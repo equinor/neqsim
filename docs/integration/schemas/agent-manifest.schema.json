@@ -115,7 +115,7 @@
     },
     "trust_level": {
       "type": "string",
-      "enum": ["core", "community", "internal", "private", "experimental"]
+      "enum": ["core", "community", "private", "experimental"]
     },
     "requires_mcp_tools": {
       "type": "array",

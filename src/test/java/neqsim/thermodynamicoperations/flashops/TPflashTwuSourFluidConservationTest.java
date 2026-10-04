@@ -20,15 +20,15 @@ class TPflashTwuSourFluidConservationTest {
   /** Build the exact reported composition, including the original TBP cut names and units. */
   private SystemInterface createFluid(double temperature, double pressure) {
     SystemInterface fluid = new SystemPrEos(temperature, pressure);
-    String[] names = { "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
-        "n-hexane", "H2S", "water" };
-    double[] amounts = { 1.587, 52.01, 6.24, 4.23, 0.855, 2.213, 1.124, 1.271, 2.289, 0.5, 5.0 };
+    String[] names = {"CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+        "n-hexane", "H2S", "water"};
+    double[] amounts = {1.587, 52.01, 6.24, 4.23, 0.855, 2.213, 1.124, 1.271, 2.289, 0.5, 5.0};
     for (int i = 0; i < names.length; i++) {
       fluid.addComponent(names[i], amounts[i]);
     }
-    double[][] cuts = { { 0.8501, 108.47, 0.7411 }, { 1.2802, 120.4, 0.755 }, { 1.6603, 133.64, 0.7695 },
-        { 6.5311, 164.7, 0.799 }, { 6.3311, 215.94, 0.8387 }, { 4.9618, 273.34, 0.8754 }, { 2.9105, 334.92, 0.90731 },
-        { 3.0505, 412.79, 0.94575 } };
+    double[][] cuts = {{0.8501, 108.47, 0.7411}, {1.2802, 120.4, 0.755}, {1.6603, 133.64, 0.7695},
+        {6.5311, 164.7, 0.799}, {6.3311, 215.94, 0.8387}, {4.9618, 273.34, 0.8754}, {2.9105, 334.92, 0.90731},
+        {3.0505, 412.79, 0.94575}};
     fluid.getCharacterization().setTBPModel("Twu");
     for (int i = 0; i < cuts.length; i++) {
       fluid.addTBPfraction("C7+_cut" + (i + 1), cuts[i][0], cuts[i][1] / 1000.0, cuts[i][2]);
@@ -42,14 +42,14 @@ class TPflashTwuSourFluidConservationTest {
   /** Recreate the pre-fix characterization, independently of the repaired Twu implementation. */
   private SystemInterface createLegacyInvalidFluid() {
     SystemInterface fluid = createFluid(343.15, 33.0);
-    double[][] legacyProperties = { { 528.700712930119, 26.751596003314564, 0.6462775091350768 },
-        { 548.0577654655797, 25.041662851847313, 0.7088168453770576 },
-        { 566.8813124869656, 23.377270637261827, 0.7930589562220649 },
-        { 603.4363531055359, 20.19968363526789, 1.0363562268358848 },
-        { 648.0280681595877, 16.45956579232401, 1.630368181510991 },
-        { 683.4600828341196, 13.620771510979344, 2.8876883670039093 },
-        { 712.174783859551, 11.476034995880262, 6.4537267962023845 },
-        { 736.9362177688092, 9.637248269519539, -38.44693197351764 } };
+    double[][] legacyProperties = {{528.700712930119, 26.751596003314564, 0.6462775091350768},
+        {548.0577654655797, 25.041662851847313, 0.7088168453770576},
+        {566.8813124869656, 23.377270637261827, 0.7930589562220649},
+        {603.4363531055359, 20.19968363526789, 1.0363562268358848},
+        {648.0280681595877, 16.45956579232401, 1.630368181510991},
+        {683.4600828341196, 13.620771510979344, 2.8876883670039093},
+        {712.174783859551, 11.476034995880262, 6.4537267962023845},
+        {736.9362177688092, 9.637248269519539, -38.44693197351764}};
     for (PhaseInterface phase : fluid.getPhases()) {
       if (phase == null) {
         continue;
@@ -131,8 +131,8 @@ class TPflashTwuSourFluidConservationTest {
     assertConservative(inventory, feed.getFluid());
     ThreePhaseSeparator separator = new ThreePhaseSeparator("separator", feed);
     separator.run();
-    StreamInterface[] outlets = { separator.getGasOutStream(), separator.getOilOutStream(),
-        separator.getWaterOutStream() };
+    StreamInterface[] outlets = {separator.getGasOutStream(), separator.getOilOutStream(),
+        separator.getWaterOutStream()};
     double totalFlow = 0.0;
     for (StreamInterface outlet : outlets) {
       assertTrue(outlet.getFlowRate("kg/hr") > 0.0);
@@ -151,7 +151,7 @@ class TPflashTwuSourFluidConservationTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "338.15, 30.0", "343.15, 33.0", "348.15, 36.0" })
+  @CsvSource({"338.15, 30.0", "343.15, 33.0", "348.15, 36.0"})
   void repeatedAndClonedFlashesConserveAtNearbyConditions(double temperature, double pressure) {
     SystemInterface fluid = createFluid(temperature, pressure);
     SystemInterface inventory = fluid.clone();

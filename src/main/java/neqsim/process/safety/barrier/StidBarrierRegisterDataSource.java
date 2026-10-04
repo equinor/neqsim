@@ -53,13 +53,13 @@ import com.google.gson.JsonParser;
  */
 public class StidBarrierRegisterDataSource {
   /** Top-level array keys interpreted as safety critical elements. */
-  public static final String[] SCE_ARRAY_KEYS = new String[] { "safetyCriticalElements", "sces", "elements" };
+  public static final String[] SCE_ARRAY_KEYS = new String[] {"safetyCriticalElements", "sces", "elements"};
 
   /** Top-level array keys interpreted as standalone barriers. */
-  public static final String[] BARRIER_ARRAY_KEYS = new String[] { "barriers", "safetyBarriers" };
+  public static final String[] BARRIER_ARRAY_KEYS = new String[] {"barriers", "safetyBarriers"};
 
   /** Top-level array keys interpreted as register-level document evidence. */
-  public static final String[] EVIDENCE_ARRAY_KEYS = new String[] { "evidence", "documents", "documentEvidence" };
+  public static final String[] EVIDENCE_ARRAY_KEYS = new String[] {"evidence", "documents", "documentEvidence"};
 
   private final JsonObject source;
 

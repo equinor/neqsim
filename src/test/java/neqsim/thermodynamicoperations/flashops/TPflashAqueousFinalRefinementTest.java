@@ -10,10 +10,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousFinalRefinementTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] REGRESSION_FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021 };
-  private static final double[] CO2_RICH_FEED = { 0.75, 0.15, 0.02, 0.08 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
+  private static final double[] REGRESSION_FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021};
+  private static final double[] CO2_RICH_FEED = {0.75, 0.15, 0.02, 0.08};
 
   @Test
   void finalRefinementRestoresAqueousFugacityEquality() {
@@ -45,7 +45,7 @@ class TPflashAqueousFinalRefinementTest {
     candidate.getPhase(0).setType(PhaseType.GAS);
     candidate.getPhase(1).setType(PhaseType.AQUEOUS);
 
-    PhaseType[] referenceTypes = new PhaseType[] { candidate.getPhase(0).getType(), candidate.getPhase(1).getType() };
+    PhaseType[] referenceTypes = new PhaseType[] {candidate.getPhase(0).getType(), candidate.getPhase(1).getType()};
     assertTrue(TPflash.preservesTwoPhaseActiveSet(candidate, referenceTypes));
 
     candidate.getPhase(0).setType(PhaseType.LIQUID);

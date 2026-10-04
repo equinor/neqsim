@@ -32,6 +32,11 @@ NeqSim provides three convergence acceleration methods to speed up recycle conve
 | **Wegstein** | Oscillating or slow-converging recycles | O(1) |
 | **Broyden** | Tightly coupled multi-variable systems | O(n²) |
 
+A loop with no `Recycle` unit at all converges only through the surrounding sweep, with none of the
+above available to it. `ProcessSystem.makeRecycles()` and `ProcessModel.makeRecycles()` find those
+implicit loops and close them with tuned recycles - see
+[Automatic recycle insertion](../process/controllers.md#automatic-recycle-insertion).
+
 ---
 
 ## Understanding Recycles
@@ -107,11 +112,45 @@ $$x_{n+1} = g(x_n)$$
 recycle.setAccelerationMethod(AccelerationMethod.DIRECT_SUBSTITUTION);
 ```
 
+### Per-recycle acceleration coordinates
+
+A `Recycle` accelerates the **overall mole fractions** in component order. Its
+Broyden matrix is therefore `n` by `n` for `n` components. Temperature, pressure
+and total molar flow retain the current mixed/flashed return-stream values;
+there are no unused thermal or flow coordinates in the accelerator.
+
+The proposed composition is clipped at zero and normalized, then applied to a
+cloned fluid's component inventories and TP-flashed at the return temperature
+and pressure. Each phase receives its own equilibrium composition and phase
+fraction. Invalid proposals or failed flashes retain the unaccelerated return.
+A changed component list resets the acceleration history. An accelerated tear
+is an iteration estimate: component and energy balances across the loop must
+be checked after convergence. Convergence uses the unaccelerated return versus
+the previous tear estimate, so damping or clipping cannot hide a residual.
+
+This scope applies to acceleration inside each `Recycle`. The separate
+`RecycleController` simultaneous-acceleration interface has its own coordinates.
+
+#### Diagnostic compatibility
+
+| API | Coordinate layout |
+| --- | --- |
+| `getCompositionWegsteinQFactors()` | `n` factors for overall mole fractions in component order |
+| `getWegsteinQFactors()` | Existing `3 + n` layout; T, P and flow entries are reserved zeros, followed by composition factors |
+| `getBroydenAccelerator().getInverseJacobian()` | `n` by `n` composition matrix for this recycle |
+
+Both Wegstein getters return defensive copies, or `null` before factors exist.
+The factors describe the proposal **before** clipping and normalization. Previously
+reported nonzero T/P/flow factors had no effect; consumers should no longer
+interpret them as acceleration of those properties. Composition entries now refer
+to overall composition, rather than the first phase. Reset acceleration state
+before reusing persisted solver history from an older version.
+
 ### 2. Wegstein Acceleration
 
 **Algorithm**: Extrapolates based on the slope between consecutive iterations.
 
-$$x_{n+1} = q \cdot g(x_n) + (1-q) \cdot x_n$$
+$$x_{n+1} = q \cdot x_n + (1-q) \cdot g(x_n)$$
 
 where the q-factor is calculated from the slope:
 
@@ -119,13 +158,18 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 
 **Bounded q-factor**: NeqSim bounds q ∈ [-5, 0] to prevent divergence:
 - q = 0: Pure direct substitution
-- q < 0: Damping for oscillatory behavior
-- q = -5: Maximum damping
+- q < 0: Extrapolation beyond the direct-substitution output
+- q = -5: Strongest extrapolation within these bounds
+- 0 < q < 1: Damping when a positive maximum is explicitly enabled
+
+For the affine map $g(x)=0.5x+1$, the measured slope gives $q=-1$.
+Starting from $x=1$ and $g(x)=1.5$, the update is $-1+2(1.5)=2$, the exact
+fixed point. At $q=0$, the update is $g(x)$ (direct substitution).
 
 **Characteristics**:
 - Low overhead (O(1) per variable)
 - Excellent for single-variable problems
-- Adaptive damping prevents oscillation
+- Bounded extrapolation limits the acceleration step
 - Each variable accelerated independently
 
 **When to Use**:
@@ -137,7 +181,7 @@ $$q = \frac{s}{s-1}, \quad s = \frac{g(x_n) - g(x_{n-1})}{x_n - x_{n-1}}$$
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 
 // Optional: Tune the q-factor bounds
-recycle.setWegsteinQMin(-5.0);  // More damping
+recycle.setWegsteinQMin(-5.0);  // Allow stronger extrapolation
 recycle.setWegsteinQMax(0.0);   // Maximum q (direct substitution)
 ```
 
@@ -401,7 +445,7 @@ Benchmarks on a 3-stage separation train with 2 liquid recycles (~20 process uni
 **Solutions**:
 1. Increase `maxIterations`
 2. Loosen tolerance with `setTolerance()`
-3. Try `WEGSTEIN` for damping
+3. Try `WEGSTEIN` acceleration; enable positive q-factors if damping is needed
 4. Check initial estimates are reasonable
 5. Verify process is physically feasible
 
@@ -416,14 +460,14 @@ recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 **Symptoms**: Error bounces between values, never settles
 
 **Solutions**:
-1. Use `WEGSTEIN` method (provides damping)
-2. Reduce Wegstein qMax toward 0
+1. Use `WEGSTEIN` with positive q-factors enabled for damping
+2. Limit negative q-factors to avoid extrapolating an oscillatory return
 3. Check for competing recycles
 
 ```java
 recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
-recycle.setWegsteinQMin(-10.0);  // Stronger damping
-recycle.setWegsteinQMax(-0.5);   // Never use direct substitution
+recycle.setWegsteinQMin(0.0);   // Disable extrapolation
+recycle.setWegsteinQMax(0.5);   // Allow damping of oscillatory returns
 ```
 
 ### Problem: Broyden diverges
@@ -554,16 +598,16 @@ RecycleController controller = process.getRecycleController();
 if (controller.hasSensitivityData()) {
     // Get as SensitivityMatrix for named access
     SensitivityMatrix sensMatrix = controller.getTearStreamSensitivityMatrix();
-    
+
     // Query individual sensitivities
     double dT_dP = sensMatrix.getSensitivity(
-        "recycle1.temperature", 
+        "recycle1.temperature",
         "recycle1.pressure"
     );
-    
+
     // Or get raw Jacobian for matrix operations
     double[][] jacobian = controller.getConvergenceJacobian();
-    
+
     // See variable names
     List<String> varNames = controller.getTearStreamVariableNames();
     // Returns: ["recycle1.temperature", "recycle1.pressure", "recycle1.flowRate", ...]
@@ -688,6 +732,7 @@ List<String> getTearStreamVariableNames()
 
 ## See Also
 
+- [Automatic recycle insertion](../process/controllers.md#automatic-recycle-insertion) - closing loops that have no `Recycle` at all
 - [Graph-Based Process Simulation](graph_based_process_simulation) - Detailed guide on graph algorithms and sensitivity analysis
 - 📓 [GraphBasedProcessSimulation.ipynb](https://github.com/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
 

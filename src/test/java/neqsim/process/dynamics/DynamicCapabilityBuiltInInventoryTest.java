@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.ProcessElementInterface;
 import neqsim.process.equipment.adsorber.AdsorptionBed;
@@ -32,7 +33,11 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.Pipeline;
 import neqsim.process.equipment.reactor.IronSulfideOxidationSource;
 import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.tank.MountainCavern;
 import neqsim.process.equipment.tank.VesselDepressurization;
+import neqsim.process.safety.release.IdealGasPipeDecompression;
+import neqsim.process.safety.release.RealGasPipeDecompression;
+import neqsim.process.safety.release.ReleaseInventory;
 
 /** CI inventory gate for built-in implementations of the standard transient boundary. */
 public class DynamicCapabilityBuiltInInventoryTest extends neqsim.NeqSimTest {
@@ -43,6 +48,7 @@ public class DynamicCapabilityBuiltInInventoryTest extends neqsim.NeqSimTest {
 
   /** Every built-in ProcessElement transient override must be mapped or cite an existing explicit ADR. */
   @Test
+  @Tag("slow")
   public void everyBuiltInTransientOverrideIsMappedOrHasAdr() throws Exception {
     assertTrue(Files.isDirectory(PROCESS_SOURCE_ROOT), "production process source tree is missing");
 
@@ -91,10 +97,10 @@ public class DynamicCapabilityBuiltInInventoryTest extends neqsim.NeqSimTest {
     assertCapability(DynamicCapability.ALGEBRAIC, Heater.class, Mixer.class, Splitter.class, MembraneSeparator.class,
         AdiabaticPipe.class);
     assertCapability(DynamicCapability.DYNAMIC_LUMPED, Filter.class, CommittedEnergyGenerator.class,
-        VesselDepressurization.class, Electrolyzer.class);
+        VesselDepressurization.class, MountainCavern.class, Electrolyzer.class, ReleaseInventory.class);
     assertCapability(DynamicCapability.DYNAMIC_DISTRIBUTED, DistillationColumn.class, AdsorptionBed.class,
         MercuryRemovalBed.class, Pipeline.class, MultiphasePipe.class, PipeBeggsAndBrills.class, PipeFlowNetwork.class,
-        WellFlowlineNetwork.class);
+        WellFlowlineNetwork.class, IdealGasPipeDecompression.class, RealGasPipeDecompression.class);
     assertCapability(DynamicCapability.BOUNDARY_DYNAMIC, IronSulfideOxidationSource.class);
   }
 

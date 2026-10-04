@@ -1,6 +1,6 @@
 ---
 name: neqsim-production-chemistry
-description: "Production-chemistry patterns for NeqSim. USE WHEN: selecting or dosing production chemicals (scale inhibitor, corrosion inhibitor, MEG/MeOH THI, KHI/AA LDHI, wax inhibitor, asphaltene inhibitor, H2S scavenger, oxygen scavenger, biocide, demulsifier, antifoam, pH adjuster, chelant, acid), checking chemical-chemical or chemical-fluid COMPATIBILITY of an injection cocktail, computing minimum effective dose / MIC / residual saturation index / inhibited corrosion rate / scavenger breakthrough, placing a chemical injection point in a flowsheet, optimising demulsifier dose against an oil-in-water spec, quantifying how a treatment changes brine pH and scaling tendency, or running an explainable chemical root-cause analysis on a deposit, emulsion, pH excursion or H2S breakthrough. Anchors on neqsim.process.chemistry and neqsim.process.equipment.watertreatment."
+description: "Production-chemistry patterns for NeqSim. USE WHEN: selecting or dosing scale/corrosion/hydrate/wax/asphaltene inhibitors, H2S or oxygen scavengers, biocide, demulsifier, antifoam, pH adjuster or acid; checking chemical-chemical or chemical-fluid COMPATIBILITY; computing minimum dose, residual SI, inhibited corrosion rate or scavenger breakthrough; placing an injection point; or chemical root-cause of a deposit, emulsion, pH excursion or H2S breakthrough."
 last_verified: "2026-09-07"
 ---
 
@@ -326,6 +326,54 @@ double kgPerHour = inj.getInjectionRateKgPerHour();
 > the outlet and hands it to the dedicated chemistry models. Do not expect it to change the
 > hydrate curve or pH by itself.
 
+### 4.1 Does the chemical reach the gas? — `ChemicalInjectionNozzlePerformance`
+
+`InhibitorInjectionPoint` and the dose-response models all assume the chemical is **dispersed** in
+the phase it has to treat. For a liquid sprayed into a **gas** line — H2S scavenger into a separator
+gas outlet, corrosion inhibitor or MEG into a wet-gas line — that assumption is the thing most
+likely to be wrong. A bare injection quill releases a coarse jet that settles onto the pipe wall
+within a few pipe diameters and treats nothing; an atomizing nozzle produces a fine spray that stays
+entrained. `neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance` quantifies the
+difference so a quill-to-nozzle modification can be evaluated instead of asserted.
+
+```java
+import neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance;
+import neqsim.process.chemistry.injection.ChemicalInjectionNozzlePerformance.InjectionDevice;
+
+ChemicalInjectionNozzlePerformance nozzle = new ChemicalInjectionNozzlePerformance();
+nozzle.setInjectionDevice(InjectionDevice.FULL_CONE_NOZZLE);   // or PLAIN_QUILL
+nozzle.setPipeInnerDiameter(0.4889);
+nozzle.setGasVolumeFlow(gasStream.getFlowRate("m3/sec"));
+nozzle.setGasDensity(gasStream.getFluid().getDensity("kg/m3"));
+nozzle.setGasViscosity(gasStream.getFluid().getPhase("gas").getViscosity("kg/msec"));
+nozzle.setChemicalVolumeFlow(235.0);          // l/h
+nozzle.setChemicalDensity(1080.0);
+nozzle.setChemicalViscosity(8.0e-3);
+nozzle.setSurfaceTension(0.040);
+nozzle.setNozzleDifferentialPressure(6.5);    // bar across the device
+nozzle.setInsertionDepth(0.135);              // from the wall; piping specs cap this
+nozzle.evaluate();
+
+double smd = nozzle.getSauterMeanDiameterMicron();
+double reachDiameters = nozzle.getWallImpingementLength() / 0.4889;
+scavenger.setMixingEfficiency(nozzle.getDispersionIndex());
+```
+
+Rules of thumb the class encodes, and the reason each matters:
+
+| Rule | Why |
+|---|---|
+| A bare quill needs about **10 m/s** gas velocity | Drop size from aerodynamic breakup is `We_crit σ / (ρ_G u²)` — velocity enters squared, so halving it quadruples the drop size |
+| Target **10–50 µm**, preferably 20–40 µm | Interfacial area is `6 Q_L / (SMD · Q_G)`, so area buys treatment; below 10 µm the mist carries over into downstream scrubbers |
+| Atomisation is bought with **pump ΔP** | Lefebvre gives `SMD ∝ ΔP^-0.5`; quartering ΔP doubles the drop size |
+| A fixed-orifice nozzle **degrades on turndown** | `Q = K√ΔP` gives `SMD ∝ Q^-0.75`; halving the dose coarsens the spray 1.7× — so a ramp-up from low rates runs at the worst atomisation unless a separate low-rate nozzle is fitted |
+| Two nozzles in parallel are **coarser** than one | Splitting a fixed total rate quarters the ΔP per nozzle. Parallel operation buys capacity, never quality |
+| Insertion limits push the nozzle **off centre** | The drop flight path before wall contact is `u_G · h / v_t`; a shallower insertion shortens `h` and with it the treated length |
+
+> Feed `getDispersionIndex()` into `H2SScavenger.setMixingEfficiency(...)` rather than guessing a
+> value. If the index is low, the answer to poor treatment is the injection hardware, not more
+> chemical.
+
 ## 5. Produced Water — Demulsifier Dose vs Oil-in-Water
 
 ```java
@@ -556,6 +604,42 @@ Enums through jpype: `CIP.InhibitorChemistry.valueOf("IMIDAZOLINE")`.
    demulsifier meet the OiW spec?).
 6. **Uncertainty + gaps** — §9 plus `getWarnings()` / `getDataGaps()` from every model.
 7. **Report** — `standards_applied`, `key_results`, `uncertainty`, `risk_evaluation`.
+
+## Closed Glycol Cooling/Heating Media — Biology and pH
+
+A closed MEG/water cooling or heating medium that has been contaminated (seawater ingress through a
+plate exchanger is the usual start) fails in three coupled ways: biofilm plugs strainers, pH drifts
+low, and stainless flanges suffer crevice/MIC attack. Three screening checks answer most of the
+questions an operations PEPR asks:
+
+1. **Is the blend biostatic?** Compute water activity with SRK-CPA and compare with the minimum a_w
+   for growth (most bacteria 0.91, most yeasts 0.88, most moulds 0.80; Scott 1957, Beuchat 1983).
+   ```python
+   f = ns.JClass("neqsim.thermo.system.SystemSrkCPAstatoil")(298.15, 1.01325)
+   f.addComponent("water", 1000 * (1 - w) / 18.015)   # per kg of solution
+   f.addComponent("MEG", 1000 * w / 62.068)
+   f.addComponent("CO2", 1e-8)
+   f.setMixingRule(10)
+   ns.JClass("neqsim.thermodynamicoperations.ThermodynamicOperations")(f).TPflash()
+   ph = f.getPhase(f.getNumberOfPhases() - 1)
+   a_w = ph.getComponent("water").getx() * ph.getActivityCoefficient(
+       ph.getComponent("water").getComponentNumber())
+   ```
+   Verified values at 25 °C: 20 wt% MEG → a_w 0.923 (NOT biostatic); a_w 0.91 at 22.7 wt%, 0.88 at
+   28.5 wt%, 0.80 at 41.5 wt%. The common "20/80" design blend allows bacterial growth.
+2. **Can caustic hold pH?** Near pH 7–9 unbuffered MEG/water has almost no buffer capacity: about
+   0.007 mmol/L of organic acid (MEG oxidation, microbial acids) moves pH 8 → 7, versus ~2.4 mmol/L
+   with a 5 mmol/L buffer (pKa 7.2). Repeated NaOH dosing that "cannot keep pH above 7.2" is this,
+   not a dosing error — recommend an inhibitor/buffer package or a hard trigger to add one.
+3. **Does fluid exchange clean the loop?** Exchange removes solutes and planktonic cells, not
+   attached biofilm. Reconcile any past feed-and-bleed with `C = C0·exp(−V_ex/V_mix)`; an inferred
+   V_mix far below the stated inventory means stagnant branches (where biofilm survives and dosing
+   does not reach). Trend the historised strainer dP as the leading indicator of regrowth.
+
+Gotchas: size the liquid at ~1 kg (55 mol water) when a gas phase is present, otherwise the aqueous
+phase evaporates into a 10-mol gas and no aqueous phase is returned. SRK-CPA gives the CO2–water
+Henry constant ~19 % low at 25 °C / 1 atm (0.0275 vs 0.034 mol/kg/bar) — use the reference value for
+carbonate pH work and keep NeqSim only for the MEG/water ratio.
 
 ## Agent Cooperation
 

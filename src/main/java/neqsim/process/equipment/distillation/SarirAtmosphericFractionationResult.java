@@ -15,7 +15,7 @@ import neqsim.thermo.characterization.SarirAtmosphericReference.ProductYieldRefe
  * </p>
  */
 public final class SarirAtmosphericFractionationResult {
-  private static final String[] PRODUCT_LABELS = { "Total Naphtha", "Kerosene", "Diesel", "Residual" };
+  private static final String[] PRODUCT_LABELS = {"Total Naphtha", "Kerosene", "Diesel", "Residual"};
   private static final double MATERIAL_FLOW_FRACTION = 1.0e-8;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
 
@@ -75,10 +75,10 @@ public final class SarirAtmosphericFractionationResult {
     }
 
     OperatingInputs inputs = model.getOperatingInputs();
-    StreamInterface[] streams = { column.getGasOutStream(),
+    StreamInterface[] streams = {column.getGasOutStream(),
         column.getSideDrawStream(inputs.getKeroseneSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID),
         column.getSideDrawStream(inputs.getDieselSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID),
-        column.getLiquidOutStream() };
+        column.getLiquidOutStream()};
 
     ProductResult[] productResults = new ProductResult[streams.length];
     double productMassFlow = 0.0;

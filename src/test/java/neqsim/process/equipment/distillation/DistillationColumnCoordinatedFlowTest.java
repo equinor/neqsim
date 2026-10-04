@@ -99,8 +99,8 @@ public class DistillationColumnCoordinatedFlowTest {
     column.addFeedStream(sideFeed, 5);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.2);
-    column.getCondenser().setOutTemperature(273.15 + 30.0);
-    column.getReboiler().setOutTemperature(273.15 + 90.0);
+    column.getCondenser().setOutletTemperature(273.15 + 30.0);
+    column.getReboiler().setOutletTemperature(273.15 + 90.0);
     column.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
     column.setCondenserRefluxRatio(1.8);
     column.setReboilerVaporBoilupRatio(1.20);

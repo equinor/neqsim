@@ -19,7 +19,7 @@ Usage:
         --inst MYINST --tags 30PT0001 --convert-png
 
 Requirements:
-    pip install stidapi
+    pip install "stidapi>=1.4.4"
     pip install pymupdf   (only for --convert-png)
 """
 import argparse
@@ -66,18 +66,23 @@ def get_docs_for_tags(inst_code, tag_list):
 def download_doc_files(inst_code, all_docs, out_dir):
     """Download PDF files for documents into out_dir.
 
+    Uses stidapi's own `File.download_file()` (stidapi>=1.4.4), which resolves
+    the correct download endpoint itself (a direct `url` if the API returned
+    one, otherwise `{inst_code}/file/{id}`). This replaces the old approach of
+    guessing between two hand-built URL patterns.
+
     Args:
         inst_code: STID installation code
-        all_docs: Dict of document metadata (from get_docs_for_tags)
+        all_docs: Dict of document metadata (from get_docs_for_tags, or the
+            --docs branch in main(), which may store either raw file dicts
+            or stidapi File objects)
         out_dir: Absolute path to output directory
 
     Returns:
         Tuple of (downloaded_list, failed_list)
     """
-    import stidapi.utils as u
+    from stidapi.doc import File
 
-    client = u.get_api_client()
-    api_url = u.get_api_url()
     os.makedirs(out_dir, exist_ok=True)
 
     downloaded = []
@@ -85,11 +90,15 @@ def download_doc_files(inst_code, all_docs, out_dir):
 
     for doc_no, info in sorted(all_docs.items()):
         for f in info.get("files", []):
-            fname = f.get("fileName") or ""
-            file_id = f.get("id", None)
-            blob_id = f.get("blobId") or ""
+            # Normalize to a File object regardless of source (tag document
+            # references return plain dicts; Doc.get_files() returns File).
+            file_obj = f if isinstance(f, File) else File(dict(f))
+            # Tag-derived file dicts don't always carry instCode; the caller's
+            # inst_code is authoritative, so force it for URL resolution.
+            file_obj.instCode = inst_code
 
-            if not fname.lower().endswith(".pdf") or not file_id:
+            fname = file_obj.file_name
+            if not fname.lower().endswith(".pdf"):
                 continue
 
             safe_name = doc_no.replace("/", "_") + ".pdf"
@@ -103,37 +112,24 @@ def download_doc_files(inst_code, all_docs, out_dir):
                 )
                 continue
 
-            urls_to_try = [
-                "{}{}//file/{}".format(api_url, inst_code, file_id),
-                "{}{}/file/blob/{}".format(api_url, inst_code, blob_id),
-            ]
-
-            success = False
-            for url in urls_to_try:
-                try:
-                    client.get_file(url=url, file_name=out_path)
-                    if os.path.exists(out_path) and os.path.getsize(out_path) > 1000:
-                        print("  [OK] {}: {} ({} bytes)".format(
-                            doc_no, info["docTitle"], os.path.getsize(out_path)))
-                        downloaded.append(
-                            {"docNo": doc_no, "title": info["docTitle"],
-                             "file": safe_name, "status": "downloaded"}
-                        )
-                        success = True
-                        break
-                    else:
-                        if os.path.exists(out_path):
-                            os.remove(out_path)
-                except Exception:
-                    if os.path.exists(out_path):
-                        os.remove(out_path)
-                    continue
-
-            if not success:
-                print("  [FAIL] {}: {}".format(doc_no, info["docTitle"]))
+            try:
+                file_obj.download_file(destination=out_path, overwrite=True)
+                if not os.path.exists(out_path) or os.path.getsize(out_path) <= 1000:
+                    raise IOError("downloaded file is missing or too small")
+                print("  [OK] {}: {} ({} bytes)".format(
+                    doc_no, info["docTitle"], os.path.getsize(out_path)))
+                downloaded.append(
+                    {"docNo": doc_no, "title": info["docTitle"],
+                     "file": safe_name, "status": "downloaded"}
+                )
+            except Exception as exc:  # noqa: BLE001
+                if os.path.exists(out_path):
+                    os.remove(out_path)
+                print("  [FAIL] {}: {} ({})".format(
+                    doc_no, info["docTitle"], str(exc)[:100]))
                 failed.append(
                     {"docNo": doc_no, "title": info["docTitle"],
-                     "error": "all URL patterns failed"}
+                     "error": str(exc)[:200]}
                 )
 
     return downloaded, failed
@@ -273,17 +269,16 @@ def main():
         for doc_no in args.docs:
             if doc_no in all_docs:
                 continue
-            # Resolve real file metadata via the Doc API so direct downloads work.
+            # Resolve real document + file metadata via the Doc API. The
+            # returned File objects (stidapi>=1.4.4) are kept as-is (not
+            # flattened to dicts) so download_doc_files() can call their own
+            # download_file() resolver instead of guessing a URL.
             doc_title = "(requested directly)"
             files = []
             try:
                 d = Doc(inst_code=args.inst, doc_no=doc_no)
-                for f in d.get_files():
-                    files.append({
-                        "id": getattr(f, "id", None),
-                        "fileName": getattr(f, "fileName", "") or "",
-                        "blobId": getattr(f, "blobId", "") or "",
-                    })
+                doc_title = d.title or doc_title
+                files = d.get_files()
             except Exception as exc:  # noqa: BLE001
                 print("  [WARN] {}: could not resolve files ({})".format(
                     doc_no, str(exc)[:80]))

@@ -20,15 +20,15 @@ public class ElectricalCable implements java.io.Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Standard cable cross-sections in mm2 per IEC 60228. */
-  private static final double[] STANDARD_CROSS_SECTIONS = { 1.5, 2.5, 4.0, 6.0, 10.0, 16.0, 25.0, 35.0, 50.0, 70.0,
-      95.0, 120.0, 150.0, 185.0, 240.0, 300.0, 400.0, 500.0, 630.0 };
+  private static final double[] STANDARD_CROSS_SECTIONS = {1.5, 2.5, 4.0, 6.0, 10.0, 16.0, 25.0, 35.0, 50.0, 70.0, 95.0,
+      120.0, 150.0, 185.0, 240.0, 300.0, 400.0, 500.0, 630.0};
 
   /**
    * Approximate base ampacity for XLPE copper cables in tray (3-core), per IEC 60502. Index matches
    * STANDARD_CROSS_SECTIONS.
    */
-  private static final double[] BASE_AMPACITY_XLPE_TRAY = { 18, 25, 33, 43, 60, 80, 106, 131, 158, 200, 241, 278, 315,
-      360, 420, 480, 560, 640, 740 };
+  private static final double[] BASE_AMPACITY_XLPE_TRAY = {18, 25, 33, 43, 60, 80, 106, 131, 158, 200, 241, 278, 315,
+      360, 420, 480, 560, 640, 740};
 
   private double lengthM = 50.0;
   private double crossSectionMM2;

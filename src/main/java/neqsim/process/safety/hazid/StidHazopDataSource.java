@@ -51,10 +51,10 @@ import com.google.gson.JsonParser;
  */
 public class StidHazopDataSource {
   /** Top-level array keys interpreted as HAZOP nodes. */
-  public static final String[] NODE_ARRAY_KEYS = new String[] { "nodes", "hazopNodes", "items" };
+  public static final String[] NODE_ARRAY_KEYS = new String[] {"nodes", "hazopNodes", "items"};
 
   /** Object keys interpreted as the HAZOP deviation array within a node. */
-  public static final String[] DEVIATION_ARRAY_KEYS = new String[] { "deviations", "deviationRows", "rows" };
+  public static final String[] DEVIATION_ARRAY_KEYS = new String[] {"deviations", "deviationRows", "rows"};
 
   private final JsonObject source;
 

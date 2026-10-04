@@ -38,7 +38,7 @@ class PitzerBinaryVolumetricAcousticConversionTest extends neqsim.NeqSimTest {
 
   @Test
   void propagatesIndependentInputUncertaintiesThroughAnalyticSensitivities() {
-    double[] standardUncertainties = { 0.02, 0.10, 0.20, 1.0e-6, 2.0 };
+    double[] standardUncertainties = {0.02, 0.10, 0.20, 1.0e-6, 2.0};
     double[][] covariance = diagonalCovariance(standardUncertainties);
 
     PitzerBinaryVolumetricAcousticConversion.ConversionResult result = PitzerBinaryVolumetricAcousticConversion
@@ -53,7 +53,7 @@ class PitzerBinaryVolumetricAcousticConversionTest extends neqsim.NeqSimTest {
         THERMAL_EXPANSION_PER_K * THERMAL_EXPANSION_PER_K / (DENSITY_KG_PER_M3 * SPECIFIC_HEAT_CAPACITY_J_PER_KG_K),
         -isothermal / DENSITY_KG_PER_M3, -2.0 * isentropic / SOUND_SPEED_M_PER_S,
         2.0 * TEMPERATURE_K * THERMAL_EXPANSION_PER_K / (DENSITY_KG_PER_M3 * SPECIFIC_HEAT_CAPACITY_J_PER_KG_K),
-        -thermalCorrection / SPECIFIC_HEAT_CAPACITY_J_PER_KG_K };
+        -thermalCorrection / SPECIFIC_HEAT_CAPACITY_J_PER_KG_K};
     double expectedVariance = 0.0;
     for (int index = 0; index < PitzerBinaryVolumetricAcousticConversion.INPUT_COUNT; index++) {
       expectedVariance += expectedJacobian[index] * expectedJacobian[index] * covariance[index][index];
@@ -69,7 +69,7 @@ class PitzerBinaryVolumetricAcousticConversionTest extends neqsim.NeqSimTest {
 
   @Test
   void retainsCrossCovarianceTerms() {
-    double[][] covariance = diagonalCovariance(new double[] { 0.0, 0.10, 0.20, 0.0, 0.0 });
+    double[][] covariance = diagonalCovariance(new double[] {0.0, 0.10, 0.20, 0.0, 0.0});
     covariance[PitzerBinaryVolumetricAcousticConversion.DENSITY_INDEX][PitzerBinaryVolumetricAcousticConversion.SOUND_SPEED_INDEX] = 0.01;
     covariance[PitzerBinaryVolumetricAcousticConversion.SOUND_SPEED_INDEX][PitzerBinaryVolumetricAcousticConversion.DENSITY_INDEX] = 0.01;
 
@@ -100,16 +100,16 @@ class PitzerBinaryVolumetricAcousticConversionTest extends neqsim.NeqSimTest {
         () -> convert(new double[PitzerBinaryVolumetricAcousticConversion.INPUT_COUNT
             - 1][PitzerBinaryVolumetricAcousticConversion.INPUT_COUNT - 1]));
 
-    double[][] asymmetric = diagonalCovariance(new double[] { 1.0, 1.0, 1.0, 1.0, 1.0 });
+    double[][] asymmetric = diagonalCovariance(new double[] {1.0, 1.0, 1.0, 1.0, 1.0});
     asymmetric[0][1] = 0.1;
     assertThrows(IllegalArgumentException.class, () -> convert(asymmetric));
 
-    double[][] indefinite = diagonalCovariance(new double[] { 1.0, 1.0, 1.0, 1.0, 1.0 });
+    double[][] indefinite = diagonalCovariance(new double[] {1.0, 1.0, 1.0, 1.0, 1.0});
     indefinite[0][1] = 2.0;
     indefinite[1][0] = 2.0;
     assertThrows(IllegalArgumentException.class, () -> convert(indefinite));
 
-    double[][] zeroVarianceCorrelation = diagonalCovariance(new double[] { 0.0, 1.0, 1.0, 1.0, 1.0 });
+    double[][] zeroVarianceCorrelation = diagonalCovariance(new double[] {0.0, 1.0, 1.0, 1.0, 1.0});
     zeroVarianceCorrelation[0][1] = 0.1;
     zeroVarianceCorrelation[1][0] = 0.1;
     assertThrows(IllegalArgumentException.class, () -> convert(zeroVarianceCorrelation));

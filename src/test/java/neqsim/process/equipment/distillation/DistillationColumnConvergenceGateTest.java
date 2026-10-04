@@ -57,7 +57,7 @@ public class DistillationColumnConvergenceGateTest {
     column.addFeedStream(feed, numberOfTrays / 2);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.5);
-    column.getReboiler().setOutTemperature(273.15 + 80.0);
+    column.getReboiler().setOutletTemperature(273.15 + 80.0);
     return column;
   }
 

@@ -16,9 +16,9 @@ You turn validated computations into teachable worked examples.
 
 ## Loaded Skills
 
-- `paperlab_worked_example_generation`
-- `neqsim_in_writing`
-- `paperlab_learning_objective_matrix`
+- `paperlab-worked-example-generation`
+- `neqsim-in-writing`
+- `paperlab-learning-objective-matrix`
 
 ## Required Context
 

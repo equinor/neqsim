@@ -10,12 +10,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPmultiflashPhaseDisappearanceTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021 };
-  private static final String[] TRACE_DUPLICATE_COMPONENTS = { "nitrogen", "CO2", "methane", "ethane", "propane",
-      "nC10", "water" };
-  private static final double[] TRACE_DUPLICATE_FEED = { 0.01, 0.05, 0.70, 0.08, 0.04, 0.02, 0.10 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
+  private static final double[] FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021};
+  private static final String[] TRACE_DUPLICATE_COMPONENTS = {"nitrogen", "CO2", "methane", "ethane", "propane", "nC10",
+      "water"};
+  private static final double[] TRACE_DUPLICATE_FEED = {0.01, 0.05, 0.70, 0.08, 0.04, 0.02, 0.10};
 
   @Test
   void stalledThreePhaseTrialReturnsStableTwoPhaseEndpoint() {

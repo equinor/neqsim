@@ -141,8 +141,8 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     liquidVolumeFractions = new double[numberOfPoints];
     // IBP(~0.5%), 5%, 10%, 15%, 20%, 25%, 30%, 35%, 40%, 45%, 50%,
     // 55%, 60%, 65%, 70%, 75%, 80%, 85%, 90%, 95%
-    double[] fracs = { 0.005, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75,
-        0.80, 0.85, 0.90, 0.95 };
+    double[] fracs = {0.005, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75,
+        0.80, 0.85, 0.90, 0.95};
     for (int i = 0; i < numberOfPoints; i++) {
       volumeFractions[i] = fracs[i];
       temperatures[i] = Double.NaN;
@@ -455,10 +455,10 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
   private double[] conversionCoefficients(double percent) {
     int last = CONVERSION_REFERENCE_DATA.length - 1;
     if (percent <= CONVERSION_REFERENCE_DATA[0][0]) {
-      return new double[] { CONVERSION_REFERENCE_DATA[0][1], CONVERSION_REFERENCE_DATA[0][2] };
+      return new double[] {CONVERSION_REFERENCE_DATA[0][1], CONVERSION_REFERENCE_DATA[0][2]};
     }
     if (percent >= CONVERSION_REFERENCE_DATA[last][0]) {
-      return new double[] { CONVERSION_REFERENCE_DATA[last][1], CONVERSION_REFERENCE_DATA[last][2] };
+      return new double[] {CONVERSION_REFERENCE_DATA[last][1], CONVERSION_REFERENCE_DATA[last][2]};
     }
     for (int i = 1; i < CONVERSION_REFERENCE_DATA.length; i++) {
       if (percent <= CONVERSION_REFERENCE_DATA[i][0]) {
@@ -468,10 +468,10 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
             + t * (CONVERSION_REFERENCE_DATA[i][1] - CONVERSION_REFERENCE_DATA[i - 1][1]);
         double b = CONVERSION_REFERENCE_DATA[i - 1][2]
             + t * (CONVERSION_REFERENCE_DATA[i][2] - CONVERSION_REFERENCE_DATA[i - 1][2]);
-        return new double[] { a, b };
+        return new double[] {a, b};
       }
     }
-    return new double[] { CONVERSION_REFERENCE_DATA[last][1], CONVERSION_REFERENCE_DATA[last][2] };
+    return new double[] {CONVERSION_REFERENCE_DATA[last][1], CONVERSION_REFERENCE_DATA[last][2]};
   }
 
   /**
@@ -609,7 +609,7 @@ public class Standard_ASTM_D86 extends neqsim.standards.Standard {
     double wabp = (sumMass > 0.0) ? wabpNum / sumMass : Double.NaN;
     double cabp = (sumVol > 0.0) ? Math.pow(cabpNum / sumVol, 3.0) : Double.NaN;
     double sg = (sumVol > 0.0) ? (sumMass / sumVol) / 999.016 : Double.NaN;
-    return new double[] { mabp, wabp, cabp, sg };
+    return new double[] {mabp, wabp, cabp, sg};
   }
 
   /**

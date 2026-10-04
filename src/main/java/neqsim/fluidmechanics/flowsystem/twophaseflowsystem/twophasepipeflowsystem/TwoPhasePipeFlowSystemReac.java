@@ -53,9 +53,9 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
     pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
     // leg
 
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 0.03, 0.07, 0.13, 2.5, 3.7 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0 };
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 0.03, 0.07, 0.13, 2.5, 3.7};
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
 
     pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
     pipe.setLegPositions(length); // setter avstand til hver leg-ende
@@ -65,7 +65,7 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
     // geometrien
     // for
     // roret
-    double[] pipeDiameter = { 0.025, 0.025, 0.025, 0.025, 0.025 };
+    double[] pipeDiameter = {0.025, 0.025, 0.025, 0.025, 0.025};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);
     }

@@ -124,7 +124,7 @@ $$
 
 ### Salinity Effect
 
-The salinity parameter $c_s$ appears only in the water alpha function. For pure water ($c_s = 0$), the model reduces to the standard PR-1978 alpha function with a slight modification for improved water vapor pressure prediction.
+The salinity parameter $c_s$ enters the water alpha function and the aqueous binary-interaction correlations. For pure water ($c_s = 0$), the model reduces to the standard PR-1978 alpha function with a slight modification for improved water vapor pressure prediction.
 
 The effect of salinity on the alpha function:
 - **Increases** the attractive parameter for water at given conditions
@@ -224,6 +224,27 @@ not a concentration. During a Søreide-Whitson TP flash, NeqSim divides this sal
 total aqueous-phase mass flow, used as the model's water-mass basis, to obtain the working
 concentration in mol/kg H₂O. With exactly 1 kg/s water, 3.01 mol/s NaCl represents an initial
 3.01 mol/kg H₂O basis; the flashed concentration can differ slightly as CO₂ dissolves.
+
+The aqueous concentration is propagated to the Søreide-Whitson water alpha function in
+all phases, including its first and second temperature derivatives. Non-water components
+retain PR-1978 alpha behavior. Setting the salt flow to zero and reflashing clears both
+the phase concentration and the attractive-term state; a cloned brine can therefore be
+reset independently. With no aqueous phase, the stored concentrations are cleared.
+
+**Numerical compatibility:** versions affected by issue [#3843](https://github.com/equinor/neqsim/issues/3843)
+left the water alpha at zero salinity even when the aqueous BIPs used a nonzero concentration.
+The correction changes saline equilibrium results for every parameterization; `LEGACY`
+selects the original BIP correlation, not the old broken salinity propagation. Freshwater
+alpha is unchanged. At 318.15 K, water alpha is 1.5764918035 at zero salinity and
+1.6030636752 at 4 mol/kg using the component critical temperature in NeqSim.
+
+The non-water CO₂ interaction pairs use the dedicated `KIJWhitsonSoriede` data:
+propane 0.1241, n-butane 0.133, n-pentane 0.14, n-hexane and n-heptane 0.145, and
+mercury 0.0145. The decimal-comma data defect in [#3842](https://github.com/equinor/neqsim/issues/3842)
+previously caused those six pairs to fall back to SRK values. The corrected values are
+loaded in both component orders, and a data regression checks that every populated
+entry in this column parses as a finite number.
+
 
 ### Parameterization selector
 
@@ -550,12 +571,22 @@ print(f"  CO2 equivalents: {co2eq_ch4 + co2eq_co2:.1f} tonnes CO2eq/year")
 
 ### Comparison with Experimental Data
 
-For the seven selected Chabab et al. Table 2 CO₂-brine points used by the regression test, the
-legacy NeqSim 3.16.0 implementation has an average absolute relative deviation of 6.80% at
-1.13 mol/kg H₂O and 15.95% at 3.01 mol/kg H₂O. The paper's m-SW results have corresponding
-deviations of 5.39% and 5.79%. The `CHABAB_2019` regression verifies the published equation
-coefficients directly, preserves the legacy values when that option is selected, covers every one
-of these low- and high-molality points, and requires improved high-salinity agreement.
+For the seven selected Chabab et al. Table 2 CO₂-brine points used by the regression test,
+the corrected water-alpha propagation gives the following average absolute relative
+deviations from the measurements:
+
+| Parameterization | Four points at 1.13 mol/kg H₂O | Three points at 3.01 mol/kg H₂O |
+|---|---:|---:|
+| `LEGACY` with salinity-dependent alpha | 2.26% | 25.80% |
+| `CHABAB_2019` with salinity-dependent alpha | 5.21% | 6.16% |
+
+These are NeqSim regression results on the specified feed basis, not a reproduction of
+the complete experimental dataset. The historical NeqSim 3.16.0 values shown earlier
+predate this correction and should not be used as current golden values. The regression
+checks the published `CHABAB_2019` coefficients separately, covers all seven measured
+points within the existing 12% tolerance, and requires improved high-salinity agreement
+over the original BIP correlation. It also verifies the water-alpha equation and its
+temperature derivatives independently for all three parameterizations.
 
 For `BURGOYNE_NIELSEN_2026`, focused regression tests reproduce 24 aqueous BIP values generated
 by the authors' drop-in implementation: all eight supported gases at 280 K/freshwater,

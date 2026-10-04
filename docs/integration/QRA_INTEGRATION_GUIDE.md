@@ -111,6 +111,11 @@ NeqSim's primary role in QRA is to produce **high-quality thermodynamics, phase 
 
 #### NeqSim Implementation
 
+`LeakModel` blowdown is bounded to a rigid, adiabatic single gas phase. Its corrected
+inventory integration conserves mass and energy, includes the exact requested final time,
+and rejects condensation/property failures. Historical results must be regenerated; see
+[the blowdown compatibility note](../process/safety/release-dispersion-scenarios.md#conservative-gas-blowdown-and-compatibility).
+
 ```java
 import neqsim.process.safety.release.*;
 import neqsim.thermo.system.*;

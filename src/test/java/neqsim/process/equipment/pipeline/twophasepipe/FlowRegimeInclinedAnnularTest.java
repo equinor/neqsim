@@ -11,8 +11,8 @@ class FlowRegimeInclinedAnnularTest {
   @Test
   void liftedAnnularFilmDoesNotBecomeChurnAtAnAbsoluteLiquidVelocity() {
     FlowRegimeDetector detector = new FlowRegimeDetector();
-    for (double inclination : new double[] { 10.1, 45.0, 90.0 }) {
-      for (double liquidVelocity : new double[] { 0.099, 0.1, 0.101, 0.14, 0.3 }) {
+    for (double inclination : new double[] {10.1, 45.0, 90.0}) {
+      for (double liquidVelocity : new double[] {0.099, 0.1, 0.101, 0.14, 0.3}) {
         PipeSection section = section(12.0, liquidVelocity, inclination);
         assertEquals(FlowRegime.ANNULAR, detector.detectFlowRegime(section),
             "annular gas-lift criterion must survive crossing 0.1 m/s at " + inclination + " degrees");
@@ -23,7 +23,7 @@ class FlowRegimeInclinedAnnularTest {
   @Test
   void lowGasVelocityDoesNotQualifyAsAnnular() {
     FlowRegimeDetector detector = new FlowRegimeDetector();
-    for (double inclination : new double[] { 10.1, 45.0, 90.0 }) {
+    for (double inclination : new double[] {10.1, 45.0, 90.0}) {
       assertNotEquals(FlowRegime.ANNULAR, detector.detectFlowRegime(section(0.1, 0.14, inclination)));
     }
   }

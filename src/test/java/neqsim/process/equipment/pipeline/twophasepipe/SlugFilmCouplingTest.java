@@ -66,7 +66,7 @@ class SlugFilmCouplingTest {
 
   @Test
   void testAbsentOilAndAbsentWaterRemainExactlyAbsent() {
-    for (double waterCut : new double[] { 0.0, 1.0 }) {
+    for (double waterCut : new double[] {0.0, 1.0}) {
       TwoFluidSection section = cell(0.2, waterCut);
       SlugFilmCoupling.Reconstruction result = SlugFilmCoupling.reconstruct(section,
           Collections.singletonList(slug(0.0, 1.0)));
@@ -81,7 +81,7 @@ class SlugFilmCouplingTest {
 
   @Test
   void testSinglePhaseStateDoesNotAcquireAnotherPhase() {
-    for (double liquidHoldup : new double[] { 0.0, 1.0 }) {
+    for (double liquidHoldup : new double[] {0.0, 1.0}) {
       TwoFluidSection section = cell(liquidHoldup, 0.0);
       SlugFilmCoupling.Reconstruction result = SlugFilmCoupling.reconstruct(section,
           Collections.singletonList(slug(0.0, 1.0)));

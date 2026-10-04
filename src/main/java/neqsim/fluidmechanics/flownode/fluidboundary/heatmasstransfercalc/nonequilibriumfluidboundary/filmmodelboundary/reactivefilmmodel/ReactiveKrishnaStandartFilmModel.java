@@ -9,7 +9,6 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactorAlg;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactorNumeric;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -79,14 +78,19 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Selects the supported algebraic reactive enhancement model.
+   *
+   * @param type enhancement type; only 1 (algebraic) is implemented
+   * @throws UnsupportedOperationException if type is not 1; the previously selected model is retained
+   */
   @Override
   public void setEnhancementType(int type) {
-    enhancementType = type;
-    if (enhancementType == 1) {
-      enhancementFactor = new EnhancementFactorAlg(this);
-    } else {
-      enhancementFactor = new EnhancementFactorNumeric(this);
+    if (type != 1) {
+      throw new UnsupportedOperationException(
+          "Numerical reactive enhancement is not implemented; use enhancement type 1 (algebraic).");
     }
+    enhancementFactor = new EnhancementFactorAlg(this);
+    enhancementType = type;
   }
 }

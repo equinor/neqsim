@@ -23,8 +23,8 @@ public class WaxFractionSimTest {
     tempSystem.setMultiPhaseCheck(true);
     NeqSimDataBase.setCreateTemporaryTables(false);
     WaxFractionSim sepSim = new WaxFractionSim(tempSystem);
-    double[] temps = { 293.15, 283.15, 273.15, 264.15, 263, 262, 261 };
-    double[] pres = { 5, 5, 5.0, 5.0, 5.0, 5.0, 5.0 };
+    double[] temps = {293.15, 283.15, 273.15, 264.15, 263, 262, 261};
+    double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
     assertEquals(0.2882069744037516, sepSim.getThermoSystem().getPhaseFraction("wax", "mass"), 0.001);
@@ -47,8 +47,8 @@ public class WaxFractionSimTest {
     tempSystem.init(0);
     tempSystem.init(1);
     WaxFractionSim sepSim = new WaxFractionSim(tempSystem);
-    double[] temps = { 293.15, 283.15, 273.15, 264.15, 263, 262, 261 };
-    double[] pres = { 5, 5, 5.0, 5.0, 5.0, 5.0, 5.0 };
+    double[] temps = {293.15, 283.15, 273.15, 264.15, 263, 262, 261};
+    double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
     NeqSimDataBase.setCreateTemporaryTables(false);

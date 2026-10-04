@@ -23,7 +23,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Methanol vaporizing into the gas phase</li>
  * <li>Water and other components being absorbed into the liquid methanol</li>
  * </ul>
- * </p>
  */
 public class MassTransferMeOHTest {
   private SystemInterface fluid;
@@ -201,7 +200,7 @@ public class MassTransferMeOHTest {
    */
   @Test
   void testMassTransferWithDifferentLengths() {
-    double[] lengths = { 0.001, 0.01, 0.1 };
+    double[] lengths = {0.001, 0.01, 0.1};
     double[] tegInGasAtLength = new double[lengths.length];
 
     for (int i = 0; i < lengths.length; i++) {

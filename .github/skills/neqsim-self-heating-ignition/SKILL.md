@@ -1,7 +1,7 @@
 ---
 name: neqsim-self-heating-ignition
 version: "1.0.0"
-description: "Self-heating, spontaneous ignition and thermal-criticality screening for reactive porous media — lagging fires from combustible liquid absorbed into porous thermal insulation, Frank-Kamenetskii and Semenov criticality, critical layer thickness, critical surface temperature, induction time to ignition, and Arrhenius parameter fitting from hot-storage (basket) tests per EN 15188 / ASTM E2021. USE WHEN: a task involves a flammable liquid leak or spill onto insulation or lagging, oil-soaked lagging, spontaneous combustion, self-ignition, smouldering, a fire with no obvious ignition source, insulation-material selection driven by absorbency, or fitting oxidation kinetics from oven/basket test data. Anchors on neqsim.process.safety.selfheating."
+description: "Self-heating and spontaneous-ignition screening for reactive porous media (lagging fires) - Frank-Kamenetskii and Semenov criticality, critical thickness and surface temperature, induction time, Arrhenius fitting from basket tests (EN 15188 / ASTM E2021). USE WHEN: a flammable liquid leak onto insulation, oil-soaked lagging, spontaneous combustion, smouldering, a fire with no obvious ignition source, or insulation choice driven by absorbency. Anchors on neqsim.process.safety.selfheating."
 last_verified: "2026-08-07"
 requires:
   java_packages: [neqsim.process.safety.selfheating, neqsim.process.safety.reaction]

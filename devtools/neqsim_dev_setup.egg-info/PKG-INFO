@@ -1,9 +1,13 @@
 Metadata-Version: 2.4
 Name: neqsim-dev-setup
-Version: 0.1.0
-Summary: JVM bootstrap helpers for NeqSim Jupyter development notebooks
+Version: 0.2.0
+Summary: NeqSim task-solving toolkit: JVM bootstrap, task folders, runner, validators, report generator
 Requires-Python: >=3.8
 Requires-Dist: jpype1
+Requires-Dist: pyyaml>=5.1
+Requires-Dist: neqsim>=3.18
+Requires-Dist: python-docx>=1.1
+Requires-Dist: matplotlib>=3.7
 Provides-Extra: pdf
 Requires-Dist: pymupdf>=1.22.0; extra == "pdf"
 Provides-Extra: ocr

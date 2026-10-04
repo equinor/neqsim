@@ -59,7 +59,7 @@ public class TwoFluidHyperbolicityTest {
   /** Without the interfacial pressure term the system is ill-posed wherever two phases coexist with slip. */
   @Test
   void testClassicalTwoFluidSystemIsIllPosedAtEveryLiquidFraction() {
-    double[] liquidHoldups = { 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9 };
+    double[] liquidHoldups = {0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9};
     for (double alphaL : liquidHoldups) {
       double value = discriminant(alphaL, 2.0, 0.0);
       Assertions.assertTrue(value < 0.0, "the classical system must have complex characteristics at liquid holdup "
@@ -74,8 +74,8 @@ public class TwoFluidHyperbolicityTest {
     equations.setEnableInterfacialPressure(true);
     double coefficient = equations.getInterfacialPressureCoefficient();
 
-    double[] liquidHoldups = { 0.1, 0.3, 0.5, 0.7, 0.9 };
-    double[] slips = { 0.5, 2.0, 5.0 };
+    double[] liquidHoldups = {0.1, 0.3, 0.5, 0.7, 0.9};
+    double[] slips = {0.5, 2.0, 5.0};
     for (double alphaL : liquidHoldups) {
       for (double slip : slips) {
         TwoFluidSection sec = section(alphaL, slip);
@@ -99,9 +99,9 @@ public class TwoFluidHyperbolicityTest {
         "a coefficient of one leaves the system marginally hyperbolic with a double root, so the default must "
             + "exceed one, but it was " + coefficient);
 
-    double[] liquidHoldups = { 0.1, 0.3, 0.5, 0.7, 0.9 };
+    double[] liquidHoldups = {0.1, 0.3, 0.5, 0.7, 0.9};
     for (double alphaL : liquidHoldups) {
-      for (double slip : new double[] { 0.5, 2.0, 5.0 }) {
+      for (double slip : new double[] {0.5, 2.0, 5.0}) {
         double supplied = equations.calcInterfacialPressureDifference(section(alphaL, slip));
         double value = discriminant(alphaL, slip, supplied);
         Assertions.assertTrue(value > 0.0, "characteristics must be real at liquid holdup " + alphaL + " and slip "
@@ -127,8 +127,8 @@ public class TwoFluidHyperbolicityTest {
     double coefficient = equations.getInterfacialPressureCoefficient();
     double expectedRatio = Math.sqrt(coefficient / (coefficient - 1.0));
 
-    for (double alphaL : new double[] { 0.2, 0.5, 0.8 }) {
-      for (double slip : new double[] { 1.0, 3.0 }) {
+    for (double alphaL : new double[] {0.2, 0.5, 0.8}) {
+      for (double slip : new double[] {1.0, 3.0}) {
         TwoFluidSection sec = section(alphaL, slip);
         double alphaG = 1.0 - alphaL;
         double d = LIQUID_DENSITY * alphaG + GAS_DENSITY * alphaL;

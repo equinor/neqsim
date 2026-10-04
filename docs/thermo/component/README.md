@@ -264,10 +264,10 @@ fluid.addComponent("methane", 1.0);
 fluid.addComponent("CO2", 0.5);  // Carbon dioxide
 
 // Add pseudo-component (TBP method)
-fluid.addTBPfraction("C10", 0.1, 140.0, 0.75);  // name, moles, MW, SG
+fluid.addTBPfraction("C10", 0.1, 140.0 / 1000.0, 0.75);  // name, moles, MW [g/mol], SG
 
 // Add plus fraction
-fluid.addPlusFraction("C7+", 0.05, 150.0, 0.78);
+fluid.addPlusFraction("C7+", 0.05, 150.0 / 1000.0, 0.78);
 ```
 
 ### Component Name Lookup

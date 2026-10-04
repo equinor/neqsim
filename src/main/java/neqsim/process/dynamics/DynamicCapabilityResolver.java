@@ -44,6 +44,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.tank.MountainCavern;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.equipment.tank.VesselDepressurization;
 import neqsim.process.equipment.util.Recycle;
@@ -56,6 +57,9 @@ import neqsim.process.equipment.valve.SafetyValve;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ModuleInterface;
+import neqsim.process.safety.release.IdealGasPipeDecompression;
+import neqsim.process.safety.release.RealGasPipeDecompression;
+import neqsim.process.safety.release.ReleaseInventory;
 
 /**
  * Transitional resolver for the dynamic capability of existing NeqSim process elements.
@@ -151,17 +155,18 @@ public final class DynamicCapabilityResolver {
       return DynamicCapability.ALGEBRAIC;
     }
 
-    if (isOneOf(type, Separator.class, ThreePhaseSeparator.class, Tank.class, VesselDepressurization.class,
-        HeatExchanger.class, Cooler.class, Compressor.class, Expander.class, Pump.class, ThrottlingValve.class,
-        BlowdownValve.class, ESDValve.class, HIPPSValve.class, PSDValve.class, RuptureDisk.class, SafetyValve.class,
-        EnergyConverter.class, Inverter.class, BatteryStorage.class, Filter.class, CommittedEnergyGenerator.class,
-        Electrolyzer.class)) {
+    if (isOneOf(type, Separator.class, ThreePhaseSeparator.class, Tank.class, MountainCavern.class,
+        VesselDepressurization.class, HeatExchanger.class, Cooler.class, Compressor.class, Expander.class, Pump.class,
+        ThrottlingValve.class, BlowdownValve.class, ESDValve.class, HIPPSValve.class, PSDValve.class, RuptureDisk.class,
+        SafetyValve.class, EnergyConverter.class, Inverter.class, BatteryStorage.class, Filter.class,
+        CommittedEnergyGenerator.class, Electrolyzer.class, ReleaseInventory.class)) {
       return DynamicCapability.DYNAMIC_LUMPED;
     }
 
     if (isOneOf(type, OnePhasePipeLine.class, TwoFluidPipe.class, TransientPipe.class, WaterHammerPipe.class,
         Pipeline.class, MultiphasePipe.class, PipeBeggsAndBrills.class, DistillationColumn.class, AdsorptionBed.class,
-        MercuryRemovalBed.class, PipeFlowNetwork.class, WellFlowlineNetwork.class)) {
+        MercuryRemovalBed.class, PipeFlowNetwork.class, WellFlowlineNetwork.class, IdealGasPipeDecompression.class,
+        RealGasPipeDecompression.class)) {
       return DynamicCapability.DYNAMIC_DISTRIBUTED;
     }
 

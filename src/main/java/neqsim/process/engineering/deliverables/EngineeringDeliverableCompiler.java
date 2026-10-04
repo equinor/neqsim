@@ -52,12 +52,12 @@ import neqsim.process.modelpackage.NeqSimModelPackage;
 public final class EngineeringDeliverableCompiler {
   private static final Gson GSON = new GsonBuilder().serializeNulls().setPrettyPrinting()
       .serializeSpecialFloatingPointValues().create();
-  private static final String[] COORDINATED_ARTIFACTS = new String[] { "process-design-basis.json",
+  private static final String[] COORDINATED_ARTIFACTS = new String[] {"process-design-basis.json",
       "equipment-datasheets.json", "valve-list.json", "io-list.json", "alarm-trip-schedule.json",
       "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json",
       "materials-selection-report.json", "engineering-external-evidence-register.json",
       "unresolved-engineering-actions.json", "revision-impact-report.json", "engineering-production-readiness.json",
-      "engineering-qualification-plan.json", "engineering-vertical-slice-execution-manifest.json" };
+      "engineering-qualification-plan.json", "engineering-vertical-slice-execution-manifest.json"};
 
   private EngineeringDeliverableCompiler() {
   }
@@ -384,7 +384,7 @@ public final class EngineeringDeliverableCompiler {
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
     String projectNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.PROJECT, project.getProjectId());
-    String[] documents = new String[] { "plant.dexpi.xml", "plant-proteus.xml", "plant-pydexpi.xml",
+    String[] documents = new String[] {"plant.dexpi.xml", "plant-proteus.xml", "plant-pydexpi.xml",
         "engineering-manifest.json", "engineering-calculations.json", "cause-and-effect.json",
         "interoperability-report.json", "engineering-model.json", "engineering-connectivity.json",
         "engineering-calculation-dag.json", "engineering-design-case-matrix.json",
@@ -398,7 +398,7 @@ public final class EngineeringDeliverableCompiler {
         "revision-impact-report.json", "engineering-production-readiness.json", "engineering-qualification-plan.json",
         "engineering-numerical-health.json", "engineering-discipline-orchestration.json",
         "engineering-vertical-slice-qualification.json", "engineering-vertical-slice-execution-manifest.json",
-        "neqsim-model-package.json" };
+        "neqsim-model-package.json"};
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)

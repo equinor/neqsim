@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 class CO2ElectrolyzerTest extends neqsim.NeqSimTest {
   @Test
   void testSelectivityBasedConversionAndEnergyDemand() {
-    SystemInterface feedFluid = new Fluid().create2(new String[] { "CO2", "water" }, new double[] { 0.95, 0.05 },
+    SystemInterface feedFluid = new Fluid().create2(new String[] {"CO2", "water"}, new double[] {0.95, 0.05},
         "mole/sec");
     feedFluid.setTemperature(298.15);
     feedFluid.setPressure(20.0);

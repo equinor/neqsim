@@ -344,7 +344,7 @@ public class HydrocycloneMechanicalDesign extends SeparatorMechanicalDesign {
    */
   private double roundUpToStandardNozzle(double idMm) {
     // Standard pipe NPS sizes in mm (approximate ID)
-    double[] standardSizes = { 25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0 };
+    double[] standardSizes = {25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0};
     for (double size : standardSizes) {
       if (size >= idMm) {
         return size;

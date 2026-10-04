@@ -365,7 +365,7 @@ public final class DeclineCurveAnalysis {
       cumProd[i] = cumulativeProduction(qi, di, b, t);
     }
 
-    return new double[][] { times, rates, cumProd };
+    return new double[][] {times, rates, cumProd};
   }
 
   // ============================================================
@@ -631,7 +631,7 @@ public final class DeclineCurveAnalysis {
       if (di <= 0.0 || qi <= 0.0) {
         return null;
       }
-      return new double[] { qi, di };
+      return new double[] {qi, di};
     }
     // Hyperbolic/harmonic: q^(-b) = qi^(-b) (1 + b di t) = A + B t
     for (int i = 0; i < n; i++) {
@@ -655,7 +655,7 @@ public final class DeclineCurveAnalysis {
     if (qi <= 0.0 || di <= 0.0) {
       return null;
     }
-    return new double[] { qi, di };
+    return new double[] {qi, di};
   }
 
   // ============================================================

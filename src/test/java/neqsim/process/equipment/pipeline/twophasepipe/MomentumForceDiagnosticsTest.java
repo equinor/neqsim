@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 class MomentumForceDiagnosticsTest {
   @Test
   void forceSnapshotClosesTheSourceBudgetAndDoesNotChangeIt() {
-    for (double waterCut : new double[] { 0.0, 0.4, 1.0 }) {
+    for (double waterCut : new double[] {0.0, 0.4, 1.0}) {
       TwoFluidSection section = new TwoFluidSection(0.5, 1.0, 0.1, 0.5);
       section.setGasDensity(10.0);
       section.setOilDensity(800.0);
@@ -31,7 +31,7 @@ class MomentumForceDiagnosticsTest {
       TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
       equations.setIncludeMassTransfer(false);
       equations.setEnableWaterOilSlip(false);
-      TwoFluidSection[] sections = { section };
+      TwoFluidSection[] sections = {section};
       double[] before = equations.calcSourceTerms(sections)[0];
       assertEquals(0, equations.getLastMomentumSourceForcesPerLength().length);
       equations.setMomentumForceDiagnosticsEnabled(true);

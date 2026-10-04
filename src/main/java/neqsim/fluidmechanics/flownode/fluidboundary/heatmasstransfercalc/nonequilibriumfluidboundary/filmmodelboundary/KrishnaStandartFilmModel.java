@@ -45,6 +45,9 @@ public class KrishnaStandartFilmModel extends
     Xgij = new Matrix(neq, 4);
     this.setuMassTrans();
     uMassTransold = uMassTrans.copy();
+    phiMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
+        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
+    redCorrectionMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
   }
 
   /**
@@ -167,8 +170,8 @@ public class KrishnaStandartFilmModel extends
     for (int i = 0; i < getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
       double tempVar = 0;
       for (int j = 0; j < getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
-        if (i != j || i == n) {
-          tempVar += nFlux.get(i, 0) / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
+        if (i != j) {
+          tempVar += nFlux.get(j, 0) / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
               * binaryMassTransferCoefficient[phaseNum][i][j]);
         }
         if (j < n) {
@@ -202,8 +205,17 @@ public class KrishnaStandartFilmModel extends
    */
   public void calcRedCorrectionMatrix(int phaseNum) {
     for (int i = 0; i < getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
-      redCorrectionMatrix.set(i, 0, (redPhiMatrix.get(0, i) * Math.exp(redPhiMatrix.get(0, i)))
-          / (Math.exp(redPhiMatrix.get(0, i)) - (1.0 - 1e-15)));
+      double z = redPhiMatrix.get(0, i);
+      double correction;
+      if (Math.abs(z) < 1e-6) {
+        // Analytic continuation of z * exp(z) / (exp(z) - 1), including z = 0.
+        correction = 1.0 + z / 2.0 + z * z / 12.0;
+      } else if (z > 0.0) {
+        correction = z / -Math.expm1(-z);
+      } else {
+        correction = z * Math.exp(z) / Math.expm1(z);
+      }
+      redCorrectionMatrix.set(i, 0, correction);
     }
   }
 
@@ -223,34 +235,21 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * calcTotalMassTransferCoefficientMatrix.
+   * Composes the coefficient matrix for column-vector composition differences: Xi * K * Gamma, where K is the inverse
+   * resistance matrix. Disabled corrections act as identity matrices. The returned total matrix is independent of K so
+   * reactive enhancement cannot change the unenhanced coefficients.
    *
    * @param phase a int
    */
   public void calcTotalMassTransferCoefficientMatrix(int phase) {
-    totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase];
-    // System.out.println("before phase: " + phase);
-    // totalMassTransferCoefficientMatrix[phase].print(10,10);
-    // System.out.println("eqcorr " + useThermodynamicCorrections(phase));
-    // System.out.println("fluxcorr " + useFiniteFluxCorrection(phase));
-    if (Math.abs(totalFlux) > 1e-30) {
-      if (useFiniteFluxCorrection(phase) && useThermodynamicCorrections(phase)) {
-        totalMassTransferCoefficientMatrix[phase] = rateCorrectionMatrix[phase]
-            .times(nonIdealCorrections[phase].times(massTransferCoefficientMatrix[phase]));
-      } else if (useFiniteFluxCorrection(phase)) {
-        totalMassTransferCoefficientMatrix[phase] = rateCorrectionMatrix[phase]
-            .times(massTransferCoefficientMatrix[phase]);
-      } else if (useThermodynamicCorrections(phase)) {
-        totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase]
-            .times(nonIdealCorrections[phase]);
-      } else {
-        totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase];
-      }
-    } else {
-      totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase];
+    Matrix corrected = massTransferCoefficientMatrix[phase].copy();
+    if (useThermodynamicCorrections(phase)) {
+      corrected = corrected.times(nonIdealCorrections[phase]);
     }
-    // System.out.println("phase: " + phase);
-    // totalMassTransferCoefficientMatrix[phase].print(10,10);
+    if (useFiniteFluxCorrection(phase)) {
+      corrected = rateCorrectionMatrix[phase].times(corrected);
+    }
+    totalMassTransferCoefficientMatrix[phase] = corrected;
   }
 
   /**

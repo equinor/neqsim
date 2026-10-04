@@ -397,7 +397,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   public void testHydratePressureDependency() throws Exception {
     logger.info("\n=== Test: Hydrate Temperature vs Pressure ===");
 
-    double[] pressures = { 50.0, 100.0, 150.0, 200.0 };
+    double[] pressures = {50.0, 100.0, 150.0, 200.0};
     double[] hydrateTemps = new double[pressures.length];
 
     for (int i = 0; i < pressures.length; i++) {
@@ -592,7 +592,7 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   public void testHydrateCurveDryGas() throws Exception {
     logger.info("\n=== Test: Hydrate Curve for Dry Gas ===");
 
-    double[] pressures = { 30.0, 50.0, 80.0, 100.0, 150.0 };
+    double[] pressures = {30.0, 50.0, 80.0, 100.0, 150.0};
     double[] hydrateTemps = new double[pressures.length];
 
     for (int i = 0; i < pressures.length; i++) {

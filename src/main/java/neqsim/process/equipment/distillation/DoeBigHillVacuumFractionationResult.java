@@ -12,7 +12,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </p>
  */
 public final class DoeBigHillVacuumFractionationResult {
-  private static final String[] PRODUCT_LABELS = { "Overhead", "Bottoms" };
+  private static final String[] PRODUCT_LABELS = {"Overhead", "Bottoms"};
   private static final double MATERIAL_FLOW_FRACTION = 1.0e-8;
   private static final double BALANCE_TOLERANCE = 5.0e-2;
 
@@ -82,7 +82,7 @@ public final class DoeBigHillVacuumFractionationResult {
       throw new IllegalStateException("Feed mass flow must be finite and positive");
     }
 
-    StreamInterface[] streams = { column.getGasOutStream(), column.getLiquidOutStream() };
+    StreamInterface[] streams = {column.getGasOutStream(), column.getLiquidOutStream()};
     ProductResult[] productResults = new ProductResult[streams.length];
     double productMassFlow = 0.0;
     double previousMeanBoilingPoint = Double.NEGATIVE_INFINITY;

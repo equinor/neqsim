@@ -1,8 +1,8 @@
 ---
 name: neqsim-root-cause-analysis
-version: "1.2.0"
-description: "Root cause analysis (RCA) framework for process equipment — Bayesian-inspired diagnosis integrating multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA) as prior, plant historian evidence (likelihood), and NeqSim simulation verification. USE WHEN: diagnosing compressor trips, high vibration, efficiency loss, separator carryover, heat exchanger fouling, or any operational anomaly. Anchors on neqsim.process.diagnostics classes."
-last_verified: "2026-07-19"
+version: "1.3.0"
+description: "Root cause analysis for process equipment - Bayesian-style diagnosis combining reliability priors (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA), historian evidence and NeqSim verification, including the control-loop correlation trap (difference both series, resolve direction from the lag sign). USE WHEN: diagnosing compressor trips, vibration, efficiency loss, separator carryover, exchanger fouling or any operational anomaly. Anchors on neqsim.process.diagnostics."
+last_verified: "2026-09-17"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.equipment.failure, neqsim.process.automation]
 ---
@@ -234,10 +234,99 @@ Pearson correlation between all parameter pairs. Reports correlations with |r| >
 - **STRONG**: |r| > 0.9
 - **MODERATE**: 0.7 < |r| < 0.9
 
+### Correlation when a controller closes the loop
+
+The most common way a historian correlation misleads is that **a control loop
+already connects the two signals being correlated**. The loop guarantees a
+correlation with exactly the sign the wrong hypothesis predicts, so the raw
+number looks like confirmation of a mechanism that is not there.
+
+**1. Ask what the controller does before reading the correlation.**
+Write the loop down first: *does the plant move B in response to A?* If it does,
+a correlation between A and B is expected under the null hypothesis and proves
+nothing. Do not run the correlation at all until this question is answered.
+
+**2. Difference both series.**
+First differences remove a shared trend — seasonal, production ramp, or
+instrument drift — which is the other manufacturer of spurious correlation.
+What survives is genuine short-term coupling.
+
+**3. Use the sign of the lag to resolve direction.**
+This is the part that discriminates. Scan lags in **both** directions and ask
+which signal leads:
+
+| Pattern | Interpretation |
+|---------|----------------|
+| Driver leads by the physical transport time | The causal mechanism under test |
+| Response leads the driver | The controller acting — the loop read backwards |
+| Peak at zero lag only | Shared common cause, or sampling too coarse to separate |
+| Flat across all lags | No coupling at the resolution available |
+
+State the expected lag **before** looking. A transport short-circuit has a
+transit time of minutes; a controller responds in seconds; a seasonal common
+cause has no lag structure at all. If the observed peak does not sit where the
+hypothesis requires, the hypothesis fails regardless of the correlation
+magnitude.
+
+**Worked example.** An investigation suspected that a warm discharge stream was
+short-circuiting back to a cold intake, and correlated intake temperature
+against discharge flow:
+
+```
+raw correlation, intake temperature vs discharge flow:   r = +0.37
+```
+
+Positive, moderate, right sign — it reads as confirmation. It is not. A
+temperature controller opened the discharge valve when the intake ran warm, so
+warm intake *caused* high flow rather than the reverse, and both series carried
+the same seasonal ramp. Two mechanisms manufactured the correlation, neither of
+them the hypothesis under test:
+
+```
+after differencing both series, every lag from -3 h to +3 h:   |r| < 0.10
+                                                     peak:     r = +0.04
+```
+
+The hypothesis fails. The raw figure is dangerous precisely because it is
+plausible rather than absurd.
+
+A saturated controller is the mirror image of this failure: the loop that
+*acts* fools the correlation, while a loop that has *stopped acting* lets
+unchanged disturbances through and makes the process look like it has a new
+external problem. Screen for it with `neqsim-control-authority-screening`
+before accepting an external cause for "the controlled variable got worse".
+
 ### STID Cross-Reference
 Compares current (latest) values to STID design values.
 - **STRONG**: > 20% deviation from design
 - **MODERATE**: 10-20% deviation
+
+### Weather as Evidence (ambient/met-ocean conditions)
+
+Some trips and performance shifts correlate with **weather at the equipment's
+location**, not with anything in the historian: an air-cooler/fin-fan or a
+gas-turbine driver losing margin on a hot day, a flare/dispersion or
+fire-water-monitor case degraded by wind, a marine/topside motion event during
+a storm, or a cold snap driving a hydrate/freeze-related valve or instrument
+failure. When the hypothesis list includes an ambient-condition driver, pull
+the historical weather for the equipment's location and the trip/event window
+with the community `neqsim-weather-data` skill (`WeatherDataService.get_historical`
+or the `installation-weather-agent`) and compare it against the equipment's
+design/rated ambient envelope (ISO ambient for a gas turbine, design ambient
+for an air cooler, etc.):
+
+- **STRONG**: the ambient condition at the event time is outside the
+  equipment's design/rated envelope (e.g. ambient above ISO plus derate margin).
+- **MODERATE**: inside the envelope but at a seasonal or historical extreme
+  for the site (compare against `design_site_conditions`'s percentiles).
+- Treat this like the control-loop correlation trap above: a weather match is
+  circumstantial evidence, not proof. Score it, do not promote it to a
+  confirmed cause without a NeqSim verification run (e.g. re-flash the gas
+  turbine or air cooler at the observed ambient condition and check the
+  predicted margin against what was actually seen).
+- There is no built-in ambient-temperature hypothesis in the compressor/pump/
+  separator/heat-exchanger/valve libraries above; add one as a custom
+  hypothesis (see Extending the Framework) when weather is a candidate driver.
 
 ## Simulation Verification
 
@@ -277,11 +366,14 @@ emitted in `RootCauseReport.toJson()` and MCP JSON.
 |-------|------------|
 | `neqsim-autonomous-investigation` | **Upstream** — when the symptom/driver is NOT given, run the observe→hypothesize→test loop and discover lead-lag relationships (`RelationshipGraph`) first, then feed the discovered candidate causes into RCA instead of a fixed symptom |
 | `neqsim-plant-data` | Read historian data via tagreader API |
+| `neqsim-control-authority-screening` | Rule out a saturated control valve before accepting an external cause for "the controlled variable got worse" |
+| `neqsim-heat-exchanger-fouling-assessment` | Quantify exchanger degradation behind a cooling or duty shortfall hypothesis |
 | `neqsim-stid-retriever` | Retrieve STID design documents |
 | `neqsim-technical-document-reading` | Extract design values from datasheets |
 | `neqsim-troubleshooting` | Recovery strategies after diagnosis |
 | `neqsim-process-safety` | Link RCA findings to barrier management |
 | `neqsim-pid-process-operations` | P&ID context for equipment relationships |
+| `neqsim-weather-data` (community) | Historical ambient temperature, wind and sea-state for the equipment's location and event window, when weather is a candidate driver |
 
 **When the symptom is unknown**, do not ask the user "what should I look for?".
 Chain `neqsim-plant-data → neqsim-autonomous-investigation → this skill`: the

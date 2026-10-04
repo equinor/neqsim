@@ -46,12 +46,14 @@ see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-f
    ```powershell
    .\install.cmd            # or: py -m pip install -e devtools/
    ```
-   macOS/Linux: `./install.sh`. This also puts the `neqsim` command on PATH
-   (open a new terminal afterwards; or use `py -m neqsim_cli`).
+   macOS/Linux: `./install.sh`. The installer puts the `neqsim` command on PATH
+   and then tells you whether it resolves; if it does not, use
+   `py -m neqsim_cli` — the same entry point — and carry on.
    > **In VS Code:** if running `neqsim` shows *"The term 'neqsim' is not
    > recognized"*, a new integrated terminal is **not** enough — VS Code captures
-   > PATH at launch, so fully quit and reopen VS Code. (Installing into an
-   > activated virtualenv avoids this entirely.)
+   > PATH at launch, so fully quit and reopen VS Code. A virtualenv does not
+   > remove this step, it replaces it: the command then resolves only in
+   > terminals where the venv is activated.
 3. **Install community agents & skills — no auth needed.** These are the default
    catalog and work immediately:
    ```powershell
@@ -63,16 +65,26 @@ see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-f
    pick them up). To install just one: `neqsim skill install <name> --vscode`.
 4. **Connect the enterprise repos AND sign in, in one step.** `private-init --login`
    registers the private repo in your per-user catalog **and** launches browser
-   SSO (`gh auth login --web`) — so SSO and repo registration happen together:
+   SSO (`gh auth login --web`) — so SSO and repo registration happen together.
+   Pass `--catalog-path` so discovery reads the repo's published catalog file
+   directly instead of scanning the repository:
    ```powershell
-   neqsim agent private-init --repo <company>/<company>-neqsim-enterprise-agents --login
-   neqsim skill private-init --repo <company>/<company>-neqsim-enterprise-skills --login
+   neqsim agent private-init --repo <company>/<company>-neqsim-enterprise-agents --catalog-path enterprise-agents.yaml --login
+   neqsim skill private-init --repo <company>/<company>-neqsim-enterprise-skills --catalog-path enterprise-skills.yaml
    # add more private repos later with the same options:
    neqsim agent add-repo --url https://git.internal.company.com/neqsim/enterprise-agents.git
    ```
-   If your org already signs you in through Git Credential Manager, you can omit
-   `--login`. Each command prints the catalog file it wrote
+   `--login` is only needed once — the second command reuses the same GitHub
+   session. If your org already signs you in through Git Credential Manager, you
+   can omit it entirely. Each command prints the catalog file it wrote
    (`~/.neqsim/private-agents.yaml` / `~/.neqsim/private-skills.yaml`).
+
+   > **`neqsim` not recognized?** On locked-down machines without elevated
+   > privileges the console script may not land on PATH. Replace `neqsim` with
+   > `python -m neqsim_cli` in every command on this page — for example
+   > `python -m neqsim_cli agent private-init --repo ... --catalog-path enterprise-agents.yaml --login`.
+   > Everything else is identical. See
+   > [devtools/README.md](../../devtools/README.md#troubleshooting-neqsim-not-found).
 
    > **SAML SSO organizations (e.g. GitHub Enterprise / an org that enforces SSO):**
    > after `gh auth login --web` you must **authorize the token for the organization**

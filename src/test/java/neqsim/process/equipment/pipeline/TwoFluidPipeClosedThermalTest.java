@@ -92,7 +92,7 @@ class TwoFluidPipeClosedThermalTest {
     double[][] faceMassFlows = new double[4][3];
     faceMassFlows[1][0] = 1.0;
     faceMassFlows[2][0] = 1.0;
-    double[] previousTemperatures = { 300.0, 320.0, 340.0 };
+    double[] previousTemperatures = {300.0, 320.0, 340.0};
 
     double source = TwoFluidPipe.calculateExplicitSensibleAdvectionSource(1, faceMassFlows, previousTemperatures, 280.0,
         2000.0, 10.0);
@@ -122,10 +122,10 @@ class TwoFluidPipeClosedThermalTest {
 
   @Test
   void invalidThermalMassFallbackUsesFinitePositiveFloor() {
-    assertArrayEquals(new double[] { 2.0, 3.0, 1.0e-12 },
-        new double[] { TwoFluidPipe.selectFinitePositiveFluidMassPerLength(2.0, Double.NaN),
+    assertArrayEquals(new double[] {2.0, 3.0, 1.0e-12},
+        new double[] {TwoFluidPipe.selectFinitePositiveFluidMassPerLength(2.0, Double.NaN),
             TwoFluidPipe.selectFinitePositiveFluidMassPerLength(Double.NaN, 3.0),
-            TwoFluidPipe.selectFinitePositiveFluidMassPerLength(Double.NaN, Double.NaN) },
+            TwoFluidPipe.selectFinitePositiveFluidMassPerLength(Double.NaN, Double.NaN)},
         0.0);
   }
 
@@ -289,9 +289,9 @@ class TwoFluidPipeClosedThermalTest {
 
   @Test
   void explicitAndImexPathsCloseForSimpleAndMultilayerModels() {
-    TimeIntegrator.Method[] methods = { TimeIntegrator.Method.EULER, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION };
+    TimeIntegrator.Method[] methods = {TimeIntegrator.Method.EULER, TimeIntegrator.Method.IMEX_PRESSURE_CORRECTION};
     for (TimeIntegrator.Method method : methods) {
-      for (boolean multilayer : new boolean[] { false, true }) {
+      for (boolean multilayer : new boolean[] {false, true}) {
         PipeFixture fixture = createInitializedPipe("thermal-path-" + method + "-" + multilayer);
         double[] initial = fixture.pipe.getTemperatureProfile();
         fixture.pipe.setTimeIntegrationMethod(method);

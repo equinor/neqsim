@@ -177,15 +177,65 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
    * @return a double
    */
   public double getActivityCoefficientInfDilWater(int k, int p) {
-    if (refPhase == null || refPhase.length <= k || refPhase[k] == null || refPhase[k].getNumberOfComponents() < 2) {
-      initRefPhases(false, getComponent(p).getName());
+    PhaseGE reference = createWaterInfiniteDilutionPhase(k, p);
+    return ((ComponentGEInterface) reference.getComponent(k)).getGamma();
+  }
+
+  /**
+   * Builds an isolated dilute reference with the owning model's parameters and component indices.
+   *
+   * <p>
+   * A fresh binary database phase loses user-set interactions and model-specific parameter selection. Retaining the
+   * full topology with numerical trace amounts of the other species preserves those parameters without transferring oil
+   * or salt into the pure-water reference or modifying the source phase.
+   * </p>
+   *
+   * @param solute solute component index
+   * @param solvent water component index
+   * @return evaluated dilute reference phase
+   */
+  protected PhaseGE createWaterInfiniteDilutionPhase(int solute, int solvent) {
+    PhaseGE reference = (PhaseGE) clone();
+    double totalMoles = solute == solvent ? 1.0 : 1.0 + 1.0e-10;
+    for (int index = 0; index < numberOfComponents; index++) {
+      double moles = index == solvent ? 1.0 : index == solute ? 1.0e-10 : 1.0e-50;
+      reference.getComponent(index).setx(moles / totalMoles);
+      reference.getComponent(index).setNumberOfMolesInPhase(totalMoles);
     }
-    refPhase[k].setTemperature(temperature);
-    refPhase[k].setPressure(pressure);
-    refPhase[k].init(refPhase[k].getNumberOfMolesInPhase(), 2, 1, this.getType(), 1.0);
-    ((PhaseGEInterface) refPhase[k]).getExcessGibbsEnergy(refPhase[k], 2, refPhase[k].getTemperature(),
-        refPhase[k].getPressure(), refPhase[k].getType());
-    return ((ComponentGEInterface) refPhase[k].getComponent(0)).getGamma();
+    reference.init(totalMoles, numberOfComponents, 2, getType(), 1.0);
+    return reference;
+  }
+
+  /**
+   * Calculates the logarithmic temperature derivative of the same dilute reference used for fugacity.
+   *
+   * @param solute solute component index
+   * @param solvent water component index
+   * @return d(ln gamma infinite dilution)/dT in 1/K
+   */
+  public double getLnActivityCoefficientInfDilWaterTemperatureDerivative(int solute, int solvent) {
+    PhaseGE reference = createWaterInfiniteDilutionPhase(solute, solvent);
+    return reference.getLnActivityCoefficientTemperatureDerivative(solute);
+  }
+
+  /**
+   * Calculates a model-generic activity derivative on an isolated phase at fixed composition.
+   *
+   * @param component component index
+   * @return d(ln gamma)/dT in 1/K
+   */
+  public double getLnActivityCoefficientTemperatureDerivative(int component) {
+    PhaseGE reference = (PhaseGE) clone();
+    double step = Math.max(1.0e-3, temperature * 1.0e-6);
+    reference.setTemperature(temperature + step);
+    reference.getExcessGibbsEnergy(reference, numberOfComponents, reference.getTemperature(), pressure,
+        reference.getType());
+    double plus = Math.log(((ComponentGEInterface) reference.getComponent(component)).getGamma());
+    reference.setTemperature(temperature - step);
+    reference.getExcessGibbsEnergy(reference, numberOfComponents, reference.getTemperature(), pressure,
+        reference.getType());
+    double minus = Math.log(((ComponentGEInterface) reference.getComponent(component)).getGamma());
+    return (plus - minus) / (2.0 * step);
   }
 
   /**
@@ -195,13 +245,35 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
    * @return a double
    */
   public double getActivityCoefficientInfDil(int k) {
-    PhaseInterface dilphase = this.clone();
+    PhaseGE dilphase = createInfiniteDilutionPhase(k);
+    return ((ComponentGEInterface) dilphase.getComponent(k)).getGamma();
+  }
+
+  /**
+   * Builds an isolated dilute reference retaining the actual mixture of other solvents.
+   *
+   * @param k solute component index
+   * @return evaluated reference phase
+   */
+  private PhaseGE createInfiniteDilutionPhase(int k) {
+    PhaseGE dilphase = (PhaseGE) clone();
     dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
     dilphase.getComponent(k).setx(1e-10);
+    dilphase.normalize();
     dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1, dilphase.getType(), 1.0);
-    ((PhaseGEInterface) dilphase).getExcessGibbsEnergy(dilphase, 2, dilphase.getTemperature(), dilphase.getPressure(),
-        dilphase.getType());
-    return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
+    ((PhaseGEInterface) dilphase).getExcessGibbsEnergy(dilphase, dilphase.getNumberOfComponents(),
+        dilphase.getTemperature(), dilphase.getPressure(), dilphase.getType());
+    return dilphase;
+  }
+
+  /**
+   * Calculates the dilute-reference derivative for a mixture of solvents.
+   *
+   * @param component solute component index
+   * @return d(ln gamma infinite dilution)/dT in 1/K
+   */
+  public double getLnActivityCoefficientInfDilTemperatureDerivative(int component) {
+    return createInfiniteDilutionPhase(component).getLnActivityCoefficientTemperatureDerivative(component);
   }
 
   /** {@inheritDoc} */

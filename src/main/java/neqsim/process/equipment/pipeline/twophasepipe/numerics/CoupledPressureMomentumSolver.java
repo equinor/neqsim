@@ -265,8 +265,8 @@ public final class CoupledPressureMomentumSolver implements Serializable {
     int cellCount = provisionalState.length;
     double[][] correctedState = copy(provisionalState);
     double[] correctedPressure = pressure.clone();
-    double[][] densities = { gasDensity.clone(), oilDensity.clone(), waterDensity.clone() };
-    double[][] soundSpeeds = { gasSoundSpeed.clone(), oilSoundSpeed.clone(), waterSoundSpeed.clone() };
+    double[][] densities = {gasDensity.clone(), oilDensity.clone(), waterDensity.clone()};
+    double[][] soundSpeeds = {gasSoundSpeed.clone(), oilSoundSpeed.clone(), waterSoundSpeed.clone()};
     boolean polytropicGas = getGasDensityModel() == GasDensityModel.POLYTROPIC;
     double[] gasExponent = new double[cellCount];
     double[] gasDensityPressureFloor = new double[cellCount];
@@ -887,8 +887,8 @@ public final class CoupledPressureMomentumSolver implements Serializable {
       throw new IllegalArgumentException("timeStep must be positive and finite");
     }
     int cellCount = state.length;
-    double[][] arrays = { pressure, areas, lengths, gasDensity, oilDensity, waterDensity, gasSoundSpeed, oilSoundSpeed,
-        waterSoundSpeed };
+    double[][] arrays = {pressure, areas, lengths, gasDensity, oilDensity, waterDensity, gasSoundSpeed, oilSoundSpeed,
+        waterSoundSpeed};
     for (double[] array : arrays) {
       if (array == null || array.length != cellCount) {
         throw new IllegalArgumentException("Every cell-property array must match the state length");

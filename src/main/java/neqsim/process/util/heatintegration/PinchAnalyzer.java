@@ -276,7 +276,7 @@ public class PinchAnalyzer implements Serializable {
     }
 
     double cumulativeQ = 0.0;
-    composite.add(new double[] { cumulativeQ, temperatures.get(0) });
+    composite.add(new double[] {cumulativeQ, temperatures.get(0)});
 
     for (int i = 0; i < temperatures.size() - 1; i++) {
       double t1 = temperatures.get(i);
@@ -296,7 +296,7 @@ public class PinchAnalyzer implements Serializable {
       }
 
       cumulativeQ += totalCpFlow * intervalDT;
-      composite.add(new double[] { cumulativeQ, t2 });
+      composite.add(new double[] {cumulativeQ, t2});
     }
   }
 
@@ -407,10 +407,10 @@ public class PinchAnalyzer implements Serializable {
     // Build grand composite curve
     grandCompositeCurve.clear();
     double adjustedCascade = minHotUtilityDuty;
-    grandCompositeCurve.add(new double[] { adjustedCascade, shiftedTemps.get(0) });
+    grandCompositeCurve.add(new double[] {adjustedCascade, shiftedTemps.get(0)});
     for (int i = 0; i < intervalDeficits.size(); i++) {
       adjustedCascade -= intervalDeficits.get(i);
-      grandCompositeCurve.add(new double[] { Math.max(0.0, adjustedCascade), shiftedTemps.get(i + 1) });
+      grandCompositeCurve.add(new double[] {Math.max(0.0, adjustedCascade), shiftedTemps.get(i + 1)});
     }
   }
 

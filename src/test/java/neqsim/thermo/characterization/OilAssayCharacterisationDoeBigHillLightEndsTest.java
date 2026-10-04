@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Public DOE qualification of composition-resolved C2-C4 assay light ends. */
 public class OilAssayCharacterisationDoeBigHillLightEndsTest {
-  private static final String[] COMPONENT_NAMES = { "ethane", "propane", "i-butane", "n-butane" };
-  private static final double[] DOE_DEBUTANIZATION_WEIGHT_PERCENT = { 0.09, 10.38, 10.21, 45.95 };
+  private static final String[] COMPONENT_NAMES = {"ethane", "propane", "i-butane", "n-butane"};
+  private static final double[] DOE_DEBUTANIZATION_WEIGHT_PERCENT = {0.09, 10.38, 10.21, 45.95};
   private static final double DOE_C2_C4_SUBSET_WEIGHT_PERCENT = 66.63;
   private static final double DOE_C2_C4_WHOLE_CRUDE_MASS_PERCENT = 1.70;
 

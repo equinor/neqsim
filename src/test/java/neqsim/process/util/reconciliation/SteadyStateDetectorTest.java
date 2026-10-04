@@ -49,7 +49,7 @@ public class SteadyStateDetectorTest {
     detector.addVariable(v);
 
     // Fill with readings that fluctuate randomly around 100
-    double[] values = { 100.2, 99.8, 100.1, 99.9, 100.0, 100.3, 99.7, 100.1, 99.9, 100.0 };
+    double[] values = {100.2, 99.8, 100.1, 99.9, 100.0, 100.3, 99.7, 100.1, 99.9, 100.0};
     for (double val : values) {
       detector.updateVariable("flow", val);
     }
@@ -120,9 +120,9 @@ public class SteadyStateDetectorTest {
     detector.addVariable(new SteadyStateVariable("pressure", 10));
 
     // Use deterministic alternating noise (white-noise-like, R stays near 1)
-    double[] flowNoise = { 0.2, -0.1, 0.3, -0.2, 0.1, -0.3, 0.2, -0.1, 0.3, -0.2 };
-    double[] tempNoise = { 0.05, -0.03, 0.04, -0.05, 0.02, -0.04, 0.05, -0.03, 0.04, -0.02 };
-    double[] presNoise = { 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01 };
+    double[] flowNoise = {0.2, -0.1, 0.3, -0.2, 0.1, -0.3, 0.2, -0.1, 0.3, -0.2};
+    double[] tempNoise = {0.05, -0.03, 0.04, -0.05, 0.02, -0.04, 0.05, -0.03, 0.04, -0.02};
+    double[] presNoise = {0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01, 0.01, -0.01};
     for (int i = 0; i < 10; i++) {
       detector.updateVariable("flow", 1000.0 + flowNoise[i]);
       detector.updateVariable("temp", 80.0 + tempNoise[i]);
@@ -217,7 +217,7 @@ public class SteadyStateDetectorTest {
     detector.addVariable(new SteadyStateVariable("noisy", 10));
 
     // Very noisy signal with std.dev >> 1
-    double[] vals = { 100, 110, 90, 115, 85, 120, 80, 105, 95, 112 };
+    double[] vals = {100, 110, 90, 115, 85, 120, 80, 105, 95, 112};
     for (double val : vals) {
       detector.updateVariable("noisy", val);
     }
@@ -337,7 +337,7 @@ public class SteadyStateDetectorTest {
     assertEquals(3, engine.getVariableCount());
 
     // Add constraint and reconcile
-    engine.addMassBalanceConstraint("sep", new String[] { "feed" }, new String[] { "gas", "liquid" });
+    engine.addMassBalanceConstraint("sep", new String[] {"feed"}, new String[] {"gas", "liquid"});
     ReconciliationResult recResult = engine.reconcile();
     assertTrue(recResult.isConverged());
   }

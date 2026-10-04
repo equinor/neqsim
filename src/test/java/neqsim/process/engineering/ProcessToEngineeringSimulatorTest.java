@@ -81,12 +81,12 @@ class ProcessToEngineeringSimulatorTest {
     assertTrue(Files.isRegularFile(compilation.getProductionReadinessFile()));
     assertTrue(Files.isRegularFile(compilation.getQualificationPlanFile()));
     assertTrue(Files.isRegularFile(temporaryDirectory.resolve("engineering-discipline-orchestration.json")));
-    String[] coordinatedArtifacts = new String[] { "process-design-basis.json", "equipment-datasheets.json",
+    String[] coordinatedArtifacts = new String[] {"process-design-basis.json", "equipment-datasheets.json",
         "valve-list.json", "io-list.json", "alarm-trip-schedule.json", "shutdown-narratives.json",
         "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json", "materials-selection-report.json",
         "engineering-external-evidence-register.json", "engineering-diagram-layout.json",
         "unresolved-engineering-actions.json", "revision-impact-report.json", "engineering-production-readiness.json",
-        "engineering-qualification-plan.json" };
+        "engineering-qualification-plan.json"};
     for (String artifact : coordinatedArtifacts) {
       assertTrue(Files.exists(temporaryDirectory.resolve(artifact)), artifact);
     }

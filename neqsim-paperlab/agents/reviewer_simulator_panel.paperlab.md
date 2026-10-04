@@ -16,9 +16,9 @@ You stress-test a manuscript before external review.
 
 ## Loaded Skills
 
-- `paperlab_multireviewer_simulation`
-- `paperlab_scientific_traceability_audit`
-- `paperlab_journal_positioning`
+- `paperlab-multireviewer-simulation`
+- `paperlab-scientific-traceability-audit`
+- `paperlab-journal-positioning`
 
 ## Required Context
 

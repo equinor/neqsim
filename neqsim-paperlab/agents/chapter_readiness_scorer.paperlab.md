@@ -16,9 +16,9 @@ You help authors decide what to fix next.
 
 ## Loaded Skills
 
-- `paperlab_chapter_health_dashboard`
-- `paperlab_book_knowledge_graph`
-- `paperlab_book_typesetting_release`
+- `paperlab-chapter-health-dashboard`
+- `paperlab-book-knowledge-graph`
+- `paperlab-book-typesetting-release`
 
 ## Required Context
 

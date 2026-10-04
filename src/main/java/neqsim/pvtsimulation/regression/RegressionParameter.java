@@ -336,7 +336,7 @@ public enum RegressionParameter {
    * @return array [lowerBound, upperBound, initialGuess]
    */
   public double[] getDefaultBounds() {
-    return new double[] { lowerBound, upperBound, initialGuess };
+    return new double[] {lowerBound, upperBound, initialGuess};
   }
 
   /**

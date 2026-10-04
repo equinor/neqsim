@@ -2226,45 +2226,166 @@ def _check_export_target(target, args):
     print("\n  Result: PASS\n")
 
 
-def cmd_remove(skills, args):
-    """Remove an installed skill."""
-    name = args.name
-    manifest = load_manifest()
-    if name not in manifest:
-        print(f"\n  Skill '{name}' is not installed.\n")
-        sys.exit(1)
+REMOVE_SOURCES = ("all", "core", "community", "private")
 
-    skill_dir = INSTALL_DIR / name
-    if skill_dir.exists():
-        import shutil
-        shutil.rmtree(skill_dir)
 
-    vscode_path = manifest.get(name, {}).get("vscode_path", "")
+def _delete_path(path, dry_run=False):
+    """Delete a file or folder if it exists.
+
+    @param path path to delete
+    @param dry_run when true, only report what would be deleted
+    @return true when the path existed (and was, or would be, deleted)
+    """
+    p = Path(path)
+    if not p.exists():
+        return False
+    if dry_run:
+        return True
+    import shutil
+    if p.is_dir():
+        shutil.rmtree(str(p), ignore_errors=True)
+    else:
+        p.unlink()
+    return True
+
+
+def _remove_manifest_entry(kind, name, manifest, install_dir, dry_run=False):
+    """Remove one installed item and every export recorded for it.
+
+    Only paths recorded in the installed manifest are touched, so third-party
+    agents or skills that live next to NeqSim exports (for example under
+    ``~/.copilot``) are left alone.
+
+    @param kind "skills" or "agents" (used for messages and the generic manifest)
+    @param name installed item name
+    @param manifest installed manifest (entry is deleted in place unless dry_run)
+    @param install_dir the ``~/.neqsim/<kind>`` install root
+    @param dry_run when true, report without deleting
+    @return generic export root that needs its manifest rewritten, or None
+    """
+    verb = "Would remove" if dry_run else "Removed"
+    info = manifest.get(name, {})
+    item_dir = Path(install_dir) / name
+    if _delete_path(item_dir, dry_run):
+        print(f"  [OK] {verb} installed copy: {item_dir}")
+
+    seen = set()
+    vscode_path = info.get("vscode_path", "")
     if vscode_path:
-        vp = Path(vscode_path)
-        if vp.exists():
-            import shutil
-            shutil.rmtree(str(vp), ignore_errors=True)
-            print(f"  [OK] Removed VS Code copy: {vp}")
+        seen.add(str(Path(vscode_path)))
+        if _delete_path(vscode_path, dry_run):
+            print(f"  [OK] {verb} VS Code copy: {vscode_path}")
 
     generic_export_root = None
-    for target, export_path in manifest.get(name, {}).get("exports", {}).items():
+    for target, export_path in info.get("exports", {}).items():
         ep = Path(export_path)
-        if ep.exists():
-            import shutil
-            if ep.is_dir():
-                shutil.rmtree(str(ep), ignore_errors=True)
-            else:
-                ep.unlink()
-            print(f"  [OK] Removed {target} export: {ep}")
+        if str(ep) not in seen and _delete_path(ep, dry_run):
+            print(f"  [OK] {verb} {target} export: {ep}")
+        seen.add(str(ep))
         if target == "generic":
             generic_export_root = ep.parent.parent
 
-    del manifest[name]
-    if generic_export_root:
-        _write_generic_manifest("skills", generic_export_root, manifest)
+    if not dry_run:
+        del manifest[name]
+    return generic_export_root
+
+
+def _select_manifest_names(manifest, source="all"):
+    """Return installed names matching a source filter.
+
+    @param manifest installed manifest
+    @param source "all", or one of core / community / private
+    @return sorted list of matching names
+    """
+    if source in (None, "", "all"):
+        return sorted(manifest)
+    return sorted(
+        name for name, info in manifest.items()
+        if info.get("source", "community") == source)
+
+
+def _confirm_removal(kind, names, args):
+    """Ask before a bulk removal unless --yes was given.
+
+    @param kind "skills" or "agents"
+    @param names items about to be removed
+    @param args parsed CLI arguments (reads yes, dry_run)
+    @return true when the removal may proceed
+    """
+    if getattr(args, "dry_run", False) or getattr(args, "yes", False):
+        return True
+    if not sys.stdin or not sys.stdin.isatty():
+        print(f"  [!!] Refusing to remove {len(names)} {kind} without --yes "
+              "in a non-interactive session.")
+        return False
+    answer = input(f"  Remove {len(names)} {kind}? [y/N] ").strip().lower()
+    return answer in ("y", "yes")
+
+
+def remove_installed_skills(names, dry_run=False):
+    """Remove installed skills by name, including their recorded exports.
+
+    @param names skill names present in the installed manifest
+    @param dry_run when true, report without deleting
+    @return list of names that were (or would be) removed
+    """
+    manifest = load_manifest()
+    generic_roots = set()
+    removed = []
+    for name in names:
+        if name not in manifest:
+            continue
+        root = _remove_manifest_entry("skills", name, manifest, INSTALL_DIR, dry_run)
+        if root:
+            generic_roots.add(root)
+        removed.append(name)
+    if dry_run:
+        return removed
+    for root in generic_roots:
+        _write_generic_manifest("skills", root, manifest)
     save_manifest(manifest)
-    print(f"\n  [OK] Removed skill '{name}'.\n")
+    return removed
+
+
+def cmd_remove(skills, args):
+    """Remove an installed skill, or every installed skill with --all.
+
+    ``--all`` removes only what the NeqSim installer put in place (core,
+    community and private/enterprise skills recorded in the installed manifest)
+    together with their VS Code and generic exports; ``--source`` narrows it to
+    one catalog.
+    """
+    manifest = load_manifest()
+    remove_all = getattr(args, "all", False)
+    name = getattr(args, "name", None)
+    dry_run = getattr(args, "dry_run", False)
+
+    if remove_all:
+        source = getattr(args, "source", "all") or "all"
+        names = _select_manifest_names(manifest, source)
+        if not names:
+            print(f"\n  No installed skills to remove (source: {source}).\n")
+            return
+        label = "" if source == "all" else f" ({source})"
+        print(f"\n  Installed skills to remove{label}: {len(names)}")
+        for n in names:
+            print(f"    - {n}")
+        if not _confirm_removal("skills", names, args):
+            sys.exit(1)
+        removed = remove_installed_skills(names, dry_run=dry_run)
+        verb = "Would remove" if dry_run else "Removed"
+        print(f"\n  [OK] {verb} {len(removed)} skill(s).\n")
+        return
+
+    if not name:
+        print("\n  Give a skill name to remove, or --all.\n")
+        sys.exit(1)
+    if name not in manifest:
+        print(f"\n  Skill '{name}' is not installed.\n")
+        sys.exit(1)
+    remove_installed_skills([name], dry_run=dry_run)
+    verb = "Would remove" if dry_run else "Removed"
+    print(f"\n  [OK] {verb} skill '{name}'.\n")
 
 
 def cmd_publish(skills, args):
@@ -2824,8 +2945,20 @@ def main():
         "--export-dir", default=None,
         help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
-    p_remove = sub.add_parser("remove", help="Remove an installed skill")
-    p_remove.add_argument("name", help="Skill name to remove")
+    p_remove = sub.add_parser(
+        "remove", help="Remove an installed skill (or every NeqSim-installed skill with --all)")
+    p_remove.add_argument("name", nargs="?", default=None, help="Skill name to remove")
+    p_remove.add_argument(
+        "--all", action="store_true",
+        help="Remove every skill the NeqSim installer put in place, including its "
+             "VS Code (~/.copilot/skills) and generic exports; other files are untouched")
+    p_remove.add_argument(
+        "--source", choices=REMOVE_SOURCES, default="all",
+        help="With --all: only core, community or private/enterprise skills")
+    p_remove.add_argument("-y", "--yes", action="store_true",
+                          help="Do not ask for confirmation with --all")
+    p_remove.add_argument("--dry-run", action="store_true",
+                          help="Show what would be removed without deleting anything")
 
     p_publish = sub.add_parser("publish", help="Publish your skill to the catalog")
     p_publish.add_argument("repo", help="GitHub repo (owner/repo) containing the skill")
@@ -2866,6 +2999,9 @@ def main():
         return
     if args.command == "doctor":
         cmd_doctor([], args)
+        return
+    if args.command == "remove":
+        cmd_remove([], args)
         return
 
     private_only = getattr(args, "private", False)

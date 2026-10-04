@@ -10,6 +10,10 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import neqsim.thermo.component.ComponentPCSAFT;
 import neqsim.thermo.system.SystemPCSAFT;
 
+/**
+ * Regression values at the physical pressure root. SaftDerivativeConsistencyTest and the
+ * coldRootSatisfiesThermodynamicIdentities test independently qualify the corrected derivatives.
+ */
 public class PhasePCSAFTRahmatTest {
   static PhasePCSAFTRahmat p;
   static PhasePCSAFTRahmat p2;
@@ -26,6 +30,36 @@ public class PhasePCSAFTRahmatTest {
     testSystem.init(3);
 
     p = (PhasePCSAFTRahmat) testSystem.getPhase(0);
+  }
+
+  private PhasePCSAFTRahmat shifted(double temperature, double molarVolume) {
+    PhasePCSAFTRahmat copy = p.clone();
+    copy.setTemperature(temperature);
+    copy.setMolarVolume(molarVolume);
+    for (int i = 0; i < copy.getNumberOfComponents(); i++) {
+      copy.getComponent(i).init(temperature, copy.getPressure(), copy.getNumberOfMolesInPhase(), 1.0, 1);
+    }
+    copy.volInit();
+    return copy;
+  }
+
+  @Test
+  void coldRootSatisfiesThermodynamicIdentities() {
+    Assertions.assertTrue(p.getNSAFT() > 0 && p.getNSAFT() < 1);
+    assertEquals(testSystem.getPressure(), p.calcPressure(), 1e-7);
+    double dt = 0.01;
+    PhasePCSAFTRahmat plus = shifted(p.getTemperature() + dt, p.getMolarVolume());
+    PhasePCSAFTRahmat minus = shifted(p.getTemperature() - dt, p.getMolarVolume());
+    assertEquals((plus.getF() - minus.getF()) / (2 * dt), p.dFdT(), Math.abs(p.dFdT()) * 1e-6);
+    assertEquals((plus.dFdT() - minus.dFdT()) / (2 * dt), p.dFdTdT(), Math.abs(p.dFdTdT()) * 1e-6);
+    assertEquals((plus.dFdV() - minus.dFdV()) / (2 * dt), p.dFdTdV(), Math.abs(p.dFdTdV()) * 1e-6);
+    double dv = p.getMolarVolume() * 1e-5;
+    plus = shifted(p.getTemperature(), p.getMolarVolume() + dv);
+    minus = shifted(p.getTemperature(), p.getMolarVolume() - dv);
+    assertEquals((plus.getF() - minus.getF()) / (2 * dv * p.getNumberOfMolesInPhase()), p.dFdV(),
+        Math.abs(p.dFdV()) * 1e-6);
+    assertEquals((plus.dFdV() - minus.dFdV()) / (2 * dv * p.getNumberOfMolesInPhase()), p.dFdVdV(),
+        Math.abs(p.dFdVdV()) * 1e-6);
   }
 
   @Test
@@ -45,56 +79,56 @@ public class PhasePCSAFTRahmatTest {
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testF_DISP1_SAFT() {
     double value = p.F_DISP1_SAFT();
-    assertEquals(-2656.5606478696354, value);
+    assertEquals(-29409.534870394025, value, 0.00029409534870394026);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testF_DISP2_SAFT() {
     double value = p.F_DISP2_SAFT();
-    assertEquals(-1929.2979666587207, value);
+    assertEquals(-1496.9067973083284, value, 1.4969067973083285e-05);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testF_HC_SAFT() {
     double value = p.F_HC_SAFT();
-    assertEquals(501.428925899878, value);
+    assertEquals(10716.299737052395, value, 0.00010716299737052395);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF1dispI1() {
     double value = p.calcF1dispI1();
-    assertEquals(0.7447173911719432, value);
+    assertEquals(1.0396905487320574, value, 1.0396905487320574e-08);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF1dispI1dN() {
     double value = p.calcF1dispI1dN();
-    assertEquals(0.8885712115632445, value);
+    assertEquals(0.22767816841676414, value, 2.2767816841676413e-09);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF1dispI1dNdN() {
     double value = p.calcF1dispI1dNdN();
-    assertEquals(-0.3783996289387171, value);
+    assertEquals(-3.7457414519089127, value, 3.745741451908913e-08);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF1dispI1dNdNdN() {
     double value = p.calcF1dispI1dNdNdN();
-    assertEquals(-19.504810659834753, value);
+    assertEquals(25.58197529720826, value, 2.558197529720826e-07);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF1dispI1dm() {
     double value = p.calcF1dispI1dm();
-    assertEquals(-0.04871346995167202, value);
+    assertEquals(-0.003017762564942697, value, 3.017762564942697e-11);
   }
 
   @Test
@@ -107,35 +141,35 @@ public class PhasePCSAFTRahmatTest {
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispI2() {
     double value = p.calcF2dispI2();
-    assertEquals(0.5114103946892024, value);
+    assertEquals(2.751316283823095, value, 2.751316283823095e-08);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispI2dN() {
     double value = p.calcF2dispI2dN();
-    assertEquals(2.075396158614915, value);
+    assertEquals(4.565684123478775, value, 4.565684123478775e-08);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispI2dNdN() {
     double value = p.calcF2dispI2dNdN();
-    assertEquals(-10.085652314796853, value);
+    assertEquals(-161.4380320511848, value, 1.614380320511848e-06);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispI2dNdNdN() {
     double value = p.calcF2dispI2dNdNdN();
-    assertEquals(53.904528812197945, value);
+    assertEquals(-2994.0784863821027, value, 2.9940784863821028e-05);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispI2dm() {
     double value = p.calcF2dispI2dm();
-    assertEquals(-0.05282097926626965, value);
+    assertEquals(0.35812797615489245, value, 3.5812797615489247e-09);
   }
 
   @Test
@@ -148,41 +182,41 @@ public class PhasePCSAFTRahmatTest {
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispZHC() {
     double value = p.calcF2dispZHC();
-    assertEquals(0.47149436306641834, value);
+    assertEquals(0.008575218020305647, value, 8.575218020305647e-11);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispZHCdN() {
     double value = p.calcF2dispZHCdN();
-    assertEquals(-5.447711889103666, value);
+    assertEquals(-0.08442240167059856, value, 8.442240167059856e-10);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispZHCdNdN() {
     double value = p.calcF2dispZHCdNdN();
-    assertEquals(75.24049982033125, value);
+    assertEquals(0.7476995110653688, value, 7.476995110653687e-09);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispZHCdNdNdN() {
     double value = p.calcF2dispZHCdNdNdN();
-    assertEquals(279935.2725213402, value, 0.001);
+    assertEquals(-6.314753507217411, value, 6.314753507217411e-08);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcF2dispZHCdm() {
     double value = p.calcF2dispZHCdm();
-    assertEquals(-0.06098259714, value, 0.001);
+    assertEquals(-0.00277595592922911, value, 2.77595592922911e-11);
   }
 
   @Test
   void testCalcdF1dispI1dT() {
     double value = p.calcdF1dispI1dT();
-    assertEquals(-2.467132676347459E-24, value, 1e-20);
+    assertEquals(-1.16726766358242E-5, value, 1.16726766358242e-13);
   }
 
   @Test
@@ -195,7 +229,7 @@ public class PhasePCSAFTRahmatTest {
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcdF2dispI2dT() {
     double value = p.calcdF2dispI2dT();
-    assertEquals(-5.762371785911064E-24, value);
+    assertEquals(-2.340749434400326E-4, value, 2.3407494344003262e-12);
   }
 
   @Test
@@ -208,21 +242,21 @@ public class PhasePCSAFTRahmatTest {
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testCalcdF2dispZHCdT() {
     double value = p.calcdF2dispZHCdT();
-    assertEquals(1.51244510048084E-23, value);
+    assertEquals(4.328194496526025E-6, value, 4.3281944965260254e-14);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testdFdTdV() {
     double value = p.dFdTdV();
-    assertEquals(-3.672119679672745E-4, value, 1e-12);
+    assertEquals(-0.012707708611563808, value, 1.270770861156381e-10);
   }
 
   @Test
   @DisabledIfSystemProperty(named = "os.arch", matches = ".*aarch64.*")
   void testdFdTdT() {
     double value = p.dFdTdT();
-    assertEquals(-0.7424036008192018, value, 1e-9);
+    assertEquals(-3.054562369032611, value, 3.054562369032611e-08);
   }
 
   @Disabled("TODO: not working per 19.06.2060")

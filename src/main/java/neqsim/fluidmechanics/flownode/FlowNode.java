@@ -569,7 +569,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     dialogContentPane.setLayout(new BorderLayout());
     Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
     dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
-    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
     String[][] table = createTable(name);
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);

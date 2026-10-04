@@ -69,11 +69,11 @@ class StreamFlowRateInvalidationTest {
 
   @Test
   void repeatedPressureCandidatesMatchFreshCompressionAndConserveMass() {
-    for (boolean polytropic : new boolean[] { false, true }) {
+    for (boolean polytropic : new boolean[] {false, true}) {
       ProcessSystem reused = compressionProcess(50000.0, 80.0, polytropic);
       Stream feed = (Stream) reused.getUnit("feed");
       Compressor compressor = (Compressor) reused.getUnit("compressor");
-      for (double pressure : new double[] { 60.01, 60.0, 60.02, 59.99, 60.0 }) {
+      for (double pressure : new double[] {60.01, 60.0, 60.02, 59.99, 60.0}) {
         feed.setFlowRate(10000.0, "kg/hr");
         compressor.setOutletPressure(pressure);
         reused.run();

@@ -138,19 +138,19 @@ public class ConfigurableLogicExample {
     logger.info("\n=== EXAMPLE 1: CONFIGURATION STRING LOGIC ===");
 
     // Configuration string format: ACTION_TYPE:EQUIPMENT:PARAMETER:DELAY
-    String[] esdConfig = { "VALVE_CLOSE:Control Valve:0:0.0", "VALVE_SET:Backup Valve:25.0:0.5",
-        "SEPARATOR_MODE:Test Separator:transient:1.0" };
+    String[] esdConfig = {"VALVE_CLOSE:Control Valve:0:0.0", "VALVE_SET:Backup Valve:25.0:0.5",
+        "SEPARATOR_MODE:Test Separator:transient:1.0"};
 
     ESDLogic configuredESD = factory.createESDFromConfig("Configured ESD", esdConfig);
     logger.info("✓ Created ESD logic from configuration strings:");
     logger.info("  - " + configuredESD.getActionCount() + " actions loaded");
 
     // Configuration string format: CONDITION_TYPE:EQUIPMENT:VALUE:OPERATOR
-    String[] startupConfig = { "VALVE_POSITION:Control Valve:10.0:<", "VALVE_POSITION:Backup Valve:95.0:>",
-        "TIMER:none:5.0:>" };
+    String[] startupConfig = {"VALVE_POSITION:Control Valve:10.0:<", "VALVE_POSITION:Backup Valve:95.0:>",
+        "TIMER:none:5.0:>"};
 
-    String[] startupActions = { "VALVE_OPEN:Control Valve:100:0.0", "VALVE_SET:Control Valve:75.0:2.0",
-        "SEPARATOR_MODE:Test Separator:steady:5.0" };
+    String[] startupActions = {"VALVE_OPEN:Control Valve:100:0.0", "VALVE_SET:Control Valve:75.0:2.0",
+        "SEPARATOR_MODE:Test Separator:steady:5.0"};
 
     StartupLogic configuredStartup = factory.createStartupFromConfig("Configured Startup", startupConfig,
         startupActions);

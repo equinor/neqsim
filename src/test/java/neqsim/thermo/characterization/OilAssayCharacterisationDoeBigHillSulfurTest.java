@@ -14,8 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Public DOE refinery-assay qualification of linear total-sulfur bookkeeping. */
 public class OilAssayCharacterisationDoeBigHillSulfurTest {
-  private static final double[] MASS_YIELD_PERCENT = { 1.70, 5.22, 8.32, 12.55, 16.19, 13.18, 18.44, 12.84, 11.56 };
-  private static final double[] SULFUR_MASS_PERCENT = { 0.0, 0.0008, 0.0026, 0.019, 0.096, 0.313, 0.534, 0.752, 1.334 };
+  private static final double[] MASS_YIELD_PERCENT = {1.70, 5.22, 8.32, 12.55, 16.19, 13.18, 18.44, 12.84, 11.56};
+  private static final double[] SULFUR_MASS_PERCENT = {0.0, 0.0008, 0.0026, 0.019, 0.096, 0.313, 0.534, 0.752, 1.334};
   private static final double DOE_WHOLE_CRUDE_SULFUR_MASS_PERCENT = 0.409;
 
   @Test

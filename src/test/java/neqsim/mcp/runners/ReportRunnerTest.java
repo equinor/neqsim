@@ -104,8 +104,8 @@ class ReportRunnerTest {
   void taskWorkflowBridgePublishesSchemaAndRejectsInvalidRequests() {
     JsonObject schema = JsonParser.parseString(TaskWorkflowBridge.run("{\"action\":\"getSchema\"}")).getAsJsonObject();
     assertEquals("success", schema.get("status").getAsString());
-    for (String field : new String[] { "key_results", "validation", "approach", "conclusions", "uncertainty",
-        "risk_evaluation", "benchmark_validation" }) {
+    for (String field : new String[] {"key_results", "validation", "approach", "conclusions", "uncertainty",
+        "risk_evaluation", "benchmark_validation"}) {
       assertTrue(schema.getAsJsonObject("fields").has(field), "Missing schema field " + field);
     }
 

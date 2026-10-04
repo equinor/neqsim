@@ -121,7 +121,7 @@ class ESDFireAlarmSystemTest {
 
     // Splitter to direct flow to process or blowdown
     gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
     gasSplitter.run();
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
@@ -217,7 +217,7 @@ class ESDFireAlarmSystemTest {
 
     // Activate ESD system
     bdValve.activate();
-    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 }); // Redirect to blowdown
+    gasSplitter.setSplitFactors(new double[] {0.0, 1.0}); // Redirect to blowdown
     separator.setCalculateSteadyState(false); // Switch to dynamic mode
 
     assertTrue(bdValve.isActivated(), "BD valve should be activated");
@@ -484,7 +484,7 @@ class ESDFireAlarmSystemTest {
     separatorGasOut.run();
 
     gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
     gasSplitter.run();
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
@@ -569,7 +569,7 @@ class ESDFireAlarmSystemTest {
 
     // Activate ESD
     bdValve.activate();
-    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 }); // Redirect to blowdown
+    gasSplitter.setSplitFactors(new double[] {0.0, 1.0}); // Redirect to blowdown
     separator.setCalculateSteadyState(false); // Switch to dynamic mode
 
     assertTrue(bdValve.isActivated(), "BD valve should be activated");

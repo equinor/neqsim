@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 /** The molecular beta solve must exclude stripped ions even if their coefficients underflow. */
 class TPmultiflashStrippedIonTest {
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, 1.0e-200, 1.0e-300 })
+  @ValueSource(doubles = {0.0, 1.0e-200, 1.0e-300})
   void strippedIonsCannotPoisonMolecularHessian(double ionCoefficient) {
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(281.3, 50.0);
     fluid.addComponent("CO2", 0.2);

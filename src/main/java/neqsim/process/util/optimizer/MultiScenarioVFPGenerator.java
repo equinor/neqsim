@@ -68,10 +68,10 @@ import neqsim.thermo.system.SystemInterface;
  * vfpGen.setFlashGenerator(flashGen);
  *
  * // Configure table axes
- * vfpGen.setFlowRates(new double[] { 5000, 10000, 20000, 40000, 60000 });
- * vfpGen.setOutletPressures(new double[] { 50, 60, 70, 80 });
- * vfpGen.setWaterCuts(new double[] { 0.05, 0.20, 0.40, 0.60 });
- * vfpGen.setGORs(new double[] { 250, 500, 1000, 2000, 5000, 10000 });
+ * vfpGen.setFlowRates(new double[] {5000, 10000, 20000, 40000, 60000});
+ * vfpGen.setOutletPressures(new double[] {50, 60, 70, 80});
+ * vfpGen.setWaterCuts(new double[] {0.05, 0.20, 0.40, 0.60});
+ * vfpGen.setGORs(new double[] {250, 500, 1000, 2000, 5000, 10000});
  *
  * // Generate table
  * VFPTable table = vfpGen.generateVFPTable();

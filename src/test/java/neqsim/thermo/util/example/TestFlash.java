@@ -35,8 +35,8 @@ public class TestFlash {
     Double[][] fluidProperties;
     int fluidNumber = 1;
     int flashMode = 1;
-    Double[] spec1 = { 1.0, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 1.0 };
-    Double[] spec2 = { 288.15, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7 }; // Temperatures
+    Double[] spec1 = {1.0, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 1.0};
+    Double[] spec2 = {288.15, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7}; // Temperatures
     // double[]
     // spec2={-470.0,-480.0,-475.0,-471.0,-474.0,-450.0,-480.0,-473.0,-471.0,-477.0};
     // // Enthalpies
@@ -44,8 +44,8 @@ public class TestFlash {
     // // Entropies
 
     // Fractions for use with fluid number 1
-    double[] fractions = { 0.01, 0.02, 0.03, 0.01, 0.80, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0 };
+    double[] fractions = {0.01, 0.02, 0.03, 0.01, 0.80, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0};
     // double[] fractions={0.01, 0.02, +.03, 0.01, 0.70, 0.14, 0.03, 0.02, 0.01,
     // 0.01, 0.01, 0.01};
     // Normalize fractions sum fractions = 1

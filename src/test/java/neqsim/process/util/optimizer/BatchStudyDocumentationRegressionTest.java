@@ -33,8 +33,7 @@ class BatchStudyDocumentationRegressionTest {
 
   @Test
   void ranksMaximizationAndMixedDirectionParetoUsingTheDeclaredDirections() {
-    BatchStudyResult result = BatchStudy.builder(process())
-        .vary("feed.flowRate", new double[] { 1000.0, 2000.0, 3000.0 })
+    BatchStudyResult result = BatchStudy.builder(process()).vary("feed.flowRate", new double[] {1000.0, 2000.0, 3000.0})
         .addObjective("flow", Objective.MAXIMIZE, proc -> ((Stream) proc.getUnit("feed")).getFlowRate("kg/hr"))
         .addObjective("cost", Objective.MINIMIZE, proc -> ((Stream) proc.getUnit("feed")).getFlowRate("kg/hr") * 0.1)
         .parallelism(2).build().run();
@@ -50,7 +49,7 @@ class BatchStudyDocumentationRegressionTest {
     ProcessSystem base = process();
     base.run();
     double original = ((Heater) base.getUnit("heater")).getOutletStream().getTemperature("K");
-    BatchStudyResult result = BatchStudy.builder(base).vary("heater.outletTemperature", new double[] { 40.0, 60.0 })
+    BatchStudyResult result = BatchStudy.builder(base).vary("heater.outletTemperature", new double[] {40.0, 60.0})
         .addObjective("temperatureK", Objective.MINIMIZE,
             proc -> ((Heater) proc.getUnit("heater")).getOutletStream().getTemperature("K"))
         .parallelism(1).build().run();
@@ -61,8 +60,8 @@ class BatchStudyDocumentationRegressionTest {
 
   @Test
   void unsupportedPathsFailCasesAndSequentialStopOnFailureStops() {
-    for (String path : new String[] { "pressure", "missing.flowRate", "heater.unknown", "feed.duty" }) {
-      BatchStudyResult result = BatchStudy.builder(process()).vary(path, new double[] { 1.0, 2.0 }).parallelism(1)
+    for (String path : new String[] {"pressure", "missing.flowRate", "heater.unknown", "feed.duty"}) {
+      BatchStudyResult result = BatchStudy.builder(process()).vary(path, new double[] {1.0, 2.0}).parallelism(1)
           .stopOnFailure(true).build().run();
       assertEquals(0, result.getSuccessCount(), path);
       assertEquals(1, result.getFailureCount(), path);
@@ -73,7 +72,7 @@ class BatchStudyDocumentationRegressionTest {
 
   @Test
   void invalidObjectiveDoesNotBecomeASuccessfulOrParetoCase() {
-    BatchStudyResult result = BatchStudy.builder(process()).vary("feed.flowRate", new double[] { 1000.0, 2000.0 })
+    BatchStudyResult result = BatchStudy.builder(process()).vary("feed.flowRate", new double[] {1000.0, 2000.0})
         .addObjective("invalid", Objective.MINIMIZE, proc -> Double.NaN).parallelism(1).build().run();
     assertEquals(0, result.getSuccessCount());
     assertEquals(2, result.getFailureCount());
@@ -85,17 +84,17 @@ class BatchStudyDocumentationRegressionTest {
     assertThrows(IllegalArgumentException.class,
         () -> BatchStudy.builder(process()).vary("feed.flowRate", 1000.0, 2000.0, 1));
     assertThrows(IllegalArgumentException.class,
-        () -> BatchStudy.builder(process()).vary("feed.flowRate", new double[] { Double.NaN }));
+        () -> BatchStudy.builder(process()).vary("feed.flowRate", new double[] {Double.NaN}));
     assertThrows(IllegalArgumentException.class, () -> BatchStudy.builder(process()).parallelism(0));
-    BatchStudyResult result = BatchStudy.builder(process()).vary("feed.flowRate", new double[] { 1000.0 })
-        .parallelism(1).build().run();
+    BatchStudyResult result = BatchStudy.builder(process()).vary("feed.flowRate", new double[] {1000.0}).parallelism(1)
+        .build().run();
     assertEquals(1, result.getSuccessCount());
   }
 
   @Test
   void exportsRuntimeWithoutReflectiveAccessToJavaTimeInternals() {
-    BatchStudyResult result = BatchStudy.builder(process()).vary("feed.flowRate", new double[] { 1000.0 })
-        .parallelism(1).build().run();
+    BatchStudyResult result = BatchStudy.builder(process()).vary("feed.flowRate", new double[] {1000.0}).parallelism(1)
+        .build().run();
     com.google.gson.JsonObject json = JsonParser.parseString(result.toJson()).getAsJsonObject();
     assertEquals(1, json.get("successCount").getAsInt());
     assertTrue(json.get("startTime").getAsString().endsWith("Z"));

@@ -41,6 +41,33 @@ system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composi
 | **Volume Correction** | Enabled by default |
 | **Fürst Parameters** | Uses `electrolyteCPA` parameter set |
 
+### Ionic covolume selection and compatibility
+
+CPA ionic components read covolume coefficients `[0]` and `[1]` directly from
+`FurstElectrolyteConstants.furstParamsCPA`, including construction and
+`initFurstParam()` reinitialization. This also applies to the Statoil and Advanced
+subclasses. ScRK components retain their separate `furstParams` defaults.
+Constructing an electrolyte CPA system no longer reassigns those shared ScRK
+defaults. Interleaving systems, adding ions later, cloning and serialization must
+therefore preserve each model's covolume identity.
+
+With the default tables, Na+ covolume is approximately `2.58461732544` for ScRK
+and `3.87214760778` for CPA in NeqSim internal units. Earlier versions could give
+the CPA value to ScRK solely because a CPA system had been constructed first.
+Removing that construction-order dependence can change affected ScRK results; it
+is not a new parameter fit or an estimate of fluid-property error.
+
+For deliberate customization, use `setFurstParamCPA(index, value)` for the CPA
+table and `setFurstParam(index, value)` for the ScRK table, then reinitialize the
+affected components/phases. These remain process-wide mutable customization APIs,
+not per-system or thread-safe parameter stores. The legacy
+`setFurstParams("electrolyteCPA")` explicitly aliases the ScRK table to CPA and
+should not be used to select a system model. Code that relied on a CPA constructor
+making `setFurstParam` target CPA must migrate to `setFurstParamCPA`.
+
+The covolume correction is independent of the reference-interaction correction
+described below. Neither changes fitted database pairs.
+
 ### Class Hierarchy
 
 ```
@@ -129,12 +156,24 @@ Where:
 
 The Born term accounts for the solvation energy of ions in the dielectric medium:
 
-$$\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{8\pi\varepsilon_0 k_B T} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)$$
+$$\frac{A^{Born}}{RT} = -\frac{e^2 N_A}{4\pi\varepsilon_0 RT} \sum_i n_i \frac{z_i^2}{\sigma_i} \left(1 - \frac{1}{\varepsilon_r}\right)$$
 
 Where:
 - $z_i$ = ionic charge
 - $\sigma_i$ = ionic diameter
 - $\varepsilon_r$ = relative permittivity (dielectric constant) of the solvent mixture
+
+Here $n_i$ is in mol and $\sigma_i$ is the diameter in metres used by the
+Furst-based implementation. The equivalent radius convention uses
+$8\pi\varepsilon_0 RT$ and $r_i=\sigma_i/2$. Do not combine a diameter with the
+radius prefactor, or use $N_A/k_B$ in place of $N_A/R$ for this molar expression.
+
+The mole derivative includes both the ionic contribution and the derivative of
+solvent permittivity. The latter must scale inversely with phase amount so that
+the chemical potential stays intensive. See
+[Born derivatives and phase-size invariance](ElectrolyteBornDerivatives.md) for
+the chain rule, the legacy Mod2004 correction, the related EOS audit, and the
+literature-based development recommendations.
 
 ## Short-Range Interaction Parameters (Wij)
 
@@ -144,7 +183,45 @@ The short-range Wij parameters capture specific ion-solvent and ion-ion interact
 
 ### Parameter Correlations
 
-The Wij values are calculated using linear correlations with ionic diameter:
+The reference coefficient `wij[0]` for calculated cation-water and ordinary
+cation-anion pairs follows the phase's EOS family. `SystemFurstElectrolyteEos`
+and `SystemFurstElectrolyteEosMod2004` use the existing ScRK `furstParams` table;
+the three electrolyte CPA variants use `furstParamsCPA`. Selection follows the
+phase type, including CPA subclasses, and is independent of construction order.
+Database pairs marked fitted (`CalcWij != 0`) retain their reference and
+temperature coefficients. The named-solvent tables, the Piperazine approximation,
+the MDEA+ ion-ion override, and gas-ion/organic-inhibitor overrides are unchanged.
+
+For ScRK, the existing six-coefficient table gives the same correlation for
+monovalent and divalent cations, with diameters in angstroms:
+
+```
+Wij(cation-water, 298.15 K) = 6.99219e-5 * stokesDiameter + 4.3984e-6
+Wij(cation-anion, 298.15 K) = -6.06e-8 * (d_cat + d_an)^4 - 2.1795e-5
+```
+
+These are the current ScRK table values, not a new fit. The separate ScRK/CPA
+model identity follows the correlations discussed by Solbraa (2002), equations
+8.14-8.15 and table 8-12; the mutable repository tables remain the exact numerical
+source. The CPA-specific valence fits are described below and are unchanged.
+
+**Numerical compatibility:** correcting the unconditional CPA dispatch introduced
+in #1787 changes calculated ScRK pairs. With the default Na+ Stokes diameter
+of 5.68 angstroms, `wij[0](Na+, water)` changes from `1.6297556353584585e-4`
+to `4.01554792e-4`. ScRK phase equilibria and properties that depend on these
+pairs can therefore change. This is a model-selection regression correction
+(#3850), not evidence that the original or corrected calibration meets a given
+experimental accuracy target. CPA reference interactions retain their values.
+
+The current shared `furstParamsCPA_TDep` temperature correction is deliberately
+retained for both families; the correction does **not** restore a complete
+historical ScRK calibration. Regressions check the reference coefficients,
+symmetric/reversed pairs, both valences, repeated initialization, CPA interleaving,
+fitted precedence, and the retained temperature formula at 298.15 and 323.15 K.
+Qualification of the combined ScRK correlation against experimental data,
+including temperature dependence, remains part of [#3144](https://github.com/equinor/neqsim/issues/3144).
+
+The CPA Wij values are calculated using the following ionic-diameter correlations:
 
 #### Monovalent (1+) Cations
 
@@ -304,10 +381,28 @@ double phi = system.getPhase(aq).getOsmoticCoefficientOfWater();
 The model supports mixed solvent systems including:
 
 - Water + MEG (monoethylene glycol)
+- Water + TEG (triethylene glycol; initial parameter estimates)
 - Water + Methanol
 - Water + MDEA (methyldiethanolamine)
 
 Separate Wij parameters are available for each solvent system.
+
+For calculated cation-glycol pairs, `TEG` and the mixing-rule alias
+`triethylene glycol` use `furstParamsCPA_TEG`; `MEG` and `ethylene glycol`
+use `furstParamsCPA_MEG`. Each set uses indices `[2]`/`[3]` for the
+monovalent slope/intercept and `[6]`/`[7]` for divalent cations. The TEG
+parameters are initial estimates based on water parameters and have **not
+been fitted to experimental TEG-water-electrolyte data**.
+
+The correction in [issue #3846](https://github.com/equinor/neqsim/issues/3846)
+removes an earlier MEG fallback that shadowed the TEG-specific branch. With
+the default parameters and the Na+ Stokes diameter of 5.68, the calculated
+Na+-TEG reference parameter is now `0.000160864`, instead of the MEG value
+`0.0003394`. TEG-containing calculations using the shared Furst short-range
+mixing rule can therefore change. Explicitly fitted pair parameters retain
+precedence, and the existing temperature-dependent coefficients are unchanged.
+This corrects parameter selection; it does not validate the TEG estimates
+against experimental data.
 
 ## Gas-Ion Interaction Parameters (Salting-Out Effect)
 

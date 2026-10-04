@@ -68,7 +68,7 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void pairedCapacityAlternativeIsDeterministicSerializableAndReversible() throws Exception {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     int evaluationCountBeforeStudy = fixture.evaluator.getEvaluationCount();
 
     ProcessModelDebottleneckStudy study = createStudy(fixture, "kg/hr");
@@ -78,8 +78,8 @@ class ProcessModelDebottleneckStudyTest {
     assertTrue(first.isCapacityRestored());
     assertTrue(first.isProcessStateRestored());
     assertTrue(first.isRecoverySimulationConverged());
-    assertArrayEquals(new double[] { 999.0 }, first.getBaseline().getSelectedParameters(), 0.0);
-    assertArrayEquals(new double[] { 1199.0 }, first.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {999.0}, first.getBaseline().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {1199.0}, first.getAlternative().getSelectedParameters(), 0.0);
     assertEquals(200.0, first.getObjectiveDelta(), 1.0e-8);
     assertEquals(5, first.getBaseline().getEvaluationCount());
     assertEquals(5, first.getAlternative().getEvaluationCount());
@@ -106,7 +106,7 @@ class ProcessModelDebottleneckStudyTest {
 
     double[] exposed = first.getAlternative().getSelectedParameters();
     exposed[0] = -1.0;
-    assertArrayEquals(new double[] { 1199.0 }, first.getAlternative().getSelectedParameters(), 0.0);
+    assertArrayEquals(new double[] {1199.0}, first.getAlternative().getSelectedParameters(), 0.0);
     assertThrows(UnsupportedOperationException.class, () -> first.getMetricComparisons().clear());
 
     StudyResult serialized = roundTrip(first);
@@ -131,7 +131,7 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void incompatibleCapacityAlternativeFailsClosedWithoutEvaluation() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     int evaluationCountBeforeStudy = fixture.evaluator.getEvaluationCount();
 
     StudyResult result = createStudy(fixture, "t/day").evaluate();
@@ -148,7 +148,7 @@ class ProcessModelDebottleneckStudyTest {
   @Test
   void unavailableRequiredMetricRetainsPhysicalEvidenceAndRestoresState() {
     Fixture fixture = createFixture();
-    fixture.evaluator.evaluate(new double[] { 800.0 });
+    fixture.evaluator.evaluate(new double[] {800.0});
     ProcessModelDebottleneckStudy study = createStudy(fixture, "kg/hr");
     study.addMetric(new MetricDefinition("required-quality", "Required quality", MetricKind.OTHER, "mol/mol",
         "dry product basis", "synthetic unavailable analyzer", "single steady state", 0.5, true, new MetricSampler() {
@@ -175,11 +175,11 @@ class ProcessModelDebottleneckStudyTest {
   /** Creates the deterministic paired study used by the focused tests. */
   private ProcessModelDebottleneckStudy createStudy(Fixture fixture, String alternativeUnit) {
     List<double[]> candidates = new ArrayList<double[]>();
-    candidates.add(new double[] { 800.0 });
+    candidates.add(new double[] {800.0});
     // Keep selected points 1 kg/hr inside each limit so unit-conversion roundoff cannot make equality infeasible.
-    candidates.add(new double[] { 999.0 });
-    candidates.add(new double[] { 1199.0 });
-    candidates.add(new double[] { 1400.0 });
+    candidates.add(new double[] {999.0});
+    candidates.add(new double[] {1199.0});
+    candidates.add(new double[] {1400.0});
     CandidateListSearch search = new CandidateListSearch("ordered-throughput-grid", "Ordered throughput grid",
         "synthetic acceptance candidate set", candidates, 0, 0.0);
     CapacityAlternative alternative = new CapacityAlternative("separator-gas-1200",

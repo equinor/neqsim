@@ -683,7 +683,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         "hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
-    double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
+    double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
     SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
@@ -700,7 +700,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         "hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
-    double[] splitMidgard = { 1e-10, 1 - 1e-10 };
+    double[] splitMidgard = {1e-10, 1 - 1e-10};
     MidgardSplit.setSplitFactors(splitMidgard);
 
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
@@ -722,7 +722,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
     neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99 });
+    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99});
 
     Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
     TEGFeed.setFlowRate(8000.0, "kg/hr");
@@ -757,7 +757,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     heatEx2.setUAvalue(1450.0);
 
     neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedWater.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 });
+    feedWater.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0});
 
     double addedWaterRate = 0.0;
     Stream waterFeed = new Stream("extra water", feedWater);
@@ -793,7 +793,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
 
     neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    stripGas.setMolarComposition(new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(250.0 * 0.8, "kg/hr");
@@ -807,15 +807,15 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
-    column.getReboiler().setOutTemperature(273.15 + 202.0);
-    column.getCondenser().setOutTemperature(273.15 + 89.0);
+    column.getReboiler().setOutletTemperature(273.15 + 202.0);
+    column.getCondenser().setOutletTemperature(273.15 + 89.0);
     column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(condenserPressure);
     column.setBottomPressure(reboilerPressure);
     column.setInternalDiameter(0.56);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + 15.0);
+    coolerRegenGas.setOutletTemperature(273.15 + 15.0);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
@@ -835,7 +835,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setTolerance(1e-1);
 
     neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
@@ -862,7 +862,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     makeupMixer.addStream(makeupTEG);
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", makeupMixer.getOutletStream());
-    coolerhOTteg3.setOutTemperature(273.15 + 40.0);
+    coolerhOTteg3.setOutletTemperature(273.15 + 40.0);
 
     condHeat.setEnergyStream(column.getCondenser().getEnergyStream());
 
@@ -981,7 +981,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         "hydrate temperature analyser Smorbukk", waterSaturatedFeedGasSmorbukk);
 
     Splitter SmorbukkSplit = new Splitter("Smorbukk Splitter", waterSaturatedFeedGasSmorbukk);
-    double[] splitSmorbukk = { 1.0 - 1e-10, 1e-10 };
+    double[] splitSmorbukk = {1.0 - 1e-10, 1e-10};
     SmorbukkSplit.setSplitFactors(splitSmorbukk);
 
     Stream dryFeedGasMidgard = new Stream("dry feed gas Midgard201", feedGas.clone());
@@ -998,7 +998,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
         "hydrate temperature analyser Midgard", waterSaturatedFeedGasMidgard);
 
     Splitter MidgardSplit = new Splitter("Midgard Splitter", waterSaturatedFeedGasMidgard);
-    double[] splitMidgard = { 1e-10, 1 - 1e-10 };
+    double[] splitMidgard = {1e-10, 1 - 1e-10};
     MidgardSplit.setSplitFactors(splitMidgard);
 
     StaticMixer TrainB = new StaticMixer("mixer TrainB");
@@ -1020,7 +1020,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     waterDewPointAnalyserToAbsorber.setReferencePressure(40.0);
 
     neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99 });
+    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.99});
 
     Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
     TEGFeed.setFlowRate(8000.0, "kg/hr");
@@ -1055,7 +1055,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     heatEx2.setUAvalue(1450.0);
 
     neqsim.thermo.system.SystemInterface feedWater = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    feedWater.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0 });
+    feedWater.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0});
 
     double addedWaterRate = 0.0;
     Stream waterFeed = new Stream("extra water", feedWater);
@@ -1091,7 +1091,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     glycol_flash_valve2.setOutletPressure(feedPressureGLycol);
 
     neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    stripGas.setMolarComposition(new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
     Stream strippingGas = new Stream("stripGas", stripGas);
     strippingGas.setFlowRate(250.0 * 0.8, "kg/hr");
@@ -1105,15 +1105,15 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     column.setMassBalanceTolerance(2.0e-1);
     column.setEnthalpyBalanceTolerance(2.0e-1);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
-    column.getReboiler().setOutTemperature(273.15 + 202.0);
-    column.getCondenser().setOutTemperature(273.15 + 89.0);
+    column.getReboiler().setOutletTemperature(273.15 + 202.0);
+    column.getCondenser().setOutletTemperature(273.15 + 89.0);
     column.getTray(1).addStream(gasToReboiler);
     column.setTopPressure(condenserPressure);
     column.setBottomPressure(reboilerPressure);
     column.setInternalDiameter(0.56);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + 15.0);
+    coolerRegenGas.setOutletTemperature(273.15 + 15.0);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
@@ -1133,7 +1133,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     recycleGasFromStripper.setTolerance(5.0e-2);
 
     neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream());
 
@@ -1160,7 +1160,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     makeupMixer.addStream(makeupTEG);
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", makeupMixer.getOutletStream());
-    coolerhOTteg3.setOutTemperature(273.15 + 40.0);
+    coolerhOTteg3.setOutletTemperature(273.15 + 40.0);
 
     condHeat.setEnergyStream(column.getCondenser().getEnergyStream());
 
@@ -1471,7 +1471,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     stream1.setPressure(10.0, "bara");
 
     Splitter splitter = new Splitter("Splitter1", stream1);
-    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    splitter.setSplitFactors(new double[] {0.6, 0.4});
 
     process.add(stream1);
     process.add(splitter);

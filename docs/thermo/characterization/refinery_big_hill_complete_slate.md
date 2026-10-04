@@ -249,3 +249,299 @@ validate product quality, or demonstrate equipment turndown.
 All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
 does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
 calibrated VGO/residue yields, equipment design, or plant-agreement evidence.
+
+## Condenser-reflux sensitivity screening
+
+`DoeBigHillVacuumRefluxSensitivity.run(...)` independently rebuilds, solves, and evaluates
+multiple Big Hill vacuum cases while varying only the condenser reflux ratio. Tray count, feed tray,
+feed and reboiler temperatures, all three absolute pressures, feed composition, and feed mass flow
+remain fixed. Reflux ratios must be finite, non-negative, unique, and strictly increasing.
+
+The documented three-point screen stays close to the qualified base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] refluxRatios = {0.49, 0.50, 0.51};
+
+DoeBigHillVacuumRefluxSensitivity sensitivity =
+    DoeBigHillVacuumRefluxSensitivity.run(
+        "Big Hill vacuum reflux screen", 1000.0, baseline, refluxRatios);
+
+for (DoeBigHillVacuumRefluxSensitivity.PointResult point : sensitivity.getPoints()) {
+  double refluxRatio = point.getCondenserRefluxRatio();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied operating inputs, immutable per-point fractionation results, the observed overhead-yield
+bounds, and the worst external mass closure, component closure, column energy error, and final MESH
+residual. A failed point aborts the complete sensitivity instead of returning a partial envelope.
+
+The condenser reflux ratio is a dimensionless `DistillationColumn` input. This screen isolates that
+single numerical operating variable; it does not represent a measured, optimized, or
+vendor-recommended reflux policy. The narrow 0.49/0.50/0.51 regression is a convergence and
+conservation test around the documented screening point. It does not establish a measured reflux
+response, require a monotonic yield trend, quantify condenser or reboiler duty, define utilities,
+size equipment, validate product quality, or demonstrate turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
+
+## Reboiler-temperature sensitivity screening
+
+`DoeBigHillVacuumReboilerTemperatureSensitivity.run(...)` independently rebuilds, solves, and
+evaluates multiple Big Hill vacuum cases while varying only the reboiler outlet temperature. Tray
+count, feed tray, feed temperature, all three absolute pressures, condenser reflux ratio, feed
+composition, and feed mass flow remain fixed. Temperatures must be finite, positive, unique,
+strictly increasing, and above the fixed feed temperature.
+
+The documented three-point screen stays close to the qualified base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] reboilerTemperaturesKelvin = {698.0, 700.0, 702.0};
+
+DoeBigHillVacuumReboilerTemperatureSensitivity sensitivity =
+    DoeBigHillVacuumReboilerTemperatureSensitivity.run(
+        "Big Hill vacuum reboiler-temperature screen",
+        1000.0,
+        baseline,
+        reboilerTemperaturesKelvin);
+
+for (DoeBigHillVacuumReboilerTemperatureSensitivity.PointResult point :
+    sensitivity.getPoints()) {
+  double reboilerTemperatureKelvin = point.getReboilerTemperatureKelvin();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied operating inputs, immutable per-point fractionation results, the observed overhead-yield
+bounds, and the worst external mass closure, component closure, column energy error, and final MESH
+residual. A failed point aborts the complete sensitivity instead of returning a partial envelope.
+
+The temperature is the specified reboiler outlet temperature, not a measured tray profile, boiling
+curve, heat duty, or utility demand. This screen isolates that single numerical operating variable;
+it does not represent a measured, optimized, or vendor-recommended temperature policy. The narrow
+698/700/702 K regression is a convergence and conservation test around the documented screening
+point. It does not establish a measured temperature response, require a monotonic yield trend,
+quantify heat-transfer performance, size equipment, validate product quality, or demonstrate
+turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
+
+## Feed-temperature sensitivity screening
+
+`DoeBigHillVacuumFeedTemperatureSensitivity.run(...)` independently rebuilds, solves, and evaluates
+multiple Big Hill vacuum cases while varying only the feed temperature. Tray count, feed tray, all
+three absolute pressures, reboiler outlet temperature, condenser reflux ratio, feed composition, and
+feed mass flow remain fixed. Temperatures must be finite, positive, unique, strictly increasing, and
+below the fixed reboiler temperature.
+
+The documented three-point screen stays close to the qualified base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] feedTemperaturesKelvin = {638.0, 640.0, 642.0};
+
+DoeBigHillVacuumFeedTemperatureSensitivity sensitivity =
+    DoeBigHillVacuumFeedTemperatureSensitivity.run(
+        "Big Hill vacuum feed-temperature screen",
+        1000.0,
+        baseline,
+        feedTemperaturesKelvin);
+
+for (DoeBigHillVacuumFeedTemperatureSensitivity.PointResult point :
+    sensitivity.getPoints()) {
+  double feedTemperatureKelvin = point.getFeedTemperatureKelvin();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied operating inputs, immutable per-point fractionation results, the observed overhead-yield
+bounds, and the worst external mass closure, component closure, column energy error, and final MESH
+residual. A failed point aborts the complete sensitivity instead of returning a partial envelope.
+
+The temperature is the specified feed-stream temperature at the fixed feed pressure, not a measured
+preheat-train profile, furnace outlet temperature, flash-zone temperature, or heat duty. This screen
+isolates that single numerical operating variable; it does not represent a measured, optimized, or
+vendor-recommended preheat policy. The narrow 638/640/642 K regression is a convergence and
+conservation test around the documented screening point. It does not establish a measured
+temperature response, require a monotonic yield trend, quantify furnace or exchanger performance,
+define heat integration, size equipment, validate product quality, or demonstrate turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, optimization, product specifications, or plant-agreement evidence.
+
+## Feed-mass-flow sensitivity screening
+
+`DoeBigHillVacuumFeedMassFlowSensitivity.run(...)` independently rebuilds, solves, and evaluates
+multiple Big Hill vacuum cases while varying only the feed mass flow. Tray count, feed tray, feed and
+reboiler temperatures, all three absolute pressures, condenser reflux ratio, and feed composition
+remain fixed. Mass flows must be finite, positive, unique, and strictly increasing.
+
+The documented three-point screen stays close to the qualified 1000 kg/h base point:
+
+```java
+OperatingInputs baseline =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+double[] feedMassFlowsKgPerHour = {980.0, 1000.0, 1020.0};
+
+DoeBigHillVacuumFeedMassFlowSensitivity sensitivity =
+    DoeBigHillVacuumFeedMassFlowSensitivity.run(
+        "Big Hill vacuum feed-mass-flow screen",
+        baseline,
+        feedMassFlowsKgPerHour);
+
+for (DoeBigHillVacuumFeedMassFlowSensitivity.PointResult point :
+    sensitivity.getPoints()) {
+  double feedMassFlowKgPerHour = point.getFeedMassFlowKgPerHour();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+}
+```
+
+Every point must pass the already qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. The summary returns a defensive point array, exact
+applied feed mass flows and operating inputs, immutable per-point fractionation results, the observed
+overhead-yield bounds, and the worst external mass closure, component closure, column energy error,
+and final MESH residual. A failed point aborts the complete sensitivity instead of returning a
+partial envelope.
+
+The mass flow is the specified feed-stream throughput in kg/h, not a measured or design column
+capacity. This screen isolates that single numerical input while keeping feed composition and every
+column operating input fixed. The narrow 980/1000/1020 kg/h regression is a convergence and
+conservation test around the documented screening point. It does not establish a measured throughput
+response, require a monotonic yield trend, demonstrate scale-up, quantify flooding, weeping,
+entrainment, pressure drop, heat duty, or utilities, size equipment, validate product quality, or
+demonstrate turndown.
+
+All DOE assay provenance and the three-cut 650 degF+ normalization remain unchanged. The calculation
+does not add ASTM D1160 or TBP pressure correction, measured vacuum-column data, fitted parameters,
+calibrated VGO/residue yields, optimization, product specifications, hydraulic capacity, or
+plant-agreement evidence.
+
+
+## Combined operating-scenario screening
+
+`DoeBigHillVacuumScenarioScreen.run(...)` independently rebuilds, solves, and evaluates complete
+caller-defined operating scenarios. This is the integration step after the qualified one-factor
+pressure, reflux, feed-temperature, reboiler-temperature, and feed-mass-flow screens. Scenario order
+is preserved; names must be unique, and every scenario supplies its own validated operating inputs
+and positive feed mass flow.
+
+The documented low/base/high scenarios combine only the narrow ranges already exercised by those
+one-factor screens:
+
+```java
+DoeBigHillVacuumScenarioScreen.Scenario[] scenarios = {
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "low",
+        980.0,
+        new OperatingInputs(12, 4, 638.0, 0.1176, 0.0784, 0.1568, 698.0, 0.49)),
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "base",
+        1000.0,
+        new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.50)),
+    new DoeBigHillVacuumScenarioScreen.Scenario(
+        "high",
+        1020.0,
+        new OperatingInputs(12, 4, 642.0, 0.1224, 0.0816, 0.1632, 702.0, 0.51))
+};
+
+DoeBigHillVacuumScenarioScreen screen =
+    DoeBigHillVacuumScenarioScreen.run("Big Hill vacuum combined screen", scenarios);
+
+for (DoeBigHillVacuumScenarioScreen.PointResult point : screen.getPoints()) {
+  String scenarioName = point.getScenario().getName();
+  double feedMassFlowKgPerHour = point.getScenario().getFeedMassFlowKgPerHour();
+  double overheadMassFraction = point.getOverheadMassFraction();
+  double overheadT50Kelvin = point.getOverheadBoilingPointQuantileKelvin(0.50);
+  DoeBigHillVacuumComponentRecovery recovery = point.getComponentRecovery();
+  double overheadHeavyRecovery =
+      recovery.getProduct("Overhead").getComponentMolarRecovery("DOE_BH_1050_PLUS_PC");
+}
+```
+
+All three absolute pressures move together by factors 0.98, 1.00, and 1.02 relative to the base
+0.12/0.08/0.16 bara values. The feed and reboiler temperatures, condenser reflux ratio, and feed mass
+flow simultaneously use the low/base/high values shown above. Tray topology and feed composition
+remain fixed.
+
+Every scenario must pass the qualified MESH-residual, fallback, mass, component, energy,
+material-product, and boiling-point-order gates. Each point also evaluates
+`DoeBigHillVacuumComponentRecovery` on the same solved model, without rebuilding or solving the
+scenario a second time. It exposes the exact DOE pseudo-component order, positive feed component
+flows in mol/h, product component flows in mol/h, and dimensionless overhead and bottoms recoveries.
+Every product recovery must remain finite and non-negative, and each component's two product
+recoveries must close to unity within 5%.
+
+The screen returns defensive scenario-point arrays, the exact immutable scenario definitions,
+fractionation results, and recovery results, overhead-yield bounds, and the worst external mass
+closure, component closure, component-recovery closure, column energy error, and final MESH
+residual. Any failed fractionation or recovery gate aborts the complete screen.
+
+These three discrete calculations are numerical robustness and interaction-screening evidence only.
+The component recoveries are numerical pseudo-component partition bookkeeping, not measured or
+calibrated yields. They do not define a continuous or measured operating envelope, response surface,
+interaction correlation, probability distribution, contaminant distribution, or optimization
+model. No monotonic trend is required. The screen does not establish hydraulic capacity, flooding,
+weeping, entrainment, pressure drop, scale-up, turndown, heat duty, utilities, equipment sizing,
+ASTM D1160 or TBP pressure correction, product-specification compliance, or plant agreement. All DOE
+assay provenance, three-cut 650 degF+ normalization, pseudo-component properties, and
+source-unreported engineering-input limitations remain unchanged.
+
+
+## Pseudo-component recovery diagnostics
+
+`DoeBigHillVacuumComponentRecovery.evaluate(...)` adds a molar component-partition audit to an
+already solved and qualified Big Hill vacuum case. It first reuses
+`DoeBigHillVacuumFractionationResult.evaluate(...)`, so the MESH, fallback, mass, energy,
+material-product, boiling-range, and aggregate component-closure gates must pass before recovery
+evidence is returned.
+
+For product $p$ and pseudo-component $c$, the dimensionless recovery is
+$R_{p,c} = \dot n_{p,c} / \dot n_{feed,c}$. The overhead and bottoms recoveries must sum to unity
+within the existing 5% screening tolerance for every component. Component order and exact NeqSim
+component names are preserved from the feed.
+
+```java
+OperatingInputs inputs =
+    new OperatingInputs(12, 4, 640.0, 0.12, 0.08, 0.16, 700.0, 0.5);
+DoeBigHillVacuumFractionationCase model =
+    DoeBigHillVacuumFractionationCase.create(
+        "Big Hill vacuum component recovery", 1000.0, inputs);
+model.getColumn().run(UUID.randomUUID());
+
+DoeBigHillVacuumComponentRecovery recovery =
+    DoeBigHillVacuumComponentRecovery.evaluate(model);
+for (String componentName : recovery.getComponentNames()) {
+  double overheadRecovery =
+      recovery.getProduct("Overhead").getComponentMolarRecovery(componentName);
+  double bottomsRecovery =
+      recovery.getProduct("Bottoms").getComponentMolarRecovery(componentName);
+}
+```
+
+The returned feed and product quantities use mol/h; recovery fractions are dimensionless. Name,
+flow, recovery, and product arrays are defensive. The result is numerical partition bookkeeping for
+the public DOE-derived three-cut synthetic screening feed. It is not measured cut recovery,
+calibrated yield, ASTM D1160/TBP or simulated-distillation evidence, a sulfur/nitrogen or contaminant
+split, a hydraulic-capacity result, an interaction model, optimization, product-specification
+compliance, or plant agreement. Feed provenance, pseudo-component properties, and every
+source-unreported operating assumption remain unchanged.

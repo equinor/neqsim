@@ -122,20 +122,20 @@ public class CombustionCalculator implements Serializable {
     MW.put("N2O", 44.0128);
 
     // ATOMS: {C, H, S, O}
-    ATOMS.put("methane", new int[] { 1, 4, 0, 0 });
-    ATOMS.put("ethane", new int[] { 2, 6, 0, 0 });
-    ATOMS.put("propane", new int[] { 3, 8, 0, 0 });
-    ATOMS.put("i-butane", new int[] { 4, 10, 0, 0 });
-    ATOMS.put("n-butane", new int[] { 4, 10, 0, 0 });
-    ATOMS.put("iso-butane", new int[] { 4, 10, 0, 0 });
-    ATOMS.put("i-pentane", new int[] { 5, 12, 0, 0 });
-    ATOMS.put("n-pentane", new int[] { 5, 12, 0, 0 });
-    ATOMS.put("22-dim-C3", new int[] { 5, 12, 0, 0 });
-    ATOMS.put("n-hexane", new int[] { 6, 14, 0, 0 });
-    ATOMS.put("benzene", new int[] { 6, 6, 0, 0 });
-    ATOMS.put("hydrogen", new int[] { 0, 2, 0, 0 });
-    ATOMS.put("CO", new int[] { 1, 0, 0, 1 });
-    ATOMS.put("H2S", new int[] { 0, 2, 1, 0 });
+    ATOMS.put("methane", new int[] {1, 4, 0, 0});
+    ATOMS.put("ethane", new int[] {2, 6, 0, 0});
+    ATOMS.put("propane", new int[] {3, 8, 0, 0});
+    ATOMS.put("i-butane", new int[] {4, 10, 0, 0});
+    ATOMS.put("n-butane", new int[] {4, 10, 0, 0});
+    ATOMS.put("iso-butane", new int[] {4, 10, 0, 0});
+    ATOMS.put("i-pentane", new int[] {5, 12, 0, 0});
+    ATOMS.put("n-pentane", new int[] {5, 12, 0, 0});
+    ATOMS.put("22-dim-C3", new int[] {5, 12, 0, 0});
+    ATOMS.put("n-hexane", new int[] {6, 14, 0, 0});
+    ATOMS.put("benzene", new int[] {6, 6, 0, 0});
+    ATOMS.put("hydrogen", new int[] {0, 2, 0, 0});
+    ATOMS.put("CO", new int[] {1, 0, 0, 1});
+    ATOMS.put("H2S", new int[] {0, 2, 1, 0});
 
     // Net (lower) heating values [kJ/mol]
     LHV_MOL.put("methane", 802.3);
@@ -750,7 +750,7 @@ public class CombustionCalculator implements Serializable {
     if (c > 0 && h == 0) {
       h = 2 * c + 2; // paraffin fallback
     }
-    return new int[] { c, h, s, o };
+    return new int[] {c, h, s, o};
   }
 
   /**
@@ -1070,7 +1070,7 @@ public class CombustionCalculator implements Serializable {
     }
 
     double totalFlueKgHr = 0.0;
-    for (String k : new String[] { "N2", "O2", "CO2", "H2O", "Ar", "SO2", "SO3" }) {
+    for (String k : new String[] {"N2", "O2", "CO2", "H2O", "Ar", "SO2", "SO3"}) {
       Double m = r.massRateKgPerHr.get(k);
       if (m != null) {
         totalFlueKgHr += m;

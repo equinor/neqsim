@@ -212,7 +212,7 @@ class DriftFluxModelTest {
   @Test
   void testInclinationEffect() {
     // Same conditions, different inclinations
-    double[] inclinations = { -45, 0, 45, 90 };
+    double[] inclinations = {-45, 0, 45, 90};
     double[] driftVelocities = new double[4];
 
     for (int i = 0; i < inclinations.length; i++) {

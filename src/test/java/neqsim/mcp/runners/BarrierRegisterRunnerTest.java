@@ -1,6 +1,7 @@
 package neqsim.mcp.runners;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -106,5 +107,60 @@ class BarrierRegisterRunnerTest {
     assertTrue(SchemaCatalog.getToolNames().contains("run_barrier_register"));
     assertNotNull(SchemaCatalog.getSchema("run_barrier_register", "input"));
     assertNotNull(SchemaCatalog.getSchema("run_barrier_register", "output"));
+  }
+
+  /** Verifies deterministic advisory fields and exclusion of impaired barriers. */
+  @Test
+  void testScreeningBoundaryAndImpairedBarrierExclusion() {
+    String json = "{\"registerId\":\"BR-1\",\"barriers\":["
+        + "{\"id\":\"B-1\",\"name\":\"Available but unqualified\",\"status\":\"AVAILABLE\",\"pfd\":0.01},"
+        + "{\"id\":\"B-2\",\"name\":\"Impaired\",\"status\":\"IMPAIRED\",\"pfd\":0.01}]}";
+    JsonObject first = JsonParser.parseString(BarrierRegisterRunner.run(json)).getAsJsonObject();
+    JsonObject second = JsonParser.parseString(BarrierRegisterRunner.run(json)).getAsJsonObject();
+
+    assertEquals(first, second);
+    assertTrue(first.get("screeningOnly").getAsBoolean());
+    assertFalse(first.get("standardConformanceClaimed").getAsBoolean());
+    assertEquals(0, first.getAsJsonObject("lopaHandoff").getAsJsonArray("layers").size());
+    assertEquals(2, first.getAsJsonObject("lopaHandoff").getAsJsonArray("excluded").size());
+    assertEquals(1, first.getAsJsonArray("impairedBarriers").size());
+  }
+
+  /** Verifies fail-closed type, count, text, numeric, nesting, and request bounds. */
+  @Test
+  void testBoundedAdmissionFailsClosed() {
+    assertError("[]", "INVALID_INPUT");
+    assertError("{\"register\":\"not-an-object\"}", "INVALID_INPUT");
+    assertError("{\"barriers\":\"not-an-array\"}", "INVALID_INPUT");
+    assertError("{\"barriers\":[1]}", "INVALID_INPUT");
+    assertError("{\"barriers\":[{\"pfd\":\"NaN\"}]}", "INVALID_INPUT");
+
+    StringBuilder barriers = new StringBuilder("{\"barriers\":[");
+    for (int i = 0; i < 101; i++) {
+      if (i > 0) {
+        barriers.append(',');
+      }
+      barriers.append("{\"id\":\"B-").append(i).append("\"}");
+    }
+    barriers.append("]}");
+    assertError(barriers.toString(), "INVALID_INPUT");
+    assertError("{\"name\":\"" + repeat('x', 4097) + "\"}", "INVALID_INPUT");
+    assertError("{\"padding\":\"" + repeat('x', 65536) + "\"}", "REQUEST_TOO_LARGE");
+  }
+
+  /** Requires the stable bounded advisory error envelope. */
+  private static void assertError(String request, String code) {
+    JsonObject result = JsonParser.parseString(BarrierRegisterRunner.run(request)).getAsJsonObject();
+    assertEquals("error", result.get("status").getAsString(), result.toString());
+    assertEquals(code, result.get("code").getAsString(), result.toString());
+    assertTrue(result.get("screeningOnly").getAsBoolean());
+    assertFalse(result.get("standardConformanceClaimed").getAsBoolean());
+  }
+
+  /** Java 8-compatible character repetition for admission fixtures. */
+  private static String repeat(char value, int count) {
+    char[] chars = new char[count];
+    java.util.Arrays.fill(chars, value);
+    return new String(chars);
   }
 }

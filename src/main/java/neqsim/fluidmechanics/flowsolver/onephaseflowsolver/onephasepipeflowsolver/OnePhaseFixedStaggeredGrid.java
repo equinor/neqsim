@@ -1578,7 +1578,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           + "zero or non-finite";
     }
 
-    double[] normalizedPerturbations = { 1.0e-5, 1.0e-6, 1.0e-7 };
+    double[] normalizedPerturbations = {1.0e-5, 1.0e-6, 1.0e-7};
     double[] massRelativeErrors = new double[normalizedPerturbations.length];
     double[] momentumRelativeErrors = new double[normalizedPerturbations.length];
     double[] jacobianDirection = multiplyCoupledBandedJacobian(jacobian, direction);
@@ -1714,8 +1714,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   }
 
   private String calculateRepeatedNodeStateDetail(double[][] first, double[][] repeated) {
-    String[] labels = { "phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow", "volumetricFlow", "Reynolds",
-        "frictionFactor", "componentMoles" };
+    String[] labels = {"phaseMoles", "density", "velocityIn", "meanVelocity", "massFlow", "volumetricFlow", "Reynolds",
+        "frictionFactor", "componentMoles"};
     double[] maximumRelativeDrift = new double[labels.length];
     int[] maximumDriftNode = new int[labels.length];
     for (int node = 0; node < first.length; node++) {

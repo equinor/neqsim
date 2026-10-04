@@ -421,6 +421,15 @@ as an external feed or product.
 
 ## Hydraulics and Pressure-Drop Coupling
 
+After solving a column, `DistillationColumnMechanicalDesign.calcDesign()` initializes the
+bottom-tray outlet fluid properties before reading densities for preliminary tray sizing.
+Column-product fallback streams are initialized in the same way. Callers do not need to
+initialize these outlet properties manually or run the design twice. This also applies to
+`AbsorptionColumn` and `StrippingColumn`, which share the mechanical-design class.
+The preliminary `getWeirLoading()` is in m³/h per metre of weir, and
+`getTrayPressureDrop()` is in mbar per tray, including the liquid-head contribution.
+These remain screening correlations; initializing properties does not establish column convergence.
+
 `calcColumnInternals()` evaluates tray or packing hydraulics for the latest column state.
 
 ```java
@@ -529,6 +538,16 @@ String report = absorber.toJson();
 
 The rate-based model exposes segment profiles, component-transfer totals, pressure-drop and flood
 fraction diagnostics, film/heat-transfer model choices, and equation-oriented residual diagnostics.
+
+The fixed-point solver rejects a positive-height profile with `IllegalStateException` when the iteration limit is reached without a finite outlet component-flow residual at or below `getConvergenceTolerance()`. Inspect `getLastConvergenceResidual()` (mol/s) and `getLastIterationCount()` after failure. `solved()` is false; previously accepted outlets and segment results are retained but are stale. A zero-height no-transfer column remains a supported bypass. An intermediate fixed-point profile may still seed the equation-oriented solver without being published; its final result must pass the separate column residual tolerance.
+
+`ColumnSolver.EQUATION_ORIENTED` throws `IllegalStateException` when the final full-transfer
+residual is non-finite or exceeds `getColumnResidualTolerance()`. The failed run clears the solved
+flag and retains residual diagnostics, but does not replace the outlet streams. Any outlets from a
+previous successful run are stale after this exception and must not be consumed as current results.
+The optional equation-oriented solver is not yet qualified for the CO2/water and TEG benchmark
+cases tracked in issues #4093 and #4094. The separate simultaneous segment solver's enthalpy
+conservation regression remains unresolved in #4094.
 
 ## Diagnostics and Results
 

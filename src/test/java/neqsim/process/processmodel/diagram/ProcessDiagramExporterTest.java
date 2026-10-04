@@ -663,7 +663,7 @@ class ProcessDiagramExporterTest {
 
     neqsim.process.equipment.splitter.Splitter splitter = new neqsim.process.equipment.splitter.Splitter(
         "Discharge Splitter", compressor.getOutletStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
     recycleProcess.add(splitter);
 
     // Recycle stream back to mixer
@@ -830,9 +830,9 @@ class ProcessDiagramExporterTest {
   @Test
   void testEquipmentVisualStylesForAllCategories() {
     // Test that all major equipment categories have visual styles defined
-    String[] equipmentTypes = { "Separator", "ThreePhaseSeparator", "Compressor", "Pump", "Expander", "HeatExchanger",
+    String[] equipmentTypes = {"Separator", "ThreePhaseSeparator", "Compressor", "Pump", "Expander", "HeatExchanger",
         "Cooler", "Heater", "ThrottlingValve", "Mixer", "Splitter", "Stream", "DistillationColumn", "Reactor",
-        "Recycle", "Adjuster", "Calculator", "Flare", "Ejector", "Filter", "Membrane", "Tank", "Pipeline", "Well" };
+        "Recycle", "Adjuster", "Calculator", "Flare", "Ejector", "Filter", "Membrane", "Tank", "Pipeline", "Well"};
 
     for (String type : equipmentTypes) {
       EquipmentVisualStyle style = EquipmentVisualStyle.getStyle(type);

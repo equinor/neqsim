@@ -59,9 +59,32 @@ public class PhaseWax extends PhaseSolid {
    * Sets the wax component model to use for fugacity calculations.
    *
    * @param modelName one of "Pedersen", "Won", "Wilson", "Coutinho"
+   * @throws IllegalArgumentException for an unknown model
+   * @throws IllegalStateException when changing the model of populated wax components
    */
   public void setWaxComponentModel(String modelName) {
-    this.waxComponentModelName = modelName;
+    String selected = validateWaxComponentModel(modelName);
+    if (getNumberOfComponents() > 0 && !selected.equalsIgnoreCase(waxComponentModelName)) {
+      throw new IllegalStateException(
+          "Select the wax model before adding wax components or calling addSolidComplexPhase");
+    }
+    this.waxComponentModelName = selected;
+  }
+
+  /**
+   * Validate a model name before changing system or phase configuration.
+   *
+   * @param modelName requested model name
+   * @return canonical model name
+   * @throws IllegalArgumentException if the name is not supported
+   */
+  public static String validateWaxComponentModel(String modelName) {
+    for (String supported : new String[] {"Pedersen", "Won", "Wilson", "Coutinho"}) {
+      if (supported.equalsIgnoreCase(modelName)) {
+        return supported;
+      }
+    }
+    throw new IllegalArgumentException("Unknown wax model: " + modelName);
   }
 
   /**

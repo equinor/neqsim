@@ -183,13 +183,13 @@ public class Pipeline extends TwoPortEquipment
   boolean equilibriumMassTransfer = false;
   int numberOfLegs = 1;
   int numberOfNodesInLeg = 30;
-  double[] legHeights = { 0, 0 };
-  double[] legPositions = { 0.0, 1.0 };
-  double[] pipeDiameters = { 0.1507588, 0.1507588 };
-  double[] outerTemperature = { 278.0, 278.0 };
-  double[] pipeWallRoughness = { 1e-5, 1e-5 };
-  double[] outerHeatTransferCoeffs = { 1e-5, 1e-5 };
-  double[] wallHeatTransferCoeffs = { 1e-5, 1e-5 };
+  double[] legHeights = {0, 0};
+  double[] legPositions = {0.0, 1.0};
+  double[] pipeDiameters = {0.1507588, 0.1507588};
+  double[] outerTemperature = {278.0, 278.0};
+  double[] pipeWallRoughness = {1e-5, 1e-5};
+  double[] outerHeatTransferCoeffs = {1e-5, 1e-5};
+  double[] wallHeatTransferCoeffs = {1e-5, 1e-5};
 
   PipelineMechanicalDesign pipelineMechanicalDesign = null;
 

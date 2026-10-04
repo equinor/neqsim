@@ -8,9 +8,9 @@ class TwoFluidLegacyStateRecoveryRegressionTest {
   void fiveVariableInputReplacesEveryLiquidInventory() {
     TwoFluidSection section = section();
     section.setWaterCut(0.25);
-    section.setStateVector(new double[] { 1.0, 8.0, 16.0, 2.0, 16.0, 48.0, 100.0 });
+    section.setStateVector(new double[] {1.0, 8.0, 16.0, 2.0, 16.0, 48.0, 100.0});
 
-    section.setStateVector(new double[] { 2.0, 12.0, 6.0, 24.0, 500.0 });
+    section.setStateVector(new double[] {2.0, 12.0, 6.0, 24.0, 500.0});
 
     assertEquals(12.0, section.getOilMassPerLength() + section.getWaterMassPerLength(), 1.0e-12);
     assertEquals(24.0, section.getOilMomentumPerLength() + section.getWaterMomentumPerLength(), 1.0e-12);
@@ -26,9 +26,9 @@ class TwoFluidLegacyStateRecoveryRegressionTest {
   @Test
   void sixVariableGasOnlyInputClearsOldLiquidMomenta() {
     TwoFluidSection section = section();
-    section.setStateVector(new double[] { 1.0, 8.0, 16.0, 2.0, 16.0, 48.0, 100.0 });
+    section.setStateVector(new double[] {1.0, 8.0, 16.0, 2.0, 16.0, 48.0, 100.0});
 
-    section.setStateVector(new double[] { 2.0, 0.0, 0.0, 6.0, 0.0, 500.0 });
+    section.setStateVector(new double[] {2.0, 0.0, 0.0, 6.0, 0.0, 500.0});
 
     assertEquals(0.0, section.getOilMomentumPerLength(), 0.0);
     assertEquals(0.0, section.getWaterMomentumPerLength(), 0.0);
@@ -37,9 +37,9 @@ class TwoFluidLegacyStateRecoveryRegressionTest {
   @Test
   void sixVariableTraceLiquidInputPreservesItsSpecifiedMomentum() {
     TwoFluidSection section = section();
-    section.setStateVector(new double[] { 1.0, 8.0, 16.0, 2.0, 16.0, 48.0, 100.0 });
+    section.setStateVector(new double[] {1.0, 8.0, 16.0, 2.0, 16.0, 48.0, 100.0});
 
-    section.setStateVector(new double[] { 2.0, 4.0e-13, 6.0e-13, 6.0, 3.0e-12, 500.0 });
+    section.setStateVector(new double[] {2.0, 4.0e-13, 6.0e-13, 6.0, 3.0e-12, 500.0});
 
     assertEquals(1.2e-12, section.getOilMomentumPerLength(), 1.0e-26);
     assertEquals(1.8e-12, section.getWaterMomentumPerLength(), 1.0e-26);

@@ -43,8 +43,8 @@ public final class CompositionRunner {
   private static final int MAX_COLLECTION_ENTRIES = 64;
   private static final int MAX_CUSTOM_SERVERS = 32;
   private static final int DEFAULT_SERVER_COUNT = 5;
-  private static final String[] CONNECTION_FIELDS = { "endpoint", "url", "command", "arguments", "environment",
-      "headers", "credentials", "token", "apiKey", "secret" };
+  private static final String[] CONNECTION_FIELDS = {"endpoint", "url", "command", "arguments", "environment",
+      "headers", "credentials", "token", "apiKey", "secret"};
 
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 

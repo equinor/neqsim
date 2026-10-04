@@ -10,16 +10,51 @@ Usage:
     neqsim new-task "hydrate formation temperature" --type A --author "Your Name"
     neqsim new-task "task title" --prompt "verbatim user request"
     neqsim new-task "task title" --prompt-file path/to/request.txt
+    neqsim new-task "task title" --prompt-file path/to/task_brief.docx   # or .md
     neqsim new-task "field study" --scale comprehensive --report-depth detailed
     neqsim new-task "field study" --notebooks "01_basis.ipynb,02_model.ipynb"
     neqsim new-task "field study" --intake-pause always
     neqsim new-task "field study" --config-file study_config.yaml
+    neqsim new-task "PEPR title" --slug 2026-09-25_pepr_80298789_x   # exact folder name;
+                                         # scaffolds around files already in it
     neqsim new-task --setup              # just create task_solve/ without a task
     neqsim new-task --list               # list existing tasks
+    neqsim new-task --set-default-folder "D:/Engineering Tasks"
+    neqsim new-task --set-default-folder cwd   # follow the terminal folder
+    neqsim new-task --show-task-root     # print the resolved destination
+    neqsim new-task "task title" --task-root "D:/One-off Studies"
+    neqsim new-task "task title" --task-root .    # into the terminal folder
+    neqsim new-task --reset-default-folder
+    neqsim new-task --set-report-template "C:/…/company template.docx"
+    neqsim new-task --show-report-template
+    neqsim new-task --reset-report-template
+    neqsim new-task --set-document-root "C:/…/Engineering Documents"
+    neqsim new-task --show-document-root
+    neqsim new-task --reset-document-root
+
+Destination precedence: --task-root, NEQSIM_TASK_ROOT, saved user default,
+then <repository>/task_solve. Settings: ~/.neqsim/task_defaults.json.
+The short top-level equivalents are `neqsim --set-task-root PATH`,
+`neqsim --show-task-root`, and `neqsim --reset-task-root`.
+
+Word reports are built from the template resolved as: generate_report.py
+--template PATH, NEQSIM_REPORT_TEMPLATE, then the saved `report_template`
+setting. The short top-level equivalents are `neqsim --set-report-template
+PATH`, `neqsim --show-report-template`, and `neqsim --reset-report-template`.
+
+The document root is the folder agents read source documents from, including
+every subfolder. It resolves as: explicit path, NEQSIM_DOCUMENT_ROOT, then the
+saved `document_root` setting. The short top-level equivalents are `neqsim
+--set-document-root PATH`, `neqsim --show-document-root`, `neqsim
+--reset-document-root`, and `neqsim documents [PATTERN]` to search it.
 """
+import argparse
 import os
+import json
 import shutil
+import subprocess
 import sys
+from collections import OrderedDict
 from datetime import date
 
 
@@ -28,6 +63,477 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 TASK_SOLVE_DIR = os.path.join(PROJECT_ROOT, "task_solve")
 TEMPLATE_DIR = os.path.join(TASK_SOLVE_DIR, "TASK_TEMPLATE")
+CWD_TASK_ROOT = "."
+CWD_ALIASES = ("cwd", "here", ".")
+REPORT_TEMPLATE_EXTENSIONS = (".docx", ".dotx")
+
+# Recorded by the tooling, not chosen by the user: never keeps the file alive.
+BOOKKEEPING_SETTINGS = ("project_root",)
+
+
+def task_defaults_path():
+    """Return the user-level task destination configuration file."""
+    return os.path.expanduser("~/.neqsim/task_defaults.json")
+
+
+def read_task_defaults():
+    """Return the saved user settings, or an empty mapping when unset."""
+    path = task_defaults_path()
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8-sig") as source:
+        settings = json.load(source)
+    if not isinstance(settings, dict):
+        raise ValueError("{} must contain a JSON object".format(path))
+    return settings
+
+
+def _write_task_defaults(settings):
+    """Persist user settings, removing the file once no setting remains."""
+    path = task_defaults_path()
+    if not any(key not in BOOKKEEPING_SETTINGS for key in settings):
+        if os.path.exists(path):
+            os.remove(path)
+        return
+    _write_file(path, json.dumps(settings, indent=2) + "\n")
+
+
+def _normalize_task_root(task_root):
+    """Map follow-the-terminal aliases onto the current working directory."""
+    return CWD_TASK_ROOT if task_root.strip().lower() in CWD_ALIASES else task_root
+
+
+def ensure_folder(path, label="Folder"):
+    """Create a configured folder so a first-time setting is immediately usable.
+
+    Never deletes, empties, or replaces anything: an existing folder is left
+    exactly as it is, and a path occupied by a file is reported instead of being
+    overwritten.
+
+    Parameters
+    ----------
+    path : str
+        Absolute folder path to create when it does not exist.
+    label : str
+        Human-readable name used in error messages.
+
+    Returns
+    -------
+    bool
+        True when the folder was created by this call, False when it existed.
+
+    Raises
+    ------
+    ValueError
+        If the path exists but is a file, or cannot be created.
+    """
+    if os.path.isdir(path):
+        return False
+    if os.path.exists(path):
+        raise ValueError("{} is a file, not a folder: {}".format(label, path))
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError as error:
+        raise ValueError("Could not create {} {}: {}".format(label.lower(), path, error))
+    return True
+
+
+def add_folder_to_vscode_workspace(path):
+    """Add a folder to the active VS Code workspace through the `code` CLI.
+
+    Parameters
+    ----------
+    path : str
+        Absolute folder to add to the last active VS Code window.
+
+    Returns
+    -------
+    tuple of (bool, str)
+        Whether the folder was handed to VS Code, and a reason when it was not.
+    """
+    if os.environ.get("NEQSIM_NO_VSCODE", "").strip():
+        return False, "disabled by NEQSIM_NO_VSCODE"
+    executable = shutil.which("code") or shutil.which("code-insiders")
+    if not executable:
+        return False, ("VS Code command line not found on PATH "
+                       "(run 'Shell Command: Install code command in PATH')")
+    try:
+        completed = subprocess.run([executable, "--add", path],
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except OSError as error:
+        return False, "Could not run {}: {}".format(executable, error)
+    if completed.returncode != 0:
+        detail = (completed.stdout or b"").decode("utf-8", "replace").strip()
+        return False, detail or "{} --add exited with {}".format(executable,
+                                                                 completed.returncode)
+    return True, ""
+
+
+def open_folder_in_file_manager(path):
+    """Open ``path`` in the OS file manager (Explorer / Finder / the default handler).
+
+    Parameters
+    ----------
+    path : str
+        Absolute folder to reveal. Must already exist.
+
+    Returns
+    -------
+    tuple of (bool, str)
+        Whether a file manager was launched, and a reason when it was not.
+    """
+    if os.environ.get("NEQSIM_NO_EXPLORER", "").strip():
+        return False, "disabled by NEQSIM_NO_EXPLORER"
+    if not os.path.isdir(path):
+        return False, "not a folder: {}".format(path)
+    try:
+        if sys.platform.startswith("win"):
+            os.startfile(path)  # noqa: opens the folder the user just configured
+            return True, ""
+        executable = "open" if sys.platform == "darwin" else shutil.which("xdg-open")
+        if not executable:
+            return False, "no file manager launcher found (xdg-open not on PATH)"
+        completed = subprocess.run([executable, path],
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except OSError as error:
+        return False, "Could not open a file manager: {}".format(error)
+    if completed.returncode != 0:
+        detail = (completed.stdout or b"").decode("utf-8", "replace").strip()
+        return False, detail or "{} exited with {}".format(executable, completed.returncode)
+    return True, ""
+
+
+def resolve_task_root(task_root=None):
+    """Resolve explicit, environment, saved-user, then repository task root."""
+    selected = task_root or os.environ.get("NEQSIM_TASK_ROOT")
+    if not selected:
+        selected = read_task_defaults().get("task_root")
+    if selected is not None and (not isinstance(selected, str) or not selected.strip()):
+        raise ValueError("Task root must be a non-empty path string")
+    selected = _normalize_task_root(selected) if selected else TASK_SOLVE_DIR
+    return os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+
+
+def save_default_task_root(task_root, create=True):
+    """Persist an absolute task root, or '.' to follow the terminal folder.
+
+    A folder that does not exist yet is created, so the setting a user just
+    typed is usable straight away instead of failing at the first task.
+    """
+    if not task_root or not task_root.strip():
+        raise ValueError("Task root must be a non-empty path string")
+    stored = _normalize_task_root(task_root)
+    if stored != CWD_TASK_ROOT:
+        stored = resolve_task_root(task_root)
+        if create:
+            ensure_folder(stored, "Task root")
+    settings = read_task_defaults()
+    settings["task_root"] = stored
+    _write_task_defaults(settings)
+    return stored
+
+
+def clear_default_task_root():
+    """Remove the saved task root, keeping other settings intact."""
+    settings = read_task_defaults()
+    removed = settings.pop("task_root", None) is not None
+    _write_task_defaults(settings)
+    return removed
+
+
+# Task folders carry a launcher, not a copy, of this generator.
+VENDORED_GENERATOR_REL = "step3_report/generate_report.py"
+
+
+def canonical_generator_path():
+    """Return the absolute path of the one report generator everyone runs."""
+    return os.path.join(SCRIPT_DIR, "task_template", "step3_report",
+                        "generate_report.py")
+
+
+def save_project_root():
+    """Record this checkout so task folders elsewhere can find the tooling."""
+    try:
+        settings = read_task_defaults()
+    except (OSError, ValueError):
+        return None
+    if settings.get("project_root") == PROJECT_ROOT:
+        return PROJECT_ROOT
+    settings["project_root"] = PROJECT_ROOT
+    try:
+        _write_task_defaults(settings)
+    except OSError:
+        return None
+    return PROJECT_ROOT
+
+
+def resolve_report_template(report_template=None):
+    """Resolve explicit, environment, then saved-user Word report template.
+
+    Returns an absolute path to an existing .docx/.dotx file, or None when no
+    template is configured. Raises ValueError for a configured but unusable
+    template so the branding failure is reported instead of silently dropped.
+
+    Parameters
+    ----------
+    report_template : str or None
+        Explicit template path that overrides environment and saved settings.
+
+    Returns
+    -------
+    str or None
+        Absolute template path, or None when the built-in styling applies.
+
+    Raises
+    ------
+    ValueError
+        If the resolved template is blank, not a Word file, or missing.
+    """
+    selected = report_template or os.environ.get("NEQSIM_REPORT_TEMPLATE")
+    if not selected:
+        selected = read_task_defaults().get("report_template")
+    if selected is None:
+        return None
+    if not isinstance(selected, str) or not selected.strip():
+        raise ValueError("Report template must be a non-empty path to a .docx or .dotx file")
+    path = os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+    if os.path.splitext(path)[1].lower() not in REPORT_TEMPLATE_EXTENSIONS:
+        raise ValueError("Report template must be a .docx or .dotx file: {}".format(path))
+    if not os.path.isfile(path):
+        raise ValueError("Report template not found: {}".format(path))
+    return path
+
+
+def save_default_report_template(report_template):
+    """Persist the Word template every generated report should be built from."""
+    if not report_template or not report_template.strip():
+        raise ValueError("Report template must be a non-empty path to a .docx or .dotx file")
+    stored = resolve_report_template(report_template)
+    settings = read_task_defaults()
+    settings["report_template"] = stored
+    _write_task_defaults(settings)
+    return stored
+
+
+def clear_default_report_template():
+    """Remove the saved report template, keeping other settings intact."""
+    settings = read_task_defaults()
+    removed = settings.pop("report_template", None) is not None
+    _write_task_defaults(settings)
+    return removed
+
+
+def resolve_document_root(document_root=None):
+    """Resolve explicit, environment, then saved-user source-document folder.
+
+    The document root is the folder agents read source documents from, and every
+    subfolder below it is in scope. Returns None when no folder is configured.
+    A configured but missing folder raises instead of silently resolving to
+    nothing, so the agent reports the blocker rather than working document-free.
+
+    Parameters
+    ----------
+    document_root : str or None
+        Explicit folder that overrides environment and saved settings.
+
+    Returns
+    -------
+    str or None
+        Absolute folder path, or None when no document root is configured.
+
+    Raises
+    ------
+    ValueError
+        If the resolved document root is blank or is not an existing folder.
+    """
+    selected = document_root or os.environ.get("NEQSIM_DOCUMENT_ROOT")
+    if not selected:
+        selected = read_task_defaults().get("document_root")
+    if selected is None:
+        return None
+    if not isinstance(selected, str) or not selected.strip():
+        raise ValueError("Document root must be a non-empty folder path")
+    path = os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+    if not os.path.isdir(path):
+        raise ValueError("Document root folder not found: {}".format(path))
+    return path
+
+
+def save_default_document_root(document_root, create=True):
+    """Persist the folder every task reads source documents from.
+
+    A folder that does not exist yet is created, so a user can point the setting
+    at a new library and start filling it with standards and datasheets. A root
+    that is configured but later disappears still raises on resolve, so the
+    missing library is reported as a blocker rather than silently ignored.
+    """
+    if not document_root or not document_root.strip():
+        raise ValueError("Document root must be a non-empty folder path")
+    if create:
+        ensure_folder(
+            os.path.abspath(os.path.expandvars(os.path.expanduser(document_root))),
+            "Document root")
+    stored = resolve_document_root(document_root)
+    settings = read_task_defaults()
+    settings["document_root"] = stored
+    _write_task_defaults(settings)
+    return stored
+
+
+def clear_default_document_root():
+    """Remove the saved document root, keeping other settings intact."""
+    settings = read_task_defaults()
+    removed = settings.pop("document_root", None) is not None
+    _write_task_defaults(settings)
+    return removed
+
+
+def find_documents(pattern="", document_root=None, limit=0):
+    """List documents under the configured document root and all subfolders.
+
+    Parameters
+    ----------
+    pattern : str
+        Case-insensitive substring matched against the path relative to the
+        document root. Empty lists every file.
+    document_root : str or None
+        Explicit folder that overrides environment and saved settings.
+    limit : int
+        Maximum number of matches to return; 0 returns all of them.
+
+    Returns
+    -------
+    list of str
+        Absolute file paths, sorted, from the root and every subfolder.
+    """
+    root = resolve_document_root(document_root)
+    if root is None:
+        raise ValueError(
+            "No document root configured. Set one: neqsim --set-document-root \"PATH\"")
+    needle = (pattern or "").strip().lower()
+    matches = []
+    visited = set()
+    # followlinks reaches a junction/symlink subfolder, which a library assembled
+    # from several drives relies on; visited real paths stop the resulting cycles.
+    for folder, subfolders, files in os.walk(root, followlinks=True):
+        real = os.path.realpath(folder)
+        if real in visited:
+            subfolders[:] = []
+            continue
+        visited.add(real)
+        subfolders[:] = sorted(name for name in subfolders if not name.startswith("."))
+        for name in sorted(files):
+            if name.startswith("."):
+                continue
+            path = os.path.join(folder, name)
+            if needle and needle not in os.path.relpath(path, root).lower():
+                continue
+            matches.append(path)
+            if limit and len(matches) >= limit:
+                return matches
+    return matches
+
+
+DOCUMENT_ROOT_INDEX_NAME = "document_root_index.md"
+
+_DOCUMENT_INDEX_HEADER = """# Source Document Library Index
+
+- Document root: {root}
+- Indexed: {today}
+- Files: {count} (root folder and every subfolder)
+
+This library is **read-only**. Search it before reporting a standard, datasheet,
+drawing, or vendor document as unavailable, then copy the documents this task
+actually uses into a per-source subfolder here (`stid/`, `vendor/`, `literature/`,
+`manual/`, ...) so the task folder stays self-contained.
+
+```bash
+neqsim documents "API 521"          # recursive search of the library
+neqsim documents --index .          # refresh this index after the library changes
+```
+
+File names are indicative only: a document may cover standards its name does not
+mention, so open a likely candidate before concluding the library lacks a source.
+"""
+
+_DOCUMENT_INDEX_NONE = """# Source Document Library Index
+
+No document root is configured, so this task has no local source-document library.
+
+Work from the documents the user supplies directly, and record every source that
+could not be obtained as a data gap in `results.json` (`data_gaps`). Configure a
+library so future tasks can search it:
+
+```bash
+neqsim --set-document-root "PATH"
+```
+"""
+
+_DOCUMENT_INDEX_BLOCKED = """# Source Document Library Index
+
+A document root is configured but could not be read, so no local source library
+is available to this task:
+
+    {error}
+
+Report this as a blocker rather than silently working document-free. Fix the
+setting with `neqsim --set-document-root "PATH"` or clear it with
+`neqsim --reset-document-root`.
+"""
+
+
+def write_document_root_index(task_dir, document_root=None, limit=2000):
+    """Write the task-local listing of the configured source-document library.
+
+    Agents read the task folder, not the user settings, so a configured library
+    stays invisible unless it is listed where they already look. The file is
+    written even when no root is configured, so its absence never reads as
+    "there was nothing to find".
+
+    Parameters
+    ----------
+    task_dir : str
+        Task folder that receives the index under step1_scope_and_research.
+    document_root : str or None
+        Explicit folder that overrides environment and saved settings.
+    limit : int
+        Maximum number of files listed; the rest are reported as a remainder.
+
+    Returns
+    -------
+    str
+        Path of the index file written.
+    """
+    path = os.path.join(task_dir, "step1_scope_and_research", "references",
+                        DOCUMENT_ROOT_INDEX_NAME)
+    try:
+        root = resolve_document_root(document_root)
+    except (OSError, ValueError) as error:
+        _write_file(path, _DOCUMENT_INDEX_BLOCKED.format(error=error))
+        return path
+    if root is None:
+        _write_file(path, _DOCUMENT_INDEX_NONE)
+        return path
+
+    documents = find_documents(document_root=root)
+    sections = OrderedDict()
+    for document in documents[:limit]:
+        folder = os.path.dirname(os.path.relpath(document, root))
+        sections.setdefault(folder.replace("\\", "/") or "(root)", []).append(
+            os.path.basename(document))
+
+    lines = [_DOCUMENT_INDEX_HEADER.format(root=root, today=date.today().isoformat(),
+                                           count=len(documents))]
+    for folder, names in sections.items():
+        lines.append("## {}\n".format(folder))
+        lines.extend("- {}".format(name) for name in names)
+        lines.append("")
+    if len(documents) > limit:
+        lines.append("_{} further file(s) not listed. Search them with "
+                     "`neqsim documents PATTERN`._\n".format(len(documents) - limit))
+    _write_file(path, "\n".join(lines))
+    return path
+
 
 TASK_TYPES = {
     "A": "Property",
@@ -57,7 +563,7 @@ figures, and reports.
 Open VS Code Copilot Chat and type:
 
 ```
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 That's it. The agent creates the folder, researches the topic, builds and runs
@@ -105,7 +611,7 @@ You have an engineering question — "What's the hydrate temperature for this
 gas?" or "Size a 3-stage compressor train." You don't want to learn Java or git.
 
 1. Open VS Code Copilot Chat
-2. Type: `@solve.task hydrate temperature for wet gas at 100 bara`
+2. Type: `@solve-task hydrate temperature for wet gas at 100 bara`
 3. The agent creates a folder, runs the simulation, and gives you results
 4. Find reports in `task_solve/.../step3_report/`
 
@@ -114,7 +620,7 @@ gas?" or "Size a 3-stage compressor train." You don't want to learn Java or git.
 You're solving a task AND improving the NeqSim codebase. When the API is
 missing something, you add it mid-task — new methods, equipment, or models.
 
-1. Type: `@solve.task add JT coefficient method` (or run `neqsim new-task` for manual control)
+1. Type: `@solve-task add JT coefficient method` (or run `neqsim new-task` for manual control)
 2. Work through all 3 steps — the agent flags API gaps as it goes
 3. Add the missing Java code, rebuild, and the notebook picks it up immediately
 4. Promote reusable code back into `src/main/`, `src/test/`, or `examples/`
@@ -124,7 +630,7 @@ missing something, you add it mid-task — new methods, equipment, or models.
 You're producing a deliverable — a report, technology screening, or design
 study. The 3 steps map directly to a professional workflow.
 
-1. Type: `@solve.task field development concept selection for deepwater gas`
+1. Type: `@solve-task field development concept selection for deepwater gas`
 2. Review and refine the scope and research notes the agent produces
 3. Iterate on analysis — the agent refines until results validate
 4. Run report generation to produce Word + HTML deliverables
@@ -156,9 +662,9 @@ coding agent that can read files and run commands can drive the workflow.
 - `git` + `gh pr create` — contributing back via PR
 
 **What's VS Code Copilot-specific** (optional convenience):
-- `@solve.task` agent — automates the full workflow (the agent reads
-  `.github/agents/solve.task.agent.md` for its instructions)
-- Specialist agents (`@thermo.fluid`, `@solve.process`, etc.)
+- `@solve-task` agent — automates the full workflow (the agent reads
+  `.github/agents/solve-task.agent.md` for its instructions)
+- Specialist agents (`@thermo-fluid`, `@solve-process`, etc.)
 
 ---
 
@@ -187,7 +693,7 @@ agent scales its depth based on what you ask for:
 | **Standard** | "TEG dehydration for 50 MMSCFD" | Full task_spec, complete notebook, Word + HTML reports |
 | **Comprehensive** | "field development concept selection per NORSOK" | Detailed task_spec with all standards, multiple notebooks per discipline, full HTML report with navigation |
 
-**The same `@solve.task` command handles all of these.** The agent reads your
+**The same `@solve-task` command handles all of these.** The agent reads your
 request and decides how deep to go. Specify standards ("per DNV-OS-F101") and
 deliverables ("with sensitivity analysis and cost estimate") to guide depth.
 
@@ -196,13 +702,13 @@ deliverables ("with sensitivity analysis and cost estimate") to guide depth.
 You control the scope through your request — the more you specify, the deeper
 the analysis. Compare:
 
-- **Simple:** `@solve.task hydrate temperature for wet gas at 100 bara`
+- **Simple:** `@solve-task hydrate temperature for wet gas at 100 bara`
   → Quick calculation, one-page result
 
-- **Medium:** `@solve.task hydrate temperature for wet gas at 100 bara, per NORSOK P-001, with inhibitor dosing curve`
+- **Medium:** `@solve-task hydrate temperature for wet gas at 100 bara, per NORSOK P-001, with inhibitor dosing curve`
   → Standard analysis with standards compliance and sensitivity plot
 
-- **Full study:** `@solve.task field development flow assurance assessment per NORSOK P-001 and DNV-RP-F109, covering hydrate, wax, corrosion, and slugging for 50 km subsea tieback, deliver phase envelopes, inhibitor curves, pipeline profiles, and design basis document`
+- **Full study:** `@solve-task field development flow assurance assessment per NORSOK P-001 and DNV-RP-F109, covering hydrate, wax, corrosion, and slugging for 50 km subsea tieback, deliver phase envelopes, inhibitor curves, pipeline profiles, and design basis document`
   → Multi-notebook comprehensive study with full deliverable set
 
 ---
@@ -324,14 +830,14 @@ The deliverables are a **Word report** (`.docx`) and optionally an **HTML report
 
 | Agent | Best For | Example |
 |-------|----------|---------|
-| `@solve.task` | **Full 3-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
-| `@thermo.fluid` | Fluid setup, EOS, flash, properties | "Density of CO2-methane mix at 200 bar" |
-| `@solve.process` | Complete simulation -> notebook | "TEG dehydration for 50 MMSCFD" |
-| `@pvt.simulation` | PVT lab experiments | "CME test at 100C for this oil" |
-| `@gas.quality` | Gas standards (ISO, GPA) | "Wobbe index per ISO 6976" |
-| `@mechanical.design` | Wall thickness, sizing | "20-inch pipe per DNV-OS-F101" |
-| `@flow.assurance` | Hydrates, wax, corrosion | "Hydrate curve for wet gas at 100 bara" |
-| `@safety.depressuring` | Blowdown, PSV, fire | "Fire-case blowdown for HP separator" |
+| `@solve-task` | **Full 3-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
+| `@thermo-fluid` | Fluid setup, EOS, flash, properties | "Density of CO2-methane mix at 200 bar" |
+| `@solve-process` | Complete simulation -> notebook | "TEG dehydration for 50 MMSCFD" |
+| `@pvt-simulation` | PVT lab experiments | "CME test at 100C for this oil" |
+| `@gas-quality` | Gas standards (ISO, GPA) | "Wobbe index per ISO 6976" |
+| `@mechanical-design` | Wall thickness, sizing | "20-inch pipe per DNV-OS-F101" |
+| `@flow-assurance` | Hydrates, wax, corrosion | "Hydrate curve for wet gas at 100 bara" |
+| `@safety-depressuring` | Blowdown, PSV, fire | "Fire-case blowdown for HP separator" |
 
 ---
 
@@ -368,7 +874,7 @@ git push -u origin task/your-task-name
 gh pr create --title "Add [description]" --body "From task: [task title]"
 ```
 
-> **Tip:** The `@solve.task` agent can do this for you — just ask
+> **Tip:** The `@solve-task` agent can do this for you — just ask
 > "create a PR with the reusable outputs from this task".
 
 ---
@@ -404,7 +910,7 @@ The task type **G (Workflow)** is intended for these multi-discipline studies.
 ### Example: Field Development Concept Selection
 
 ```
-@solve.task field development concept selection for 200 MMSCFD deepwater gas,
+@solve-task field development concept selection for 200 MMSCFD deepwater gas,
   per NORSOK P-001, Z-013, L-001, and DNV-OS-F101.
   Evaluate subsea tieback vs. FPSO vs. fixed platform.
   Deliver: reservoir fluid characterization, process train sizing,
@@ -513,13 +1019,13 @@ Create a Jupyter notebook in step2_analysis/ that:
 
 | Task Type | Agent | Example prompt |
 |-----------|-------|----------------|
-| Fluid properties | `@thermo.fluid` | "Create a CPA fluid for gas with 5% MEG" |
-| Process simulation | `@solve.process` | "3-stage compression from 5 to 150 bara" |
-| PVT study | `@pvt.simulation` | "CME test for reservoir fluid at 100C" |
-| Gas quality | `@gas.quality` | "Wobbe index per ISO 6976 for this gas" |
-| Mechanical design | `@mechanical.design` | "Wall thickness for 20-inch pipe per DNV" |
-| Flow assurance | `@flow.assurance` | "Hydrate formation curve for wet gas" |
-| Safety | `@safety.depressuring` | "Fire-case blowdown for HP separator" |
+| Fluid properties | `@thermo-fluid` | "Create a CPA fluid for gas with 5% MEG" |
+| Process simulation | `@solve-process` | "3-stage compression from 5 to 150 bara" |
+| PVT study | `@pvt-simulation` | "CME test for reservoir fluid at 100C" |
+| Gas quality | `@gas-quality` | "Wobbe index per ISO 6976 for this gas" |
+| Mechanical design | `@mechanical-design` | "Wall thickness for 20-inch pipe per DNV" |
+| Flow assurance | `@flow-assurance` | "Hydrate formation curve for wet gas" |
+| Safety | `@safety-depressuring` | "Fire-case blowdown for HP separator" |
 
 ---
 
@@ -528,8 +1034,9 @@ Create a Jupyter notebook in step2_analysis/ that:
 The deliverables are a **Word report** (`.docx`) and optionally an **HTML report**.
 
 - [ ] Figures saved to `figures/`
-- [ ] `generate_report.py` customized and runs end-to-end
+- [ ] Hand-written report prose in `step3_report/report_sections.json` (never edit `generate_report.py`)
 - [ ] Report(s) generated in `step3_report/`
+- [ ] `WORK_RECORD.md` generated and its narrative blocks filled
 - [ ] All required deliverables from task spec produced
 - [ ] Task logged in `docs/development/TASK_LOG.md`
 
@@ -540,11 +1047,37 @@ pip install python-docx matplotlib    # one-time setup
 python step3_report/generate_report.py
 ```
 
+The report files are named after the report title (from `study.title` in
+`study_config.yaml`, or `--title`), e.g. `Hydrate_margin_export_line.docx`, so a
+deliverable is identifiable outside its task folder. The Word file is built from
+the template saved with
+`neqsim --set-report-template "PATH"` (check it with `neqsim --show-report-template`),
+so it carries your organisation's styles, fonts, headers, and footers. Override
+for one run with `--template "PATH"`, or ignore it with `--no-template`.
+
+**The work record is generated with the report** (`step3_report/WORK_RECORD.md`).
+Rebuild it alone with:
+
+```powershell
+neqsim work-record .          # run from the task folder
+neqsim work-record . --check  # verify it is filled in
+```
+
+The report says what the answer is; the work record says how it was produced —
+every script and notebook with its purpose and outputs, every source system and
+collected document, the cached data files, an annotated folder map, and the
+commands to reproduce the study. Write the `background`, `method`, and
+`limitations` NARRATIVE blocks by hand; they are preserved on regeneration.
+Declaring `analysis.scripts` and `inputs.data_sources` in `study_config.yaml`
+is what turns the auto-built sections into a real method and data record.
+
 **AI prompt - paste into VS Code Copilot Chat:**
 
 ```
-Customize step3_report/generate_report.py for this task.
-Read the task spec in step1_scope_and_research/task_spec.md for required deliverables.
+Prepare the Step 3 report for this task with `neqsim report <this task folder>`.
+Put hand-written prose (executive_summary, problem_description, approach, conclusions)
+in step3_report/report_sections.json under "manual_sections"; do not open or edit
+generate_report.py. Read step1_scope_and_research/task_spec.md for required deliverables.
 Fill in the report sections with actual results from step2_analysis/.
 Embed all figures from figures/.
 Generate both Word (.docx) and HTML output.
@@ -679,7 +1212,7 @@ gh pr create --title "Add [description]" \\
   --body "From task-solving workflow: [TITLE]"
 ```
 
-> **Tip:** Ask the `@solve.task` agent to do this:
+> **Tip:** Ask the `@solve-task` agent to do this:
 > "create a PR with the test and notebook from this task"
 """
 
@@ -730,6 +1263,27 @@ For each reference document, add a subsection like this:
 REFERENCES_README = """# References Folder
 
 Place literature papers, standards documents, and other reference material here.
+
+## Where source documents come from
+
+If the user has configured a document root, it is recorded as `inputs.document_root`
+in `study_config.yaml` and printed by `neqsim --show-document-root`. That folder
+**and all its subfolders** are the source library for this task. Its file listing
+is in `document_root_index.md` next to this README — read it before concluding a
+standard or datasheet is unavailable.
+
+```bash
+neqsim --show-document-root       # may be unset - then there is no library
+neqsim documents "API 521"        # recursive search when one is configured
+neqsim documents --index .        # refresh document_root_index.md
+```
+
+The setting is optional. When it is unset, work from the documents the user
+supplies directly and record the missing evidence as a data gap. When it is set,
+search it before reporting a standard, datasheet, or drawing as unavailable. The
+library is read-only: copy the documents this task actually uses into a
+per-source subfolder here (`stid/`, `vendor/`, `literature/`, `manual/`, ...) so
+the task folder stays self-contained.
 
 ## What to put in this folder
 
@@ -784,13 +1338,26 @@ After placing files here, add each to the Sources table in `notes.md`:
 | 2 | API 521 6th Ed | Standard | Relief sizing per Section 5.4 |
 
 And add structured entries to the `references` list in `results.json` so they
-appear in the final report (see `results.json` schema in AGENTS.md).
+appear in the final report (see `results.json` schema in
+docs/development/AGENT_REFERENCE.md, Part A).
 """
 
 TASK_SPEC = """# Task Specification
 
 This file defines the scope and requirements that guide the analysis in Step 2.
 Fill this in before starting any simulation work.
+
+## Objective
+
+[State, in 2-4 sentences, what was asked and what the study must deliver. This
+text is quoted at the top of the report under "Task", so write it as the task
+statement a reader should see first.]
+
+## Background
+
+[Why the task was raised: the operational trigger, the decision it feeds, and any
+constraint that frames it. Delete this section if the objective is
+self-contained.]
 
 ## Applicable Standards
 
@@ -913,7 +1480,7 @@ Pick a starting composition or define your own. All values in mol%.
 | H2S | 0.5 |
 
 > **Note:** Adapt these to your specific project data. For oil systems with
-> C7+ fractions, use the `@thermo.fluid` agent or define TBP/plus fractions.
+> C7+ fractions, use the `@thermo-fluid` agent or define TBP/plus fractions.
 """
 
 STUDY_CONFIG = "\n".join([
@@ -936,7 +1503,8 @@ STUDY_CONFIG = "\n".join([
     "  confirm_before_notebooks: true",
     "",
     "inputs:",
-    "  prompt_file: \"\"       # Optional text/markdown file used as the original task prompt.",
+    "  prompt_file: \"\"       # Optional task brief (.md/.txt/.docx) used as the original task prompt.",
+    "  document_root: \"\"     # Source document library, root + all subfolders. Empty = not configured.",
     "  documents_required: false",
     "  document_extraction_required: auto  # auto | required | optional | skip",
     "  documents:",
@@ -944,9 +1512,27 @@ STUDY_CONFIG = "\n".join([
     "      role: reference_documents",
     "      required: false",
     "      extraction: classify_extract_normalize_validate",
+    "  data_sources_required: false  # true when the answer comes from source systems, not documents",
+    "  data_sources: []",
+    "  # Declare every source system the study reads so the report gate can check that",
+    "  # captured evidence exists for each one.",
+    "  #  - system: sap_maintenance   # historian | stid | sap_maintenance | pdm | synergi | lab | vendor",
+    "  #    scope: \"plant 1820, notifications 2015-2026\"",
+    "  #    access: read_only",
+    "  #    evidence: step2_analysis/sap_pull.json",
+    "",
+    "analysis:",
+    "  engine: auto           # auto | notebook | script | hybrid",
+    "  resumable_jobs: false  # long source-system pulls must restart without re-reading everything",
+    "  scripts: []",
+    "  # Script-backed studies (API pulls, long batch jobs, non-NeqSim data analysis)",
+    "  # declare their scripts here instead of notebooks, and set notebooks.required: false.",
+    "  #  - file: 01_pull_source_data.py",
+    "  #    purpose: Read the source systems and cache the raw records.",
+    "  #    produces: step2_analysis/raw_records.json",
     "",
     "notebooks:",
-    "  required: true",
+    "  required: true                   # false for script-backed studies (see analysis.engine)",
     "  execution_required: true",
     "  execution_engine: neqsim_runner  # neqsim_runner | interactive | auto",
     "  runner_mode: execute             # execute | script",
@@ -969,21 +1555,36 @@ STUDY_CONFIG = "\n".join([
     "  formats:",
     "    - docx",
     "    - html",
+    "    # - pdf",
     "  depth: auto          # auto | brief | standard | detailed",
+    "  language: en         # en (default) | nb/no | any ISO code",
+    "  # Language of the report: section headings, cover labels, caption prefixes,",
+    "  # and the document language used for spell-check. Write the study content in",
+    "  # the same language. The scientific paper stays English.",
     "  include_paper: false",
+    "  work_record: auto    # auto | required | skip -> step3_report/WORK_RECORD.md",
+    "  # The work record is the method-and-provenance companion to the report: what was",
+    "  # done, how, which data and scripts were used, and where every file lives.",
+    "  # Build it with: neqsim work-record <task folder>",
     "  required_sections:",
     "    - executive_summary",
     "    - scope_and_standards",
+    "    - information_sources   # how many documents from which source system",
     "    - methodology",
     "    - results",
     "    - discussion",
     "    - validation",
+    "    - assumptions_and_gaps  # every assumption, and what was assumed where data was missing",
     "    - conclusions",
     "    - references",
     "",
     "quality_gates:",
     "  require_results_json: true",
     "  benchmark_validation: auto     # auto | required | optional | skip",
+    "  benchmark_kind: auto           # auto | reference_data | peer_fleet | plant_data | none",
+    "  provenance_closure: auto       # every declared data source must have captured evidence",
+    "  work_record: auto              # auto | required | skip (method and data record)",
+    "  human_review: auto             # auto | required | optional (decision-grade output)",
     "  uncertainty_analysis: auto     # auto | required | optional | skip",
     "  risk_register: auto            # auto | required | optional | skip",
     "  figure_discussion: required    # required | optional | skip",
@@ -1056,2411 +1657,93 @@ Document any parameter sweeps performed:
 - [ ] Figures saved to figures/ using absolute TASK_DIR path (not os.getcwd!)
 """
 
-GENERATE_REPORT = '''"""
-generate_report.py - Generate Word and HTML reports for this task.
+GENERATE_REPORT = '''#!/usr/bin/env python3
+"""Run the canonical NeqSim report generator against this task folder.
 
-Usage:
-    pip install python-docx matplotlib latex2mathml lxml   (one-time setup)
-    python step3_report/generate_report.py
+Task folders used to vendor a full copy of the generator, which then forked as
+the generator improved — two tasks with identical results.json could render
+different reports. This launcher keeps the familiar entry point while the code
+stays in one place: <neqsim>/devtools/task_template/step3_report/.
 
-This script AUTO-READS data from the task folder:
-  - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
-  - results.json (task root)               -> populates Results + Validation
-  - figures/*.png                          -> embeds all plots
-  - results.json "equations"               -> renders equations (native OMML / KaTeX / images)
-  - results.json "figure_captions"         -> custom captions for figures
+    python step3_report/generate_report.py [--paper] [--template PATH]
+    neqsim report .                              # identical
 
-It produces:
-  - step3_report/Report.docx  (Word document for formal distribution)
-  - step3_report/Report.html  (navigable HTML with sidebar, KaTeX equations)
-
-If results.json or task_spec.md are missing, the report uses placeholder text.
-Customize MANUAL_SECTIONS below for content that can't be auto-generated.
+The generator is located via NEQSIM_PROJECT_ROOT, the path recorded when this
+task was created, the saved project root in ~/.neqsim/task_defaults.json, then
+a walk up from this file looking for a NeqSim checkout.
 """
-import os
-import sys
-import glob
 import json
-import base64
-import io
-from datetime import date
+import os
+import runpy
+import sys
 
-try:
-    from docx import Document
-    from docx.shared import Inches, Pt, RGBColor
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.enum.table import WD_TABLE_ALIGNMENT
-    from docx.oxml.ns import nsdecls
-    from docx.oxml import parse_xml
-except ImportError:
-    print("ERROR: python-docx not installed. Run: pip install python-docx")
-    sys.exit(1)
-
-# Optional: matplotlib for rendering equations to images (Word report fallback)
-try:
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
-except ImportError:
-    HAS_MATPLOTLIB = False
-
-# ── OMML equation support (LaTeX → MathML → OMML for native Word equations) ──
-_omml_transform = None
-HAS_OMML = False
-
-def _init_omml():
-    """Lazily load the MML2OMML XSLT transform for converting MathML to OMML."""
-    global _omml_transform, HAS_OMML
-    if _omml_transform is not None:
-        return True
-    try:
-        from lxml import etree
-        import latex2mathml.converter  # noqa: F401
-    except ImportError:
-        return False
-    xsl_candidates = [
-        os.path.expandvars(r'%ProgramFiles%\\Microsoft Office\\root\\Office16\\MML2OMML.XSL'),
-        os.path.expandvars(r'%ProgramFiles(x86)%\\Microsoft Office\\root\\Office16\\MML2OMML.XSL'),
-        os.path.expandvars(r'%ProgramFiles%\\Microsoft Office\\Office16\\MML2OMML.XSL'),
-    ]
-    for path in xsl_candidates:
-        if os.path.exists(path):
-            xslt_doc = etree.parse(path)
-            _omml_transform = etree.XSLT(xslt_doc)
-            HAS_OMML = True
-            return True
-    return False
-
-def _latex_to_omml(latex_str):
-    """Convert a LaTeX math string to an OMML XML element for Word embedding.
-
-    Returns an lxml Element (m:oMath) on success, or None if the pipeline
-    is unavailable or the conversion fails for this particular expression.
-    """
-    if not _init_omml():
-        return None
-    try:
-        import latex2mathml.converter
-        from lxml import etree
-        mathml = latex2mathml.converter.convert(latex_str)
-        tree = etree.fromstring(mathml.encode('utf-8'))
-        omml = _omml_transform(tree)
-        return omml.getroot()
-    except Exception:
-        return None
-
-# ── Paths ────────────────────────────────────────────────
 TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FIG_DIR = os.path.join(TASK_DIR, "figures")
-REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
-DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
-HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
-RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
-TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
-
-# ── Configuration (edit these) ───────────────────────────
-TITLE = "Task Report"           # <-- Change to your task title
-AUTHOR = ""                     # <-- Your name
-TASK_DATE = date.today().isoformat()
-
-# ── Manual sections (edit content for your specific task) ─
-# These are used when auto-read data is not available.
-# If results.json exists, sections 5-6 are auto-populated.
-MANUAL_SECTIONS = {
-    "executive_summary": (
-        "[Replace with a 3-5 sentence summary of the task, approach, "
-        "and key findings.]"
-    ),
-    "problem_description": (
-        "[Describe the engineering question or task that was solved.]"
-    ),
-    "approach": (
-        "[Describe the methodology: EOS used, process configuration, "
-        "simulation setup, key assumptions.]"
-    ),
-    "results_discussion": (
-        "[Discuss the key results: what they mean physically, why they matter "
-        "for design/operation, and what actions should follow. Auto-populated "
-        "from results.json figure_discussion entries when available.]"
-    ),
-    "conclusions": (
-        "[Summarize key findings and provide recommendations.]"
-    ),
-    "references": (
-        "[List references from step1_scope_and_research/notes.md.]"
-    ),
-}
+GENERATOR_HINT = r"__GENERATOR_HINT__"
+RELATIVE = os.path.join("devtools", "task_template", "step3_report",
+                        "generate_report.py")
 
 
-# ══════════════════════════════════════════════════════════
-# Auto-read functions
-# ══════════════════════════════════════════════════════════
+def _saved_project_root():
+    """Return the project root recorded by the task tooling, if any."""
+    path = os.path.join(os.path.expanduser("~"), ".neqsim", "task_defaults.json")
+    try:
+        with open(path, "r", encoding="utf-8-sig") as handle:
+            return json.load(handle).get("project_root") or ""
+    except (OSError, ValueError, AttributeError):
+        return ""
 
-def load_results():
-    """Load results.json if it exists. Returns dict or None."""
-    if os.path.exists(RESULTS_FILE):
-        with open(RESULTS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        print("  Loaded results.json ({} keys)".format(len(data)))
-        return data
-    print("  No results.json found (using manual sections)")
+
+def _candidates():
+    """Yield possible locations of the canonical generator, best first."""
+    for root in (os.environ.get("NEQSIM_PROJECT_ROOT"), _saved_project_root()):
+        if root:
+            yield os.path.join(root, RELATIVE)
+    if GENERATOR_HINT:
+        yield GENERATOR_HINT
+    # pip-installed toolkit (agent-plugin installs without a source checkout)
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("task_template")
+        for loc in (spec.submodule_search_locations or []) if spec else []:
+            yield os.path.join(loc, "step3_report", "generate_report.py")
+    except (ImportError, ValueError):
+        pass
+    here = os.path.abspath(__file__)
+    for _ in range(8):
+        parent = os.path.dirname(here)
+        if parent == here:
+            break
+        here = parent
+        if os.path.isfile(os.path.join(here, "pom.xml")):
+            yield os.path.join(here, RELATIVE)
+
+
+def _find_generator():
+    """Return the first canonical generator that exists on disk."""
+    for candidate in _candidates():
+        if candidate and os.path.isfile(candidate):
+            return os.path.abspath(candidate)
     return None
 
 
-def load_task_spec():
-    """Load task_spec.md and extract standards/methods/criteria sections."""
-    if not os.path.exists(TASK_SPEC_FILE):
-        print("  No task_spec.md found (using placeholder for scope)")
-        return None
-    with open(TASK_SPEC_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
-    print("  Loaded task_spec.md ({} chars)".format(len(content)))
-    return content
+def main():
+    """Execute the canonical generator with this task folder as the target."""
+    generator = _find_generator()
+    if not generator:
+        print("ERROR: canonical report generator not found.")
+        print("Set NEQSIM_PROJECT_ROOT to your NeqSim checkout, or run:")
+        print('  neqsim report "{}"'.format(TASK_DIR))
+        return 2
+    argv = list(sys.argv[1:])
+    if "--task-dir" not in argv:
+        argv = ["--task-dir", TASK_DIR] + argv
+    sys.argv = [generator] + argv
+    runpy.run_path(generator, run_name="__main__")
+    return 0
 
-
-def extract_spec_section(spec_text, heading):
-    """Extract a section from task_spec.md by heading."""
-    if not spec_text:
-        return ""
-    lines = spec_text.split("\\n")
-    capturing = False
-    result = []
-    for line in lines:
-        if line.startswith("## ") and heading.lower() in line.lower():
-            capturing = True
-            continue
-        elif line.startswith("## ") and capturing:
-            break
-        elif capturing:
-            result.append(line)
-    text = "\\n".join(result).strip()
-    # Skip if still placeholder
-    if text and "| | | |" not in text and "[e.g.," not in text:
-        return text
-    return ""
-
-
-def _md_table_to_html(lines):
-    """Convert markdown table lines to an HTML table string."""
-    if len(lines) < 2:
-        return ""
-    # Parse header
-    header_cells = [c.strip() for c in lines[0].strip().strip("|").split("|")]
-    # Skip separator line (line 1)
-    html = '<table class="scope-table"><thead><tr>'
-    for cell in header_cells:
-        html += "<th>{}</th>".format(_md_inline(cell))
-    html += "</tr></thead><tbody>\\n"
-    for row_line in lines[2:]:
-        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
-        html += "<tr>"
-        for cell in cells:
-            html += "<td>{}</td>".format(_md_inline(cell))
-        html += "</tr>\\n"
-    html += "</tbody></table>"
-    return html
-
-
-def _md_inline(text):
-    """Convert inline markdown (bold) to HTML."""
-    import re as _re
-    # **bold**
-    text = _re.sub(r"\\*\\*(.+?)\\*\\*", r"<strong>\\1</strong>", text)
-    return text
-
-
-def _md_list_to_html(lines):
-    """Convert markdown bullet list lines to an HTML list."""
-    html = "<ul>\\n"
-    for line in lines:
-        item = line.lstrip("- ").strip()
-        html += "  <li>{}</li>\\n".format(_md_inline(item))
-    html += "</ul>"
-    return html
-
-
-def scope_content_to_html(content):
-    """Convert scope section content (from task_spec.md) to styled HTML.
-
-    Handles markdown tables, bold text, bullet lists, and sub-headings.
-    """
-    lines = content.split("\\n")
-    html_parts = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-
-        # Blank line
-        if not line.strip():
-            i += 1
-            continue
-
-        # Sub-heading (e.g., "Applicable Standards:")
-        if (line.strip().endswith(":") and not line.strip().startswith("-")
-                and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            html_parts.append("<h3>{}</h3>".format(_md_inline(line.strip())))
-            i += 1
-            continue
-
-        # Markdown table (starts with |)
-        if line.strip().startswith("|"):
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i])
-                i += 1
-            # Check if second line is separator (|---|)
-            if len(table_lines) >= 2 and set(table_lines[1].replace("|", "").replace("-", "").replace(":", "").strip()) <= set(""):
-                html_parts.append(_md_table_to_html(table_lines))
-            else:
-                # Not a real table, just text with pipes
-                for tl in table_lines:
-                    html_parts.append("<p>{}</p>".format(_md_inline(tl.strip())))
-            continue
-
-        # Bullet list (starts with -)
-        if line.strip().startswith("- "):
-            list_lines = []
-            while i < len(lines) and lines[i].strip().startswith("- "):
-                list_lines.append(lines[i])
-                i += 1
-            html_parts.append(_md_list_to_html(list_lines))
-            continue
-
-        # Regular paragraph
-        html_parts.append("<p>{}</p>".format(_md_inline(line.strip())))
-        i += 1
-
-    return "\\n".join(html_parts)
-
-
-def render_scope_to_word(doc, content):
-    """Render scope section content (from task_spec.md) into a Word document.
-
-    Parses markdown tables into Word tables, bold text into runs, and
-    bullet lists into formatted paragraphs.
-    """
-    lines = content.split("\\n")
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-
-        # Blank line
-        if not line.strip():
-            i += 1
-            continue
-
-        # Sub-heading (e.g., "Applicable Standards:")
-        if (line.strip().endswith(":") and not line.strip().startswith("-")
-                and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            doc.add_heading(line.strip(), level=2)
-            i += 1
-            continue
-
-        # Markdown table
-        if line.strip().startswith("|"):
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i])
-                i += 1
-            if len(table_lines) >= 2:
-                _md_table_to_word(doc, table_lines)
-            else:
-                for tl in table_lines:
-                    doc.add_paragraph(tl.strip())
-            continue
-
-        # Bullet list
-        if line.strip().startswith("- "):
-            while i < len(lines) and lines[i].strip().startswith("- "):
-                item_text = lines[i].strip()[2:]  # Remove "- "
-                p = doc.add_paragraph(style="List Bullet")
-                _add_bold_runs(p, item_text)
-                i += 1
-            continue
-
-        # Regular paragraph
-        p = doc.add_paragraph()
-        _add_bold_runs(p, line.strip())
-        i += 1
-
-
-def _md_table_to_word(doc, table_lines):
-    """Convert markdown table lines to a styled Word table."""
-    header_cells = [c.strip() for c in table_lines[0].strip().strip("|").split("|")]
-    data_rows = []
-    for row_line in table_lines[2:]:  # skip header and separator
-        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
-        data_rows.append(cells)
-    add_word_table(doc, header_cells, data_rows)
-
-
-def _add_bold_runs(paragraph, text):
-    """Add text with **bold** sections as separate runs."""
-    import re as _re
-    parts = _re.split(r"(\\*\\*.+?\\*\\*)", text)
-    for part in parts:
-        if part.startswith("**") and part.endswith("**"):
-            run = paragraph.add_run(part[2:-2])
-            run.bold = True
-        else:
-            paragraph.add_run(part)
-
-
-def get_figures():
-    """Collect all PNG/SVG figures from the figures/ directory."""
-    pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
-    svgs = sorted(glob.glob(os.path.join(FIG_DIR, "*.svg")))
-    return pngs + svgs
-
-
-def get_figure_caption(fig_path, results, fig_index):
-    """Get a caption for a figure: custom from results.json or auto-generated."""
-    fig_name = os.path.basename(fig_path)
-    captions = {}
-    if results:
-        captions = results.get("figure_captions", {})
-    if fig_name in captions:
-        return "Figure {}: {}".format(fig_index, captions[fig_name])
-    # Auto-generate from filename
-    auto = fig_name.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
-    return "Figure {}: {}".format(fig_index, auto)
-
-
-def get_equations(results):
-    """Get equations from results.json. Returns list of {label, latex}."""
-    if not results:
-        return []
-    return results.get("equations", [])
-
-
-def render_equation_to_image(latex_str, output_path):
-    """Render a LaTeX equation to a high-quality PNG image using matplotlib.
-
-    This is a FALLBACK when the OMML pipeline is unavailable.
-    Returns True if the image was created, False otherwise.
-    """
-    if not HAS_MATPLOTLIB:
-        return False
-    try:
-        fig = plt.figure(figsize=(8, 1.2))
-        fig.text(
-            0.5, 0.5,
-            "${}$".format(latex_str),
-            fontsize=24, ha="center", va="center",
-            math_fontfamily="cm",
-        )
-        fig.savefig(output_path, dpi=300, bbox_inches="tight",
-                    pad_inches=0.15, facecolor="white", edgecolor="none")
-        plt.close(fig)
-        return True
-    except Exception as e:
-        print("  Warning: could not render equation: {}".format(e))
-        return False
-
-
-def _add_display_equation_to_doc(doc, latex_str, eq_number=None):
-    """Add a display equation to a Word document using native OMML if available.
-
-    Tries the OMML pipeline first (produces editable, scalable equations that
-    match the document font). Falls back to a matplotlib image, then plain
-    italic text.
-
-    Args:
-        doc: python-docx Document object.
-        latex_str: LaTeX math string (without delimiters).
-        eq_number: Optional equation number for right-aligned numbering.
-    """
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-    omml = _latex_to_omml(latex_str)
-    if omml is not None:
-        p._element.append(omml)
-    else:
-        # Fallback: matplotlib image
-        eq_img_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "_eq_images")
-        if not os.path.exists(eq_img_dir):
-            os.makedirs(eq_img_dir)
-        import hashlib
-        eq_hash = hashlib.md5(latex_str.encode()).hexdigest()[:8]
-        eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_hash))
-        if render_equation_to_image(latex_str, eq_img_path):
-            doc.add_picture(eq_img_path, width=Inches(5.5))
-            doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
-        else:
-            # Last resort: italic Cambria Math text
-            run = p.add_run(latex_str)
-            run.italic = True
-            run.font.name = 'Cambria Math'
-            run.font.size = Pt(11)
-
-    if eq_number is not None:
-        run = p.add_run("    ({})".format(eq_number))
-        run.font.size = Pt(10)
-
-
-def _add_inline_math_runs(paragraph, text):
-    """Add text with inline $math$ rendered as native OMML equations.
-
-    Splits text on $...$ delimiters. Math segments become OMML elements;
-    non-math segments become regular text runs.
-    """
-    import re as _re
-    parts = _re.split(r'(?<!\\$)(\\$(?!\\$).+?\\$(?!\\$))', text)
-    for part in parts:
-        if not part:
-            continue
-        if part.startswith('$') and part.endswith('$') and not part.startswith('$$'):
-            latex = part[1:-1]
-            omml = _latex_to_omml(latex)
-            if omml is not None:
-                paragraph._element.append(omml)
-            else:
-                run = paragraph.add_run(latex)
-                run.italic = True
-                run.font.name = 'Cambria Math'
-        else:
-            # Formatted text with **bold**
-            fmt_parts = _re.split(r'(\\*\\*.+?\\*\\*)', part)
-            for fp in fmt_parts:
-                if not fp:
-                    continue
-                if fp.startswith('**') and fp.endswith('**'):
-                    run = paragraph.add_run(fp[2:-2])
-                    run.bold = True
-                else:
-                    paragraph.add_run(fp)
-
-
-def auto_executive_summary(results, task_spec):
-    """Generate an executive summary paragraph from available results data."""
-    parts = []
-
-    # Opening: what was done
-    approach = ""
-    if results and results.get("approach"):
-        approach = results["approach"]
-    if approach and not approach.startswith("["):
-        # First sentence of approach
-        first_sent = approach.split(". ")[0].rstrip(".")
-        parts.append(first_sent + ".")
-
-    # Key findings: summarize top results
-    if results and results.get("key_results"):
-        kr = results["key_results"]
-        items = list(kr.items())[:5]  # Top 5 results
-        findings = []
-        for key, value in items:
-            label, unit = _parse_key_name(key)
-            if isinstance(value, float):
-                val_str = "{:.4g}".format(value)
-            else:
-                val_str = str(value)
-            if unit:
-                findings.append("{} = {} {}".format(label, val_str, unit))
-            else:
-                findings.append("{} = {}".format(label, val_str))
-        if findings:
-            parts.append("Key findings: {}.".format(", ".join(findings)))
-
-    # Uncertainty summary
-    if results and results.get("uncertainty"):
-        unc = results["uncertainty"]
-        p50 = unc.get("p50")
-        output = unc.get("output_parameter", "output")
-        prob_neg = unc.get("prob_negative_pct")
-        if p50 is not None:
-            unc_text = "Monte Carlo analysis ({} simulations) yields a P50 {} of {:.4g}".format(
-                unc.get("n_simulations", "N"), output, p50)
-            p10 = unc.get("p10")
-            p90 = unc.get("p90")
-            if p10 is not None and p90 is not None:
-                unc_text += " (P10: {:.4g}, P90: {:.4g})".format(p10, p90)
-            unc_text += "."
-            if prob_neg is not None:
-                unc_text += " Probability of unfavourable outcome: {:.1f}%.".format(prob_neg)
-            parts.append(unc_text)
-
-    # Validation status
-    if results and results.get("validation"):
-        val = results["validation"]
-        all_pass = all(
-            v is True or (isinstance(v, (int, float)) and v < 1.0)
-            for v in val.values()
-        )
-        if all_pass:
-            parts.append("All validation checks passed.")
-        else:
-            parts.append("Some validation checks require attention.")
-
-    readiness = infer_safety_readiness(results) if results else None
-    if readiness:
-        parts.append("Safety study readiness: {}.".format(readiness["verdict"]))
-
-    # Benchmark status
-    if results and results.get("benchmark_validation"):
-        bv = results["benchmark_validation"]
-        tests = bv.get("tests", [])
-        n_pass = sum(1 for t in tests if t.get("pass") is True)
-        n_total = len(tests)
-        if n_pass == n_total:
-            parts.append("All {} benchmark comparisons passed.".format(n_total))
-        else:
-            parts.append("{}/{} benchmark comparisons passed.".format(n_pass, n_total))
-
-    # Conclusion
-    if results and results.get("conclusions"):
-        conc = results["conclusions"]
-        if not conc.startswith("["):
-            parts.append(conc)
-
-    # Risk summary
-    if results and results.get("risk_evaluation"):
-        re_ = results["risk_evaluation"]
-        overall = re_.get("overall_risk_level", "")
-        if overall:
-            parts.append("Overall project risk is assessed as {}.".format(overall))
-
-    if parts:
-        return " ".join(parts)
-    return ""
-
-
-def auto_problem_description(results, task_spec):
-    """Generate a problem description from task_spec.md sections."""
-    parts = []
-    # Try extracting objective/description from task_spec
-    for heading in ["Objective", "Description", "Problem Statement",
-                    "Task Description", "Background"]:
-        text = extract_spec_section(task_spec, heading)
-        if text:
-            parts.append(text)
-            break  # Use the first match
-
-    # If task_spec has operating envelope, mention it
-    envelope = extract_spec_section(task_spec, "Operating Envelope")
-    if envelope:
-        parts.append("Operating envelope: " + envelope.replace("\\n", " ").strip())
-
-    if parts:
-        return "\\n\\n".join(parts)
-    return ""
-
-
-def _format_list_item_text(item):
-    """Format a result-list item as readable report text."""
-    if isinstance(item, dict):
-        preferred = []
-        for key in ("gap", "description", "finding", "item", "action", "recommendation"):
-            if item.get(key):
-                preferred.append(str(item.get(key)))
-        if preferred:
-            return " - ".join(preferred)
-        parts = []
-        for key in sorted(item.keys()):
-            parts.append("{}: {}".format(key.replace("_", " "), item[key]))
-        return "; ".join(parts)
-    return str(item)
-
-
-def format_list_items_text(items):
-    """Format strings or dictionaries from results.json as bullet text."""
-    if not items:
-        return ""
-    if isinstance(items, dict):
-        iterable = [items]
-    elif isinstance(items, list):
-        iterable = items
-    else:
-        iterable = [items]
-    return "\\n".join(["- {}".format(_format_list_item_text(item)) for item in iterable])
-
-
-def _validation_failures(results):
-    """Return false validation checks as report-facing blockers."""
-    failures = []
-    validation = results.get("validation", {}) if results else {}
-    for check, outcome in validation.items():
-        if outcome is False:
-            failures.append(check.replace("_", " ").title())
-    return failures
-
-
-def infer_safety_readiness(results):
-    """Infer a report-facing safety readiness label from results.json."""
-    if not results:
-        return None
-    safety_keys = ("safety_readiness", "readiness", "evidence_gaps",
-                   "assumptions_gaps", "standards_findings",
-                   "source_term_handoff", "source_basis_summary")
-    text = " ".join([
-        str(results.get("task_type", "")),
-        str(results.get("objective", "")),
-        str(results.get("approach", "")),
-        str(results.get("conclusions", "")),
-    ]).lower()
-    has_context = any(results.get(key) for key in safety_keys) or any(
-        token in text for token in ("safety", "rupture", "fire", "blowdown"))
-    if not has_context:
-        return None
-    explicit = results.get("safety_readiness") or results.get("readiness")
-    findings = []
-    if isinstance(explicit, dict):
-        verdict = str(explicit.get("verdict") or explicit.get("label") or "").strip()
-        raw_findings = explicit.get("findings") or explicit.get("blockers") or []
-        if isinstance(raw_findings, list):
-            findings.extend([str(item) for item in raw_findings])
-        elif raw_findings:
-            findings.append(str(raw_findings))
-    elif explicit:
-        verdict = str(explicit).strip()
-    else:
-        verdict = ""
-    evidence_gaps = results.get("evidence_gaps") or results.get("assumptions_gaps") or []
-    validation_failures = _validation_failures(results)
-    if evidence_gaps and isinstance(evidence_gaps, list):
-        findings.extend([_format_list_item_text(item) for item in evidence_gaps[:5]])
-    findings.extend(validation_failures)
-    if not verdict:
-        if evidence_gaps or validation_failures:
-            verdict = "SCREENING - DESIGN-GRADE BLOCKED"
-        else:
-            verdict = "SCREENING / READY FOR HUMAN REVIEW"
-    elif verdict.upper() == "SCREENING" and (evidence_gaps or validation_failures):
-        verdict = "SCREENING - DESIGN-GRADE BLOCKED"
-    return {"verdict": verdict, "findings": findings}
-
-
-def format_safety_readiness_text(results):
-    """Format safety readiness as a report section."""
-    readiness = infer_safety_readiness(results)
-    if not readiness:
-        return ""
-    lines = ["Readiness label: {}".format(readiness["verdict"])]
-    findings = [item for item in readiness.get("findings", []) if item]
-    if findings:
-        lines.append("")
-        lines.append("Design-grade blockers / review findings:")
-        lines.extend(["- {}".format(item) for item in findings])
-    lines.append("")
-    lines.append("Safety-study outputs remain screening/preparation until blockers are closed and reviewed by a qualified engineer.")
-    return "\\n".join(lines)
-
-
-def _parse_key_name(key):
-    """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
-    unit_suffixes = [
-        ("_pct", "%"), ("_percent", "%"),
-        ("_bar", "bar"), ("_bara", "bara"), ("_barg", "barg"),
-        ("_psi", "psi"), ("_psia", "psia"),
-        ("_C", "\u00b0C"), ("_K", "K"), ("_F", "\u00b0F"),
-        ("_kg", "kg"), ("_g", "g"), ("_lb", "lb"),
-        ("_m3", "m\u00b3"), ("_m2", "m\u00b2"), ("_m", "m"),
-        ("_mm", "mm"), ("_cm", "cm"), ("_km", "km"),
-        ("_ft", "ft"), ("_in", "in"),
-        ("_kW", "kW"), ("_MW", "MW"), ("_W", "W"),
-        ("_kJ", "kJ"), ("_MJ", "MJ"), ("_J", "J"),
-        ("_kg_hr", "kg/hr"), ("_kg_s", "kg/s"),
-        ("_m3_hr", "m\u00b3/hr"), ("_m3_s", "m\u00b3/s"),
-        ("_Sm3_day", "Sm\u00b3/day"), ("_Sm3_hr", "Sm\u00b3/hr"),
-        ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
-        ("_rpm", "rpm"), ("_Hz", "Hz"),
-    ]
-    for suffix, unit in unit_suffixes:
-        if key.endswith(suffix):
-            name_part = key[:len(key) - len(suffix)]
-            label = name_part.replace("_", " ").title()
-            return label, unit
-    return key.replace("_", " ").title(), ""
-
-
-def format_results_table(results):
-    """Format key_results dict as a text table."""
-    key_results = results.get("key_results", {})
-    if not key_results:
-        return "[No key_results in results.json]"
-    lines = []
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        if unit:
-            lines.append("{}: {} {}".format(label, val_str, unit))
-        else:
-            lines.append("{}: {}".format(label, val_str))
-    return "\\n".join(lines)
-
-
-def format_validation_table(results):
-    """Format validation checks as a text table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return "[No validation data in results.json]"
-    lines = ["Validation Summary:", ""]
-    for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
-        if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
-        elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
-        else:
-            status = str(outcome)
-        lines.append("  {}: {}".format(label, status))
-    return "\\n".join(lines)
-
-
-def format_validation_html(results):
-    """Format validation checks as an HTML table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return "<p><em>No validation data in results.json</em></p>"
-    rows = ""
-    for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
-        if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
-            css_class = ' class="pass"' if outcome else ' class="fail"'
-        elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
-            css_class = ""
-        else:
-            status = str(outcome)
-            css_class = ""
-        rows += \'<tr><td>{}</td><td{}>{}</td></tr>\\n\'.format(
-            label, css_class, status)
-    return \'<table class="validation-table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>\\n{}</tbody></table>\'.format(rows)
-
-
-def format_results_html(results):
-    """Format key_results dict as a styled HTML table with units column."""
-    key_results = results.get("key_results", {})
-    if not key_results:
-        return ""
-    rows = ""
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        rows += \'<tr><td>{}</td><td class="num">{}</td><td>{}</td></tr>\\n\'.format(
-            label, val_str, unit)
-    return (
-        \'<table class="results-table"><thead>\'
-        \'<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>\'
-        \'</thead><tbody>\\n{}</tbody></table>\'.format(rows)
-    )
-
-
-def format_custom_tables_html(results):
-    """Format custom tables from results.json 'tables' key as HTML."""
-    tables = results.get("tables", [])
-    if not tables:
-        return ""
-    html_parts = []
-    for tbl in tables:
-        title = tbl.get("title", "")
-        headers = tbl.get("headers", [])
-        data_rows = tbl.get("rows", [])
-        if not headers or not data_rows:
-            continue
-        h = ""
-        if title:
-            h += \'<h3>{}</h3>\\n\'.format(title)
-        h += \'<table class="custom-table"><thead><tr>\'
-        for col in headers:
-            h += \'<th>{}</th>\'.format(col)
-        h += \'</tr></thead><tbody>\\n\'
-        for row in data_rows:
-            h += "<tr>"
-            for i, cell in enumerate(row):
-                css = \' class="num"\' if i > 0 and isinstance(cell, (int, float)) else ""
-                if isinstance(cell, float):
-                    h += \'<td{}>{:.4g}</td>\'.format(css, cell)
-                else:
-                    h += \'<td{}>{}</td>\'.format(css, cell)
-            h += "</tr>\\n"
-        h += "</tbody></table>"
-        html_parts.append(h)
-    return "\\n".join(html_parts)
-
-
-def format_references_html(results):
-    """Format the references list from results.json as a styled HTML ordered list."""
-    refs = results.get("references", [])
-    if not refs:
-        return ""
-    h = \'<ol class="reference-list">\\n\'
-    for ref in refs:
-        ref_id = ref.get("id", "")
-        ref_text = ref.get("text", "")
-        if ref_id:
-            h += \'  <li id="ref-{}"><strong>[{}]</strong> {}</li>\\n\'.format(
-                ref_id, ref_id, ref_text)
-        else:
-            h += \'  <li>{}</li>\\n\'.format(ref_text)
-    h += \'</ol>\'
-    return h
-
-
-def format_figure_discussion_html(results):
-    """Format figure_discussion entries as structured HTML discussion blocks."""
-    discussions = results.get("figure_discussion", [])
-    if not discussions:
-        return ""
-    html_parts = []
-    for i, disc in enumerate(discussions, 1):
-        figure = disc.get("figure", "")
-        title = disc.get("title", figure)
-        obs = disc.get("observation", "")
-        mech = disc.get("mechanism", "")
-        impl = disc.get("implication", "")
-        rec = disc.get("recommendation", "")
-        linked = disc.get("linked_results", [])
-        insight_ref = disc.get("insight_question_ref", "")
-        h = \'<div class="discussion-block">\\n\'
-        h += \'  <h3 class="disc-title">Discussion {}: {}</h3>\\n\'.format(i, title)
-        if obs:
-            h += \'  <div class="disc-row"><span class="disc-label">Observation:</span> {}</div>\\n\'.format(obs)
-        if mech:
-            h += \'  <div class="disc-row"><span class="disc-label">Physical Mechanism:</span> {}</div>\\n\'.format(mech)
-        if impl:
-            h += \'  <div class="disc-row"><span class="disc-label">Engineering Implication:</span> {}</div>\\n\'.format(impl)
-        if rec:
-            h += \'  <div class="disc-row disc-rec"><span class="disc-label">Recommendation:</span> {}</div>\\n\'.format(rec)
-        trace_parts = []
-        if linked:
-            trace_parts.append("Results: " + ", ".join(linked))
-        if insight_ref:
-            trace_parts.append("Addresses: " + insight_ref)
-        if figure:
-            trace_parts.append("Figure: " + figure)
-        if trace_parts:
-            h += \'  <div class="disc-trace">{}</div>\\n\'.format(
-                " &bull; ".join(trace_parts))
-        h += \'</div>\\n\'
-        html_parts.append(h)
-
-    # Summary of all recommendations
-    recs = [d.get("recommendation", "") for d in discussions if d.get("recommendation")]
-    if len(recs) > 1:
-        summary = \'<div class="discussion-summary">\\n\'
-        summary += \'  <h3>Summary of Recommendations</h3>\\n<ol>\\n\'
-        for r in recs:
-            summary += \'  <li>{}</li>\\n\'.format(r)
-        summary += \'</ol></div>\\n\'
-        html_parts.append(summary)
-
-    return "\\n".join(html_parts)
-
-
-def format_benchmark_html(results):
-    """Format benchmark_validation from results.json as styled HTML."""
-    bv = results.get("benchmark_validation", {})
-    if not bv:
-        return ""
-    source = bv.get("source", "")
-    tests = bv.get("tests", [])
-    h = ""
-    if source:
-        h += \'<p><strong>Reference source:</strong> {}</p>\\n\'.format(source)
-    if tests:
-        h += \'<table class="benchmark-table"><thead><tr>\'
-        h += \'<th>Parameter</th><th>NeqSim</th><th>Reference</th>\'
-        h += \'<th>Unit</th><th>Tol %</th><th>Status</th></tr></thead><tbody>\\n\'
-        for t in tests:
-            param = t.get("parameter", "")
-            neq = t.get("neqsim", "")
-            ref = t.get("reference", "")
-            unit = t.get("unit", "")
-            tol = t.get("tolerance_pct", "")
-            passed = t.get("pass", None)
-            if passed is True:
-                badge = \'<span class="pass">PASS</span>\'
-            elif passed is False:
-                badge = \'<span class="fail">FAIL</span>\'
-            else:
-                badge = str(passed)
-            neq_s = "{:.4g}".format(neq) if isinstance(neq, float) else str(neq)
-            ref_s = "{:.4g}".format(ref) if isinstance(ref, float) else str(ref)
-            tol_s = "{:.1f}".format(tol) if isinstance(tol, float) else str(tol)
-            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(param, neq_s)
-            h += \'<td class="num">{}</td><td>{}</td>\'.format(ref_s, unit)
-            h += \'<td class="num">{}</td><td>{}</td></tr>\\n\'.format(tol_s, badge)
-        h += \'</tbody></table>\'
-    return h
-
-
-def format_uncertainty_html(results):
-    """Format uncertainty analysis from results.json as styled HTML."""
-    unc = results.get("uncertainty", {})
-    if not unc:
-        return ""
-    h = ""
-    method = unc.get("method", "")
-    n_sims = unc.get("n_simulations", "")
-    engine = unc.get("simulation_engine", "")
-    if method:
-        h += \'<p><strong>Method:</strong> {}</p>\\n\'.format(method)
-    if engine:
-        h += \'<p><strong>Simulation engine:</strong> {}</p>\\n\'.format(engine)
-    if n_sims:
-        h += \'<p><strong>Number of simulations:</strong> {}</p>\\n\'.format(n_sims)
-    # P10/P50/P90 summary
-    output_param = unc.get("output_parameter", "Output")
-    p10 = unc.get("p10")
-    p50 = unc.get("p50")
-    p90 = unc.get("p90")
-    mean = unc.get("mean")
-    std = unc.get("std")
-    prob_neg = unc.get("prob_negative_pct")
-    if p10 is not None or p50 is not None or p90 is not None:
-        h += \'<h3>Statistical Summary: {}</h3>\\n\'.format(output_param)
-        h += \'<table class="uncertainty-table"><thead><tr>\'
-        h += \'<th>Statistic</th><th>Value</th></tr></thead><tbody>\\n\'
-        if p10 is not None:
-            h += \'<tr><td>P10 (low)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p10)
-        if p50 is not None:
-            h += \'<tr><td>P50 (median)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p50)
-        if p90 is not None:
-            h += \'<tr><td>P90 (high)</td><td class="num">{:.4g}</td></tr>\\n\'.format(p90)
-        if mean is not None:
-            h += \'<tr><td>Mean</td><td class="num">{:.4g}</td></tr>\\n\'.format(mean)
-        if std is not None:
-            h += \'<tr><td>Std Dev</td><td class="num">{:.4g}</td></tr>\\n\'.format(std)
-        if prob_neg is not None:
-            h += \'<tr><td>P(negative)</td><td class="num">{:.1f}%</td></tr>\\n\'.format(prob_neg)
-        h += \'</tbody></table>\\n\'
-    # Input parameters table
-    inputs = unc.get("input_parameters", [])
-    if inputs:
-        h += \'<h3>Input Parameter Ranges</h3>\\n\'
-        h += \'<table class="uncertainty-table"><thead><tr>\'
-        h += \'<th>Parameter</th><th>Low</th><th>Base</th><th>High</th>\'
-        h += \'<th>Unit</th><th>Distribution</th></tr></thead><tbody>\\n\'
-        for inp in inputs:
-            name = inp.get("name", "")
-            unit = inp.get("unit", "")
-            low = inp.get("low", "")
-            base = inp.get("base", "")
-            high = inp.get("high", "")
-            dist = inp.get("distribution", "")
-            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, float) else str(v)
-            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(name, fmt(low))
-            h += \'<td class="num">{}</td><td class="num">{}</td>\'.format(fmt(base), fmt(high))
-            h += \'<td>{}</td><td>{}</td></tr>\\n\'.format(unit, dist)
-        h += \'</tbody></table>\\n\'
-    # Tornado table
-    tornado = unc.get("tornado", [])
-    if tornado:
-        h += \'<h3>Sensitivity Ranking (Tornado)</h3>\\n\'
-        h += \'<table class="tornado-table"><thead><tr>\'
-        h += \'<th>Parameter</th><th>Low Case</th><th>High Case</th>\'
-        h += \'<th>Swing</th></tr></thead><tbody>\\n\'
-        for t in tornado:
-            param = t.get("parameter", "")
-            low_v = t.get("npv_low", t.get("low", ""))
-            high_v = t.get("npv_high", t.get("high", ""))
-            swing = t.get("swing", "")
-            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, (int, float)) else str(v)
-            h += \'<tr><td>{}</td><td class="num">{}</td>\'.format(param, fmt(low_v))
-            h += \'<td class="num">{}</td><td class="num">{}</td></tr>\\n\'.format(
-                fmt(high_v), fmt(swing))
-        h += \'</tbody></table>\\n\'
-    return h
-
-
-def format_risk_html(results):
-    """Format risk_evaluation from results.json as styled HTML."""
-    risk = results.get("risk_evaluation", {})
-    if not risk:
-        return ""
-    h = ""
-    overall = risk.get("overall_risk_level", "")
-    matrix = risk.get("risk_matrix_used", "")
-    if overall:
-        css = "risk-high" if "high" in overall.lower() else (
-            "risk-med" if "medium" in overall.lower() else "risk-low")
-        h += \'<p>Overall risk level: <span class="{}">{}</span></p>\\n\'.format(
-            css, overall)
-    if matrix:
-        h += \'<p>Risk matrix: {}</p>\\n\'.format(matrix)
-    risks = risk.get("risks", [])
-    if risks:
-        h += \'<table class="risk-table"><thead><tr>\'
-        h += \'<th>ID</th><th>Description</th><th>Category</th>\'
-        h += \'<th>Likelihood</th><th>Consequence</th><th>Risk Level</th>\'
-        h += \'<th>Mitigation</th></tr></thead><tbody>\\n\'
-        for r in risks:
-            rid = r.get("id", "")
-            desc = r.get("description", "")
-            cat = r.get("category", "")
-            like = r.get("likelihood", "")
-            cons = r.get("consequence", "")
-            level = r.get("risk_level", "")
-            mitig = r.get("mitigation", "")
-            css = "risk-high" if "high" in level.lower() else (
-                "risk-med" if "medium" in level.lower() else "risk-low")
-            h += \'<tr><td>{}</td><td>{}</td><td>{}</td>\'.format(rid, desc, cat)
-            h += \'<td>{}</td><td>{}</td>\'.format(like, cons)
-            h += \'<td><span class="{}">{}</span></td>\'.format(css, level)
-            h += \'<td>{}</td></tr>\\n\'.format(mitig)
-        h += \'</tbody></table>\'
-    return h
-
-
-def add_figure_discussion_word(doc, results):
-    """Add figure_discussion entries to a Word document."""
-    discussions = results.get("figure_discussion", [])
-    if not discussions:
-        return
-    for i, disc in enumerate(discussions, 1):
-        title = disc.get("title", disc.get("figure", ""))
-        obs = disc.get("observation", "")
-        mech = disc.get("mechanism", "")
-        impl = disc.get("implication", "")
-        rec = disc.get("recommendation", "")
-        linked = disc.get("linked_results", [])
-        insight_ref = disc.get("insight_question_ref", "")
-        figure = disc.get("figure", "")
-        doc.add_heading("Discussion {}: {}".format(i, title), level=2)
-        fields = [
-            ("Observation", obs),
-            ("Physical Mechanism", mech),
-            ("Engineering Implication", impl),
-            ("Recommendation", rec),
-        ]
-        for label, text in fields:
-            if text:
-                p = doc.add_paragraph()
-                run = p.add_run("{}: ".format(label))
-                run.bold = True
-                p.add_run(text)
-        # Traceability line
-        trace_parts = []
-        if linked:
-            trace_parts.append("Results: " + ", ".join(linked))
-        if insight_ref:
-            trace_parts.append("Addresses: " + insight_ref)
-        if figure:
-            trace_parts.append("Figure: " + figure)
-        if trace_parts:
-            p = doc.add_paragraph()
-            run = p.add_run(" | ".join(trace_parts))
-            run.font.size = Pt(8)
-            run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
-        doc.add_paragraph("")
-
-    # Summary of all recommendations
-    recs = [d.get("recommendation", "") for d in discussions if d.get("recommendation")]
-    if len(recs) > 1:
-        doc.add_heading("Summary of Recommendations", level=2)
-        for j, r in enumerate(recs, 1):
-            doc.add_paragraph("{}. {}".format(j, r))
-        doc.add_paragraph("")
-
-
-def add_benchmark_word(doc, results):
-    """Add benchmark_validation section to a Word document."""
-    bv = results.get("benchmark_validation", {})
-    if not bv:
-        return
-    source = bv.get("source", "")
-    if source:
-        doc.add_paragraph("Reference source: {}".format(source))
-    tests = bv.get("tests", [])
-    if tests:
-        headers = ["Parameter", "NeqSim", "Reference", "Unit", "Tol %", "Status"]
-        rows = []
-        for t in tests:
-            neq = t.get("neqsim", "")
-            ref = t.get("reference", "")
-            tol = t.get("tolerance_pct", "")
-            passed = t.get("pass", None)
-            status = "PASS" if passed is True else ("FAIL" if passed is False else str(passed))
-            neq_s = "{:.4g}".format(neq) if isinstance(neq, float) else str(neq)
-            ref_s = "{:.4g}".format(ref) if isinstance(ref, float) else str(ref)
-            tol_s = "{:.1f}".format(tol) if isinstance(tol, float) else str(tol)
-            rows.append([t.get("parameter", ""), neq_s, ref_s,
-                         t.get("unit", ""), tol_s, status])
-        table = add_word_table(doc, headers, rows)
-        # Color-code PASS/FAIL
-        for row in table.rows[1:]:
-            cell = row.cells[5]
-            text = cell.text.strip()
-            for paragraph in cell.paragraphs:
-                for run in paragraph.runs:
-                    run.font.bold = True
-                    if text == "PASS":
-                        run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-                    elif text == "FAIL":
-                        run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-
-
-def add_uncertainty_word(doc, results):
-    """Add uncertainty analysis section to a Word document."""
-    unc = results.get("uncertainty", {})
-    if not unc:
-        return
-    method = unc.get("method", "")
-    n_sims = unc.get("n_simulations", "")
-    engine = unc.get("simulation_engine", "")
-    if method:
-        doc.add_paragraph("Method: {}".format(method))
-    if engine:
-        doc.add_paragraph("Engine: {}".format(engine))
-    if n_sims:
-        doc.add_paragraph("Simulations: {}".format(n_sims))
-    output_param = unc.get("output_parameter", "Output")
-    p10 = unc.get("p10")
-    p50 = unc.get("p50")
-    p90 = unc.get("p90")
-    mean = unc.get("mean")
-    std = unc.get("std")
-    prob_neg = unc.get("prob_negative_pct")
-    if p10 is not None or p50 is not None or p90 is not None:
-        doc.add_heading("Statistical Summary: {}".format(output_param), level=2)
-        rows = []
-        if p10 is not None:
-            rows.append(["P10 (low)", "{:.4g}".format(p10)])
-        if p50 is not None:
-            rows.append(["P50 (median)", "{:.4g}".format(p50)])
-        if p90 is not None:
-            rows.append(["P90 (high)", "{:.4g}".format(p90)])
-        if mean is not None:
-            rows.append(["Mean", "{:.4g}".format(mean)])
-        if std is not None:
-            rows.append(["Std Dev", "{:.4g}".format(std)])
-        if prob_neg is not None:
-            rows.append(["P(negative)", "{:.1f}%".format(prob_neg)])
-        add_word_table(doc, ["Statistic", "Value"], rows)
-    inputs = unc.get("input_parameters", [])
-    if inputs:
-        doc.add_heading("Input Parameter Ranges", level=2)
-        headers = ["Parameter", "Low", "Base", "High", "Unit", "Distribution"]
-        rows = []
-        for inp in inputs:
-            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, float) else str(v)
-            rows.append([inp.get("name", ""), fmt(inp.get("low", "")),
-                         fmt(inp.get("base", "")), fmt(inp.get("high", "")),
-                         inp.get("unit", ""), inp.get("distribution", "")])
-        add_word_table(doc, headers, rows)
-    tornado = unc.get("tornado", [])
-    if tornado:
-        doc.add_heading("Sensitivity Ranking (Tornado)", level=2)
-        headers = ["Parameter", "Low Case", "High Case", "Swing"]
-        rows = []
-        for t in tornado:
-            fmt = lambda v: "{:.4g}".format(v) if isinstance(v, (int, float)) else str(v)
-            rows.append([t.get("parameter", ""),
-                         fmt(t.get("npv_low", t.get("low", ""))),
-                         fmt(t.get("npv_high", t.get("high", ""))),
-                         fmt(t.get("swing", ""))])
-        add_word_table(doc, headers, rows)
-
-
-def add_risk_word(doc, results):
-    """Add risk_evaluation section to a Word document."""
-    risk = results.get("risk_evaluation", {})
-    if not risk:
-        return
-    overall = risk.get("overall_risk_level", "")
-    matrix = risk.get("risk_matrix_used", "")
-    if overall:
-        p = doc.add_paragraph()
-        run = p.add_run("Overall risk level: ")
-        run.bold = True
-        run2 = p.add_run(overall)
-        run2.bold = True
-        if "high" in overall.lower():
-            run2.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-        elif "medium" in overall.lower():
-            run2.font.color.rgb = RGBColor(0xFF, 0x8C, 0x00)
-        else:
-            run2.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-    if matrix:
-        doc.add_paragraph("Risk matrix: {}".format(matrix))
-    risks = risk.get("risks", [])
-    if risks:
-        headers = ["ID", "Description", "Category", "Likelihood",
-                    "Consequence", "Risk Level", "Mitigation"]
-        rows = []
-        for r in risks:
-            rows.append([r.get("id", ""), r.get("description", ""),
-                         r.get("category", ""), r.get("likelihood", ""),
-                         r.get("consequence", ""), r.get("risk_level", ""),
-                         r.get("mitigation", "")])
-        add_word_table(doc, headers, rows)
-
-
-def add_word_table(doc, headers, data_rows, col_widths=None):
-    """Add a professionally styled table to a Word document.
-
-    Args:
-        doc: Document object.
-        headers: list of column header strings.
-        data_rows: list of lists (each inner list = one row of cell values).
-        col_widths: optional list of Inches widths per column.
-    """
-    table = doc.add_table(rows=1, cols=len(headers))
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    table.style = "Table Grid"
-
-    # Header row
-    hdr = table.rows[0]
-    for i, text in enumerate(headers):
-        cell = hdr.cells[i]
-        cell.text = str(text)
-        # Style header: bold, white text on dark blue background
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                run.font.size = Pt(9)
-                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-        shading = parse_xml(
-            \'<w:shd {} w:fill="2F5496"/>\'.format(nsdecls(\'w\'))
-        )
-        cell._tc.get_or_add_tcPr().append(shading)
-
-    # Data rows
-    for row_data in data_rows:
-        row = table.add_row()
-        for i, val in enumerate(row_data):
-            cell = row.cells[i]
-            cell.text = str(val)
-            for paragraph in cell.paragraphs:
-                for run in paragraph.runs:
-                    run.font.size = Pt(9)
-
-    # Apply column widths if specified
-    if col_widths:
-        for i, width in enumerate(col_widths):
-            for row in table.rows:
-                row.cells[i].width = width
-
-    doc.add_paragraph("")  # spacing after table
-    return table
-
-
-def add_results_word_table(doc, results):
-    """Add key_results as a styled Word table with units column."""
-    key_results = results.get("key_results", {})
-    if not key_results:
-        return
-    headers = ["Parameter", "Value", "Unit"]
-    data_rows = []
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        data_rows.append([label, val_str, unit])
-    add_word_table(doc, headers, data_rows,
-                   col_widths=[Inches(3.0), Inches(1.5), Inches(1.5)])
-
-
-def add_validation_word_table(doc, results):
-    """Add validation checks as a styled Word table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return
-    headers = ["Check", "Result"]
-    data_rows = []
-    for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
-        if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
-        elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
-        else:
-            status = str(outcome)
-        data_rows.append([label, status])
-    table = add_word_table(doc, headers, data_rows,
-                           col_widths=[Inches(4.0), Inches(2.0)])
-    # Color-code PASS/FAIL cells
-    for row in table.rows[1:]:
-        cell = row.cells[1]
-        text = cell.text.strip()
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                if text == "PASS":
-                    run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-                elif text == "FAIL":
-                    run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-
-
-def add_custom_word_tables(doc, results):
-    """Add custom tables from results.json 'tables' key."""
-    tables = results.get("tables", [])
-    if not tables:
-        return
-    for tbl in tables:
-        title = tbl.get("title", "")
-        headers = tbl.get("headers", [])
-        data_rows = tbl.get("rows", [])
-        if not headers or not data_rows:
-            continue
-        if title:
-            doc.add_heading(title, level=2)
-        # Format numeric values
-        formatted_rows = []
-        for row in data_rows:
-            formatted = []
-            for cell in row:
-                if isinstance(cell, float):
-                    formatted.append("{:.4g}".format(cell))
-                else:
-                    formatted.append(str(cell))
-            formatted_rows.append(formatted)
-        add_word_table(doc, headers, formatted_rows)
-
-
-# ══════════════════════════════════════════════════════════
-# Report consistency checker
-# ══════════════════════════════════════════════════════════
-
-def check_report_consistency(results):
-    """Check results.json for internal contradictions and inconsistencies.
-
-    Returns a list of dicts with keys: severity, message, fix_type.
-    severity: \'ERROR\', \'WARNING\', or \'INFO\'.
-    fix_type: \'text\' (auto-fixable in report), \'calculation\' (needs
-    agent to re-run notebook), or \'none\' (informational).
-    """
-    if not results:
-        return [{"severity": "INFO", "message": "No results.json loaded; all sections use placeholders.", "fix_type": "none"}]
-
-    issues = []
-
-    # --- 1. Benchmark failures vs optimistic conclusions ---
-    bmk = results.get("benchmark_validation", {})
-    bmk_tests = bmk.get("tests", [])
-    n_fail = sum(1 for t in bmk_tests if t.get("pass") is False)
-    n_total = len(bmk_tests)
-    conclusions = results.get("conclusions", "")
-
-    if n_fail > 0:
-        # Check if any failure has large deviation (>20%) => calculation fix
-        large_devs = []
-        for t in bmk_tests:
-            if t.get("pass") is False:
-                dev_pct = t.get("deviation_pct")
-                if dev_pct is not None and abs(dev_pct) > 20:
-                    large_devs.append(t)
-
-        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
-                         "issue", "concern", "discrepanc", "not met"]
-        conc_lower = conclusions.lower()
-        acknowledges = any(w in conc_lower for w in failure_words)
-
-        if large_devs:
-            params = [t.get("parameter", "?") for t in large_devs]
-            issues.append({
-                "severity": "ERROR",
-                "message": "Benchmark deviation >20% for: {}. Model may need "
-                           "retuning or different EOS/parameters.".format(
-                               ", ".join(params)),
-                "fix_type": "calculation",
-                "action": "Re-run benchmark notebook with revised model "
-                          "parameters (check EOS, BIPs, component characterization).",
-                "parameters": params,
-            })
-
-        if not acknowledges:
-            safe_words = ["safe", "confirm", "acceptable", "satisfactor",
-                          "within limits", "meets"]
-            if any(w in conc_lower for w in safe_words):
-                issues.append({
-                    "severity": "ERROR",
-                    "message": "Conclusions say \\'{}\\' but {}/{} benchmark tests FAILED. "
-                               "Conclusions must acknowledge benchmark failures or explain "
-                               "why they are acceptable.".format(
-                                   conclusions[:80], n_fail, n_total),
-                    "fix_type": "text",
-                })
-            else:
-                issues.append({
-                    "severity": "WARNING",
-                    "message": "{}/{} benchmark tests failed. Consider addressing this "
-                               "in the conclusions.".format(n_fail, n_total),
-                    "fix_type": "text",
-                })
-
-    # --- 2. Validation failures vs optimistic conclusions ---
-    validation = results.get("validation", {})
-    val_failures = []
-    for check, outcome in validation.items():
-        if outcome is False:
-            val_failures.append(check)
-        elif isinstance(outcome, (int, float)) and outcome >= 5.0:
-            val_failures.append("{} ({})".format(check, outcome))
-    if val_failures:
-        conc_lower = conclusions.lower()
-        safe_words = ["safe", "confirm", "acceptable", "satisfactor",
-                      "all.*pass", "within limits"]
-        if any(w in conc_lower for w in safe_words):
-            issues.append({
-                "severity": "ERROR",
-                "message": "Conclusions claim safety/acceptability but validation checks "
-                           "show issues: {}. Revise conclusions or explain why failures "
-                           "are acceptable.".format(", ".join(val_failures)),
-                "fix_type": "text",
-            })
-        # Check if validation error is large enough to need recalculation
-        large_val = [v for v in validation.values()
-                     if isinstance(v, (int, float)) and v >= 10.0]
-        if large_val:
-            issues.append({
-                "severity": "ERROR",
-                "message": "Validation error >=10% detected ({}). Model accuracy "
-                           "may be insufficient — consider retuning.".format(
-                               ", ".join(val_failures)),
-                "fix_type": "calculation",
-                "action": "Re-run main analysis notebook with tighter convergence "
-                          "tolerances or revised model setup.",
-            })
-
-    # --- 3. High risk level vs unconditionally positive conclusions ---
-    risk_eval = results.get("risk_evaluation", {})
-    overall_risk = risk_eval.get("overall_risk_level", "").lower()
-    risks = risk_eval.get("risks", [])
-    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()
-                  or "very high" in r.get("risk_level", "").lower()]
-    if high_risks:
-        conc_lower = conclusions.lower()
-        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
-                         "condition", "subject to", "provided that"]
-        has_caution = any(w in conc_lower for w in caution_words)
-        if not has_caution and any(
-            w in conc_lower for w in ["safe", "confirm", "recommend proceed",
-                                      "no concern"]
-        ):
-            issues.append({
-                "severity": "WARNING",
-                "message": "{} high-risk items identified ({}), but conclusions don\\'t "
-                           "mention risk mitigation. Consider adding caveats.".format(
-                               len(high_risks),
-                               ", ".join(r.get("description", "") for r in high_risks[:3])),
-                "fix_type": "text",
-            })
-
-    # --- 4. High probability of negative outcome vs positive conclusions ---
-    uncertainty = results.get("uncertainty", {})
-    prob_neg = uncertainty.get("prob_negative_pct")
-    if prob_neg is not None and prob_neg > 25:
-        conc_lower = conclusions.lower()
-        if any(w in conc_lower for w in ["safe", "confirm", "favourable",
-                                          "recommend proceed"]):
-            issues.append({
-                "severity": "WARNING",
-                "message": "Probability of unfavourable outcome is {:.1f}% (>25%). "
-                           "Conclusions should acknowledge the significant downside "
-                           "risk.".format(prob_neg),
-                "fix_type": "text",
-            })
-
-    # --- 5. Discussion recommendations contradict conclusions ---
-    discussions = results.get("figure_discussion", [])
-    recs = [d.get("recommendation", "") for d in discussions
-            if d.get("recommendation")]
-    for rec in recs:
-        rec_lower = rec.lower()
-        conc_lower = conclusions.lower()
-        # Check for direct contradictions
-        if "do not proceed" in rec_lower and "proceed" in conc_lower:
-            issues.append({
-                "severity": "ERROR",
-                "message": "Discussion recommends \\'do not proceed\\' but conclusions "
-                           "say \\'proceed\\'. Resolve the contradiction.",
-                "fix_type": "text",
-            })
-        if "further study" in rec_lower or "sensitivity" in rec_lower:
-            if "no further" in conc_lower:
-                issues.append({
-                    "severity": "WARNING",
-                    "message": "Discussion recommends further study/sensitivity analysis "
-                               "but conclusions dismiss it. Ensure consistency.",
-                    "fix_type": "text",
-                })
-
-    # --- 6. Missing critical sections ---
-    if not results.get("key_results"):
-        issues.append({
-            "severity": "WARNING",
-            "message": "No key_results in results.json. The Results section will be empty.",
-            "fix_type": "calculation",
-            "action": "Run the main analysis notebook and populate key_results in results.json.",
-        })
-    if not results.get("conclusions") or results["conclusions"].startswith("["):
-        issues.append({
-            "severity": "WARNING",
-            "message": "Conclusions are still a placeholder. Fill in conclusions "
-                       "before finalising the report.",
-            "fix_type": "text",
-        })
-    if not results.get("approach") or results["approach"].startswith("["):
-        issues.append({
-            "severity": "WARNING",
-            "message": "Approach section is still a placeholder.",
-            "fix_type": "text",
-        })
-
-    # --- 7. Numerical consistency: key_results referenced in discussions ---
-    key_results = results.get("key_results", {})
-    for disc in discussions:
-        obs = disc.get("observation", "")
-        linked = disc.get("linked_results", [])
-        for link_key in linked:
-            if link_key in key_results:
-                expected_val = key_results[link_key]
-                if isinstance(expected_val, float):
-                    # Check if the observation mentions a consistent number
-                    val_strs = [
-                        "{:.4g}".format(expected_val),
-                        "{:.3g}".format(expected_val),
-                        "{:.2g}".format(expected_val),
-                        "{:.1f}".format(expected_val),
-                        str(int(expected_val)) if expected_val == int(expected_val) else "",
-                    ]
-                    val_strs = [v for v in val_strs if v]
-                    if obs and not any(v in obs for v in val_strs):
-                        issues.append({
-                            "severity": "WARNING",
-                            "message": "Discussion links to \\'{}\\' (value={}) but "
-                                       "observation text doesn\\'t mention this value. "
-                                       "Verify numerical consistency.".format(
-                                           link_key, expected_val),
-                            "fix_type": "calculation",
-                            "action": "Verify the value of \\'{}\\' in the notebook output "
-                                      "and update either key_results or the discussion "
-                                      "observation text.".format(link_key),
-                        })
-
-    # --- 8. Risk level vs uncertainty probability alignment ---
-    if prob_neg is not None and overall_risk:
-        if prob_neg > 40 and overall_risk in ("low",):
-            issues.append({
-                "severity": "WARNING",
-                "message": "Probability of negative outcome is {:.0f}% but overall risk "
-                           "is \\'Low\\'. These seem inconsistent.".format(prob_neg),
-                "fix_type": "text",
-            })
-        if prob_neg < 5 and overall_risk in ("high", "very high"):
-            issues.append({
-                "severity": "INFO",
-                "message": "Probability of negative outcome is only {:.0f}% but overall "
-                           "risk is \\'{}\\'. Consider whether the risk rating is driven "
-                           "by non-economic factors.".format(prob_neg, overall_risk.title()),
-                "fix_type": "none",
-            })
-
-    if not issues:
-        issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
-
-    return issues
-
-
-def print_consistency_report(issues):
-    """Print the consistency check results with visual formatting."""
-    errors = [i for i in issues if i["severity"] == "ERROR"]
-    warnings = [i for i in issues if i["severity"] == "WARNING"]
-    infos = [i for i in issues if i["severity"] == "INFO"]
-
-    text_fixes = [i for i in issues if i.get("fix_type") == "text"]
-    calc_fixes = [i for i in issues if i.get("fix_type") == "calculation"]
-
-    print("  ===== Report Consistency Check =====")
-    if errors:
-        for i in errors:
-            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
-            print("  [ERROR{}] {}".format(tag, i["message"]))
-    if warnings:
-        for i in warnings:
-            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
-            print("  [WARNING{}] {}".format(tag, i["message"]))
-    if infos and not errors and not warnings:
-        for i in infos:
-            print("  [OK] {}".format(i["message"]))
-
-    if errors:
-        print("")
-        print("  {} ERROR(s) found. Fix these before distributing the report.".format(
-            len(errors)))
-        print("  Errors indicate contradictions that undermine report credibility.")
-    elif warnings:
-        print("")
-        print("  {} WARNING(s) found. Review before finalising.".format(
-            len(warnings)))
-    else:
-        print("  Report is internally consistent.")
-
-    if text_fixes:
-        print("  {} text fix(es) will be applied automatically.".format(len(text_fixes)))
-    if calc_fixes:
-        print("  {} calculation fix(es) need agent re-run (see fixes_needed.json).".format(
-            len(calc_fixes)))
-
-    print("  ====================================")
-    return len(errors)
-
-
-def auto_fix_consistency(results):
-    """Automatically fix consistency issues in results by appending caveats.
-
-    Modifies results dict in-place. Returns list of fixes applied.
-    """
-    if not results:
-        return []
-
-    fixes = []
-    conclusions = results.get("conclusions", "")
-    if not conclusions or conclusions.startswith("["):
-        return fixes
-
-    caveats = []
-
-    # --- Fix 1: Benchmark failures not acknowledged ---
-    bmk = results.get("benchmark_validation", {})
-    bmk_tests = bmk.get("tests", [])
-    failed_tests = [t for t in bmk_tests if t.get("pass") is False]
-    if failed_tests:
-        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
-                         "issue", "concern", "discrepanc", "not met",
-                         "outside tolerance", "tolerance"]
-        conc_lower = conclusions.lower()
-        if not any(w in conc_lower for w in failure_words):
-            failed_params = [t.get("parameter", "?") for t in failed_tests]
-            caveat = ("Note: {}/{} benchmark comparisons exceeded tolerance "
-                      "({}). These deviations should be evaluated against "
-                      "project-specific acceptance criteria.".format(
-                          len(failed_tests), len(bmk_tests),
-                          ", ".join(failed_params)))
-            caveats.append(caveat)
-            fixes.append("Added benchmark failure caveat for: {}".format(
-                ", ".join(failed_params)))
-
-    # --- Fix 2: High risk items not mentioned ---
-    risk_eval = results.get("risk_evaluation", {})
-    risks = risk_eval.get("risks", [])
-    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()]
-    if high_risks:
-        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
-                         "condition", "subject to", "provided that"]
-        conc_lower = conclusions.lower()
-        if not any(w in conc_lower for w in caution_words):
-            risk_descs = [r.get("description", "?") for r in high_risks[:3]]
-            caveat = ("Key risks requiring mitigation: {}. See Risk Evaluation "
-                      "section for details.".format("; ".join(risk_descs)))
-            caveats.append(caveat)
-            fixes.append("Added risk caveat for {} high-risk item(s)".format(
-                len(high_risks)))
-
-    # --- Fix 3: High probability of negative outcome ---
-    uncertainty = results.get("uncertainty", {})
-    prob_neg = uncertainty.get("prob_negative_pct")
-    if prob_neg is not None and prob_neg > 25:
-        conc_lower = conclusions.lower()
-        if not any(w in conc_lower for w in ["probability", "unfavourable",
-                                              "downside", "negative",
-                                              "uncertainty"]):
-            caveat = ("Uncertainty analysis indicates a {:.0f}% probability of "
-                      "unfavourable outcome. Sensitivity to key input parameters "
-                      "should be considered in decision-making.".format(prob_neg))
-            caveats.append(caveat)
-            fixes.append("Added uncertainty caveat (P(negative)={:.0f}%)".format(
-                prob_neg))
-
-    # --- Fix 4: Validation failures ---
-    validation = results.get("validation", {})
-    val_failures = []
-    for check, outcome in validation.items():
-        if outcome is False:
-            val_failures.append(check.replace("_", " ").title())
-    if val_failures:
-        conc_lower = conclusions.lower()
-        if not any(w in conc_lower for w in ["fail", "attention", "issue",
-                                              "not met", "concern"]):
-            caveat = ("Validation checks flagged: {}. Review these items "
-                      "before finalising design.".format(
-                          ", ".join(val_failures)))
-            caveats.append(caveat)
-            fixes.append("Added validation failure caveat for: {}".format(
-                ", ".join(val_failures)))
-
-    # --- Apply caveats by appending to conclusions ---
-    if caveats:
-        # Remove overly optimistic opening if needed
-        conc_lower = conclusions.lower()
-        # Don't replace the original — append caveats after it
-        updated = conclusions.rstrip(".")
-        updated += ". " + " ".join(caveats)
-        results["conclusions"] = updated
-
-    return fixes
-
-
-# ══════════════════════════════════════════════════════════
-# Build sections (auto-populated where possible)
-# ══════════════════════════════════════════════════════════
-
-def build_sections(results, task_spec):
-    """Build report sections, auto-populating from results.json and task_spec.md."""
-    sections = []
-
-    # 1. Executive Summary (auto-generated from results data)
-    exec_summary = auto_executive_summary(results, task_spec)
-    if not exec_summary:
-        exec_summary = MANUAL_SECTIONS["executive_summary"]
-    sections.append({
-        "heading": "1. Executive Summary",
-        "content": exec_summary,
-    })
-
-    # 2. Problem Description (auto-populated from task_spec.md)
-    prob_desc = auto_problem_description(results, task_spec)
-    if not prob_desc:
-        prob_desc = MANUAL_SECTIONS["problem_description"]
-    sections.append({
-        "heading": "2. Problem Description",
-        "content": prob_desc,
-    })
-
-    next_section_num = 3
-
-    safety_readiness = format_safety_readiness_text(results) if results else ""
-    if safety_readiness:
-        sections.append({
-            "heading": "{}. Safety Study Readiness".format(next_section_num),
-            "content": safety_readiness,
-        })
-        next_section_num += 1
-
-    # 3. Scope and Standards (auto-populated from task_spec.md)
-    scope_parts = []
-    standards = extract_spec_section(task_spec, "Applicable Standards")
-    if standards:
-        scope_parts.append("Applicable Standards:\\n" + standards)
-    methods = extract_spec_section(task_spec, "Calculation Methods")
-    if methods:
-        scope_parts.append("Calculation Methods:\\n" + methods)
-    criteria = extract_spec_section(task_spec, "Acceptance Criteria")
-    if criteria:
-        scope_parts.append("Acceptance Criteria:\\n" + criteria)
-    envelope = extract_spec_section(task_spec, "Operating Envelope")
-    if envelope:
-        scope_parts.append("Operating Envelope:\\n" + envelope)
-
-    scope_content = "\\n\\n".join(scope_parts) if scope_parts else (
-        "[Auto-populated from task_spec.md when filled in. "
-        "Edit step1_scope_and_research/task_spec.md and re-run.]"
-    )
-    sections.append({
-        "heading": "{}. Scope and Standards".format(next_section_num),
-        "content": scope_content,
-        "has_scope": True,
-    })
-    next_section_num += 1
-
-    # 4. Approach
-    approach = MANUAL_SECTIONS["approach"]
-    if results and results.get("approach"):
-        approach = results["approach"]
-    sections.append({
-        "heading": "{}. Approach".format(next_section_num),
-        "content": approach,
-        "has_equations": True,
-    })
-    next_section_num += 1
-
-    # 5. Results (auto-populated from results.json)
-    if results and results.get("key_results"):
-        results_text = format_results_table(results)
-    else:
-        results_text = (
-            "[Auto-populated from results.json when created by notebook. "
-            "Save results with the pattern shown in the task README.]"
-        )
-    sections.append({
-        "heading": "{}. Results".format(next_section_num),
-        "content": results_text,
-        "has_figures": True,
-    })
-    next_section_num += 1
-
-    # 6. Results Discussion (auto-populated from figure_discussion)
-    discussion_content = MANUAL_SECTIONS["results_discussion"]
-    if results and results.get("figure_discussion"):
-        discussion_content = "See structured discussion below."
-    sections.append({
-        "heading": "{}. Results Discussion".format(next_section_num),
-        "content": discussion_content,
-        "has_discussion": True,
-    })
-    next_section_num += 1
-
-    # 7. Validation Summary (auto-populated from results.json)
-    if results and results.get("validation"):
-        validation_text = format_validation_table(results)
-    else:
-        validation_text = (
-            "[Auto-populated from results.json validation section. "
-            "Add validation checks to your notebook results output.]"
-        )
-    sections.append({
-        "heading": "{}. Validation Summary".format(next_section_num),
-        "content": validation_text,
-    })
-    next_section_num += 1
-
-    # 8. Benchmark Validation (auto-populated from results.json)
-    if results and results.get("benchmark_validation"):
-        sections.append({
-            "heading": "{}. Benchmark Validation".format(next_section_num),
-            "content": "See benchmark comparison below.",
-            "has_benchmark": True,
-        })
-        next_section_num += 1
-
-    # 9. Uncertainty Analysis (auto-populated from results.json)
-    if results and results.get("uncertainty"):
-        sections.append({
-            "heading": "{}. Uncertainty Analysis".format(next_section_num),
-            "content": "See uncertainty analysis below.",
-            "has_uncertainty": True,
-        })
-        next_section_num += 1
-
-    # 10. Risk Evaluation (auto-populated from results.json)
-    if results and results.get("risk_evaluation"):
-        sections.append({
-            "heading": "{}. Risk Evaluation".format(next_section_num),
-            "content": "See risk evaluation below.",
-            "has_risk": True,
-        })
-        next_section_num += 1
-
-    if results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
-        sections.append({
-            "heading": "{}. Evidence Gaps and Design-Grade Blockers".format(next_section_num),
-            "content": format_list_items_text(
-                results.get("evidence_gaps") or results.get("assumptions_gaps")),
-        })
-        next_section_num += 1
-
-    if results and results.get("recommendations"):
-        sections.append({
-            "heading": "{}. Recommendations".format(next_section_num),
-            "content": format_list_items_text(results.get("recommendations")),
-        })
-        next_section_num += 1
-
-    # N. Conclusions and Recommendations
-    conclusions = MANUAL_SECTIONS["conclusions"]
-    if results and results.get("conclusions"):
-        conclusions = results["conclusions"]
-    sections.append({
-        "heading": "{}. Conclusions and Recommendations".format(next_section_num),
-        "content": conclusions,
-    })
-    next_section_num += 1
-
-    # N+1. References (auto-populated from results.json if available)
-    refs_content = MANUAL_SECTIONS["references"]
-    if results and results.get("references"):
-        ref_lines = []
-        for i, ref in enumerate(results["references"], 1):
-            ref_id = ref.get("id", "")
-            ref_text = ref.get("text", "")
-            if ref_id:
-                ref_lines.append("[{}] {}".format(i, ref_text))
-            else:
-                ref_lines.append("[{}] {}".format(i, ref_text))
-        refs_content = "\\n".join(ref_lines)
-    sections.append({
-        "heading": "{}. References".format(next_section_num),
-        "content": refs_content,
-        "has_references": True,
-    })
-
-    return sections
-
-
-# ══════════════════════════════════════════════════════════
-# Word report
-# ══════════════════════════════════════════════════════════
-
-def build_word_report(sections, results=None):
-    """Build the Word document with numbered figures, captions, and equations."""
-    doc = Document()
-
-    # Title page
-    doc.add_heading(TITLE, level=0)
-    doc.add_paragraph("")
-    doc.add_paragraph("Author: {}".format(AUTHOR or "(not specified)"))
-    doc.add_paragraph("Date: {}".format(TASK_DATE))
-    doc.add_page_break()
-
-    # Add all sections
-    for section in sections:
-        doc.add_heading(section["heading"], level=1)
-
-        # Results section: use Word table instead of plain text
-        if section.get("has_figures") and results and results.get("key_results"):
-            add_results_word_table(doc, results)
-            # Custom tables
-            if results.get("tables"):
-                add_custom_word_tables(doc, results)
-        elif section.get("has_figures"):
-            # No results data — show placeholder text
-            for para_text in section["content"].split("\\n\\n"):
-                if para_text.strip():
-                    doc.add_paragraph(para_text.strip())
-        elif section.get("has_scope"):
-            # Scope section: parse markdown tables, bold, and lists
-            render_scope_to_word(doc, section["content"])
-        elif "Validation" in section["heading"] and not section.get("has_benchmark") and results and results.get("validation"):
-            # Validation section: use Word table
-            add_validation_word_table(doc, results)
-        elif section.get("has_discussion") and results and results.get("figure_discussion"):
-            # Results Discussion: structured observation/mechanism/implication/rec
-            add_figure_discussion_word(doc, results)
-        elif section.get("has_benchmark") and results:
-            # Benchmark Validation: comparison table with PASS/FAIL
-            add_benchmark_word(doc, results)
-        elif section.get("has_uncertainty") and results:
-            # Uncertainty Analysis: P10/P50/P90, inputs, tornado
-            add_uncertainty_word(doc, results)
-        elif section.get("has_risk") and results:
-            # Risk Evaluation: risk register with color-coded levels
-            add_risk_word(doc, results)
-        else:
-            # Regular text content
-            for para_text in section["content"].split("\\n\\n"):
-                if para_text.strip():
-                    doc.add_paragraph(para_text.strip())
-
-        # Embed figures after Results section
-        if section.get("has_figures"):
-            figures = get_figures()
-            if figures:
-                for fig_idx, fig_path in enumerate(figures, 1):
-                    caption_text = get_figure_caption(fig_path, results, fig_idx)
-                    doc.add_picture(fig_path, width=Inches(6.0))
-                    last_para = doc.paragraphs[-1]
-                    last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption = doc.add_paragraph(caption_text)
-                    caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption.runs[0].font.size = Pt(9)
-                    caption.runs[0].font.italic = True
-                    doc.add_paragraph("")
-            else:
-                doc.add_paragraph(
-                    "[No figures found in figures/ directory. "
-                    "Save plots as PNG files there and re-run this script.]"
-                )
-
-        # Embed equations after Approach section
-        if section.get("has_equations"):
-            equations = get_equations(results)
-            if equations:
-                doc.add_heading("Key Equations", level=2)
-                # Report OMML status
-                if _init_omml():
-                    print("  [INFO] Native Word equations enabled (LaTeX -> OMML)")
-                else:
-                    print("  [WARN] OMML unavailable; equations as images/text")
-                for eq_idx, eq in enumerate(equations, 1):
-                    label = eq.get("label", "Equation {}".format(eq_idx))
-                    latex = eq.get("latex", "")
-                    if not latex:
-                        continue
-                    # Add label above the equation
-                    label_p = doc.add_paragraph()
-                    label_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    run = label_p.add_run("Equation {}: {}".format(eq_idx, label))
-                    run.font.size = Pt(9)
-                    run.font.italic = True
-                    # Add the equation using native OMML (or fallback)
-                    _add_display_equation_to_doc(doc, latex, eq_number=eq_idx)
-                    doc.add_paragraph("")
-
-    # Save
-    doc.save(DOCX_FILE)
-    print("Word report saved: {}".format(DOCX_FILE))
-
-
-# ══════════════════════════════════════════════════════════
-# HTML report
-# ══════════════════════════════════════════════════════════
-
-def build_html_report(sections, results=None):
-    """Build an HTML report with embedded figures, KaTeX equations, and navigation."""
-    figures = get_figures()
-
-    # Build figure HTML with base64-embedded images and numbered captions
-    figure_html = ""
-    if figures:
-        for fig_idx, fig_path in enumerate(figures, 1):
-            fig_name = os.path.basename(fig_path)
-            caption_text = get_figure_caption(fig_path, results, fig_idx)
-            # Determine MIME type
-            if fig_path.endswith(".svg"):
-                mime = "image/svg+xml"
-            else:
-                mime = "image/png"
-            with open(fig_path, "rb") as f:
-                img_data = base64.b64encode(f.read()).decode("utf-8")
-            figure_html += """
-            <div class="figure">
-                <img src="data:{};base64,{}" alt="{}">
-                <p class="caption">{}</p>
-            </div>
-            """.format(mime, img_data, caption_text, caption_text)
-    else:
-        figure_html = "<p><em>No figures found in figures/ directory.</em></p>"
-
-    # Build equation HTML (KaTeX rendering with embedded image fallbacks)
-    equation_html = ""
-    equations = get_equations(results)
-    if equations:
-        equation_html += '<h3>Key Equations</h3>\\n'
-        # Pre-render equation images for offline fallback
-        eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-        if not os.path.exists(eq_img_dir):
-            os.makedirs(eq_img_dir)
-        for eq_idx, eq in enumerate(equations, 1):
-            label = eq.get("label", "Equation {}".format(eq_idx))
-            latex = eq.get("latex", "")
-            if not latex:
-                continue
-            # Render fallback image
-            fallback_img = ""
-            eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
-            if render_equation_to_image(latex, eq_img_path):
-                with open(eq_img_path, "rb") as imgf:
-                    img_b64 = base64.b64encode(imgf.read()).decode("utf-8")
-                fallback_img = (
-                    '<img class="eq-fallback" '
-                    'src="data:image/png;base64,{}" '
-                    'alt="{}" style="display:none; max-width:90%;">'.format(
-                        img_b64, label)
-                )
-            equation_html += """
-            <div class="equation-block">
-                <div class="equation katex-eq">$${}$$</div>
-                {}
-                <p class="equation-label">Equation {}: {}</p>
-            </div>
-            """.format(latex, fallback_img, eq_idx, label)
-
-    # Build validation HTML
-    validation_html = ""
-    if results and results.get("validation"):
-        validation_html = format_validation_html(results)
-
-    # Build key results HTML table
-    results_table_html = ""
-    if results and results.get("key_results"):
-        results_table_html = format_results_html(results)
-
-    # Build custom tables HTML
-    custom_tables_html = ""
-    if results and results.get("tables"):
-        custom_tables_html = format_custom_tables_html(results)
-
-    # Build section HTML and navigation
-    nav_items = ""
-    section_html = ""
-    for section in sections:
-        section_id = section["heading"].lower().replace(" ", "-").replace(".", "")
-        nav_items += \'    <li><a href="#{}">{}</a></li>\\n\'.format(
-            section_id, section["heading"]
-        )
-        # Convert scope section markdown to HTML
-        if section.get("has_scope"):
-            content = scope_content_to_html(section["content"])
-        else:
-            content = section["content"].replace("\\n", "<br>")
-
-        # Insert auto-generated HTML for special sections
-        if section.get("has_figures"):
-            if results_table_html:
-                content = results_table_html + custom_tables_html + figure_html
-            else:
-                content += figure_html
-
-        if section.get("has_equations") and equation_html:
-            content += equation_html
-
-        if "Validation" in section["heading"] and not section.get("has_benchmark") and validation_html:
-            content = validation_html
-
-        if section.get("has_discussion") and results and results.get("figure_discussion"):
-            content = format_figure_discussion_html(results)
-
-        if section.get("has_benchmark") and results:
-            content = format_benchmark_html(results)
-
-        if section.get("has_uncertainty") and results:
-            content = format_uncertainty_html(results)
-
-        if section.get("has_risk") and results:
-            content = format_risk_html(results)
-
-        if section.get("has_references") and results and results.get("references"):
-            content = format_references_html(results)
-
-        section_html += """
-        <section id="{}">
-            <h2>{}</h2>
-            <div>{}</div>
-        </section>
-        """.format(section_id, section["heading"], content)
-
-    # KaTeX CDN for equation rendering (only if equations exist)
-    katex_head = ""
-    katex_body_script = ""
-    if equations:
-        katex_head = """
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>"""
-        katex_body_script = """
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            if (typeof renderMathInElement === "function") {
-                renderMathInElement(document.body, {
-                    delimiters: [
-                        {left: "$$", right: "$$", display: true},
-                        {left: "$", right: "$", display: false}
-                    ],
-                    throwOnError: false
-                });
-            } else {
-                // KaTeX not available (offline) — show fallback images
-                var eqs = document.querySelectorAll(".katex-eq");
-                for (var i = 0; i < eqs.length; i++) {
-                    eqs[i].style.display = "none";
-                }
-                var imgs = document.querySelectorAll(".eq-fallback");
-                for (var j = 0; j < imgs.length; j++) {
-                    imgs[j].style.display = "inline";
-                }
-            }
-        });
-    </script>"""
-
-    html = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>{katex_head}
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-               display: flex; line-height: 1.6; color: #333; }}
-        nav {{ width: 260px; min-height: 100vh; background: #f5f5f5; padding: 1.5rem;
-              position: fixed; overflow-y: auto; border-right: 1px solid #ddd; }}
-        nav h3 {{ margin-bottom: 1rem; color: #555; font-size: 0.9rem;
-                  text-transform: uppercase; letter-spacing: 0.05em; }}
-        nav ul {{ list-style: none; }}
-        nav li {{ margin-bottom: 0.5rem; }}
-        nav a {{ color: #0366d6; text-decoration: none; font-size: 0.9rem; }}
-        nav a:hover {{ text-decoration: underline; }}
-        main {{ margin-left: 260px; max-width: 900px; padding: 2rem 3rem; }}
-        h1 {{ margin-bottom: 0.5rem; color: #1a1a1a; }}
-        h2 {{ margin-top: 2rem; margin-bottom: 1rem; color: #1a1a1a;
-             border-bottom: 1px solid #eee; padding-bottom: 0.3rem; }}
-        h3 {{ margin-top: 1.5rem; margin-bottom: 0.5rem; color: #333; }}
-        .meta {{ color: #666; margin-bottom: 2rem; }}
-        section {{ margin-bottom: 2rem; }}
-        .figure {{ text-align: center; margin: 1.5rem 0; }}
-        .figure img {{ max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
-        .caption {{ font-size: 0.85rem; color: #666; font-style: italic;
-                    margin-top: 0.3rem; }}
-        .equation-block {{ margin: 1.5rem 0; text-align: center; }}
-        .equation {{ font-size: 1.2rem; padding: 0.5rem 0; }}
-        .equation-label {{ font-size: 0.85rem; color: #666; font-style: italic;
-                           margin-top: 0.2rem; }}
-        table {{ border-collapse: collapse; width: 100%; margin: 1.5rem 0;
-                font-size: 0.92rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }}
-        thead th {{ background: #2F5496; color: #fff; font-weight: 600;
-                    padding: 0.6rem 0.75rem; text-align: left;
-                    border: 1px solid #2a4a85; }}
-        tbody td {{ border: 1px solid #e0e0e0; padding: 0.5rem 0.75rem;
-                    text-align: left; }}
-        tbody tr:nth-child(even) {{ background: #f8f9fa; }}
-        tbody tr:hover {{ background: #e9ecef; }}
-        td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
-        .pass {{ color: #28a745; font-weight: bold; }}
-        .fail {{ color: #dc3545; font-weight: bold; }}
-        .results-table {{ max-width: 600px; }}
-        .validation-table {{ max-width: 500px; }}
-        .custom-table {{ margin-top: 0.5rem; }}
-        .scope-table {{ margin: 0.5rem 0 1rem 0; }}
-        section h3 {{ color: #2F5496; margin-top: 1.2rem; margin-bottom: 0.4rem;
-            font-size: 1.1rem; border-bottom: 1px solid #ddd; padding-bottom: 0.2rem; }}
-        section ul {{ margin: 0.3rem 0 0.8rem 1.5rem; }}
-        section ul li {{ margin-bottom: 0.3rem; }}
-        .reference-list {{ list-style: none; padding-left: 0; }}
-        .reference-list li {{ margin-bottom: 0.6rem; padding: 0.4rem 0.6rem;
-            border-left: 3px solid #2F5496; background: #f8f9fa; }}
-        .reference-list li strong {{ color: #2F5496; }}
-        .discussion-block {{ margin: 1.5rem 0; padding: 1rem 1.2rem;
-            background: #f8f9fa; border-left: 4px solid #2F5496;
-            border-radius: 0 4px 4px 0; }}
-        .disc-title {{ color: #2F5496; margin-top: 0 !important; margin-bottom: 0.6rem;
-            font-size: 1rem; border-bottom: none !important; }}
-        .disc-row {{ margin-bottom: 0.4rem; line-height: 1.5; }}
-        .disc-label {{ font-weight: 600; color: #444; }}
-        .disc-rec {{ background: #e8f5e9; padding: 0.4rem 0.6rem;
-            border-radius: 3px; margin-top: 0.3rem; }}
-        .disc-trace {{ font-size: 0.8rem; color: #888; margin-top: 0.4rem; }}
-        .discussion-summary {{ background: #f0f4f8; border-left: 3px solid #1a73e8;
-            padding: 1rem 1.2rem; margin-top: 1.5rem; border-radius: 4px; }}
-        .discussion-summary h3 {{ margin-top: 0; color: #1a73e8; }}
-        .discussion-summary ol {{ margin: 0.5rem 0; padding-left: 1.5rem; }}
-        .discussion-summary li {{ margin-bottom: 0.3rem; }}
-        .benchmark-table {{ max-width: 700px; }}
-        .uncertainty-table {{ max-width: 600px; }}
-        .tornado-table {{ max-width: 600px; }}
-        .risk-table {{ font-size: 0.88rem; }}
-        .risk-high {{ color: #fff; background: #dc3545; padding: 0.15rem 0.5rem;
-            border-radius: 3px; font-weight: 600; }}
-        .risk-med {{ color: #fff; background: #ff8c00; padding: 0.15rem 0.5rem;
-            border-radius: 3px; font-weight: 600; }}
-        .risk-low {{ color: #fff; background: #28a745; padding: 0.15rem 0.5rem;
-            border-radius: 3px; font-weight: 600; }}
-        @media (max-width: 768px) {{
-            nav {{ position: static; width: 100%; min-height: auto; }}
-            main {{ margin-left: 0; padding: 1rem; }}
-        }}
-    </style>
-</head>
-<body>
-    <nav>
-        <h3>Contents</h3>
-        <ul>
-{nav}
-        </ul>
-        <hr style="margin: 1rem 0;">
-        <p style="font-size: 0.8rem; color: #999;">Generated {date}</p>
-    </nav>
-    <main>
-        <h1>{title}</h1>
-        <p class="meta">Author: {author} | Date: {date}</p>
-{sections}
-    </main>{katex_body_script}
-</body>
-</html>""".format(
-        title=TITLE,
-        author=AUTHOR or "(not specified)",
-        date=TASK_DATE,
-        nav=nav_items,
-        sections=section_html,
-        katex_head=katex_head,
-        katex_body_script=katex_body_script,
-    )
-
-    with open(HTML_FILE, "w", encoding="utf-8") as f:
-        f.write(html)
-    print("HTML report saved: {}".format(HTML_FILE))
-
-
-# ══════════════════════════════════════════════════════════
-# Main
-# ══════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    print("Generating reports for: {}".format(TITLE))
-    print("")
-
-    # Auto-read task data
-    results = load_results()
-    task_spec = load_task_spec()
-
-    # Run consistency check BEFORE generating reports
-    print("")
-    issues = check_report_consistency(results)
-    n_errors = print_consistency_report(issues)
-
-    # Separate text fixes (auto-apply) from calculation fixes (need agent)
-    text_issues = [i for i in issues
-                   if i.get("fix_type") == "text"
-                   and i["severity"] in ("ERROR", "WARNING")]
-    calc_issues = [i for i in issues if i.get("fix_type") == "calculation"]
-
-    # Auto-apply text fixes
-    if text_issues and results:
-        print("")
-        print("  Applying automatic text fixes...")
-        fixes = auto_fix_consistency(results)
-        for f in fixes:
-            print("    -> {}".format(f))
-        if fixes:
-            # Re-check to confirm fixes resolved text issues
-            recheck = check_report_consistency(results)
-            remaining_text_errors = [
-                i for i in recheck
-                if i.get("fix_type") == "text" and i["severity"] == "ERROR"
-            ]
-            if remaining_text_errors:
-                print("  {} text error(s) remain after auto-fix:".format(
-                    len(remaining_text_errors)))
-                for i in remaining_text_errors:
-                    print("    [ERROR] {}".format(i["message"]))
-            else:
-                print("  All text issues resolved.")
-
-    # Write fixes_needed.json for calculation-level issues
-    if calc_issues:
-        fixes_path = os.path.join(TASK_DIR, "fixes_needed.json")
-        calc_entries = []
-        for ci in calc_issues:
-            entry = {
-                "severity": ci["severity"],
-                "message": ci["message"],
-                "action": ci.get("action", "Re-run the relevant notebook with revised parameters."),
-            }
-            if "parameters" in ci:
-                entry["parameters"] = ci["parameters"]
-            calc_entries.append(entry)
-        with open(fixes_path, "w", encoding="utf-8") as f:
-            json.dump(calc_entries, f, indent=2)
-        print("")
-        print("  Wrote {} calculation fix(es) to fixes_needed.json".format(
-            len(calc_entries)))
-        print("  The solve-task agent should read this file and re-run")
-        print("  the affected notebooks before regenerating the report.")
-
-    # Build sections (auto-populated where data exists)
-    sections = build_sections(results, task_spec)
-
-    # Generate both formats
-    print("")
-    build_word_report(sections, results)
-    build_html_report(sections, results)
-    print("")
-    print("Both reports generated.")
-    print("  Open Report.html in a browser for navigable view.")
-    print("  Open Report.docx for formal distribution.")
-    if calc_issues:
-        print("")
-        print("  !! {} calculation issue(s) need agent re-run.".format(
-            len(calc_issues)))
-        print("  !! See fixes_needed.json for details.")
-    if not results:
-        print("")
-        print("TIP: Create results.json in the task root to auto-populate")
-        print("     the Results and Validation sections. See the task README")
-        print("     for the results.json pattern.")
+    raise SystemExit(main())
 '''
 
 
@@ -3505,17 +1788,19 @@ def _write_file(path, content):
         f.write(content)
 
 
-def setup_workspace():
+def setup_workspace(task_root=None):
     """
     Create the task_solve/ folder with README and TASK_TEMPLATE.
 
     Safe to call multiple times — skips files that already exist.
     Returns True if anything was created.
     """
+    task_root = resolve_task_root(task_root)
+    template_dir = os.path.join(task_root, "TASK_TEMPLATE")
     created = False
 
     # Main README
-    readme = os.path.join(TASK_SOLVE_DIR, "README.md")
+    readme = os.path.join(task_root, "README.md")
     if not os.path.exists(readme):
         _write_file(readme, WORKSPACE_README)
         created = True
@@ -3534,15 +1819,17 @@ def setup_workspace():
     }
 
     for path, content in template_files.items():
+        path = os.path.join(template_dir, os.path.relpath(path, TEMPLATE_DIR))
         if not os.path.exists(path):
             _write_file(path, content)
             created = True
 
     # Overlay tracked canonical templates from devtools/task_template/ if present.
-    # These are the authoritative versions of files like generate_report.py and
-    # starter notebooks.  They override the embedded strings above so that
+    # These are the authoritative versions of files like starter notebooks, so
     # improvements made to devtools/task_template/ automatically propagate to
     # new tasks without updating the embedded strings in this script.
+    # generate_report.py is deliberately NOT copied: tasks get a launcher shim
+    # so the 4800-line generator has exactly one copy that everyone runs.
     canonical_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                  "task_template")
     if os.path.isdir(canonical_dir):
@@ -3553,10 +1840,17 @@ def setup_workspace():
                     continue
                 src = os.path.join(root, fname)
                 rel = os.path.relpath(src, canonical_dir)
-                dst = os.path.join(TEMPLATE_DIR, rel)
+                if rel.replace("\\", "/") == VENDORED_GENERATOR_REL:
+                    continue
+                dst = os.path.join(template_dir, rel)
                 # Always overwrite with canonical version
                 _write_file(dst, open(src, "r", encoding="utf-8").read())
                 created = True
+
+    # Always refresh the launcher so a template created before this change
+    # stops carrying a full copy of the generator.
+    _write_file(os.path.join(template_dir, "step3_report", "generate_report.py"),
+                GENERATE_REPORT)
 
     return created
 
@@ -3707,6 +2001,14 @@ def _apply_study_config_overrides(content, title, task_type, scale,
     content = _replace_section_key(content, "study", "title", _yaml_quote(title))
     content = _replace_section_key(content, "study", "task_type", _yaml_quote(task_type))
 
+    try:
+        document_root = resolve_document_root()
+    except (OSError, ValueError) as error:
+        print("  WARNING: document root is not usable: {}".format(error))
+        document_root = None
+    content = _replace_section_key(content, "inputs", "document_root",
+                                   _yaml_quote(document_root or ""))
+
     normalized_scale = normalize_scale(scale)
     if normalized_scale:
         mode, aace_class, fel_stage, default_depth = _scale_defaults(normalized_scale)
@@ -3767,9 +2069,110 @@ def _seed_study_config(task_dir, title, task_type, scale, report_depth,
         config.write(content)
 
 
+def _docx_table_to_markdown(table):
+    rows = []
+    for row in table.rows:
+        cells = [" ".join(cell.text.split()).replace("|", "\\|") for cell in row.cells]
+        rows.append("| " + " | ".join(cells) + " |")
+    if not rows:
+        return ""
+    width = len(table.rows[0].cells)
+    rows.insert(1, "|" + "|".join(["---"] * width) + "|")
+    return "\n".join(rows)
+
+
+def _docx_to_markdown(path):
+    """Convert a Word task brief to Markdown, keeping headings, lists and tables in order."""
+    try:
+        import docx
+        from docx.table import Table
+        from docx.text.paragraph import Paragraph
+    except ImportError:
+        raise ValueError("Reading a .docx prompt file needs python-docx "
+                         "(pip install python-docx)")
+    document = docx.Document(path)
+    blocks = []
+    for child in document.element.body.iterchildren():
+        tag = child.tag.rsplit("}", 1)[-1]
+        if tag == "tbl":
+            text = _docx_table_to_markdown(Table(child, document))
+        elif tag == "p":
+            paragraph = Paragraph(child, document)
+            text = paragraph.text.strip()
+            if not text:
+                continue
+            style = (paragraph.style.name if paragraph.style is not None else "").lower()
+            if style == "title":
+                text = "# " + text
+            elif style.startswith("heading"):
+                level = style.replace("heading", "").strip()
+                text = "#" * (int(level) if level.isdigit() else 2) + " " + text
+            elif "list" in style:
+                text = ("1. " if "number" in style else "- ") + text
+        else:
+            continue
+        if text:
+            blocks.append(text)
+    return "\n\n".join(blocks)
+
+
+def read_prompt_file(path):
+    """Return the text of a task brief as Markdown.
+
+    A .docx brief is converted (headings, lists and tables in order); any other
+    file is read as UTF-8 text, as before. Raises ValueError for a missing or
+    unreadable file.
+    """
+    if not path or not os.path.isfile(path):
+        raise ValueError("Prompt file not found: {}".format(path))
+    if os.path.splitext(path)[1].lower() == ".docx":
+        return _docx_to_markdown(path)
+    try:
+        with open(path, "r", encoding="utf-8-sig") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        raise ValueError("Prompt file is not UTF-8 text or .docx: {}. For a PDF, place it "
+                         "in references/ and extract it in Step 1.".format(path))
+
+
+def _attach_prompt_file(task_dir, prompt_file):
+    """Copy the brief into references/manual/ and record it in study_config.yaml."""
+    manual_dir = os.path.join(task_dir, "step1_scope_and_research", "references", "manual")
+    os.makedirs(manual_dir, exist_ok=True)
+    target = os.path.join(manual_dir, os.path.basename(prompt_file))
+    shutil.copy2(prompt_file, target)
+    relative = os.path.relpath(target, task_dir).replace("\\", "/")
+    config_path = os.path.join(task_dir, "study_config.yaml")
+    if os.path.exists(config_path):
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = f.read()
+        config = config.replace('prompt_file: ""', 'prompt_file: "{}"'.format(relative), 1)
+        with open(config_path, "w", encoding="utf-8") as f:
+            f.write(config)
+    return relative
+
+
+def _copy_template_missing(template_dir, task_dir, ignore):
+    """Copy template files into an existing folder, never overwriting a file.
+
+    @param template_dir the TASK_TEMPLATE folder
+    @param task_dir the existing task folder
+    @param ignore a shutil ignore callable
+    """
+    for root, dirs, files in os.walk(template_dir):
+        skipped = ignore(root, dirs + files)
+        dirs[:] = [d for d in dirs if d not in skipped]
+        dest_root = os.path.join(task_dir, os.path.relpath(root, template_dir))
+        os.makedirs(dest_root, exist_ok=True)
+        for name in files:
+            dest = os.path.join(dest_root, name)
+            if name not in skipped and not os.path.exists(dest):
+                shutil.copy2(os.path.join(root, name), dest)
+
+
 def create_task(title, task_type="B", author="", prompt="", scale="",
                 report_depth="", notebooks="", config_file="",
-                intake_pause=""):
+                intake_pause="", task_root=None, prompt_file="", slug=""):
     """Create a new task folder from the template.
 
     Parameters
@@ -3793,36 +2196,62 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         Optional path to a study_config.yaml file to copy into the task.
     intake_pause : str
         Optional intake pause setting: auto, always, or never.
+    task_root : str
+        Optional parent folder overriding the environment and saved default.
+    prompt_file : str
+        Optional task brief (.md, .txt or .docx). Its text becomes the prompt
+        when ``prompt`` is empty; the original is kept in references/manual/.
+    slug : str
+        Optional exact folder name. When the folder already exists but has not
+        been scaffolded (no README.md) - e.g. created by a PEPR/M1 intake tool
+        that downloaded attachments first - the template is filled in around
+        the existing files instead of creating a second folder.
     """
+    if prompt_file and not prompt:
+        prompt = read_prompt_file(prompt_file)
+    task_root = resolve_task_root(task_root)
+    template_dir = os.path.join(task_root, "TASK_TEMPLATE")
     # Ensure workspace exists
-    if not os.path.exists(TEMPLATE_DIR):
-        print("Setting up task_solve/ workspace for the first time...")
-        setup_workspace()
+    if not os.path.exists(template_dir):
+        print("Setting up task workspace: {}".format(task_root))
+        setup_workspace(task_root)
         print("")
     else:
         # Always refresh the canonical overlay so updates to
         # devtools/task_template/ propagate to new tasks without requiring
         # a full --setup re-run.
-        setup_workspace()
+        setup_workspace(task_root)
 
     today = date.today().isoformat()
-    folder_name = "{}_{}".format(today, slugify(title))
-    task_dir = os.path.join(TASK_SOLVE_DIR, folder_name)
+    slug = (slug or "").strip()
+    if slug and (slug in (".", "..") or os.path.basename(slug) != slug
+                 or "/" in slug or "\\" in slug):
+        raise ValueError("--slug must be a single folder name, got: {}".format(slug))
+    folder_name = slug or "{}_{}".format(today, slugify(title))
+    task_dir = os.path.join(task_root, folder_name)
+    ignore = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
 
     if os.path.exists(task_dir):
-        print("ERROR: Folder already exists: {}".format(task_dir))
-        sys.exit(1)
-
-    # Copy template
-    shutil.copytree(
-        TEMPLATE_DIR,
-        task_dir,
-        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
-    )
+        if not slug or os.path.exists(os.path.join(task_dir, "README.md")):
+            print("ERROR: Folder already exists: {}".format(task_dir))
+            sys.exit(1)
+        # Pre-created by an intake tool: add the template without touching its files.
+        _copy_template_missing(template_dir, task_dir, ignore)
+        print("Scaffolding existing folder: {}".format(task_dir))
+    else:
+        shutil.copytree(template_dir, task_dir, ignore=ignore)
 
     # Seed explicit task-depth configuration before the agent starts planning.
     _seed_study_config(task_dir, title, task_type, scale, report_depth,
                        notebooks, config_file, intake_pause)
+    brief_path = _attach_prompt_file(task_dir, prompt_file) if prompt_file else ""
+
+    # List the source-document library where agents already look, so a
+    # configured root is discoverable without knowing the CLI exists.
+    try:
+        write_document_root_index(task_dir)
+    except (OSError, ValueError) as error:
+        print("  WARNING: could not index the document root: {}".format(error))
 
     # Fill in the README
     readme_path = os.path.join(task_dir, "README.md")
@@ -3836,6 +2265,7 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
         "A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow)",
         type_label,
     )
+    content = content.replace("task_solve/[THIS_FOLDER]", task_dir.replace("\\", "/"))
     content = content.replace("[THIS_FOLDER]", folder_name)
     if author:
         content = content.replace(
@@ -3857,15 +2287,18 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     with open(notes_path, "w", encoding="utf-8") as f:
         f.write(notes)
 
-    # Fill in generate_report.py
+    # Point the launcher at the canonical generator in this checkout, and
+    # record the same root so later tooling can find it from anywhere.
     report_path = os.path.join(task_dir, "step3_report", "generate_report.py")
     with open(report_path, "r", encoding="utf-8") as f:
         report = f.read()
+    report = report.replace("__GENERATOR_HINT__", canonical_generator_path())
     report = report.replace('TITLE = "Task Report"', 'TITLE = "{}"'.format(title))
     if author:
         report = report.replace('AUTHOR = ""', 'AUTHOR = "{}"'.format(author))
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
+    save_project_root()
 
     # Seed user_input.md with the original user request so the task can be
     # reproduced from the same chat input. The agent should append clarifying
@@ -3891,20 +2324,40 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
                 if placeholder_block in ui:
                     ui = ui.replace(placeholder_block,
                                     marker + "\n" + prompt.strip())
+            if brief_path:
+                attachment = ("- [List any files, images, PDFs, links, or pasted tables "
+                              "the user provided]")
+                ui = ui.replace(attachment, "- `{}` - task brief supplied with --prompt-file "
+                                "(its text is the original request above)".format(brief_path), 1)
             with open(user_input_path, "w", encoding="utf-8") as f:
                 f.write(ui)
         except Exception as e:
             print("  WARNING: could not seed user_input.md ({})".format(e))
 
-    print("Created: task_solve/{}".format(folder_name))
+    # Pull controlled documents automatically when a retrieval backend is
+    # configured (same zero-argument path agents use in chat). Non-fatal.
+    try:
+        import doc_retriever
+        retrieval = doc_retriever.retrieve_for_task(task_dir, quiet=True)
+        if retrieval.get("status") == "ok":
+            print("  Documents: {} retrieved into step1_scope_and_research/references/stid/".format(
+                retrieval.get("documents_downloaded", 0) + retrieval.get("documents_cached", 0)))
+        elif retrieval.get("status") not in ("no_backend", "disabled", "no_installation"):
+            print("  Document retrieval {}: {}".format(retrieval.get("status"),
+                                                      retrieval.get("message", "")))
+    except Exception as error:  # noqa: BLE001
+        print("  WARNING: automatic document retrieval skipped ({})".format(str(error)[:120]))
+
+    print("Created: {}".format(task_dir))
     print("")
     print("Task input can be added before analysis starts:")
-    print("  Config: task_solve/{}/study_config.yaml".format(folder_name))
-    print("  Prompt/log: task_solve/{}/user_input.md".format(folder_name))
-    print("  Document input: task_solve/{}/step1_scope_and_research/references/".format(
-        folder_name))
+    print("  Config: {}/study_config.yaml".format(task_dir))
+    print("  Prompt/log: {}/user_input.md".format(task_dir))
+    print("  Document input: {}/step1_scope_and_research/references/".format(task_dir))
     print("  Supported documents include PDFs, Word files, Excel stream tables,")
     print("  P&IDs, vendor data sheets, standards, and lab reports.")
+    print("  Source library listed in: step1_scope_and_research/references/{}".format(
+        DOCUMENT_ROOT_INDEX_NAME))
     intake_setting = normalize_intake_pause(intake_pause) or "auto"
     if intake_setting == "always":
         print("  Intake pause: requested - wait for user confirmation before notebooks.")
@@ -3914,33 +2367,34 @@ def create_task(title, task_type="B", author="", prompt="", scale="",
     print("  Recommended - Let Copilot do everything:")
     print("    Open VS Code Copilot Chat and type:")
     print("")
-    print("    @solve.task {}".format(title))
+    print("    @solve-task {}".format(title))
     print("")
     print("  Alternative - Follow prompts manually:")
-    print("    Open task_solve/{}/README.md".format(folder_name))
+    print("    Open {}/README.md".format(task_dir))
     print("")
     return task_dir
 
 
-def list_tasks():
+def list_tasks(task_root=None):
     """List existing task folders."""
-    if not os.path.exists(TASK_SOLVE_DIR):
-        print("No task_solve/ folder yet. Run: neqsim new-task --setup")
+    task_root = resolve_task_root(task_root)
+    if not os.path.exists(task_root):
+        print("No task folder at {}. Run: neqsim new-task --setup".format(task_root))
         return
 
-    entries = sorted(os.listdir(TASK_SOLVE_DIR))
+    entries = sorted(os.listdir(task_root))
     tasks = [
         e for e in entries
-        if os.path.isdir(os.path.join(TASK_SOLVE_DIR, e))
+        if os.path.isdir(os.path.join(task_root, e))
         and e != "TASK_TEMPLATE"
     ]
 
     if not tasks:
         print("No tasks yet. Create one with: neqsim new-task \"your task\"")
     else:
-        print("Tasks in task_solve/:")
+        print("Tasks in {}:".format(task_root))
         for t in tasks:
-            readme = os.path.join(TASK_SOLVE_DIR, t, "README.md")
+            readme = os.path.join(task_root, t, "README.md")
             status = ""
             if os.path.exists(readme):
                 with open(readme, "r", encoding="utf-8") as f:
@@ -3952,64 +2406,127 @@ def list_tasks():
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+    """Handle destination settings before forwarding task creation arguments."""
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--task-root")
+    settings = parser.add_mutually_exclusive_group()
+    settings.add_argument("--set-default-folder")
+    settings.add_argument("--reset-default-folder", action="store_true")
+    settings.add_argument("--show-task-root", action="store_true")
+    settings.add_argument("--set-report-template")
+    settings.add_argument("--reset-report-template", action="store_true")
+    settings.add_argument("--show-report-template", action="store_true")
+    settings.add_argument("--set-document-root")
+    settings.add_argument("--reset-document-root", action="store_true")
+    settings.add_argument("--show-document-root", action="store_true")
+    options, remaining = parser.parse_known_args()
+    try:
+        if options.set_default_folder is not None:
+            stored = save_default_task_root(options.set_default_folder)
+            if stored == CWD_TASK_ROOT:
+                print("Saved default task folder: the terminal's current folder.")
+            else:
+                print("Saved default task folder: {}".format(stored))
+            return
+        if options.reset_default_folder:
+            clear_default_task_root()
+            print("Saved default removed. Existing tasks are unchanged.")
+            return
+        if options.show_task_root:
+            print(resolve_task_root(options.task_root))
+            return
+        if options.set_report_template is not None:
+            print("Saved report template: {}".format(
+                save_default_report_template(options.set_report_template)))
+            return
+        if options.reset_report_template:
+            clear_default_report_template()
+            print("Saved report template removed. Reports use built-in styling.")
+            return
+        if options.show_report_template:
+            print(resolve_report_template() or "(none — reports use built-in styling)")
+            return
+        if options.set_document_root is not None:
+            print("Saved document root: {}".format(
+                save_default_document_root(options.set_document_root)))
+            return
+        if options.reset_document_root:
+            clear_default_document_root()
+            print("Saved document root removed.")
+            return
+        if options.show_document_root:
+            print(resolve_document_root() or "(none — no document root configured)")
+            return
+        _main([sys.argv[0]] + remaining, options.task_root)
+    except (OSError, ValueError, TypeError, AttributeError) as error:
+        parser.error(str(error))
+
+
+def _main(argv, task_root=None):
+    """Run task commands using the selected output root."""
+    if len(argv) < 2 or argv[1] in ("-h", "--help"):
         print(__doc__)
         sys.exit(0)
 
-    if sys.argv[1] == "--setup":
-        if setup_workspace():
-            print("Created task_solve/ workspace with README and template.")
+    if argv[1] == "--setup":
+        if setup_workspace(task_root):
+            print("Created task workspace at {}".format(resolve_task_root(task_root)))
         else:
-            print("task_solve/ workspace already exists.")
+            print("Task workspace already exists at {}".format(resolve_task_root(task_root)))
         print("\nCreate a task: neqsim new-task \"your task title\"")
         return
 
-    if sys.argv[1] == "--list":
-        list_tasks()
+    if argv[1] == "--list":
+        list_tasks(task_root)
         return
 
-    title = sys.argv[1]
+    title = argv[1]
     task_type = "B"
     author = ""
     prompt = ""
+    prompt_file = ""
     scale = ""
     report_depth = ""
     notebooks = ""
     config_file = ""
     intake_pause = ""
+    slug = ""
 
     i = 2
-    while i < len(sys.argv):
-        if sys.argv[i] == "--type" and i + 1 < len(sys.argv):
-            task_type = sys.argv[i + 1].upper()
+    while i < len(argv):
+        if argv[i] == "--type" and i + 1 < len(argv):
+            task_type = argv[i + 1].upper()
             i += 2
-        elif sys.argv[i] == "--author" and i + 1 < len(sys.argv):
-            author = sys.argv[i + 1]
+        elif argv[i] == "--author" and i + 1 < len(argv):
+            author = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--prompt" and i + 1 < len(sys.argv):
-            prompt = sys.argv[i + 1]
+        elif argv[i] == "--prompt" and i + 1 < len(argv):
+            prompt = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--prompt-file" and i + 1 < len(sys.argv):
+        elif argv[i] == "--prompt-file" and i + 1 < len(argv):
             try:
-                with open(sys.argv[i + 1], "r", encoding="utf-8") as f:
-                    prompt = f.read()
-            except Exception as e:
+                prompt = read_prompt_file(argv[i + 1])
+                prompt_file = argv[i + 1]
+            except ValueError as e:
                 print("WARNING: could not read --prompt-file: {}".format(e))
             i += 2
-        elif sys.argv[i] == "--scale" and i + 1 < len(sys.argv):
-            scale = sys.argv[i + 1]
+        elif argv[i] == "--scale" and i + 1 < len(argv):
+            scale = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--report-depth" and i + 1 < len(sys.argv):
-            report_depth = sys.argv[i + 1]
+        elif argv[i] == "--report-depth" and i + 1 < len(argv):
+            report_depth = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--notebooks" and i + 1 < len(sys.argv):
-            notebooks = sys.argv[i + 1]
+        elif argv[i] == "--notebooks" and i + 1 < len(argv):
+            notebooks = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--intake-pause" and i + 1 < len(sys.argv):
-            intake_pause = sys.argv[i + 1]
+        elif argv[i] == "--intake-pause" and i + 1 < len(argv):
+            intake_pause = argv[i + 1]
             i += 2
-        elif sys.argv[i] == "--config-file" and i + 1 < len(sys.argv):
-            config_file = sys.argv[i + 1]
+        elif argv[i] == "--config-file" and i + 1 < len(argv):
+            config_file = argv[i + 1]
+            i += 2
+        elif argv[i] == "--slug" and i + 1 < len(argv):
+            slug = argv[i + 1]
             i += 2
         else:
             i += 1
@@ -4032,7 +2549,8 @@ def main():
         intake_pause = ""
 
     create_task(title, task_type, author, prompt, scale, report_depth,
-                notebooks, config_file, intake_pause)
+                notebooks, config_file, intake_pause, task_root=task_root,
+                prompt_file=prompt_file, slug=slug)
 
 
 if __name__ == "__main__":

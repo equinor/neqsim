@@ -82,7 +82,7 @@ public final class DoeBigHillVacuumFractionationCase {
     configuredColumn.setTopPressure(operatingInputs.getTopPressureBara());
     configuredColumn.setBottomPressure(operatingInputs.getBottomPressureBara());
     configuredColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    configuredColumn.getReboiler().setOutTemperature(operatingInputs.getReboilerTemperatureKelvin());
+    configuredColumn.getReboiler().setOutletTemperature(operatingInputs.getReboilerTemperatureKelvin());
     configuredColumn.setCondenserRefluxRatio(operatingInputs.getCondenserRefluxRatio());
 
     configuredColumn.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);

@@ -65,6 +65,15 @@ System.out.println("Outlet temperature: " + outletT + " °C");
 
 ## Calculation Methods
 
+For single-phase inlets, `setUseGERG2008(true)`, `setUseLeachman(true)` or
+`setUseVega(true)` selects the matching PS solver for the model's entropy
+reference. Isentropic, polytropic and specified-outlet-temperature calculations
+use that solver directly. Entropy from one property model must not be passed to
+the standard EOS PS solver: the reference values can differ substantially.
+Standard EOS PS flashes enforce the
+[entropy convergence contract](../../thermodynamicoperations/README.md#ps-flash-convergence)
+and report non-convergence instead of silently returning an unconverged state.
+
 ### Isentropic Compression
 
 ```java

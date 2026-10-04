@@ -1,7 +1,7 @@
 ---
 name: neqsim-autonomous-investigation
 version: "1.1.0"
-description: "Autonomous investigation loop for operational and engineering anomalies — turns an agent from 'told what to look for' into 'discovers relationships and hypotheses on its own'. USE WHEN: solving a PEPR action, root-cause, or operational study where the symptom, driver, or important relationships are NOT given up front. Runs an observe -> hypothesize -> predict -> test -> discriminate loop, using neqsim.process.diagnostics.RelationshipGraph for unsupervised lead-lag relationship discovery across historian tags, then hands the discovered relationships to neqsim-root-cause-analysis. Anchors on neqsim.process.diagnostics classes."
+description: "Autonomous observe-hypothesize-predict-test-discriminate loop for operational anomalies. USE WHEN: solving a PEPR action, root-cause or operational study where the symptom, driver or important relationships are NOT given up front. Uses neqsim.process.diagnostics.RelationshipGraph for lead-lag relationship discovery across historian tags, then hands off to neqsim-root-cause-analysis."
 last_verified: "2026-07-19"
 requires:
   java_packages: [neqsim.process.diagnostics, neqsim.process.automation]
@@ -109,6 +109,20 @@ for r in edges:
 - A strong statistical edge that does **not** follow a physical process path
   (upstream -> downstream in the flowsheet) is a candidate common-cause or
   instrument artifact, not a direct cause.
+
+## External (non-historian) candidate signals: weather
+
+`RelationshipGraph` only sees what is in the historian data set you hand it.
+For outdoor/topside equipment, ambient temperature, wind, or sea state can be
+a driver that is not tagged anywhere in the plant historian. Before concluding
+"no cause found" for an anomaly on weather-exposed equipment, pull the
+historical weather for the site and event window with the community
+`neqsim-weather-data` skill (`WeatherDataService.get_historical`) and add it as
+an extra column to the data handed to `RelationshipGraph.analyze(...)`, exactly
+like any other tag. A lead-lag edge from an ambient-temperature or wind-speed
+series into the anomalous tag is then a discovered candidate cause, to be
+hypothesised and tested like any other `RelationshipGraph` finding — not
+asserted from correlation alone.
 
 ## Auto-detect the symptom — `AnomalyScanner`
 

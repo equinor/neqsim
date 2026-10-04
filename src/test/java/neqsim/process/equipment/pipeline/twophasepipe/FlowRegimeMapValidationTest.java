@@ -133,7 +133,7 @@ class FlowRegimeMapValidationTest {
   @Test
   @DisplayName("the annular boundary moves to higher gas velocity as the liquid rate rises")
   void testAnnularBoundaryRetreatsWithLiquidRate() {
-    double[] liquidRates = new double[] { 0.05, 0.3, 1.0 };
+    double[] liquidRates = new double[] {0.05, 0.3, 1.0};
     double previousBoundary = 0.0;
     for (int i = 0; i < liquidRates.length; i++) {
       double boundary = Double.NaN;
@@ -165,7 +165,7 @@ class FlowRegimeMapValidationTest {
   @Test
   @DisplayName("a liquid-rich line at low gas velocity is never called annular")
   void testNoAnnularFlowWhenTheLiquidCanBridgeTheBore() {
-    double[] diameters = new double[] { 0.20, 0.30, 0.40, 0.50 };
+    double[] diameters = new double[] {0.20, 0.30, 0.40, 0.50};
     for (int i = 0; i < diameters.length; i++) {
       for (double vsg = 0.5; vsg <= 4.0; vsg += 0.5) {
         FlowRegime regime = new FlowRegimeDetector()

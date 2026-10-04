@@ -92,7 +92,7 @@ class CalciumChlorideDensityPressureValidationTest extends neqsim.NeqSimTest {
         double[] anchor = pressureAnchors.get(isothermKey);
         if (anchor == null) {
           pressureAnchors.put(isothermKey,
-              new double[] { state.pressureBara, state.density, calculatedDensity, state.expandedUncertainty });
+              new double[] {state.pressureBara, state.density, calculatedDensity, state.expandedUncertainty});
         } else {
           assertTrue(state.pressureBara > anchor[0], "ThermoML isotherm is not ordered from its pressure anchor");
           double pressureAdjustedRelativeResidual = (calculatedDensity - anchor[2] + anchor[1]) / state.density - 1.0;

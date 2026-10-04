@@ -8,8 +8,8 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashLiquidLiquidConsistencyTest {
-  private static final String[] COMPONENTS = { "methane", "CO2", "n-heptane" };
-  private static final double[] FEED = { 0.15, 0.65, 0.20 };
+  private static final String[] COMPONENTS = {"methane", "CO2", "n-heptane"};
+  private static final double[] FEED = {0.15, 0.65, 0.20};
 
   @Test
   void ordinaryFlashRefinesLowerGibbsLiquidLiquidEndpoint() {

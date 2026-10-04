@@ -248,7 +248,7 @@ public class SystemUMRPRUMCEosMatlabTest {
     assertTrue(scrubberFluid.getNumberOfPhases() >= 1, "Should have at least 1 phase");
 
     // --- Subcooling sweep (this is the core operation) ---
-    double[] temperatures = { 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0 };
+    double[] temperatures = {21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0};
     for (double subcoolT : temperatures) {
       SystemInterface subcooledFluid = scrubberFluid.clone();
       subcooledFluid.setTemperature(subcoolT, "C");

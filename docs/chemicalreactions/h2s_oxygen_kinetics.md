@@ -284,6 +284,116 @@ total-sulfide-loss evidence. They do not consume O2, assign sulfur products, cal
 phase transfer, create signed component sources, mutate pipeline/transient state, or update S8,
 FeS, wall, or sulfur-deposition inventories.
 
+## Product-agnostic sulfur-equivalent budget
+
+The segment and constant-water trajectory results also expose the sulfur-element mass equivalent
+of the qualified total-sulfide loss. One mole of total sulfide contains one mole of sulfur atoms,
+so the conversion is
+
+$
+\dot m_{S,\mathrm{equiv},r,i}
+=\dot n_{r,i}M_S, \qquad
+m_{S,\mathrm{equiv},r,i}
+=n_{r,i,\mathrm{reacted}}M_S.
+$
+
+where `M_S = 0.032065 kg/mol` reuses
+`IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL`. Segment results report lower-rate,
+nominal, and upper-rate mean sulfur-equivalent loss in kg/h and kg/s, plus reacted
+sulfur-equivalent mass in kg. The trajectory result reports cumulative reacted
+sulfur-equivalent mass and the corresponding mass-basis closure residual for every fit-scatter
+path.
+
+For positive duration, the mass-rate integral closes exactly:
+
+$
+\dot m_{S,\mathrm{equiv},r,i}\Delta t_i
+=m_{S,\mathrm{equiv},r,i}.
+$
+
+Zero duration gives exactly zero reacted sulfur-equivalent mass while preserving the finite
+analytical mean-rate limit. The segment sums telescope to the trajectory cumulative mass,
+unchanged-state subdivision is invariant, and all values scale linearly with the caller-supplied
+water inventory. Non-finite or unrepresentable derived mass fails closed.
+
+This is a sulfur-atom conservation view, not an elemental-sulfur or S8 yield. It does not identify
+S8, sulfate, thiosulfate, polysulfides, FeS, or any other product; prescribe selectivity or oxygen
+demand; calculate reaction heat; or update a stream, wall, deposit, filter, or pipeline state.
+Product and deposition calculations require separately qualified stoichiometry and selectivity
+and must compose with the existing sulfur analyser, wall inventory, oxidation source, solid
+flash, and filter implementations.
+
+## Explicit elemental-sulfur allocation boundary
+
+`AqueousHydrogenSulfideOxidationElementalSulfurAllocation.allocate(...)` creates an immutable,
+non-mutating accounting receipt between one qualified segment sulfur-equivalent budget and a
+caller-defined elemental-sulfur scenario. The caller must supply both an allocation fraction
+`f_ES` in `[0, 1]` and a non-blank allocation-basis identifier. The identifier records which
+external basis the caller used; its presence does not qualify that basis or turn the fraction
+into a measured product yield.
+
+For each lower-rate, nominal, and upper-rate fit path, the receipt applies the same explicit
+fraction to mass rate and mass:
+
+$
+\dot m_{S,\mathrm{allocated}}=f_{ES}\dot m_{S,\mathrm{equiv}}, \qquad
+\dot m_{S,\mathrm{unallocated}}=\dot m_{S,\mathrm{equiv}}-\dot m_{S,\mathrm{allocated}},
+$
+
+$
+m_{S,\mathrm{allocated}}=f_{ES}m_{S,\mathrm{equiv}}, \qquad
+m_{S,\mathrm{unallocated}}=m_{S,\mathrm{equiv}}-m_{S,\mathrm{allocated}}.
+$
+
+The result exposes the source sulfur-equivalent budget, allocated elemental-sulfur scenario,
+unallocated sulfur-equivalent remainder, and closure residual on both rate and mass bases.
+Zero allocation leaves the complete source budget unallocated; full allocation leaves an exact
+zero remainder. Values scale linearly with the explicit water inventory, and summing receipts
+from an unchanged-state segment subdivision reproduces the unsplit allocated mass. Missing or
+invalid inputs, numerical overflow, and positive products that underflow to zero fail closed.
+
+Downstream code may consume an allocated elemental-sulfur field once and must carry the
+unallocated remainder separately. It must not apply both the original source budget and the
+unallocated remainder as products, because that would double count sulfur. The receipt itself
+does not create S8 molecular amounts, supply a default fraction, select products, qualify
+stoichiometry or selectivity, consume O2, calculate heat, speciation, pressure, phase transfer or
+water holdup, create a signed source, execute a solid flash, or mutate a stream, wall, deposit,
+filter, corrosion, process, transient, or pipeline state.
+
+## Explicit mass-based S8 transfer receipt
+
+`AqueousHydrogenSulfideOxidationS8Transfer.create(...)` selects exactly one lower-rate, nominal,
+or upper-rate path from an existing elemental-sulfur allocation and creates an immutable transfer
+receipt for NeqSim's existing `S8` component path. The caller must explicitly supply the fit path,
+a product-identity basis identifier, and a downstream idempotency key. The allocation-basis
+identifier and source-segment metadata are preserved.
+
+The receipt copies the selected path on a mass basis without an additional conversion:
+
+$
+\dot m_{S8,\mathrm{transfer}}=\dot m_{S,\mathrm{allocated}}, \qquad
+m_{S8,\mathrm{transfer}}=m_{S,\mathrm{allocated}}.
+$
+
+It also carries the source sulfur-equivalent budget, unallocated remainder, and existing rate- and
+mass-basis closure residuals. This exact kg/h and kg passthrough deliberately avoids calculating
+S8 moles or introducing another molecular-weight constant. Zero allocation gives an exact zero
+transfer, full allocation leaves an exact zero remainder, and the inherited fit-path ordering,
+water-inventory scaling, and unchanged-state segment-split mass sums are preserved.
+
+The product-identity identifier records why the caller selected the `S8` representation; it does
+not qualify that choice as a measured product distribution. The idempotency key is a hook for a
+downstream accounting ledger, not an in-memory consumption lock. A consumer must apply the
+transferred mass only once under that key and carry the unallocated sulfur-equivalent remainder
+separately. It must not also apply the original allocation or source budget as product.
+
+This is the narrow mass-unit seam toward the existing `SulfurDepositionAnalyser`, TP-solid-flash,
+and `SulfurFilter` path. The receipt does not add `S8` to a stream, run equilibrium or a solid
+flash, predict saturation, precipitation, deposition, capture or corrosion, consume O2, calculate
+heat, speciation, phase transfer or water holdup, or mutate any stream, wall, filter, process,
+transient, or pipeline state. Those operations remain separate and require independently
+qualified product identity and application evidence.
+
 ## Piecewise target crossing
 
 `AqueousHydrogenSulfideOxidationTrajectory.timeToRemainingFractionRange(...)` locates where a
@@ -314,6 +424,77 @@ residence time, or return infinity.
 This diagnostic identifies a crossing within caller-defined aqueous screening segments. It does
 not locate a position in a pipeline, calculate flow residence time, size equipment, or couple the
 reaction to phase behavior, mass transfer, oxygen depletion, or a transient solver.
+
+
+## Absolute reacted-moles target crossing
+
+`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToReactedMolesRange(...)`
+converts a requested reacted total-sulfide amount to the remaining fraction required by the
+existing piecewise target-crossing calculation. With initial molality `c_0`, constant water
+inventory `m_w`, and requested reacted amount `n_target`,
+
+$
+n_0=c_0m_w, \qquad
+f_{\mathrm{target}}=\frac{n_0-n_{\mathrm{target}}}{n_0}.
+$
+
+The immutable result records the input molality and water inventory, initial and target amounts,
+the corresponding remaining amount and fraction, and the existing shortest, nominal, and longest
+crossing times and segment indices. Reacting half of the initial dimensional inventory therefore
+maps exactly to a remaining fraction of `0.5`; at the illustrative reference state the nominal
+time is `22.4288 h`.
+
+Forward evaluation at each reported fit-scatter crossing recovers the requested reacted amount.
+Larger targets require longer times. Scaling both the constant water inventory and reacted-moles
+target by the same factor leaves the target fraction and crossing times unchanged. Unchanged-state
+segment subdivision preserves elapsed times while the reported source-order crossing index follows
+the supplied segmentation. A target of exactly zero crosses at time zero.
+
+The target must be finite, non-negative, and strictly less than the initial dimensional
+total-sulfide inventory; equality would require infinite time in this first-order model. Inputs
+that cannot represent a positive target change at the current floating-point scale fail closed.
+Every fit-scatter path must reach the target within the supplied finite trajectory.
+
+This method dimensionalizes an analytical screening target only. The constant water inventory
+remains caller-supplied and is not a calculated holdup. The output is not a residence-time design,
+pipeline position, signed H2S source, oxygen demand, product yield, or deposition prediction.
+
+## Absolute remaining-moles target crossing
+
+`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(...)`
+converts a requested absolute remaining total-sulfide inventory to the fraction required by the
+existing piecewise target-crossing calculation. With initial molality `c_0`, constant water
+inventory `m_w`, and requested remaining amount `n_remaining,target`,
+
+$
+n_0=c_0m_w, \qquad
+f_{\mathrm{target}}=\frac{n_{\mathrm{remaining,target}}}{n_0}, \qquad
+n_{\mathrm{reacted,target}}=n_0-n_{\mathrm{remaining,target}}.
+$
+
+The immutable result records the input molality and water inventory, initial, remaining, and
+complementary reacted amounts, the target fraction, and the existing shortest, nominal, and
+longest crossing times and segment indices. A remaining target equal to half the initial inventory
+maps exactly to a fraction of `0.5`; at the illustrative reference state the nominal crossing is
+`22.4288 h`. It agrees exactly with the reacted-moles inverse when the two dimensional targets
+are complements.
+
+Forward evaluation at each reported fit-scatter crossing recovers the requested remaining amount.
+A smaller remaining target requires a longer time. Scaling both the constant water inventory and
+remaining-moles target by the same factor leaves the target fraction and crossing times unchanged.
+Unchanged-state segment subdivision preserves elapsed times while the source-order crossing index
+continues to describe the supplied segmentation. A target equal to the initial inventory crosses
+at exact time zero.
+
+The target must be finite, strictly positive, and no greater than the initial dimensional inventory;
+exact zero is unreachable in finite time for this first-order model. Non-finite, numerically
+underflowing, overflowing, unrepresentable, or unreachable inputs fail closed. Every lower,
+nominal, and upper fit-scatter path must reach a non-identity target within the supplied finite
+trajectory.
+
+This method is an absolute inventory-threshold screen, not a water-holdup calculation, residence-
+time design, pipeline position, signed H2S source, oxygen demand, product yield, or deposition
+prediction. The water inventory remains an explicit constant caller input.
 
 ## Scientific stop boundary
 

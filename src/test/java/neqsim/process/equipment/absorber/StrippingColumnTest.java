@@ -171,7 +171,7 @@ class StrippingColumnTest extends NeqSimTest {
     stripper.setEnthalpyBalanceTolerance(5.0e-2);
     stripper.setMaxNumberOfIterations(80);
     for (int trayNumber = 0; trayNumber < stripper.getNumberOfTrays(); trayNumber++) {
-      stripper.getTray(trayNumber).setOutTemperature(stageTemperature);
+      stripper.getTray(trayNumber).setOutletTemperature(stageTemperature);
     }
 
     assertSame(strippingGas, stripper.getStrippingGasStream());

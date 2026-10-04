@@ -183,12 +183,12 @@ public class NoiseAssessment implements Serializable {
   /**
    * ISO 9613-2 standard octave-band centre frequencies in Hz.
    */
-  private static final double[] OCTAVE_BANDS = { 63.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0 };
+  private static final double[] OCTAVE_BANDS = {63.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0};
 
   /**
    * A-weighting corrections for the standard octave bands in dB.
    */
-  private static final double[] A_WEIGHT = { -26.2, -16.1, -8.6, -3.2, 0.0, 1.2, 1.0, -1.1 };
+  private static final double[] A_WEIGHT = {-26.2, -16.1, -8.6, -3.2, 0.0, 1.2, 1.0, -1.1};
 
   /**
    * Calculate atmospheric absorption coefficient per ISO 9613-1.

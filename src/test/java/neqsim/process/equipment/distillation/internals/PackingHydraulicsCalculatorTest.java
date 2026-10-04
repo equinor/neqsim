@@ -128,7 +128,7 @@ public class PackingHydraulicsCalculatorTest {
    */
   @Test
   public void testPackingPresets() {
-    String[] presets = { "Pall-Ring-25", "Pall-Ring-38", "Raschig-Ring-25", "IMTP-40", "Berl-Saddle-25" };
+    String[] presets = {"Pall-Ring-25", "Pall-Ring-38", "Raschig-Ring-25", "IMTP-40", "Berl-Saddle-25"};
 
     for (String preset : presets) {
       PackingHydraulicsCalculator calc = new PackingHydraulicsCalculator();
@@ -145,7 +145,7 @@ public class PackingHydraulicsCalculatorTest {
    */
   @Test
   public void testStructuredPackingPresets() {
-    String[] presets = { "Mellapak-125Y", "Mellapak-250Y", "Mellapak-500Y", "Flexipac-2Y" };
+    String[] presets = {"Mellapak-125Y", "Mellapak-250Y", "Mellapak-500Y", "Flexipac-2Y"};
 
     for (String preset : presets) {
       PackingHydraulicsCalculator calc = new PackingHydraulicsCalculator();

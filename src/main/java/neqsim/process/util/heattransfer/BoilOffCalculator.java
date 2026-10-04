@@ -207,6 +207,6 @@ public class BoilOffCalculator implements Serializable {
       thickness[i] = minThicknessM + i * step;
       rate[i] = boilOffRateKgPerH(thickness[i]);
     }
-    return new double[][] { thickness, rate };
+    return new double[][] {thickness, rate};
   }
 }

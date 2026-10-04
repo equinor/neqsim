@@ -164,7 +164,8 @@ public class PipelineEvaporationStudyTest {
   void testGasBubbleCaseReachesMassBasedDissolutionCriterion() {
     SystemInterface inlet = createGasBubbleInOilSystem();
     PipelineEvaporationConfig config = oneStepDissolutionConfig();
-    config.setPipeLength(0.10);
+    // Corrected film factors give finite-rate dissolution over metres, not centimetres.
+    config.setPipeLength(5.0);
     config.setMinimumStepLength(1.0e-8);
     config.setMaximumStepLength(0.01);
     config.setMaximumDonorFractionPerStep(0.20);
@@ -175,12 +176,20 @@ public class PipelineEvaporationStudyTest {
     PipelineDissolutionResult result = new PipelineDissolutionStudy(inlet, config).run();
     EvaporationProfilePoint outlet = result.getProfile().get(result.getProfile().size() - 1);
 
-    assertTrue(result.isCompleteDissolution());
+    assertTrue(result.isCompleteDissolution(),
+        "Remaining fraction=" + outlet.getRemainingTrackedPhaseFraction() + "; " + result.getWarnings());
     assertTrue(result.getCompleteDissolutionDistance() > 0.0);
     assertTrue(result.getCompleteDissolutionDistance() < config.getPipeLength());
     assertTrue(outlet.getRemainingTrackedPhaseFraction() <= config.getCompletionFraction());
     assertTrue(result.getMaximumComponentMolarBalanceError() < 1.0e-10);
     assertTrue(result.getRelativeEnergyBalanceError() < 1.0e-5);
+    config.setMaximumStepLength(0.005);
+    PipelineDissolutionResult refined = new PipelineDissolutionStudy(inlet, config).run();
+    assertTrue(refined.isCompleteDissolution(), "The refined axial mesh must also reach the mass criterion");
+    assertEquals(result.getCompleteDissolutionDistance(), refined.getCompleteDissolutionDistance(),
+        0.05 * refined.getCompleteDissolutionDistance(), "Completion distance must be stable to axial refinement");
+    assertTrue(refined.getMaximumComponentMolarBalanceError() < 1.0e-10);
+    assertTrue(refined.getRelativeEnergyBalanceError() < 1.0e-5);
   }
 
   @Test

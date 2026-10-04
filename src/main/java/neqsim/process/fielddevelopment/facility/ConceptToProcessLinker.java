@@ -261,7 +261,7 @@ public class ConceptToProcessLinker implements Serializable {
     // HP Compression
     StreamInterface hpGas = hpSep.getGasOutStream();
     Cooler hpScrubCooler = new Cooler("HP-Scrub-Cooler", hpGas);
-    hpScrubCooler.setOutTemperature(273.15 + 30.0);
+    hpScrubCooler.setOutletTemperature(273.15 + 30.0);
     process.add(hpScrubCooler);
 
     Compressor exportCompressor = new Compressor("Export-Compressor", hpScrubCooler.getOutletStream());
@@ -270,7 +270,7 @@ public class ConceptToProcessLinker implements Serializable {
     process.add(exportCompressor);
 
     Cooler exportCooler = new Cooler("Export-Cooler", exportCompressor.getOutletStream());
-    exportCooler.setOutTemperature(273.15 + 40.0);
+    exportCooler.setOutletTemperature(273.15 + 40.0);
     process.add(exportCooler);
 
     if (fidelity.ordinal() >= FidelityLevel.PRE_FEED.ordinal()) {
@@ -307,12 +307,12 @@ public class ConceptToProcessLinker implements Serializable {
     StreamInterface gas = slugCatcher.getGasOutStream();
 
     Cooler inletCooler = new Cooler("Inlet-Cooler", gas);
-    inletCooler.setOutTemperature(273.15 + 25.0);
+    inletCooler.setOutletTemperature(273.15 + 25.0);
     process.add(inletCooler);
 
     // Dehydration represented as cooler (simplified)
     Cooler dehydration = new Cooler("Dehydration", inletCooler.getOutletStream());
-    dehydration.setOutTemperature(273.15 + 20.0);
+    dehydration.setOutletTemperature(273.15 + 20.0);
     process.add(dehydration);
 
     // Export compression
@@ -322,7 +322,7 @@ public class ConceptToProcessLinker implements Serializable {
     process.add(exportComp);
 
     Cooler exportCooler = new Cooler("Export-Cooler", exportComp.getOutletStream());
-    exportCooler.setOutTemperature(273.15 + 40.0);
+    exportCooler.setOutletTemperature(273.15 + 40.0);
     process.add(exportCooler);
   }
 
@@ -343,7 +343,7 @@ public class ConceptToProcessLinker implements Serializable {
     // Condensate stabilization
     StreamInterface condensate = hpSep.getOilOutStream();
     Heater stabHeater = new Heater("Stabilizer-Heater", condensate);
-    stabHeater.setOutTemperature(273.15 + 80.0);
+    stabHeater.setOutletTemperature(273.15 + 80.0);
     process.add(stabHeater);
 
     neqsim.process.equipment.valve.ThrottlingValve stabValve = new neqsim.process.equipment.valve.ThrottlingValve(

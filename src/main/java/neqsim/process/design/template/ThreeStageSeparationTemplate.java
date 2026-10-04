@@ -158,16 +158,16 @@ public class ThreeStageSeparationTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] { "Separator", "ThrottlingValve" };
+    return new String[] {"Separator", "ThrottlingValve"};
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] { "HP Gas - Gas stream from HP separator",
+    return new String[] {"HP Gas - Gas stream from HP separator",
         "HP Liquid - Liquid stream from HP separator to MP valve", "MP Gas - Gas stream from MP separator",
         "MP Liquid - Liquid stream from MP separator to LP valve", "LP Gas - Gas stream from LP separator",
-        "LP Liquid - Stabilized oil from LP separator" };
+        "LP Liquid - Stabilized oil from LP separator"};
   }
 
   /** {@inheritDoc} */

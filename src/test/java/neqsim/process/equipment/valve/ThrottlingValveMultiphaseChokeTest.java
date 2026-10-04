@@ -111,7 +111,7 @@ public class ThrottlingValveMultiphaseChokeTest {
   @Test
   @DisplayName("Test all Gilbert-type correlations")
   void testAllGilbertCorrelations() {
-    String[] models = { "Gilbert", "Baxendell", "Ros", "Achong" };
+    String[] models = {"Gilbert", "Baxendell", "Ros", "Achong"};
 
     logger.info("\n=== Comparison of Gilbert-Type Correlations ===");
     logger.info("Model       | Outlet Flow (kg/hr)");
@@ -137,7 +137,7 @@ public class ThrottlingValveMultiphaseChokeTest {
   @Test
   @DisplayName("Test choke diameter effect on calculated flow")
   void testChokeDiameterEffect() {
-    double[] diameters = { 0.25, 0.5, 0.75, 1.0 }; // inches
+    double[] diameters = {0.25, 0.5, 0.75, 1.0}; // inches
     double previousCalculatedFlow = 0;
 
     logger.info("\n=== Choke Diameter Effect on Flow ===");
@@ -176,7 +176,7 @@ public class ThrottlingValveMultiphaseChokeTest {
   @Test
   @DisplayName("Test pressure drop effect on flow")
   void testPressureDropEffect() {
-    double[] outletPressures = { 90, 70, 50, 30 }; // bara
+    double[] outletPressures = {90, 70, 50, 30}; // bara
 
     logger.info("\n=== Pressure Drop Effect on Flow (Sachdeva) ===");
     logger.info("P_out (bara) | Delta_P | Flow (kg/hr) | Regime");
@@ -215,7 +215,7 @@ public class ThrottlingValveMultiphaseChokeTest {
   @Test
   @DisplayName("Test discharge coefficient effect")
   void testDischargeCoefficient() {
-    double[] cdValues = { 0.70, 0.80, 0.85, 0.90 };
+    double[] cdValues = {0.70, 0.80, 0.85, 0.90};
 
     logger.info("\n=== Discharge Coefficient Effect ===");
     logger.info("Cd    | Flow (kg/hr)");
@@ -333,7 +333,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     logger.info("Target Opening | Calc Flow (kg/s) | Reverse Calc Opening | Error");
     logger.info("----------------------------------------------------------------");
 
-    double[] testOpenings = { 20.0, 40.0, 60.0, 80.0, 100.0 };
+    double[] testOpenings = {20.0, 40.0, 60.0, 80.0, 100.0};
     for (double opening : testOpenings) {
       // Reset and calculate flow at this opening
       chokeMethod.setChokeDiameter(1.0, "in");
@@ -402,7 +402,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     assertTrue(outletFlow2 > 0, "Calculated flow should be positive");
 
     // Test 3: Different choke sizes should give different flows in transient mode
-    double[] diameters = { 0.25, 0.5, 1.0 }; // inches
+    double[] diameters = {0.25, 0.5, 1.0}; // inches
     double previousFlow = 0;
 
     logger.info("\n--- Flow vs Choke Diameter (Transient Mode) ---");
@@ -433,7 +433,7 @@ public class ThrottlingValveMultiphaseChokeTest {
     logger.info("------------------------------------------");
 
     previousFlow = 0;
-    double[] openings = { 25.0, 50.0, 75.0, 100.0 };
+    double[] openings = {25.0, 50.0, 75.0, 100.0};
 
     for (double opening : openings) {
       ThrottlingValve choke = new ThrottlingValve("Choke", inletStream);

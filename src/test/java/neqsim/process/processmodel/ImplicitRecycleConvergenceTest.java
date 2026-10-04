@@ -32,7 +32,7 @@ class ImplicitRecycleConvergenceTest extends neqsim.NeqSimTest {
       SystemInterface fluid = getInletStream().getFluid().clone();
       if (changeComposition) {
         double methane = runs % 2 == 0 ? 0.7 : 0.9;
-        fluid.setMolarComposition(new double[] { methane, 1.0 - methane });
+        fluid.setMolarComposition(new double[] {methane, 1.0 - methane});
         fluid.setTotalFlowRate(100.0, "mol/sec");
       } else {
         fluid.setTemperature(runs % 2 == 0 ? 300.0 : 310.0);
@@ -44,7 +44,7 @@ class ImplicitRecycleConvergenceTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "false,false", "true,false", "false,true", "true,true" })
+  @CsvSource({"false,false", "true,false", "false,true", "true,true"})
   void unconvergedLoopFailsInsteadOfReportingSuccess(boolean changeComposition, boolean addAdjuster) {
     SystemInterface fluid = new SystemSrkEos(300.0, 20.0);
     fluid.addComponent("methane", 0.8);

@@ -60,8 +60,8 @@ public class OpenDrainReviewItem implements Serializable {
     if (sourceDocument != null) {
       item.addSourceReference(String.valueOf(sourceDocument));
     }
-    for (String key : new String[] { "design", "requirements", "service", "operationalData", "tagreaderData",
-        "historianData" }) {
+    for (String key : new String[] {"design", "requirements", "service", "operationalData", "tagreaderData",
+        "historianData"}) {
       Object nested = source.get(key);
       if (nested instanceof Map<?, ?>) {
         for (Map.Entry<String, Object> entry : ((Map<String, Object>) nested).entrySet()) {

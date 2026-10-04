@@ -161,9 +161,9 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
   // Default pipe geometry parameters
   private double defaultWallRoughness = 1e-5;
-  private double[] defaultOuterTemperature = { 278.0, 278.0 };
-  private double[] defaultOuterHeatTransfer = { 5.0, 5.0 };
-  private double[] defaultWallHeatTransfer = { 15.0, 15.0 };
+  private double[] defaultOuterTemperature = {278.0, 278.0};
+  private double[] defaultOuterHeatTransfer = {5.0, 5.0};
+  private double[] defaultWallHeatTransfer = {15.0, 15.0};
 
   /**
    * Create a new pipeline flow network.
@@ -278,10 +278,10 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     OnePhasePipeLine pipeline = new OnePhasePipeLine(name, inletStream);
     pipeline.setNumberOfLegs(1);
     pipeline.setNumberOfNodesInLeg(numberOfNodes);
-    pipeline.setPipeDiameters(new double[] { diameter, diameter });
-    pipeline.setLegPositions(new double[] { 0.0, length });
-    pipeline.setHeightProfile(new double[] { 0.0, 0.0 });
-    pipeline.setPipeWallRoughness(new double[] { defaultWallRoughness, defaultWallRoughness });
+    pipeline.setPipeDiameters(new double[] {diameter, diameter});
+    pipeline.setLegPositions(new double[] {0.0, length});
+    pipeline.setHeightProfile(new double[] {0.0, 0.0});
+    pipeline.setPipeWallRoughness(new double[] {defaultWallRoughness, defaultWallRoughness});
     pipeline.setOuterTemperatures(defaultOuterTemperature);
     pipeline.setPipeOuterHeatTransferCoefficients(defaultOuterHeatTransfer);
     pipeline.setPipeWallHeatTransferCoefficients(defaultWallHeatTransfer);
@@ -305,7 +305,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param temperature outer temperature in Kelvin
    */
   public void setDefaultOuterTemperature(double temperature) {
-    this.defaultOuterTemperature = new double[] { temperature, temperature };
+    this.defaultOuterTemperature = new double[] {temperature, temperature};
   }
 
   /**
@@ -315,8 +315,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param wallCoeff wall heat transfer coefficient (W/m2K)
    */
   public void setDefaultHeatTransferCoefficients(double outerCoeff, double wallCoeff) {
-    this.defaultOuterHeatTransfer = new double[] { outerCoeff, outerCoeff };
-    this.defaultWallHeatTransfer = new double[] { wallCoeff, wallCoeff };
+    this.defaultOuterHeatTransfer = new double[] {outerCoeff, outerCoeff};
+    this.defaultWallHeatTransfer = new double[] {wallCoeff, wallCoeff};
   }
 
   /**

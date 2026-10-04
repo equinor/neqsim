@@ -6,8 +6,16 @@ TF-IDF + cosine similarity index over the YAML front-matter ``description``
 fields of every agent definition it can find across the multi-repo workspace:
 
   * neqsim repo             : ``.github/agents/*.agent.md``
-  * neqsim-community-agents : ``agents/<name>/AGENT.md``
-  * neqsim-enterprise-agents: ``agents/<name>/AGENT.md``
+  * neqsim-community-agents : ``agents/<name>/AGENT.md`` (if cloned as a sibling)
+  * neqsim-enterprise-agents: ``agents/<name>/AGENT.md`` (if cloned as a sibling)
+  * ~/.neqsim/agents        : ``<name>/AGENT.md`` (agents installed via
+    ``neqsim agent install``/``--all``)
+  * installed plugins       : ``<plugin>/com.github.copilot/agents/*.agent.md`` under
+    ``~/.vscode/agent-plugins`` or ``~/.copilot/installed-plugins`` (marketplace
+    install - the only source on a machine with no clones and no CLI install)
+
+The last two are indexed as fallbacks: they hold copies of agents a checkout may
+also provide, so an agent already found in a repo is not listed twice.
 
 Why TF-IDF and not sentence embeddings? Agent descriptions are short and
 keyword-dense, so character + word n-gram TF-IDF gives most of the recall of a
@@ -35,10 +43,15 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
+import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import agent_frontmatter as af  # noqa: E402
+import bm25  # noqa: E402
 
 # An agent record is (name, haystack, path, required_skills, repo, handle).
 # ``handle`` is the id used to *invoke* the agent (e.g. "capability.scout" or
@@ -49,102 +62,46 @@ AgentRecord = Tuple[str, str, str, List[str], str, str]
 
 
 def _strip_yaml_value(s: str) -> str:
-    s = s.strip()
-    if s.startswith('"') and s.endswith('"'):
-        s = s[1:-1]
-    elif s.startswith("'") and s.endswith("'"):
-        s = s[1:-1]
-    return s
+    return af.strip_yaml_scalar(s)
 
 
 def _parse_front_matter(text: str) -> Optional[Dict[str, object]]:
-    """Return a shallow dict of the leading YAML front-matter block, or None.
+    """Return ``name``/``description``/``required_skills`` from the front-matter, or None.
 
-    Only the keys needed for search are parsed (``name``, ``description``, and a
-    simple ``required_skills`` / ``loaded_skills`` list). This avoids a PyYAML
-    dependency and tolerates the small front-matter dialects used across repos.
+    Thin wrapper over :mod:`agent_frontmatter` kept for backwards-compatible
+    imports; frontmatter ``required_skills`` (also ``loaded_skills``/``skills``)
+    is returned under ``required_skills``.
     """
-    if not text.startswith("---"):
+    front, _ = af.split_frontmatter(text)
+    if front is None:
         return None
-    end = text.find("\n---", 3)
-    if end < 0:
-        return None
-    front = text[3:end]
+    fm = af.parse_frontmatter(text)
     out: Dict[str, object] = {}
+    if isinstance(fm.get("name"), str):
+        out["name"] = fm["name"]
+    if isinstance(fm.get("description"), str):
+        out["description"] = fm["description"]
     skills: List[str] = []
-    in_skills = False
-    for line in front.splitlines():
-        raw = line.rstrip()
-        stripped = raw.strip()
-        if in_skills:
-            if stripped.startswith("- "):
-                skills.append(_strip_yaml_value(stripped[2:]))
-                continue
-            # A non-list, non-indented line ends the list block.
-            if raw and not raw.startswith((" ", "\t", "-")):
-                in_skills = False
-            else:
-                continue
-        if stripped.startswith("name:"):
-            out["name"] = _strip_yaml_value(stripped[5:])
-        elif stripped.startswith("description:"):
-            out["description"] = _strip_yaml_value(stripped[12:])
-        elif re.match(r"^(required_skills|loaded_skills|skills)\s*:", stripped):
-            value = stripped.split(":", 1)[1].strip()
-            if value and value != "[]":
-                # Inline list form: skills: [a, b] or skills: a, b
-                value = value.strip("[]")
-                skills.extend(
-                    _strip_yaml_value(v) for v in value.split(",") if v.strip()
-                )
-            else:
-                in_skills = True
+    for key in af.SKILL_LIST_KEYS:
+        value = fm.get(key)
+        if isinstance(value, list):
+            skills.extend(value)
+        elif isinstance(value, str) and value:
+            skills.extend(v.strip() for v in value.strip("[]").split(",") if v.strip())
     if skills:
         out["required_skills"] = skills
     return out
 
 
 def _extract_loaded_skills_body(text: str) -> List[str]:
-    """Parse a 'Loaded skills: a, b, c' line or a skills heading + bullet list.
-
-    Handles the three conventions agents use in the body: an inline
-    ``Loaded skills:`` line, a ``## Skills to Load`` heading, and a
-    ``## Loaded skills`` heading, each optionally followed by a bullet list.
-    """
-    skills: List[str] = []
-    m = re.search(r"(?im)^\s*Loaded skills:\s*(.+)$", text)
-    if m:
-        skills.extend(s.strip() for s in m.group(1).split(",") if s.strip())
-    # Bullet list under a '## Skills to Load' or '## Loaded skills' heading
-    block = re.search(
-        r"(?is)##\s*(?:Skills to Load|Loaded skills)\b(.*?)(?:\n##\s|\Z)", text
-    )
-    if block:
-        for line in block.group(1).splitlines():
-            bm = re.match(r"\s*[-*]\s*`?([a-z0-9][a-z0-9_-]+)`?", line)
-            if bm:
-                skills.append(bm.group(1))
-    # Dedupe preserving order
-    seen = set()
-    out = []
-    for s in skills:
-        key = s.lower()
-        if key not in seen:
-            seen.add(key)
-            out.append(s)
-    return out
+    """Parse the legacy body declarations (``Loaded skills:`` line or bullet block)."""
+    _, body = af.split_frontmatter(text)
+    return af.extract_body_skills(body)
 
 
 def _handle_for_path(md: Path) -> str:
-    """Return the id used to invoke the agent (its @handle / agent id).
-
-    neqsim uses flat ``<handle>.agent.md`` files, so the handle is the stem
-    minus the ``.agent`` suffix. Community/enterprise agents live in
-    ``agents/<handle>/AGENT.md``, so the handle is the parent directory name.
-    """
-    if md.name.lower() == "agent.md":
-        return md.parent.name
-    return md.stem[:-6] if md.stem.lower().endswith(".agent") else md.stem
+    """Return the kebab-case id used to invoke the agent (its @handle)."""
+    return af.agent_id_for_path(md)
 
 
 def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecord]:
@@ -168,28 +125,112 @@ def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecor
         skills = list(fm.get("required_skills") or [])  # type: ignore[arg-type]
         if not skills:
             skills = _extract_loaded_skills_body(text)
-        # Include the handle in the haystack so a query using the @handle matches.
-        haystack = f"{name} {handle} {md.parent.name} {desc}"
+        # Handle so an @handle query matches; required skills because a skill id such
+        # as neqsim-water-hammer is the sharpest routing signal an agent declares. The
+        # folder name is skipped when it merely repeats the handle (agents/<id>/AGENT.md),
+        # otherwise community ids were counted three times and outranked core agents.
+        folder = md.parent.name if md.parent.name != handle else ""
+        haystack = f"{name} {handle} {folder} {desc} {' '.join(skills)}"
         out.append((name, haystack, str(md), skills, repo, handle))
     return out
 
 
-def _discover_roots(repo_root: Path, extra: Optional[List[Path]]) -> List[Tuple[Path, str, str]]:
-    """Return (dir, repo_label, glob) tuples for every agent source to index."""
-    roots: List[Tuple[Path, str, str]] = []
+def _installed_agents_root() -> Path:
+    """Return the directory ``neqsim agent install`` places agents into.
+
+    Honors ``NEQSIM_AGENTS_HOME`` so tests (and any caller that needs isolation
+    from the real machine's installed catalog) can redirect this without
+    depending on ``Path.home()``. ``install_agent.py`` reads the same variable
+    for its ``INSTALL_DIR``, so the install location and this search cannot
+    diverge.
+    """
+    override = os.environ.get("NEQSIM_AGENTS_HOME")
+    if override:
+        return Path(override)
+    return Path.home() / ".neqsim" / "agents"
+
+
+def _plugin_name(plugin_dir: Path) -> str:
+    """Name from ``plugin.json``, else the folder name (version-hash cache copies)."""
+    try:
+        name = json.loads((plugin_dir / "plugin.json").read_text(encoding="utf-8")).get("name")
+    except (OSError, ValueError, AttributeError):
+        name = None
+    return str(name) if name else plugin_dir.name
+
+
+def _plugin_agent_roots() -> List[Tuple[Path, str, str, bool]]:
+    """Agent folders of installed Agent Plugins packages - flat ``*.agent.md``.
+
+    A marketplace install is the third way to obtain agents, and on such a machine
+    ``~/.neqsim/agents`` stays empty: the agents live in the plugin package as
+    ``<plugin>/com.github.copilot/agents/*.agent.md``. Labelled with the plugin's own
+    ``plugin.json`` name (``plugin:neqsim-community``) so a community agent is still
+    told apart from its enterprise counterpart, and so the user-data cache copies -
+    which sit under a version-hash folder such as ``…/neqsim-community/1a0c50d1a81/``
+    - do not show up under a meaningless label. One root per plugin name, first
+    location wins. Depth-bounded globs, not ``**``, because the plugin tree also
+    holds hundreds of skill folders. ``NEQSIM_AGENT_PLUGINS_HOME`` replaces the
+    search bases, for tests and for a non-default plugin location.
+    """
+    override = os.environ.get("NEQSIM_AGENT_PLUGINS_HOME")
+    if override:
+        bases = [Path(override)]
+    else:
+        bases = [Path.home() / ".vscode" / "agent-plugins",         # VS Code marketplace
+                 Path.home() / ".copilot" / "installed-plugins"]    # Copilot CLI
+        appdata = os.environ.get("APPDATA")
+        if appdata:
+            bases.append(Path(appdata) / "Code" / "agentPlugins")   # user-data cache copies
+    roots: List[Tuple[Path, str, str, bool]] = []
+    seen = set()
+    for base in bases:
+        if not base.is_dir():
+            continue
+        for depth in range(1, 5):
+            pattern = "/".join(["*"] * depth) + "/com.github.copilot/agents"
+            for agents_dir in sorted(base.glob(pattern)):
+                if not agents_dir.is_dir():
+                    continue
+                name = _plugin_name(agents_dir.parents[1])
+                if name in seen:
+                    continue
+                seen.add(name)
+                roots.append((agents_dir, "plugin:" + name, "*.agent.md", True))
+    return roots
+
+
+def _discover_roots(repo_root: Path,
+                    extra: Optional[List[Path]]) -> List[Tuple[Path, str, str, bool]]:
+    """Return (dir, repo_label, glob, is_fallback) tuples for every agent source.
+
+    A *fallback* root holds installed copies of agents that a checkout also
+    provides; see ``_load_agents`` for why they are indexed last.
+    """
+    roots: List[Tuple[Path, str, str, bool]] = []
     # 1) neqsim repo — flat *.agent.md files
-    roots.append((repo_root / ".github" / "agents", "neqsim", "*.agent.md"))
+    roots.append((repo_root / ".github" / "agents", "neqsim", "*.agent.md", False))
     # 2) sibling *-agents repos — agents/<name>/AGENT.md
     workspace_root = repo_root.parent
     for sibling in ("neqsim-community-agents", "neqsim-enterprise-agents"):
         cand = workspace_root / sibling / "agents"
-        roots.append((cand, sibling, "*/AGENT.md"))
+        roots.append((cand, sibling, "*/AGENT.md", False))
     # 3) explicit extra roots (auto-detect layout: flat vs nested)
     for path in extra or []:
         if (path / "agents").is_dir():
-            roots.append((path / "agents", path.name, "*/AGENT.md"))
+            roots.append((path / "agents", path.name, "*/AGENT.md", False))
         else:
-            roots.append((path, path.name, "*.agent.md"))
+            roots.append((path, path.name, "*.agent.md", False))
+    # 4) the user's locally *installed* agent catalog — ~/.neqsim/agents/<name>/AGENT.md.
+    # This is where `neqsim agent install <name>` / `--all` actually places agents
+    # (see install_agent.py INSTALL_DIR), independent of whether the community/
+    # enterprise *-agents repos above happen to be cloned as siblings. Without this
+    # root, any agent installed only via the CLI catalog (the normal, documented way
+    # to obtain community/private agents) is invisible to this search even though it
+    # is fully installed and already invocable — see CHANGELOG_AGENT_NOTES.md.
+    roots.append((_installed_agents_root(), "installed", "*/AGENT.md", True))
+    # 5) agents shipped inside installed Agent Plugins packages
+    roots.extend(_plugin_agent_roots())
     return roots
 
 
@@ -197,66 +238,37 @@ def _load_agents(repo_root: Path, extra: Optional[List[Path]] = None) -> List[Ag
     # Dedup by (repo, name) so cross-repo variants that intentionally share a
     # name (e.g. a community screening agent and its enterprise policy-gated
     # counterpart) are BOTH indexed — dropping either hides functionality.
+    # Fallback roots (~/.neqsim/agents, plugin packages) hold *copies* of agents a
+    # checkout may also provide, under a different label, so that key alone would
+    # list the same agent twice and burn two of the --top N slots. They are indexed
+    # last and skipped per handle when a checkout already supplied it; among
+    # themselves the (repo, name) rule still applies, so the community and
+    # enterprise copies of one name both survive on a plugin-only machine.
     seen_keys = set()
+    from_checkout = set()
     out: List[AgentRecord] = []
-    for agents_dir, repo, pattern in _discover_roots(repo_root, extra):
+    for agents_dir, repo, pattern, is_fallback in _discover_roots(repo_root, extra):
         for rec in _load_from_dir(agents_dir, repo, pattern):
+            handle = rec[5].lower()
+            if is_fallback and handle in from_checkout:
+                continue
             key = (rec[4], rec[0].lower())
             if key in seen_keys:
                 continue
             seen_keys.add(key)
+            if not is_fallback:
+                from_checkout.add(handle)
             out.append(rec)
     return out
 
 
-def _tokenize(s: str) -> List[str]:
-    s = s.lower()
-    return re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)*", s)
-
-
-def _try_sklearn_search(
+def _bm25_search(
     query: str, agents: List[AgentRecord], top: int
 ) -> List[Tuple[float, AgentRecord]]:
-    from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
-    from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
-
-    corpus = [a[1] for a in agents]
-    word_vec = TfidfVectorizer(
-        analyzer="word", ngram_range=(1, 2), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    char_vec = TfidfVectorizer(
-        analyzer="char_wb", ngram_range=(3, 5), min_df=1, lowercase=True, sublinear_tf=True
-    )
-    Xw = word_vec.fit_transform(corpus + [query])
-    Xc = char_vec.fit_transform(corpus + [query])
-    sim_w = cosine_similarity(Xw[-1], Xw[:-1]).ravel()
-    sim_c = cosine_similarity(Xc[-1], Xc[:-1]).ravel()
-    sim = 0.6 * sim_w + 0.4 * sim_c
-    order = sim.argsort()[::-1][:top]
-    return [(float(sim[i]), agents[i]) for i in order]
-
-
-def _fallback_search(
-    query: str, agents: List[AgentRecord], top: int
-) -> List[Tuple[float, AgentRecord]]:
-    q_tokens = set(_tokenize(query))
-    if not q_tokens:
-        return []
-    scored: List[Tuple[float, AgentRecord]] = []
-    for rec in agents:
-        h_tokens = set(_tokenize(rec[1]))
-        if not h_tokens:
-            continue
-        intersection = len(q_tokens & h_tokens)
-        if intersection == 0:
-            scored.append((0.0, rec))
-            continue
-        union = len(q_tokens | h_tokens)
-        jaccard = intersection / union
-        boost = intersection / max(1, len(q_tokens))
-        scored.append((0.5 * jaccard + 0.5 * boost, rec))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return scored[:top]
+    """Rank agents with dependency-free BM25 so dev and CI score identically."""
+    scores = bm25.BM25([a[1] for a in agents]).scores(query)
+    order = sorted(range(len(agents)), key=lambda i: scores[i], reverse=True)
+    return [(scores[i], agents[i]) for i in order[:top]]
 
 
 def search(
@@ -265,10 +277,7 @@ def search(
     agents = _load_agents(repo_root, extra)
     if not agents:
         return []
-    try:
-        return _try_sklearn_search(query, agents, top)
-    except ImportError:
-        return _fallback_search(query, agents, top)
+    return _bm25_search(query, agents, top)
 
 
 def _results_to_payload(query: str, results: List[Tuple[float, AgentRecord]]) -> dict:

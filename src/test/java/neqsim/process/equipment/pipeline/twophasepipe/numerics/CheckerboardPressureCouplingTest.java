@@ -14,7 +14,7 @@ class CheckerboardPressureCouplingTest {
   void disabledInterpolationRetainsLegacyVolumeExactCheckerboard() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     assertFalse(solver.isCheckerboardCorrectionEnabled());
-    Fixture fixture = checkerboard(new double[] { 1.0, 0.0, 0.0 }, 16, 100.0);
+    Fixture fixture = checkerboard(new double[] {1.0, 0.0, 0.0}, 16, 100.0);
 
     CoupledPressureMomentumSolver.Result result = solve(solver, fixture, 0.1);
 
@@ -32,11 +32,11 @@ class CheckerboardPressureCouplingTest {
    */
   @Test
   void pressureResponseMatchesLinearFiniteDomainReferenceAtLargeAcousticStep() {
-    for (double beta : new double[] { 1.0, 900.0 }) {
+    for (double beta : new double[] {1.0, 900.0}) {
       CoupledPressureMomentumSolver solver = enabledSolver();
       solver.setPressureRelaxation(1.0);
       solver.setRelativeVolumeTolerance(1.0e-12);
-      Fixture fixture = checkerboard(new double[] { 1.0, 0.0, 0.0 }, 4, 1.0);
+      Fixture fixture = checkerboard(new double[] {1.0, 0.0, 0.0}, 4, 1.0);
       double dt = Math.sqrt(beta) / fixture.soundSpeed[0][0];
 
       CoupledPressureMomentumSolver.Result result = solve(solver, fixture, dt);
@@ -45,7 +45,7 @@ class CheckerboardPressureCouplingTest {
       double denominator = 1.0 + 4.0 * beta + 2.0 * beta * beta;
       double endCorrection = -beta / denominator;
       double innerCorrection = (3.0 * beta + 2.0 * beta * beta) / denominator;
-      double[] correction = { endCorrection, innerCorrection, -innerCorrection, -endCorrection };
+      double[] correction = {endCorrection, innerCorrection, -innerCorrection, -endCorrection};
       for (int cell = 0; cell < 4; cell++) {
         assertEquals(fixture.pressure[cell] + correction[cell], result.getPressure()[cell], 1.0e-4,
             "Pressure must follow the compact implicit face operator, cell=" + cell + ", beta=" + beta);
@@ -57,7 +57,7 @@ class CheckerboardPressureCouplingTest {
 
   @Test
   void initiallyVolumeExactPressureModeDampsAndConservesGasOilAndWater() {
-    double[][] phaseFractions = { { 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 }, { 0.4, 0.3, 0.3 } };
+    double[][] phaseFractions = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {0.4, 0.3, 0.3}};
     for (double[] fractions : phaseFractions) {
       CoupledPressureMomentumSolver solver = enabledSolver();
       Fixture fixture = checkerboard(fractions, 16, 100.0);
@@ -89,8 +89,8 @@ class CheckerboardPressureCouplingTest {
   @Test
   void linearHydrostaticPressureAddsNoCorrectionOnANonuniformMesh() {
     CoupledPressureMomentumSolver solver = enabledSolver();
-    Fixture fixture = checkerboard(new double[] { 0.0, 0.0, 1.0 }, 6, 0.0);
-    fixture.length = new double[] { 1.0, 2.0, 4.0, 2.0, 1.0, 2.0 };
+    Fixture fixture = checkerboard(new double[] {0.0, 0.0, 1.0}, 6, 0.0);
+    fixture.length = new double[] {1.0, 2.0, 4.0, 2.0, 1.0, 2.0};
     double leftFace = 0.0;
     for (int cell = 0; cell < fixture.state.length; cell++) {
       double center = leftFace + 0.5 * fixture.length[cell];
@@ -109,9 +109,9 @@ class CheckerboardPressureCouplingTest {
   @Test
   void constantPressureDensityAndPhaseContactRemainsAtRest() {
     CoupledPressureMomentumSolver solver = enabledSolver();
-    Fixture fixture = checkerboard(new double[] { 0.4, 0.3, 0.3 }, 6, 0.0);
+    Fixture fixture = checkerboard(new double[] {0.4, 0.3, 0.3}, 6, 0.0);
     for (int cell = 0; cell < fixture.state.length; cell++) {
-      double[] fractions = cell < 3 ? new double[] { 0.0, 0.0, 1.0 } : new double[] { 0.6, 0.4, 0.0 };
+      double[] fractions = cell < 3 ? new double[] {0.0, 0.0, 1.0} : new double[] {0.6, 0.4, 0.0};
       fixture.density[0][cell] = cell < 3 ? 0.02 : 20.0;
       fixture.density[1][cell] = cell < 3 ? 800.0 : 700.0;
       fixture.density[2][cell] = cell < 3 ? 1000.0 : 900.0;
@@ -133,7 +133,7 @@ class CheckerboardPressureCouplingTest {
   @Test
   void discardedCorrectionCannotModifyInputsOrSubsequentRetry() {
     CoupledPressureMomentumSolver solver = enabledSolver();
-    Fixture fixture = checkerboard(new double[] { 0.4, 0.3, 0.3 }, 16, 100.0);
+    Fixture fixture = checkerboard(new double[] {0.4, 0.3, 0.3}, 16, 100.0);
     double[][] original = copy(fixture.state);
     double[] initialPressure = fixture.pressure.clone();
     double[][] initialDensity = copy(fixture.density);
@@ -170,9 +170,9 @@ class CheckerboardPressureCouplingTest {
     fixture.area = filled(cellCount, 1.0);
     fixture.length = filled(cellCount, 1.0);
     fixture.density = new double[3][cellCount];
-    fixture.soundSpeed = new double[][] { filled(cellCount, 300.0), filled(cellCount, 1200.0),
-        filled(cellCount, 1200.0) };
-    double[] referenceDensity = { 10.0, 800.0, 1000.0 };
+    fixture.soundSpeed = new double[][] {filled(cellCount, 300.0), filled(cellCount, 1200.0),
+        filled(cellCount, 1200.0)};
+    double[] referenceDensity = {10.0, 800.0, 1000.0};
     for (int cell = 0; cell < cellCount; cell++) {
       double perturbation = cell % 2 == 0 ? amplitude : -amplitude;
       fixture.pressure[cell] = 1.0e6 + perturbation;

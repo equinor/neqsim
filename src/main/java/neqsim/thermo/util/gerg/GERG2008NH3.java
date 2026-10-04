@@ -100,54 +100,52 @@ public class GERG2008NH3 extends GERG2008 {
   /** Number of polynomial power terms (l=0). */
   private static final int GAO_NPOL = 5;
   /** Gao power term amplitudes. */
-  private static final double[] gaoPowN = { 0.006132232, 1.7395866, -2.2261792, -0.30127553, 0.08967023, -0.076387037,
-      -0.84063963, -0.27026327 };
+  private static final double[] gaoPowN = {0.006132232, 1.7395866, -2.2261792, -0.30127553, 0.08967023, -0.076387037,
+      -0.84063963, -0.27026327};
   /** Gao power term d exponents. */
-  private static final int[] gaoPowD = { 4, 1, 1, 2, 3, 3, 2, 3 };
+  private static final int[] gaoPowD = {4, 1, 1, 2, 3, 3, 2, 3};
   /** Gao power term t exponents. */
-  private static final double[] gaoPowT = { 1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063 };
+  private static final double[] gaoPowT = {1.0, 0.382, 1.0, 1.0, 0.677, 2.915, 3.51, 1.063};
   /** Gao power term l exponents (0=polynomial, &gt;0=exponential). */
-  private static final int[] gaoPowL = { 0, 0, 0, 0, 0, 2, 2, 1 };
+  private static final int[] gaoPowL = {0, 0, 0, 0, 0, 2, 2, 1};
 
   /** Number of Gaussian terms in Gao EOS. */
   private static final int GAO_NGAUSS = 10;
   /** Gao Gaussian term amplitudes. */
-  private static final double[] gaoGaussN = { 6.212578, -5.7844357, 2.4817542, -2.3739168, 0.01493697, -3.7749264,
-      6.254348E-4, -1.7359E-5, -0.13462033, 0.07749072839 };
+  private static final double[] gaoGaussN = {6.212578, -5.7844357, 2.4817542, -2.3739168, 0.01493697, -3.7749264,
+      6.254348E-4, -1.7359E-5, -0.13462033, 0.07749072839};
   /** Gao Gaussian term d exponents. */
-  private static final int[] gaoGaussD = { 1, 1, 1, 2, 2, 1, 3, 3, 1, 1 };
+  private static final int[] gaoGaussD = {1, 1, 1, 2, 2, 1, 3, 3, 1, 1};
   /** Gao Gaussian term t exponents. */
-  private static final double[] gaoGaussT = { 0.655, 1.3, 3.1, 1.4395, 1.623, 0.643, 1.13, 4.5, 1.0, 4.0 };
+  private static final double[] gaoGaussT = {0.655, 1.3, 3.1, 1.4395, 1.623, 0.643, 1.13, 4.5, 1.0, 4.0};
   /** Gao Gaussian term eta (delta Gaussian width). */
-  private static final double[] gaoGaussEta = { 0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56,
-      22.68 };
+  private static final double[] gaoGaussEta = {0.42776, 0.6424, 0.8175, 0.7995, 0.91, 0.3574, 1.21, 4.14, 22.56, 22.68};
   /** Gao Gaussian term beta (tau Gaussian width). */
-  private static final double[] gaoGaussBeta = { 1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85 };
+  private static final double[] gaoGaussBeta = {1.708, 1.4865, 2.0915, 2.43, 0.488, 1.1, 0.85, 1.14, 945.64, 993.85};
   /** Gao Gaussian term gamma (tau Gaussian center). */
-  private static final double[] gaoGaussGamma = { 1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897,
-      1.05277 };
+  private static final double[] gaoGaussGamma = {1.036, 1.2777, 1.083, 1.2906, 0.928, 0.934, 0.919, 1.852, 1.05897,
+      1.05277};
   /** Gao Gaussian term epsilon (delta Gaussian center). */
-  private static final double[] gaoGaussEps = { -0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574,
-      0.9576 };
+  private static final double[] gaoGaussEps = {-0.0726, -0.1274, 0.7527, 0.57, 2.2, -0.243, 2.96, 3.02, 0.9574, 0.9576};
 
   /** Number of GaoB near-critical terms. */
   private static final int GAO_NGAOB = 2;
   /** GaoB term amplitudes. */
-  private static final double[] gaoBN = { -1.6909858, 0.93739074 };
+  private static final double[] gaoBN = {-1.6909858, 0.93739074};
   /** GaoB term d exponents. */
-  private static final int[] gaoBD = { 1, 1 };
+  private static final int[] gaoBD = {1, 1};
   /** GaoB term t exponents. */
-  private static final double[] gaoBT = { 4.3315, 4.015 };
+  private static final double[] gaoBT = {4.3315, 4.015};
   /** GaoB term eta (stored negative for Gaussian damping). */
-  private static final double[] gaoBEta = { -2.8452, -2.8342 };
+  private static final double[] gaoBEta = {-2.8452, -2.8342};
   /** GaoB term beta. */
-  private static final double[] gaoBBeta = { 0.3696, 0.2962 };
+  private static final double[] gaoBBeta = {0.3696, 0.2962};
   /** GaoB term gamma. */
-  private static final double[] gaoBGamma = { 1.108, 1.313 };
+  private static final double[] gaoBGamma = {1.108, 1.313};
   /** GaoB term epsilon. */
-  private static final double[] gaoBEps = { 0.4478, 0.44689 };
+  private static final double[] gaoBEps = {0.4478, 0.44689};
   /** GaoB term b (denominator constant). */
-  private static final double[] gaoBb = { 1.244, 0.6826 };
+  private static final double[] gaoBb = {1.244, 0.6826};
 
   /**
    * Default constructor for GERG2008NH3.
@@ -499,7 +497,7 @@ public class GERG2008NH3 extends GERG2008 {
     double del2 = del * del;
     double del3 = del2 * del;
     double del4 = del2 * del2;
-    double[] delp = { 1.0, del, del2, del3, del4 };
+    double[] delp = {1.0, del, del2, del3, del4};
 
     // Precompute exp(-delta^l) for l=1,2
     double expDel1 = Math.exp(-del);

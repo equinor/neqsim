@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>{@link AdiabaticTwoPhasePipe} - Two-phase capable pipe</li>
  * <li>{@link PipeBeggsAndBrills} - Beggs and Brill correlation</li>
  * </ul>
- * </p>
  *
  * <p>
  * Reference equations for gas pipeline flow:
@@ -455,7 +454,7 @@ public class PipelinePressureDropComparisonTest {
 
   @Test
   void testCompareModelsAtDifferentFlowRates() {
-    double[] flowRates = { 10000, 50000, 100000, 200000 }; // kg/hr
+    double[] flowRates = {10000, 50000, 100000, 200000}; // kg/hr
 
     logger.info("\n========== COMPARISON: Different Flow Rates ==========");
     logger.info("Flow Rate (kg/hr) | AdiabaticPipe | TwoPhasePipe | BeggsAndBrills");
@@ -514,7 +513,7 @@ public class PipelinePressureDropComparisonTest {
 
   @Test
   void testCompareModelsAtDifferentPressures() {
-    double[] pressures = { 20, 50, 100, 150 }; // bara
+    double[] pressures = {20, 50, 100, 150}; // bara
 
     logger.info("\n========== COMPARISON: Different Inlet Pressures ==========");
     logger.info("Pressure (bara) | AdiabaticPipe | TwoPhasePipe | BeggsAndBrills");
@@ -581,7 +580,6 @@ public class PipelinePressureDropComparisonTest {
    * <li>Weymouth equation - conservative, commonly used for transmission lines</li>
    * <li>Panhandle A equation - for medium-large diameter pipelines</li>
    * </ul>
-   * </p>
    *
    * <p>
    * Reference: Menon, E.S. "Gas Pipeline Hydraulics", CRC Press, 2005 Reference: Mohitpour, M. et al. "Pipeline Design
@@ -1162,7 +1160,7 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 20.0;
 
     // Different flow rates to achieve different Reynolds numbers
-    double[] flowRatesKgHr = { 100, 500, 2000, 10000, 50000 };
+    double[] flowRatesKgHr = {100, 500, 2000, 10000, 50000};
 
     logger.info("Conditions:");
     logger.info("  Pipe Length: " + lengthM + " m");
@@ -1706,7 +1704,7 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 50.0;
 
     // Test different gas fractions - moderate range
-    double[] gasFlowsKgHr = { 200, 500, 1000, 2000, 3000 };
+    double[] gasFlowsKgHr = {200, 500, 1000, 2000, 3000};
     double oilFlowKgHr = 20000.0;
 
     logger.info("Conditions:");
@@ -2396,7 +2394,7 @@ public class PipelinePressureDropComparisonTest {
     logger.info("=== Flow Rate Calculation at Different Outlet Pressures ===");
 
     // Test different outlet pressures
-    double[] targetOutletPressures = { 95.0, 90.0, 80.0, 70.0, 50.0 }; // bara
+    double[] targetOutletPressures = {95.0, 90.0, 80.0, 70.0, 50.0}; // bara
 
     for (double targetPressure : targetOutletPressures) {
       // Create new stream for each test

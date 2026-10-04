@@ -32,8 +32,8 @@ class ElectrolyteCPAMixedBrineInventoryTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "40, 3, 0.6, Ca++", "60, 3, 0.6, Ca++", "50, 1.5, 0.3, Ca++", "50, 4, 1.2, Ca++", "40, 3, 2, K+",
-      "50, 3, 2, K+", "60, 3, 2, K+" })
+  @CsvSource({"40, 3, 0.6, Ca++", "60, 3, 0.6, Ca++", "50, 1.5, 0.3, Ca++", "50, 4, 1.2, Ca++", "40, 3, 2, K+",
+      "50, 3, 2, K+", "60, 3, 2, K+"})
   void nearbyAndMonovalentBrinesConserveInventory(double pressure, double nacl, double secondSalt, String cation)
       throws Exception {
     SystemInterface fluid = createBrine(pressure, nacl, secondSalt, cation, false);
@@ -44,7 +44,7 @@ class ElectrolyteCPAMixedBrineInventoryTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "Ca++", "K+" })
+  @ValueSource(strings = {"Ca++", "K+"})
   void additionOrderAndRepeatedRunsMatchFreshFluid(String cation) throws Exception {
     double secondSalt = "Ca++".equals(cation) ? 0.6 : 2.0;
     SystemInterface reference = createBrine(50.0, 3.0, secondSalt, cation, false);
@@ -63,10 +63,10 @@ class ElectrolyteCPAMixedBrineInventoryTest extends neqsim.NeqSimTest {
 
   @Test
   void intermediateTpFlashesConserveBothBrines() {
-    for (String cation : new String[] { "Ca++", "K+" }) {
+    for (String cation : new String[] {"Ca++", "K+"}) {
       SystemInterface fluid = createBrine(50.0, 3.0, "Ca++".equals(cation) ? 0.6 : 2.0, cation, false);
       ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-      for (double temperature : new double[] { 263.0, 271.0, 281.3, 290.0, 281.3 }) {
+      for (double temperature : new double[] {263.0, 271.0, 281.3, 290.0, 281.3}) {
         fluid.setTemperature(temperature);
         ops.TPflash();
         assertInventory(fluid);
@@ -94,7 +94,7 @@ class ElectrolyteCPAMixedBrineInventoryTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "component", "phase", "normalization", "ion" })
+  @ValueSource(strings = {"component", "phase", "normalization", "ion"})
   void invalidFluidStateThrowsAndRestoresCallerSetting(final String fault) {
     final SystemInterface fluid = createBrine(50.0, 3.0, 0.6, "Ca++", false);
     fluid.setMultiPhaseCheck(false);

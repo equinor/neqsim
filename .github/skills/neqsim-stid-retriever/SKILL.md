@@ -1,7 +1,7 @@
 ---
 name: neqsim-stid-retriever
-description: "Retrieves engineering documents (compressor curves, mechanical drawings, line lists, P&IDs, data sheets, vendor docs, material certificates, fire/PFP documents, piping specs) from document management systems for use in NeqSim engineering tasks. Supports local directories, manual upload, and pluggable retrieval backends (e.g., stidapi for STID). USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, water-hammer route/event evidence, trapped-liquid fire rupture evidence, or as-built documentation for process equipment."
-last_verified: "2026-07-04"
+description: "Retrieves engineering documents (compressor curves, drawings, line lists, P&IDs, datasheets, vendor docs, material certificates, fire/PFP documents, piping specs) from local folders, uploads or pluggable backends such as stidapi. USE WHEN: a task needs vendor performance data, mechanical drawings, line-list route hydraulics, water-hammer or trapped-liquid rupture evidence, or as-built documentation for process equipment."
+last_verified: "2026-09-21"
 ---
 
 # Document Retrieval Skill for Engineering Tasks
@@ -122,7 +122,10 @@ by equipment tag. See the config template below for setup instructions.
 ### STID Download Helper (Recommended)
 
 Use `devtools/stid_download.py` to download STID documents directly into a
-task folder. This ensures all documents end up in the right place:
+task folder. This ensures all documents end up in the right place. Requires
+`pip install "stidapi>=1.4.4"` — that version added a proper `File.download_file()`
+resolver (direct `url` if the API returned one, else `{inst_code}/file/{id}`),
+so the helper no longer has to guess between multiple hand-built URL patterns:
 
 ```bash
 # Download documents by tag — saves to task's references/ folder
@@ -144,18 +147,56 @@ The helper:
 - Optionally converts PDFs to PNGs in the task's `figures/` directory
 - Skips already-downloaded files
 
+### Automatic retrieval (DEFAULT — do this first, no arguments needed)
+
+`devtools/doc_retriever.py` is the chat-equivalent, zero-argument path. It
+infers the installation from the task title/scope (matching the display names
+in `installation_codes`), searches STID tags by equipment keywords, ranks the
+referenced documents (P&IDs and data sheets first), downloads the best ones to
+`references/stid/`, and writes `stid_retrieval_manifest.json` plus
+`retrieval_status.json`. Console output is redacted to counts.
+
+```bash
+neqsim fetch-docs <task_dir>                          # infer installation + default keywords
+neqsim fetch-docs <task_dir> --inst MYINST --max-docs 80
+neqsim fetch-docs <task_dir> --keywords compressor "export gas" --no-download --json
+```
+
+It runs automatically in `neqsim new-task` and in the Standard-first gate of
+every scheduled living-task cycle (reused for 24 h after success, retried after
+6 h on failure). **Never report "documents not available" after searching only
+the document root** — the document root is usually a standards library; plant
+documents live in STID. Read `retrieval_status.json` and report its status:
+
+| Status | Meaning / action |
+|--------|------------------|
+| `ok` | Documents downloaded; extract them |
+| `no_backend` | No `doc_retrieval_config.yaml` or `stidapi` missing — ask for manual upload |
+| `no_installation` | Installation not in the task text — rerun with `--inst CODE` |
+| `no_matches` | Backend reachable, nothing matched — try `--keywords` / `--tags` |
+| `auth_error` | Sign-in/permission failure — report as blocker |
+| `disabled` | `NEQSIM_DISABLE_DOC_RETRIEVAL` set (tests/offline) |
+
+Gotchas learned in practice:
+- `installation_codes` maps **code → display name**; always pass the *code*
+  (e.g. `MYINST`) to `stidapi`. Passing the display name returns HTTP 400,
+  which `stidapi` logs and swallows, so searches silently return 0 tags.
+- STID `docType` values are **numeric** per installation, not the letter codes
+  (`CE`/`DS`/`AA`/`MD`) in `default_doc_types`. The retriever matches letter
+  codes against doc-number segments and the `isPid`/`isDatasheet` flags, always
+  keeps P&IDs for config defaults, and ignores a filter that would remove all.
+- Tag search by `description=` works well for equipment keywords; wildcard
+  `tag_no` patterns such as `*KA*` return nothing.
+
 ### Generic retrieval interface
 
 ```python
-# Generic retrieval interface used by the task solver:
-from devtools.doc_retriever import retrieve_documents
+from devtools.doc_retriever import retrieve_for_task, retrieve_documents
 
-docs = retrieve_documents(
-    tags=['35-KA001A'],
-    doc_types=['CE', 'AA', 'MD', 'DS'],
-    output_dir='step1_scope_and_research/references/'
-)
-# Returns list of downloaded file paths, or [] if no backend configured
+status = retrieve_for_task(TASK_DIR)               # dict, never raises
+paths = retrieve_documents(tags=['35-KA001A'], doc_types=['CE', 'AA', 'MD', 'DS'],
+                           output_dir='step1_scope_and_research/references/')
+# retrieve_documents returns downloaded file paths, or [] if no backend configured
 ```
 
 ---

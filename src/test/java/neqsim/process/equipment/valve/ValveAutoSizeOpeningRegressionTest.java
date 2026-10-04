@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Regression coverage for sizing a valve at an opening different from its current position. */
 class ValveAutoSizeOpeningRegressionTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @CsvSource({ "100.0, 50.0, methane, linear", "30.0, 70.0, methane, linear", "70.0, 30.0, methane, linear",
-      "100.0, 50.0, methane, equal percentage", "100.0, 50.0, water, linear", "30.0, 70.0, water, equal percentage" })
+  @CsvSource({"100.0, 50.0, methane, linear", "30.0, 70.0, methane, linear", "70.0, 30.0, methane, linear",
+      "100.0, 50.0, methane, equal percentage", "100.0, 50.0, water, linear", "30.0, 70.0, water, equal percentage"})
   void requestedDesignOpeningPreservesDesignFlow(double initialOpening, double designOpening, String component,
       String characteristic) {
     SystemSrkEos fluid = new SystemSrkEos(303.15, 50.0);
@@ -36,7 +36,7 @@ class ValveAutoSizeOpeningRegressionTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @CsvSource({ "NaN, 50.0", "0.0, 50.0", "1.0, NaN", "1.0, 0.0", "1.0, 101.0" })
+  @CsvSource({"NaN, 50.0", "0.0, 50.0", "1.0, NaN", "1.0, 0.0", "1.0, 101.0"})
   void invalidDesignIsRejectedBeforeChangingTheValve(double safetyFactor, double opening) {
     ThrottlingValve valve = new ThrottlingValve("unconnected valve");
     assertThrows(IllegalArgumentException.class, () -> valve.autoSize(safetyFactor, opening));

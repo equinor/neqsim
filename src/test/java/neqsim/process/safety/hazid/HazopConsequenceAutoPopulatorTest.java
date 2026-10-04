@@ -174,7 +174,7 @@ public class HazopConsequenceAutoPopulatorTest {
 
     HazopConsequenceAutoPopulator populator = new HazopConsequenceAutoPopulator();
     List<HAZOPTemplate> nodes = HAZOPTemplate.fromProcessSystem(process);
-    String[] neutralTypes = { "Stream", "ThrottlingValve", "Separator", "Cooler" };
+    String[] neutralTypes = {"Stream", "ThrottlingValve", "Separator", "Cooler"};
     for (String equipmentType : neutralTypes) {
       HAZOPTemplate populated = populator.populate(findNode(nodes, equipmentType));
       HAZOPDeviation noFlow = findDeviation(populated, GuideWord.NO, Parameter.FLOW);

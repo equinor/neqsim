@@ -20,7 +20,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * TP flash at the found temperature.</li>
  * <li><b>Multiple systems:</b> WGS reaction, steam methane reforming, ammonia synthesis, non- reactive baseline.</li>
  * </ol>
- * </p>
  *
  * @author copilot
  * @version 1.0
@@ -312,7 +311,7 @@ public class ReactiveMultiphasePHflashTest {
    */
   @Test
   public void testPressureRange() {
-    double[] pressures = { 1.0, 10.0, 50.0, 200.0 };
+    double[] pressures = {1.0, 10.0, 50.0, 200.0};
 
     for (double P : pressures) {
       SystemInterface system = new SystemSrkEos(500.0, P);

@@ -1,12 +1,51 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
-last_verified: "2026-08-22"
+last_verified: "2026-09-20"
 ---
 
 # NeqSim API Patterns
 
 Copy-paste reference for common NeqSim operations. All Java code must be Java 8 compatible.
+
+## MCP server vs. Python/Java API — which to use
+
+**Default policy: MCP first.** For any single calculation, always check whether
+a NeqSim MCP tool (`mcp_neqsim_*`) already covers it before writing Python or
+Java. Only drop to code when MCP genuinely cannot do the job. Concretely:
+
+1. **Curated tool exists** (`runFlash`, `runProcess`, `runPVT`, `getPhaseEnvelope`,
+   `sizeEquipment`, `calculateStandard`, `runFlowAssurance`, `runBatch`, ...) →
+   use it directly. Confirm field names with `getSchema`/`validateInput` first.
+2. **No curated tool, but it might still be reachable** → use `runCapability`
+   (`search` → `inspectApi` → invoke) before writing any code.
+3. **`runCapability` reports `inspect-only`, or the task needs loops/plotting/
+   state/notebooks/reports** → fall back to the Python API (`import neqsim`)
+   or Java in a checkout. This is the *only* reason to write code for a
+   calculation MCP already exposes.
+4. **NeqSim itself lacks the capability** (not a packaging gap, an engine gap)
+   → implement it in Java with tests (`spotless:apply`) rather than working
+   around it with ad-hoc Python; see `neqsim-troubleshooting` and the
+   continuous-improvement rule in `AGENTS.md`.
+
+Both the MCP tools and the Python/Java API call the same NeqSim engine — the
+difference is packaging, not physics — but MCP additionally gives a stable
+JSON contract, schema validation, and provenance/quality-gate info (EOS,
+convergence, benchmark trust, standards) for free.
+
+| Use the **MCP server** (`mcp_neqsim_*` tools) when... | Use the **Python/Java API** (`import neqsim`, or Java in a checkout) when... |
+|---|---|
+| No dev environment is available (chat-only client, no terminal/Python/JVM) | Building a task notebook, multi-unit flowsheet, or anything with loops, custom logic, plotting, or state you inspect between steps |
+| The need is one bounded calculation a curated tool already covers (`runFlash`, `runProcess`, `getPhaseEnvelope`, `sizeEquipment`, `calculateStandard`, ...) | The calculation is not covered by a curated tool and `runCapability` routes it `inspect-only` (no safe generic invocation exists) |
+| You want the built-in provenance/quality-gate envelope (EOS, convergence, benchmark trust, standards) with no extra code | The run is long or iterative (Monte Carlo, sweeps, optimizer loops) — `runCapability`'s cooperative timeout is for short calls; a script has none |
+| A different agent/tool needs the result over a stable JSON contract (`composeWorkflow`, `composeMultiServerWorkflow`, cross-client interoperability) | You are inside the `/solve-task` workflow — task folders, validators, report generation, and the NeqSim Runner are Python-only, not exposed over MCP |
+| Doing bounded discovery of a capability before writing code (`runCapability` search, `inspectApi`) | You need direct object access (intermediate phase properties, custom equipment subclassing, mechanical design classes) beyond what any tool exposes |
+
+In a session with both available (e.g. this workspace), default to a curated MCP
+tool for a single quick calculation or lookup; switch to writing code as soon as
+the task needs more than one call, custom logic, or a deliverable (notebook,
+report, task folder). See `neqsim-task-workflow` skill §0.6 for the matrix by
+*environment* (workspace checkout / pip toolkit / chat-only) rather than by task.
 
 ## MCP Runtime Capability Routing
 
@@ -27,6 +66,27 @@ containers, oversized payloads, arbitrary objects, and instance methods are excl
 uses cooperative Java interruption, so route long-running calculations through a curated runner or
 `runProcess`. Treat runtime presence as capability evidence, then check tests, benchmark trust, and
 standards before using the result for engineering decisions.
+
+### MCP tool inputs: schema first, validate, then run
+
+Every calculation tool (`run*`, `sizeEquipment`, `designUtilities`, `calculateStandard`) has a
+tool-specific input schema whose field names and units mirror the runner exactly. Do not guess
+field names such as `flowRate_kg_hr` or `setPressure_barg`:
+
+1. `getSchema("run_relief", "input")` — snake_case or camelCase (`runRelief`) both resolve.
+   `required` / `allOf` (mode-dependent, e.g. `case: gas`) / `oneOf` tell you what to send.
+2. `validateInput({"tool": "runRelief", "input": {...}})` — any tool; returns
+   `SCHEMA_VIOLATION` issues naming the missing or mistyped field. Flash and process JSON may
+   also be passed bare (auto-detected).
+3. Run, then read `status`, `qualityGate`, `provenance.converged` and `warnings`.
+
+Process JSON pre-flight is strict: `UNRESOLVED_INLET` (an `inlet` naming no unit — feeds are
+units of `"type": "Stream"`), `MISPLACED_UNIT_PARAMETERS` (keys beside `properties`, e.g.
+`outletPressure_bara`; they are otherwise ignored and the unit runs on defaults) and
+`UNRECOGNIZED_INPUT_SHAPE` (no `process`/`areas`/`components`) are errors, and `runProcess`
+refuses to report success for a disconnected flowsheet. `runFlowAssurance` `hydrateRiskMap`
+requires `water` in the composition; an unavailable hydrate temperature is returned as
+`RESULT_NOT_AVAILABLE`, never as `LOW` risk (`RiskLevel.UNKNOWN` in Java).
 
 ## EOS Selection Guide
 
@@ -240,6 +300,18 @@ Benchmarked against CoolProp (Span-Wagner) — density deviation at 40 °C / 100
 Use `SystemGERG2008Eos` for any CO₂ compression, injection or transport duty. Cubics are
 acceptable for the gas-phase part of the train but not near or above the critical density.
 
+### CPA liquid-water caloric accuracy
+
+Default `SystemSrkCPAstatoil` water Cp can be 8–17% low at 5–60 °C even when
+density is accurate. For qualified pure-water duty calculations, explicitly
+select `setUseCaloricWaterAlpha(true)`, then TP flash and initialize properties.
+The calibration changes the EOS alpha and its derivatives consistently; never
+patch Cp alone or fit water ideal-gas Cp to compensate for a liquid error.
+Caloric checks cover 5–150 °C and 1–100 bara (stable liquid); density qualification
+is 5–60 °C. Mixtures, electrolytes, hydrates and near-critical states need separate
+validation. See [CPA water caloric guidance](../../../docs/thermo/cpa_water_caloric.md)
+for results, provenance and limitations. Legacy behavior remains the default.
+
 ## Process Equipment Patterns
 
 ### Standard outlet-stream contract
@@ -257,6 +329,15 @@ the live public stream objects, not clones or solver-internal tray streams. Once
 an outlet has been handed to downstream equipment, preserve its object identity
 across `run(...)` calls by updating its thermodynamic system in place or using
 the established identity-preserving adoption helper.
+
+When publishing an equilibrium outlet, apply `SystemInterface.setTotalFlowRate(...)`
+before the final TP flash: the rate setter calls `init(0)` and resets the phase state.
+Initialize thermodynamic and transport properties with `initProperties()` after the
+flash, then publish without further rate mutations. Check raw outlet Cp, phase identity
+and component closure before any caller-side reflash; a sequential heat-transfer test
+can expose stale properties that a mass-balance test misses. See
+`TwoFluidPipeOutletThermodynamicsTest` and issue #3685. Handle zero inventory separately
+because its intensive properties are undefined.
 
 For phase-separated equipment, add a focused contract test after a successful
 solve that verifies:

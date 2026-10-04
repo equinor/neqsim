@@ -252,7 +252,7 @@ class FlowRegimeHorizontalTransitionTest {
       TwoFluidSection upstream = transientSection(0.0, superficialGas);
       TwoFluidSection downstream = transientSection(100.0, superficialGas);
 
-      equations.calcRHS(new TwoFluidSection[] { upstream, downstream }, 100.0);
+      equations.calcRHS(new TwoFluidSection[] {upstream, downstream}, 100.0);
       Map<FlowRegime, Double> weights = upstream.getRegimeWeights();
       if (weights == null || weights.size() < 2) {
         continue;
@@ -292,7 +292,7 @@ class FlowRegimeHorizontalTransitionTest {
       assertRelativeEquals(expectedInterfacialArea, upstream.getInterfacialWidth());
       double gasWallForce = -expectedGasWallForce;
       double liquidWallForce = -expectedLiquidWallForce;
-      double[] source = equations.calcSourceTerms(new TwoFluidSection[] { upstream })[0];
+      double[] source = equations.calcSourceTerms(new TwoFluidSection[] {upstream})[0];
       assertRelativeEquals(gasWallForce - expectedInterfacialForce,
           source[TwoFluidConservationEquations.IDX_GAS_MOMENTUM]);
       assertRelativeEquals(liquidWallForce + expectedInterfacialForce,

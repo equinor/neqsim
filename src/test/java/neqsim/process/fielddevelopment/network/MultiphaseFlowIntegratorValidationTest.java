@@ -28,7 +28,7 @@ class MultiphaseFlowIntegratorValidationTest {
       PipelineResult result = integrator.calculateHydraulics(stream, 1.0);
       assertTrue(result.isFeasible(), result.getInfeasibilityReason());
       for (PipelineResult point : integrator.calculateHydraulicsCurve(stream.getFluid(), 60.0,
-          new double[] { 5000.0, 10000.0 })) {
+          new double[] {5000.0, 10000.0})) {
         assertTrue(point.isFeasible(), point.getInfeasibilityReason());
       }
       double diameter = integrator.sizePipeline(stream, 1.0, 0.8);
@@ -114,7 +114,7 @@ class MultiphaseFlowIntegratorValidationTest {
   @Test
   void sizingRejectsInvalidVelocityLimit() {
     MultiphaseFlowIntegrator integrator = sizingStub(true, false);
-    for (double limit : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY }) {
+    for (double limit : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> integrator.sizePipeline(null, 10.0, limit));
     }
   }

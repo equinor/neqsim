@@ -40,7 +40,7 @@ class TwoFluidTraceFluxRegressionTest {
     next.setPosition(1.5);
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
-    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] { cell, next }, 1.0);
+    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {cell, next}, 1.0);
 
     double expected = cell.getWaterMassPerLength() * 2.0;
     assertTrue(expected > 0.0);
@@ -67,7 +67,7 @@ class TwoFluidTraceFluxRegressionTest {
     cell.updateConservativeVariables();
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
 
-    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] { cell }, 1.0);
+    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {cell}, 1.0);
 
     for (int phase = 1; phase < 3; phase++) {
       double expected = cell.getStateVector()[phase] * 2.0;

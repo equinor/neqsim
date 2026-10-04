@@ -272,7 +272,7 @@ This framework is designed to work with NeqSim's existing ML capabilities:
 | `GymEnvironment` | Uses same `StateVector`/`ActionVector` |
 | `ProcessLinkedMPC` | Validate via `SimulationValidator.validate(process)` |
 | `ProductionOptimizer` | Validate inputs before optimization |
-| `SurrogateModelRegistry` | Physics constraint checking |
+| `SurrogateModelRegistry` | [Vector validation and physics fallback](../process/ml/README.md#input-schema-output-validation-and-fallback); physical qualification is separate |
 
 ---
 

@@ -97,8 +97,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * optimizer.configureProcessCompressorCharts();
  *
  * // Generate capacity table for reservoir simulator
- * double[] inletPressures = { 50, 60, 70, 80 }; // bara
- * double[] outletPressures = { 140, 145, 150, 155 }; // bara
+ * double[] inletPressures = {50, 60, 70, 80}; // bara
+ * double[] outletPressures = {140, 145, 150, 155}; // bara
  * ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
  *
  * logger.info(table.toFormattedString());
@@ -1080,8 +1080,8 @@ public class FlowRateOptimizer implements Serializable {
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
    * optimizer.configureProcessCompressorCharts();
    *
-   * ProcessPerformanceTable table = optimizer
-   *     .generateProcessPerformanceTable(new double[] { 30000, 50000, 70000, 90000 }, "kg/hr", 80.0, "bara");
+   * ProcessPerformanceTable table = optimizer.generateProcessPerformanceTable(new double[] {30000, 50000, 70000, 90000},
+   *     "kg/hr", 80.0, "bara");
    *
    * System.out.println(table.toFormattedString());
    * System.out.println("Total power at 50000 kg/hr: " + table.getTotalPower(1) + " kW");
@@ -1144,8 +1144,8 @@ public class FlowRateOptimizer implements Serializable {
    * </p>
    *
    * <pre>
-   * double[] flowRates = { 20000, 40000, 60000, 80000, 100000 };
-   * double[] inletPressures = { 60, 70, 80, 90 };
+   * double[] flowRates = {20000, 40000, 60000, 80000, 100000};
+   * double[] inletPressures = {60, 70, 80, 90};
    *
    * ProcessLiftCurveTable table = optimizer.generateProcessLiftCurve(flowRates, "kg/hr", inletPressures, "bara");
    *
@@ -1528,8 +1528,8 @@ public class FlowRateOptimizer implements Serializable {
    * </p>
    *
    * <pre>
-   * double[] inletPressures = { 60, 70, 80, 90 }; // bara
-   * double[] outletPressures = { 130, 140, 150, 160 }; // bara
+   * double[] inletPressures = {60, 70, 80, 90}; // bara
+   * double[] outletPressures = {130, 140, 150, 160}; // bara
    *
    * ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
    *
@@ -2661,7 +2661,7 @@ public class FlowRateOptimizer implements Serializable {
 
     private double[] generateLinearArray(double min, double max, int points) {
       if (points <= 1) {
-        return new double[] { min };
+        return new double[] {min};
       }
       double[] arr = new double[points];
       double step = (max - min) / (points - 1);

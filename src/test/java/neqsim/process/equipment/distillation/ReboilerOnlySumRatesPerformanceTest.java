@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Deterministic work-reduction gate for native sum-rates routing on reboiler-only columns. */
 public class ReboilerOnlySumRatesPerformanceTest {
   private static SystemInterface createFluid(double temperature, double[] moles) {
-    String[] components = { "methane", "ethane", "propane", "n-butane", "nC10" };
+    String[] components = {"methane", "ethane", "propane", "n-butane", "nC10"};
     SystemInterface fluid = new SystemSrkEos(temperature, 30.0);
     for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
       fluid.addComponent(components[componentIndex], moles[componentIndex]);
@@ -30,13 +30,13 @@ public class ReboilerOnlySumRatesPerformanceTest {
   private static DistillationColumn createColumn(String name, double gasTemperature, double solventFlowRate,
       DistillationColumn.SolverType solverType) {
     Stream gasFeed = createFeed(name + " rich gas",
-        createFluid(gasTemperature, new double[] { 0.70, 0.15, 0.10, 0.05, 1.0e-10 }), 1000.0);
+        createFluid(gasTemperature, new double[] {0.70, 0.15, 0.10, 0.05, 1.0e-10}), 1000.0);
     Stream solventFeed = createFeed(name + " lean solvent",
-        createFluid(298.15, new double[] { 1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0 }), solventFlowRate);
+        createFluid(298.15, new double[] {1.0e-10, 1.0e-10, 1.0e-10, 1.0e-10, 1.0}), solventFlowRate);
     DistillationColumn column = new DistillationColumn(name, 10, true, false);
     column.addFeedStream(gasFeed, 1);
     column.addFeedStream(solventFeed, column.getNumberOfTrays() - 1);
-    column.getReboiler().setOutTemperature(330.15);
+    column.getReboiler().setOutletTemperature(330.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(30.0);
     column.setMaxNumberOfIterations(400);

@@ -59,13 +59,13 @@ public class StidWellBarrierDataSource {
   private static final Logger logger = LogManager.getLogger(StidWellBarrierDataSource.class);
 
   /** Keys interpreted as the primary envelope object. */
-  public static final String[] PRIMARY_KEYS = new String[] { "primaryEnvelope", "primary" };
+  public static final String[] PRIMARY_KEYS = new String[] {"primaryEnvelope", "primary"};
 
   /** Keys interpreted as the secondary envelope object. */
-  public static final String[] SECONDARY_KEYS = new String[] { "secondaryEnvelope", "secondary" };
+  public static final String[] SECONDARY_KEYS = new String[] {"secondaryEnvelope", "secondary"};
 
   /** Keys interpreted as the element array within an envelope. */
-  public static final String[] ELEMENT_ARRAY_KEYS = new String[] { "elements", "barrierElements" };
+  public static final String[] ELEMENT_ARRAY_KEYS = new String[] {"elements", "barrierElements"};
 
   private final JsonObject source;
 

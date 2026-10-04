@@ -124,15 +124,15 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     DualProducerFixture fixture = createDualProducerFixture();
     ProcessModelOperatingActionSetEvaluator evaluator = createCoupledEvaluator(fixture);
 
-    CandidateSetEvaluationResult redistributed = evaluator.evaluate(new double[] { 700.0, 300.0 });
+    CandidateSetEvaluationResult redistributed = evaluator.evaluate(new double[] {700.0, 300.0});
     assertEquals(Outcome.FEASIBLE, redistributed.getOutcome(), redistributed.getDiagnostics().toString());
     assertTrue(redistributed.isFeasible());
     assertTrue(redistributed.isCandidateSimulationConverged());
     assertTrue(redistributed.isCandidateEvaluatorFeasible());
     assertTrue(redistributed.isBaselineRestored());
     assertTrue(redistributed.isBaselineSimulationConverged());
-    assertArrayEquals(new double[] { 600.0, 400.0 }, redistributed.getBaselineValues(), 1.0e-8);
-    assertArrayEquals(new double[] { 700.0, 300.0 }, redistributed.getCandidateValues(), 0.0);
+    assertArrayEquals(new double[] {600.0, 400.0}, redistributed.getBaselineValues(), 1.0e-8);
+    assertArrayEquals(new double[] {700.0, 300.0}, redistributed.getCandidateValues(), 0.0);
     assertEquals(1000.0, redistributed.getRawObjectives()[0], 1.0e-8);
     assertEquals(1, redistributed.getProcessBoundaryConstraintEvidence().size());
     assertEquals(1000.0, redistributed.getProcessBoundaryConstraintEvidence().get(0).getSampledValue(), 1.0e-8);
@@ -149,7 +149,7 @@ class ProcessModelOperatingActionSetEvaluatorTest {
       assertEquals(0.0, evidence.getRestorationReadBackResidual(), 1.0e-8);
     }
 
-    CandidateSetEvaluationResult overloaded = evaluator.evaluate(new double[] { 800.0, 500.0 });
+    CandidateSetEvaluationResult overloaded = evaluator.evaluate(new double[] {800.0, 500.0});
     assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, overloaded.getOutcome(),
         overloaded.getDiagnostics().toString());
     assertEquals(1300.0 / 1200.0, overloaded.getHydraulicConstraints().get(0).getUtilization(), 1.0e-12);
@@ -157,7 +157,7 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
 
-    CandidateSetEvaluationResult repeated = evaluator.evaluate(new double[] { 700.0, 300.0 });
+    CandidateSetEvaluationResult repeated = evaluator.evaluate(new double[] {700.0, 300.0});
     assertEquals(redistributed.getOutcome(), repeated.getOutcome());
     assertArrayEquals(redistributed.getRawObjectives(), repeated.getRawObjectives(), 1.0e-9);
     assertEquals(redistributed.getHydraulicConstraints().get(0).getUtilization(),
@@ -171,7 +171,7 @@ class ProcessModelOperatingActionSetEvaluatorTest {
     ProcessModelOperatingActionSetEvaluator evaluator = createCoupledEvaluator(fixture);
     int evaluationsBefore = evaluator.getSimulationEvaluator().getEvaluationCount();
 
-    CandidateSetEvaluationResult rejected = evaluator.evaluate(new double[] { 700.0, 1200.0 });
+    CandidateSetEvaluationResult rejected = evaluator.evaluate(new double[] {700.0, 1200.0});
 
     assertEquals(Outcome.ACTION_REJECTED, rejected.getOutcome(), rejected.getDiagnostics().toString());
     assertFalse(rejected.isCandidateSimulationConverged());
@@ -204,8 +204,8 @@ class ProcessModelOperatingActionSetEvaluatorTest {
         "basis", simulation, Arrays.asList(actionA, duplicateAddress)));
 
     ProcessModelOperatingActionSetEvaluator evaluator = createCoupledEvaluator(fixture);
-    assertEquals(Outcome.CANDIDATE_VECTOR_INVALID, evaluator.evaluate(new double[] { 700.0 }).getOutcome());
-    CandidateSetEvaluationResult original = evaluator.evaluate(new double[] { 700.0, 300.0 });
+    assertEquals(Outcome.CANDIDATE_VECTOR_INVALID, evaluator.evaluate(new double[] {700.0}).getOutcome());
+    CandidateSetEvaluationResult original = evaluator.evaluate(new double[] {700.0, 300.0});
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
     output.writeObject(original);
@@ -216,10 +216,10 @@ class ProcessModelOperatingActionSetEvaluatorTest {
 
     assertEquals("well-allocation", restored.getId());
     assertEquals("synthetic two-well allocation basis", restored.getProvenance());
-    assertArrayEquals(new double[] { 700.0, 300.0 }, restored.getCandidateValues(), 0.0);
+    assertArrayEquals(new double[] {700.0, 300.0}, restored.getCandidateValues(), 0.0);
     double[] candidates = restored.getCandidateValues();
     candidates[0] = -1.0;
-    assertArrayEquals(new double[] { 700.0, 300.0 }, restored.getCandidateValues(), 0.0);
+    assertArrayEquals(new double[] {700.0, 300.0}, restored.getCandidateValues(), 0.0);
     assertNotSame(restored.getActions(), restored.getActions());
     assertNotSame(restored.getActionEvidence(), restored.getActionEvidence());
     assertNotSame(restored.getHydraulicConstraints(), restored.getHydraulicConstraints());
@@ -316,8 +316,8 @@ class ProcessModelOperatingActionSetEvaluatorTest {
         .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Gathering", "gathering sink",
             "installed gathering rate", "shared installed gathering capacity");
 
-    CandidateSetEvaluationResult lower = evaluator.evaluate(new double[] { 0.8 * baselineRateA, 0.8 * baselineRateB });
-    CandidateSetEvaluationResult higher = evaluator.evaluate(new double[] { 1.2 * baselineRateA, 1.2 * baselineRateB });
+    CandidateSetEvaluationResult lower = evaluator.evaluate(new double[] {0.8 * baselineRateA, 0.8 * baselineRateB});
+    CandidateSetEvaluationResult higher = evaluator.evaluate(new double[] {1.2 * baselineRateA, 1.2 * baselineRateB});
 
     assertEquals(Outcome.FEASIBLE, lower.getOutcome(), lower.getDiagnostics().toString());
     assertEquals(Outcome.HYDRAULIC_CONSTRAINT_VIOLATED, higher.getOutcome(), higher.getDiagnostics().toString());

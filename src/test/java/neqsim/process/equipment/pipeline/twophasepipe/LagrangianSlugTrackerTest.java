@@ -25,7 +25,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Mass conservation</li>
  * <li>Statistics tracking</li>
  * </ul>
- * </p>
  *
  * @author Test
  */
@@ -562,7 +561,7 @@ class LagrangianSlugTrackerTest {
   @Test
   void testNonuniformCellCentersAndPhysicalOutlet() {
     tracker.setEnableInletSlugGeneration(false);
-    sections = new TwoFluidSection[] { sections[0], sections[1], sections[2] };
+    sections = new TwoFluidSection[] {sections[0], sections[1], sections[2]};
     sections[0].setPosition(1.0);
     sections[0].setLength(2.0);
     sections[1].setPosition(3.5);

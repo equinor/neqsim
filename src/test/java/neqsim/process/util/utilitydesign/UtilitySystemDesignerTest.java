@@ -36,10 +36,10 @@ public class UtilitySystemDesignerTest {
     feed.setPressure(50.0, "bara");
 
     Heater heater = new Heater("process heater", feed);
-    heater.setOutTemperature(393.15); // 120 C
+    heater.setOutletTemperature(393.15); // 120 C
 
     Cooler cooler = new Cooler("process cooler", heater.getOutletStream());
-    cooler.setOutTemperature(313.15); // 40 C -> cooling water
+    cooler.setOutletTemperature(313.15); // 40 C -> cooling water
 
     Compressor compressor = new Compressor("export compressor", cooler.getOutletStream());
     compressor.setOutletPressure(90.0);

@@ -91,7 +91,7 @@ public class PitzerHydrateFlashTest extends neqsim.NeqSimTest {
 
   @Test
   void saltsSuppressCo2HydratesAndMixedBrineRetainsIons() throws Exception {
-    double[][] salts = { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0.5 }, { 0.5, 0.3, 0.2 } };
+    double[][] salts = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 0.5}, {0.5, 0.3, 0.2}};
     double pureTemperature = 0.0;
     for (int i = 0; i < salts.length; i++) {
       SystemPitzer fluid = brine("CO2", salts[i][0], salts[i][1], salts[i][2], 40.0);
@@ -125,7 +125,7 @@ public class PitzerHydrateFlashTest extends neqsim.NeqSimTest {
    */
   @Test
   void co2FiveWeightPercentNaClExperimentalBenchmark() throws Exception {
-    double[][] points = { { 21.80, 275.9 }, { 25.99, 277.3 }, { 32.43, 278.9 }, { 42.26, 280.6 } };
+    double[][] points = {{21.80, 275.9}, {25.99, 277.3}, {32.43, 278.9}, {42.26, 280.6}};
     for (double[] point : points) {
       SystemPitzer fluid = brine("CO2", 0.05 / (0.95 * 0.05844), 0, 0, point[0]);
       new ThermodynamicOperations(fluid).hydrateFormationTemperature();

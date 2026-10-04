@@ -169,8 +169,8 @@ public class ThreeFluidSection extends TwoFluidSection {
         + oilMass * (getOilEnthalpy() + 0.5 * oilVelocity * oilVelocity)
         + waterMass * (getWaterEnthalpy() + 0.5 * waterVelocity * waterVelocity)
         - getPressure() * area * (getGasHoldup() + getOilHoldup() + getWaterHoldup());
-    setStateVector(new double[] { gasMass, oilMass, waterMass, gasMass * gasVelocity, oilMass * oilVelocity,
-        waterMass * waterVelocity, energy });
+    setStateVector(new double[] {gasMass, oilMass, waterMass, gasMass * gasVelocity, oilMass * oilVelocity,
+        waterMass * waterVelocity, energy});
     updateLiquidMixtureProperties();
   }
 

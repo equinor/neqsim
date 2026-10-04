@@ -7,6 +7,7 @@ agentic workflows. Reports issues with actionable fix suggestions.
 Usage:
     neqsim doctor          # run all checks
     neqsim doctor --fix    # attempt auto-fixes where possible
+    neqsim doctor --skip-jar  # check a CLI installation before the Java build
 
 Inspired by OpenClaw's `openclaw doctor` pattern.
 """
@@ -16,11 +17,16 @@ import re
 import shutil
 import subprocess
 import sys
+import sysconfig
+import time
 from datetime import datetime
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+# Toolkit mode: installed via pip / the agent plugin, no source checkout beside us.
+TOOLKIT_MODE = not os.path.isfile(os.path.join(PROJECT_ROOT, "pom.xml"))
+MCP_MIN_JAVA = 21
 
 # ── Result tracking ──────────────────────────────────────
 _results = []
@@ -91,6 +97,47 @@ def _portable_jdk_hint():
     )
 
 
+def _discovered_java_hint():
+    """Return a hint naming an installed Java that is simply not on PATH.
+
+    Java is frequently installed on managed corporate machines without being
+    exported, so point at what is already there before asking for a download.
+
+    @return a remediation string for a discovered Java home, or None
+    """
+    sys.path.insert(0, SCRIPT_DIR)
+    try:
+        from java_locator import find_java_installs
+    except ImportError:
+        return None
+    installs = find_java_installs()
+    if not installs:
+        return None
+    best = installs[0]
+    if sys.platform.startswith("win"):
+        persist = (
+            "         Make it permanent (user scope, no admin, new terminal to apply):\n"
+            "            [Environment]::SetEnvironmentVariable('JAVA_HOME','{h}','User')"
+        ).format(h=best.home)
+    else:
+        persist = (
+            "         Make it permanent by adding to your shell rc file:\n"
+            "            export JAVA_HOME={h}"
+        ).format(h=best.home)
+    return (
+        "Java {v} is already installed here (found via {s}):\n"
+        "            {h}\n{persist}"
+    ).format(v=best.major or "?", s=best.source, h=best.home, persist=persist)
+
+
+def _java_missing_hint():
+    """Return the best available remedy when Java looks unavailable.
+
+    @return a discovered-install hint when one exists, else the portable-JDK hint
+    """
+    return _discovered_java_hint() or _portable_jdk_hint()
+
+
 def _parse_java_major(version_output):
     """Parse the Java major version from `java -version` output.
 
@@ -153,7 +200,7 @@ def check_java():
             _check(
                 "Java installed", False,
                 "java on PATH but failed to run: {e}".format(e=e),
-                fix_hint=_portable_jdk_hint()
+                fix_hint=_java_missing_hint()
             )
     elif java_home_valid:
         _check(
@@ -170,7 +217,7 @@ def check_java():
         _check(
             "Java installed", False,
             "No java on PATH and JAVA_HOME is not set/valid",
-            fix_hint=_portable_jdk_hint()
+            fix_hint=_java_missing_hint()
         )
 
     # JAVA_HOME status (mvnw prefers it; a stale value silently breaks builds).
@@ -181,7 +228,7 @@ def check_java():
             "Valid: {p}".format(p=java_home) if java_home_valid
             else "Set but invalid (no bin/java): {p}".format(p=java_home),
             fix_hint=None if java_home_valid
-            else "Point JAVA_HOME at a real JDK home. " + _portable_jdk_hint()
+            else "Point JAVA_HOME at a real JDK home. " + _java_missing_hint()
         )
     elif java_on_path:
         _warn(
@@ -199,6 +246,63 @@ def check_java():
             fix_hint=None if major >= 8
             else "NeqSim requires JDK 8 or newer. " + _portable_jdk_hint()
         )
+        # The installed plugin needs Java 21 for its MCP server. In a source
+        # workspace, older supported JDKs may still run CLI-only checks, so report
+        # the MCP limitation without failing unrelated workspace health checks.
+        mcp_name = "Java version >= {n} (MCP server)".format(n=MCP_MIN_JAVA)
+        mcp_message = "Detected Java {major}".format(major=major)
+        mcp_hint = (
+            "The NeqSim MCP server needs a JDK {n}+ (winget install "
+            "EclipseAdoptium.Temurin.{n}.JDK). "
+        ).format(n=MCP_MIN_JAVA) + _portable_jdk_hint()
+        if major >= MCP_MIN_JAVA:
+            _check(mcp_name, True, mcp_message)
+        elif TOOLKIT_MODE:
+            _check(mcp_name, False, mcp_message, fix_hint=mcp_hint)
+        else:
+            _warn(mcp_name, mcp_message, fix_hint=mcp_hint)
+        if major < MCP_MIN_JAVA and java_on_path:
+            _check_shadowed_jdk(major, java_home_valid, java_home)
+    return major
+
+
+def _check_shadowed_jdk(path_major, java_home_valid, java_home):
+    """Report a newer JDK at JAVA_HOME hidden behind an older ``java`` on PATH.
+
+    The plugin's MCP server is started as plain ``java``, so PATH order decides.
+    On Windows the machine PATH precedes the user PATH, so a user-installed JDK
+    cannot overtake an Oracle ``javapath`` or Software Center Java 8 without
+    the older entry being removed.
+
+    @param path_major major version of the ``java`` found first on PATH
+    @param java_home_valid whether JAVA_HOME points at a JDK
+    @param java_home the JAVA_HOME value
+    """
+    if not java_home_valid:
+        return
+    java_bin = os.path.join(java_home, "bin", "java.exe" if sys.platform.startswith("win") else "java")
+    try:
+        result = subprocess.run([java_bin, "-version"], capture_output=True, text=True, timeout=10)
+    except Exception:  # noqa: BLE001 - JAVA_HOME already reported above
+        return
+    home_major = _parse_java_major(result.stderr or result.stdout or "")
+    if home_major is None or home_major <= path_major:
+        return
+    path_java = shutil.which("java")
+    hint = (
+        "The MCP server runs `java` from PATH and finds the Java {p} at {pj}. "
+        "The JDK {h} at JAVA_HOME is shadowed."
+    ).format(p=path_major, pj=path_java, h=home_major)
+    if sys.platform.startswith("win"):
+        hint += (
+            " On Windows the machine PATH comes before the user PATH, so adding your "
+            "JDK to the user PATH is not enough: remove the old Java from the machine "
+            "PATH (Software Center / IT), or start VS Code from a terminal where "
+            "$env:PATH = \"{h}\\bin;$env:PATH\" so the session inherits the right java."
+        ).format(h=java_home)
+    _check("java on PATH is the newest JDK", False,
+           "PATH -> Java {p}, JAVA_HOME -> Java {h}".format(p=path_major, h=home_major),
+           fix_hint=hint)
 
 
 def check_maven():
@@ -253,7 +357,8 @@ def check_neqsim_jar():
     )]
 
     if main_jars:
-        jar = main_jars[0]
+        # Old versions linger in target/ after a version bump; judge the newest build.
+        jar = max(main_jars, key=os.path.getmtime)
         mod_time = datetime.fromtimestamp(os.path.getmtime(jar))
         age_hours = (datetime.now() - mod_time).total_seconds() / 3600
         age_str = "{:.1f} hours ago".format(
@@ -269,6 +374,171 @@ def check_neqsim_jar():
             "JAR built", False, "No neqsim-*.jar in target/",
             fix_hint="Run: mvnw.cmd package -DskipTests"
         )
+
+
+def check_packaged_jar():
+    """Toolkit mode: the NeqSim engine is the JAR inside the pip `neqsim` package."""
+    print("\n--- NeqSim engine (packaged JAR) ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import neqsim_dev_setup
+        jars = neqsim_dev_setup._find_packaged_jars()
+    except Exception as error:  # noqa: BLE001
+        _check("neqsim_dev_setup", False, str(error),
+               fix_hint="Reinstall: pip install --force-reinstall neqsim-dev-setup")
+        return
+    if not jars:
+        _check("Packaged NeqSim JAR", False, "no JAR from `pip install neqsim` and NEQSIM_JAR unset",
+               fix_hint="{py} -m pip install neqsim   (or set NEQSIM_JAR)".format(py=sys.executable))
+        return
+    jar = jars[-1]
+    _check("Packaged NeqSim JAR", True, os.path.basename(jar))
+    try:
+        flash_script = "".join([
+            "from neqsim_dev_setup import neqsim_init, neqsim_classes;",
+            "ns=neqsim_classes(neqsim_init(project_root='/nonexistent', verbose=False));",
+            "f=ns.SystemSrkEos(298.15,50.0);f.addComponent('methane',1.0);f.setMixingRule('classic');",
+            "ns.ThermodynamicOperations(f).TPflash();f.initProperties();",
+            "print('FLASH_OK', round(float(f.getDensity('kg/m3')),2), len(ns.MISSING_CLASSES))",
+        ])
+        result = subprocess.run(
+            [sys.executable, "-c", flash_script],
+            capture_output=True, text=True, timeout=120)
+        line = next((l for l in result.stdout.splitlines() if l.startswith("FLASH_OK")), None)
+        if line:
+            _, rho, missing = line.split()
+            _check("JVM starts and flashes", True,
+                   "methane at 25 C / 50 bara: {r} kg/m3".format(r=rho))
+            if int(missing):
+                _warn("Classes newer than the JAR",
+                      "{n} classes on master are not in this release".format(n=missing),
+                      fix_hint="Upgrade: pip install -U neqsim (or clone equinor/neqsim for latest)")
+        else:
+            _check("JVM starts and flashes", False,
+                   (result.stderr or result.stdout).strip().splitlines()[-1:] or "no output",
+                   fix_hint="Check java on PATH / JAVA_HOME and that jpype1 is installed")
+    except Exception as error:  # noqa: BLE001
+        _check("JVM starts and flashes", False, str(error))
+
+
+def _vscode_user_mcp_files():
+    """VS Code user ``mcp.json`` paths that exist on this machine."""
+    if sys.platform.startswith("win"):
+        base = os.environ.get("APPDATA", os.path.join(os.path.expanduser("~"), "AppData", "Roaming"))
+        dirs = [os.path.join(base, "Code", "User"), os.path.join(base, "Code - Insiders", "User")]
+    elif sys.platform == "darwin":
+        base = os.path.join(os.path.expanduser("~"), "Library", "Application Support")
+        dirs = [os.path.join(base, "Code", "User"), os.path.join(base, "Code - Insiders", "User")]
+    else:
+        base = os.environ.get("XDG_CONFIG_HOME", os.path.join(os.path.expanduser("~"), ".config"))
+        dirs = [os.path.join(base, "Code", "User"), os.path.join(base, "Code - Insiders", "User")]
+    return [os.path.join(d, "mcp.json") for d in dirs if os.path.isfile(os.path.join(d, "mcp.json"))]
+
+
+def _registered_mcp_entry():
+    """``(mcp_json_path, command, launcher)`` of the plugin's ``neqsim`` server, or None.
+
+    The plugin installer / session hook register the launcher by absolute path in the
+    VS Code user mcp.json (VS Code does not expand ``${PLUGIN_ROOT}``); that entry -
+    not the plugin's own mcp.json - decides which ``java`` starts the server.
+    """
+    import json
+    for path in _vscode_user_mcp_files():
+        try:
+            with open(path, encoding="utf-8") as handle:
+                cfg = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        servers = cfg.get("servers") if isinstance(cfg, dict) else None
+        entry = servers.get("neqsim") if isinstance(servers, dict) else None
+        if not isinstance(entry, dict):
+            continue
+        args = [str(a) for a in entry.get("args", [])]
+        launcher = next((a for a in args if a.endswith("NeqsimMcpLauncher.java")), None)
+        if launcher:
+            return path, str(entry.get("command", "java")), launcher
+    return None
+
+
+def check_mcp_launcher(java_major):
+    """Toolkit mode: the plugin's MCP server launcher and its cached jar.
+
+    Checks the ``java`` the *registered* server entry will run, because a Java 8
+    first on PATH cannot source-launch ``NeqsimMcpLauncher.java`` and fails before
+    the launcher's own version message - the server then never starts and leaves
+    no jar cache behind, which is the tell-tale this check reports.
+    """
+    print("\n--- NeqSim MCP server ---")
+    cache = os.path.join(os.path.expanduser("~"), ".neqsim", "mcp-server")
+    jars = glob.glob(os.path.join(cache, "neqsim-mcp-server-*-runner.jar"))
+    data = os.environ.get("PLUGIN_DATA")
+    if data:
+        jars += glob.glob(os.path.join(data, "neqsim-mcp-server-*-runner.jar"))
+    entry = _registered_mcp_entry()
+    launcher_java = None
+    launcher_major = None
+    if entry:
+        mcp_path, command, launcher = entry
+        launcher_java = command if (os.sep in command or "/" in command) else shutil.which(command)
+        if launcher_java and os.path.isfile(launcher_java):
+            try:
+                result = subprocess.run([launcher_java, "-version"], capture_output=True, text=True,
+                                        timeout=15)
+                launcher_major = _parse_java_major(result.stderr or result.stdout or "")
+            except Exception:  # noqa: BLE001 - reported as unknown below
+                launcher_major = None
+        pinned = "pinned" if launcher_java == command else "bare `{c}` -> PATH".format(c=command)
+        if launcher_major is None:
+            _check("Registered server java", False,
+                   "{c} ({p}) cannot be run".format(c=command, p=pinned),
+                   fix_hint="Fix the 'neqsim' server command in {m} (re-run the plugin install script, "
+                            "or set NEQSIM_MCP_JAVA and start a new chat so the session hook re-pins it)"
+                            .format(m=mcp_path))
+        else:
+            _check("Registered server java", launcher_major >= MCP_MIN_JAVA,
+                   "Java {v} via {p} ({j})".format(v=launcher_major, p=pinned, j=launcher_java),
+                   fix_hint=None if launcher_major >= MCP_MIN_JAVA else
+                   "Java {v} cannot source-launch the .java launcher (fails with 'Could not find or "
+                   "load main class'). Install a JDK {n}+ and re-run the plugin install script, or set "
+                   "the server's command in {m} to <jdk{n}>/bin/java; then start a new chat."
+                   .format(v=launcher_major, n=MCP_MIN_JAVA, m=mcp_path))
+        _check("Launcher file", os.path.isfile(launcher), launcher,
+               fix_hint="The plugin folder moved or was uninstalled; re-run the plugin install script")
+    else:
+        _warn("Registered server entry",
+              "no 'neqsim' server pointing at NeqsimMcpLauncher.java in the VS Code user mcp.json",
+              fix_hint="Expected when the plugin's own mcp.json is used (Copilot CLI); in VS Code run "
+                       "the plugin install script, which registers the launcher by absolute path")
+    if jars:
+        _check("Server jar cached", True, os.path.basename(sorted(jars)[-1]))
+    else:
+        java_hint = launcher_java or shutil.which("java") or "<jdk21+>/bin/java"
+        launcher_hint = entry[2] if entry else "<plugin>/servers/NeqsimMcpLauncher.java"
+        _warn("Server jar cached",
+              "nothing in {c} - the launcher has never completed a start (first start downloads "
+              "~90 MB from github.com/equinor/neqsim/releases)".format(c=cache),
+              fix_hint="If this persists after a chat session the launcher is failing silently; run "
+                       "it yourself to see the real error (exit 0 = OK):\n         \"{j}\" \"{l}\" "
+                       "--prefetch".format(j=java_hint, l=launcher_hint))
+    marker = os.path.join(data or cache, "latest-release.txt")
+    if os.path.isfile(marker):
+        try:
+            with open(marker, encoding="utf-8") as handle:
+                parts = handle.read().split()
+            age_h = (time.time() * 1000 - int(parts[1])) / 3.6e6
+            _check("Tracking latest release", True,
+                   "v{v}, checked {h:.0f} h ago (re-checked daily)".format(v=parts[0], h=age_h))
+        except (IndexError, ValueError, OSError):
+            _warn("Tracking latest release", "latest-release.txt unreadable; the launcher "
+                  "re-resolves on next start")
+    effective = launcher_major if launcher_major is not None else java_major
+    if effective is not None and effective < MCP_MIN_JAVA:
+        _check("Server can start", False,
+               "Java {m} < {n}".format(m=effective, n=MCP_MIN_JAVA),
+               fix_hint="Install a JDK {n}+ (winget install EclipseAdoptium.Temurin.{n}.JDK / AccessIT) "
+                        "and re-run the plugin install script; MCP tools bind at chat-session start, so "
+                        "open a new chat or Developer: Reload Window afterwards".format(n=MCP_MIN_JAVA))
 
 
 def check_python_neqsim():
@@ -299,6 +569,7 @@ def check_python_neqsim():
             if cls_check.returncode == 0 and "CLASSPATH_OK" in cls_check.stdout:
                 _check("NeqSim classpath", True,
                        "NeqSim classes load correctly")
+                _check_duplicate_runtime_jars(path)
             else:
                 _check(
                     "NeqSim classpath", False,
@@ -347,6 +618,32 @@ def check_python_neqsim():
             "neqsim package", False, str(e),
             fix_hint="pip install neqsim or run from the repo with devtools"
         )
+
+
+def _check_duplicate_runtime_jars(neqsim_init_path):
+    """Flag several neqsim-*.jar versions sharing the runtime lib/ directory.
+
+    The package adds ``lib/*`` to the classpath, so a leftover older JAR is
+    loaded alongside the current one. Classes then resolve across two versions
+    of the same package and fail late with IllegalAccessError/NoSuchMethodError
+    instead of anything that points at the real cause.
+    """
+    lib_dir = os.path.join(os.path.dirname(neqsim_init_path), "lib")
+    if not os.path.isdir(lib_dir):
+        return
+    jars = [os.path.basename(j)
+            for j in glob.glob(os.path.join(lib_dir, "neqsim-*.jar"))
+            if not any(s in os.path.basename(j)
+                       for s in ("-sources", "-javadoc", "-tests"))]
+    if len(jars) > 1:
+        _check(
+            "Single NeqSim JAR on runtime classpath", False,
+            "{n} versions in {d}: {names}".format(
+                n=len(jars), d=lib_dir, names=", ".join(sorted(jars))),
+            fix_hint="Delete the stale JAR(s); keep only the current version"
+        )
+    elif jars:
+        _check("Single NeqSim JAR on runtime classpath", True, jars[0])
 
 
 def check_agent_files():
@@ -451,6 +748,86 @@ def check_cross_tool_files():
         )
 
 
+def check_cli_on_path():
+    """Check that the ``neqsim`` console script resolves on PATH.
+
+    Every docs page, agent instruction and install message is written as
+    ``neqsim <command>``. When the script directory is missing from PATH the
+    command is "not recognized" and the user falls back to
+    ``python -m neqsim_cli`` -- which works, so a broken PATH is easy to live
+    with and easy to never report.
+
+    @return ``None``
+    """
+    print("\n--- CLI command ---")
+    interpreter = os.path.splitext(os.path.basename(sys.executable))[0]
+    module_form = "{exe} -m neqsim_cli".format(exe=interpreter)
+    resolved = shutil.which("neqsim")
+
+    if resolved:
+        _check("'neqsim' command", True, resolved)
+        try:
+            own_scripts = sysconfig.get_path("scripts")
+        except (KeyError, ValueError):
+            own_scripts = None
+        if own_scripts and not _same_dir(os.path.dirname(resolved), own_scripts):
+            _warn(
+                "'neqsim' interpreter",
+                "the command on PATH comes from {found}, not from the "
+                "interpreter running this check ({own})".format(
+                    found=os.path.dirname(resolved), own=own_scripts),
+                fix_hint="These are different installs and can disagree. Use "
+                         "'{mod}' to be certain which one you "
+                         "run.".format(mod=module_form),
+            )
+        return
+
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import ensure_on_path
+        script_dir = ensure_on_path.find_script_dir()
+    except Exception:
+        script_dir = None
+
+    if script_dir:
+        message = "installed in {dir} but that folder is not on PATH".format(
+            dir=script_dir)
+        venv = os.environ.get("VIRTUAL_ENV")
+        in_venv = venv and _same_dir(
+            script_dir,
+            os.path.join(venv, "Scripts" if sys.platform.startswith("win") else "bin"))
+        if in_venv:
+            # A venv is activated per terminal, so "open a new terminal" is the
+            # wrong advice here and a reboot changes nothing.
+            fix = ("activate the virtualenv in this terminal ({venv}); it is "
+                   "not activated, only VIRTUAL_ENV is set. A new terminal or "
+                   "a reboot will not help. '{mod}' works "
+                   "meanwhile.".format(venv=venv, mod=module_form))
+        else:
+            fix = ("run '{exe} devtools/ensure_on_path.py', then open a NEW "
+                   "terminal -- in VS Code quit and reopen the window, a new "
+                   "integrated terminal is not enough. '{mod}' works "
+                   "meanwhile.".format(exe=interpreter, mod=module_form))
+    else:
+        message = "not on PATH, and no installed script was found"
+        fix = ("reinstall with 'install.cmd' (Windows) or './install.sh', then "
+               "open a new terminal. '{mod}' works "
+               "meanwhile.".format(mod=module_form))
+    _check("'neqsim' command", False, message, fix_hint=fix)
+
+
+def _same_dir(a, b):
+    """Return whether two paths refer to the same directory.
+
+    @param a first path
+    @param b second path
+    @return ``True`` when both normalize to the same directory
+    """
+    return (os.path.normcase(os.path.normpath(a))
+            == os.path.normcase(os.path.normpath(b)))
+
+
 def check_devtools():
     """Check devtools scripts are available."""
     print("\n--- DevTools ---")
@@ -468,6 +845,74 @@ def check_devtools():
             os.path.isfile(path),
             "Found" if os.path.isfile(path) else "Missing",
         )
+
+
+def check_task_root():
+    """Report the folder new task folders are created in."""
+    print("\n--- Task destination ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        resolved = new_task.resolve_task_root()
+    except Exception as error:
+        _check("Task root", False, str(error),
+               fix_hint="Set a valid folder: neqsim --set-task-root \"PATH\"")
+        return
+    if os.environ.get("NEQSIM_TASK_ROOT"):
+        source = "from NEQSIM_TASK_ROOT"
+    elif os.path.exists(new_task.task_defaults_path()):
+        source = "saved in ~/.neqsim/task_defaults.json"
+    else:
+        source = "repository default - change with: neqsim --set-task-root \"PATH\""
+    _check("New tasks are created in", True,
+           "{root} ({source})".format(root=resolved, source=source))
+
+
+def check_report_template():
+    """Report the Word template every generated task report is built from."""
+    print("\n--- Report template ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        template = new_task.resolve_report_template()
+    except Exception as error:
+        _check("Report template", False, str(error),
+               fix_hint="Set a valid file: neqsim --set-report-template \"PATH\" "
+                        "(or neqsim --reset-report-template)")
+        return
+    if not template:
+        _check("Word reports use", True,
+               "built-in styling - change with: neqsim --set-report-template \"PATH\"")
+        return
+    source = ("from NEQSIM_REPORT_TEMPLATE" if os.environ.get("NEQSIM_REPORT_TEMPLATE")
+              else "saved in ~/.neqsim/task_defaults.json")
+    _check("Word reports are built from", True,
+           "{template} ({source})".format(template=template, source=source))
+
+
+def check_document_root():
+    """Report the folder agents read source documents from."""
+    print("\n--- Source documents ---")
+    if SCRIPT_DIR not in sys.path:
+        sys.path.insert(0, SCRIPT_DIR)
+    try:
+        import new_task
+        root = new_task.resolve_document_root()
+    except Exception as error:
+        _check("Document root", False, str(error),
+               fix_hint="Set an existing folder: neqsim --set-document-root \"PATH\" "
+                        "(or neqsim --reset-document-root)")
+        return
+    if not root:
+        _check("Documents are read from", True,
+               "not configured - set one with: neqsim --set-document-root \"PATH\"")
+        return
+    source = ("from NEQSIM_DOCUMENT_ROOT" if os.environ.get("NEQSIM_DOCUMENT_ROOT")
+              else "saved in ~/.neqsim/task_defaults.json")
+    _check("Documents are read from", True,
+           "{root} and all subfolders ({source})".format(root=root, source=source))
 
 
 def check_git():
@@ -495,19 +940,42 @@ def check_git():
 # Main
 # ══════════════════════════════════════════════════════════
 
-def main():
+def main(argv=None):
+    """Run health checks, optionally skipping the build artifact for CLI setup."""
+    argv = sys.argv[1:] if argv is None else argv
+    _results.clear()
     print("=" * 60)
     print("  NeqSim Doctor - Environment Diagnostic")
+    print("  Mode: {m}".format(
+        m="toolkit (pip / agent plugin, no source checkout)" if TOOLKIT_MODE
+        else "workspace (source checkout at {r})".format(r=PROJECT_ROOT)))
     print("=" * 60)
 
-    check_java()
-    check_maven()
-    check_neqsim_jar()
-    check_python_neqsim()
-    check_agent_files()
-    check_cross_tool_files()
-    check_devtools()
-    check_git()
+    java_major = check_java()
+    if TOOLKIT_MODE:
+        # Build tooling is irrelevant here; what matters is that the packaged
+        # engine, the MCP launcher, the CLI and the task/document folders work.
+        check_packaged_jar()
+        check_mcp_launcher(java_major)
+        check_cli_on_path()
+        check_task_root()
+        check_report_template()
+        check_document_root()
+    else:
+        check_maven()
+        if "--skip-jar" in argv:
+            _warn("JAR built", "Not checked (--skip-jar); build the JAR before simulations")
+        else:
+            check_neqsim_jar()
+        check_python_neqsim()
+        check_cli_on_path()
+        check_agent_files()
+        check_cross_tool_files()
+        check_devtools()
+        check_task_root()
+        check_report_template()
+        check_document_root()
+        check_git()
 
     # Summary
     passed = sum(1 for r in _results if r["passed"])

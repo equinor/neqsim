@@ -112,7 +112,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * comp.setPolytropicEfficiency(0.75);
  *
  * Cooler cooler = new Cooler("Aftercooler", comp.getOutletStream());
- * cooler.setOutTemperature(313.15);
+ * cooler.setOutletTemperature(313.15);
  *
  * Stream export = new Stream("Export", cooler.getOutletStream());
  *
@@ -145,8 +145,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * optimizer.setMaxFlowRate(100000.0);
  *
  * // Define pressure ranges for the lift curve table
- * double[] inletPressures = { 50.0, 60.0, 70.0, 80.0 }; // Reservoir/wellhead pressures
- * double[] outletPressures = { 90.0, 100.0, 110.0, 120.0 }; // Export/delivery pressures
+ * double[] inletPressures = {50.0, 60.0, 70.0, 80.0}; // Reservoir/wellhead pressures
+ * double[] outletPressures = {90.0, 100.0, 110.0, 120.0}; // Export/delivery pressures
  *
  * // Generate the lift curve table
  * LiftCurveTable table = optimizer.generateLiftCurveTable(inletPressures, outletPressures, "bara");
@@ -166,7 +166,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
  * <pre>
  * // Generate capacity curve showing max flow vs outlet pressure
  * double inletPressure = 70.0;
- * double[] outletPressures = { 80.0, 90.0, 100.0, 110.0, 120.0 };
+ * double[] outletPressures = {80.0, 90.0, 100.0, 110.0, 120.0};
  *
  * double[] maxFlowRates = optimizer.generateCapacityCurve(inletPressure, outletPressures, "bara");
  *
@@ -940,9 +940,9 @@ public class PressureBoundaryOptimizer implements Serializable {
    *
    * <pre>
    * // Generate table
-   * LiftCurveTable table = optimizer.generateLiftCurveTable(new double[] { 50.0, 60.0, 70.0 }, // inlet
+   * LiftCurveTable table = optimizer.generateLiftCurveTable(new double[] {50.0, 60.0, 70.0}, // inlet
    *     // pressures
-   *     new double[] { 90.0, 100.0, 110.0 }, // outlet pressures
+   *     new double[] {90.0, 100.0, 110.0}, // outlet pressures
    *     "bara");
    *
    * // Access data

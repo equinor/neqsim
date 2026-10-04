@@ -88,7 +88,7 @@ class ProcessSystemXStreamPortabilityTest extends neqsim.NeqSimTest {
     process.add(separator);
 
     Splitter splitter = new Splitter("splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
     process.add(splitter);
 
     Recycle recycle = new Recycle("recycle");
@@ -150,7 +150,7 @@ class ProcessSystemXStreamPortabilityTest extends neqsim.NeqSimTest {
   private static void assertNoUnportableTypeIsReachable(Object root) {
     Set<Object> visited = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
     Deque<Object[]> queue = new ArrayDeque<Object[]>();
-    queue.add(new Object[] { root, root.getClass().getSimpleName() });
+    queue.add(new Object[] {root, root.getClass().getSimpleName()});
     int inspected = 0;
 
     while (!queue.isEmpty() && inspected < MAX_INSPECTED_OBJECTS) {
@@ -173,21 +173,21 @@ class ProcessSystemXStreamPortabilityTest extends neqsim.NeqSimTest {
         if (!type.getComponentType().isPrimitive()) {
           int length = Array.getLength(node);
           for (int i = 0; i < length; i++) {
-            queue.add(new Object[] { Array.get(node, i), path + "[" + i + "]" });
+            queue.add(new Object[] {Array.get(node, i), path + "[" + i + "]"});
           }
         }
         continue;
       }
       if (node instanceof Collection) {
         for (Object element : (Collection<?>) node) {
-          queue.add(new Object[] { element, path + "/element" });
+          queue.add(new Object[] {element, path + "/element"});
         }
         continue;
       }
       if (node instanceof Map) {
         for (Map.Entry<?, ?> mapEntry : ((Map<?, ?>) node).entrySet()) {
-          queue.add(new Object[] { mapEntry.getKey(), path + "/key" });
-          queue.add(new Object[] { mapEntry.getValue(), path + "/value" });
+          queue.add(new Object[] {mapEntry.getKey(), path + "/key"});
+          queue.add(new Object[] {mapEntry.getValue(), path + "/value"});
         }
         continue;
       }
@@ -208,7 +208,7 @@ class ProcessSystemXStreamPortabilityTest extends neqsim.NeqSimTest {
           } catch (Throwable inaccessible) {
             continue;
           }
-          queue.add(new Object[] { value, path + "." + field.getName() });
+          queue.add(new Object[] {value, path + "." + field.getName()});
         }
       }
     }

@@ -98,7 +98,7 @@ public class SelfHeatingInductionSolverTest {
   @Test
   void transientAgreesWithSteadyStateCriticality() {
     double tCrit = criticalTemperature();
-    double[] offsets = new double[] { -40.0, -20.0, 25.0, 50.0 };
+    double[] offsets = new double[] {-40.0, -20.0, 25.0, 50.0};
 
     for (int i = 0; i < offsets.length; i++) {
       double temperature = tCrit + offsets[i];

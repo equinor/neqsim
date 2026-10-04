@@ -275,8 +275,8 @@ public class SafetyInstrumentedFunction implements Serializable {
   }
 
   private double validatePfd(double pfd, int sil) {
-    double[] minPfd = { 0, 0.01, 0.001, 0.0001, 0.00001 };
-    double[] maxPfd = { 1, 0.1, 0.01, 0.001, 0.0001 };
+    double[] minPfd = {0, 0.01, 0.001, 0.0001, 0.00001};
+    double[] maxPfd = {1, 0.1, 0.01, 0.001, 0.0001};
 
     if (pfd < minPfd[sil] || pfd > maxPfd[sil]) {
       // Warning but don't fail

@@ -176,10 +176,10 @@ public class BroydenAccelerator implements Serializable {
       logger.debug("Broyden step limited from {} to {}", stepNorm, maxStepSize);
     }
 
-    // Compute next iterate: x_{n+1} = x_n + step
+    // Compute next iterate: x_{n+1} = x_n - B^{-1} f(x_n)
     double[] nextX = new double[n];
     for (int i = 0; i < n; i++) {
-      nextX[i] = currentX[i] + step[i];
+      nextX[i] = currentX[i] - step[i];
     }
 
     // Store for next iteration

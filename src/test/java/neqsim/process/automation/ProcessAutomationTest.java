@@ -1039,7 +1039,7 @@ class ProcessAutomationTest {
     s.setFlowRate(10000.0, "kg/hr");
 
     Splitter splitter = new Splitter("Splitter", s, 2);
-    splitter.setSplitFactors(new double[] { 0.6, 0.4 });
+    splitter.setSplitFactors(new double[] {0.6, 0.4});
 
     ProcessSystem ps = new ProcessSystem();
     ps.add(s);
@@ -1651,7 +1651,7 @@ class ProcessAutomationTest {
     feed.setPressure(60.0, "bara");
 
     Splitter split = new Splitter("Router", feed);
-    split.setSplitFactors(new double[] { 0.5, 0.5 });
+    split.setSplitFactors(new double[] {0.5, 0.5});
 
     ProcessSystem p = new ProcessSystem();
     p.add(feed);
@@ -1744,7 +1744,7 @@ class ProcessAutomationTest {
 
     ProcessAutomation auto = new ProcessAutomation(p);
     java.util.List<java.util.Map<String, Double>> candidates = new java.util.ArrayList<java.util.Map<String, Double>>();
-    for (double r : new double[] { 8000.0, 12000.0, 16000.0 }) {
+    for (double r : new double[] {8000.0, 12000.0, 16000.0}) {
       java.util.Map<String, Double> c = new java.util.LinkedHashMap<String, Double>();
       c.put("bfeed.flowRate", r);
       candidates.add(c);
@@ -1772,7 +1772,7 @@ class ProcessAutomationTest {
     ProcessAutomation auto = new ProcessAutomation(model);
 
     java.util.List<java.util.Map<String, Double>> candidates = new java.util.ArrayList<java.util.Map<String, Double>>();
-    for (double pOut : new double[] { 110.0, 130.0 }) {
+    for (double pOut : new double[] {110.0, 130.0}) {
       java.util.Map<String, Double> c = new java.util.LinkedHashMap<String, Double>();
       c.put("Compression::Export Compressor.outletPressure", pOut);
       candidates.add(c);

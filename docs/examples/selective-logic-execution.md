@@ -1,113 +1,158 @@
 ---
-title: Selective Logic Execution in ProcessScenarioRunner
-description: The `ProcessScenarioRunner` provides multiple ways to control which logic sequences execute during a scenario.
+title: "Selective Logic Execution with ProcessScenarioRunner"
+description: "Executable Java example for registering process logic and running one named subset in a bounded NeqSim scenario."
 ---
 
-The `ProcessScenarioRunner` provides multiple ways to control which logic sequences execute during a scenario.
+Use `ProcessScenarioRunner` when one process model has several registered logic
+sequences but a scenario should exercise only a named subset. Selection controls
+which registered sequences the runner advances; it does not activate a sequence,
+prove that a safeguard is adequate, or replace a functional-safety test plan.
 
-## Method 1: Add Only What You Need (Simplest)
+## Engineering question
 
-Only add the logic sequences you want to run:
+Can one high-pressure screening scenario execute `HIPPS Protection` while leaving
+the separately registered `ESD Level 1` logic idle, and can the software result be
+checked without confusing it with safety-system qualification?
 
-```java
-ProcessScenarioRunner runner = new ProcessScenarioRunner(processSystem);
+The example below uses one gas feed because the contract under test is logic
+selection. Pressure is in bar absolute (`bara`), flow is in `kg/hr`, temperature is
+in degrees Celsius, and both scenario duration and time step are in seconds.
 
-// Only add ESD logic - HIPPS and startup won't run
-runner.addLogic(esdLogic);
+## Executable selective-logic example
 
-// This scenario will only execute ESD logic
-runner.runScenario("ESD Test", scenario, 30.0, 1.0);
-```
-
-## Method 2: Add/Remove Logic Dynamically
-
-Add all logic initially, then remove what you don't need:
-
-```java
-ProcessScenarioRunner runner = new ProcessScenarioRunner(processSystem);
-
-// Add all logic
-runner.addLogic(hippsLogic);
-runner.addLogic(esdLogic);
-runner.addLogic(startupLogic);
-
-// For this scenario, remove HIPPS
-runner.removeLogic("HIPPS Protection");
-
-// This scenario will run ESD and startup, but not HIPPS
-runner.runScenario("Test Without HIPPS", scenario, 30.0, 1.0);
-
-// Re-add HIPPS for next scenario
-runner.addLogic(hippsLogic);
-```
-
-## Method 3: Run Scenario With Specific Logic (Most Flexible)
-
-Register all logic once, then specify which to use per scenario:
+Save the program as `SelectiveLogicScenarioExample.java`, compile it with the
+NeqSim and Log4j2 dependencies on the class path, and enable Java assertions when
+running it (`java -ea ... SelectiveLogicScenarioExample`).
 
 ```java
-ProcessScenarioRunner runner = new ProcessScenarioRunner(processSystem);
+import java.util.Collections;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.logic.LogicState;
+import neqsim.process.logic.esd.ESDLogic;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.ProcessSafetyScenario;
+import neqsim.process.util.scenario.ProcessScenarioRunner;
+import neqsim.process.util.scenario.ScenarioExecutionSummary;
+import neqsim.process.util.scenario.ScenarioExecutionSummary.LogicResult;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Register all logic sequences once
-runner.addLogic(hippsLogic);      // "HIPPS Protection"
-runner.addLogic(esdLogic);        // "ESD Level 1"
-runner.addLogic(startupLogic);    // "System Startup"
+public final class SelectiveLogicScenarioExample {
+  private static final Logger logger =
+      LogManager.getLogger(SelectiveLogicScenarioExample.class);
 
-// Scenario 1: Test only HIPPS
-runner.runScenarioWithLogic("HIPPS Test", scenario1, 30.0, 1.0, 
-    Arrays.asList("HIPPS Protection"));
+  private SelectiveLogicScenarioExample() {}
 
-// Scenario 2: Test ESD without HIPPS
-runner.runScenarioWithLogic("ESD Test", scenario2, 30.0, 1.0, 
-    Arrays.asList("ESD Level 1", "System Startup"));
+  public static void main(String[] args) {
+    SystemInterface gas = new SystemSrkEos(298.15, 55.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.10);
+    gas.setMixingRule("classic");
 
-// Scenario 3: Run all logic (pass null or empty list)
-runner.runScenarioWithLogic("Full Test", scenario3, 30.0, 1.0, null);
+    Stream feed = new Stream("Feed", gas);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(55.0, "bara");
 
-// Or use the standard method (runs all registered logic)
-runner.runScenario("Full Test Alternative", scenario3, 30.0, 1.0);
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.run();
+
+    ESDLogic hippsLogic = new ESDLogic("HIPPS Protection");
+    ESDLogic esdLogic = new ESDLogic("ESD Level 1");
+
+    ProcessScenarioRunner runner = new ProcessScenarioRunner(process);
+    runner.addLogic(hippsLogic);
+    runner.addLogic(esdLogic);
+
+    ProcessSafetyScenario highPressure =
+        ProcessSafetyScenario.builder("High-pressure screen")
+            .customManipulator(
+                "Feed",
+                equipment -> {
+                  if (!(equipment instanceof Stream)) {
+                    throw new IllegalStateException("Feed must be a Stream");
+                  }
+                  ((Stream) equipment).setPressure(60.0, "bara");
+                })
+            .build();
+
+    assert runner.getLogicSequences().size() == 2;
+    assert runner.activateLogic("HIPPS Protection");
+
+    ScenarioExecutionSummary summary =
+        runner.runScenarioWithLogic(
+            "HIPPS-only software screen",
+            highPressure,
+            1.0,
+            1.0,
+            Collections.singletonList("HIPPS Protection"));
+
+    Map<String, LogicResult> results = summary.getLogicResults();
+    double finalPressureBara = feed.getPressure("bara");
+    double finalFlowKgPerHour = feed.getFlowRate("kg/hr");
+
+    assert summary.isSuccessful();
+    assert summary.getErrors().isEmpty();
+    assert results.size() == 1;
+    assert results.containsKey("HIPPS Protection");
+    assert !results.containsKey("ESD Level 1");
+    assert hippsLogic.getState() == LogicState.COMPLETED;
+    assert esdLogic.getState() == LogicState.IDLE;
+    assert Double.isFinite(finalPressureBara);
+    assert Math.abs(finalPressureBara - 60.0) < 1.0e-10;
+    assert Double.isFinite(finalFlowKgPerHour) && finalFlowKgPerHour > 0.0;
+
+    logger.info(
+        "Scenario {} selected {} logic result at {} bara and {} kg/hr",
+        summary.getScenarioName(),
+        results.size(),
+        finalPressureBara,
+        finalFlowKgPerHour);
+  }
+}
 ```
 
-## Method 4: Clear and Re-add Between Scenarios
+The two `ESDLogic` instances intentionally contain no equipment actions. That keeps
+the example focused on registration, activation, and named-subset execution: the
+selected sequence advances from `RUNNING` to `COMPLETED`, while the unselected
+sequence remains `IDLE`. Add validated actions only after the selection behavior is
+understood.
 
-```java
-ProcessScenarioRunner runner = new ProcessScenarioRunner(processSystem);
+## Selection and state semantics
 
-// Scenario 1: Only startup
-runner.addLogic(startupLogic);
-runner.runScenario("Startup Only", scenario1, 30.0, 1.0);
-runner.reset();
+1. `addLogic(...)` registers a sequence; it does not activate it.
+2. `activateLogic(name)` changes the matching sequence to an active state.
+3. `runScenarioWithLogic(..., names)` advances only registered sequences whose names
+   appear in `names`.
+4. A `null` or empty name list means all registered logic, not no logic.
+5. `reset()` resets all registered logic, renews the simulation identifier, and reruns
+   the process steady state. Use it before another scenario only when that shared-state
+   behavior is intended.
+6. `clearAllLogic()` removes registrations; it is not equivalent to resetting their
+   internal states.
 
-// Scenario 2: Only ESD
-runner.clearAllLogic();
-runner.addLogic(esdLogic);
-runner.runScenario("ESD Only", scenario2, 30.0, 1.0);
-runner.reset();
+Treat names as configuration identifiers. Duplicate or misspelled names can make a
+screen exercise a different subset than intended, so check the returned logic-result
+map and fail closed if an expected name is absent.
 
-// Scenario 3: All logic
-runner.clearAllLogic();
-runner.addLogic(hippsLogic);
-runner.addLogic(esdLogic);
-runner.addLogic(startupLogic);
-runner.runScenario("All Logic", scenario3, 30.0, 1.0);
-```
+## Engineering boundary
 
-## Quick Reference
+This example proves software selection and execution behavior for one bounded model.
+It does not prove HIPPS or ESD demand coverage, voting architecture, SIL/PFD,
+independence, common-cause treatment, response time, valve capacity, final-element
+travel, pressure protection, relief adequacy, proof testing, alarm management,
+operator response, or compliance with a governing standard. A real study needs a
+validated dynamic process model, traceable trip set points and delays, physical final
+elements, failure modes, acceptance criteria, sensitivity cases, and accountable
+process- and functional-safety review.
 
-| Method | Use Case |
-|--------|----------|
-| `addLogic(logic)` | Add a logic sequence to the runner |
-| `removeLogic(logic)` | Remove a specific logic object |
-| `removeLogic("name")` | Remove logic by name |
-| `clearAllLogic()` | Remove all registered logic |
-| `runScenario(...)` | Run with all registered logic |
-| `runScenarioWithLogic(..., Arrays.asList("Logic1", "Logic2"))` | Run with specific logic by name |
-| `findLogic("name")` | Find a logic sequence by name |
-| `activateLogic("name")` | Activate a logic sequence by name |
+## Related documentation
 
-## Best Practices
-
-1. **Testing individual systems**: Use `runScenarioWithLogic()` to test each safety system independently
-2. **Performance**: If a scenario doesn't need certain logic, excluding it reduces computation
-3. **Safety validation**: Test HIPPS and ESD independently, then together to verify independence
-4. **Reset between scenarios**: Always call `runner.reset()` between scenarios to clear logic states
+- [Process logic framework](../simulation/process_logic_framework.md)
+- [ESD testing workflow](../safety/esd_testing_workflow.md)
+- [Scenario generation](../process/safety/scenario-generation.md)
+- [Troubleshooting](../troubleshooting/index.md)

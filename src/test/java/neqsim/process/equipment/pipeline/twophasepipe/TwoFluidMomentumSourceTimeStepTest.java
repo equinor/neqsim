@@ -2,7 +2,6 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import org.junit.jupiter.api.Test;
@@ -20,11 +19,11 @@ class TwoFluidMomentumSourceTimeStepTest {
     double expectedRate = 2.0 * coefficient * 3.0
         * (1.0 / section.getGasMassPerLength() + 1.0 / section.getOilMassPerLength());
     double[] initial = section.getStateVector();
-    double timeStep = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section });
+    double timeStep = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section});
     assertEquals(1.0 / expectedRate, timeStep, 1.0e-9 / expectedRate);
     assertArrayEquals(initial, section.getStateVector(), 0.0, "A source estimate must not advance the state");
     TwoFluidConservationEquations strongerDrag = equations(0.0, 0.0, 2.0 * coefficient, true);
-    assertEquals(timeStep / 2.0, strongerDrag.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }),
+    assertEquals(timeStep / 2.0, strongerDrag.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}),
         timeStep * 1.0e-9);
   }
 
@@ -34,7 +33,7 @@ class TwoFluidMomentumSourceTimeStepTest {
     double coefficient = 7.0;
     double expectedRate = coefficient * (1.0 / section.getGasMassPerLength() + 1.0 / section.getOilMassPerLength());
     assertEquals(1.0 / expectedRate,
-        equations(0.0, 0.0, coefficient, false).calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }),
+        equations(0.0, 0.0, coefficient, false).calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}),
         1.0e-9 / expectedRate);
   }
 
@@ -61,7 +60,7 @@ class TwoFluidMomentumSourceTimeStepTest {
     });
     // At this state dF/duG=0 while |dF/duL|=4; probing only gas misses the source.
     assertEquals(section.getOilMassPerLength() / 4.0,
-        equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }),
+        equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}),
         section.getOilMassPerLength() * 1.0e-8);
   }
 
@@ -70,34 +69,34 @@ class TwoFluidMomentumSourceTimeStepTest {
     TwoFluidSection section = section(1.0, 0.0, 0.0, 0.0, 0.0);
     double coefficient = 11.0;
     assertEquals(section.getOilMassPerLength() / coefficient,
-        equations(0.0, coefficient, 0.0, false).calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }),
+        equations(0.0, coefficient, 0.0, false).calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}),
         1.0e-10);
   }
 
   @Test
   void exactlyAbsentPhasesDoNotIntroduceAnInverseMassConstraint() throws Exception {
-    for (double liquidHoldup : new double[] { 0.0, 1.0 }) {
+    for (double liquidHoldup : new double[] {0.0, 1.0}) {
       TwoFluidSection section = section(liquidHoldup, 0.0, 3.0, -4.0, 9.0);
       double[] initial = section.getStateVector();
       assertEquals(Double.POSITIVE_INFINITY,
-          equations(0.0, 0.0, 1.0e9, true).calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }));
+          equations(0.0, 0.0, 1.0e9, true).calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}));
       assertArrayEquals(initial, section.getStateVector(), 0.0);
     }
   }
 
   @Test
-  void threePhaseBoundIncludesTheSmallLiquidReceivingInterfaceForce() throws Exception {
+  void threePhaseGasDragRetainsTheCommonLiquidAccelerationTimeScale() throws Exception {
     TwoFluidSection section = section(0.8, 0.01, 3.0, 1.0, 1.0);
     TwoFluidConservationEquations equations = equations(0.0, 0.0, 4.0, false);
     equations.setEnableWaterOilSlip(true);
-    // Viscosities are left unset, so the fallback interface split is 80% oil / 20% water.
-    double liquidInverseMass = Math.max(0.8 / section.getOilMassPerLength(), 0.2 / section.getWaterMassPerLength());
+    // Gas drag uses the bulk liquid velocity, so each liquid receives the same acceleration even with slip enabled.
+    double liquidInverseMass = 1.0 / (section.getOilMassPerLength() + section.getWaterMassPerLength());
     double expectedRate = 4.0 * (1.0 / section.getGasMassPerLength() + liquidInverseMass);
-    double dt = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section });
+    double dt = equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section});
     assertEquals(1.0 / expectedRate, dt, 1.0e-7 / expectedRate);
     equations.setEnableWaterOilSlip(false);
-    assertTrue(equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }) > dt,
-        "Common liquid acceleration must recover the aggregate liquid mass limit");
+    assertEquals(dt, equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}), dt * 1.0e-7,
+        "Both paths use aggregate liquid inertia for the same bulk gas drag");
   }
 
   @Test
@@ -109,7 +108,7 @@ class TwoFluidMomentumSourceTimeStepTest {
     double derivative = phaseAvailability * 0.02 * 900.0 * 2.0;
     double expectedRate = derivative * section.getDiameter() * 0.5
         * (1.0 / section.getOilMassPerLength() + 1.0 / section.getWaterMassPerLength());
-    assertEquals(1.0 / expectedRate, equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] { section }),
+    assertEquals(1.0 / expectedRate, equations.calcExplicitMomentumSourceTimeStep(new TwoFluidSection[] {section}),
         1.0e-9 / expectedRate);
   }
 

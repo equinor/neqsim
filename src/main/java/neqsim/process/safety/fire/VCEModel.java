@@ -109,7 +109,7 @@ public class VCEModel implements Serializable {
       return Double.POSITIVE_INFINITY;
     }
     // Near-field plateau values (TNO Fig 4.10 at R̅ → 1)
-    double[] plateau = { 0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 1.00, 2.00, 5.00, 10.0 };
+    double[] plateau = {0.01, 0.02, 0.05, 0.10, 0.20, 0.50, 1.00, 2.00, 5.00, 10.0};
     double dpNear = plateau[strengthClass - 1];
     if (Rbar <= 1.0) {
       return dpNear;

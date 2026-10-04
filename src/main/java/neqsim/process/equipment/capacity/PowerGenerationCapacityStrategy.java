@@ -113,6 +113,17 @@ public class PowerGenerationCapacityStrategy implements EquipmentCapacityStrateg
       addHRSGConstraints(constraints, (HRSG) equipment);
     }
 
+    // Explicit equipment limits are authoritative, including custom constraints and
+    // their live value suppliers. Keep the legacy HRSG strategy lookup key.
+    if (equipment instanceof CapacityConstrainedEquipment) {
+      for (Map.Entry<String, CapacityConstraint> entry : ((CapacityConstrainedEquipment) equipment)
+          .getCapacityConstraints().entrySet()) {
+        String key = equipment instanceof HRSG && "heatDuty".equals(entry.getKey()) ? "heatTransferred"
+            : entry.getKey();
+        constraints.put(key, entry.getValue());
+      }
+    }
+
     return constraints;
   }
 

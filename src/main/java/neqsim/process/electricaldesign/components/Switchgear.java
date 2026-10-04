@@ -20,8 +20,8 @@ public class Switchgear implements java.io.Serializable {
   private static final long serialVersionUID = 1000L;
 
   /** Standard switchgear current ratings (A). */
-  private static final double[] STANDARD_RATINGS_A = { 100, 160, 250, 400, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150,
-      4000 };
+  private static final double[] STANDARD_RATINGS_A = {100, 160, 250, 400, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150,
+      4000};
 
   // === Configuration ===
   private double ratedCurrentA;
@@ -114,8 +114,8 @@ public class Switchgear implements java.io.Serializable {
    * @return fuse current rating in A
    */
   private double selectStandardFuseRating(double motorFLC) {
-    double[] fuseRatings = { 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000,
-        1250 };
+    double[] fuseRatings = {16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000,
+        1250};
     double target = motorFLC * 1.6;
     for (double fuse : fuseRatings) {
       if (fuse >= target) {

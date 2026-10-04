@@ -39,9 +39,9 @@ public class MuznyViscosityMethod extends Viscosity {
     double T = phase.getPhase().getTemperature();
     double rho = phase.getPhase().getDensity_Leachman();
 
-    double[] a = { 2.09630e-1, -4.55274e-1, 1.43602e-1, -3.35325e-2, 2.76981e-3 };
-    double[] b = { -0.1870, 2.4871, 3.7151, -11.0972, 9.0965, -3.8292, 0.5166 };
-    double[] c = { 0, 6.43449673, 4.56334068e-2, 2.32797868e-1, 9.58326120e-1, 1.27941189e-1, 3.63576595e-1 };
+    double[] a = {2.09630e-1, -4.55274e-1, 1.43602e-1, -3.35325e-2, 2.76981e-3};
+    double[] b = {-0.1870, 2.4871, 3.7151, -11.0972, 9.0965, -3.8292, 0.5166};
+    double[] c = {0, 6.43449673, 4.56334068e-2, 2.32797868e-1, 9.58326120e-1, 1.27941189e-1, 3.63576595e-1};
     double Tc = 33.145; // [K] (Source: NIST)
     double rho_sc = 90.909090909; // [kg/m^3]
     double M = 2.01588; // [g/mol] molar mass

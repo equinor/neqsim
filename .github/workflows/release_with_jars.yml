@@ -261,3 +261,15 @@ jobs:
           # workflow_dispatch is allowed to start workflows created with GITHUB_TOKEN.
           gh workflow run publish_to_maven_central.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
           gh workflow run mcp_server_release.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
+
+      - name: Notify the plugin marketplace (offline bundle rebuild)
+        # Cross-repo dispatch needs a PAT with `repo` scope on equinor/neqsim-copilot-plugin
+        # stored as NEQSIM_PLUGIN_DISPATCH_TOKEN. Without it the plugin repo's daily check
+        # still picks the release up within a day.
+        if: steps.publication.outputs.draft == 'false' && env.TOKEN != ''
+        env:
+          TOKEN: ${{ secrets.NEQSIM_PLUGIN_DISPATCH_TOKEN }}
+          RELEASE_VERSION: ${{ needs.get_versions.outputs.version }}
+        run: |
+          GH_TOKEN="$TOKEN" gh api repos/equinor/neqsim-copilot-plugin/dispatches \
+            -f event_type=neqsim-release -F "client_payload[version]=${RELEASE_VERSION}"

@@ -1,6 +1,6 @@
 ---
 name: neqsim-plant-data
-description: "Connecting NeqSim process simulations to plant historian data via tagreader. USE WHEN: reading data from OSIsoft PI or Aspen IP.21 historians, building tag mappings for process equipment, comparing simulated vs measured values, running digital twin loops, integrating NeqSim models with operational data, or extracting event windows for water-hammer screening. Covers tagreader API, tag mapping patterns, data quality handling, mock data generation, model-vs-plant comparison workflows, and valve/pump transient snapshots."
+description: "Connecting NeqSim simulations to plant historian data via tagreader. USE WHEN: reading OSIsoft PI or Aspen IP.21 data, building equipment tag maps, comparing simulated vs measured values, running digital-twin loops, or extracting event windows for water-hammer screening. Covers tagreader API, tag mapping, data quality, mock data, model-vs-plant comparison and valve/pump transient snapshots."
 last_verified: "2026-07-04"
 ---
 
@@ -106,6 +106,19 @@ results = c.search("*COMP*", timeout=30)
 > resolved count** before `read()`. Also check the per-tag `::status`/quality
 > column — a value with bad quality (e.g. status 2) must not be trusted as a
 > current-operation input.
+
+> **Block suffixes select what a point returns.** On PI sources the same
+> instrument commonly exposes a family of blocks under
+> `<PREFIX>.<TAG>/<BLOCK>/PRIM`: `Meas1`/`Meas` = measured value,
+> `SPntOut` = setpoint, `ConOut` = controller output, `Manual` = mode,
+> `OutControl` = valve output/position demand, `Position` = valve position
+> feedback, and `Running`/`Start`/`Stop`/`PowerDemand` = motor status. Pick the
+> block deliberately — a "flow" or "power" point may be a status block that
+> holds a near-constant code rather than a measurement, so check
+> `series.nunique()` before trusting it. Prefix casing can differ between tags on
+> the same source, so search case-insensitively instead of hand-building names.
+> Site-specific source names, prefixes and suffix families are recorded in the
+> enterprise `enterprise-plant-data` skill.
 
 Returns a list of tuples: `[(tag_name, description), ...]`
 

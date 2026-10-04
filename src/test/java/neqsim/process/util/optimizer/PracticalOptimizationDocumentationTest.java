@@ -79,17 +79,16 @@ class PracticalOptimizationDocumentationTest extends NeqSimTest {
       assertTrue(compiler.getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjectsFromFiles(files))
           .call(), diagnostics.getDiagnostics().toString());
     }
-    try (
-        URLClassLoader loader = new URLClassLoader(new URL[] { output.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {output.toUri().toURL()}, getClass().getClassLoader())) {
       for (String name : names) {
-        String[] args = name.equals("VFPTableGeneration") ? new String[] { output.resolve("table.inc").toString() }
+        String[] args = name.equals("VFPTableGeneration") ? new String[] {output.resolve("table.inc").toString()}
             : new String[0];
         loader.loadClass(name).getMethod("main", String[].class).invoke(null, (Object) args);
       }
       String vfp = new String(Files.readAllBytes(output.resolve("table.inc")), StandardCharsets.UTF_8);
       assertTrue(vfp.contains("VFPPROD"));
-      assertBhpRow(vfp, 1, new double[] { 30.0, 36.0, 48.0 });
-      assertBhpRow(vfp, 3, new double[] { 74.0, 80.0, 92.0 });
+      assertBhpRow(vfp, 1, new double[] {30.0, 36.0, 48.0});
+      assertBhpRow(vfp, 3, new double[] {74.0, 80.0, 92.0});
       assertFalse(vfp.contains("No BHP data"));
 
       ProcessSystem process = (ProcessSystem) loader.loadClass("MultiEquipmentOptimization").getMethod("createProcess")

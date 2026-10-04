@@ -102,7 +102,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     MEGrecircHeater = new Heater("MEGrecircHeater", MEGRecircPump.getOutletStream());
     // MEGrecircHeater.setEnergyInput(5000.0);
-    MEGrecircHeater.setOutTemperature(273 + 68.9);
+    MEGrecircHeater.setOutletTemperature(273 + 68.9);
 
     recircValve = new ThrottlingValve("recircValve", MEGrecircHeater.getOutletStream());
     recircValve.setOutletPressure(reclaimerPressure);

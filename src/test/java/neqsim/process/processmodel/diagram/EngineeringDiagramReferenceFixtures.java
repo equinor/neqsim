@@ -161,7 +161,7 @@ public final class EngineeringDiagramReferenceFixtures {
     inletValve.setOutletPressure(52.0, "bara");
     Separator separator = new Separator("30-VA-001", inletValve.getOutletStream());
     Splitter gasAllocation = new Splitter("30-SP-001", separator.getGasOutStream());
-    gasAllocation.setSplitFactors(new double[] { 0.98, 0.02 });
+    gasAllocation.setSplitFactors(new double[] {0.98, 0.02});
     ProcessSystem inlet = new ProcessSystem("Inlet process area");
     inlet.add(feed);
     inlet.add(inletValve);

@@ -56,7 +56,7 @@ class TwoFluidPipeConservativeSlugTest {
 
   @Test
   void coupledTrackedSlugPreservesEveryPhaseInAClosedPipe() throws Exception {
-    for (double waterCut : new double[] { 0.0, 0.4, 1.0 }) {
+    for (double waterCut : new double[] {0.0, 0.4, 1.0}) {
       TwoFluidPipe pipe = pipe(waterCut);
       SlugBubbleUnit slug = seed(pipe);
       pipe.runTransient(1e-3, UUID.randomUUID());
@@ -81,7 +81,7 @@ class TwoFluidPipeConservativeSlugTest {
     TwoFluidPipe pipe = pipe(0.4);
     SlugBubbleUnit slug = seed(pipe);
     double initialFront = slug.frontPosition;
-    final int[] attempts = { 0 };
+    final int[] attempts = {0};
     TimeIntegrator integrator = new TimeIntegrator(TimeIntegrator.Method.RK2) {
       @Override
       public double[][] step(double[][] state, RHSFunction rhs, double dt) {

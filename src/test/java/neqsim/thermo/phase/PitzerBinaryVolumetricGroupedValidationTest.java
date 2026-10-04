@@ -18,7 +18,7 @@ class PitzerBinaryVolumetricGroupedValidationTest extends neqsim.NeqSimTest {
   private static final double BETA1_DERIVATIVE = -0.7e-10;
   private static final double CPHI_DERIVATIVE = 1.1e-11;
   private static final double STANDARD_UNCERTAINTY = 2.0e-8;
-  private static final double[] CALIBRATION_MOLALITIES = { 0.02, 0.08, 0.2, 0.5, 1.0, 2.0, 3.5, 5.0, 6.0 };
+  private static final double[] CALIBRATION_MOLALITIES = {0.02, 0.08, 0.2, 0.5, 1.0, 2.0, 3.5, 5.0, 6.0};
 
   @Test
   void fitsCalibrationOnlyAndReportsUntouchedHoldoutResiduals() {
@@ -26,8 +26,8 @@ class PitzerBinaryVolumetricGroupedValidationTest extends neqsim.NeqSimTest {
     PitzerBinaryVolumetricGroupedValidation validation = new PitzerBinaryVolumetricGroupedValidation(model);
     List<PitzerBinaryVolumetricRegression.Observation> calibration = observations(model, CALIBRATION_MOLALITIES,
         new double[CALIBRATION_MOLALITIES.length], "calibration-laboratory");
-    List<PitzerBinaryVolumetricRegression.Observation> holdout = observations(model, new double[] { 0.1, 1.5, 4.0 },
-        new double[] { 1.0, -2.0, 0.5 }, "validation-laboratory");
+    List<PitzerBinaryVolumetricRegression.Observation> holdout = observations(model, new double[] {0.1, 1.5, 4.0},
+        new double[] {1.0, -2.0, 0.5}, "validation-laboratory");
 
     PitzerBinaryVolumetricGroupedValidation.ValidationResult result = validation.validate(calibration, holdout,
         TEMPERATURE_K, PRESSURE_PA, DEBYE_HUCKEL_VOLUME_SLOPE);
@@ -50,8 +50,8 @@ class PitzerBinaryVolumetricGroupedValidationTest extends neqsim.NeqSimTest {
     List<PitzerBinaryVolumetricRegression.Observation> calibration = observations(model, CALIBRATION_MOLALITIES,
         new double[CALIBRATION_MOLALITIES.length], "calibration");
     List<PitzerBinaryVolumetricRegression.Observation> holdout = new ArrayList<PitzerBinaryVolumetricRegression.Observation>();
-    holdout.addAll(observations(model, new double[] { 0.3, 2.5 }, new double[] { 0.4, -0.2 }, "laboratory-b"));
-    holdout.addAll(observations(model, new double[] { 0.6, 4.5 }, new double[] { -0.5, 0.1 }, "laboratory-a"));
+    holdout.addAll(observations(model, new double[] {0.3, 2.5}, new double[] {0.4, -0.2}, "laboratory-b"));
+    holdout.addAll(observations(model, new double[] {0.6, 4.5}, new double[] {-0.5, 0.1}, "laboratory-a"));
 
     PitzerBinaryVolumetricGroupedValidation.ValidationResult forward = validation.validate(calibration, holdout,
         TEMPERATURE_K, PRESSURE_PA, DEBYE_HUCKEL_VOLUME_SLOPE);
@@ -78,8 +78,8 @@ class PitzerBinaryVolumetricGroupedValidationTest extends neqsim.NeqSimTest {
     PitzerBinaryVolumetricGroupedValidation validation = new PitzerBinaryVolumetricGroupedValidation(model);
     List<PitzerBinaryVolumetricRegression.Observation> calibration = observations(model, CALIBRATION_MOLALITIES,
         new double[CALIBRATION_MOLALITIES.length], "shared-lineage");
-    List<PitzerBinaryVolumetricRegression.Observation> holdout = observations(model, new double[] { 0.1 },
-        new double[] { 0.0 }, "shared-lineage");
+    List<PitzerBinaryVolumetricRegression.Observation> holdout = observations(model, new double[] {0.1},
+        new double[] {0.0}, "shared-lineage");
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
         () -> validation.validate(calibration, holdout, TEMPERATURE_K, PRESSURE_PA, DEBYE_HUCKEL_VOLUME_SLOPE));

@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -19,7 +18,7 @@ import org.h2.jdbc.JdbcSQLSyntaxErrorException;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable, AutoCloseable {
+public class NeqSimDataBase extends NeqSimDatabaseBase {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -45,22 +44,18 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private transient Statement statement = null;
-  protected transient Connection databaseConnection = null;
-
   /**
    * Constructor for NeqSimDataBase.
    */
   public NeqSimDataBase() {
     setDataBaseType(dataBaseType);
+    initializeDatabaseConnection();
+  }
 
-    try {
-      databaseConnection = this.openConnection();
-      statement = databaseConnection.createStatement();
-    } catch (Exception ex) {
-      logger.error("SQLException ", ex);
-      throw new RuntimeException(ex);
-    }
+  /** {@inheritDoc} */
+  @Override
+  protected Logger getLogger() {
+    return logger;
   }
 
   /**
@@ -70,6 +65,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @throws java.sql.SQLException if any.
    * @throws java.lang.ClassNotFoundException if any.
    */
+  @Override
   public Connection openConnection() throws SQLException, ClassNotFoundException {
     javax.naming.InitialContext ctx = null;
     javax.sql.DataSource ds = null;
@@ -117,64 +113,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   }
 
   /**
-   * getConnection.
-   *
-   * @return a Connection object
-   */
-  public Connection getConnection() {
-    return databaseConnection;
-  }
-
-  /**
-   * Getter for the field <code>statement</code>.
-   *
-   * @return a Statement object
-   */
-  public Statement getStatement() {
-    return statement;
-  }
-
-  /**
-   * Setter for the field <code>statement</code>.
-   *
-   * @param statement a Statement object
-   */
-  public void setStatement(Statement statement) {
-    this.statement = statement;
-  }
-
-  /**
-   * Execute query using execute.
-   *
-   * @param sqlString Query to execute.
-   * @return True if the first result is a ResultSet object; false if it is an update count or there are no results
-   */
-  public boolean execute(String sqlString) {
-    try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
-      return getStatement().execute(sqlString);
-    } catch (Exception ex) {
-      logger.error("error in NeqSimDataBase ", ex);
-      // TODO: should be checked against database type.
-      logger.error("The database must be registered on the local DBMS to work.");
-      throw new RuntimeException(ex);
-    }
-  }
-
-  /**
    * Execute query using executeQuery but do not return anything.
    *
    * @param sqlString Query to execute.
    */
   public void executeQuery(String sqlString) {
     try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
+      ensureConnection();
       getStatement().executeQuery(sqlString);
     } catch (Exception ex) {
       logger.error("error in NeqSimDataBase ", ex);
@@ -190,12 +135,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
    * @param sqlString Query to execute.
    * @return a ResultSet object
    */
+  @Override
   public ResultSet getResultSet(String sqlString) {
     try {
-      if (databaseConnection == null) {
-        databaseConnection = this.openConnection();
-        setStatement(databaseConnection.createStatement());
-      }
+      ensureConnection();
       return getStatement().executeQuery(sqlString);
     } catch (JdbcSQLSyntaxErrorException ex) {
       if (ex.getMessage().startsWith("Table ") && ex.getMessage().contains(" not found;")) {
@@ -206,19 +149,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     } catch (Exception ex) {
       logger.error("error loading NeqSimbataBase ", ex);
       throw new RuntimeException(ex);
-    }
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public void close() throws SQLException {
-    if (databaseConnection != null) {
-      databaseConnection.close();
-      databaseConnection = null;
-    }
-    if (statement != null) {
-      statement.close();
-      statement = null;
     }
   }
 
@@ -433,6 +363,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   public static void useExtendedComponentDatabase(boolean useExtendedDatabase) {
     if (useExtendedDatabase) {
       updateTable("COMP", "data/COMP_EXT.csv");
+      includeMissingStandardComponents();
     } else {
       updateTable("COMP", "data/COMP.csv");
     }
@@ -442,6 +373,117 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
           "- failed to (re)load the COMP table (extended=" + useExtendedDatabase + "). The component "
               + "database is now unusable until useExtendedComponentDatabase or replaceTable('COMP', ...) "
               + "is called again successfully."));
+    }
+  }
+
+  /**
+   * Preserve standard components and optional columns when loading the extended database.
+   *
+   * <p>
+   * The standard resource is authoritative for shared neutral components. Existing extended rows retain their own ID
+   * and COMPINDEX, while common pure-component fields are updated from the standard table. Ions retain their
+   * electrolyte-specific extended properties, except for the existing reviewed formation and vapor-pressure
+   * corrections. Newly added standard names are copied with fresh IDs. CSVREAD exposes columns as strings, including
+   * optional identity metadata.
+   * </p>
+   */
+  private static void includeMissingStandardComponents() {
+    URL standard = NeqSimDataBase.class.getClassLoader().getResource("data/COMP.csv");
+    String source = "CSVREAD('file:" + standard + "')";
+    try (NeqSimDataBase database = new NeqSimDataBase()) {
+      java.util.Set<String> extendedColumns = new java.util.HashSet<String>();
+      try (ResultSet columns = database.getResultSet("SELECT * FROM COMP WHERE 1=0")) {
+        java.sql.ResultSetMetaData metadata = columns.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+          extendedColumns.add(metadata.getColumnName(i));
+        }
+      }
+      java.util.List<String> standardColumns = new java.util.ArrayList<String>();
+      try (ResultSet columns = database.getResultSet("SELECT * FROM " + source + " WHERE 1=0")) {
+        java.sql.ResultSetMetaData metadata = columns.getMetaData();
+        for (int i = 1; i <= metadata.getColumnCount(); i++) {
+          standardColumns.add(metadata.getColumnName(i));
+        }
+      }
+      StringBuilder names = new StringBuilder();
+      StringBuilder values = new StringBuilder();
+      for (String column : standardColumns) {
+        String quoted = "\"" + column.replace("\"", "\"\"") + "\"";
+        if (!extendedColumns.contains(column)) {
+          database.execute("ALTER TABLE COMP ADD " + quoted + " VARCHAR");
+        }
+        if (names.length() > 0) {
+          names.append(',');
+          values.append(',');
+        }
+        names.append(quoted);
+        if ("ID".equalsIgnoreCase(column)) {
+          values.append("(SELECT COALESCE(MAX(CAST(ID AS BIGINT)),0) FROM COMP) + ROW_NUMBER() OVER ()");
+        } else {
+          values.append("standard.").append(quoted);
+        }
+      }
+      database.execute("INSERT INTO COMP (" + names + ") SELECT " + values + " FROM " + source
+          + " standard WHERE NOT EXISTS (SELECT 1 FROM COMP extended WHERE extended.NAME=standard.NAME)");
+      // Standard component properties also govern matching neutral names already in COMP_EXT.
+      // Preserve the extended row's unique identity and leave electrolyte ion models alone.
+      java.util.List<String> synchronizedColumns = new java.util.ArrayList<String>();
+      StringBuilder setColumns = new StringBuilder();
+      for (String column : standardColumns) {
+        if ("ID".equalsIgnoreCase(column) || "COMPINDEX".equalsIgnoreCase(column) || "NAME".equalsIgnoreCase(column)) {
+          continue;
+        }
+        if (setColumns.length() > 0) {
+          setColumns.append(',');
+        }
+        setColumns.append('"').append(column.replace("\"", "\"\"")).append("\"=?");
+        synchronizedColumns.add(column);
+      }
+      try (ResultSet canonical = database.getResultSet("SELECT * FROM " + source + " WHERE COMPTYPE<>'ion'");
+          java.sql.PreparedStatement update = database.getConnection()
+              .prepareStatement("UPDATE COMP SET " + setColumns + " WHERE NAME=?")) {
+        while (canonical.next()) {
+          for (int i = 0; i < synchronizedColumns.size(); i++) {
+            update.setString(i + 1, canonical.getString(synchronizedColumns.get(i)));
+          }
+          update.setString(synchronizedColumns.size() + 1, canonical.getString("NAME"));
+          update.addBatch();
+        }
+        update.executeBatch();
+      }
+      // Copy reviewed gas-phase formation data as a value/provenance pair. Never label an
+      // unrelated extended-table placeholder as reviewed merely because the name matches.
+      try (
+          ResultSet formation = database.getResultSet("SELECT NAME,ENTHALPYOFFORMATION,FORMATIONENTHALPYSOURCE FROM "
+              + source + " WHERE FORMATIONENTHALPYSOURCE IS NOT NULL AND FORMATIONENTHALPYSOURCE<>''");
+          java.sql.PreparedStatement update = database.getConnection()
+              .prepareStatement("UPDATE COMP SET ENTHALPYOFFORMATION=?,FORMATIONENTHALPYSOURCE=? WHERE NAME=?")) {
+        while (formation.next()) {
+          update.setString(1, formation.getString("ENTHALPYOFFORMATION"));
+          update.setString(2, formation.getString("FORMATIONENTHALPYSOURCE"));
+          update.setString(3, formation.getString("NAME"));
+          update.addBatch();
+        }
+        update.executeBatch();
+      }
+      // Apply only the reviewed vapor-pressure corrections, preserving other extended-table data.
+      String vaporColumns = "AntoineVapPresLiqType,ANTOINEA,ANTOINEB,ANTOINEC,ANTOINED,ANTOINEE";
+      try (
+          ResultSet corrections = database.getResultSet("SELECT NAME," + vaporColumns + " FROM " + source
+              + " WHERE AntoineVapPresLiqType='none' OR NAME IN ('acetone','ammonia','H2S')");
+          java.sql.PreparedStatement update = database.getConnection().prepareStatement(
+              "UPDATE COMP SET AntoineVapPresLiqType=?,ANTOINEA=?,ANTOINEB=?,ANTOINEC=?,ANTOINED=?,ANTOINEE=? WHERE NAME=?")) {
+        while (corrections.next()) {
+          for (int i = 1; i <= 6; i++) {
+            update.setString(i, corrections.getString(i + 1));
+          }
+          update.setString(7, corrections.getString("NAME"));
+          update.addBatch();
+        }
+        update.executeBatch();
+      }
+    } catch (Exception ex) {
+      throw new IllegalStateException("Failed to preserve standard components in the extended database", ex);
     }
   }
 
@@ -568,5 +610,16 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
+  }
+
+  /**
+   * Executes SQL using this wrapper's managed connection.
+   *
+   * @param sqlString SQL statement
+   * @return true if execution produces a result set
+   * @throws RuntimeException if SQL execution fails
+   */
+  public boolean execute(String sqlString) {
+    return executeSql(sqlString);
   }
 }

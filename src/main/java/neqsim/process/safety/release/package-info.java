@@ -7,6 +7,24 @@
  * <li>{@link neqsim.process.safety.release.LeakModel} - Mass flow, jet velocity, and momentum calculations</li>
  * <li>{@link neqsim.process.safety.release.SourceTermResult} - Time-series release data with export capabilities</li>
  * <li>{@link neqsim.process.safety.release.ReleaseOrientation} - Jet orientation for dispersion modeling</li>
+ * <li>{@link neqsim.process.safety.release.ReleaseSolidRiskAssessment} - Fail-closed mixture-specific solid and hydrate
+ * applicability assessment</li>
+ * <li>{@link neqsim.process.safety.release.DriftFluxHomogeneousEquilibriumReleaseModel} - Bounded vertical-upward
+ * gas/liquid drift-flux short-opening screening</li>
+ * <li>{@link neqsim.process.safety.release.FiniteRateDriftFluxReleaseModel} - Caller-parameterized first-order
+ * phase-split relaxation with bounded vertical drift flux</li>
+ * <li>{@link neqsim.process.safety.release.ComponentSelectiveFiniteRateReleaseModel} - Component-resolved first-order
+ * phase-partition relaxation with bounded vertical drift flux</li>
+ * <li>{@link neqsim.process.safety.release.RanzMarshallFiniteRateReleaseModel} - Explicit Ranz-Marshall external-film
+ * component transfer coupled to bounded vertical gas-bubble drift flux</li>
+ * <li>{@link neqsim.process.safety.release.IdealGasFannoPipeReleaseModel} - Assessed quasi-steady ideal-gas pipe
+ * release with specified Darcy friction</li>
+ * <li>{@link neqsim.process.safety.release.RealGasFannoPipeReleaseModel} - EOS-backed quasi-steady single-gas pipe
+ * release with specified Darcy friction</li>
+ * <li>{@link neqsim.process.safety.release.IdealGasPipeDecompression} - Conservative one-dimensional perfect-gas
+ * transient decompression and line packing</li>
+ * <li>{@link neqsim.process.safety.release.RealGasPipeDecompression} - Conservative one-dimensional EOS-backed
+ * single-gas transient decompression and line packing</li>
  * </ul>
  *
  * <p>
@@ -17,6 +35,22 @@
  * <li>KFX (DNV)</li>
  * <li>OpenFOAM</li>
  * </ul>
+ *
+ * <p>
+ * LeakModel time integration is limited to a rigid, adiabatic, well-mixed gas inventory. It conserves component mass
+ * and energy and fails explicitly if condensation occurs. The scalar release correlations remain screening methods. The
+ * homogeneous-equilibrium model assesses its resolved stations for equilibrium solids and hydrate risk, but does not
+ * calculate solid-bearing release flow. The quasi-steady finite-pipe models exclude transient decompression waves. The
+ * separate perfect-gas and EOS-backed single-gas transient models resolve waves and line packing but exclude heat
+ * transfer, pipe elasticity and solid-bearing transport. Separate short-opening models can either apply a
+ * caller-declared gas/liquid velocity ratio or predict vertical-upward bubbly/dispersed slip with a bounded
+ * Zuber-Findlay/Harmathy closure. A third model applies caller-parameterized first-order phase-split relaxation before
+ * the same drift-flux closure. A fourth resolves component-specific phase-partition relaxation and emits phase
+ * compositions while retaining exact component conservation. A fifth predicts external-film component relaxation times
+ * from explicit Ranz-Marshall inputs for spherical gas bubbles, while failing closed for out-of-range dimensionless
+ * groups and liquid-droplet hydrodynamics. These models retain explicit phase-area and kinetic-energy closure; none
+ * predicts residence time, interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas
+ * pipe models fail closed if an equilibrium phase appears.
  *
  * <p>
  * Example usage:
@@ -33,8 +67,8 @@
  *     .scenarioName("HP Separator Leak").build();
  *
  * SourceTermResult result = leak.calculateSourceTerm(300.0, 1.0); // 5 minutes
- * System.out.println("Peak flow: " + result.getPeakMassFlowRate() + " kg/s");
- * System.out.println("Total released: " + result.getTotalMassReleased() + " kg");
+ * double peakFlowKgS = result.getPeakMassFlowRate();
+ * double totalReleasedKg = result.getTotalMassReleased();
  * </pre>
  *
  * @see neqsim.process.safety.risk Probabilistic risk analysis

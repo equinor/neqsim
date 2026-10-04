@@ -90,7 +90,7 @@ public class DCFCalculatorTest {
 
     dcf.addCapex(0, 300.0);
 
-    double[] production = new double[] { 0, 10, 50, 100, 100 };
+    double[] production = new double[] {0, 10, 50, 100, 100};
     dcf.setAnnualProduction(production);
     dcf.setProductPrice(2.0);
     dcf.setAnnualOpex(20.0);
@@ -112,7 +112,7 @@ public class DCFCalculatorTest {
 
     dcf.addCapex(0, 100.0);
 
-    double[] production = new double[] { 0, 50, 50, 50, 50 };
+    double[] production = new double[] {0, 50, 50, 50, 50};
     dcf.setAnnualProduction(production);
     dcf.setProductPrice(1.0);
     dcf.setAnnualOpex(0.0);
@@ -130,7 +130,7 @@ public class DCFCalculatorTest {
     dcf.setProjectLifeYears(5);
     dcf.addCapex(0, 1000.0);
 
-    double[] prod = new double[] { 0, 100, 100, 100, 100 };
+    double[] prod = new double[] {0, 100, 100, 100, 100};
     dcf.setAnnualProduction(prod);
     dcf.setProductPrice(5.0);
 
@@ -154,7 +154,7 @@ public class DCFCalculatorTest {
     dcf.setDepreciationYears(0);
 
     dcf.addCapex(0, 200.0);
-    double[] production = new double[] { 0, 100, 100 };
+    double[] production = new double[] {0, 100, 100};
     dcf.setAnnualProduction(production);
     dcf.setProductPrice(1.0);
     dcf.setAnnualOpex(0.0);
@@ -174,9 +174,9 @@ public class DCFCalculatorTest {
     // Multi-product model: oil + gas + condensate priced separately should give the same
     // NPV as a single legacy product whose annual revenue equals the summed product revenue.
     int years = 6;
-    double[] oil = new double[] { 0, 100, 100, 80, 60, 40 };
-    double[] gas = new double[] { 0, 200, 200, 200, 150, 120 };
-    double[] cond = new double[] { 0, 10, 10, 8, 6, 4 };
+    double[] oil = new double[] {0, 100, 100, 80, 60, 40};
+    double[] gas = new double[] {0, 200, 200, 200, 150, 120};
+    double[] cond = new double[] {0, 10, 10, 8, 6, 4};
     double oilPrice = 4.0;
     double gasPrice = 1.5;
     double condPrice = 3.0;
@@ -220,7 +220,7 @@ public class DCFCalculatorTest {
   public void testProductRevenueAccessor() {
     DCFCalculator dcf = new DCFCalculator();
     dcf.setProjectLifeYears(4);
-    double[] oil = new double[] { 0, 100, 50, 25 };
+    double[] oil = new double[] {0, 100, 50, 25};
     dcf.addProduct("oil", oil, 4.0);
     dcf.calculate();
 
@@ -235,8 +235,8 @@ public class DCFCalculatorTest {
   public void testVariableCostReducesNPV() {
     // A produced-water handling cost that scales with water volume should reduce NPV.
     int years = 5;
-    double[] oil = new double[] { 0, 100, 100, 100, 100 };
-    double[] water = new double[] { 0, 50, 80, 120, 160 };
+    double[] oil = new double[] {0, 100, 100, 100, 100};
+    double[] water = new double[] {0, 50, 80, 120, 160};
 
     DCFCalculator withoutCost = new DCFCalculator();
     withoutCost.setDiscountRate(0.08);
@@ -265,8 +265,8 @@ public class DCFCalculatorTest {
     DCFCalculator dcf = new DCFCalculator();
     dcf.setProjectLifeYears(3);
     dcf.addCapex(0, 100.0);
-    dcf.addProduct("oil", new double[] { 0, 100, 100 }, 4.0);
-    dcf.addProduct("gas", new double[] { 0, 200, 200 }, 1.5);
+    dcf.addProduct("oil", new double[] {0, 100, 100}, 4.0);
+    dcf.addProduct("gas", new double[] {0, 200, 200}, 1.5);
     dcf.calculate();
 
     String json = dcf.toJson();
@@ -286,7 +286,7 @@ public class DCFCalculatorTest {
     dcf.setTaxRate(0.0);
     dcf.setDepreciationYears(0);
     dcf.addCapex(0, 100.0);
-    dcf.setAnnualProduction(new double[] { 0, 50, 50, 50, 50 });
+    dcf.setAnnualProduction(new double[] {0, 50, 50, 50, 50});
     dcf.setProductPrice(1.0);
     dcf.calculate();
 

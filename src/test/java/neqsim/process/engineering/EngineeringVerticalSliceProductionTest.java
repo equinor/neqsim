@@ -180,16 +180,16 @@ class EngineeringVerticalSliceProductionTest {
     process.add(exportLine);
     process.run();
 
-    double[] conditions = new double[] { 19.0, 300.0, 50.0, 0.90 };
-    double[] speeds = new double[] { 9000.0, 11000.0 };
-    double[][] flows = new double[][] { { 50.0, 100.0, 150.0 }, { 70.0, 140.0, 210.0 } };
-    double[][] heads = new double[][] { { 75.0, 65.0, 50.0 }, { 110.0, 95.0, 72.0 } };
-    double[][] efficiencies = new double[][] { { 70.0, 79.0, 73.0 }, { 71.0, 80.0, 74.0 } };
+    double[] conditions = new double[] {19.0, 300.0, 50.0, 0.90};
+    double[] speeds = new double[] {9000.0, 11000.0};
+    double[][] flows = new double[][] {{50.0, 100.0, 150.0}, {70.0, 140.0, 210.0}};
+    double[][] heads = new double[][] {{75.0, 65.0, 50.0}, {110.0, 95.0, 72.0}};
+    double[][] efficiencies = new double[][] {{70.0, 79.0, 73.0}, {71.0, 80.0, 74.0}};
     compressor.getCompressorChart().setCurves(conditions, speeds, flows, heads, efficiencies);
     compressor.getCompressorChart()
-        .setSurgeCurve(new SafeSplineSurgeCurve(new double[] { 42.0, 55.0, 70.0 }, new double[] { 110.0, 90.0, 65.0 }));
+        .setSurgeCurve(new SafeSplineSurgeCurve(new double[] {42.0, 55.0, 70.0}, new double[] {110.0, 90.0, 65.0}));
     compressor.getCompressorChart().setStoneWallCurve(
-        new SafeSplineStoneWallCurve(new double[] { 170.0, 195.0, 220.0 }, new double[] { 110.0, 90.0, 65.0 }));
+        new SafeSplineStoneWallCurve(new double[] {170.0, 195.0, 220.0}, new double[] {110.0, 90.0, 65.0}));
     compressor.getCompressorChart().setHeadUnit("kJ/kg");
     compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.getAntiSurge().setActive(true);

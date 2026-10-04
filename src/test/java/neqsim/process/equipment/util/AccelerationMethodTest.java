@@ -71,8 +71,8 @@ class AccelerationMethodTest {
     @Test
     @DisplayName("First iteration returns direct substitution")
     void testFirstIterationDirectSubstitution() {
-      double[] x = { 1.0, 2.0, 3.0 };
-      double[] gx = { 1.1, 2.1, 3.1 };
+      double[] x = {1.0, 2.0, 3.0};
+      double[] gx = {1.1, 2.1, 3.1};
 
       double[] result = accelerator.accelerate(x, gx);
 
@@ -85,18 +85,18 @@ class AccelerationMethodTest {
     void testDelayIterations() {
       accelerator.setDelayIterations(3);
 
-      double[] x1 = { 1.0, 2.0 };
-      double[] gx1 = { 1.1, 2.1 };
+      double[] x1 = {1.0, 2.0};
+      double[] gx1 = {1.1, 2.1};
       double[] result1 = accelerator.accelerate(x1, gx1);
       assertArrayEquals(gx1, result1, 1e-10);
 
-      double[] x2 = { 1.1, 2.1 };
-      double[] gx2 = { 1.15, 2.15 };
+      double[] x2 = {1.1, 2.1};
+      double[] gx2 = {1.15, 2.15};
       double[] result2 = accelerator.accelerate(x2, gx2);
       assertArrayEquals(gx2, result2, 1e-10);
 
-      double[] x3 = { 1.15, 2.15 };
-      double[] gx3 = { 1.17, 2.17 };
+      double[] x3 = {1.15, 2.15};
+      double[] gx3 = {1.17, 2.17};
       double[] result3 = accelerator.accelerate(x3, gx3);
       assertArrayEquals(gx3, result3, 1e-10);
 
@@ -108,8 +108,8 @@ class AccelerationMethodTest {
     void testReset() {
       BroydenAccelerator acc = new BroydenAccelerator(2);
 
-      double[] x = { 1.0, 2.0 };
-      double[] gx = { 1.1, 2.1 };
+      double[] x = {1.0, 2.0};
+      double[] gx = {1.1, 2.1};
       acc.accelerate(x, gx);
 
       assertEquals(1, acc.getIterationCount());
@@ -144,13 +144,13 @@ class AccelerationMethodTest {
       acc.setDelayIterations(1);
       acc.setMaxStepSize(1.0); // Limit step size to prevent divergence
 
-      double[] x = { 1.0 }; // Start closer to solution
-      double[] lastX = { 0.0 };
+      double[] x = {1.0}; // Start closer to solution
+      double[] lastX = {0.0};
       double tolerance = 0.01;
       int maxIter = 50;
 
       for (int i = 0; i < maxIter; i++) {
-        double[] gx = { 0.5 * x[0] + 1.0 }; // g(x) = 0.5x + 1, fixed point at x=2
+        double[] gx = {0.5 * x[0] + 1.0}; // g(x) = 0.5x + 1, fixed point at x=2
 
         // For 1D problems, direct substitution is more stable
         // Just verify the accelerator doesn't crash and produces output
@@ -177,8 +177,8 @@ class AccelerationMethodTest {
 
       assertEquals(-1.0, acc.getResidualNorm()); // No residual yet
 
-      double[] x = { 1.0, 2.0 };
-      double[] gx = { 1.1, 2.2 };
+      double[] x = {1.0, 2.0};
+      double[] gx = {1.1, 2.2};
       acc.accelerate(x, gx);
 
       assertTrue(acc.getResidualNorm() >= 0);
@@ -455,8 +455,8 @@ class AccelerationMethodTest {
       BroydenAccelerator acc = new BroydenAccelerator(2);
       acc.setDelayIterations(1);
 
-      double[] x = { 0.0, 0.0 };
-      double[] gx = { 1.0, 1.0 }; // g(0,0) = (1,1)
+      double[] x = {0.0, 0.0};
+      double[] gx = {1.0, 1.0}; // g(0,0) = (1,1)
 
       double[] xNew = acc.accelerate(x, gx);
       assertNotNull(xNew);

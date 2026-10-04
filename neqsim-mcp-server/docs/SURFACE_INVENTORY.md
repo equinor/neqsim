@@ -5,6 +5,12 @@ baseline. The focused protocol regression in `test_mcp_server.py` obtains every 
 running server's standards-conforming list operations; it does not infer publication from a
 manually maintained Java method list.
 
+All focused `test_*_protocol.py` harnesses freeze the same current inventory
+as the primary harness: version `1.50`, 50 contract-tested tools and 1 confirmed
+gap. `test_phase0_documentation.py` checks these executable expectations before
+packaging, so a promotion cannot leave a later protocol step on an older baseline.
+Per-tool evidence counts and historical promotion records remain independent.
+
 | Surface | Count | Protocol evidence | Authoritative implementation |
 | --- | ---: | --- | --- |
 | Tools | 71 | `tools/list` | `NeqSimTools` MCP annotations |
@@ -17,12 +23,12 @@ manually maintained Java method list.
 | Factory equipment | 207 types | `getCapabilities.implementationInventory` | `EquipmentFactory` |
 | Engineering report paths | 2 | `getCapabilities.implementationInventory` | `ReportRunner`, `TaskWorkflowBridge` |
 | MCP Java test classes | 72 | `getCapabilities.phase0EvidenceInventory` | `src/test/java/neqsim/mcp/**/*Test.java` |
-| MCP protocol scenarios | 94 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
+| MCP protocol scenarios | 102 | `getCapabilities.phase0EvidenceInventory` | `test_mcp_server.py` |
 | Focused API protocol scenarios | 3 | `getCapabilities.phase0EvidenceInventory` | `test_inspect_api_protocol.py` |
 | MCP guides | 8 | `getCapabilities.phase0EvidenceInventory` | Core guides, foundation traceability, fixtures, baseline harness, and campaign matrix |
 | Explicit benchmark-trust pages | 20 of 71 tools | `getBenchmarkTrust` and `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust` |
-| Trust coverage records | 71 = 20 explicit benchmark + 35 bounded contract-tested software contracts + 16 confirmed gaps | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
-| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.35; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
+| Trust coverage records | 71 = 20 explicit benchmark + 50 bounded contract-tested software contracts + 1 confirmed gap | `getCapabilities.phase0EvidenceInventory` | `BenchmarkTrust`, `McpImplementationInventory`, MCP contract tests |
+| Contract-promotion candidates | 0 | `getCapabilities.phase0EvidenceInventory` | No candidate is queued in inventory 1.50; any future promotion must move machine-readable coverage and primary protocol accounting atomically |
 
 The tool regression asserts the exact 71-name set grouped by its current trust tier. It also calls
 `getCapabilities` and requires `toolCatalogCoverage.complete`, equal published and described tool
@@ -88,10 +94,12 @@ does not claim that an external Word/HTML artifact has been generated or enginee
 
 `getCapabilities.phase0EvidenceInventory` freezes the remaining source-evidence dimensions of the
 Phase 0 inventory. The exact current source contains 72 JUnit test classes under
-`src/test/java/neqsim/mcp`, 94 named scenarios in the primary real-STDIO JSON-RPC harness
+`src/test/java/neqsim/mcp`, 102 named scenarios in the primary real-STDIO JSON-RPC harness
 `neqsim-mcp-server/test_mcp_server.py`, and three focused packaged-MCP API-inspection scenarios in
 `neqsim-mcp-server/test_inspect_api_protocol.py`. The primary protocol regression independently
-recounts its source tree and fails if the manifest drifts; the focused harnesses are separately
+recounts its source tree and fails if the manifest drifts. The dependency-free
+`test_phase0_documentation.py` check also reconciles the primary scenario count with the Java
+inventory and this guide before packaging; the focused harnesses are separately
 executed by the read-only `MCP protocol qualification` workflow. The validation-profile and
 automation-advisory harnesses add bounded software-contract scenarios but do not alter the frozen
 primary-scenario count. These counts identify evidence locations; they are not a claim that a test
@@ -111,7 +119,7 @@ The eight MCP guides have distinct roles:
 | `neqsim-mcp-server/docs/CAMPAIGN_MATRIX.md` | All 66 campaign criteria and discipline-level trust maturity with explicit gaps |
 
 The default response-size guard may omit large capability-catalog sections when the full manifest
-exceeds 256 KiB. It retains `implementationInventory` and `phase0EvidenceInventory` because those
+exceeds 280 KiB. It retains `implementationInventory` and `phase0EvidenceInventory` because those
 contracts have no equivalent selective-retrieval routes. Omitted catalog detail remains identified
 in `truncation` and can be queried through `getSchema`, `getExample`, `getBenchmarkTrust`, and the
 MCP catalog resources.
@@ -145,8 +153,8 @@ one deterministic record for every published tool and uses three bounded states:
   applicability, or no-limitations evidence.
 
 Accordingly, `coverageComplete=true` means all 71 published tools have an explicit trust-coverage
-classification. It does **not** mean the MCP surface is scientifically validated: 17 records remain
-`CONFIRMED_GAP`, thirty-four are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
+classification. It does **not** mean the MCP surface is scientifically validated: 1 record remains
+`CONFIRMED_GAP`, fifty are `CONTRACT_TESTED`, `scientificValidationComplete=false`, and the
 overall Phase 0 `complete` flag remains false. The benchmark registry itself remains unchanged at
 20 explicit pages and 51 generic benchmark fallbacks, so existing benchmark-report accounting and
 protocol contracts are preserved.
@@ -193,9 +201,9 @@ facade preserves normal access enforcement and the standard response envelope.
 `test_inspect_api_protocol.py` starts the packaged STDIO server and calls `inspectApi` through
 `tools/call`, requiring `ProcessModel` to resolve to the exact runtime class with a filtered public
 `run` method and requiring `java.lang.Runtime` to fail closed. It also calls `getCapabilities` and
-now reconciles inventory 1.35 with 20/35/16 coverage accounting while retaining
+now reconciles inventory 1.50 with 20/50/1 coverage accounting while retaining
 `inspectApi=CONTRACT_TESTED`. The primary `test_mcp_server.py` independently includes `inspectApi`
-among its thirty-five bounded software contracts and requires 16 confirmed gaps. The read-only
+among its fifty bounded software contracts and requires 1 confirmed gap. The read-only
 `MCP protocol qualification` workflow builds the exact NeqSim/MCP artifacts and executes the
 focused scenarios on pull requests and `master`.
 
@@ -220,7 +228,7 @@ This is software/governance evidence only. The named standards and design factor
 to be current, complete, legally applicable, licensed for redistribution, or correct for a real
 facility; `validateWithProfile` scientific correctness, persistence, multi-tenant isolation,
 external authorization, and plant authority remain outside the evidence boundary. Its historical
-promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.35 retains that contract
+promotion moved coverage from 20/10/41 to 20/11/40. Current inventory 1.42 retains that contract
 alongside the later automation, model-registry, and session-lifecycle promotions below. See
 `docs/evidence/VALIDATION_PROFILE_CONTRACT.md`.
 
@@ -430,7 +438,7 @@ stateful execution, plant/control authority, certification, or accountable
 engineering approval. The detailed boundary is in
 `docs/evidence/RUNTIME_CAPABILITY_CONTRACT.md`.
 
-No promotion candidate remains queued in inventory 1.35. A future transition must again move the
+No promotion candidate remains queued in inventory 1.42. A future transition must again move the
 machine-readable coverage record and primary packaged-protocol accounting atomically from direct
 evidence.
 
@@ -473,11 +481,11 @@ deployment-profile names, tool-capability reconciliation, schema resource graph,
 graph, tool implementation bindings, factory-backed equipment, report paths, test sources, guides,
 merged-foundation reconciliation, four public synthetic acceptance scales, bounded acceptance
 baseline harness, campaign traceability/maturity matrix, and explicit trust-coverage status for
-every published tool. Thirty-four bounded discovery, catalog, lookup, progress, trust-retrieval,
+every published tool. Thirty-eight bounded discovery, catalog, lookup, progress, trust-retrieval,
 governance, validation-profile, API-inspection, model-registry, session-lifecycle, security-management,
 persisted-state, adjustable-parameter discovery, pre-flight validation, result-validation, reporting handoff,
 process-local plugin execution, automation advisory, simulation-variable mutation, paired snapshot, and
-visualization-generation, bounded runtime-capability, composed-workflow, task-solver, streaming-simulation, and multi-server-composition contracts are contract-tested, leaving 16 confirmed trust gaps and no queued promotion candidate.
+visualization-generation, bounded runtime-capability, composed-workflow, task-solver, streaming-simulation, multi-server-composition, risk-matrix-screening, LOPA-screening, and SIF-PFD-screening contracts are contract-tested, leaving 13 confirmed trust gaps and no queued promotion candidate.
 
 Follow-up work should continue auditing remaining confirmed gaps and promote only when concrete
 source/test/public-benchmark evidence or a clearly bounded software contract supports a precise
@@ -592,9 +600,9 @@ transactions/rollback, semantic/unit compatibility, scientific or numerical
 validity, convergence, conservation, plant/control authority, certification,
 or accountable engineering approval. No promotion candidate remains queued.
 
-## Qualified bounded risk-matrix screening
+## Promoted bounded risk-matrix screening
 
-`runRiskMatrix` now has direct source and packaged-MCP qualification for its
+`runRiskMatrix` has direct source and packaged-MCP qualification for its
 generic software-screening contract. Requests are limited to 16,384 UTF-8 bytes,
 1–100 events, 256-character names, and 2,048-character mitigation strings.
 Every event must provide exactly one complete input basis: integer caller levels
@@ -610,7 +618,220 @@ safeguards, acceptance criteria, standards applicability or compliance,
 operating decisions, or accountable engineering approval. See
 `docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md`.
 
-Inventory remains `1.35 / 20 explicit + 35 contract-tested + 16 confirmed
-gaps`. `runRiskMatrix` remains `CONFIRMED_GAP` until a separate post-merge
-evidence promotion changes machine-readable coverage and authoritative protocol
-accounting atomically. No promotion candidate is queued in this qualification.
+After merged #3645 established that direct evidence, inventory version 1.36
+atomically promoted `runRiskMatrix` to `CONTRACT_TESTED`. Machine-readable
+coverage, Java assertions, the focused packaged protocol, synchronized protocol
+expectations, authoritative comprehensive accounting, and documentation move
+together from `20/35/16` to `20/36/15`.
+
+### Promoted bounded LOPA-screening contract
+
+Merged #3655 qualifies `runLOPA` through direct Java and packaged-MCP evidence
+while retaining the existing canonical `SafetyInstrumentedFunction`
+calculation. The runner accepts only caller-supplied scenario, initiating-event,
+target, and independent-protection-layer inputs; enforces finite probability,
+request, collection, and text bounds; preserves deterministic order and
+defaults; emits stable fail-closed errors; and returns explicit screening and
+advisory metadata through the normal response and access-control paths.
+
+Inventory version 1.37 atomically promotes `runLOPA` to `CONTRACT_TESTED`.
+Machine-readable coverage, Java assertions, `test_lopa_protocol.py`, synchronized
+focused protocol expectations, authoritative comprehensive accounting, and
+documentation move together from `20/36/15` to `20/37/14`. This is a bounded
+software and transport contract only. It does not identify hazards, establish
+scenario completeness, verify IPL independence or effectiveness, select or
+verify SIL, decide tolerability or risk acceptance, establish standards
+compliance, authorize plant action, certify design, or replace qualified
+process-safety review and accountable approval. No promotion candidate remains
+queued. See `docs/evidence/LOPA_SCREENING_CONTRACT.md`.
+
+### Promoted bounded SIF PFD-screening contract
+
+The current increment qualifies `runSIL` through direct Java and packaged-MCP
+evidence while retaining the canonical `SafetyInstrumentedFunction` and
+`SILVerificationResult`. The runner bounds the request, component collection,
+text, supported architectures, claimed SIL, proof-test interval, PFD, and
+failure-rate inputs; rejects conflicting or non-finite inputs; preserves
+component order and deterministic defaults; and returns explicit screening,
+caller-assumption, and independent-assessment metadata.
+
+After merged #3664 established that direct evidence, inventory version 1.38
+atomically promotes `runSIL` to `CONTRACT_TESTED`. Machine-readable coverage,
+Java assertions, `test_sil_protocol.py`, synchronized focused protocol
+expectations, authoritative comprehensive accounting, acceptance baselines, and
+documentation move together from `20/37/14` to `20/38/13`. This is a bounded
+software and transport contract only. It does not establish SRS completeness,
+validate reliability data, verify independence, common cause, architecture
+suitability, diagnostic coverage, proof-test effectiveness or systematic
+capability, select or approve SIL, demonstrate standards conformance, certify
+design, authorize plant action, or replace independent functional-safety
+assessment and accountable approval. No promotion candidate remains queued. See
+`docs/evidence/SIL_SCREENING_CONTRACT.md`.
+
+
+### Promoted bounded canonical process-comparison contract
+
+Inventory version 1.39 atomically promotes `compareProcesses` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/38/13` to `20/39/12`. The runner admits a maximum 1 MiB UTF-8 request,
+two to 32 cases, and optional unique names of at most 256 characters. It
+preserves request order and delegates every case to the canonical
+`ProcessRunner`.
+
+The response reports `caseCount`, `successfulCaseCount`,
+`failedCaseCount`, `complete`, and each canonical case result. A failed case
+remains visible beside successful results instead of being mistaken for a
+complete comparison. This bounded software contract does not establish
+compatible units or bases between cases, numerical or thermodynamic accuracy,
+convergence for arbitrary inputs, conservation, uncertainty, optimization
+quality, facility fidelity, persistence, parallel execution, plant authority,
+certification, or engineering approval. See
+`docs/evidence/PROCESS_COMPARISON_CONTRACT.md`.
+
+
+### Promoted bounded barrier-register screening contract
+
+Inventory version 1.40 atomically promotes `runBarrierRegister` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/39/12` to `20/40/11`. Merged PR #3711 supplies bounded UTF-8 and
+structural admission, deterministic accounting, canonical NeqSim barrier-model
+construction, traceable direct or performance-standard evidence, quantitative
+handoff exclusions, advisory metadata, normal access enforcement, standard
+response evidence, focused Java qualification, and seven packaged-STDIO
+scenarios. The classification does not validate hazards, documents, scenarios,
+PFD, barrier independence or effectiveness, proof testing, SIL, tolerability,
+standards compliance, plant action, or design. Qualified process-safety and
+independent-maintainer review remain mandatory. No promotion candidate is queued
+and `scientificValidationComplete=false`.
+
+### Promoted bounded operational-study orchestration contract
+
+Inventory version 1.41 atomically promotes `runOperationalStudy` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/40/11` to `20/41/10`. Merged PR #3747 supplies bounded request
+admission, fail-closed errors, eight-action discovery, deterministic controller
+screening, canonical local `JsonProcessBuilder` and `ProcessSystem` execution,
+invariant screening-only and no-plant-write metadata, normal access enforcement,
+standard response evidence, focused Java qualification, and six packaged-STDIO
+scenarios. The classification does not establish causality; validate documents,
+tags, P&IDs, instrumentation, controller tuning or stability, process fidelity,
+thermodynamic accuracy, convergence, conservation, equipment condition,
+operating envelopes, trips, mitigations, safe limits, or standards conformance;
+authorize plant or control action; certify design; or replace qualified and
+accountable engineering review. No promotion candidate is queued and
+`scientificValidationComplete=false`.
+
+### Promoted bounded pressure-relief sizing screening contract
+
+Inventory version 1.42 atomically promotes `runRelief` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/41/10` to `20/42/9`. Merged PR #3787 supplies bounded 16,384-byte
+UTF-8 request admission, fail-closed malformed, non-finite, non-positive, and
+out-of-range inputs, gas, liquid, two-phase, and fire-heat-input routing through
+canonical NeqSim `ReliefValveSizing` calculations, backpressure validation,
+finite positive and conservative selected-area evidence, explicit
+screening-only and standards-conformance metadata, normal access enforcement,
+standard response evidence, focused Java qualification, and packaged-STDIO
+qualification. The classification does not establish relief-scenario
+completeness, standards applicability, relieving-rate or property validity,
+allowable accumulation, coefficient applicability, relief-system hydraulics or
+disposal capacity, reaction loads, installation suitability, certification,
+plant authorization, or accountable engineering approval. Qualified
+pressure-relief/process-safety and independent-maintainer review remain
+mandatory. No promotion candidate is queued and
+`scientificValidationComplete=false`.
+
+
+
+### Promoted bounded canonical process-loop orchestration contract
+
+Inventory version 1.43 atomically promotes `runProcessLoop` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/42/9` to `20/43/8`. The existing runner builds the caller-supplied
+canonical `ProcessSystem` once and delegates ordered trials to
+`ProcessAutomation.evaluate`; it does not introduce an MCP-side process or
+optimization model. Direct Java and packaged-STDIO qualification cover ordered
+trial indices and counts, feasible-result accounting, readback routing,
+per-trial rejected-setpoint evidence, fail-closed blank and malformed inputs,
+normal access enforcement, and standard response evidence.
+
+This classification does not establish global or local optimization,
+feasible-space completeness, numerical or thermodynamic accuracy, convergence
+for arbitrary inputs, conservation, uncertainty, controller stability,
+equipment or facility fidelity, safe operating limits, persistence, parallel
+execution, plant or control authority, certification, or accountable
+engineering approval. See `docs/evidence/PROCESS_LOOP_CONTRACT.md`.
+
+
+### Promoted canonical utility-design screening contract
+
+Inventory version 1.44 atomically promotes `designUtilities` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving Phase 0 accounting from
+`20/43/8` to `20/44/7`. The existing runner dispatches the caller's design
+basis to the native NeqSim `Boiler`, `Deaerator`, `RefrigerationCycle`,
+`NitrogenSystem`, or `SteamNetwork`; it does not introduce a second utility
+model. Direct utility-component tests plus focused and comprehensive packaged
+STDIO qualification cover all five routes, standard response evidence, and
+fail-closed blank, malformed, and unsupported utility types.
+
+This classification does not establish design-basis completeness, property or
+correlation accuracy, equipment sizing adequacy, utility availability or
+reliability, network optimization, emissions or cost forecast accuracy,
+mechanical design, safe operating limits, standards or regulatory compliance,
+plant or control authority, certification, or accountable engineering
+approval. See `docs/evidence/UTILITY_DESIGN_SCREENING_CONTRACT.md`.
+
+
+### Promoted canonical chemistry dispatch contract
+
+Inventory version 1.45 atomically promotes `runChemistry` from
+`CONFIRMED_GAP` to `CONTRACT_TESTED`, moving current Phase 0 accounting
+from `20/44/7` to `20/45/6`. The existing MCP facade delegates all eight
+supported analyses to the canonical `ChemistryRunner`; it does not introduce
+a second chemistry, electrolyte, scale, corrosion, adsorption, reaction, or
+transport model. Direct Java runner tests plus focused and comprehensive
+packaged STDIO qualification cover routing, standard response evidence, and
+fail-closed blank, malformed, and unknown analyses.
+
+This classification does not establish composition or design-basis
+suitability, model or dataset applicability, thermodynamic or kinetic
+accuracy, convergence for arbitrary inputs, uncertainty, chemical dose, safe
+operating limits, standards or regulatory compliance, plant or control
+authority, certification, or accountable engineering approval. See
+`docs/evidence/CHEMISTRY_SCREENING_CONTRACT.md`.
+
+
+### Inventory 1.49 open-drain review promotion
+
+`runOpenDrainReview` is `CONTRACT_TESTED` for deterministic execution of the existing
+NORSOK S-001 Clause 9 review engine through the packaged MCP server. Evidence covers discovery,
+the normalized STID/P&ID catalog example, two-item `PASS_WITH_WARNINGS` report (zero failures
+and one missing-standards warning), standards/provenance fields,
+deterministic replay, fail-closed empty input, access enforcement, and the standard response
+envelope. It does not certify source/tag fidelity, completeness, hydraulic adequacy, standards
+conformance, plant authority, or accountable process-safety approval.
+
+
+### Inventory 1.50 NORSOK S-001 Clause 10 review promotion
+
+Inventory 1.50 promotes `runNorsokS001Clause10Review` from `CONFIRMED_GAP` to
+`CONTRACT_TESTED`, moving current Phase 0 accounting from 20/49/2 to 20/50/1.
+The published facade continues to delegate to the existing
+`NorsokS001Clause10ReviewRunner`, which normalizes caller-supplied evidence for
+the canonical `ProcessSafetySystemReviewEngine`. Optional performance,
+operational-study, and dynamic evidence remains embedded through the existing
+runners; no parallel safety, process, or transient model is introduced.
+
+Direct runner and engine tests, the deterministic
+`process-safety-review/norsok-s001-clause10` catalog example, comprehensive
+protocol coverage, five focused packaged-STDIO scenarios, normal access
+enforcement, and the standard response envelope move with the machine-readable
+classification on the same exact head.
+
+This bounded software contract does not establish direct STID, tagreader, C&E,
+SRS, or PSV connectivity; source-document or tag completeness and fidelity;
+hazard or scenario completeness; SIL/PFD/SIF, proof-test, or lifecycle validity;
+PSV or relief adequacy; controller, transient, or dynamic validity;
+independence or common-cause claims; standards applicability or conformance;
+safe operating limits; plant or control authority; certification; or
+accountable engineering or process-safety approval.

@@ -98,10 +98,10 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
   }
 
   /** Component names reported by the acid-solubility notebook example. */
-  private static final String[] ACID_REPORT_COMPONENTS = { "CO2", "water", "nitric acid", "sulfuric acid" };
+  private static final String[] ACID_REPORT_COMPONENTS = {"CO2", "water", "nitric acid", "sulfuric acid"};
 
   /** Acid component names included in the reported total acid concentration. */
-  private static final String[] ACID_REPORT_ACIDS = { "nitric acid", "sulfuric acid" };
+  private static final String[] ACID_REPORT_ACIDS = {"nitric acid", "sulfuric acid"};
 
   /**
    * Runs a CO2-rich Van Laar acid flash and returns the values printed by the notebook example.
@@ -140,7 +140,7 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     for (int componentIndex = 0; componentIndex < ACID_REPORT_COMPONENTS.length; componentIndex++) {
       String componentName = ACID_REPORT_COMPONENTS[componentIndex];
       values[1 + componentIndex] = molePercent(acidPhase, componentName);
-      values[5 + componentIndex] = weightPercent(acidPhase, new String[] { componentName });
+      values[5 + componentIndex] = weightPercent(acidPhase, new String[] {componentName});
     }
     values[9] = (componentMoleFraction(carbonDioxideRichPhase, "nitric acid")
         + componentMoleFraction(carbonDioxideRichPhase, "sulfuric acid")) * 1.0e6;
@@ -277,7 +277,7 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
       }
     }
     double sum = x1 + x2 + x3;
-    return new double[] { x1 / sum, x2 / sum, x3 / sum };
+    return new double[] {x1 / sum, x2 / sum, x3 / sum};
   }
 
   /**
@@ -410,7 +410,7 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
 
     PhaseInterface vapour = system.getPhase(0);
     assertTrue(SystemVanLaarActivitySRK.isPredominantlyCarbonDioxidePhase(vapour));
-    for (String componentName : new String[] { "water", "nitric acid", "sulfuric acid" }) {
+    for (String componentName : new String[] {"water", "nitric acid", "sulfuric acid"}) {
       assertEquals(system.carbonDioxideCarrierFugacityCoefficient(componentName),
           system.getGammaPhiVapourFugacityCoefficient(vapour.getComponent(componentName), vapour), 0.0,
           componentName + " should use the tuned trace-CO2 carrier reference");
@@ -514,7 +514,7 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     double gasSulfuricPpm = gas.getComponent("sulfuric acid").getx() * 1.0e6;
     assertTrue(gasSulfuricPpm < 3.0, "CO2-rich phase H2SO4 should be reduced below the total feed ppm");
 
-    String[] names = { "CO2", "water", "nitric acid", "sulfuric acid" };
+    String[] names = {"CO2", "water", "nitric acid", "sulfuric acid"};
     for (int i = 0; i < names.length; i++) {
       double phaseMoles = 0.0;
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
@@ -720,16 +720,16 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
   @Test
   public void testMaterialAcidSolubilityNotebookReferenceCases() {
     assertAcidReportValues(48.0, 169.0, 100000.0, 54000.0, 0.0,
-        new double[] { 64.5861407589, 4.61321199649e-11, 65.7289201930, 34.2710798070, 0.00000000000, 6.07207705205e-11,
-            35.4138592411, 64.5861407589, 0.00000000000, 2653.04705015, 1535.99871337, 0.129803580865 });
+        new double[] {64.5861407589, 4.61321199649e-11, 65.7289201930, 34.2710798070, 0.00000000000, 6.07207705205e-11,
+            35.4138592411, 64.5861407589, 0.00000000000, 2653.04705015, 1535.99871337, 0.129803580865});
     assertAcidReportValues(0.0, 100.0, 100000.0, 54500.0, 0.0,
-        new double[] { 65.1413190444, 3.19845990494e-11, 65.1780977127, 34.8219022872, 0.00000000000, 4.17895102490e-11,
-            34.8586809556, 65.1413190444, 0.00000000000, 1408.71182512, 630.172783960, 0.132054525639 });
+        new double[] {65.1413190444, 3.19845990494e-11, 65.1780977127, 34.8219022872, 0.00000000000, 4.17895102490e-11,
+            34.8586809556, 65.1413190444, 0.00000000000, 1408.71182512, 630.172783960, 0.132054525639});
     assertAcidReportValues(-28.0, 20.0, 100000.0, 53500.0, 0.0,
-        new double[] { 65.0877627397, 8.19980668535e-11, 65.2315894654, 34.7684105345, 0.00000000000, 1.07211268705e-10,
-            34.9122372602, 65.0877627397, 0.00000000000, 425.310614046, 422.963641934, 0.132337239329 });
-    assertAcidReportValues(50.0, 125.0, 10.0, 0.0, 90.0, new double[] { 97.9375, 5.66359e-11, 10.2859, 0.0, 89.7141,
-        2.77433e-11, 2.06249, 0.0, 97.9375, 3.39581, 0.0706188, 9.65239e-05 });
+        new double[] {65.0877627397, 8.19980668535e-11, 65.2315894654, 34.7684105345, 0.00000000000, 1.07211268705e-10,
+            34.9122372602, 65.0877627397, 0.00000000000, 425.310614046, 422.963641934, 0.132337239329});
+    assertAcidReportValues(50.0, 125.0, 10.0, 0.0, 90.0, new double[] {97.9375, 5.66359e-11, 10.2859, 0.0, 89.7141,
+        2.77433e-11, 2.06249, 0.0, 97.9375, 3.39581, 0.0706188, 9.65239e-05});
     assertMixedAcidReportInvariants(50.0, 125.0, 10.0, 30.0, 90.0);
   }
 
@@ -832,17 +832,17 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     PhaseInterface liquid = findVanLaarLiquid(system);
     assertNotNull(liquid, "Van Laar liquid phase must exist");
 
-    String[] names = { "water", "nitric acid", "sulfuric acid" };
-    double[] gammaRef = { NitricSulfuricAcidVaporPressure.activityCoefficientWater(x[0], x[1], x[2], t),
+    String[] names = {"water", "nitric acid", "sulfuric acid"};
+    double[] gammaRef = {NitricSulfuricAcidVaporPressure.activityCoefficientWater(x[0], x[1], x[2], t),
         NitricSulfuricAcidVaporPressure.activityCoefficientNitricAcid(x[0], x[1], x[2], t),
-        NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(x[0], x[1], x[2], t) };
-    double[] p0RefBar = { NitricSulfuricAcidVaporPressure.pureVaporPressureWater(t) / PASCALS_PER_BAR,
+        NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(x[0], x[1], x[2], t)};
+    double[] p0RefBar = {NitricSulfuricAcidVaporPressure.pureVaporPressureWater(t) / PASCALS_PER_BAR,
         NitricSulfuricAcidVaporPressure.pureVaporPressureNitricAcid(t) / PASCALS_PER_BAR,
-        NitricSulfuricAcidVaporPressure.pureVaporPressureSulfuricAcid(t) / PASCALS_PER_BAR };
+        NitricSulfuricAcidVaporPressure.pureVaporPressureSulfuricAcid(t) / PASCALS_PER_BAR};
     double[] partialRefBar = {
         NitricSulfuricAcidVaporPressure.partialPressureWater(x[0], x[1], x[2], t) / PASCALS_PER_BAR,
         NitricSulfuricAcidVaporPressure.partialPressureNitricAcid(x[0], x[1], x[2], t) / PASCALS_PER_BAR,
-        NitricSulfuricAcidVaporPressure.partialPressureSulfuricAcid(x[0], x[1], x[2], t) / PASCALS_PER_BAR };
+        NitricSulfuricAcidVaporPressure.partialPressureSulfuricAcid(x[0], x[1], x[2], t) / PASCALS_PER_BAR};
 
     for (int i = 0; i < names.length; i++) {
       double gammaSystem = liquid.getActivityCoefficient(i);
@@ -926,14 +926,14 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     // The Van Laar model is evaluated on the liquid's renormalised acid
     // composition.
     double[] xa = acidFractions(liquid);
-    double[] gammaRef = { NitricSulfuricAcidVaporPressure.activityCoefficientWater(xa[0], xa[1], xa[2], t),
+    double[] gammaRef = {NitricSulfuricAcidVaporPressure.activityCoefficientWater(xa[0], xa[1], xa[2], t),
         NitricSulfuricAcidVaporPressure.activityCoefficientNitricAcid(xa[0], xa[1], xa[2], t),
-        NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(xa[0], xa[1], xa[2], t) };
-    double[] p0RefBar = { NitricSulfuricAcidVaporPressure.pureVaporPressureWater(t) / PASCALS_PER_BAR,
+        NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(xa[0], xa[1], xa[2], t)};
+    double[] p0RefBar = {NitricSulfuricAcidVaporPressure.pureVaporPressureWater(t) / PASCALS_PER_BAR,
         NitricSulfuricAcidVaporPressure.pureVaporPressureNitricAcid(t) / PASCALS_PER_BAR,
-        NitricSulfuricAcidVaporPressure.pureVaporPressureSulfuricAcid(t) / PASCALS_PER_BAR };
+        NitricSulfuricAcidVaporPressure.pureVaporPressureSulfuricAcid(t) / PASCALS_PER_BAR};
 
-    String[] names = { "water", "nitric acid", "sulfuric acid" };
+    String[] names = {"water", "nitric acid", "sulfuric acid"};
     for (int i = 0; i < 3; i++) {
       double xi = liquid.getComponent(i).getx();
       double gammaSystem = liquid.getActivityCoefficient(i);
@@ -985,12 +985,12 @@ public class SystemVanLaarActivitySRKTest extends neqsim.NeqSimTest {
     assertNotNull(liquid, "A Van Laar liquid phase must form in the carrier-gas VLE");
 
     double[] xa = acidFractions(liquid);
-    double[] gammaRef = { NitricSulfuricAcidVaporPressure.activityCoefficientWater(xa[0], xa[1], xa[2], t),
+    double[] gammaRef = {NitricSulfuricAcidVaporPressure.activityCoefficientWater(xa[0], xa[1], xa[2], t),
         NitricSulfuricAcidVaporPressure.activityCoefficientNitricAcid(xa[0], xa[1], xa[2], t),
-        NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(xa[0], xa[1], xa[2], t) };
-    double[] p0RefBar = { NitricSulfuricAcidVaporPressure.pureVaporPressureWater(t) / PASCALS_PER_BAR,
+        NitricSulfuricAcidVaporPressure.activityCoefficientSulfuricAcid(xa[0], xa[1], xa[2], t)};
+    double[] p0RefBar = {NitricSulfuricAcidVaporPressure.pureVaporPressureWater(t) / PASCALS_PER_BAR,
         NitricSulfuricAcidVaporPressure.pureVaporPressureNitricAcid(t) / PASCALS_PER_BAR,
-        NitricSulfuricAcidVaporPressure.pureVaporPressureSulfuricAcid(t) / PASCALS_PER_BAR };
+        NitricSulfuricAcidVaporPressure.pureVaporPressureSulfuricAcid(t) / PASCALS_PER_BAR};
 
     for (int i = 0; i < 3; i++) {
       double xi = liquid.getComponent(i).getx();

@@ -20,7 +20,7 @@ public class SQPoptimizerTest {
       }
     });
 
-    sqp.setInitialPoint(new double[] { 0.0, 0.0 });
+    sqp.setInitialPoint(new double[] {0.0, 0.0});
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged(), "Should converge for simple quadratic");
@@ -49,7 +49,7 @@ public class SQPoptimizerTest {
       }
     });
 
-    sqp.setInitialPoint(new double[] { 3.0, 3.0 });
+    sqp.setInitialPoint(new double[] {3.0, 3.0});
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged(), "Should converge with inequality constraint");
@@ -78,7 +78,7 @@ public class SQPoptimizerTest {
       }
     });
 
-    sqp.setInitialPoint(new double[] { 0.0, 0.0 });
+    sqp.setInitialPoint(new double[] {0.0, 0.0});
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged(), "Should converge with equality constraint");
@@ -99,8 +99,8 @@ public class SQPoptimizerTest {
       }
     });
 
-    sqp.setVariableBounds(new double[] { 0.0 }, new double[] { 5.0 });
-    sqp.setInitialPoint(new double[] { 2.0 });
+    sqp.setVariableBounds(new double[] {0.0}, new double[] {5.0});
+    sqp.setInitialPoint(new double[] {2.0});
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged());
@@ -117,7 +117,7 @@ public class SQPoptimizerTest {
         return x[0] * x[0];
       }
     });
-    sqp.setInitialPoint(new double[] { 5.0 });
+    sqp.setInitialPoint(new double[] {5.0});
     SQPoptimizer.OptimizationResult result = sqp.solve();
 
     Assertions.assertTrue(result.isConverged());

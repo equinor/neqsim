@@ -34,12 +34,12 @@ class DifferentialPressureFlowCalculatorTest {
 
   @Test
   void testSimplifiedFlowUsesCv() {
-    double[] pressureBarg = { 5.0 };
-    double[] temperatureC = { 25.0 };
-    double[] differentialPressureMbar = { 50.0 };
-    double[] flowData = { 2.5 };
+    double[] pressureBarg = {5.0};
+    double[] temperatureC = {25.0};
+    double[] differentialPressureMbar = {50.0};
+    double[] flowData = {2.5};
     List<String> components = Arrays.asList("nitrogen");
-    double[] fractions = { 1.0 };
+    double[] fractions = {1.0};
 
     FlowCalculationResult result = DifferentialPressureFlowCalculator.calculate(pressureBarg, temperatureC,
         differentialPressureMbar, "Simplified", flowData, components, fractions, true);
@@ -61,13 +61,13 @@ class DifferentialPressureFlowCalculatorTest {
 
   @Test
   void testStreamFlowRateMatchesCalculatorResult() {
-    double[] pressureBarg = { 8.0 };
-    double[] temperatureC = { 18.0 };
-    double[] differentialPressureMbar = { 120.0 };
-    double[] flowData = { 300.0, 200.0, 0.9 };
+    double[] pressureBarg = {8.0};
+    double[] temperatureC = {18.0};
+    double[] differentialPressureMbar = {120.0};
+    double[] flowData = {300.0, 200.0, 0.9};
 
     List<String> components = Arrays.asList("nitrogen");
-    double[] fractions = { 1.0 };
+    double[] fractions = {1.0};
 
     FlowCalculationResult result = DifferentialPressureFlowCalculator.calculate(pressureBarg, temperatureC,
         differentialPressureMbar, "Venturi", flowData, components, fractions, true);
@@ -92,10 +92,10 @@ class DifferentialPressureFlowCalculatorTest {
 
   @Test
   void testSimplifiedRequiresPositiveCv() {
-    double[] pressureBarg = { 5.0 };
-    double[] temperatureC = { 25.0 };
-    double[] differentialPressureMbar = { 50.0 };
-    double[] flowData = { 0.0 };
+    double[] pressureBarg = {5.0};
+    double[] temperatureC = {25.0};
+    double[] differentialPressureMbar = {50.0};
+    double[] flowData = {0.0};
 
     assertThrows(IllegalArgumentException.class, () -> DifferentialPressureFlowCalculator.calculate(pressureBarg,
         temperatureC, differentialPressureMbar, "Simplified", flowData, null, null, true));

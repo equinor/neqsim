@@ -47,10 +47,10 @@ class ProcessScreeningDiagnosticExportTest {
       }
     }
     // Formatting uses the saved result axes, not mutable settings for the next run.
-    generator.setFlowRates(new double[] { 999.0 });
-    generator.setOutletPressures(new double[] { 999.0 });
-    generator.setWaterCuts(new double[] { 0.9 });
-    generator.setGORs(new double[] { 999.0 });
+    generator.setFlowRates(new double[] {999.0});
+    generator.setOutletPressures(new double[] {999.0});
+    generator.setWaterCuts(new double[] {0.9});
+    generator.setGORs(new double[] {999.0});
     generator.setFlowRateUnit("Sm3/s");
     assertEquals(diagnostic, generator.toDiagnosticString());
     assertEquals(diagnostic, generator.toVFPEXPString(17));
@@ -76,20 +76,19 @@ class ProcessScreeningDiagnosticExportTest {
   @Test
   void pressureBoundaryDiagnosticsPreserveEveryCoordinateAndUnavailableValue() {
     PressureBoundaryOptimizer.LiftCurveTable table = new PressureBoundaryOptimizer.LiftCurveTable("capacity",
-        new double[] { 40.0, 50.0 }, new double[] { 20.0, 30.0 },
-        new double[][] { { 400.25, Double.NaN }, { 350.5, 500.75 } },
-        new double[][] { { 10.25, Double.NaN }, { 20.5, 30.75 } },
-        new String[][] { { "compressor", "unavailable" }, { "pipe", "valve" } }, "bara", "kg/hr");
+        new double[] {40.0, 50.0}, new double[] {20.0, 30.0}, new double[][] {{400.25, Double.NaN}, {350.5, 500.75}},
+        new double[][] {{10.25, Double.NaN}, {20.5, 30.75}},
+        new String[][] {{"compressor", "unavailable"}, {"pipe", "valve"}}, "bara", "kg/hr");
     String diagnostic = table.toDiagnosticTable();
     assertDiagnosticOnly(diagnostic);
     assertEquals(diagnostic, table.toEclipseFormat());
     assertTrue(diagnostic.contains("maximum flow [kg/hr]"));
     List<String[]> rows = dataRows(diagnostic);
     assertEquals(4, rows.size());
-    assertArrayEquals(new String[] { "40.0", "20.0", "400.25", "10.25", "compressor", "true" }, rows.get(0));
-    assertArrayEquals(new String[] { "40.0", "30.0", "NaN", "NaN", "unavailable", "false" }, rows.get(1));
-    assertArrayEquals(new String[] { "50.0", "20.0", "350.5", "20.5", "pipe", "true" }, rows.get(2));
-    assertArrayEquals(new String[] { "50.0", "30.0", "500.75", "30.75", "valve", "true" }, rows.get(3));
+    assertArrayEquals(new String[] {"40.0", "20.0", "400.25", "10.25", "compressor", "true"}, rows.get(0));
+    assertArrayEquals(new String[] {"40.0", "30.0", "NaN", "NaN", "unavailable", "false"}, rows.get(1));
+    assertArrayEquals(new String[] {"50.0", "20.0", "350.5", "20.5", "pipe", "true"}, rows.get(2));
+    assertArrayEquals(new String[] {"50.0", "30.0", "500.75", "30.75", "valve", "true"}, rows.get(3));
     Locale previous = Locale.getDefault();
     try {
       Locale.setDefault(Locale.GERMANY);
@@ -101,7 +100,7 @@ class ProcessScreeningDiagnosticExportTest {
 
   private static void assertDiagnosticOnly(String text) {
     assertTrue(text.contains("diagnostic text only"));
-    for (String misleading : new String[] { "VFPPROD", "VFPEXP", "BHP", "THP", "1*" }) {
+    for (String misleading : new String[] {"VFPPROD", "VFPEXP", "BHP", "THP", "1*"}) {
       assertFalse(text.contains(misleading), "Diagnostic output must not contain " + misleading);
     }
   }
@@ -132,10 +131,10 @@ class ProcessScreeningDiagnosticExportTest {
     }, "feed", "feed");
     generator.setFlashGenerator(new RecombinationFlashGenerator(input));
     generator.setFlowRateUnit("kg/hr");
-    generator.setFlowRates(new double[] { 10.0, 20.0 });
-    generator.setOutletPressures(new double[] { 10.0, 40.0 });
-    generator.setWaterCuts(new double[] { 0.0 });
-    generator.setGORs(new double[] { 80.0 });
+    generator.setFlowRates(new double[] {10.0, 20.0});
+    generator.setOutletPressures(new double[] {10.0, 40.0});
+    generator.setWaterCuts(new double[] {0.0});
+    generator.setGORs(new double[] {80.0});
     generator.setMinInletPressure(5.0);
     generator.setMaxInletPressure(30.0);
     generator.setPressureTolerance(0.1);

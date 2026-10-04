@@ -1,7 +1,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseElectrolyteCPA;
-import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
  * This class defines a thermodynamic system using the Electrolyte CPA EoS of Equinor.
@@ -36,7 +35,6 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
-    FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
     this.useVolumeCorrection(false);
   }
 

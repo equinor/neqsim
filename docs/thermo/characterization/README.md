@@ -13,7 +13,7 @@ The `neqsim.thermo.characterization` package converts petroleum assay, TBP, and 
 | --- | --- | --- |
 | Pre-binned TBP fractions | `SystemInterface.addTBPfraction(...)` | Add a petroleum cut from moles, molar mass, and specific gravity |
 | Plus fraction | `SystemInterface.addPlusFraction(...)` + `Characterise` | Represent and split a C7+/C20+ heavy end |
-| Refinery assay | `OilAssayCharacterisation` | Convert mass- or volume-basis refinery cuts/TBP boundaries to pseudo-components |
+| Refinery assay | `OilAssayCharacterisation` | Convert assay data, export, split, re-lump, re-ingest and recharacterize an auditable TBP cut table, with invertible recovery/cut-point queries and conservative target-grid resampling |
 | Assay blend screening | `RefineryAssayBlend` | Combine whole-assay SG/API and optional sulfur/nitrogen on an explicit mass basis |
 | TBP property model selection | `Characterise.setTBPModel(...)` | Select Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing, and related models |
 | Lumping | `Characterise.configureLumping()` | Reduce a detailed heavy-end slate while preserving configured grouping rules |
@@ -47,10 +47,43 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 
 - one explicit composition basis per assay: mass or liquid volume;
 - volume-to-mass conversion using cut density;
+- literature-qualified ASTM D86 reference-point conversion at 0, 10, 30, 50, 70, 90, and 95 vol% with an explicit caller-supplied 100 vol% TBP terminal boundary;
+- auditable TBP cut-table export with mass/volume-basis round-trip closure and fail-closed contiguous boundaries;
+- bounded, invertible TBP recovery/cut-point queries with unit-explicit interval-yield receipts;
+- immutable TBP boiling-range temperature-moment, distribution-spread, SG60/60, API-gravity, density, and Watson-factor receipts with additive raw-moment closure;
+- conservative adjacent whole-cut re-lumping with exact liquid-volume and implied-mass closure;
 - kg/mol and g/mol explicit molar-mass helpers;
 - specific-gravity, kg/m3, and API-gravity density inputs;
 - exact API-gravity/SG60/60 round-tripping and explicit bulk density at 60 degF;
 - immutable whole-assay blend screening with ideal additive liquid volumes and mass-linear sulfur/nitrogen;
+- auditable optimizer property bounds, margins, and binding-constraint receipts;
+- auditable blend-batch mass, additive-volume, specific-gravity, and optimizer-cost receipts;
+- immutable label-addressable source ledgers for qualified blend batches;
+- complete optimized blend plans with source-level cost closure and retained quality receipts;
+- stoichiometric hydrotreating sulfur/hydrogen screening receipts with explicit H2/S assumptions;
+- stoichiometric hydrotreating nitrogen/hydrogen/ammonia receipts with explicit H2/N assumptions;\n- coupled hydrotreating sulfur/nitrogen receipts solved on one liquid-product mass basis;\n- unit-explicit coupled sulfur/nitrogen throughput receipts in kg/h;\n- coupled sulfur/nitrogen makeup- and outlet-gas receipts with H2, H2S, NH3, and non-H2 closure;
+- coupled sulfur/nitrogen recycle/purge receipts with explicit H2, H2S, NH3, and non-H2 recovery;
+- unit-explicit coupled recycle-throughput receipts in kg/h and kmol/h;
+- coupled sulfur/nitrogen hydrogen energy and caller-priced utility receipts;
+- coupled sulfur/nitrogen external liquid-product and export-gas distribution receipts;
+- caller-owned coupled sulfur/nitrogen reaction-heat and net thermal-duty receipts;
+- caller-owned coupled sulfur/nitrogen fired-heater fuel, cost, and emissions receipts;\n- caller-owned CHSON fuel/air/complete-combustion flue-gas closure receipts;
+- caller-owned wet-flue-gas sensible stack-loss receipts reconciled to qualified furnace loss;
+- caller-owned wet-flue-gas heat-recovery receipts with explicit recovered/remaining loss closure;
+- caller-owned recovered-heat utilization with avoided/net fired-heater fuel, cost, and emissions receipts;
+- integrated net hydrogen/fired-heater energy, emissions, and caller-priced operating receipts;
+- liquid-product-basis energy, emissions, and caller-priced operating-intensity receipts;
+- caller-priced coupled sulfur/nitrogen screening-economics receipts;
+- single-variable break-even economics and price-sensitivity receipts;
+- same-physical-case economics scenario-delta attribution receipts;\n- fixed-screening-price economics case-delta receipts;\n- symmetric total economics-delta attribution receipts;
+- scenario-based coupled sulfur/nitrogen hydrogen-supply emissions and carbon-cost receipts;
+- integrated coupled sulfur/nitrogen material, energy, emissions, and scenario-cost receipts;
+- hydrotreating makeup-gas and outlet-gas receipts with explicit H2 purity, excess, and non-H2 molar mass;
+- hydrotreating recycle/purge receipts with explicit component recovery and purge assumptions;
+- unit-explicit hydrotreating throughput receipts in kg/h and kmol/h;
+- explicit hydrotreating hydrogen energy and caller-priced utility receipts;
+- scenario-based hydrotreating hydrogen-supply emissions and carbon-cost receipts;
+- integrated hydrotreating material, energy, emissions, and scenario-cost receipts;
 - forward and inverse UOP/Watson characterization between representative boiling point and specific gravity;
 - mass-basis mapping of known assay light ends to authoritative NeqSim standard components;
 - number-average molar mass from mass-basis PIANO family/carbon-number data;
@@ -157,6 +190,30 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 ## Related documentation
 
 - [Refinery Assay and TBP Cut Characterization](refinery_assay)
+- [Hydrotreating sulfur and hydrogen balance](refinery_hydrotreating_sulfur_balance)
+- [Hydrotreating nitrogen and ammonia balance](refinery_hydrotreating_nitrogen_balance)\n- [Coupled hydrotreating sulfur and nitrogen balance](refinery_hydrotreating_sulfur_nitrogen_balance)\n- [Coupled hydrotreating sulfur/nitrogen throughput balance](refinery_hydrotreating_sulfur_nitrogen_throughput_balance)\n- [Coupled sulfur/nitrogen hydrotreating hydrogen supply](refinery_hydrotreating_sulfur_nitrogen_hydrogen_supply_balance)
+- [Coupled sulfur/nitrogen hydrotreating hydrogen recycle and purge](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_balance)
+- [Coupled sulfur/nitrogen recycle-throughput balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_throughput_balance)
+- [Coupled sulfur/nitrogen product-distribution receipt](refinery_hydrotreating_sulfur_nitrogen_product_distribution_receipt)
+- [Coupled sulfur/nitrogen thermal-duty balance](refinery_hydrotreating_sulfur_nitrogen_thermal_duty_balance)
+- [Coupled sulfur/nitrogen fired-heater utility balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_utility_balance)\n- [Coupled sulfur/nitrogen fired-heater combustion balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_combustion_balance)
+- [Coupled sulfur/nitrogen fired-heater stack-loss balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_stack_loss_balance)
+- [Coupled sulfur/nitrogen fired-heater heat-recovery balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_heat_recovery_balance)
+- [Coupled sulfur/nitrogen fired-heater heat-recovery credit balance](refinery_hydrotreating_sulfur_nitrogen_fired_heater_heat_recovery_credit_balance)
+- [Net coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_net_operating_receipt)
+- [Net coupled sulfur/nitrogen hydrotreating liquid-product intensity receipt](refinery_hydrotreating_sulfur_nitrogen_net_product_intensity_receipt)
+- [Coupled sulfur/nitrogen hydrotreating screening-economics receipt](refinery_hydrotreating_sulfur_nitrogen_screening_economics_receipt)
+- [Coupled sulfur/nitrogen hydrotreating break-even economics receipt](refinery_hydrotreating_sulfur_nitrogen_break_even_economics_receipt)
+- [Coupled sulfur/nitrogen hydrotreating economics scenario-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_scenario_delta_receipt)\n- [Coupled sulfur/nitrogen hydrotreating economics case-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_case_delta_receipt)\n- [Coupled sulfur/nitrogen hydrotreating total economics-delta receipt](refinery_hydrotreating_sulfur_nitrogen_economics_total_delta_receipt)
+- [Coupled sulfur/nitrogen hydrogen utility balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_utility_balance)
+- [Coupled sulfur/nitrogen hydrogen-supply emissions balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_emissions_balance)
+- [Integrated coupled sulfur/nitrogen hydrotreating operating receipt](refinery_hydrotreating_sulfur_nitrogen_operating_receipt)
+- [Hydrotreating hydrogen supply and outlet gas balance](refinery_hydrotreating_hydrogen_supply_balance)
+- [Hydrotreating hydrogen recycle and purge balance](refinery_hydrotreating_hydrogen_recycle_balance)
+- [Hydrotreating throughput-rate balance](refinery_hydrotreating_throughput_balance)
+- [Hydrotreating hydrogen utility balance](refinery_hydrotreating_hydrogen_utility_balance)
+- [Hydrotreating hydrogen-supply emissions balance](refinery_hydrotreating_hydrogen_emissions_balance)
+- [Integrated hydrotreating operating receipt](refinery_hydrotreating_operating_receipt)
 - [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation)
 - [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation)
 - [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation)

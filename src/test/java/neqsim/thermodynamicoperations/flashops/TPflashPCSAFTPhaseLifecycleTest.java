@@ -14,7 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Qualification tests for the PC-SAFT methane/n-hexane TP-flash lifecycle.
  *
  * <p>
- * The synthetic binary retains the existing 250 K and 10 bara heat-capacity reference while adding strict equilibrium
+ * The synthetic binary uses the corrected 250 K and 10 bara heat-capacity reference and checks strict equilibrium
  * closure, algorithm agreement, poor-initialization, nearby-state, and reused-state contracts. This is numerical
  * qualification, not independent validation of PC-SAFT parameters.
  * </p>
@@ -22,7 +22,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TPflashPCSAFTPhaseLifecycleTest {
   private static final double REFERENCE_TEMPERATURE_K = 250.0;
   private static final double REFERENCE_PRESSURE_BARA = 10.0;
-  private static final double REFERENCE_HEAT_CAPACITY_J_PER_K = 172.3659584364608;
+  private static final double REFERENCE_HEAT_CAPACITY_J_PER_K = 219.08347126863538;
 
   private static final double NORMALIZATION_TOLERANCE = 3.0e-12;
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
@@ -33,7 +33,7 @@ class TPflashPCSAFTPhaseLifecycleTest {
    */
   @Test
   void nearbyTemperatureAndPressureMatricesRemainClosed() {
-    for (double temperatureK : new double[] { 248.0, REFERENCE_TEMPERATURE_K, 252.0 }) {
+    for (double temperatureK : new double[] {248.0, REFERENCE_TEMPERATURE_K, 252.0}) {
       SystemInterface ordinary = flash(createSystem(temperatureK, REFERENCE_PRESSURE_BARA, false));
       SystemInterface multiphase = flash(createSystem(temperatureK, REFERENCE_PRESSURE_BARA, true));
       assertQualifiedState(ordinary, "ordinary temperature " + temperatureK);
@@ -41,7 +41,7 @@ class TPflashPCSAFTPhaseLifecycleTest {
       assertEquivalentState(ordinary, multiphase, 1.0e-8, "algorithm agreement at " + temperatureK + " K");
     }
 
-    for (double pressureBara : new double[] { 9.0, REFERENCE_PRESSURE_BARA, 11.0 }) {
+    for (double pressureBara : new double[] {9.0, REFERENCE_PRESSURE_BARA, 11.0}) {
       SystemInterface ordinary = flash(createSystem(REFERENCE_TEMPERATURE_K, pressureBara, false));
       SystemInterface multiphase = flash(createSystem(REFERENCE_TEMPERATURE_K, pressureBara, true));
       assertQualifiedState(ordinary, "ordinary pressure " + pressureBara);
@@ -51,7 +51,7 @@ class TPflashPCSAFTPhaseLifecycleTest {
   }
 
   /**
-   * The established reference-state total heat capacity must remain unchanged.
+   * The corrected heat-capacity reference is independently checked against dH/dT in SystemPCSAFTTest.
    */
   @Test
   void referenceStateRetainsHeatCapacityAnchor() {
@@ -156,7 +156,7 @@ class TPflashPCSAFTPhaseLifecycleTest {
     assertQualifiedState(expected, label + " expected");
     assertQualifiedState(actual, label + " actual");
 
-    for (PhaseType type : new PhaseType[] { PhaseType.GAS, PhaseType.OIL }) {
+    for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.OIL}) {
       int expectedPhase = findPhase(expected, type);
       int actualPhase = findPhase(actual, type);
       assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label + " beta " + type);

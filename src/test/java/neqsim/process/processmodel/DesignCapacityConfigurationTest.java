@@ -72,7 +72,7 @@ class DesignCapacityConfigurationTest {
   void invalidValuesAndUnknownPropertiesRejectBeforeMutation() {
     ProcessSystem process = process();
     double previous = ((Compressor) process.getUnit("compressor")).getMaximumSpeed();
-    Object[] invalid = { Double.NaN, Double.POSITIVE_INFINITY, 0.0, -1.0, "5000", null };
+    Object[] invalid = {Double.NaN, Double.POSITIVE_INFINITY, 0.0, -1.0, "5000", null};
     for (Object value : invalid) {
       Map<String, Map<String, Object>> input = capacities();
       input.put("compressor", properties("maxSpeed", 13000.0));
@@ -94,7 +94,7 @@ class DesignCapacityConfigurationTest {
   void invalidNamesAndUnsupportedEquipmentAreRejected() {
     ProcessSystem process = process();
     assertThrows(IllegalArgumentException.class, () -> process.applyDesignCapacities(null));
-    for (String name : new String[] { null, " ", "feed" }) {
+    for (String name : new String[] {null, " ", "feed"}) {
       Map<String, Map<String, Object>> input = capacities();
       input.put(name, properties("internalDiameter", 2.0));
       assertThrows(IllegalArgumentException.class, () -> process.applyDesignCapacities(input));
@@ -149,7 +149,7 @@ class DesignCapacityConfigurationTest {
           .setSource(CapacityConstraint.ConstraintSource.VENDOR_DATASHEET, "datasheet-123")
           .setDataSource("installed-data");
     }
-    for (double scale : new double[] { 1.0, 2.0 }) {
+    for (double scale : new double[] {1.0, 2.0}) {
       input.put("pump", properties("maxDesignPower", 75.0 * scale, "maxDesignVolumeFlow", 140.0 * scale));
       input.put("compressor", properties("maxSpeed", 12000.0 * scale));
       input.put("cooler", properties("maxDesignDutyMW", 4.0 * scale));
@@ -197,7 +197,7 @@ class DesignCapacityConfigurationTest {
     assertEquals("kW", power.getUnit());
     assertEquals(operatingPowerKW, power.getCurrentValue(), 1.0e-12);
     Map<String, Map<String, Object>> input = capacities();
-    for (double ratingKW : new double[] { 75.0, 150.0 }) {
+    for (double ratingKW : new double[] {75.0, 150.0}) {
       input.put("pump", properties("maxDesignPower", ratingKW));
       process.applyDesignCapacities(input);
       assertEquals(ratingKW * 1000.0, pump.getMechanicalDesign().maxDesignPower, 1.0e-12);
@@ -237,10 +237,9 @@ class DesignCapacityConfigurationTest {
 
   @Test
   void incompatibleCustomConstraintUnitsRejectAllAreaUpdatesBeforeMutation() {
-    String[][] cases = { { "pump", "power", "maxDesignPower", "W" },
-        { "pump", "flowRate", "maxDesignVolumeFlow", "m3/sec" }, { "cooler", "duty", "maxDesignDutyKW", "kW" },
-        { "compressor", "speed", "maxSpeed", "rad/s" },
-        { "separator", "gasLoadFactor", "designGasLoadFactor", "ft/s" } };
+    String[][] cases = {{"pump", "power", "maxDesignPower", "W"}, {"pump", "flowRate", "maxDesignVolumeFlow", "m3/sec"},
+        {"cooler", "duty", "maxDesignDutyKW", "kW"}, {"compressor", "speed", "maxSpeed", "rad/s"},
+        {"separator", "gasLoadFactor", "designGasLoadFactor", "ft/s"}};
     for (String[] mismatch : cases) {
       ProcessSystem first = process();
       ProcessSystem second = process();
@@ -304,7 +303,7 @@ class DesignCapacityConfigurationTest {
     assertTrue(operatingPowerKW > 0.0);
     CapacityConstraint power = compressor.getCapacityConstraints().get("power");
     power.setEnabled(false).setSourceReference("retained-source");
-    for (double targetUtilization : new double[] { 0.75, 0.375 }) {
+    for (double targetUtilization : new double[] {0.75, 0.375}) {
       compressor.updatePowerConstraint(operatingPowerKW / targetUtilization);
       assertSame(power, compressor.getCapacityConstraints().get("power"));
       assertEquals("%", power.getUnit());
@@ -378,7 +377,7 @@ class DesignCapacityConfigurationTest {
     assertEquals("B::separator", report.get("B::separator").equipmentName);
     assertEquals(2.0, ((Separator) first.getUnit("separator")).getInternalDiameter());
     assertEquals(3.0, ((Separator) second.getUnit("separator")).getInternalDiameter());
-    for (String name : new String[] { "separator", "missing::separator", "A::", "A::separator::extra" }) {
+    for (String name : new String[] {"separator", "missing::separator", "A::", "A::separator::extra"}) {
       input.put(name, properties("internalDiameter", 9.0));
       assertThrows(IllegalArgumentException.class, () -> model.applyDesignCapacities(input));
       input.remove(name);

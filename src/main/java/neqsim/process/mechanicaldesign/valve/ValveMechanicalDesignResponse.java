@@ -35,13 +35,13 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
   private int ansiPressureClass;
 
   /** Nominal valve size [inches]. */
-  private double nominalSizeInches;
+  private double nominalSizeInches = Double.NaN;
 
   /** Required valve Cv. */
-  private double cvRequired;
+  private double cvRequired = Double.NaN;
 
   /** Selected/limiting trim maximum Cv, or legacy required Cv when no catalog is evaluated. */
-  private double cvMax;
+  private double cvMax = Double.NaN;
 
   /** Available vendor trim capacity options. */
   private List<ValveTrimOption> availableTrimOptions = new ArrayList<ValveTrimOption>();
@@ -53,22 +53,22 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
   private String selectedTrimIdentifier;
 
   /** Relative size of the selected or limiting trim [%]. */
-  private double relativeTrimSizePercent;
+  private double relativeTrimSizePercent = Double.NaN;
 
   /** Maximum design Cv of the selected or limiting trim. */
-  private double selectedTrimMaximumCv;
+  private double selectedTrimMaximumCv = Double.NaN;
 
   /** Largest maximum design Cv in the supplied trim catalog. */
-  private double maximumAvailableTrimCv;
+  private double maximumAvailableTrimCv = Double.NaN;
 
   /** Required-Cv utilization of the selected or limiting trim. */
-  private double trimCvUtilization;
+  private double trimCvUtilization = Double.NaN;
 
   /** Remaining Cv capacity of the selected or limiting trim. */
-  private double trimCvCapacityMargin;
+  private double trimCvCapacityMargin = Double.NaN;
 
   /** Maximum allowed trim utilization used for selection. */
-  private double maximumAllowedTrimUtilization;
+  private double maximumAllowedTrimUtilization = Double.NaN;
 
   /** Whether a feasible trim was selected. */
   private boolean trimFeasible;
@@ -83,64 +83,64 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
   private String trimRecommendation;
 
   /** Valve opening percentage at design point. */
-  private double valveOpening;
+  private double valveOpening = Double.NaN;
 
   /** Calculated Kv (metric flow coefficient). */
-  private double kv;
+  private double kv = Double.NaN;
 
   /** Face-to-face dimension [mm]. */
-  private double faceToFace;
+  private double faceToFace = Double.NaN;
 
   /** Body wall thickness [mm]. */
-  private double bodyWallThickness;
+  private double bodyWallThickness = Double.NaN;
 
   /** Body weight [kg]. */
-  private double bodyWeight;
+  private double bodyWeight = Double.NaN;
 
   /** Actuator weight [kg]. */
-  private double actuatorWeight;
+  private double actuatorWeight = Double.NaN;
 
   /** Actuator type (pneumatic, electric, hydraulic, manual). */
   private String actuatorType;
 
   /** Required actuator thrust [N]. */
-  private double requiredActuatorThrust;
+  private double requiredActuatorThrust = Double.NaN;
 
   /** Stem diameter [mm]. */
-  private double stemDiameter;
+  private double stemDiameter = Double.NaN;
 
   /** Flange type (RF, RTJ, FF). */
   private String flangeType;
 
   /** Inlet pressure [bara]. */
-  private double inletPressure;
+  private double inletPressure = Double.NaN;
 
   /** Outlet pressure [bara]. */
-  private double outletPressure;
+  private double outletPressure = Double.NaN;
 
   /** Pressure drop [bar]. */
-  private double pressureDrop;
+  private double pressureDrop = Double.NaN;
 
   /** Pressure recovery factor (FL). */
-  private double flFactor;
+  private double flFactor = Double.NaN;
 
   /** Pressure ratio factor (xT). */
-  private double xtFactor;
+  private double xtFactor = Double.NaN;
 
   /** Flow regime (subcritical, critical, choked). */
   private String flowRegime;
 
   /** Mass flow rate [kg/h]. */
-  private double massFlowRate;
+  private double massFlowRate = Double.NaN;
 
   /** Volumetric flow rate [m³/h]. */
-  private double volumetricFlowRate;
+  private double volumetricFlowRate = Double.NaN;
 
   /** Noise level [dBA]. */
-  private double noiseLevel;
+  private double noiseLevel = Double.NaN;
 
   /** Cavitation index. */
-  private double cavitationIndex;
+  private double cavitationIndex = Double.NaN;
 
   /** Is flow choked? */
   private boolean isChoked;
@@ -179,11 +179,13 @@ public class ValveMechanicalDesignResponse extends MechanicalDesignResponse {
       return;
     }
 
+    setMaxDesignPressure(mecDesign.getDesignPressure() > 0.0 ? mecDesign.getDesignPressure() : Double.NaN);
+    setMaxDesignTemperature(mecDesign.getDesignPressure() > 0.0 ? mecDesign.getDesignTemperature() : Double.NaN);
     this.valveType = mecDesign.getValveType();
     this.valveCharacteristic = mecDesign.getValveCharacterization();
     this.ansiPressureClass = mecDesign.getAnsiPressureClass();
     this.nominalSizeInches = mecDesign.getNominalSizeInches();
-    this.cvRequired = Double.isFinite(mecDesign.getRequiredCv()) ? mecDesign.getRequiredCv() : 0.0;
+    this.cvRequired = mecDesign.getRequiredCv();
     this.cvMax = mecDesign.getValveCvMax();
     this.availableTrimOptions = new ArrayList<ValveTrimOption>(mecDesign.getAvailableTrimOptions());
     this.faceToFace = mecDesign.getFaceToFace();

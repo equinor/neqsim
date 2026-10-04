@@ -563,7 +563,8 @@ public class PowerGenerationOptimization {
 
 - `setRatedPower()` / `setDesignHeatDuty()` create the capacity constraints. In this API their hard limits include 10% overload, so the search can reach 110% design utilization. Without a specified rating, the fallback capacity estimate is not a fixed installed limit.
 - `autoSize(1.2)` is a shortcut that sets rated capacity = current duty × safety factor.
-- The `ProcessOptimizationEngine` reads `CapacityConstrainedEquipment` constraints from every unit in the `ProcessSystem`, so power generation equipment participates in plant-wide bottleneck detection alongside compressors, separators, and other equipment.
+- For power generation equipment, `ProcessOptimizationEngine` uses the equipment's explicit `CapacityConstrainedEquipment` limits and live value suppliers, including custom limits. These take precedence over strategy defaults. The HRSG strategy retains its `heatTransferred` lookup key for the equipment's `heatDuty` constraint.
+- The turbine outlet supplies hot combustion exhaust to the HRSG. The turbine's `getHeat()` estimates recoverable heat; it must not be counted as heat already removed upstream of the HRSG.
 - For more on capacity constraints, see the [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK).
 - For power generation equipment details, see [Power Generation Equipment](../equipment/power_generation).
 

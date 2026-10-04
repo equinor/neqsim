@@ -529,7 +529,7 @@ public class RelativePermeabilityGenerator {
    */
   private static double[] linspace(double start, double end, int n) {
     if (n < 2) {
-      return new double[] { start };
+      return new double[] {start};
     }
     double[] result = new double[n];
     double step = (end - start) / (n - 1);

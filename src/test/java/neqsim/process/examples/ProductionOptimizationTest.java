@@ -150,7 +150,7 @@ public class ProductionOptimizationTest {
     logger.info("\n=== Separator & Scrubber Design Check (" + label + ") ===");
 
     // Get all separators from process
-    String[] separatorNames = { "20-VA-01", "20-VA-02", "20-VA-03", "23-VG-01", "23-VG-02", "23-VG-03", "23-VG-04" };
+    String[] separatorNames = {"20-VA-01", "20-VA-02", "20-VA-03", "23-VG-01", "23-VG-02", "23-VG-03", "23-VG-04"};
 
     for (String name : separatorNames) {
       try {

@@ -835,6 +835,27 @@ chart.setOperatingMW(20.0)
 
 Multi-speed (variable speed) compressors have performance curves at multiple rotational speeds. NeqSim interpolates between these curves to determine performance at any operating speed.
 
+For `CompressorChartAlternativeMapLookupExtrapolate` (the `"interpolate and extrapolate"`
+chart type), head is evaluated on the two surrounding speed curves at the requested
+actual flow and then linearly interpolated in speed. The interpolated head is not
+scaled by speed again: the supplied curves already represent the speed dependence.
+This preserves continuity through every reference speed, which is required for
+repeatable speed solves and compressor-capacity optimization. This corrects older
+behavior that introduced downward jumps just above reference speeds and could make
+a previously feasible optimizer point exceed the speed limit when replayed.
+
+Exact reference-curve values, efficiency interpolation, flow extrapolation, and the
+existing single-curve linear speed scaling outside the speed range are unchanged.
+Operating points between speed curves can therefore produce different head, speed,
+power, and utilization than older versions; re-evaluate optimized setpoints after
+upgrading. Extrapolation remains a model estimate and does not extend the allowable
+equipment operating envelope.
+
+`CompressorChartKhader2015` inherits this interpolation in its dimensionless
+Mach-number coordinates. Its head between reference curves changes for the same
+reason. The sound-speed corrections to flow, speed, and head remain unchanged;
+re-evaluate operating points using the actual gas composition.
+
 ### Setting Up Multi-Speed Curves
 
 ```java
@@ -1072,6 +1093,13 @@ Distance to Stone Wall = (Single Stone Wall Flow Point / Operating Flow) - 1
 ---
 
 ## Speed Calculation from Operating Point
+
+When `Compressor.setSolveSpeed(true)` solves an outlet-pressure target, the
+accepted speed is retained once the pressure residual is within 0.001 bar.
+The reported speed, chart head, efficiency and power therefore describe the same
+iterate. Re-running an unchanged inlet and target does not take an additional
+Newton step after convergence, which could otherwise move a capacity-limited
+operating point across its limit. Configured speed limits still apply.
 
 When you need to determine the compressor speed required to achieve a specific operating point (flow and head), NeqSim provides a robust algorithm that works both within the defined curve range and with extrapolation beyond it.
 

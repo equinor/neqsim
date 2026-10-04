@@ -25,9 +25,9 @@ package neqsim.pvtsimulation.util;
  *
  * <pre>
  * {@code
- * double[] pressures = { 300, 250, 200, 150, 100 };
- * double[] Bo = { 1.45, 1.40, 1.35, 1.30, 1.25 };
- * double[] Rs = { 200, 170, 140, 110, 80 };
+ * double[] pressures = {300, 250, 200, 150, 100};
+ * double[] Bo = {1.45, 1.40, 1.35, 1.30, 1.25};
+ * double[] Rs = {200, 170, 140, 110, 80};
  *
  * ValidationResult result = BlackOilTableValidator.validate(pressures, Bo, Rs, null, null, null);
  * System.out.println(result.isValid());

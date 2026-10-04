@@ -50,7 +50,8 @@ This documentation is organized into the following sections:
 | [neqsim-studio.md](neqsim-studio) | **NeqSim Studio (Python)** — newcomer-friendly process builder: natural language, templates, guided wizard, edit-by-chat, recipe gallery |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
 | [energy_streams.md](energy_streams) | **Energy streams** — typed heat, shaft-work, and electrical ports, unit-aware duties, graph ordering, and energy-driven equipment |
-| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
+| [json_process_models_and_systems.md](json_process_models_and_systems) | **Process JSON builder input** — schema, validation, stream wiring, ports, supported equipment, and ProcessModel areas |
+| [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON model export** — portable ProcessSystem and ProcessModel JSON from live models, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [model-change-events.md](model-change-events) | **Governed model revisions** — versioned change events, idempotent publication, fingerprints, and durable replay |
 | [model-impact-analysis.md](model-impact-analysis) | **Cross-model impact analysis** — configurable propagation rules, recalculation order, cycle detection, and reapproval work |
@@ -211,6 +212,7 @@ This documentation is organized into the following sections:
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
 | **LNG Liquefaction** | [lng_liquefaction.md](lng_liquefaction) | LNGProcessBuilder, LNGProcessModel, LNGProcessBenchmark, LNGHeatExchanger |
 | **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | SMR/ATR/POX route templates, ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer |
+| **Solid Hydride Storage Screening** | [hydride_storage_screening.md](hydride_storage_screening) | Crystallographic H2 capacity and pressure-dependent desorption screening using NeqSim gas fugacity |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Gas Network Operations | [gas_network_operations.md](gas_network_operations) | Conservative mixing, coupled hydraulics, quality, optimization, and linepack |
 | Oil Network Operations | [oil_network_operations.md](oil_network_operations) | Pumps, assays, tanks, parcels, blends, and cargo scheduling |

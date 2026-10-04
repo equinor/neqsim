@@ -47,11 +47,10 @@ public class FlowlineSizeSelector implements Serializable {
   public static final double C_FACTOR_INTERMITTENT = 125.0;
 
   /** Candidate outside diameters in metres, ASME B36.10 line pipe. */
-  private static final double[] DEFAULT_OD_M = { 0.1683, 0.2191, 0.2731, 0.3239, 0.3556, 0.4064, 0.4572, 0.5080,
-      0.6096 };
+  private static final double[] DEFAULT_OD_M = {0.1683, 0.2191, 0.2731, 0.3239, 0.3556, 0.4064, 0.4572, 0.5080, 0.6096};
 
   /** Nominal size labels matching {@link #DEFAULT_OD_M}. */
-  private static final double[] DEFAULT_NOMINAL_INCH = { 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0 };
+  private static final double[] DEFAULT_NOMINAL_INCH = {6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0};
 
   /** Mass flow rate in kg/s. */
   private double massFlowRateKgPerSec = Double.NaN;

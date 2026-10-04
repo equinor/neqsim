@@ -65,8 +65,8 @@ public class StabilityProfileTest {
   void profileStabilityBreakdown() throws Exception {
     int ITERS = 200;
 
-    SystemInterface[] cases = new SystemInterface[] { makeLightFluid(), makeHeavyFluid(), makeWetGas() };
-    String[] caseNames = new String[] { "Light 5c gas (1ph)", "Heavy 13c gas", "Wet gas 2ph" };
+    SystemInterface[] cases = new SystemInterface[] {makeLightFluid(), makeHeavyFluid(), makeWetGas()};
+    String[] caseNames = new String[] {"Light 5c gas (1ph)", "Heavy 13c gas", "Wet gas 2ph"};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "%n%-22s %12s %12s %12s %12s %12s%n", "case", "flash_noStab",
         "flash_stab", "stab_delta", "stab_only", "multiPh+stab");

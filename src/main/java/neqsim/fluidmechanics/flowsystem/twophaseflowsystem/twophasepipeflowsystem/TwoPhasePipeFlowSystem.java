@@ -87,9 +87,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * pipe.setNumberOfNodesInLeg(10);
  *
  * // Set leg geometry
- * double[] height = { 0, 0, 0, 0 };
- * double[] length = { 0.0, 100.0, 200.0, 300.0 };
- * double[] outerTemp = { 288.0, 288.0, 288.0, 288.0 };
+ * double[] height = {0, 0, 0, 0};
+ * double[] length = {0.0, 100.0, 200.0, 300.0};
+ * double[] outerTemp = {288.0, 288.0, 288.0, 288.0};
  * pipe.setLegHeights(height);
  * pipe.setLegPositions(length);
  * pipe.setLegOuterTemperatures(outerTemp);
@@ -476,14 +476,14 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
   /** {@inheritDoc} */
   @Override
   public void solveSteadyState(int type, UUID id) {
-    double[] times = { 0.0 };
+    double[] times = {0.0};
     display = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
         this.getTotalNumberOfNodes(), 1);
     getTimeSeries().setTimes(times);
-    neqsim.thermo.system.SystemInterface[] systems = { flowNode[0].getBulkSystem() };
+    neqsim.thermo.system.SystemInterface[] systems = {flowNode[0].getBulkSystem()};
     getTimeSeries().setInletThermoSystems(systems);
     getTimeSeries().setNumberOfTimeStepsInInterval(1);
-    double[] outletFlowRates = { 0.0, 0.0 };
+    double[] outletFlowRates = {0.0, 0.0};
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
     neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver solver = new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
@@ -600,10 +600,10 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
     display = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
         this.getTotalNumberOfNodes(), times.length);
     getTimeSeries().setTimes(times);
-    neqsim.thermo.system.SystemInterface[] systems = { flowNode[0].getBulkSystem() };
+    neqsim.thermo.system.SystemInterface[] systems = {flowNode[0].getBulkSystem()};
     getTimeSeries().setInletThermoSystems(systems);
     getTimeSeries().setNumberOfTimeStepsInInterval(times.length);
-    double[] outletFlowRates = { 0.0, 0.0 };
+    double[] outletFlowRates = {0.0, 0.0};
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
     // Create solver in dynamic mode
@@ -2702,11 +2702,11 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
     try (java.io.PrintWriter writer = new java.io.PrintWriter(
         new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
       // Write header
-      String[] headers = { "Position [m]", "Elevation [m]", "Temperature [K]", "Pressure [Pa]", "Gas Velocity [m/s]",
+      String[] headers = {"Position [m]", "Elevation [m]", "Temperature [K]", "Pressure [Pa]", "Gas Velocity [m/s]",
           "Liquid Velocity [m/s]", "Superficial Gas Velocity [m/s]", "Superficial Liquid Velocity [m/s]",
           "Void Fraction [-]", "Liquid Holdup [-]", "Gas Density [kg/m3]", "Liquid Density [kg/m3]",
           "Mixture Density [kg/m3]", "Gas Viscosity [Pa.s]", "Liquid Viscosity [Pa.s]", "Reynolds Gas [-]",
-          "Reynolds Liquid [-]", "Pressure Gradient [Pa/m]", "Flow Pattern" };
+          "Reynolds Liquid [-]", "Pressure Gradient [Pa/m]", "Flow Pattern"};
       writer.println(String.join(delimiter, headers));
 
       // Get all profiles
@@ -2732,7 +2732,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
 
       // Write data rows
       for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-        String[] values = { String.format("%.6f", position[i]), String.format("%.6f", elevation[i]),
+        String[] values = {String.format("%.6f", position[i]), String.format("%.6f", elevation[i]),
             String.format("%.4f", temperature[i]), String.format("%.2f", pressure[i]),
             String.format("%.6f", gasVelocity[i]), String.format("%.6f", liquidVelocity[i]),
             String.format("%.6f", usg[i]), String.format("%.6f", usl[i]), String.format("%.6f", voidFraction[i]),
@@ -2740,7 +2740,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
             String.format("%.4f", liquidDensity[i]), String.format("%.4f", mixtureDensity[i]),
             String.format("%.8e", gasViscosity[i]), String.format("%.8e", liquidViscosity[i]),
             String.format("%.2f", reGas[i]), String.format("%.2f", reLiquid[i]),
-            String.format("%.4f", pressureGradient[i]), patterns[i] != null ? patterns[i].getName() : "unknown" };
+            String.format("%.4f", pressureGradient[i]), patterns[i] != null ? patterns[i].getName() : "unknown"};
         writer.println(String.join(delimiter, values));
       }
     }
@@ -2951,14 +2951,14 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
     pipe.setNumberOfLegs(5); // deler inn roret i et gitt antall legger
     pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
     // leg
-    double[] height = { 0, 0, 0, 0, 0, 0 };
-    double[] length = { 0.0, 1.7, 3.5, 5.0, 7.5, 10.4 };
-    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0 }; // , 278.0, 275.0,
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
+    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0}; // , 278.0, 275.0,
     // 275.0, 275.0,
     // 275.0};
-    double[] roughness = { 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5 };
-    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
-    double[] wallHeacCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
+    double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    double[] wallHeacCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
 
     pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
     pipe.setLegPositions(length); // setter avstand til hver leg-ende
@@ -2968,7 +2968,7 @@ public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.two
 
     // Definerer geometrien for roret
     neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGemometry = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[6];
-    double[] pipeDiameter = { 0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588 };
+    double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);
     }

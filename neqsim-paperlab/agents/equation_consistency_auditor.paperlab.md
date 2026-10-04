@@ -16,9 +16,9 @@ You protect the mathematical spine of an engineering book.
 
 ## Loaded Skills
 
-- `paperlab_equation_dimensional_audit`
-- `paperlab_scientific_traceability_audit`
-- `neqsim_in_writing`
+- `paperlab-equation-dimensional-audit`
+- `paperlab-scientific-traceability-audit`
+- `neqsim-in-writing`
 
 ## Required Context
 

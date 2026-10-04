@@ -260,13 +260,21 @@ public class TrappedLiquidFireRuptureResult implements Serializable {
   }
 
   /**
-   * Creates a full-bore source term using the result state at limiting failure.
+   * Creates a full-bore gas blowdown source term using the result state at limiting failure.
+   *
+   * <p>
+   * Delegates to the conservative, gas-only {@link LeakModel#calculateSourceTerm(double, double)} model. A liquid or
+   * multiphase failure state, or subsequent condensation, is unsupported and throws explicitly. In particular, this
+   * method does not provide liquid rupture depletion. The screening result and passive-fire-protection demand remain
+   * available independently of this optional handoff. The caller's fluid is never modified.
+   * </p>
    *
    * @param fluid representative fluid to clone and set to failure state
    * @param orientation release orientation; defaults to horizontal when null
    * @param durationSeconds source-term duration in s; must be positive
    * @param timeStepSeconds source-term time step in s; must be positive
    * @return source term result from the existing release model
+   * @throws IllegalStateException if the failure state or subsequent trajectory is outside the gas-only regime
    */
   public SourceTermResult createRuptureSourceTerm(SystemInterface fluid, ReleaseOrientation orientation,
       double durationSeconds, double timeStepSeconds) {

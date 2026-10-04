@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 /** Unit tests for the public component-conservation report contract. */
 class TwoFluidComponentConservationReportTest {
-  private static final String[] COMPONENT_NAMES = { "methane", "nitrogen" };
+  private static final String[] COMPONENT_NAMES = {"methane", "nitrogen"};
 
   @Test
   void constructorRejectsInvalidArrayShapes() {
@@ -29,13 +29,13 @@ class TwoFluidComponentConservationReportTest {
 
   @Test
   void constructorRejectsInvalidNamesAndNumbers() {
-    String[] duplicateNames = { "methane", "methane" };
+    String[] duplicateNames = {"methane", "methane"};
     IllegalArgumentException nameException = assertThrows(IllegalArgumentException.class,
         () -> createReport(duplicateNames, new double[duplicateNames.length], new double[3][duplicateNames.length],
             new double[3][duplicateNames.length][1]));
     assertTrue(nameException.getMessage().contains("duplicate"));
 
-    double[] nonFiniteInventory = { 1.0, Double.NaN };
+    double[] nonFiniteInventory = {1.0, Double.NaN};
     IllegalArgumentException numberException = assertThrows(IllegalArgumentException.class,
         () -> createReport(COMPONENT_NAMES, nonFiniteInventory, new double[3][COMPONENT_NAMES.length],
             new double[3][COMPONENT_NAMES.length][1]));
@@ -44,12 +44,12 @@ class TwoFluidComponentConservationReportTest {
 
   @Test
   void constructorAcceptsAbsentPhaseBoundsAndCopiesInputs() {
-    double[] inventory = { 1.0, 0.0 };
+    double[] inventory = {1.0, 0.0};
     TwoFluidComponentConservationReport report = createReport(COMPONENT_NAMES, inventory,
         new double[3][COMPONENT_NAMES.length], new double[3][COMPONENT_NAMES.length][1]);
 
     inventory[0] = 2.0;
-    assertArrayEquals(new double[] { 1.0, 0.0 }, report.getInitialInventoryKg(), 0.0);
+    assertArrayEquals(new double[] {1.0, 0.0}, report.getInitialInventoryKg(), 0.0);
     assertTrue(Double.isNaN(report.getMinimumMassFraction()));
     assertTrue(Double.isNaN(report.getMaximumMassFraction()));
   }

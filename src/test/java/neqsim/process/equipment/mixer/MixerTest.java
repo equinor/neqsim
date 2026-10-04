@@ -84,7 +84,7 @@ class MixerTest {
     testSystem.setMultiPhaseCheck(true);
 
     waterSystem = testSystem.clone();
-    waterSystem.setMolarComposition(new double[] { 1.0, 0.0, 0.0, 0.0, 0.0 });
+    waterSystem.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0, 0.0});
 
     gasStream = new Stream("turbine stream", testSystem);
     gasStream.setFlowRate(1.0, "MSm3/day");
@@ -437,8 +437,8 @@ class MixerTest {
 
   @Test
   void testInletOrderPermutationsProduceEquivalentMultiphaseState() {
-    List<int[]> permutations = Arrays.asList(new int[] { 0, 1, 2 }, new int[] { 0, 2, 1 }, new int[] { 1, 0, 2 },
-        new int[] { 1, 2, 0 }, new int[] { 2, 0, 1 }, new int[] { 2, 1, 0 });
+    List<int[]> permutations = Arrays.asList(new int[] {0, 1, 2}, new int[] {0, 2, 1}, new int[] {1, 0, 2},
+        new int[] {1, 2, 0}, new int[] {2, 0, 1}, new int[] {2, 1, 0});
     SystemInterface reference = null;
 
     for (int mixerType = 0; mixerType < 2; mixerType++) {
@@ -511,11 +511,11 @@ class MixerTest {
     gasFluid.setMultiPhaseCheck(true);
 
     SystemInterface megFluid = gasFluid.clone();
-    megFluid.setMolarComposition(new double[] { 0.0, 0.1099744114900417, 0.8900255885099583 });
+    megFluid.setMolarComposition(new double[] {0.0, 0.1099744114900417, 0.8900255885099583});
     megFluid.setMultiPhaseCheck(false);
 
     SystemInterface waterFluid = gasFluid.clone();
-    waterFluid.setMolarComposition(new double[] { 0.0, 1.0, 0.0 });
+    waterFluid.setMolarComposition(new double[] {0.0, 1.0, 0.0});
     waterFluid.setMultiPhaseCheck(false);
 
     Stream gas = new Stream("bulk gas", gasFluid);
@@ -535,7 +535,7 @@ class MixerTest {
     water.setTemperature(29.0, "C");
     water.setPressure(74.1, "barg");
     water.run();
-    return new Stream[] { gas, meg, water };
+    return new Stream[] {gas, meg, water};
   }
 
   private static void assertEquivalentThermodynamicState(SystemInterface expected, SystemInterface actual) {

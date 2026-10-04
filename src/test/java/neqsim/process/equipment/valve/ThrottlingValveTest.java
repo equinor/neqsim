@@ -98,7 +98,7 @@ public class ThrottlingValveTest {
         "Fixed-Kv pressure mode must invert the forward sizing point");
 
     double previousPressureDrop = 0.0;
-    double[] flowRates = { 24000.0, 26500.0, 27500.0, 28000.0, 28500.0, 29000.0, 30000.0 };
+    double[] flowRates = {24000.0, 26500.0, 27500.0, 28000.0, 28500.0, 29000.0, 30000.0};
     for (double flowRate : flowRates) {
       inlet.setFlowRate(flowRate, "kg/hr");
       process.run();

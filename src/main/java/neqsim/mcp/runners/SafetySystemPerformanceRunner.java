@@ -450,16 +450,16 @@ public final class SafetySystemPerformanceRunner {
     JsonObject templates = new JsonObject();
     templates.add("NORSOK-S-001",
         buildStandardTemplate("NORSOK-S-001", "Technical safety screening template for safety critical systems",
-            new String[] { "safetyFunction", "barrierId", "equipmentTags", "availability", "responseTimeSeconds",
-                "demandCapacityMargin", "evidenceRefs" }));
+            new String[] {"safetyFunction", "barrierId", "equipmentTags", "availability", "responseTimeSeconds",
+                "demandCapacityMargin", "evidenceRefs"}));
     templates.add("ISO-13702",
         buildStandardTemplate("ISO-13702", "Control and mitigation of fires and explosions screening template",
-            new String[] { "fireScenario", "delugeZone", "detectorCoverage", "PFPFireRatingMinutes",
-                "firewaterCapacity", "impairmentStatus", "evidenceRefs" }));
+            new String[] {"fireScenario", "delugeZone", "detectorCoverage", "PFPFireRatingMinutes", "firewaterCapacity",
+                "impairmentStatus", "evidenceRefs"}));
     templates.add("TR1055-STYLE",
         buildStandardTemplate("TR1055-STYLE", "Barrier performance standard follow-up template",
-            new String[] { "performanceRequirement", "acceptanceCriteria", "testInterval", "responsibleDiscipline",
-                "verificationMethod", "currentStatus", "gapAction" }));
+            new String[] {"performanceRequirement", "acceptanceCriteria", "testInterval", "responsibleDiscipline",
+                "verificationMethod", "currentStatus", "gapAction"}));
     return templates;
   }
 

@@ -39,7 +39,7 @@ public class BulkMechanicalDesignConstraintsTest {
 
     Heater heater = new Heater(name, feed);
     heater.setOutletPressure(outletPressure);
-    heater.setOutTemperature(60.0 + 273.15);
+    heater.setOutletTemperature(60.0 + 273.15);
 
     ProcessSystem process = new ProcessSystem();
     process.setName(name + " area");

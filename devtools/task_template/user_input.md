@@ -14,7 +14,7 @@ information.
 
 **Date/Time:** YYYY-MM-DD HH:MM
 **Channel:** [VS Code Copilot Chat / CLI / API / other]
-**Agent invoked:** [@solve.task / @field.development / ...]
+**Agent invoked:** [@solve-task / @field-development / ...]
 
 ```text
 <!-- ORIGINAL_USER_PROMPT -->

@@ -405,7 +405,7 @@ public class ProductionChemicalScaleScenario implements Serializable {
   private static double[] carbonateFractions(double valuePH, double k1, double k2) {
     double h = Math.pow(10.0, -valuePH);
     double denominator = h * h + k1 * h + k1 * k2;
-    return new double[] { h * h / denominator, k1 * h / denominator, k1 * k2 / denominator };
+    return new double[] {h * h / denominator, k1 * h / denominator, k1 * k2 / denominator};
   }
 
   private static double alkalinity(double totalCarbon, double valuePH, double k1, double k2) {

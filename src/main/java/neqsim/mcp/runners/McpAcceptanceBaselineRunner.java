@@ -54,8 +54,8 @@ public final class McpAcceptanceBaselineRunner {
     contract.addProperty("executionMode", "ON_DEMAND_TEST_HARNESS");
     contract.addProperty("executionEvidenceStatus", "CONTRACT_DEFINED_EXACT_HEAD_EXECUTION_REQUIRED");
     contract.addProperty("evidenceDocument", "neqsim-mcp-server/docs/ACCEPTANCE_BASELINES.md");
-    contract.add("measurementGroups", toJsonArray(new String[] { "environment", "runtime", "heapSnapshot",
-        "payloadAndGuard", "convergence", "determinism", "reportEvidence", "balanceEvidence" }));
+    contract.add("measurementGroups", toJsonArray(new String[] {"environment", "runtime", "heapSnapshot",
+        "payloadAndGuard", "convergence", "determinism", "reportEvidence", "balanceEvidence"}));
     contract.addProperty("canonicalExecution",
         "Production FlashRunner and ProcessRunner execute the McpAcceptanceFixtureCatalog inputs");
     contract.addProperty("performanceQualification", false);

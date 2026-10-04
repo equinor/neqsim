@@ -83,7 +83,7 @@ class CoolerTest {
   @Test
   void testCoolerReducesTemperature() {
     Cooler cooler = new Cooler("cooler", inletStream);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     process.add(cooler);
     process.run();
 
@@ -95,7 +95,7 @@ class CoolerTest {
   void testCoolerDutyIsNegative() {
     // Cooling should remove heat, resulting in a negative duty for the cooler
     Cooler cooler = new Cooler("cooler", inletStream);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     process.add(cooler);
     process.run();
 
@@ -108,7 +108,7 @@ class CoolerTest {
   @Test
   void testCoolerPreservesPressure() {
     Cooler cooler = new Cooler("cooler", inletStream);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     process.add(cooler);
     process.run();
 
@@ -120,7 +120,7 @@ class CoolerTest {
   @Test
   void testCoolerWithOutletPressure() {
     Cooler cooler = new Cooler("cooler", inletStream);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     cooler.setOutPressure(45.0, "bara");
     process.add(cooler);
     process.run();
@@ -135,7 +135,7 @@ class CoolerTest {
   @Test
   void testCoolerMassBalance() {
     Cooler cooler = new Cooler("cooler", inletStream);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     process.add(cooler);
     process.run();
 
@@ -147,7 +147,7 @@ class CoolerTest {
   @Test
   void testCoolerToJson() {
     Cooler cooler = new Cooler("cooler", inletStream);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     process.add(cooler);
     process.run();
 
@@ -159,13 +159,13 @@ class CoolerTest {
   @Test
   void testCoolerNeedRecalculation() {
     Cooler cooler = new Cooler("cooler", inletStream);
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
     process.add(cooler);
     process.run();
 
     assertFalse(cooler.needRecalculation());
 
-    cooler.setOutTemperature(273.15 + 20.0);
+    cooler.setOutletTemperature(273.15 + 20.0);
     assertTrue(cooler.needRecalculation());
   }
 

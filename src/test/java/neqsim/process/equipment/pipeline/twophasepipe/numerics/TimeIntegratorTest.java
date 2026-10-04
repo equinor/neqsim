@@ -86,7 +86,7 @@ public class TimeIntegratorTest {
   void imexTimeStepHonorsCflBelowConfiguredMinimum() {
     integrator.setMinTimeStep(0.01);
     integrator.setCflNumber(0.5);
-    double dt = integrator.calcIMEXTimeStep(new double[] { 1e10 }, new double[] { 0.0 }, 10.0);
+    double dt = integrator.calcIMEXTimeStep(new double[] {1e10}, new double[] {0.0}, 10.0);
     assertEquals(5e-10, dt, 1e-20);
     assertEquals(dt, integrator.getCurrentDt(), 0.0, "The reported current step must be the bound just calculated");
   }
@@ -118,7 +118,7 @@ public class TimeIntegratorTest {
 
   @Test
   void failedStepCannotExposePreviousPressureCorrectionOrLedger() {
-    for (boolean failInRhs : new boolean[] { true, false }) {
+    for (boolean failInRhs : new boolean[] {true, false}) {
       double[][] state = configureCoupledCorrection();
       TimeIntegrator.RHSFunction zeroRhs = (values, time) -> new double[values.length][values[0].length];
       integrator.step(state, zeroRhs, 0.01);
@@ -136,17 +136,17 @@ public class TimeIntegratorTest {
 
   private double[][] configureCoupledCorrection() {
     integrator = new TimeIntegrator(TimeIntegrator.Method.EULER);
-    double[] pressure = { 5e6, 5e6 };
-    double[] area = { 1.0, 1.0 };
-    double[] lengths = { 10.0, 10.0 };
-    double[] gasDensity = { 10.0, 10.0 };
-    double[] oilDensity = { 800.0, 800.0 };
-    double[] waterDensity = { 1000.0, 1000.0 };
-    double[] gasSoundSpeed = { 300.0, 300.0 };
-    double[] liquidSoundSpeed = { 1200.0, 1200.0 };
+    double[] pressure = {5e6, 5e6};
+    double[] area = {1.0, 1.0};
+    double[] lengths = {10.0, 10.0};
+    double[] gasDensity = {10.0, 10.0};
+    double[] oilDensity = {800.0, 800.0};
+    double[] waterDensity = {1000.0, 1000.0};
+    double[] gasSoundSpeed = {300.0, 300.0};
+    double[] liquidSoundSpeed = {1200.0, 1200.0};
     integrator.setCoupledPressureMomentumProperties(pressure, area, lengths, gasDensity, oilDensity, waterDensity,
         gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed, 5e6, true, true);
-    return new double[][] { { 4.0, 480.0, 0.0, 4.0, 480.0, 0.0, 1e6 }, { 4.1, 480.0, 0.0, 4.0, 480.0, 0.0, 1e6 } };
+    return new double[][] {{4.0, 480.0, 0.0, 4.0, 480.0, 0.0, 1e6}, {4.1, 480.0, 0.0, 4.0, 480.0, 0.0, 1e6}};
   }
 
   private void assertNoCoupledCorrectionResult() {
@@ -161,7 +161,7 @@ public class TimeIntegratorTest {
   @Test
   void testStepConstantRHS() {
     // Test stepping with constant RHS (linear solution)
-    double[][] U0 = { { 1.0, 2.0 }, { 3.0, 4.0 } };
+    double[][] U0 = {{1.0, 2.0}, {3.0, 4.0}};
     double dt = 0.1;
 
     // RHS that returns zeros - solution should stay constant
@@ -182,10 +182,10 @@ public class TimeIntegratorTest {
   @Test
   void testStepLinearRHS() {
     // Test stepping with constant RHS = 1 (linear growth)
-    double[][] U0 = { { 0.0 } };
+    double[][] U0 = {{0.0}};
     double dt = 0.1;
 
-    TimeIntegrator.RHSFunction constantRHS = (U, t) -> new double[][] { { 1.0 } };
+    TimeIntegrator.RHSFunction constantRHS = (U, t) -> new double[][] {{1.0}};
 
     double[][] U1 = integrator.step(U0, constantRHS, dt);
 
@@ -198,8 +198,8 @@ public class TimeIntegratorTest {
     double initialTime = 0.0;
     integrator.setCurrentTime(initialTime);
 
-    double[][] U = { { 1.0 } };
-    TimeIntegrator.RHSFunction rhs = (state, t) -> new double[][] { { 0.0 } };
+    double[][] U = {{1.0}};
+    TimeIntegrator.RHSFunction rhs = (state, t) -> new double[][] {{0.0}};
 
     double dt = 0.5;
     integrator.step(U, rhs, dt);
@@ -211,9 +211,9 @@ public class TimeIntegratorTest {
   @Test
   void testMultipleVariables() {
     // Test with multiple cells and variables
-    double[][] U0 = { { 1.0, 2.0, 3.0, 4.0 }, // Cell 0: 4 conservative vars
-        { 5.0, 6.0, 7.0, 8.0 }, // Cell 1
-        { 9.0, 10.0, 11.0, 12.0 } // Cell 2
+    double[][] U0 = {{1.0, 2.0, 3.0, 4.0}, // Cell 0: 4 conservative vars
+        {5.0, 6.0, 7.0, 8.0}, // Cell 1
+        {9.0, 10.0, 11.0, 12.0} // Cell 2
     };
     double dt = 0.01;
 
@@ -258,20 +258,20 @@ public class TimeIntegratorTest {
   @Test
   void testImplicitVoidWavePreservesMassAndTotalMomentum() {
     TimeIntegrator voidWaveIntegrator = new TimeIntegrator(TimeIntegrator.Method.EULER);
-    double[] soundSpeeds = { 100.0, 100.0, 100.0 };
-    double[] mixtureDensities = { 800.0, 500.0, 200.0 };
-    double[] areas = { 1.0, 1.0, 1.0 };
-    double[] gasDensities = { 1.0, 1.0, 1.0 };
-    double[] liquidDensities = { 1000.0, 1000.0, 1000.0 };
-    double[] voidWaveSpeeds = { 5.0, 5.0, 5.0 };
-    double[] slipCoefficients = { 25.0, 25.0, 25.0 };
+    double[] soundSpeeds = {100.0, 100.0, 100.0};
+    double[] mixtureDensities = {800.0, 500.0, 200.0};
+    double[] areas = {1.0, 1.0, 1.0};
+    double[] gasDensities = {1.0, 1.0, 1.0};
+    double[] liquidDensities = {1000.0, 1000.0, 1000.0};
+    double[] voidWaveSpeeds = {5.0, 5.0, 5.0};
+    double[] slipCoefficients = {25.0, 25.0, 25.0};
     voidWaveIntegrator.setIMEXProperties(soundSpeeds, mixtureDensities, areas, gasDensities, liquidDensities,
         liquidDensities, 1.0, 1.0e5, false);
     voidWaveIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, slipCoefficients, areas, gasDensities,
         liquidDensities, liquidDensities, 1.0, true);
 
-    double[][] initial = { { 0.2, 800.0, 0.0, 0.4, 0.0, 0.0, 0.0 }, { 0.5, 500.0, 0.0, 1.0, 0.0, 0.0, 0.0 },
-        { 0.8, 200.0, 0.0, 1.6, 0.0, 0.0, 0.0 } };
+    double[][] initial = {{0.2, 800.0, 0.0, 0.4, 0.0, 0.0, 0.0}, {0.5, 500.0, 0.0, 1.0, 0.0, 0.0, 0.0},
+        {0.8, 200.0, 0.0, 1.6, 0.0, 0.0, 0.0}};
     TimeIntegrator.RHSFunction zeroRhs = (state, time) -> new double[state.length][state[0].length];
     double[][] corrected = voidWaveIntegrator.step(initial, zeroRhs, 0.1);
 

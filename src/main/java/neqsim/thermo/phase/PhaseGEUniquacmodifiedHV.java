@@ -7,7 +7,7 @@
 package neqsim.thermo.phase;
 
 /**
- * PhaseGEUniquacmodifiedHV class.
+ * Unsupported prototype of a modified-Huron-Vidal UNIQUAC phase.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,8 +18,11 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
   /**
    * Constructor for PhaseGEUniquacmodifiedHV.
+   *
+   * @throws UnsupportedOperationException because modified-HV UNIQUAC is not implemented
    */
   public PhaseGEUniquacmodifiedHV() {
+    throw new UnsupportedOperationException("Modified-HV UNIQUAC is not implemented. Use a supported GE model.");
   }
 
   /** {@inheritDoc} */

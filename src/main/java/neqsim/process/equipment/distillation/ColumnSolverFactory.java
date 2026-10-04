@@ -598,36 +598,36 @@ final class ColumnSolverFactory {
    */
   private static DistillationColumn.SolverType[] selectCandidateSolvers(DistillationColumn column) {
     if (column.isReactive()) {
-      return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
-          DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.NAPHTALI_SANDHOLM,
+          DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
     }
     if (hasAdjustableProductSpecification(column)) {
       if (column.numberOfTrays >= 12) {
-        return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
             DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.MESH_RESIDUAL,
-            DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
-      return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.INSIDE_OUT,
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
           DistillationColumn.SolverType.NAPHTALI_SANDHOLM, DistillationColumn.SolverType.MESH_RESIDUAL,
-          DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+          DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
     }
     if (column.hasCondenser && column.hasReboiler) {
       if (column.numberOfTrays >= 12) {
-        return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.MATRIX_INSIDE_OUT,
             DistillationColumn.SolverType.INSIDE_OUT, DistillationColumn.SolverType.MESH_RESIDUAL,
-            DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+            DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
       if (column.numberOfTrays >= 6) {
-        return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.INSIDE_OUT,
-            DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION };
+        return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.INSIDE_OUT,
+            DistillationColumn.SolverType.MESH_RESIDUAL, DistillationColumn.SolverType.DAMPED_SUBSTITUTION};
       }
     }
     if (!column.hasCondenser || !column.hasReboiler) {
-      return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-          DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.DIRECT_SUBSTITUTION };
+      return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+          DistillationColumn.SolverType.SUM_RATES, DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
     }
-    return new DistillationColumn.SolverType[] { DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
-        DistillationColumn.SolverType.DIRECT_SUBSTITUTION };
+    return new DistillationColumn.SolverType[] {DistillationColumn.SolverType.DAMPED_SUBSTITUTION,
+        DistillationColumn.SolverType.DIRECT_SUBSTITUTION};
   }
 
   /**

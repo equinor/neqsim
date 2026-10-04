@@ -31,7 +31,7 @@ public class DebottleneckAnalyzerTest {
     Separator sep = new Separator("HP Separator", feed);
 
     Cooler cooler = new Cooler("Gas Cooler", sep.getGasOutStream());
-    cooler.setOutTemperature(273.15 + 25.0);
+    cooler.setOutletTemperature(273.15 + 25.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

@@ -247,7 +247,7 @@ The framework integrates with NeqSim's existing ML capabilities:
 | GymEnvironment | `neqsim.process.ml` | Compatible state/action vectors |
 | ProcessLinkedMPC | `neqsim.process.mpc` | Validate MPC process systems |
 | ProductionOptimizer | `neqsim.process.util.optimizer` | Validate optimizer inputs |
-| SurrogateModelRegistry | `neqsim.process.ml.surrogate` | Physics constraint checking |
+| SurrogateModelRegistry | `neqsim.process.ml.surrogate` | [Vector validation and physics fallback](../process/ml/README.md#input-schema-output-validation-and-fallback); physical qualification is separate |
 
 ## Exception Remediation
 
@@ -360,4 +360,3 @@ Run tests:
 4. **Surrogate model validation** integration with SurrogateModelRegistry
 5. **Real-time validation** during simulation stepping
 6. **Custom validation rules** via pluggable validators
-

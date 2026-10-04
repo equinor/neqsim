@@ -193,10 +193,10 @@ class StandardCatalogTest {
 
   @Test
   void requirementPacksReferenceLoadableCapabilitiesAndCurrentEditions() throws Exception {
-    StandardType[] packedStandards = { StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
+    StandardType[] packedStandards = {StandardType.NORSOK_P_002, StandardType.NORSOK_S_001, StandardType.ISO_10418,
         StandardType.IEC_61511, StandardType.API_520_PART_1, StandardType.NORSOK_M_001, StandardType.API_650,
         StandardType.API_660, StandardType.DNV_ST_F101, StandardType.DNV_RP_F104, StandardType.DNV_RP_F110,
-        StandardType.DNV_RP_F114 };
+        StandardType.DNV_RP_F114};
 
     for (StandardType standardType : packedStandards) {
       StandardRequirementPack pack = StandardRequirementPackRegistry.lookup(standardType).requirePack();

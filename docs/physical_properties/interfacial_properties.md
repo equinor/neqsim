@@ -139,7 +139,9 @@ model choice.
 The Parachor model relates surface tension to the phase-density/composition contrast and
 component parachors. It is the default gas-liquid model and is computationally useful
 for screening. The result is only as reliable as the equilibrium state, equation of
-state, mixing rule, and component parachor data.
+state, mixing rule, and component parachor data. CPA components, including
+electrolyte CPA subclasses, read the `PARACHOR_CPA` database column; other
+components read `PARACHOR`.
 
 ### Gradient-theory models
 
@@ -148,6 +150,9 @@ approximations to the interfacial density profile. Full Gradient Theory is the m
 detailed of these selectors and generally the most computationally demanding. Do not
 interpret the selector name as a validated accuracy guarantee: benchmark the chosen
 equation of state and influence parameters against data in the intended range.
+
+Simple Gradient Theory solves the transposed density-gradient system through
+`LinearAlgebraOperations` with the JAMA backend.
 
 ### Classical density functional theory
 

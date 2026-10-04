@@ -487,7 +487,7 @@ def step_done(results):
         print("  1. Run the doctor:     neqsim doctor")
         print("  2. Create a task:      neqsim new-task \"My task\"")
         print("  3. Create a skill:     neqsim new-skill \"my-topic\"")
-        print("  4. Use an agent:       @solve.task JT cooling for rich gas")
+        print("  4. Use an agent:       @solve-task JT cooling for rich gas")
         print("  5. Read the docs:      AGENTS.md, CONTEXT.md, CONTRIBUTING.md")
     else:
         print("  Some steps had issues — see the [!!] items above.")

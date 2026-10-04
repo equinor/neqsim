@@ -236,6 +236,11 @@ The bottleneck analysis feature is a powerful tool for optimizing production. By
 2.  **Identify Constraints**: Provide utilization limits per equipment name or type plus custom hard/soft constraints via `OptimizationConstraint`. Safety margins and capacity-uncertainty factors can be applied globally so bottleneck checks keep headroom.
 3.  **Iterative Solver (selectable)**:
     *   `BINARY_FEASIBILITY` (default) targets monotonic systems and searches on feasibility margins.
+        Verify a feasible lower bound before searching the upper capacity boundary. Compressor
+        surge or minimum-speed limits can make low-flow points infeasible as well as high-flow
+        points; bisecting that entire range can discard a feasible interval. Probe the operating
+        range first (equal lower/upper bounds perform a single-point evaluation), then bracket
+        the upper boundary using a verified feasible point and the next higher infeasible point.
     *   `GOLDEN_SECTION_SCORE` samples non-monotonic responses using weighted objectives and constraint penalties to guide the search.
     *   `NELDER_MEAD_SCORE` applies a simplex-based heuristic to handle noisy or coupled objectives without assuming monotonicity.
     *   `PARTICLE_SWARM_SCORE` explores the design space with a configurable swarm size/inertia/weights, useful when the objective landscape has multiple peaks.
@@ -678,6 +683,14 @@ Sand production and erosion limits require a qualified, separately supplied mode
 evidence. Register those as additional hard constraints before interpreting this example as a
 well operating envelope; this example does not invent a sand-production correlation.
 
+### Verified lower endpoint in binary feasibility searches
+
+The binary search evaluates and records its lower endpoint before testing interior
+points. If an interior point becomes infeasible during the final uncached solve,
+this endpoint remains available for a fresh feasibility check. Recovery retains
+the configured utilization and hard-constraint limits; it does not relax them.
+The returned result and live process always describe the same verified point.
+
 ### Debottlenecking Studies
 
 Once the bottleneck is identified (e.g., a compressor), you can simulate a "debottlenecking" project:
@@ -686,3 +699,21 @@ Once the bottleneck is identified (e.g., a compressor), you can simulate a "debo
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
 
+
+
+### Non-monotonic compressor operating envelopes
+
+Binary feasibility search assumes a feasible lower-flow region followed by an
+infeasible upper-flow region. Compressor surge and minimum-speed constraints can
+instead create an interior feasible interval. Sample the operating envelope
+before choosing a binary-search bracket, or report the highest freshly verified
+feasible point on an explicit flow grid. The three-compressor cooling example
+uses a 0.5 percent grid and rejects invalid or over-capacity results.
+
+### Verified lower endpoint in binary feasibility searches
+
+The binary search evaluates and records its lower endpoint before testing interior
+points. If an interior point becomes infeasible during the final uncached solve,
+this endpoint remains available for a fresh feasibility check. Recovery retains
+the configured utilization and hard-constraint limits; it does not relax them.
+The returned result and live process always describe the same verified point.

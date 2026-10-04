@@ -6,15 +6,18 @@
 
 ## Solve a Task (Start Here)
 
-The fastest way to solve an engineering task is the `@solve.task` Copilot agent:
+The fastest way to solve an engineering task is the `@solve-task` Copilot agent:
 
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve-task hydrate formation temperature for wet gas at 100 bara
 ```
 
 It creates a `task_solve/` folder, researches the topic, builds a simulation,
 validates results, and generates a Word report — all in one session. The script
-alternative is `neqsim new-task "your task"`. See
+alternative is `neqsim new-task "your task"`. To keep tasks outside the clone,
+set the destination once with `neqsim --set-task-root "PATH"` (`neqsim --show-task-root`
+prints the folder in use), and set your organisation's Word template once with
+`neqsim --set-report-template "PATH"` so every report follows it. See
 `docs/tutorials/solve-engineering-task.md` for a hands-on tutorial or
 `docs/development/TASK_SOLVING_GUIDE.md` for the full reference.
 
@@ -26,7 +29,7 @@ runs the full workflow including PR creation.
 
 Java library for thermodynamic fluid properties and process simulation.
 Developed at NTNU, maintained by Equinor. Apache-2.0 license.
-`com.equinor.neqsim:neqsim` version 3.20.0 — **must compile with Java 8**.
+`com.equinor.neqsim:neqsim` version 3.23.0 — **must compile with Java 8**.
 
 ## Repo Map
 
@@ -131,7 +134,7 @@ devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task
 
 # Package JAR + copy to Python
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.20.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\ -Force
+Copy-Item target\neqsim-3.23.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\ -Force
 ```
 
 ## Code Patterns — Copy-Paste Starters
@@ -320,7 +323,7 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | Check gas quality | `src/main/java/neqsim/standards/gasquality/` |
 | See a working example | `examples/notebooks/` or `src/test/java/neqsim/process/` |
 | Read documentation | `docs/wiki/` (60+ topics) or `docs/REFERENCE_MANUAL_INDEX.md` |
-| Use an AI agent | `.github/agents/` (17 specialist agents), start with `@neqsim.help` or `@capability.scout` or `@field.development` |
+| Use an AI agent | `.github/agents/` (17 specialist agents), start with `@neqsim.help` or `@capability-scout` or `@field-development` |
 | Check API changes | `CHANGELOG_AGENT_NOTES.md` |
 | Set up Jupyter dev | `devtools/neqsim_dev_setup.py` |
 | Find design data | `src/main/resources/designdata/` |

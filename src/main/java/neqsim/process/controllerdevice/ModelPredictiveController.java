@@ -1804,7 +1804,7 @@ public class ModelPredictiveController extends NamedBaseClass
         return null;
       }
       double rateOfChange = (nextMeasurement - measurement) / dt;
-      double[] row = { measurement / measurementScale, control / controlScale, 1.0 };
+      double[] row = {measurement / measurementScale, control / controlScale, 1.0};
       for (int rowIndex = 0; rowIndex < 3; rowIndex++) {
         double value = row[rowIndex];
         for (int colIndex = 0; colIndex < 3; colIndex++) {

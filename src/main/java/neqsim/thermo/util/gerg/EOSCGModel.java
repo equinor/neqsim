@@ -661,8 +661,9 @@ public class EOSCGModel {
       Expd[i] = Math.exp(-delp[i]);
     }
 
-    // If temperature has changed, calculate temperature dependent parts
-    if (Math.abs(T - Told) > 0.0000001 || Math.abs(Tr.val - Trold2) > 0.0000001) {
+    // Even sub-1e-7 K changes must refresh these terms: flash convergence
+    // must not depend on the sequence of temperatures evaluated.
+    if (T != Told || Tr.val != Trold2) {
       tTermsGERG(lntau, x);
     }
     Told = T;
@@ -997,8 +998,6 @@ public class EOSCGModel {
 
     // Exponents in pure fluid equations
     for (int i = 1; i <= MaxFlds; ++i) {
-      Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
-      Tc2[i] = Math.sqrt(Tc[i]);
       coik[i][1] = 0;
       doik[i][1] = 1;
       toik[i][1] = 0.25;
@@ -3983,6 +3982,14 @@ public class EOSCGModel {
 
     applyEOSCG2021ReducingParameters();
 
+    // All pure-fluid critical properties, including EOS-CG slots 22-28, must be loaded before
+    // forming binary reducing factors. Computing these in the earlier GERG exponent loop uses
+    // zero critical properties for the added components and poisons mixtures with infinity.
+    for (int i = 1; i <= MaxFlds; ++i) {
+      Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
+      Tc2[i] = Math.sqrt(Tc[i]);
+    }
+
     for (int i = 1; i <= MaxFlds; ++i) {
       bvij[i][i] = 1;
       btij[i][i] = 1;
@@ -4199,8 +4206,8 @@ public class EOSCGModel {
     int iFlag = 0;
     StringW herr = new StringW("");
 
-    double[] x = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
-        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
+    double[] x = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
 
     test.MolarMassEOSCG(x, Mm);
 

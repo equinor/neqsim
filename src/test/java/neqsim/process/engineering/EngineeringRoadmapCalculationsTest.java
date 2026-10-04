@@ -87,7 +87,7 @@ class EngineeringRoadmapCalculationsTest {
         SafetyScenarioEngineCalculation.Credibility.CREDIBLE, SafetyScenarioEngineCalculation.FluidModel.GAS, "train-a",
         "HAZOP-1", 10.0, 50.0, 0.20, 2.0, 5.0, 1.0, -20.0);
     SafetyScenarioEngineCalculation.Input safetyInput = new SafetyScenarioEngineCalculation.Input("safety-1",
-        Collections.singletonList(scenario), new double[] { 0.110, 0.196, 0.307 }, 3.0, 10.0, 120.0, -46.0);
+        Collections.singletonList(scenario), new double[] {0.110, 0.196, 0.307}, 3.0, 10.0, 120.0, -46.0);
     assertEquals(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED,
         new SafetyScenarioEngineCalculation().calculate(safetyInput, context).getStatus());
 
@@ -111,7 +111,7 @@ class EngineeringRoadmapCalculationsTest {
         SafetyScenarioEngineCalculation.Credibility.HAZOP_DECISION_REQUIRED,
         SafetyScenarioEngineCalculation.FluidModel.TWO_PHASE, "fire-zone-a", "", 8.0, 50.0, 0.30, 2.0, 5.0, 1.0, -55.0);
     SafetyScenarioEngineCalculation.Input input = new SafetyScenarioEngineCalculation.Input("blocked",
-        Collections.singletonList(unresolved), new double[] { 0.307, 0.503 }, 3.0, 10.0, 120.0, -46.0);
+        Collections.singletonList(unresolved), new double[] {0.307, 0.503}, 3.0, 10.0, 120.0, -46.0);
     assertEquals(EngineeringCalculationResult.Status.BLOCKED,
         new SafetyScenarioEngineCalculation().calculate(input, context).getStatus());
 

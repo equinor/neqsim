@@ -307,7 +307,7 @@ public final class NorwegianOilFieldCase {
     recoveredGasMixer.addStream(lpGasCooler.getOutletStream());
     Splitter gasAllocation = new Splitter("Gas export and injection allocation", recoveredGasMixer.getOutletStream(),
         2);
-    gasAllocation.setSplitFactors(includeGasInjectionTrain ? new double[] { 0.15, 0.85 } : new double[] { 1.0, 0.0 });
+    gasAllocation.setSplitFactors(includeGasInjectionTrain ? new double[] {0.15, 0.85} : new double[] {1.0, 0.0});
 
     Compressor gasExportCompressor = new Compressor("Gas export compressor", gasAllocation.getSplitStream(0));
     gasExportCompressor.setOutletPressure(180.0, "bara");

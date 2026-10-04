@@ -26,9 +26,9 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
   private static final double BOUNDARY_COMPOSITION_OFFSET = 1.0e-4;
-  private static final TieLine[] TIE_LINES = { new TieLine("methane", 123.15, 20.0, 0.0192, 0.818),
+  private static final TieLine[] TIE_LINES = {new TieLine("methane", 123.15, 20.0, 0.0192, 0.818),
       new TieLine("methane", 143.05, 40.2, 0.0477, 0.721), new TieLine("methane", 173.65, 59.9, 0.0709, 0.362),
-      new TieLine("ethane", 148.15, 20.0, 0.00618, 0.986), new TieLine("ethane", 173.15, 40.0, 0.0168, 0.977) };
+      new TieLine("ethane", 148.15, 20.0, 0.00618, 0.986), new TieLine("ethane", 173.15, 40.0, 0.0168, 0.977)};
 
   @Test
   void experimentalTieLinesRemainTwoPhaseAndCrossAlgorithmConsistent() {
@@ -83,14 +83,14 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
 
   @Test
   void calculatedBoundaryTransitionsDoNotRetainStalePhaseState() {
-    for (TieLine tieLine : new TieLine[] { TIE_LINES[1], TIE_LINES[2] }) {
+    for (TieLine tieLine : new TieLine[] {TIE_LINES[1], TIE_LINES[2]}) {
       for (Eos eos : Eos.values()) {
         SystemInterface midpoint = flash(createSystem(eos, tieLine, tieLine.midpoint(), false), false);
         double vaporHydrogen = midpoint.getPhase(phaseOrder(midpoint)[0]).getComponent("hydrogen").getx();
         double insideHydrogen = vaporHydrogen - BOUNDARY_COMPOSITION_OFFSET;
         double outsideHydrogen = vaporHydrogen + BOUNDARY_COMPOSITION_OFFSET;
 
-        for (boolean multiphase : new boolean[] { false, true }) {
+        for (boolean multiphase : new boolean[] {false, true}) {
           SystemInterface insideReference = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), false);
           SystemInterface poorGuess = flash(createSystem(eos, tieLine, insideHydrogen, multiphase), true);
           assertEquivalent(insideReference, poorGuess, tieLine.label(eos) + " boundary poor initialization");
@@ -99,13 +99,13 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
           flash(insideReference, false);
           assertEquivalent(repeatedReference, insideReference, tieLine.label(eos) + " boundary repeat");
 
-          insideReference.setMolarComposition(new double[] { outsideHydrogen, 1.0 - outsideHydrogen });
+          insideReference.setMolarComposition(new double[] {outsideHydrogen, 1.0 - outsideHydrogen});
           flash(insideReference, false);
           SystemInterface outsideReference = flash(createSystem(eos, tieLine, outsideHydrogen, multiphase), false);
           assertEquals(1, outsideReference.getNumberOfPhases(), tieLine.label(eos) + " boundary disappearance");
           assertEquivalent(outsideReference, insideReference, tieLine.label(eos) + " boundary disappearance");
 
-          insideReference.setMolarComposition(new double[] { insideHydrogen, 1.0 - insideHydrogen });
+          insideReference.setMolarComposition(new double[] {insideHydrogen, 1.0 - insideHydrogen});
           flash(insideReference, false);
           assertEquivalent(poorGuess, insideReference, tieLine.label(eos) + " boundary reappearance");
         }
@@ -118,7 +118,7 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
     TieLine initialPoint = TIE_LINES[1];
     TieLine changedPoint = TIE_LINES[2];
     for (Eos eos : Eos.values()) {
-      for (boolean multiphase : new boolean[] { false, true }) {
+      for (boolean multiphase : new boolean[] {false, true}) {
         SystemInterface reference = flash(createSystem(eos, initialPoint, initialPoint.midpoint(), multiphase), false);
         SystemInterface continued = flash(createSystem(eos, initialPoint, initialPoint.midpoint(), multiphase), true);
         assertEquivalent(reference, continued, initialPoint.label(eos) + " poor initialization");
@@ -129,7 +129,7 @@ class TPflashHydrogenLiteratureConsistencyTest extends neqsim.NeqSimTest {
 
         continued.setTemperature(changedPoint.temperature, "K");
         continued.setPressure(changedPoint.pressureBar(), "bara");
-        continued.setMolarComposition(new double[] { changedPoint.midpoint(), 1.0 - changedPoint.midpoint() });
+        continued.setMolarComposition(new double[] {changedPoint.midpoint(), 1.0 - changedPoint.midpoint()});
         flash(continued, false);
 
         SystemInterface changedReference = flash(createSystem(eos, changedPoint, changedPoint.midpoint(), multiphase),

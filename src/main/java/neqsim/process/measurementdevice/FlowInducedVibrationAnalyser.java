@@ -32,8 +32,8 @@ public class FlowInducedVibrationAnalyser extends MeasurementDeviceBaseClass
    * flexible (highest predicted vibration).
    * </p>
    */
-  public static final String[] VALID_SUPPORT_ARRANGEMENTS = new String[] { "Stiff", "Medium stiff", "Medium",
-      "Flexible" };
+  public static final String[] VALID_SUPPORT_ARRANGEMENTS = new String[] {"Stiff", "Medium stiff", "Medium",
+      "Flexible"};
 
   /**
    * Reference viscosity used by the Energy Institute fluid-viscosity factor for GVF &gt; 0.99, in centipoise.

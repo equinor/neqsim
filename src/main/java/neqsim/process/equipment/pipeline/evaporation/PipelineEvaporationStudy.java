@@ -313,8 +313,8 @@ public class PipelineEvaporationStudy {
     for (int i = 0; i < componentCount; i++) {
       fluxes[i] = node.getFluidBoundary().getInterphaseMolarFlux(i);
     }
-    double[] heatFluxes = new double[] { node.getFluidBoundary().getInterphaseHeatFlux(0),
-        node.getFluidBoundary().getInterphaseHeatFlux(1) };
+    double[] heatFluxes = new double[] {node.getFluidBoundary().getInterphaseHeatFlux(0),
+        node.getFluidBoundary().getInterphaseHeatFlux(1)};
     boolean usedHeatFluxFallback = !allFinite(heatFluxes);
     if (usedHeatFluxFallback) {
       heatFluxes = calculateFallbackHeatFluxes(node, fluxes);
@@ -372,7 +372,7 @@ public class PipelineEvaporationStudy {
         interfaceTemperature));
     return new double[] {
         -heatTransferCoefficients[0] * (node.getBulkSystem().getPhase(0).getTemperature() - interfaceTemperature),
-        -heatTransferCoefficients[1] * (node.getBulkSystem().getPhase(1).getTemperature() - interfaceTemperature) };
+        -heatTransferCoefficients[1] * (node.getBulkSystem().getPhase(1).getTemperature() - interfaceTemperature)};
   }
 
   private void setLocalHydrodynamics(TwoPhaseFlowNode node, SystemInterface system, PipeData pipe,
@@ -593,7 +593,7 @@ public class PipelineEvaporationStudy {
       if (Math.abs(error) <= 1.0e-9 * Math.max(1.0, Math.abs(targetEnthalpy))) {
         return;
       }
-      double[] heatCapacities = new double[] { state.getPhase(0).getCp(), state.getPhase(1).getCp() };
+      double[] heatCapacities = new double[] {state.getPhase(0).getCp(), state.getPhase(1).getCp()};
       int correctionPhase = -1;
       double correctionHeatCapacity = 0.0;
       for (int phase = 0; phase < 2; phase++) {

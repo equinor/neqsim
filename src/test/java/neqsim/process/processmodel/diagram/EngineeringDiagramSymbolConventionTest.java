@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.EvidenceState;
 import neqsim.process.engineering.model.EngineeringDiagramConventionRegister.SymbolConvention;

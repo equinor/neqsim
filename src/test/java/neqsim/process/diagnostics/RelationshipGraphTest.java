@@ -90,7 +90,7 @@ class RelationshipGraphTest {
   void returnsEmptyForInsufficientTags() {
     RelationshipGraph graph = new RelationshipGraph();
     Map<String, double[]> single = new HashMap<String, double[]>();
-    single.put("ONLY", new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 });
+    single.put("ONLY", new double[] {1.0, 2.0, 3.0, 4.0, 5.0, 6.0});
     assertTrue(graph.analyze(single).isEmpty());
     assertTrue(graph.analyze(null).isEmpty());
     assertTrue(graph.analyze(new HashMap<String, double[]>()).isEmpty());

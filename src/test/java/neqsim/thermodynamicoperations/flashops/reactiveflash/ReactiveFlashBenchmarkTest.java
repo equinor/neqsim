@@ -529,7 +529,7 @@ public class ReactiveFlashBenchmarkTest {
       xFinal[i] = system.getPhase(0).getComponent(i).getx();
     }
     double[] bFinal = fm.computeElementVector(xFinal);
-    double[] z0 = { 0.10, 0.05, 0.15, 0.20, 0.15, 0.35 };
+    double[] z0 = {0.10, 0.05, 0.15, 0.20, 0.15, 0.35};
     double[] bInit = fm.computeElementVector(z0);
 
     for (int k = 0; k < bInit.length; k++) {
@@ -666,7 +666,7 @@ public class ReactiveFlashBenchmarkTest {
   @Test
   void testWGSKpQuantitative() {
     // CO + H2O = CO2 + H2 (delta-nu = 0, so Kp = Kx at ideal gas)
-    double[] temps = { 600.0, 800.0, 1000.0, 1200.0 };
+    double[] temps = {600.0, 800.0, 1000.0, 1200.0};
     double prevKp = Double.MAX_VALUE;
 
     for (double T : temps) {
@@ -719,7 +719,7 @@ public class ReactiveFlashBenchmarkTest {
    */
   @Test
   void testAmmoniaSynthesisPressureSeries() {
-    double[] pressures = { 1.0, 10.0, 100.0, 300.0 };
+    double[] pressures = {1.0, 10.0, 100.0, 300.0};
     double prevNH3 = 0.0;
 
     for (double P : pressures) {
@@ -907,7 +907,7 @@ public class ReactiveFlashBenchmarkTest {
    */
   @Test
   void testSMRTemperatureSensitivity() {
-    double[] tempK = { 700.0, 900.0, 1100.0 };
+    double[] tempK = {700.0, 900.0, 1100.0};
     double prevXCH4 = 1.0; // Start with max
 
     for (double T : tempK) {
@@ -963,18 +963,18 @@ public class ReactiveFlashBenchmarkTest {
     // H2: dHf=0, S0=130.7, CpA=23.969262, CpB=0.030603834,
     // CpC=-6.4184e-5, CpD=5.7e-8, CpE=-1.770882e-11
 
-    double[] dHf = { -110525.0, -241818.0, -393509.0, 0.0 };
-    double[] S0 = { 197.7, 188.8, 213.8, 130.7 };
-    double[][] cpCoeffs = { { 32.524368, -0.032532682, 9.8271e-5, -1.08e-7, 4.28171e-11 },
-        { 36.54003, -0.034802404, 1.16811e-4, -1.3e-7, 5.254448e-11 },
-        { 18.583021, 0.082379635, -7.93039e-5, 4.22218e-8, -9.5771e-12 },
-        { 23.969262, 0.030603834, -6.4184e-5, 5.7e-8, -1.770882e-11 } };
+    double[] dHf = {-110525.0, -241818.0, -393509.0, 0.0};
+    double[] S0 = {197.7, 188.8, 213.8, 130.7};
+    double[][] cpCoeffs = {{32.524368, -0.032532682, 9.8271e-5, -1.08e-7, 4.28171e-11},
+        {36.54003, -0.034802404, 1.16811e-4, -1.3e-7, 5.254448e-11},
+        {18.583021, 0.082379635, -7.93039e-5, 4.22218e-8, -9.5771e-12},
+        {23.969262, 0.030603834, -6.4184e-5, 5.7e-8, -1.770882e-11}};
     // stoichiometry: CO(-1) + H2O(-1) + CO2(+1) + H2(+1)
-    double[] nu = { -1.0, -1.0, 1.0, 1.0 };
+    double[] nu = {-1.0, -1.0, 1.0, 1.0};
 
     double T0 = 298.15;
     double R = 8.314462;
-    double[] temperatures = { 600.0, 800.0, 1000.0, 1200.0 };
+    double[] temperatures = {600.0, 800.0, 1000.0, 1200.0};
 
     for (double T : temperatures) {
       // Compute ΔG_rxn(T)
@@ -1073,8 +1073,8 @@ public class ReactiveFlashBenchmarkTest {
     // T=800K: 25.025 + 0 - 10.620 - 14.118 = 0.287 -> Kp = 1.94
     // T=1000K: 20.143 + 0 - 9.289 - 11.329 = -0.475 -> Kp = 0.335
     // T=1200K: 17.019 + 0 - 8.509 - 9.740 = -1.230 -> Kp = 0.0589
-    double[] testTempK = { 600.0, 800.0, 1000.0, 1200.0 };
-    double[] nistLog10Kp = { 1.244, 0.287, -0.475, -1.230 };
+    double[] testTempK = {600.0, 800.0, 1000.0, 1200.0};
+    double[] nistLog10Kp = {1.244, 0.287, -0.475, -1.230};
 
     for (int idx = 0; idx < testTempK.length; idx++) {
       double T = testTempK[idx];
@@ -1135,8 +1135,8 @@ public class ReactiveFlashBenchmarkTest {
     // N2 + 3H2 = 2NH3, delta_nu = -2
     // Kp = (xNH3^2) / (xN2 * xH2^3) * (P/Pref)^delta_nu = Kx * P^(-2)
     // At P=1 bar: Kp = Kx
-    double[] testTempK = { 500.0, 700.0, 1000.0 };
-    double[] nistLog10Kp = { 0.72, -2.50, -4.81 };
+    double[] testTempK = {500.0, 700.0, 1000.0};
+    double[] nistLog10Kp = {0.72, -2.50, -4.81};
 
     for (int idx = 0; idx < testTempK.length; idx++) {
       double T = testTempK[idx];

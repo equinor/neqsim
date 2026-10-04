@@ -37,11 +37,25 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public boolean isInert();
 
   /**
-   * setIdealGasEnthalpyOfFormation.
+   * Supply an ideal-gas standard formation enthalpy at 298.15 K. This explicitly marks the value as user-supplied; it
+   * does not enable the formation reference by itself.
    *
-   * @param idealGasEnthalpyOfFormation a double
+   * @param idealGasEnthalpyOfFormation finite value in J/mol
+   * @throws IllegalArgumentException if the value is not finite
    */
   public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation);
+
+  /**
+   * Set a formation enthalpy together with its provenance. An empty source retains a legacy value or unreviewed
+   * estimate without declaring it available for the formation reference.
+   *
+   * @param value formation enthalpy in J/mol at 298.15 K
+   * @param source provenance identifier, or null/empty for unavailable data
+   * @throws IllegalArgumentException if the value is not finite
+   */
+  public default void setIdealGasEnthalpyOfFormation(double value, String source) {
+    setIdealGasEnthalpyOfFormation(value);
+  }
 
   /**
    * getFormulae.
@@ -582,9 +596,10 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getMeltingPointTemperature();
 
   /**
-   * getIdealGasEnthalpyOfFormation.
+   * Read the stored standard ideal-gas formation enthalpy at 298.15 K. Legacy database rows can contain placeholders;
+   * check {@link #hasIdealGasEnthalpyOfFormation()} before using a value in a thermochemical balance.
    *
-   * @return a double
+   * @return stored value in J/mol
    */
   public double getIdealGasEnthalpyOfFormation();
 
@@ -1000,12 +1015,70 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getCv0(double temperature);
 
   /**
-   * getHID.
+   * Ideal-gas molar enthalpy using this component's selected reference. The default is sensible enthalpy relative to
+   * 273.15 K. With formation enthalpy enabled, returns Hf(298.15 K) + integral from 298.15 K to T of Cp dT.
    *
-   * @param T a double
-   * @return a double
+   * @param T temperature in K
+   * @return ideal-gas molar enthalpy in J/mol
    */
   public double getHID(double T);
+
+  /**
+   * Evaluate an explicit enthalpy reference without modifying the component.
+   *
+   * @param T temperature in K
+   * @param includeFormationEnthalpy true for Hf(298.15 K) plus sensible heat from 298.15 K; false for the legacy
+   * sensible reference at 273.15 K
+   * @return ideal-gas molar enthalpy in J/mol
+   * @throws IllegalStateException if formation data are unavailable
+   */
+  public default double getHID(double T, boolean includeFormationEnthalpy) {
+    if (includeFormationEnthalpy) {
+      throw new IllegalStateException("Formation reference is unsupported by this component");
+    }
+    return getHID(T);
+  }
+
+  /**
+   * Check whether reviewed or explicitly supplied gas-phase formation data are available. Zero is a valid value for
+   * elements; availability is never inferred from its magnitude.
+   *
+   * @return true if formation data are available for the neutral component
+   */
+  public default boolean hasIdealGasEnthalpyOfFormation() {
+    return false;
+  }
+
+  /**
+   * Get provenance of the available formation enthalpy.
+   *
+   * @return source identifier, user-supplied, or empty if unavailable
+   */
+  public default String getFormationEnthalpySource() {
+    return "";
+  }
+
+  /**
+   * Check the selected enthalpy reference.
+   *
+   * @return true if getHID includes formation enthalpy
+   */
+  public default boolean isUsingIdealGasEnthalpyOfFormation() {
+    return false;
+  }
+
+  /**
+   * Select the ideal-gas enthalpy reference. Prefer the corresponding system method so every phase and subsequently
+   * added component uses the same convention.
+   *
+   * @param useFormationEnthalpy true to include formation enthalpy referenced to 298.15 K
+   * @throws IllegalStateException if formation data are unavailable
+   */
+  public default void setUseIdealGasEnthalpyOfFormation(boolean useFormationEnthalpy) {
+    if (useFormationEnthalpy) {
+      throw new IllegalStateException("Formation reference is unsupported by this component");
+    }
+  }
 
   /**
    * getEnthalpy.
@@ -1134,18 +1207,43 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setNumberOfmoles(double newmoles);
 
   /**
-   * getAntoineVaporPressure.
+   * Whether a liquid-vapor pressure correlation is available for this component.
    *
-   * @param temp a double
-   * @return a double
+   * <p>
+   * False for ions and database rows explicitly marked {@code none}. Availability does not certify the accuracy or
+   * fitted temperature range of legacy correlations.
+   * </p>
+   *
+   * @return true if a correlation is available
+   */
+  public boolean hasAntoineVaporPressureCorrelation();
+
+  /**
+   * Evaluate the liquid-vapor pressure correlation in bar absolute.
+   *
+   * <p>
+   * Returns {@link Double#NaN} when no correlation is available (including ions), for nonpositive or nonfinite
+   * temperature, or above the critical temperature. No estimated correlation is silently substituted. Consult the
+   * source for the fitted temperature range; values below the melting point can represent metastable liquid.
+   * </p>
+   *
+   * <p>
+   * A nonzero DIPPR exponent ({@code |E| > 1e-12}) selects {@code exp(A + B/T + C*ln(T) + D*T^E) / 100000}, including
+   * legacy {@code log}/{@code exp} labels. Explicit {@code pow10} and {@code pow10KPa} labels retain precedence.
+   * </p>
+   *
+   * @param temp temperature in K
+   * @return vapor pressure in bara, or NaN when unavailable, outside the liquid-vapor domain, or the evaluated pressure
+   * exceeds the finite critical pressure; results are never clipped to the critical pressure
    */
   public double getAntoineVaporPressure(double temp);
 
   /**
-   * getAntoineVaporTemperature.
+   * Invert the liquid-vapor pressure correlation.
    *
-   * @param pres a double
-   * @return a double
+   * @param pres absolute pressure in bar
+   * @return temperature in K, or NaN when no correlation is available, pressure is nonpositive or nonfinite, or
+   * pressure exceeds the critical pressure
    */
   public double getAntoineVaporTemperature(double pres);
 
@@ -1346,20 +1444,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setParachorParameter(double parachorParameter);
 
   /**
-   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/liter Should only be used in the
-   * valid temperature range (specified in component database).
+   * getPureComponentSolidDensity. Calculates the pure component solid density in kg/m3 Should only be used in the valid
+   * temperature range (specified in component database).
    *
    * @param temperature a double
-   * @return pure component solid density in kg/liter
+   * @return pure component solid density in kg/m3
    */
   public double getPureComponentSolidDensity(double temperature);
 
   /**
-   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/liter Should only be used in the
+   * getPureComponentLiquidDensity. Calculates the pure component liquid density in kg/m3 Should only be used in the
    * valid temperature range (specified in component database). This method seems to give bad results at the moment
    *
    * @param temperature a double
-   * @return pure component liquid density in kg/liter
+   * @return pure component liquid density in kg/m3
    */
   public double getPureComponentLiquidDensity(double temperature);
 
@@ -1408,10 +1506,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getVoli();
 
   /**
-   * getAntoineVaporPressuredT.
+   * Temperature derivative of the liquid-vapor pressure correlation where implemented. DIPPR-101, {@code pow10},
+   * {@code pow10KPa}, and the three-parameter {@code log}/{@code exp} forms use the same coefficient selection and
+   * pressure scale as {@link #getAntoineVaporPressure(double)}. Explicit base-ten labels retain precedence over a
+   * nonzero DIPPR exponent. For {@code pow10KPa}, the derivative is P * ln(10) * B / (T + C)^2 in bar/K.
    *
-   * @param temp a double
-   * @return a double
+   * @param temp temperature in K
+   * @return derivative in bar/K, or zero for available correlation types without a derivative; NaN under the same
+   * missing-data and domain conditions as {@link #getAntoineVaporPressure(double)}
    */
   public double getAntoineVaporPressuredT(double temp);
 
@@ -1639,10 +1741,26 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setHenryCoefParameter(double[] henryCoefParameter);
 
   /**
-   * getHenryCoef. Getter for property Henrys Coefficient. Unit is bar. ln H = C1 + C2/T + C3lnT + C4*T
+   * Tests whether finite non-placeholder Henry polynomial parameters are present. This does not qualify a temperature
+   * range or aqueous reaction model.
+   *
+   * @return true for a supplied correlation, false for missing data or legacy sentinels
+   */
+  public default boolean hasHenryCorrelation() {
+    return Double.isFinite(getHenryCoef(298.15));
+  }
+
+  /**
+   * Returns the legacy molality-scale pure-water Henry reference, in bar kg/mol.
+   *
+   * <p>
+   * Hm = 1.802 exp(C1 + C2/T + C3 ln(T) + C4 T). Divide by the water molar mass in kg/mol to obtain the limiting
+   * mole-fraction reference in bar. The compiled Sander correlations are local temperature approximations, not
+   * qualified broad-range fits. Missing, sentinel, invalid, overflowing and underflowing correlations return NaN.
+   * </p>
    *
    * @param temperature a double
-   * @return Henrys Coefficient in bar
+   * @return molality Henry reference in bar kg/mol, or NaN when unavailable
    */
   public double getHenryCoef(double temperature);
 
@@ -1654,7 +1772,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
    * </p>
    *
    * @param temperature temperature in K
-   * @return Henry-coefficient derivative in bar/K
+   * @return Henry-coefficient derivative in bar kg/(mol K), or NaN when unavailable
    */
   public double getHenryCoefdT(double temperature);
 

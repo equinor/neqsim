@@ -171,12 +171,12 @@ public class ParallelBenchmarkTest {
     comp.setOutletPressure(120.0);
     sys.add(comp);
     Cooler cool = new Cooler("cooler", comp.getOutletStream());
-    cool.setOutTemperature(303.0);
+    cool.setOutletTemperature(303.0);
     sys.add(cool);
     Separator sep2 = new Separator("sep2", cool.getOutletStream());
     sys.add(sep2);
     Heater h = new Heater("heater", sep2.getGasOutStream());
-    h.setOutTemperature(350.0);
+    h.setOutletTemperature(350.0);
     sys.add(h);
     return sys;
   }
@@ -196,7 +196,7 @@ public class ParallelBenchmarkTest {
       comp.setOutletPressure(150.0);
       sys.add(comp);
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
     }
     // previously forced sequential due to Mixer
@@ -221,12 +221,12 @@ public class ParallelBenchmarkTest {
       comp.setOutletPressure(150.0);
       sys.add(comp);
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
       Separator sep2 = new Separator("sep2-" + t, cool.getOutletStream());
       sys.add(sep2);
       Heater h = new Heater("heat" + t, sep2.getGasOutStream());
-      h.setOutTemperature(340.0);
+      h.setOutletTemperature(340.0);
       sys.add(h);
     }
     return sys;
@@ -244,7 +244,7 @@ public class ParallelBenchmarkTest {
     gasComp.setOutletPressure(120.0);
     sys.add(gasComp);
     Cooler gasCool = new Cooler("gas cooler", gasComp.getOutletStream());
-    gasCool.setOutTemperature(310.0);
+    gasCool.setOutletTemperature(310.0);
     sys.add(gasCool);
     ThrottlingValve lpValve = new ThrottlingValve("LP valve", hpSep.getLiquidOutStream());
     lpValve.setOutletPressure(5.0);
@@ -252,7 +252,7 @@ public class ParallelBenchmarkTest {
     Separator lpSep = new Separator("LP sep", lpValve.getOutletStream());
     sys.add(lpSep);
     Heater lpGasHeater = new Heater("LP gas heater", lpSep.getGasOutStream());
-    lpGasHeater.setOutTemperature(330.0);
+    lpGasHeater.setOutletTemperature(330.0);
     sys.add(lpGasHeater);
     HeatExchanger hx = new HeatExchanger("HX", gasCool.getOutletStream());
     hx.setFeedStream(1, lpGasHeater.getOutletStream());

@@ -82,17 +82,17 @@ public class CDFTSurfaceTensionBenchmarkTest {
   void benchmarkPureComponents() {
     // Experimental IFT data (mN/m) from NIST / literature
     // Format: {component, T(K), sigma_exp (mN/m)}
-    String[][] testCases = { { "methane", "90.7", "18.9" }, // Near triple point
-        { "methane", "111.0", "14.9" }, // Normal boiling point
-        { "methane", "120.0", "13.0" }, { "methane", "150.0", "6.6" }, { "methane", "170.0", "2.8" },
-        { "ethane", "184.0", "17.1" }, { "ethane", "230.0", "9.4" }, { "ethane", "270.0", "3.6" },
-        { "propane", "230.0", "13.6" }, { "propane", "270.0", "8.6" }, { "propane", "320.0", "3.4" },
-        { "n-butane", "270.0", "13.2" }, { "n-butane", "320.0", "7.6" }, { "n-pentane", "300.0", "14.6" },
-        { "n-pentane", "350.0", "9.1" }, { "n-hexane", "300.0", "16.3" }, { "n-hexane", "340.0", "12.5" },
-        { "n-hexane", "400.0", "5.8" }, { "nitrogen", "77.0", "9.4" }, { "nitrogen", "90.0", "6.2" },
-        { "CO2", "220.0", "15.5" }, { "CO2", "250.0", "8.5" }, { "CO2", "280.0", "2.6" }, };
+    String[][] testCases = {{"methane", "90.7", "18.9"}, // Near triple point
+        {"methane", "111.0", "14.9"}, // Normal boiling point
+        {"methane", "120.0", "13.0"}, {"methane", "150.0", "6.6"}, {"methane", "170.0", "2.8"},
+        {"ethane", "184.0", "17.1"}, {"ethane", "230.0", "9.4"}, {"ethane", "270.0", "3.6"},
+        {"propane", "230.0", "13.6"}, {"propane", "270.0", "8.6"}, {"propane", "320.0", "3.4"},
+        {"n-butane", "270.0", "13.2"}, {"n-butane", "320.0", "7.6"}, {"n-pentane", "300.0", "14.6"},
+        {"n-pentane", "350.0", "9.1"}, {"n-hexane", "300.0", "16.3"}, {"n-hexane", "340.0", "12.5"},
+        {"n-hexane", "400.0", "5.8"}, {"nitrogen", "77.0", "9.4"}, {"nitrogen", "90.0", "6.2"},
+        {"CO2", "220.0", "15.5"}, {"CO2", "250.0", "8.5"}, {"CO2", "280.0", "2.6"},};
 
-    String[] eosTypes = { "PR", "SRK" };
+    String[] eosTypes = {"PR", "SRK"};
 
     logger.info("=== cDFT Surface Tension Benchmark ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "| %-12s | %-3s | %6s | %6s | %19s | %19s | %19s |%n",
@@ -150,7 +150,7 @@ public class CDFTSurfaceTensionBenchmarkTest {
     logger.printf(org.apache.logging.log4j.Level.INFO, "| %6s | %8s | %8s | %8s |%n", "T (K)", "cDFT", "Full GT",
         "Parachor");
 
-    double[] temps = { 95, 100, 110, 120, 130, 140, 150, 160, 170, 180 };
+    double[] temps = {95, 100, 110, 120, 130, 140, 150, 160, 170, 180};
     int validCount = 0;
     for (double t : temps) {
       SystemInterface sys = setupVLE("PR", "methane", t);
@@ -176,7 +176,7 @@ public class CDFTSurfaceTensionBenchmarkTest {
     logger.info("=== Heavier Alkanes at 300K (PR EOS) ===");
     logger.printf(org.apache.logging.log4j.Level.INFO, "| %-12s | %8s | %8s |%n", "Component", "cDFT", "Parachor");
 
-    String[] components = { "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10" };
+    String[] components = {"n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane", "nC10"};
 
     for (String comp : components) {
       SystemInterface sys = setupVLE("PR", comp, 300.0);

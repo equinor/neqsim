@@ -139,9 +139,9 @@ public class ThermoHotspotBreakdownTest {
           double entropy = c.getEntropy();
           c.setPressure(150.0);
           ops.PSflash(entropy);
-        } };
-    String[] names = new String[] { "A: clone only", "B: clone + init(3)", "C: clone + TPflash (no stab)",
-        "D: clone + TPflash (with stab)", "E: clone + TPflash + PSflash" };
+        }};
+    String[] names = new String[] {"A: clone only", "B: clone + init(3)", "C: clone + TPflash (no stab)",
+        "D: clone + TPflash (with stab)", "E: clone + TPflash + PSflash"};
 
     for (int k = 0; k < tasks.length; k++) {
       double serial = timeSerial(fluids, tasks[k], ITERS);

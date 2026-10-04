@@ -16,20 +16,20 @@ class TwoFluidVirtualMassTest {
   @Test
   void identicalRhsEvaluationsAreBitwiseDeterministic() {
     TwoFluidConservationEquations equations = enabledEquations(0.5);
-    TwoFluidSection[] sections = { createSection(0.0, 0.5), createSection(10.0, 0.5) };
+    TwoFluidSection[] sections = {createSection(0.0, 0.5), createSection(10.0, 0.5)};
 
     double[][] first = equations.calcRHS(sections, 10.0);
     double[][] second = equations.calcRHS(sections, 10.0);
 
     assertMatrixEquals(first, second, 0.0);
 
-    final double[][] initialState = { createSection(0.0, 0.5).getStateVector() };
+    final double[][] initialState = {createSection(0.0, 0.5).getStateVector()};
     TimeIntegrator.RHSFunction rhs = (state, time) -> {
       TwoFluidSection stageSection = createSection(0.0, 0.5);
       stageSection.setStateVector(state[0]);
       stageSection.extractPrimitiveVariables();
       double[][] rates = accelerationRates(stageSection, 100.0, -2.0);
-      equations.applyVirtualMassCoupling(new TwoFluidSection[] { stageSection }, rates);
+      equations.applyVirtualMassCoupling(new TwoFluidSection[] {stageSection}, rates);
       return rates;
     };
     for (TimeIntegrator.Method method : TimeIntegrator.Method.values()) {
@@ -51,7 +51,7 @@ class TwoFluidVirtualMassTest {
     rates[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM] = 8.0;
     rates[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM] = -2.0;
 
-    equations.applyVirtualMassCoupling(new TwoFluidSection[] { section }, rates);
+    equations.applyVirtualMassCoupling(new TwoFluidSection[] {section}, rates);
 
     assertEquals(0.5116279069767442, rates[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM], 1.0e-12);
     assertEquals(5.488372093023256, rates[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM], 1.0e-12);
@@ -71,7 +71,7 @@ class TwoFluidVirtualMassTest {
     rates[0][TwoFluidConservationEquations.IDX_WATER_MOMENTUM] = -1.0;
     double momentumBefore = totalMomentumRate(rates[0]);
 
-    equations.applyVirtualMassCoupling(new TwoFluidSection[] { section }, rates);
+    equations.applyVirtualMassCoupling(new TwoFluidSection[] {section}, rates);
 
     assertEquals(momentumBefore, totalMomentumRate(rates[0]), 0.0);
     double oilCorrection = rates[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM] + 1.0;
@@ -88,25 +88,25 @@ class TwoFluidVirtualMassTest {
     reference[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM] = -2.0;
 
     double[][] disabled = copy(reference);
-    new TwoFluidConservationEquations().applyVirtualMassCoupling(new TwoFluidSection[] { section }, disabled);
+    new TwoFluidConservationEquations().applyVirtualMassCoupling(new TwoFluidSection[] {section}, disabled);
     assertMatrixEquals(reference, disabled, 0.0);
 
     double[][] zeroCoefficient = copy(reference);
     TwoFluidConservationEquations equations = enabledEquations(0.0);
-    equations.applyVirtualMassCoupling(new TwoFluidSection[] { section }, zeroCoefficient);
+    equations.applyVirtualMassCoupling(new TwoFluidSection[] {section}, zeroCoefficient);
     assertMatrixEquals(reference, zeroCoefficient, 0.0);
   }
 
   @Test
   void couplingIsFiniteAcrossHoldupsAndCoefficientsAndSkipsAbsentLiquid() {
-    double[] gasHoldups = { 1.0e-8, 0.1, 0.5, 0.9, 1.0 - 1.0e-8 };
-    double[] coefficients = { 0.3, 0.5, 0.7 };
+    double[] gasHoldups = {1.0e-8, 0.1, 0.5, 0.9, 1.0 - 1.0e-8};
+    double[] coefficients = {0.3, 0.5, 0.7};
     for (double gasHoldup : gasHoldups) {
       double previousRelativeAcceleration = Double.POSITIVE_INFINITY;
       for (double coefficient : coefficients) {
         TwoFluidSection section = createSection(0.0, gasHoldup);
         double[][] rates = accelerationRates(section, 100.0, -2.0);
-        enabledEquations(coefficient).applyVirtualMassCoupling(new TwoFluidSection[] { section }, rates);
+        enabledEquations(coefficient).applyVirtualMassCoupling(new TwoFluidSection[] {section}, rates);
         double relativeAcceleration = relativeAcceleration(section, rates[0]);
         assertTrue(Double.isFinite(relativeAcceleration));
         assertTrue(Math.abs(relativeAcceleration) < previousRelativeAcceleration);
@@ -117,7 +117,7 @@ class TwoFluidVirtualMassTest {
     TwoFluidSection gasOnly = createSection(0.0, 1.0);
     double[][] gasOnlyRates = accelerationRates(gasOnly, 100.0, 0.0);
     double[][] gasOnlyReference = copy(gasOnlyRates);
-    enabledEquations(0.5).applyVirtualMassCoupling(new TwoFluidSection[] { gasOnly }, gasOnlyRates);
+    enabledEquations(0.5).applyVirtualMassCoupling(new TwoFluidSection[] {gasOnly}, gasOnlyRates);
     assertMatrixEquals(gasOnlyReference, gasOnlyRates, 0.0);
   }
 
@@ -141,8 +141,8 @@ class TwoFluidVirtualMassTest {
     TwoFluidSection section = createSection(0.0, 0.5);
     double[][] originalRates = accelerationRates(section, 100.0, -2.0);
     double[][] restoredRates = copy(originalRates);
-    original.applyVirtualMassCoupling(new TwoFluidSection[] { section }, originalRates);
-    restored.applyVirtualMassCoupling(new TwoFluidSection[] { section }, restoredRates);
+    original.applyVirtualMassCoupling(new TwoFluidSection[] {section}, originalRates);
+    restored.applyVirtualMassCoupling(new TwoFluidSection[] {section}, restoredRates);
     assertMatrixEquals(originalRates, restoredRates, 0.0);
   }
 

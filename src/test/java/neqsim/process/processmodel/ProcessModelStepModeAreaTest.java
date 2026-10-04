@@ -49,7 +49,7 @@ class ProcessModelStepModeAreaTest {
     heater.setOutTemperature(30.0, "C");
 
     Splitter splitter = new Splitter(areaName + " splitter", heater.getOutletStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
 
     Stream product = new Stream(areaName + " product", splitter.getSplitStream(0));
 

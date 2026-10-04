@@ -1,7 +1,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseElectrolyteCPAstatoil;
-import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
  * This class defines a thermodynamic system using the electrolyte CPA EoS Statoil model.
@@ -36,7 +35,6 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }
-    FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
     this.useVolumeCorrection(true);
   }
 

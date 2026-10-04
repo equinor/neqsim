@@ -1,208 +1,75 @@
 ---
-title: Adsorbers
-description: Documentation for adsorption equipment in NeqSim.
+title: "Adsorbers: Legacy SimpleAdsorber Boundary"
+description: "Source-verified status and migration routes for NeqSim's unqualified legacy MDEA-loading prototype."
 ---
 
-Documentation for adsorption equipment in NeqSim.
+The `SimpleAdsorber` class is a legacy, currently unqualified MDEA-loading prototype. It is not
+NeqSim's solid-adsorption model, and it does not have executable evidence for use as a gas-treating
+absorber. Do not use it for new engineering work.
 
-## Table of Contents
-- [Overview](#overview)
-- [SimpleAdsorber](#simpleadsorber)
-- [Key Features](#key-features)
-- [Usage Examples](#usage-examples)
-- [Parameters](#parameters)
-- [Related Documentation](#related-documentation)
+## Choose a maintained model
 
----
+| Engineering question | Model family | Maintained guide |
+| --- | --- | --- |
+| Fixed-bed adsorption, breakthrough, mercury removal, or PSA/TSA/VSA cycles | `AdsorptionBed`, `MercuryRemovalBed`, or `PressureSwingAdsorptionBed` | [Adsorption beds](adsorption_bed) |
+| Gas-liquid absorption or stripping | `AbsorptionColumn`, `RateBasedPackedColumn`, `SimpleAmineAbsorber`, or `SimpleTEGAbsorber` | [Absorbers and strippers](absorbers) |
+| Historical MDEA-loading prototype inspection | `SimpleAdsorber` | This legacy boundary only |
 
-## Overview
+The maintained model's assumptions and executable tests remain authoritative. Select a model from
+its own guide instead of translating the old `SimpleAdsorber` snippets.
 
-**Location:** `neqsim.process.equipment.adsorber`
+## What the current implementation does
 
-The adsorber package provides equipment for modeling gas treatment processes using solid adsorbents. Adsorption is commonly used for:
-- CO2 removal from natural gas
-- Dehydration (water removal)
-- Mercury removal
-- H2S removal
+The two-argument constructor stores the same inlet object in two inlet slots and creates two
+outlet clones. Outlet 0 remains a clone of the feed. Outlet 1 starts from another feed clone, then
+adds MDEA and water and initializes electrolyte reaction handling.
 
----
+During `run(UUID)`, outlet 0 is cloned from the inlet again. The calculation iterates the MDEA and
+water inventory in outlet 1 toward a CO2-to-amine loading target. It does not remove CO2 from
+outlet 0. Consequently:
 
-## SimpleAdsorber
+- outlet 0 must not be labelled treated or sweet gas;
+- outlet 1 is not an independently supplied solvent stream;
+- the two outlets must not be interpreted as a conventional gas product and rich-solvent product;
+- `getMassBalance(String)` is not evidence of a conventional absorber material balance because
+  both inlet slots refer to the same feed object.
 
-The `SimpleAdsorber` class models a simplified adsorption column for gas treatment applications.
+The source currently exposes `getOutletStream(int)`. The older `getOutStream(int)` accessor is
+deprecated. The only public loading-target setter is the misspelled legacy method
+`setAproachToEquilibrium(double)`; it must not be described as a gas-removal-efficiency
+specification.
 
-### Class Hierarchy
+## Inactive configuration fields
 
-```
-ProcessEquipmentBaseClass
-└── SimpleAdsorber
-```
+The class stores values for number of stages, theoretical stages, stage efficiency, HTU, and NTU,
+but `run(UUID)` does not read those fields. Their setters therefore do not configure an active
+stage or transfer-unit calculation in the current implementation.
 
-### Constructor
+Although `getMechanicalDesign()` returns an `AdsorberMechanicalDesign`, no enabled
+`SimpleAdsorber` regression qualifies a diameter, height, weight, or cost result. Do not use that
+path for engineering sizing.
 
-```java
-import neqsim.process.equipment.adsorber.SimpleAdsorber;
-import neqsim.process.equipment.stream.Stream;
+## Validation status
 
-// Basic constructor
-SimpleAdsorber adsorber = new SimpleAdsorber("CO2 Adsorber");
+The repository's only `SimpleAdsorberTest.testRun` method is disabled with an explicit
+"until ... SimpleAdsorber is fixed" reason. Its process execution is commented out. The class also
+writes directly to the console internally. For those reasons, this page intentionally contains no
+runnable `SimpleAdsorber` example and makes no numerical performance claim.
 
-// Constructor with inlet stream
-SimpleAdsorber adsorber = new SimpleAdsorber("CO2 Adsorber", feedStream);
-```
+The maintained solid-adsorption replacement has enabled construction, geometry, steady-state,
+transient, validation, and reporting tests in `AdsorptionBedTest`. The maintained gas-liquid
+models and their evidence are listed in the absorber guide.
 
-### Key Properties
+## Source and test evidence
 
-| Property | Description | Default |
-|----------|-------------|---------|
-| `numberOfStages` | Number of theoretical stages | 5 |
-| `numberOfTheoreticalStages` | Theoretical stages (continuous) | 3.0 |
-| `absorptionEfficiency` | Removal efficiency (0-1) | 0.5 |
-| `HTU` | Height of Transfer Unit (m) | 0.85 |
-| `NTU` | Number of Transfer Units | 2.0 |
-| `stageEfficiency` | Per-stage efficiency | 0.25 |
+- [SimpleAdsorber source](../../../src/main/java/neqsim/process/equipment/adsorber/SimpleAdsorber.java)
+- [Disabled SimpleAdsorber regression](../../../src/test/java/neqsim/process/equipment/adsorber/SimpleAdsorberTest.java)
+- [AdsorptionBed source](../../../src/main/java/neqsim/process/equipment/adsorber/AdsorptionBed.java)
+- [Enabled AdsorptionBed regressions](../../../src/test/java/neqsim/process/equipment/adsorber/AdsorptionBedTest.java)
 
----
+## Related documentation
 
-## Key Features
-
-### CO2 Absorption with MDEA
-
-The SimpleAdsorber is configured for CO2 removal using MDEA (methyldiethanolamine) solvent:
-
-```java
-// Create gas feed with CO2
-SystemInterface gasFluid = new SystemSrkEos(298.15, 50.0);
-gasFluid.addComponent("methane", 0.85);
-gasFluid.addComponent("CO2", 0.10);
-gasFluid.addComponent("nitrogen", 0.05);
-gasFluid.setMixingRule("classic");
-
-Stream feedGas = new Stream("Feed Gas", gasFluid);
-feedGas.setFlowRate(10000.0, "Sm3/hr");
-
-// Create adsorber
-SimpleAdsorber adsorber = new SimpleAdsorber("CO2 Removal", feedGas);
-
-// Run
-adsorber.run();
-
-// Get treated gas
-StreamInterface treatedGas = adsorber.getOutStream(0);
-System.out.println("CO2 in treated gas: " + 
-    treatedGas.getFluid().getComponent("CO2").getx() * 100 + " mol%");
-```
-
-### Multiple Output Streams
-
-The adsorber provides two output streams:
-- `getOutStream(0)` - Treated gas (clean gas)
-- `getOutStream(1)` - Rich solvent (solvent loaded with absorbed component)
-
----
-
-## Usage Examples
-
-### Basic CO2 Removal
-
-```java
-import neqsim.process.equipment.adsorber.SimpleAdsorber;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemSrkEos;
-
-// Create sour gas
-SystemInterface sourGas = new SystemSrkEos(298.15, 50.0);
-sourGas.addComponent("methane", 0.80);
-sourGas.addComponent("ethane", 0.05);
-sourGas.addComponent("CO2", 0.10);
-sourGas.addComponent("H2S", 0.02);
-sourGas.addComponent("nitrogen", 0.03);
-sourGas.setMixingRule("classic");
-
-Stream feed = new Stream("Sour Gas Feed", sourGas);
-feed.setFlowRate(5.0, "MSm3/day");
-
-// Create and run adsorber
-SimpleAdsorber acidGasRemoval = new SimpleAdsorber("AGRU", feed);
-acidGasRemoval.setAbsorptionEfficiency(0.95);
-acidGasRemoval.run();
-
-// Results
-StreamInterface sweetGas = acidGasRemoval.getOutStream(0);
-System.out.println("Sweet gas CO2: " + 
-    sweetGas.getFluid().getComponent("CO2").getx() * 1e6 + " ppm");
-```
-
-### Integration in Process System
-
-```java
-import neqsim.process.processmodel.ProcessSystem;
-
-ProcessSystem process = new ProcessSystem();
-
-// Add equipment
-process.add(feedStream);
-process.add(adsorber);
-process.add(treatedGasExport);
-
-// Run complete process
-process.run();
-```
-
----
-
-## Parameters
-
-### Setting Absorption Efficiency
-
-```java
-// Set 95% removal efficiency
-adsorber.setAbsorptionEfficiency(0.95);
-```
-
-### Setting Stage Parameters
-
-```java
-adsorber.setNumberOfStages(10);
-adsorber.setNumberOfTheoreticalStages(7.5);
-adsorber.setStageEfficiency(0.75);
-```
-
-### Transfer Unit Parameters
-
-```java
-adsorber.setHTU(0.5);  // Height of Transfer Unit in meters
-adsorber.setNTU(4.0);  // Number of Transfer Units
-```
-
----
-
-## Mechanical Design
-
-The `SimpleAdsorber` supports mechanical design calculations through `AdsorberMechanicalDesign`:
-
-```java
-import neqsim.process.mechanicaldesign.adsorber.AdsorberMechanicalDesign;
-
-AdsorberMechanicalDesign design = adsorber.getMechanicalDesign();
-design.calcDesign();
-
-System.out.println("Vessel diameter: " + design.getInnerDiameter() + " m");
-System.out.println("Vessel height: " + design.getTotalHeight() + " m");
-```
-
----
-
-## Related Documentation
-
-- [Absorbers](absorbers) - Liquid absorption equipment (TEG, amine)
-- [Separators](separators) - Gas-liquid separation
-- [Membrane](membranes) - Membrane separation for CO2
-- [Chemical Reactions](../../chemicalreactions/) - Reaction chemistry
-
----
-
-## See Also
-
-- `neqsim.process.equipment.absorber` - Alternative absorption equipment
-- `neqsim.thermo.characterization` - Fluid characterization for sour gas
+- [Adsorption beds](adsorption_bed) — fixed-bed adsorption and cyclic operation
+- [Absorbers and strippers](absorbers) — gas-liquid mass-transfer model selection
+- [Equipment catalog](equipment_catalog) — current concrete equipment inventory
+- [Chemical reactions](../../chemicalreactions/) — reaction and equilibrium boundaries

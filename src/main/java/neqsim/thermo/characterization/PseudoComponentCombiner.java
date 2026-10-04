@@ -338,7 +338,7 @@ public final class PseudoComponentCombiner {
       component.setHeatOfFusion(reference.heatOfFusion);
     }
     if (Double.isFinite(reference.idealGasEnthalpyOfFormation)) {
-      component.setIdealGasEnthalpyOfFormation(reference.idealGasEnthalpyOfFormation);
+      component.setIdealGasEnthalpyOfFormation(reference.idealGasEnthalpyOfFormation, "");
     }
     if (Double.isFinite(reference.cpA)) {
       component.setCpA(reference.cpA);
@@ -1819,7 +1819,7 @@ public final class PseudoComponentCombiner {
         component.setHeatOfFusion(heatOfFusion);
       }
       if (Double.isFinite(idealGasEnthalpyOfFormation)) {
-        component.setIdealGasEnthalpyOfFormation(idealGasEnthalpyOfFormation);
+        component.setIdealGasEnthalpyOfFormation(idealGasEnthalpyOfFormation, "");
       }
       if (Double.isFinite(cpA)) {
         component.setCpA(cpA);

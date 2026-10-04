@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.separator.Separator;
@@ -287,6 +288,7 @@ class SlugPipelineToSeparatorTest {
    */
   @Test
   @DisplayName("Verify pipeline outlet flow, pressure and holdup variations")
+  @Tag("slow")
   void testPipelineOutletVariations() {
     logger.info("=== Pipeline Outlet Variations Test ===\n");
 

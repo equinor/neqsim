@@ -87,6 +87,14 @@ public class EstimationTestHarness implements Serializable {
     public final double minBound;
     public final double maxBound;
 
+    /**
+     * Constructor.
+     *
+     * @param path the parameter path
+     * @param trueValue the true value of the parameter
+     * @param minBound the minimum bound for the parameter
+     * @param maxBound the maximum bound for the parameter
+     */
     public ParameterWithTruth(String path, double trueValue, double minBound, double maxBound) {
       this.path = path;
       this.trueValue = trueValue;
@@ -423,7 +431,7 @@ public class EstimationTestHarness implements Serializable {
 
       // Record history
       estimateHistory.add(result.getEstimates());
-      rmseHistory.add(new double[] { result.getRMSE() });
+      rmseHistory.add(new double[] {result.getRMSE()});
 
       if (progressCallback != null) {
         progressCallback.accept(step);
@@ -498,7 +506,7 @@ public class EstimationTestHarness implements Serializable {
       EnKFParameterEstimator.EnKFResult result = estimator.update(meas);
 
       estimateHistory.add(result.getEstimates());
-      rmseHistory.add(new double[] { result.getRMSE() });
+      rmseHistory.add(new double[] {result.getRMSE()});
     }
 
     return new TestReport("Drift Tracking Test", numSteps, estimator.getEstimates(), currentTrueValues,

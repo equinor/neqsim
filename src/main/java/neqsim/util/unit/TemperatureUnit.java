@@ -6,105 +6,149 @@ package neqsim.util.unit;
  * @author esol
  * @version $Id: $Id
  */
-public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
+public class TemperatureUnit extends neqsim.util.unit.BaseUnit implements BiasAdjustedUnit {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  private static final String[] ALLOWED_UNITS = {"K", "C", "F", "R"};
 
   /**
    * Constructor for TemperatureUnit.
    *
    * @param value a double
-   * @param name a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
+   * @throws IllegalArgumentException if unit is not supported
    */
-  public TemperatureUnit(double value, String name) {
-    super(value, name);
-    // store the temperature in Kelvin for reuse
-    this.SIvalue = getValue(value, name, "K");
+  public TemperatureUnit(double value, String unit) {
+    super(value, unit);
+    // Preserve the protected legacy snapshot for existing subclasses.
+    SIvalue = toSIvalue(value, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String[] getAllowedUnits() {
+    return ALLOWED_UNITS.clone();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSIUnit() {
+    return "K";
   }
 
   /**
-   * Get conversion factor for temperature unit conversions to Kelvin. Note: This is primarily for understanding scale,
-   * not for direct conversions including offsets.
+   * Convert a temperature value to SI unit (Kelvin).
    *
-   * @param name a {@link java.lang.String} object representing the temperature unit
-   * @return a double representing the conversion factor relative to Kelvin
+   * @param value temperature value
+   * @param unit source unit (K, C, F, R)
+   * @return value in Kelvin
+   * @throws IllegalArgumentException if unit is not supported
    */
-  public double getConversionFactor(String name) {
-    switch (name) {
+  @Override
+  public double toSIvalue(double value, String unit) {
+    Unit.validateUnitInput(unit, "unit");
+    switch (unit) {
     case "K":
-      return 1.0;
+      return value;
     case "C":
-      return 1.0; // Same scale as Kelvin
+      return value + 273.15;
     case "F":
-      return 5.0 / 9.0; // Scale factor for Fahrenheit to Kelvin
+      return (value - 32) * 5.0 / 9.0 + 273.15;
     case "R":
-      return 5.0 / 9.0; // Scale factor for Rankine to Kelvin
+      return value * 5.0 / 9.0;
     default:
-      throw new IllegalArgumentException("Unknown unit: " + name);
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(double value, String fromUnit, String toUnit) {
-    if (fromUnit.equals(toUnit)) {
-      return value;
-    }
-
-    // Convert input to Kelvin first. Unknown units should not default to Kelvin.
-    double tempInKelvin;
-    switch (fromUnit) {
+  public double fromSIvalue(double siValue, String unit) {
+    Unit.validateUnitInput(unit, "unit");
+    switch (unit) {
     case "K":
-      tempInKelvin = value;
-      break;
+      return siValue;
     case "C":
-      tempInKelvin = value + 273.15;
-      break;
+      return siValue - 273.15;
     case "F":
-      tempInKelvin = (value - 32) * 5.0 / 9.0 + 273.15;
-      break;
+      return (siValue - 273.15) * 9.0 / 5.0 + 32;
     case "R":
-      tempInKelvin = value * 5.0 / 9.0;
-      break;
+      return siValue * 9.0 / 5.0;
     default:
-      throw new IllegalArgumentException("Unsupported fromUnit: " + fromUnit);
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
     }
+  }
 
-    // Convert from Kelvin to target unit
-    if (toUnit.equals("K")) {
-      return tempInKelvin;
-    } else if (toUnit.equals("C")) {
-      return tempInKelvin - 273.15;
-    } else if (toUnit.equals("F")) {
-      return (tempInKelvin - 273.15) * 9.0 / 5.0 + 32;
-    } else if (toUnit.equals("R")) {
-      return tempInKelvin * 9.0 / 5.0;
-    }
+  /** {@inheritDoc} */
+  @Override
+  public double getSIvalue() {
+    return toSIvalue(invalue, inunit);
+  }
 
-    throw new IllegalArgumentException("Unsupported unit: " + toUnit);
+  /** {@inheritDoc} */
+  @Override
+  public double getValue(String toUnit) {
+    return fromSIvalue(getSIvalue(), toUnit);
   }
 
   /**
-   * {@inheritDoc}
+   * Convert a temperature value between supported units.
    *
-   * Convert a given temperature value from Kelvin to a specified unit.
+   * @param value value to convert
+   * @param unit source unit
+   * @param toUnit target unit
+   * @return converted value
    */
-  @Override
-  public double getValue(String toUnit) {
-    // convert the original value to Kelvin and reuse for subsequent conversions
-    double tempInKelvin = SIvalue;
+  public static double convert(double value, String unit, String toUnit) {
+    return new TemperatureUnit(value, unit).getValue(toUnit);
+  }
 
-    switch (toUnit) {
+  /**
+   * Convert a signed temperature difference without Celsius or Fahrenheit offsets.
+   *
+   * @param value temperature difference
+   * @param unit source temperature unit
+   * @param toUnit target temperature unit
+   * @return difference in the target unit
+   * @throws IllegalArgumentException if either unit is null, blank or unsupported
+   */
+  public static double convertDifference(double value, String unit, String toUnit) {
+    return value * differenceScale(unit) / differenceScale(toUnit);
+  }
+
+  /**
+   * Return the temperature-difference multiplier to Kelvin.
+   *
+   * @param unit temperature unit
+   * @return scale multiplier to Kelvin
+   * @throws IllegalArgumentException if the unit is null, blank or unsupported
+   */
+  private static double differenceScale(String unit) {
+    Unit.validateUnitInput(unit, "unit");
+    switch (unit) {
     case "K":
-      return tempInKelvin;
     case "C":
-      return tempInKelvin - 273.15;
+      return 1.0;
     case "F":
-      return (tempInKelvin - 273.15) * 9.0 / 5.0 + 32;
     case "R":
-      return tempInKelvin * 9.0 / 5.0;
+      return 5.0 / 9.0;
     default:
-      throw new IllegalArgumentException("Unsupported conversion unit: " + toUnit);
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
     }
+  }
+
+  /**
+   * Return the legacy temperature scale to Kelvin, excluding offsets.
+   *
+   * @param unit temperature unit
+   * @return scale multiplier to Kelvin
+   * @throws IllegalArgumentException if the unit is null, blank or unsupported
+   * @deprecated Use {@link #convert(double, String, String)} for temperatures or
+   * {@link #convertDifference(double, String, String)} for differences.
+   */
+  @Deprecated
+  public double getConversionFactor(String unit) {
+    return differenceScale(unit);
   }
 }

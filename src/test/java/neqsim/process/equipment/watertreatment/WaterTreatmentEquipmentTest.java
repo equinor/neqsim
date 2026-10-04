@@ -552,7 +552,7 @@ public class WaterTreatmentEquipmentTest {
     HydrocycloneMechanicalDesign md = (HydrocycloneMechanicalDesign) hc.getMechanicalDesign();
     md.calcDesign();
 
-    double[] stdSizes = { 25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0 };
+    double[] stdSizes = {25.0, 40.0, 50.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0, 400.0};
 
     assertTrue(isStandardSize(md.getInletNozzleIdMm(), stdSizes),
         "Inlet nozzle " + md.getInletNozzleIdMm() + " not a standard size");

@@ -8,7 +8,7 @@ accompanying discussion block that follows this contract. Loaded by
 `scientific-writer`, `book-author`, `narrative-framer`, and the
 `solve.task.agent` workflow.
 
-DO NOT USE for: figure generation (use `generate_publication_figures`),
+DO NOT USE for: figure generation (use `generate-publication-figures`),
 captions only (captions are a separate, terser artefact).
 
 ---

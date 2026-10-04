@@ -213,7 +213,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
 
     DifferentialLiberation differentialLiberation = new DifferentialLiberation(tempSystem);
     differentialLiberation
-        .setPressures(new double[] { 350.0, 250.0, 200.0, 150.0, 100.0, 70.0, 50.0, 40.0, 30.0, 20.0, 1.0 });
+        .setPressures(new double[] {350.0, 250.0, 200.0, 150.0, 100.0, 70.0, 50.0, 40.0, 30.0, 20.0, 1.0});
     differentialLiberation.setTemperature(83.5, "C");
     differentialLiberation.runCalc();
   }

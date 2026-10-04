@@ -235,8 +235,8 @@ public class ThermalConductivityTest {
    */
   @Test
   void testAllMethodsPhysicallyReasonable() {
-    double[][] conditions = { { 250.0, 10.0 }, { 300.0, 50.0 }, { 350.0, 100.0 }, { 400.0, 200.0 } };
-    String[] methods = { "PFCT", "Chung-dense", "friction theory" };
+    double[][] conditions = {{250.0, 10.0}, {300.0, 50.0}, {350.0, 100.0}, {400.0, 200.0}};
+    String[] methods = {"PFCT", "Chung-dense", "friction theory"};
 
     for (double[] cond : conditions) {
       SystemInterface system = new SystemSrkEos(cond[0], cond[1]);
@@ -266,11 +266,11 @@ public class ThermalConductivityTest {
    */
   @Test
   void testConductivityIncreaseWithPressure() {
-    String[] methods = { "PFCT", "Chung-dense" };
+    String[] methods = {"PFCT", "Chung-dense"};
 
     for (String method : methods) {
       double prevLambda = 0.0;
-      double[] pressures = { 1.0, 50.0, 100.0, 200.0 };
+      double[] pressures = {1.0, 50.0, 100.0, 200.0};
 
       for (double p : pressures) {
         SystemInterface system = new SystemSrkEos(300.0, p);

@@ -49,7 +49,7 @@ public class TPflashMembrane {
     testSystem.allowPhaseShift(false);
 
     try {
-      String[] comps = { "CO2" };
+      String[] comps = {"CO2"};
       testOps.dTPflash(comps);
       // testOps.TPflash();
       testSystem.display();

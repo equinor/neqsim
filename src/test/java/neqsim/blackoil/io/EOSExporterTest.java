@@ -98,7 +98,7 @@ class EOSExporterTest {
 
     EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
         .setReferenceTemperature(273.15 + 135.0)
-        .setPressureGrid(new double[] { 30.0, 100.0, 200.0, 300.0, 400.0, 500.0, 596.0, 650.0 });
+        .setPressureGrid(new double[] {30.0, 100.0, 200.0, 300.0, 400.0, 500.0, 596.0, 650.0});
     String result = EclipseEOSExporter.toString(fluid, config);
 
     assertTrue(result.contains("PVTG"));
@@ -124,7 +124,7 @@ class EOSExporterTest {
   void testEclipseExportWithConfig() {
     EclipseEOSExporter.ExportConfig config = new EclipseEOSExporter.ExportConfig()
         .setUnits(EclipseEOSExporter.Units.FIELD).setIncludeHeader(true).setComment("Test export for validation")
-        .setPressureGrid(new double[] { 50, 100, 150, 200, 250, 300 });
+        .setPressureGrid(new double[] {50, 100, 150, 200, 250, 300});
 
     String result = EclipseEOSExporter.toString(testFluid, config);
 
@@ -271,7 +271,7 @@ class EOSExporterTest {
   void testCMGExportWithCustomConfig() {
     CMGEOSExporter.ExportConfig config = new CMGEOSExporter.ExportConfig().setSimulator(CMGEOSExporter.Simulator.IMEX)
         .setUnits(CMGEOSExporter.Units.FIELD).setModelName("MY_RESERVOIR_FLUID").setComment("Custom test fluid model")
-        .setPressureGrid(new double[] { 50, 100, 150, 200, 300 });
+        .setPressureGrid(new double[] {50, 100, 150, 200, 300});
 
     String result = CMGEOSExporter.toString(testFluid, config);
 
@@ -320,7 +320,7 @@ class EOSExporterTest {
   void testExportWithDifferentPressureGrids() {
     // Test with few pressure points
     EclipseEOSExporter.ExportConfig sparseConfig = new EclipseEOSExporter.ExportConfig()
-        .setPressureGrid(new double[] { 50, 150, 300 });
+        .setPressureGrid(new double[] {50, 150, 300});
 
     String sparseResult = EclipseEOSExporter.toString(testFluid, sparseConfig);
     assertNotNull(sparseResult);

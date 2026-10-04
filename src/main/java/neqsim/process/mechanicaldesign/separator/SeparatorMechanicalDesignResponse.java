@@ -1,6 +1,8 @@
 package neqsim.process.mechanicaldesign.separator;
 
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
 
 /**
  * Response class for separator mechanical design JSON export.
@@ -28,172 +30,172 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
   private String separatorType;
 
   /** Gas load factor (K-factor). */
-  private double gasLoadFactor;
+  private double gasLoadFactor = Double.NaN;
 
   /** Volumetric design safety factor. */
-  private double volumeSafetyFactor;
+  private double volumeSafetyFactor = Double.NaN;
 
   /** Liquid level fraction (Fg). */
-  private double liquidLevelFraction;
+  private double liquidLevelFraction = Double.NaN;
 
   /** Liquid retention time [s]. */
-  private double retentionTime;
+  private double retentionTime = Double.NaN;
 
   /** Demister type (wire mesh, vane, cyclone). */
   private String demisterType;
 
   /** Demister efficiency. */
-  private double demisterEfficiency;
+  private double demisterEfficiency = Double.NaN;
 
   /** Number of inlet nozzles. */
   private int numberOfInletNozzles;
 
   /** Inlet nozzle diameter [mm]. */
-  private double inletNozzleDiameter;
+  private double inletNozzleDiameter = Double.NaN;
 
   /** Gas outlet nozzle diameter [mm]. */
-  private double gasOutletNozzleDiameter;
+  private double gasOutletNozzleDiameter = Double.NaN;
 
   /** Liquid outlet nozzle diameter [mm]. */
-  private double liquidOutletNozzleDiameter;
+  private double liquidOutletNozzleDiameter = Double.NaN;
 
   /** Water outlet nozzle diameter (for 3-phase) [mm]. */
-  private double waterOutletNozzleDiameter;
+  private double waterOutletNozzleDiameter = Double.NaN;
 
   /** Head type (hemispherical, 2:1 ellipsoidal, torispherical). */
   private String headType;
 
   /** Head thickness [mm]. */
-  private double headThickness;
+  private double headThickness = Double.NaN;
 
   /** Shell course thickness [mm]. */
-  private double shellThickness;
+  private double shellThickness = Double.NaN;
 
   /** Design code (ASME VIII Div 1, Div 2). */
   private String designCode;
 
   /** Gas design velocity [m/s]. */
-  private double gasDesignVelocity;
+  private double gasDesignVelocity = Double.NaN;
 
   /** Actual gas velocity [m/s]. */
-  private double actualGasVelocity;
+  private double actualGasVelocity = Double.NaN;
 
   /** Allowable gas velocity [m/s]. */
-  private double allowableGasVelocity;
+  private double allowableGasVelocity = Double.NaN;
 
   /** Design gas flow [Am³/h]. */
-  private double designGasFlow;
+  private double designGasFlow = Double.NaN;
 
   /** Design liquid flow [m³/h]. */
-  private double designLiquidFlow;
+  private double designLiquidFlow = Double.NaN;
 
   /** Design water flow (for 3-phase) [m³/h]. */
-  private double designWaterFlow;
+  private double designWaterFlow = Double.NaN;
 
   /** Normal liquid level [m]. */
-  private double normalLiquidLevel;
+  private double normalLiquidLevel = Double.NaN;
 
   /** High liquid level [m]. */
-  private double highLiquidLevel;
+  private double highLiquidLevel = Double.NaN;
 
   /** Low liquid level [m]. */
-  private double lowLiquidLevel;
+  private double lowLiquidLevel = Double.NaN;
 
   /** Oil-water interface level (for 3-phase) [m]. */
-  private double interfaceLevel;
+  private double interfaceLevel = Double.NaN;
 
   /** Liquid surge volume [m³]. */
-  private double surgeVolume;
+  private double surgeVolume = Double.NaN;
 
   /** Liquid holdup volume [m³]. */
-  private double holdupVolume;
+  private double holdupVolume = Double.NaN;
 
   /** Empty vessel weight [kg]. */
-  private double emptyVesselWeight;
+  private double emptyVesselWeight = Double.NaN;
 
   /** Operating liquid volume [m³]. */
-  private double operatingLiquidVolume;
+  private double operatingLiquidVolume = Double.NaN;
 
   /** Liquid density [kg/m³]. */
-  private double liquidDensity;
+  private double liquidDensity = Double.NaN;
 
   /** Gas density [kg/m³]. */
-  private double gasDensity;
+  private double gasDensity = Double.NaN;
 
   // ============================================================================
   // Liquid Level Design Parameters (added January 2026)
   // ============================================================================
 
   /** Effective length for liquid separation [m]. */
-  private double effectiveLengthLiquid;
+  private double effectiveLengthLiquid = Double.NaN;
 
   /** Effective length for gas separation [m]. */
-  private double effectiveLengthGas;
+  private double effectiveLengthGas = Double.NaN;
 
   // ============================================================================
   // Process Design Parameters (added for TR3500 compliance)
   // ============================================================================
 
   /** Foam allowance factor. */
-  private double foamAllowanceFactor;
+  private double foamAllowanceFactor = Double.NaN;
 
   /** Design droplet diameter for gas-liquid separation [um]. */
-  private double dropletDiameterGasLiquid;
+  private double dropletDiameterGasLiquid = Double.NaN;
 
   /** Design droplet diameter for liquid-liquid separation [um]. */
-  private double dropletDiameterLiquidLiquid;
+  private double dropletDiameterLiquidLiquid = Double.NaN;
 
   /** Design pressure margin factor. */
-  private double designPressureMarginFactor;
+  private double designPressureMarginFactor = Double.NaN;
 
   /** Design temperature margin [C]. */
-  private double designTemperatureMarginC;
+  private double designTemperatureMarginC = Double.NaN;
 
   /** Maximum gas velocity [m/s]. */
-  private double maxGasVelocity;
+  private double maxGasVelocity = Double.NaN;
 
   /** Maximum liquid velocity [m/s]. */
-  private double maxLiquidVelocity;
+  private double maxLiquidVelocity = Double.NaN;
 
   /** Demister pressure drop [mbar]. */
-  private double demisterPressureDrop;
+  private double demisterPressureDrop = Double.NaN;
 
   /** Demister void fraction. */
-  private double demisterVoidFraction;
+  private double demisterVoidFraction = Double.NaN;
 
   /** Minimum oil retention time [min]. */
-  private double minOilRetentionTime;
+  private double minOilRetentionTime = Double.NaN;
 
   /** Minimum water retention time [min]. */
-  private double minWaterRetentionTime;
+  private double minWaterRetentionTime = Double.NaN;
 
   // ============================================================================
   // Liquid Level Design Parameters (added January 2026)
   // ============================================================================
 
   /** High-High Liquid Level fraction of ID. */
-  private double hhllFraction;
+  private double hhllFraction = Double.NaN;
 
   /** High Liquid Level fraction of ID. */
-  private double hllFraction;
+  private double hllFraction = Double.NaN;
 
   /** Normal Liquid Level fraction of ID. */
-  private double nllFraction;
+  private double nllFraction = Double.NaN;
 
   /** Low Liquid Level fraction of ID. */
-  private double lllFraction;
+  private double lllFraction = Double.NaN;
 
   /** Weir height fraction of ID. */
-  private double weirFraction;
+  private double weirFraction = Double.NaN;
 
   /** High Interface Level fraction of ID. */
-  private double hilFraction;
+  private double hilFraction = Double.NaN;
 
   /** Normal Interface Level fraction of ID. */
-  private double nilFraction;
+  private double nilFraction = Double.NaN;
 
   /** Low Interface Level fraction of ID. */
-  private double lilFraction;
+  private double lilFraction = Double.NaN;
 
   // ============================================================================
   // Entrainment Performance Results
@@ -202,23 +204,23 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
   /** Whether detailed entrainment calculation was used. */
   private boolean detailedEntrainmentUsed;
   /** Oil-in-gas entrainment fraction [0-1]. */
-  private double oilInGasFraction;
+  private double oilInGasFraction = Double.NaN;
   /** Water-in-gas entrainment fraction [0-1]. */
-  private double waterInGasFraction;
+  private double waterInGasFraction = Double.NaN;
   /** Gas-in-oil carry-under fraction [0-1]. */
-  private double gasInOilFraction;
+  private double gasInOilFraction = Double.NaN;
   /** Gas-in-water carry-under fraction [0-1]. */
-  private double gasInWaterFraction;
+  private double gasInWaterFraction = Double.NaN;
   /** Oil-in-water entrainment fraction [0-1]. */
-  private double oilInWaterFraction;
+  private double oilInWaterFraction = Double.NaN;
   /** Water-in-oil entrainment fraction [0-1]. */
-  private double waterInOilFraction;
+  private double waterInOilFraction = Double.NaN;
   /** Overall gas-liquid separation efficiency [0-1]. */
-  private double overallGasLiquidEfficiency;
+  private double overallGasLiquidEfficiency = Double.NaN;
   /** Mist eliminator efficiency [0-1]. */
-  private double mistEliminatorEfficiency;
+  private double mistEliminatorEfficiency = Double.NaN;
   /** K-factor utilization (actual/design) [0-1]. */
-  private double kFactorUtilization;
+  private double kFactorUtilization = Double.NaN;
   /** Whether the mist eliminator is flooded. */
   private boolean mistEliminatorFlooded;
   /** Liquid-in-gas calibration factor. */
@@ -231,28 +233,28 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
   private transient String entrainmentDetailJson;
 
   /** High-High Liquid Level [m]. */
-  private double hhll;
+  private double hhll = Double.NaN;
 
   /** High Liquid Level [m] - duplicate for explicit naming. */
-  private double hll;
+  private double hll = Double.NaN;
 
   /** Normal Liquid Level [m] - duplicate for explicit naming. */
-  private double nll;
+  private double nll = Double.NaN;
 
   /** Low Liquid Level [m] - duplicate for explicit naming. */
-  private double lll;
+  private double lll = Double.NaN;
 
   /** Weir height [m]. */
-  private double weirHeight;
+  private double weirHeight = Double.NaN;
 
   /** High Interface Level [m]. */
-  private double hil;
+  private double hil = Double.NaN;
 
   /** Normal Interface Level [m]. */
-  private double nil;
+  private double nil = Double.NaN;
 
   /** Low Interface Level [m]. */
-  private double lil;
+  private double lil = Double.NaN;
 
   // ============================================================================
   // Constructors
@@ -288,6 +290,14 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
       return;
     }
 
+    if (mecDesign.getProcessEquipment() instanceof Separator) {
+      Separator separator = (Separator) mecDesign.getProcessEquipment();
+      this.orientation = separator.getOrientation();
+      this.separatorType = separator instanceof ThreePhaseSeparator ? "three-phase" : "two-phase";
+    }
+    this.shellThickness = mecDesign.getWallThickness() > 0.0 ? mecDesign.getWallThickness() * 1000.0 : Double.NaN;
+    this.demisterType = mecDesign.getDemisterType();
+    // Head geometry has no authoritative owner in this model and remains unavailable.
     this.gasLoadFactor = mecDesign.getGasLoadFactor();
     this.volumeSafetyFactor = mecDesign.getVolumeSafetyFactor();
     this.liquidLevelFraction = mecDesign.getFg();

@@ -52,7 +52,7 @@ public class GERG2008H2ComparisonTest {
         "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] h2Fractions = { 0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0 };
+    double[] h2Fractions = {0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0};
 
     for (double xH2 : h2Fractions) {
       double[] x = new double[22];
@@ -96,7 +96,7 @@ public class GERG2008H2ComparisonTest {
         "Z GERG-2008-H2", "ΔZ", "ΔZ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0 };
+    double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0};
 
     for (double xH2 : h2Fractions) {
       double[] x = new double[22];
@@ -146,7 +146,7 @@ public class GERG2008H2ComparisonTest {
         "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0 };
+    double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 0.70, 1.0};
 
     for (double xH2 : h2Fractions) {
       double[] x = new double[22];
@@ -189,7 +189,7 @@ public class GERG2008H2ComparisonTest {
         "W GERG-2008-H2", "ΔW (m/s)", "ΔW (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] h2Fractions = { 0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.0 };
+    double[] h2Fractions = {0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.0};
 
     for (double xH2 : h2Fractions) {
       double[] x = new double[22];
@@ -229,7 +229,7 @@ public class GERG2008H2ComparisonTest {
         "Cp GERG-2008-H2", "ΔCp", "ΔCp (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 1.0 };
+    double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 1.0};
 
     for (double xH2 : h2Fractions) {
       double[] x = new double[22];
@@ -272,7 +272,7 @@ public class GERG2008H2ComparisonTest {
         "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] pressures = { 1000, 2000, 5000, 10000, 20000, 30000, 50000 }; // kPa
+    double[] pressures = {1000, 2000, 5000, 10000, 20000, 30000, 50000}; // kPa
 
     for (double P : pressures) {
       doubleW D1 = new doubleW(0.0);
@@ -318,7 +318,7 @@ public class GERG2008H2ComparisonTest {
         "ρ GERG-2008-H2", "Δρ (mol/L)", "Δρ (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] temperatures = { 200, 250, 300, 350, 400, 450, 500 };
+    double[] temperatures = {200, 250, 300, 350, 400, 450, 500};
 
     for (double T : temperatures) {
       doubleW D1 = new doubleW(0.0);
@@ -357,7 +357,7 @@ public class GERG2008H2ComparisonTest {
         "JT GERG-2008-H2", "ΔJT (%)");
     logger.info(StringUtils.repeat("-", 80));
 
-    double[] h2Fractions = { 0.0, 0.10, 0.20, 0.30, 0.50, 1.0 };
+    double[] h2Fractions = {0.0, 0.10, 0.20, 0.30, 0.50, 1.0};
 
     for (double xH2 : h2Fractions) {
       double[] x = new double[22];
@@ -392,9 +392,9 @@ public class GERG2008H2ComparisonTest {
     double P = 10000.0;
 
     // Different binary systems
-    String[] systems = { "CH4-H2", "N2-H2", "CO2-H2 (T=350K)", "C2H6-H2" };
-    int[][] components = { { 1, 15 }, { 2, 15 }, { 3, 15 }, { 4, 15 } };
-    double[] temps = { 300, 300, 350, 300 };
+    String[] systems = {"CH4-H2", "N2-H2", "CO2-H2 (T=350K)", "C2H6-H2"};
+    int[][] components = {{1, 15}, {2, 15}, {3, 15}, {4, 15}};
+    double[] temps = {300, 300, 350, 300};
 
     logger.info("Binary System Analysis at P = 10 MPa, x(H2) = 0.50");
 
@@ -469,6 +469,6 @@ public class GERG2008H2ComparisonTest {
 
     gerg.PropertiesGERG(T, D, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
-    return new double[] { W.val, Cp.val, JT.val, Z.val, Cv.val, H.val, S.val };
+    return new double[] {W.val, Cp.val, JT.val, Z.val, Cv.val, H.val, S.val};
   }
 }

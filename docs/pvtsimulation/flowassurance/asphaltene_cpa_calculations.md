@@ -361,6 +361,16 @@ Based on literature (Li & Firoozabadi, Vargas et al.):
 | Critical Pressure (Pc) | 5 - 15 | bar | Affects phase behavior |
 | Acentric Factor (ω) | 1.0 - 2.0 | - | Shape factor |
 
+The 1A and 2A self-association matrices allow equivalent sites on different
+molecules to bond. A donor/acceptor charge test must not suppress these
+self-interactions. Cross-solvation between different components retains the
+existing donor/acceptor selection rules. The `CpaEquivalentSiteAssociationTest`
+checks a nonzero bonded fraction for the configured asphaltene and H2S rows and
+preserves the 2B/4C selection rules. Association still requires a positive site
+count and fitted energy/volume parameters; a scheme label alone does not activate
+association. In particular, inactive acid database rows are not fitted by simply
+changing their site counts.
+
 ### Starting Guess Recommendations
 
 | Oil Type | API Gravity | ε/R [K] | κ |

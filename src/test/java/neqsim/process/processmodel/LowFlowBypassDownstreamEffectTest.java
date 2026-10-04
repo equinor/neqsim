@@ -142,7 +142,7 @@ public class LowFlowBypassDownstreamEffectTest extends neqsim.NeqSimTest {
     feed.setTemperature(25.0, "C");
 
     Splitter splitter = new Splitter("dead leg splitter", feed, 2);
-    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
 
     ThrottlingValve valve = new ThrottlingValve("dead leg valve", splitter.getSplitStream(0));
     valve.setOutletPressure(30.0, "bara");

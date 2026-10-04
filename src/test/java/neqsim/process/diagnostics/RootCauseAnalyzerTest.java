@@ -243,7 +243,7 @@ class RootCauseAnalyzerTest {
         .category(Hypothesis.Category.MECHANICAL).priorProbability(0.4).build();
     SimulationVerifier verifier = new SimulationVerifier(process, compressorName);
     Map<String, double[]> historian = new HashMap<String, double[]>();
-    historian.put("polytropicEfficiency", new double[] { 1.0, 0.85 });
+    historian.put("polytropicEfficiency", new double[] {1.0, 0.85});
     verifier.setHistorianData(historian);
 
     SimulationVerifier.VerificationResult result = verifier.verifyWithResult(h);
@@ -307,10 +307,10 @@ class RootCauseAnalyzerTest {
   @Test
   void testEvidenceCollectorExpectedSignalSupport() {
     EvidenceCollector collector = new EvidenceCollector();
-    double[] values = new double[] { 2.0, 3.0, 4.2, 5.5, 7.0 };
+    double[] values = new double[] {2.0, 3.0, 4.2, 5.5, 7.0};
     Map<String, double[]> data = new HashMap<>();
     data.put("bearing_vibration", values);
-    collector.setHistorianData(data, new double[] { 0, 1, 2, 3, 4 });
+    collector.setHistorianData(data, new double[] {0, 1, 2, 3, 4});
 
     Hypothesis h = new Hypothesis.Builder().name("bearing_degradation").description("Bearing").addExpectedSignal(
         "vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
@@ -327,10 +327,10 @@ class RootCauseAnalyzerTest {
   @Test
   void testEvidenceCollectorContradictorySignal() {
     EvidenceCollector collector = new EvidenceCollector();
-    double[] values = new double[] { 7.0, 5.5, 4.0, 3.0, 2.0 };
+    double[] values = new double[] {7.0, 5.5, 4.0, 3.0, 2.0};
     Map<String, double[]> data = new HashMap<>();
     data.put("bearing_vibration", values);
-    collector.setHistorianData(data, new double[] { 0, 1, 2, 3, 4 });
+    collector.setHistorianData(data, new double[] {0, 1, 2, 3, 4});
 
     Hypothesis h = new Hypothesis.Builder().name("bearing_degradation").description("Bearing").addExpectedSignal(
         "vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
@@ -348,8 +348,8 @@ class RootCauseAnalyzerTest {
   void testEvidenceCollectorFiltersIrrelevantSignals() {
     EvidenceCollector collector = new EvidenceCollector();
     Map<String, double[]> data = new HashMap<>();
-    data.put("unrelated_pressure", new double[] { 10.0, 11.0, 12.0, 13.0 });
-    collector.setHistorianData(data, new double[] { 0, 1, 2, 3 });
+    data.put("unrelated_pressure", new double[] {10.0, 11.0, 12.0, 13.0});
+    collector.setHistorianData(data, new double[] {0, 1, 2, 3});
 
     Hypothesis h = new Hypothesis.Builder().name("bearing_degradation").description("Bearing").addExpectedSignal(
         "vibration|bearing", Hypothesis.ExpectedBehavior.INCREASE, 3.0, "Bearing degradation raises vibration").build();
@@ -431,8 +431,8 @@ class RootCauseAnalyzerTest {
     rca.setSimulationEnabled(false);
 
     Map<String, double[]> data = new HashMap<>();
-    data.put("bearing_vibration", new double[] { 2.0, 3.0, 4.5, 5.8, 7.0 });
-    rca.setHistorianData(data, new double[] { 0, 1, 2, 3, 4 });
+    data.put("bearing_vibration", new double[] {2.0, 3.0, 4.5, 5.8, 7.0});
+    rca.setHistorianData(data, new double[] {0, 1, 2, 3, 4});
 
     String json = rca.analyze().toJson();
     assertTrue(json.contains("\"supporting\""));

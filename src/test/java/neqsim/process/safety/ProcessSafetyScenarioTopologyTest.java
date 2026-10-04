@@ -45,7 +45,7 @@ public class ProcessSafetyScenarioTopologyTest {
     compressor.setOutletPressure(120.0);
 
     Cooler cooler = new Cooler("export-cooler", compressor.getOutletStream());
-    cooler.setOutTemperature(313.15);
+    cooler.setOutletTemperature(313.15);
 
     process = new ProcessSystem();
     process.add(feed);

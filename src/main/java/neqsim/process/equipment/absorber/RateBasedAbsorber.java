@@ -711,7 +711,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
         * Math.pow(ap * dp, 0.4);
     double kL = kLDimensionless * Math.pow(muL * g / rhoL, 1.0 / 3.0); // [m/s]
 
-    return new double[] { kG, kL, aw };
+    return new double[] {kG, kL, aw};
   }
 
   /**
@@ -761,7 +761,7 @@ public class RateBasedAbsorber extends SimpleAbsorber {
     // Wetted area (simplified — same as Onda for random, or vendor data)
     double aw = 0.85 * ap; // Default fraction for structured packing
 
-    return new double[] { kG, kL, aw };
+    return new double[] {kG, kL, aw};
   }
 
   /**

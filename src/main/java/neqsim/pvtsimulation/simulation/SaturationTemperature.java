@@ -21,6 +21,10 @@ public class SaturationTemperature extends BasePVTsimulation {
   private static final double TEMPERATURE_TOLERANCE_K = 1.0e-5;
   /** Maximum bisection iterations used when refining the saturation boundary. */
   private static final int MAXIMUM_BISECTION_ITERATIONS = 500;
+  /** Lower bound of an explicitly requested tuning search, in kelvin. */
+  private double minimumSearchTemperature = MINIMUM_SEARCH_TEMPERATURE_K;
+  /** Upper bound of an explicitly requested tuning search, in kelvin. */
+  private double maximumSearchTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
 
   /**
    * Constructor for SaturationTemperature.
@@ -32,9 +36,44 @@ public class SaturationTemperature extends BasePVTsimulation {
   }
 
   /**
-   * Calculates the upper saturation temperature.
+   * Sets a bounded temperature search for repeated saturation-temperature tuning.
    *
-   * @return a double
+   * <p>
+   * The search returns the uppermost crossing resolved by the 10 K grid inside these bounds. The caller must establish
+   * that this interval contains the desired upper boundary throughout the tuning range. A local bracket cannot exclude
+   * a disconnected two-phase region above the supplied maximum. Use the default global search when that assumption is
+   * not justified. No flash results are cached, so changes to composition or pressure are evaluated on every call.
+   * </p>
+   *
+   * <p>
+   * If the upper endpoint is multiphase or no crossing is found, the calculation falls back to the full 30-1200 K
+   * search. The same bounds are used on subsequent calls; they are not silently moved to a previous solution.
+   * </p>
+   *
+   * @param minimumTemperature lower search bound in kelvin, at least 30 K
+   * @param maximumTemperature upper search bound in kelvin, at most 1200 K and above the lower bound
+   * @throws IllegalArgumentException if either bound is non-finite or outside the supported range
+   */
+  public void setTemperatureSearchBounds(double minimumTemperature, double maximumTemperature) {
+    if (!Double.isFinite(minimumTemperature) || !Double.isFinite(maximumTemperature)
+        || minimumTemperature < MINIMUM_SEARCH_TEMPERATURE_K || maximumTemperature > MAXIMUM_SEARCH_TEMPERATURE_K
+        || minimumTemperature >= maximumTemperature) {
+      throw new IllegalArgumentException("Temperature search bounds must satisfy 30 <= minimum < maximum <= 1200 K");
+    }
+    minimumSearchTemperature = minimumTemperature;
+    maximumSearchTemperature = maximumTemperature;
+  }
+
+  /** Restores the default global search for the uppermost saturation boundary. */
+  public void clearTemperatureSearchBounds() {
+    minimumSearchTemperature = MINIMUM_SEARCH_TEMPERATURE_K;
+    maximumSearchTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
+  }
+
+  /**
+   * Calculates the upper saturation temperature using the global grid or explicit tuning bounds.
+   *
+   * @return saturation temperature in kelvin, or 1200 K if the global grid finds no boundary
    */
   public double calcSaturationTemperature() {
     boolean isMultiPhaseCheckChanged = false;
@@ -44,41 +83,62 @@ public class SaturationTemperature extends BasePVTsimulation {
     }
 
     try {
-      double twoPhaseTemperature = Double.NaN;
-      double singlePhaseTemperature = Double.NaN;
-      double higherTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
-      boolean higherIsTwoPhase = isTwoPhaseAtTemperature(higherTemperature);
-      int numberOfSearchSteps = (int) Math
-          .floor((MAXIMUM_SEARCH_TEMPERATURE_K - MINIMUM_SEARCH_TEMPERATURE_K) / SEARCH_TEMPERATURE_STEP_K);
-
-      // Descending makes the first bracket the uppermost crossing, including for retrograde fluids.
-      for (int stepIndex = numberOfSearchSteps; stepIndex >= 0; stepIndex--) {
-        double trialTemperature = MINIMUM_SEARCH_TEMPERATURE_K + stepIndex * SEARCH_TEMPERATURE_STEP_K;
-        if (trialTemperature >= higherTemperature) {
-          continue;
+      boolean boundedSearch = minimumSearchTemperature != MINIMUM_SEARCH_TEMPERATURE_K
+          || maximumSearchTemperature != MAXIMUM_SEARCH_TEMPERATURE_K;
+      if (boundedSearch) {
+        double result = searchUpperSaturationTemperature(minimumSearchTemperature, maximumSearchTemperature, true);
+        if (!Double.isNaN(result)) {
+          return result;
         }
-        boolean trialIsTwoPhase = isTwoPhaseAtTemperature(trialTemperature);
-        if (trialIsTwoPhase && !higherIsTwoPhase) {
-          twoPhaseTemperature = trialTemperature;
-          singlePhaseTemperature = higherTemperature;
-          break;
-        }
-        higherTemperature = trialTemperature;
-        higherIsTwoPhase = trialIsTwoPhase;
       }
 
-      if (Double.isNaN(twoPhaseTemperature) || Double.isNaN(singlePhaseTemperature)) {
+      double result = searchUpperSaturationTemperature(MINIMUM_SEARCH_TEMPERATURE_K, MAXIMUM_SEARCH_TEMPERATURE_K,
+          false);
+      if (Double.isNaN(result)) {
         getThermoSystem().setTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
         thermoOps.TPflash();
         return getThermoSystem().getTemperature();
       }
-
-      return refineUpperSaturationTemperature(twoPhaseTemperature, singlePhaseTemperature);
+      return result;
     } finally {
       if (isMultiPhaseCheckChanged) {
         getThermoSystem().setMultiPhaseCheck(false);
       }
     }
+  }
+
+  /**
+   * Searches downward on the original global grid, also checking both interval endpoints.
+   *
+   * @param minimumTemperature lower search bound in kelvin
+   * @param maximumTemperature upper search bound in kelvin
+   * @param requireSinglePhaseUpperEndpoint reject a bounded interval whose upper endpoint is multiphase
+   * @return refined upper boundary, or NaN when the interval does not bracket one
+   */
+  private double searchUpperSaturationTemperature(double minimumTemperature, double maximumTemperature,
+      boolean requireSinglePhaseUpperEndpoint) {
+    double higherTemperature = maximumTemperature;
+    boolean higherIsTwoPhase = isTwoPhaseAtTemperature(higherTemperature);
+    if (requireSinglePhaseUpperEndpoint && higherIsTwoPhase) {
+      return Double.NaN;
+    }
+    // Retain the global grid's resolution and alignment, including for retrograde fluids.
+    double trialTemperature = MINIMUM_SEARCH_TEMPERATURE_K + SEARCH_TEMPERATURE_STEP_K
+        * Math.floor((maximumTemperature - MINIMUM_SEARCH_TEMPERATURE_K) / SEARCH_TEMPERATURE_STEP_K);
+    if (trialTemperature >= higherTemperature) {
+      trialTemperature -= SEARCH_TEMPERATURE_STEP_K;
+    }
+    while (higherTemperature > minimumTemperature) {
+      trialTemperature = Math.max(minimumTemperature, trialTemperature);
+      boolean trialIsTwoPhase = isTwoPhaseAtTemperature(trialTemperature);
+      if (trialIsTwoPhase && !higherIsTwoPhase) {
+        return refineUpperSaturationTemperature(trialTemperature, higherTemperature);
+      }
+      higherTemperature = trialTemperature;
+      higherIsTwoPhase = trialIsTwoPhase;
+      trialTemperature -= SEARCH_TEMPERATURE_STEP_K;
+    }
+    return Double.NaN;
   }
 
   /**

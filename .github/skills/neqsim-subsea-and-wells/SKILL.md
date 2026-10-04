@@ -1,6 +1,6 @@
 ---
 name: neqsim-subsea-and-wells
-description: "Subsea production systems, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F101 corroded-pipeline screening, well design, SURF cost estimation, and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical seabed stability or inspected metal loss, sizing flowlines and umbilicals, estimating well costs, performing casing design, running tieback comparisons, or configuring subsea equipment (trees, manifolds, boosters, risers)."
+description: "Subsea systems, DNV-RP-F109 on-bottom stability, DNV-RP-F105 free span, DNV-RP-F101 corroded pipe, well design, SURF cost and tieback analysis with NeqSim. USE WHEN: designing subsea fields, screening pipeline/cable/umbilical stability or metal loss, sizing flowlines and umbilicals, estimating well cost, casing design, comparing tiebacks, or configuring trees, manifolds, boosters and risers."
 last_verified: "2026-08-02"
 ---
 

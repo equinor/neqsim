@@ -281,7 +281,7 @@ public final class SlugProbe implements Serializable {
       double front = motion.front0 + fraction * (motion.front1 - motion.front0);
       double tail = motion.tail0 + fraction * (motion.tail1 - motion.tail0);
       if (front >= tail) {
-        intervals.add(new double[] { tail, front });
+        intervals.add(new double[] {tail, front});
       }
     }
     Collections.sort(intervals, new Comparator<double[]>() {

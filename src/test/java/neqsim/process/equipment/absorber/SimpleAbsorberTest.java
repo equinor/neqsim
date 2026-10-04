@@ -2,6 +2,8 @@ package neqsim.process.equipment.absorber;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -36,6 +38,16 @@ public class SimpleAbsorberTest extends neqsim.NeqSimTest {
      * operations.run();
      */
     // operations.displayResult();
+  }
+
+  @Test
+  void testRunDiagnosticsAreExplicitBeforeCalculation() {
+    SimpleAbsorber absorber = new SimpleAbsorber("diagnostic absorber");
+
+    assertFalse(absorber.isLastRunConverged());
+    assertEquals(0, absorber.getLastIterationCount());
+    assertTrue(Double.isNaN(absorber.getLastConvergenceError()));
+    assertEquals("NOT_RUN", absorber.getLastRunExitReason());
   }
 
   @Test

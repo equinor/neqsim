@@ -99,6 +99,12 @@ public class DryGasSealAnalyzer {
   /** Seal leakage rate at standard conditions in normal litres per minute. */
   private double sealLeakageNLmin = 280.0;
 
+  /** Mass-basis leakage in kg/hr; NaN selects the normal-volume basis. */
+  private double sealLeakageKgHr = Double.NaN;
+
+  /** Explicit conditioning supply flow in NL/min; NaN retains legacy three-times-leakage sizing. */
+  private double gcuSupplyNLmin = Double.NaN;
+
   // ── Standpipe geometry ──
   /** Standpipe (dead-leg) length in metres. */
   private double standpipeLengthM = 1.5;
@@ -158,7 +164,12 @@ public class DryGasSealAnalyzer {
    * @param sealGas the thermodynamic system representing the seal gas composition
    */
   public void setSealGas(SystemInterface sealGas) {
-    this.sealGas = sealGas;
+    invalidateAnalysis();
+    if (sealGas == null) {
+      throw new IllegalArgumentException("Seal gas must not be null");
+    }
+    this.sealGas = sealGas.clone();
+    this.sealGas.setMultiPhaseCheck(true);
   }
 
   /**
@@ -168,6 +179,7 @@ public class DryGasSealAnalyzer {
    * @param unit pressure unit: "bara", "barg", "Pa", "MPa"
    */
   public void setSealCavityPressure(double pressure, String unit) {
+    invalidateAnalysis();
     this.sealCavityPressureBara = convertPressureToBara(pressure, unit);
   }
 
@@ -178,6 +190,7 @@ public class DryGasSealAnalyzer {
    * @param unit temperature unit: "C", "K", "F"
    */
   public void setSealCavityTemperature(double temperature, String unit) {
+    invalidateAnalysis();
     this.sealCavityTemperatureK = convertTemperatureToKelvin(temperature, unit);
   }
 
@@ -188,6 +201,7 @@ public class DryGasSealAnalyzer {
    * @param unit pressure unit: "bara", "barg", "Pa", "MPa"
    */
   public void setPrimaryVentPressure(double pressure, String unit) {
+    invalidateAnalysis();
     this.primaryVentPressureBara = convertPressureToBara(pressure, unit);
   }
 
@@ -198,6 +212,7 @@ public class DryGasSealAnalyzer {
    * @param unit length unit: "m", "mm", "um"
    */
   public void setSealClearance(double clearance, String unit) {
+    invalidateAnalysis();
     if ("mm".equals(unit)) {
       this.sealClearanceM = clearance / 1000.0;
     } else if ("um".equals(unit)) {
@@ -214,13 +229,15 @@ public class DryGasSealAnalyzer {
    * @param unit rate unit: "NL/min", "Nm3/hr", "kg/hr"
    */
   public void setSealLeakageRate(double rate, String unit) {
-    if ("Nm3/hr".equals(unit)) {
-      this.sealLeakageNLmin = rate * 1000.0 / 60.0;
-    } else if ("kg/hr".equals(unit)) {
-      // Will be converted later using gas density at standard conditions
-      this.sealLeakageNLmin = rate; // placeholder, recalculated in analysis
+    invalidateAnalysis();
+    requireNonNegative(rate, "Seal leakage");
+    if ("kg/hr".equals(unit)) {
+      sealLeakageKgHr = rate;
+    } else if ("Nm3/hr".equals(unit) || "NL/min".equals(unit)) {
+      sealLeakageKgHr = Double.NaN;
+      sealLeakageNLmin = "Nm3/hr".equals(unit) ? rate * 1000.0 / 60.0 : rate;
     } else {
-      this.sealLeakageNLmin = rate; // NL/min default
+      throw new IllegalArgumentException("Unsupported leakage unit: " + unit);
     }
   }
 
@@ -231,6 +248,7 @@ public class DryGasSealAnalyzer {
    * @param innerDiameterM inner diameter in metres
    */
   public void setStandpipeGeometry(double lengthM, double innerDiameterM) {
+    invalidateAnalysis();
     this.standpipeLengthM = lengthM;
     this.standpipeIDM = innerDiameterM;
   }
@@ -241,6 +259,7 @@ public class DryGasSealAnalyzer {
    * @param count number of standpipes
    */
   public void setStandpipeCount(int count) {
+    invalidateAnalysis();
     this.standpipeCount = count;
   }
 
@@ -250,6 +269,7 @@ public class DryGasSealAnalyzer {
    * @param thicknessM wall thickness in metres
    */
   public void setStandpipeWallThickness(double thicknessM) {
+    invalidateAnalysis();
     this.standpipeWallThicknessM = thicknessM;
   }
 
@@ -260,6 +280,7 @@ public class DryGasSealAnalyzer {
    * @param conductivity insulation thermal conductivity in W/(m K)
    */
   public void setInsulation(double thicknessM, double conductivity) {
+    invalidateAnalysis();
     this.insulationThicknessM = thicknessM;
     this.insulationConductivity = conductivity;
   }
@@ -271,6 +292,7 @@ public class DryGasSealAnalyzer {
    * @param unit temperature unit: "C", "K", "F"
    */
   public void setAmbientTemperature(double temperature, String unit) {
+    invalidateAnalysis();
     this.ambientTemperatureK = convertTemperatureToKelvin(temperature, unit);
   }
 
@@ -280,18 +302,90 @@ public class DryGasSealAnalyzer {
    * @param speedMs wind speed in m/s
    */
   public void setWindSpeed(double speedMs) {
+    invalidateAnalysis();
     this.windSpeedMs = speedMs;
   }
 
   /**
-   * Sets the GCU superheat and subcool margins per API 692.
+   * Sets caller-selected GCU superheat and subcool screening margins.
    *
    * @param superheatK margin above dew point for reheating in Kelvin
    * @param subcoolK margin below dew point for cooling in Kelvin
    */
   public void setGCUMargins(double superheatK, double subcoolK) {
+    invalidateAnalysis();
+    requireNonNegative(superheatK, "GCU superheat margin");
+    requireNonNegative(subcoolK, "GCU subcool margin");
     this.gcuSuperheatMarginK = superheatK;
     this.gcuSubcoolMarginK = subcoolK;
+  }
+
+  /**
+   * Sets actual conditioning supply flow, distinct from seal leakage. Normal volume uses ideal gas equivalents at
+   * 273.15 K and 1.01325 bara.
+   *
+   * @param flow conditioning inlet flow in NL/min
+   */
+  public void setGCUSupplyFlowNLmin(double flow) {
+    requireNonNegative(flow, "GCU supply flow");
+    gcuSupplyNLmin = flow;
+    invalidateAnalysis();
+  }
+
+  /** Clears derived evidence whenever the design basis changes. */
+  private void invalidateAnalysis() {
+    analysisComplete = false;
+    results.clear();
+  }
+
+  /**
+   * Validates a finite nonnegative scalar.
+   *
+   * @param value value to validate
+   * @param label diagnostic label
+   */
+  private static void requireNonNegative(double value, String label) {
+    if (!Double.isFinite(value) || value < 0.0) {
+      throw new IllegalArgumentException(label + " must be finite and nonnegative");
+    }
+  }
+
+  /** Resolves mass leakage into ideal normal-volume equivalents after composition is configured. */
+  private void resolveLeakageBasis() {
+    if (!Double.isNaN(sealLeakageKgHr)) {
+      sealGas.init(0);
+      double molarMass = sealGas.getMolarMass("kg/mol");
+      if (!Double.isFinite(molarMass) || molarMass <= 0.0) {
+        throw new IllegalStateException("Leakage conversion requires positive molar mass");
+      }
+      sealLeakageNLmin = sealLeakageKgHr / molarMass / 60.0 * 8.314 * STD_TEMPERATURE_K / (STD_PRESSURE_BARA * 1e5)
+          * 1000.0;
+    }
+  }
+
+  /**
+   * Sums hydrocarbon and aqueous liquid volumes, including a single liquid phase.
+   *
+   * @param fluid flashed system
+   * @return liquid volume percent
+   */
+  private static double liquidVolumePercent(SystemInterface fluid) {
+    double volume = fluid.getVolume("m3");
+    if (!Double.isFinite(volume) || volume <= 0.0) {
+      throw new IllegalStateException("Invalid flashed volume");
+    }
+    double liquidVolume = 0.0;
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      String type = fluid.getPhase(i).getType().getDesc();
+      if ("oil".equals(type) || "aqueous".equals(type)) {
+        liquidVolume += fluid.getPhase(i).getVolume("m3");
+      }
+    }
+    double value = 100.0 * liquidVolume / volume;
+    if (!Double.isFinite(value) || value < 0.0 || value > 100.000001) {
+      throw new IllegalStateException("Invalid liquid fraction");
+    }
+    return value;
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -319,7 +413,14 @@ public class DryGasSealAnalyzer {
       throw new IllegalStateException("Seal gas not set. Call setSealGas() first.");
     }
 
-    results.clear();
+    invalidateAnalysis();
+    resolveLeakageBasis();
+    if (!Double.isFinite(sealCavityPressureBara) || !Double.isFinite(primaryVentPressureBara)
+        || primaryVentPressureBara <= 0.0 || sealCavityPressureBara < primaryVentPressureBara
+        || !Double.isFinite(sealCavityTemperatureK) || sealCavityTemperatureK <= 0.0
+        || !Double.isFinite(ambientTemperatureK) || ambientTemperatureK <= 0.0) {
+      throw new IllegalStateException("Invalid seal pressure or temperature basis");
+    }
     results.put("name", name);
     results.put("seal_cavity_pressure_bara", sealCavityPressureBara);
     results.put("seal_cavity_temperature_C", sealCavityTemperatureK - 273.15);
@@ -409,6 +510,7 @@ public class DryGasSealAnalyzer {
     SystemInterface inletFluid = sealGas.clone();
     inletFluid.setTemperature(sealCavityTemperatureK);
     inletFluid.setPressure(sealCavityPressureBara);
+    inletFluid.setMultiPhaseCheck(true);
 
     ThermodynamicOperations inletOps = new ThermodynamicOperations(inletFluid);
     inletOps.TPflash();
@@ -427,6 +529,7 @@ public class DryGasSealAnalyzer {
     double maxLiquidPressure = 0.0;
     double minOutletTemperatureC = sealCavityTemperatureK - 273.15;
 
+    int failedPoints = 0;
     int nSteps = 40;
     double pStart = sealCavityPressureBara;
     double pEnd = primaryVentPressureBara;
@@ -434,9 +537,6 @@ public class DryGasSealAnalyzer {
 
     for (int i = 0; i <= nSteps; i++) {
       double pOut = pStart - i * dp;
-      if (pOut < 1.0) {
-        pOut = 1.0;
-      }
 
       try {
         SystemInterface expandedFluid = sealGas.clone();
@@ -453,12 +553,11 @@ public class DryGasSealAnalyzer {
         expandedFluid.initProperties();
 
         double outletTempC = expandedFluid.getTemperature("C");
-        double liquidVolFraction = 0.0;
+        double liquidVolFraction = liquidVolumePercent(expandedFluid);
         double liquidMolFraction = 0.0;
         double liquidDensity = 0.0;
 
-        if (expandedFluid.getNumberOfPhases() > 1 && expandedFluid.hasPhaseType("oil")) {
-          liquidVolFraction = expandedFluid.getPhase("oil").getVolume("m3") / expandedFluid.getVolume("m3") * 100.0;
+        if (expandedFluid.hasPhaseType("oil")) {
           liquidMolFraction = expandedFluid.getPhase("oil").getBeta();
           liquidDensity = expandedFluid.getPhase("oil").getDensity("kg/m3");
         }
@@ -484,11 +583,15 @@ public class DryGasSealAnalyzer {
         }
 
       } catch (Exception ex) {
+        failedPoints++;
         logger.warn("PH flash failed at P={} bara: {}", pOut, ex.getMessage());
       }
     }
 
     result.put("expansion_path", expansionPath);
+    result.put("expected_point_count", nSteps + 1);
+    result.put("failed_point_count", failedPoints);
+    result.put("calculation_complete", failedPoints == 0 && expansionPath.size() == nSteps + 1);
     result.put("max_liquid_vol_pct", maxLiquidFraction);
     result.put("max_liquid_at_pressure_bara", maxLiquidPressure);
     result.put("min_outlet_temperature_C", minOutletTemperatureC);
@@ -521,12 +624,9 @@ public class DryGasSealAnalyzer {
       vent.put("temperature_C", ventFluid.getTemperature("C"));
       vent.put("number_of_phases", ventFluid.getNumberOfPhases());
 
+      vent.put("liquid_vol_pct", liquidVolumePercent(ventFluid));
       if (ventFluid.hasPhaseType("oil")) {
-        double liqVol = ventFluid.getPhase("oil").getVolume("m3") / ventFluid.getVolume("m3") * 100.0;
-        vent.put("liquid_vol_pct", liqVol);
         vent.put("liquid_density_kg_m3", ventFluid.getPhase("oil").getDensity("kg/m3"));
-      } else {
-        vent.put("liquid_vol_pct", 0.0);
       }
     } catch (Exception ex) {
       vent.put("error", ex.getMessage());
@@ -552,18 +652,19 @@ public class DryGasSealAnalyzer {
   private Map<String, Object> runRetrogradeCdensationMap() {
     Map<String, Object> result = new LinkedHashMap<>();
 
-    // Temperature range: 10C to seal cavity temperature
-    double tMinC = Math.max(0.0, ambientTemperatureK - 273.15 - 15.0);
+    // Sampled temperature range from ambient minus 15 K to cavity temperature
+    double tMinC = Math.min(ambientTemperatureK, sealCavityTemperatureK) - 273.15 - 15.0;
     double tMaxC = sealCavityTemperatureK - 273.15;
     int nT = 25;
     double dtC = (tMaxC - tMinC) / nT;
 
-    // Pressure range: 2 bara to seal cavity pressure (capped at 200 bara for grid)
+    // Pressure range covers the complete configured vent-to-cavity interval.
     double pMin = primaryVentPressureBara;
-    double pMax = Math.min(sealCavityPressureBara, 200.0);
+    double pMax = sealCavityPressureBara;
     int nP = 25;
     double dpBar = (pMax - pMin) / nP;
 
+    int failedPoints = 0;
     List<Map<String, Object>> gridPoints = new ArrayList<>();
     double maxLiquid = 0.0;
     double maxLiquidTC = 0.0;
@@ -605,10 +706,7 @@ public class DryGasSealAnalyzer {
           ThermodynamicOperations gridOps = new ThermodynamicOperations(gridFluid);
           gridOps.TPflash();
 
-          double liquidVolPct = 0.0;
-          if (gridFluid.getNumberOfPhases() > 1 && gridFluid.hasPhaseType("oil")) {
-            liquidVolPct = gridFluid.getPhase("oil").getVolume("m3") / gridFluid.getVolume("m3") * 100.0;
-          }
+          double liquidVolPct = liquidVolumePercent(gridFluid);
 
           Map<String, Object> pt = new LinkedHashMap<>();
           pt.put("temperature_C", tC);
@@ -623,18 +721,21 @@ public class DryGasSealAnalyzer {
             maxLiquidPBara = pBara;
           }
         } catch (Exception ex) {
-          // Skip failed points
+          failedPoints++;
         }
       }
     }
 
     result.put("grid_points", gridPoints);
+    result.put("expected_point_count", (nP + 1) * (nT + 1));
+    result.put("failed_point_count", failedPoints);
+    result.put("calculation_complete", failedPoints == 0 && gridPoints.size() == (nP + 1) * (nT + 1));
     result.put("dew_point_curve", dewPointCurve);
     result.put("max_liquid_vol_pct", maxLiquid);
     result.put("max_liquid_temperature_C", maxLiquidTC);
     result.put("max_liquid_pressure_bara", maxLiquidPBara);
-    result.put("grid_temperature_range_C", new double[] { tMinC, tMaxC });
-    result.put("grid_pressure_range_bara", new double[] { pMin, pMax });
+    result.put("grid_temperature_range_C", new double[] {tMinC, tMaxC});
+    result.put("grid_pressure_range_bara", new double[] {pMin, pMax});
 
     return result;
   }
@@ -737,9 +838,8 @@ public class DryGasSealAnalyzer {
         ThermodynamicOperations stepOps = new ThermodynamicOperations(stepFluid);
         stepOps.TPflash();
 
-        if (stepFluid.getNumberOfPhases() > 1 && stepFluid.hasPhaseType("oil")) {
-          liquidVolPct = stepFluid.getPhase("oil").getVolume("m3") / stepFluid.getVolume("m3") * 100.0;
-
+        liquidVolPct = liquidVolumePercent(stepFluid);
+        if (liquidVolPct > 0.0) {
           if (!condensationStarted) {
             condensationStarted = true;
             dewPointTimeHours = timeHours;
@@ -934,6 +1034,7 @@ public class DryGasSealAnalyzer {
       SystemInterface inletFluid = sealGas.clone();
       inletFluid.setTemperature(sealCavityTemperatureK);
       inletFluid.setPressure(sealCavityPressureBara);
+      inletFluid.setMultiPhaseCheck(true);
 
       ThermodynamicOperations ops = new ThermodynamicOperations(inletFluid);
       ops.TPflash();
@@ -948,21 +1049,21 @@ public class DryGasSealAnalyzer {
       ventFluid.initProperties();
 
       double liquidMolFraction = 0.0;
-      double liquidDensity = 500.0;
-      double liquidMW = 0.080; // kg/mol default
-
-      if (ventFluid.getNumberOfPhases() > 1 && ventFluid.hasPhaseType("oil")) {
-        liquidMolFraction = ventFluid.getPhase("oil").getBeta();
-        liquidDensity = ventFluid.getPhase("oil").getDensity("kg/m3");
-        liquidMW = ventFluid.getPhase("oil").getMolarMass("kg/mol");
+      double liquidKgPerSec = 0.0;
+      double liquidM3PerSec = 0.0;
+      for (int i = 0; i < ventFluid.getNumberOfPhases(); i++) {
+        String type = ventFluid.getPhase(i).getType().getDesc();
+        if ("oil".equals(type) || "aqueous".equals(type)) {
+          double beta = ventFluid.getPhase(i).getBeta();
+          double massFlow = molarFlowMolPerSec * beta * ventFluid.getPhase(i).getMolarMass("kg/mol");
+          liquidMolFraction += beta;
+          liquidKgPerSec += massFlow;
+          liquidM3PerSec += massFlow / ventFluid.getPhase(i).getDensity("kg/m3");
+        }
       }
-
-      // Liquid molar flow rate
       double liquidMolPerSec = molarFlowMolPerSec * liquidMolFraction;
-      // Liquid mass flow rate
-      double liquidKgPerSec = liquidMolPerSec * liquidMW;
-      // Liquid volume flow rate
-      double liquidM3PerSec = liquidKgPerSec / liquidDensity;
+      double liquidDensity = liquidM3PerSec > 0.0 ? liquidKgPerSec / liquidM3PerSec : Double.NaN;
+      double liquidMW = liquidMolPerSec > 0.0 ? liquidKgPerSec / liquidMolPerSec : Double.NaN;
       double liquidLPerDay = liquidM3PerSec * 1000.0 * 86400.0;
       double liquidLPerHour = liquidLPerDay / 24.0;
 
@@ -1034,6 +1135,7 @@ public class DryGasSealAnalyzer {
       SystemInterface inletFluid = sealGas.clone();
       inletFluid.setTemperature(sealCavityTemperatureK);
       inletFluid.setPressure(sealCavityPressureBara);
+      inletFluid.setMultiPhaseCheck(true);
 
       ThermodynamicOperations ops = new ThermodynamicOperations(inletFluid);
       ops.TPflash();
@@ -1153,17 +1255,17 @@ public class DryGasSealAnalyzer {
   // ═══════════════════════════════════════════════════════════════════
 
   /**
-   * Sizes a Gas Conditioning Unit (GCU) per API 692 guidelines. The GCU removes heavy hydrocarbons from the seal gas by
-   * cooling below the dew point, separating the condensed liquid, and reheating the dry gas above the dew point plus a
-   * safety margin.
+   * Screens a Gas Conditioning Unit (GCU) using configurable margins. The GCU removes heavy hydrocarbons from the seal
+   * gas by cooling below the dew point, separating the condensed liquid, and reheating the dry gas above the dew point
+   * plus a safety margin.
    *
    * <p>
-   * GCU design basis (per API 692):
+   * Legacy screening basis (project/OEM requirements must be supplied separately):
    * </p>
    * <ul>
-   * <li>Cool seal gas to dew point minus subcool margin (typically 17 degC below)</li>
+   * <li>Cool gas to the sampled maximum dew temperature minus the configured margin</li>
    * <li>Separate liquid at the lowest temperature</li>
-   * <li>Reheat gas to dew point plus superheat margin (typically 17 degC above)</li>
+   * <li>Reheat separated gas above the feed sampled maximum dew temperature</li>
    * <li>Size the cooler, separator, and heater</li>
    * </ul>
    *
@@ -1221,14 +1323,14 @@ public class DryGasSealAnalyzer {
       logger.warn("GCU dew point sweep failed: {}", sweepEx.getMessage());
     }
 
-    // If no dew point was found anywhere, no condensation risk — no GCU needed
+    // Failure to find a dew point is unresolved evidence, not proof of dry gas.
     if (maxDewPointC < -250.0) {
-      result.put("gcu_required", false);
-      result.put("reason", "No dew point found in operating pressure range");
+      result.put("error", "No valid dew point found; GCU requirement is unresolved");
+      result.put("gcu_required", null);
       return result;
     }
 
-    // Use the cricondentherm pressure as the GCU operating pressure
+    // Use the sampled maximum-dew-point pressure for legacy screening (not booster design).
     double gcuOperatingPressure = maxDewPointPBara;
     double dewPointC = maxDewPointC;
 
@@ -1267,7 +1369,8 @@ public class DryGasSealAnalyzer {
       // Convert seal gas flow to molar flow
       // Seal gas supply flow is typically much larger than leakage
       // Use seal leakage * safety factor as minimum GCU throughput
-      double gcuFlowNLmin = sealLeakageNLmin * 3.0; // size for 3x leakage
+      double gcuFlowNLmin = Double.isNaN(gcuSupplyNLmin) ? sealLeakageNLmin * 3.0 : gcuSupplyNLmin;
+      result.put("flow_basis", Double.isNaN(gcuSupplyNLmin) ? "legacy_three_times_leakage" : "explicit_supply");
       double gcuFlowM3PerSec = gcuFlowNLmin / 1000.0 / 60.0;
       double gcuMolarFlow = STD_PRESSURE_BARA * 1e5 * gcuFlowM3PerSec / (8.314 * STD_TEMPERATURE_K);
       double coolingDutyW = coolingDutyPerMol * gcuMolarFlow;
@@ -1277,44 +1380,48 @@ public class DryGasSealAnalyzer {
       result.put("cooling_duty_kW", coolingDutyW / 1000.0);
 
       // Step 4: Liquid separated at cooling target
-      double liquidVolPct = 0.0;
-      double liquidMolFraction = 0.0;
-      if (coldFluid.getNumberOfPhases() > 1 && coldFluid.hasPhaseType("oil")) {
-        liquidVolPct = coldFluid.getPhase("oil").getVolume("m3") / coldFluid.getVolume("m3") * 100.0;
-        liquidMolFraction = coldFluid.getPhase("oil").getBeta();
+      double liquidVolPct = liquidVolumePercent(coldFluid);
+      if (!coldFluid.hasPhaseType("gas")) {
+        throw new IllegalStateException("GCU cooling produced no gas outlet");
       }
+      double gasMolFraction = coldFluid.getPhase("gas").getBeta();
       result.put("liquid_separated_vol_pct", liquidVolPct);
-      result.put("liquid_separated_mol_fraction", liquidMolFraction);
+      result.put("liquid_separated_mol_fraction", 1.0 - gasMolFraction);
+      result.put("gas_outlet_mol_fraction", gasMolFraction);
 
-      // Step 5: Reheat target = new dew point + superheat margin
-      // After liquid separation, find new dew point of the gas phase
-      double reheatTargetC = dewPointC + gcuSuperheatMarginK;
-      result.put("gcu_reheat_target_C", reheatTargetC);
-
-      // Step 6: Calculate reheating duty
-      SystemInterface separatedGas = sealGas.clone();
-      separatedGas.setTemperature(273.15 + coolingTargetC);
-      separatedGas.setPressure(gcuOperatingPressure);
-      ThermodynamicOperations sepOps = new ThermodynamicOperations(separatedGas);
-      sepOps.TPflash();
+      // Remove liquids before reheating. Use retained gas flow, not total feed flow.
+      SystemInterface separatedGas = coldFluid.phaseToSystem("gas");
+      separatedGas.setMultiPhaseCheck(true);
       separatedGas.initProperties();
       double hSep = separatedGas.getEnthalpy("J/mol");
+      Map<String, Double> dryComposition = new LinkedHashMap<>();
+      for (int i = 0; i < separatedGas.getNumberOfComponents(); i++) {
+        dryComposition.put(separatedGas.getComponent(i).getName(), separatedGas.getComponent(i).getz());
+      }
+      result.put("dry_gas_composition", dryComposition);
 
-      SystemInterface reheatedGas = sealGas.clone();
+      // Conservative legacy target uses feed's sampled maximum dew temperature.
+      double reheatTargetC = dewPointC + gcuSuperheatMarginK;
+      result.put("gcu_reheat_target_C", reheatTargetC);
+      result.put("reheat_target_basis", "feed_sampled_maximum_dew_point_plus_margin");
+      SystemInterface reheatedGas = separatedGas.clone();
       reheatedGas.setTemperature(273.15 + reheatTargetC);
-      reheatedGas.setPressure(gcuOperatingPressure);
       ThermodynamicOperations reheatOps = new ThermodynamicOperations(reheatedGas);
       reheatOps.TPflash();
       reheatedGas.initProperties();
       double hReheat = reheatedGas.getEnthalpy("J/mol");
-
-      double reheatDutyPerMol = hReheat - hSep;
-      double reheatDutyW = reheatDutyPerMol * gcuMolarFlow;
+      double dryGasMolarFlow = gcuMolarFlow * gasMolFraction;
+      double reheatDutyW = (hReheat - hSep) * dryGasMolarFlow;
+      result.put("dry_gas_molar_flow_mol_s", dryGasMolarFlow);
+      result.put("separated_gas_enthalpy_J_mol", hSep);
+      result.put("reheated_gas_enthalpy_J_mol", hReheat);
       result.put("reheat_duty_W", reheatDutyW);
       result.put("reheat_duty_kW", reheatDutyW / 1000.0);
 
       // Step 7: Summary
-      result.put("total_electrical_kW", (coolingDutyW + reheatDutyW) / 1000.0);
+      result.put("total_thermal_duty_kW", (coolingDutyW + reheatDutyW) / 1000.0);
+      // Retain the key for compatibility, but electrical demand is unresolved without COP/efficiency.
+      result.put("total_electrical_kW", Double.NaN);
       // GCU is required if the cricondentherm is above ambient (condensation will occur
       // somewhere in the downstream pressure range) or if liquid was separated
       boolean gcuRequired = liquidVolPct > 0.0 || dewPointC > (ambientTemperatureK - 273.15);
@@ -1344,7 +1451,7 @@ public class DryGasSealAnalyzer {
   }
 
   /**
-   * Returns whether the seal gas system is safe from condensation at the configured conditions. The system is
+   * Returns whether the sampled seal gas path passes condensation screening at the configured conditions. The system is
    * considered safe only if no liquid is produced at any point in the isenthalpic expansion path and no retrograde
    * condensation occurs at ambient conditions.
    *
@@ -1355,27 +1462,32 @@ public class DryGasSealAnalyzer {
       return false;
     }
 
-    Object jtResult = results.get("isenthalpic_expansion");
-    if (jtResult instanceof Map) {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> jt = (Map<String, Object>) jtResult;
-      Object maxLiq = jt.get("max_liquid_vol_pct");
-      if (maxLiq instanceof Number && ((Number) maxLiq).doubleValue() > 0.01) {
-        return false;
-      }
-    }
+    return condensationEvidencePasses(results.get("isenthalpic_expansion"))
+        && condensationEvidencePasses(results.get("retrograde_condensation_map"));
+  }
 
-    Object retroResult = results.get("retrograde_condensation_map");
-    if (retroResult instanceof Map) {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> retro = (Map<String, Object>) retroResult;
-      Object maxRetroLiq = retro.get("max_liquid_vol_pct");
-      if (maxRetroLiq instanceof Number && ((Number) maxRetroLiq).doubleValue() > 0.01) {
-        return false;
-      }
+  /**
+   * Checks complete sampled condensation evidence; failures never count as a pass.
+   *
+   * @param evidence sub-analysis result
+   * @return true for complete finite liquid results below the legacy 0.01 vol-percent threshold
+   */
+  private static boolean condensationEvidencePasses(Object evidence) {
+    if (!(evidence instanceof Map)) {
+      return false;
     }
-
-    return true;
+    Map<?, ?> values = (Map<?, ?>) evidence;
+    Object liquid = values.get("max_liquid_vol_pct");
+    if (!Boolean.TRUE.equals(values.get("calculation_complete")) || values.containsKey("error")
+        || !(liquid instanceof Number)) {
+      return false;
+    }
+    Object vent = values.get("vent_conditions");
+    if (vent instanceof Map && ((Map<?, ?>) vent).containsKey("error")) {
+      return false;
+    }
+    double fraction = ((Number) liquid).doubleValue();
+    return Double.isFinite(fraction) && fraction >= 0.0 && fraction <= 0.01;
   }
 
   /**

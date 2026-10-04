@@ -202,7 +202,7 @@ public final class DexpiEquipmentFactory {
 
     double designTemp = unit.getSizingAttributeAsDouble(DexpiMetadata.DESIGN_TEMPERATURE, -1.0);
     if (designTemp > 0) {
-      hx.setOutTemperature(273.15 + designTemp);
+      hx.setOutletTemperature(273.15 + designTemp);
     }
 
     logger.debug("Created HeatExchanger '{}' (designT={})", name, designTemp);
@@ -222,7 +222,7 @@ public final class DexpiEquipmentFactory {
 
     double designTemp = unit.getSizingAttributeAsDouble(DexpiMetadata.DESIGN_TEMPERATURE, -1.0);
     if (designTemp > 0) {
-      heater.setOutTemperature(273.15 + designTemp);
+      heater.setOutletTemperature(273.15 + designTemp);
     }
 
     logger.debug("Created Heater '{}' (designT={})", name, designTemp);
@@ -242,7 +242,7 @@ public final class DexpiEquipmentFactory {
 
     double designTemp = unit.getSizingAttributeAsDouble(DexpiMetadata.DESIGN_TEMPERATURE, -1.0);
     if (designTemp > 0) {
-      cooler.setOutTemperature(273.15 + designTemp);
+      cooler.setOutletTemperature(273.15 + designTemp);
     }
 
     logger.debug("Created Cooler '{}' (designT={})", name, designTemp);

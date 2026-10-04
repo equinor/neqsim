@@ -42,8 +42,8 @@ public class DistillationColumnSolvedConsistencyTest extends neqsim.NeqSimTest {
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 1, true, true);
     column.addFeedStream(richTegFeed, 1);
-    column.getReboiler().setOutTemperature(273.15 + 202.0);
-    column.getCondenser().setOutTemperature(273.15 + 95.0);
+    column.getReboiler().setOutletTemperature(273.15 + 202.0);
+    column.getCondenser().setOutletTemperature(273.15 + 95.0);
     column.setTopPressure(1.05);
     column.setBottomPressure(1.05);
 

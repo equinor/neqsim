@@ -35,7 +35,7 @@ class TPflashUMRCPADehydrationLifecycleTest {
   @Test
   void temperatureAndPressureMatricesRemainClosedAndMonotonic() {
     double previousWaterInGas = -1.0;
-    for (double temperatureK : new double[] { 283.15, REFERENCE_TEMPERATURE_K, 313.15 }) {
+    for (double temperatureK : new double[] {283.15, REFERENCE_TEMPERATURE_K, 313.15}) {
       SystemInterface ordinary = flash(createSystem(temperatureK, REFERENCE_PRESSURE_BARA, false));
       SystemInterface multiphase = flash(createSystem(temperatureK, REFERENCE_PRESSURE_BARA, true));
       assertQualifiedState(ordinary, "ordinary temperature " + temperatureK);
@@ -49,7 +49,7 @@ class TPflashUMRCPADehydrationLifecycleTest {
     }
 
     double previousWaterInGasAtPressure = Double.POSITIVE_INFINITY;
-    for (double pressureBara : new double[] { 30.0, REFERENCE_PRESSURE_BARA, 120.0 }) {
+    for (double pressureBara : new double[] {30.0, REFERENCE_PRESSURE_BARA, 120.0}) {
       SystemInterface ordinary = flash(createSystem(REFERENCE_TEMPERATURE_K, pressureBara, false));
       SystemInterface multiphase = flash(createSystem(REFERENCE_TEMPERATURE_K, pressureBara, true));
       assertQualifiedState(ordinary, "ordinary pressure " + pressureBara);
@@ -174,7 +174,7 @@ class TPflashUMRCPADehydrationLifecycleTest {
     assertQualifiedState(expected, label + " expected");
     assertQualifiedState(actual, label + " actual");
 
-    for (PhaseType type : new PhaseType[] { PhaseType.GAS, PhaseType.AQUEOUS }) {
+    for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.AQUEOUS}) {
       int expectedPhase = findPhase(expected, type);
       int actualPhase = findPhase(actual, type);
       assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), tolerance, label + " beta " + type);

@@ -21,10 +21,38 @@ class FlowAssuranceRunnerTest {
     String result = FlowAssuranceRunner.run(ExampleCatalog.flowAssuranceHydrate());
     assertNotNull(result);
     JsonObject obj = JsonParser.parseString(result).getAsJsonObject();
-    assertTrue(obj.has("status"), "Missing status field");
-    // Hydrate calculation may fail in unit-test context (no profile points etc.)
-    String status = obj.get("status").getAsString();
-    assertTrue("success".equals(status) || "error".equals(status), "Status should be success or error, got: " + status);
+    assertEquals("success", obj.get("status").getAsString(), result);
+    JsonObject data = obj.getAsJsonObject("data");
+    // The shipped example (CPA wet gas, 20 C, 100 bara) must give a real hydrate temperature, not NaN -> LOW.
+    assertEquals(0, data.get("unknownPointCount").getAsInt(), result);
+    JsonObject point = data.getAsJsonArray("profile").get(0).getAsJsonObject();
+    double hydrateT = point.get("hydrateTemperature_C").getAsDouble();
+    assertTrue(hydrateT > 5.0 && hydrateT < 30.0, "hydrate T at 100 bara should be ~15-25 C, got " + hydrateT);
+    assertTrue(!"UNKNOWN".equals(data.get("overallRisk").getAsString()));
+  }
+
+  @Test
+  void testCpaDefaultsToCpaMixingRule() {
+    // With the SRK kij database ("classic") CPA gives ~0 C here; with the CPA rule ~16 C (SRK classic: 16.3 C).
+    String input = "{\"model\":\"CPA\",\"temperature_C\":10.0,\"pressure_bara\":100.0,"
+        + "\"components\":{\"methane\":0.9,\"ethane\":0.05,\"CO2\":0.02,\"water\":0.03},\"analysis\":\"hydrateRiskMap\"}";
+    JsonObject obj = JsonParser.parseString(FlowAssuranceRunner.run(input)).getAsJsonObject();
+    assertEquals("success", obj.get("status").getAsString(), obj.toString());
+    double hydrateT = obj.getAsJsonObject("data").getAsJsonArray("profile").get(0).getAsJsonObject()
+        .get("hydrateTemperature_C").getAsDouble();
+    assertTrue(hydrateT > 10.0 && hydrateT < 22.0, "CPA hydrate T at 100 bara should be ~16 C, got " + hydrateT);
+  }
+
+  @Test
+  void testHydrateRiskWithoutWaterIsErrorNotLowRisk() {
+    String input = "{\"model\":\"SRK\",\"temperature_C\":10.0,\"pressure_bara\":100.0,"
+        + "\"components\":{\"methane\":0.9,\"ethane\":0.1},\"analysis\":\"hydrateRiskMap\"}";
+    JsonObject obj = JsonParser.parseString(FlowAssuranceRunner.run(input)).getAsJsonObject();
+    assertEquals("error", obj.get("status").getAsString(), obj.toString());
+    String text = obj.toString();
+    assertTrue(text.contains("RESULT_NOT_AVAILABLE"), text);
+    assertTrue(text.contains("water"), text);
+    assertTrue(obj.has("partialData"));
   }
 
   @Test

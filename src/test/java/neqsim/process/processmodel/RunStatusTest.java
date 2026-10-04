@@ -173,10 +173,10 @@ class RunStatusTest {
   }
 
   @ParameterizedTest
-  @ValueSource(booleans = { false, true })
+  @ValueSource(booleans = {false, true})
   void testRecordedFailureDoesNotAlsoReceiveCachedSuccess(boolean optimized) {
     final ProcessSystem process = new ProcessSystem();
-    final boolean[] reject = { false };
+    final boolean[] reject = {false};
     process.setUseOptimizedExecution(optimized);
     process.add(new ProcessEquipmentBaseClass("ValidatedUnit") {
       private static final long serialVersionUID = 1L;

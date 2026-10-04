@@ -250,22 +250,22 @@ public class ManifoldMechanicalDesignCalculator implements Serializable {
   static {
     // Material -> [Allowable at 20C, 100C, 200C, 300C, 400C]
     ASME_ALLOWABLE_STRESSES = new HashMap<String, double[]>();
-    ASME_ALLOWABLE_STRESSES.put("A106-B", new double[] { 138.0, 138.0, 138.0, 132.0, 121.0 });
-    ASME_ALLOWABLE_STRESSES.put("A312-TP316", new double[] { 138.0, 115.0, 103.0, 92.0, 84.0 });
-    ASME_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] { 115.0, 103.0, 92.0, 83.0, 76.0 });
-    ASME_ALLOWABLE_STRESSES.put("A790-S31803", new double[] { 207.0, 192.0, 177.0, 165.0, 0.0 });
-    ASME_ALLOWABLE_STRESSES.put("A790-S32750", new double[] { 241.0, 226.0, 211.0, 197.0, 0.0 });
+    ASME_ALLOWABLE_STRESSES.put("A106-B", new double[] {138.0, 138.0, 138.0, 132.0, 121.0});
+    ASME_ALLOWABLE_STRESSES.put("A312-TP316", new double[] {138.0, 115.0, 103.0, 92.0, 84.0});
+    ASME_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] {115.0, 103.0, 92.0, 83.0, 76.0});
+    ASME_ALLOWABLE_STRESSES.put("A790-S31803", new double[] {207.0, 192.0, 177.0, 165.0, 0.0});
+    ASME_ALLOWABLE_STRESSES.put("A790-S32750", new double[] {241.0, 226.0, 211.0, 197.0, 0.0});
 
     // Subsea grades: [SMYS (MPa), SMTS (MPa), Density (kg/m3)]
     SUBSEA_MATERIAL_PROPERTIES = new HashMap<String, double[]>();
-    SUBSEA_MATERIAL_PROPERTIES.put("X52", new double[] { 359.0, 455.0, 7850.0 });
-    SUBSEA_MATERIAL_PROPERTIES.put("X60", new double[] { 414.0, 517.0, 7850.0 });
-    SUBSEA_MATERIAL_PROPERTIES.put("X65", new double[] { 448.0, 531.0, 7850.0 });
-    SUBSEA_MATERIAL_PROPERTIES.put("X70", new double[] { 483.0, 565.0, 7850.0 });
-    SUBSEA_MATERIAL_PROPERTIES.put("22Cr-Duplex", new double[] { 450.0, 620.0, 7800.0 });
-    SUBSEA_MATERIAL_PROPERTIES.put("25Cr-SuperDuplex", new double[] { 550.0, 750.0, 7800.0 });
-    SUBSEA_MATERIAL_PROPERTIES.put("6Mo", new double[] { 300.0, 650.0, 8000.0 });
-    SUBSEA_MATERIAL_PROPERTIES.put("Inconel-625", new double[] { 414.0, 827.0, 8440.0 });
+    SUBSEA_MATERIAL_PROPERTIES.put("X52", new double[] {359.0, 455.0, 7850.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("X60", new double[] {414.0, 517.0, 7850.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("X65", new double[] {448.0, 531.0, 7850.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("X70", new double[] {483.0, 565.0, 7850.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("22Cr-Duplex", new double[] {450.0, 620.0, 7800.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("25Cr-SuperDuplex", new double[] {550.0, 750.0, 7800.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("6Mo", new double[] {300.0, 650.0, 8000.0});
+    SUBSEA_MATERIAL_PROPERTIES.put("Inconel-625", new double[] {414.0, 827.0, 8440.0});
   }
 
   /**

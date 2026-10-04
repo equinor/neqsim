@@ -16,7 +16,7 @@ class TwoFluidPhaseConservationTest {
   /** Verify oil-only, mixed, and water-only inventories, including repeated recovery. */
   @Test
   void preservesLiquidPhaseIdentityAtWaterCutEndpoints() {
-    double[] waterCuts = { 0.0, 0.25, 0.75, 1.0 };
+    double[] waterCuts = {0.0, 0.25, 0.75, 1.0};
     for (double waterCut : waterCuts) {
       TwoFluidSection section = createSection(waterCut);
       section.setGasVelocity(3.0);
@@ -144,8 +144,8 @@ class TwoFluidPhaseConservationTest {
   /** Primitive phase appearance inherits bulk flow without overwriting existing recovered slip. */
   @Test
   void newlyPresentUnownedLiquidsInheritBulkVelocity() {
-    for (boolean standalone : new boolean[] { false, true }) {
-      for (double initialWaterCut : new double[] { 0.0, 1.0 }) {
+    for (boolean standalone : new boolean[] {false, true}) {
+      for (double initialWaterCut : new double[] {0.0, 1.0}) {
         TwoFluidSection section = standalone ? new ThreeFluidSection(0.0, 10.0, 0.1, 0.0)
             : createSection(initialWaterCut);
         section.setGasDensity(50.0);

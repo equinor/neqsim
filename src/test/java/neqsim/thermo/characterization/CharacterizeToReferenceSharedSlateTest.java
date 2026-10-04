@@ -26,8 +26,8 @@ class CharacterizeToReferenceSharedSlateTest {
   private static SystemInterface referenceFluid(int cuts) {
     SystemInterface fluid = new SystemPrEos(298.15, 60.0);
     fluid.addComponent("methane", 0.6);
-    double[] molarMass = { 0.080, 0.100, 0.130, 0.160, 0.200, 0.240 };
-    double[] density = { 0.70, 0.73, 0.76, 0.79, 0.81, 0.83 };
+    double[] molarMass = {0.080, 0.100, 0.130, 0.160, 0.200, 0.240};
+    double[] density = {0.70, 0.73, 0.76, 0.79, 0.81, 0.83};
     for (int i = 0; i < cuts; i++) {
       fluid.addTBPfraction("C" + (7 + i), 0.10, molarMass[i], density[i]);
     }
@@ -137,7 +137,7 @@ class CharacterizeToReferenceSharedSlateTest {
 
     // Each output pseudo-component must inherit the reference molar mass in carbon-number order,
     // proving the clamped equal-mass cuts kept each reference PC inside its own cut.
-    double[] expectedMw = { 0.080, 0.100, 0.130, 0.160, 0.200, 0.240 };
+    double[] expectedMw = {0.080, 0.100, 0.130, 0.160, 0.200, 0.240};
     int idx = 0;
     for (int i = 0; i < result.getNumberOfComponents(); i++) {
       ComponentInterface c = result.getComponent(i);

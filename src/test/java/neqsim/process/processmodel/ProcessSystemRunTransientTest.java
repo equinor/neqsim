@@ -686,7 +686,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     Stream gasfromsep2 = new Stream("gas from sep", separator2.getGasOutStream());
 
     Splitter splitter = new Splitter("splitter1", gasfromsep2);
-    splitter.setSplitFactors(new double[] { 0.99, 0.01 });
+    splitter.setSplitFactors(new double[] {0.99, 0.01});
     splitter.setCalculateSteadyState(false);
 
     ThrottlingValve recycleValve = new ThrottlingValve("anti surge valve", splitter.getSplitStream(1));

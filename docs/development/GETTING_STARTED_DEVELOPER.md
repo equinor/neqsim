@@ -156,7 +156,7 @@ NeqSim has an **AI-assisted workflow** for solving engineering tasks:
 #### Fast Path: Use AI Agent
 ```
 # In VS Code Copilot Chat:
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 The agent creates a task folder, researches the topic, builds a simulation, validates results, and generates a Word report.
@@ -165,6 +165,10 @@ The agent creates a task folder, researches the topic, builds a simulation, vali
 ```bash
 neqsim new-task "Your task description" --type B --intake-pause always
 ```
+
+Both paths create the task folder under the task root: the default saved with
+`neqsim --set-task-root "PATH"` (`cwd` follows the terminal folder), or
+`<repo>/task_solve` when nothing is set. Check it with `neqsim --show-task-root`.
 
 The intake pause creates the folder first, then lets you edit
 `study_config.yaml`, add details to `user_input.md`, or place document inputs
@@ -242,7 +246,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 #### Jupyter Notebooks
 
 1. **Create notebook**:
-   - Use AI agent: `@notebook.example 3-stage compression with intercooling`
+   - Use AI agent: `@notebook-example 3-stage compression with intercooling`
    - Or manually create in `examples/notebooks/`
 
 2. **Follow structure**:
@@ -296,7 +300,7 @@ Then follow the workflow in `task_solve/<your_task>/README.md`:
 3. **Add comments**: Explain each step
 4. **Test compilation**: `javac YourExample.java`
 
-**See**: [notebook.example.agent.md](../../.github/agents/notebook.example.agent.md) for guidelines.
+**See**: [notebook-example.agent.md](../../.github/agents/notebook-example.agent.md) for guidelines.
 
 ### E. Contribute a Skill
 
@@ -363,7 +367,7 @@ python generate_manual.py
 - `String.repeat()` → Use `StringUtils.repeat()`
 - Text blocks `"""..."""` → Regular strings with `\n`
 
-See [copilot-instructions.md](../../.github/copilot-instructions.md#java-8-compatibility) for complete list.
+See [AGENT_REFERENCE.md](AGENT_REFERENCE.md) (Part B, Java 8 Compatibility) for complete list.
 
 ---
 

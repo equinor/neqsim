@@ -6,6 +6,39 @@ Usage:
     python step3_report/generate_report.py            # Technical report only
     python step3_report/generate_report.py --paper     # Also generate scientific paper
     python step3_report/generate_report.py --paper-only  # Scientific paper only
+    python step3_report/generate_report.py --template "C:/…/company template.docx"
+    python step3_report/generate_report.py --no-template  # ignore the saved template
+    python step3_report/generate_report.py --keep-template-content
+    python step3_report/generate_report.py --title "..." --author "..."
+    python step3_report/generate_report.py --language nb
+    python devtools/task_template/step3_report/generate_report.py --task-dir PATH
+
+The canonical copy of this script lives in devtools/task_template/. Run it
+against any task folder with `neqsim report <task folder>` (or --task-dir /
+NEQSIM_TASK_DIR) so a fix here applies to task folders created earlier.
+
+The report language is English unless another is configured. Resolution order:
+--language CODE, NEQSIM_REPORT_LANGUAGE, then `report.language` in
+study_config.yaml. It sets the section headings, cover labels, and caption
+prefixes the generator owns, and the document language of the .docx and .html
+so Word spell-checks in that language; authored content is written in that
+language by the study author. The scientific paper (--paper) stays English.
+
+The report title is the STUDY title, and the task is stated at the top of the
+report. Title/author resolution order:
+    --title / --author  >  NEQSIM_REPORT_TITLE / NEQSIM_REPORT_AUTHOR  >
+    study_config.yaml (study.title, study.author)  >  the first heading of
+    task_spec.md  >  a task-local generate_report.py copy  >  the folder name.
+The task statement comes from results.json ("task_statement" / "objective"),
+else the Objective/Task Description section of task_spec.md, else study.title.
+
+Report.docx is built from a Word template when one is configured, so company
+fonts, colours, styles, headers, and footers apply. Resolution order:
+--template PATH, NEQSIM_REPORT_TEMPLATE, then the saved `report_template` in
+~/.neqsim/task_defaults.json (set once with `neqsim --set-report-template PATH`).
+The template's own body text is dropped unless --keep-template-content is given;
+page setup, headers, footers, and styles are always inherited. Paper.docx keeps
+journal formatting and ignores the template.
 
 This script AUTO-READS data from the task folder:
     - study_config.yaml                    -> defines depth, notebook plan, quality gates
@@ -15,31 +48,43 @@ This script AUTO-READS data from the task folder:
   - results.json "equations"               -> renders equations (KaTeX/images)
   - results.json "figure_captions"         -> custom captions for figures
 
-It produces:
-  - step3_report/Report.docx  (Word document for formal distribution)
-  - step3_report/Report.html  (navigable HTML with sidebar, KaTeX equations)
-  - step3_report/Paper.docx   (scientific paper in Word format, with --paper)
-  - step3_report/Paper.html   (scientific paper in HTML format, with --paper)
+It produces (file names are the report title, so a deliverable is identifiable
+outside its task folder — e.g. "Hydrate margin for the export line" becomes
+Hydrate_margin_for_the_export_line.docx):
+  - step3_report/<Title>.docx        (Word document for formal distribution)
+  - step3_report/<Title>.html        (navigable HTML with sidebar, KaTeX equations)
+  - step3_report/<Title>_Paper.docx  (scientific paper in Word format, with --paper)
+  - step3_report/<Title>_Paper.html  (scientific paper in HTML format, with --paper)
+Report files written under an earlier title are removed, so a renamed study does
+not leave a superseded deliverable beside the current one.
 
 If results.json or task_spec.md are missing, the report uses placeholder text.
-Customize MANUAL_SECTIONS below for content that can't be auto-generated.
+Hand-written content goes in step3_report/report_sections.json (see
+_load_report_sections); do not fork or edit this script per task.
 """
 import os
+import re
 import sys
 import glob
 import json
 import base64
+import hashlib
 import io
+import shutil
 import sqlite3
+import subprocess
 from datetime import date
 
 try:
     from docx import Document
     from docx.shared import Inches, Pt, RGBColor
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT
+    from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
+    from docx.enum.section import WD_ORIENT, WD_SECTION
+    from docx.enum.style import WD_STYLE_TYPE
+    from docx.text.paragraph import Paragraph
     from docx.oxml.ns import nsdecls, qn
-    from docx.oxml import parse_xml
+    from docx.oxml import OxmlElement, parse_xml
 except ImportError:
     print("ERROR: python-docx not installed. Run: pip install python-docx")
     sys.exit(1)
@@ -49,26 +94,1006 @@ try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.transforms import Bbox
     HAS_MATPLOTLIB = True
 except ImportError:
     HAS_MATPLOTLIB = False
 
+# ── Word typography ──────────────────────────────────────
+# Floors applied to the template's own styles (see _apply_readable_typography).
+BODY_PT = 11.0
+HEADING1_PT = 16.0
+HEADING2_PT = 13.0
+HEADING3_PT = 11.5
+TABLE_PT = 10.0
+CAPTION_PT = 9.5
+BODY_SPACE_AFTER_PT = 6.0
+
+# Equation images are rendered at EQ_FONT_PT and then placed at their NATURAL
+# size, so the maths comes out at EQ_FONT_PT in the document. Forcing a fixed
+# picture width instead magnifies a short equation to the width of the page.
+EQ_FONT_PT = 13.0
+EQ_RENDER_DPI = 300
+# Inline maths ($...$ inside a sentence) is rendered at body size so it sits
+# on the line like a normal word instead of towering over the surrounding text.
+INLINE_EQ_FONT_PT = BODY_PT
+
+# ── Page measure ─────────────────────────────────────────
+# A corporate .dotx is frequently LANDSCAPE because it is built for forms and
+# presentations. An engineering report set on that 9.5 in measure runs to ~140
+# characters per line, roughly twice the readable optimum, and every figure and
+# table sized for a portrait page leaves a third of the width empty.
+# "template" keeps whatever the template declares.
+REPORT_ORIENTATION = "portrait"   # portrait | landscape | template
+MAX_MEASURE_IN = 6.7              # widest column we set continuous prose on
+MIN_SIDE_MARGIN_IN = 0.79         # 20 mm — never narrower when widening margins
+# Room left under a full-width figure for its caption and the following gap.
+FIGURE_CAPTION_ALLOWANCE_IN = 0.9
+# ISO 80000-1 digit grouping: a non-breaking space, not a comma.
+THOUSANDS_SEP = "\u00a0"
+
+# ── Report language ──────────────────────────────────────
+# Resolved from --language, NEQSIM_REPORT_LANGUAGE, or study_config.yaml
+# (report.language). English is the default. This sets the report furniture the
+# generator owns — section headings, cover labels, caption prefixes, navigation
+# — and the document language of the .docx and .html, so Word spell-checks in
+# the right language. Authored content (results.json, task_spec.md, the manual
+# sections) is written in that language by the study author.
+DEFAULT_REPORT_LANGUAGE = "en"
+REPORT_LANGUAGE = DEFAULT_REPORT_LANGUAGE
+
+# Spellings a user may reasonably write in study_config.yaml.
+LANGUAGE_ALIASES = {
+    "en": "en", "eng": "en", "english": "en", "en-gb": "en", "en-us": "en",
+    "no": "nb", "nb": "nb", "nb-no": "nb", "nn": "nb", "norsk": "nb",
+    "norwegian": "nb", "bokmal": "nb", "bokmål": "nb",
+}
+
+# Written into the .docx (w:lang) and the HTML lang attribute.
+LANGUAGE_LOCALES = {
+    "en": "en-GB",
+    "nb": "nb-NO",
+    "da": "da-DK",
+    "sv": "sv-SE",
+    "de": "de-DE",
+    "fr": "fr-FR",
+    "nl": "nl-NL",
+    "es": "es-ES",
+    "pt": "pt-PT",
+    "it": "it-IT",
+}
+
+# Fixed report wording, keyed by the English phrase used in the code. A language
+# without a table here still gets its document language set; only the furniture
+# stays English, and the generator says so.
+REPORT_STRINGS = {
+    "nb": {
+        # Section headings
+        "Executive Summary": "Sammendrag",
+        "Problem Description": "Problembeskrivelse",
+        "Safety Study Readiness": "Grunnlag for sikkerhetsstudie",
+        "Scope and Standards": "Omfang og standarder",
+        "Information Sources and Evidence Basis":
+            "Informasjonskilder og dokumentasjonsgrunnlag",
+        "Approach": "Fremgangsmåte",
+        "Solution Workflow": "Arbeidsflyt for løsningen",
+        "Results": "Resultater",
+        "Discussion": "Diskusjon",
+        "Analytical Depth": "Analytisk dybde",
+        "Validation Summary": "Valideringssammendrag",
+        "Report Consistency Review": "Konsistenskontroll av rapporten",
+        "Study Configuration Warnings": "Advarsler fra studiekonfigurasjonen",
+        "Benchmark Validation": "Referansevalidering",
+        "Uncertainty Analysis": "Usikkerhetsanalyse",
+        "Risk Assessment": "Risikovurdering",
+        "Assumptions and Data Gaps": "Forutsetninger og datamangler",
+        "Evidence Gaps and Design-Grade Blockers":
+            "Dokumentasjonsmangler og hindringer for designgrunnlag",
+        "Recommendations": "Anbefalinger",
+        "Tooling Improvements Delivered": "Leverte verktøyforbedringer",
+        "Conclusions and Recommendations": "Konklusjoner og anbefalinger",
+        "References": "Referanser",
+        # Front matter and furniture
+        "NeqSim Engineering Report": "NeqSim ingeniørrapport",
+        "Table of Contents": "Innholdsfortegnelse",
+        "List of Figures": "Figurliste",
+        "List of Tables": "Tabelliste",
+        "Key Equations": "Sentrale ligninger",
+        "Appendix A. Report Quality Checks": "Vedlegg A. Kvalitetskontroll av rapporten",
+        "Appendix B. Report Quality Checks": "Vedlegg B. Kvalitetskontroll av rapporten",
+        "Appendix A. Reproducing the Results": "Vedlegg A. Reprodusere resultatene",
+        "Software and environment": "Programvare og miljø",
+        "Steps": "Trinn",
+        "Checks after a rerun": "Kontroller etter ny kjøring",
+        "Changing a case": "Endre et tilfelle",
+        "Consistency review": "Konsistenskontroll",
+        "Study configuration": "Studiekonfigurasjon",
+        "automatic equation typesetting unavailable":
+            "automatisk ligningssetting ikke tilgjengelig",
+        "Test": "Test",
+        "Reference": "Referanse",
+        "Reference value": "Referanseverdi",
+        "NeqSim value": "NeqSim-verdi",
+        "Unit": "Enhet",
+        "Deviation [%]": "Avvik [%]",
+        "Tolerance [%]": "Toleranse [%]",
+        "Status": "Status",
+        "Notes": "Merknader",
+        "Contents": "Innhold",
+        "Revision History": "Revisjonshistorikk",
+        "Document Number": "Dokumentnummer",
+        "Document No.": "Dokumentnr.",
+        "Revision": "Revisjon",
+        "Rev": "Rev",
+        "Date": "Dato",
+        "Description": "Beskrivelse",
+        "Author": "Forfatter",
+        "Classification": "Klassifisering",
+        "Initial issue": "Første utgivelse",
+        "(not specified)": "(ikke angitt)",
+        "Task": "Oppgave",
+        "Figure": "Figur",
+        "Table": "Tabell",
+        "Equation": "Ligning",
+        # Sub-headings
+        "Key results": "Hovedresultater",
+        "Validation checks": "Valideringskontroller",
+        "Applicable Standards": "Gjeldende standarder",
+        "Calculation Methods": "Beregningsmetoder",
+        "Acceptance Criteria": "Akseptkriterier",
+        "Source systems read": "Kildesystemer som er lest",
+        "Assumptions the results depend on": "Forutsetninger resultatene hviler på",
+        "Information sought but not available, and what was assumed in its place":
+            "Informasjon som ble søkt, men ikke funnet, og hva som ble antatt i stedet",
+        "Input Parameter Ranges": "Spenn i inngangsparametere",
+        "Output Distribution (P10 / P50 / P90)": "Resultatfordeling (P10 / P50 / P90)",
+        "Sensitivity Ranking (Tornado)": "Sensitivitetsrangering (tornado)",
+        "Contributors ranked on a common basis": "Bidragsytere rangert på felles grunnlag",
+        "Which effects actually carry the result, largest first.":
+            "Hvilke effekter som faktisk bærer resultatet, størst først.",
+        "Verdict on each source recommendation": "Vurdering av hver kildeanbefaling",
+        "Supported, supported with correction, or challenged \u2014 with the basis.":
+            "Støttet, støttet med korreksjon eller utfordret \u2014 med begrunnelse.",
+        "Hypotheses ruled out quantitatively": "Hypoteser utelukket kvantitativt",
+        "What was excluded, by which test, and with how much margin.":
+            "Hva som ble utelukket, med hvilken test og med hvor stor margin.",
+        "Robustness and crossover": "Robusthet og vippepunkt",
+        "How far an input can move before the conclusion flips.":
+            "Hvor langt en inngangsverdi kan flytte seg før konklusjonen snur.",
+        "Direction of each conservatism": "Retning på hver konservatisme",
+        "Whether each assumption bounds the answer from above or below.":
+            "Om hver antakelse avgrenser svaret ovenfra eller nedenfra.",
+        "Cheapest discriminating test": "Billigste avgjørende test",
+        "The one measurement that would separate the surviving explanations.":
+            "Den ene målingen som skiller forklaringene som gjenstår.",
+        "Evidence that does not fit": "Evidens som ikke passer",
+        "Observations the accepted explanation does not account for.":
+            "Observasjoner som den aksepterte forklaringen ikke dekker.",
+        # Table furniture inside generated sections
+        "Operating Envelope": "Driftsområde",
+        "Operating envelope": "Driftsområde",
+        "System": "System",
+        "Scope read": "Omfang lest",
+        "Access": "Tilgang",
+        "Captured evidence": "Lagret dokumentasjon",
+        "not recorded": "ikke registrert",
+        "missing": "mangler",
+        "Source system": "Kildesystem",
+        "Documents": "Dokumenter",
+        "Content": "Innhold",
+        "Documents sought but not obtained:": "Dokumenter som ble søkt etter, men ikke funnet:",
+        "Assumption": "Forutsetning",
+        "Basis": "Grunnlag",
+        "Effect on the result": "Effekt på resultatet",
+        "Information sought": "Informasjon søkt",
+        "Source": "Kilde",
+        "Assumed instead": "Antatt i stedet",
+        "Effect if wrong": "Effekt hvis feil",
+        "Each gap above is an open item: the conclusion holds only while the stated substitute assumption holds.":
+            "Hver mangel over er et åpent punkt: konklusjonen gjelder bare så lenge den angitte erstatningsforutsetningen holder.",
+        "Observation": "Observasjon",
+        "Physical Mechanism": "Fysisk mekanisme",
+        "Engineering Implication": "Ingeniørmessig betydning",
+        "Recommendation": "Anbefaling",
+        "Linked results": "Koblede resultater",
+        "Parameter": "Parameter",
+        "Value": "Verdi",
+        "Check": "Kontroll",
+        "Result": "Resultat",
+        "{} document(s) were collected from {} source system(s) and are stored with this task in step1_scope_and_research/references/.":
+            "{} dokument(er) ble hentet fra {} kildesystem(er) og er lagret med oppgaven i step1_scope_and_research/references/.",
+        "Standards and literature cited are listed in the References section; the per-file origin, retrieval date, and relevance of every collected document are in step1_scope_and_research/references/SOURCES.md.":
+            "Standarder og litteratur er listet under Referanser; opprinnelse, hentedato og relevans for hvert dokument står i step1_scope_and_research/references/SOURCES.md.",
+        "(Right-click and select 'Update Field' to populate)":
+            "(Høyreklikk og velg «Oppdater felt» for å fylle ut)",
+        "Reference source": "Referansekilde",
+        "Task type": "Oppgavetype",
+        "Scale": "Omfang",
+        "Mode": "Modus",
+        "AACE class": "AACE-klasse",
+        "FEL stage": "FEL-fase",
+    },
+}
+
+
+def _t(text):
+    """Translate fixed report wording into REPORT_LANGUAGE.
+
+    Returns the English phrase unchanged when the language has no table or no
+    entry for it, so adding a heading never breaks a translated report.
+    """
+    return REPORT_STRINGS.get(REPORT_LANGUAGE, {}).get(text, text)
+
+
+def _report_locale():
+    """Return the document locale (``nb-NO``) for the report language."""
+    return LANGUAGE_LOCALES.get(REPORT_LANGUAGE, REPORT_LANGUAGE or "en")
+
 # ── Paths ────────────────────────────────────────────────
-TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def _resolve_task_dir() -> str:
+    """Return the task folder: --task-dir, NEQSIM_TASK_DIR, else this file's parent.
+
+    Allowing an external task folder lets the canonical devtools copy of this
+    script serve any task, so a fix here reaches task folders that were created
+    with an older vendored copy (`neqsim report <task folder>`).
+    """
+    if "--task-dir" in sys.argv:
+        index = sys.argv.index("--task-dir") + 1
+        if index >= len(sys.argv):
+            print("ERROR: --task-dir requires a path")
+            sys.exit(2)
+        return os.path.abspath(sys.argv[index])
+    env_dir = os.environ.get("NEQSIM_TASK_DIR")
+    if env_dir:
+        return os.path.abspath(os.path.expandvars(os.path.expanduser(env_dir)))
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+TASK_DIR = _resolve_task_dir()
 FIG_DIR = os.path.join(TASK_DIR, "figures")
-REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPORT_DIR = os.path.join(TASK_DIR, "step3_report")
+REPORT_BASENAME = "Report"      # replaced by the report title in __main__
 DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
 HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
+PDF_FILE = os.path.join(REPORT_DIR, "Report.pdf")
 PAPER_DOCX_FILE = os.path.join(REPORT_DIR, "Paper.docx")
 PAPER_HTML_FILE = os.path.join(REPORT_DIR, "Paper.html")
+PAPER_PDF_FILE = os.path.join(REPORT_DIR, "Paper.pdf")
 RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
 TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
 STUDY_CONFIG_FILE = os.path.join(TASK_DIR, "study_config.yaml")
+OUTPUT_MANIFEST_FILE = os.path.join(REPORT_DIR, ".report_outputs.json")
+LEGACY_OUTPUT_NAMES = ("Report.docx", "Report.html", "Report.pdf",
+                       "Paper.docx", "Paper.html", "Paper.pdf")
+REPORT_NAME_MAX_CHARS = 120
 
-# ── Configuration (edit these) ───────────────────────────
-TITLE = "Task Report"           # <-- Change to your task title
-AUTHOR = ""                     # <-- Your name
+if not os.path.isdir(REPORT_DIR):
+    os.makedirs(REPORT_DIR)
+
+
+def slugify_report_name(title, fallback="Report"):
+    """Return a filesystem-safe file base name derived from the report title.
+
+    Parameters
+    ----------
+    title : str
+        The report (study) title.
+    fallback : str
+        Name used when the title yields nothing usable.
+
+    Returns
+    -------
+    str
+        Title with path-hostile characters removed and spaces as underscores.
+    """
+    text = str(title or "")
+    text = re.sub(r"[\\/:*?\"<>|\r\n\t]+", " ", text)
+    text = re.sub(r"[^0-9A-Za-z\u00C0-\u024F &()+,._-]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip(" .-_")
+    if not text:
+        return fallback
+    name = re.sub(r"_+", "_", text.replace(" ", "_")).strip("_")
+    if len(name) > REPORT_NAME_MAX_CHARS:
+        name = name[:REPORT_NAME_MAX_CHARS].rstrip("_-")
+    return name or fallback
+
+
+def apply_report_output_names(title):
+    """Name the generated report files after the report title.
+
+    Every task ships deliverables whose file name is the study title, so a
+    report is identifiable outside its task folder.
+
+    Parameters
+    ----------
+    title : str
+        Resolved report title.
+
+    Returns
+    -------
+    str
+        The base name used for the generated files.
+    """
+    global REPORT_BASENAME, DOCX_FILE, HTML_FILE, PDF_FILE
+    global PAPER_DOCX_FILE, PAPER_HTML_FILE, PAPER_PDF_FILE
+    REPORT_BASENAME = slugify_report_name(title)
+    DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".docx")
+    HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".html")
+    PDF_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + ".pdf")
+    PAPER_DOCX_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.docx")
+    PAPER_HTML_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.html")
+    PAPER_PDF_FILE = os.path.join(REPORT_DIR, REPORT_BASENAME + "_Paper.pdf")
+    return REPORT_BASENAME
+
+
+def _docx_to_pdf_word(docx_path, pdf_path):
+    """Convert through Microsoft Word COM automation (Windows only).
+
+    Preferred backend: Word renders its own format, so the corporate template's
+    fonts, headers, footers and numbering survive the conversion intact.
+
+    Parameters
+    ----------
+    docx_path : str
+        Absolute path of the source Word document.
+    pdf_path : str
+        Absolute path of the PDF to write.
+
+    Returns
+    -------
+    str or None
+        ``None`` on success, otherwise the reason the backend was unusable.
+    """
+    try:
+        import pythoncom
+        import win32com.client
+    except ImportError:
+        return "pywin32 is not installed"
+    wd_export_format_pdf = 17
+    pythoncom.CoInitialize()
+    word = None
+    document = None
+    try:
+        word = win32com.client.DispatchEx("Word.Application")
+        word.Visible = False
+        word.DisplayAlerts = 0
+        document = word.Documents.Open(docx_path, ReadOnly=True, Visible=False)
+        document.ExportAsFixedFormat(pdf_path, wd_export_format_pdf,
+                                     CreateBookmarks=1)
+    except Exception as error:  # pragma: no cover - COM surfaces many types
+        return "Word automation failed ({})".format(error)
+    finally:
+        if document is not None:
+            try:
+                document.Close(0)
+            except Exception:
+                pass
+        if word is not None:
+            try:
+                word.Quit()
+            except Exception:
+                pass
+        pythoncom.CoUninitialize()
+    return None
+
+
+def _docx_to_pdf_libreoffice(docx_path, pdf_path):
+    """Convert through a headless LibreOffice installation.
+
+    Cross-platform fallback. Fidelity to a Word template is good but not exact,
+    so this is only used when Word automation is unavailable.
+
+    Parameters
+    ----------
+    docx_path : str
+        Absolute path of the source Word document.
+    pdf_path : str
+        Absolute path of the PDF to write.
+
+    Returns
+    -------
+    str or None
+        ``None`` on success, otherwise the reason the backend was unusable.
+    """
+    executable = shutil.which("soffice") or shutil.which("libreoffice")
+    if not executable:
+        return "LibreOffice (soffice) is not on PATH"
+    outdir = os.path.dirname(pdf_path)
+    try:
+        completed = subprocess.run(
+            [executable, "--headless", "--convert-to", "pdf", "--outdir",
+             outdir, docx_path],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300)
+    except (OSError, subprocess.SubprocessError) as error:
+        return "LibreOffice call failed ({})".format(error)
+    if completed.returncode != 0:
+        return "LibreOffice exited {}".format(completed.returncode)
+    produced = os.path.join(
+        outdir, os.path.splitext(os.path.basename(docx_path))[0] + ".pdf")
+    if produced != pdf_path and os.path.isfile(produced):
+        shutil.move(produced, pdf_path)
+    return None
+
+
+def convert_docx_to_pdf(docx_path, pdf_path, label="Report"):
+    """Render a generated Word report to PDF for distribution.
+
+    The PDF is produced from the DOCX rather than from the HTML so that it
+    inherits the configured corporate Word template. Backends are tried in
+    descending order of fidelity, and a failure is reported rather than raised:
+    a missing PDF must not discard an otherwise complete report run.
+
+    Parameters
+    ----------
+    docx_path : str
+        Path of the Word report produced by this run.
+    pdf_path : str
+        Path of the PDF to write.
+    label : str, optional
+        Human-readable name used in console messages.
+
+    Returns
+    -------
+    bool
+        True when the PDF was written.
+    """
+    docx_path = os.path.abspath(docx_path)
+    pdf_path = os.path.abspath(pdf_path)
+    if not os.path.isfile(docx_path):
+        print("NOTE: {} PDF skipped, source document is missing: {}".format(
+            label, docx_path))
+        return False
+    reasons = []
+    for backend in (_docx_to_pdf_word, _docx_to_pdf_libreoffice):
+        reason = backend(docx_path, pdf_path)
+        if reason is None and os.path.isfile(pdf_path):
+            print("{} PDF saved: {}".format(label, pdf_path))
+            return True
+        reasons.append(reason or "backend reported success but wrote no file")
+    print("NOTE: {} PDF could not be generated. Tried: {}.".format(
+        label, "; ".join(reasons)))
+    print("      Install Microsoft Word with pywin32, or LibreOffice, "
+          "or export the .docx manually.")
+    return False
+
+
+def want_pdf_output(study_config):
+    """Decide whether this run should also emit PDF.
+
+    Parameters
+    ----------
+    study_config : dict
+        Parsed ``study_config.yaml``.
+
+    Returns
+    -------
+    bool
+        True when ``--pdf`` was passed or ``report.formats`` lists ``pdf``.
+    """
+    if "--pdf" in sys.argv:
+        return True
+    if "--no-pdf" in sys.argv:
+        return False
+    formats = (study_config or {}).get("report", {}).get("formats") or []
+    return any(str(fmt).strip().lower() == "pdf" for fmt in formats)
+
+
+def resolve_report_orientation(study_config):
+    """Resolve the page orientation for the report body.
+
+    Order: ``--orientation VALUE`` > ``report.orientation`` in
+    ``study_config.yaml`` > portrait. ``template`` keeps whatever the corporate
+    template declares, which is usually landscape.
+    """
+    allowed = ("portrait", "landscape", "template")
+    value = _cli_option("--orientation")
+    if not value:
+        value = (study_config or {}).get("report", {}).get("orientation")
+    value = str(value or "portrait").strip().lower()
+    if value not in allowed:
+        print("NOTE: unknown report.orientation '{}'; using portrait.".format(value))
+        return "portrait"
+    return value
+
+
+def resolve_report_language(study_config):
+    """Resolve the language the report is written in.
+
+    Order: ``--language CODE`` > ``NEQSIM_REPORT_LANGUAGE`` >
+    ``report.language`` (then ``study.language``) in ``study_config.yaml`` >
+    English.
+
+    Parameters
+    ----------
+    study_config : dict
+        Parsed ``study_config.yaml``.
+
+    Returns
+    -------
+    str
+        Normalized language code, e.g. ``en`` or ``nb``.
+    """
+    value = _cli_option("--language") or os.environ.get("NEQSIM_REPORT_LANGUAGE", "")
+    if not value:
+        config = study_config or {}
+        value = (config.get("report", {}).get("language")
+                 or config.get("study", {}).get("language") or "")
+    value = str(value or "").strip().lower()
+    if value in ("", "auto", "default"):
+        return DEFAULT_REPORT_LANGUAGE
+    code = LANGUAGE_ALIASES.get(value, value)
+    if code != DEFAULT_REPORT_LANGUAGE and code not in REPORT_STRINGS:
+        print("NOTE: no translation table for report language '{}'. Section "
+              "headings and cover labels stay English; the document language "
+              "is set to {}.".format(value, LANGUAGE_LOCALES.get(code, code)))
+    return code
+
+
+def prune_superseded_outputs(current_files):
+    """Delete report files this generator wrote under an earlier title.
+
+    Without this, renaming a study leaves the superseded deliverable beside the
+    current one and a reader cannot tell which is live.
+
+    Parameters
+    ----------
+    current_files : list of str
+        Paths written by this run.
+    """
+    current = set(os.path.abspath(path) for path in current_files
+                  if path and os.path.exists(path))
+    previous = list(LEGACY_OUTPUT_NAMES)
+    if os.path.exists(OUTPUT_MANIFEST_FILE):
+        try:
+            with open(OUTPUT_MANIFEST_FILE, encoding="utf-8-sig") as manifest:
+                previous.extend(json.load(manifest).get("files", []))
+        except (OSError, ValueError) as error:
+            print("NOTE: could not read report output manifest; "
+                  "checking legacy output names only ({}).".format(error), file=sys.stderr)
+    for name in previous:
+        stale = os.path.abspath(os.path.join(REPORT_DIR, os.path.basename(name)))
+        if stale in current or not os.path.isfile(stale):
+            continue
+        try:
+            os.remove(stale)
+            print("Removed superseded report file: {}".format(os.path.basename(stale)))
+        except OSError as error:
+            print("NOTE: could not remove {}: {}".format(stale, error))
+    try:
+        with open(OUTPUT_MANIFEST_FILE, "w", encoding="utf-8") as manifest:
+            json.dump({"files": sorted(os.path.basename(p) for p in current)},
+                      manifest, indent=2)
+    except OSError as error:
+        print("NOTE: could not save report output manifest; cleanup tracking "
+              "may be incomplete next run ({}).".format(error), file=sys.stderr)
+
+# ── Word template (corporate branding) ───────────────────
+# Resolution order: --template PATH, NEQSIM_REPORT_TEMPLATE, the saved
+# `report_template` in ~/.neqsim/task_defaults.json (neqsim --set-report-template),
+# then built-in styling. Word documents are then built on the template so the
+# company fonts, colours, styles, headers, and footers apply.
+TASK_DEFAULTS_FILE = os.path.expanduser("~/.neqsim/task_defaults.json")
+REPORT_TEMPLATE_EXTENSIONS = (".docx", ".dotx")
+REPORT_TEMPLATE = None          # set in __main__ from CLI/env/settings
+KEEP_TEMPLATE_CONTENT = False   # --keep-template-content keeps the template body
+TEMPLATE_NUMBERS_HEADINGS = False  # template Heading styles carry their own numbering
+
+
+def resolve_report_template(explicit=None, allow_saved=True, configured=None):
+    """Resolve the Word template reports are built from, or None if unset.
+
+    Parameters
+    ----------
+    explicit : str or None
+        Template path from --template; overrides everything else.
+    allow_saved : bool
+        When False (--no-template), study_config, environment and the saved
+        user setting are all ignored.
+    configured : str or None
+        ``report.template`` from study_config.yaml; relative paths resolve from
+        the task folder and ``none`` selects the built-in styling. Overrides
+        the environment and the saved user setting.
+
+    Returns
+    -------
+    str or None
+        Absolute path to an existing .docx/.dotx file, or None.
+
+    Raises
+    ------
+    ValueError
+        If a template is configured but is not a readable Word file.
+    """
+    configured = (configured or "").strip()
+    if not explicit and allow_saved and configured:
+        if configured.lower() in ("none", "off", "builtin", "built-in"):
+            return None
+        explicit = (configured if os.path.isabs(os.path.expanduser(configured))
+                    else os.path.join(TASK_DIR, configured))
+    selected = explicit or os.environ.get("NEQSIM_REPORT_TEMPLATE")
+    if not selected and allow_saved and os.path.exists(TASK_DEFAULTS_FILE):
+        with open(TASK_DEFAULTS_FILE, encoding="utf-8-sig") as source:
+            selected = json.load(source).get("report_template")
+    if not selected:
+        return None
+    if not isinstance(selected, str) or not selected.strip():
+        raise ValueError("Report template must be a path to a .docx or .dotx file")
+    path = os.path.abspath(os.path.expandvars(os.path.expanduser(selected)))
+    if os.path.splitext(path)[1].lower() not in REPORT_TEMPLATE_EXTENSIONS:
+        raise ValueError("Report template must be a .docx or .dotx file: {}".format(path))
+    if not os.path.isfile(path):
+        raise ValueError("Report template not found: {}".format(path))
+    return path
+
+
+def _clear_document_body(doc):
+    """Drop the template's own body content, keeping page setup and headers."""
+    body = doc.element.body
+    for child in list(body):
+        if child.tag == qn("w:sectPr"):
+            continue
+        body.remove(child)
+
+
+def _ensure_paragraph_style(doc, name, size_pt=None, bold=False):
+    """Create a minimal stand-in when the template lacks a style we write to."""
+    try:
+        doc.styles[name]
+        return
+    except KeyError:
+        pass
+    style = doc.styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
+    try:
+        style.base_style = doc.styles["Normal"]
+    except KeyError:
+        pass
+    if size_pt:
+        style.font.size = Pt(size_pt)
+    style.font.bold = bold
+
+
+def _apply_readable_typography(doc):
+    """Raise style sizes that fall below the readable floor.
+
+    Only ever increases a size, so a template whose body text and headings are
+    already reasonable keeps its own design. Corporate templates built for
+    dense forms often ship Normal at 9-9.5 pt with all heading levels at the
+    same size, which leaves the report body small and the section hierarchy
+    invisible once the template body is cleared.
+    """
+    floors = (
+        ("Normal", BODY_PT),
+        ("Heading 1", HEADING1_PT),
+        ("Heading 2", HEADING2_PT),
+        ("Heading 3", HEADING3_PT),
+    )
+    for name, floor_pt in floors:
+        try:
+            style = doc.styles[name]
+        except KeyError:
+            continue
+        current = style.font.size.pt if style.font.size else None
+        if current is None or current < floor_pt:
+            style.font.size = Pt(floor_pt)
+        if name.startswith("Heading"):
+            style.font.bold = True
+    # A form template often sets space_after = 0, which glues consecutive
+    # paragraphs together and hides the paragraph structure entirely.
+    try:
+        body = doc.styles["Normal"].paragraph_format
+        if body.space_after is None or body.space_after < Pt(BODY_SPACE_AFTER_PT):
+            body.space_after = Pt(BODY_SPACE_AFTER_PT)
+        body.widow_control = True
+    except KeyError:
+        pass
+    _ensure_caption_style(doc)
+
+
+def _ensure_caption_style(doc):
+    """Give figure and table captions a real Caption style.
+
+    Captions written as ad-hoc italic runs cannot be collected into a list of
+    figures, and Word is free to break the page between a figure and its
+    caption. A styled caption fixes both.
+    """
+    _ensure_paragraph_style(doc, "Caption", CAPTION_PT)
+    try:
+        style = doc.styles["Caption"]
+    except KeyError:
+        return
+    style.font.size = Pt(CAPTION_PT)
+    style.font.italic = True
+    style.font.bold = False
+    style.font.color.rgb = RGBColor(90, 90, 90)
+    style.paragraph_format.space_after = Pt(BODY_SPACE_AFTER_PT)
+    style.paragraph_format.keep_with_next = False
+
+
+def _set_run_language(r_pr, locale):
+    """Set ``w:lang`` on a run-properties element, replacing any existing one."""
+    for existing in r_pr.findall(qn("w:lang")):
+        r_pr.remove(existing)
+    r_pr.append(parse_xml(
+        '<w:lang {} w:val="{}" w:eastAsia="{}"/>'.format(
+            nsdecls("w"), locale, locale)))
+
+
+def _apply_document_language(doc):
+    """Set the document language so Word spell-checks in the report language.
+
+    A template built in one language otherwise marks every word of a report
+    written in another as a spelling error.
+    """
+    locale = _report_locale()
+    styles = doc.styles.element
+    defaults = styles.find(qn("w:docDefaults"))
+    if defaults is not None:
+        r_pr_default = defaults.find(qn("w:rPrDefault"))
+        if r_pr_default is None:
+            r_pr_default = parse_xml(
+                '<w:rPrDefault {}/>'.format(nsdecls("w")))
+            defaults.insert(0, r_pr_default)
+        r_pr = r_pr_default.find(qn("w:rPr"))
+        if r_pr is None:
+            r_pr = parse_xml('<w:rPr {}/>'.format(nsdecls("w")))
+            r_pr_default.append(r_pr)
+        _set_run_language(r_pr, locale)
+    try:
+        normal = doc.styles["Normal"].element
+    except KeyError:
+        return
+    r_pr = normal.find(qn("w:rPr"))
+    if r_pr is None:
+        r_pr = parse_xml('<w:rPr {}/>'.format(nsdecls("w")))
+        normal.append(r_pr)
+    _set_run_language(r_pr, locale)
+
+
+def _anchor_header_drawings_to_right_margin(doc):
+    """Keep right-hand header/footer drawings (logo) on the page after a flip.
+
+    Corporate templates place the logo with a fixed offset from the left
+    column. Rotating a landscape template to portrait leaves that offset
+    beyond the page edge, so the logo vanishes. Re-expressing the offset
+    relative to the right margin keeps the same gap in either orientation.
+    """
+    seen = set()
+    for section in doc.sections:
+        left = section.left_margin or 0
+        right = section.right_margin or 0
+        page_w = section.page_width
+        parts = (section.header, section.first_page_header,
+                 section.even_page_header, section.footer,
+                 section.first_page_footer, section.even_page_footer)
+        for part in parts:
+            if part.is_linked_to_previous:
+                continue
+            root = part._element
+            if id(root) in seen:
+                continue
+            seen.add(id(root))
+            for anchor in root.iter(qn("wp:anchor")):
+                pos_h = anchor.find(qn("wp:positionH"))
+                extent = anchor.find(qn("wp:extent"))
+                if pos_h is None or extent is None:
+                    continue
+                offset = pos_h.find(qn("wp:posOffset"))
+                if offset is None:
+                    continue
+                base = {"column": left, "margin": left, "leftMargin": left,
+                        "page": 0}.get(pos_h.get("relativeFrom"))
+                if base is None:
+                    continue
+                x_left = base + int(offset.text)
+                if x_left + int(extent.get("cx")) / 2.0 < page_w / 2.0:
+                    continue
+                pos_h.set("relativeFrom", "rightMargin")
+                offset.text = str(int(x_left - (page_w - right)))
+
+
+def _normalize_page_setup(doc):
+    """Set the body on a readable measure, whatever the template declares."""
+    if REPORT_ORIENTATION == "template":
+        return
+    want_landscape = REPORT_ORIENTATION == "landscape"
+    _anchor_header_drawings_to_right_margin(doc)
+    for section in doc.sections:
+        if (section.page_width > section.page_height) != want_landscape:
+            section.page_width, section.page_height = (
+                section.page_height, section.page_width)
+            section.orientation = (WD_ORIENT.LANDSCAPE if want_landscape
+                                   else WD_ORIENT.PORTRAIT)
+        measure = (section.page_width - section.left_margin
+                   - section.right_margin) / 914400.0
+        if measure <= MAX_MEASURE_IN:
+            continue
+        extra = Inches((measure - MAX_MEASURE_IN) / 2.0)
+        floor = Inches(MIN_SIDE_MARGIN_IN)
+        section.left_margin = max(section.left_margin + extra, floor)
+        section.right_margin = max(section.right_margin + extra, floor)
+
+
+def _text_width_in(doc):
+    """Printable width of the current section, in inches."""
+    section = doc.sections[-1]
+    return max(2.0, (section.page_width - section.left_margin
+                     - section.right_margin) / 914400.0)
+
+
+def _text_height_in(doc):
+    """Printable height of the current section, in inches."""
+    section = doc.sections[-1]
+    return max(2.0, (section.page_height - section.top_margin
+                     - section.bottom_margin) / 914400.0)
+
+
+def _new_document():
+    """Return a Word document based on the configured template, if any."""
+    global TEMPLATE_NUMBERS_HEADINGS
+    if not REPORT_TEMPLATE:
+        doc = Document()
+        _apply_readable_typography(doc)
+        _apply_document_language(doc)
+        _normalize_page_setup(doc)
+        return doc
+    doc = Document(REPORT_TEMPLATE)
+    if not KEEP_TEMPLATE_CONTENT:
+        _clear_document_body(doc)
+    for name, size_pt in (("Title", 28), ("Heading 1", HEADING1_PT),
+                          ("Heading 2", HEADING2_PT),
+                          ("Heading 3", HEADING3_PT), ("List Bullet", None)):
+        _ensure_paragraph_style(doc, name, size_pt, bold=size_pt is not None)
+    _apply_readable_typography(doc)
+    _apply_document_language(doc)
+    _normalize_page_setup(doc)
+    return doc
+
+
+def _style_numbering_active(doc, style_name, _seen=None):
+    """Return true when a heading style carries automatic Word numbering.
+
+    A corporate template usually numbers its heading styles itself. Writing our
+    own "7. " prefix into such a heading produces "8   7. Solution Workflow" —
+    two numbering schemes that also disagree, because Word counts the cover and
+    contents headings too.
+    """
+    if _seen is None:
+        _seen = set()
+    if style_name in _seen:
+        return False
+    _seen.add(style_name)
+    try:
+        style = doc.styles[style_name]
+    except KeyError:
+        return False
+    element = style.element
+    if element.find(qn("w:pPr")) is not None:
+        if element.find(qn("w:pPr")).find(qn("w:numPr")) is not None:
+            return True
+    based_on = element.find(qn("w:basedOn"))
+    if based_on is not None:
+        parent = based_on.get(qn("w:val"))
+        if parent:
+            return _style_numbering_active(doc, parent, _seen)
+    return False
+
+
+_HEADING_NUMBERING_CACHE = {}
+_MANUAL_HEADING_NUMBER = re.compile(r"^\s*\d+(?:\.\d+)*[.)]?\s+")
+
+
+def _heading_numbering_active(doc, level):
+    """Cache the numbering check per document and heading level."""
+    key = (id(doc), level)
+    if key not in _HEADING_NUMBERING_CACHE:
+        _HEADING_NUMBERING_CACHE[key] = _style_numbering_active(
+            doc, "Heading {}".format(level))
+    return _HEADING_NUMBERING_CACHE[key]
+
+
+def _suppress_paragraph_numbering(paragraph):
+    """Remove list numbering from a single paragraph (numId 0)."""
+    p_pr = paragraph._p.get_or_add_pPr()
+    for existing in p_pr.findall(qn("w:numPr")):
+        p_pr.remove(existing)
+    p_pr.append(parse_xml(
+        '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(
+            nsdecls("w"))))
+
+
+_MANUAL_SUBSECTION_STATE = {}
+_LEADING_CHAPTER_NUMBER = re.compile(r"^\s*(\d+)[.)]?\s+")
+
+
+def _add_heading(doc, text, level=1, numbered=True):
+    """Add a heading that does not fight the template's own numbering.
+
+    When the template numbers headings, our manual "N. " prefix is dropped so
+    Word supplies the single authoritative number; headings that must stay
+    unnumbered (contents, front matter) have numbering suppressed instead.
+    Without template numbering, level-2 headings get a manual "N.k" so the
+    built-in layout matches a numbered corporate template.
+    """
+    text = str(text)
+    if _heading_numbering_active(doc, level):
+        if numbered:
+            text = _MANUAL_HEADING_NUMBER.sub("", text)
+        heading = doc.add_heading(text, level=level)
+        if not numbered:
+            _suppress_paragraph_numbering(heading)
+    else:
+        state = _MANUAL_SUBSECTION_STATE.setdefault(id(doc), {"chapter": None, "sub": 0})
+        if level == 1:
+            match = _LEADING_CHAPTER_NUMBER.match(text) if numbered else None
+            state["chapter"], state["sub"] = (match.group(1) if match else None), 0
+        elif level == 2 and numbered and state["chapter"] \
+                and not _MANUAL_HEADING_NUMBER.match(text):
+            state["sub"] += 1
+            text = "{}.{} {}".format(state["chapter"], state["sub"], text)
+        heading = doc.add_heading(text, level=level)
+    # A heading stranded at the foot of a page is the most visible layout fault
+    # in an otherwise clean report.
+    heading.paragraph_format.keep_with_next = True
+    heading.paragraph_format.page_break_before = False
+    return heading
+
+
+def _repeat_header_row(table):
+    """Mark row 1 as a header so it repeats when the table breaks across pages."""
+    tr_pr = table.rows[0]._tr.get_or_add_trPr()
+    if tr_pr.find(qn("w:tblHeader")) is None:
+        tr_pr.append(parse_xml('<w:tblHeader {}/>'.format(nsdecls("w"))))
+
+
+def _keep_rows_intact(table):
+    """Stop Word splitting a single table row across a page break."""
+    for row in table.rows:
+        tr_pr = row._tr.get_or_add_trPr()
+        if tr_pr.find(qn("w:cantSplit")) is None:
+            tr_pr.append(parse_xml('<w:cantSplit {}/>'.format(nsdecls("w"))))
+
+
+_NUMERIC_CELL = re.compile(
+    r"^[\s\u00a0]*[<>\u2264\u2265\u00b1~]?[\s\u00a0]*[-+]?[\d\u00a0,. ]*\d"
+    r"(?:[eE][-+]?\d+)?[\s\u00a0]*%?[\s\u00a0]*$")
+
+
+def _align_numeric_cells(table):
+    """Right-align the cells that hold numbers so digits line up by place value."""
+    for row in table.rows[1:]:
+        for cell in row.cells:
+            text = cell.text.strip()
+            if not text or not _NUMERIC_CELL.match(text):
+                continue
+            for paragraph in cell.paragraphs:
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
+
+def _set_table_style(table, name="Table Grid"):
+    """Apply a table style, falling back to explicit borders if it is missing."""
+    try:
+        table.style = name
+        return
+    except KeyError:
+        pass
+    borders = "".join(
+        '<w:{} w:val="single" w:sz="4" w:color="999999"/>'.format(edge)
+        for edge in ("top", "left", "bottom", "right", "insideH", "insideV")
+    )
+    table._tbl.tblPr.append(
+        parse_xml('<w:tblBorders {}>{}</w:tblBorders>'.format(nsdecls("w"), borders))
+    )
+
+# ── Configuration ────────────────────────────────────────
+# TITLE and AUTHOR are resolved at run time by resolve_report_identity():
+#   --title / --author  >  study_config.yaml (study.title, study.author)  >
+#   task_spec.md heading  >  a task-local generate_report.py copy  >  folder name.
+# The values below are only the last-resort fallbacks.
+TITLE = "Task Report"
+AUTHOR = ""
 TASK_DATE = date.today().isoformat()
+TASK_STATEMENT = ""             # resolved from study_config/task_spec/results
+STUDY_BADGES = []               # [(label, value)] shown under the title
 
 # ── Paper-specific configuration (edit for scientific paper output) ──
 PAPER_TITLE = ""                # <-- Leave empty to use TITLE
@@ -144,15 +1169,95 @@ PAPER_SECTIONS = {
 }
 
 
+# ── Task-local overrides ─────────────────────────────────
+# Hand-written report content lives in step3_report/report_sections.json, not
+# in a forked copy of this script. Keys: title, author, classification,
+# doc_number, revision, manual_sections, paper_sections, paper_* metadata.
+REPORT_SECTIONS_FILE = os.path.join(REPORT_DIR, "report_sections.json")
+
+
+def _load_report_sections():
+    """Return the task's hand-written report overrides, or an empty dict."""
+    if not os.path.isfile(REPORT_SECTIONS_FILE):
+        return {}
+    try:
+        with open(REPORT_SECTIONS_FILE, "r", encoding="utf-8-sig") as source:
+            data = json.load(source)
+    except (OSError, ValueError) as error:
+        print("WARNING: could not read {}: {}".format(REPORT_SECTIONS_FILE, error))
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+REPORT_SECTIONS = _load_report_sections()
+# Sections a human wrote by hand; these outrank auto-generated prose.
+AUTHORED_SECTIONS = set()
+
+for _key, _value in (REPORT_SECTIONS.get("manual_sections") or {}).items():
+    if isinstance(_value, str) and _value.strip():
+        MANUAL_SECTIONS[_key] = _value
+        AUTHORED_SECTIONS.add(_key)
+for _key, _value in (REPORT_SECTIONS.get("paper_sections") or {}).items():
+    if isinstance(_value, str) and _value.strip():
+        PAPER_SECTIONS[_key] = _value
+for _key, _global in (("doc_number", "DOC_NUMBER"), ("revision", "REVISION"),
+                      ("paper_title", "PAPER_TITLE"),
+                      ("paper_journal", "PAPER_JOURNAL"),
+                      ("paper_acknowledgments", "PAPER_ACKNOWLEDGMENTS")):
+    if isinstance(REPORT_SECTIONS.get(_key), str) and REPORT_SECTIONS[_key].strip():
+        globals()[_global] = REPORT_SECTIONS[_key]
+for _key, _global in (("revision_history", "REVISION_HISTORY"),
+                      ("paper_authors", "PAPER_AUTHORS"),
+                      ("paper_keywords", "PAPER_KEYWORDS")):
+    if isinstance(REPORT_SECTIONS.get(_key), list) and REPORT_SECTIONS[_key]:
+        globals()[_global] = REPORT_SECTIONS[_key]
+
+
 # ══════════════════════════════════════════════════════════
 # Auto-read functions
 # ══════════════════════════════════════════════════════════
+
+_PASS_STATUSES = {"PASS", "PASSED", "OK", "MET"}
+_FAIL_STATUSES = {"FAIL", "FAILED", "NOT MET", "NOT_MET"}
+
+
+def _status_word(status):
+    """Map a validation-row status to PASS, FAIL or its own upper-cased text."""
+    if isinstance(status, bool):
+        return "PASS" if status else "FAIL"
+    word = str(status if status is not None else "").strip().upper()
+    if word in _PASS_STATUSES:
+        return "PASS"
+    if word in _FAIL_STATUSES:
+        return "FAIL"
+    return word or "N/A"
+
+
+def _normalize_validation(data):
+    """Accept a list of check rows as `validation` by folding it into the dict shape used here."""
+    validation = data.get("validation")
+    if isinstance(validation, list):
+        data["validation_rows"] = validation
+        folded = {}
+        for index, row in enumerate(validation):
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("check", index))
+            if name in folded:
+                name = "{} ({})".format(name, index + 1)
+            # Status words, not booleans: a boolean would be inverted for names such as "error".
+            folded[name] = _status_word(row.get("status", row.get("passed", row.get("pass"))))
+        data["validation"] = folded
+    elif validation is not None and not isinstance(validation, dict):
+        data["validation"] = {}
+    return data
+
 
 def load_results():
     """Load results.json if it exists. Returns dict or None."""
     if os.path.exists(RESULTS_FILE):
         with open(RESULTS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
+            data = _normalize_validation(json.load(f))
         print("  Loaded results.json ({} keys)".format(len(data)))
         return data
     print("  No results.json found (using manual sections)")
@@ -339,7 +1444,8 @@ def load_study_config():
     with open(STUDY_CONFIG_FILE, "r", encoding="utf-8") as config_file:
         text = config_file.read()
     config = {}
-    for section in ["study", "inputs", "notebooks", "report", "quality_gates"]:
+    for section in ["study", "inputs", "analysis", "notebooks", "report",
+                    "quality_gates"]:
         lines = _section_lines(text, section)
         config[section] = _parse_section_scalars(lines)
     config["report"]["formats"] = _parse_scalar_list(
@@ -350,19 +1456,51 @@ def load_study_config():
         _section_lines(text, "notebooks"))
     config["inputs"]["documents"] = _parse_mapping_list(
         _section_lines(text, "inputs"), "documents")
+    config["inputs"]["data_sources"] = _parse_mapping_list(
+        _section_lines(text, "inputs"), "data_sources")
+    config["analysis"]["scripts"] = _parse_mapping_list(
+        _section_lines(text, "analysis"), "scripts")
     print("  Loaded study_config.yaml")
     return config
 
 
+# Norwegian task_spec.md files are common, and heading matching used to be
+# English-only, so a fully written Norwegian scope section was reported as
+# "lacks source data". Each canonical heading therefore carries its aliases.
+SPEC_HEADING_ALIASES = {
+    "applicable standards": ("gjeldende standarder", "standarder", "regelverk",
+                             "scope and standards", "omfang og standarder"),
+    "calculation methods": ("beregningsmetoder", "metode", "metoder",
+                            "framgangsmate", "fremgangsmate"),
+    "acceptance criteria": ("akseptkriterier", "akseptansekriterier"),
+    "operating envelope": ("driftsomrade", "driftsvindu", "operasjonsvindu"),
+    "objective": ("formal", "mal", "hensikt", "oppgave"),
+    "scope": ("omfang", "avgrensning", "bakgrunn og avgrensning"),
+    "data sources": ("datakilder", "kilder"),
+    "deliverables": ("leveranser", "leveranse"),
+}
+
+
+def _heading_variants(heading):
+    """Return the heading plus any language aliases registered for it."""
+    key = str(heading or "").strip().lower()
+    return (key,) + SPEC_HEADING_ALIASES.get(key, ())
+
+
 def extract_spec_section(spec_text, heading):
-    """Extract a section from task_spec.md by heading."""
+    """Extract a section from task_spec.md by heading.
+
+    Matching is case-insensitive and alias-aware, so a Norwegian heading such as
+    "Akseptkriterier" satisfies a request for "Acceptance Criteria".
+    """
     if not spec_text:
         return ""
+    variants = _heading_variants(heading)
     lines = spec_text.split("\n")
     capturing = False
     result = []
     for line in lines:
-        if line.startswith("## ") and heading.lower() in line.lower():
+        if line.startswith("## ") and any(v in line.lower() for v in variants):
             capturing = True
             continue
         elif line.startswith("## ") and capturing:
@@ -374,6 +1512,172 @@ def extract_spec_section(spec_text, heading):
     if text and "| | | |" not in text and "[e.g.," not in text:
         return text
     return ""
+
+
+# ── Report identity (title, author, task statement) ──────
+
+def _is_placeholder_value(value):
+    """Return true for empty or bracketed scaffold values such as "[Title]"."""
+    text = str(value or "").strip()
+    if not text:
+        return True
+    return text.startswith("[") and text.endswith("]")
+
+
+def _prettify_slug(folder_name):
+    """Turn a task folder name into a readable title."""
+    name = folder_name
+    if len(name) >= 11 and name[4] == "-" and name[7] == "-":
+        name = name[11:]
+    name = name.replace("_", " ").replace("-", " ").strip()
+    if not name:
+        return ""
+    return name[0].upper() + name[1:]
+
+
+def _local_report_constant(name):
+    """Read a constant from report_sections.json or a legacy vendored copy."""
+    override = REPORT_SECTIONS.get(name.lower())
+    if isinstance(override, str) and override.strip():
+        return override.strip()
+    local_copy = os.path.join(REPORT_DIR, "generate_report.py")
+    if os.path.abspath(local_copy) == os.path.abspath(__file__):
+        return ""
+    if not os.path.isfile(local_copy):
+        return ""
+    pattern = re.compile(r'^{}\s*=\s*"([^"]*)"'.format(name), re.MULTILINE)
+    with open(local_copy, "r", encoding="utf-8") as source:
+        match = pattern.search(source.read())
+    return match.group(1).strip() if match else ""
+
+
+def _task_spec_title(task_spec):
+    """Return the title from the first heading of task_spec.md."""
+    if not task_spec:
+        return ""
+    for line in task_spec.split("\n"):
+        if line.startswith("# "):
+            title = line[2:].strip()
+            for prefix in ("Task Specification:", "Task Spec:", "Task:"):
+                if title.lower().startswith(prefix.lower()):
+                    title = title[len(prefix):].strip()
+            if not _is_placeholder_value(title):
+                return title
+            return ""
+    return ""
+
+
+def _cli_option(flag):
+    """Return the value that follows a command-line flag, or an empty string."""
+    if flag not in sys.argv:
+        return ""
+    index = sys.argv.index(flag) + 1
+    if index >= len(sys.argv):
+        print("ERROR: {} requires a value".format(flag))
+        sys.exit(2)
+    return sys.argv[index].strip()
+
+
+def _first_paragraph(text, max_chars=700):
+    """Return the first prose paragraph of a block, trimmed for a summary box."""
+    for block in str(text or "").split("\n\n"):
+        cleaned = " ".join(
+            line.strip() for line in block.split("\n")
+            if line.strip() and not line.strip().startswith(("|", "#", "-", "*"))
+        ).strip()
+        if cleaned:
+            if len(cleaned) > max_chars:
+                cleaned = cleaned[:max_chars].rsplit(" ", 1)[0] + " ..."
+            return cleaned
+    return ""
+
+
+def resolve_task_statement(results, task_spec, study_config):
+    """Return a one-paragraph statement of what the task asked for."""
+    if results:
+        for key in ("task_statement", "task", "objective", "problem_statement"):
+            text = results.get(key)
+            if text and isinstance(text, str) and not _is_placeholder_text(text):
+                return _first_paragraph(text)
+    for heading in ("Objective", "Task Description", "Problem Statement",
+                    "Description", "Background"):
+        text = extract_spec_section(task_spec, heading)
+        if text and not _is_placeholder_text(text):
+            statement = _first_paragraph(text)
+            if statement:
+                return statement
+    title = (study_config or {}).get("study", {}).get("title", "")
+    if not _is_placeholder_value(title):
+        return "Study scope: {}.".format(str(title).rstrip("."))
+    return ""
+
+
+def _study_badges(study_config):
+    """Return [(label, value)] describing study depth, shown under the title."""
+    study = (study_config or {}).get("study", {})
+    labels = (
+        ("task_type", "Task type"),
+        ("scale", "Scale"),
+        ("mode", "Mode"),
+        ("aace_class", "AACE class"),
+        ("fel_stage", "FEL stage"),
+    )
+    badges = []
+    for key, label in labels:
+        value = str(study.get(key, "")).strip()
+        if not value or value.lower() in ("auto", "none", "[title]"):
+            continue
+        badges.append((_t(label), value))
+    return badges
+
+
+def resolve_report_identity(study_config, task_spec, results):
+    """Set TITLE, AUTHOR, CLASSIFICATION, TASK_STATEMENT and STUDY_BADGES.
+
+    The report title is the study title, so a report generated from the
+    canonical script against any task folder is never left named "Task Report".
+    """
+    global TITLE, AUTHOR, CLASSIFICATION, TASK_STATEMENT, STUDY_BADGES
+
+    study = (study_config or {}).get("study", {})
+    report_cfg = (study_config or {}).get("report", {})
+
+    title_candidates = [
+        _cli_option("--title"),
+        os.environ.get("NEQSIM_REPORT_TITLE", "").strip(),
+        study.get("title", ""),
+        _task_spec_title(task_spec),
+        _local_report_constant("TITLE"),
+        _prettify_slug(os.path.basename(TASK_DIR)),
+    ]
+    for candidate in title_candidates:
+        if candidate and not _is_placeholder_value(candidate) \
+                and candidate != "Task Report":
+            TITLE = str(candidate).strip()
+            break
+
+    author_candidates = [
+        _cli_option("--author"),
+        os.environ.get("NEQSIM_REPORT_AUTHOR", "").strip(),
+        study.get("author", ""),
+        report_cfg.get("author", ""),
+        _local_report_constant("AUTHOR"),
+    ]
+    for candidate in author_candidates:
+        if candidate and not _is_placeholder_value(candidate):
+            AUTHOR = str(candidate).strip()
+            break
+
+    for candidate in (study.get("classification", ""),
+                      report_cfg.get("classification", ""),
+                      _local_report_constant("CLASSIFICATION")):
+        if candidate and not _is_placeholder_value(candidate):
+            CLASSIFICATION = str(candidate).strip()
+            break
+
+    TASK_STATEMENT = resolve_task_statement(results, task_spec, study_config)
+    STUDY_BADGES = _study_badges(study_config)
+    return TITLE
 
 
 def _as_bool(value):
@@ -401,6 +1705,8 @@ def _is_placeholder_text(text):
     if not text:
         return True
     stripped = str(text).strip()
+    if stripped.startswith("[") and stripped.endswith("]"):
+        return True
     placeholder_markers = (
         "[replace with",
         "[describe ",
@@ -441,13 +1747,53 @@ def _has_safety_context(results):
     return any(token in text for token in ("safety", "rupture", "fire", "blowdown"))
 
 
+# Validation keys whose NAME asserts something bad. For these, False is the
+# desired outcome, so it must not be reported as a failed check. The enterprise
+# skills require agents to emit `credentials_disclosed: false`, which otherwise
+# reads as a blocker and flips safety readiness to DESIGN-GRADE BLOCKED.
+_NEGATIVE_VALIDATION_MARKERS = (
+    "disclosed", "exceeded", "violated", "breached", "failed", "failure",
+    "error", "errors", "blocked", "blocker", "blockers", "leaked", "exposed",
+    "inferred", "fabricated", "constructed", "overrun", "overdue",
+)
+
+# A key that already negates itself ("no_data_fabricated") is positive again.
+_VALIDATION_NEGATION_PREFIXES = ("no", "not", "never", "without", "zero", "nil")
+
+
+def _validation_outcome_is_failure(check, outcome):
+    """True when a validation entry should be reported as a failed check.
+
+    A key phrased as an assertion of something undesirable is inverted: for
+    ``credentials_disclosed`` the passing value is False, not True. A key that
+    carries its own negation prefix flips back, so
+    ``no_document_number_inferred`` passes on True.
+    """
+    if isinstance(outcome, str):
+        return outcome.strip().upper() in _FAIL_STATUSES
+    if outcome not in (True, False):
+        return False
+    tokens = check.lower().split("_")
+    negative = any(marker in tokens for marker in _NEGATIVE_VALIDATION_MARKERS)
+    if negative and tokens and tokens[0] in _VALIDATION_NEGATION_PREFIXES:
+        negative = False
+    return outcome is True if negative else outcome is False
+
+
+def _validation_value(outcome):
+    """Return the scalar of a validation entry; entries may be {value, unit, label} dicts."""
+    if isinstance(outcome, dict) and "value" in outcome:
+        return outcome["value"]
+    return outcome
+
+
 def _validation_failures(results):
     """Return validation checks that are false and block design-grade use."""
     failures = []
     validation = results.get("validation", {}) if results else {}
     for check, outcome in validation.items():
-        if outcome is False:
-            failures.append(check.replace("_", " ").title())
+        if _validation_outcome_is_failure(check, _validation_value(outcome)):
+            failures.append(_label_from_key(check))
     return failures
 
 
@@ -505,6 +1851,291 @@ def _format_list_item_text(item):
     return str(item)
 
 
+def load_collection_manifest():
+    """Return the references collection manifest, or {} when absent.
+
+    Written by devtools/generate_sources_md.py; it is the machine-readable
+    record of every document the task collected and which system it came from.
+    """
+    path = os.path.join(TASK_DIR, "step1_scope_and_research", "references",
+                        "collection_manifest.json")
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8-sig") as manifest_file:
+            data = json.load(manifest_file)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _document_source_counts(manifest):
+    """Return [(source name, document count, description)] from the manifest."""
+    rows = []
+    for group in manifest.get("sources", []) or []:
+        if not isinstance(group, dict):
+            continue
+        documents = group.get("documents") or group.get("files") or []
+        if not documents:
+            continue
+        name = (group.get("system_name") or group.get("source")
+                or group.get("name") or "other")
+        rows.append((str(name), len(documents), str(group.get("description", "") or "")))
+    rows.sort(key=lambda row: (-row[1], row[0].lower()))
+    return rows
+
+
+def _count_reference_files():
+    """Count collected files directly, for tasks with no manifest."""
+    references = os.path.join(TASK_DIR, "step1_scope_and_research", "references")
+    if not os.path.isdir(references):
+        return []
+    counts = {}
+    for root, dirs, files in os.walk(references):
+        dirs[:] = [name for name in dirs if not name.startswith(".")]
+        for name in files:
+            if name in ("SOURCES.md", "collection_manifest.json"):
+                continue
+            folder = os.path.basename(root)
+            label = "unfiled" if os.path.abspath(root) == os.path.abspath(references) \
+                else folder
+            counts[label] = counts.get(label, 0) + 1
+    rows = [(name, count, "") for name, count in counts.items()]
+    rows.sort(key=lambda row: (-row[1], row[0].lower()))
+    return rows
+
+
+def format_information_sources_text(config, results):
+    """Format the evidence basis: how many documents came from which system.
+
+    A reader's first question about a data-driven study is what it was built on.
+    This answers it from the collected files themselves, so the count cannot be
+    overstated in prose.
+    """
+    manifest = load_collection_manifest()
+    rows = _document_source_counts(manifest) or _count_reference_files()
+    inputs = (config or {}).get("inputs", {})
+    data_sources = inputs.get("data_sources", []) or []
+    parts = []
+
+    if rows:
+        total = sum(row[1] for row in rows)
+        parts.append(
+            _t("{} document(s) were collected from {} source system(s) and are stored "
+               "with this task in step1_scope_and_research/references/.").format(
+                total, len(rows)))
+        parts.append("")
+        table = ["| {} | {} | {} |".format(_t("Source system"), _t("Documents"), _t("Content")),
+                 "|---|---|---|"]
+        for name, count, description in rows:
+            table.append("| {} | {} | {} |".format(name, count, description or "-"))
+        parts.append("\n".join(table))
+
+    if data_sources:
+        parts.append("")
+        parts.append(_t("Source systems read") + ":")
+        table = ["| {} | {} | {} | {} |".format(
+                     _t("System"), _t("Scope read"), _t("Access"), _t("Captured evidence")),
+                 "|---|---|---|---|"]
+        for entry in data_sources:
+            if not isinstance(entry, dict):
+                continue
+            evidence = str(entry.get("evidence", "") or "")
+            if not evidence:
+                state = _t("not recorded")
+            elif os.path.exists(_resolve_task_path(evidence)):
+                state = evidence
+            else:
+                state = "{} ({})".format(evidence, _t("missing"))
+            table.append("| {} | {} | {} | {} |".format(
+                entry.get("system", "-"), entry.get("scope", "-"),
+                entry.get("access", "read-only"), state))
+        if len(table) > 2:
+            parts.append("\n".join(table))
+
+    gaps = manifest.get("data_gaps", []) or []
+    if gaps:
+        parts.append("")
+        parts.append(_t("Documents sought but not obtained:"))
+        for gap in gaps:
+            if isinstance(gap, dict):
+                text = (gap.get("description") or gap.get("gap")
+                        or "; ".join("{}: {}".format(key, value)
+                                     for key, value in sorted(gap.items())))
+            else:
+                text = str(gap)
+            parts.append("- {}".format(text))
+
+    if results and results.get("references"):
+        parts.append("")
+        parts.append(_t("Standards and literature cited are listed in the References "
+                        "section; the per-file origin, retrieval date, and relevance of "
+                        "every collected document are in "
+                        "step1_scope_and_research/references/SOURCES.md."))
+    elif rows:
+        parts.append("")
+        parts.append("Per-file origin, retrieval date, and relevance: "
+                     "step1_scope_and_research/references/SOURCES.md.")
+
+    return "\n".join(parts).strip()
+
+
+def format_improvements_text(results):
+    """Format the tooling improvements this task delivered to NeqSim/agents/skills.
+
+    A task is also a test of the tooling; this section makes the resulting fixes
+    part of the deliverable instead of leaving them in a side file.
+    """
+    if not results:
+        return ""
+    items = results.get("improvements")
+    if isinstance(items, str):
+        return items.strip()
+    if not isinstance(items, list) or not items:
+        return ""
+
+    rows = []
+    for item in items:
+        if not isinstance(item, dict):
+            rows.append("- {}".format(item))
+            continue
+        target = (item.get("target") or item.get("component") or item.get("file")
+                  or item.get("repo") or "tooling")
+        if item.get("repo") and item.get("file") and not item.get("target"):
+            target = "{}: {}".format(item["repo"], item["file"])
+        gap = item.get("gap") or item.get("problem") or ""
+        change = item.get("change") or item.get("improvement") or ""
+        evidence = item.get("evidence") or item.get("test") or ""
+        line = "- **{}** — {}".format(target, change or gap)
+        if gap and change:
+            line += " (gap: {})".format(gap)
+        if evidence:
+            line += " [{}]".format(evidence)
+        rows.append(line)
+    return "\n".join(rows)
+
+
+def _assumption_rows(results):
+    """Return (assumption rows, data-gap rows) from any results.json spelling."""
+    assumptions = []
+    gaps = []
+    combined = results.get("assumptions_and_gaps") or results.get("assumptions_gaps")
+    if isinstance(combined, dict):
+        assumptions.extend(combined.get("assumptions", []) or [])
+        gaps.extend(combined.get("data_gaps", []) or combined.get("gaps", []) or [])
+        if not any(k in combined for k in ("assumptions", "data_gaps", "gaps")):
+            # Free-form {topic: text} register, the shape most task folders write.
+            assumptions.extend({"assumption": "{}: {}".format(k.replace("_", " "), v)}
+                               for k, v in combined.items() if v)
+    elif isinstance(combined, list):
+        gaps.extend(combined)
+    for key in ("assumptions", "assumption_register"):
+        value = results.get(key)
+        if isinstance(value, list):
+            assumptions.extend(value)
+    for key in ("data_gaps", "evidence_gaps", "gaps"):
+        value = results.get(key)
+        if isinstance(value, list):
+            gaps.extend(value)
+    return assumptions, gaps
+
+
+def _assumption_text(item, keys):
+    """Pull the first present key from a dict item, else render the whole item."""
+    if not isinstance(item, dict):
+        return str(item)
+    for key in keys:
+        if item.get(key):
+            return str(item[key])
+    return ""
+
+
+def format_assumptions_text(results):
+    """Format the assumption and data-gap register.
+
+    Every assumption a reader must accept, and every piece of information that
+    could not be found, with what was assumed in its place.
+    """
+    if not results:
+        return ""
+    assumptions, gaps = _assumption_rows(results)
+    if not assumptions and not gaps:
+        return ""
+
+    parts = []
+    if assumptions:
+        rows = []
+        for item in assumptions:
+            if isinstance(item, dict):
+                text = _assumption_text(item, ("assumption", "description", "text", "item"))
+                basis = _assumption_text(item, ("basis", "source", "rationale", "why"))
+                effect = _assumption_text(
+                    item, ("effect", "impact", "conservatism", "direction", "consequence"))
+            else:
+                text, basis, effect = str(item), "", ""
+            rows.append((text, basis, effect))
+        parts.append(_t("Assumptions the results depend on") + ":")
+        parts.append("")
+        # A table with two empty columns reads worse than a list; only tabulate
+        # when the basis or effect was actually recorded.
+        if any(basis or effect for _text, basis, effect in rows):
+            table = ["| # | {} | {} | {} |".format(
+                         _t("Assumption"), _t("Basis"), _t("Effect on the result")),
+                     "|---|---|---|---|"]
+            for index, (text, basis, effect) in enumerate(rows, 1):
+                table.append("| A{} | {} | {} | {} |".format(
+                    index, text.replace("|", "/"), basis.replace("|", "/") or "-",
+                    effect.replace("|", "/") or "-"))
+            parts.append("\n".join(table))
+        else:
+            for index, (text, _basis, _effect) in enumerate(rows, 1):
+                parts.append("- A{}: {}".format(index, text))
+
+    if gaps:
+        if parts:
+            parts.append("")
+        parts.append(_t("Information sought but not available, and what was assumed "
+                        "in its place") + ":")
+        parts.append("")
+        table = [
+            "| # | {} | {} | {} | {} | {} |".format(
+                _t("Information sought"), _t("Source"), _t("Status"),
+                _t("Assumed instead"), _t("Effect if wrong")),
+            "|---|---|---|---|---|---|",
+        ]
+        for index, item in enumerate(gaps, 1):
+            if isinstance(item, dict):
+                sought = _assumption_text(
+                    item, ("gap", "description", "information", "sought", "what",
+                           "needed", "missing", "item", "text"))
+                source = _assumption_text(item, ("source", "system", "document"))
+                status = _assumption_text(item, ("status", "state", "reason"))
+                blocker = _assumption_text(item, ("blocker", "why", "detail"))
+                if not sought:
+                    sought, blocker = blocker, ""
+                if blocker and status:
+                    status = "{} — {}".format(status, blocker)
+                elif blocker:
+                    status = blocker
+                assumed = _assumption_text(
+                    item, ("assumed", "assumption", "fallback", "substitute",
+                           "workaround", "mitigation"))
+                effect = _assumption_text(
+                    item, ("effect", "impact", "consequence", "risk"))
+            else:
+                sought, source, status, assumed, effect = str(item), "", "", "", ""
+            table.append("| G{} | {} | {} | {} | {} | {} |".format(
+                index, sought.replace("|", "/") or "-", source.replace("|", "/") or "-",
+                status.replace("|", "/") or "-", assumed.replace("|", "/") or "-",
+                effect.replace("|", "/") or "-"))
+        parts.append("\n".join(table))
+        parts.append("")
+        parts.append(_t("Each gap above is an open item: the conclusion holds only while "
+                        "the stated substitute assumption holds."))
+
+    return "\n".join(parts).strip()
+
+
 def format_list_items_text(items):
     """Format strings or dictionaries from results.json as bullet text."""
     if not items:
@@ -516,6 +2147,40 @@ def format_list_items_text(items):
     else:
         iterable = [items]
     return "\n".join(["- {}".format(_format_list_item_text(item)) for item in iterable])
+
+
+def format_reproducibility_text(results):
+    """Format results.json ``reproducibility`` as markdown for the appendix.
+
+    Accepts a string, a list of steps, or a dict with ``environment``,
+    ``steps``, ``checks`` and ``what_if`` (each a string or list).
+    """
+    repro = (results or {}).get("reproducibility")
+    if not repro:
+        return ""
+    if isinstance(repro, str):
+        return repro
+    if isinstance(repro, list):
+        return "\n".join("{}. {}".format(i, s) for i, s in enumerate(repro, 1))
+    lines = []
+    if repro.get("summary"):
+        lines.extend([repro["summary"], ""])
+    for key, title, numbered in (("environment", "Software and environment", False),
+                                 ("steps", "Steps", True),
+                                 ("checks", "Checks after a rerun", False),
+                                 ("what_if", "Changing a case", False)):
+        items = repro.get(key)
+        if not items:
+            continue
+        lines.append("**{}**".format(_t(title)))
+        if isinstance(items, str):
+            lines.append(items)
+        else:
+            lines.extend("{} {}".format("{}.".format(i) if numbered else "-",
+                                        _format_list_item_text(item))
+                         for i, item in enumerate(items, 1))
+        lines.append("")
+    return "\n".join(lines).strip()
 
 
 def format_safety_readiness_text(results):
@@ -537,23 +2202,178 @@ def format_safety_readiness_text(results):
     return "\n".join(lines)
 
 
+_SENTENCE_ABBREVIATIONS = (
+    "e.g.", "i.e.", "cf.", "vs.", "etc.", "approx.", "ca.", "no.", "nos.",
+    "fig.", "figs.", "eq.", "eqs.", "ref.", "refs.", "tab.", "sec.", "ch.",
+    "dvs.", "jf.", "bl.a.", "pkt.", "ca.", "inkl.", "ekskl.",
+)
+
+# Longer than this in one unbroken run and a Word/PDF paragraph reads as a wall.
+BODY_PARAGRAPH_MAX_CHARS = 650
+
+
+# A trailing run of 1-4 "Capital-letter + period" groups (e.g. "J.M.", "R.")
+# is almost always initials in a person's name, not a sentence boundary.
+_INITIALS_RE = re.compile(r'(?:^|\s)(?:[A-Z]\.){1,4}$')
+
+
+def _split_sentences(text):
+    """Split prose into sentences, keeping abbreviations and initials intact.
+
+    Without the initials check, "benchmarked against the J.M. Campbell
+    correlation" splits into two paragraphs at "J.M.", stranding "Campbell
+    correlation." as an orphan one-line paragraph.
+    """
+    pieces = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9\u00c6\u00d8\u00c5"\'(\[])', text)
+    merged = []
+    for piece in pieces:
+        if merged and (merged[-1].lower().endswith(_SENTENCE_ABBREVIATIONS)
+                       or _INITIALS_RE.search(merged[-1])):
+            merged[-1] = merged[-1] + " " + piece
+        else:
+            merged.append(piece)
+    return merged
+
+
+def _reflow_paragraph(text, max_chars=BODY_PARAGRAPH_MAX_CHARS):
+    """Break an over-long single paragraph at sentence boundaries."""
+    if len(text) <= max_chars:
+        return [text]
+    chunks = []
+    buffer = ""
+    for sentence in _split_sentences(text):
+        if buffer and len(buffer) + 1 + len(sentence) > max_chars:
+            chunks.append(buffer)
+            buffer = sentence
+        else:
+            buffer = sentence if not buffer else buffer + " " + sentence
+    if buffer:
+        chunks.append(buffer)
+    return chunks
+
+
+def _body_paragraphs(text):
+    """Return renderable paragraphs for a plain-prose section.
+
+    A results.json field written as one long string (approach, conclusions,
+    executive_summary) otherwise renders as a single unbroken block. Blocks the
+    author already broke with their own newlines are left untouched.
+    """
+    paragraphs = []
+    for block in str(text or "").split("\n\n"):
+        block = block.strip()
+        if not block:
+            continue
+        if "\n" in block:
+            paragraphs.append(block)
+            continue
+        paragraphs.extend(_reflow_paragraph(block))
+    return paragraphs
+
+
+def _word_paragraphs(text):
+    """Paragraphs for Word: wrapped prose rejoined, each list item or table row on its own.
+
+    Word keeps a literal newline as a line break, so hard-wrapped markdown would
+    otherwise print with ragged breaks mid-sentence.
+    """
+    paragraphs = []
+    for para in _body_paragraphs(text):
+        lines = [line.strip() for line in para.split("\n") if line.strip()]
+        if len(lines) > 1 and _is_line_structured(para):
+            items = []
+            for line in lines:
+                starts_item = _LIST_LINE_RE.match(line) or line.startswith("|")
+                if items and not starts_item:
+                    items[-1] += " " + line  # wrapped continuation of a list item
+                else:
+                    items.append(line)
+            paragraphs.extend(items)
+        else:
+            paragraphs.append(" ".join(lines))
+    return paragraphs
+
+
+_LIST_LINE_RE = re.compile(r"^\s*(?:[-*+\u2022]\s|\d+[.)]\s)")
+_INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
+
+
+def _is_line_structured(block):
+    """True when a block's own line breaks carry meaning (list or table)."""
+    lines = [line for line in block.split("\n") if line.strip()]
+    if len(lines) < 2:
+        return False
+    structured = sum(1 for line in lines
+                     if _LIST_LINE_RE.match(line) or line.strip().startswith("|"))
+    return structured >= len(lines) / 2.0
+
+
+def _prose_to_html(text):
+    """Render plain prose as HTML paragraphs using the same splitting rules.
+
+    Source markdown is hard-wrapped, and markdown treats a single newline as a
+    space. Only a list or table block keeps its line breaks; wrapped prose is
+    rejoined so sentences are not split mid-clause. Inline `code` spans become
+    <code>, which is how tag and document numbers are written in a task spec.
+    """
+    out = []
+    for para in _body_paragraphs(text):
+        if _is_line_structured(para):
+            body = "<br>".join(line.strip() for line in para.split("\n")
+                               if line.strip())
+        else:
+            body = " ".join(line.strip() for line in para.split("\n")
+                            if line.strip())
+        out.append("<p>{}</p>".format(_INLINE_CODE_RE.sub(r"<code>\1</code>", body)))
+    return "".join(out)
+
+
+def _benchmark_tests(results):
+    """Normalize legacy ``tests`` lists and named benchmark mappings for all outputs."""
+    benchmark = (results or {}).get("benchmark_validation") or {}
+    if not isinstance(benchmark, dict):
+        return []
+    listed = next((benchmark[key] for key in ("tests", "points")
+                   if isinstance(benchmark.get(key), list)), None)
+    if listed is not None:
+        entries = ((value.get("test") or value.get("name") or "Test {}".format(index)
+                    if isinstance(value, dict) else "Test {}".format(index), value)
+                   for index, value in enumerate(listed, 1))
+    else:
+        entries = benchmark.items()
+    tests = []
+    for name, value in entries:
+        if not isinstance(value, dict):
+            continue
+        test = dict(value)
+        test.setdefault("parameter", name if listed is not None else name.replace("_", " ").title())
+        if "pass" not in test:
+            status = str(test.get("status", "")).upper()
+            if status in ("PASS", "FAIL"):
+                test["pass"] = status == "PASS"
+        tests.append(test)
+    return tests
+
+
 def auto_executive_summary(results, task_spec):
-    """Generate an executive summary paragraph from available results data."""
+    """Generate an executive summary from available results data."""
     parts = []
     approach = ""
     if results and results.get("approach"):
         approach = results["approach"]
     if approach and not _is_placeholder_text(approach):
-        first_sentence = approach.split(". ")[0].rstrip(".")
+        # Skip run-in headings such as "Data." that open a paragraph.
+        sentences = [s.strip().rstrip(".") for s in approach.split(". ") if s.strip()]
+        first_sentence = next((s for s in sentences if len(s.split()) >= 4),
+                              sentences[0] if sentences else "")
         parts.append(first_sentence + ".")
-    if results and results.get("key_results"):
+    conclusions = str((results or {}).get("conclusions") or "").strip()
+    has_conclusions = bool(conclusions) and not _is_placeholder_text(conclusions)
+    # With written conclusions (appended below) a dump of machine key names only adds noise.
+    if not has_conclusions and results and results.get("key_results"):
         findings = []
-        for key, value in list(results["key_results"].items())[:5]:
-            label, unit = _parse_key_name(key)
-            if isinstance(value, float):
-                value_text = "{:.4g}".format(value)
-            else:
-                value_text = str(value)
+        for label, value, unit, _note in _flatten_key_results(results["key_results"])[:5]:
+            value_text = _fmt_cell(value)
             findings.append("{} = {}{}".format(
                 label, value_text, " " + unit if unit else ""))
         if findings:
@@ -561,6 +2381,19 @@ def auto_executive_summary(results, task_spec):
     readiness = infer_safety_readiness(results) if results else None
     if readiness:
         parts.append("Safety study readiness: {}.".format(readiness["verdict"]))
+    evidence_rows = _document_source_counts(load_collection_manifest()) \
+        or _count_reference_files()
+    if evidence_rows:
+        parts.append("Evidence basis: {} document(s) from {}.".format(
+            sum(row[1] for row in evidence_rows),
+            ", ".join("{} ({})".format(name, count)
+                      for name, count, _desc in evidence_rows[:6])))
+    if results:
+        _assumptions, _gaps = _assumption_rows(results)
+        if _gaps:
+            parts.append("{} item(s) of information could not be obtained; the "
+                         "substitute assumptions are listed in Assumptions and "
+                         "Data Gaps.".format(len(_gaps)))
     if results and results.get("uncertainty"):
         uncertainty = results["uncertainty"]
         p50 = uncertainty.get("p50")
@@ -569,14 +2402,344 @@ def auto_executive_summary(results, task_spec):
             parts.append("Uncertainty analysis gives P50 {} = {:.4g}.".format(output, p50))
     if results and results.get("validation"):
         failures = _validation_failures(results)
+        failures.extend("benchmark: {}".format(test["parameter"])
+                        for test in _benchmark_tests(results) if test.get("pass") is False)
         if failures:
             parts.append("Validation checks requiring attention: {}.".format(
                 ", ".join(failures)))
         else:
             parts.append("Validation checks did not flag design blockers.")
+    benchmarks = _benchmark_tests(results)
+    if benchmarks:
+        passed = sum(test.get("pass") is True for test in benchmarks)
+        parts.append("{} of {} benchmark comparisons passed.".format(passed, len(benchmarks)))
+    if results and results.get("risk_evaluation", {}).get("overall_risk_level"):
+        parts.append("Overall project risk: {}.".format(
+            results["risk_evaluation"]["overall_risk_level"]))
     if results and results.get("conclusions") and not _is_placeholder_text(results["conclusions"]):
         parts.append(results["conclusions"])
-    return " ".join(parts)
+    return "\n\n".join(parts)
+
+
+def check_report_consistency(results):
+    """Check results.json for internal contradictions and inconsistencies.
+
+    Returns a list of dicts with keys: severity, message, fix_type.
+    severity: 'ERROR', 'WARNING', or 'INFO'.
+    fix_type: 'text' (auto-fixable in report), 'calculation' (needs
+    agent to re-run notebook), or 'none' (informational).
+    """
+    if not results:
+        return [{"severity": "INFO", "message": "No results.json loaded; all sections use placeholders.", "fix_type": "none"}]
+
+    issues = []
+
+    # --- 1. Benchmark failures vs optimistic conclusions ---
+    bmk_tests = _benchmark_tests(results)
+    n_fail = sum(1 for t in bmk_tests if t.get("pass") is False)
+    n_total = len(bmk_tests)
+    conclusions = results.get("conclusions", "")
+
+    if n_fail > 0:
+        # Check if any failure has large deviation (>20%) => calculation fix
+        large_devs = []
+        documented = []
+        for t in bmk_tests:
+            if t.get("pass") is False:
+                dev_pct = t.get("deviation_pct")
+                if dev_pct is not None and abs(dev_pct) > 20:
+                    # A written disposition (e.g. two input sources disagree) is a finding, not a misfit.
+                    (documented if str(t.get("disposition", "")).strip() else large_devs).append(t)
+        if documented:
+            issues.append({
+                "severity": "WARNING",
+                "message": "Benchmark deviation >20% kept with a written disposition: {}.".format(
+                    ", ".join(t.get("parameter", "?") for t in documented)),
+                "fix_type": "none",
+            })
+
+        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
+                         "issue", "concern", "discrepanc", "not met"]
+        conc_lower = conclusions.lower()
+        acknowledges = any(w in conc_lower for w in failure_words)
+
+        if large_devs:
+            params = [t.get("parameter", "?") for t in large_devs]
+            issues.append({
+                "severity": "ERROR",
+                "message": "Benchmark deviation >20% for: {}. Model may need "
+                           "retuning or different EOS/parameters.".format(
+                               ", ".join(params)),
+                "fix_type": "calculation",
+                "action": "Re-run benchmark notebook with revised model "
+                          "parameters (check EOS, BIPs, component characterization).",
+                "parameters": params,
+            })
+
+        if not acknowledges:
+            safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                          "within limits", "meets"]
+            if any(w in conc_lower for w in safe_words):
+                issues.append({
+                    "severity": "ERROR",
+                    "message": "Conclusions say \'{}\' but {}/{} benchmark tests FAILED. "
+                               "Conclusions must acknowledge benchmark failures or explain "
+                               "why they are acceptable.".format(
+                                   conclusions[:80], n_fail, n_total),
+                    "fix_type": "text",
+                })
+            else:
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "{}/{} benchmark tests failed. Consider addressing this "
+                               "in the conclusions.".format(n_fail, n_total),
+                    "fix_type": "text",
+                })
+
+    # --- 2. Validation failures vs optimistic conclusions ---
+    validation = results.get("validation", {})
+    val_failures = []
+    for check, outcome in validation.items():
+        outcome = _validation_value(outcome)
+        if outcome is False or (isinstance(outcome, str)
+                                and outcome.strip().upper() in _FAIL_STATUSES):
+            val_failures.append(check)
+        elif (check.endswith(("_pct", "_percent"))
+              and isinstance(outcome, (int, float)) and outcome >= 5.0):
+            val_failures.append("{} ({})".format(check, outcome))
+    if val_failures:
+        conc_lower = conclusions.lower()
+        safe_words = ["safe", "confirm", "acceptable", "satisfactor",
+                      "all.*pass", "within limits"]
+        if any(w in conc_lower for w in safe_words):
+            issues.append({
+                "severity": "ERROR",
+                "message": "Conclusions claim safety/acceptability but validation checks "
+                           "show issues: {}. Revise conclusions or explain why failures "
+                           "are acceptable.".format(", ".join(val_failures)),
+                "fix_type": "text",
+            })
+        # Check if validation error is large enough to need recalculation
+        large_val = [value for key, value in validation.items()
+                     if key.endswith(("_pct", "_percent"))
+                     and isinstance(value, (int, float)) and value >= 10.0]
+        if large_val:
+            issues.append({
+                "severity": "ERROR",
+                "message": "Validation error >=10% detected ({}). Model accuracy "
+                           "may be insufficient — consider retuning.".format(
+                               ", ".join(val_failures)),
+                "fix_type": "calculation",
+                "action": "Re-run main analysis notebook with tighter convergence "
+                          "tolerances or revised model setup.",
+            })
+
+    # --- 3. High risk level vs unconditionally positive conclusions ---
+    risk_eval = results.get("risk_evaluation", {})
+    overall_risk = risk_eval.get("overall_risk_level", "").lower()
+    risks = risk_eval.get("risks", [])
+    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()
+                  or "very high" in r.get("risk_level", "").lower()]
+    if high_risks:
+        conc_lower = conclusions.lower()
+        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
+                         "condition", "subject to", "provided that"]
+        has_caution = any(w in conc_lower for w in caution_words)
+        if not has_caution and any(
+            w in conc_lower for w in ["safe", "confirm", "recommend proceed",
+                                      "no concern"]
+        ):
+            issues.append({
+                "severity": "WARNING",
+                "message": "{} high-risk items identified ({}), but conclusions don\'t "
+                           "mention risk mitigation. Consider adding caveats.".format(
+                               len(high_risks),
+                               ", ".join(r.get("description", "") for r in high_risks[:3])),
+                "fix_type": "text",
+            })
+
+    # --- 4. High probability of negative outcome vs positive conclusions ---
+    uncertainty = results.get("uncertainty", {})
+    prob_neg = uncertainty.get("prob_negative_pct")
+    if prob_neg is not None and prob_neg > 25:
+        conc_lower = conclusions.lower()
+        if any(w in conc_lower for w in ["safe", "confirm", "favourable",
+                                          "recommend proceed"]):
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of unfavourable outcome is {:.1f}% (>25%). "
+                           "Conclusions should acknowledge the significant downside "
+                           "risk.".format(prob_neg),
+                "fix_type": "text",
+            })
+
+    # --- 5. Discussion recommendations contradict conclusions ---
+    discussions = results.get("figure_discussion", [])
+    recs = [d.get("recommendation", "") for d in discussions
+            if d.get("recommendation")]
+    for rec in recs:
+        rec_lower = rec.lower()
+        conc_lower = conclusions.lower()
+        # Check for direct contradictions
+        if "do not proceed" in rec_lower and "proceed" in conc_lower:
+            issues.append({
+                "severity": "ERROR",
+                "message": "Discussion recommends \'do not proceed\' but conclusions "
+                           "say \'proceed\'. Resolve the contradiction.",
+                "fix_type": "text",
+            })
+        if "further study" in rec_lower or "sensitivity" in rec_lower:
+            if "no further" in conc_lower:
+                issues.append({
+                    "severity": "WARNING",
+                    "message": "Discussion recommends further study/sensitivity analysis "
+                               "but conclusions dismiss it. Ensure consistency.",
+                    "fix_type": "text",
+                })
+
+    # --- 6. Missing critical sections ---
+    if not results.get("key_results"):
+        issues.append({
+            "severity": "WARNING",
+            "message": "No key_results in results.json. The Results section will be empty.",
+            "fix_type": "calculation",
+            "action": "Run the main analysis notebook and populate key_results in results.json.",
+        })
+    if not results.get("conclusions") or results["conclusions"].startswith("["):
+        issues.append({
+            "severity": "WARNING",
+            "message": "Conclusions are still a placeholder. Fill in conclusions "
+                       "before finalising the report.",
+            "fix_type": "text",
+        })
+    if not results.get("approach") or results["approach"].startswith("["):
+        issues.append({
+            "severity": "WARNING",
+            "message": "Approach section is still a placeholder.",
+            "fix_type": "text",
+        })
+
+    # --- 7. Numerical consistency: key_results referenced in discussions ---
+    key_results = results.get("key_results", {})
+    for disc in discussions:
+        obs = disc.get("observation", "")
+        linked = disc.get("linked_results", [])
+        for link_key in linked:
+            if link_key in key_results:
+                expected_val = key_results[link_key]
+                if isinstance(expected_val, dict):
+                    expected_val = expected_val.get("value")
+                if isinstance(expected_val, float):
+                    # Check if the observation mentions a consistent number.
+                    # Small magnitudes are usually written in scientific notation in
+                    # prose, so accept those renderings too; and do not accept the
+                    # degenerate "0.0" that %.1f produces for them, which would match
+                    # almost any text.
+                    val_strs = [
+                        "{:.4g}".format(expected_val),
+                        "{:.3g}".format(expected_val),
+                        "{:.2g}".format(expected_val),
+                        str(int(expected_val)) if expected_val == int(expected_val) else "",
+                    ]
+                    if abs(expected_val) >= 0.1:
+                        val_strs.append("{:.1f}".format(expected_val))
+                    for prec in (1, 2, 3):
+                        sci = "{:.{p}e}".format(expected_val, p=prec)
+                        mant, _, exp = sci.partition("e")
+                        exp_i = int(exp)
+                        val_strs.extend([
+                            sci,
+                            "{}e{:+03d}".format(mant, exp_i),
+                            "{}e{}".format(mant, exp_i),
+                            "{}E{:+03d}".format(mant, exp_i),
+                        ])
+                    val_strs = [v for v in val_strs if v]
+                    # Norwegian and other decimal-comma prose write 169,9 and 49 229.
+                    localized = [v.replace(".", ",") for v in val_strs if "." in v and "e" not in v.lower()]
+                    if abs(expected_val) >= 1000:
+                        grouped = "{:,.0f}".format(expected_val)
+                        localized.extend([grouped, grouped.replace(",", " "), grouped.replace(",", "\u00a0")])
+                    val_strs.extend(localized)
+                    if obs and not any(v in obs for v in val_strs):
+                        issues.append({
+                            "severity": "WARNING",
+                            "message": "Discussion links to \'{}\' (value={}) but "
+                                       "observation text doesn\'t mention this value. "
+                                       "Verify numerical consistency.".format(
+                                           link_key, expected_val),
+                            "fix_type": "calculation",
+                            "action": "Verify the value of \'{}\' in the notebook output "
+                                      "and update either key_results or the discussion "
+                                      "observation text.".format(link_key),
+                        })
+
+    # --- 8. Risk level vs uncertainty probability alignment ---
+    if prob_neg is not None and overall_risk:
+        if prob_neg > 40 and overall_risk in ("low",):
+            issues.append({
+                "severity": "WARNING",
+                "message": "Probability of negative outcome is {:.0f}% but overall risk "
+                           "is \'Low\'. These seem inconsistent.".format(prob_neg),
+                "fix_type": "text",
+            })
+        if prob_neg < 5 and overall_risk in ("high", "very high"):
+            issues.append({
+                "severity": "INFO",
+                "message": "Probability of negative outcome is only {:.0f}% but overall "
+                           "risk is \'{}\'. Consider whether the risk rating is driven "
+                           "by non-economic factors.".format(prob_neg, overall_risk.title()),
+                "fix_type": "none",
+            })
+
+    if not issues:
+        issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
+
+    return issues
+
+
+def print_consistency_report(issues):
+    """Print the consistency check results with visual formatting."""
+    errors = [i for i in issues if i["severity"] == "ERROR"]
+    warnings = [i for i in issues if i["severity"] == "WARNING"]
+    infos = [i for i in issues if i["severity"] == "INFO"]
+
+    text_fixes = [i for i in issues if i.get("fix_type") == "text"]
+    calc_fixes = [i for i in issues if i.get("fix_type") == "calculation"]
+
+    print("  ===== Report Consistency Check =====")
+    if errors:
+        for i in errors:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [ERROR{}] {}".format(tag, i["message"]))
+    if warnings:
+        for i in warnings:
+            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
+            print("  [WARNING{}] {}".format(tag, i["message"]))
+    if infos and not errors and not warnings:
+        for i in infos:
+            print("  [OK] {}".format(i["message"]))
+
+    if errors:
+        print("")
+        print("  {} ERROR(s) found. Fix these before distributing the report.".format(
+            len(errors)))
+        print("  Errors indicate contradictions that undermine report credibility.")
+    elif warnings:
+        print("")
+        print("  {} WARNING(s) found. Review before finalising.".format(
+            len(warnings)))
+    else:
+        print("  Report is internally consistent.")
+
+    if text_fixes:
+        print("  {} text fix(es) require review before distribution.".format(len(text_fixes)))
+    if calc_fixes:
+        print("  {} calculation fix(es) need agent re-run (see fixes_needed.json).".format(
+            len(calc_fixes)))
+
+    print("  ====================================")
+    return len(errors)
+
 
 
 def auto_problem_description(results, task_spec):
@@ -588,8 +2751,12 @@ def auto_problem_description(results, task_spec):
             parts.append(text)
             break
     envelope = extract_spec_section(task_spec, "Operating Envelope")
-    if envelope:
-        parts.append("Operating envelope: " + envelope.replace("\n", " ").strip())
+    # A markdown table cannot be flattened into prose without becoming a line of
+    # pipes; Scope and Standards already renders the same section as a table.
+    if envelope and "|" not in envelope:
+        items = [re.sub(r"^\s*[-*]\s+", "", line).strip().rstrip(".")
+                 for line in envelope.splitlines() if line.strip()]
+        parts.append(_t("Operating envelope") + ": " + "; ".join(items) + ".")
     if results and results.get("objective") and not parts:
         parts.append(str(results["objective"]))
     return "\n\n".join(parts)
@@ -617,6 +2784,10 @@ def _required_section_available(section, results, task_spec):
     if normalized in ("methodology", "approach"):
         return bool((results and results.get("approach"))
                     or _manual_section_filled("approach"))
+    if normalized in ("information_sources", "evidence_basis", "sources"):
+        return bool(format_information_sources_text({}, results))
+    if normalized in ("assumptions", "assumptions_and_gaps", "data_gaps"):
+        return bool(format_assumptions_text(results))
     if normalized == "results":
         return bool(results and results.get("key_results"))
     if normalized == "discussion":
@@ -748,6 +2919,226 @@ def _validate_runner_execution(notebooks, planned_notebooks, existing_notebooks)
     return warnings
 
 
+def _resolve_task_path(path):
+    """Resolve a study_config path relative to the task folder."""
+    if os.path.isabs(str(path)):
+        return str(path)
+    return os.path.join(TASK_DIR, str(path))
+
+
+def _validate_analysis_scripts(analysis):
+    """Return warnings for declared analysis scripts and their artifacts."""
+    warnings = []
+    engine = str(analysis.get("engine", "auto")).strip().lower()
+    scripts = analysis.get("scripts", [])
+    if engine in ("script", "hybrid") and not scripts:
+        warnings.append(
+            "analysis.engine is '{}', but analysis.scripts lists no scripts.".format(engine))
+    for entry in scripts:
+        script_file = entry.get("file")
+        if not script_file:
+            continue
+        # Data-retrieval scripts live in step1; the work record resolves bare names in both folders.
+        candidates = [os.path.join(TASK_DIR, folder, str(script_file))
+                      for folder in ("step2_analysis", "step1_scope_and_research")]
+        candidates.append(_resolve_task_path(script_file))
+        if not any(os.path.exists(path) for path in candidates):
+            warnings.append("Planned analysis script is missing: step2_analysis/{}".format(
+                script_file))
+            continue
+        produces = entry.get("produces")
+        if produces and not glob.glob(_resolve_task_path(produces)):
+            warnings.append("Analysis script {} declares an output that is missing: {}".format(
+                script_file, produces))
+    return warnings
+
+
+def _validate_data_sources(inputs, quality_gates, results):
+    """Return warnings for declared source systems and provenance closure."""
+    warnings = []
+    data_sources = inputs.get("data_sources", [])
+    required = _as_bool(inputs.get("data_sources_required", False))
+    if required and not data_sources:
+        warnings.append(
+            "inputs.data_sources_required is true, but no source systems are listed.")
+
+    for entry in data_sources:
+        system = entry.get("system", "<unnamed>")
+        evidence = entry.get("evidence")
+        if not evidence:
+            if required or _is_required(quality_gates.get("provenance_closure")):
+                warnings.append(
+                    "Data source '{}' has no evidence path — captured records cannot "
+                    "be traced.".format(system))
+            continue
+        if not os.path.exists(_resolve_task_path(evidence)):
+            warnings.append("Captured evidence is missing for data source '{}': {}".format(
+                system, evidence))
+
+    if _is_required(quality_gates.get("provenance_closure")) and data_sources:
+        cited = results.get("data_sources") or results.get("sources") if results else None
+        if not cited:
+            warnings.append(
+                "Provenance closure is required, but results.json has no data_sources "
+                "or sources section naming the systems the numbers came from.")
+    return warnings
+
+
+def _validate_work_record(report, quality_gates):
+    """Return warnings when the method-and-data record is required but unusable."""
+    setting = str(report.get("work_record", "auto")).strip().lower()
+    gate = str(quality_gates.get("work_record", "auto")).strip().lower()
+    if "skip" in (setting, gate):
+        return []
+    if not (_is_required(setting) or _is_required(gate)):
+        return []
+
+    record_path = os.path.join(TASK_DIR, "step3_report", "WORK_RECORD.md")
+    if not os.path.exists(record_path):
+        return ["Work record is required, but step3_report/WORK_RECORD.md is missing "
+                "(build it with: neqsim work-record .)."]
+    try:
+        with open(record_path, "r", encoding="utf-8") as record_file:
+            text = record_file.read()
+    except OSError as error:
+        return ["Work record could not be read: {}".format(error)]
+
+    warnings = []
+    blocks = re.findall(
+        r"<!--\s*WORK_RECORD:NARRATIVE id=([A-Za-z0-9_\-]+)\s*-->\n?(.*?)\n?"
+        r"<!--\s*/WORK_RECORD:NARRATIVE\s*-->", text, re.DOTALL)
+    unfilled = [block_id for block_id, body in blocks
+                if re.fullmatch(r"\[[^\]]*\]", (body or "").strip() or "[]")]
+    if unfilled:
+        warnings.append(
+            "Work record narrative is still template text: {}.".format(
+                ", ".join(unfilled)))
+    if not blocks:
+        warnings.append(
+            "Work record has no narrative blocks — regenerate it with "
+            "neqsim work-record so the method section is present.")
+    return warnings
+
+
+def _find_work_record_generator():
+    """Locate devtools/generate_work_record.py from the environment or the tree.
+
+    A task folder vendors its own copy of this report generator, so the search
+    also walks up from the task itself — that is what lets an old task pick up
+    the current work-record generator.
+    """
+    return _find_devtool("generate_work_record.py")
+
+
+def _find_devtool(filename):
+    """Locate a devtools script from NEQSIM_PROJECT_ROOT or the folder tree."""
+    candidates = []
+    project_root = os.environ.get("NEQSIM_PROJECT_ROOT")
+    if project_root:
+        candidates.append(os.path.join(project_root, "devtools", filename))
+    for start in (os.path.dirname(os.path.abspath(__file__)), TASK_DIR):
+        current = start
+        for _ in range(6):
+            candidates.append(os.path.join(current, "devtools", filename))
+            candidates.append(os.path.join(current, filename))
+            parent = os.path.dirname(current)
+            if parent == current:
+                break
+            current = parent
+    for candidate in candidates:
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def record_environment(results):
+    """Record the software that produced this report into results.json.
+
+    Stamped here rather than backfilled later: only the run that renders the
+    deliverable can honestly claim which NeqSim produced its numbers.
+    """
+    if not isinstance(results, dict):
+        return None
+    tool = _find_devtool("task_corpus.py")
+    if not tool:
+        return None
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("neqsim_task_corpus", tool)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        environment = module.capture_environment()
+    except Exception as error:  # a provenance stamp must never break a report
+        print("NOTE: environment not recorded ({}).".format(error))
+        return None
+    results["environment"] = environment
+    try:
+        with open(RESULTS_FILE, "r", encoding="utf-8-sig") as handle:
+            stored = json.load(handle)
+        if isinstance(stored, dict):
+            stored["environment"] = environment
+            with open(RESULTS_FILE, "w", encoding="utf-8") as handle:
+                json.dump(stored, handle, indent=2, ensure_ascii=False)
+                handle.write("\n")
+    except (OSError, ValueError) as error:
+        print("NOTE: could not persist the report environment in results.json "
+              "({}).".format(error), file=sys.stderr)
+    return environment
+
+
+def generate_work_record(config):
+    """Build step3_report/WORK_RECORD.md unless the task opts out.
+
+    The report carries the conclusion; the work record carries the method, the
+    data, and the file map. It is regenerated with every report so the two
+    deliverables cannot drift apart.
+    """
+    setting = str((config.get("report") or {}).get("work_record", "auto")).strip().lower()
+    if setting == "skip":
+        return
+    generator = _find_work_record_generator()
+    if not generator:
+        print("")
+        print("NOTE: work record not generated (devtools/generate_work_record.py "
+              "not found). Run: neqsim work-record \"{}\"".format(TASK_DIR))
+        return
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("neqsim_work_record", generator)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        print("")
+        module.main([TASK_DIR])
+    except Exception as error:  # never block the report on the companion file
+        print("")
+        print("NOTE: work record could not be generated: {}".format(error))
+
+
+def _validate_assumption_register(inputs, results):
+    """Warn when information was not obtained but nothing was assumed in writing.
+
+    A study that could not get a document still reached an answer somehow. If no
+    assumption is registered, that substitution is invisible to the reader.
+    """
+    unobtained = []
+    for entry in inputs.get("data_sources", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        evidence = str(entry.get("evidence", "") or "")
+        if not evidence or not os.path.exists(_resolve_task_path(evidence)):
+            unobtained.append(str(entry.get("system", "<unnamed>")))
+    manifest_gaps = load_collection_manifest().get("data_gaps", []) or []
+    if not unobtained and not manifest_gaps:
+        return []
+    if format_assumptions_text(results):
+        return []
+    detail = ", ".join(unobtained) if unobtained else "{} document gap(s)".format(
+        len(manifest_gaps))
+    return ["Information was not obtained ({}), but results.json registers no "
+            "assumptions or data_gaps \u2014 state what was assumed in its place.".format(
+                detail)]
+
+
 def validate_study_config(config, results, task_spec):
     """Return warnings for missing deliverables required by study_config.yaml."""
     if not config:
@@ -755,6 +3146,7 @@ def validate_study_config(config, results, task_spec):
 
     warnings = []
     inputs = config.get("inputs", {})
+    analysis = config.get("analysis", {})
     notebooks = config.get("notebooks", {})
     report = config.get("report", {})
     quality_gates = config.get("quality_gates", {})
@@ -788,9 +3180,11 @@ def validate_study_config(config, results, task_spec):
     notebooks_required = _as_bool(notebooks.get("required", True))
     notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
     execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
-    script_backed = execution_engine == "script" and not notebooks_required
+    analysis_engine = str(analysis.get("engine", "auto")).strip().lower()
+    script_backed = (not notebooks_required
+                     and (execution_engine == "script" or analysis_engine == "script"))
     if notebooks_required or notebook_execution_required or minimum_count:
-        if minimum_count and len(existing_notebooks) < minimum_count:
+        if minimum_count and len(existing_notebooks) < minimum_count and not script_backed:
             warnings.append(
                 "Configured notebook minimum is {}, but {} notebook(s) exist.".format(
                     minimum_count, len(existing_notebooks)))
@@ -804,11 +3198,26 @@ def validate_study_config(config, results, task_spec):
         warnings.extend(_validate_runner_execution(notebooks, planned_notebooks,
                                                    existing_notebooks))
 
+    warnings.extend(_validate_analysis_scripts(analysis))
+    warnings.extend(_validate_data_sources(inputs, quality_gates, results or {}))
+    warnings.extend(_validate_work_record(report, quality_gates))
+    warnings.extend(_validate_assumption_register(inputs, results or {}))
+
     if _as_bool(quality_gates.get("require_results_json", False)) and not results:
         warnings.append("quality_gates.require_results_json is true, but results.json is missing.")
     if _is_required(quality_gates.get("benchmark_validation")) and not (
             results and results.get("benchmark_validation")):
-        warnings.append("Benchmark validation is required, but results.json has no benchmark_validation section.")
+        benchmark_kind = str(quality_gates.get("benchmark_kind", "auto")).strip().lower()
+        if benchmark_kind in ("", "auto", "none"):
+            benchmark_kind = "independent reference"
+        warnings.append(
+            "Benchmark validation ({}) is required, but results.json has no "
+            "benchmark_validation section.".format(benchmark_kind.replace("_", " ")))
+    if _is_required(quality_gates.get("human_review")) and not (
+            results and (results.get("human_review") or results.get("review"))):
+        warnings.append(
+            "Human review is required, but results.json has no human_review section "
+            "recording the reviewer and sign-off status.")
     if _is_required(quality_gates.get("uncertainty_analysis")) and not (
             results and results.get("uncertainty")):
         warnings.append("Uncertainty analysis is required, but results.json has no uncertainty section.")
@@ -858,11 +3267,9 @@ def _md_table_to_html(lines):
 
 
 def _md_inline(text):
-    """Convert inline markdown (bold) to HTML."""
-    import re as _re
-    # **bold**
-    text = _re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-    return text
+    """Convert inline markdown (bold, `code`) to HTML."""
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    return _INLINE_CODE_RE.sub(r"<code>\1</code>", text)
 
 
 def _md_list_to_html(lines):
@@ -894,7 +3301,8 @@ def scope_content_to_html(content):
         # Sub-heading (e.g., "Applicable Standards:")
         if (line.strip().endswith(":") and not line.strip().startswith("-")
                 and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            html_parts.append("<h3>{}</h3>".format(_md_inline(line.strip())))
+            html_parts.append("<h3>{}</h3>".format(
+                _md_inline(line.strip().rstrip(":").strip())))
             i += 1
             continue
 
@@ -948,7 +3356,8 @@ def render_scope_to_word(doc, content):
         # Sub-heading (e.g., "Applicable Standards:")
         if (line.strip().endswith(":") and not line.strip().startswith("-")
                 and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            doc.add_heading(line.strip(), level=2)
+            # "Applicable Standards:" is a label in the spec, not heading text.
+            _add_heading(doc, line.strip().rstrip(":").strip(), level=2)
             i += 1
             continue
 
@@ -990,23 +3399,86 @@ def _md_table_to_word(doc, table_lines):
     add_word_table(doc, header_cells, data_rows)
 
 
+# Matches **bold** spans and $...$ inline maths (but not $$...$$ display
+# maths, which is a separate results.json-driven code path) in one pass, so
+# the two kinds of markup can be interleaved in a single sentence.
+_INLINE_TOKEN_RE = re.compile(
+    r"(\*\*.+?\*\*|`[^`\n]+`|\$(?!\$)[^$\n]+?\$(?!\$))")
+_INLINE_MATH_CACHE = {}
+
+
+def _inline_math_image_path(latex_str, font_pt):
+    """Render (and cache) a small inline-maths PNG; returns the path or None."""
+    key = (latex_str, font_pt)
+    if key in _INLINE_MATH_CACHE:
+        return _INLINE_MATH_CACHE[key]
+    eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
+    if not os.path.exists(eq_img_dir):
+        os.makedirs(eq_img_dir)
+    digest = hashlib.md5(latex_str.encode("utf-8")).hexdigest()[:12]
+    path = os.path.join(eq_img_dir, "inline_{}.png".format(digest))
+    ok = render_equation_to_image(latex_str, path, font_pt=font_pt, inline=True)
+    _INLINE_MATH_CACHE[key] = path if ok else None
+    return _INLINE_MATH_CACHE[key]
+
+
+def _add_inline_math_run(paragraph, latex_str, font_pt=None):
+    """Insert a small inline-maths image sized to sit on the text line."""
+    font_pt = font_pt or INLINE_EQ_FONT_PT
+    image_path = _inline_math_image_path(_sanitize_equation_latex(latex_str), font_pt)
+    if not image_path:
+        run = paragraph.add_run(_latex_fallback_text(latex_str))
+        run.italic = True
+        return
+    run = paragraph.add_run()
+    # Natural size at EQ_RENDER_DPI reproduces exactly the fixed ascent/descent
+    # window the image was cropped to, so consecutive inline equations share
+    # one baseline instead of each floating at their own ink-tight height.
+    size = _png_pixel_size(image_path)
+    if size and size[1] > 0:
+        run.add_picture(image_path, height=Inches(size[1] / float(EQ_RENDER_DPI)))
+    else:
+        run.add_picture(image_path, height=Pt(font_pt))
+
+
 def _add_bold_runs(paragraph, text):
-    """Add text with **bold** sections as separate runs."""
-    import re as _re
-    parts = _re.split(r"(\*\*.+?\*\*)", text)
-    for part in parts:
+    """Add text with **bold** spans and $...$ inline maths as separate runs."""
+    for part in _INLINE_TOKEN_RE.split(text):
+        if not part:
+            continue
         if part.startswith("**") and part.endswith("**"):
             run = paragraph.add_run(part[2:-2])
             run.bold = True
+        elif part.startswith("`") and part.endswith("`") and len(part) > 2:
+            run = paragraph.add_run(part[1:-1])
+            run.font.name = "Consolas"
+        elif part.startswith("$") and part.endswith("$") and len(part) > 2:
+            _add_inline_math_run(paragraph, part[1:-1])
         else:
             paragraph.add_run(part)
 
 
 def get_figures():
-    """Collect all PNG/SVG figures from the figures/ directory."""
+    """Collect all PNG/SVG figures from the figures/ directory.
+
+    Files named without an ordering prefix (``fig01_``, ``01_``) follow the order of
+    ``figure_captions`` in results.json, so the narrative order is the author's, not
+    the alphabet's; figures without a caption follow alphabetically.
+    """
     pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
     svgs = sorted(glob.glob(os.path.join(FIG_DIR, "*.svg")))
-    return pngs + svgs
+    figures = pngs + svgs
+    prefixed = re.compile(r"^(fig(ure)?[\s_-]*)?\d", re.IGNORECASE)
+    if any(prefixed.match(os.path.basename(path)) for path in figures):
+        return figures
+    try:
+        with open(RESULTS_FILE, "r", encoding="utf-8") as source:
+            captions = list((json.load(source).get("figure_captions") or {}).keys())
+    except (OSError, ValueError, AttributeError):
+        return figures
+    rank = {name: index for index, name in enumerate(captions)}
+    return sorted(figures, key=lambda path: (rank.get(os.path.basename(path), len(rank)),
+                                             os.path.basename(path)))
 
 
 def get_figure_caption(fig_path, results, fig_index):
@@ -1016,37 +3488,145 @@ def get_figure_caption(fig_path, results, fig_index):
     if results:
         captions = results.get("figure_captions", {})
     if fig_name in captions:
-        return "Figure {}: {}".format(fig_index, captions[fig_name])
-    # Auto-generate from filename
-    auto = fig_name.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
-    return "Figure {}: {}".format(fig_index, auto)
+        return "{} {}: {}".format(_t("Figure"), fig_index, captions[fig_name])
+    for entry in (results or {}).get("figure_discussion", []) or []:
+        if isinstance(entry, dict) and os.path.basename(
+                str(entry.get("figure", ""))) == fig_name:
+            title = str(entry.get("caption") or entry.get("title") or "").strip()
+            if title:
+                return "{} {}: {}".format(_t("Figure"), fig_index, title)
+    # Auto-generate from filename; drop an ordering prefix such as "fig03_".
+    stem = re.sub(r"^fig(ure)?[\s_-]*\d+[\s_-]*", "",
+                  fig_name.rsplit(".", 1)[0], flags=re.IGNORECASE)
+    stem = stem or fig_name.rsplit(".", 1)[0]
+    auto = stem.replace("_", " ").replace("-", " ").strip()
+    auto = auto[:1].upper() + auto[1:]
+    return "{} {}: {}".format(_t("Figure"), fig_index, auto)
+
+
+# A degree sign written through a codepage-437 console round-trips as the
+# U+2591 light-shade block ("°C" becomes "░C"); nothing in engineering
+# notation legitimately uses that glyph, so repairing it is always safe.
+_MOJIBAKE_DEGREE = "\u2591"
+# matplotlib's mathtext only knows the long form of these comparison
+# operators, not the common LaTeX aliases authors actually type.
+_MATHTEXT_ALIASES = [
+    (re.compile(r"\\le\b"), r"\\leq"),
+    (re.compile(r"\\ge\b"), r"\\geq"),
+    (re.compile(r"\\ne\b"), r"\\neq"),
+]
+
+
+def _sanitize_equation_latex(latex_str):
+    """Repair known encoding corruption and LaTeX/mathtext symbol mismatches."""
+    text = str(latex_str or "").replace(_MOJIBAKE_DEGREE, "\u00b0")
+    for pattern, replacement in _MATHTEXT_ALIASES:
+        text = pattern.sub(replacement, text)
+    return text
+
+
+# Best-effort LaTeX-to-plain-text approximation for the rare equation mathtext
+# cannot parse at all (e.g. a \begin{cases} piecewise definition -- mathtext
+# has no support for LaTeX environments). Order matters: fractions and text
+# runs are unwrapped before the catch-all \command stripper at the end.
+_LATEX_FALLBACK_SUBS = [
+    (re.compile(r"\\begin\{[a-zA-Z*]+\}"), ""),
+    (re.compile(r"\\end\{[a-zA-Z*]+\}"), ""),
+    (re.compile(r"\\\\"), "; "),
+    (re.compile(r"\\d?frac\{([^{}]*)\}\{([^{}]*)\}"), r"(\1)/(\2)"),
+    (re.compile(r"\\text\{([^{}]*)\}"), r"\1"),
+    (re.compile(r"\\mathrm\{([^{}]*)\}"), r"\1"),
+    (re.compile(r"\\left|\\right"), ""),
+    (re.compile(r"\\quad|\\qquad|\\,|\\;|\\!"), " "),
+    (re.compile(r"\\cdot"), "\u00b7"), (re.compile(r"\\times"), "\u00d7"),
+    (re.compile(r"\\leq"), "\u2264"), (re.compile(r"\\geq"), "\u2265"),
+    (re.compile(r"\\neq"), "\u2260"),
+    (re.compile(r"\\rightarrow|\\to"), "\u2192"),
+    (re.compile(r"\\pi"), "\u03c0"), (re.compile(r"\\Delta"), "\u0394"),
+    (re.compile(r"\\alpha"), "\u03b1"), (re.compile(r"\\beta"), "\u03b2"),
+    (re.compile(r"\\gamma"), "\u03b3"), (re.compile(r"\\eta"), "\u03b7"),
+    (re.compile(r"\\rho"), "\u03c1"), (re.compile(r"\\mu"), "\u03bc"),
+    (re.compile(r"\\theta"), "\u03b8"), (re.compile(r"\\omega"), "\u03c9"),
+    (re.compile(r"\\phi"), "\u03c6"),
+    (re.compile(r"&"), " \u2192 "),
+    (re.compile(r"\\[a-zA-Z]+"), ""),
+    (re.compile(r"[{}]"), ""),
+    (re.compile(r"\s+"), " "),
+]
+
+
+def _latex_fallback_text(latex_str):
+    """Readable approximation for an equation matplotlib cannot render.
+
+    Used only when rendering fails; a stripped-down plain-text approximation
+    reads as an engineer's shorthand, whereas the raw backslash-and-brace
+    LaTeX source reads as a bug in a formal report.
+    """
+    text = _sanitize_equation_latex(latex_str)
+    for pattern, replacement in _LATEX_FALLBACK_SUBS:
+        text = pattern.sub(replacement, text)
+    return text.strip()
 
 
 def get_equations(results):
     """Get equations from results.json. Returns list of {label, latex}."""
     if not results:
         return []
-    return results.get("equations", [])
+    cleaned = []
+    for eq in results.get("equations", []):
+        if isinstance(eq, dict) and eq.get("latex"):
+            eq = dict(eq, latex=_sanitize_equation_latex(eq["latex"]))
+        cleaned.append(eq)
+    return cleaned
 
 
-def render_equation_to_image(latex_str, output_path):
-    """Render a LaTeX equation to a high-quality PNG image using matplotlib.
+# An inline equation's own ink extent varies with how many sub/superscripts
+# or fractions it carries, so a per-equation tight vertical crop would leave
+# every inline expression sitting at a different height on the line (Word
+# aligns an inline picture's BOTTOM edge with the text baseline). Cropping to
+# a fixed ascent/descent window instead -- in font-size units, generous enough
+# for a simple fraction or subscript -- keeps that bottom edge, and so the
+# apparent baseline, the same distance from every equation's own baseline.
+INLINE_EQ_ASCENT_EM = 1.30
+INLINE_EQ_DESCENT_EM = 0.50
 
-    Uses display-style math, large font, and 300 DPI for crisp rendering
-    in Word documents. Returns True if the image was created, False otherwise.
+
+def render_equation_to_image(latex_str, output_path, font_pt=None, inline=False):
+    """Render a LaTeX equation to a PNG sized for font_pt in the document.
+
+    Rendered at font_pt (default EQ_FONT_PT) and EQ_RENDER_DPI so that placing
+    the image at its natural size (pixels / EQ_RENDER_DPI inches) reproduces
+    exactly that point size. A display equation (inline=False) is cropped
+    tight to its own ink on every side, which is correct for a free-standing,
+    centered equation. ``inline=True`` instead crops to a fixed ascent/descent
+    window so consecutive inline equations line up on the same baseline; see
+    INLINE_EQ_ASCENT_EM/INLINE_EQ_DESCENT_EM. Returns True if the image was
+    created, False otherwise.
     """
     if not HAS_MATPLOTLIB:
         return False
+    size_pt = font_pt or EQ_FONT_PT
+    text = "${}$".format(_sanitize_equation_latex(latex_str))
     try:
-        fig = plt.figure(figsize=(8, 1.2))
-        fig.text(
-            0.5, 0.5,
-            "${}$".format(latex_str),
-            fontsize=24, ha="center", va="center",
-            math_fontfamily="cm",
-        )
-        fig.savefig(output_path, dpi=300, bbox_inches="tight",
-                    pad_inches=0.15, facecolor="white", edgecolor="none")
+        if inline:
+            ascent_in = INLINE_EQ_ASCENT_EM * size_pt / 72.0
+            descent_in = INLINE_EQ_DESCENT_EM * size_pt / 72.0
+            fig = plt.figure(figsize=(10.0, ascent_in + descent_in))
+            fig.text(0.5, descent_in / (ascent_in + descent_in), text,
+                      fontsize=size_pt, ha="center", va="baseline",
+                      math_fontfamily="cm")
+            renderer = fig.canvas.get_renderer()
+            tight = fig.get_tightbbox(renderer)
+            fixed = Bbox.from_extents(tight.x0, 0.0, tight.x1,
+                                       ascent_in + descent_in)
+            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches=fixed,
+                        pad_inches=0.02, facecolor="white", edgecolor="none")
+        else:
+            fig = plt.figure(figsize=(8, 1.2))
+            fig.text(0.5, 0.5, text, fontsize=size_pt, ha="center", va="center",
+                      math_fontfamily="cm")
+            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches="tight",
+                        pad_inches=0.04, facecolor="white", edgecolor="none")
         plt.close(fig)
         return True
     except Exception as e:
@@ -1054,10 +3634,264 @@ def render_equation_to_image(latex_str, output_path):
         return False
 
 
+def _png_pixel_size(path):
+    """Return (width, height) in pixels from the PNG IHDR chunk, else None."""
+    try:
+        with open(path, "rb") as handle:
+            header = handle.read(24)
+        if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
+            return None
+        return (int.from_bytes(header[16:20], "big"),
+                int.from_bytes(header[20:24], "big"))
+    except Exception:
+        return None
+
+
+def _add_equation_picture(doc, image_path, max_width_in):
+    """Insert an equation image at its natural size, capped to the text width."""
+    size = _png_pixel_size(image_path)
+    if size and size[0] > 0:
+        width_in = min(size[0] / float(EQ_RENDER_DPI), max_width_in)
+    else:
+        width_in = min(3.0, max_width_in)
+    doc.add_picture(image_path, width=Inches(width_in))
+
+
+def _raise_run(run, half_points):
+    """Raise a run above the baseline by the given number of half-points."""
+    if half_points > 0:
+        run._r.get_or_add_rPr().append(parse_xml(
+            '<w:position {} w:val="{}"/>'.format(nsdecls("w"), int(half_points))))
+
+
+def _add_display_equation(doc, image_path, label, max_width_in):
+    """Set a display equation centred, with its number right-aligned: (n).
+
+    The label goes on a short lead-in line above; the number is a Word SEQ
+    field raised to the equation's vertical centre, as in a typeset paper.
+    """
+    measure = _text_width_in(doc)
+    if label:
+        lead = doc.add_paragraph()
+        run = lead.add_run(_strip_caption_prefix(label))
+        run.italic = True
+        run.font.size = Pt(CAPTION_PT)
+        run.font.color.rgb = RGBColor(90, 90, 90)
+        lead.paragraph_format.space_before = Pt(6)
+        lead.paragraph_format.space_after = Pt(0)
+        lead.paragraph_format.keep_with_next = True
+    size = _png_pixel_size(image_path)
+    natural_in = size[0] / float(EQ_RENDER_DPI) if size and size[0] else 3.0
+    # Leave room either side so the number never collides with the maths.
+    width_in = min(natural_in, max_width_in, measure - 1.4)
+    height_pt = (width_in * size[1] / float(size[0]) * 72.0
+                 if size and size[0] else EQ_FONT_PT * 1.5)
+    paragraph = doc.add_paragraph()
+    fmt = paragraph.paragraph_format
+    fmt.space_before = Pt(2)
+    fmt.space_after = Pt(8)
+    fmt.keep_together = True
+    fmt.tab_stops.add_tab_stop(Inches(measure / 2.0), WD_TAB_ALIGNMENT.CENTER)
+    fmt.tab_stops.add_tab_stop(Inches(measure), WD_TAB_ALIGNMENT.RIGHT)
+    paragraph.add_run("\t")
+    paragraph.add_run().add_picture(image_path, width=Inches(width_in))
+    first_number_run = len(paragraph.runs)
+    paragraph.add_run("\t(")
+    _add_seq_field(paragraph, _t("Equation"))
+    paragraph.add_run(")")
+    # Word re-formats an updated field result from its field-code run, so every
+    # run of the number (codes included) must carry the raise, not just the text.
+    for run in paragraph.runs[first_number_run:]:
+        _raise_run(run, height_pt - 0.7 * BODY_PT)
+    return paragraph
+
+
+def _add_equation_fallback_paragraph(doc, label, latex):
+    """Show an unrenderable display equation as marked, readable text.
+
+    Presenting it as ordinary body prose would read as a typo; the italic,
+    muted styling and the trailing note make clear it is a known gap rather
+    than broken output.
+    """
+    paragraph = doc.add_paragraph()
+    prefix = "{}: ".format(label) if label else ""
+    run = paragraph.add_run(prefix + _latex_fallback_text(latex))
+    run.italic = True
+    run.font.color.rgb = RGBColor(90, 90, 90)
+    note = paragraph.add_run("  ({})".format(
+        _t("automatic equation typesetting unavailable")))
+    note.italic = True
+    note.font.size = Pt(CAPTION_PT)
+    note.font.color.rgb = RGBColor(140, 140, 140)
+    return paragraph
+
+
+def _add_figure_picture(doc, image_path):
+    """Place a figure across the measure, shrunk if it would not fit the page.
+
+    A fixed picture width makes a tall figure overflow the printable height,
+    which Word resolves by pushing it onto its own page and clipping what is
+    left. Scaling on the native aspect ratio keeps every figure on one page.
+    """
+    max_width = _text_width_in(doc)
+    max_height = max(2.0, _text_height_in(doc) - FIGURE_CAPTION_ALLOWANCE_IN)
+    width_in = max_width
+    size = _png_pixel_size(image_path)
+    if size and size[0] > 0 and size[1] > 0:
+        height_in = max_width * size[1] / float(size[0])
+        if height_in > max_height:
+            width_in = max_width * max_height / height_in
+    doc.add_picture(image_path, width=Inches(width_in))
+    picture_para = doc.paragraphs[-1]
+    picture_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # The caption follows the picture, so the picture must not end a page.
+    picture_para.paragraph_format.keep_with_next = True
+    return picture_para
+
+
+_CAPTION_PREFIX = re.compile(r"^\s*(Figure|Table|Equation)\s+\d+\s*[:.\u2013-]\s*",
+                             re.IGNORECASE)
+
+
+def _strip_caption_prefix(text):
+    """Drop a leading "Figure 3:" so the Word SEQ field owns the numbering.
+
+    Also strips the translated labels, otherwise a report in another language
+    keeps the prefix and Word adds a second one.
+    """
+    cleaned = _CAPTION_PREFIX.sub("", str(text or "")).strip()
+    labels = [_t(label) for label in ("Figure", "Table", "Equation")]
+    labels = [label for label in labels if label]
+    if labels:
+        translated = re.compile(
+            r"^\s*({})\s+\d+\s*[:.\u2013-]\s*".format("|".join(
+                re.escape(label) for label in labels)), re.IGNORECASE)
+        cleaned = translated.sub("", cleaned).strip()
+    return cleaned
+
+
+def _add_seq_field(paragraph, label):
+    """Append a { SEQ <label> } field so Word owns the caption numbering."""
+    run = paragraph.add_run()
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
+    run._r.append(parse_xml(
+        '<w:instrText {} xml:space="preserve"> SEQ {} \\* ARABIC </w:instrText>'
+        .format(nsdecls("w"), label)))
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))))
+    placeholder = paragraph.add_run(str(_SEQ_COUNTERS.setdefault(label, 0) + 1))
+    _SEQ_COUNTERS[label] += 1
+    run_end = paragraph.add_run()
+    run_end._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
+    return placeholder
+
+
+_SEQ_COUNTERS = {}
+
+
+def _add_caption(doc, label, text, keep_with_next=False):
+    """Add a numbered, styled caption that a list of figures/tables can collect.
+
+    The number comes from a Word SEQ field, so inserting a figure renumbers the
+    rest of the report instead of leaving the captions to drift out of step.
+    """
+    text = _strip_caption_prefix(text)
+    try:
+        paragraph = doc.add_paragraph(style="Caption")
+    except KeyError:
+        paragraph = doc.add_paragraph()
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    paragraph.paragraph_format.keep_with_next = keep_with_next
+    paragraph.add_run("{} ".format(label))
+    _add_seq_field(paragraph, label)
+    if text:
+        paragraph.add_run(": {}".format(text))
+    for run in paragraph.runs:
+        run.font.size = Pt(CAPTION_PT)
+        run.font.italic = True
+    return paragraph
+
+
+def _fmt_number(value, sig=4):
+    """Format a number the way an engineering report prints one.
+
+    "{:.4g}" turns 370523 into "3.705e+05", which reads as a slip rather than a
+    result. Digits are grouped with a non-breaking space per ISO 80000-1 and an
+    exponent is kept only where it is genuinely the clearer form.
+    """
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if number != number or number in (float("inf"), float("-inf")):
+        return str(value)
+    if number == 0:
+        return "0"
+    magnitude = abs(number)
+    # An exact count is not a measurement: rounding 370523 records to 370 500
+    # reads as a sloppy figure rather than a rounded one.
+    if float(number).is_integer() and magnitude < 1e12:
+        return "{:,.0f}".format(number).replace(",", THOUSANDS_SEP)
+    if magnitude >= 1e7 or magnitude < 1e-4:
+        return _localize_decimal("{:.{}e}".format(number, max(1, sig - 1)))
+    rounded = float("{:.{}g}".format(number, sig))
+    if abs(rounded) >= 1000:
+        return "{:,.0f}".format(rounded).replace(",", THOUSANDS_SEP)
+    return _localize_decimal("{:.{}g}".format(rounded, sig))
+
+
+# Report languages whose prose and tables use a decimal comma (ISO 80000-1 allows both).
+DECIMAL_COMMA_LANGUAGES = {"nb"}
+
+
+def _localize_decimal(text):
+    """Swap the decimal point for a comma when the report language writes 0,5."""
+    return text.replace(".", ",") if REPORT_LANGUAGE in DECIMAL_COMMA_LANGUAGES else text
+
+
+def _fmt_cell(value, sig=4):
+    """Format one table cell, leaving non-numeric values untouched."""
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, (int, float)):
+        return _fmt_number(value, sig)
+    return str(value)
+
+
+def _label_from_key(name_part):
+    """Title-case a snake_case key without destroying acronyms.
+
+    ``.title()`` turns GFC into Gfc and LL into Ll, which reads badly in the
+    headline results table. A token that is already all-uppercase is kept.
+    """
+    words = []
+    for word in name_part.split("_"):
+        if not word:
+            continue
+        # "0p91" is how a decimal survives a snake_case key.
+        decimal = re.match(r"^(\d+)p(\d+)$", word)
+        if decimal:
+            words.append("{}.{}".format(*decimal.groups()))
+        elif word.isupper() and len(word) > 1:
+            words.append(word)
+        elif any(ch.isupper() for ch in word[1:]):
+            words.append(word)
+        else:
+            words.append(word.capitalize())
+    return " ".join(words)
+
+
 def _parse_key_name(key):
     """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
     unit_suffixes = [
         ("_pct", "%"), ("_percent", "%"),
+        ("_ppm", "ppm"), ("_ppmv", "ppmv"), ("_ppb", "ppb"),
+        ("_l_per_h", "l/h"), ("_l_per_min", "l/min"), ("_l_per_s", "l/s"),
+        ("_degC", "\u00b0C"), ("_degc", "\u00b0C"),
+        ("_MNOK", "MNOK"), ("_MUSD", "MUSD"), ("_NOK", "NOK"), ("_USD", "USD"),
+        ("_days", "days"), ("_years", "years"),
         ("_bar", "bar"), ("_bara", "bara"), ("_barg", "barg"),
         ("_psi", "psi"), ("_psia", "psia"),
         ("_C", "°C"), ("_K", "K"), ("_F", "°F"),
@@ -1070,15 +3904,164 @@ def _parse_key_name(key):
         ("_kg_hr", "kg/hr"), ("_kg_s", "kg/s"),
         ("_m3_hr", "m³/hr"), ("_m3_s", "m³/s"),
         ("_Sm3_day", "Sm³/day"), ("_Sm3_hr", "Sm³/hr"),
+        ("_Sm3d", "Sm³/d"), ("_Sm3", "Sm³"), ("_kSm3", "kSm³"), ("_MSm3", "MSm³"),
+        ("_GSm3", "GSm³"), ("_rm3_Sm3", "rm³/Sm³"),
+        ("_kg_m3", "kg/m³"), ("_kg_Sm3", "kg/Sm³"), ("_g_cm3", "g/cm³"),
         ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
         ("_rpm", "rpm"), ("_Hz", "Hz"),
     ]
-    for suffix, unit in unit_suffixes:
+    # Checked before the suffix table below: single-letter suffixes such as
+    # "_s"/"_m"/"_kg" would otherwise swallow the denominator of a
+    # "..._num_per_den" key (e.g. "velocity_m_per_s" ending in "_s").
+    per_match = re.match(r"^(.*)_([A-Za-z0-9]+)_per_([A-Za-z0-9]+)$", key)
+    if per_match:
+        name_part, num_token, den_token = per_match.groups()
+        unit = "{}/{}".format(_prettify_unit_token(num_token), _prettify_unit_token(den_token))
+        return _label_from_key(name_part), unit
+    # Sorted longest-suffix-first so a compound suffix (e.g. "_kg_m3") always
+    # wins over a shorter suffix it contains (e.g. "_m3"), regardless of the
+    # order the table above lists them in. Without this a density key like
+    # "..._kg_m3" resolves to unit "m³" with a stray "Kg" left in the label.
+    for suffix, unit in sorted(unit_suffixes, key=lambda pair: -len(pair[0])):
         if key.endswith(suffix):
             name_part = key[:len(key) - len(suffix)]
-            label = name_part.replace("_", " ").title()
-            return label, unit
-    return key.replace("_", " ").title(), ""
+            return _label_from_key(name_part), unit
+    return _label_from_key(key), ""
+
+
+_UNIT_TOKEN_MAP = {
+    "kg": "kg", "g": "g", "lb": "lb",
+    "m3": "m\u00b3", "m2": "m\u00b2", "m": "m", "mm": "mm", "cm": "cm", "km": "km",
+    "sm3": "Sm\u00b3", "ksm3": "kSm\u00b3", "msm3": "MSm\u00b3", "nm3": "Nm\u00b3",
+    "s": "s", "sec": "s", "min": "min", "h": "h", "hr": "h", "d": "d", "day": "day",
+    "bar": "bar", "bara": "bara", "barg": "barg", "psi": "psi", "psia": "psia",
+    "kw": "kW", "mw": "MW", "w": "W", "kj": "kJ", "mj": "MJ", "j": "J",
+    "kmol": "kmol", "mol": "mol", "rpm": "rpm", "hz": "Hz",
+    "degc": "\u00b0C", "degf": "\u00b0F", "c": "\u00b0C",
+}
+
+
+
+def _prettify_unit_token(token):
+    """Normalize a single unit token parsed out of a ``..._per_...`` key suffix."""
+    lookup = _UNIT_TOKEN_MAP.get(token.lower())
+    if lookup:
+        return lookup
+    numeric = re.match(r"^(\d+)([A-Za-z]+)$", token)
+    if numeric:
+        number, unit = numeric.groups()
+        return "{} {}".format(number, _UNIT_TOKEN_MAP.get(unit.lower(), unit))
+    return token
+
+
+def _prettify_declared_unit(unit_str):
+    """Superscript/normalize an explicitly declared unit string (e.g. "kSm3/h")."""
+    if not unit_str:
+        return unit_str
+    parts = str(unit_str).split("/")
+    pretty = [_prettify_unit_token(part) if re.match(r"^[A-Za-z0-9]+$", part) else part
+              for part in parts]
+    return "/".join(pretty)
+
+
+def _leaf_label_and_unit(key_for_leaf, declared_unit=None):
+    """Resolve the display label/unit for one leaf, preferring a declared unit."""
+    if key_for_leaf is None:
+        return "Value", _prettify_declared_unit(declared_unit) or ""
+    parsed_label, parsed_unit = _parse_key_name(key_for_leaf)
+    unit = _prettify_declared_unit(declared_unit) if declared_unit else parsed_unit
+    return parsed_label, unit
+
+
+_LIST_SUMMARY_THRESHOLD = 8
+
+
+def _summarize_dict_list(items):
+    """Summarize a long list of similarly-shaped dicts (e.g. a transient time
+    history) as one compact line instead of exploding every sample into its
+    own row.
+    """
+    keys = []
+    for item in items:
+        if isinstance(item, dict):
+            for sub_key in item:
+                if sub_key not in keys:
+                    keys.append(sub_key)
+    parts = ["{} samples".format(len(items))]
+    for sub_key in keys:
+        values = [item[sub_key] for item in items
+                  if isinstance(item, dict) and isinstance(item.get(sub_key), (int, float))
+                  and not isinstance(item.get(sub_key), bool)]
+        if values:
+            parts.append("{}: {} \u2192 {}".format(
+                _label_from_key(sub_key), _fmt_number(min(values)), _fmt_number(max(values))))
+    return "; ".join(parts)
+
+
+def _flatten_key_results(key_results):
+    """Flatten a (possibly nested) key_results dict into printable leaf rows.
+
+    Task notebooks sometimes group parameters into nested dicts, e.g.
+    ``{"operating_point": {"pressure_barg": {"value": 29.1, "unit": "barg",
+    "description": "..."}}}`` instead of the flat ``key -> scalar`` schema.
+    Printing ``str(value)`` on those dicts puts raw Python repr straight into
+    the report. This walks the structure and yields one ``(label, value,
+    unit, note)`` row per leaf, honoring an explicit ``value``/``unit`` pair
+    and prefixing nested leaves with their parent group name(s).
+    """
+    rows = []
+
+    def walk(value, key_for_leaf, path_labels, depth):
+        if isinstance(value, dict):
+            if "value" in value and not isinstance(value["value"], (dict, list)):
+                label_part, unit = _leaf_label_and_unit(key_for_leaf, value.get("unit"))
+                label_part = value.get("label") or label_part
+                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+                note = value.get("description") or value.get("source") or value.get("basis")
+                rows.append((label, value["value"], unit, note))
+                return
+            if depth >= 5:
+                label = " \u2013 ".join(path_labels) or "Value"
+                rows.append((label, str(value), "", None))
+                return
+            group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
+            for sub_key, sub_val in value.items():
+                walk(sub_val, sub_key, group_labels, depth + 1)
+            return
+        if isinstance(value, (list, tuple)):
+            if all(not isinstance(item, (dict, list, tuple)) for item in value):
+                label_part, unit = _leaf_label_and_unit(key_for_leaf)
+                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+                if len(value) > _LIST_SUMMARY_THRESHOLD:
+                    shown = ", ".join(_fmt_cell(item) for item in value[:3])
+                    text = "{}, \u2026 ({} values total)".format(shown, len(value))
+                else:
+                    text = ", ".join(_fmt_cell(item) for item in value)
+                rows.append((label, text, unit, None))
+            elif len(value) > _LIST_SUMMARY_THRESHOLD and all(
+                    isinstance(item, dict) for item in value):
+                # A long list of same-shaped dicts is a time series/sweep, not a
+                # set of distinct results; one summary row beats one row per sample.
+                label_part = _label_from_key(key_for_leaf) if key_for_leaf else "Value"
+                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+                rows.append((label, _summarize_dict_list(value), "",
+                             "Full series retained in results.json"))
+            else:
+                group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
+                for index, item in enumerate(value, 1):
+                    walk(item, str(index), group_labels, depth + 1)
+            return
+        label_part, unit = _leaf_label_and_unit(key_for_leaf)
+        if isinstance(value, str):
+            # A guessed unit suffix (e.g. "..._pct") does not apply once the
+            # value is free text that may already state its own units.
+            unit = ""
+        label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
+        rows.append((label, value, unit, None))
+
+    for top_key, top_val in (key_results or {}).items():
+        walk(top_val, top_key, [], 1)
+    return rows
 
 
 def format_results_table(results):
@@ -1087,16 +4070,12 @@ def format_results_table(results):
     if not key_results:
         return "[No key_results in results.json]"
     lines = []
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        if unit:
-            lines.append("{}: {} {}".format(label, val_str, unit))
-        else:
-            lines.append("{}: {}".format(label, val_str))
+    for label, value, unit, note in _flatten_key_results(key_results):
+        val_str = _fmt_cell(value)
+        line = "{}: {} {}".format(label, val_str, unit) if unit else "{}: {}".format(label, val_str)
+        if note:
+            line += " ({})".format(note)
+        lines.append(line)
     return "\n".join(lines)
 
 
@@ -1107,9 +4086,12 @@ def format_validation_table(results):
         return "[No validation data in results.json]"
     lines = ["Validation Summary:", ""]
     for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
+        label = _label_from_key(check)
+        if isinstance(outcome, dict) and "value" in outcome:
+            label = outcome.get("label") or label
+            outcome = outcome["value"]
         if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
+            status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
         elif isinstance(outcome, (int, float)):
             status = "{:.4g}".format(outcome)
         else:
@@ -1125,19 +4107,29 @@ def format_validation_html(results):
         return "<p><em>No validation data in results.json</em></p>"
     rows = ""
     for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
+        label = _label_from_key(check)
+        unit = ""
+        if isinstance(outcome, dict) and "value" in outcome:
+            label = outcome.get("label") or label
+            unit = outcome.get("unit") or ""
+            outcome = outcome["value"]
         if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
-            css_class = ' class="pass"' if outcome else ' class="fail"'
+            failed = _validation_outcome_is_failure(check, outcome)
+            status = "FAIL" if failed else "PASS"
+            css_class = ' class="fail"' if failed else ' class="pass"'
         elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
-            css_class = ""
+            status = (_fmt_number(outcome) + " " + unit).strip()
+            css_class = ' class="num"'
         else:
             status = str(outcome)
-            css_class = ""
+            css_class = {"PASS": ' class="pass"', "FAIL": ' class="fail"'}.get(
+                status.strip().upper(), "")
         rows += '<tr><td>{}</td><td{}>{}</td></tr>\n'.format(
             label, css_class, status)
-    return '<table class="validation-table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>\n{}</tbody></table>'.format(rows)
+    return (_html_table_caption(_t("Validation checks"))
+            + '<table class="validation-table"><thead><tr><th>{}</th>'
+            '<th>{}</th></tr></thead><tbody>\n{}</tbody></table>'.format(
+                _t("Check"), _t("Result"), rows))
 
 
 def format_results_html(results):
@@ -1145,20 +4137,35 @@ def format_results_html(results):
     key_results = results.get("key_results", {})
     if not key_results:
         return ""
+    flat_rows = _flatten_key_results(key_results)
+    has_notes = any(note for _label, _value, _unit, note in flat_rows)
     rows = ""
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        rows += '<tr><td>{}</td><td class="num">{}</td><td>{}</td></tr>\n'.format(
-            label, val_str, unit)
+    for label, value, unit, note in flat_rows:
+        rows += '<tr><td>{}</td><td class="num">{}</td><td>{}</td>'.format(
+            _html_escape(label), _fmt_cell(value), _html_escape(unit))
+        if has_notes:
+            rows += '<td>{}</td>'.format(_html_escape(note) if note else "")
+        rows += '</tr>\n'
+    extra_header = '<th>Source</th>' if has_notes else ""
     return (
-        '<table class="results-table"><thead>'
-        '<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>'
-        '</thead><tbody>\n{}</tbody></table>'.format(rows)
+        _html_table_caption(_t("Key results"))
+        + '<table class="results-table"><thead>'
+        '<tr><th>Parameter</th><th>Value</th><th>Unit</th>{}</tr>'
+        '</thead><tbody>\n{}</tbody></table>'.format(extra_header, rows)
     )
+
+
+_HTML_TABLE_COUNTER = {"n": 0}
+
+
+def _html_table_caption(title):
+    """Return a numbered table caption so HTML and Word agree on the numbering."""
+    _HTML_TABLE_COUNTER["n"] += 1
+    text = _strip_caption_prefix(title)
+    label = "{} {}".format(_t("Table"), _HTML_TABLE_COUNTER["n"])
+    if text:
+        label = "{}: {}".format(label, text)
+    return '<p class="table-caption">{}</p>\n'.format(_html_escape(label))
 
 
 def format_custom_tables_html(results):
@@ -1173,9 +4180,7 @@ def format_custom_tables_html(results):
         data_rows = tbl.get("rows", [])
         if not headers or not data_rows:
             continue
-        h = ""
-        if title:
-            h += '<h3>{}</h3>\n'.format(title)
+        h = _html_table_caption(title)
         h += '<table class="custom-table"><thead><tr>'
         for col in headers:
             h += '<th>{}</th>'.format(col)
@@ -1184,14 +4189,18 @@ def format_custom_tables_html(results):
             h += "<tr>"
             for i, cell in enumerate(row):
                 css = ' class="num"' if i > 0 and isinstance(cell, (int, float)) else ""
-                if isinstance(cell, float):
-                    h += '<td{}>{:.4g}</td>'.format(css, cell)
-                else:
-                    h += '<td{}>{}</td>'.format(css, cell)
+                h += '<td{}>{}</td>'.format(css, _fmt_cell(cell))
             h += "</tr>\n"
         h += "</tbody></table>"
         html_parts.append(h)
     return "\n".join(html_parts)
+
+
+def _reference_text(ref):
+    """Citation text of a reference entry; results.json files use text, citation or title."""
+    if not isinstance(ref, dict):
+        return str(ref)
+    return str(ref.get("text") or ref.get("citation") or ref.get("title") or "")
 
 
 def format_references_html(results):
@@ -1202,7 +4211,7 @@ def format_references_html(results):
     h = '<ol class="reference-list">\n'
     for ref in refs:
         ref_id = ref.get("id", "")
-        ref_text = ref.get("text", "")
+        ref_text = _reference_text(ref)
         if ref_id:
             h += '  <li id="ref-{}"><strong>[{}]</strong> {}</li>\n'.format(
                 ref_id, ref_id, ref_text)
@@ -1326,14 +4335,14 @@ def add_workflow_word_section(doc, results):
     workflow = plan.get("workflow", "")
     if wtype:
         p = doc.add_paragraph()
-        p.add_run("Workflow type: ").font.size = Pt(10)
+        p.add_run("Workflow type: ").font.size = Pt(BODY_PT)
         run = p.add_run(str(wtype))
         run.bold = True
-        run.font.size = Pt(10)
+        run.font.size = Pt(BODY_PT)
     if workflow:
         p = doc.add_paragraph()
-        p.add_run("Composition: ").font.size = Pt(10)
-        p.add_run(str(workflow)).font.size = Pt(10)
+        p.add_run("Composition: ").font.size = Pt(BODY_PT)
+        p.add_run(str(workflow)).font.size = Pt(BODY_PT)
     disc = plan.get("discovery", {})
     if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
         bits = []
@@ -1342,7 +4351,7 @@ def add_workflow_word_section(doc, results):
         if disc.get("agent_search"):
             bits.append("agent_search: {}".format(disc.get("agent_search")))
         p = doc.add_paragraph()
-        p.add_run("Discovery: {}".format(", ".join(bits))).font.size = Pt(10)
+        p.add_run("Discovery: {}".format(", ".join(bits))).font.size = Pt(BODY_PT)
 
     agents = plan.get("agents_used", [])
     if agents:
@@ -1362,7 +4371,7 @@ def add_workflow_word_section(doc, results):
         p = doc.add_paragraph()
         run = p.add_run(str(rationale))
         run.italic = True
-        run.font.size = Pt(10)
+        run.font.size = Pt(BODY_PT)
 
 
 def format_uncertainty_html(results):
@@ -1388,7 +4397,7 @@ def format_uncertainty_html(results):
     # Input parameters table
     params = unc.get("input_parameters", [])
     if params:
-        h += '<h3>Input Parameter Ranges</h3>\n'
+        h += '<h3>' + _t('Input Parameter Ranges') + '</h3>\n'
         h += '<table class="uncertainty-table"><thead><tr>'
         h += '<th>Parameter</th><th>Unit</th><th>Low</th><th>Base</th>'
         h += '<th>High</th><th>Distribution</th>'
@@ -1408,7 +4417,7 @@ def format_uncertainty_html(results):
     out_param = unc.get("output_parameter", "")
     out_params = unc.get("output_parameters", {})
     if out_param or out_params:
-        h += '<h3>Output Distribution (P10 / P50 / P90)</h3>\n'
+        h += '<h3>' + _t('Output Distribution (P10 / P50 / P90)') + '</h3>\n'
         h += '<table class="uncertainty-table"><thead><tr>'
         h += '<th>Output Parameter</th><th>P10</th><th>P50</th><th>P90</th>'
         h += '</tr></thead><tbody>\n'
@@ -1428,7 +4437,7 @@ def format_uncertainty_html(results):
     # Tornado sensitivity table
     tornado = unc.get("tornado", [])
     if tornado:
-        h += '<h3>Sensitivity Ranking (Tornado)</h3>\n'
+        h += '<h3>' + _t('Sensitivity Ranking (Tornado)') + '</h3>\n'
         h += '<table class="tornado-table"><thead><tr>'
         # Detect column names from first tornado entry
         first = tornado[0]
@@ -1452,34 +4461,24 @@ def format_benchmark_html(results):
     bv = results.get("benchmark_validation", {})
     if not bv:
         return ""
-    h = '<table class="benchmark-table"><thead><tr>'
-    h += '<th>Test</th><th>Description</th><th>Status</th><th>Details</th>'
+    source = bv.get("source", "")
+    h = '<p>{}: {}</p>\n'.format(_t("Reference source"), _html_escape(str(source))) if source else ""
+    headers, rows, status_idx = _benchmark_table(results)
+    h += '<table class="benchmark-table"><thead><tr>'
+    h += "".join("<th>{}</th>".format(_html_escape(str(x))) for x in headers)
     h += '</tr></thead><tbody>\n'
-    for key, val in bv.items():
-        if not isinstance(val, dict):
-            continue
-        label = key.replace("_", " ").title()
-        desc = val.get("description") or val.get("reference") or key
-        status = val.get("status")
-        if status is None:
-            p = val.get("pass")
-            status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
-        css = ' class="pass"' if status == "PASS" else (' class="fail"' if status == "FAIL" else "")
-        # Gather numeric details
-        details = []
-        for dk, dv in val.items():
-            if dk in ("description", "status", "reference", "pass", "points"):
-                continue
-            dl = dk.replace("_", " ").title()
-            if isinstance(dv, float):
-                details.append("{}: {:.4g}".format(dl, dv))
-            else:
-                details.append("{}: {}".format(dl, dv))
+    for row in rows:
         h += '<tr>'
-        h += '<td><strong>{}</strong></td>'.format(label)
-        h += '<td>{}</td>'.format(desc)
-        h += '<td{}><strong>{}</strong></td>'.format(css, status)
-        h += '<td>{}</td>'.format("; ".join(details) if details else "")
+        for index, cell in enumerate(row):
+            text = _html_escape(str(cell))
+            if index == status_idx:
+                css = (' class="pass"' if cell == "PASS"
+                       else (' class="fail"' if cell == "FAIL" else ""))
+                h += '<td{}><strong>{}</strong></td>'.format(css, text)
+            elif index == 0:
+                h += '<td><strong>{}</strong></td>'.format(text)
+            else:
+                h += '<td>{}</td>'.format(text)
         h += '</tr>\n'
     h += '</tbody></table>\n'
     return h
@@ -1487,10 +4486,9 @@ def format_benchmark_html(results):
 
 def _fmt_num(value):
     """Format a numeric value for display in tables."""
-    if isinstance(value, float):
-        if abs(value) >= 1000 or (abs(value) < 0.01 and value != 0):
-            return "{:.4g}".format(value)
-        return "{:.4g}".format(value)
+    # Same formatter as every other table, so 162000.0 reads "162 000", not "1.62e+05".
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return _fmt_cell(value)
     return str(value)
 
 
@@ -1509,21 +4507,21 @@ def add_risk_word_table(doc, results):
 
     # Summary paragraph
     p = doc.add_paragraph()
-    p.add_run("Risk assessment using ").font.size = Pt(10)
+    p.add_run("Risk assessment using ").font.size = Pt(BODY_PT)
     r = p.add_run("{} framework".format(matrix))
     r.bold = True
-    r.font.size = Pt(10)
-    p.add_run(". Overall risk level: ").font.size = Pt(10)
+    r.font.size = Pt(BODY_PT)
+    p.add_run(". Overall risk level: ").font.size = Pt(BODY_PT)
     r2 = p.add_run(overall)
     r2.bold = True
-    r2.font.size = Pt(10)
+    r2.font.size = Pt(BODY_PT)
     if overall == "High":
         r2.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
     elif overall == "Medium":
         r2.font.color.rgb = RGBColor(0xE6, 0x7E, 0x22)
     elif overall == "Low":
         r2.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-    p.add_run(". ({} High, {} Medium)".format(high_count, medium_count)).font.size = Pt(10)
+    p.add_run(". ({} High, {} Medium)".format(high_count, medium_count)).font.size = Pt(BODY_PT)
 
     if not risks:
         return
@@ -1566,15 +4564,15 @@ def add_uncertainty_word_tables(doc, results):
     p = doc.add_paragraph()
     p.add_run("{} with {} simulations".format(
         unc.get("method", "Monte Carlo analysis"),
-        unc.get("n_simulations", "N/A"))).font.size = Pt(10)
+        unc.get("n_simulations", "N/A"))).font.size = Pt(BODY_PT)
     engine = unc.get("simulation_engine", "")
     if engine:
-        p.add_run(" using {}.".format(engine)).font.size = Pt(10)
+        p.add_run(" using {}.".format(engine)).font.size = Pt(BODY_PT)
 
     # Input parameters table
     params = unc.get("input_parameters", [])
     if params:
-        doc.add_heading("Input Parameter Ranges", level=2)
+        _add_heading(doc, _t("Input Parameter Ranges"), level=2)
         headers = ["Parameter", "Unit", "Low", "Base", "High", "Distribution"]
         data_rows = []
         for param in params:
@@ -1592,7 +4590,7 @@ def add_uncertainty_word_tables(doc, results):
     out_param = unc.get("output_parameter", "")
     out_params = unc.get("output_parameters", {})
     if out_param or out_params:
-        doc.add_heading("Output Distribution (P10 / P50 / P90)", level=2)
+        _add_heading(doc, _t("Output Distribution (P10 / P50 / P90)"), level=2)
         headers = ["Output Parameter", "P10", "P50", "P90"]
         data_rows = []
         if out_param:
@@ -1616,7 +4614,7 @@ def add_uncertainty_word_tables(doc, results):
     # Tornado sensitivity table
     tornado = unc.get("tornado", [])
     if tornado:
-        doc.add_heading("Sensitivity Ranking (Tornado)", level=2)
+        _add_heading(doc, _t("Sensitivity Ranking (Tornado)"), level=2)
         first = tornado[0]
         cols = [k for k in first.keys() if k != "parameter"]
         headers = ["Parameter"] + [c.replace("_", " ").title() for c in cols]
@@ -1629,36 +4627,107 @@ def add_uncertainty_word_tables(doc, results):
         add_word_table(doc, headers, data_rows)
 
 
+# (label, accepted keys): results.json files in use write either
+# reference_value/neqsim_value or the shorter numeric reference/neqsim.
+_BENCHMARK_VALUE_COLUMNS = (
+    ("Reference value", ("reference_value", "expected", "reference")),
+    ("NeqSim value", ("neqsim_value", "neqsim", "calculated")),
+    ("Unit", ("unit",)),
+    ("Deviation [%]", ("deviation_pct", "deviation_percent")),
+    ("Tolerance [%]", ("tolerance_pct", "tolerance_percent")),
+)
+_BENCHMARK_TEXT_KEYS = {"parameter", "name", "test", "description", "source",
+                        "status", "pass", "points"}
+
+
+def _benchmark_value_key(test, keys, label):
+    """First key of ``keys`` present in the test; a text "reference" is a citation."""
+    for key in keys:
+        if key not in test:
+            continue
+        if key == "reference" and isinstance(test[key], str):
+            continue
+        return key
+    return None
+
+
+def _benchmark_reference_text(test):
+    """The citation for a test, when one is given as text."""
+    reference = test.get("reference")
+    if isinstance(reference, str) and reference.strip():
+        return reference
+    if test.get("name") and test.get("description"):
+        return test["description"]
+    return test.get("source") or ""
+
+
+def _benchmark_table(results):
+    """Return (headers, rows, status column index) for the benchmark table.
+
+    Each numeric field gets its own column; flattening them into one
+    "Name: ...; Reference Value: ..." string made the table unreadable.
+    """
+    tests = _benchmark_tests(results)
+    value_cols = [(label, keys) for label, keys in _BENCHMARK_VALUE_COLUMNS
+                  if any(_benchmark_value_key(t, keys, label) for t in tests)]
+    # A value from another simulator (OPM, OLGA) is not a "NeqSim value"; say what it is.
+    bv = (results or {}).get("benchmark_validation") or {}
+    value_label = bv.get("value_label") if isinstance(bv, dict) else None
+    if not value_label and not any(k in t for t in tests for k in ("neqsim_value", "neqsim")):
+        value_label = "Calculated value"
+    if value_label:
+        value_cols = [(value_label if label == "NeqSim value" else label, keys)
+                      for label, keys in value_cols]
+    has_reference = any(_benchmark_reference_text(t) for t in tests)
+    used_by_test = []
+    for test in tests:
+        used = set(_BENCHMARK_TEXT_KEYS)
+        for label, keys in value_cols:
+            key = _benchmark_value_key(test, keys, label)
+            if key:
+                used.add(key)
+        if isinstance(test.get("reference"), str):
+            used.add("reference")
+        used_by_test.append(used)
+    has_notes = any(key not in used for test, used in zip(tests, used_by_test)
+                    for key in test)
+    headers = ([_t("Test")] + ([_t("Reference")] if has_reference else [])
+               + [_t(label) for label, _ in value_cols]
+               + [_t("Status")] + ([_t("Notes")] if has_notes else []))
+    rows = []
+    for test, used in zip(tests, used_by_test):
+        status = test.get("status")
+        if status is None:
+            passed = test.get("pass")
+            status = "PASS" if passed is True else ("FAIL" if passed is False else "N/A")
+        row = [test.get("name") or test.get("description") or test["parameter"]]
+        if has_reference:
+            row.append(_benchmark_reference_text(test))
+        for label, keys in value_cols:
+            key = _benchmark_value_key(test, keys, label)
+            row.append(_fmt_cell(test[key]) if key else "")
+        row.append(str(status).upper())
+        if has_notes:
+            row.append("; ".join(_fmt_cell(value) if key in ("notes", "note", "comment")
+                                  else "{}: {}".format(_label_from_key(key), _fmt_cell(value))
+                                  for key, value in test.items() if key not in used))
+        rows.append(row)
+    return headers, rows, 1 + int(has_reference) + len(value_cols)
+
+
 def add_benchmark_word_table(doc, results):
     """Add benchmark validation as a styled Word table."""
     bv = results.get("benchmark_validation", {})
     if not bv:
         return
-    headers = ["Test", "Description", "Status", "Details"]
-    data_rows = []
-    for key, val in bv.items():
-        if not isinstance(val, dict):
-            continue
-        label = key.replace("_", " ").title()
-        desc = val.get("description") or val.get("reference") or key
-        status = val.get("status")
-        if status is None:
-            p = val.get("pass")
-            status = "PASS" if p is True else ("FAIL" if p is False else "N/A")
-        details = []
-        for dk, dv in val.items():
-            if dk in ("description", "status", "reference", "pass", "points"):
-                continue
-            dl = dk.replace("_", " ").title()
-            if isinstance(dv, float):
-                details.append("{}: {:.4g}".format(dl, dv))
-            else:
-                details.append("{}: {}".format(dl, dv))
-        data_rows.append([label, desc, status, "; ".join(details)])
+    if bv.get("source"):
+        doc.add_paragraph("{}: {}".format(_t("Reference source"), bv["source"]))
+    headers, data_rows, status_idx = _benchmark_table(results)
+    if not data_rows:
+        return
     table = add_word_table(doc, headers, data_rows)
-    # Color-code status column (column 2, 0-indexed)
     for row in table.rows[1:]:
-        cell = row.cells[2]
+        cell = row.cells[status_idx]
         text = cell.text.strip()
         for paragraph in cell.paragraphs:
             for run in paragraph.runs:
@@ -1669,53 +4738,276 @@ def add_benchmark_word_table(doc, results):
                     run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
 
 
-def add_word_table(doc, headers, data_rows, col_widths=None):
+def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
     """Add a professionally styled table to a Word document.
 
     Args:
         doc: Document object.
         headers: list of column header strings.
         data_rows: list of lists (each inner list = one row of cell values).
-        col_widths: optional list of Inches widths per column.
+        col_widths: optional list of Inches widths per column, rescaled to the
+            measure so a template's page size cannot leave the table narrow.
+        caption: optional caption text, numbered and placed above the table.
     """
-    table = doc.add_table(rows=1, cols=len(headers))
+    ncols = len(headers)
+    texts = [[str(text) for text in headers]]
+    texts += [[_fmt_cell(val) for val in row_data[:ncols]]
+              + [""] * max(0, ncols - len(row_data)) for row_data in data_rows]
+    margin_in = _TABLE_WIDE_MARGIN_IN if ncols >= 7 else _TABLE_MARGIN_IN
+    body_pt, landscape = _plan_table_layout(doc, texts, margin_in, col_widths)
+    if landscape:
+        _set_body_orientation(doc, landscape=True)
+    if caption:
+        _add_caption(doc, _t("Table"), caption, keep_with_next=True)
+    table = doc.add_table(rows=1, cols=ncols)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    table.style = "Table Grid"
+    _set_table_style(table)
+    _set_cell_margins(table, margin_in)
 
-    # Header row
     hdr = table.rows[0]
-    for i, text in enumerate(headers):
+    for i, text in enumerate(texts[0]):
         cell = hdr.cells[i]
-        cell.text = str(text)
-        # Style header: bold, white text on dark blue background
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                run.font.size = Pt(9)
-                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
-        shading = parse_xml(
-            '<w:shd {} w:fill="2F5496"/>'.format(nsdecls('w'))
-        )
-        cell._tc.get_or_add_tcPr().append(shading)
+        cell.text = text
+        _style_cell_text(cell, body_pt, bold=True, color=RGBColor(0xFF, 0xFF, 0xFF))
+        cell._tc.get_or_add_tcPr().append(parse_xml(
+            '<w:shd {} w:val="clear" w:color="auto" w:fill="2F5496"/>'.format(
+                nsdecls('w'))))
+        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.BOTTOM
 
-    # Data rows
-    for row_data in data_rows:
+    for row_texts in texts[1:]:
         row = table.add_row()
-        for i, val in enumerate(row_data):
+        for i, text in enumerate(row_texts):
             cell = row.cells[i]
-            cell.text = str(val)
-            for paragraph in cell.paragraphs:
-                for run in paragraph.runs:
-                    run.font.size = Pt(9)
+            cell.text = text
+            _style_cell_text(cell, body_pt)
 
-    # Apply column widths if specified
-    if col_widths:
-        for i, width in enumerate(col_widths):
-            for row in table.rows:
-                row.cells[i].width = width
+    _scale_table_to_measure(doc, table, col_widths, body_pt, margin_in)
+    _repeat_header_row(table)
+    _keep_rows_intact(table)
+    _align_numeric_cells(table)
 
-    doc.add_paragraph("")  # spacing after table
+    if landscape:
+        _set_body_orientation(doc, landscape=False)
+    else:
+        spacer = doc.add_paragraph("")
+        spacer.paragraph_format.space_after = Pt(4)
     return table
+
+
+# Word's default cell margin is 0.075 in each side; wide tables get less so the
+# digits, not the padding, claim the width.
+_TABLE_MARGIN_IN = 0.075
+_TABLE_WIDE_MARGIN_IN = 0.045
+# Smallest type a portrait table may shrink to before it is set landscape.
+_TABLE_PORTRAIT_MIN_PT = 8.0
+_TABLE_MIN_PT = 7.0
+# Body cells narrower than this are kept on one line ("Test 1", "open (NIP-01)").
+_TABLE_NOWRAP_IN = 0.85
+
+
+def _style_cell_text(cell, font_pt, bold=False, color=None):
+    """Set type size and compact spacing; Normal's 6 pt space-after doubles row height."""
+    for paragraph in cell.paragraphs:
+        fmt = paragraph.paragraph_format
+        fmt.space_before = Pt(1.5)
+        fmt.space_after = Pt(1.5)
+        fmt.line_spacing = 1.0
+        fmt.keep_with_next = False
+        for run in paragraph.runs:
+            run.font.size = Pt(font_pt)
+            if bold:
+                run.font.bold = True
+            if color is not None:
+                run.font.color.rgb = color
+
+
+def _set_cell_margins(table, margin_in):
+    """Set the table's default left/right cell margins."""
+    tbl_pr = table._tbl.tblPr
+    for existing in tbl_pr.findall(qn("w:tblCellMar")):
+        tbl_pr.remove(existing)
+    twips = int(round(margin_in * 1440))
+    tbl_pr.append(parse_xml(
+        '<w:tblCellMar {0}><w:top w:w="0" w:type="dxa"/>'
+        '<w:left w:w="{1}" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/>'
+        '<w:right w:w="{1}" w:type="dxa"/></w:tblCellMar>'.format(nsdecls("w"), twips)))
+
+
+def _landscape_measure_in(doc):
+    """Printable width of the current section if it were turned landscape."""
+    section = doc.sections[-1]
+    long_side = max(section.page_width, section.page_height)
+    return max(2.0, (long_side - section.left_margin - section.right_margin) / 914400.0)
+
+
+def _plan_table_layout(doc, texts, margin_in, col_widths=None):
+    """Pick the largest type size at which no word or number has to break.
+
+    Returns (font_pt, landscape). A table that does not fit the portrait measure
+    even at _TABLE_PORTRAIT_MIN_PT is set on its own landscape page instead of
+    splitting "9.961" over three lines.
+    """
+    ncols = len(texts[0]) if texts else 0
+    start_pt = TABLE_PT
+    if ncols >= 9:
+        start_pt = TABLE_PT - 1.5
+    elif ncols >= 7:
+        start_pt = TABLE_PT - 1.0
+    if col_widths or ncols <= 1:
+        return start_pt, False
+    pad = 2.0 * margin_in + 0.02
+    portrait = _text_width_in(doc)
+    section = doc.sections[-1]
+    already_landscape = section.page_width > section.page_height
+
+    def fits(font_pt, measure):
+        minimums, _natural = _column_extents(texts, font_pt, pad)
+        return sum(minimums) <= measure
+
+    font_pt = start_pt
+    while font_pt >= _TABLE_PORTRAIT_MIN_PT - 1e-9:
+        if fits(font_pt, portrait):
+            return font_pt, False
+        font_pt -= 0.5
+    if already_landscape or REPORT_ORIENTATION == "template":
+        font_pt = _TABLE_PORTRAIT_MIN_PT - 0.5
+        while font_pt > _TABLE_MIN_PT and not fits(font_pt, portrait):
+            font_pt -= 0.5
+        return max(font_pt, _TABLE_MIN_PT), False
+    landscape = _landscape_measure_in(doc)
+    font_pt = start_pt
+    while font_pt > _TABLE_MIN_PT and not fits(font_pt, landscape):
+        font_pt -= 0.5
+    return max(font_pt, _TABLE_MIN_PT), True
+
+
+def _set_body_orientation(doc, landscape):
+    """Start a new section on a fresh page in the requested orientation.
+
+    Headers and footers stay linked to the previous section, so page numbering
+    and branding continue unchanged.
+    """
+    section = doc.add_section(WD_SECTION.NEW_PAGE)
+    is_landscape = section.page_width > section.page_height
+    if is_landscape != landscape:
+        section.page_width, section.page_height = section.page_height, section.page_width
+    section.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
+    section.different_first_page_header_footer = False
+    return section
+
+
+# Approximate advance widths in em for a sans corporate face (Arial/Calibri
+# class). A flat average under-sizes "Medium" (two wide m's) and over-sizes
+# "Consequence", so column minimums were wrong in both directions.
+_GLYPH_EM_WIDE = set("MWmw@%")
+_GLYPH_EM_NARROW = set("iljtfrI.,:;'!|()[]-/ ")
+_TABLE_BOLD_FACTOR = 1.07
+_TABLE_CELL_PAD_IN = 0.17
+# A single token longer than this (a URL, a long formula) may break; letting
+# it claim its full width would starve every other column.
+_TABLE_MAX_TOKEN_IN = 1.6
+
+
+def _text_width_estimate_in(text, font_pt):
+    """Estimated printed width of text in inches at font_pt (bold)."""
+    em = 0.0
+    for char in text:
+        if char in _GLYPH_EM_WIDE:
+            em += 0.86
+        elif char in _GLYPH_EM_NARROW:
+            em += 0.30
+        elif char.isupper():
+            em += 0.68
+        else:
+            em += 0.56
+    return em * font_pt * _TABLE_BOLD_FACTOR / 72.0
+# Only real spaces are break points; "180 000" uses a no-break separator.
+_TABLE_BREAK_RE = re.compile(r"[ \t\n]+")
+
+
+def _column_extents(texts, font_pt, pad_in=_TABLE_CELL_PAD_IN):
+    """Return (minimum, natural) widths per column for a text matrix.
+
+    Row 0 is the header, which may wrap between words; a short body cell is
+    kept on one line because "Test / 1" reads as two entries.
+    """
+    ncols = max(len(row) for row in texts) if texts else 0
+    minimums, natural = [], []
+    for index in range(ncols):
+        min_in, natural_in = 0.0, 0.0
+        for row_index, row in enumerate(texts):
+            if index >= len(row):
+                continue
+            text = row[index].strip()
+            words = [w for w in _TABLE_BREAK_RE.split(text) if w]
+            if not words:
+                continue
+            longest = max(_text_width_estimate_in(w, font_pt) for w in words)
+            whole = _text_width_estimate_in(text[:70], font_pt)
+            if row_index > 0 and whole <= _TABLE_NOWRAP_IN:
+                longest = whole
+            min_in = max(min_in, min(longest, _TABLE_MAX_TOKEN_IN))
+            natural_in = max(natural_in, whole)
+        minimums.append(min_in + pad_in)
+        natural.append(max(min_in, natural_in) + pad_in)
+    return minimums, natural
+
+
+def _content_column_widths(table, measure, font_pt=TABLE_PT, pad_in=_TABLE_CELL_PAD_IN):
+    """Column widths from content, so no column has to break a word.
+
+    Equal-width columns split "Consequence" into "Consequenc/e" while a
+    two-character ID column sits half empty. Every column first gets room for
+    its longest word; the rest of the measure goes to the columns whose text
+    would otherwise wrap the most.
+    """
+    texts = [[cell.text for cell in row.cells] for row in table.rows]
+    minimums, natural = _column_extents(texts, font_pt, pad_in)
+    if sum(natural) <= measure:
+        return natural
+    spare = measure - sum(minimums)
+    if spare <= 0:
+        return minimums
+    stretch = [want - low for want, low in zip(natural, minimums)]
+    total_stretch = sum(stretch) or 1.0
+    return [low + spare * extra / total_stretch
+            for low, extra in zip(minimums, stretch)]
+
+
+def _scale_table_to_measure(doc, table, col_widths=None, font_pt=TABLE_PT,
+                            margin_in=_TABLE_MARGIN_IN):
+    """Lay the table out across the full measure, keeping column proportions.
+
+    Column widths written in absolute inches were sized for a portrait page; on
+    any other page they leave the table floating in white space or push it into
+    the margin.
+    """
+    measure = _text_width_in(doc)
+    count = len(table.columns)
+    if not count:
+        return
+    if col_widths:
+        shares = [float(width.inches) if hasattr(width, "inches") else float(width)
+                  for width in col_widths[:count]]
+        shares += [sum(shares) / len(shares)] * (count - len(shares))
+    else:
+        shares = _content_column_widths(table, measure, font_pt, 2.0 * margin_in + 0.02)
+    total = sum(shares) or float(count)
+    table.autofit = False
+    twips_total = 0
+    for index, share in enumerate(shares):
+        width = Inches(measure * share / total)
+        twips_total += int(width.twips)
+        table.columns[index].width = width
+        for row in table.rows:
+            if index < len(row.cells):
+                row.cells[index].width = width
+    # An "auto" table width lets Word and LibreOffice re-flow a fixed layout.
+    tbl_pr = table._tbl.tblPr
+    for existing in tbl_pr.findall(qn("w:tblW")):
+        tbl_pr.remove(existing)
+    tbl_pr.append(parse_xml('<w:tblW {} w:w="{}" w:type="dxa"/>'.format(
+        nsdecls("w"), twips_total)))
 
 
 def add_results_word_table(doc, results):
@@ -1723,17 +5015,20 @@ def add_results_word_table(doc, results):
     key_results = results.get("key_results", {})
     if not key_results:
         return
-    headers = ["Parameter", "Value", "Unit"]
-    data_rows = []
-    for key, value in key_results.items():
-        label, unit = _parse_key_name(key)
-        if isinstance(value, float):
-            val_str = "{:.4g}".format(value)
-        else:
-            val_str = str(value)
-        data_rows.append([label, val_str, unit])
+    flat_rows = _flatten_key_results(key_results)
+    has_notes = any(note for _label, _value, _unit, note in flat_rows)
+    if has_notes:
+        headers = [_t("Parameter"), _t("Value"), _t("Unit"), _t("Source")]
+        data_rows = [[label, _fmt_cell(value), unit, note or ""]
+                     for label, value, unit, note in flat_rows]
+        col_widths = [Inches(2.3), Inches(1.3), Inches(1.1), Inches(2.3)]
+    else:
+        headers = [_t("Parameter"), _t("Value"), _t("Unit")]
+        data_rows = [[label, _fmt_cell(value), unit] for label, value, unit, _note in flat_rows]
+        col_widths = [Inches(3.0), Inches(1.5), Inches(1.5)]
     add_word_table(doc, headers, data_rows,
-                   col_widths=[Inches(3.0), Inches(1.5), Inches(1.5)])
+                   col_widths=col_widths,
+                   caption=_t("Key results"))
 
 
 def add_validation_word_table(doc, results):
@@ -1741,19 +5036,27 @@ def add_validation_word_table(doc, results):
     validation = results.get("validation", {})
     if not validation:
         return
-    headers = ["Check", "Result"]
+    headers = [_t("Check"), _t("Result")]
     data_rows = []
     for check, outcome in validation.items():
-        label = check.replace("_", " ").title()
+        label = _label_from_key(check)
+        if isinstance(outcome, dict) and "value" in outcome:
+            label = outcome.get("label") or label
+            unit = outcome.get("unit") or ""
+            outcome = outcome["value"]
+            if isinstance(outcome, (int, float)) and not isinstance(outcome, bool) and unit:
+                data_rows.append([label, "{} {}".format(_fmt_number(outcome), unit)])
+                continue
         if isinstance(outcome, bool):
-            status = "PASS" if outcome else "FAIL"
+            status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
         elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
+            status = _fmt_number(outcome)
         else:
             status = str(outcome)
         data_rows.append([label, status])
     table = add_word_table(doc, headers, data_rows,
-                           col_widths=[Inches(4.0), Inches(2.0)])
+                           col_widths=[Inches(4.0), Inches(2.0)],
+                           caption=_t("Validation checks"))
     # Color-code PASS/FAIL cells
     for row in table.rows[1:]:
         cell = row.cells[1]
@@ -1778,19 +5081,152 @@ def add_custom_word_tables(doc, results):
         data_rows = tbl.get("rows", [])
         if not headers or not data_rows:
             continue
-        if title:
-            doc.add_heading(title, level=2)
-        # Format numeric values
-        formatted_rows = []
-        for row in data_rows:
-            formatted = []
-            for cell in row:
-                if isinstance(cell, float):
-                    formatted.append("{:.4g}".format(cell))
-                else:
-                    formatted.append(str(cell))
-            formatted_rows.append(formatted)
-        add_word_table(doc, headers, formatted_rows)
+        # A data table titled with Heading 2 lands in the table of contents as
+        # if it were a chapter; a numbered caption is what it actually is.
+        add_word_table(doc, headers, data_rows, caption=title or None)
+
+
+# ── Analytical depth (the nine depth moves) ──────────────
+# A report can pass every hygiene gate and still only restate its source
+# document. These keys carry the analysis that separates an engineering answer
+# from a summary; see the neqsim-professional-reporting skill, Principle 0.
+DEPTH_MOVES = (
+    ("contributor_ranking",
+     "Contributors ranked on a common basis",
+     "Which effects actually carry the result, largest first."),
+    ("source_recommendation_assessment",
+     "Verdict on each source recommendation",
+     "Supported, supported with correction, or challenged \u2014 with the basis."),
+    ("ruled_out",
+     "Hypotheses ruled out quantitatively",
+     "What was excluded, by which test, and with how much margin."),
+    ("robustness",
+     "Robustness and crossover",
+     "How far an input can move before the conclusion flips."),
+    ("conservatism",
+     "Direction of each conservatism",
+     "Whether each assumption bounds the answer from above or below."),
+    ("discriminating_test",
+     "Cheapest discriminating test",
+     "The one measurement that would separate the surviving explanations."),
+    ("evidence_against",
+     "Evidence that does not fit",
+     "Observations the accepted explanation does not account for."),
+)
+
+
+def _depth_entries(results):
+    """Return the depth moves that the study actually produced."""
+    if not results:
+        return []
+    return [(key, _t(title), _t(hint)) for key, title, hint in DEPTH_MOVES
+            if results.get(key)]
+
+
+def _depth_rows(payload):
+    """Normalise a depth payload into (headers, rows) for a table, or None."""
+    if isinstance(payload, dict):
+        payload = [payload]
+    if not isinstance(payload, list) or not payload:
+        return None
+    dict_items = [item for item in payload if isinstance(item, dict)]
+    if len(dict_items) != len(payload):
+        return None
+    headers = []
+    for item in dict_items:
+        for key in item:
+            if key not in headers:
+                headers.append(key)
+    rows = [[_fmt_cell(item.get(key, "")) for key in headers]
+            for item in dict_items]
+    return [key.replace("_", " ").title() for key in headers], rows
+
+
+def _depth_bullets(payload):
+    """Render a non-tabular depth payload as bullet lines."""
+    if isinstance(payload, dict):
+        return ["{}: {}".format(key.replace("_", " ").title(), _fmt_cell(value))
+                for key, value in payload.items()]
+    if isinstance(payload, list):
+        return [_format_list_item_text(item) for item in payload]
+    return [str(payload)]
+
+
+def _depth_score_text(results):
+    """Return the declared depth score, or one derived from what is present."""
+    declared = results.get("depth_score") if results else None
+    if declared:
+        return str(declared)
+    return "{}/{} depth moves reported".format(
+        len(_depth_entries(results)), len(DEPTH_MOVES))
+
+
+def format_depth_html(results):
+    """Render the analytical-depth moves as HTML."""
+    entries = _depth_entries(results)
+    if not entries:
+        return ""
+    html = ('<p class="depth-score">Analytical depth: <strong>{}</strong></p>\n'
+            .format(_html_escape(_depth_score_text(results))))
+    for key, title, hint in entries:
+        payload = results.get(key)
+        html += '<h3>{}</h3>\n<p class="depth-hint">{}</p>\n'.format(
+            _html_escape(title), _html_escape(hint))
+        table = _depth_rows(payload)
+        if table:
+            headers, rows = table
+            html += _html_table_caption(title)
+            html += '<table class="custom-table"><thead><tr>'
+            html += "".join('<th>{}</th>'.format(_html_escape(col))
+                            for col in headers)
+            html += '</tr></thead><tbody>\n'
+            for row in rows:
+                html += "<tr>" + "".join(
+                    '<td>{}</td>'.format(_html_escape(cell)) for cell in row
+                ) + "</tr>\n"
+            html += "</tbody></table>\n"
+        else:
+            html += "<ul>\n" + "".join(
+                "  <li>{}</li>\n".format(_html_escape(line))
+                for line in _depth_bullets(payload)) + "</ul>\n"
+    return html
+
+
+def add_references_word(doc, results):
+    """Numbered reference list, one paragraph per entry with a hanging indent."""
+    for index, ref in enumerate(results.get("references") or [], 1):
+        text = _reference_text(ref)
+        para = doc.add_paragraph()
+        fmt = para.paragraph_format
+        fmt.left_indent = Inches(0.4)
+        fmt.first_line_indent = Inches(-0.4)
+        fmt.space_after = Pt(3)
+        para.add_run("[{}]\t".format(index))
+        _add_bold_runs(para, text)
+
+
+def add_depth_word_section(doc, results):
+    """Render the analytical-depth moves into the Word report."""
+    entries = _depth_entries(results)
+    if not entries:
+        return
+    paragraph = doc.add_paragraph()
+    paragraph.add_run("Analytical depth: ").bold = True
+    paragraph.add_run(_depth_score_text(results))
+    for key, title, hint in entries:
+        _add_heading(doc, title, level=2)
+        hint_para = doc.add_paragraph(hint)
+        for run in hint_para.runs:
+            run.font.size = Pt(CAPTION_PT)
+            run.font.italic = True
+            run.font.color.rgb = RGBColor(110, 110, 110)
+        table = _depth_rows(results.get(key))
+        if table:
+            headers, rows = table
+            add_word_table(doc, headers, rows, caption=title)
+        else:
+            for line in _depth_bullets(results.get(key)):
+                doc.add_paragraph(line, style="List Bullet")
 
 
 def format_discussion_html(results):
@@ -1815,20 +5251,20 @@ def format_discussion_html(results):
         insight_ref = disc.get("insight_question_ref", "")
 
         h += '<div class="discussion-block">\n'
-        h += '<h3>Discussion {}: {}</h3>\n'.format(i, title)
+        h += '<h3>{} {}: {}</h3>\n'.format(_t("Discussion"), i, title)
         if observation:
-            h += '<p><strong>Observation:</strong> {}</p>\n'.format(observation)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Observation"), observation)
         if mechanism:
-            h += '<p><strong>Physical Mechanism:</strong> {}</p>\n'.format(mechanism)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Physical Mechanism"), mechanism)
         if implication:
-            h += '<p><strong>Engineering Implication:</strong> {}</p>\n'.format(implication)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Engineering Implication"), implication)
         if recommendation:
-            h += '<p class="recommendation"><strong>Recommendation:</strong> {}</p>\n'.format(
-                recommendation)
+            h += '<p class="recommendation"><strong>{}:</strong> {}</p>\n'.format(
+                _t("Recommendation"), recommendation)
         # Traceability footer
         trace_parts = []
         if linked:
-            trace_parts.append("Linked results: {}".format(", ".join(linked)))
+            trace_parts.append("{}: {}".format(_t("Linked results"), ", ".join(linked)))
         if insight_ref:
             trace_parts.append("Answers: {}".format(insight_ref))
         if trace_parts:
@@ -1856,48 +5292,48 @@ def add_discussion_word(doc, results):
         linked = disc.get("linked_results", [])
         insight_ref = disc.get("insight_question_ref", "")
 
-        doc.add_heading("Discussion {}: {}".format(i, title), level=2)
+        _add_heading(doc, "{} {}: {}".format(_t("Discussion"), i, title), level=2)
 
         if observation:
             p = doc.add_paragraph()
-            r = p.add_run("Observation: ")
+            r = p.add_run(_t("Observation") + ": ")
             r.bold = True
-            r.font.size = Pt(10)
-            p.add_run(observation).font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
+            p.add_run(observation).font.size = Pt(BODY_PT)
 
         if mechanism:
             p = doc.add_paragraph()
-            r = p.add_run("Physical Mechanism: ")
+            r = p.add_run(_t("Physical Mechanism") + ": ")
             r.bold = True
-            r.font.size = Pt(10)
-            p.add_run(mechanism).font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
+            p.add_run(mechanism).font.size = Pt(BODY_PT)
 
         if implication:
             p = doc.add_paragraph()
-            r = p.add_run("Engineering Implication: ")
+            r = p.add_run(_t("Engineering Implication") + ": ")
             r.bold = True
-            r.font.size = Pt(10)
-            p.add_run(implication).font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
+            p.add_run(implication).font.size = Pt(BODY_PT)
 
         if recommendation:
             p = doc.add_paragraph()
-            r = p.add_run("Recommendation: ")
+            r = p.add_run(_t("Recommendation") + ": ")
             r.bold = True
-            r.font.size = Pt(10)
+            r.font.size = Pt(BODY_PT)
             r2 = p.add_run(recommendation)
-            r2.font.size = Pt(10)
+            r2.font.size = Pt(BODY_PT)
             r2.font.color.rgb = RGBColor(0x1A, 0x53, 0x7A)
 
         # Traceability line
         trace_parts = []
         if linked:
-            trace_parts.append("Linked results: {}".format(", ".join(linked)))
+            trace_parts.append("{}: {}".format(_t("Linked results"), ", ".join(linked)))
         if insight_ref:
             trace_parts.append("Answers: {}".format(insight_ref))
         if trace_parts:
             p = doc.add_paragraph()
             r = p.add_run(" | ".join(trace_parts))
-            r.font.size = Pt(8)
+            r.font.size = Pt(CAPTION_PT)
             r.font.italic = True
             r.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
 
@@ -1908,7 +5344,25 @@ def add_discussion_word(doc, results):
 # Build sections (auto-populated where possible)
 # ══════════════════════════════════════════════════════════
 
-def build_sections(results, task_spec, study_config_warnings=None):
+def _renumber_sections(sections):
+    """Renumber section headings 1..N so conditional sections cannot leave gaps.
+
+    Sections are appended conditionally, so any counter bug shows up in the
+    issued report as a skipped or repeated chapter number.
+    """
+    index = 0
+    for section in sections:
+        if section.get("appendix"):
+            continue
+        index += 1
+        heading = str(section.get("heading", "")).strip()
+        section["heading"] = "{}. {}".format(
+            index, _MANUAL_HEADING_NUMBER.sub("", heading).strip())
+    return sections
+
+
+def build_sections(results, task_spec, study_config_warnings=None, study_config=None,
+                   consistency_issues=None):
     """Build report sections, auto-populating from results.json and task_spec.md."""
     sections = []
     if study_config_warnings is None:
@@ -1916,23 +5370,29 @@ def build_sections(results, task_spec, study_config_warnings=None):
 
     # 1. Executive Summary
     exec_summary = ""
-    if results and results.get("executive_summary"):
+    if "executive_summary" in AUTHORED_SECTIONS:
+        exec_summary = MANUAL_SECTIONS["executive_summary"]
+    if _is_placeholder_text(exec_summary) and results \
+            and results.get("executive_summary"):
         exec_summary = str(results["executive_summary"])
     if _is_placeholder_text(exec_summary):
         exec_summary = auto_executive_summary(results, task_spec)
     if _is_placeholder_text(exec_summary):
         exec_summary = MANUAL_SECTIONS["executive_summary"]
     sections.append({
-        "heading": "1. Executive Summary",
+        "heading": "1. {}".format(_t("Executive Summary")),
         "content": exec_summary,
     })
 
     # 2. Problem Description
-    problem_description = auto_problem_description(results, task_spec)
+    problem_description = MANUAL_SECTIONS["problem_description"] \
+        if "problem_description" in AUTHORED_SECTIONS else ""
+    if _is_placeholder_text(problem_description):
+        problem_description = auto_problem_description(results, task_spec)
     if _is_placeholder_text(problem_description):
         problem_description = MANUAL_SECTIONS["problem_description"]
     sections.append({
-        "heading": "2. Problem Description",
+        "heading": "2. {}".format(_t("Problem Description")),
         "content": problem_description,
     })
 
@@ -1941,8 +5401,10 @@ def build_sections(results, task_spec, study_config_warnings=None):
     safety_readiness = format_safety_readiness_text(results) if results else ""
     if safety_readiness:
         sections.append({
-            "heading": "{}. Safety Study Readiness".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num,
+                                       _t("Safety Study Readiness")),
             "content": safety_readiness,
+            "has_markdown": True,
         })
         next_section_num += 1
 
@@ -1950,34 +5412,45 @@ def build_sections(results, task_spec, study_config_warnings=None):
     scope_parts = []
     standards = extract_spec_section(task_spec, "Applicable Standards")
     if standards:
-        scope_parts.append("Applicable Standards:\n" + standards)
+        scope_parts.append(_t("Applicable Standards") + ":\n" + standards)
     methods = extract_spec_section(task_spec, "Calculation Methods")
     if methods:
-        scope_parts.append("Calculation Methods:\n" + methods)
+        scope_parts.append(_t("Calculation Methods") + ":\n" + methods)
     criteria = extract_spec_section(task_spec, "Acceptance Criteria")
     if criteria:
-        scope_parts.append("Acceptance Criteria:\n" + criteria)
+        scope_parts.append(_t("Acceptance Criteria") + ":\n" + criteria)
     envelope = extract_spec_section(task_spec, "Operating Envelope")
     if envelope:
-        scope_parts.append("Operating Envelope:\n" + envelope)
+        scope_parts.append(_t("Operating Envelope") + ":\n" + envelope)
 
     scope_content = "\n\n".join(scope_parts) if scope_parts else (
         "[Auto-populated from task_spec.md when filled in. "
         "Edit step1_scope_and_research/task_spec.md and re-run.]"
     )
     sections.append({
-        "heading": "{}. Scope and Standards".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Scope and Standards")),
         "content": scope_content,
         "has_scope": True,
     })
     next_section_num += 1
 
+    # Information Sources (auto-built from the collected documents themselves)
+    information_sources = format_information_sources_text(study_config, results)
+    if information_sources:
+        sections.append({
+            "heading": "{}. {}".format(
+                next_section_num, _t("Information Sources and Evidence Basis")),
+            "content": information_sources,
+            "has_markdown": True,
+        })
+        next_section_num += 1
+
     # Approach
     approach = MANUAL_SECTIONS["approach"]
-    if results and results.get("approach"):
+    if results and results.get("approach") and "approach" not in AUTHORED_SECTIONS:
         approach = results["approach"]
     sections.append({
-        "heading": "{}. Approach".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Approach")),
         "content": approach,
         "has_equations": True,
     })
@@ -1986,7 +5459,7 @@ def build_sections(results, task_spec, study_config_warnings=None):
     # Solution Workflow (how the task was solved — discovered agents + workflow)
     if results and results.get("agent_workflow_plan"):
         sections.append({
-            "heading": "{}. Solution Workflow".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Solution Workflow")),
             "content": "",
             "has_workflow": True,
         })
@@ -2001,7 +5474,7 @@ def build_sections(results, task_spec, study_config_warnings=None):
             "Save results with the pattern shown in the task README.]"
         )
     sections.append({
-        "heading": "{}. Results".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Results")),
         "content": results_text,
         "has_figures": True,
     })
@@ -2010,9 +5483,18 @@ def build_sections(results, task_spec, study_config_warnings=None):
     # Discussion (auto-populated from results.json figure_discussion)
     if results and results.get("figure_discussion"):
         sections.append({
-            "heading": "{}. Discussion".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Discussion")),
             "content": "",
             "has_discussion": True,
+        })
+        next_section_num += 1
+
+    # Analytical Depth: the moves that turn a summary into an engineering answer
+    if _depth_entries(results):
+        sections.append({
+            "heading": "{}. {}".format(next_section_num, _t("Analytical Depth")),
+            "content": "",
+            "has_depth": True,
         })
         next_section_num += 1
 
@@ -2025,22 +5507,28 @@ def build_sections(results, task_spec, study_config_warnings=None):
             "Add validation checks to your notebook results output.]"
         )
     sections.append({
-        "heading": "{}. Validation Summary".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("Validation Summary")),
         "content": validation_text,
+        "has_validation": True,
     })
     next_section_num += 1
 
+    # Generator self-checks belong to the reviewer, not the engineering
+    # argument: they go to an appendix instead of interrupting the chapters.
+    quality_lines = []
+    review_items = ["- {}: {}".format(issue["severity"], issue["message"])
+                    for issue in (consistency_issues or [])
+                    if issue["severity"] != "INFO"]
+    if review_items:
+        quality_lines.append("**{}**".format(_t("Consistency review")))
+        quality_lines.extend(review_items)
     if study_config_warnings:
-        warning_lines = ["- {}".format(warning) for warning in study_config_warnings]
-        sections.append({
-            "heading": "{}. Study Configuration Warnings".format(next_section_num),
-            "content": "\n".join(warning_lines),
-        })
-        next_section_num += 1
+        quality_lines.append("**{}**".format(_t("Study configuration")))
+        quality_lines.extend("- {}".format(w) for w in study_config_warnings)
 
     if results and results.get("benchmark_validation"):
         sections.append({
-            "heading": "{}. Benchmark Validation".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Benchmark Validation")),
             "content": "",
             "has_benchmark": True,
         })
@@ -2049,7 +5537,7 @@ def build_sections(results, task_spec, study_config_warnings=None):
     # N. Uncertainty Analysis (if data available)
     if results and results.get("uncertainty"):
         sections.append({
-            "heading": "{}. Uncertainty Analysis".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Uncertainty Analysis")),
             "content": "",
             "has_uncertainty": True,
         })
@@ -2058,24 +5546,46 @@ def build_sections(results, task_spec, study_config_warnings=None):
     # N. Risk Assessment (if data available)
     if results and results.get("risk_evaluation"):
         sections.append({
-            "heading": "{}. Risk Assessment".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Risk Assessment")),
             "content": "",
             "has_risk": True,
         })
         next_section_num += 1
 
-    if results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
+    assumptions_text = format_assumptions_text(results)
+    if assumptions_text:
         sections.append({
-            "heading": "{}. Evidence Gaps and Design-Grade Blockers".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num,
+                                       _t("Assumptions and Data Gaps")),
+            "content": assumptions_text,
+            "has_markdown": True,
+        })
+        next_section_num += 1
+    elif results and (results.get("evidence_gaps") or results.get("assumptions_gaps")):
+        sections.append({
+            "heading": "{}. {}".format(
+                next_section_num, _t("Evidence Gaps and Design-Grade Blockers")),
             "content": format_list_items_text(
                 results.get("evidence_gaps") or results.get("assumptions_gaps")),
+            "has_markdown": True,
         })
         next_section_num += 1
 
     if results and results.get("recommendations"):
         sections.append({
-            "heading": "{}. Recommendations".format(next_section_num),
+            "heading": "{}. {}".format(next_section_num, _t("Recommendations")),
             "content": format_list_items_text(results.get("recommendations")),
+            "has_markdown": True,
+        })
+        next_section_num += 1
+
+    improvements_text = format_improvements_text(results)
+    if improvements_text:
+        sections.append({
+            "heading": "{}. {}".format(next_section_num,
+                                       _t("Tooling Improvements Delivered")),
+            "content": improvements_text,
+            "has_markdown": True,
         })
         next_section_num += 1
 
@@ -2084,7 +5594,8 @@ def build_sections(results, task_spec, study_config_warnings=None):
     if results and results.get("conclusions"):
         conclusions = results["conclusions"]
     sections.append({
-        "heading": "{}. Conclusions and Recommendations".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num,
+                                   _t("Conclusions and Recommendations")),
         "content": conclusions,
     })
     next_section_num += 1
@@ -2095,19 +5606,37 @@ def build_sections(results, task_spec, study_config_warnings=None):
         ref_lines = []
         for i, ref in enumerate(results["references"], 1):
             ref_id = ref.get("id", "")
-            ref_text = ref.get("text", "")
+            ref_text = _reference_text(ref)
             if ref_id:
                 ref_lines.append("[{}] {}".format(i, ref_text))
             else:
                 ref_lines.append("[{}] {}".format(i, ref_text))
         refs_content = "\n".join(ref_lines)
     sections.append({
-        "heading": "{}. References".format(next_section_num),
+        "heading": "{}. {}".format(next_section_num, _t("References")),
         "content": refs_content,
         "has_references": True,
     })
 
-    return sections
+    reproducibility_text = format_reproducibility_text(results)
+    if reproducibility_text:
+        sections.append({
+            "heading": _t("Appendix A. Reproducing the Results"),
+            "content": reproducibility_text,
+            "has_markdown": True,
+            "appendix": True,
+        })
+
+    if quality_lines:
+        sections.append({
+            "heading": _t("Appendix B. Report Quality Checks" if reproducibility_text
+                          else "Appendix A. Report Quality Checks"),
+            "content": "\n".join(quality_lines),
+            "has_markdown": True,
+            "appendix": True,
+        })
+
+    return _renumber_sections(sections)
 
 
 # ══════════════════════════════════════════════════════════
@@ -2147,23 +5676,43 @@ def _add_cover_page(doc):
     # Subtitle line
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = subtitle.add_run("NeqSim Engineering Report")
+    run = subtitle.add_run(_t("NeqSim Engineering Report"))
     run.font.size = Pt(14)
     run.font.color.rgb = RGBColor(100, 100, 100)
+
+    if STUDY_BADGES:
+        badges = doc.add_paragraph()
+        badges.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = badges.add_run(
+            "  |  ".join("{}: {}".format(label, value)
+                         for label, value in STUDY_BADGES))
+        run.font.size = Pt(9)
+        run.font.color.rgb = RGBColor(130, 130, 130)
+
+    if TASK_STATEMENT:
+        doc.add_paragraph("")
+        statement = doc.add_paragraph()
+        statement.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        statement.paragraph_format.left_indent = Inches(0.8)
+        statement.paragraph_format.right_indent = Inches(0.8)
+        run = statement.add_run(TASK_STATEMENT)
+        run.font.size = Pt(11)
+        run.font.italic = True
+        run.font.color.rgb = RGBColor(70, 70, 70)
 
     for _ in range(3):
         doc.add_paragraph("")
 
     # Metadata table
     meta_table = doc.add_table(rows=5, cols=2)
-    meta_table.style = "Table Grid"
+    _set_table_style(meta_table)
     meta_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     meta_data = [
-        ("Document Number", doc_num),
-        ("Revision", REVISION),
-        ("Date", TASK_DATE),
-        ("Author", AUTHOR or "(not specified)"),
-        ("Classification", CLASSIFICATION),
+        (_t("Document Number"), doc_num),
+        (_t("Revision"), REVISION),
+        (_t("Date"), TASK_DATE),
+        (_t("Author"), AUTHOR or _t("(not specified)")),
+        (_t("Classification"), CLASSIFICATION),
     ]
     for i, (label, value) in enumerate(meta_data):
         meta_table.rows[i].cells[0].text = label
@@ -2181,19 +5730,19 @@ def _add_cover_page(doc):
     # Revision history table (if entries exist)
     rev_entries = REVISION_HISTORY or [
         {"rev": REVISION, "date": TASK_DATE,
-         "description": "Initial issue", "author": AUTHOR or ""}
+         "description": _t("Initial issue"), "author": AUTHOR or ""}
     ]
     rev_heading = doc.add_paragraph()
     rev_heading.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    run = rev_heading.add_run("Revision History")
+    run = rev_heading.add_run(_t("Revision History"))
     run.font.size = Pt(12)
     run.bold = True
     run.font.color.rgb = RGBColor(47, 84, 150)
 
     rev_table = doc.add_table(rows=1 + len(rev_entries), cols=4)
-    rev_table.style = "Table Grid"
+    _set_table_style(rev_table)
     rev_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    headers = ["Rev", "Date", "Description", "Author"]
+    headers = [_t("Rev"), _t("Date"), _t("Description"), _t("Author")]
     for j, h in enumerate(headers):
         cell = rev_table.rows[0].cells[j]
         cell.text = h
@@ -2208,15 +5757,100 @@ def _add_cover_page(doc):
         rev_table.rows[i].cells[1].text = str(entry.get("date", ""))
         rev_table.rows[i].cells[2].text = str(entry.get("description", ""))
         rev_table.rows[i].cells[3].text = str(entry.get("author", ""))
+    # The contents heading carries page-break-before; a break paragraph after
+    # this table would be an extra empty line that can spill a blank page.
 
-    doc.add_page_break()
+
+def _suppress_paragraph_numbering(paragraph):
+    """Keep a heading out of the template's automatic heading numbering."""
+    p_pr = paragraph._p.get_or_add_pPr()
+    for existing in p_pr.findall(qn("w:numPr")):
+        p_pr.remove(existing)
+    p_pr.append(parse_xml(
+        '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(nsdecls("w"))
+    ))
+
+
+FRONT_MATTER_STYLE = "NeqSim Front Matter Heading"
+
+
+def _front_matter_heading(doc, text):
+    """A heading that looks like Heading 1 but stays out of the TOC.
+
+    As a real Heading 1 the contents page listed itself ("Table of Contents
+    ... 2") and the lists of figures and tables. Outline level 9 is body text,
+    so neither the \\o nor the \\u TOC switch collects it, and numId 0 keeps a
+    template's heading numbering off it.
+    """
+    try:
+        style = doc.styles[FRONT_MATTER_STYLE]
+    except KeyError:
+        style = doc.styles.add_style(FRONT_MATTER_STYLE, WD_STYLE_TYPE.PARAGRAPH)
+        try:
+            style.base_style = doc.styles["Heading 1"]
+        except KeyError:
+            style.font.size = Pt(HEADING1_PT)
+            style.font.bold = True
+        p_pr = style.element.get_or_add_pPr()
+        for tag in ("w:numPr", "w:outlineLvl"):
+            for existing in p_pr.findall(qn(tag)):
+                p_pr.remove(existing)
+        p_pr.append(parse_xml(
+            '<w:numPr {}><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'.format(
+                nsdecls("w"))))
+        p_pr.append(parse_xml('<w:outlineLvl {} w:val="9"/>'.format(nsdecls("w"))))
+        style.paragraph_format.keep_with_next = True
+        style.paragraph_format.page_break_before = False
+    return doc.add_paragraph(text, style=style)
+
+
+def _end_page(doc):
+    """Start the next content on a new page without leaving a blank page.
+
+    doc.add_page_break() puts the break in a paragraph of its own; when the
+    page is already full that paragraph spills onto the next page and breaks
+    again. Appending the break to the last paragraph cannot spill.
+    """
+    body = [child for child in doc.element.body if child.tag != qn("w:sectPr")]
+    if body and body[-1].tag == qn("w:p"):
+        Paragraph(body[-1], doc._body).add_run().add_break(WD_BREAK.PAGE)
+    else:
+        doc.add_page_break()
 
 
 def _add_word_toc(doc):
     """Add a Table of Contents field to the Word document."""
-    # Add TOC heading
-    doc.add_heading("Table of Contents", level=1)
-    # Insert a Word TOC field (updates when user presses F9 in Word)
+    heading = _front_matter_heading(doc, _t("Table of Contents"))
+    heading.paragraph_format.page_break_before = True
+    _add_toc_field(doc, 'TOC \\o "1-2" \\h \\z \\u')
+    # Tell Word to update all fields (incl. this TOC) when the document is opened
+    _set_update_fields_on_open(doc)
+    _end_page(doc)
+
+
+def _add_figure_and_table_lists(doc, results):
+    """Add a list of figures and a list of tables, when there is anything to list.
+
+    Word builds these from the SEQ fields in the captions, so a reader can find
+    a named figure without scrolling the whole report.
+    """
+    added = False
+    if get_figures():
+        _front_matter_heading(doc, _t("List of Figures"))
+        _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Figure")))
+        added = True
+    if results and (results.get("tables") or results.get("key_results")):
+        heading = _front_matter_heading(doc, _t("List of Tables"))
+        if added:
+            heading.paragraph_format.space_before = Pt(18)
+        _add_toc_field(doc, 'TOC \\h \\z \\c "{}"'.format(_t("Table")))
+        added = True
+    if added:
+        _end_page(doc)
+
+
+def _add_toc_field(doc, instruction):
+    """Insert a Word TOC-family field that populates on open or F9."""
     paragraph = doc.add_paragraph()
     run = paragraph.add_run()
     fldChar1 = parse_xml(
@@ -2225,8 +5859,8 @@ def _add_word_toc(doc):
     run._r.append(fldChar1)
     run2 = paragraph.add_run()
     instrText = parse_xml(
-        '<w:instrText {} xml:space="preserve"> TOC \\o "1-2" \\h \\z \\u </w:instrText>'.format(
-            nsdecls("w")
+        '<w:instrText {} xml:space="preserve"> {} </w:instrText>'.format(
+            nsdecls("w"), instruction
         )
     )
     run2._r.append(instrText)
@@ -2235,7 +5869,7 @@ def _add_word_toc(doc):
         '<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))
     )
     run3._r.append(fldChar2)
-    run4 = paragraph.add_run("(Right-click and select 'Update Field' to populate)")
+    run4 = paragraph.add_run(_t("(Right-click and select 'Update Field' to populate)"))
     run4.font.color.rgb = RGBColor(128, 128, 128)
     run4.font.italic = True
     run5 = paragraph.add_run()
@@ -2243,9 +5877,7 @@ def _add_word_toc(doc):
         '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))
     )
     run5._r.append(fldChar3)
-    # Tell Word to update all fields (incl. this TOC) when the document is opened
-    _set_update_fields_on_open(doc)
-    doc.add_page_break()
+    return paragraph
 
 
 def _set_update_fields_on_open(doc):
@@ -2261,19 +5893,285 @@ def _set_update_fields_on_open(doc):
         update.set(qn("w:val"), "true")
 
 
+def _heading_levels_by_style(doc):
+    """Map paragraph style id -> heading level for 'Heading 1..9' styles."""
+    levels = {}
+    for style in doc.styles:
+        match = re.match(r"^heading\s+(\d)$", (style.name or "").strip(), re.IGNORECASE)
+        if match and style.style_id:
+            levels[style.style_id] = int(match.group(1))
+    return levels
+
+
+def _collect_toc_entries(doc):
+    """Return (headings [(level, text)], captions {seq label: [text]}) in document order."""
+    levels = _heading_levels_by_style(doc)
+    headings, captions = [], {}
+    for p in doc.element.body.iter(qn("w:p")):
+        instr = "".join(t.text or "" for t in p.iter(qn("w:instrText")))
+        if instr.strip().startswith("TOC"):
+            continue
+        text = "".join(t.text or "" for t in p.iter(qn("w:t"))).strip()
+        if not text:
+            continue
+        seq = re.search(r"\bSEQ\s+\"?([^\s\"\\]+)", instr)
+        if seq:
+            captions.setdefault(seq.group(1), []).append(text)
+            continue
+        style = p.find(qn("w:pPr") + "/" + qn("w:pStyle"))
+        level = levels.get(style.get(qn("w:val"))) if style is not None else None
+        if level:
+            headings.append((level, text))
+    return headings, captions
+
+
+def _write_field_result(doc, field_p, entries, style_for_level):
+    """Replace a TOC field's placeholder result with one paragraph per entry.
+
+    The field keeps its begin/instr/separate runs in the first paragraph and its
+    end run moves to the last one, so Word still sees one field and F9 or the
+    automatic update replaces the whole result (adding page numbers).
+    """
+    runs = list(field_p.iter(qn("w:r")))
+    kinds = [(r, r.find(qn("w:fldChar"))) for r in runs]
+    sep = next(r for r, f in kinds if f is not None and f.get(qn("w:fldCharType")) == "separate")
+    end = next(r for r, f in kinds if f is not None and f.get(qn("w:fldCharType")) == "end")
+    for r in runs[runs.index(sep) + 1:runs.index(end) + 1]:
+        field_p.remove(r)
+    previous = field_p
+    for index, (level, text) in enumerate(entries):
+        if index == 0:
+            p_el = field_p
+        else:
+            p_el = OxmlElement("w:p")
+            previous.addnext(p_el)
+        paragraph = Paragraph(p_el, doc._body)
+        style_name = style_for_level(level)
+        try:
+            paragraph.style = doc.styles[style_name]
+        except KeyError:
+            paragraph.paragraph_format.left_indent = Inches(0.25 * (level - 1))
+        paragraph.paragraph_format.space_after = Pt(2)
+        paragraph.add_run(text)
+        previous = p_el
+    previous.append(end)
+
+
+def _prefill_toc_fields(doc):
+    """Write the current headings and captions into every TOC-family field result.
+
+    Without this the contents, list of figures and list of tables show only a
+    placeholder until someone updates fields in Word; viewers that never update
+    fields (Word Online, Teams/SharePoint preview, LibreOffice) show nothing.
+    Page numbers are added when Word updates the fields.
+    """
+    headings, captions = _collect_toc_entries(doc)
+    for p in list(doc.element.body.iter(qn("w:p"))):
+        instr = "".join(t.text or "" for t in p.iter(qn("w:instrText"))).strip()
+        if not instr.startswith("TOC"):
+            continue
+        caption = re.search(r'\\c\s+"([^"]+)"', instr)
+        if caption:
+            entries = [(1, text) for text in captions.get(caption.group(1), [])]
+            style_for_level = lambda level: "Table of Figures"  # noqa: E731
+        else:
+            outline = re.search(r'\\o\s+"(\d)-(\d)"', instr)
+            deepest = int(outline.group(2)) if outline else 3
+            entries = [(level, text) for level, text in headings if level <= deepest]
+            style_for_level = lambda level: "TOC {}".format(level)  # noqa: E731
+        if entries:
+            _write_field_result(doc, p, entries, style_for_level)
+
+
+_WORD_FIELD_UPDATE_SCRIPT = r'''
+import sys
+import pythoncom
+import win32com.client
+pythoncom.CoInitialize()
+word = win32com.client.DispatchEx("Word.Application")
+word.Visible = False
+word.DisplayAlerts = 0
+doc = word.Documents.Open(sys.argv[1], ConfirmConversions=False, ReadOnly=False,
+                          AddToRecentFiles=False, Visible=False)
+try:
+    doc.Fields.Update()
+    for i in range(1, doc.TablesOfContents.Count + 1):
+        doc.TablesOfContents(i).Update()
+    for i in range(1, doc.TablesOfFigures.Count + 1):
+        doc.TablesOfFigures(i).Update()
+    doc.Repaginate()
+    # Filling the lists moves the body, so refresh page numbers once more.
+    for i in range(1, doc.TablesOfContents.Count + 1):
+        doc.TablesOfContents(i).UpdatePageNumbers()
+    for i in range(1, doc.TablesOfFigures.Count + 1):
+        doc.TablesOfFigures(i).UpdatePageNumbers()
+    doc.Fields.Update()
+    doc.Save()
+finally:
+    doc.Close(0)
+    word.Quit()
+    pythoncom.CoUninitialize()
+'''
+
+
+def _clear_update_fields_flag(docx_path):
+    """Remove w:updateFields so Word does not ask to update an already-updated document."""
+    import zipfile
+    tmp_path = docx_path + ".tmp"
+    with zipfile.ZipFile(docx_path) as src, zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_DEFLATED) as dst:
+        for item in src.infolist():
+            data = src.read(item.filename)
+            if item.filename == "word/settings.xml":
+                data = re.sub(rb"<w:updateFields\b[^>]*/>", b"", data)
+            dst.writestr(item, data)
+    os.replace(tmp_path, docx_path)
+
+
+def update_word_fields(docx_path, timeout=240):
+    """Let Microsoft Word fill the TOC, lists of figures/tables and page numbers.
+
+    Runs by default on Windows when Word and pywin32 are available; disable with
+    ``--no-field-update`` or ``NEQSIM_REPORT_FIELD_UPDATE=0``. Word runs in a
+    child process on a %TEMP% copy (Word automation can hang on OneDrive paths),
+    and any failure leaves the pre-filled document, which still carries the
+    update-on-open flag.
+
+    Returns
+    -------
+    str or None
+        ``None`` when Word updated the document, otherwise why it did not.
+    """
+    if "--no-field-update" in sys.argv or os.environ.get("NEQSIM_REPORT_FIELD_UPDATE", "1") == "0":
+        return "disabled"
+    if os.name != "nt":
+        return "Microsoft Word automation is only available on Windows"
+    try:
+        import win32com.client  # noqa: F401
+    except ImportError:
+        return "pywin32 is not installed"
+    import tempfile
+    workdir = tempfile.mkdtemp(prefix="neqsim_fields_")
+    work = os.path.join(workdir, "report.docx")
+    try:
+        shutil.copy2(docx_path, work)
+        _clear_update_fields_flag(work)
+        try:
+            completed = subprocess.run([sys.executable, "-c", _WORD_FIELD_UPDATE_SCRIPT, work],
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                       timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return "Word did not finish within {} s".format(timeout)
+        if completed.returncode != 0:
+            tail = completed.stdout.decode("utf-8", "replace").strip().splitlines()[-1:]
+            return "Word automation failed ({})".format(tail[0] if tail else completed.returncode)
+        try:
+            shutil.copy2(work, docx_path)
+        except PermissionError:
+            return "{} is open in Word or locked by OneDrive".format(os.path.basename(docx_path))
+        return None
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+def finalize_word_fields(docx_path, label="Report"):
+    """Update fields through Word and report the outcome in one line."""
+    reason = update_word_fields(docx_path)
+    if reason is None:
+        print("{}: table of contents, lists of figures/tables and page numbers filled by Word.".format(label))
+    elif reason != "disabled":
+        print("{}: contents and lists pre-filled without page numbers ({}); "
+              "Word adds page numbers when the file is opened.".format(label, reason))
+    return reason is None
+
+
+def _add_page_number_footer(doc):
+    """Add "<title> | <doc no> | Page X of Y" to the footer of every section.
+
+    Skipped when a corporate template is used, because the template owns its
+    own headers and footers.
+    """
+    if REPORT_TEMPLATE:
+        return
+    label = "{} | {} Rev {} | Page ".format(TITLE, _auto_doc_number(), REVISION)
+    for section in doc.sections:
+        footer = section.footer
+        paragraph = footer.paragraphs[0] if footer.paragraphs \
+            else footer.add_paragraph()
+        paragraph.text = ""
+        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = paragraph.add_run(label)
+        run.font.size = Pt(8)
+        run.font.color.rgb = RGBColor(120, 120, 120)
+        _add_field(paragraph, "PAGE")
+        run = paragraph.add_run(" of ")
+        run.font.size = Pt(8)
+        run.font.color.rgb = RGBColor(120, 120, 120)
+        _add_field(paragraph, "NUMPAGES")
+
+
+def _add_field(paragraph, instruction):
+    """Append a Word field (e.g. PAGE, NUMPAGES) to a paragraph."""
+    run = paragraph.add_run()
+    run.font.size = Pt(8)
+    run.font.color.rgb = RGBColor(120, 120, 120)
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
+    run._r.append(parse_xml(
+        '<w:instrText {} xml:space="preserve"> {} </w:instrText>'.format(
+            nsdecls("w"), instruction)))
+    run._r.append(parse_xml(
+        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
+
+
+def _add_task_statement_block(doc):
+    """State the task at the very start of the report body."""
+    if not TASK_STATEMENT:
+        return
+    heading = doc.add_paragraph()
+    run = heading.add_run(_t("Task"))
+    run.bold = True
+    run.font.size = Pt(12)
+    run.font.color.rgb = RGBColor(47, 84, 150)
+
+    box = doc.add_table(rows=1, cols=1)
+    box.alignment = WD_TABLE_ALIGNMENT.CENTER
+    cell = box.rows[0].cells[0]
+    cell._tc.get_or_add_tcPr().append(
+        parse_xml('<w:shd {} w:fill="F3F6FB"/>'.format(nsdecls("w"))))
+    cell.text = ""
+    paragraph = cell.paragraphs[0]
+    run = paragraph.add_run(TASK_STATEMENT)
+    run.font.size = Pt(BODY_PT)
+    if STUDY_BADGES:
+        meta = cell.add_paragraph()
+        run = meta.add_run("  |  ".join(
+            "{}: {}".format(label, value) for label, value in STUDY_BADGES))
+        run.font.size = Pt(CAPTION_PT)
+        run.font.italic = True
+        run.font.color.rgb = RGBColor(110, 110, 110)
+    doc.add_paragraph("")
+
+
 def build_word_report(sections, results=None):
     """Build the Word document with cover page, TOC, numbered figures, and equations."""
-    doc = Document()
+    doc = _new_document()
 
     # Cover page with metadata and revision history
     _add_cover_page(doc)
 
     # Table of Contents
     _add_word_toc(doc)
+    _add_figure_and_table_lists(doc, results)
+
+    # The task this report answers, stated before any analysis
+    _add_task_statement_block(doc)
 
     # Add all sections
     for section in sections:
-        doc.add_heading(section["heading"], level=1)
+        heading = _add_heading(doc, section["heading"], level=1,
+                               numbered=not section.get("appendix"))
+        if section.get("appendix"):
+            heading.paragraph_format.page_break_before = True
 
         # Results section: use Word table instead of plain text
         if section.get("has_figures") and results and results.get("key_results"):
@@ -2283,13 +6181,13 @@ def build_word_report(sections, results=None):
                 add_custom_word_tables(doc, results)
         elif section.get("has_figures"):
             # No results data — show placeholder text
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    doc.add_paragraph(para_text.strip())
-        elif section.get("has_scope"):
+            for para_text in _body_paragraphs(section["content"]):
+                doc.add_paragraph(para_text)
+        elif section.get("has_scope") or section.get("has_markdown"):
             # Scope section: parse markdown tables, bold, and lists
             render_scope_to_word(doc, section["content"])
-        elif "Validation" in section["heading"] and results and results.get("validation"):
+        elif (section.get("has_validation") and not section.get("has_benchmark")
+              and results and results.get("validation")):
             # Validation section: use Word table
             add_validation_word_table(doc, results)
         elif section.get("has_benchmark") and results:
@@ -2307,11 +6205,15 @@ def build_word_report(sections, results=None):
         elif section.get("has_discussion") and results:
             # Discussion section: figure-by-figure interpretation
             add_discussion_word(doc, results)
+        elif section.get("has_depth") and results:
+            # Analytical Depth: ranking, rule-outs, robustness, crossover
+            add_depth_word_section(doc, results)
+        elif section.get("has_references") and results and results.get("references"):
+            add_references_word(doc, results)
         else:
-            # Regular text content
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    doc.add_paragraph(para_text.strip())
+            # Regular text content (bold spans and $...$ inline maths render)
+            for para_text in _word_paragraphs(section["content"]):
+                _add_bold_runs(doc.add_paragraph(), para_text)
 
         # Embed figures after Results section
         if section.get("has_figures"):
@@ -2319,14 +6221,8 @@ def build_word_report(sections, results=None):
             if figures:
                 for fig_idx, fig_path in enumerate(figures, 1):
                     caption_text = get_figure_caption(fig_path, results, fig_idx)
-                    doc.add_picture(fig_path, width=Inches(6.0))
-                    last_para = doc.paragraphs[-1]
-                    last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption = doc.add_paragraph(caption_text)
-                    caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption.runs[0].font.size = Pt(9)
-                    caption.runs[0].font.italic = True
-                    doc.add_paragraph("")
+                    _add_figure_picture(doc, fig_path)
+                    _add_caption(doc, _t("Figure"), caption_text)
             else:
                 doc.add_paragraph(
                     "[No figures found in figures/ directory. "
@@ -2337,36 +6233,37 @@ def build_word_report(sections, results=None):
         if section.get("has_equations"):
             equations = get_equations(results)
             if equations:
-                doc.add_heading("Key Equations", level=2)
+                _add_heading(doc, _t("Key Equations"), level=2)
                 eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
                 if not os.path.exists(eq_img_dir):
                     os.makedirs(eq_img_dir)
                 for eq_idx, eq in enumerate(equations, 1):
-                    label = eq.get("label", "Equation {}".format(eq_idx))
+                    label = eq.get("label", "")
                     latex = eq.get("latex", "")
                     if not latex:
                         continue
-                    # Try to render equation as image
                     eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
                     if render_equation_to_image(latex, eq_img_path):
-                        doc.add_paragraph("")
-                        doc.add_picture(eq_img_path, width=Inches(5.5))
-                        last_para = doc.paragraphs[-1]
-                        last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        caption = doc.add_paragraph(
-                            "Equation {}: {}".format(eq_idx, label)
-                        )
-                        caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        caption.runs[0].font.size = Pt(9)
-                        caption.runs[0].font.italic = True
+                        _add_display_equation(doc, eq_img_path, label,
+                                              _text_width_in(doc))
                     else:
-                        # Fallback: text representation
-                        doc.add_paragraph("{}: {}".format(label, latex))
-                    doc.add_paragraph("")
+                        _add_equation_fallback_paragraph(doc, label, latex)
 
     # Save
-    doc.save(DOCX_FILE)
+    _prefill_toc_fields(doc)
+    _add_page_number_footer(doc)
+    _save_docx(doc, DOCX_FILE)
     print("Word report saved: {}".format(DOCX_FILE))
+
+
+def _save_docx(doc, path):
+    """Save a Word document, exiting with a clear message when it is open in Word."""
+    try:
+        doc.save(path)
+    except PermissionError:
+        print("ERROR: cannot write {} - it is open in Word or locked by "
+              "OneDrive. Close it and run the report again.".format(path))
+        sys.exit(3)
 
 
 # ══════════════════════════════════════════════════════════
@@ -2378,7 +6275,7 @@ def _build_rev_rows_html():
     """Build HTML table rows for revision history in the HTML report."""
     rev_entries = REVISION_HISTORY or [
         {"rev": REVISION, "date": TASK_DATE,
-         "description": "Initial issue", "author": AUTHOR or ""}
+         "description": _t("Initial issue"), "author": AUTHOR or ""}
     ]
     rows = ""
     for entry in rev_entries:
@@ -2386,6 +6283,35 @@ def _build_rev_rows_html():
             entry.get("rev", ""), entry.get("date", ""),
             entry.get("description", ""), entry.get("author", ""))
     return rows
+
+
+def _html_escape(text):
+    """Escape the characters that would break generated HTML."""
+    return (str(text).replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;"))
+
+
+def _build_badges_html():
+    """Build the study-depth badge row shown under the report title."""
+    if not STUDY_BADGES:
+        return ""
+    spans = "".join(
+        "<span>{}: {}</span>".format(_html_escape(label), _html_escape(value))
+        for label, value in STUDY_BADGES)
+    return '<p class="study-badges">{}</p>'.format(spans)
+
+
+def _build_task_block_html():
+    """Build the task statement shown at the very start of the report body."""
+    if not TASK_STATEMENT:
+        return ""
+    return (
+        '<div class="task-statement">\n'
+        '    <h2>{}</h2>\n'
+        '    <p>{}</p>\n'
+        '</div>'.format(_html_escape(_t("Task")),
+                        _html_escape(TASK_STATEMENT))
+    )
 
 
 def build_html_report(sections, results=None):
@@ -2418,7 +6344,7 @@ def build_html_report(sections, results=None):
     equation_html = ""
     equations = get_equations(results)
     if equations:
-        equation_html += '<h3>Key Equations</h3>\n'
+        equation_html += '<h3>{}</h3>\n'.format(_t("Key Equations"))
         # Pre-render equation images for offline fallback
         eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
         if not os.path.exists(eq_img_dir):
@@ -2472,10 +6398,10 @@ def build_html_report(sections, results=None):
             section_id, section["heading"]
         )
         # Convert scope section markdown to HTML
-        if section.get("has_scope"):
+        if section.get("has_scope") or section.get("has_markdown"):
             content = scope_content_to_html(section["content"])
         else:
-            content = section["content"].replace("\n", "<br>")
+            content = _prose_to_html(section["content"])
 
         # Insert auto-generated HTML for special sections
         if section.get("has_figures"):
@@ -2487,7 +6413,7 @@ def build_html_report(sections, results=None):
         if section.get("has_equations") and equation_html:
             content += equation_html
 
-        if "Validation" in section["heading"] and validation_html:
+        if section.get("has_validation") and validation_html:
             content = validation_html
 
         if section.get("has_benchmark") and results:
@@ -2504,6 +6430,9 @@ def build_html_report(sections, results=None):
 
         if section.get("has_discussion") and results:
             content = format_discussion_html(results)
+
+        if section.get("has_depth") and results:
+            content = format_depth_html(results)
 
         if section.get("has_references") and results and results.get("references"):
             content = format_references_html(results)
@@ -2549,7 +6478,7 @@ def build_html_report(sections, results=None):
     </script>"""
 
     html = """<!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2574,8 +6503,21 @@ def build_html_report(sections, results=None):
         .meta {{ color: #666; margin-bottom: 2rem; }}
         .cover-page {{ text-align: center; padding: 3rem 0; margin-bottom: 2rem;
                        border-bottom: 3px solid #2F5496; }}
-        .cover-page h1 {{ font-size: 2.2rem; color: #2F5496; margin-bottom: 0.5rem; }}
-        .cover-page .subtitle {{ font-size: 1.1rem; color: #888; margin-bottom: 2rem; }}
+        .cover-page h1 {{ font-size: 2.2rem; color: #2F5496; margin-bottom: 0.5rem;
+                          line-height: 1.25; }}
+        .cover-page .subtitle {{ font-size: 1.1rem; color: #888; margin-bottom: 0.8rem; }}
+        .study-badges {{ margin-bottom: 1.5rem; }}
+        .study-badges span {{ display: inline-block; margin: 0 0.25rem 0.35rem 0;
+                       padding: 0.15rem 0.6rem; font-size: 0.78rem; color: #2F5496;
+                       background: #eef2fa; border: 1px solid #d4ddef;
+                       border-radius: 999px; }}
+        .task-statement {{ border-left: 4px solid #2F5496; background: #f3f6fb;
+                       padding: 1rem 1.2rem; margin: 0 0 2rem 0;
+                       border-radius: 0 4px 4px 0; }}
+        .task-statement h2 {{ margin: 0 0 0.4rem 0; border: none; padding: 0;
+                       font-size: 1.05rem; color: #2F5496;
+                       text-transform: uppercase; letter-spacing: 0.06em; }}
+        .task-statement p {{ margin: 0; }}
         .cover-meta {{ display: inline-block; text-align: left; margin: 1rem auto;
                        background: #f8f9fa; padding: 1rem 2rem; border-radius: 6px;
                        border: 1px solid #e0e0e0; }}
@@ -2589,6 +6531,14 @@ def build_html_report(sections, results=None):
         .figure img {{ max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
         .caption {{ font-size: 0.85rem; color: #666; font-style: italic;
                     margin-top: 0.3rem; }}
+        .table-caption {{ font-size: 0.85rem; color: #555; font-style: italic;
+                    margin: 1.4rem 0 0.2rem 0; }}
+        .table-caption + table {{ margin-top: 0; }}
+        .depth-score {{ background: #f3f6fb; border-left: 4px solid #2F5496;
+                    padding: 0.5rem 0.9rem; margin-bottom: 1rem;
+                    border-radius: 0 4px 4px 0; }}
+        .depth-hint {{ font-size: 0.85rem; color: #777; font-style: italic;
+                    margin-bottom: 0.4rem; }}
         .equation-block {{ margin: 1.5rem 0; text-align: center; }}
         .equation {{ font-size: 1.2rem; padding: 0.5rem 0; }}
         .equation-label {{ font-size: 0.85rem; color: #666; font-style: italic;
@@ -2650,41 +6600,71 @@ def build_html_report(sections, results=None):
             nav {{ position: static; width: 100%; min-height: auto; }}
             main {{ margin-left: 0; padding: 1rem; }}
         }}
+        @media print {{
+            @page {{ size: A4 portrait; margin: 20mm 18mm 18mm 20mm; }}
+            nav {{ display: none; }}
+            main {{ margin-left: 0; max-width: 100%; padding: 0; }}
+            body {{ display: block; font-size: 10.5pt; color: #000; }}
+            .cover-page {{ page-break-after: always; }}
+            section {{ page-break-inside: auto; }}
+            .figure, table, .discussion-block {{ page-break-inside: avoid; }}
+            thead {{ display: table-header-group; }}
+            tr {{ page-break-inside: avoid; }}
+            h2, h3 {{ page-break-after: avoid; break-after: avoid; }}
+            .table-caption {{ page-break-after: avoid; }}
+            p {{ orphans: 3; widows: 3; }}
+            a {{ color: #000; text-decoration: none; }}
+        }}
     </style>
 </head>
 <body>
     <nav>
-        <h3>Contents</h3>
+        <h3>{contents_label}</h3>
         <ul>
 {nav}
         </ul>
         <hr style="margin: 1rem 0;">
         <p style="font-size: 0.8rem; color: #999;">{doc_num}</p>
-        <p style="font-size: 0.8rem; color: #999;">Rev {rev} | {date}</p>
+        <p style="font-size: 0.8rem; color: #999;">{rev_label} {rev} | {date}</p>
     </nav>
     <main>
         <div class="cover-page">
             <h1>{title}</h1>
-            <p class="subtitle">NeqSim Engineering Report</p>
+            <p class="subtitle">{subtitle}</p>
+            {badges}
             <table class="cover-meta">
-                <tr><td>Document No.</td><td>{doc_num}</td></tr>
-                <tr><td>Revision</td><td>{rev}</td></tr>
-                <tr><td>Date</td><td>{date}</td></tr>
-                <tr><td>Author</td><td>{author}</td></tr>
-                <tr><td>Classification</td><td>{classification}</td></tr>
+                <tr><td>{doc_num_label}</td><td>{doc_num}</td></tr>
+                <tr><td>{revision_label}</td><td>{rev}</td></tr>
+                <tr><td>{date_label}</td><td>{date}</td></tr>
+                <tr><td>{author_label}</td><td>{author}</td></tr>
+                <tr><td>{classification_label}</td><td>{classification}</td></tr>
             </table>
-            <h3 style="margin-top: 2rem; color: #2F5496;">Revision History</h3>
+            <h3 style="margin-top: 2rem; color: #2F5496;">{rev_history_label}</h3>
             <table class="rev-table">
-                <thead><tr><th>Rev</th><th>Date</th><th>Description</th><th>Author</th></tr></thead>
+                <thead><tr><th>{rev_label}</th><th>{date_label}</th><th>{description_label}</th><th>{author_label}</th></tr></thead>
                 <tbody>{rev_rows}</tbody>
             </table>
         </div>
+{task_block}
 {sections}
     </main>{katex_body_script}
 </body>
 </html>""".format(
         title=TITLE,
-        author=AUTHOR or "(not specified)",
+        lang=_report_locale(),
+        subtitle=_t("NeqSim Engineering Report"),
+        contents_label=_t("Contents"),
+        doc_num_label=_t("Document No."),
+        revision_label=_t("Revision"),
+        date_label=_t("Date"),
+        author_label=_t("Author"),
+        classification_label=_t("Classification"),
+        description_label=_t("Description"),
+        rev_history_label=_t("Revision History"),
+        rev_label=_t("Rev"),
+        badges=_build_badges_html(),
+        task_block=_build_task_block_html(),
+        author=AUTHOR or _t("(not specified)"),
         date=TASK_DATE,
         doc_num=_auto_doc_number(),
         rev=REVISION,
@@ -2914,7 +6894,7 @@ def build_paper_sections(results, task_spec):
     if results and results.get("references"):
         ref_lines = []
         for i, ref in enumerate(results["references"], 1):
-            ref_text = ref.get("text", "")
+            ref_text = _reference_text(ref)
             ref_lines.append("[{}] {}".format(i, ref_text))
         refs_content = "\n".join(ref_lines)
     elif not MANUAL_SECTIONS["references"].startswith("["):
@@ -2949,6 +6929,9 @@ def build_paper_docx(sections, results=None):
     Uses standard academic formatting: Times New Roman, single-column,
     numbered sections, centered title/author block, italic abstract,
     numbered figures and equations.
+
+    The corporate report template is deliberately not applied here: a journal
+    manuscript follows the journal's format, not company branding.
     """
     doc = Document()
 
@@ -3041,11 +7024,11 @@ def build_paper_docx(sections, results=None):
 
         # Heading level
         if stype == "abstract":
-            h = doc.add_heading(heading_text, level=1)
+            h = _add_heading(doc, heading_text, level=1, numbered=False)
         elif is_sub:
-            h = doc.add_heading(heading_text, level=2)
+            h = _add_heading(doc, heading_text, level=2)
         else:
-            h = doc.add_heading(heading_text, level=1)
+            h = _add_heading(doc, heading_text, level=1)
 
         # Style heading runs as Times New Roman
         for run in h.runs:
@@ -3053,17 +7036,16 @@ def build_paper_docx(sections, results=None):
 
         # Abstract is italic
         if stype == "abstract":
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    p = doc.add_paragraph()
-                    r = p.add_run(para_text.strip())
-                    r.font.italic = True
-                    r.font.size = Pt(10)
-                    r.font.name = "Times New Roman"
+            for para_text in _body_paragraphs(section["content"]):
+                p = doc.add_paragraph()
+                r = p.add_run(para_text)
+                r.font.italic = True
+                r.font.size = Pt(10)
+                r.font.name = "Times New Roman"
         elif stype == "references" and results and results.get("references"):
             # Numbered reference list
             for i, ref in enumerate(results["references"], 1):
-                ref_text = ref.get("text", "")
+                ref_text = _reference_text(ref)
                 p = doc.add_paragraph()
                 p.paragraph_format.left_indent = Inches(0.3)
                 p.paragraph_format.first_line_indent = Inches(-0.3)
@@ -3082,10 +7064,10 @@ def build_paper_docx(sections, results=None):
             # Discussion text
             disc = section["content"]
             if disc and not disc.startswith("["):
-                for para_text in disc.split("\n\n"):
-                    if para_text.strip():
-                        doc.add_paragraph(para_text.strip())
-        elif "Validation" in section["heading"] and results and results.get("validation"):
+                for para_text in _body_paragraphs(disc):
+                    doc.add_paragraph(para_text)
+        elif ("Validation" in section["heading"] and not section.get("has_benchmark")
+              and results and results.get("validation")):
             add_validation_word_table(doc, results)
         elif section.get("has_benchmark") and results:
             add_benchmark_word_table(doc, results)
@@ -3093,18 +7075,17 @@ def build_paper_docx(sections, results=None):
             add_uncertainty_word_tables(doc, results)
         elif section.get("has_risk") and results:
             add_risk_word_table(doc, results)
-        elif section.get("has_scope", False):
+        elif section.get("has_scope", False) or section.get("has_markdown", False):
             render_scope_to_word(doc, section["content"])
         else:
             # Regular text content
-            for para_text in section["content"].split("\n\n"):
-                if para_text.strip():
-                    p = doc.add_paragraph()
-                    _add_bold_runs(p, para_text.strip())
-                    for run in p.runs:
-                        run.font.name = "Times New Roman"
-                        if not run.font.size:
-                            run.font.size = Pt(11)
+            for para_text in _body_paragraphs(section["content"]):
+                p = doc.add_paragraph()
+                _add_bold_runs(p, para_text)
+                for run in p.runs:
+                    run.font.name = "Times New Roman"
+                    if not run.font.size:
+                        run.font.size = Pt(11)
 
         # Embed equations after Methodology section
         if section.get("has_equations"):
@@ -3122,20 +7103,9 @@ def build_paper_docx(sections, results=None):
                     eq_img_path = os.path.join(
                         eq_img_dir, "eq_{}.png".format(eq_counter[0]))
                     if render_equation_to_image(latex, eq_img_path):
-                        doc.add_paragraph("")
-                        doc.add_picture(eq_img_path, width=Inches(5.0))
-                        last_para = doc.paragraphs[-1]
-                        last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        cap = doc.add_paragraph(
-                            "({}){}".format(
-                                eq_counter[0],
-                                "  " + label if label else ""))
-                        cap.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-                        for run in cap.runs:
-                            run.font.size = Pt(10)
-                            run.font.name = "Times New Roman"
+                        _add_display_equation(doc, eq_img_path, label, 5.0)
                     else:
-                        doc.add_paragraph("{}: {}".format(label, latex))
+                        _add_equation_fallback_paragraph(doc, label, latex)
 
         # Embed figures after Results section
         if section.get("has_figures"):
@@ -3146,13 +7116,11 @@ def build_paper_docx(sections, results=None):
                     caption_text = get_figure_caption(
                         fig_path, results, fig_counter[0])
                     doc.add_paragraph("")
-                    doc.add_picture(fig_path, width=Inches(5.5))
-                    last_para = doc.paragraphs[-1]
-                    last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    _add_figure_picture(doc, fig_path)
                     cap = doc.add_paragraph(caption_text)
                     cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     for run in cap.runs:
-                        run.font.size = Pt(9)
+                        run.font.size = Pt(CAPTION_PT)
                         run.font.name = "Times New Roman"
                         run.font.italic = True
                     doc.add_paragraph("")
@@ -3161,7 +7129,7 @@ def build_paper_docx(sections, results=None):
         if section.get("has_discussion") and results:
             add_discussion_word(doc, results)
 
-    doc.save(PAPER_DOCX_FILE)
+    _save_docx(doc, PAPER_DOCX_FILE)
     print("Scientific paper (Word) saved: {}".format(PAPER_DOCX_FILE))
 
 
@@ -3270,7 +7238,7 @@ def build_paper_html(sections, results=None):
         # Content formatting
         if stype == "abstract":
             content = '<div class="abstract-text">{}</div>'.format(
-                section["content"].replace("\n\n", "</p><p>").replace("\n", "<br>"))
+                _prose_to_html(section["content"]))
         elif stype == "references" and results and results.get("references"):
             content = format_references_html(results)
         elif section.get("has_figures") and results and results.get("key_results"):
@@ -3280,8 +7248,7 @@ def build_paper_html(sections, results=None):
             # Add discussion text
             disc = section["content"]
             if disc and not disc.startswith("["):
-                content += "<p>{}</p>".format(
-                    disc.replace("\n\n", "</p><p>").replace("\n", "<br>"))
+                content += _prose_to_html(disc)
             # Add figures
             if figures:
                 for fig_path in figures:
@@ -3294,11 +7261,10 @@ def build_paper_html(sections, results=None):
             content = format_uncertainty_html(results)
         elif section.get("has_risk") and results:
             content = format_risk_html(results)
-        elif section.get("has_scope", False):
+        elif section.get("has_scope", False) or section.get("has_markdown", False):
             content = scope_content_to_html(section["content"])
         else:
-            content = section["content"].replace("\n\n", "</p><p>").replace(
-                "\n", "<br>")
+            content = _prose_to_html(section["content"])
 
         # Add figure discussion after figures in Results & Discussion
         if section.get("has_discussion") and results:
@@ -3493,14 +7459,60 @@ if __name__ == "__main__":
     generate_paper = "--paper" in sys.argv or "--paper-only" in sys.argv
     paper_only = "--paper-only" in sys.argv
 
-    print("Generating outputs for: {}".format(TITLE))
-    print("")
+    # Word template selection: --template PATH | --no-template | saved setting
+    explicit_template = None
+    if "--template" in sys.argv:
+        template_index = sys.argv.index("--template") + 1
+        if template_index >= len(sys.argv):
+            print("ERROR: --template requires a path to a .docx or .dotx file")
+            sys.exit(2)
+        explicit_template = sys.argv[template_index]
+    KEEP_TEMPLATE_CONTENT = "--keep-template-content" in sys.argv
+    study_config = load_study_config()
+    try:
+        REPORT_TEMPLATE = resolve_report_template(
+            explicit_template, allow_saved="--no-template" not in sys.argv,
+            configured=study_config.get("report", {}).get("template"))
+    except (OSError, ValueError) as error:
+        print("ERROR: {}".format(error))
+        print("Fix the path, set report.template in study_config.yaml, pass --template PATH, or run:")
+        print("  neqsim --set-report-template \"PATH\"   (or --reset-report-template)")
+        sys.exit(2)
 
     # Auto-read task data
-    study_config = load_study_config()
     results = load_results()
     task_spec = load_task_spec()
+    record_environment(results)
+    REPORT_LANGUAGE = resolve_report_language(study_config)  # before identity: badges are translated
+    resolve_report_identity(study_config, task_spec, results)
+    apply_report_output_names(TITLE)
+
+    print("")
+    print("Generating outputs for: {}".format(TITLE))
+    REPORT_ORIENTATION = resolve_report_orientation(study_config)
+    if REPORT_LANGUAGE != DEFAULT_REPORT_LANGUAGE:
+        print("Report language: {} ({})".format(REPORT_LANGUAGE, _report_locale()))
+    pdf_requested = want_pdf_output(study_config)
+    print("Report files: {}.docx / {}.html{}".format(
+        REPORT_BASENAME, REPORT_BASENAME,
+        " / {}.pdf".format(REPORT_BASENAME) if pdf_requested else ""))
+    if REPORT_TEMPLATE:
+        print("Word template: {}".format(REPORT_TEMPLATE))
+    if not TASK_STATEMENT:
+        print("NOTE: no task statement found. Add study.title to study_config.yaml,")
+        print("      an '## Objective' section to task_spec.md, or 'objective' to")
+        print("      results.json so the report states the task up front.")
+
     study_config_warnings = validate_study_config(study_config, results, task_spec)
+    consistency_issues = check_report_consistency(results)
+    print_consistency_report(consistency_issues)
+    calculation_issues = [issue for issue in consistency_issues
+                          if issue.get("fix_type") == "calculation"]
+    fixes_path = os.path.join(TASK_DIR, "fixes_needed.json")
+    if calculation_issues or os.path.exists(fixes_path):
+        with open(fixes_path, "w", encoding="utf-8") as handle:
+            json.dump(calculation_issues, handle, indent=2, ensure_ascii=False)
+            handle.write("\n")
     if study_config_warnings:
         print("")
         print("Study configuration warnings:")
@@ -3509,14 +7521,24 @@ if __name__ == "__main__":
 
     if not paper_only:
         # Build report sections and generate technical report
-        sections = build_sections(results, task_spec, study_config_warnings)
+        sections = build_sections(results, task_spec, study_config_warnings,
+                                  study_config, consistency_issues)
         print("")
         build_word_report(sections, results)
+        finalize_word_fields(DOCX_FILE, "Report")
         build_html_report(sections, results)
+        report_pdf_written = False
+        if pdf_requested:
+            report_pdf_written = convert_docx_to_pdf(DOCX_FILE, PDF_FILE, "Report")
         print("")
         print("Technical reports generated.")
-        print("  Open Report.html in a browser for navigable view.")
-        print("  Open Report.docx for formal distribution.")
+        print("  Open {} in a browser for navigable view.".format(
+            os.path.basename(HTML_FILE)))
+        print("  Open {} for formal distribution.".format(
+            os.path.basename(DOCX_FILE)))
+        if report_pdf_written:
+            print("  Open {} for read-only distribution.".format(
+                os.path.basename(PDF_FILE)))
 
     if generate_paper:
         # Build paper sections and generate scientific paper
@@ -3524,15 +7546,38 @@ if __name__ == "__main__":
         print("")
         build_paper_docx(paper_sections, results)
         build_paper_html(paper_sections, results)
+        paper_pdf_written = False
+        if pdf_requested:
+            paper_pdf_written = convert_docx_to_pdf(
+                PAPER_DOCX_FILE, PAPER_PDF_FILE, "Paper")
         print("")
         print("Scientific papers generated.")
-        print("  Open Paper.html in a browser for reading.")
-        print("  Open Paper.docx for journal submission / distribution.")
+        print("  Open {} for reading.".format(os.path.basename(PAPER_HTML_FILE)))
+        print("  Open {} for journal submission / distribution.".format(
+            os.path.basename(PAPER_DOCX_FILE)))
+        if paper_pdf_written:
+            print("  Open {} for read-only distribution.".format(
+                os.path.basename(PAPER_PDF_FILE)))
+
+    written = []
+    if not paper_only:
+        written.extend([DOCX_FILE, HTML_FILE])
+        if pdf_requested:
+            written.append(PDF_FILE)
+    if generate_paper:
+        written.extend([PAPER_DOCX_FILE, PAPER_HTML_FILE])
+        if pdf_requested:
+            written.append(PAPER_PDF_FILE)
+    if written:
+        prune_superseded_outputs(written)
 
     if not generate_paper and not paper_only:
         print("")
         print("TIP: Add --paper flag to also generate a scientific paper.")
         print("     python step3_report/generate_report.py --paper")
+
+    if not paper_only:
+        generate_work_record(study_config)
 
     if not results:
         print("")

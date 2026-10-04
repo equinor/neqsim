@@ -316,7 +316,7 @@ public final class SaturationPressureCorrelation {
     }
 
     if (validCount == 0) {
-      return new double[] { Double.NaN, Double.NaN, Double.NaN, Double.NaN };
+      return new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
     }
 
     double avg = sum / validCount;
@@ -330,7 +330,7 @@ public final class SaturationPressureCorrelation {
     }
     double stdDev = Math.sqrt(sumSq / validCount);
 
-    return new double[] { avg, min, max, stdDev };
+    return new double[] {avg, min, max, stdDev};
   }
 
   /**

@@ -17,6 +17,7 @@ import jpype
 from pathlib import Path
 import subprocess
 import os
+import sys
 import types
 
 
@@ -63,6 +64,38 @@ def _find_project_root():
 
 
 _PROJECT_ROOT = _find_project_root() or Path(__file__).resolve().parent.parent
+
+
+def _find_packaged_jars():
+    """Return NeqSim JARs available without a source checkout, or [].
+
+    Order: ``NEQSIM_JAR`` (file or directory), then the ``lib/`` folder of the
+    installed ``neqsim`` pip package. Used when no ``pom.xml``/``target/classes``
+    is reachable - the situation of a user who installed the agent plugin but
+    not the repository.
+    """
+    env_jar = os.environ.get("NEQSIM_JAR")
+    if env_jar:
+        p = Path(env_jar)
+        if p.is_file():
+            return [p]
+        if p.is_dir():
+            return sorted(p.glob("*.jar"))
+    try:
+        import importlib.util
+        spec = importlib.util.find_spec("neqsim")
+    except (ImportError, ValueError):
+        spec = None
+    if spec and spec.submodule_search_locations:
+        for loc in spec.submodule_search_locations:
+            jars = sorted(Path(loc).glob("lib/*.jar"))
+            if jars:
+                return jars
+    return []
+
+
+def _is_source_checkout(root):
+    return root is not None and (Path(root) / "pom.xml").exists()
 
 
 def find_task_dir(start=None):
@@ -225,15 +258,24 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     # The pip wheel checks this before auto-starting its own JVM on import.
     os.environ["NEQSIM_JVM_AUTOSTART"] = "0"
 
-    # Validate the root has a pom.xml
-    if not (root / "pom.xml").exists():
-        raise FileNotFoundError(
-            f"NeqSim project root not found at {root}. "
-            "Set NEQSIM_PROJECT_ROOT env var or pass project_root= parameter."
-        )
+    # No source checkout: fall back to a packaged JAR (plugin-only installs).
+    if not _is_source_checkout(root):
+        jars = _find_packaged_jars()
+        if not jars:
+            raise FileNotFoundError(
+                f"NeqSim project root not found at {root} and no packaged NeqSim JAR "
+                "available. Either clone equinor/neqsim and set NEQSIM_PROJECT_ROOT, or "
+                "`pip install neqsim` (or set NEQSIM_JAR) to run against the released JAR."
+            )
+        if recompile:
+            raise RuntimeError("recompile=True needs a source checkout (pom.xml); running from "
+                               "a packaged JAR instead.")
+        return _init_from_jars(jars, extra_classpath, verbose, convert_strings)
 
     if verbose:
         print(f"NeqSim project root: {root}")
+
+    _ensure_jvm_available(verbose)
 
     # If JVM is already running, handle based on recompile flag
     if jpype.isJVMStarted():
@@ -288,16 +330,7 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
             print(f"  {i}. {cp}")
 
     # Suppress Java 22+ restricted method warnings from JPype native access
-    # Only add the flag if the JVM supports it (Java 22+)
-    jvm_args = []
-    import subprocess, re
-    try:
-        _ver = subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT, text=True)
-        _m = re.search(r'"(\d+)', _ver)
-        if _m and int(_m.group(1)) >= 22:
-            jvm_args.append("--enable-native-access=ALL-UNNAMED")
-    except Exception:
-        pass
+    jvm_args = _jvm_args()
     jpype.startJVM(*jvm_args, classpath=classpath, convertStrings=convert_strings)
     if verbose:
         print(f"\nJVM started: {jpype.getDefaultJVMPath()}")
@@ -309,6 +342,76 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     if verbose:
         print("Ready — call neqsim_classes(ns) to import classes")
 
+    return ns
+
+
+def _jvm_args():
+    """JVM flags that depend on the installed Java version."""
+    args = []
+    import re
+    try:
+        ver = subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT, text=True)
+        m = re.search(r'"(\d+)', ver)
+        # Java 22+ warns on JPype's native access unless enabled explicitly.
+        if m and int(m.group(1)) >= 22:
+            args.append("--enable-native-access=ALL-UNNAMED")
+    except (subprocess.SubprocessError, OSError, ValueError):
+        # Version probing is optional; keep the default JVM arguments when it fails.
+        pass
+    return args
+
+
+def _ensure_jvm_available(verbose=True):
+    """Make an installed JVM discoverable before JPype starts it.
+
+    Corporate machines frequently have Java installed but neither on PATH nor
+    exported as ``JAVA_HOME``; JPype then raises ``JVMNotFoundException``. This
+    searches the usual install locations and sets ``JAVA_HOME`` for the current
+    process only.
+
+    @param verbose whether to print the Java home that was resolved
+    @return the Java home now in effect, or None when none was found
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    try:
+        from java_locator import ensure_java_home
+    except ImportError:
+        return os.environ.get("JAVA_HOME") or None
+    java_home = ensure_java_home(verbose=False)
+    if java_home is None:
+        raise RuntimeError(
+            "No Java runtime found. NeqSim needs a JDK (21+ recommended).\n"
+            "  - If Java is installed, run: python devtools/java_locator.py\n"
+            "  - Otherwise unpack a Temurin JDK into your user profile (no admin "
+            "required) and set JAVA_HOME to it.")
+    if verbose and not os.environ.get("_NEQSIM_JAVA_HOME_REPORTED"):
+        print("Java home: {h}".format(h=java_home))
+        os.environ["_NEQSIM_JAVA_HOME_REPORTED"] = "1"
+    return java_home
+
+
+def _init_from_jars(jars, extra_classpath, verbose, convert_strings):
+    """Start the JVM on packaged NeqSim JAR(s); same ``ns`` contract as a checkout."""
+    classpath = [str(j) for j in jars] + list(extra_classpath or [])
+    if verbose:
+        print("NeqSim source checkout not found - running from packaged JAR (plugin mode).")
+        print("Classpath:")
+        for i, cp in enumerate(classpath, 1):
+            print(f"  {i}. {cp}")
+    if jpype.isJVMStarted():
+        if verbose:
+            print("JVM already running — reusing existing JVM")
+    else:
+        _ensure_jvm_available(verbose)
+        jpype.startJVM(*_jvm_args(), classpath=classpath, convertStrings=convert_strings)
+        if verbose:
+            print(f"\nJVM started: {jpype.getDefaultJVMPath()}")
+    ns = types.SimpleNamespace()
+    ns.PROJECT_ROOT = None
+    ns.JAR_MODE = True
+    ns.JClass = jpype.JClass
+    if verbose:
+        print("Ready — call neqsim_classes(ns) to import classes")
     return ns
 
 
@@ -329,7 +432,15 @@ def neqsim_classes(ns):
     ns : namespace object
         Same object, now with class attributes like ns.SystemSrkEos, etc.
     """
-    JClass = jpype.JClass
+    _missing = []
+
+    def JClass(name):
+        # A packaged JAR may predate classes on master; keep the rest importable.
+        try:
+            return jpype.JClass(name)
+        except TypeError:
+            _missing.append(name)
+            return None
 
     # Thermo systems
     ns.SystemSrkEos = JClass("neqsim.thermo.system.SystemSrkEos")
@@ -435,7 +546,13 @@ def neqsim_classes(ns):
         "neqsim.process.processmodel.biorefinery.GasificationSynthesisModule"
     )
 
-    print("All NeqSim classes imported OK")
+    ns.MISSING_CLASSES = _missing
+    if _missing:
+        print(f"NeqSim classes imported; {len(_missing)} not in this NeqSim build "
+              f"(e.g. {_missing[0].rsplit('.', 1)[-1]}) - use a newer JAR or a source checkout "
+              "if you need them; see ns.MISSING_CLASSES")
+    else:
+        print("All NeqSim classes imported OK")
     return ns
 
 

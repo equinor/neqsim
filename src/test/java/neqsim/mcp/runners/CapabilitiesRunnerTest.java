@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.mcp.catalog.ExampleCatalog;
 import neqsim.mcp.catalog.SchemaCatalog;
+import neqsim.process.equipment.EquipmentFactory;
 
 /**
  * Tests for the CapabilitiesRunner.
@@ -33,6 +34,8 @@ class CapabilitiesRunnerTest {
     assertTrue(obj.has("calculationModes"));
     assertTrue(obj.has("toolCapabilities"));
     assertTrue(obj.has("implementationInventory"));
+    assertTrue(obj.has("engineeringCoverage"));
+    assertFalse(obj.getAsJsonObject("engineeringCoverage").get("complete").getAsBoolean());
     assertTrue(obj.has("phase0EvidenceInventory"));
     assertTrue(obj.has("setupTemplates"));
     assertTrue(obj.has("processJsonContract"));
@@ -141,11 +144,13 @@ class CapabilitiesRunnerTest {
 
     JsonArray equipmentTypes = inventory.getAsJsonArray("supportedEquipmentTypes");
     JsonArray contractEquipment = root.getAsJsonObject("processJsonContract").getAsJsonArray("supportedEquipmentTypes");
-    assertEquals(207, inventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(EquipmentFactory.getSupportedEquipmentTypes().size(), inventory.get("equipmentTypeCount").getAsInt());
+    assertEquals(equipmentTypes.size(), inventory.get("equipmentTypeCount").getAsInt());
     assertEquals(contractEquipment, equipmentTypes);
     assertTrue(equipmentTypes.toString().contains("Compressor"));
     assertTrue(equipmentTypes.toString().contains("ThreePhaseSeparator"));
     assertTrue(equipmentTypes.toString().contains("ThrottlingValve"));
+    assertTrue(equipmentTypes.toString().contains("\"MountainCavern\""));
 
     JsonArray reportPaths = inventory.getAsJsonArray("reportPaths");
     assertEquals(2, inventory.get("reportPathCount").getAsInt());
@@ -164,7 +169,7 @@ class CapabilitiesRunnerTest {
 
     JsonObject tests = inventory.getAsJsonObject("tests");
     assertEquals(72, tests.get("javaTestClassCount").getAsInt());
-    assertEquals(94, tests.get("protocolScenarioCount").getAsInt());
+    assertEquals(102, tests.get("protocolScenarioCount").getAsInt());
 
     JsonObject guides = inventory.getAsJsonObject("guides");
     assertEquals(8, guides.get("guideCount").getAsInt());

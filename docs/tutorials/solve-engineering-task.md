@@ -63,6 +63,14 @@ mvnw.cmd install        # Windows
 # Install Python helpers (finds Python + uses `python -m pip` for you)
 ./install.ps1                         # Windows (macOS/Linux: ./install.sh)
 python -m pip install python-docx matplotlib    # For reports and plots
+
+# Optional: put solved tasks outside the clone (default: <repo>/task_solve)
+neqsim --set-task-root "D:/Engineering Tasks"   # or: cwd, to follow the terminal folder
+neqsim --show-task-root
+
+# Optional: build every Word report from your organisation's template
+neqsim --set-report-template "C:/Users/you/Documents/company report template.docx"
+neqsim --show-report-template
 ```
 
 > **Important:** Installing `devtools/` (editable) ensures your notebooks
@@ -77,10 +85,10 @@ python -m pip install python-docx matplotlib    # For reports and plots
 If you have VS Code with GitHub Copilot Chat, this is the fastest path:
 
 ```
-@solve.task hydrate formation temperature for wet gas at 100 bara
+@solve-task hydrate formation temperature for wet gas at 100 bara
 ```
 
-The `@solve.task` agent handles the entire workflow:
+The `@solve-task` agent handles the entire workflow:
 1. Creates the task folder
 2. Fills in the task specification (standards, methods, acceptance criteria)
 3. Researches the topic
@@ -117,6 +125,13 @@ creation so you can add input files before notebooks are created:
 ```powershell
 neqsim new-task "compressor seal condensation study" --type G --scale comprehensive --intake-pause always
 ```
+
+The folder is created under the task root — the saved default from
+`neqsim --set-task-root`, or `<repo>/task_solve` if none is set. `neqsim --show-task-root`
+prints the folder in use, and `--task-root "PATH"` overrides it for a single task.
+The `@solve-task` agent resolves the same setting, so both paths land in one place.
+The Word report the task later generates follows `neqsim --set-report-template`
+the same way.
 
 This creates a folder like:
 
@@ -438,8 +453,8 @@ python step3_report/generate_report.py
 ```
 
 This produces two files:
-- **Report.docx** — Word document for formal distribution
-- **Report.html** — Interactive HTML with navigation sidebar
+- **`<Report title>.docx`** — Word document for formal distribution
+- **`<Report title>.html`** — Interactive HTML with navigation sidebar
 
 Both reports auto-populate from your data:
 

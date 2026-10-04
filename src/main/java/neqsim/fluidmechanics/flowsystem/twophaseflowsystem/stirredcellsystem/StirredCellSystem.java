@@ -118,11 +118,11 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
     // setter antall nodepunkter (beregningspunkter/grid) pr. // leg
     pipe.setNumberOfNodesInLeg(10);
 
-    double[] height = { 0, 0 };
-    double[] length = { 0.0, 10.0 };
-    double[] outerTemperature = { 278.0, 278.0 };
-    double[] outerHeatTransferCoef = { 2.0, 2.0 };
-    double[] wallHeatTransferCoef = { 2.0, 2.0 };
+    double[] height = {0, 0};
+    double[] length = {0.0, 10.0};
+    double[] outerTemperature = {278.0, 278.0};
+    double[] outerHeatTransferCoef = {2.0, 2.0};
+    double[] wallHeatTransferCoef = {2.0, 2.0};
 
     pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
     pipe.setLegPositions(length); // setter avstand til hver leg-ende
@@ -132,7 +132,7 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
 
     // Deffinerer geometrien for roret
     neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGemometry = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[6];
-    double[] pipeDiameter = { 0.02588, 0.02588 };
+    double[] pipeDiameter = {0.02588, 0.02588};
     for (int i = 0; i < pipeDiameter.length; i++) {
       pipeGemometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);
     }
@@ -141,9 +141,9 @@ public class StirredCellSystem extends neqsim.fluidmechanics.flowsystem.twophase
     pipe.createSystem();
     pipe.init();
 
-    double[] times = { 0, 10 };
+    double[] times = {0, 10};
     pipe.getTimeSeries().setTimes(times);
-    SystemInterface[] systems = { testSystem, testSystem, testSystem };
+    SystemInterface[] systems = {testSystem, testSystem, testSystem};
     pipe.getTimeSeries().setInletThermoSystems(systems);
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(5);
     pipe.solveSteadyState(2);

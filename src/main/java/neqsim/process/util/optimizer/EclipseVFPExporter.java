@@ -228,7 +228,7 @@ public class EclipseVFPExporter implements Serializable {
   }
 
   private static double[] axisOrZero(double[] values) {
-    return values == null ? new double[] { 0.0 } : values;
+    return values == null ? new double[] {0.0} : values;
   }
 
   private static void validateAxis(String name, double[] values, boolean positive) {

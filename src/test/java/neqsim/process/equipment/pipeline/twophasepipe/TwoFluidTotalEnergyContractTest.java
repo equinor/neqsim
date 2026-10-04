@@ -13,7 +13,7 @@ class TwoFluidTotalEnergyContractTest {
     cell.setGasWallShear(30.0);
     cell.setLiquidWallShear(50.0);
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
-    assertEquals(0.0, equations.calcSourceTerms(new TwoFluidSection[] { cell })[0][6], 1e-10);
+    assertEquals(0.0, equations.calcSourceTerms(new TwoFluidSection[] {cell})[0][6], 1e-10);
   }
 
   @Test
@@ -23,7 +23,7 @@ class TwoFluidTotalEnergyContractTest {
     double expected = -9.81 * Math.sin(0.3)
         * (cell.getGasMomentumPerLength() + cell.getOilMomentumPerLength() + cell.getWaterMomentumPerLength());
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
-    assertEquals(expected, equations.calcSourceTerms(new TwoFluidSection[] { cell })[0][6], 1e-10);
+    assertEquals(expected, equations.calcSourceTerms(new TwoFluidSection[] {cell})[0][6], 1e-10);
   }
 
   @Test
@@ -34,7 +34,7 @@ class TwoFluidTotalEnergyContractTest {
     equations.setEnableHeatTransfer(true);
     equations.setHeatTransferCoefficient(10.0);
     equations.setSurfaceTemperature(300.0);
-    double heat = equations.calcSourceTerms(new TwoFluidSection[] { cell })[0][6];
+    double heat = equations.calcSourceTerms(new TwoFluidSection[] {cell})[0][6];
     assertTrue(heat < 0.0);
     assertEquals(-10.0 * Math.PI * cell.getDiameter() * 20.0, heat, 1e-10);
   }
@@ -47,7 +47,7 @@ class TwoFluidTotalEnergyContractTest {
         + cell.getWaterMomentumPerLength() * (cell.getLiquidEnthalpy() + 0.5);
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setAllowOutletPhaseBackflow(true);
-    for (String name : new String[] { "calcInletFlux", "calcOutletFlux" }) {
+    for (String name : new String[] {"calcInletFlux", "calcOutletFlux"}) {
       Method method = TwoFluidConservationEquations.class.getDeclaredMethod(name, TwoFluidSection.class);
       method.setAccessible(true);
       assertEquals(expected, ((double[]) method.invoke(equations, cell))[6], 1e-7);
@@ -55,7 +55,7 @@ class TwoFluidTotalEnergyContractTest {
     Method internal = TwoFluidConservationEquations.class.getDeclaredMethod("calcInterfaceFluxes",
         TwoFluidSection[].class, double.class);
     internal.setAccessible(true);
-    double[][] flux = (double[][]) internal.invoke(equations, new TwoFluidSection[] { cell, cell.clone() }, 1.0);
+    double[][] flux = (double[][]) internal.invoke(equations, new TwoFluidSection[] {cell, cell.clone()}, 1.0);
     assertEquals(expected, flux[0][6], 1e-7);
   }
 

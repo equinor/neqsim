@@ -266,7 +266,7 @@ class PinchAnalysisTest {
     process.add(hotFeed);
 
     Cooler cooler = new Cooler("Cooler-1", hotFeed);
-    cooler.setOutTemperature(273.15 + 40.0);
+    cooler.setOutletTemperature(273.15 + 40.0);
     process.add(cooler);
 
     Stream coldFeed = new Stream("Cold Feed", coldFluid);
@@ -274,7 +274,7 @@ class PinchAnalysisTest {
     process.add(coldFeed);
 
     Heater heater = new Heater("Heater-1", coldFeed);
-    heater.setOutTemperature(273.15 + 100.0);
+    heater.setOutletTemperature(273.15 + 100.0);
     process.add(heater);
 
     process.run();
@@ -359,7 +359,7 @@ class PinchAnalysisTest {
     process.add(feed);
 
     Cooler cooler = new Cooler("Aftercooler", feed);
-    cooler.setOutTemperature(273.15 + 35.0);
+    cooler.setOutletTemperature(273.15 + 35.0);
     process.add(cooler);
 
     process.run();

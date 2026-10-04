@@ -80,7 +80,7 @@ public class LumpingConfigBuilderTest {
   @Test
   void testCustomBoundaries() {
     // Test custom carbon number boundaries (feature 3)
-    int[] boundaries = { 6, 10, 15, 20 };
+    int[] boundaries = {6, 10, 15, 20};
     fluid.getCharacterization().configureLumping().model("PVTlumpingModel").customBoundaries(boundaries).build();
 
     assertTrue(fluid.getCharacterization().getLumpingModel().hasCustomBoundaries(), "Custom boundaries should be set");
@@ -91,7 +91,7 @@ public class LumpingConfigBuilderTest {
   @Test
   void testCustomBoundariesSetsNumberOfGroups() {
     // Custom boundaries should set the number of lumped components
-    int[] boundaries = { 6, 7, 10, 15, 20 };
+    int[] boundaries = {6, 7, 10, 15, 20};
     fluid.getCharacterization().configureLumping().model("standard").customBoundaries(boundaries).build();
 
     assertEquals(5, fluid.getCharacterization().getLumpingModel().getNumberOfLumpedComponents(),

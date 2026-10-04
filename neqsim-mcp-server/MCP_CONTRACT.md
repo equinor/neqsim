@@ -96,8 +96,8 @@ industrial validation.
 | `queryDataCatalog` | ADVISORY | v1.2 | Browse thermodynamic databases (components, standards, materials, EOS models) |
 | `generateVisualization` | CALCULATION | v1.2 | Inline SVG/Mermaid/HTML visualization |
 | `runRelief` | CALCULATION | v1.3 | PSV sizing per API 520 (gas/liquid/two-phase) and API 521 fire heat input |
-| `runLOPA` | CALCULATION | v1.3 | Layer of Protection Analysis per IEC 61511 / CCPS, with required-SIL gap analysis |
-| `runSIL` | CALCULATION | v1.3 | SIL verification per IEC 61508 / 61511 (1oo1, 1oo2, 2oo3 architectures) |
+| `runLOPA` | CALCULATION | v1.3 | Bounded caller-supplied LOPA screening with canonical numerical evidence; no IPL, SIL, risk-acceptance, or standards-conformance claim |
+| `runSIL` | CALCULATION | v1.3 | Bounded caller-supplied SIF PFD screening; indicative SIL band only, with no standards-conformance or approval claim |
 | `runRiskMatrix` | CALCULATION | v1.3 | Bounded generic 5×5 screening; caller owns project criteria and qualified review |
 | `runFlareNetwork` | CALCULATION | v1.3 | Flare radiation profile and API 521 safe-distance contour |
 | `runHAZOP` | CALCULATION | v1.4 | Simulation-backed IEC 61882 HAZOP worksheets from ProcessSystem scenarios and document evidence |
@@ -240,7 +240,7 @@ Schema resource paths use snake_case tool names such as `run_flash`, but respons
 the MCP method names such as `runFlash`. Schema lookups accept only `input` and `output` as schema
 types; any other type is treated as schema-not-found.
 
-Responses larger than 256 KiB are reduced by the shared transport guard unless
+Responses larger than 280 KiB are reduced by the shared transport guard unless
 `neqsim.mcp.maxResponseBytes` or `NEQSIM_MCP_MAX_RESPONSE_BYTES` configures another limit. The
 `truncation` block identifies omitted root fields and focused retrieval routes, and the legacy
 top-level and canonical `data` views are reduced together. For `getCapabilities`,

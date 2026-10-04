@@ -105,7 +105,12 @@ public class HydrateRiskMapper implements Serializable {
     /** Moderate margin (subcooling &lt; 6 C). */
     MEDIUM,
     /** Safe margin (subcooling &gt;= 6 C). */
-    LOW
+    LOW,
+    /**
+     * No hydrate equilibrium temperature could be computed (fluid without water, or flash did not converge). This is
+     * not a safe classification; see {@link RiskProfile#getFailureReasons()}.
+     */
+    UNKNOWN
   }
 
   /**
@@ -157,30 +162,44 @@ public class HydrateRiskMapper implements Serializable {
     }
 
     List<RiskPoint> results = new ArrayList<>();
+    List<String> failureReasons = new ArrayList<>();
     RiskLevel worstRisk = RiskLevel.LOW;
-    double minSubcooling = Double.MAX_VALUE;
+    double minSubcooling = Double.NaN;
     int criticalCount = 0;
+    boolean hasUnknown = false;
+
+    boolean hasWater = baseFluid.getPhase(0).hasComponent("water");
+    if (!hasWater) {
+      failureReasons.add("Fluid contains no water; hydrate equilibrium is undefined. Add 'water' to the composition.");
+    }
 
     for (ProfilePoint point : profilePoints) {
-      double hydrateTC;
-      try {
-        SystemInterface fluid = baseFluid.clone();
-        fluid.setTemperature(point.temperatureC + 273.15);
-        fluid.setPressure(point.pressureBara);
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.hydrateFormationTemperature();
-        hydrateTC = fluid.getTemperature("C");
-      } catch (Exception e) {
-        logger.warn("Hydrate calculation failed at {} km, {} bara: {}", point.distanceKm, point.pressureBara,
-            e.getMessage());
-        hydrateTC = Double.NaN;
+      double hydrateTC = Double.NaN;
+      if (hasWater) {
+        try {
+          SystemInterface fluid = baseFluid.clone();
+          fluid.setTemperature(point.temperatureC + 273.15);
+          fluid.setPressure(point.pressureBara);
+          if (!fluid.getHydrateCheck()) {
+            fluid.setHydrateCheck(true);
+          }
+          ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+          ops.hydrateFormationTemperature();
+          hydrateTC = fluid.getTemperature("C");
+        } catch (Exception e) {
+          logger.warn("Hydrate calculation failed at {} km, {} bara: {}", point.distanceKm, point.pressureBara,
+              e.getMessage());
+          failureReasons.add("Hydrate temperature not available at " + point.distanceKm + " km, " + point.pressureBara
+              + " bara: " + e.getMessage());
+        }
       }
 
       double subcooling = Double.isNaN(hydrateTC) ? Double.NaN : point.temperatureC - hydrateTC;
 
       RiskLevel risk;
       if (Double.isNaN(subcooling)) {
-        risk = RiskLevel.LOW; // assume safe if calculation failed
+        risk = RiskLevel.UNKNOWN;
+        hasUnknown = true;
       } else if (subcooling < criticalSubcoolingK) {
         risk = RiskLevel.CRITICAL;
         criticalCount++;
@@ -192,17 +211,22 @@ public class HydrateRiskMapper implements Serializable {
         risk = RiskLevel.LOW;
       }
 
-      if (risk.ordinal() < worstRisk.ordinal()) {
+      if (risk != RiskLevel.UNKNOWN && risk.ordinal() < worstRisk.ordinal()) {
         worstRisk = risk;
       }
-      if (!Double.isNaN(subcooling) && subcooling < minSubcooling) {
+      if (!Double.isNaN(subcooling) && (Double.isNaN(minSubcooling) || subcooling < minSubcooling)) {
         minSubcooling = subcooling;
       }
 
       results.add(new RiskPoint(point.distanceKm, point.pressureBara, point.temperatureC, hydrateTC, subcooling, risk));
     }
 
-    return new RiskProfile(results, worstRisk, minSubcooling, criticalCount);
+    // A failed point can hide a hydrate region, so only a confirmed CRITICAL outranks UNKNOWN.
+    if (hasUnknown && worstRisk != RiskLevel.CRITICAL) {
+      worstRisk = RiskLevel.UNKNOWN;
+    }
+
+    return new RiskProfile(results, worstRisk, minSubcooling, criticalCount, failureReasons);
   }
 
   // ============================================================
@@ -282,20 +306,24 @@ public class HydrateRiskMapper implements Serializable {
     private final RiskLevel overallRisk;
     private final double minimumSubcoolingC;
     private final int criticalPointCount;
+    private final List<String> failureReasons;
 
     /**
      * Creates a risk profile.
      *
      * @param points list of risk points along the pipeline
      * @param overallRisk worst risk level across all points
-     * @param minimumSubcoolingC minimum subcooling margin
+     * @param minimumSubcoolingC minimum subcooling margin, NaN when no point could be evaluated
      * @param criticalPointCount number of points in CRITICAL region
+     * @param failureReasons reasons why points could not be evaluated; empty when all points converged
      */
-    RiskProfile(List<RiskPoint> points, RiskLevel overallRisk, double minimumSubcoolingC, int criticalPointCount) {
+    RiskProfile(List<RiskPoint> points, RiskLevel overallRisk, double minimumSubcoolingC, int criticalPointCount,
+        List<String> failureReasons) {
       this.points = points;
       this.overallRisk = overallRisk;
       this.minimumSubcoolingC = minimumSubcoolingC;
       this.criticalPointCount = criticalPointCount;
+      this.failureReasons = failureReasons;
     }
 
     /**
@@ -335,6 +363,30 @@ public class HydrateRiskMapper implements Serializable {
     }
 
     /**
+     * Gets the number of points where no hydrate temperature could be computed.
+     *
+     * @return count of points classified {@link RiskLevel#UNKNOWN}
+     */
+    public int getUnknownPointCount() {
+      int count = 0;
+      for (RiskPoint rp : points) {
+        if (rp.riskLevel == RiskLevel.UNKNOWN) {
+          count++;
+        }
+      }
+      return count;
+    }
+
+    /**
+     * Gets the reasons why one or more points could not be evaluated.
+     *
+     * @return unmodifiable list of failure reasons; empty when every point converged
+     */
+    public List<String> getFailureReasons() {
+      return java.util.Collections.unmodifiableList(failureReasons);
+    }
+
+    /**
      * Converts the risk profile to a JSON string.
      *
      * @return JSON representation
@@ -344,7 +396,15 @@ public class HydrateRiskMapper implements Serializable {
       json.addProperty("overallRisk", overallRisk.name());
       json.addProperty("minimumSubcooling_C", minimumSubcoolingC);
       json.addProperty("criticalPointCount", criticalPointCount);
+      json.addProperty("unknownPointCount", getUnknownPointCount());
       json.addProperty("totalPoints", points.size());
+      if (!failureReasons.isEmpty()) {
+        JsonArray reasons = new JsonArray();
+        for (String reason : failureReasons) {
+          reasons.add(reason);
+        }
+        json.add("failureReasons", reasons);
+      }
 
       JsonArray pointsArray = new JsonArray();
       for (RiskPoint rp : points) {

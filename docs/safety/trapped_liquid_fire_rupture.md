@@ -14,7 +14,15 @@ The NeqSim workflow is generic and industry-standard based. It does not encode o
 3. Select material strength using `MaterialStrengthCurve`, preferably from verified material records. The built-in API 5L lookup is a screening default.
 4. Run `TrappedLiquidFireRuptureStudy` with pipe geometry, wall thickness, optional flange class, optional relief set pressure, and time controls.
 5. Review event times for relief demand, vapor-pocket indication, pipe rupture, and flange failure.
-6. Convert the result to a passive fire protection demand or a release source term when consequence analysis is needed.
+6. Convert the result to a passive fire protection demand. For consequence analysis,
+   export the failure state and inventory to a release model that supports its phase regime.
+
+`createRuptureSourceTerm(...)` delegates to the conservative, gas-only `LeakModel`
+blowdown calculation. A liquid or multiphase failure state, or condensation during
+depletion, raises `BLOWDOWN_PHASE_BOUNDARY` instead of producing a gas-based liquid
+release estimate. Liquid rupture depletion is not supported by this helper. Its
+rejection leaves the caller's fluid unchanged and does not invalidate the rupture
+screening result or passive-fire-protection demand.
 
 For a fast, fire-independent check of pure thermal-expansion overpressure in a blocked-in liquid
 segment (e.g. before deciding whether a fire-exposure rupture study is warranted at all), see
@@ -77,4 +85,3 @@ Final design decisions should verify:
 - Fire scenario and exposed area from layout or consequence modelling.
 - Relief device presence, capacity, and discharge path.
 - Required PFP endurance and documented PFP condition.
-

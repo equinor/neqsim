@@ -32,6 +32,7 @@ This folder contains documentation for:
 | Document | Description |
 |----------|-------------|
 | [TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE) | Complete workflow for solving tasks with AI while developing the physics engine, including `study_config.yaml`, intake pauses, document inputs, and deep multi-notebook studies |
+| [CONTINUOUS_TASK_SOLVING.md](CONTINUOUS_TASK_SOLVING) | Living tasks: keep a solved task improving with monitor cycles and solve loops — setup, backtesting, scheduling, headless agents, ledger and baseline promotion |
 | [Solve an Engineering Task](../tutorials/solve-engineering-task) | Hands-on tutorial: from blank screen to validated report |
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
 | [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
@@ -66,6 +67,7 @@ These guides explain how to add new functionality to NeqSim:
 | [Extending Process Equipment](extending_process_equipment) | Add custom separators, reactors, and other unit operations |
 | [Extending Physical Properties](extending_physical_properties) | Add custom viscosity, conductivity, and diffusivity models |
 | [Extending Thermodynamic Models](extending_thermodynamic_models) | Add custom equations of state and activity models |
+| [Numerical Model Specifications](model_spec_harness) | Sourced numerical cases, explicit absence contracts and fast CI coverage |
 | [Python Extension Patterns](python_extension_patterns) | Use NeqSim from Python, create wrappers, implement interfaces |
 
 ### Extension Quick Reference

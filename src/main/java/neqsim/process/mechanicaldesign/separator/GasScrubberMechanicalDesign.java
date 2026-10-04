@@ -173,6 +173,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
         / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
+    updateWallThicknessForSizedDiameter();
     // System.out.println("inner Diameter " + innerDiameter);
 
     // calculating from standard codes

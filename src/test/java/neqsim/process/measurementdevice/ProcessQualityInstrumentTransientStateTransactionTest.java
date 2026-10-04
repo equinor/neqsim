@@ -221,8 +221,8 @@ class ProcessQualityInstrumentTransientStateTransactionTest extends neqsim.NeqSi
 
   private static double[] readAll(MolarMassAnalyser molarMass, WaterContentAnalyser waterContent,
       CompositionAnalyzer composition, FlowRatioMeter flowRatio, ImpurityMonitor impurity) {
-    return new double[] { molarMass.getMeasuredValue("gr/mol"), waterContent.getMeasuredValue("kg/day"),
-        composition.getMeasuredValue("mole/mole"), flowRatio.getMeasuredValue(""), impurity.getMeasuredValue("mol%") };
+    return new double[] {molarMass.getMeasuredValue("gr/mol"), waterContent.getMeasuredValue("kg/day"),
+        composition.getMeasuredValue("mole/mole"), flowRatio.getMeasuredValue(""), impurity.getMeasuredValue("mol%")};
   }
 
   private static List<String> transientIdentities(MolarMassAnalyser molarMass, WaterContentAnalyser waterContent,

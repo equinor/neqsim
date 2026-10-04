@@ -10,17 +10,17 @@ import org.junit.jupiter.api.Test;
 /** Tests the surveyed-route resampler shared by the pipe models. */
 public class RouteProfileTest {
   private static double[] kp() {
-    return new double[] { 0.0, 1000.0, 2000.0, 3000.0 };
+    return new double[] {0.0, 1000.0, 2000.0, 3000.0};
   }
 
   private static double[] depths() {
-    return new double[] { 260.0, 250.0, 270.0, 240.0 };
+    return new double[] {260.0, 250.0, 270.0, 240.0};
   }
 
   @Test
   void depthsAreNegatedIntoTheModelElevationConvention() {
     RouteProfile route = RouteProfile.fromDepths(kp(), depths());
-    assertArrayEquals(new double[] { -260.0, -250.0, -270.0, -240.0 }, route.getElevationProfile(), 1.0e-9);
+    assertArrayEquals(new double[] {-260.0, -250.0, -270.0, -240.0}, route.getElevationProfile(), 1.0e-9);
   }
 
   @Test
@@ -80,8 +80,7 @@ public class RouteProfileTest {
 
   @Test
   void aMonotonicRouteHasNoLowPoints() {
-    RouteProfile route = RouteProfile.fromDepths(new double[] { 0.0, 100.0, 200.0 },
-        new double[] { 300.0, 200.0, 100.0 });
+    RouteProfile route = RouteProfile.fromDepths(new double[] {0.0, 100.0, 200.0}, new double[] {300.0, 200.0, 100.0});
     assertTrue(route.getLowPointKp().isEmpty());
   }
 
@@ -94,11 +93,10 @@ public class RouteProfileTest {
 
   @Test
   void mismatchedOrTooShortOrNonMonotonicInputIsRejected() {
+    assertThrows(IllegalArgumentException.class, () -> new RouteProfile(new double[] {0.0, 1.0}, new double[] {0.0}));
+    assertThrows(IllegalArgumentException.class, () -> new RouteProfile(new double[] {0.0}, new double[] {0.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> new RouteProfile(new double[] { 0.0, 1.0 }, new double[] { 0.0 }));
-    assertThrows(IllegalArgumentException.class, () -> new RouteProfile(new double[] { 0.0 }, new double[] { 0.0 }));
-    assertThrows(IllegalArgumentException.class,
-        () -> new RouteProfile(new double[] { 0.0, 100.0, 50.0 }, new double[] { 0.0, 1.0, 2.0 }));
+        () -> new RouteProfile(new double[] {0.0, 100.0, 50.0}, new double[] {0.0, 1.0, 2.0}));
   }
 
   @Test

@@ -155,7 +155,7 @@ class IndustrialPlantOptimizationBaselineTest {
     evaluator.addParameter("guide::Well Feed.flowRate", 1000.0, 20000.0, "kg/hr");
     double flowBeforeInvalid = fixture.feed.getFlowRate("kg/hr");
     IllegalArgumentException invalid = assertThrows(IllegalArgumentException.class,
-        () -> evaluator.evaluate(new double[] { Double.NaN }));
+        () -> evaluator.evaluate(new double[] {Double.NaN}));
     assertEquals(flowBeforeInvalid, fixture.feed.getFlowRate("kg/hr"), 0.0,
         "non-finite proposal must not mutate the live feed");
     JsonObject invalidRecord = new JsonObject();
@@ -210,12 +210,12 @@ class IndustrialPlantOptimizationBaselineTest {
     assertEquals("M Feed Pipe", constraintChange.getAsJsonObject("bottleneck").get("equipment").getAsString());
     modes.add(constraintChange);
 
-    fixture.trainSplitter.setSplitFactors(new double[] { 0.5, 0.5, 0.0 });
+    fixture.trainSplitter.setSplitFactors(new double[] {0.5, 0.5, 0.0});
     JsonObject lineUp = runAndRecord(fixture.process, "discrete-line-up", 1, fixture.feed, null);
     lineUp.addProperty("availabilityAction", "train-3 unavailable through zero split allocation");
     modes.add(lineUp);
 
-    fixture.trainSplitter.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    fixture.trainSplitter.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     fixture.feed.setFlowRate(90000.0, "kg/hr");
     JsonObject restored = runAndRecord(fixture.process, "restored-line-up", 1, fixture.feed, coldProduct);
     restored.addProperty("restoration", "FULL_REPLAY_COMPLETED");
@@ -371,7 +371,7 @@ class IndustrialPlantOptimizationBaselineTest {
     PipeBeggsAndBrills feedPipe = pipe("M Feed Pipe", feed, 250.0, 0.60);
     process.add(feedPipe);
     Splitter trainSplitter = new Splitter("M Train Splitter", feedPipe.getOutletStream(), 3);
-    trainSplitter.setSplitFactors(new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 });
+    trainSplitter.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
     process.add(trainSplitter);
 
     StreamInterface[] trainOutlets = new StreamInterface[3];
@@ -384,7 +384,7 @@ class IndustrialPlantOptimizationBaselineTest {
       compressor.setOutletPressure(120.0, "bara");
       compressor.setIsentropicEfficiency(0.78);
       Cooler cooler = new Cooler(prefix + " Aftercooler", compressor.getOutletStream());
-      cooler.setOutTemperature(308.15);
+      cooler.setOutletTemperature(308.15);
       Separator scrubber = new Separator(prefix + " Scrubber", cooler.getOutletStream());
       scrubber.setInternalDiameter(1.5);
       PipeBeggsAndBrills outletPipe = pipe(prefix + " Outlet Pipe", scrubber.getGasOutStream(), 100.0, 0.45);
@@ -405,7 +405,7 @@ class IndustrialPlantOptimizationBaselineTest {
     process.add(exportMixer);
 
     Splitter tailSplitter = new Splitter("M Tail Splitter", exportMixer.getOutletStream(), 2);
-    tailSplitter.setSplitFactors(new double[] { 0.95, 0.05 });
+    tailSplitter.setSplitFactors(new double[] {0.95, 0.05});
     process.add(tailSplitter);
     PipeBeggsAndBrills exportPipe = pipe("M Export Pipe", tailSplitter.getSplitStream(0), 1000.0, 0.55);
     process.add(exportPipe);

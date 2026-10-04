@@ -111,15 +111,15 @@ public final class Comparesimulations2EngineeringDiagramReference {
 
   private static Map<String, String> blockSections(EngineeringGraph graph) {
     Map<String, String> sectionByName = new LinkedHashMap<String, String>();
-    String[][] sections = { { "Feed", "well stream" }, { "Separation", "20-HA-01", "20-VA-01", "VLV-100", "MIX-101",
-        "20-HA-02", "20-VA-02", "VLV-102", "MIX-102", "20-HA-03", "20-VA-03" },
-        { "Oil export", "21-HA-01", "21-PA-01", "export oil" },
-        { "Recompression", "23-HA-03", "23-VG-03", "23-PA-01", "LP oil recycle", "23-KA-03", "MIX-103", "23-HA-02",
+    String[][] sections = {{"Feed", "well stream"}, {"Separation", "20-HA-01", "20-VA-01", "VLV-100", "MIX-101",
+        "20-HA-02", "20-VA-02", "VLV-102", "MIX-102", "20-HA-03", "20-VA-03"},
+        {"Oil export", "21-HA-01", "21-PA-01", "export oil"},
+        {"Recompression", "23-HA-03", "23-VG-03", "23-PA-01", "LP oil recycle", "23-KA-03", "MIX-103", "23-HA-02",
             "23-VG-02", "23-KA-02", "MIX-100", "23-HA-01", "23-VG-01", "dew point recycle 1",
-            "dew point liquid reflux 1", "third stage reflux" },
-        { "Cold process", "23-KA-01", "24-HA-01", "24-VG-01", "dew point recycle 2", "splitter", "25-HA-01", "25-HA-02",
-            "25-VG-01", "dew point liquid reflux 2" },
-        { "Fuel gas", "fuel gas" }, { "Gas export", "27-KA-01", "27-HA-01", "export gas" } };
+            "dew point liquid reflux 1", "third stage reflux"},
+        {"Cold process", "23-KA-01", "24-HA-01", "24-VG-01", "dew point recycle 2", "splitter", "25-HA-01", "25-HA-02",
+            "25-VG-01", "dew point liquid reflux 2"},
+        {"Fuel gas", "fuel gas"}, {"Gas export", "27-KA-01", "27-HA-01", "export gas"}};
     for (String[] section : sections) {
       for (int index = 1; index < section.length; index++) {
         sectionByName.put(section[index], section[0]);
@@ -140,13 +140,13 @@ public final class Comparesimulations2EngineeringDiagramReference {
 
   private static EngineeringDiagramLayoutRegister blockLayout(EngineeringBlockFlowProjection overview) {
     Map<String, double[]> points = new LinkedHashMap<String, double[]>();
-    points.put("Feed", new double[] { 48.0, 125.0 });
-    points.put("Separation", new double[] { 126.0, 125.0 });
-    points.put("Recompression", new double[] { 214.0, 125.0 });
-    points.put("Cold process", new double[] { 298.0, 125.0 });
-    points.put("Gas export", new double[] { 380.0, 125.0 });
-    points.put("Oil export", new double[] { 126.0, 205.0 });
-    points.put("Fuel gas", new double[] { 298.0, 55.0 });
+    points.put("Feed", new double[] {48.0, 125.0});
+    points.put("Separation", new double[] {126.0, 125.0});
+    points.put("Recompression", new double[] {214.0, 125.0});
+    points.put("Cold process", new double[] {298.0, 125.0});
+    points.put("Gas export", new double[] {380.0, 125.0});
+    points.put("Oil export", new double[] {126.0, 205.0});
+    points.put("Fuel gas", new double[] {298.0, 55.0});
     EngineeringDiagramLayoutRegister result = new EngineeringDiagramLayoutRegister();
     for (Map.Entry<String, String> block : overview.getBlockLabels().entrySet()) {
       double[] point = points.get(block.getValue());
@@ -196,12 +196,12 @@ public final class Comparesimulations2EngineeringDiagramReference {
         .withSheet(sheet("recompression", "3", "Flash-gas recompression and dew point"))
         .withSheet(sheet("export", "4", "Fuel split and gas export compression"));
 
-    String[] separation = { "20-HA-01", "20-VA-01", "VLV-100", "MIX-101", "20-HA-02", "20-VA-02", "VLV-102", "MIX-102",
-        "20-HA-03", "20-VA-03", "21-HA-01", "21-PA-01" };
-    String[] recompression = { "23-HA-03", "23-VG-03", "23-PA-01", "LP oil recycle", "23-KA-03", "MIX-103", "23-HA-02",
-        "23-VG-02", "23-KA-02", "MIX-100", "23-HA-01", "23-VG-01", "dew point recycle 1" };
-    String[] export = { "23-KA-01", "24-HA-01", "24-VG-01", "dew point recycle 2", "splitter", "25-HA-01", "25-HA-02",
-        "25-VG-01", "27-KA-01", "27-HA-01" };
+    String[] separation = {"20-HA-01", "20-VA-01", "VLV-100", "MIX-101", "20-HA-02", "20-VA-02", "VLV-102", "MIX-102",
+        "20-HA-03", "20-VA-03", "21-HA-01", "21-PA-01"};
+    String[] recompression = {"23-HA-03", "23-VG-03", "23-PA-01", "LP oil recycle", "23-KA-03", "MIX-103", "23-HA-02",
+        "23-VG-02", "23-KA-02", "MIX-100", "23-HA-01", "23-VG-01", "dew point recycle 1"};
+    String[] export = {"23-KA-01", "24-HA-01", "24-VG-01", "dew point recycle 2", "splitter", "25-HA-01", "25-HA-02",
+        "25-VG-01", "27-KA-01", "27-HA-01"};
     register = place(register, "separation", separation, equipmentIds);
     register = place(register, "recompression", recompression, equipmentIds);
     register = place(register, "export", export, equipmentIds);

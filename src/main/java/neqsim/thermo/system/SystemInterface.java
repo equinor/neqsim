@@ -1108,6 +1108,32 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getEnthalpy();
 
   /**
+   * Select formation-based enthalpy for every component and phase. Supported phases use the standard Cp-polynomial plus
+   * EOS-departure enthalpy. Native caloric models with independent references, solids and aqueous ions are not
+   * supported by this option. Add components and any user-supplied formation data before enabling it. All streams
+   * connected in an energy balance must use the same reference. Entropy is unchanged.
+   *
+   * @param useFormationEnthalpy true for Hf(298.15 K) plus the Cp integral from 298.15 K; false for the legacy sensible
+   * enthalpy reference at 273.15 K (default)
+   * @throws IllegalStateException if any component lacks reviewed formation data or a phase uses an unsupported caloric
+   * reference
+   */
+  public default void setUseIdealGasEnthalpyOfFormation(boolean useFormationEnthalpy) {
+    if (useFormationEnthalpy) {
+      throw new IllegalStateException("Formation reference is unsupported by this system");
+    }
+  }
+
+  /**
+   * Check the selected system enthalpy reference.
+   *
+   * @return true if formation enthalpies are included in stream enthalpy
+   */
+  public default boolean isUsingIdealGasEnthalpyOfFormation() {
+    return false;
+  }
+
+  /**
    * method to return total enthalpy in a specified unit.
    *
    * @param unit Supported units are 'J', 'J/mol', 'kJ/kmol', 'J/kg' and 'kJ/kg'
@@ -1682,20 +1708,57 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public String[][] getResultTable();
 
   /**
-   * Get the speed of sound of a system. The sound speed is implemented based on a molar average over the phases
+   * Legacy molar-phase-fraction weighted average of phase sound speeds.
+   *
+   * <p>
+   * This is neither a homogeneous-equilibrium derivative nor a frozen-phase mixture acoustic model. For decompression
+   * studies use {@link #calculateEquilibriumSoundSpeed()}.
+   * </p>
    *
    * @return speed of sound in m/s
    */
   public double getSoundSpeed();
 
   /**
-   * Get the speed of sound of a system in a specific unit. The sound speed is implemented based on a molar average over
-   * the phases
+   * Legacy molar-phase-fraction weighted average of phase sound speeds in a specified unit.
    *
-   * @param unit Supported units are m/s, km/h
-   * @return speed of sound in m/s
+   * <p>
+   * See {@link #getSoundSpeed()} for the averaging semantics and acoustic-model limitations.
+   * </p>
+   *
+   * @param unit supported units are m/s, km/hr and ft/sec
+   * @return legacy phase average in the requested unit
    */
   public double getSoundSpeed(String unit);
+
+  /**
+   * Calculate the homogeneous-equilibrium sound speed at fixed specific entropy and composition.
+   *
+   * <p>
+   * Uses cloned fluids, EOS total density, checked entropy roots and step refinement. The result includes convergence,
+   * closure and phase-boundary stencil diagnostics. The input is unchanged.
+   * </p>
+   *
+   * @return equilibrium acoustic result in SI units; inspect isConverged before using the speed
+   * @throws IllegalArgumentException for nonphysical input
+   * @see neqsim.thermo.util.EquilibriumSoundSpeed
+   */
+  public default neqsim.thermo.util.EquilibriumSoundSpeed.Result calculateEquilibriumSoundSpeed() {
+    return neqsim.thermo.util.EquilibriumSoundSpeed.calculate(this);
+  }
+
+  /**
+   * Calculate an equilibrium acoustic derivative with a specified initial pressure step.
+   *
+   * @param relativePressureStep pressure increment divided by centre pressure, [1e-6, 0.05]
+   * @return equilibrium acoustic result with convergence and stencil diagnostics
+   * @throws IllegalArgumentException for invalid input or step
+   * @see #calculateEquilibriumSoundSpeed()
+   */
+  public default neqsim.thermo.util.EquilibriumSoundSpeed.Result calculateEquilibriumSoundSpeed(
+      double relativePressureStep) {
+    return neqsim.thermo.util.EquilibriumSoundSpeed.calculate(this, relativePressureStep);
+  }
 
   /**
    * Getter for property standard.
@@ -2391,6 +2454,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Setter for property <code>beta</code>.
+   *
    * <p>
    * NB! Sets beta = b for first (heaviest) phase and 1-b for second (lightest) phase, not for multiphase systems.
    * </p>
@@ -2541,10 +2605,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMixingRule(String typename, String GEmodel);
 
   /**
-   * setModel.
+   * Creates a system using the requested model and copies this fluid's components and amounts.
    *
    * @param model a {@link java.lang.String} object
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @return the completely converted system
+   * @throws IllegalArgumentException if the model is unsupported or any conversion step fails; the cause is preserved
    */
   public SystemInterface setModel(String model);
 
@@ -2618,8 +2683,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMultiphaseWaxCheck(boolean multiphaseWaxCheck);
 
   /**
-   * Sets the wax thermodynamic model to use. Must be called before {@link #addSolidComplexPhase(String)} to take
-   * effect.
+   * Sets the wax thermodynamic model to use. Select the model before {@link #addSolidComplexPhase(String)}. Changing a
+   * populated wax phase to another model throws {@link IllegalStateException}; selecting its current model is allowed.
+   * Unknown model names throw {@link IllegalArgumentException}.
    *
    * <p>
    * Available models:
@@ -2635,6 +2701,22 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public default void setWaxModelType(String modelName) {
     // Default no-op for backward compatibility
+  }
+
+  /**
+   * Prepares the fluid for wax-equilibrium calculations using the selected solid-solution model.
+   *
+   * <p>
+   * If an unresolved plus fraction is present it is characterized first. The method then creates wax-forming
+   * pseudo-components, refreshes component database data, installs the wax phase, enables wax and multiphase checks,
+   * and initializes the system. The EOS and mixing rule are intentionally left unchanged.
+   * </p>
+   *
+   * @param modelName wax model name, for example {@code "Pedersen"}, {@code "Won"}, {@code "Wilson"}, or
+   * {@code "Coutinho"}
+   */
+  public default void enableWaxModel(String modelName) {
+    throw new UnsupportedOperationException("Wax model setup is not supported by this system implementation");
   }
 
   /**
@@ -2884,14 +2966,19 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * composition and component inventories without reallocating phases or recalculating equilibrium.
    * </p>
    *
+   * <p>
+   * Enabling allocates solid storage but does not change {@link #doMultiPhaseCheck()}. Enable fluid multiphase checking
+   * separately when additional liquid phases are required.
+   * </p>
+   *
    * @param test true to enable solid checking, false to disable it
    */
   public void setSolidPhaseCheck(boolean test);
 
   /**
-   * setSolidPhaseCheck.
+   * Enable solid checking for a selected component without changing {@link #doMultiPhaseCheck()}.
    *
-   * @param solidComponent a {@link java.lang.String} object
+   * @param solidComponent name of the component to check for solid precipitation
    */
   public void setSolidPhaseCheck(String solidComponent);
 
@@ -2949,6 +3036,18 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param totalNumberOfMoles Total molar flow rate of fluid in unit mol/sec
    */
   public void setTotalNumberOfMoles(double totalNumberOfMoles);
+
+  /**
+   * Set the scalar total-moles bookkeeping field directly, WITHOUT rescaling any per-component mole numbers (unlike
+   * {@link #setTotalNumberOfMoles(double)}). Intended for callers that mutate individual component/phase mole numbers
+   * themselves (e.g. via {@link neqsim.thermo.component.ComponentInterface#addMoles(double)} or
+   * {@link neqsim.thermo.component.ComponentInterface#addMolesChemReac(double)}) and then need to resynchronise this
+   * scalar with the true sum of the (already correct) component mole numbers, without the composition being forced back
+   * toward a stale, pre-mutation ratio.
+   *
+   * @param totalNumberOfMoles new total number of moles; negative values are clipped to zero
+   */
+  public void setTotalNumberOfMolesRaw(double totalNumberOfMoles);
 
   /**
    * setUseTVasIndependentVariables.

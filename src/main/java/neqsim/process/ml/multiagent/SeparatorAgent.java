@@ -76,21 +76,21 @@ public class SeparatorAgent extends ProcessAgent {
   private void initializeSpaces() {
     // Observation space
     if (controlGasValve) {
-      observationNames = new String[] { "liquid_level", "pressure", "level_error", "pressure_error", "liquid_valve_pos",
-          "gas_valve_pos" };
+      observationNames = new String[] {"liquid_level", "pressure", "level_error", "pressure_error", "liquid_valve_pos",
+          "gas_valve_pos"};
     } else {
-      observationNames = new String[] { "liquid_level", "pressure", "level_error", "liquid_valve_pos" };
+      observationNames = new String[] {"liquid_level", "pressure", "level_error", "liquid_valve_pos"};
     }
 
     // Action space: valve position changes [-0.1, 0.1]
     if (controlGasValve) {
-      actionNames = new String[] { "liquid_valve_delta", "gas_valve_delta" };
-      actionLow = new double[] { -0.1, -0.1 };
-      actionHigh = new double[] { 0.1, 0.1 };
+      actionNames = new String[] {"liquid_valve_delta", "gas_valve_delta"};
+      actionLow = new double[] {-0.1, -0.1};
+      actionHigh = new double[] {0.1, 0.1};
     } else {
-      actionNames = new String[] { "liquid_valve_delta" };
-      actionLow = new double[] { -0.1 };
-      actionHigh = new double[] { 0.1 };
+      actionNames = new String[] {"liquid_valve_delta"};
+      actionLow = new double[] {-0.1};
+      actionHigh = new double[] {0.1};
     }
 
     // Default setpoints
@@ -116,10 +116,10 @@ public class SeparatorAgent extends ProcessAgent {
     double pressureError = Double.isNaN(pressureSP) ? 0.0 : (pressure - pressureSP) / 20.0;
 
     if (controlGasValve) {
-      return new double[] { level, pressure / 100.0, levelError, pressureError, currentLiquidValvePos,
-          currentGasValvePos };
+      return new double[] {level, pressure / 100.0, levelError, pressureError, currentLiquidValvePos,
+          currentGasValvePos};
     } else {
-      return new double[] { level, pressure / 100.0, levelError, currentLiquidValvePos };
+      return new double[] {level, pressure / 100.0, levelError, currentLiquidValvePos};
     }
   }
 

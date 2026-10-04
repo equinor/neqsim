@@ -15,9 +15,9 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Tests the reproducible DOE Big Hill Sweet complete modeled assay slate. */
 public class DoeBigHillSweetAssayTest {
-  private static final String[] STANDARD_COMPONENTS = { "ethane", "propane", "i-butane", "n-butane" };
-  private static final String[] PSEUDO_COMPONENTS = { "DOE_BH_C5_175_PC", "DOE_BH_175_250_PC", "DOE_BH_250_375_PC",
-      "DOE_BH_375_530_PC", "DOE_BH_530_650_PC", "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC" };
+  private static final String[] STANDARD_COMPONENTS = {"ethane", "propane", "i-butane", "n-butane"};
+  private static final String[] PSEUDO_COMPONENTS = {"DOE_BH_C5_175_PC", "DOE_BH_175_250_PC", "DOE_BH_250_375_PC",
+      "DOE_BH_375_530_PC", "DOE_BH_530_650_PC", "DOE_BH_650_850_PC", "DOE_BH_850_1050_PC", "DOE_BH_1050_PLUS_PC"};
 
   @Test
   public void completeSlateClosesAndPreservesEvidenceBoundaries() {
@@ -82,12 +82,12 @@ public class DoeBigHillSweetAssayTest {
     assertEquals(42.84, DoeBigHillSweetAssay.getVacuumScreeningWholeCrudeMassPercent(), 0.0);
 
     double[] sourceWeightPercent = DoeBigHillSweetAssay.getVacuumScreeningSourceWeightPercent();
-    assertArrayEquals(new double[] { 18.44, 12.84, 11.56 }, sourceWeightPercent, 0.0);
+    assertArrayEquals(new double[] {18.44, 12.84, 11.56}, sourceWeightPercent, 0.0);
     assertEquals(42.84, sum(sourceWeightPercent), 1.0e-12);
     sourceWeightPercent[0] = 0.0;
     assertEquals(18.44, DoeBigHillSweetAssay.getVacuumScreeningSourceWeightPercent()[0], 0.0);
 
-    assertArrayEquals(new double[] { 18.44 / 42.84, 12.84 / 42.84, 11.56 / 42.84 }, assay.getResolvedMassFractions(),
+    assertArrayEquals(new double[] {18.44 / 42.84, 12.84 / 42.84, 11.56 / 42.84}, assay.getResolvedMassFractions(),
         1.0e-12);
     assertEquals(1.0, sum(assay.getResolvedMassFractions()), 1.0e-12);
     assertEquals(0.8152119514472456, assay.getBulkSulfurMassPercent(), 1.0e-12);

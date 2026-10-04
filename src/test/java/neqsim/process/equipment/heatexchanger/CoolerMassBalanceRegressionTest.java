@@ -16,11 +16,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /** Regression for neqsim-python issue 357: a recuperator loop without a Recycle unit. */
 class CoolerMassBalanceRegressionTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @ValueSource(strings = { "optimized", "sequential", "parallel", "dataflow", "hybrid" })
+  @ValueSource(strings = {"optimized", "sequential", "parallel", "dataflow", "hybrid"})
   void ltsCoolerConservesFlow(String mode) throws InterruptedException {
     SystemInterface fluid = new SystemPrEos(273.15 + 15.55, 41.37);
-    String[] names = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane" };
-    double[] fractions = { 0.0132, 0.006, 0.6098, 0.1866, 0.1054, 0.0412, 0.0378 };
+    String[] names = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane"};
+    double[] fractions = {0.0132, 0.006, 0.6098, 0.1866, 0.1054, 0.0412, 0.0378};
     for (int i = 0; i < names.length; i++) {
       fluid.addComponent(names[i], fractions[i]);
     }
@@ -51,7 +51,7 @@ class CoolerMassBalanceRegressionTest extends neqsim.NeqSimTest {
     process.add(exchanger.getOutStream(1));
     assertTrue(process.hasRecycleLoops());
     assertTrue(process.getExecutionStrategyExplanation().contains("implicit recycle"));
-    for (double flow : new double[] { 498.1, 550.0 }) {
+    for (double flow : new double[] {498.1, 550.0}) {
       feed.setFlowRate(flow, "kmol/hr");
       for (int repeat = 0; repeat < 2; repeat++) {
         runProcess(process, mode);

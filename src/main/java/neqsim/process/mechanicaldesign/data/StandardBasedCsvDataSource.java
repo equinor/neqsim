@@ -199,7 +199,7 @@ public class StandardBasedCsvDataSource implements MechanicalDesignDataSource {
         continue;
       }
       if (row.specification != null && !row.specification.isEmpty()) {
-        specs.put(row.specification, new double[] { row.minValue, row.maxValue });
+        specs.put(row.specification, new double[] {row.minValue, row.maxValue});
       }
     }
 

@@ -825,7 +825,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   private static final double TARGET_BRANCH_VELOCITY = 18.0;
 
   /** Standard pipe inner diameters in meters (Schedule 40 approximate). */
-  private static final double[] STANDARD_PIPE_IDS = { 0.0269, // 1"
+  private static final double[] STANDARD_PIPE_IDS = {0.0269, // 1"
       0.0409, // 1.5"
       0.0525, // 2"
       0.0779, // 3"
@@ -844,7 +844,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   };
 
   /** Standard pipe wall thicknesses in meters (Schedule 40 approximate). */
-  private static final double[] STANDARD_PIPE_WALLS = { 0.00338, // 1"
+  private static final double[] STANDARD_PIPE_WALLS = {0.00338, // 1"
       0.00368, // 1.5"
       0.00391, // 2"
       0.00549, // 3"

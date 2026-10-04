@@ -38,6 +38,28 @@ public class DepressurizationSimulator implements Serializable {
   private static final double PRESSURE_MONOTONIC_ABSOLUTE_TOLERANCE_BARA = 1.0e-3;
   private static final double PRESSURE_MONOTONIC_RELATIVE_TOLERANCE = 1.0e-4;
   private static final double MASS_MONOTONIC_RELATIVE_TOLERANCE = 1.0e-9;
+  /**
+   * Density ceiling for a phase to be treated as the vapour leaving the blowdown valve, in kg/m3. A phase denser than
+   * this is a liquid even if the flash labelled it a gas.
+   */
+  private static final double VAPOUR_PHASE_MAX_DENSITY_KGM3 = 300.0;
+  /**
+   * Largest fraction of the vapour phase one time step may remove. Emptying most of the vapour space in a single step
+   * makes the constant-volume flash swing, because the liquid then flashes back to refill it.
+   */
+  private static final double MAX_VAPOUR_FRACTION_PER_STEP = 0.25;
+
+  /**
+   * Which inventory leaves through the blowdown valve.
+   */
+  public enum WithdrawalMode {
+    /** Vapour when the inventory is multiphase, bulk when it is single phase. Default. */
+    AUTO,
+    /** Always discharge the bulk inventory composition. */
+    BULK,
+    /** Always discharge the vapour phase, as a top-mounted blowdown valve does. */
+    VAPOUR
+  }
 
   private final SystemInterface fluid;
   private final double vesselVolume; // m3
@@ -58,6 +80,7 @@ public class DepressurizationSimulator implements Serializable {
   private double timeStep = 1.0; // s
   private double maxTime = 900.0; // s (15 min default)
   private double minPressure = 1.5e5; // Pa absolute - stop when reached
+  private WithdrawalMode withdrawalMode = WithdrawalMode.AUTO;
 
   /**
    * Construct a depressurization simulator.
@@ -221,6 +244,35 @@ public class DepressurizationSimulator implements Serializable {
   }
 
   /**
+   * Select which inventory leaves through the blowdown valve.
+   *
+   * <p>
+   * A blowdown valve is mounted on top of the vessel, so for a separator, scrubber or knock-out drum that holds liquid
+   * the discharged stream is vapour, and the liquid flashes as the pressure falls. Discharging the bulk composition
+   * instead understates the flare load and overstates the cooling, and it does so without failing, because the mass
+   * balance still closes. {@link WithdrawalMode#AUTO} (the default) uses vapour withdrawal whenever the inventory is
+   * multiphase and is identical to {@link WithdrawalMode#BULK} for a single-phase inventory.
+   *
+   * @param mode the withdrawal mode to apply; null is ignored
+   * @return this simulator for chaining
+   */
+  public DepressurizationSimulator setWithdrawalMode(WithdrawalMode mode) {
+    if (mode != null) {
+      this.withdrawalMode = mode;
+    }
+    return this;
+  }
+
+  /**
+   * Current withdrawal mode.
+   *
+   * @return the configured withdrawal mode, never null
+   */
+  public WithdrawalMode getWithdrawalMode() {
+    return withdrawalMode;
+  }
+
+  /**
    * Run the transient simulation and return the time-series result.
    *
    * @return result containing time, pressure, temperature, mass and metal-temperature trajectories
@@ -241,21 +293,22 @@ public class DepressurizationSimulator implements Serializable {
     // internal energy and enthalpy used in the energy balance below are consistent with
     // the discharged mass. Without this, a fluid supplied on a 1-mol (or phase-fraction)
     // basis produces an energy balance that drives the VU flash to a non-physical state
-    // (instant pressure collapse, no cooling). The moles are scaled by adding per-component
-    // mole deltas (preserving composition); pressure and temperature are intensive and so
-    // are unchanged.
-    double currentMoles = fluid.getNumberOfMoles();
-    double molarMass = fluid.getMolarMass(); // kg/mol
-    if (molarMass > 0.0 && currentMoles > 0.0) {
-      double targetMoles = mass / molarMass;
-      scaleMoles(targetMoles / currentMoles);
+    // (instant pressure collapse, no cooling). Scale on VOLUME rather than on bulk density:
+    // the two agree for a single phase, but for a multiphase inventory a density-based basis
+    // leaves the fluid occupying more than the vessel, and the first constant-volume flash
+    // then jumps the pressure above the stated operating point.
+    double fluidVolume = fluid.getVolume("m3");
+    for (int attempt = 0; attempt < 3 && fluidVolume > 0.0
+        && Math.abs(fluidVolume - vesselVolume) / vesselVolume > 1.0e-9; attempt++) {
+      scaleMoles(vesselVolume / fluidVolume);
       ops.TPflash();
       fluid.initProperties();
-      tempK = fluid.getTemperature();
-      pPa = fluid.getPressure() * 1.0e5;
-      density = fluid.getDensity("kg/m3");
-      mass = density * vesselVolume;
+      fluidVolume = fluid.getVolume("m3");
     }
+    tempK = fluid.getTemperature();
+    pPa = fluid.getPressure() * 1.0e5;
+    density = fluid.getDensity("kg/m3");
+    mass = fluid.getMolarMass() * fluid.getNumberOfMoles();
 
     double wallTemp = tempK; // start at fluid temperature
 
@@ -268,13 +321,39 @@ public class DepressurizationSimulator implements Serializable {
     final double area = Math.PI * 0.25 * orificeDiameter * orificeDiameter;
 
     while (t < maxTime && pPa > minPressure && mass > 1.0e-6) {
-      // Determine compressibility, gamma, MW from current state
-      double mw = fluid.getMolarMass(); // kg/mol
-      double cp = fluid.getCp("J/molK");
-      double cv = fluid.getCv("J/molK");
+      // Which inventory leaves the vessel. A top-mounted blowdown valve passes vapour, so for a
+      // multiphase inventory the orifice, the discharged enthalpy and the removed composition must
+      // all come from the vapour phase - taking bulk properties here understates the flare load and
+      // overstates the cooling, without failing.
+      int vapourIndex = -1;
+      if (withdrawalMode != WithdrawalMode.BULK && fluid.getNumberOfPhases() > 1) {
+        vapourIndex = vapourPhaseIndex(fluid);
+      }
+      boolean useVapour = vapourIndex >= 0;
+      if (useVapour) {
+        res.vapourWithdrawalUsed = true;
+      }
+
+      // Determine compressibility, gamma, MW from the discharged stream
+      double mw;
+      double cp;
+      double cv;
+      double dischargeDensity;
+      if (useVapour) {
+        neqsim.thermo.phase.PhaseInterface vapour = fluid.getPhase(vapourIndex);
+        mw = vapour.getMolarMass(); // kg/mol
+        cp = vapour.getCp("J/molK");
+        cv = vapour.getCv("J/molK");
+        dischargeDensity = vapour.getDensity("kg/m3");
+      } else {
+        mw = fluid.getMolarMass(); // kg/mol
+        cp = fluid.getCp("J/molK");
+        cv = fluid.getCv("J/molK");
+        dischargeDensity = density;
+      }
       double gamma = (cv > 0.0) ? cp / cv : 1.3;
       double R = 8.314;
-      double z = pPa * mw / (density * R * tempK);
+      double z = pPa * mw / (dischargeDensity * R * tempK);
       if (z <= 0.0 || Double.isNaN(z)) {
         z = 1.0;
       }
@@ -307,8 +386,15 @@ public class DepressurizationSimulator implements Serializable {
       }
       double newMass = mass - dm;
 
-      // Specific enthalpy of discharged fluid (J/kg)
-      double hSpec = fluid.getEnthalpy() / mass;
+      // Specific enthalpy of the discharged stream (J/kg)
+      double hSpec;
+      if (useVapour) {
+        neqsim.thermo.phase.PhaseInterface vapour = fluid.getPhase(vapourIndex);
+        double vapourMass = vapour.getNumberOfMolesInPhase() * mw;
+        hSpec = vapourMass > 0.0 ? vapour.getEnthalpy() / vapourMass : fluid.getEnthalpy() / mass;
+      } else {
+        hSpec = fluid.getEnthalpy() / mass;
+      }
 
       // Energy balance: dU = -h*dm + Q_fire*dt + Q_wall*dt. External fire normally heats the
       // wall first when a wall model is configured; direct fluid heating remains the fallback.
@@ -343,11 +429,17 @@ public class DepressurizationSimulator implements Serializable {
       }
 
       // New internal energy
-      double newU = (fluid.getInternalEnergy()) + dU;
-
+      double uBefore = fluid.getInternalEnergy();
+      double newU = uBefore + dU;
       // Update fluid state by VU flash (constant volume, new internal energy).
-      // Scale the remaining inventory by adding per-component mole deltas (preserving composition).
-      if (mass > 0.0) {
+      // Vapour withdrawal removes the vapour composition; bulk withdrawal scales every component.
+      if (useVapour) {
+        double removedMoles = removePhaseMoles(vapourIndex, dm / mw);
+        dm = removedMoles * mw;
+        newMass = mass - dm;
+        // recompute against the pre-removal internal energy, since capping can change dm
+        newU = uBefore + (-hSpec * dm) + (directFireHeat * timeStep) + (qWall * timeStep);
+      } else if (mass > 0.0) {
         scaleMoles(newMass / mass);
       }
       try {
@@ -367,7 +459,9 @@ public class DepressurizationSimulator implements Serializable {
       tempK = fluid.getTemperature();
       pPa = fluid.getPressure() * 1.0e5;
       density = fluid.getDensity("kg/m3");
-      mass = newMass;
+      // under vapour withdrawal the inventory left behind is whatever the flash resolved, so read it
+      // back rather than carrying the estimate forward
+      mass = useVapour ? fluid.getMolarMass() * fluid.getNumberOfMoles() : newMass;
 
       t += timeStep;
       res.append(t, pPa / 1.0e5, tempK, mass, wallTemp, mDot);
@@ -396,6 +490,66 @@ public class DepressurizationSimulator implements Serializable {
     fluid.init(0);
   }
 
+  /**
+   * Index of the phase that leaves through a top-mounted blowdown valve.
+   *
+   * <p>
+   * The phase is selected by <b>lowest density</b>, not by the phase type label. A flash of a rich hydrocarbon mixture
+   * can report the oil phase as {@code GAS} at moderate pressure, and a type-based selection then discharges liquid
+   * while the mass balance still closes, so the error is silent.
+   *
+   * @param system the flashed fluid to inspect; must not be null
+   * @return the index of the lightest phase, or -1 when no phase is light enough to be the vapour
+   */
+  public static int vapourPhaseIndex(SystemInterface system) {
+    if (system == null || system.getNumberOfPhases() < 1) {
+      return -1;
+    }
+    int index = -1;
+    double lowest = Double.MAX_VALUE;
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      double rho = system.getPhase(i).getDensity("kg/m3");
+      if (!Double.isNaN(rho) && rho < lowest) {
+        lowest = rho;
+        index = i;
+      }
+    }
+    return lowest > VAPOUR_PHASE_MAX_DENSITY_KGM3 ? -1 : index;
+  }
+
+  /**
+   * Remove moles from the vessel using the composition of one phase.
+   *
+   * <p>
+   * Component amounts are taken as {@code phaseMoles * x_i} because a component object reached through a phase does not
+   * reliably report a phase-local mole count.
+   *
+   * @param phaseIndex index of the phase being discharged
+   * @param molesToRemove total moles to remove; capped at a fraction of the phase inventory so the constant-volume
+   * flash keeps a phase to work with and the pressure trajectory stays stable
+   * @return the moles actually removed
+   */
+  private double removePhaseMoles(int phaseIndex, double molesToRemove) {
+    if (molesToRemove <= 0.0 || Double.isNaN(molesToRemove)) {
+      return 0.0;
+    }
+    neqsim.thermo.phase.PhaseInterface phase = fluid.getPhase(phaseIndex);
+    double available = phase.getNumberOfMolesInPhase();
+    double removed = Math.min(molesToRemove, available * MAX_VAPOUR_FRACTION_PER_STEP);
+    if (removed <= 0.0) {
+      return 0.0;
+    }
+    int nc = fluid.getNumberOfComponents();
+    for (int i = 0; i < nc; i++) {
+      double dn = removed * phase.getComponent(i).getx();
+      if (dn > 0.0) {
+        fluid.addComponent(i, -dn);
+      }
+    }
+    fluid.init(0);
+    return removed;
+  }
+
   // ----------------------------------------------------------------------
   // Result holder
   // ----------------------------------------------------------------------
@@ -414,6 +568,8 @@ public class DepressurizationSimulator implements Serializable {
     public boolean fireHeatInputRoutedToWall;
     /** Number of VU-flash failures that used the conservative fallback state update. */
     public int vuFlashFallbackCount;
+    /** True when at least one time step discharged the vapour phase rather than the bulk inventory. */
+    public boolean vapourWithdrawalUsed;
     /** Time stamps in seconds. */
     public final List<Double> time = new ArrayList<>();
     /** Pressure trajectory in bara. */

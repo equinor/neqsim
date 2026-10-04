@@ -80,7 +80,7 @@ public class CompositeWallConduction implements Serializable {
     if (thicknessM <= 0.0 || conductivity <= 0.0 || density <= 0.0 || specificHeat <= 0.0) {
       throw new IllegalArgumentException("thickness, conductivity, density and specificHeat must be positive");
     }
-    layers.add(new double[] { thicknessM, conductivity, density, specificHeat });
+    layers.add(new double[] {thicknessM, conductivity, density, specificHeat});
     layerNames.add(name.trim());
     nodePositionM = null;
     return this;

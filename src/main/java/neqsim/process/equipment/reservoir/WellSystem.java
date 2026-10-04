@@ -82,8 +82,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <pre>{@code
  * // Setup well as above, then generate lift curves
- * double[] whPressures = { 30, 40, 50, 60, 70 }; // bara
- * double[] waterCuts = { 0.0, 0.2, 0.4, 0.6, 0.8 };
+ * double[] whPressures = {30, 40, 50, 60, 70}; // bara
+ * double[] waterCuts = {0.0, 0.2, 0.4, 0.6, 0.8};
  *
  * // Generate lift curve table
  * LiftCurveTable liftTable = well.generateLiftCurves(whPressures, waterCuts);
@@ -1257,7 +1257,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       flows[i] = calculateFlowFromIPR(bhp);
     }
 
-    return new double[][] { flows, bhps };
+    return new double[][] {flows, bhps};
   }
 
   /**
@@ -1299,7 +1299,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       bhps[i] = calculateVLP_BHP(flowRates[i]);
     }
 
-    return new double[][] { flowRates, bhps };
+    return new double[][] {flowRates, bhps};
   }
 
   // Getters for results

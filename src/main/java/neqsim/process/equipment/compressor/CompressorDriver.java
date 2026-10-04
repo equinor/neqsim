@@ -44,7 +44,7 @@ public class CompressorDriver implements Serializable {
   private double ratedSpeed = 5000.0; // RPM
 
   // For VFD motors - efficiency vs speed curve coefficients
-  private double[] vfdEfficiencyCoeffs = { 0.90, 0.05, -0.02 }; // η = a + b*(N/Nrated) +
+  private double[] vfdEfficiencyCoeffs = {0.90, 0.05, -0.02}; // η = a + b*(N/Nrated) +
   // c*(N/Nrated)²
 
   // For gas turbines - ambient temperature derating
@@ -689,7 +689,7 @@ public class CompressorDriver implements Serializable {
    * @param c quadratic term coefficient
    */
   public void setVfdEfficiencyCoefficients(double a, double b, double c) {
-    this.vfdEfficiencyCoeffs = new double[] { a, b, c };
+    this.vfdEfficiencyCoeffs = new double[] {a, b, c};
   }
 
   /**
@@ -740,7 +740,7 @@ public class CompressorDriver implements Serializable {
    * @param c quadratic term coefficient (dimensionless)
    */
   public void setMaxPowerCurveCoefficients(double a, double b, double c) {
-    this.maxPowerCurveCoeffs = new double[] { a, b, c };
+    this.maxPowerCurveCoeffs = new double[] {a, b, c};
     this.useMaxPowerCurve = true;
   }
 
@@ -751,7 +751,7 @@ public class CompressorDriver implements Serializable {
    */
   public double[] getMaxPowerCurveCoefficients() {
     if (maxPowerCurveCoeffs != null) {
-      return new double[] { maxPowerCurveCoeffs[0], maxPowerCurveCoeffs[1], maxPowerCurveCoeffs[2] };
+      return new double[] {maxPowerCurveCoeffs[0], maxPowerCurveCoeffs[1], maxPowerCurveCoeffs[2]};
     }
     return null;
   }
@@ -804,8 +804,8 @@ public class CompressorDriver implements Serializable {
    * </p>
    *
    * <pre>
-   * double[] speeds = { 4922, 5500, 6000, 6500, 7000, 7383 }; // RPM
-   * double[] powers = { 21.8, 27.5, 32.0, 37.0, 42.0, 44.4 }; // MW
+   * double[] speeds = {4922, 5500, 6000, 6500, 7000, 7383}; // RPM
+   * double[] powers = {21.8, 27.5, 32.0, 37.0, 42.0, 44.4}; // MW
    * driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
    * </pre>
    *

@@ -41,7 +41,7 @@ public class AttractiveTermPr extends AttractiveTermBaseClass {
     this.m = val;
     neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = { -0.26992, 1.54226, (0.37464 - this.m) };
+    double[] acentricConstants = {-0.26992, 1.54226, (0.37464 - this.m)};
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));
     // System.out.println("solve accen " + component.getAcentricFactor());

@@ -82,7 +82,7 @@ public class EndToEndSimulationTests {
 
     // Heater
     Heater heater = new Heater("Gas Heater", feed);
-    heater.setOutTemperature(320.0);
+    heater.setOutletTemperature(320.0);
 
     // Separator after heater
     Separator sep = new Separator("Separator", heater.getOutletStream());

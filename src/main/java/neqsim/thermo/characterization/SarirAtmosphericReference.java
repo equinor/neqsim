@@ -32,33 +32,33 @@ public final class SarirAtmosphericReference {
   private static final double KILOGRAMS_PER_METRIC_TONNE = 1000.0;
   private static final double HOURS_PER_DAY = 24.0;
 
-  private static final double[] TBP_TEMPERATURE_CELSIUS = { 70.0, 90.0, 110.0, 150.0, 195.0, 215.0, 255.0, 275.0, 295.0,
-      335.0, 370.0, 400.0, 460.0, 480.0, 500.0, 520.0, 550.0 };
-  private static final double[] TBP_VOLUME_PERCENT = { 7.44, 10.47, 13.83, 21.16, 28.52, 31.54, 38.03, 41.76, 44.68,
-      51.97, 59.19, 63.50, 72.52, 75.61, 78.66, 81.05, 83.70 };
+  private static final double[] TBP_TEMPERATURE_CELSIUS = {70.0, 90.0, 110.0, 150.0, 195.0, 215.0, 255.0, 275.0, 295.0,
+      335.0, 370.0, 400.0, 460.0, 480.0, 500.0, 520.0, 550.0};
+  private static final double[] TBP_VOLUME_PERCENT = {7.44, 10.47, 13.83, 21.16, 28.52, 31.54, 38.03, 41.76, 44.68,
+      51.97, 59.19, 63.50, 72.52, 75.61, 78.66, 81.05, 83.70};
 
   private static final ProductQualityReference[] PRODUCT_QUALITIES = {
       new ProductQualityReference("Light Naphtha", 42.0, 90.0, -9.0, 97.0),
       new ProductQualityReference("Heavy Naphtha", 96.0, 160.0, 83.0, 153.0),
       new ProductQualityReference("Kerosene", 185.0, 221.0, 159.0, 214.0),
-      new ProductQualityReference("Diesel", 262.0, 346.0, 235.0, 339.0) };
+      new ProductQualityReference("Diesel", 262.0, 346.0, 235.0, 339.0)};
 
   private static final ProductSpecificationReference[] PRODUCT_SPECIFICATIONS = {
       new ProductSpecificationReference("Light Naphtha", 90.0, "90", false),
       new ProductSpecificationReference("Heavy Naphtha", 160.0, "160", false),
       new ProductSpecificationReference("Kerosene", 221.0, "221", false),
       new ProductSpecificationReference("Diesel", 327.0, "327", false),
-      new ProductSpecificationReference("Residual", Double.NaN, "<550+", true) };
+      new ProductSpecificationReference("Residual", Double.NaN, "<550+", true)};
 
   private static final ProductYieldReference[] PRODUCT_YIELDS = {
       new ProductYieldReference("Total Naphtha", "Naphtha", 208.95, 208.2),
       new ProductYieldReference("Kerosene", "Kerosene product", 22.85, 20.0),
       new ProductYieldReference("Diesel", "Diesel product", 425.018, 393.0),
-      new ProductYieldReference("Residual", "Residual", 646.5, 706.1) };
+      new ProductYieldReference("Residual", "Residual", 646.5, 706.1)};
 
   private static final PumparoundReference[] PUMPAROUNDS = {
       new PumparoundReference("Top pump around (TPA)", 3, 1, 29777.64, 143.9, 80.99),
-      new PumparoundReference("Bottom pump around (BPA)", 22, 19, 60423.66, 232.4, 173.99) };
+      new PumparoundReference("Bottom pump around (BPA)", 22, 19, 60423.66, 232.4, 173.99)};
 
   private static final SteamInjectionReference[] STEAM_INJECTIONS = {
       new SteamInjectionReference("Main atmospheric column", SteamInjectionService.MAIN_ATMOSPHERIC_COLUMN, 340.2,
@@ -66,7 +66,7 @@ public final class SarirAtmosphericReference {
       new SteamInjectionReference("Kerosene side stripper", SteamInjectionService.KEROSENE_SIDE_STRIPPER, 68.04, 150.0,
           476.0),
       new SteamInjectionReference("Diesel side stripper", SteamInjectionService.DIESEL_SIDE_STRIPPER, 226.8, 150.0,
-          476.0) };
+          476.0)};
 
   private static final AduStreamReference[] ADU_STREAMS = {
       new AduStreamReference("Crude oil tower", AduStreamDirection.INLET, 350.0, 233.0, 54420.0),
@@ -78,7 +78,7 @@ public final class SarirAtmosphericReference {
       new AduStreamReference("Kerosene product", AduStreamDirection.OUTLET, 126.3, 210.0, 952.2),
       new AduStreamReference("Diesel product", AduStreamDirection.OUTLET, 214.8, 219.1, 17709.24),
       new AduStreamReference("Residual", AduStreamDirection.OUTLET, 341.9, 230.0, 26937.99),
-      new AduStreamReference("Water draw", AduStreamDirection.OUTLET, 49.0, 140.0, 745.5) };
+      new AduStreamReference("Water draw", AduStreamDirection.OUTLET, 49.0, 140.0, 745.5)};
 
   private SarirAtmosphericReference() {
   }

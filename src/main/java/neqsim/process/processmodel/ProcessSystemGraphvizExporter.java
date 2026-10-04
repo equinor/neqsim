@@ -27,10 +27,10 @@ import neqsim.process.equipment.stream.StreamInterface;
 public class ProcessSystemGraphvizExporter {
   private static final Logger logger = LogManager.getLogger(ProcessSystemGraphvizExporter.class);
 
-  private static final String[] OUTLET_KEYWORDS = { "out", "product", "split", "mixed", "export", "from", "vent",
-      "discharge", "residue", "bottom", "top", "vapor", "vapour", "to" };
-  private static final String[] INLET_KEYWORDS = { "inlet", "feed", "inflow", "suction", "source", "supply", "import",
-      "makeup", "recycle" };
+  private static final String[] OUTLET_KEYWORDS = {"out", "product", "split", "mixed", "export", "from", "vent",
+      "discharge", "residue", "bottom", "top", "vapor", "vapour", "to"};
+  private static final String[] INLET_KEYWORDS = {"inlet", "feed", "inflow", "suction", "source", "supply", "import",
+      "makeup", "recycle"};
   private static final int MAX_INDEXED_STREAMS = 16;
   private static final Class<?> INACCESSIBLE_OBJECT_EXCEPTION_CLASS = resolveClass(
       "java.lang.reflect.InaccessibleObjectException");

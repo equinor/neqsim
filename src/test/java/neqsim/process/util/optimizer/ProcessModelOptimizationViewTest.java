@@ -87,7 +87,7 @@ public class ProcessModelOptimizationViewTest {
 
   @Test
   void convergenceToleranceMustBeFiniteAndPositive() {
-    for (double invalid : new double[] { Double.NaN, Double.POSITIVE_INFINITY, 0.0, -1.0 }) {
+    for (double invalid : new double[] {Double.NaN, Double.POSITIVE_INFINITY, 0.0, -1.0}) {
       Assertions.assertThrows(IllegalArgumentException.class,
           () -> new ProcessModelOptimizationView(new ProcessModel(), 3, invalid));
     }

@@ -155,7 +155,7 @@ public class NeqSimXtream {
     };
     xstream.setMode(XStream.ID_REFERENCES);
     xstream.addPermission(AnyTypePermission.ANY);
-    xstream.allowTypesByWildcard(new String[] { "neqsim.**" });
+    xstream.allowTypesByWildcard(new String[] {"neqsim.**"});
     return xstream;
   }
 

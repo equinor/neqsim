@@ -276,7 +276,7 @@ fluid.addComponent("methane", 100.0);
 fluid.addComponent(0, 100.0);
 
 // TBP fraction (for plus fractions)
-fluid.addTBPfraction("C7+", 10.0, 150.0, 0.78);  // name, moles, MW, SG
+fluid.addTBPfraction("C7+", 10.0, 150.0 / 1000.0, 0.78);  // name, moles, MW [g/mol], SG
 
 // Set mole fractions directly
 double[] z = {0.85, 0.10, 0.05};
@@ -296,6 +296,11 @@ fluid.setPhaseType(1, "oil");
 // Allow solid phases
 fluid.setSolidPhaseCheck(true);
 ```
+
+Enabling a solid check, either for all components or with `setSolidPhaseCheck(name)`,
+preserves `doMultiPhaseCheck()`. Call `setMultiPhaseCheck(true)` separately if the
+fluid calculation needs additional liquid phases; solid allocation no longer
+implicitly enables that search.
 
 `setSolidPhaseCheck(false)` safely disables solid checking even on a fresh fluid.
 Repeated calls clear the component flags in every allocated phase while preserving

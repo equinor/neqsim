@@ -6,6 +6,8 @@
 
 package neqsim.util.unit;
 
+import neqsim.util.exception.InvalidInputException;
+
 /**
  * Unit interface.
  *
@@ -14,27 +16,68 @@ package neqsim.util.unit;
  */
 public interface Unit {
   /**
-   * getSIvalue.
+   * Validate a unit string input.
+   *
+   * @param unit unit string to validate
+   * @param parameterName parameter name used in error messages
+   * @throws IllegalArgumentException if the unit string is null or blank
+   */
+  static void validateUnitInput(String unit, String parameterName) {
+    if (unit == null) {
+      throw new IllegalArgumentException("Unit parameter '" + parameterName + "' cannot be null");
+    }
+    if (unit.trim().isEmpty()) {
+      throw new IllegalArgumentException("Unit parameter '" + parameterName + "' cannot be blank");
+    }
+  }
+
+  /**
+   * Units accepted by this implementation, or {@code null} to accept any unit.
+   *
+   * @return array of allowed unit names, or {@code null} for no restriction
+   */
+  public String[] getAllowedUnits();
+
+  /**
+   * Validate that a unit name is one of the units supported by the calling implementation.
+   *
+   * @param unit the unit name to validate
+   * @throws IllegalArgumentException if the unit is not supported
+   */
+  public default void validateAllowedUnit(String unit) {
+    validateUnitInput(unit, "unit");
+    String[] allowedUnits = getAllowedUnits();
+    if (allowedUnits == null) {
+      return;
+    }
+    for (String allowed : allowedUnits) {
+      if (allowed.equals(unit)) {
+        return;
+      }
+    }
+    throw new IllegalArgumentException(
+        new InvalidInputException(this, "validateAllowedUnit", unit, "unit not supported"));
+  }
+
+  /**
+   * Get the value in SI units.
    *
    * @return a double
    */
   double getSIvalue();
 
   /**
-   * Convert value from a specified unit to a specified unit.
+   * Get the SI unit symbol.
    *
-   * @param val a double
-   * @param fromunit a {@link java.lang.String} object
-   * @param tounit a {@link java.lang.String} object
-   * @return a double
+   * @return a {@link java.lang.String} object
    */
-  double getValue(double val, String fromunit, String tounit);
+  String getSIUnit();
 
   /**
    * Get process value in specified unit.
    *
-   * @param tounit Unit to get process value in.
+   * @param toUnit Unit to get process value in.
    * @return Value converted to the specified unit.
    */
-  double getValue(String tounit);
+  double getValue(String toUnit);
 }

@@ -151,7 +151,7 @@ public class RootCauseAnalyzer implements Serializable {
    * @param highLimit high limit (use Double.NaN for no high limit)
    */
   public void setDesignLimit(String parameter, double lowLimit, double highLimit) {
-    designLimits.put(parameter, new double[] { lowLimit, highLimit });
+    designLimits.put(parameter, new double[] {lowLimit, highLimit});
   }
 
   /**

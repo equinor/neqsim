@@ -51,7 +51,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
       unifacGroups.clear();
       unifacGroups.add(new UNIFACgroup(1, 2));
       unifacGroups.add(new UNIFACgroup(2, intNumb));
-      unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
+      setUnifacGroups(unifacGroups);
       // System.out.println("adding unifac pseudo.." + intNumb);
       for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
         getUnifacGroup(i).calcXComp(this);
@@ -92,7 +92,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
                   + "Without groups R and Q are zero, which makes the activity coefficient NaN. "
                   + "Add a row for this component or use a model that does not need UNIFAC groups."));
     }
-    unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
+    setUnifacGroups(unifacGroups);
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
       getUnifacGroup(i).calcXComp(this);
     }
@@ -115,7 +115,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     unifacGroups.clear();
     unifacGroups.add(new UNIFACgroup(1, 2));
     unifacGroups.add(new UNIFACgroup(2, intNumb));
-    unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
+    setUnifacGroups(unifacGroups);
     for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
       getUnifacGroup(i).calcXComp(this);
     }

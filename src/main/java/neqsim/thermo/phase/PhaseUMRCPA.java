@@ -41,7 +41,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
   double dFCPAdVdV = 0.0;
   double dFCPAdVdVdV = 0.0;
   double gcpav = 0.0;
-  private double[] dFdNtemp = { 0, 0 };
+  private double[] dFdNtemp = {0, 0};
   int cpaon = 1;
   int oldTotalNumberOfAccociationSites = 0;
   int totalNumberOfAccociationSites = 0;
@@ -801,7 +801,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
       tot1 += 1.0 / 2.0 * tot2 * getComponent(k).getNumberOfMolesInPhase();
       tot4 += 0.5 * getComponent(k).getNumberOfMolesInPhase() * tot3;
     }
-    return new double[] { -tot1, -tot4 };
+    return new double[] {-tot1, -tot4};
   }
 
   /**

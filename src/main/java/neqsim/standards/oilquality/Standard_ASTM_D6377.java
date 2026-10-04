@@ -10,7 +10,28 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.IsNaNException;
 
 /**
- * Standard_ASTM_D6377 class.
+ * EOS screening of VPCR4, correlated RVP-equivalent values and bubble-point TVP.
+ *
+ * <p>
+ * The default is raw {@code VPCR4}: vapor/liquid volume ratio 4:1, not 80% molar vapor. The D6377-labelled correlation
+ * is {@code 0.834 * VPCR4}; D323-82 is {@code 0.752 * VPCR4 + 0.0607} in bara. {@code VPCR4_no_water} and the
+ * historical D323-73/79 label both return raw dry VPCR4. These model labels do not certify laboratory equivalence or
+ * compliance; {@link #isOnSpec()} always returns true.
+ *
+ * <p>
+ * {@link #calculate()} mutates the supplied fluid state. A clone protects temperature, pressure and composition during
+ * this workflow, but BIP arrays can be shared across clones: do not mutate model parameters through a clone. Water
+ * removal must preserve the complete characterization in every phase. The current component-removal path does not remap
+ * BIPs when retained component indices shift; audit named interactions before using a dry result. A finite positive
+ * {@link RvpResult} alone does not certify convergence to the corrected volume-ratio target.
+ *
+ * <p>
+ * For a declared water-contact storage approximation on an audited dry model, apply
+ * {@code RVPE_water_sat = 0.834 * (VPCR4_dry + psat_water(37.8 C))}, not dry RVPE plus the full water pressure. The
+ * analogous TVP approximation is {@code TVP_dry(T) + psat_water(T)}. Water saturation pressure must come from an
+ * independently validated source in consistent pressure units. This assumes water activity near one and sufficient
+ * water for saturation; it neither models the ASTM apparatus nor repairs sampling losses. See the
+ * <a href="https://equinor.github.io/neqsim/standards/astm_d6377_rvp.html">vapor-pressure water-basis guide</a>.
  *
  * @author ESOL
  * @version $Id: $Id
@@ -54,15 +75,15 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * @version 1.0
    */
   public enum RvpMethod {
-    /** ASTM D6377 RVPE (RVP equivalent), derived from VPCR4. */
+    /** D6377-labelled RVPE correlation: 0.834 times VPCR4, not laboratory certification. */
     RVP_ASTM_D6377("RVP_ASTM_D6377"),
-    /** ASTM D323-73/79 dry method (water removed before flash). */
+    /** Historical D323-73/79 label: raw dry VPCR4 in this implementation. */
     RVP_ASTM_D323_73_79("RVP_ASTM_D323_73_79"),
-    /** ASTM D323-82 correlation. */
+    /** D323-82-labelled correlation: 0.752 times VPCR4 plus 0.0607 bara. */
     RVP_ASTM_D323_82("RVP_ASTM_D323_82"),
-    /** Vapor pressure at vapor/liquid ratio 4:1 (default). */
+    /** Raw vapor pressure at vapor/liquid volume ratio 4:1 (default). */
     VPCR4("VPCR4"),
-    /** Vapor pressure at vapor/liquid ratio 4:1 with water removed. */
+    /** Raw vapor pressure at vapor/liquid volume ratio 4:1 with water removed; audit retained BIPs. */
     VPCR4_NO_WATER("VPCR4_no_water");
 
     /** Legacy string label associated with this method. */
@@ -291,8 +312,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * Returns a structured RVP result for a specific method.
    *
    * <p>
-   * Call {@link #calculate()} first. All method values are populated by a single {@link #calculate()} call, so this
-   * does not trigger a recalculation.
+   * Call {@link #calculate()} first. Direct correlations reuse that calculation; water-free variants run extra flashes
+   * lazily on first access. Dry-basis selection is separate from correlation selection: multiply raw dry VPCR4 by 0.834
+   * explicitly for dry D6377-labelled RVPE. No independent water-saturation correction is added.
    * </p>
    *
    * @param method the method whose result should be returned; must not be null
@@ -309,7 +331,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   /**
    * Constructor for Standard_ASTM_D6377.
    *
-   * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+   * @param thermoSystem characterized fluid whose state will be mutated by calculation; pass a clone to preserve the
+   * caller's state, without assuming BIP independence
    */
   public Standard_ASTM_D6377(SystemInterface thermoSystem) {
     super("Standard_ASTM_D6377", "Standard_ASTM_D6377", thermoSystem);
@@ -352,11 +375,15 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * Evaluates the water-free vapor-pressure variants {@code VPCR4_no_water} and {@code RVP_ASTM_D323_73_79}.
    *
    * <p>
-   * This requires a clone of the fluid with water removed plus a bubble-point flash and a 80% vapor-fraction flash,
+   * This requires a clone of the fluid with water removed plus a bubble-point flash and an 80% vapor-volume flash,
    * which roughly doubles the cost of {@link #calculate()}. Because most callers only read {@code VPCR4} or
    * {@code RVP_ASTM_D6377}, the work is deferred until one of the water-free values is actually requested and is then
    * cached until the next {@link #calculate()} call.
    * </p>
+   *
+   * <p>
+   * Component removal does not remap the BIP matrix when retained indices shift. The method label therefore does not
+   * guarantee preservation of an arbitrary characterized fluid; audit every phase and reject a changed basis.
    */
   private void calculateNoWaterVariants() {
     if (noWaterVariantsCalculated) {
@@ -452,7 +479,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    */
   public void setReferenceTemperature(double refTemp, String refTempUnit) {
     neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(refTemp, refTempUnit);
-    referenceTemperature = tempConversion.getValue(refTemp, refTempUnit, "C");
+    referenceTemperature = tempConversion.getValue("C");
   }
 
   /**

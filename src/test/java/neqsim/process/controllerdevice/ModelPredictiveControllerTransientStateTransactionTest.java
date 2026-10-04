@@ -106,7 +106,7 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
     controller.setMoveWeights(0.0, 0.0);
     controller.setPreferredControlVector(30.0, 30.0);
     controller.addLinearMoveConstraint(new ModelPredictiveController.LinearMoveConstraint("shared opening budget",
-        new double[] { 1.0, 1.0 }, Double.NEGATIVE_INFINITY, 2.0));
+        new double[] {1.0, 1.0}, Double.NEGATIVE_INFINITY, 2.0));
     ProcessSystem process = new ProcessSystem("linear constraint transaction");
     process.add(controller);
 
@@ -114,13 +114,13 @@ class ModelPredictiveControllerTransientStateTransactionTest extends neqsim.NeqS
     TransientStepTransaction transaction = process.beginTransientStepTransaction();
     controller.clearLinearMoveConstraints();
     controller.addLinearMoveConstraint(new ModelPredictiveController.LinearMoveConstraint("trial opening budget",
-        new double[] { 1.0, 1.0 }, Double.NEGATIVE_INFINITY, 100.0));
+        new double[] {1.0, 1.0}, Double.NEGATIVE_INFINITY, 100.0));
     controller.runTransient(Double.NaN, 1.0, stepId);
     double unconstrainedOpening = controller.getControlValue(0) + controller.getControlValue(1) - 20.0;
     assertTrue(unconstrainedOpening > 2.0 + 1.0e-6);
     transaction.rollback();
 
-    assertArrayEquals(new double[] { 10.0, 10.0 }, controller.getControlVector(), 0.0);
+    assertArrayEquals(new double[] {10.0, 10.0}, controller.getControlVector(), 0.0);
     controller.runTransient(Double.NaN, 1.0, stepId);
     double constrainedOpening = controller.getControlValue(0) + controller.getControlValue(1) - 20.0;
     assertEquals(2.0, constrainedOpening, 1.0e-6);

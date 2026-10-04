@@ -39,6 +39,18 @@ def source_classpath():
     return [str(ROOT / "target/classes")] + dependency_file.read_text().strip().split(os.pathsep)
 
 
+def require_source_classpath(test_case):
+    """Skip locally when the build prerequisite is missing; still fail in CI."""
+    try:
+        source_classpath()
+    except RuntimeError as error:
+        if os.environ.get("CI"):
+            raise
+        test_case.skipTest(
+            "{0}: ./mvnw test dependency:build-classpath "
+            "-Dmdep.outputFile=target/optimization-classpath.txt".format(error))
+
+
 def verify_results(page, context):
     """Check that execution produced the physical/reporting result taught by the page."""
     if page == "batch-studies":
@@ -97,6 +109,7 @@ class OptimizerGuideExamplesTest(unittest.TestCase):
     """Keep each page isolated while executing its snippets in documented order."""
 
     def check_page(self, page):
+        require_source_classpath(self)
         with tempfile.TemporaryDirectory(prefix="neqsim-optimizer-guide-") as directory:
             result = subprocess.run(
                 [sys.executable, str(Path(__file__).resolve()), "--worker", page, "--directory", directory],

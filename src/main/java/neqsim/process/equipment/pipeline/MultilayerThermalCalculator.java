@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Multi-layer radial heat transfer calculator for pipeline thermal analysis.
@@ -493,6 +494,83 @@ public class MultilayerThermalCalculator implements Serializable {
     for (int i = 0; i < n; i++) {
       layers.get(i).setTemperature(newTemperatures[i]);
     }
+  }
+
+  /**
+   * Validate a privately advanced thermal state before the connected pipe publishes any candidate values.
+   *
+   * <p>
+   * Layer identities, geometry, materials and the outer boundary configuration belong to the connected calculator. They
+   * must agree with the candidate. Fluid/ambient temperatures, the locally evaluated inner coefficient, layer
+   * temperatures and heat-flux diagnostics may advance. Concrete calculator and layer types are required because the
+   * acceptance operation does not cover additional subclass-owned state or user callbacks.
+   * </p>
+   *
+   * @param candidate completed private calculator state
+   * @throws IllegalStateException if configuration differs or candidate thermal values are invalid
+   */
+  void validateCandidateConfiguration(MultilayerThermalCalculator candidate) {
+    if (candidate == null || getClass() != MultilayerThermalCalculator.class
+        || candidate.getClass() != MultilayerThermalCalculator.class || layers.size() != candidate.layers.size()
+        || innerRadius != candidate.innerRadius || outerHTC != candidate.outerHTC
+        || enableThermalMass != candidate.enableThermalMass) {
+      throw new IllegalStateException("Thermal candidate must retain the connected calculator configuration");
+    }
+    if (!Double.isFinite(candidate.innerHTC) || candidate.innerHTC < 0.0 || !Double.isFinite(candidate.outerHTC)
+        || candidate.outerHTC < 0.0 || !Double.isFinite(candidate.fluidTemperature) || candidate.fluidTemperature <= 0.0
+        || !Double.isFinite(candidate.ambientTemperature) || candidate.ambientTemperature <= 0.0
+        || !Double.isFinite(candidate.overallUValue) || candidate.overallUValue < 0.0
+        || !Double.isFinite(candidate.lastFluidHeatTransferPerLength)
+        || !Double.isFinite(candidate.lastAmbientHeatTransferPerLength)) {
+      throw new IllegalStateException("Thermal candidate requires finite temperatures, coefficients and heat fluxes");
+    }
+    for (int layer = 0; layer < layers.size(); layer++) {
+      RadialThermalLayer accepted = layers.get(layer);
+      RadialThermalLayer proposed = candidate.layers.get(layer);
+      if (accepted.getClass() != RadialThermalLayer.class || proposed.getClass() != RadialThermalLayer.class
+          || !Objects.equals(accepted.getName(), proposed.getName())
+          || accepted.getMaterialType() != proposed.getMaterialType()
+          || accepted.getInnerRadius() != proposed.getInnerRadius()
+          || accepted.getOuterRadius() != proposed.getOuterRadius()
+          || accepted.getThermalConductivity() != proposed.getThermalConductivity()
+          || accepted.getDensity() != proposed.getDensity()
+          || accepted.getSpecificHeat() != proposed.getSpecificHeat()) {
+        throw new IllegalStateException("Thermal candidate must retain the connected radial-layer configuration");
+      }
+      if (!Double.isFinite(proposed.getTemperature()) || proposed.getTemperature() <= 0.0
+          || !Double.isFinite(proposed.getPreviousTemperature()) || proposed.getPreviousTemperature() <= 0.0) {
+        throw new IllegalStateException("Thermal candidate radial-layer temperatures must be positive and finite");
+      }
+    }
+  }
+
+  /**
+   * Install a validated candidate while preserving the connected calculator and all its radial-layer objects.
+   *
+   * <p>
+   * The owning pipe must validate first and keep both objects unchanged between validation and acceptance. Exact
+   * concrete layer types are checked during validation, so the temperature assignments below invoke no user code. Both
+   * current and previous temperatures are retained. Geometry and material values remain owned by the original layers;
+   * no allocation or heat-transfer solve occurs during acceptance.
+   * </p>
+   *
+   * @param candidate previously validated private thermal state
+   */
+  void acceptCandidateState(MultilayerThermalCalculator candidate) {
+    for (int layer = 0; layer < layers.size(); layer++) {
+      RadialThermalLayer accepted = layers.get(layer);
+      RadialThermalLayer proposed = candidate.layers.get(layer);
+      accepted.initializeTemperature(proposed.getPreviousTemperature());
+      accepted.setTemperature(proposed.getTemperature());
+    }
+    innerHTC = candidate.innerHTC;
+    outerHTC = candidate.outerHTC;
+    fluidTemperature = candidate.fluidTemperature;
+    ambientTemperature = candidate.ambientTemperature;
+    overallUValue = candidate.overallUValue;
+    uValueDirty = candidate.uValueDirty;
+    lastFluidHeatTransferPerLength = candidate.lastFluidHeatTransferPerLength;
+    lastAmbientHeatTransferPerLength = candidate.lastAmbientHeatTransferPerLength;
   }
 
   /**

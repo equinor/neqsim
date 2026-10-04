@@ -42,7 +42,7 @@ class TPmultiflashTest {
     SystemInterface poorGuess = flashMethaneHeptane(155.1, 84.4, binaryInteractionParameter, true, true, true);
     assertEquivalentHydrocarbonState(reference, poorGuess, 1.0e-8, "poor beta initialization");
 
-    for (double pressure : new double[] { 84.3, 84.4, 84.5 }) {
+    for (double pressure : new double[] {84.3, 84.4, 84.5}) {
       SystemInterface ordinary = flashMethaneHeptane(155.1, pressure, binaryInteractionParameter, false, false, false);
       SystemInterface enhanced = flashMethaneHeptane(155.1, pressure, binaryInteractionParameter, true, true, false);
       assertHydrocarbonTwoPhaseEquilibrium(ordinary, "ordinary at " + pressure + " bara");
@@ -74,7 +74,7 @@ class TPmultiflashTest {
   @Test
   void testEnhancedHydrocarbonBinaryMatchesOrdinaryMultiphaseCheck() {
     final double binaryInteractionParameter = 0.05;
-    double[][] conditions = new double[][] { { 110.0, 264.0 }, { 112.5, 276.0 }, { 70.0, 458.0 }, { 120.0, 200.0 } };
+    double[][] conditions = new double[][] {{110.0, 264.0}, {112.5, 276.0}, {70.0, 458.0}, {120.0, 200.0}};
 
     for (double[] condition : conditions) {
       String label = "P=" + condition[0] + " bara, T=" + condition[1] + " K";
@@ -245,8 +245,8 @@ class TPmultiflashTest {
   /** A raw EJML solve must not accept a non-finite correction from a singular beta Hessian. */
   @Test
   void testBetaCorrectionRejectsSingularSolveReportedAsSuccessful() {
-    DMatrixRMaj singularHessian = new DMatrixRMaj(new double[][] { { 1.0, 1.0 }, { 1.0, 1.0 } });
-    DMatrixRMaj gradient = new DMatrixRMaj(new double[][] { { 1.0 }, { 1.0 } });
+    DMatrixRMaj singularHessian = new DMatrixRMaj(new double[][] {{1.0, 1.0}, {1.0, 1.0}});
+    DMatrixRMaj gradient = new DMatrixRMaj(new double[][] {{1.0}, {1.0}});
     DMatrixRMaj correction = new DMatrixRMaj(2, 1);
 
     assertFalse(TPmultiflash.solveBetaCorrection(singularHessian, gradient, correction));
@@ -383,7 +383,7 @@ class TPmultiflashTest {
     system.init(1);
 
     assertEquals(2, system.getNumberOfPhases());
-    double[] referenceBeta = new double[] { system.getBeta(0), system.getBeta(1) };
+    double[] referenceBeta = new double[] {system.getBeta(0), system.getBeta(1)};
     double[][] referenceComposition = new double[2][system.getPhase(0).getNumberOfComponents()];
     for (int phase = 0; phase < 2; phase++) {
       for (int component = 0; component < referenceComposition[phase].length; component++) {

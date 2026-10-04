@@ -7,9 +7,18 @@ description: "The `HeatExchangerMechanicalDesign` class provides sizing estimate
 
 ## Overview
 
+For deposits inside tubes and their effect on process heat recovery and outlet pressures, see
+[Fouling thermal-hydraulic rating](../process/mechanical_design/fouling_thermal_hydraulic_rating).
+
 The `HeatExchangerMechanicalDesign` class provides sizing estimates for shell-and-tube, plate-and-frame, air cooler, and double-pipe exchangers. It can be attached to a full two-stream `HeatExchanger` or to single-stream `Heater` and `Cooler` units that supply an auxiliary utility specification. The mechanical design routine evaluates the candidate exchanger types, computes the required UA and approach temperatures, and selects a preferred configuration based on area, weight, or pressure-drop criteria.
 
 ## Prerequisites
+
+For geometry-based gasketed plate rating, use
+[`PlateHeatExchangerDesignCalculator`](../process/mechanical_design/plate_heat_exchanger_design).
+It adds Martin chevron correlations, channel and port losses, effectiveness–NTU,
+fouling, and separate frame and bolt plate limits. The generic `PLATE_AND_FRAME`
+selection described below remains an area estimate.
 
 - Run the process simulation so that the process-side temperatures, pressures, and duty are available.
 - Ensure the equipment has been initialized (`initMechanicalDesign`) before requesting the sizing results.

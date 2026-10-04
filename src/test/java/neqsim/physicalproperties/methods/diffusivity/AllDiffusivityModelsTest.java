@@ -262,7 +262,7 @@ public class AllDiffusivityModelsTest {
 
   @Test
   void testGasDiffusivityIncreaseWithTemperature() {
-    double[] temps = { 273.15, 323.15, 373.15, 473.15 };
+    double[] temps = {273.15, 323.15, 373.15, 473.15};
     double[] dValues = new double[temps.length];
 
     for (int t = 0; t < temps.length; t++) {
@@ -293,7 +293,7 @@ public class AllDiffusivityModelsTest {
 
   @Test
   void testGasDiffusivityDecreaseWithPressure() {
-    double[] pressures = { 1.0, 5.0, 10.0, 50.0 };
+    double[] pressures = {1.0, 5.0, 10.0, 50.0};
     double[] dValues = new double[pressures.length];
 
     for (int p = 0; p < pressures.length; p++) {

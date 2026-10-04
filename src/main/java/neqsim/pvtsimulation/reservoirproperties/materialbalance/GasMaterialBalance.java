@@ -233,7 +233,7 @@ public final class GasMaterialBalance implements Serializable {
       gpOut[i - 1] = gp[i];
       foverEg[i - 1] = eg > 1.0e-30 ? f / eg : Double.NaN;
     }
-    return new double[][] { gpOut, foverEg };
+    return new double[][] {gpOut, foverEg};
   }
 
   /**
@@ -312,7 +312,7 @@ public final class GasMaterialBalance implements Serializable {
       ssTot += (y[i] - meanY) * (y[i] - meanY);
     }
     double rSquared = ssTot > 1.0e-30 ? 1.0 - ssRes / ssTot : 1.0;
-    return new double[] { slope, intercept, rSquared };
+    return new double[] {slope, intercept, rSquared};
   }
 
   /**
@@ -348,7 +348,7 @@ public final class GasMaterialBalance implements Serializable {
       ssTot += (y[i] - meanY) * (y[i] - meanY);
     }
     double rSquared = ssTot > 1.0e-30 ? 1.0 - ssRes / ssTot : 1.0;
-    return new double[] { slope, rSquared };
+    return new double[] {slope, rSquared};
   }
 
   /**

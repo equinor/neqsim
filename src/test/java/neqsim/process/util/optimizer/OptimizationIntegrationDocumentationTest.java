@@ -112,10 +112,10 @@ class OptimizationIntegrationDocumentationTest {
           .call(), diagnostics.getDiagnostics().toString());
     }
     Path csv = documentationOutput.resolve("pressure_grid.csv");
-    try (URLClassLoader loader = new URLClassLoader(new URL[] { documentationOutput.toUri().toURL() },
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {documentationOutput.toUri().toURL()},
         getClass().getClassLoader())) {
       loader.loadClass("VFPGenerationExample").getMethod("main", String[].class).invoke(null,
-          (Object) new String[] { csv.toString() });
+          (Object) new String[] {csv.toString()});
     }
     List<String> rows = Files.readAllLines(csv, StandardCharsets.UTF_8);
     assertEquals(17, rows.size());
@@ -170,14 +170,14 @@ class OptimizationIntegrationDocumentationTest {
         p -> ((Cooler) p.getUnit("cooler")).getOutletStream().getPressure("bara"), 60.0);
     evaluator.addConstraintUpperBound("maxOutletTemp",
         p -> ((Cooler) p.getUnit("cooler")).getOutletStream().getTemperature("C"), 50.0);
-    double[] target = new double[] { 10000.0, 60.0 };
+    double[] target = new double[] {10000.0, 60.0};
     ProcessSimulationEvaluator.EvaluationResult reference = evaluator.evaluate(target);
     assertTrue(reference.isFeasible());
     assertTrue(reference.isSimulationConverged());
     assertTrue(reference.getObjective() > 400.0 && reference.getObjective() < 500.0);
-    evaluator.evaluate(new double[] { 55000.0, 85.0 });
-    evaluator.evaluate(new double[] { 55001.0, 85.0 });
-    evaluator.evaluate(new double[] { 55000.0, 85.01 });
+    evaluator.evaluate(new double[] {55000.0, 85.0});
+    evaluator.evaluate(new double[] {55001.0, 85.0});
+    evaluator.evaluate(new double[] {55000.0, 85.01});
     ProcessSimulationEvaluator.EvaluationResult repeated = evaluator.evaluate(target);
     assertEquals(reference.getObjective(), repeated.getObjective(), 1.0e-6);
     assertEquals(50000.0, ((StreamInterface) process.getUnit("feed")).getFlowRate("kg/hr"), 1.0e-6);
@@ -194,12 +194,12 @@ class OptimizationIntegrationDocumentationTest {
         ProcessSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
     evaluator.addConstraintRange("feed range", p -> ((StreamInterface) p.getUnit("feed")).getFlowRate("kg/hr"), 5000.0,
         15000.0);
-    ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] { 10000.0, 60.0 });
+    ProcessSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[] {10000.0, 60.0});
     assertTrue(result.isFeasible());
     assertEquals(-10000.0, result.getObjective(), 1.0e-6);
     assertEquals(2, evaluator.getConstraints().get(0).toOptimizationConstraints().size());
-    assertFalse(evaluator.evaluate(new double[] { 3000.0, 60.0 }).isFeasible());
-    assertFalse(evaluator.evaluate(new double[] { 17000.0, 60.0 }).isFeasible());
+    assertFalse(evaluator.evaluate(new double[] {3000.0, 60.0}).isFeasible());
+    assertFalse(evaluator.evaluate(new double[] {17000.0, 60.0}).isFeasible());
   }
 
   @Test
@@ -269,10 +269,10 @@ class OptimizationIntegrationDocumentationTest {
     MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(factory, "feed", "outlet");
     generator.setFlashGenerator(recombination);
     generator.setFlowRateUnit("kg/hr");
-    generator.setFlowRates(new double[] { 1000.0, 3000.0 });
-    generator.setOutletPressures(new double[] { 20.0, 30.0 });
-    generator.setWaterCuts(new double[] { 0.0, 0.3 });
-    generator.setGORs(new double[] { 80.0, 200.0 });
+    generator.setFlowRates(new double[] {1000.0, 3000.0});
+    generator.setOutletPressures(new double[] {20.0, 30.0});
+    generator.setWaterCuts(new double[] {0.0, 0.3});
+    generator.setGORs(new double[] {80.0, 200.0});
     generator.setInletTemperature(353.15);
     generator.setMinInletPressure(5.0);
     generator.setMaxInletPressure(150.0);

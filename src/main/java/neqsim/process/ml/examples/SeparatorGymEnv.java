@@ -98,13 +98,13 @@ public class SeparatorGymEnv extends GymEnvironment {
 
     // Observation space: 8 dimensions
     observationDim = 8;
-    observationLow = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0 };
-    observationHigh = new double[] { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
+    observationLow = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0};
+    observationHigh = new double[] {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
     // Action space: 1 dimension (valve delta)
     actionDim = 1;
-    actionLow = new double[] { -0.1 };
-    actionHigh = new double[] { 0.1 };
+    actionLow = new double[] {-0.1};
+    actionHigh = new double[] {0.1};
 
     maxEpisodeSteps = 500;
   }
@@ -229,8 +229,8 @@ public class SeparatorGymEnv extends GymEnvironment {
 
     double levelError = (liquidLevel - levelSetpoint) / 0.5; // Normalized error
 
-    return new double[] { liquidLevel, pressure, temperature, feedFlow, gasDensity, liquidDensity, levelError,
-        valvePosition };
+    return new double[] {liquidLevel, pressure, temperature, feedFlow, gasDensity, liquidDensity, levelError,
+        valvePosition};
   }
 
   private double getLiquidOutflowRate() {
@@ -289,8 +289,8 @@ public class SeparatorGymEnv extends GymEnvironment {
    * @return feature names
    */
   public String[] getObservationNames() {
-    return new String[] { "liquid_level", "pressure", "temperature", "feed_flow", "gas_density", "liquid_density",
-        "level_error", "valve_position" };
+    return new String[] {"liquid_level", "pressure", "temperature", "feed_flow", "gas_density", "liquid_density",
+        "level_error", "valve_position"};
   }
 
   /**
@@ -299,6 +299,6 @@ public class SeparatorGymEnv extends GymEnvironment {
    * @return action names
    */
   public String[] getActionNames() {
-    return new String[] { "valve_delta" };
+    return new String[] {"valve_delta"};
   }
 }

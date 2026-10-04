@@ -11,14 +11,13 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashSourGasConsistencyTest {
-  private static final String[] COMPONENTS = { "methane", "CO2", "H2S" };
-  private static final double[] FEED = { 49.88 / 99.97, 9.87 / 99.97, 40.22 / 99.97 };
+  private static final String[] COMPONENTS = {"methane", "CO2", "H2S"};
+  private static final double[] FEED = {49.88 / 99.97, 9.87 / 99.97, 40.22 / 99.97};
 
   @Test
   void ordinaryAndMultiphaseFlashReachSameStableOneOrTwoPhaseState() {
-    double[][] conditions = { { 145.0, 10.98 }, { 170.0, 20.96 }, { 170.0, 380.24 }, { 200.0, 50.90 },
-        { 210.0, 145.71 }, { 220.0, 100.80 }, { 225.0, 105.79 }, { 250.0, 105.79 }, { 255.0, 105.79 },
-        { 270.0, 120.76 }, { 280.0, 120.76 } };
+    double[][] conditions = {{145.0, 10.98}, {170.0, 20.96}, {170.0, 380.24}, {200.0, 50.90}, {210.0, 145.71},
+        {220.0, 100.80}, {225.0, 105.79}, {250.0, 105.79}, {255.0, 105.79}, {270.0, 120.76}, {280.0, 120.76}};
 
     for (double[] condition : conditions) {
       SystemInterface ordinary = flash(condition[0], condition[1], false, false);
@@ -30,7 +29,7 @@ class TPflashSourGasConsistencyTest {
 
   @Test
   void enhancedMultiphaseFlashRepairsInvalidOrCollapsedEndpoints() {
-    double[][] conditions = { { 240.0, 100.80 }, { 260.0, 20.96 }, { 285.0, 45.91 } };
+    double[][] conditions = {{240.0, 100.80}, {260.0, 20.96}, {285.0, 45.91}};
 
     for (double[] condition : conditions) {
       SystemInterface ordinary = flash(condition[0], condition[1], false, false);
@@ -66,7 +65,7 @@ class TPflashSourGasConsistencyTest {
     assertEquals(3877.865927361861, ordinary.getGibbsEnergy(), 1.0e-6);
     assertEquals(0.572813112145268, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
 
-    double[][] nearbyConditions = { { 220.0, 95.81 }, { 225.0, 100.80 }, { 230.0, 95.81 } };
+    double[][] nearbyConditions = {{220.0, 95.81}, {225.0, 100.80}, {230.0, 95.81}};
     for (double[] condition : nearbyConditions) {
       SystemInterface nearbyOrdinary = flash(condition[0], condition[1], false, false);
       SystemInterface nearbyMultiphase = flash(condition[0], condition[1], true, false);
@@ -88,7 +87,7 @@ class TPflashSourGasConsistencyTest {
 
   @Test
   void enhancedMultiphaseFlashQualifiesStableThreePhaseLine() {
-    double[][] conditions = { { 202.0, 47.0 }, { 205.0, 50.0 }, { 208.0, 53.0 } };
+    double[][] conditions = {{202.0, 47.0}, {205.0, 50.0}, {208.0, 53.0}};
 
     for (double[] condition : conditions) {
       String label = "T=" + condition[0] + " K, P=" + condition[1] + " bara";

@@ -36,9 +36,9 @@ public final class ParaHydrogenSolidHelmholtzEquation implements SolidHelmholtzE
   private static final double A_D = 0.0008734;
   private static final double B_D = 0.9295;
   private static final double C_D = 1.020;
-  private static final double[] EINSTEIN_WEIGHTS = { 0.09616, 0.1597, 0.004324 };
-  private static final double[] EINSTEIN_TEMPERATURES = { 51.62, 247.0, 187.9 };
-  private static final double[] EINSTEIN_GRUNEISEN = { 2.290, 0.9952, 1.367 };
+  private static final double[] EINSTEIN_WEIGHTS = {0.09616, 0.1597, 0.004324};
+  private static final double[] EINSTEIN_TEMPERATURES = {51.62, 247.0, 187.9};
+  private static final double[] EINSTEIN_GRUNEISEN = {2.290, 0.9952, 1.367};
   private static final double THETA_INTERNAL0 = 1086.0;
   private static final double GAMMA_INTERNAL = 2.775;
   private static final double EXTERNAL_MODES_PER_MOLECULE = 5.0;

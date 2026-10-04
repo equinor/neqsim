@@ -38,7 +38,7 @@ public class ThermalConductivityDocumentationTest {
   /** Verifies the self-contained model-comparison example. */
   @Test
   void compareConductivityModelsExample() {
-    String[] models = { "PFCT", "Chung-dense" };
+    String[] models = {"PFCT", "Chung-dense"};
     double[] conductivities = new double[models.length];
 
     for (int i = 0; i < models.length; i++) {
@@ -63,7 +63,7 @@ public class ThermalConductivityDocumentationTest {
     baseFluid.addComponent("methane", 1.0);
     baseFluid.setMixingRule("classic");
 
-    double[] pressuresBara = { 10, 50, 100, 150, 200 };
+    double[] pressuresBara = {10, 50, 100, 150, 200};
     for (double pressureBara : pressuresBara) {
       SystemInterface fluid = baseFluid.clone();
       fluid.setPressure(pressureBara, "bara");
@@ -96,7 +96,7 @@ public class ThermalConductivityDocumentationTest {
     gas.addComponent("ethane", 0.1);
     gas.setMixingRule("classic");
     flashAndInitialize(gas);
-    for (String model : new String[] { "PFCT", "Chung", "Chung-dense" }) {
+    for (String model : new String[] {"PFCT", "Chung", "Chung-dense"}) {
       gas.getPhase("gas").getPhysicalProperties().setConductivityModel(model);
       gas.getPhase("gas").initPhysicalProperties();
       assertPositiveFinite(gas.getPhase("gas").getThermalConductivity("W/mK"));

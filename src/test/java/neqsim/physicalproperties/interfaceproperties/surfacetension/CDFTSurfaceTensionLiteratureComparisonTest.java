@@ -133,22 +133,22 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     // format: component, T(K), sigma_exp (mN/m)
     String[][] testCases = {
         // Methane: Miqueu AAD = 1.2%
-        { "methane", "90.7", "18.9" }, { "methane", "111.0", "14.9" }, { "methane", "120.0", "13.0" },
-        { "methane", "150.0", "6.6" }, { "methane", "170.0", "2.8" },
+        {"methane", "90.7", "18.9"}, {"methane", "111.0", "14.9"}, {"methane", "120.0", "13.0"},
+        {"methane", "150.0", "6.6"}, {"methane", "170.0", "2.8"},
         // Ethane: Miqueu AAD = 1.1%
-        { "ethane", "184.0", "17.1" }, { "ethane", "230.0", "9.4" }, { "ethane", "270.0", "3.6" },
+        {"ethane", "184.0", "17.1"}, {"ethane", "230.0", "9.4"}, {"ethane", "270.0", "3.6"},
         // Propane: Miqueu AAD = 0.7%
-        { "propane", "230.0", "13.6" }, { "propane", "270.0", "8.6" }, { "propane", "320.0", "3.4" },
+        {"propane", "230.0", "13.6"}, {"propane", "270.0", "8.6"}, {"propane", "320.0", "3.4"},
         // n-Butane: Miqueu AAD = 0.5%
-        { "n-butane", "270.0", "13.2" }, { "n-butane", "320.0", "7.6" },
+        {"n-butane", "270.0", "13.2"}, {"n-butane", "320.0", "7.6"},
         // n-Pentane: Miqueu AAD = 2.1%
-        { "n-pentane", "300.0", "14.6" }, { "n-pentane", "350.0", "9.1" },
+        {"n-pentane", "300.0", "14.6"}, {"n-pentane", "350.0", "9.1"},
         // n-Hexane: Miqueu AAD = 1.3%
-        { "n-hexane", "300.0", "16.3" }, { "n-hexane", "340.0", "12.5" }, { "n-hexane", "400.0", "5.8" },
+        {"n-hexane", "300.0", "16.3"}, {"n-hexane", "340.0", "12.5"}, {"n-hexane", "400.0", "5.8"},
         // Nitrogen: Miqueu AAD = 3.4%
-        { "nitrogen", "77.0", "9.4" }, { "nitrogen", "90.0", "6.2" },
+        {"nitrogen", "77.0", "9.4"}, {"nitrogen", "90.0", "6.2"},
         // CO2: Miqueu AAD ~ 2% (generalized)
-        { "CO2", "220.0", "15.5" }, { "CO2", "250.0", "8.5" }, { "CO2", "280.0", "2.6" }, };
+        {"CO2", "220.0", "15.5"}, {"CO2", "250.0", "8.5"}, {"CO2", "280.0", "2.6"},};
 
     // Published per-component AAD from Miqueu (2003) Table 4 (generalized c(omega))
     Map<String, Double> miqueuAAD = new LinkedHashMap<String, Double>();
@@ -299,9 +299,9 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     logger.info(
         "===========================================================================" + "============================");
 
-    String[][] testCases = { { "methane", "111.0", "14.9" }, { "ethane", "230.0", "9.4" },
-        { "propane", "270.0", "8.6" }, { "n-butane", "320.0", "7.6" }, { "n-hexane", "300.0", "16.3" },
-        { "nitrogen", "77.0", "9.4" }, { "CO2", "250.0", "8.5" }, };
+    String[][] testCases = {{"methane", "111.0", "14.9"}, {"ethane", "230.0", "9.4"}, {"propane", "270.0", "8.6"},
+        {"n-butane", "320.0", "7.6"}, {"n-hexane", "300.0", "16.3"}, {"nitrogen", "77.0", "9.4"},
+        {"CO2", "250.0", "8.5"},};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "| %-10s | %5s | %5s | %9s | %9s | %9s | %9s |%n", "Component",
         "T(K)", "Exp", "cDFT-PR", "cDFT-SRK", "GT-PR", "GT-SRK");
@@ -380,10 +380,9 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
         "GT + vol-corrected PR, generalized c(omega)", "2.2", "0", "Miqueu (2003) Table 4");
 
     // Run our models to get actual AAD values
-    String[][] quickTest = { { "methane", "111.0", "14.9" }, { "methane", "150.0", "6.6" },
-        { "ethane", "230.0", "9.4" }, { "propane", "270.0", "8.6" }, { "n-butane", "320.0", "7.6" },
-        { "n-pentane", "300.0", "14.6" }, { "n-hexane", "300.0", "16.3" }, { "nitrogen", "77.0", "9.4" },
-        { "CO2", "250.0", "8.5" }, };
+    String[][] quickTest = {{"methane", "111.0", "14.9"}, {"methane", "150.0", "6.6"}, {"ethane", "230.0", "9.4"},
+        {"propane", "270.0", "8.6"}, {"n-butane", "320.0", "7.6"}, {"n-pentane", "300.0", "14.6"},
+        {"n-hexane", "300.0", "16.3"}, {"nitrogen", "77.0", "9.4"}, {"CO2", "250.0", "8.5"},};
 
     double sumGT = 0, sumPar = 0, sumCDFT = 0;
     int n = 0;
@@ -448,14 +447,14 @@ public class CDFTSurfaceTensionLiteratureComparisonTest {
     logger.info("==========================================================================="
         + "================================================================");
 
-    String[][] testCases = { { "methane", "90.7", "18.9" }, { "methane", "111.0", "14.9" },
-        { "methane", "120.0", "13.0" }, { "methane", "150.0", "6.6" }, { "methane", "170.0", "2.8" },
-        { "ethane", "184.0", "17.1" }, { "ethane", "230.0", "9.4" }, { "ethane", "270.0", "3.6" },
-        { "propane", "230.0", "13.6" }, { "propane", "270.0", "8.6" }, { "propane", "320.0", "3.4" },
-        { "n-butane", "270.0", "13.2" }, { "n-butane", "320.0", "7.6" }, { "n-pentane", "300.0", "14.6" },
-        { "n-pentane", "350.0", "9.1" }, { "n-hexane", "300.0", "16.3" }, { "n-hexane", "340.0", "12.5" },
-        { "n-hexane", "400.0", "5.8" }, { "nitrogen", "77.0", "9.4" }, { "nitrogen", "90.0", "6.2" },
-        { "CO2", "220.0", "15.5" }, { "CO2", "250.0", "8.5" }, { "CO2", "280.0", "2.6" }, };
+    String[][] testCases = {{"methane", "90.7", "18.9"}, {"methane", "111.0", "14.9"}, {"methane", "120.0", "13.0"},
+        {"methane", "150.0", "6.6"}, {"methane", "170.0", "2.8"}, {"ethane", "184.0", "17.1"},
+        {"ethane", "230.0", "9.4"}, {"ethane", "270.0", "3.6"}, {"propane", "230.0", "13.6"},
+        {"propane", "270.0", "8.6"}, {"propane", "320.0", "3.4"}, {"n-butane", "270.0", "13.2"},
+        {"n-butane", "320.0", "7.6"}, {"n-pentane", "300.0", "14.6"}, {"n-pentane", "350.0", "9.1"},
+        {"n-hexane", "300.0", "16.3"}, {"n-hexane", "340.0", "12.5"}, {"n-hexane", "400.0", "5.8"},
+        {"nitrogen", "77.0", "9.4"}, {"nitrogen", "90.0", "6.2"}, {"CO2", "220.0", "15.5"}, {"CO2", "250.0", "8.5"},
+        {"CO2", "280.0", "2.6"},};
 
     logger.printf(org.apache.logging.log4j.Level.INFO, "| %-10s | %6s | %6s | %10s | %10s | %10s | %10s |%n",
         "Component", "T (K)", "Exp", "cDFT-raw", "cDFT-pred", "Full GT", "Parachor");

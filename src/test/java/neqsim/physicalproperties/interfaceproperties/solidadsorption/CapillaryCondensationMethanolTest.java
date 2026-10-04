@@ -288,7 +288,7 @@ public class CapillaryCondensationMethanolTest {
     model.setSaturationMoleFraction(idx, ySat);
     model.setRelativeSaturationBasis(RelativeSaturationBasis.SATURATION_MOLE_FRACTION);
 
-    for (double radius : new double[] { 1.0, 2.0, 5.0, 20.0, 50.0 }) {
+    for (double radius : new double[] {1.0, 2.0, 5.0, 20.0, 50.0}) {
       double onset = model.getCondensationPressure(radius, idx, 0);
       double limit = model.getMaxAllowableMoleFraction(idx, radius, 0);
       assertEquals(onset * ySat, limit, 1.0e-9,

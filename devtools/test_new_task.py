@@ -1,0 +1,540 @@
+"""Task output destination regression tests, isolated from user settings."""
+import json
+import os
+import sys
+from pathlib import Path
+
+import pytest
+
+import new_task
+
+
+@pytest.fixture
+def defaults(tmp_path, monkeypatch):
+    config = tmp_path / "settings" / "task_defaults.json"
+    monkeypatch.setattr(new_task, "task_defaults_path", lambda: str(config))
+    monkeypatch.setattr(new_task, "TASK_SOLVE_DIR", str(tmp_path / "fallback"))
+    monkeypatch.delenv("NEQSIM_TASK_ROOT", raising=False)
+    monkeypatch.delenv("NEQSIM_REPORT_TEMPLATE", raising=False)
+    monkeypatch.delenv("NEQSIM_DOCUMENT_ROOT", raising=False)
+    # Never launch the editor or a file manager window from a test run.
+    monkeypatch.setenv("NEQSIM_NO_VSCODE", "1")
+    monkeypatch.setenv("NEQSIM_NO_EXPLORER", "1")
+    return config
+
+
+def test_task_root_precedence(defaults, tmp_path, monkeypatch):
+    assert new_task.resolve_task_root() == str(tmp_path / "fallback")
+    saved = new_task.save_default_task_root(str(tmp_path / "saved tasks"))
+    assert json.loads(defaults.read_text())["task_root"] == saved
+    assert new_task.resolve_task_root() == saved
+    monkeypatch.setenv("NEQSIM_TASK_ROOT", str(tmp_path / "environment"))
+    assert new_task.resolve_task_root() == str(tmp_path / "environment")
+    assert new_task.resolve_task_root(str(tmp_path / "explicit")) == str(tmp_path / "explicit")
+
+
+def test_create_and_list_external_task(defaults, tmp_path, capsys):
+    root = new_task.save_default_task_root(str(tmp_path / "external tasks"))
+    task = Path(new_task.create_task("External destination", prompt="Original request"))
+    assert task.parent == Path(root)
+    assert (task / "study_config.yaml").is_file()
+    assert (task / "step3_report" / "generate_report.py").is_file()
+    assert (task / "step1_scope_and_research" / "references").is_dir()
+    assert not (tmp_path / "fallback").exists()
+    new_task.list_tasks()
+    assert root in capsys.readouterr().out
+
+
+def test_invalid_default_fails_closed(defaults):
+    defaults.parent.mkdir()
+    defaults.write_text('{"task_root": 123}')
+    with pytest.raises(ValueError, match="non-empty path"):
+        new_task.resolve_task_root()
+
+
+def test_word_brief_becomes_prompt_and_is_kept(defaults, tmp_path):
+    docx = pytest.importorskip("docx")
+    brief = tmp_path / "Increase production brief.docx"
+    document = docx.Document()
+    document.add_heading("Goal", level=1)
+    document.add_paragraph("Find operational levers worth at least 2 MSm3/d.")
+    document.add_paragraph("No modifications", style="List Bullet")
+    table = document.add_table(rows=2, cols=2)
+    table.cell(0, 0).text, table.cell(0, 1).text = "KPI", "Target"
+    table.cell(1, 0).text, table.cell(1, 1).text = "uplift", "2 MSm3/d"
+    document.save(str(brief))
+
+    text = new_task.read_prompt_file(str(brief))
+    assert text.splitlines()[0] == "# Goal"
+    assert "- No modifications" in text
+    assert "| uplift | 2 MSm3/d |" in text
+
+    new_task.save_default_task_root(str(tmp_path / "tasks"))
+    task = Path(new_task.create_task("Brief task", prompt_file=str(brief)))
+    kept = task / "step1_scope_and_research" / "references" / "manual" / brief.name
+    assert kept.is_file()
+    assert "Find operational levers" in (task / "user_input.md").read_text(encoding="utf-8")
+    config = (task / "study_config.yaml").read_text(encoding="utf-8")
+    assert 'prompt_file: "step1_scope_and_research/references/manual/{}"'.format(brief.name) in config
+
+
+def test_markdown_brief_and_legacy_text_files(tmp_path, defaults, monkeypatch, capsys):
+    brief = tmp_path / "brief.md"
+    brief.write_text("# Goal\nReduce compressor power by 5 %.\n", encoding="utf-8")
+    assert new_task.read_prompt_file(str(brief)).startswith("# Goal")
+    legacy = tmp_path / "request.prompt"
+    legacy.write_text("verbatim request", encoding="utf-8")
+    assert new_task.read_prompt_file(str(legacy)) == "verbatim request"
+    pdf = tmp_path / "brief.pdf"
+    pdf.write_bytes(b"%PDF-1.4\n\xff\xfe\x00binary")
+    with pytest.raises(ValueError, match="not UTF-8 text"):
+        new_task.read_prompt_file(str(pdf))
+    with pytest.raises(ValueError, match="not found"):
+        new_task.read_prompt_file(str(tmp_path / "missing.md"))
+    # Unreadable prompt files keep the historical behaviour: warn and still create the task.
+    root = tmp_path / "cli tasks"
+    monkeypatch.setattr(sys, "argv", ["new_task", "Legacy prompt", "--task-root", str(root),
+                                     "--prompt-file", str(pdf)])
+    new_task.main()
+    assert "WARNING: could not read --prompt-file" in capsys.readouterr().out
+    assert len(list(root.glob("*_legacy_prompt"))) == 1
+
+
+def test_cli_settings_and_override(defaults, tmp_path, monkeypatch, capsys):
+    saved = str(tmp_path / "saved")
+    monkeypatch.setattr(sys, "argv", ["new_task", "--set-default-folder", saved])
+    new_task.main()
+    monkeypatch.setattr(sys, "argv", ["new_task", "--show-task-root"])
+    new_task.main()
+    assert saved in capsys.readouterr().out
+    explicit = str(tmp_path / "one off")
+    monkeypatch.setattr(sys, "argv", ["new_task", "CLI task", "--task-root", explicit,
+                                     "--type", "A", "--scale", "quick"])
+    new_task.main()
+    tasks = list(Path(explicit).glob("*_cli_task"))
+    assert len(tasks) == 1
+    assert "quick" in (tasks[0] / "study_config.yaml").read_text(encoding="utf-8")
+    assert new_task.resolve_task_root() == saved
+    monkeypatch.setattr(sys, "argv", ["new_task", "--reset-default-folder"])
+    new_task.main()
+    assert not defaults.exists()
+    assert tasks[0].exists()
+
+
+def test_unified_cli_resolves_relative_destination_from_caller(defaults, tmp_path,
+                                                             monkeypatch):
+    import neqsim_cli
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["neqsim", "new-task", "--set-default-folder",
+                                     "relative tasks"])
+    neqsim_cli.main()
+    assert new_task.resolve_task_root() == str(tmp_path / "relative tasks")
+
+
+def test_top_level_task_root_command(defaults, tmp_path, monkeypatch, capsys):
+    import neqsim_cli
+
+    chosen = tmp_path / "engineering tasks"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(chosen)])
+    with pytest.raises(SystemExit) as exit_info:
+        neqsim_cli.main()
+    assert exit_info.value.code == 0
+    assert new_task.resolve_task_root() == str(chosen)
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--show-task-root"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert str(chosen) in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--reset-task-root"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert not defaults.exists()
+
+
+def test_default_can_follow_terminal_folder(defaults, tmp_path, monkeypatch):
+    assert new_task.save_default_task_root("cwd") == "."
+    first = tmp_path / "project a"
+    second = tmp_path / "project b"
+    for folder in (first, second):
+        folder.mkdir()
+        monkeypatch.chdir(folder)
+        assert new_task.resolve_task_root() == str(folder)
+    new_task.create_task("Terminal folder task")
+    assert list(second.glob("*_terminal_folder_task"))
+
+
+def test_report_template_precedence_and_validation(defaults, tmp_path, monkeypatch):
+    company = tmp_path / "company template.docx"
+    company.write_bytes(b"PK")
+    assert new_task.resolve_report_template() is None
+    assert new_task.save_default_report_template(str(company)) == str(company)
+    assert new_task.resolve_report_template() == str(company)
+
+    other = tmp_path / "other.dotx"
+    other.write_bytes(b"PK")
+    monkeypatch.setenv("NEQSIM_REPORT_TEMPLATE", str(other))
+    assert new_task.resolve_report_template() == str(other)
+    monkeypatch.delenv("NEQSIM_REPORT_TEMPLATE")
+
+    with pytest.raises(ValueError, match="not found"):
+        new_task.resolve_report_template(str(tmp_path / "missing.docx"))
+    with pytest.raises(ValueError, match=r"\.docx or \.dotx"):
+        new_task.resolve_report_template(str(tmp_path / "template.pdf"))
+
+
+def test_report_template_and_task_root_settings_coexist(defaults, tmp_path, monkeypatch):
+    import neqsim_cli
+
+    template = tmp_path / "brand.docx"
+    template.write_bytes(b"PK")
+    saved_root = new_task.save_default_task_root(str(tmp_path / "tasks"))
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-report-template", str(template)])
+    with pytest.raises(SystemExit) as exit_info:
+        neqsim_cli.main()
+    assert exit_info.value.code == 0
+
+    assert json.loads(defaults.read_text()) == {
+        "task_root": saved_root, "report_template": str(template)}
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--reset-task-root"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert new_task.resolve_report_template() == str(template)
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--reset-report-template"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert new_task.resolve_report_template() is None
+    assert not defaults.exists()
+
+
+def test_report_template_cli_rejects_unusable_path(defaults, tmp_path, monkeypatch, capsys):
+    import neqsim_cli
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-report-template",
+                                      str(tmp_path / "missing.docx")])
+    with pytest.raises(SystemExit) as exit_info:
+        neqsim_cli.main()
+    assert exit_info.value.code == 2
+    assert "not found" in capsys.readouterr().out
+    assert not defaults.exists()
+
+
+def test_document_root_precedence_and_validation(defaults, tmp_path, monkeypatch):
+    documents = tmp_path / "engineering documents"
+    (documents / "stid").mkdir(parents=True)
+    assert new_task.resolve_document_root() is None
+    assert new_task.save_default_document_root(str(documents)) == str(documents)
+    assert json.loads(defaults.read_text())["document_root"] == str(documents)
+    assert new_task.resolve_document_root() == str(documents)
+
+    other = tmp_path / "shared documents"
+    other.mkdir()
+    monkeypatch.setenv("NEQSIM_DOCUMENT_ROOT", str(other))
+    assert new_task.resolve_document_root() == str(other)
+    monkeypatch.delenv("NEQSIM_DOCUMENT_ROOT")
+
+    with pytest.raises(ValueError, match="not found"):
+        new_task.resolve_document_root(str(tmp_path / "missing documents"))
+
+
+def test_find_documents_walks_subfolders(defaults, tmp_path):
+    documents = tmp_path / "documents"
+    (documents / "stid" / "pid").mkdir(parents=True)
+    (documents / "datasheet.pdf").write_text("a", encoding="utf-8")
+    (documents / "stid" / "pid" / "C-12345.pdf").write_text("b", encoding="utf-8")
+    (documents / ".hidden.pdf").write_text("c", encoding="utf-8")
+    new_task.save_default_document_root(str(documents))
+
+    assert new_task.find_documents() == [
+        str(documents / "datasheet.pdf"),
+        str(documents / "stid" / "pid" / "C-12345.pdf"),
+    ]
+    assert new_task.find_documents("c-123") == [
+        str(documents / "stid" / "pid" / "C-12345.pdf")]
+    assert new_task.find_documents(limit=1) == [str(documents / "datasheet.pdf")]
+
+
+def test_document_root_cli_and_listing(defaults, tmp_path, monkeypatch, capsys):
+    import neqsim_cli
+
+    documents = tmp_path / "documents"
+    (documents / "vendor").mkdir(parents=True)
+    (documents / "vendor" / "curve.pdf").write_text("x", encoding="utf-8")
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-document-root", str(documents)])
+    with pytest.raises(SystemExit) as exit_info:
+        neqsim_cli.main()
+    assert exit_info.value.code == 0
+    assert new_task.resolve_document_root() == str(documents)
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "documents", "curve"])
+    with pytest.raises(SystemExit) as exit_info:
+        neqsim_cli.main()
+    assert exit_info.value.code == 0
+    assert "curve.pdf" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--reset-document-root"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert new_task.resolve_document_root() is None
+
+
+def test_document_root_cli_creates_missing_folder(defaults, tmp_path, monkeypatch, capsys):
+    import neqsim_cli
+
+    library = tmp_path / "standards library"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-document-root", str(library)])
+    with pytest.raises(SystemExit) as exit_info:
+        neqsim_cli.main()
+    assert exit_info.value.code == 0
+    assert library.is_dir()
+    assert new_task.resolve_document_root() == str(library)
+    assert "standards" in capsys.readouterr().out
+
+
+def test_roots_rejected_when_path_is_a_file(defaults, tmp_path):
+    occupied = tmp_path / "not-a-folder.txt"
+    occupied.write_text("x", encoding="utf-8")
+    with pytest.raises(ValueError, match="is a file"):
+        new_task.save_default_document_root(str(occupied))
+    with pytest.raises(ValueError, match="is a file"):
+        new_task.save_default_task_root(str(occupied))
+    assert not defaults.exists()
+    assert occupied.read_text(encoding="utf-8") == "x"
+
+
+def test_setting_an_existing_root_keeps_its_content(defaults, tmp_path):
+    library = tmp_path / "standards"
+    (library / "norsok").mkdir(parents=True)
+    (library / "norsok" / "P-002.pdf").write_text("standard", encoding="utf-8")
+    tasks = tmp_path / "tasks"
+    (tasks / "2026-01-01_existing").mkdir(parents=True)
+
+    for _ in range(2):
+        new_task.save_default_document_root(str(library))
+        new_task.save_default_task_root(str(tasks))
+
+    assert (library / "norsok" / "P-002.pdf").read_text(encoding="utf-8") == "standard"
+    assert (tasks / "2026-01-01_existing").is_dir()
+
+
+def test_set_root_adds_folder_to_vscode_only_when_asked(defaults, tmp_path, monkeypatch,
+                                                        capsys):
+    import neqsim_cli
+
+    added = []
+    monkeypatch.setattr(new_task, "add_folder_to_vscode_workspace",
+                        lambda path: (added.append(path), (True, ""))[1])
+
+    tasks = tmp_path / "my tasks"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks)])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert tasks.is_dir()
+    assert added == []
+    assert "Add Folder to Workspace" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks), "--vscode"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert added == [str(tasks)]
+    assert "Added to the VS Code workspace." in capsys.readouterr().out
+
+    # 'cwd' is re-resolved per command, so there is no single folder to add.
+    added.clear()
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", "cwd", "--vscode"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert added == []
+
+
+def test_set_root_opens_file_explorer_only_when_asked(defaults, tmp_path, monkeypatch, capsys):
+    import neqsim_cli
+
+    opened = []
+    monkeypatch.setattr(new_task, "open_folder_in_file_manager",
+                        lambda path: (opened.append(path), (True, ""))[1])
+
+    tasks = tmp_path / "my tasks"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks)])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == []
+    assert "--explorer" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-task-root", str(tasks), "--explorer"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == [str(tasks)]
+    assert "Opened in the file explorer." in capsys.readouterr().out
+
+
+def test_set_document_root_opens_file_explorer_only_when_asked(defaults, tmp_path, monkeypatch,
+                                                                capsys):
+    import neqsim_cli
+
+    opened = []
+    monkeypatch.setattr(new_task, "open_folder_in_file_manager",
+                        lambda path: (opened.append(path), (True, ""))[1])
+
+    documents = tmp_path / "standards"
+    monkeypatch.setattr(sys, "argv", ["neqsim", "--set-document-root", str(documents)])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == []
+    assert "--explorer" in capsys.readouterr().out
+
+    monkeypatch.setattr(sys, "argv",
+                        ["neqsim", "--set-document-root", str(documents), "--explorer"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert opened == [str(documents)]
+    assert "Opened in the file explorer." in capsys.readouterr().out
+
+
+def test_set_root_accepts_both_vscode_and_explorer_flags_together(defaults, tmp_path, monkeypatch):
+    import neqsim_cli
+
+    added = []
+    opened = []
+    monkeypatch.setattr(new_task, "add_folder_to_vscode_workspace",
+                        lambda path: (added.append(path), (True, ""))[1])
+    monkeypatch.setattr(new_task, "open_folder_in_file_manager",
+                        lambda path: (opened.append(path), (True, ""))[1])
+
+    tasks = tmp_path / "my tasks"
+    monkeypatch.setattr(sys, "argv",
+                        ["neqsim", "--set-task-root", str(tasks), "--vscode", "--explorer"])
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert added == [str(tasks)]
+    assert opened == [str(tasks)]
+
+
+def test_open_folder_in_file_manager_disabled_by_env(defaults, tmp_path, monkeypatch):
+    monkeypatch.setenv("NEQSIM_NO_EXPLORER", "1")
+    folder = tmp_path / "docs"
+    folder.mkdir()
+    opened, reason = new_task.open_folder_in_file_manager(str(folder))
+    assert opened is False
+    assert "NEQSIM_NO_EXPLORER" in reason
+
+
+def test_open_folder_in_file_manager_rejects_missing_folder(defaults, tmp_path, monkeypatch):
+    monkeypatch.delenv("NEQSIM_NO_EXPLORER", raising=False)
+    missing = tmp_path / "does-not-exist"
+    opened, reason = new_task.open_folder_in_file_manager(str(missing))
+    assert opened is False
+    assert "not a folder" in reason
+
+
+def test_open_folder_in_file_manager_launches_platform_handler(defaults, tmp_path, monkeypatch):
+    monkeypatch.delenv("NEQSIM_NO_EXPLORER", raising=False)
+    folder = tmp_path / "docs"
+    folder.mkdir()
+    calls = []
+    monkeypatch.setattr(os, "startfile", lambda path: calls.append(path), raising=False)
+    monkeypatch.setattr(sys, "platform", "win32")
+    opened, reason = new_task.open_folder_in_file_manager(str(folder))
+    assert opened is True
+    assert reason == ""
+    assert calls == [str(folder)]
+
+
+def test_setting_accepts_bare_flag_and_unquoted_path(defaults, tmp_path, monkeypatch):
+    import neqsim_cli
+
+    documents = tmp_path / "equinor work" / "TR and standards"
+    documents.mkdir(parents=True)
+    # A path typed without quotes reaches the CLI as several arguments.
+    monkeypatch.setattr(sys, "argv",
+                        ["neqsim", "set-document-root"] + str(documents).split(" "))
+    with pytest.raises(SystemExit) as exit_info:
+        neqsim_cli.main()
+    assert exit_info.value.code == 0
+    assert new_task.resolve_document_root() == str(documents)
+
+    monkeypatch.setattr(sys, "argv", ["neqsim", "set-task-root"] + str(tmp_path / "my tasks").split(" "))
+    with pytest.raises(SystemExit):
+        neqsim_cli.main()
+    assert new_task.resolve_task_root() == str(tmp_path / "my tasks")
+
+
+def test_task_records_document_root_when_set_and_unset(defaults, tmp_path):
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    new_task.save_default_task_root(str(tmp_path / "tasks"))
+
+    unset = Path(new_task.create_task("No document library"))
+    config = (unset / "study_config.yaml").read_text(encoding="utf-8")
+    assert 'document_root: ""' in config
+
+    new_task.save_default_document_root(str(documents))
+    configured = Path(new_task.create_task("With document library"))
+    config = (configured / "study_config.yaml").read_text(encoding="utf-8")
+    assert 'document_root: "{}"'.format(str(documents).replace("\\", "\\\\")) in config
+
+
+def test_task_indexes_document_library_for_agents(defaults, tmp_path):
+    documents = tmp_path / "documents"
+    (documents / "standards").mkdir(parents=True)
+    (documents / "standards" / "API 521.pdf").write_text("x", encoding="utf-8")
+    (documents / "design basis.docx").write_text("x", encoding="utf-8")
+    new_task.save_default_task_root(str(tmp_path / "tasks"))
+
+    # An unconfigured library still leaves a file, so its absence never reads
+    # to an agent as "there was nothing to find".
+    unset = Path(new_task.create_task("No library"))
+    index = unset / "step1_scope_and_research" / "references" / "document_root_index.md"
+    assert "No document root is configured" in index.read_text(encoding="utf-8")
+
+    new_task.save_default_document_root(str(documents))
+    task = Path(new_task.create_task("With library"))
+    index = task / "step1_scope_and_research" / "references" / "document_root_index.md"
+    listing = index.read_text(encoding="utf-8")
+    assert str(documents) in listing
+    assert "## standards" in listing
+    assert "- API 521.pdf" in listing
+    assert "- design basis.docx" in listing
+
+    (documents / "standards" / "NORSOK P-002.pdf").write_text("x", encoding="utf-8")
+    new_task.write_document_root_index(str(task))
+    assert "- NORSOK P-002.pdf" in index.read_text(encoding="utf-8")
+
+
+def test_document_search_reaches_every_subfolder(defaults, tmp_path):
+    documents = tmp_path / "library"
+    deep = documents / "field development" / "instructions" / "appendix"
+    deep.mkdir(parents=True)
+    (documents / "top.pdf").write_text("x", encoding="utf-8")
+    (deep / "buried datasheet.pdf").write_text("x", encoding="utf-8")
+    hidden = documents / ".archive"
+    hidden.mkdir()
+    (hidden / "superseded.pdf").write_text("x", encoding="utf-8")
+    new_task.save_default_document_root(str(documents))
+
+    found = [os.path.relpath(p, str(documents)) for p in new_task.find_documents()]
+    assert os.path.join("field development", "instructions", "appendix",
+                        "buried datasheet.pdf") in found
+    assert "top.pdf" in found
+    # Dot-folders are deliberately out of scope: superseded copies are not evidence.
+    assert not any(name.startswith(".") for name in found)
+
+    # A junction/symlink subfolder must not hide documents, and a link that
+    # points back up must not make the walk run forever. Skip where the
+    # platform refuses to create one.
+    linked = tmp_path / "vendor"
+    linked.mkdir()
+    (linked / "linked manual.pdf").write_text("x", encoding="utf-8")
+    try:
+        (documents / "vendor").symlink_to(linked, target_is_directory=True)
+        (deep / "loop").symlink_to(documents, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlink creation not permitted on this platform")
+    found = [os.path.basename(p) for p in new_task.find_documents()]
+    assert "linked manual.pdf" in found
+    assert found.count("top.pdf") == 1

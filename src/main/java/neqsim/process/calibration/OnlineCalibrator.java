@@ -42,6 +42,13 @@ public class OnlineCalibrator implements Serializable {
     private final Map<String, Double> predictions;
     private final Map<String, Double> conditions;
 
+    /**
+     * Constructor for a data point.
+     *
+     * @param measurements actual measured values
+     * @param predictions model predicted values
+     * @param conditions operating conditions at the time of measurement
+     */
     public DataPoint(Map<String, Double> measurements, Map<String, Double> predictions,
         Map<String, Double> conditions) {
       this.timestamp = Instant.now();

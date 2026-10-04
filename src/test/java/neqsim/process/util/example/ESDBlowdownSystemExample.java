@@ -89,7 +89,7 @@ public class ESDBlowdownSystemExample {
 
     // Splitter to divide gas between process and blowdown
     Splitter gasSplitter = new Splitter("Gas Splitter", separatorGasOut, 2);
-    gasSplitter.setSplitFactors(new double[] { 1.0, 0.0 }); // Initially all to process
+    gasSplitter.setSplitFactors(new double[] {1.0, 0.0}); // Initially all to process
 
     Stream processStream = new Stream("To Process", gasSplitter.getSplitStream(0));
     Stream blowdownStream = new Stream("To Blowdown", gasSplitter.getSplitStream(1));
@@ -176,7 +176,7 @@ public class ESDBlowdownSystemExample {
     esdInletValve.trip();
 
     // Redirect flow to blowdown
-    gasSplitter.setSplitFactors(new double[] { 0.0, 1.0 });
+    gasSplitter.setSplitFactors(new double[] {0.0, 1.0});
 
     // Now switch separator to dynamic/transient mode
     separator.setCalculateSteadyState(false);

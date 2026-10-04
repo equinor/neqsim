@@ -63,12 +63,12 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   private static final double CORROSION_ALLOWANCE = 3.0;
 
   /** Standard pipe sizes in inches (NPS). */
-  private static final double[] STANDARD_PIPE_SIZES = { 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0,
-      16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
+  private static final double[] STANDARD_PIPE_SIZES = {0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0,
+      16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
 
   /** Pipe outside diameters in mm corresponding to NPS. */
-  private static final double[] PIPE_OD_MM = { 21.3, 26.7, 33.4, 48.3, 60.3, 88.9, 114.3, 168.3, 219.1, 273.1, 323.9,
-      355.6, 406.4, 457.2, 508.0, 609.6, 762.0, 914.4, 1066.8, 1219.2 };
+  private static final double[] PIPE_OD_MM = {21.3, 26.7, 33.4, 48.3, 60.3, 88.9, 114.3, 168.3, 219.1, 273.1, 323.9,
+      355.6, 406.4, 457.2, 508.0, 609.6, 762.0, 914.4, 1066.8, 1219.2};
 
   // ============================================================================
   // Process System Reference

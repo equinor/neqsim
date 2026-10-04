@@ -4,14 +4,15 @@ description: Quick recipes for common NeqSim tasks. Copy-paste solutions for the
 ---
 
 
-Quick, copy-paste recipes for common tasks. Each recipe is self-contained and ready to run.
+Quick, copy-paste recipes for common tasks. Each page states whether its examples are independent
+programs or ordered session fragments.
 
 ## Recipe Categories
 
 | Category | Description |
 |----------|-------------|
 | [Thermodynamics Recipes](thermodynamics-recipes.md) | Fluids, flash, properties, phase envelopes |
-| [Process Recipes](process-recipes.md) | Equipment, flowsheets, streams |
+| [Process Recipes](process-recipes.md) | Executable reference process plus equipment and flowsheet session recipes |
 | [Adsorption Recipes](adsorption-recipes.md) | Isotherm evaluation, PSA/TSA cycles, breakthrough curves |
 | [Pipeline Recipes](pipeline-recipes.md) | Pressure drop, multiphase flow, slugging |
 | [Unit Conversion](unit-conversion-recipes.md) | Working with units in NeqSim |
@@ -26,6 +27,7 @@ Quick, copy-paste recipes for common tasks. Each recipe is self-contained and re
 | Run a flash calculation | [thermodynamics-recipes.md#flash-calculations](thermodynamics-recipes.md#flash-calculations) |
 | Get density (correct way) | [thermodynamics-recipes.md#reading-properties](thermodynamics-recipes.md#reading-properties) |
 | Calculate phase envelope | [thermodynamics-recipes.md#phase-envelopes](thermodynamics-recipes.md#phase-envelopes) |
+| Run a validated separator-compressor-cooler screen | [process-recipes.md#executable-reference-process](process-recipes.md#executable-reference-process) |
 | Simple separator | [process-recipes.md#two-phase-separator](process-recipes.md#two-phase-separator) |
 | Compressor with efficiency | [process-recipes.md#compressor-with-efficiency](process-recipes.md#compressor-with-efficiency) |
 | Pipeline pressure drop | [pipeline-recipes.md#simple-pressure-drop](pipeline-recipes.md#simple-pressure-drop) |

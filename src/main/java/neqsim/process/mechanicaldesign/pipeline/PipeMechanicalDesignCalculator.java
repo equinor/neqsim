@@ -302,20 +302,20 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   static {
     API_5L_GRADES = new HashMap<String, double[]>();
     // Grade -> [SMYS (MPa), SMTS (MPa)] per API 5L 46th Edition
-    API_5L_GRADES.put("A25", new double[] { 172, 310 }); // 25000 psi yield
-    API_5L_GRADES.put("A", new double[] { 207, 331 }); // 30000 psi yield
-    API_5L_GRADES.put("B", new double[] { 241, 414 }); // 35000 psi yield
-    API_5L_GRADES.put("X42", new double[] { 290, 414 }); // 42000 psi yield
-    API_5L_GRADES.put("X46", new double[] { 317, 434 }); // 46000 psi yield
-    API_5L_GRADES.put("X52", new double[] { 359, 455 }); // 52000 psi yield - common for process
-    API_5L_GRADES.put("X56", new double[] { 386, 490 }); // 56000 psi yield
-    API_5L_GRADES.put("X60", new double[] { 414, 517 }); // 60000 psi yield - high strength
-    API_5L_GRADES.put("X65", new double[] { 448, 531 }); // 65000 psi yield - offshore standard
-    API_5L_GRADES.put("X70", new double[] { 483, 565 }); // 70000 psi yield - high pressure
-    API_5L_GRADES.put("X80", new double[] { 552, 621 }); // 80000 psi yield - very high strength
-    API_5L_GRADES.put("X90", new double[] { 620, 695 }); // 90000 psi yield - ultra high strength
-    API_5L_GRADES.put("X100", new double[] { 690, 760 }); // 100000 psi yield - maximum strength
-    API_5L_GRADES.put("X120", new double[] { 827, 931 }); // 120000 psi yield - extreme applications
+    API_5L_GRADES.put("A25", new double[] {172, 310}); // 25000 psi yield
+    API_5L_GRADES.put("A", new double[] {207, 331}); // 30000 psi yield
+    API_5L_GRADES.put("B", new double[] {241, 414}); // 35000 psi yield
+    API_5L_GRADES.put("X42", new double[] {290, 414}); // 42000 psi yield
+    API_5L_GRADES.put("X46", new double[] {317, 434}); // 46000 psi yield
+    API_5L_GRADES.put("X52", new double[] {359, 455}); // 52000 psi yield - common for process
+    API_5L_GRADES.put("X56", new double[] {386, 490}); // 56000 psi yield
+    API_5L_GRADES.put("X60", new double[] {414, 517}); // 60000 psi yield - high strength
+    API_5L_GRADES.put("X65", new double[] {448, 531}); // 65000 psi yield - offshore standard
+    API_5L_GRADES.put("X70", new double[] {483, 565}); // 70000 psi yield - high pressure
+    API_5L_GRADES.put("X80", new double[] {552, 621}); // 80000 psi yield - very high strength
+    API_5L_GRADES.put("X90", new double[] {620, 695}); // 90000 psi yield - ultra high strength
+    API_5L_GRADES.put("X100", new double[] {690, 760}); // 100000 psi yield - maximum strength
+    API_5L_GRADES.put("X120", new double[] {827, 931}); // 120000 psi yield - extreme applications
 
     // Standard pipe sizes per API 5L / ASME B36.10 (NPS -> OD in meters)
     STANDARD_PIPE_SIZES = new HashMap<String, Double>();
@@ -796,7 +796,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    */
   public int selectFlangeClass() {
     // Find minimum class that meets pressure requirement
-    int[] classes = { 150, 300, 400, 600, 900, 1500, 2500 };
+    int[] classes = {150, 300, 400, 600, 900, 1500, 2500};
 
     for (int cls : classes) {
       Double rating = FLANGE_CLASS_RATINGS.get(cls);

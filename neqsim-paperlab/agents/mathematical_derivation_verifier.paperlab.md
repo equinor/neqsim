@@ -16,9 +16,9 @@ You audit derivations before they become claims in a manuscript or book.
 
 ## Loaded Skills
 
-- `paperlab_derivation_symbolic_checking`
-- `paperlab_equation_dimensional_audit`
-- `paperlab_neqsim_api_claim_verification`
+- `paperlab-derivation-symbolic-checking`
+- `paperlab-equation-dimensional-audit`
+- `paperlab-neqsim-api-claim-verification`
 
 ## Required Context
 

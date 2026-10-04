@@ -24,8 +24,10 @@ import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
+import neqsim.standards.gasquality.Standard_ISO6976;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Gas turbine model with integrated air compression, combustion, and expansion.
@@ -173,7 +175,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    * Getter for the field <code>heat</code>.
    *
    * <p>
-   * Returns the exhaust heat rejected by the turbine cooler (the energy a HRSG or bottoming cycle could recover).
+   * Returns positive exhaust heat rejected by the turbine cooler (the energy a HRSG or bottoming cycle could recover).
    * </p>
    *
    * @return exhaust heat duty in watts (W)
@@ -249,22 +251,42 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     outStreamAir.getFluid().addFluid(thermoSystem);
     outStreamAir.run(id);
 
-    double heatOfCombustion = inStream.LCV() * inStream.getFlowRate("mole/sec");
-    Heater locHeater = new Heater("locHeater", outStreamAir);
-    locHeater.setEnergyInput(heatOfCombustion);
-    locHeater.run(id);
+    // Use molar heating value so calorific-value and flow reference volumes cannot differ.
+    // The 0 C combustion reference matches the EOS ideal-gas sensible-enthalpy reference.
+    Standard_ISO6976 calorificValue = inStream.getISO6976("molar", 0.0, 0.0);
+    calorificValue.calculate();
+    double heatOfCombustion = calorificValue.getValue("InferiorCalorificValue") * 1000.0
+        * inStream.getFlowRate("mole/sec");
+    thermoSystem.init(2);
+    double targetEnthalpy = airCompressor.getOutletStream().getFluid().getEnthalpy() + thermoSystem.getEnthalpy()
+        + heatOfCombustion;
+    SystemInterface combustionProducts = outStreamAir.getFluid();
+    combustionProducts.init(2);
+    double temperatureEstimate = combustionProducts.getTemperature()
+        + (targetEnthalpy - combustionProducts.getEnthalpy()) / combustionProducts.getCp();
 
-    // Apply combustion stoichiometry for all hydrocarbon components, limited by available oxygen.
-    combustFuel(locHeater.getOutletStream().getFluid());
+    // Solve the products' enthalpy after changing composition. The Cp estimate avoids an
+    // enormous first inverse-temperature step in PHflash for a cold combustor inlet.
+    combustFuel(combustionProducts);
+    if (!Double.isFinite(temperatureEstimate) || temperatureEstimate <= 0.0) {
+      throw new IllegalStateException("GasTurbine combustion requires a finite positive temperature estimate");
+    }
+    combustionProducts.setTemperature(temperatureEstimate);
+    new ThermodynamicOperations(combustionProducts).PHflash(targetEnthalpy);
+    combustionProducts.init(2);
+    double enthalpyResidual = combustionProducts.getEnthalpy() - targetEnthalpy;
+    if (!Double.isFinite(enthalpyResidual)
+        || Math.abs(enthalpyResidual) > 1.0e-7 * Math.max(1.0, Math.abs(targetEnthalpy))) {
+      throw new IllegalStateException(
+          "GasTurbine combustion enthalpy did not converge: residual=" + enthalpyResidual + " W");
+    }
 
-    locHeater.getOutletStream().getFluid().init(3);
-
-    Expander expander = new Expander("expander", locHeater.getOutletStream());
+    Expander expander = new Expander("expander", outStreamAir);
     expander.setOutletPressure(ThermodynamicConstantsInterface.referencePressure);
     expander.run(id);
 
     Cooler cooler1 = new Cooler("cooler1", expander.getOutletStream());
-    cooler1.setOutTemperature(288.15);
+    cooler1.setOutletTemperature(288.15);
     cooler1.run(id);
 
     expanderPower = expander.getPower();
@@ -274,16 +296,18 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     // the load is therefore the magnitude of the expander work minus the air-compressor work:
     // (-expanderPower) - compressorPower.
     power = -expanderPower - compressorPower;
-    this.heat = cooler1.getDuty();
+    this.heat = -cooler1.getDuty();
+    // The cooler measures recoverable heat; it is not an installed turbine cooler.
+    // Publish hot combustion exhaust so a downstream HRSG can recover that energy.
+    outStream.setThermoSystem(expander.getOutletStream().getThermoSystem());
 
     // Simple-cycle override: when a thermal efficiency (or heat rate) is set, report the net shaft
     // power directly from the fuel lower heating value and treat the remainder as exhaust heat. This
     // gives a realistic driver power out of the box for screening studies, independent of the
     // detailed air-compressor / expander pressure-ratio assumptions of the Brayton cycle above.
-    // Stream.LCV() is a volumetric heating value (J/Sm3), so it must be multiplied by the volumetric
-    // standard flow (Sm3/s) to obtain the combustion heat in watts.
+    // Use the legacy 15.55 C combustion reference on a molar basis.
     if (thermalEfficiency > 0.0) {
-      double fuelHeat = inStream.LCV() * inStream.getFlowRate("Sm3/sec");
+      double fuelHeat = getFuelMolarLCV() * inStream.getFlowRate("mole/sec");
       power = thermalEfficiency * fuelHeat;
       this.heat = fuelHeat - power;
     }
@@ -295,10 +319,10 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    * Inverse (power-demand) run: size the fuel flow so the turbine delivers {@link #requiredPower}.
    *
    * <p>
-   * The fuel volumetric flow is computed from the fuel lower heating value (LCV, J/Sm3) and the simple-cycle
-   * {@link #thermalEfficiency}: fuelHeat = requiredPower / efficiency and fuelFlow[Sm3/s] = fuelHeat / LCV. The inlet
-   * fuel stream flow is set to this value, so the fuel consumption always matches the required load. The remaining fuel
-   * heat is reported as exhaust heat.
+   * The fuel molar flow is computed from the ISO 6976:1995 lower heating value (J/mol, combustion at 15.55 C) and the
+   * simple-cycle {@link #thermalEfficiency}: fuelHeat = requiredPower / efficiency and fuelFlow[mol/s] = fuelHeat /
+   * LCV. The inlet fuel stream flow is set to this value, so the fuel consumption always matches the required load. The
+   * remaining fuel heat is reported as exhaust heat.
    * </p>
    *
    * @param id the calculation identifier
@@ -317,10 +341,10 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
       inStream.setFlowRate(1.0, "mole/sec");
     }
     inStream.run(id);
-    double lcvVolumetric = inStream.LCV(); // J/Sm3
+    double lcvMolar = getFuelMolarLCV(); // J/mol
     double fuelHeat = requiredPower / thermalEfficiency; // W
-    double reqStdFlow = lcvVolumetric > 0.0 ? fuelHeat / lcvVolumetric : 0.0; // Sm3/s
-    inStream.setFlowRate(reqStdFlow, "Sm3/sec");
+    double requiredMolarFlow = lcvMolar > 0.0 ? fuelHeat / lcvMolar : 0.0; // mol/s
+    inStream.setFlowRate(requiredMolarFlow, "mole/sec");
     inStream.run(id);
     thermoSystem = inStream.getThermoSystem().clone();
     power = requiredPower;
@@ -329,6 +353,17 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     outStream.setCalculationIdentifier(id);
     publishEnergyPorts();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Calculate fuel LCV without imposing a metering-volume reference.
+   *
+   * @return ISO 6976:1995 lower calorific value in J/mol, combustion at 15.55 C
+   */
+  private double getFuelMolarLCV() {
+    Standard_ISO6976 calorificValue = inStream.getISO6976("molar", 0.0, 15.55);
+    calorificValue.calculate();
+    return calorificValue.getValue("InferiorCalorificValue") * 1000.0;
   }
 
   /**
@@ -550,12 +585,12 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    */
   private double[] carbonAndHydrogen(neqsim.thermo.component.ComponentInterface component) {
     if (component.getElements() != null && component.getElements().getElementNames() != null) {
-      return new double[] { component.getElements().getNumberOfElements("C"),
-          component.getElements().getNumberOfElements("H") };
+      return new double[] {component.getElements().getNumberOfElements("C"),
+          component.getElements().getNumberOfElements("H")};
     }
     double molarMassGramPerMol = component.getMolarMass() * 1000.0;
     double carbon = Math.max(1.0, (molarMassGramPerMol - 2.016) / 14.027);
-    return new double[] { carbon, 2.0 * carbon + 2.0 };
+    return new double[] {carbon, 2.0 * carbon + 2.0};
   }
 
   /**

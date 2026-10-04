@@ -121,9 +121,9 @@ public final class LargeProcessSteadyStateBenchmark {
 
   private static SystemInterface fluid(boolean cpa) {
     SystemInterface fluid = cpa ? new SystemSrkCPAstatoil(313.15, 80.0) : new SystemSrkEos(313.15, 80.0);
-    String[] names = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
-        "n-pentane", "n-hexane", "n-heptane", "n-octane" };
-    double[] fractions = { 0.01, 0.02, 0.65, 0.10, 0.06, 0.02, 0.03, 0.015, 0.015, 0.03, 0.03, 0.02 };
+    String[] names = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+        "n-pentane", "n-hexane", "n-heptane", "n-octane"};
+    double[] fractions = {0.01, 0.02, 0.65, 0.10, 0.06, 0.02, 0.03, 0.015, 0.015, 0.03, 0.03, 0.02};
     for (int i = 0; i < names.length; i++) {
       fluid.addComponent(names[i], fractions[i]);
     }
@@ -140,11 +140,11 @@ public final class LargeProcessSteadyStateBenchmark {
     StreamInterface current = inlet;
     for (int stage = 0; stage < count; stage++) {
       Heater heater = new Heater(prefix + " heater " + stage, current);
-      heater.setOutTemperature(328.15 + stage % 3);
+      heater.setOutletTemperature(328.15 + stage % 3);
       fixture.heaters.add(heater);
       area.add(heater);
       Cooler cooler = new Cooler(prefix + " cooler " + stage, heater.getOutletStream());
-      cooler.setOutTemperature(298.15 + stage % 3);
+      cooler.setOutletTemperature(298.15 + stage % 3);
       fixture.heaters.add(cooler);
       area.add(cooler);
       ThrottlingValve valve = new ThrottlingValve(prefix + " valve " + stage, cooler.getOutletStream());
@@ -216,7 +216,7 @@ public final class LargeProcessSteadyStateBenchmark {
           // An isobaric thermal recycle avoids inventing pressure gain across a heater.
           current = thermalStages(fixture, area, mixer.getOutletStream(), prefix, 3, 80.0, 0.0);
           Splitter splitter = new Splitter(prefix + " splitter", current, 2);
-          splitter.setSplitFactors(new double[] { 0.8, 0.2 });
+          splitter.setSplitFactors(new double[] {0.8, 0.2});
           area.add(splitter);
           Recycle recycle = new Recycle(prefix + " recycle");
           recycle.addStream(splitter.getSplitStream(1));

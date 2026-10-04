@@ -36,8 +36,8 @@ public class RadialExpanderGeometryMapTest {
     RadialExpanderGeometryMap generator = new RadialExpanderGeometryMap(0.424, 0.45, 0.45);
     generator.setReferenceFluid(referenceFluid());
     generator.setPointsPerCurve(21);
-    double[] igv = new double[] { 1.0 };
-    double[] nozzle = new double[] { 72.0 };
+    double[] igv = new double[] {1.0};
+    double[] nozzle = new double[] {72.0};
     ExpanderChartKhader chart = generator.generateChart(igv, nozzle);
 
     double nuOpt = generator.nominalVelocityRatio(72.0);
@@ -56,7 +56,7 @@ public class RadialExpanderGeometryMapTest {
   void testEfficiencyFallsOffAwayFromPeak() {
     RadialExpanderGeometryMap generator = new RadialExpanderGeometryMap();
     generator.setReferenceFluid(referenceFluid());
-    ExpanderChartKhader chart = generator.generateChart(new double[] { 1.0 }, new double[] { 72.0 });
+    ExpanderChartKhader chart = generator.generateChart(new double[] {1.0}, new double[] {72.0});
     double ucPeak = chart.getOptimumVelocityRatio(1.0);
     double etaPeak = chart.getEfficiency(ucPeak, 1.0);
     double etaLow = chart.getEfficiency(0.45, 1.0);
@@ -74,7 +74,7 @@ public class RadialExpanderGeometryMapTest {
     RadialExpanderGeometryMap generator = new RadialExpanderGeometryMap();
     generator.setReferenceFluid(ref);
     generator.setDesignHeadDropKjPerKg(50.0);
-    ExpanderChartKhader chart = generator.generateChart(new double[] { 0.6, 1.0 }, new double[] { 75.0, 70.0 });
+    ExpanderChartKhader chart = generator.generateChart(new double[] {0.6, 1.0}, new double[] {75.0, 70.0});
     double head = chart.getStageHeadDrop(0.7, 1.0, ref);
     assertTrue(head > 0.0, "head drop must be positive: " + head);
     // more open IGV carries a larger head than the more closed setting
@@ -102,13 +102,13 @@ public class RadialExpanderGeometryMapTest {
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        generator.generateChart(new double[] { 1.0 }, new double[] { 95.0 });
+        generator.generateChart(new double[] {1.0}, new double[] {95.0});
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
       @Override
       public void execute() {
-        generator.generateChart(new double[] { 0.5, 1.0 }, new double[] { 70.0 });
+        generator.generateChart(new double[] {0.5, 1.0}, new double[] {70.0});
       }
     });
     assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {

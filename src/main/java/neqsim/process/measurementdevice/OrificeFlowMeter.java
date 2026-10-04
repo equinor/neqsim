@@ -577,10 +577,10 @@ public class OrificeFlowMeter extends DifferentialPressureFlowMeter {
    * @return fingerprint array, compared with {@link Arrays#equals(double[], double[])}
    */
   private double[] buildWetGasSignature() {
-    return new double[] { getDifferentialPressurePa(), getUpstreamPressurePa(), getBetaRatio(), getGasDensity(),
+    return new double[] {getDifferentialPressurePa(), getUpstreamPressurePa(), getBetaRatio(), getGasDensity(),
         getDynamicViscosity(), getIsentropicExponent(), liquidMassFlowRate, resolveLiquidToGasMassRatio(),
         getLiquidDensity(), pressureLoss, gravitationalAcceleration, wetGasCorrelation.ordinal(),
-        tappingArrangement.ordinal() };
+        tappingArrangement.ordinal()};
   }
 
   /**
@@ -704,7 +704,7 @@ public class OrificeFlowMeter extends DifferentialPressureFlowMeter {
     SystemInterface fluid = stream.getThermoSystem();
     double mass = 0.0;
     double volume = 0.0;
-    String[] liquidPhases = new String[] { "oil", "aqueous" };
+    String[] liquidPhases = new String[] {"oil", "aqueous"};
     for (int i = 0; i < liquidPhases.length; i++) {
       try {
         if (!fluid.hasPhaseType(liquidPhases[i])) {

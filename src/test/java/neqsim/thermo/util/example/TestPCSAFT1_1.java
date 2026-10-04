@@ -1,5 +1,6 @@
 package neqsim.thermo.util.example;
 
+import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -16,6 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestPCSAFT1_1 {
   private static final Logger logger = LogManager.getLogger(TestPCSAFT1_1.class);
+  private static final Random RANDOM = new Random();
 
   /** Logger object for class. */
 
@@ -27,9 +29,9 @@ public class TestPCSAFT1_1 {
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
     double pressure = 5.0;
-    String[] componentName = { "methane", "ethane", "propane", "i-butane", "n-butane", "benzene" };
-    double[] compositions = { 93.121, 3.04830, 0.9936, 1.0323, 1.5099, 0.2948 };
-    double[] uncertcompositions = { 1.1405, 0.1056, 0.0466, 0.0358, 0.0523, 0.0138 };
+    String[] componentName = {"methane", "ethane", "propane", "i-butane", "n-butane", "benzene"};
+    double[] compositions = {93.121, 3.04830, 0.9936, 1.0323, 1.5099, 0.2948};
+    double[] uncertcompositions = {1.1405, 0.1056, 0.0466, 0.0358, 0.0523, 0.0138};
     double[] runcompositions = new double[componentName.length];
     SystemInterface testSystem = new SystemSrkEos(273.14, pressure);
     double pres = 0.0;
@@ -38,8 +40,7 @@ public class TestPCSAFT1_1 {
       for (int k = 0; k < 1; k++) {
         testSystem = new SystemSrkEos(testSystem.getTemperature(), pres);
         for (int i = 0; i < componentName.length; i++) {
-          double newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
-          newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
+          double newVar = compositions[i] + RANDOM.nextGaussian() * uncertcompositions[i];
           runcompositions[i] = compositions[i] + newVar;
           testSystem.addComponent(componentName[i], runcompositions[i]);
         }

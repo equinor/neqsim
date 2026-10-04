@@ -6,7 +6,9 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
-import Jama.Matrix;
+import java.util.Arrays;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -18,12 +20,13 @@ import neqsim.thermo.system.SystemInterface;
 public class TPgradientFlash extends Flash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
   private SystemInterface system;
   private double temperature;
   private double height;
-  private Matrix Jac;
-  private Matrix fvec;
-  private Matrix dx;
+  private double[][] Jac;
+  private double[] fvec;
+  private double[] dx;
   private SystemInterface localSystem;
   private SystemInterface tempSystem;
   private double deltaHeight;
@@ -47,8 +50,8 @@ public class TPgradientFlash extends Flash {
     this.temperature = temperature;
     this.height = height;
     int numComponents = system.getPhase(0).getNumberOfComponents();
-    Jac = new Matrix(numComponents + 1, numComponents + 1);
-    fvec = new Matrix(numComponents + 1, 1);
+    Jac = new double[numComponents + 1][numComponents + 1];
+    fvec = new double[numComponents + 1];
   }
 
   /**
@@ -71,19 +74,21 @@ public class TPgradientFlash extends Flash {
       double molarMassTerm = component.getMolarMass() * gravity * deltaHeight
           / (gasConstant * tempSystem.getPhase(0).getTemperature());
 
-      fvec.set(i, 0, logTerm - Math.log(tempSystem.getPhases()[0].getComponent(i).getFugacityCoefficient()
-          * tempSystem.getPhases()[0].getComponent(i).getx() * tempSystem.getPressure()) - molarMassTerm);
+      fvec[i] = logTerm - Math.log(tempSystem.getPhases()[0].getComponent(i).getFugacityCoefficient()
+          * tempSystem.getPhases()[0].getComponent(i).getx() * tempSystem.getPressure()) - molarMassTerm;
       sumx += componentX;
     }
 
-    fvec.set(numComponents, 0, sumx - 1.0);
+    fvec[numComponents] = sumx - 1.0;
   }
 
   /**
    * Sets the Jacobian (Jac) matrix values based on the thermodynamic calculations.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
+    for (double[] row : Jac) {
+      Arrays.fill(row, 0.0);
+    }
     int numComponents = system.getPhase(0).getNumberOfComponents();
 
     for (int i = 0; i < numComponents; i++) {
@@ -95,13 +100,13 @@ public class TPgradientFlash extends Flash {
 
         double tempJ = 1.0 / (fugacityCoeff * componentX * pressure) * (fugacityCoeff * dij * pressure
             + localSystem.getPhases()[0].getComponent(i).getdfugdx(j) * componentX * pressure);
-        Jac.set(i, j, tempJ);
+        Jac[i][j] = tempJ;
       }
     }
 
     // Set the last row of Jac
     for (int j = 0; j < numComponents; j++) {
-      Jac.set(numComponents, j, 1.0);
+      Jac[numComponents][j] = 1.0;
     }
 
     for (int i = 0; i < numComponents; i++) {
@@ -112,10 +117,10 @@ public class TPgradientFlash extends Flash {
       double tempJ = 1.0 / (fugacityCoeff * componentX * pressure)
           * (localSystem.getPhases()[0].getComponent(i).getdfugdp() * componentX * pressure
               + fugacityCoeff * componentX);
-      Jac.set(i, numComponents, tempJ);
+      Jac[i][numComponents] = tempJ;
     }
 
-    Jac.set(numComponents, numComponents, 0.0);
+    Jac[numComponents][numComponents] = 0.0;
   }
 
   /**
@@ -127,12 +132,12 @@ public class TPgradientFlash extends Flash {
 
     for (int i = 0; i < numComponents; i++) {
       ComponentInterface component = localSystem.getPhase(0).getComponent(i);
-      double newX = component.getx() - relaxationFactor * dx.get(i, 0);
+      double newX = component.getx() - relaxationFactor * dx[i];
       component.setx(newX);
     }
 
     // Update system pressure
-    double newPressure = localSystem.getPressure() - relaxationFactor * dx.get(numComponents, 0);
+    double newPressure = localSystem.getPressure() - relaxationFactor * dx[numComponents];
     localSystem.setPressure(newPressure);
 
     // Optional: Normalize phase composition
@@ -167,9 +172,9 @@ public class TPgradientFlash extends Flash {
         localSystem.init(3); // Initialize system properties
         setfvec(); // Calculate the function vector
         setJac(); // Calculate the Jacobian matrix
-        dx = Jac.solve(fvec); // Solve for updates (dx)
+        dx = ALGEBRA.solve(Jac, fvec); // Solve for updates (dx)
         setNewX(); // Update composition and pressure
-      } while (dx.norm2() > tolerance && iter < maxIterations);
+      } while (ALGEBRA.euclideanNorm(dx) > tolerance && iter < maxIterations);
 
       // Clone the updated local system into tempSystem
       tempSystem = localSystem.clone();

@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-safety
 version: "1.5.0"
-description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, integrated facility safety response, safety change revalidation, independent benchmarks, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, integrated ESD/compressor-trip/blowdown/relief/flare evidence, safety-study revalidation after change, independent method benchmarks, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
+description: "Process safety methodology - barriers, PSFs/SCEs, HAZOP, LOPA, SIL per IEC 61511, integrated safety response, change revalidation, bow-tie, risk matrix, TR3001 overpressure studies, trapped-liquid rupture. USE WHEN: a task needs barrier registers, hazard identification, LOPA, SIF SIL assignment, ESD/blowdown/relief/flare evidence, safety revalidation, overpressure governing cases, PFP demand or risk evaluation. Anchors on neqsim.process.safety.barrier, .risk, .overpressure, .rupture."
 last_verified: "2026-07-18"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]

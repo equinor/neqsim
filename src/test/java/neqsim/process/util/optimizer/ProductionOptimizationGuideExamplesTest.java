@@ -37,9 +37,9 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
   @TempDir
   Path output;
 
-  private static final String[] GUIDES = { "docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md",
+  private static final String[] GUIDES = {"docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md",
       "docs/process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md",
-      "docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md", "docs/wiki/bottleneck_analysis.md" };
+      "docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md", "docs/wiki/bottleneck_analysis.md"};
 
   // These declarations represent the explicitly required existing plant, ratings and observations in advanced
   // fragments. They allow compilation to check public APIs without inventing missing engineering evidence.
@@ -115,8 +115,8 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
       }
     }
     assertTrue(count >= 90, "The complete Java fragment inventory must remain covered");
-    String[] headings = { "### Basic Production Rate Optimization",
-        "### Full Process Example: Finding Active Constraint", "### Maximum Throughput" };
+    String[] headings = {"### Basic Production Rate Optimization",
+        "### Full Process Example: Finding Active Constraint", "### Maximum Throughput"};
     for (int index = 0; index < headings.length; index++) {
       String doc = index < 2 ? documents[0] : documents[1];
       Matcher block = Pattern.compile("```java\\n(.*?)```", Pattern.DOTALL)
@@ -134,8 +134,7 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
               + feedName + "};\n}\n}");
     }
     compile(files);
-    try (
-        URLClassLoader loader = new URLClassLoader(new URL[] { output.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {output.toUri().toURL()}, getClass().getClassLoader())) {
       for (int index = 0; index < headings.length; index++) {
         Object[] values = (Object[]) loader.loadClass("optimization.documentation.CompleteGuide" + index)
             .getMethod("run").invoke(null);
@@ -191,8 +190,10 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
         + "trains[i].setUsePolytropicCalc(true); trains[i].setPolytropicEfficiency(0.78);\n"
         + "trains[i].getMechanicalDesign().setMaxDesignPower(2000.0); processSystem.add(trains[i]);\n}\n"
         + "processSystem.run();\nfor (Compressor train : trains) {\n"
-        + "train.generateCompressorChart(\"normal curves\", 5); train.setSolveSpeed(true);\n"
-        + "train.reinitializeCapacityConstraints();\n}\nprocessSystem.run();\n"
+        // Keep this API/documentation fixture inside an explicit synthetic map. The automatic five-speed map spans
+        // only +/-5%, making load-balancing probes and throughput replay sensitive to its speed boundary.
+        + "train.generateCompressorChart(\"normal curves\", new double[] {2400, 2700, 3000, 3300, 3600});\n"
+        + "train.setSolveSpeed(true);\n" + "train.reinitializeCapacityConstraints();\n}\nprocessSystem.run();\n"
         + "comp1 = trains[0]; comp2 = trains[1]; comp3 = trains[2]; compressor = comp1;\n"
         + "optimizer = new ProductionOptimizer(); currentFlow = 100000.0; originalFlow = currentFlow;\n"
         + "minFlow = 90000.0; maxFlow = 110000.0;\n"
@@ -208,12 +209,12 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
         + "\nCompressorGuideExecution.split1Var = split1Var;\n"
         + "CompressorGuideExecution.split2Var = split2Var;\nreturn result; }\n"
         + "public static OptimizationResult stages() { multi();\n" + stages + "\nreturn stage2Result; }\n"
-        + "public static TwoStageResult helper() { setup();\n" + helper + "\nreturn result; }\n} ";
+        + "public static TwoStageResult helper() { setup();\n" + helper + "\nreturn result; }\n"
+        + "public static ProcessSystem currentProcess() { return processSystem; }\n} ";
     List<File> files = new ArrayList<>();
     writeSource(files, "CompressorGuideExecution", source);
     compile(files);
-    try (
-        URLClassLoader loader = new URLClassLoader(new URL[] { output.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {output.toUri().toURL()}, getClass().getClassLoader())) {
       Class<?> example = loader.loadClass("optimization.documentation.CompressorGuideExecution");
       for (String method : Arrays.asList("single", "multi", "stages")) {
         OptimizationResult result = (OptimizationResult) example.getMethod(method).invoke(null);
@@ -222,13 +223,22 @@ class ProductionOptimizationGuideExamplesTest extends NeqSimTest {
       }
       CompressorOptimizationHelper.TwoStageResult result = (CompressorOptimizationHelper.TwoStageResult) example
           .getMethod("helper").invoke(null);
-      assertTrue(result.getStage1Result().isFeasible());
-      assertTrue(result.getStage2Result().isFeasible());
+      assertTrue(result.getStage1Result().isFeasible(), result.getStage1Result().getInfeasibilityDiagnosis());
+      assertTrue(result.getStage2Result().isFeasible(), result.getStage2Result().getInfeasibilityDiagnosis());
       assertEquals(1.0, result.getTrainSplits().values().stream().mapToDouble(Double::doubleValue).sum(), 1.0e-12);
       assertEquals(result.getTotalFlow(),
           result.getTrainFlows().values().stream().mapToDouble(Double::doubleValue).sum(), 1.0e-5);
       for (double utilization : result.getTrainUtilizations().values()) {
         assertTrue(utilization >= 0.0 && utilization <= 1.0, "Driver utilization must be a fraction");
+      }
+      ProcessSystem finalProcess = (ProcessSystem) example.getMethod("currentProcess").invoke(null);
+      finalProcess.run();
+      for (int i = 0; i < 3; i++) {
+        Compressor train = (Compressor) finalProcess.getUnit("Train " + i);
+        assertTrue(train.isSimulationValid(), "Selected documentation point must remain valid on replay");
+        assertTrue(train.getMaxUtilization() <= 0.95,
+            "Replay must preserve the helper's default 95% equipment utilization limit");
+        assertTrue(train.getDistanceToSurge() >= 0.10, "Replay must preserve the helper's surge constraint");
       }
     }
   }

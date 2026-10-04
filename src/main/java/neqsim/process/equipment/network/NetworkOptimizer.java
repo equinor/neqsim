@@ -443,7 +443,7 @@ public class NetworkOptimizer {
     for (String name : chokeNames) {
       LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(name);
       double rate = Math.abs(pipe.getFlowRate()) * 3600.0; // kg/hr
-      lastResult.wellResults.put(name, new double[] { rate, pipe.getChokeOpening(), pipe.getHeadLoss() / 1e5 });
+      lastResult.wellResults.put(name, new double[] {rate, pipe.getChokeOpening(), pipe.getHeadLoss() / 1e5});
     }
 
     double totalProd = network.getTotalSinkFlow() * 3600.0;

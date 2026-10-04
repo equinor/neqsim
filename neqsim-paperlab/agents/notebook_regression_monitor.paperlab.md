@@ -16,8 +16,8 @@ You turn one-time notebook checks into reproducibility monitoring.
 
 ## Loaded Skills
 
-- `paperlab_notebook_regression_baselines`
-- `neqsim_in_writing`
+- `paperlab-notebook-regression-baselines`
+- `neqsim-in-writing`
 - `neqsim-notebook-patterns`
 
 ## Required Context

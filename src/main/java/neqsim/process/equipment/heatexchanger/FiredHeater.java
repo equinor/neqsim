@@ -28,7 +28,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <pre>
  * {@code
  * FiredHeater heater = new FiredHeater("Crude Heater", feedStream);
- * heater.setOutTemperature(273.15 + 350.0); // Outlet temperature in K
+ * heater.setOutletTemperature(273.15 + 350.0); // Outlet temperature in K
  * heater.setThermalEfficiency(0.85); // 85% efficiency
  * heater.setFuelLHV(48.0e6); // J/kg (natural gas)
  * heater.setFuelCO2Factor(2.75); // kg CO2 per kg fuel

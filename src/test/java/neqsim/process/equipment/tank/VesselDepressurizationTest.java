@@ -1525,9 +1525,9 @@ public class VesselDepressurizationTest {
   void testAllFireTypePresets() {
     Stream feed = createTestStream(300.0, 50.0);
 
-    VesselDepressurization.FireType[] presets = { VesselDepressurization.FireType.SCANDPOWER_JET,
+    VesselDepressurization.FireType[] presets = {VesselDepressurization.FireType.SCANDPOWER_JET,
         VesselDepressurization.FireType.SCANDPOWER_POOL, VesselDepressurization.FireType.API_JET,
-        VesselDepressurization.FireType.API_POOL };
+        VesselDepressurization.FireType.API_POOL};
 
     for (VesselDepressurization.FireType preset : presets) {
       VesselDepressurization vessel = new VesselDepressurization("preset_" + preset.name(), feed);

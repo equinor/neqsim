@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashSrkWaterRichSeededPhaseSetTest {
-  private static final String[] COMPONENTS = { "CO2", "methane", "ethane", "water" };
-  private static final double[] FEED = { 0.543865141103918, 0.2937712952303271, 0.07010605470616459,
-      0.09225750895959021 };
+  private static final String[] COMPONENTS = {"CO2", "methane", "ethane", "water"};
+  private static final double[] FEED = {0.543865141103918, 0.2937712952303271, 0.07010605470616459,
+      0.09225750895959021};
 
   @Test
   void seededPhaseSetRepairsInvalidOrdinaryAndCollapsedMultiphaseEndpoints() {
@@ -38,8 +38,8 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
 
   @Test
   void seededPhaseSetRemainsContinuousAcrossChangedNearbyStates() {
-    double[][] states = { { 215.0, 225.0 }, { 220.0, 200.0 }, { 220.0, 225.0 }, { 225.0, 200.0 }, { 230.0, 250.0 },
-        { 220.0, 200.0 } };
+    double[][] states = {{215.0, 225.0}, {220.0, 200.0}, {220.0, 225.0}, {225.0, 200.0}, {230.0, 250.0},
+        {220.0, 200.0}};
     SystemInterface multiphase = createSystem(states[0][0], states[0][1], true, true);
 
     for (double[] state : states) {

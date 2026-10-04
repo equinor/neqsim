@@ -129,10 +129,25 @@ public class FlowAssuranceRunner {
 
       result.add("data", data);
 
+      List<String> unresolved = collectUnresolvedResults(analysis, data);
+      if (!unresolved.isEmpty()) {
+        return errorJson("RESULT_NOT_AVAILABLE",
+            analysis + " produced no usable result: " + String.join("; ", unresolved),
+            "For hydrateRiskMap the fluid must contain 'water' (use model 'CPA' for polar systems); check that "
+                + "pressure_bara/temperature_C or profilePoints are inside the hydrate-forming range. "
+                + "An unavailable value is reported as an error rather than as LOW risk.",
+            data);
+      }
+
       ResultProvenance provenance = new ResultProvenance();
       provenance.setCalculationType("flow assurance: " + analysis);
       provenance.setConverged(true);
       provenance.setComputationTimeMs(System.currentTimeMillis() - startTime);
+      if (data.has("failureReasons")) {
+        for (JsonElement reason : data.getAsJsonArray("failureReasons")) {
+          provenance.addLimitation(reason.getAsString());
+        }
+      }
       result.add("provenance", GSON.toJsonTree(provenance));
 
       return GSON.toJson(result);
@@ -580,7 +595,7 @@ public class FlowAssuranceRunner {
         fluid.addComponent(entry.getKey(), entry.getValue().getAsDouble());
       }
     }
-    String mixingRule = input.has("mixingRule") ? input.get("mixingRule").getAsString() : "classic";
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
     fluid.setMixingRule(mixingRule);
     fluid.setMultiPhaseCheck(true);
     return fluid;
@@ -682,6 +697,53 @@ public class FlowAssuranceRunner {
   }
 
   /**
+   * Detects analyses whose headline result is unavailable (NaN, UNKNOWN) so the tool fails loudly.
+   *
+   * @param analysis analysis name
+   * @param data analysis data block
+   * @return reasons the result is unusable; empty when the headline result is valid
+   */
+  private static List<String> collectUnresolvedResults(String analysis, JsonObject data) {
+    List<String> reasons = new java.util.ArrayList<String>();
+    if ("hydrateRiskMap".equals(analysis)) {
+      boolean allUnknown = data.has("unknownPointCount") && data.has("totalPoints")
+          && data.get("unknownPointCount").getAsInt() >= data.get("totalPoints").getAsInt();
+      if (allUnknown) {
+        if (data.has("failureReasons")) {
+          for (JsonElement reason : data.getAsJsonArray("failureReasons")) {
+            reasons.add(reason.getAsString());
+          }
+        } else {
+          reasons.add("no hydrate temperature could be computed at any profile point");
+        }
+      }
+    } else if ("waxAppearance".equals(analysis)) {
+      if (isNaN(data, "waxAppearanceTemperature_C")) {
+        reasons.add("wax appearance temperature is NaN (no wax-forming components or non-converged wax flash)");
+      }
+    }
+    return reasons;
+  }
+
+  /**
+   * Checks whether a numeric JSON field is missing, NaN or serialized as the string "NaN".
+   *
+   * @param data JSON object
+   * @param field field name
+   * @return true when the field is absent or not a finite number
+   */
+  private static boolean isNaN(JsonObject data, String field) {
+    if (!data.has(field) || data.get(field).isJsonNull()) {
+      return true;
+    }
+    try {
+      return !Double.isFinite(data.get(field).getAsDouble());
+    } catch (RuntimeException e) {
+      return true;
+    }
+  }
+
+  /**
    * Creates a standard error JSON string.
    *
    * @param code the error code
@@ -690,6 +752,19 @@ public class FlowAssuranceRunner {
    * @return the error JSON string
    */
   private static String errorJson(String code, String message, String remediation) {
+    return errorJson(code, message, remediation, null);
+  }
+
+  /**
+   * Creates a standard error JSON string, optionally carrying the partial data that led to the error.
+   *
+   * @param code the error code
+   * @param message the error message
+   * @param remediation the fix suggestion
+   * @param partialData partial analysis data to include for diagnosis, or null
+   * @return the error JSON string
+   */
+  private static String errorJson(String code, String message, String remediation, JsonObject partialData) {
     JsonObject error = new JsonObject();
     error.addProperty("status", "error");
     JsonArray errors = new JsonArray();
@@ -699,6 +774,9 @@ public class FlowAssuranceRunner {
     err.addProperty("remediation", remediation);
     errors.add(err);
     error.add("errors", errors);
+    if (partialData != null) {
+      error.add("partialData", partialData);
+    }
     return GSON.toJson(error);
   }
 }

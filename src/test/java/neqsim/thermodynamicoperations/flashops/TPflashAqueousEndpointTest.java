@@ -8,8 +8,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashAqueousEndpointTest {
-  private static final String[] COMPONENTS = { "methane", "water" };
-  private static final double[] FEED = { 0.85, 0.15 };
+  private static final String[] COMPONENTS = {"methane", "water"};
+  private static final double[] FEED = {0.85, 0.15};
 
   @Test
   void ordinaryAndMultiphaseFlashSelectSameAqueousEquilibrium() {

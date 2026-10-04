@@ -197,7 +197,7 @@ public class TEGdehydrationProcessDistillationGFA {
         "hydrate temperature analyser", waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
-    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
+    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97});
 
     Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", waterSaturatedFeedGas);
     feedTPsetterToAbsorber.setOutPressure(absorberFeedGasPressure, "bara");
@@ -261,14 +261,14 @@ public class TEGdehydrationProcessDistillationGFA {
 
     DistillationColumn column = new DistillationColumn("TEG regeneration column", 3, true, true);
     column.addFeedStream(glycol_flash_valve2.getOutletStream(), 1);
-    column.getReboiler().setOutTemperature(273.15 + reboilerTemperature);
-    column.getCondenser().setOutTemperature(273.15 + condenserTemperature);
+    column.getReboiler().setOutletTemperature(273.15 + reboilerTemperature);
+    column.getCondenser().setOutletTemperature(273.15 + condenserTemperature);
     column.getReboiler().addStream(gasToReboiler);
     column.setTopPressure(condenserPressure);
     column.setBottomPressure(reboilerPressure);
 
     Heater coolerRegenGas = new Heater("regen gas cooler", column.getGasOutStream());
-    coolerRegenGas.setOutTemperature(273.15 + regenerationGasCoolerTemperature);
+    coolerRegenGas.setOutletTemperature(273.15 + regenerationGasCoolerTemperature);
 
     Separator sepregenGas = new Separator("regen gas separator", coolerRegenGas.getOutletStream());
 
@@ -287,7 +287,7 @@ public class TEGdehydrationProcessDistillationGFA {
     recycleGasFromStripper.setOutletStream(gasToReboiler);
 
     Heater bufferTank = new Heater("TEG buffer tank", stripper.getSolventOutStream());
-    bufferTank.setOutTemperature(273.15 + bufferTankTemperatureTEG);
+    bufferTank.setOutletTemperature(273.15 + bufferTankTemperatureTEG);
 
     Pump hotLeanTEGPump = new Pump("hot lean TEG pump", bufferTank.getOutletStream()); // stripper.getSolventOutStream());
     hotLeanTEGPump.setOutletPressure(hotTEGpumpPressure);
@@ -298,7 +298,7 @@ public class TEGdehydrationProcessDistillationGFA {
     heatEx2.setFeedStream(1, heatEx.getOutStream(1));
 
     Heater coolerhOTteg3 = new Heater("lean TEG cooler", heatEx2.getOutStream(1));
-    coolerhOTteg3.setOutTemperature(273.15 + leanTEGTemperature);
+    coolerhOTteg3.setOutletTemperature(273.15 + leanTEGTemperature);
 
     Pump hotLeanTEGPump2 = new Pump("lean TEG HP pump", coolerhOTteg3.getOutletStream());
     hotLeanTEGPump2.setOutletPressure(absorberFeedGasPressure);
@@ -309,7 +309,7 @@ public class TEGdehydrationProcessDistillationGFA {
     Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
     neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
-    pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+    pureTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-6, "kg/hr");

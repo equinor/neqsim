@@ -263,10 +263,10 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
     // adding oil components
 
-    String[] componentNames = { "C7" };
-    double[] molarComposition = { 0.15 };
-    double[] molarMasses = { 0.092 };
-    double[] reldens = { 0.82 };
+    String[] componentNames = {"C7"};
+    double[] molarComposition = {0.15};
+    double[] molarMasses = {0.092};
+    double[] reldens = {0.82};
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
 
@@ -286,7 +286,7 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
     // adding oil components
 
-    molarMasses = new double[] { 0.120 };
+    molarMasses = new double[] {0.120};
 
     thermoSystem.getCharacterization().setTBPModel("PedersenSRK"); // this need to be set before
 

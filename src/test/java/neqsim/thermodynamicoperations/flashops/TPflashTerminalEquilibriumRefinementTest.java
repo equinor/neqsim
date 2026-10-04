@@ -9,8 +9,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 class TPflashTerminalEquilibriumRefinementTest {
-  private static final String[] COMPONENTS = { "nitrogen", "CO2", "methane", "ethane", "propane", "nC10", "water" };
-  private static final double[] FEED = { 0.02, 0.05, 0.55, 0.18, 0.12, 0.06, 0.02 };
+  private static final String[] COMPONENTS = {"nitrogen", "CO2", "methane", "ethane", "propane", "nC10", "water"};
+  private static final double[] FEED = {0.02, 0.05, 0.55, 0.18, 0.12, 0.06, 0.02};
 
   @Test
   void boundedFinalSsiRestoresNeutralGasOilEquilibrium() {
@@ -76,7 +76,7 @@ class TPflashTerminalEquilibriumRefinementTest {
   private void assertEquivalentEndpoint(SystemInterface reference, SystemInterface candidate) {
     assertEquals(reference.getNumberOfPhases(), candidate.getNumberOfPhases());
     assertEquals(reference.getGibbsEnergy(), candidate.getGibbsEnergy(), 1.0e-8);
-    for (PhaseType phaseType : new PhaseType[] { PhaseType.GAS, PhaseType.OIL }) {
+    for (PhaseType phaseType : new PhaseType[] {PhaseType.GAS, PhaseType.OIL}) {
       int referencePhase = reference.getPhaseNumberOfPhase(phaseType.getDesc());
       int candidatePhase = candidate.getPhaseNumberOfPhase(phaseType.getDesc());
       assertEquals(reference.getBeta(referencePhase), candidate.getBeta(candidatePhase), 1.0e-10);

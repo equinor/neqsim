@@ -245,11 +245,11 @@ class BenchmarkValidationTest {
 
     JsonObject tools = root.getAsJsonObject("tools");
     // Verify all claimed tools are present
-    String[] expectedTools = { "runFlash", "runProcess", "runPVT", "runFlowAssurance", "calculateStandard",
+    String[] expectedTools = {"runFlash", "runProcess", "runPVT", "runFlowAssurance", "calculateStandard",
         "runPipeline", "runWaterHammer", "runRootCauseAnalysis", "calculateStandard", "runPipeline", "runWaterHammer",
         "runRootCauseAnalysis", "runMaterialsReview", "runReservoir", "runFieldEconomics", "runBatch", "runDynamic",
         "runBioprocess", "crossValidateModels", "runParametricStudy", "getPhaseEnvelope", "getPropertyTable",
-        "sizeEquipment" };
+        "sizeEquipment"};
 
     for (String tool : expectedTools) {
       assertTrue(tools.has(tool), "Trust report must include entry for " + tool);
@@ -264,8 +264,8 @@ class BenchmarkValidationTest {
   @Test
   @DisplayName("Each tool trust page has maturityLevel and knownLimitations")
   void testToolTrustPageStructure() {
-    String[] calculationTools = { "runFlash", "runProcess", "runBatch", "runPVT", "runDynamic", "getPhaseEnvelope",
-        "getPropertyTable", "runParametricStudy", "crossValidateModels", "sizeEquipment" };
+    String[] calculationTools = {"runFlash", "runProcess", "runBatch", "runPVT", "runDynamic", "getPhaseEnvelope",
+        "getPropertyTable", "runParametricStudy", "crossValidateModels", "sizeEquipment"};
 
     for (String toolName : calculationTools) {
       String page = BenchmarkTrust.getToolTrust(toolName);

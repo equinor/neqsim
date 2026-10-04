@@ -58,12 +58,12 @@ public class ProfilingBenchmarkTest {
       comp.setOutletPressure(150.0);
       sys.add(comp);
       Cooler cool = new Cooler("cool" + t, comp.getOutletStream());
-      cool.setOutTemperature(303.0);
+      cool.setOutletTemperature(303.0);
       sys.add(cool);
       Separator sep2 = new Separator("sep2-" + t, cool.getOutletStream());
       sys.add(sep2);
       Heater h = new Heater("heat" + t, sep2.getGasOutStream());
-      h.setOutTemperature(340.0);
+      h.setOutletTemperature(340.0);
       sys.add(h);
     }
     return sys;
@@ -85,7 +85,7 @@ public class ProfilingBenchmarkTest {
         totalCalls += (long) v[1];
       }
     }
-    return new double[] { totalWall / runs, totalUnit / runs, totalCalls / (double) runs };
+    return new double[] {totalWall / runs, totalUnit / runs, totalCalls / (double) runs};
   }
 
   /** Aggregated per-equipment-class timing across all runs. */
@@ -104,7 +104,7 @@ public class ProfilingBenchmarkTest {
         String cls = nameToClass.getOrDefault(e.getKey(), "?");
         double[] cur = classTotals.get(cls);
         if (cur == null) {
-          cur = new double[] { 0, 0 };
+          cur = new double[] {0, 0};
           classTotals.put(cls, cur);
         }
         cur[0] += e.getValue()[0];
@@ -121,7 +121,7 @@ public class ProfilingBenchmarkTest {
   @Test
   void profileIndependentTrains() throws Exception {
     final int RUNS = 20;
-    int[] trainsCases = { 1, 4, 8 };
+    int[] trainsCases = {1, 4, 8};
 
     logger.info("\n===== PROFILING: Independent trains (where is time spent?) =====");
     logger.printf(org.apache.logging.log4j.Level.INFO, "%-8s %-12s %10s %10s %10s %10s %10s%n", "trains", "mode",

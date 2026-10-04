@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.failure.EquipmentFailureMode;
-import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -389,9 +388,7 @@ public class DegradedOperationOptimizer implements Serializable {
         Pump pump = (Pump) equipment;
         pump.setOutletPressure(pump.getInletStream().getPressure());
       } else if (equipment instanceof Heater) {
-        ((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
-      } else if (equipment instanceof Cooler) {
-        ((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
+        ((Heater) equipment).setOutletTemperature(((Heater) equipment).getInletStream().getTemperature());
       }
     }
   }
@@ -409,7 +406,7 @@ public class DegradedOperationOptimizer implements Serializable {
     StreamInterface feed = (StreamInterface) feedUnit;
 
     // Search from high to low flow rates
-    double[] flowFactors = { 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1 };
+    double[] flowFactors = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
 
     for (double factor : flowFactors) {
       double testFlow = baselineFlow * factor;

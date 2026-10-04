@@ -83,8 +83,8 @@ final class ReferenceEosLiquidDensitySolver {
         && upperResidual > 0.0;
   }
 
-  /** Pressure convergence tolerance in kPa. */
+  /** Pressure convergence tolerance in kPa, kept below saturation VU closure tolerances. */
   private static double pressureTolerance(double targetPressure) {
-    return Math.max(1.0e-6, Math.abs(targetPressure) * 1.0e-8);
+    return Math.max(1.0e-9, Math.abs(targetPressure) * 1.0e-11);
   }
 }

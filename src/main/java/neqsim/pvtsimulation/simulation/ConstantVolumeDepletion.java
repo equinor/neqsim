@@ -234,7 +234,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
       for (int i = 0; i < experimentalData[0].length; i++) {
         CVDFunction function = new CVDFunction();
-        double[] guess = new double[] { 234.0 / 1000.0 }; // getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
+        double[] guess = new double[] {234.0 / 1000.0}; // getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
@@ -243,9 +243,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = { temperatures[i], pressures[i] };
+        double[] sample1 = {temperatures[i], pressures[i]};
         double relativeVolume = experimentalData[0][i];
-        double[] standardDeviation1 = { 1.5 };
+        double[] standardDeviation1 = {1.5};
         SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
@@ -320,10 +320,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(tempSystem);
     CVDsim.setTemperature(315.0, "K");
-    CVDsim.setPressures(new double[] { 400, 300.0, 200.0, 150.0, 100.0, 50.0 });
+    CVDsim.setPressures(new double[] {400, 300.0, 200.0, 150.0, 100.0, 50.0});
     CVDsim.runCalc();
-    CVDsim.setTemperaturesAndPressures(new double[] { 313, 313, 313, 313 }, new double[] { 400, 300.0, 200.0, 100.0 });
-    double[][] expData = { { 0.95, 0.99, 1.0, 1.1 } };
+    CVDsim.setTemperaturesAndPressures(new double[] {313, 313, 313, 313}, new double[] {400, 300.0, 200.0, 100.0});
+    double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
     CVDsim.setExperimentalData(expData);
     // CVDsim.runTuning();
   }

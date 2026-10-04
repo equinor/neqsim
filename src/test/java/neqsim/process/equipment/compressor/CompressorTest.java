@@ -149,7 +149,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(358.0);
+    compressor1.setOutletTemperature(358.0);
     compressor1.run();
     // logger.info("srk polytropic efficiency " +
     // compressor1.getPolytropicEfficiency()*100 + " poly eff");
@@ -175,7 +175,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(358.0);
+    compressor1.setOutletTemperature(358.0);
     compressor1.setUseGERG2008(true);
     // compressor1.setUseRigorousPolytropicMethod(true);
     compressor1.run();
@@ -355,7 +355,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(400.0);
+    compressor1.setOutletTemperature(400.0);
     compressor1.setUseLeachman(true); // Enable the use of Leachman method
 
     // Run the compressor
@@ -415,7 +415,7 @@ class CompressorTest extends neqsim.NeqSimTest {
         "Compressor1", inletStream);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setOutletPressure(pressure_Out);
-    compressor1.setOutTemperature(400.0);
+    compressor1.setOutletTemperature(400.0);
     compressor1.setUseVega(true); // Enable the use of Vega method
 
     // Run the compressor
@@ -609,5 +609,59 @@ class CompressorTest extends neqsim.NeqSimTest {
     logger.info("  Template: " + comp.getCurveTemplate());
     logger.info("  Original speed: " + originalSpeed + " RPM");
     logger.info("  Calculated speed: " + comp.getSpeed() + " RPM");
+  }
+
+  /**
+   * getValidatedDistanceToSurge() must honour the {@link Compressor#isChartExtrapolated()} contract at a range of
+   * operating points: NaN whenever the point is outside the chart's validated flow/speed range, and exactly
+   * {@link Compressor#getDistanceToSurge()} otherwise. Motivated by a PEPR blackout/driver-trip anti-surge screening
+   * study where an automated coastdown sweep needed to distinguish "off-chart" points from a genuine surge margin,
+   * instead of silently trusting a finite but physically meaningless value from an extrapolated chart.
+   */
+  @Test
+  public void testGetValidatedDistanceToSurgeFlagsExtrapolation() {
+    SystemSrkEos fluid = new SystemSrkEos(298.0, 5.0);
+    fluid.addComponent("methane", 100.0);
+    Stream inletStream = new Stream("inletStream", fluid);
+    inletStream.setPressure(5.0, "bara");
+    inletStream.setTemperature(35.0, "C");
+    inletStream.setFlowRate(80000.0, "kg/hr");
+    inletStream.run();
+
+    Compressor comp = new Compressor("designComp", inletStream);
+    comp.setOutletPressure(20.0, "bara");
+    comp.setPolytropicEfficiency(0.78);
+    comp.setUsePolytropicCalc(true);
+    comp.run();
+    comp.setSpeed(10000.0);
+    comp.generateCompressorChart();
+    comp.setSolveSpeed(false);
+
+    boolean sawExtrapolated = false;
+    boolean sawInRange = false;
+    double[] speedFractions = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2};
+    for (double speedFraction : speedFractions) {
+      comp.setSpeed(10000.0 * speedFraction);
+      inletStream.setFlowRate(80000.0, "kg/hr");
+      inletStream.run();
+      comp.run();
+
+      boolean extrapolated = comp.isChartExtrapolated();
+      double validated = comp.getValidatedDistanceToSurge();
+      if (extrapolated) {
+        sawExtrapolated = true;
+        Assertions.assertTrue(Double.isNaN(validated),
+            "Expected NaN at speed fraction " + speedFraction + " (chart extrapolated)");
+      } else {
+        sawInRange = true;
+        assertEquals(comp.getDistanceToSurge(), validated, 1.0e-9,
+            "Expected getValidatedDistanceToSurge() to match getDistanceToSurge() at speed fraction " + speedFraction
+                + " (chart in range)");
+      }
+    }
+    // The sweep must exercise BOTH branches of the contract, otherwise the test would not catch a
+    // regression that always (or never) returns NaN.
+    Assertions.assertTrue(sawExtrapolated, "Expected at least one extrapolated point in the sweep");
+    Assertions.assertTrue(sawInRange, "Expected at least one in-range point in the sweep");
   }
 }

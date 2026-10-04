@@ -111,7 +111,7 @@ class SimultaneousSolvingIntegrationTest {
 
     // Splitter - split some gas for recycle
     Splitter gasSplitter = new Splitter("Gas Splitter", hpSeparator.getGasOutStream());
-    gasSplitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    gasSplitter.setSplitFactors(new double[] {0.9, 0.1});
     process.add(gasSplitter);
 
     // Product gas - use StreamInterface
@@ -249,7 +249,7 @@ class SimultaneousSolvingIntegrationTest {
 
     // Split for recycle 1 (anti-surge first stage)
     Splitter splitter1 = new Splitter("Anti-surge Splitter 1", finalSeparator.getGasOutStream());
-    splitter1.setSplitFactors(new double[] { 0.95, 0.05 });
+    splitter1.setSplitFactors(new double[] {0.95, 0.05});
     process.add(splitter1);
 
     // JT valve for first recycle
@@ -268,7 +268,7 @@ class SimultaneousSolvingIntegrationTest {
 
     // Split for recycle 2 (anti-surge second stage)
     Splitter splitter2 = new Splitter("Anti-surge Splitter 2", splitter1.getSplitStream(0));
-    splitter2.setSplitFactors(new double[] { 0.98, 0.02 });
+    splitter2.setSplitFactors(new double[] {0.98, 0.02});
     process.add(splitter2);
 
     // JT valve for second recycle
@@ -475,7 +475,7 @@ class SimultaneousSolvingIntegrationTest {
     process.add(separator);
 
     Splitter splitter = new Splitter("Splitter", separator.getGasOutStream());
-    splitter.setSplitFactors(new double[] { 0.9, 0.1 });
+    splitter.setSplitFactors(new double[] {0.9, 0.1});
     process.add(splitter);
 
     ThrottlingValve valve = new ThrottlingValve("Valve", splitter.getSplitStream(1));

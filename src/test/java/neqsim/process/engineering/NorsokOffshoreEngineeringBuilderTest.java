@@ -78,11 +78,11 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     process.add(exportLine);
     process.run();
 
-    double[] chartConditions = new double[] { 19.0, 303.15, 50.0, 0.90 };
-    double[] speeds = new double[] { 8000.0, 10000.0 };
-    double[][] flows = new double[][] { { 4000.0, 6000.0, 8000.0 }, { 5000.0, 7500.0, 10000.0 } };
-    double[][] heads = new double[][] { { 55.0, 50.0, 42.0 }, { 85.0, 78.0, 65.0 } };
-    double[][] efficiencies = new double[][] { { 70.0, 78.0, 72.0 }, { 71.0, 80.0, 73.0 } };
+    double[] chartConditions = new double[] {19.0, 303.15, 50.0, 0.90};
+    double[] speeds = new double[] {8000.0, 10000.0};
+    double[][] flows = new double[][] {{4000.0, 6000.0, 8000.0}, {5000.0, 7500.0, 10000.0}};
+    double[][] heads = new double[][] {{55.0, 50.0, 42.0}, {85.0, 78.0, 65.0}};
+    double[][] efficiencies = new double[][] {{70.0, 78.0, 72.0}, {71.0, 80.0, 73.0}};
     compressor.getCompressorChart().setCurves(chartConditions, speeds, flows, heads, efficiencies);
     compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.getAntiSurge().setActive(true);
@@ -356,7 +356,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
       top = Math.max(top, y);
     }
 
-    String[] elementNames = new String[] { "ProcessInstrumentationFunction", "PipingComponent" };
+    String[] elementNames = new String[] {"ProcessInstrumentationFunction", "PipingComponent"};
     for (String elementName : elementNames) {
       NodeList elements = document.getElementsByTagName(elementName);
       for (int i = 0; i < elements.getLength(); i++) {
@@ -424,8 +424,8 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
         positions = new ArrayList<double[]>();
         positionsByEquipment.put(equipmentTag, positions);
       }
-      positions.add(new double[] { Double.parseDouble(location.getAttribute("X")),
-          Double.parseDouble(location.getAttribute("Y")) });
+      positions.add(new double[] {Double.parseDouble(location.getAttribute("X")),
+          Double.parseDouble(location.getAttribute("Y"))});
     }
     for (Map.Entry<String, List<double[]>> entry : positionsByEquipment.entrySet()) {
       List<double[]> positions = entry.getValue();

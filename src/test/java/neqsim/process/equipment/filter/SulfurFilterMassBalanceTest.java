@@ -20,13 +20,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 class SulfurFilterMassBalanceTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, 0.9, 1.0 })
+  @ValueSource(doubles = {0.0, 0.9, 1.0})
   void gasSolidCaptureConservesMassAndComponents(double efficiency) {
     checkCapture(createFeed(false), efficiency, false);
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, 0.9, 1.0 })
+  @ValueSource(doubles = {0.0, 0.9, 1.0})
   void wetMultiphaseCaptureConservesMassAndComponents(double efficiency) {
     checkCapture(createFeed(true), efficiency, true);
   }
@@ -53,7 +53,7 @@ class SulfurFilterMassBalanceTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(doubles = { 0.0, 1.0e-20 })
+  @ValueSource(doubles = {0.0, 1.0e-20})
   void feedWithoutSolidSulfurResetsCaptureAndSupersaturation(double s8Moles) {
     SulfurFilter filter = new SulfurFilter("filter", createFeed(false));
     filter.setDeltaP(0.0);

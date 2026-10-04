@@ -45,7 +45,7 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     }
 
     // Reuse the qualified property implementations as the authoritative input-domain checks.
-    double[] equalMasses = { 1.0, 1.0 };
+    double[] equalMasses = {1.0, 1.0};
     RefineryAssayBlend.fromBulkProperties(equalMasses, sourceSpecificGravities, sourceSulfurMassFractions,
         sourceNitrogenMassFractions);
     RefineryViscosityBlend.fromMassBasis(equalMasses, sourceKinematicViscositiesCSt, temperatureCelsius);
@@ -56,7 +56,7 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
     this.sourceKinematicViscositiesCSt = Arrays.copyOf(sourceKinematicViscositiesCSt, 2);
     this.temperatureCelsius = temperatureCelsius;
 
-    double[] interval = { 0.0, 1.0 };
+    double[] interval = {0.0, 1.0};
     double firstApiGravity = calculateApiGravity(sourceSpecificGravities[0]);
     double secondApiGravity = calculateApiGravity(sourceSpecificGravities[1]);
     intersectLinearConstraint(interval, firstApiGravity, secondApiGravity, minimumApiGravity, maximumApiGravity,
@@ -185,7 +185,7 @@ public final class RefineryBinaryBlendEnvelope implements Serializable {
         || firstSourceMassFraction > maximumFirstSourceMassFraction) {
       throw new IllegalArgumentException("First-source mass fraction must lie inside the feasible interval");
     }
-    double[] masses = { firstSourceMassFraction, 1.0 - firstSourceMassFraction };
+    double[] masses = {firstSourceMassFraction, 1.0 - firstSourceMassFraction};
     RefineryAssayBlend assayBlend = RefineryAssayBlend.fromBulkProperties(masses, sourceSpecificGravities,
         sourceSulfurMassFractions, sourceNitrogenMassFractions);
     RefineryViscosityBlend viscosityBlend = RefineryViscosityBlend.fromMassBasis(masses, sourceKinematicViscositiesCSt,

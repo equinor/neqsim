@@ -283,6 +283,6 @@ public class NetworkLinearSolver {
     int totalEntries = nodeCount * nodeCount;
     double density = (totalEntries > 0) ? (double) estimatedNnz / totalEntries : 1.0;
     double usesSparse = (nodeCount > SPARSE_THRESHOLD && density < 0.5) ? 1.0 : 0.0;
-    return new double[] { density, estimatedNnz, usesSparse };
+    return new double[] {density, estimatedNnz, usesSparse};
   }
 }

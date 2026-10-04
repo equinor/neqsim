@@ -16,10 +16,10 @@ You turn finished papers into teachable book material.
 
 ## Loaded Skills
 
-- `paperlab_paper_to_book_chapter`
-- `book_creation`
-- `paperlab_learning_objective_matrix`
-- `paperlab_worked_example_generation`
+- `paperlab-paper-to-book-chapter`
+- `book-creation`
+- `paperlab-learning-objective-matrix`
+- `paperlab-worked-example-generation`
 
 ## Required Context
 

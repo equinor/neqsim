@@ -460,7 +460,7 @@ public class ColumnInternalsDesigner implements Serializable {
     } catch (Exception ex) {
       logger.debug("Could not read tray flows: " + ex.getMessage());
     }
-    return new double[] { Math.max(vaporMass, 1e-6), Math.max(liquidMass, 1e-6) };
+    return new double[] {Math.max(vaporMass, 1e-6), Math.max(liquidMass, 1e-6)};
   }
 
   /**
@@ -547,7 +547,7 @@ public class ColumnInternalsDesigner implements Serializable {
       logger.debug("Could not read tray properties: " + ex.getMessage());
     }
 
-    return new double[] { vaporDensity, liquidDensity, liquidViscosity, surfaceTension, alpha };
+    return new double[] {vaporDensity, liquidDensity, liquidViscosity, surfaceTension, alpha};
   }
 
   // ======================== Result Getters ========================

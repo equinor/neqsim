@@ -405,8 +405,8 @@ public class WellIntegrityScreening implements Serializable {
    */
   private static int countByStatus(WellBarrierSchematic schematic, BarrierElement.Status status) {
     int count = 0;
-    BarrierEnvelope[] envelopes = new BarrierEnvelope[] { schematic.getPrimaryEnvelope(),
-        schematic.getSecondaryEnvelope() };
+    BarrierEnvelope[] envelopes = new BarrierEnvelope[] {schematic.getPrimaryEnvelope(),
+        schematic.getSecondaryEnvelope()};
     for (BarrierEnvelope envelope : envelopes) {
       if (envelope == null) {
         continue;

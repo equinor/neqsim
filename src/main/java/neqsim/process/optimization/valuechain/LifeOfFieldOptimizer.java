@@ -254,7 +254,7 @@ public class LifeOfFieldOptimizer implements Serializable {
     int[] best = new int[n];
     int[] current = new int[n];
     double[] bestCashFlow = new double[nYears];
-    double[] bestNpv = new double[] { Double.NEGATIVE_INFINITY };
+    double[] bestNpv = new double[] {Double.NEGATIVE_INFINITY};
     enumerate(0, current, best, bestNpv, bestCashFlow, evaluator);
     return new LifeOfFieldResult(best, bestNpv[0], bestCashFlow);
   }

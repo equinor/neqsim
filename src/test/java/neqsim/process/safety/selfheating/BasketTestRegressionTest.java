@@ -48,7 +48,7 @@ public class BasketTestRegressionTest {
   @Test
   void regressionRecoversKnownKinetics() {
     SelfHeatingGeometry geometry = SelfHeatingGeometry.CUBE;
-    double[] sizes = new double[] { 0.0125, 0.025, 0.05, 0.1 };
+    double[] sizes = new double[] {0.0125, 0.025, 0.05, 0.1};
 
     BasketTestRegression regression = new BasketTestRegression().setEffectiveThermalConductivity(LAMBDA);
     for (int i = 0; i < sizes.length; i++) {
@@ -105,7 +105,7 @@ public class BasketTestRegressionTest {
   @Test
   void fittedKineticsExtrapolateToPlantScale() {
     SelfHeatingGeometry geometry = SelfHeatingGeometry.CUBE;
-    double[] labSizes = new double[] { 0.0125, 0.025, 0.05 };
+    double[] labSizes = new double[] {0.0125, 0.025, 0.05};
 
     BasketTestRegression regression = new BasketTestRegression().setEffectiveThermalConductivity(LAMBDA);
     double smallestLabCriticalTemperature = syntheticCriticalTemperature(geometry, labSizes[0]);

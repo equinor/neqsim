@@ -1,5 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -62,6 +63,10 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
   @Test
   void wetWallAndInterphaseExchangePreserveMixtureMomentum() {
     TwoFluidSection section = section(0.5, 4.0, 2.0);
+    section.updateConservativeVariables();
+    double[] initialState = section.getStateVector();
+    assertEquals(0.5 * 750.0 * section.getArea(), initialState[1], 0.0);
+    assertEquals(0.0, initialState[2], 0.0);
     SlugForceBalance closure = new SlugForceBalance();
     SlugForceBalance.Forces force = closure.evaluate(section);
     WallFriction.WallFrictionResult legacy = new WallFriction().calculate(FlowRegime.SLUG, 2.0, 2.0, 40.0, 750.0,
@@ -74,9 +79,11 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
     equations.setIncludeEnergyEquation(false);
     section.setInterfacialShear(force.interfaceForce / section.getDiameter());
     section.setInterfacialWidth(section.getDiameter());
-    double[][] source = equations.calcSourceTerms(new TwoFluidSection[] { section });
+    double[][] source = equations.calcSourceTerms(new TwoFluidSection[] {section});
     assertEquals(-force.interfaceForce, source[0][3], 1.0e-10);
     assertEquals(-force.liquidWall, source[0][3] + source[0][4] + source[0][5], 1.0e-10);
+    assertArrayEquals(initialState, section.getStateVector(), 0.0,
+        "Evaluating the source must preserve the initialized conservative state");
   }
 
   /** The unchanged 5 km liquid-rich null fixture, with only the new closure selected. */
@@ -126,8 +133,8 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
   @Test
   void reverseLiquidWallMotionRemainsDissipative() {
     SlugForceBalance closure = new SlugForceBalance();
-    for (double gasVelocity : new double[] { -4.0, 0.0, 4.0 }) {
-      for (double liquidVelocity : new double[] { -2.0, 0.0, 2.0 }) {
+    for (double gasVelocity : new double[] {-4.0, 0.0, 4.0}) {
+      for (double liquidVelocity : new double[] {-2.0, 0.0, 2.0}) {
         SlugForceBalance.Forces force = closure.evaluate(section(0.5, gasVelocity, liquidVelocity));
         assertTrue(force.liquidWall * liquidVelocity >= 0.0);
         assertTrue(force.interfaceForce * (gasVelocity - liquidVelocity) >= 0.0);
@@ -138,9 +145,9 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
   @Test
   void nearbyRatesAndInclinationsRetainMechanicalEquilibrium() {
     SlugForceBalance closure = new SlugForceBalance();
-    for (double gasFlux : new double[] { 1.5, 2.0, 2.5 }) {
-      for (double liquidFlux : new double[] { 0.8, 1.0, 1.2 }) {
-        for (double inclination : new double[] { -0.02, 0.0, 0.02 }) {
+    for (double gasFlux : new double[] {1.5, 2.0, 2.5}) {
+      for (double liquidFlux : new double[] {0.8, 1.0, 1.2}) {
+        for (double inclination : new double[] {-0.02, 0.0, 0.02}) {
           TwoFluidSection section = section(0.5, 4.0, 2.0);
           section.setInclination(inclination);
           double holdup = closure.solveHoldup(section, gasFlux, liquidFlux);
@@ -180,6 +187,7 @@ class TwoFluidPipeSharedSlugForceBalanceTest {
   }
 
   @Test
+  @Tag("slow")
   void refinedSubstepsDoNotLeaveAnUnrepresentableClockRemainder() {
     TwoFluidPipe pipe = liquidRichPipe(true, 80, 0.25);
     for (int step = 0; step < 28; step++) {

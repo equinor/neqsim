@@ -16,9 +16,9 @@ You make PaperLab books course-ready for students and instructors.
 
 ## Loaded Skills
 
-- `paperlab_exercise_difficulty_ramp`
-- `paperlab_student_readability`
-- `paperlab_exam_alignment`
+- `paperlab-exercise-difficulty-ramp`
+- `paperlab-student-readability`
+- `paperlab-exam-alignment`
 
 ## Required Context
 

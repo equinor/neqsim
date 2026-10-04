@@ -57,7 +57,7 @@ with vapour-liquid and other solid equilibria.
 The solid-liquid equilibrium for each wax-forming component $i$ is:
 
 $$
-\ln\left(\frac{x_i^S \gamma_i^S}{x_i^L \gamma_i^L}\right) = -\frac{\Delta H_{f,i}}{R T}\left(1 - \frac{T}{T_{f,i}}\right) + \frac{\Delta C_{p,i}^{SL}}{R}\left(\frac{T_{f,i}}{T} - 1 - \ln\frac{T_{f,i}}{T}\right) - \frac{\Delta V_i^{SL}(P - P_{ref})}{R T}
+\ln\left(\frac{x_i^S \gamma_i^S}{x_i^L \gamma_i^L}\right) = \frac{\Delta H_{f,i}}{R T}\left(1 - \frac{T}{T_{f,i}}\right) - \frac{\Delta C_{p,i}^{SL}}{R}\left(\frac{T_{f,i}}{T} - 1 - \ln\frac{T_{f,i}}{T}\right) + \frac{\Delta V_i^{SL}(P - P_{ref})}{R T}
 $$
 
 where:
@@ -158,7 +158,7 @@ $$
 
 **Class:** `ComponentCoutinhoWax` | **Key:** `"Coutinho"`
 
-The most thermodynamically rigorous model, based on Coutinho (1998, 2001).
+A local-composition solid-solution model based on Coutinho (1998, 2001).
 Uses the UNIQUAC local-composition framework for solid-phase activity coefficients,
 with predictive interaction parameters derived from sublimation enthalpies.
 
@@ -171,13 +171,15 @@ corrections via UNIQUAC $r$ and $q$ parameters from Bondi group contributions),
 and the residual part uses interaction parameters $\lambda_{ij}$ estimated from:
 
 $$
-\lambda_{ij} = -\frac{2}{Z}\sqrt{(\Delta H_{sub,i} - RT)(\Delta H_{sub,j} - RT)}
+\lambda_{ii} = -\frac{2}{Z}(\Delta H_{sub,i} - RT)
 $$
 
-with $Z = 10$ (coordination number) and $\Delta H_{sub}$ the sublimation enthalpy.
+For self interactions, use $Z = 10$ (coordination number) and $\Delta H_{sub}$ as the sublimation enthalpy.
+For unlike molecules, the pair energy is the self energy of the shorter chain:
+$\lambda_{ij}=\lambda_{ji}=\lambda_{short,short}$.
 
-**Strengths:** Most predictive; validated against pure n-alkane mixtures and crude oils;
-accounts for solid solution non-ideality through first-principles approach.
+**Strengths:** Accounts for molecular size and solid-solution non-ideality.
+The implemented correlations require validation against data for the fluid of interest.
 
 **Limitations:** More sensitive to characterization quality; requires correct carbon number
 assignment for TBP fractions.
@@ -188,7 +190,13 @@ assignment for TBP fractions.
 
 ### Selecting a Wax Model (Recommended)
 
-Use `setWaxModelType()` on the fluid system **before** calling `addSolidComplexPhase("wax")`:
+Use `setWaxModelType()` on the fluid system **before** calling `addSolidComplexPhase("wax")`.
+Names are case-insensitive; unknown or null names raise `IllegalArgumentException`.
+Changing an already populated wax phase to a different model raises
+`IllegalStateException` and preserves the existing configuration. Selecting its current
+model again is allowed. The same rules apply to `PhaseWax.setWaxComponentModel()`.
+To compare models, construct one fresh fluid for each selection:
+
 
 ```java
 import neqsim.thermo.system.SystemSrkEos;
@@ -203,6 +211,32 @@ fluid.addSolidComplexPhase("wax");
 fluid.setMultiphaseWaxCheck(true);
 fluid.setMultiPhaseCheck(true);
 ```
+
+### Numerical behavior and limits
+
+The alternative models use Morgan-Kobayashi (1994) vaporization enthalpies with
+the PERT2 coefficients. These correlations are evaluated only for wax-forming
+components and require `0 < T < Tc`; methane and other excluded fluid components
+do not enter solid activity sums. Solid compositions are normalized over wax formers.
+Invalid correlation states or nonfinite/zero fugacity coefficients raise an exception
+instead of being passed into the phase-fraction calculation. Such an exception is
+not a prediction of zero wax.
+
+All four models use the same liquid-reference, fusion, heat-capacity and pressure
+corrections. The pressure contribution is `(Vs - Vl) * (P - 1 bara) / (R*T)`,
+with volumes in m³/mol and the pressure difference converted to Pa; the current
+solid-volume approximation is `Vs = 0.9*Vl`. Won's solid cohesive energy includes
+both vaporization and fusion enthalpy. UNIQUAC uses relative interaction energies
+so that its pure-component activity coefficient is one, and its infinite-dilution
+coefficient is evaluated without dividing by a zero mole fraction.
+
+The regression coverage for [issue #3914](https://github.com/equinor/neqsim/issues/3914)
+checks actual component classes, finite coefficients, pure-solid limits, pressure
+units and component inventories for the characterized methane/TBP/plus-fraction
+mixture at 261 and 275 K and 5 bara. It also cross-checks a Morgan-Kobayashi
+value against an independent implementation. These are numerical and thermodynamic
+consistency checks, not experimental qualification of each model's WAT or wax amount.
+Use measured WAT and wax-fraction data to qualify or tune predictions for a specific oil.
 
 ### Python (Jupyter)
 
@@ -269,6 +303,40 @@ ops.calcWAT();
 double watC = fluid.getTemperature() - 273.15;
 ```
 
+`calcWAT()` now locates the numerical wax onset with independent, freshly initialized
+TP flashes at the current pressure. It brackets the transition through a wax mass
+fraction of **1e-8 of the whole fluid**, then refines the temperature interval to
+**1e-4 K** and repeats both endpoint flashes. The returned temperature is the warm
+endpoint (wax mass fraction at or below the threshold). The fluid retains that
+verified TP phase state; the operation does not append an artificial wax phase.
+Downstream wax amounts should be obtained with a new `TPflash()` at the operating
+temperature.
+
+The initial temperature must lie within the numerical search bounds of **100-1000 K**.
+The operation searches in 10 K increments from that guess and assumes a single
+wax appearance transition in the bracket. These bounds are solver guards, not a
+statement of physical model validity. Wax checks are enabled on the internal
+trials; the caller's wax-check and fluid multiphase-check settings are preserved.
+Enable `setMultiPhaseCheck(true)` before calculation when an aqueous phase must be
+considered. Characterization and `addSolidComplexPhase("wax")` remain prerequisites.
+
+Invalid inputs or missing wax formers/configuration raise `IllegalArgumentException`.
+Failure to find or reproduce a bracket, or a nonfinite/unbalanced TP trial, raises
+`IllegalStateException` with pressure, trial/bracket temperatures and the number
+of TP evaluations. Failure leaves the caller's temperature, phase state and
+overall composition unchanged. Do not treat the initial temperature as a WAT after
+an exception.
+
+This resolves the internal consistency failure in [issue #3709](https://github.com/equinor/neqsim/issues/3709):
+the characterized synthetic oil previously returned 54.4595 °C at 60 bara although
+fresh TP flashes already predicted wax at 64 °C. Regression tests compare direct
+WAT against a refined independent TP appearance bracket at 40, 60 and 80 bara,
+including different initial guesses, reordered/existing wax phases and added water.
+This checks consistency within the selected EOS, wax model and characterization;
+it is not experimental validation. Laboratory WAT and wax-fraction data are still
+needed for fluid-specific prediction, and equilibrium wax appearance does not
+by itself predict deposition rate or location.
+
 ### Step 4: Wax Fraction vs Temperature
 
 ```java
@@ -289,18 +357,68 @@ double[] fractions = calc.getWaxWeightFractions();
 
 ## Wax Curve Calculation
 
+### Simple wax setup
+
+For ordinary wax-equilibrium work, use the high-level setup helper instead of
+manually wiring characterization, wax pseudo-components, database refresh,
+solid-phase registration, phase checks and initialization:
+
+```java
+SystemInterface fluid = new SystemSrkEos(298.0, 10.0);
+fluid.addComponent("methane", 6.78);
+fluid.addTBPfraction("C19", 10.13, 0.170, 0.7814);
+fluid.addPlusFraction("C20", 10.62, 0.381, 0.850871882888);
+fluid.setMixingRule(2);
+fluid.enableWaxModel("Coutinho");
+```
+
+`enableWaxModel(...)` characterizes an unresolved plus fraction when present,
+creates the wax-forming pseudo-components, refreshes component data, installs
+the wax phase, enables the required phase checks and initializes the fluid. It
+does **not** change the EOS or mixing rule, so those remain explicit engineering
+choices. The lower-level setup methods remain available for research workflows
+that need control over individual characterization steps.
+
 ### WaxCurveCalculator
 
-The `WaxCurveCalculator` class provides the most robust way to generate wax
-precipitation curves. It scans from high to low temperature, performs a
-TP flash at each point, and applies monotonicity enforcement to remove
-non-physical artifacts.
+`WaxCurveCalculator` scans from high to low temperature using independent TP
+flashes of the configured feed. Configure the wax phase and enable
+`setMultiphaseWaxCheck(true)` before calculating. A disabled or missing wax
+phase is a setup failure, not evidence of zero wax.
+
+Failed flashes, nonfinite phase states, unnormalized phase compositions and
+component-balance errors above an absolute feed mole-fraction tolerance of
+$10^{-6}$ produce `NaN`, never zero or the preceding result. The per-point
+`getFailureMessages()` array records temperature, pressure and the failure
+reason; successful entries are null. Inspect it together with `getFailCount()`.
+The pressure-sweep API uses the same checks and returns `NaN` for failed trials.
+These checks establish finite and conserved results, not global phase stability
+or experimental accuracy.
+
+For compatibility, running-maximum smoothing remains enabled by default. It is
+only postprocessing: it can conceal a physical or numerical trend and must not
+be used as validation. Use `setEnforceMonotonicity(false)` for research, model
+comparison and condensate studies, and retain `getRawWaxFractions()`. Missing
+points stay missing, and smoothing restarts after each gap. Correction counts
+reset on every calculation.
+
+`getWaxAppearanceTemperatureC()` is a coarse interpolation of adjacent raw
+samples across a total-feed wax mass fraction of $10^{-8}$. It returns `NaN`
+when wax is already present at the warm boundary, when no onset is found, or
+when a failed warmer point prevents a reliable bracket. This intentionally
+replaces the previous misleading boundary-temperature result. Use
+`calculateWAT()` for the native refined TP onset search described above; the
+curve estimate is grid-dependent and is not an experimental WAT. Pressure must
+be finite and positive in bara; grid temperatures must be finite and above
+absolute zero, the upper bound must exceed the lower, and the step must be
+positive. The minimum effective step remains 0.1 C and the grid is limited to
+10001 points.
 
 ```java
 WaxCurveCalculator calc = new WaxCurveCalculator(fluid);
 calc.setPressure(100.0);
 calc.setTemperatureRange(-10.0, 80.0, 1.0);
-calc.setEnforceMonotonicity(true); // default
+calc.setEnforceMonotonicity(false); // preserve raw trends for model comparison
 calc.calculate();
 
 // Results
@@ -312,6 +430,31 @@ double[] waxWtFractions = calc.getWaxWeightFractions();
 double[] pressures = {50.0, 100.0, 200.0};
 Map<Double, Double> results = calc.calculateAtMultiplePressures(pressures, 10.0);
 ```
+
+
+### Waxy-condensate research case: Hong et al. (2026)
+
+[Issue #4116](https://github.com/equinor/neqsim/issues/4116) tracks qualification
+against Hong, Wang, Meng and Wang, *AIP Advances* 16, 075039,
+[DOI: 10.1063/5.0326546](https://doi.org/10.1063/5.0326546).
+The paper combines gas/liquid/solid equilibrium, heavy-end characterization and
+modified PR models. Its reported 12.4% wax-temperature and 20.2% best dew-point
+pressure deviations are comparisons with reference/theoretical or simulated
+results; they must not be relabeled as NeqSim experimental accuracy.
+
+A reproducible comparison must preserve Table I's **mass-percent basis** and
+convert to mole fractions using the selected component molar masses. Carbon
+number cuts must not silently be replaced by pure normal paraffins: cut molar
+masses, densities and normal-paraffin content affect the wax-forming inventory.
+Record any such surrogate assumption explicitly. Obtain numerical reference
+curves and their provenance before reporting a quantitative benchmark.
+
+The current four-model regression fluid is a synthetic consistency test, not a
+reconstruction of this field fluid. Required follow-up includes a sourced case
+fixture, pressure/temperature phase and wax maps without smoothing, numerical
+WAT brackets, characterization sensitivity, independent experimental WAT and
+wax-fraction data, and a cleanly executed Colab example. Equilibrium wax amount
+does not establish a deposition rate, location, or plugging time.
 
 ### WaxFractionSim
 
@@ -432,7 +575,7 @@ Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures
 | Speed | Fast | Fast | Medium | Medium |
 | Parameters to tune | 3-5 | 3-5 | 3-5 | 3-5 |
 | Solid non-ideality | None | Solubility param | Wilson GE | UNIQUAC GE |
-| $\Delta C_p$ correction | Yes | No | Yes | Yes |
+| $\Delta C_p$ correction | Yes | Yes | Yes | Yes |
 | Best for | Screening, quick studies | Multi-component waxes | Moderate accuracy | High accuracy, validation |
 | Literature validation | Pedersen 1991 | Won 1986, 1989 | - | Coutinho 1998, 2001 |
 
@@ -440,8 +583,8 @@ Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures
 
 1. **Screening and quick studies:** Use Pedersen (default). Fast, robust, easy to tune.
 2. **Engineering design (single oil):** Use Pedersen or Won with parameter tuning to experimental data.
-3. **Predictive work (no experimental data):** Use Coutinho — most thermodynamically rigorous.
-4. **Multi-crude blending or new field:** Use Coutinho — best extrapolation outside fitted range.
+3. **Predictive work:** Compare model sensitivity and obtain experimental validation before relying on absolute wax amounts.
+4. **Multi-crude blending or new field:** Validate the characterization and solid-solution model for the new compositions.
 
 ---
 
@@ -452,6 +595,10 @@ Map<Double, Double> waxAtPressures = calc.calculateAtMultiplePressures(pressures
 - Won, K.W., "Thermodynamic Calculation of Cloud Point Temperatures and Wax Phase Compositions of Refined Hydrocarbon Mixtures," *Fluid Phase Equilibria*, 53, 377-396, 1989.
 - Coutinho, J.A.P., "Predictive UNIQUAC: A New Model for the Description of Multiphase Solid-Liquid Equilibria in Complex Hydrocarbon Mixtures," *Ind. Eng. Chem. Res.*, 37, 4870-4875, 1998.
 - Coutinho, J.A.P. and Daridon, J.-L., "Low-Pressure Modeling of Wax Formation in Crude Oils," *Energy & Fuels*, 15, 1454-1460, 2001.
+- Coutinho, J.A.P. et al., *Fluid Phase Equilibria* 233 (2005), 28-33, Eq. 13: shortest-chain pair-interaction energy. [DOI](https://doi.org/10.1016/j.fluid.2005.04.007).
+- Morgan, D.L. and Kobayashi, R., "Extension of Pitzer CSP Models for Vapor Pressures and Heats of Vaporization to Long-Chain Hydrocarbons," *Fluid Phase Equilibria*, 94, 51-87, 1994. [DOI](https://doi.org/10.1016/0378-3812(94)87051-9).
+- Wang, W. et al., "Thermodynamics Prediction of Wax Precipitation in Black Oil Using Regular Solution Model and Plus Fraction Characterization," *Advances in Mechanical Engineering*, 2013, Eq. 11. [DOI](https://doi.org/10.1155/2013/829591).
+- [Chemicals MK implementation](https://chemicals.readthedocs.io/_modules/chemicals/phase_change.html#MK): independent coefficient and numerical cross-check; the full original coefficient table was not used directly.
 - Huang, Q., Huang, J., Zhao, Y., and Zhang, J., "Wax Deposition: Experimental Characterizations, Theoretical Modeling, and Field Practices," CRC Press, 2016.
 
 ---

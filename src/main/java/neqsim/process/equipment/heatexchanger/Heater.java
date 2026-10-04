@@ -354,6 +354,34 @@ public class Heater extends TwoPortEquipment
     this.temperatureOut = temperature;
   }
 
+  /**
+   * Returns the specified outlet temperature, in the unit it was specified in.
+   *
+   * @return specified outlet temperature, or zero when no outlet temperature has been specified
+   * @see #getSpecifiedOutletTemperatureUnit()
+   */
+  public double getSpecifiedOutletTemperature() {
+    return setTemperature ? temperatureOut : 0.0;
+  }
+
+  /**
+   * Checks whether an explicit outlet-temperature specification is currently active.
+   *
+   * @return true when {@link #run(UUID)} will honor the outlet-temperature specification
+   */
+  public boolean hasOutletTemperatureSpecification() {
+    return setTemperature;
+  }
+
+  /**
+   * Returns the unit of the specified outlet temperature.
+   *
+   * @return temperature unit, for example "K" or "C"
+   */
+  public String getSpecifiedOutletTemperatureUnit() {
+    return temperatureUnit;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setOutTP(double temperature, double pressure) {
@@ -547,6 +575,15 @@ public class Heater extends TwoPortEquipment
     this.energyInput = energyInput;
     setTemperature = false;
     setEnergyInput = true;
+  }
+
+  /**
+   * Checks whether an explicit duty specification is currently active.
+   *
+   * @return true when {@link #run(UUID)} will honor the specified duty
+   */
+  public boolean hasDutySpecification() {
+    return setEnergyInput;
   }
 
   /**

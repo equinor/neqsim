@@ -16,8 +16,8 @@ final class SulfurProcessUtil {
   static final double S8_MOLAR_MASS_KG_PER_MOL = 0.25648;
 
   /** Components required by the core sulfur-recovery models. */
-  static final String[] CORE_COMPONENTS = { "H2S", "SO2", "S8", "COS", "CS2", "water", "oxygen", "nitrogen", "hydrogen",
-      "CO", "CO2", "methane", "ammonia" };
+  static final String[] CORE_COMPONENTS = {"H2S", "SO2", "S8", "COS", "CS2", "water", "oxygen", "nitrogen", "hydrogen",
+      "CO", "CO2", "methane", "ammonia"};
 
   /** Utility class. */
   private SulfurProcessUtil() {

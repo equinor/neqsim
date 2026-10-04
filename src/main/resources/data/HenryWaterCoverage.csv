@@ -1,0 +1,390 @@
+name,CAS,status,Sander_source_types
+methane,74-82-8,imported_local_temperature_expression,? C L M Q R T V
+ethane,74-84-0,imported_local_temperature_expression,? C L M Q T V X
+Cl-,16887-00-6,ionic_not_a_neutral_Henry_solute,
+Na+,17341-25-2,ionic_not_a_neutral_Henry_solute,
+Mg++,22537-22-0,ionic_not_a_neutral_Henry_solute,
+MDEA,105-59-9,held_reactive_amine_joint_model_requalification,M Q V
+MDEA+,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+H3O+,13968-08-6,ionic_not_a_neutral_Henry_solute,
+propane,74-98-6,imported_local_temperature_expression,? C L M Q V X
+CO2,124-38-9,imported_local_temperature_expression,? C L M Q R T V X
+methanol,67-56-1,imported_local_temperature_expression,? L M Q R T V X
+MEG,107-21-1,held_solvent_role_mixed_solvent_validation,? L M Q V X
+oxygen,7782-44-7,imported_local_temperature_expression,? C L M Q T V
+TEG,112-27-6,estimate_or_other_source_requires_review,E Q
+DEG,111-46-6,estimate_or_other_source_requires_review,? E Q X
+nitrogen,7727-37-9,imported_local_temperature_expression,? C L M Q T V
+n-butane,106-97-8,imported_local_temperature_expression,? C L M Q V X
+HCO3-,71-52-3,ionic_not_a_neutral_Henry_solute,
+Li+,17341-24-1,ionic_not_a_neutral_Henry_solute,
+K+,24203-36-9,ionic_not_a_neutral_Henry_solute,
+Ca++,14127-61-8,ionic_not_a_neutral_Henry_solute,
+I-,20461-54-5,ionic_not_a_neutral_Henry_solute,
+Sr++,22537-39-9,ionic_not_a_neutral_Henry_solute,
+Ba++,22541-12-4,ionic_not_a_neutral_Henry_solute,
+OH-,14280-30-9,ionic_not_a_neutral_Henry_solute,
+CO3--,3812-32-6,ionic_not_a_neutral_Henry_solute,
+NH4+,14798-03-9,ionic_not_a_neutral_Henry_solute,
+Br-,24959-67-9,ionic_not_a_neutral_Henry_solute,
+n-pentane,109-66-0,imported_local_temperature_expression,? L M Q V X
+n-hexane,110-54-3,imported_local_temperature_expression,? L M Q T V X
+benzene,71-43-2,imported_local_temperature_expression,? C L M Q T V X
+toluene,108-88-3,imported_local_temperature_expression,? C L M Q T V X
+n-heptane,142-82-5,imported_local_temperature_expression,? L M Q V X
+n-octane,111-65-9,imported_local_temperature_expression,? L M Q V X
+nC10,124-18-5,qualified_reference_point_only,? L Q V X
+n-nonane,111-84-2,imported_local_temperature_expression,? L M Q V X
+hydrogen,1333-74-0,imported_local_temperature_expression,? L M Q R T V
+argon,7440-37-1,imported_local_temperature_expression,? L M Q T V
+i-butane,75-28-5,imported_local_temperature_expression,? L M Q V X
+c-propane,75-19-4,imported_local_temperature_expression,? L M Q V X
+Cs+,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+Rb+,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+ice,7732-18-5,no_exact_CAS_match_in_source_archive,
+nC11,1120-21-4,qualified_reference_point_only,? L Q V X
+nC12,112-40-3,qualified_reference_point_only,? L Q V X
+nC13,629-50-5,estimate_or_other_source_requires_review,? Q V X
+nC14,629-59-4,qualified_reference_point_only,? L Q V X
+nC15,629-62-9,estimate_or_other_source_requires_review,? Q V X
+nC16,544-76-3,estimate_or_other_source_requires_review,? Q V X
+nC17,629-78-7,estimate_or_other_source_requires_review,? Q
+nC18,593-45-3,estimate_or_other_source_requires_review,? Q V
+nC19,629-92-5,estimate_or_other_source_requires_review,? Q
+nC20,112-95-8,estimate_or_other_source_requires_review,? Q V
+nC21,629-94-7,estimate_or_other_source_requires_review,Q
+nC22,629-97-0,estimate_or_other_source_requires_review,Q
+nC23,638-67-5,estimate_or_other_source_requires_review,Q
+nC24,646-31-1,estimate_or_other_source_requires_review,Q
+22-dim-C3,463-82-1,imported_local_temperature_expression,? L M Q V X
+22-dim-C4,75-83-2,imported_local_temperature_expression,? L Q V X
+23-dim-C4,79-29-8,imported_local_temperature_expression,? L Q V X
+2-m-C5,107-83-5,imported_local_temperature_expression,? C L M Q V X
+3-m-C5,96-14-0,qualified_reference_point_only,? L Q V X
+c-C5,287-92-3,imported_local_temperature_expression,? L M Q V X
+default,0-0-0-0,no_exact_CAS_match_in_source_archive,
+Piperazine,110-85-0,held_reactive_amine_joint_model_requalification,M T
+Piperazine+,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+PZCOO-,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+H+PZCOO-,0-0-0-0,no_exact_CAS_match_in_source_archive,
+-OOCPZCOO-,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+c-hexane,110-82-7,imported_local_temperature_expression,? L M Q T V X
+22-DM-C5,590-35-2,qualified_reference_point_only,? L Q V X
+M-cy-C5,96-37-7,imported_local_temperature_expression,? L Q V X
+24-DM-C5,108-08-7,qualified_reference_point_only,? L Q V X
+223-TM-C4,464-06-2,estimate_or_other_source_requires_review,? Q V X
+33-DM-C5,562-49-2,imported_local_temperature_expression,? L Q V X
+2-M-C6,591-76-4,qualified_reference_point_only,? L M Q V X
+23-DM-C5,565-59-3,qualified_reference_point_only,? L Q V X
+11-DM-cy-C5,1638-26-2,estimate_or_other_source_requires_review,? Q X
+3-M-C6,589-34-4,qualified_reference_point_only,? L Q V X
+cis-13-DM-cy-C5,2532-58-3,estimate_or_other_source_requires_review,? Q X
+trans-13-DM-cy-C5,1759-58-6,estimate_or_other_source_requires_review,? Q X
+trans-12-DM-cy-C5,822-50-4,estimate_or_other_source_requires_review,? Q X
+224-TM-C5,540-84-1,qualified_reference_point_only,? L M Q V X
+113-TM-cy-C5,4516-69-2,qualified_reference_point_only,L Q V X
+22-DM-C6,590-73-8,imported_local_temperature_expression,? L M Q V X
+E-cy-C5,1640-89-7,estimate_or_other_source_requires_review,? Q X
+25-DM-C6,592-13-2,imported_local_temperature_expression,? L M Q X
+24-DM-C6,589-43-5,estimate_or_other_source_requires_review,? Q X
+cis-13-DM-cy-C6,638-04-0,estimate_or_other_source_requires_review,? Q X
+3-M-C7,589-81-1,qualified_reference_point_only,? L Q V X
+3-E-C6,619-99-8,estimate_or_other_source_requires_review,? Q X
+ethylbenzene,100-41-4,imported_local_temperature_expression,? C L M Q T V X
+m-Xylene,108-38-3,imported_local_temperature_expression,? C L M Q V X
+p-Xylene,106-42-3,imported_local_temperature_expression,? C L M Q V X
+o-Xylene,95-47-6,imported_local_temperature_expression,? C L M Q V X
+2-M-C8,3221-61-2,estimate_or_other_source_requires_review,? Q X
+ethylcyclohexane,1678-91-7,imported_local_temperature_expression,? L M Q V X
+i-pentane,78-78-4,imported_local_temperature_expression,? L Q V X
+H2S,7783-06-4,imported_local_temperature_expression,? L M Q R T
+S8,10544-50-0,no_exact_CAS_match_in_source_archive,
+acetic acid,64-19-7,held_acid_base_intrinsic_definition_review,? C L M Q T V X
+Ac-,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+neon,7440-01-9,imported_local_temperature_expression,? L M Q T V
+acetone,67-64-1,imported_local_temperature_expression,? C L M Q R T V X
+HS-,15035-72-0,ionic_not_a_neutral_Henry_solute,
+S--,18496-25-8,ionic_not_a_neutral_Henry_solute,
+ethanol,64-17-5,imported_local_temperature_expression,? L M Q T V X
+DEA,0-0-0-0,no_exact_CAS_match_in_source_archive,
+DEA+,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+DEACOO-,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+Piperazine++,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+CaCO3,0-0-0-0,no_exact_CAS_match_in_source_archive,
+water,7732-18-5,solvent_not_a_solute,
+F-,16984-48-8,ionic_not_a_neutral_Henry_solute,
+Fe++,15438-31-0,ionic_not_a_neutral_Henry_solute,
+Pb++,14280-50-3,ionic_not_a_neutral_Henry_solute,
+NO3-,14797-55-8,ionic_not_a_neutral_Henry_solute,
+ClO4-,14797-73-0,ionic_not_a_neutral_Henry_solute,
+SO4--,14808-79-8,ionic_not_a_neutral_Henry_solute,
+helium,7440-59-7,imported_local_temperature_expression,? L M Q T V
+c-C7,291-64-5,imported_local_temperature_expression,? L Q V X
+c-C8,292-64-8,imported_local_temperature_expression,? L M Q V X
+CO,630-08-0,imported_local_temperature_expression,? L M Q T
+methanolPVTsim,67-56-1,imported_exact_identity_alias,? L M Q R T V X
+MEGPVTsim18,107-21-1,held_solvent_role_mixed_solvent_validation,? L M Q V X
+MEGPVTsim19,107-21-1,held_solvent_role_mixed_solvent_validation,? L M Q V X
+propanePVTsim,74-98-6,imported_exact_identity_alias,? C L M Q V X
+ethanolPVTsim,64-17-5,imported_exact_identity_alias,? L M Q T V X
+nbutanePVTsim,106-97-8,imported_exact_identity_alias,? C L M Q V X
+mercury,7439-97-6,imported_local_temperature_expression,? C L M V
+propylbenzene,103-65-1,imported_local_temperature_expression,? L M Q T V X
+NaCl,7647-14-5,no_exact_CAS_match_in_source_archive,
+CaCl2,10043-52-4,no_exact_CAS_match_in_source_archive,
+SF6,2551-62-4,imported_local_temperature_expression,? L M Q V
+R12,75-71-8,imported_local_temperature_expression,? C L M Q V X
+R134a,811-97-2,imported_local_temperature_expression,L M Q V
+COS,463-58-1,imported_local_temperature_expression,? L M Q V X
+2-M-C7,592-27-8,estimate_or_other_source_requires_review,? Q V X
+M-cy-C6,108-87-2,imported_local_temperature_expression,? L M Q V X
+i-p-cy-C5,3875-51-2,estimate_or_other_source_requires_review,Q X
+cis-12-DM-cy-C6,2207-01-4,imported_local_temperature_expression,? L M Q V X
+234-TM-C5,565-75-3,qualified_reference_point_only,? L Q V X
+1.2-DM-cyC5,2452-99-5,no_exact_CAS_match_in_source_archive,
+1.3-dDM-cyC5,0-0-0-0,no_exact_CAS_match_in_source_archive,
+1.cis-2.trans-4-TMcyC5,4850-28-6,estimate_or_other_source_requires_review,Q X
+2.3-DM-C6,584-94-1,estimate_or_other_source_requires_review,? Q X
+3-M-C8,2216-33-3,estimate_or_other_source_requires_review,? Q X
+2.2-DM-C7,1071-26-7,estimate_or_other_source_requires_review,? Q X
+2.6-DM-C7,1072-05-5,estimate_or_other_source_requires_review,? Q X
+1.1.3-TM-cy-C6,3073-66-3,qualified_reference_point_only,L Q V X
+1.2.3-TMcyC6,1678-97-3,no_exact_CAS_match_in_source_archive,
+4-M-C8,2216-34-4,qualified_reference_point_only,? L Q V X
+o-E-toluene,611-14-3,qualified_reference_point_only,? L Q V X
+1.2.3-TM-Benzene,526-73-8,imported_local_temperature_expression,? L M Q V X
+cy-C9,293-55-0,no_exact_CAS_match_in_source_archive,
+2-E-p-xylene,1758-88-9,estimate_or_other_source_requires_review,? Q X
+nC5-Benzene,538-68-1,imported_local_temperature_expression,? L M Q T V X
+nC6-Benzene,1077-16-3,imported_local_temperature_expression,? L Q T V X
+nC7-Benzene,1078-71-3,qualified_reference_point_only,? L Q V X
+nC10-cy-C5,1795-21-7,estimate_or_other_source_requires_review,Q X
+nC8-Benzene,2189-60-8,qualified_reference_point_only,? L Q V X
+nC9-Benzene,1081-77-2,qualified_reference_point_only,? L Q
+3-M-4.4-DE-heptane,62198-98-5,estimate_or_other_source_requires_review,Q X
+nC12-cy-C5,5634-30-0,no_exact_CAS_match_in_source_archive,
+nC10-Benzene,104-72-3,qualified_reference_point_only,? L Q V
+nC14-cy-C5,1795-22-8,no_exact_CAS_match_in_source_archive,
+nC17-cy-C5,0-0-0-0,no_exact_CAS_match_in_source_archive,
+nC27,593-49-7,estimate_or_other_source_requires_review,Q
+nC34,14167-59-0,no_exact_CAS_match_in_source_archive,
+nC39,7194-86-7,no_exact_CAS_match_in_source_archive,
+1.2.4-TMcyC6,2234-75-5,no_exact_CAS_match_in_source_archive,
+nC30,638-68-6,estimate_or_other_source_requires_review,Q
+1-propanol,71-23-8,imported_local_temperature_expression,? L M Q T V X
+i-propanol,67-63-0,imported_local_temperature_expression,? L M Q R V X
+c-C4,287-23-0,estimate_or_other_source_requires_review,Q
+33-DM-C6,563-16-6,estimate_or_other_source_requires_review,? Q X
+n-Bcychexane,1678-93-9,estimate_or_other_source_requires_review,? Q X
+Pent-CC6,4292-92-6,estimate_or_other_source_requires_review,Q X
+nC25,629-99-2,estimate_or_other_source_requires_review,Q
+nC26,630-01-3,estimate_or_other_source_requires_review,Q V
+nC28,630-02-4,estimate_or_other_source_requires_review,Q
+nC29,630-03-5,estimate_or_other_source_requires_review,Q
+Hg++,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+glycerol,112-27-6,estimate_or_other_source_requires_review,E Q
+sulfur(S8),10544-50-0,no_exact_CAS_match_in_source_archive,
+seawater,7732-18-5,no_exact_CAS_match_in_source_archive,
+naphthalene,91-20-3,imported_local_temperature_expression,? C L M Q T V X
+MEA,141-43-5,held_reactive_amine_joint_model_requalification,? M Q
+trans-12-DM-cy-C6,6876-23-9,imported_local_temperature_expression,? L M Q V X
+cis-14-DM-cy-C6,624-29-3,estimate_or_other_source_requires_review,? Q X
+trans-14-DM-cy-C6,2207-04-7,qualified_reference_point_only,? L Q V X
+PG,57-55-6,held_solvent_role_mixed_solvent_validation,L Q V X
+ammonia,7664-41-7,held_acid_base_intrinsic_definition_review,? L M Q T X
+chlorine,7782-50-5,held_reactive_hydrolysis_speciation_review,M Q R T
+ethylene,74-85-1,imported_local_temperature_expression,? C L M Q T V X
+propene,115-07-1,imported_local_temperature_expression,? C L M Q V X
+cis-butene,590-18-1,estimate_or_other_source_requires_review,? Q V X
+trans-butene,624-64-6,estimate_or_other_source_requires_review,? Q V X
+iso-butene,115-11-7,imported_local_temperature_expression,? L M Q V X
+formic acid,64-18-6,held_acid_base_intrinsic_definition_review,? C L M Q T V X
+hydrochloric acid,7647-01-0,estimate_or_other_source_requires_review,? C Q R T
+sulfuric acid,7664-93-9,estimate_or_other_source_requires_review,T
+SO2,7446-09-5,held_reactive_hydrolysis_speciation_review,? C L M Q T V X
+NO2,10102-44-0,held_reactive_hydrolysis_speciation_review,? L M T
+nitric acid,7697-37-2,estimate_or_other_source_requires_review,? R T V
+para-hydrogen,1333-74-0,held_spin_isomer_specific_identity_data,? L M Q R T V
+ortho-hydrogen,1333-74-0,held_spin_isomer_specific_identity_data,? L M Q R T V
+NO,10102-43-9,imported_local_temperature_expression,? C L M Q T
+NO-,10102-43-9,ionic_not_a_neutral_Henry_solute,? C L M Q T
+N2O5,10102-03-1,estimate_or_other_source_requires_review,E Q T
+N2O5-,10102-03-1,ionic_not_a_neutral_Henry_solute,E Q T
+N2O3,10544-73-7,held_reactive_hydrolysis_speciation_review,L M
+N2O3-,10544-73-7,ionic_not_a_neutral_Henry_solute,L M
+N2O,10024-97-2,imported_local_temperature_expression,? C L M Q X
+N2O-,10024-97-2,ionic_not_a_neutral_Henry_solute,? C L M Q X
+NHÃ¢â€šâ€šOH,7803-49-8,estimate_or_other_source_requires_review,Q
+NHÃ¢â€šâ€šOH-,7803-49-8,ionic_not_a_neutral_Henry_solute,Q
+NÃ¢â€šâ€šHÃ¢â€šâ€ž,302-01-2,estimate_or_other_source_requires_review,V
+NÃ¢â€šâ€šHÃ¢â€šâ€ž-,302-01-2,ionic_not_a_neutral_Henry_solute,V
+S,7704-34-9,estimate_or_other_source_requires_review,?
+S-,7704-34-9,ionic_not_a_neutral_Henry_solute,?
+SO3,7446-11-9,estimate_or_other_source_requires_review,Q
+SO3-,7446-11-9,ionic_not_a_neutral_Henry_solute,Q
+HNO2,7782-77-6,held_acid_base_intrinsic_definition_review,? L M T
+HNO2-,7782-77-6,ionic_not_a_neutral_Henry_solute,? L M T
+NH4NO3,6484-52-2,no_exact_CAS_match_in_source_archive,
+NH4NO3-,6484-52-2,ionic_not_a_neutral_Henry_solute,
+NH4HSO4,7803-63-6,no_exact_CAS_match_in_source_archive,
+NH4HSO4-,7803-63-6,ionic_not_a_neutral_Henry_solute,
+NH2OH,7803-49-8,estimate_or_other_source_requires_review,Q
+NH2OH-,7803-49-8,ionic_not_a_neutral_Henry_solute,Q
+N2H4,302-01-2,estimate_or_other_source_requires_review,V
+N2H4-,302-01-2,ionic_not_a_neutral_Henry_solute,V
+HCN,74-90-8,held_acid_base_intrinsic_definition_review,? L M Q R T X
+HCN-,74-90-8,ionic_not_a_neutral_Henry_solute,? L M Q R T X
+CS2,75-15-0,imported_local_temperature_expression,? L M Q V X
+CS2-,75-15-0,ionic_not_a_neutral_Henry_solute,? L M Q V X
+CH2O,50-00-0,held_reactive_uptake_definition_review,? C L M Q T V X
+CH2O-,50-00-0,ionic_not_a_neutral_Henry_solute,? C L M Q T V X
+C2H4O,75-21-8,held_reactive_uptake_definition_review,? M Q V
+C2H4O-,75-21-8,ionic_not_a_neutral_Henry_solute,? M Q V
+H+,0-0-0-0,ionic_not_a_neutral_Henry_solute,
+C2H4,74-85-1,imported_local_temperature_expression,? C L M Q T V X
+C2H4-,74-85-1,ionic_not_a_neutral_Henry_solute,? C L M Q T V X
+HNO3,7697-37-2,estimate_or_other_source_requires_review,? R T V
+H2SO4,7664-93-9,estimate_or_other_source_requires_review,T
+NO2-,14797-65-0,ionic_not_a_neutral_Henry_solute,
+H2O2,7722-84-1,held_reactive_uptake_definition_review,? L M Q T
+NaNO2,7632-00-0,ionic_not_a_neutral_Henry_solute,
+NH2SO3H,5329-14-6,no_exact_CAS_match_in_source_archive,
+NH2SO3-,5329-14-6,ionic_not_a_neutral_Henry_solute,
+NaHSO4,7681-38-1,no_exact_CAS_match_in_source_archive,
+N2O4,10544-72-6,held_reactive_hydrolysis_speciation_review,L M
+N2O4-,10544-72-6,ionic_not_a_neutral_Henry_solute,L M
+asphaltene,0-0-0-0,no_exact_CAS_match_in_source_archive,
+MEA+,141-43-5,ionic_not_a_neutral_Henry_solute,? M Q
+MEACOO-,141-43-5,ionic_not_a_neutral_Henry_solute,? M Q
+(e)-2-methyl-3-hexene,692-24-0,estimate_or_other_source_requires_review,Q X
+"(e)-3,4-dimethyl-2-pentene",4914-92-5,estimate_or_other_source_requires_review,Q X
+(e)-3-methyl-3-hexene,3899-36-3,estimate_or_other_source_requires_review,Q X
+"1,1,4-trimethylcyclohexane",7094-27-1,estimate_or_other_source_requires_review,Q X
+"1,2,3,5-tetramethylcyclohexane",3726-36-1,no_exact_CAS_match_in_source_archive,
+"1,2,4,5-tetramethylbenzene",95-93-2,qualified_reference_point_only,? L Q V X
+"1,2,4-trimethylbenzene",95-63-6,imported_local_temperature_expression,? L M Q V X
+"1,2,4-trimethylcyclopentane",16883-48-0,estimate_or_other_source_requires_review,Q X
+"1,2-diethylbenzene",135-01-3,estimate_or_other_source_requires_review,? C Q V X
+"1,3,5-triethylbenzene",102-25-0,qualified_reference_point_only,L Q X
+"1,3-diethylcyclopentane",19398-75-5,no_exact_CAS_match_in_source_archive,
+"1,4-diethylbenzene",105-05-5,estimate_or_other_source_requires_review,? Q V X
+"1,5-dimethylcyclopentene",16491-15-9,no_exact_CAS_match_in_source_archive,
+1-Methyl-2-propylcyclohexane,4291-79-6,no_exact_CAS_match_in_source_archive,
+1-butene,106-98-9,imported_local_temperature_expression,? L M Q V X
+"1-ethyl-2,3-dimethylbenzene",933-98-2,estimate_or_other_source_requires_review,? Q X
+"1-ethyl-2,4-dimethylbenzene",874-41-9,estimate_or_other_source_requires_review,? Q X
+1-heptene,592-76-7,qualified_reference_point_only,? L Q V X
+1-hexene,592-41-6,imported_local_temperature_expression,? L Q V X
+1-methyl-1-ethylcyclohexane,4926-90-3,estimate_or_other_source_requires_review,Q X
+1-methyl-2-propylcyclopentane,932-43-4,estimate_or_other_source_requires_review,Q X
+1-methylcyclopentene,693-89-0,estimate_or_other_source_requires_review,Q
+1-methylnaphthalene,90-12-0,imported_local_temperature_expression,? L M Q V X
+1-pentene,109-67-1,qualified_reference_point_only,? L Q V X
+"2,2,3-trimethylhexane",16747-25-4,estimate_or_other_source_requires_review,? Q X
+"2,2,3-trimethylpentane",564-02-3,estimate_or_other_source_requires_review,? Q X
+"2,2,4-trimethylheptane",14720-74-2,estimate_or_other_source_requires_review,? Q X
+"2,2,5-trimethylhexane",3522-94-9,imported_local_temperature_expression,? L Q V X
+"2,2,6-trimethyloctane",62016-28-8,estimate_or_other_source_requires_review,Q X
+"2,2-dimethyloctane",15869-87-1,estimate_or_other_source_requires_review,? Q X
+"2,3,3-trimethyl-1-butene",594-56-9,estimate_or_other_source_requires_review,? Q X
+"2,3,3-trimethyloctane",62016-30-2,estimate_or_other_source_requires_review,Q X
+"2,3,3-trimethylpentane",560-21-4,estimate_or_other_source_requires_review,? Q X
+"2,3,4-trimethyl-1,4-pentadiene",72014-90-5,no_exact_CAS_match_in_source_archive,
+"2,3,5-trimethylhexane",1069-53-0,estimate_or_other_source_requires_review,? Q X
+"2,3-dimethyl-1-hexene",16746-86-4,estimate_or_other_source_requires_review,Q X
+"2,3-dimethyl-2-heptene",3074-64-4,no_exact_CAS_match_in_source_archive,
+"2,3-dimethyl-2-octene",19781-18-1,no_exact_CAS_match_in_source_archive,
+"2,3-dimethyl-2-pentene",10574-37-5,estimate_or_other_source_requires_review,Q X
+"2,3-dimethylheptane",3074-71-3,estimate_or_other_source_requires_review,? Q X
+"2,3-dimethyloctane",7146-60-3,estimate_or_other_source_requires_review,? Q X
+"2,4-dimethyl-1-heptene",19549-87-2,no_exact_CAS_match_in_source_archive,
+"2,4-dimethylheptane",2213-23-2,estimate_or_other_source_requires_review,? Q X
+"2,4-dimethyloctane",4032-94-4,estimate_or_other_source_requires_review,? Q X
+"2,5,6-trimethyloctane",62016-14-2,estimate_or_other_source_requires_review,Q X
+"2,5-dimethylheptane",2216-30-0,estimate_or_other_source_requires_review,? Q X
+"2,5-dimethyloctane",15869-89-3,estimate_or_other_source_requires_review,? Q X
+"2,6-dimethyl-3-heptene",2738-18-3,no_exact_CAS_match_in_source_archive,
+"2,6-dimethyloctane",2051-30-1,estimate_or_other_source_requires_review,? Q X
+2-hexene,4050-45-7,estimate_or_other_source_requires_review,? Q X
+2-methyl-1-butene,563-46-2,estimate_or_other_source_requires_review,? Q V X
+2-methyl-1-heptene,15870-10-7,estimate_or_other_source_requires_review,Q X
+2-methyl-1-hexene,6094-02-6,estimate_or_other_source_requires_review,? Q X
+2-methyl-1-pentene,763-29-1,qualified_reference_point_only,? L Q V X
+2-methyl-2-butene,513-35-9,imported_local_temperature_expression,? L Q V X
+2-methyl-2-hexene,2738-19-4,estimate_or_other_source_requires_review,Q X
+2-methyl-2-octene,16993-86-5,no_exact_CAS_match_in_source_archive,
+2-methyl-2-pentene,625-27-4,estimate_or_other_source_requires_review,? Q X
+2-methylnaphthalene,91-57-6,imported_local_temperature_expression,? L M Q V X
+"3,3-dimethyl-1-butene",558-37-2,estimate_or_other_source_requires_review,? Q X
+"3,3-dimethyl-1-pentene",3404-73-7,estimate_or_other_source_requires_review,Q X
+"3,5-dimethyl-3-heptene",59643-68-4,no_exact_CAS_match_in_source_archive,
+"3,5-dimethylcyclopentene",7459-71-4,no_exact_CAS_match_in_source_archive,
+3-ethyl-2-pentene,816-79-5,estimate_or_other_source_requires_review,Q X
+3-ethyl-3-hexene,16789-51-8,estimate_or_other_source_requires_review,Q X
+3-ethylcyclopentene,694-35-9,no_exact_CAS_match_in_source_archive,
+3-ethylheptane,15869-80-4,estimate_or_other_source_requires_review,? Q X
+3-ethylnonane,17302-11-3,estimate_or_other_source_requires_review,Q X
+3-ethyloctane,5881-17-4,estimate_or_other_source_requires_review,? Q X
+3-ethylpentane,617-78-7,estimate_or_other_source_requires_review,? Q X
+3-methyl-1-butene,563-45-1,qualified_reference_point_only,? L M Q V X
+3-methyl-1-hexene,3404-61-3,estimate_or_other_source_requires_review,? Q X
+3-methyl-1-pentene,760-20-3,estimate_or_other_source_requires_review,? Q X
+3-methyl-2-hexene,17618-77-8,no_exact_CAS_match_in_source_archive,
+3-methylnonane,5911-04-6,estimate_or_other_source_requires_review,? Q X
+4-ethylheptane,2216-32-2,estimate_or_other_source_requires_review,? Q X
+4-methyl-1-hexene,3769-23-1,estimate_or_other_source_requires_review,? Q X
+4-methylheptane,589-53-7,qualified_reference_point_only,? L Q X
+4-methylnonane,17301-94-9,estimate_or_other_source_requires_review,? Q X
+5-ethyltetralin,42775-75-7,no_exact_CAS_match_in_source_archive,
+5-methyl-3-heptene,13172-91-3,no_exact_CAS_match_in_source_archive,
+5-methyl-3-heptyne,61228-09-9,no_exact_CAS_match_in_source_archive,
+5-methylnonane,15869-85-9,estimate_or_other_source_requires_review,? Q X
+5-undecene,764-96-5,no_exact_CAS_match_in_source_archive,
+1-butyl-2-methylbenzene,1595-11-5,estimate_or_other_source_requires_review,Q X
+"2-ethyl-1,3-dimethylbenzene",2870-04-4,estimate_or_other_source_requires_review,? Q X
+biphenyl,92-52-4,imported_local_temperature_expression,? L M Q T V X
+butylbenzene,104-51-8,imported_local_temperature_expression,? L M Q T V X
+cis-2-Octene,7642-04-8,estimate_or_other_source_requires_review,Q X
+cis-2-heptene,6443-92-1,qualified_reference_point_only,? L Q X
+cis-2-pentene,627-20-3,qualified_reference_point_only,? L Q V X
+cis-3-hexene,13269-52-8,estimate_or_other_source_requires_review,? Q X
+cis-3-octene,14850-22-7,estimate_or_other_source_requires_review,Q X
+cis-4-octene,14850-23-8,estimate_or_other_source_requires_review,? Q X
+cumene,98-82-8,imported_local_temperature_expression,? L M Q V X
+cyclohexene,110-83-8,imported_local_temperature_expression,? L M Q V X
+1-methylcyclohexene,591-49-1,qualified_reference_point_only,L Q V
+"1,2,3-trimethylcyclopentane",2815-57-8,no_exact_CAS_match_in_source_archive,
+1-ethyl-3-methylcyclopentane,3726-47-4,no_exact_CAS_match_in_source_archive,
+cyclopentene,142-29-0,imported_local_temperature_expression,? L M Q V X
+isobutylbenzene,538-93-2,qualified_reference_point_only,? L Q V X
+isobutylcyclohexane,1678-98-4,no_exact_CAS_match_in_source_archive,
+isoprene,78-79-5,imported_local_temperature_expression,? L M Q V X
+mesitylene,108-67-8,imported_local_temperature_expression,? L M Q V X
+"2,7-dimethyloctane",1072-16-8,estimate_or_other_source_requires_review,? Q X
+pentamethylbenzene,700-12-9,estimate_or_other_source_requires_review,Q
+"trans-1,3-Pentadiene",2004-70-8,estimate_or_other_source_requires_review,? Q X
+trans-1-ethyl-2-methylcyclopentane,930-90-5,estimate_or_other_source_requires_review,Q X
+trans-2-nonene,6434-78-2,no_exact_CAS_match_in_source_archive,
+trans-3-Methyl-2-pentene,616-12-6,estimate_or_other_source_requires_review,? Q X
+trans-3-heptene,14686-14-7,estimate_or_other_source_requires_review,? Q X
+trans-3-nonene,125146-82-9,no_exact_CAS_match_in_source_archive,
+trans-4-Methyl-2-pentene,674-76-0,estimate_or_other_source_requires_review,? Q X
+"1,1-dimethylcyclohexane",590-66-9,estimate_or_other_source_requires_review,? Q X
+"2,2,4-trimethylhexane",16747-26-5,estimate_or_other_source_requires_review,? Q X
+2-propyltoluene,1074-17-5,estimate_or_other_source_requires_review,Q X
+"3,4-dimethylheptane",922-28-1,estimate_or_other_source_requires_review,? Q X
+"3,4-dimethylhexane",583-48-2,estimate_or_other_source_requires_review,? Q X
+"3,5-dimethylheptane",926-82-9,estimate_or_other_source_requires_review,? Q X
+3-ethyl-2-methylpentane,609-26-7,estimate_or_other_source_requires_review,? Q X
+3-ethyltoluene,620-14-4,estimate_or_other_source_requires_review,? Q X
+3-propyltoluene,1074-43-7,estimate_or_other_source_requires_review,Q X
+4-ethyl-2-methylhexane,3074-75-7,estimate_or_other_source_requires_review,? Q X
+4-ethyl-o-xylene,934-80-5,estimate_or_other_source_requires_review,? Q X
+4-ethyltoluene,622-96-8,qualified_reference_point_only,? L Q V X
+5-ethyl-m-xylene,934-74-7,estimate_or_other_source_requires_review,? Q X
+"1,1,2-trimethylcyclopentane",4259-00-1,estimate_or_other_source_requires_review,Q X
+"trans-1,3-dimethylcyclohexane",2207-03-6,estimate_or_other_source_requires_review,? Q X
+1-ethyl-2-methylcyclopentane,3726-46-3,no_exact_CAS_match_in_source_archive,
+isopropylcyclohexane,696-29-7,estimate_or_other_source_requires_review,? Q X
+m-cymene,535-77-3,qualified_reference_point_only,? L Q V X
+m-diethylbenzene,141-93-5,estimate_or_other_source_requires_review,? C Q V X

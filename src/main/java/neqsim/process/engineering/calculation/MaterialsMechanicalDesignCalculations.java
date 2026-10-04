@@ -30,6 +30,24 @@ public final class MaterialsMechanicalDesignCalculations {
     private final double designLifeYears;
     private final String externalEnvironment;
 
+    /**
+     * Constructor for material input.
+     *
+     * @param equipmentTag equipment tag
+     * @param governingCaseId governing case ID
+     * @param co2MoleFraction CO2 mole fraction
+     * @param h2sMoleFraction H2S mole fraction
+     * @param chlorideMgL chloride concentration in mg/L
+     * @param freeWaterPresent whether free water is present
+     * @param sourServiceDesignated whether sour service is designated
+     * @param operatingTemperatureC operating temperature in °C
+     * @param designTemperatureC design temperature in °C
+     * @param depressurizationMinimumTemperatureC depressurization minimum temperature in °C
+     * @param designPressureBara design pressure in bara
+     * @param corrosionAllowanceMm corrosion allowance in mm
+     * @param designLifeYears design life in years
+     * @param externalEnvironment external environment description
+     */
     public MaterialInput(String equipmentTag, String governingCaseId, double co2MoleFraction, double h2sMoleFraction,
         double chlorideMgL, boolean freeWaterPresent, boolean sourServiceDesignated, double operatingTemperatureC,
         double designTemperatureC, double depressurizationMinimumTemperatureC, double designPressureBara,

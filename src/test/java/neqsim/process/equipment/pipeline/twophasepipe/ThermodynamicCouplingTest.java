@@ -167,7 +167,7 @@ class ThermodynamicCouplingTest {
     assertTrue(expected.getOilSourceKgPerMetreSecond() > 0.0);
     int oilPhase = equilibrium.getPhaseNumberOfPhase("oil");
 
-    for (PhaseType alias : new PhaseType[] { PhaseType.LIQUID, PhaseType.LIQUID_ASPHALTENE }) {
+    for (PhaseType alias : new PhaseType[] {PhaseType.LIQUID, PhaseType.LIQUID_ASPHALTENE}) {
       SystemInterface aliased = equilibrium.clone();
       aliased.getPhase(oilPhase).setType(alias);
       PhaseMassTransfer actual = coupling.calcPhaseMassTransferRatePerLength(section, 30.0, aliased);
@@ -216,7 +216,7 @@ class ThermodynamicCouplingTest {
     section.setPressure(70.0e5);
     section.setGasMassPerLength(10.0);
 
-    double[] temperatureOffsets = { -1.0, -0.5, -0.2 };
+    double[] temperatureOffsets = {-1.0, -0.5, -0.2};
     double previousWaterSource = Double.POSITIVE_INFINITY;
     double[] condensedWaterInventories = new double[temperatureOffsets.length];
     for (int index = 0; index < temperatureOffsets.length; index++) {
@@ -235,7 +235,7 @@ class ThermodynamicCouplingTest {
       condensedWaterInventories[index] = transfer.getWaterSourceKgPerMetreSecond() * 30.0;
     }
 
-    double[] warmTemperatureOffsets = { 1.0, 0.5, 0.2 };
+    double[] warmTemperatureOffsets = {1.0, 0.5, 0.2};
     double previousEvaporationMagnitude = Double.POSITIVE_INFINITY;
     for (int index = 0; index < warmTemperatureOffsets.length; index++) {
       double condensedWaterInventory = condensedWaterInventories[index];

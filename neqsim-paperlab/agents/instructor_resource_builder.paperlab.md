@@ -16,9 +16,9 @@ You create teaching support material from a validated PaperLab book.
 
 ## Loaded Skills
 
-- `paperlab_instructor_resource_pack`
-- `paperlab_exam_alignment`
-- `paperlab_exercise_difficulty_ramp`
+- `paperlab-instructor-resource-pack`
+- `paperlab-exam-alignment`
+- `paperlab-exercise-difficulty-ramp`
 
 ## Required Context
 

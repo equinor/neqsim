@@ -24,10 +24,10 @@ import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.StandardConstraintType;
 import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
-import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
 import neqsim.process.equipment.separator.entrainment.EntrainmentProviderRegistry;
 import neqsim.process.equipment.separator.entrainment.EntrainmentResult;
+import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
+import neqsim.process.equipment.separator.entrainment.MultiphaseFlowRegime;
 import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.equipment.separator.entrainment.SpecCarryOverProvider;
 import neqsim.process.equipment.separator.sectiontype.ManwaySection;
@@ -274,6 +274,11 @@ public class Separator extends ProcessEquipmentBaseClass
    * divide-by-near-zero that returns a nonsensically large K.
    */
   private static final double MIN_LIQUID_GAS_DENSITY_DIFFERENCE = 10.0;
+  /**
+   * Liquid density [kg/m3] used by the gas-load factor when the vessel is dry. NaN means
+   * {@link #DEFAULT_LIQUID_DENSITY}.
+   */
+  private double dryLiquidDensity = Double.NaN;
   /** Design gas load factor (K-factor) from mechanical design [m/s]. */
   private double designGasLoadFactor = DEFAULT_DESIGN_GAS_LOAD_FACTOR;
   /** Liquid level fraction (Fg) from mechanical design. */
@@ -1527,6 +1532,31 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Sets the liquid density used by the Souders-Brown gas-load, allowable-velocity and sizing calculations when the
+   * vessel carries no liquid phase.
+   *
+   * <p>
+   * A scrubber that flips between dry gas and a trace of condensate otherwise jumps between the 1000 kg/m3 default and
+   * the real condensate density (often 500-650 kg/m3 at high pressure), a 20-30 % step in the reported gas load for an
+   * insignificant change in duty. Setting the design condensate density here makes both states use the same basis.
+   * </p>
+   *
+   * @param density liquid density in kg/m3; a non-positive value or NaN restores the 1000 kg/m3 default
+   */
+  public void setDryLiquidDensity(double density) {
+    this.dryLiquidDensity = density > 0.0 ? density : Double.NaN;
+  }
+
+  /**
+   * Returns the liquid density used by the gas-load factor when the vessel is dry.
+   *
+   * @return liquid density in kg/m3
+   */
+  public double getDryLiquidDensity() {
+    return Double.isNaN(dryLiquidDensity) ? DEFAULT_LIQUID_DENSITY : dryLiquidDensity;
+  }
+
+  /**
    * getGasLoadFactor.
    *
    * @return a double
@@ -1536,18 +1566,18 @@ public class Separator extends ProcessEquipmentBaseClass
     thermoSystem.initPhysicalProperties();
     double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
     double liquidDensity;
-    // For dry gas (single phase), use default liquid density of 1000 kg/m3
+    // For dry gas (single phase), use the dry-vessel liquid density (default 1000 kg/m3)
     if (thermoSystem.getNumberOfPhases() < 2
         || !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
-      liquidDensity = DEFAULT_LIQUID_DENSITY; // Default liquid density for dry separators/scrubbers
+      liquidDensity = getDryLiquidDensity();
     } else {
       liquidDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
     }
     // Guard: a near-dry or gas-like second phase (liquidDensity approximately equal to
     // gasDensity) would collapse the Souders-Brown denominator and return a
-    // nonsensically large K. Fall back to the default liquid density in that case.
+    // nonsensically large K. Fall back to the dry-vessel liquid density in that case.
     if (liquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
-      liquidDensity = DEFAULT_LIQUID_DENSITY;
+      liquidDensity = getDryLiquidDensity();
     }
     double term1 = (liquidDensity - gasDensity) / gasDensity;
     return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
@@ -1569,13 +1599,13 @@ public class Separator extends ProcessEquipmentBaseClass
     double liquidDensity;
     // For dry gas (single phase), use default liquid density of 1000 kg/m3
     if (thermoSystem.getNumberOfPhases() < 2 || phaseNumber >= thermoSystem.getNumberOfPhases()) {
-      liquidDensity = DEFAULT_LIQUID_DENSITY; // Default liquid density for dry separators/scrubbers
+      liquidDensity = getDryLiquidDensity();
     } else {
       liquidDensity = thermoSystem.getPhase(phaseNumber).getPhysicalProperties().getDensity();
     }
     // Guard against a gas-like second phase collapsing the Souders-Brown denominator.
     if (liquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
-      liquidDensity = DEFAULT_LIQUID_DENSITY;
+      liquidDensity = getDryLiquidDensity();
     }
     double term1 = 1.0 / gasAreaFraction * (liquidDensity - gasDensity) / gasDensity;
     return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
@@ -1599,7 +1629,7 @@ public class Separator extends ProcessEquipmentBaseClass
     double liquidDensity;
     if (thermoSystem.getNumberOfPhases() < 2
         || !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
-      liquidDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+      liquidDensity = getDryLiquidDensity();
     } else {
       liquidDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
     }
@@ -1688,8 +1718,7 @@ public class Separator extends ProcessEquipmentBaseClass
         ? thermoSystem.getPhase("gas").getPhysicalProperties().getDensity()
         : 50.0; // Default gas density if no gas phase
 
-    // Use actual liquid density if available, otherwise default to 1000 kg/m³
-    double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+    double liqDensity = getDryLiquidDensity();
     if (thermoSystem.hasPhaseType("oil")) {
       liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
     } else if (thermoSystem.hasPhaseType("aqueous")) {
@@ -1970,8 +1999,7 @@ public class Separator extends ProcessEquipmentBaseClass
       return;
     }
 
-    // Use actual liquid density if available, otherwise default to 1000 kg/m³
-    double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+    double liqDensity = getDryLiquidDensity();
     if (thermoSystem.hasPhaseType("oil")) {
       liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
     } else if (thermoSystem.hasPhaseType("aqueous")) {
@@ -2146,8 +2174,7 @@ public class Separator extends ProcessEquipmentBaseClass
       thermoSystem.initPhysicalProperties();
       double gasDensity = thermoSystem.getPhase("gas").getPhysicalProperties().getDensity();
 
-      // Use actual liquid density if available, otherwise default to 1000 kg/m³
-      double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+      double liqDensity = getDryLiquidDensity();
       if (thermoSystem.hasPhaseType("oil")) {
         liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
       } else if (thermoSystem.hasPhaseType("aqueous")) {
@@ -2192,8 +2219,7 @@ public class Separator extends ProcessEquipmentBaseClass
       thermoSystem.initPhysicalProperties();
       double gasDensity = thermoSystem.getPhase("gas").getPhysicalProperties().getDensity();
 
-      // Use actual liquid density if available, otherwise default to 1000 kg/m³
-      double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+      double liqDensity = getDryLiquidDensity();
       boolean liquidDensityAssumed = true;
       if (thermoSystem.hasPhaseType("oil")) {
         liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();

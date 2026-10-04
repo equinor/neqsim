@@ -116,7 +116,7 @@ public class RecycleFlowCoordinator extends ProcessEquipmentBaseClass {
     dischargeSplitter.getSplitStream(1).setFlowRate(lastRecycleFlow, "kg/hr");
     recycleValve.getInletStream().setFlowRate(lastRecycleFlow, "kg/hr");
     recycleValve.getOutletStream().setFlowRate(lastRecycleFlow, "kg/hr");
-    dischargeSplitter.setFlowRates(new double[] { Splitter.REMAINDER, Math.max(lastRecycleFlow, recycleSeedFlow) },
+    dischargeSplitter.setFlowRates(new double[] {Splitter.REMAINDER, Math.max(lastRecycleFlow, recycleSeedFlow)},
         "kg/hr");
     setCalculationIdentifier(id);
   }

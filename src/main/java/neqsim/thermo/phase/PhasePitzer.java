@@ -412,7 +412,7 @@ public class PhasePitzer extends PhaseGE {
    * @param value lambda parameter on the source dataset's molality convention
    */
   public void setLambda(int first, int second, double value) {
-    setLambdaTemperatureCoefficients(first, second, 298.15, new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    setLambdaTemperatureCoefficients(first, second, 298.15, new double[] {value, 0.0, 0.0, 0.0, 0.0, 0.0});
   }
 
   /**
@@ -434,7 +434,7 @@ public class PhasePitzer extends PhaseGE {
         || (!isNeutralSolute(second) && Math.abs(getComponent(second).getIonicCharge()) < 0.5)) {
       throw new IllegalArgumentException("Pitzer lambda does not permit water");
     }
-    setNeutralInteraction(NEUTRAL_FAMILY_LAMBDA, new int[] { first, second },
+    setNeutralInteraction(NEUTRAL_FAMILY_LAMBDA, new int[] {first, second},
         new PitzerTemperatureFunction(referenceTemperature, coefficients));
   }
 
@@ -447,7 +447,7 @@ public class PhasePitzer extends PhaseGE {
    * @param value zeta parameter
    */
   public void setZeta(int neutral, int cation, int anion, double value) {
-    setZetaTemperatureCoefficients(neutral, cation, anion, 298.15, new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    setZetaTemperatureCoefficients(neutral, cation, anion, 298.15, new double[] {value, 0.0, 0.0, 0.0, 0.0, 0.0});
   }
 
   /**
@@ -464,7 +464,7 @@ public class PhasePitzer extends PhaseGE {
     requireNeutralSolute(neutral, "zeta");
     requireChargeSign(cation, 1, "zeta cation");
     requireChargeSign(anion, -1, "zeta anion");
-    setNeutralInteraction(NEUTRAL_FAMILY_ZETA, new int[] { neutral, cation, anion },
+    setNeutralInteraction(NEUTRAL_FAMILY_ZETA, new int[] {neutral, cation, anion},
         new PitzerTemperatureFunction(referenceTemperature, coefficients));
   }
 
@@ -477,7 +477,7 @@ public class PhasePitzer extends PhaseGE {
    * @param value mu parameter
    */
   public void setMu(int first, int second, int third, double value) {
-    setMuTemperatureCoefficients(first, second, third, 298.15, new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    setMuTemperatureCoefficients(first, second, third, 298.15, new double[] {value, 0.0, 0.0, 0.0, 0.0, 0.0});
   }
 
   /**
@@ -494,7 +494,7 @@ public class PhasePitzer extends PhaseGE {
     requireNeutralSolute(first, "mu");
     requireNeutralSolute(second, "mu");
     requireNeutralSolute(third, "mu");
-    setNeutralInteraction(NEUTRAL_FAMILY_MU, new int[] { first, second, third },
+    setNeutralInteraction(NEUTRAL_FAMILY_MU, new int[] {first, second, third},
         new PitzerTemperatureFunction(referenceTemperature, coefficients));
   }
 
@@ -507,8 +507,7 @@ public class PhasePitzer extends PhaseGE {
    * @param value eta parameter
    */
   public void setEta(int neutral, int firstIon, int secondIon, double value) {
-    setEtaTemperatureCoefficients(neutral, firstIon, secondIon, 298.15,
-        new double[] { value, 0.0, 0.0, 0.0, 0.0, 0.0 });
+    setEtaTemperatureCoefficients(neutral, firstIon, secondIon, 298.15, new double[] {value, 0.0, 0.0, 0.0, 0.0, 0.0});
   }
 
   /**
@@ -528,7 +527,7 @@ public class PhasePitzer extends PhaseGE {
     if (getComponent(firstIon).getIonicCharge() * getComponent(secondIon).getIonicCharge() <= 0.0) {
       throw new IllegalArgumentException("Pitzer eta requires two ions with the same charge sign");
     }
-    setNeutralInteraction(NEUTRAL_FAMILY_ETA, new int[] { neutral, firstIon, secondIon },
+    setNeutralInteraction(NEUTRAL_FAMILY_ETA, new int[] {neutral, firstIon, secondIon},
         new PitzerTemperatureFunction(referenceTemperature, coefficients));
   }
 

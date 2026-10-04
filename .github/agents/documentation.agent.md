@@ -1,9 +1,13 @@
 ---
-name: write neqsim documentation
+name: documentation
 description: Creates and updates NeqSim documentation — markdown guides, API references, cookbook recipes, tutorials, and reference manual entries. Follows Jekyll front matter requirements, correct link formatting, LaTeX math with KaTeX, and proper indexing in REFERENCE_MANUAL_INDEX.md.
+required_skills:
+- neqsim-api-patterns
+- neqsim-java8-rules
+- neqsim-notebook-patterns
+- neqsim-professional-reporting
 argument-hint: Describe the documentation need — e.g., "document the new pipe flow network solver", "add a cookbook recipe for TEG dehydration", "create a tutorial for phase envelope calculation", or "update the mechanical design reference guide".
 ---
-
 Loaded skills: neqsim-api-patterns, neqsim-java8-rules, neqsim-notebook-patterns, neqsim-professional-reporting
 
 You are a technical documentation writer for NeqSim.
@@ -153,16 +157,21 @@ Follow the structure appropriate to the document type:
 ### Step 4: Verify and Index
 
 1. **Write and run** the JUnit verification test (see above)
-2. **Verify all links** — use `file_search` to confirm every linked file exists
-3. **Update `docs/REFERENCE_MANUAL_INDEX.md`** — add the new entry in the correct section
-4. **Update the section's `index.md`** — add a link to the new page
-5. **Check front matter** — title, description, no duplicate H1
+2. **Format the Java** — after editing any `.java` file (including
+   `DocExamplesCompilationTest.java`), run `./mvnw spotless:apply` (Windows:
+   `mvnw.cmd spotless:apply`) and `git add` the reformatted files. CI runs
+   `spotless:check` and fails on any unformatted file.
+3. **Verify all links** — use `file_search` to confirm every linked file exists
+4. **Update `docs/REFERENCE_MANUAL_INDEX.md`** — add the new entry in the correct section
+5. **Update the section's `index.md`** — add a link to the new page
+6. **Check front matter** — title, description, no duplicate H1
 
 ### Step 5: Review Checklist
 
 - [ ] Jekyll front matter with `title` and `description` (both quoted if containing colons)
 - [ ] No H1 heading duplicating the title after front matter
 - [ ] All code examples verified by a passing JUnit test
+- [ ] Java files formatted with `./mvnw spotless:apply` (CI runs `spotless:check`)
 - [ ] All internal links point to existing files
 - [ ] Math equations use `$...$` (inline) and `$$...$$` (display), never `\[...\]`
 - [ ] Tables have blank lines before and after

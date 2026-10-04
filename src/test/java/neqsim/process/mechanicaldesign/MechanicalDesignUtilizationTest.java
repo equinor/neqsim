@@ -40,7 +40,7 @@ public class MechanicalDesignUtilizationTest {
 
     Heater heater = new Heater("heater", feed);
     heater.setOutletPressure(50.0);
-    heater.setOutTemperature(30.0 + 273.15);
+    heater.setOutletTemperature(30.0 + 273.15);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);

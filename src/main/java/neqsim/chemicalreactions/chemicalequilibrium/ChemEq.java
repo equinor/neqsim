@@ -2,7 +2,8 @@ package neqsim.chemicalreactions.chemicalequilibrium;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
@@ -16,6 +17,7 @@ public class ChemEq implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemEq.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   /** Minimum moles to prevent log(0) and division by zero. */
   private static final double MIN_MOLES = 1e-60;
@@ -212,26 +214,19 @@ public class ChemEq implements java.io.Serializable {
       b_vector[NNOT - 1] += n_mol[i] * chem_pot[i];
     }
 
-    double[][] btest = new double[NNOT][1];
-
     for (int i = 0; i < NNOT; i++) {
-      btest[i][0] = b_vector[i];
-
       for (int j = 0; j < NNOT; j++) {
         logger.trace("matrix: " + i + " " + j + " " + matrix[i][j]);
       }
     }
 
-    Matrix matrixA = new Matrix(matrix);
-    Matrix matrixb = new Matrix(btest);
-    Matrix solved = matrixA.solve(matrixb);
-    // solved.print(5, 3); // Removed debug print
+    double[] solved = ALGEBRA.solve(matrix, b_vector);
 
     for (int j = 0; j < NELE; j++) {
-      b_vector[j] = solved.get(j, 0);
-      phi[j] = solved.get(j, 0);
+      b_vector[j] = solved[j];
+      phi[j] = solved[j];
     }
-    u_u = solved.get(NELE, 0);
+    u_u = solved[NELE];
 
     sum = 0;
 
@@ -356,17 +351,7 @@ public class ChemEq implements java.io.Serializable {
     }
 
     // beregner b (calculate element balance vector)
-    double[][] nAr = new double[n_mol.length][1];
-
-    for (int i = 0; i < n_mol.length; i++) {
-      nAr[i][0] = n_mol[i];
-    }
-
-    Matrix matrixA = new Matrix(A_matrix);
-    Matrix matrixnAr = new Matrix(nAr);
-    Matrix solved = matrixA.times(matrixnAr);
-
-    this.b_element = solved.transpose().getArrayCopy()[0];
+    this.b_element = ALGEBRA.multiply(A_matrix, n_mol);
 
     NSPEC = n_mol.length;
     NELE = A_matrix.length;
@@ -382,7 +367,7 @@ public class ChemEq implements java.io.Serializable {
     phi = new double[NELE];
 
     // Initialize phi with default Lagrange multiplier estimates (bounds-checked)
-    double[] defaultPhi = { -9.7851, -12.969, -15.222, -10.0, -10.0 };
+    double[] defaultPhi = {-9.7851, -12.969, -15.222, -10.0, -10.0};
     for (int i = 0; i < NELE && i < defaultPhi.length; i++) {
       phi[i] = defaultPhi[i];
     }

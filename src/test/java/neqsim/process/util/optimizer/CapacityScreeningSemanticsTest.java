@@ -15,10 +15,10 @@ class CapacityScreeningSemanticsTest {
   void compositionScenariosFailBeforeFeedMutation() {
     Stream feed = feed();
     ProcessOptimizationEngine engine = engine(feed);
-    assertThrows(UnsupportedOperationException.class, () -> engine.generateLiftCurve(new double[] { 20.0 },
-        new double[] { 320.0 }, new double[] { 0.1 }, new double[] { 100.0 }));
-    assertThrows(UnsupportedOperationException.class, () -> engine.generateLiftCurve(new double[] { 20.0 },
-        new double[] { 320.0 }, new double[] { 0.0, 0.0 }, new double[] { 0.0 }));
+    assertThrows(UnsupportedOperationException.class, () -> engine.generateLiftCurve(new double[] {20.0},
+        new double[] {320.0}, new double[] {0.1}, new double[] {100.0}));
+    assertThrows(UnsupportedOperationException.class, () -> engine.generateLiftCurve(new double[] {20.0},
+        new double[] {320.0}, new double[] {0.0, 0.0}, new double[] {0.0}));
     assertEquals(50.0, feed.getPressure("bara"), 1e-10);
     assertEquals(300.0, feed.getTemperature("K"), 1e-10);
   }
@@ -27,8 +27,8 @@ class CapacityScreeningSemanticsTest {
   void screeningAppliesTemperaturePreservesCompositionAndRetainsInfeasiblePoints() {
     Stream feed = feed();
     ProcessOptimizationEngine engine = engine(feed);
-    ProcessOptimizationEngine.LiftCurveData samples = engine.generateCapacityScreening(new double[] { 20.0, 40.0 },
-        new double[] { 310.0, 330.0 }, 30.0, 100.0, 200.0);
+    ProcessOptimizationEngine.LiftCurveData samples = engine.generateCapacityScreening(new double[] {20.0, 40.0},
+        new double[] {310.0, 330.0}, 30.0, 100.0, 200.0);
     assertEquals(4, samples.size());
     for (int i = 0; i < 4; i++) {
       ProcessOptimizationEngine.LiftCurvePoint point = samples.getPoints().get(i);
@@ -50,14 +50,14 @@ class CapacityScreeningSemanticsTest {
   void invalidBoundsAreRejectedBeforeSimulation() {
     ProcessOptimizationEngine engine = engine(feed());
     assertThrows(IllegalArgumentException.class,
-        () -> engine.generateCapacityScreening(new double[] { Double.NaN }, new double[] { 300.0 }));
+        () -> engine.generateCapacityScreening(new double[] {Double.NaN}, new double[] {300.0}));
     assertThrows(IllegalArgumentException.class,
-        () -> engine.generateCapacityScreening(new double[] { 20.0 }, new double[] { 300.0 }, 1.0, 200.0, 100.0));
+        () -> engine.generateCapacityScreening(new double[] {20.0}, new double[] {300.0}, 1.0, 200.0, 100.0));
   }
 
   @Test
   void nonfiniteOutletPressureCannotPassTheScreeningPressureGate() {
-    for (double pressure : new double[] { Double.NaN, Double.POSITIVE_INFINITY, 0.0 }) {
+    for (double pressure : new double[] {Double.NaN, Double.POSITIVE_INFINITY, 0.0}) {
       ProcessSystem process = new ProcessSystem() {
         @Override
         public void run() {
@@ -71,8 +71,8 @@ class CapacityScreeningSemanticsTest {
       process.add(outlet);
       ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
       engine.setEnforceConstraints(false);
-      ProcessOptimizationEngine.LiftCurveData samples = engine.generateCapacityScreening(new double[] { 40.0 },
-          new double[] { 300.0 }, 20.0, 100.0, 200.0);
+      ProcessOptimizationEngine.LiftCurveData samples = engine.generateCapacityScreening(new double[] {40.0},
+          new double[] {300.0}, 20.0, 100.0, 200.0);
       assertEquals(1, samples.size());
       assertTrue(Double.isNaN(samples.getPoints().get(0).getMaxFlowRate()));
     }
@@ -81,9 +81,9 @@ class CapacityScreeningSemanticsTest {
   @Test
   void processTablesHaveNoReservoirDeckExport() {
     FlowRateOptimizer.ProcessLiftCurveTable lift = new FlowRateOptimizer.ProcessLiftCurveTable("screening",
-        new double[] { 100.0 }, new double[] { 30.0 }, java.util.Collections.<String>emptyList());
+        new double[] {100.0}, new double[] {30.0}, java.util.Collections.<String>emptyList());
     FlowRateOptimizer.ProcessCapacityTable capacity = new FlowRateOptimizer.ProcessCapacityTable("screening",
-        new double[] { 30.0 }, new double[] { 20.0 }, java.util.Collections.<String>emptyList());
+        new double[] {30.0}, new double[] {20.0}, java.util.Collections.<String>emptyList());
     assertThrows(UnsupportedOperationException.class, lift::toEclipseFormat);
     assertThrows(UnsupportedOperationException.class, capacity::toEclipseFormat);
     assertFalse(lift.toFormattedString().contains("BHP"));

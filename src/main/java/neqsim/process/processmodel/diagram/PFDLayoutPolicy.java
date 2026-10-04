@@ -1164,6 +1164,6 @@ public class PFDLayoutPolicy implements Serializable {
   public int[] getLayoutCoordinates(ProcessNode node, ProcessGraph graph) {
     ProcessPosition hPos = classifyHorizontalPosition(node, graph);
     PhaseZone vZone = classifyPhaseZone(node);
-    return new int[] { hPos.getHorizontalRank(), vZone.getVerticalRank() };
+    return new int[] {hPos.getHorizontalRank(), vZone.getVerticalRank()};
   }
 }

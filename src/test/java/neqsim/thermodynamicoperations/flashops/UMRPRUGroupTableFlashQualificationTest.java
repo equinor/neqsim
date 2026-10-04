@@ -26,14 +26,14 @@ class UMRPRUGroupTableFlashQualificationTest {
   private static final double FUGACITY_TOLERANCE = 1.0e-8;
 
   private static final FluidCase[] CASES = {
-      new FluidCase("aromatic-heavy", 298.15, 10.0, new String[] { "methane", "propylbenzene" },
-          new double[] { 0.90, 0.10 }),
-      new FluidCase("cyclic-light", 285.15, 20.0, new String[] { "methane", "c-propane", "c-C4" },
-          new double[] { 0.80, 0.10, 0.10 }),
-      new FluidCase("hydrogen-inert", 280.15, 50.0, new String[] { "hydrogen", "argon", "methane", "n-hexane" },
-          new double[] { 0.10, 0.02, 0.83, 0.05 }),
-      new FluidCase("substituted-naphthene", 310.15, 15.0, new String[] { "methane", "n-Bcychexane", "Pent-CC6" },
-          new double[] { 0.80, 0.10, 0.10 }) };
+      new FluidCase("aromatic-heavy", 298.15, 10.0, new String[] {"methane", "propylbenzene"},
+          new double[] {0.90, 0.10}),
+      new FluidCase("cyclic-light", 285.15, 20.0, new String[] {"methane", "c-propane", "c-C4"},
+          new double[] {0.80, 0.10, 0.10}),
+      new FluidCase("hydrogen-inert", 280.15, 50.0, new String[] {"hydrogen", "argon", "methane", "n-hexane"},
+          new double[] {0.10, 0.02, 0.83, 0.05}),
+      new FluidCase("substituted-naphthene", 310.15, 15.0, new String[] {"methane", "n-Bcychexane", "Pent-CC6"},
+          new double[] {0.80, 0.10, 0.10})};
 
   /** Ordinary, multiphase, and deliberately poor beta estimates must agree at nominal states. */
   @Test

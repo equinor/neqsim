@@ -133,7 +133,7 @@ public class RegressionResult {
       if (parameterConfigs.get(i).getParameter() == parameter) {
         double value = optimizedParameters[i];
         double ci = uncertainty.getConfidenceInterval95(i);
-        return new double[] { value - ci, value + ci };
+        return new double[] {value - ci, value + ci};
       }
     }
     return null;

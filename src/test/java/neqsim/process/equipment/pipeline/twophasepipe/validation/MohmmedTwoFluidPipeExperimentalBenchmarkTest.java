@@ -349,7 +349,7 @@ class MohmmedTwoFluidPipeExperimentalBenchmarkTest {
         if (report == null) {
           throw new IllegalStateException("Accepted interval has no mass-balance report");
         }
-        for (Phase phase : new Phase[] { Phase.GAS, Phase.OIL, Phase.WATER }) {
+        for (Phase phase : new Phase[] {Phase.GAS, Phase.OIL, Phase.WATER}) {
           result.maximumMassResidual = Math.max(result.maximumMassResidual, Math.abs(report.getResidualKg(phase)));
           if (!report.isWithinTolerance(phase, 1e-8, 1e-6)) {
             throw new IllegalStateException("Phase conservation tolerance exceeded for " + phase);

@@ -332,6 +332,34 @@ List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
 > `HeatExchanger` always overrode both. Apply the same override when adding new
 > multi-port equipment.
 
+### "Converged: YES" while a unit holds NaN
+
+`runUntilConverged()` can return `true` for a plant whose equipment carries
+`NaN` results. The boundary gate compares stream values; a unit whose internal
+solve produced `NaN` can still present a self-consistent (nonsense) outlet, so
+the gate is satisfied. An older build that reports `converged=false` may hold
+the **better** numbers.
+
+Therefore, when comparing two NeqSim versions or bisecting a regression, never
+classify a run by the convergence flag. Classify on physical finiteness of the
+units you care about:
+
+```python
+bad = (not math.isfinite(eta) or not math.isfinite(power)
+       or outlet_temperature_K < 100.0)   # absolute floor, not a tolerance
+```
+
+`TurboExpanderCompressor` is a worked example of how one `NaN` survives:
+`Math.max(x, 1e-6)` **returns NaN when x is NaN**, and `NaN` fails every
+comparison, so `if (N > N_max)` / `if (N < N_min)` speed clamps in the
+Newton speed-matching loop never fire. The `NaN` then reaches efficiency,
+power, speed and the outlet flash. Guard with `Double.isNaN(...)` explicitly —
+`Math.max`/`Math.min` clamps and `>`/`<` bound checks are not guards.
+
+> Also check the right object: a standalone `Expander` built only for reporting
+> is not the unit the flowsheet solves. Read the coupled unit actually added to
+> the `ProcessSystem`.
+
 ## Process Equipment Errors
 
 ### Compressor: Negative or Unreasonable Power
@@ -386,6 +414,84 @@ List<StreamInterface> out = heatEx.getOutletStreams(); // expect all products
 | `ClassCastException` in equipment | Wrong stream type connection | Verify equipment constructors take `StreamInterface` |
 | `java.sql.SQLException` | Component not in database | Check spelling, verify against COMP.csv |
 | `StackOverflowError` in recycle | Infinite loop in process topology | Check for circular references without a Recycle unit |
+| `IllegalAccessError` / `NoSuchMethodError` between two NeqSim classes in the **same** package | Two `neqsim-*.jar` versions on one classpath | See "Stale or Duplicate Runtime JAR" below |
+| `Java package 'neqsim.x.y' has no attribute 'Z'` for a class that exists in `src/` | Installed JAR is older than the repo source | See "Stale or Duplicate Runtime JAR" below |
+
+## No JVM Found (JPype Cannot Start Java)
+
+**Symptom:** `JVMNotFoundException`, "No JVM shared library file (jvm.dll) found",
+or `import neqsim` failing before any calculation runs.
+
+This is a *discovery* failure, not a missing installation. On managed corporate
+machines Java is routinely installed with no `java` on PATH and no `JAVA_HOME`,
+and it lands in places a naive scan of `C:\Program Files\Java` misses: the user
+profile, `LOCALAPPDATA\Programs`, the Windows registry, a JetBrains `jbr`, or
+the JRE shipped inside the VS Code Java extension
+(`~/.vscode/extensions/redhat.java-*/jre/*`).
+
+Recovery, in order:
+
+1. **Was this even a code task?** A single flash/property/sizing question needs
+   no local JVM at all — use the curated `mcp_neqsim_*` tool (see
+   `neqsim-api-patterns` § "MCP server vs. Python/Java API").
+2. **Find the installed Java** instead of hunting by hand:
+   ```powershell
+   python devtools/java_locator.py     # source checkout: usable Javas, best first
+   neqsim doctor                       # plugin / pip install: names the found Java
+   ```
+3. **Make it usable for this process** — no admin, no persisted env change:
+   ```python
+   import neqsim_dev_setup, sys, pathlib
+   sys.path.insert(0, str(pathlib.Path(neqsim_dev_setup.__file__).parent))
+   from java_locator import ensure_java_home
+   ensure_java_home()                  # sets JAVA_HOME + PATH in-process
+   import neqsim
+   ```
+   The `sys.path` line is needed because an editable devtools install resolves
+   modules through a map frozen at install time. `neqsim_dev_setup.neqsim_init(...)`
+   already does all of this, so notebooks and NeqSim Runner jobs are covered.
+4. **Persist it** for Maven and future terminals (user scope, no admin):
+   ```powershell
+   [Environment]::SetEnvironmentVariable('JAVA_HOME','<home from step 2>','User')
+   ```
+5. **Only if the locator finds nothing**, install Java — a portable Temurin JDK
+   unpacked into the user profile needs no admin rights. `neqsim doctor` prints
+   this remedy with the exact commands.
+
+A JRE is enough to *run* NeqSim through JPype; `mvnw` compilation needs a full
+JDK (`bin/javac`). The locator ranks JDKs above JREs for this reason.
+
+## Stale or Duplicate Runtime JAR
+
+The Python package adds its `lib/*` folder to the classpath as a flat glob, so a
+JAR left behind by an earlier install is loaded **alongside** the current one.
+Classes then resolve across two versions of the same package.
+
+**Symptom:** an access or linkage error between two classes that are provably in
+the same package and legal in source, e.g.
+`IllegalAccessError: class ...ProcessModelOperatingActionSetEvaluator tried to
+access private method ...HydraulicConstraintBinding.<init>(...)`.
+
+Do **not** go looking for a Java access-modifier bug. Check the JAR count first:
+
+```powershell
+Get-ChildItem <venv>\Lib\site-packages\neqsim\lib\*.jar
+python -c "import importlib.metadata as m; print(m.version('neqsim'))"
+```
+
+Keep only the JAR matching the installed package version. `python
+devtools/neqsim_doctor.py` reports this as "Single NeqSim JAR on runtime
+classpath".
+
+**Related symptom — version skew, not a missing class:** `has no attribute 'X'`
+for a class that exists under `src/main/java/` means the released JAR predates
+`<revision>` in `pom.xml`. Point the run at workspace classes instead:
+`NEQSIM_TEST_CLASSPATH=target/classes` plus dependencies, or use the
+`devtools/neqsim_dev_setup.py` bootstrap.
+
+Replacing a JAR under a **live** JVM (notebook kernel) is a third variant: the
+copy succeeds but any class not already loaded fails to resolve. Restart the
+kernel; a JVM cannot reload a JAR in-process.
 
 ## Phase Envelope Branch Labels Swapped
 

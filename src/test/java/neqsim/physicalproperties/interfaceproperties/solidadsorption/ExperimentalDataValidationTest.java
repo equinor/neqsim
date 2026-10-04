@@ -138,7 +138,7 @@ public class ExperimentalDataValidationTest {
   @Test
   public void testFreundlichPhysicalConsistency() {
     // Test at multiple pressures - Freundlich should increase monotonically
-    double[] pressures = { 1.0, 5.0, 10.0, 20.0, 50.0 };
+    double[] pressures = {1.0, 5.0, 10.0, 20.0, 50.0};
     double prevLoading = 0.0;
 
     for (double p : pressures) {
@@ -368,7 +368,7 @@ public class ExperimentalDataValidationTest {
    */
   @Test
   public void testAdsorbateAffinityOrdering() {
-    String[] models = { "Langmuir", "Freundlich", "Sips" };
+    String[] models = {"Langmuir", "Freundlich", "Sips"};
 
     for (String model : models) {
       // CO2

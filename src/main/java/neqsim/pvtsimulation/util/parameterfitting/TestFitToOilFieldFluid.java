@@ -56,12 +56,12 @@ public class TestFitToOilFieldFluid {
         tempSystem.init(0);
         tempSystem.init(1);
 
-        double[] sample1 = { 273.15 + 100 };
+        double[] sample1 = {273.15 + 100};
         double satPres = 75.0;
-        double[] standardDeviation1 = { 75.0 / 100.0 };
+        double[] standardDeviation1 = {75.0 / 100.0};
         SampleValue sample = new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
         FunctionJohanSverderup function = new FunctionJohanSverderup();
-        double[] guess = { 17.90 };
+        double[] guess = {17.90};
         sample.setFunction(function);
         function.setInitialGuess(guess);
         sample.setThermodynamicSystem(tempSystem);

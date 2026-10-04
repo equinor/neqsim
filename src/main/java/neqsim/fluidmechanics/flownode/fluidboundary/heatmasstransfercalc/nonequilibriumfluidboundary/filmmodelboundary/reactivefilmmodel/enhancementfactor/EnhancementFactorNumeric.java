@@ -1,11 +1,10 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor;
 
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarynonreactive.FluidBoundarySystemNonReactive;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarysystemreactive.FluidBoundarySystemReactive;
 
 /**
- * EnhancementFactorNumeric class.
+ * Reserved numerical reactive enhancement model. A flux-ratio calculation is not implemented; construction and
+ * calculation fail explicitly rather than returning the zero-initialized enhancement vector.
  *
  * @author esol
  * @version $Id: $Id
@@ -16,32 +15,26 @@ public class EnhancementFactorNumeric extends EnhancementFactor {
    *
    * @param fluidBoundary a
    * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
+   * @throws UnsupportedOperationException always, because numerical enhancement is not implemented
    */
   public EnhancementFactorNumeric(FluidBoundaryInterface fluidBoundary) {
     super(fluidBoundary);
-    // fluidBoundary.setNumericSolve(true);
-    reactiveInterface = new FluidBoundarySystemReactive(fluidBoundary);
-    nonReactiveInterface = new FluidBoundarySystemNonReactive(fluidBoundary);
-    reactiveInterface.createSystem();
-    nonReactiveInterface.createSystem();
-    // numericInterface.createSystem();
+    throw new UnsupportedOperationException("Numerical reactive enhancement is not implemented.");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void calcEnhancementVec(int phaseNum) {
+    throw new UnsupportedOperationException("Numerical reactive enhancement is not implemented.");
   }
 
   /**
    * calcEnhancementMatrix.
    *
    * @param phaseNum a int
+   * @throws UnsupportedOperationException always, because numerical enhancement is not implemented
    */
   public void calcEnhancementMatrix(int phaseNum) {
-    reactiveInterface.createSystem();
-    nonReactiveInterface.createSystem();
-    nonReactiveInterface.solve();
-    reactiveInterface.solve();
-    for (int i = 0; i < fluidBoundary.getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); i++) {
-      for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
-        // enhancementFactor[1].set(i,j,0);
-        // System.out.println("num enhancement " + enhancementFactor[1].get(i,j));
-      }
-    }
+    throw new UnsupportedOperationException("Numerical reactive enhancement is not implemented.");
   }
 }

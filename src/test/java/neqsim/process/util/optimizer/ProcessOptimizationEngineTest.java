@@ -237,10 +237,10 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testGenerateLiftCurve() {
-    double[] pressures = { 30.0, 40.0, 50.0 };
-    double[] temperatures = { 298.15 };
+    double[] pressures = {30.0, 40.0, 50.0};
+    double[] temperatures = {298.15};
     assertThrows(UnsupportedOperationException.class,
-        () -> engine.generateLiftCurve(pressures, temperatures, new double[] { 0.0 }, new double[] { 100.0 }));
+        () -> engine.generateLiftCurve(pressures, temperatures, new double[] {0.0}, new double[] {100.0}));
     ProcessOptimizationEngine.LiftCurveData curve = engine.generateCapacityScreening(pressures, temperatures, 20.0,
         1000.0, 2000.0);
     assertEquals(3, curve.size());
@@ -450,7 +450,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testGenerateComprehensiveLiftCurve() {
-    double[] inletPressures = { 40.0, 50.0, 60.0 };
+    double[] inletPressures = {40.0, 50.0, 60.0};
 
     neqsim.process.util.optimizer.FlowRateOptimizer optimizer = engine.generateComprehensiveLiftCurve("feed",
         inletPressures, 10.0);

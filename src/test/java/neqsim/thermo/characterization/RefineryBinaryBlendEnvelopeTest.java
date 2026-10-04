@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 
 /** Tests binary refinery quality-envelope and minimum-cost planning. */
 public class RefineryBinaryBlendEnvelopeTest {
-  private static final double[] SOURCE_SPECIFIC_GRAVITIES = { 0.847, 0.771 };
-  private static final double[] SOURCE_SULFUR_MASS_FRACTIONS = { 0.020, 0.005 };
-  private static final double[] SOURCE_NITROGEN_MASS_FRACTIONS = { 0.0020, 0.0005 };
-  private static final double[] SOURCE_VISCOSITIES_CST = { 550.0, 375.0 };
+  private static final double[] SOURCE_SPECIFIC_GRAVITIES = {0.847, 0.771};
+  private static final double[] SOURCE_SULFUR_MASS_FRACTIONS = {0.020, 0.005};
+  private static final double[] SOURCE_NITROGEN_MASS_FRACTIONS = {0.0020, 0.0005};
+  private static final double[] SOURCE_VISCOSITIES_CST = {550.0, 375.0};
 
   @Test
   public void independentConstraintsRecoverAnalyticalFeasibleIntervalAndCostEndpoints() {
@@ -94,7 +94,7 @@ public class RefineryBinaryBlendEnvelopeTest {
     RefineryBinaryBlendEnvelope.Plan plan = envelope.evaluateAtFirstSourceMassFraction(0.40);
     assertFalse(plan.hasUnitCost());
     assertThrows(IllegalStateException.class, plan::getUnitCostPerMass);
-    assertArrayEquals(new double[] { 0.40, 0.60 }, plan.getAssayBlend().getMassFractions(), 1.0e-15);
+    assertArrayEquals(new double[] {0.40, 0.60}, plan.getAssayBlend().getMassFractions(), 1.0e-15);
   }
 
   @Test
@@ -104,7 +104,7 @@ public class RefineryBinaryBlendEnvelopeTest {
             SOURCE_SULFUR_MASS_FRACTIONS, SOURCE_NITROGEN_MASS_FRACTIONS, SOURCE_VISCOSITIES_CST, 50.0, 60.0, 70.0, 1.0,
             1.0, 375.0, 550.0));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryBinaryBlendEnvelope.fromQualityConstraints(new double[] { 0.8 }, SOURCE_SULFUR_MASS_FRACTIONS,
+        () -> RefineryBinaryBlendEnvelope.fromQualityConstraints(new double[] {0.8}, SOURCE_SULFUR_MASS_FRACTIONS,
             SOURCE_NITROGEN_MASS_FRACTIONS, SOURCE_VISCOSITIES_CST, 50.0, -100.0, 100.0, 1.0, 1.0, 375.0, 550.0));
     assertThrows(IllegalArgumentException.class,
         () -> RefineryBinaryBlendEnvelope.fromQualityConstraints(SOURCE_SPECIFIC_GRAVITIES,
@@ -164,6 +164,6 @@ public class RefineryBinaryBlendEnvelopeTest {
   }
 
   private static double[] reverse(double[] values) {
-    return new double[] { values[1], values[0] };
+    return new double[] {values[1], values[0]};
   }
 }

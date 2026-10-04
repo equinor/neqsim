@@ -252,13 +252,13 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
   /** {@inheritDoc} */
   @Override
   public void solveSteadyState(int type, UUID id) {
-    double[] times = { 0.0 };
+    double[] times = {0.0};
     display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
     getTimeSeries().setTimes(times);
-    SystemInterface[] systems = { flowNode[0].getBulkSystem() };
+    SystemInterface[] systems = {flowNode[0].getBulkSystem()};
     getTimeSeries().setInletThermoSystems(systems);
     getTimeSeries().setNumberOfTimeStepsInInterval(1);
-    double[] outletFlowRates = { 0.0, 0.0 }; // this is not yet implemented
+    double[] outletFlowRates = {0.0, 0.0}; // this is not yet implemented
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
     // SteadystateOnePhasePipeFlowSolver pipeSolve = new
     // SteadystateOnePhasePipeFlowSolver(this, getSystemLength(),
@@ -588,7 +588,7 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * @param velocity outlet velocity in m/s
    */
   public void setOutletVelocity(double velocity) {
-    getTimeSeries().setOutletVelocity(new double[] { velocity });
+    getTimeSeries().setOutletVelocity(new double[] {velocity});
   }
 
   /**
@@ -597,6 +597,6 @@ public class PipeFlowSystem extends neqsim.fluidmechanics.flowsystem.onephaseflo
    * @param pressure outlet pressure in bar
    */
   public void setOutletPressure(double pressure) {
-    getTimeSeries().setOutletPressure(new double[] { pressure });
+    getTimeSeries().setOutletPressure(new double[] {pressure});
   }
 }

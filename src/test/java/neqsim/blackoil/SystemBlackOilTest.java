@@ -75,23 +75,23 @@ class SystemBlackOilTest {
 
   @Test
   void testDirectPVTTable() {
-    double[] boP = { 100, 200, 300 };
-    double[] boV = { 1.5, 1.4, 1.3 };
+    double[] boP = {100, 200, 300};
+    double[] boV = {1.5, 1.4, 1.3};
 
-    double[] bgP = { 120, 150, 200 };
-    double[] bgV = { 0.0045, 0.0042, 0.0040 };
+    double[] bgP = {120, 150, 200};
+    double[] bgV = {0.0045, 0.0042, 0.0040};
 
-    double[] bwP = { 50, 150, 250 };
-    double[] bwV = { 1.02, 1.01, 1.00 };
+    double[] bwP = {50, 150, 250};
+    double[] bwV = {1.02, 1.01, 1.00};
 
-    double[] rsP = { 0.0, 100.0, 200.0 };
-    double[] rsV = { 1.2, 1.15, 1.12 };
+    double[] rsP = {0.0, 100.0, 200.0};
+    double[] rsV = {1.2, 1.15, 1.12};
 
-    double[] rvP = { 0.0, 150.0, 200.0 };
-    double[] rvV = { 0.0045, 0.0042, 0.0040 };
+    double[] rvP = {0.0, 150.0, 200.0};
+    double[] rvV = {0.0045, 0.0042, 0.0040};
 
     // Build a merged pressure grid and create records by interpolation
-    double[] grid = { 100, 120, 150, 170, 200, 250, 300 };
+    double[] grid = {100, 120, 150, 170, 200, 250, 300};
 
     List<BlackOilPVTTable.Record> recs = new ArrayList<>();
     for (double p : grid) {

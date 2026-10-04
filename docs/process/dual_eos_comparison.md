@@ -51,7 +51,7 @@ fluid.addComponent("ethane", 0.10);
 fluid.addComponent("propane", 0.05);
 fluid.addComponent("n-butane", 0.03);
 fluid.addComponent("n-pentane", 0.02);
-fluid.addTBPfraction("C7+", 0.05, 150.0, 0.80);
+fluid.addTBPfraction("C7+", 0.05, 150.0 / 1000.0, 0.80);
 fluid.setMixingRule("classic");
 
 // Build comparison
@@ -95,7 +95,7 @@ fluid.addComponent("ethane", 0.10)
 fluid.addComponent("propane", 0.05)
 fluid.addComponent("n-butane", 0.03)
 fluid.addComponent("n-pentane", 0.02)
-fluid.addTBPfraction("C7+", 0.05, 150.0, 0.80)
+fluid.addTBPfraction("C7+", 0.05, 150.0 / 1000.0, 0.80)
 fluid.setMixingRule("classic")
 
 comp = DualEosComparison(fluid)

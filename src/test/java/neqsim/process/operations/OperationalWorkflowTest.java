@@ -87,9 +87,9 @@ class OperationalWorkflowTest {
    */
   @Test
   void controllerTuningStudyFlagsGoodAndSaturatedResponses() {
-    double[] time = new double[] { 0.0, 10.0, 20.0, 30.0, 40.0, 50.0 };
-    double[] processValue = new double[] { 0.0, 0.55, 0.82, 0.95, 0.99, 1.0 };
-    double[] output = new double[] { 40.0, 55.0, 58.0, 53.0, 50.0, 50.0 };
+    double[] time = new double[] {0.0, 10.0, 20.0, 30.0, 40.0, 50.0};
+    double[] processValue = new double[] {0.0, 0.55, 0.82, 0.95, 0.99, 1.0};
+    double[] output = new double[] {40.0, 55.0, 58.0, 53.0, 50.0, 50.0};
 
     ControllerTuningResult good = ControllerTuningStudy.evaluateStepResponse("LC-001", 1.0, time, processValue, output,
         0.0, 100.0, 0.05);
@@ -97,7 +97,7 @@ class OperationalWorkflowTest {
     assertEquals("ACCEPTABLE_SCREENING_RESULT", good.getRecommendation());
     assertTrue(good.getIntegralAbsoluteError() > 0.0);
 
-    double[] saturatedOutput = new double[] { 0.0, 100.0, 100.0, 100.0, 100.0, 100.0 };
+    double[] saturatedOutput = new double[] {0.0, 100.0, 100.0, 100.0, 100.0, 100.0};
     ControllerTuningResult saturated = ControllerTuningStudy.evaluateStepResponse("LC-002", 1.0, time, processValue,
         saturatedOutput, 0.0, 100.0, 0.05);
     assertEquals("CHECK_ACTUATOR_LIMITS_OR_PROCESS_CAPACITY", saturated.getRecommendation());

@@ -475,6 +475,15 @@ Single-pass multi-variable optimizers can get stuck in local optima or produce i
 1. **Stage 1 - Balance Load:** At current flow, optimize split factors to minimize max utilization
 2. **Stage 2 - Maximize Flow:** With balanced splits, use binary search to find maximum feasible flow
 
+At a strict capacity boundary, retain a small numerical selection margin and
+verify the feasible lower bracket with the same replay count and margin as the
+final search. The example uses a relative utilization margin of `1.0e-4`
+(0.01%) and four fresh solves. This selects below the 100% limit; it does not
+relax the physical capacity assertions. Choose a larger engineering margin when
+operating uncertainty warrants it. Compressor minimum-speed and surge constraints
+can also make feasibility non-monotonic, so first locate a repeatably feasible
+lower bracket rather than assuming the lowest flow is feasible.
+
 ```java
 // ========== STAGE 1: Balance compressor loads ==========
 ProductionOptimizer optimizer = new ProductionOptimizer();
@@ -522,6 +531,8 @@ OptimizationConfig stage2Config = new OptimizationConfig(
     .rateUnit("kg/hr")
     .tolerance(originalFlow * 0.001)
     .maxIterations(20)
+    .selectedPointReplays(4)
+    .utilizationMarginFraction(1.0e-4)
     .defaultUtilizationLimit(1.0)  // Strict 100% limit
     .searchMode(SearchMode.BINARY_FEASIBILITY)
     .rejectInvalidSimulations(true);
@@ -590,7 +601,9 @@ TwoStageResult result = CompressorOptimizationHelper.optimizeTwoStage(
 
 // Inspect both stages before accepting their proposed operating point.
 if (!result.getStage1Result().isFeasible() || !result.getStage2Result().isFeasible()) {
-    throw new IllegalStateException("No feasible two-stage solution");
+    throw new IllegalStateException("No feasible two-stage solution: stage 1: "
+        + result.getStage1Result().getInfeasibilityDiagnosis() + "; stage 2: "
+        + result.getStage2Result().getInfeasibilityDiagnosis());
 }
 
 // Access results

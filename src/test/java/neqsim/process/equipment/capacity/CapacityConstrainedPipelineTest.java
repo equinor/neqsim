@@ -255,7 +255,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldCapacityConstraints() {
     Manifold manifold = new Manifold("test manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
+    manifold.setSplitFactors(new double[] {0.5, 0.5});
     manifold.run();
 
     // Test capacity constraints
@@ -279,7 +279,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldFIVAnalysis() {
     Manifold manifold = new Manifold("fiv manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
+    manifold.setSplitFactors(new double[] {0.5, 0.5});
     manifold.setHeaderInnerDiameter(0.2, "m");
     manifold.setHeaderWallThickness(10, "mm");
     manifold.setBranchInnerDiameter(0.1, "m");
@@ -325,7 +325,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldAutoSizeAndConstraints() {
     Manifold manifold = new Manifold("auto-size manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
+    manifold.setSplitFactors(new double[] {0.5, 0.5});
 
     assertFalse(manifold.isAutoSized(), "Should not be auto-sized initially");
 
@@ -348,7 +348,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldBottleneckDetection() {
     Manifold manifold = new Manifold("bottleneck manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 0.5, 0.5 });
+    manifold.setSplitFactors(new double[] {0.5, 0.5});
     manifold.setHeaderInnerDiameter(0.05, "m"); // Small header to cause high velocity
     manifold.run();
 
@@ -370,7 +370,7 @@ class CapacityConstrainedPipelineTest {
   void testManifoldConstraintManipulation() {
     Manifold manifold = new Manifold("constraint manipulation manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 1.0 });
+    manifold.setSplitFactors(new double[] {1.0});
     manifold.run();
 
     // Get initial constraints
@@ -500,7 +500,7 @@ class CapacityConstrainedPipelineTest {
     Manifold manifold = new Manifold("production manifold");
     manifold.addStream(gasStream);
     manifold.addStream(gasStream2);
-    manifold.setSplitFactors(new double[] { 0.6, 0.4 });
+    manifold.setSplitFactors(new double[] {0.6, 0.4});
     manifold.setHeaderInnerDiameter(0.3, "m");
     manifold.setBranchInnerDiameter(0.15, "m");
     process.add(manifold);
@@ -538,7 +538,7 @@ class CapacityConstrainedPipelineTest {
     // Add Manifold
     Manifold manifold = new Manifold("inlet manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 1.0 });
+    manifold.setSplitFactors(new double[] {1.0});
     manifold.setHeaderInnerDiameter(0.25, "m");
     process.add(manifold);
 
@@ -620,7 +620,7 @@ class CapacityConstrainedPipelineTest {
 
     Manifold manifold = new Manifold("inlet manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 1.0 });
+    manifold.setSplitFactors(new double[] {1.0});
     manifold.setHeaderInnerDiameter(0.25, "m");
     inletSystem.add(manifold);
 
@@ -690,7 +690,7 @@ class CapacityConstrainedPipelineTest {
 
     Manifold manifold = new Manifold("gathering manifold");
     manifold.addStream(gasStream);
-    manifold.setSplitFactors(new double[] { 1.0 });
+    manifold.setSplitFactors(new double[] {1.0});
     manifold.setHeaderInnerDiameter(0.3, "m");
     manifoldSystem.add(manifold);
 

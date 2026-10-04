@@ -88,7 +88,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
     int proposalCount = 0;
     Map<String, List<String>> proposalIdsByOwnerAndRegister = new java.util.TreeMap<String, List<String>>();
     Map<String, String> proposalOwnerById = new java.util.TreeMap<String, String>();
-    for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
+    for (String register : new String[] {"nozzles", "valves", "instruments", "interfaces"}) {
       for (Map<String, Object> row : rows(registers, register)) {
         String id = String.valueOf(row.get("id"));
         String tag = String.valueOf(row.get("tag"));
@@ -152,8 +152,8 @@ class EngineeringDiagramDualProfileDeliveryTest {
     assertEquals(signals.size(), signalPaths(pidSvg).size());
     assertTrue(((java.util.List<?>) registers.toMap().get("nozzles")).stream().anyMatch(
         row -> !((java.util.List<?>) ((java.util.Map<?, ?>) row).get("candidateSemanticConnectionIds")).isEmpty()));
-    for (String file : new String[] { "pid-design-model.json", "pid-completeness-report.json",
-        "pid-engineering-registers.json" }) {
+    for (String file : new String[] {"pid-design-model.json", "pid-completeness-report.json",
+        "pid-engineering-registers.json"}) {
       JsonObject sidecar = new Gson().fromJson(
           new String(Files.readAllBytes(report.getDirectory().resolve("pid").resolve(file)), StandardCharsets.UTF_8),
           JsonObject.class);
@@ -225,7 +225,7 @@ class EngineeringDiagramDualProfileDeliveryTest {
     String[] points = rawPoints.split(" ");
     String[] coordinates = points[0].split(",", 2);
     String context = proposalId + " points=\"" + rawPoints + "\"";
-    return new double[] { parseCoordinate(coordinates[0], context), parseCoordinate(coordinates[1], context) };
+    return new double[] {parseCoordinate(coordinates[0], context), parseCoordinate(coordinates[1], context)};
   }
 
   private static double parseCoordinate(String value, String context) {

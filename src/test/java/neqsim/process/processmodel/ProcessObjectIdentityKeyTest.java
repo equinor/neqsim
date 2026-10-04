@@ -45,7 +45,7 @@ public class ProcessObjectIdentityKeyTest extends neqsim.NeqSimTest {
   private static ProcessSystem buildProcess() {
     Stream feed = new Stream("feed", makeGas());
     Heater cooler = new Heater("cooler", feed);
-    cooler.setOutTemperature(280.0);
+    cooler.setOutletTemperature(280.0);
     Separator sep = new Separator("sep", cooler.getOutletStream());
 
     ProcessSystem process = new ProcessSystem();

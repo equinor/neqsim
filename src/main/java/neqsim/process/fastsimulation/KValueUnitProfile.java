@@ -380,7 +380,7 @@ public class KValueUnitProfile implements Serializable {
       double waterResidual = residualAndJacobian[1];
       double residualNorm = Math.max(Math.abs(gasResidual), Math.abs(waterResidual));
       if (residualNorm < 1.0e-12) {
-        return new double[] { vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction };
+        return new double[] {vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction};
       }
 
       double jgg = residualAndJacobian[2];
@@ -421,7 +421,7 @@ public class KValueUnitProfile implements Serializable {
         total);
     if (residualAndJacobian != null
         && Math.max(Math.abs(residualAndJacobian[0]), Math.abs(residualAndJacobian[1])) < 1.0e-8) {
-      return new double[] { vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction };
+      return new double[] {vaporFraction, 1.0 - vaporFraction - waterFraction, waterFraction};
     }
     return null;
   }
@@ -460,7 +460,7 @@ public class KValueUnitProfile implements Serializable {
       jwg -= z * waterDelta * gasDelta / denominatorSquared;
       jww -= z * waterDelta * waterDelta / denominatorSquared;
     }
-    return new double[] { gasResidual, waterResidual, jgg, jgw, jwg, jww };
+    return new double[] {gasResidual, waterResidual, jgg, jgw, jwg, jww};
   }
 
   /**

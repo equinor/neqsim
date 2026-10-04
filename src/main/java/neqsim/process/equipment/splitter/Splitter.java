@@ -425,6 +425,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       }
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
+      // Mole scaling invalidates the cached extensive caloric properties.
+      splitStream[i].getThermoSystem().init(2);
     }
 
     // Store inlet stream values for needRecalculation check (not split stream values)

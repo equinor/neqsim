@@ -53,8 +53,13 @@ exist in the packaged parameter inventory.
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CompetitiveAdsorptionScreen {
+    private static final Logger logger =
+        LogManager.getLogger(CompetitiveAdsorptionScreen.class);
+
     public static void main(String[] args) throws Exception {
         SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
         gas.addComponent("methane", 0.90);
@@ -70,12 +75,7 @@ public class CompetitiveAdsorptionScreen {
             "MOF HKUST-1"
         };
 
-        System.out.printf(
-            "%-18s %14s %14s %12s%n",
-            "Material",
-            "CO2 [mol/kg]",
-            "CH4 [mol/kg]",
-            "Selectivity");
+        logger.info("Material | CO2 [mol/kg] | CH4 [mol/kg] | Selectivity");
 
         for (String material : materials) {
             LangmuirAdsorption model = new LangmuirAdsorption(gas);
@@ -86,8 +86,11 @@ public class CompetitiveAdsorptionScreen {
             double methaneLoading = model.getSurfaceExcess("methane");
             double selectivity = model.getSelectivity(1, 0, 0);
 
-            System.out.printf(
-                "%-18s %14.4f %14.4f %12.2f%n",
+            assert Double.isFinite(co2Loading) && co2Loading >= 0.0;
+            assert Double.isFinite(methaneLoading) && methaneLoading >= 0.0;
+            assert Double.isFinite(selectivity) && selectivity > 0.0;
+            logger.info(
+                "{} | CO2 {} mol/kg | CH4 {} mol/kg | selectivity {}",
                 material,
                 co2Loading,
                 methaneLoading,
@@ -124,8 +127,13 @@ import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermTyp
 import neqsim.process.equipment.adsorber.AdsorptionBed;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdsorptionBedScreen {
+    private static final Logger logger =
+        LogManager.getLogger(AdsorptionBedScreen.class);
+
     private static Stream createFeed() {
         SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
         gas.addComponent("methane", 0.85);
@@ -157,8 +165,14 @@ public class AdsorptionBedScreen {
             .getPhase(0)
             .getComponent("CO2")
             .getx();
-        System.out.printf(
-            "Steady screen: adsorbent %.1f kg, pressure drop %.1f Pa, outlet CO2 %.6f%n",
+        assert Double.isFinite(steadyBed.getAdsorbentMass());
+        assert steadyBed.getAdsorbentMass() > 0.0;
+        assert Double.isFinite(steadyBed.getPressureDrop());
+        assert steadyBed.getPressureDrop() > 0.0;
+        assert Double.isFinite(outletCO2);
+        assert outletCO2 >= 0.0 && outletCO2 <= 1.0;
+        logger.info(
+            "Steady screen: adsorbent {} kg, pressure drop {} Pa, outlet CO2 {}",
             steadyBed.getAdsorbentMass(),
             steadyBed.getPressureDrop(),
             outletCO2);
@@ -174,8 +188,12 @@ public class AdsorptionBedScreen {
         }
 
         double co2Loading = transientBed.getAverageLoading(1);
-        System.out.printf(
-            "Transient screen: time %.2f s, average CO2 loading %.6f mol/kg, breakthrough %s%n",
+        assert Double.isFinite(transientBed.getElapsedTime());
+        assert transientBed.getElapsedTime() > 0.0;
+        assert Double.isFinite(co2Loading);
+        assert co2Loading >= 0.0;
+        logger.info(
+            "Transient screen: time {} s, average CO2 loading {} mol/kg, breakthrough {}",
             transientBed.getElapsedTime(),
             co2Loading,
             transientBed.isBreakthroughOccurred());
@@ -214,8 +232,13 @@ import neqsim.process.equipment.adsorber.AdsorptionCycleController;
 import neqsim.process.equipment.adsorber.AdsorptionCycleController.PhaseStep;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class AdsorptionCycleSchedule {
+    private static final Logger logger =
+        LogManager.getLogger(AdsorptionCycleSchedule.class);
+
     private static AdsorptionBed createBed() {
         SystemSrkEos gas = new SystemSrkEos(298.15, 10.0);
         gas.addComponent("methane", 0.90);
@@ -236,10 +259,18 @@ public class AdsorptionCycleSchedule {
     private static void printSchedule(
             String name,
             AdsorptionCycleController controller) {
-        System.out.println(name);
+        assert !controller.getSchedule().isEmpty();
+        logger.info("{}:", name);
         for (PhaseStep step : controller.getSchedule()) {
-            System.out.printf(
-                "  %-18s duration %.0f s, target %.2f bara, %.2f K%n",
+            assert Double.isFinite(step.getDuration()) && step.getDuration() > 0.0;
+            assert step.getTargetPressure() == -1.0
+                || Double.isFinite(step.getTargetPressure())
+                    && step.getTargetPressure() > 0.0;
+            assert step.getTargetTemperature() == -1.0
+                || Double.isFinite(step.getTargetTemperature())
+                    && step.getTargetTemperature() > 0.0;
+            logger.info(
+                "{} duration {} s, target {} bara, {} K",
                 step.getPhase(),
                 step.getDuration(),
                 step.getTargetPressure(),
@@ -252,9 +283,11 @@ public class AdsorptionCycleSchedule {
             new AdsorptionCycleController(createBed());
 
         controller.configurePSA(300.0, 30.0, 60.0, 30.0, 1.0);
+        assert controller.getSchedule().size() == 4;
         printSchedule("PSA schedule", controller);
 
         controller.configureTSA(1800.0, 600.0, 300.0, 523.15);
+        assert controller.getSchedule().size() == 3;
         printSchedule("TSA schedule", controller);
     }
 }

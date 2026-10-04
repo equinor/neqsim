@@ -13,6 +13,17 @@ The workflow **adapts to any scale** — from a 5-minute property lookup to a
 multi-discipline Class A field development study. You describe the task, the
 agent decides how deep to go based on what you ask for.
 
+### How this guide is organised
+
+| Part | Sections | Read it when |
+|------|----------|--------------|
+| **1. Solve a task** | [AI-Supported Task Solving](#ai-supported-task-solving-while-developing) to [Making Solutions Reusable](#making-solutions-reusable) | You want one task solved and reported |
+| **2. Keep a task alive** | [Continuous Task Solving](#keeping-a-task-alive-continuous-task-solving) | A finished task must keep improving as new data arrives, or must be solved iteratively until the goal is met |
+| **3. Reference** | [Common Pitfalls](#common-pitfalls) to [Related Documentation](#related-documentation) | You need agents, quick starts, other AI tools or PR steps |
+
+Part 2 builds on Part 1: a living task is an ordinary task folder with a
+`continuous/` folder added.
+
 ---
 
 ## AI-Supported Task Solving While Developing
@@ -38,7 +49,7 @@ tools with NeqSim's physics-based API. Each task gets its own folder in
 
 ```
 Open VS Code Copilot Chat and type:
-@solve.task JT cooling for rich gas at 100 bara
+@solve-task JT cooling for rich gas at 100 bara
 ```
 
 The agent creates the folder, fills in the task specification, researches the
@@ -66,7 +77,93 @@ HTML reports — all in one session.
 > **New user?** The script is in `devtools/` (tracked in git), so it's available
 > immediately after `git clone`. It creates `task_solve/` automatically on first run.
 
-### Task Folder Structure
+### Default Task Destination
+
+Set a user-wide parent folder once, shared by future sessions and NeqSim clones:
+
+```powershell
+neqsim --set-task-root "D:/Engineering Tasks"
+neqsim --show-task-root
+neqsim new-task "My study"
+```
+
+Each new task gets its own dated subfolder. The destination precedence is:
+
+1. `--task-root PATH` on a command (also works with `--setup` and `--list`).
+2. The `NEQSIM_TASK_ROOT` environment variable.
+3. The saved user default in `~/.neqsim/task_defaults.json`.
+4. `<NeqSim repository>/task_solve` when no override exists.
+
+Relative paths are resolved against the current working directory; saved defaults
+are stored as absolute paths. Spaces, `~`, and environment-variable expansion are
+supported. To put one task in the folder the terminal is already in, pass
+`--task-root .`. To make every new task land in whatever folder the terminal is in,
+save the follow-the-terminal default:
+
+```powershell
+neqsim --set-task-root cwd
+```
+
+That stores `"."`, which is re-resolved on each command, so the destination changes
+with the terminal. Agents run commands from a workspace folder, so this makes the
+task land next to the code being worked on. Use an absolute default instead when
+tasks must always collect in one place regardless of the terminal.
+
+### Default Report Template
+
+Set your organisation's Word template once and every task report is built from it:
+
+```powershell
+neqsim --set-report-template "C:/Users/you/Documents/company report template.docx"
+neqsim --show-report-template
+```
+
+The Word report then inherits the template's styles, fonts, theme colours, page
+setup, headers, and footers. The template precedence is:
+
+1. `python step3_report/generate_report.py --template "PATH"` for a single run.
+2. The `NEQSIM_REPORT_TEMPLATE` environment variable.
+3. The saved user default in `~/.neqsim/task_defaults.json`.
+4. Built-in styling when nothing is configured.
+
+The template's own body text is dropped so the report starts on a clean page; pass
+`--keep-template-content` to keep a template cover page or boilerplate. Use
+`--no-template` to ignore the setting for one run, and `neqsim --reset-report-template`
+to remove it. A configured template that is missing or is not a `.docx`/`.dotx` file
+is reported as an error rather than silently ignored, so an unbranded report is never
+issued by accident. `Paper.docx` keeps journal formatting and ignores the template.
+
+> Tasks created before the template support was added carry their own older copy of
+> `generate_report.py`. Run the canonical generator against them instead of copying
+> files around:
+>
+> ```powershell
+> neqsim report "C:/path/to/task_solve/2026-04-21_my_task"
+> neqsim report .                       # the task folder you are standing in
+> neqsim report . --paper --no-template # flags are forwarded to the generator
+> ```
+>
+> `neqsim report` always runs `devtools/task_template/step3_report/generate_report.py`,
+> so a fix to the generator reaches every task folder, old or new. The same effect is
+> available directly with `--task-dir PATH` or the `NEQSIM_TASK_DIR` environment
+> variable.
+
+
+To remove the saved default, run `neqsim --reset-task-root`. The same controls are
+also available on the subcommand as `neqsim new-task --set-default-folder/--show-task-root/--reset-default-folder`.
+This does not move or delete existing tasks, and an environment override still applies.
+Invalid settings or inaccessible destinations must be corrected, not silently ignored.
+
+Agents must treat the `task_solve/` examples in this guide as the resolved parent
+folder. Pass the created absolute task path to all child agents, artifact writers,
+validators and external tools. Existing tasks are resumed in their original folder.
+For notebooks outside the source tree, set `NEQSIM_PROJECT_ROOT` to the NeqSim
+repository and, where needed, `NEQSIM_TASK_DIR` to the active dated task folder.
+An external destination is not automatically gitignored by another repository;
+keep private task data out of commits. Tools that do not expose an output-path
+option are not automatically redirected by this setting.
+
+### Task Folder Layout
 
 ```
 task_solve/
@@ -432,6 +529,47 @@ at high pressure. JT coefficient = 0.35 K/bar at 200 bar, 40°C.
 CPA not needed since no water in this case.
 ```
 
+### Phase 6: Push the improvements
+
+Every task is also a test of NeqSim, the agents, and the skills. The loop
+**engineering task → AI orchestration → NeqSim physics core → back again** only
+closes when what the task taught is committed and pushed — a fix left in the chat
+session or in the task folder is lost, and the next engineer hits the same wall.
+
+![Continuous-improvement loop: engineering task, AI orchestration with agents and skills, NeqSim physics core, with the improvements committed and pushed back](../integration/figures/improvement_loop.png)
+
+Each folder in the workspace is an independent repository; commit in the one that
+owns the fix:
+
+| What you learned | Repo | Change |
+|------------------|------|--------|
+| Missing/wrong calculation, equipment, property | `equinor/neqsim` | Java + JUnit, `mvnw spotless:apply`, PR |
+| Wrong API recipe, gotcha, unit trap, better pattern | `neqsim-community-skills` / `neqsim-enterprise-skills` | edit `SKILL.md` |
+| Wrong skill choice, missed hand-off, bad routing | `neqsim-community-agents` / `neqsim-enterprise-agents` | edit `*.agent.md` |
+| Useful new multi-agent pipeline | agents repo | record as a composition pattern |
+| Documentation error or gap hit on the way | repo owning the doc | fix in the same PR |
+
+```bash
+cd <repo that owns the fix>
+git checkout -b task/<slug>
+git add <changed files>
+git commit -m "<what the task taught>"
+git push -u origin task/<slug>
+gh pr create --fill
+```
+
+Never push task output (evidence, notebooks, results, reports) or company data
+into a code repo — only the reusable distillation. Record each change in
+`step1_scope_and_research/neqsim_improvements.md` and in `results.json` under
+`improvements`, and refresh your local install afterwards with
+`neqsim agent install --all --vscode --force`.
+
+> **Tip — keep every repo in one VS Code workspace.** `File → Add Folder to
+> Workspace...` for `neqsim`, the agent/skill repos, and your task folder (which
+> is *not* a clone), then `File → Save Workspace As...`. Copilot Chat then sees
+> the skill, the agent definition, the NeqSim source, and the task in the same
+> conversation, which is what makes this phase a two-minute step.
+
 ---
 
 ## Task Classification
@@ -449,7 +587,7 @@ point, verification strategy, and AI agent.
 | EOS choice | See EOS Selection table in `CONTEXT.md` |
 | Code goes in | Test (`src/test/`) or notebook (`examples/notebooks/`) |
 | Verify by | Compare against NIST, experiment, or published correlations |
-| AI agent | `@thermo.fluid` |
+| AI agent | `@thermo-fluid` |
 
 ```java
 SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
@@ -475,7 +613,7 @@ System.out.println("Density: " + fluid.getDensity("kg/m3"));
 | Look at | `src/test/java/neqsim/process/` for similar flowsheets |
 | Code goes in | Notebook (best for presentation) or test (best for regression) |
 | Verify by | Mass/energy balance, physical reasonableness |
-| AI agent | `@solve.process` or `@process.model` |
+| AI agent | `@solve-process` or `@process-model` |
 
 Key patterns:
 - Equipment connects via streams: `new Compressor("comp", sep.getGasOutStream())`
@@ -497,7 +635,7 @@ Key patterns:
 | Start from | `src/main/java/neqsim/pvtsimulation/simulation/` |
 | Experiments | CME, CVD, DL, SaturationPressure, GOR, SwellingTest, MMP |
 | Verify by | Compare against lab data |
-| AI agent | `@pvt.simulation` |
+| AI agent | `@pvt-simulation` |
 
 ---
 
@@ -509,7 +647,7 @@ Key patterns:
 |--------|--------|
 | Start from | `src/main/java/neqsim/standards/gasquality/` |
 | Verify by | Standard reference values, round-robin test results |
-| AI agent | `@gas.quality` |
+| AI agent | `@gas-quality` |
 
 ---
 
@@ -523,7 +661,7 @@ Key patterns:
 | Read the interface | `*Interface.java` for method contracts |
 | Write tests first | Mirror location in `src/test/java/neqsim/` |
 | Verify by | `.\mvnw.cmd test -Dtest=YourTest` then `checkstyle:check` |
-| AI agent | `@neqsim.test` for test writing |
+| AI agent | `@neqsim-test` for test writing |
 
 ---
 
@@ -535,7 +673,7 @@ Key patterns:
 |--------|--------|
 | Pattern | Mechanical Design section in `.github/copilot-instructions.md` |
 | Design data | `src/main/resources/designdata/` |
-| AI agent | `@mechanical.design` |
+| AI agent | `@mechanical-design` |
 
 ---
 
@@ -549,7 +687,7 @@ Key patterns:
 | Scope | task_spec.md is critical — define ALL standards, methods, deliverables upfront |
 | Notebooks | Multiple numbered notebooks per discipline (01_reservoir_fluid, 02_pipeline, etc.) |
 | Report | Full HTML with navigation sidebar + Word summary |
-| AI agent | `@solve.task` (orchestrates specialist agents) |
+| AI agent | `@solve-task` (orchestrates specialist agents) |
 
 Type G tasks span multiple engineering disciplines and produce a comprehensive
 assessment. The HTML report becomes a navigable multi-section document linking
@@ -626,16 +764,16 @@ types. They share the same codebase context but differ in what they optimize for
 
 | Agent | When to Use | Output |
 |-------|-------------|--------|
-| `@thermo.fluid` | Fluid setup, EOS selection, flash, properties | Java code or notebook cell |
-| `@solve.process` | Complete simulation task → working notebook | Full Jupyter notebook |
-| `@process.model` | Process flowsheet design, equipment sizing | Process code |
-| `@pvt.simulation` | PVT lab experiments | PVT results + plots |
-| `@gas.quality` | Gas quality per ISO/GPA standards | Standards results |
-| `@mechanical.design` | Wall thickness, structural design | Design report JSON |
-| `@neqsim.test` | Writing regression/unit tests | JUnit 5 test class |
-| `@notebook.example` | Creating example notebooks | Jupyter notebook |
-| `@flow.assurance` | Hydrates, wax, corrosion, slugging | Analysis + mitigation |
-| `@safety.depressuring` | Depressurization, PSV, fire cases | Safety analysis |
+| `@thermo-fluid` | Fluid setup, EOS selection, flash, properties | Java code or notebook cell |
+| `@solve-process` | Complete simulation task → working notebook | Full Jupyter notebook |
+| `@process-model` | Process flowsheet design, equipment sizing | Process code |
+| `@pvt-simulation` | PVT lab experiments | PVT results + plots |
+| `@gas-quality` | Gas quality per ISO/GPA standards | Standards results |
+| `@mechanical-design` | Wall thickness, structural design | Design report JSON |
+| `@neqsim-test` | Writing regression/unit tests | JUnit 5 test class |
+| `@notebook-example` | Creating example notebooks | Jupyter notebook |
+| `@flow-assurance` | Hydrates, wax, corrosion, slugging | Analysis + mitigation |
+| `@safety-depressuring` | Depressurization, PSV, fire cases | Safety analysis |
 | `@documentation` | Wiki pages, guides, cookbooks | Markdown files |
 
 ### Chaining Agents
@@ -646,9 +784,9 @@ Specialist agents are shortcuts for well-defined task shapes.
 
 Example of a multi-step task:
 ```
-1. @thermo.fluid  → "Create a CPA fluid for gas with 5% MEG and water"
-2. @solve.process → "Build a TEG dehydration unit using that fluid"
-3. @neqsim.test   → "Write regression tests for the dehydration results"
+1. @thermo-fluid  → "Create a CPA fluid for gas with 5% MEG and water"
+2. @solve-process → "Build a TEG dehydration unit using that fluid"
+3. @neqsim-test   → "Write regression tests for the dehydration results"
 ```
 
 ### What the AI Can See
@@ -903,16 +1041,17 @@ into reports and ensures the report always reflects the latest simulation run.
        json.dump(results, f, indent=2)
    ```
 4. Run `python step3_report/generate_report.py` — produces a professional engineering
-   report (Report.docx + Report.html). The Results, Validation, and Scope sections
-   auto-populate from `results.json` and `task_spec.md`
+   report in Word and HTML, named after the report title (e.g.
+   `Hydrate_margin_for_the_export_line.docx`). The Results, Validation, and Scope
+   sections auto-populate from `results.json` and `task_spec.md`
 5. Scientific papers are only generated when explicitly requested:
-   `python step3_report/generate_report.py --paper` (adds Paper.docx + Paper.html)
+   `python step3_report/generate_report.py --paper` (adds `<Title>_Paper.docx` + `.html`)
 6. **Built-in styled formatting:** The template automatically renders these sections
    when the corresponding keys exist in `results.json`:
    - **Benchmark Validation** (`benchmark_validation`): PASS/FAIL table with color coding
    - **Uncertainty Analysis** (`uncertainty`): input parameters, P10/P50/P90 distribution, tornado table
    - **Risk Assessment** (`risk_evaluation`): summary card with risk badges, color-coded risk table
-   - All four outputs (Report.docx, Report.html, Paper.docx, Paper.html) share the same formatters
+   - All four outputs (report and paper, Word and HTML) share the same formatters
 
 ### Quality Gates
 
@@ -958,7 +1097,8 @@ includes a comparison table:
 
 ### Report Generation Best Practices
 
-The `generate_report.py` template needs customisation for each task. Common failure
+The report is customised per task through `results.json` and
+`step3_report/report_sections.json`, never by editing `generate_report.py`. Common failure
 modes and how to avoid them:
 
 **1. Section completeness:** The default template only renders Results, Validation,
@@ -973,8 +1113,8 @@ requires changes in three places:
 
 | # | Section | Data Source | Figures |
 |---|---------|-------------|---------|
-| 1 | Executive Summary | MANUAL_SECTIONS | — |
-| 2 | Problem Description | MANUAL_SECTIONS | — |
+| 1 | Executive Summary | report_sections.json `manual_sections` | — |
+| 2 | Problem Description | report_sections.json `manual_sections` | — |
 | 3 | Scope & Standards | task_spec.md | — |
 | 4 | Approach | results.json or MANUAL | — |
 | 5 | Results | results.json key_results + tables | Main notebook figs |
@@ -982,7 +1122,7 @@ requires changes in three places:
 | 7 | Benchmark Validation | results.json benchmark_validation | benchmark_*.png |
 | 8 | Uncertainty Analysis | results.json uncertainty | uncertainty_*.png |
 | 9 | Risk Evaluation | results.json risk_evaluation | risk_matrix.png |
-| 10 | Conclusions | MANUAL_SECTIONS or results.json | — |
+| 10 | Conclusions | results.json or report_sections.json | — |
 | 11 | References | results.json references | — |
 
 **3. Figure captions:** Every PNG in `figures/` should have a caption entry in
@@ -990,8 +1130,9 @@ requires changes in three places:
 all notebooks (main, benchmark, uncertainty) must be captioned.
 
 **4. Stale numbers:** When design parameters change iteratively, hardcoded text in
-`MANUAL_SECTIONS["executive_summary"]` and `MANUAL_SECTIONS["conclusions"]` becomes
-stale. Prefer writing conclusions programmatically from results.json where possible.
+`step3_report/report_sections.json` (`manual_sections.executive_summary`,
+`manual_sections.conclusions`) becomes stale. Never edit or fork
+`generate_report.py` for task content; run it with `neqsim report <task_dir>`. Prefer writing conclusions programmatically from results.json where possible.
 At minimum, re-verify all hardcoded numbers after each parameter change.
 
 **5. Figure placement:** Embed figures in their relevant section, not all at the end of
@@ -1343,6 +1484,79 @@ install the released `neqsim` package for repository task calculations.
 
 ---
 
+## Keeping a Task Alive: Continuous Task Solving
+
+Everything above solves a task **once**: the report is a snapshot of the data
+and the model on the day it was written. Some tasks should not stop there — a
+compressor efficiency study is out of date the week after the next wash, and an
+optimisation study is worth repeating when the plant changes. For those, make
+the task **living**.
+
+A living task keeps its normal three steps and adds a `continuous/` folder. A
+**cycle** then runs daily or on demand: it pulls new data, recomputes the KPIs,
+checks for drift, updates an improvement ledger and writes a digest. An agent is
+launched only when a trigger fires. You review the result and promote a cycle to
+the new baseline — nothing changes without a named reviewer.
+
+### When to use it
+
+| Situation | Use |
+|-----------|-----|
+| A one-off question or study | The normal workflow above — no living task needed |
+| A finished study that should stay current as data arrives | Monitor cycles: `neqsim task-cycle` |
+| A task that must be solved iteratively until a goal is met, or until improvement is marginal | Solve loop: `neqsim task-solve` |
+
+### The five steps to set one up
+
+1. **Make it living** — `neqsim task-living <task> --brief brief.docx` scaffolds
+   `continuous/` and a draft goal from the brief. It never overwrites files.
+2. **Confirm the goal** — edit `continuous/goal.yaml` (objective metric, target,
+   stop rules) and set `confirmed_by`.
+3. **Write the plan** — edit `continuous/cycle_plan.yaml`: data sources, KPIs,
+   drift signals with engineering floors, triggers, and task-local stage scripts
+   that run the NeqSim model.
+4. **Backtest** — `neqsim task-backtest <task> --start ... --end ...` replays
+   archived data and checks the monitor finds the events it should, with no
+   false alarms.
+5. **Run it** — by hand with `neqsim task-cycle <task>` / `neqsim task-solve <task>`,
+   or on a schedule with `neqsim task-schedule <task> --daily 05:00 --install`.
+
+Scheduled living tasks enforce a **Standard-first gate**. The generated schedule
+runs `task-cycle --standard-first`, which checks that the initial task solve has
+Step 1 research, capability assessment, Step 2 model/notebook/script,
+`results.json`, consistency status, first formal report and
+`step3_report/WORK_RECORD.md`. Missing reports/work records are generated with
+the normal `neqsim report` / `neqsim work-record` tools when possible. If the
+task is still incomplete, the cycle is marked degraded with a
+`standard_first:*` trigger and `continuous/standard_first_status.json` records
+what is missing. This lets a schedule collect evidence, but prevents the hourly
+loop from being treated as operational before the first Standard task basis is
+finished or explicitly blocked with data gaps.
+
+Then, day to day: read `continuous/LIVING_REPORT.md`, decide ledger items with
+`neqsim task-ledger`, and promote reviewed cycles with `neqsim task-promote`.
+
+To learn the loop without company data, create the public reference case —
+a synthetic compressor station with three injected faults. Living tasks use the
+same task root as all other tasks (`neqsim --show-task-root`), so a folder name
+is enough:
+
+```powershell
+neqsim task-reference-case          # created in your task root
+neqsim task-backtest reference_compressor_station --start 2025-10-02 --end 2026-09-30
+neqsim task-status                  # every living task in the task root
+```
+
+In Copilot Chat, the **continuous-improvement** agent does the
+setup, backtesting and triage for you, and stops before every decision.
+
+**Full guide:** [Continuous Task Solving (Living Tasks)](CONTINUOUS_TASK_SOLVING.md)
+— setup, goal and plan reference, stage scripts, backtesting, scheduling on a
+laptop or server, headless agents, day-to-day work, company data sources and
+troubleshooting.
+
+---
+
 ## Common Pitfalls
 
 | Mistake | Symptom | Fix |
@@ -1371,7 +1585,7 @@ install the released `neqsim` package for repository task calculations.
 | Old JAR in Python site-packages | `from neqsim import jneqsim` loads stale class | Use the devtools setup cell and `ns.JClass()` so notebooks load workspace classes from `target/classes` |
 | Report generator missing sections | Benchmark/uncertainty/risk data in results.json but absent from report | Add rendering to `build_sections()`, `build_word_report()`, AND `build_html_report()` for each data section |
 | Figure captions only from main notebook | Benchmark/uncertainty figures show generic captions | Add ALL figure filenames to `results.json["figure_captions"]` from every notebook |
-| Stale numbers in MANUAL_SECTIONS | Executive summary/conclusions don't match latest results | Write conclusions in `results.json["conclusions"]`; update MANUAL_SECTIONS when parameters change |
+| Stale numbers in report_sections.json | Executive summary/conclusions don't match latest results | Write conclusions in `results.json["conclusions"]`; update `manual_sections` when parameters change |
 | Design change not propagated to all notebooks | Benchmark/uncertainty results reflect old parameters | Re-run ALL notebooks (restart kernels) when base case parameters change |
 | All figures dumped in one report section | 12 figures after Results, none in Benchmark/Uncertainty/Risk | Use section flags (`has_benchmark`, `has_uncertainty`, `has_risk`) to embed figures in their own section |
 
@@ -1383,18 +1597,19 @@ install the released `neqsim` package for repository task calculations.
 
 | Agent | Best For |
 |-------|----------|
-| `@solve.task` | **Full 3-step workflow** (does everything end-to-end) |
-| `@thermo.fluid` | EOS selection, fluid creation, flash, properties |
-| `@solve.process` | Complete process simulation → working notebook |
-| `@process.model` | Process flowsheet design |
-| `@pvt.simulation` | PVT experiments (CME, CVD, etc.) |
-| `@gas.quality` | Gas quality standards (GCV, Wobbe) |
-| `@mechanical.design` | Wall thickness, ASME/DNV design |
-| `@neqsim.test` | Writing JUnit 5 tests |
-| `@notebook.example` | Creating example notebooks |
-| `@flow.assurance` | Hydrates, wax, corrosion, slugging |
-| `@safety.depressuring` | Depressurization, PSV, fire cases |
+| `@solve-task` | **Full 3-step workflow** (does everything end-to-end) |
+| `@thermo-fluid` | EOS selection, fluid creation, flash, properties |
+| `@solve-process` | Complete process simulation → working notebook |
+| `@process-model` | Process flowsheet design |
+| `@pvt-simulation` | PVT experiments (CME, CVD, etc.) |
+| `@gas-quality` | Gas quality standards (GCV, Wobbe) |
+| `@mechanical-design` | Wall thickness, ASME/DNV design |
+| `@neqsim-test` | Writing JUnit 5 tests |
+| `@notebook-example` | Creating example notebooks |
+| `@flow-assurance` | Hydrates, wax, corrosion, slugging |
+| `@safety-depressuring` | Depressurization, PSV, fire cases |
 | `@documentation` | Writing docs and wiki pages |
+| `continuous-improvement` | Living tasks: monitor cycles, solve loops, backtests, triage ([guide](CONTINUOUS_TASK_SOLVING.md)) |
 
 ---
 
@@ -1416,7 +1631,7 @@ Search docs/development/TASK_LOG.md for similar past tasks.
 If you're a process engineer (not a developer):
 
 1. Open VS Code with the NeqSim repo
-2. Open Copilot Chat and type: `@solve.task your engineering question`
+2. Open Copilot Chat and type: `@solve-task your engineering question`
 3. The agent creates the folder, runs the intake gate, then hands back results + reports
 4. Find Word and HTML reports in `task_solve/.../step3_report/`
 
@@ -1479,7 +1694,7 @@ coding agent that can read files and run commands can follow the same workflow.
 | `neqsim new-task` | Creates task folders | Any terminal |
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
 | Jupyter notebooks | Simulation code | NeqSim Runner by default; JupyterLab/Colab for interactive debugging |
-| `python generate_report.py` | Produces engineering report (Report.docx + Report.html) | Any terminal |
+| `python generate_report.py` | Produces engineering report in Word + HTML, named after the report title | Any terminal |
 | `python generate_report.py --paper` | Also produces Paper.docx + Paper.html (only when requested) | Any terminal |
 | `git` + `gh pr create` | Contribute back via PR | Any terminal |
 
@@ -1487,8 +1702,8 @@ coding agent that can read files and run commands can follow the same workflow.
 
 | Feature | Purpose | Alternative |
 |---------|---------|-------------|
-| `@solve.task` agent | Automates the full 3-step workflow | Give any AI the prompt above |
-| Specialist agents (`@thermo.fluid`, etc.) | Deep sub-task automation | Use the agent files in `.github/agents/` as prompts |
+| `@solve-task` agent | Automates the full 3-step workflow | Give any AI the prompt above |
+| Specialist agents (`@thermo-fluid`, etc.) | Deep sub-task automation | Use the agent files in `.github/agents/` as prompts |
 | Notebook cell execution | Run cells from chat | Use `neqsim_runner` for task notebooks; JupyterLab/Colab for quick debugging |
 
 ### Tips for Non-VS-Code AI Tools
@@ -1497,7 +1712,9 @@ coding agent that can read files and run commands can follow the same workflow.
   Point it at `TASK_SOLVING_GUIDE.md` and it follows the workflow.
 - **Claude Code**: Same approach — give it the workflow prompt and task folder path.
 - **Cursor**: Supports custom instructions — paste the agent instructions from
-  `.github/agents/solve.task.agent.md` into Cursor's rules.
+  `.github/agents/solve-task.agent.md` (orchestrator) and
+  `.github/skills/neqsim-task-workflow/SKILL.md` (the phase-by-phase procedure)
+  into Cursor's rules.
 - **Google Colab + AI**: Published external examples may use `pip install neqsim`,
   but local task notebooks and runner workflows must use `neqsim_dev_setup.py`.
 
@@ -1576,7 +1793,7 @@ git push -u origin task/your-task-name
 gh pr create --title "Add [description]" --body "From task-solving workflow"
 ```
 
-> **Tip:** The `@solve.task` agent can do this for you — just ask
+> **Tip:** The `@solve-task` agent can do this for you — just ask
 > "create a PR with the test and notebook from this task".
 
 ---
@@ -1588,8 +1805,9 @@ gh pr create --title "Add [description]" --body "From task-solving workflow"
 | `devtools/new_task.py` | Script to create task folders (auto-bootstraps `task_solve/`) |
 | `task_solve/README.md` | AI-supported task-solving workflow (3-step process) |
 | `task_solve/TASK_TEMPLATE/` | Template folder with task_spec, prompts, and report generator |
-| `.github/agents/solve.task.agent.md` | The `@solve.task` Copilot agent (does everything end-to-end) |
+| `.github/agents/solve-task.agent.md` | The `@solve-task` Copilot agent (does everything end-to-end) |
 | `CONTEXT.md` | 60-second repo orientation |
+| [CONTINUOUS_TASK_SOLVING.md](CONTINUOUS_TASK_SOLVING.md) | Living tasks: keep a task improving with scheduled cycles |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Persistent task memory |
 | `docs/development/extending_process_equipment.md` | Adding new equipment |

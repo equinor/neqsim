@@ -236,9 +236,9 @@ public class TBPfractionModelTest {
     double density = 0.78; // g/cm³
 
     // Core models with good accuracy
-    String[] coreModels = { "PedersenSRK", "Lee-Kesler", "Twu", "Standing" };
+    String[] coreModels = {"PedersenSRK", "Lee-Kesler", "Twu", "Standing"};
     // Models with known limitations
-    String[] allModels = { "PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing" };
+    String[] allModels = {"PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing"};
 
     logger.info("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
     logger.info(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));

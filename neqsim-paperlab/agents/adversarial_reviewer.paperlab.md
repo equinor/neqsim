@@ -228,7 +228,7 @@ Use these rough yardsticks. Do not let a draft pass without them.
 - Introduction: cites ≥ 15 references, ends with bullet list of
   contributions.
 - Methods: every equation has a `\cite{}` for its origin and a Java
-  cross-reference (per `neqsim_in_writing` skill).
+  cross-reference (per `neqsim-in-writing` skill).
 - Results: every figure and table is referenced in the text in order;
   every number in the abstract reappears here with a reference to the
   experiment.

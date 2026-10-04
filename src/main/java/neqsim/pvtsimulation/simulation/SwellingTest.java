@@ -118,7 +118,7 @@ public class SwellingTest extends BasePVTsimulation {
     test.setInjectionGas(gasSystem);
     test.setTemperature(298.15);
     test.setCummulativeMolePercentGasInjected(
-        new double[] { 0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0 });
+        new double[] {0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0});
     test.runCalc();
 
     test.getThermoSystem().display();

@@ -265,7 +265,7 @@ class RiskMLInterfaceTest {
   @Test
   void testPredictionProbabilities() {
     RiskMLInterface.MLPrediction prediction = new RiskMLInterface.MLPrediction("test-model");
-    double[] probs = { 0.1, 0.2, 0.7 };
+    double[] probs = {0.1, 0.2, 0.7};
     prediction.setProbabilities(probs);
 
     assertEquals(3, prediction.getProbabilities().length);
@@ -291,8 +291,8 @@ class RiskMLInterfaceTest {
   void testPerformanceMetricsCalculation() {
     RiskMLInterface.MLModel model = mlInterface.createFailurePredictionModel("model-1", "Test Model");
 
-    final double[] predictions = { 0.5, 0.6, 0.4, 0.7 };
-    final int[] index = { 0 };
+    final double[] predictions = {0.5, 0.6, 0.4, 0.7};
+    final int[] index = {0};
 
     model.setPredictor(features -> {
       RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());

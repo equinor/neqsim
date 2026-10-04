@@ -1,6 +1,6 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, inspected metal-loss screening, pipeline hydraulics, DNV-RP-F109 on-bottom stability screening, DNV-RP-F105 free-span screening, DNV-RP-F104 CO2-envelope screening, DNV-RP-F110 global-buckling response screening, DNV-RP-F114 pipe-soil screening, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+description: "Flow assurance patterns for NeqSim. USE WHEN: predicting hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506), mineral scale and brine mixing, valve scale drift and remediation, sulfur S8 deposition, metal-loss screening, pipeline hydraulics, DNV-RP-F109/F105/F104/F110/F114 screening, water hammer, slug flow, thermal analysis or inhibitor dosing. Code patterns plus the governing standards for every threat."
 last_verified: "2026-09-07"
 ---
 
@@ -100,6 +100,12 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateFormationTemperature();
 double hydrateT_C = fluid.getTemperature() - 273.15;
 ```
+
+`setHydrateCheck(true)` is mandatory: without it `hydrateFormationTemperature()` fails
+(no hydrate phase) and any wrapper that swallows the exception reports NaN. The fluid must
+contain `water`. `HydrateRiskMapper` (and MCP `runFlowAssurance` `hydrateRiskMap`) now sets the
+flag itself and returns `RiskLevel.UNKNOWN` / `RESULT_NOT_AVAILABLE` with `failureReasons` when
+no equilibrium temperature exists — never treat an unavailable hydrate temperature as safe.
 
 ### Hydrate Equilibrium Curve (Multiple Pressures)
 

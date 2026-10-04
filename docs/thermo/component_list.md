@@ -25,7 +25,7 @@ NeqSim provides two pure component parameter databases:
 
 | Database | Components | Performance | Use Case |
 |----------|------------|-------------|----------|
-| **Standard** | 257 | Fast (embedded) | Typical oil & gas simulations |
+| **Standard** | 389 | Fast (embedded) | Typical oil & gas simulations |
 | **Extended** | 76,704 | Slower (loaded on demand) | Specialty chemicals, research |
 
 The **standard database** is the default and covers most components needed for oil & gas applications. It loads instantly as an embedded database.
@@ -103,6 +103,17 @@ The database CSV files are located in the NeqSim repository:
 
 - **Standard database**: [`src/main/resources/data/COMP.csv`](https://github.com/equinor/neqsim/blob/master/src/main/resources/data/COMP.csv)
 - **Extended database**: [`src/main/resources/data/COMP_EXT.csv`](https://github.com/equinor/neqsim/blob/master/src/main/resources/data/COMP_EXT.csv)
+- **UMR-PRU group assignments**: [`src/main/resources/data/UNIFACcompUMRPRU.csv`](https://github.com/equinor/neqsim/blob/master/src/main/resources/data/UNIFACcompUMRPRU.csv)
+
+The UMR-PRU table is joined to `COMP.csv` on an **exact match of the name**, so a
+component whose name differs between the two files silently ends up with no
+groups. 277 of the 389 standard components carry a group assignment; the rest are
+ions, salts and other species the model does not apply to.
+
+`COMP.csv` also carries an **`InChIKey`** column, a structure-derived identifier
+that is the same for a substance however it is named. It is the reliable way to
+tell whether two rows are the same molecule, since a CAS number can be absent,
+wrong, or registered separately for each stereoisomer.
 
 ### When to Use Extended Database
 
@@ -118,6 +129,53 @@ The database CSV files are located in the NeqSim repository:
 | Unknown component lookup | Extended |
 
 > **Performance Note**: The extended database loads components into an embedded database on demand, which takes slightly longer than the pre-loaded standard database. For production simulations with common components, use the standard database.
+
+---
+
+## Pure-Component Vapor-Pressure Correlations
+
+`ComponentInterface.getAntoineVaporPressure(T)` takes temperature in K and returns
+pressure in bar. Its coefficients can represent several correlations. Explicit
+`pow10` and `pow10KPa` labels keep their existing interpretation. For other labels,
+`|ANTOINEE| > 1e-12` selects the five-parameter DIPPR-101 form for available data, even when the database
+label is the legacy `log` or `exp`:
+
+$$P_{\mathrm{sat}}[\mathrm{bar}] = \frac{\exp(A + B/T + C\ln T + DT^E)}{10^5}$$
+
+The stored DIPPR coefficients give pressure in Pa before conversion to bar.
+`getAntoineVaporPressuredT(T)` uses the same selection and returns the analytical
+DIPPR derivative in bar/K. This keeps the derivative consistent with the pressure
+used by `getAntoineVaporTemperature(P)` and activity-coefficient models.
+Available rows with zero exponent retain their existing correlation selection.
+
+The `pow10KPa` form also has an analytical derivative in bar/K:
+$dP_{\mathrm{sat}}/dT = P_{\mathrm{sat}}\ln(10)B/(T+C)^2$.
+It uses the existing pressure $P_{\mathrm{sat}} = 10^{A-B/(T+C)}/10^5$ in bar
+with T in K, including when a nonzero E is present. The legacy `pow10KPa`
+label does not change this scale to a kPa-to-bar conversion.
+`ComponentPow10KPaVaporPressureTest` verifies analytical values, finite-difference
+slopes, pressure/temperature round trips, and unavailable-data behavior with
+prescribed test coefficients; those coefficients are not physical fits.
+
+For example, the stored coefficients at 298.15 K give 0.91801 bar for `i-pentane`,
+9.53257 bar for `propanePVTsim`, and 2.43661 bar for `nbutanePVTsim`.
+`ComponentAntoineVaporPressureTest` checks these values, pressure/temperature round
+trips, finite-difference derivatives, and an independent
+[NIST isopentane correlation](https://webbook.nist.gov/cgi/cbook.cgi?ID=C78784&Mask=4).
+
+`hasAntoineVaporPressureCorrelation()` reports missing data explicitly. The known
+shared placeholders, copied water coefficients on unrelated compounds, and all
+ions are marked `none` in the standard table. Pressure, derivative and inverse
+queries return `Double.NaN` for these rows; pressure and derivative also reject
+temperatures above Tc, and inversion rejects pressures above Pc. The extended
+database preserves these corrections and acetone's corrected NIST coefficients.
+See the [database guide](component_database_guide.md#vapor-pressure-parameters)
+for units, applicability, compatibility and acetone provenance.
+
+Correct dispatch does not validate other coefficients or extend their fitted
+temperature range. The dispatch correction in
+[#3768](https://github.com/equinor/neqsim/issues/3768) and missing-data policy in
+[#3771](https://github.com/equinor/neqsim/issues/3771) address distinct defects.
 
 ---
 
@@ -338,10 +396,10 @@ NeqSim supports characterizing heavy oil fractions using TBP (True Boiling Point
 
 ```java
 // Method 1: Add by boiling point and density
-fluid.addTBPfraction("C7", 0.10, 95.0, 0.68);   // Name, moleFrac, MW, SG
-fluid.addTBPfraction("C8", 0.08, 107.0, 0.72);
-fluid.addTBPfraction("C9", 0.06, 121.0, 0.75);
-fluid.addTBPfraction("C10+", 0.04, 200.0, 0.82);
+fluid.addTBPfraction("C7", 0.10, 95.0 / 1000.0, 0.68);   // Name, moleFrac, MW [g/mol], SG
+fluid.addTBPfraction("C8", 0.08, 107.0 / 1000.0, 0.72);
+fluid.addTBPfraction("C9", 0.06, 121.0 / 1000.0, 0.75);
+fluid.addTBPfraction("C10+", 0.04, 200.0 / 1000.0, 0.82);
 
 // Method 2: Using oil characterization
 CharacterisationTBP characterization = new CharacterisationTBP(fluid);
@@ -382,19 +440,32 @@ Legend: ✅ Full support | ⚠️ Partial/limited | ❌ Not supported
 
 ## Complete Component Count by Category
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| Paraffins (alkanes) | ~50 | methane, ethane, n-decane |
-| Naphthenes (cycloalkanes) | ~15 | c-hexane, c-C7, c-C8 |
-| Aromatics | ~20 | benzene, toluene, m-Xylene |
-| Acid gases | 6 | CO2, H2S, SO2, NO, NO2, COS |
-| Inert gases | 5 | N2, O2, Ar, He, H2 |
-| Water and glycols | 5 | water, MEG, DEG, TEG, PG |
-| Amines | 5 | MDEA, DEA, MEA, Piperazine, ammonia |
-| Alcohols | ~10 | methanol, ethanol, 1-propanol |
-| Refrigerants | ~15 | R-134a, R-22, R-32 |
-| Ions | ~15 | Na+, Cl-, Ca++, SO4-- |
-| **Total** | **~150+ pure components** | Plus unlimited TBP fractions |
+Counted from the `COMPTYPE` column of `COMP.csv`:
+
+| Category | `COMPTYPE` | Count | Examples |
+|----------|------------|-------|----------|
+| Hydrocarbons | `HC` | 238 | methane, toluene, 2,4-dimethylheptane |
+| Ions | `ion` | 62 | Na+, Cl-, Ca++, SO4-- |
+| General / unclassified | `GEN`, `0` | 37 | assorted |
+| Inert and light gases | `inert` | 12 | N2, O2, Ar, He, H2 |
+| Other | `other` | 10 | |
+| Glycols | `glycol` | 7 | MEG, DEG, TEG |
+| Acid gases | `acid` | 7 | CO2, H2S, SO2 |
+| Alcohols | `alcohol` | 6 | methanol, ethanol, 1-propanol |
+| Amines | `amine` | 4 | MDEA, DEA, MEA |
+| Water, ice, seawater, salt, chlorine, asphaltene | one each | 6 | |
+| **Total** | | **389** | Plus unlimited TBP fractions |
+
+By structure, the hydrocarbons break down as roughly 94 paraffins, 100
+naphthenes and olefins, 37 aromatics and 11 alkynes or dienes. Many are
+structural isomers, so a shared formula and molar mass between rows is expected
+rather than a duplicate.
+
+> **Not usable with UMR-PRU:** `ethylene`, `C2H4`, `C2H4-` and
+> `5-methyl-3-heptyne` have no group assignment, because no group in the set can
+> represent a bare CH2=CH2 and the alkyne subgroup has no parameters. They work
+> with the cubic equations of state. See the
+> [Component Database Guide](component_database_guide) for the reasoning.
 
 ---
 
@@ -407,7 +478,7 @@ If a component is not in the database, you can add it manually:
 fluid.addComponent("myComponent", 1.0);  // Will use default properties
 
 // Or use TBP characterization for undefined heavy fractions
-fluid.addTBPfraction("MyHeavy", 0.05, 350.0, 0.88);  // MW=350, SG=0.88
+fluid.addTBPfraction("MyHeavy", 0.05, 350.0 / 1000.0, 0.88);  // MW=350, SG=0.88
 ```
 
 ---

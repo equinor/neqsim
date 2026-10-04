@@ -44,7 +44,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    */
   public ComponentGEUnifac(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
-    if (!this.getClass().equals(ComponentGEUnifac.class)) {
+    // UMR-PRU loads its own group table; PSRK uses the classic group assignments.
+    if (this instanceof ComponentGEUnifacUMRPRU) {
       return;
     }
     if (name.contains("_PC")) {
@@ -52,6 +53,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
       int intNumb = (int) Math.round(number) - 2;
       unifacGroups.add(new UNIFACgroup(1, 2));
       unifacGroups.add(new UNIFACgroup(2, intNumb));
+      setUnifacGroups(unifacGroups);
       logger.info("adding unifac pseudo.." + intNumb);
       return;
     }
@@ -84,6 +86,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
               + "Without groups R and Q are zero, which makes the activity coefficient NaN. "
               + "Add a row for this component or use a model that does not need UNIFAC groups."));
     }
+    setUnifacGroups(unifacGroups);
   }
 
   /**
@@ -99,6 +102,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     unifacGroups.clear();
     unifacGroups.add(new UNIFACgroup(1, 2));
     unifacGroups.add(new UNIFACgroup(2, intNumb));
+    setUnifacGroups(unifacGroups);
   }
 
   /**
@@ -109,7 +113,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
    */
   public void addUNIFACgroup(int p, int n) {
     unifacGroups.add(new UNIFACgroup(p, n));
-    unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
+    unifacGroupsArray = unifacGroups.toArray(new UNIFACgroup[unifacGroups.size()]);
   }
 
   /**
@@ -313,13 +317,17 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
   }
 
   /**
-   * Setter for property unifacGroups.
+   * Replace the group list and rebuild the indexed array to exactly the same length.
+   *
+   * <p>
+   * Call this setter after structurally editing the list returned by {@link #getUnifacGroups2()}.
+   * </p>
    *
    * @param unifacGroups New value of property unifacGroups.
    */
   public void setUnifacGroups(ArrayList<UNIFACgroup> unifacGroups) {
     this.unifacGroups = unifacGroups;
-    unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
+    unifacGroupsArray = unifacGroups.toArray(new UNIFACgroup[unifacGroups.size()]);
   }
 
   /**

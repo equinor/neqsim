@@ -1,145 +1,125 @@
 ---
-title: "Java simulations inspired by NeqSim Colab notebooks"
-description: "This guide shows how to translate the interactive workflows from the"
+title: Translate NeqSim Colab workflows to Java
+description: Preserve a notebook calculation basis while translating a verified NeqSim workflow into executable Java.
 ---
 
-# Java simulations inspired by NeqSim Colab notebooks
+This guide shows how to translate a NeqSim Colab calculation into a Java application
+without silently changing its thermodynamic basis. It does not claim that Python and
+Java inputs are interchangeable by inspection: record the composition, model, mixing
+rule, temperature, pressure, units, operation sequence, and reported phase before
+comparing results.
 
-This guide shows how to translate the interactive workflows from the
-[NeqSim-Colab](https://github.com/EvenSol/NeqSim-Colab) notebooks into
-pure Java simulations. The notebooks run NeqSim through a Python bridge,
-but the thermodynamics, process models, and solver settings are the same
-as in Java. Use this page to recreate those examples in IDEs or CI
-pipelines where Java is preferred.
+## Choose a source notebook and freeze its basis
 
-## Prerequisites
+Start from a specific notebook revision, such as the
+[NeqSim-Colab getting-started notebook](https://github.com/EvenSol/NeqSim-Colab/blob/master/GettingStartedWIthNeqSim.ipynb)
+or the
+[SRK gas-density notebook](https://github.com/EvenSol/NeqSim-Colab/blob/master/notebooks/thermodynamics/density_of_gas_using_SRK_EoS.ipynb).
+Record the notebook commit and these inputs before translating:
 
-1. Add the NeqSim dependency to your Maven or Gradle build (for Maven,
-   use `pom.xml` with groupId `com.github.equinor` and artifactId
-   `neqsim` from Maven Central).
-2. Ensure you have the same component names and units used in the
-   notebooks (mole fractions, bar, and Kelvin unless noted).
-3. Enable a database connection when you need accurate equation of state
-   parameters, mimicking the `fluid = fluid('srk')` cell in Colab.
+| Basis item | Translation check |
+| --- | --- |
+| Components and amounts | Preserve names and relative mole amounts in the same order. |
+| Thermodynamic model | Instantiate the corresponding Java `SystemInterface` implementation. |
+| Mixing rule and database use | Copy the explicit configuration; do not infer it from a notebook title. |
+| Temperature and pressure | Carry units explicitly in the record. Java system constructors use kelvin and bara. |
+| Flash or process sequence | Preserve operation order and initialization calls. |
+| Result phase and property unit | Compare the same phase and request the same output unit. |
 
-```java
-SystemSrkEos fluid = new SystemSrkEos(288.15, 100.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.05);
-fluid.addComponent("propane", 0.03);
-fluid.addComponent("n-hexane", 0.02);
-fluid.createDatabase();
-fluid.setMixingRule(2); // classic SRK as in the PVT notebooks
-```
+Python gateway objects resolve Java calls at runtime. Direct Java code is checked by
+the compiler, so translated code also needs explicit imports, a complete class, and a
+declared runtime dependency. The current Maven application coordinate is
+`com.equinor.neqsim:neqsim:3.20.0`. See
+[Getting Started with NeqSim in Java](../java-getting-started) for the separate Java 8
+distribution boundary.
 
-## Mapping common notebooks to Java
+## Executable TP-flash translation
 
-### PVT and flash notebooks
-
-The PVT notebooks (e.g., `notebooks/PVT`) typically run TP or PT flashes
-followed by property extraction. In Java, use `ThermodynamicOperations`
-for the flashes and retrieve phase data from the `SystemInterface`.
-
-```java
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
-
-System.out.println("Z-factors: " + Arrays.toString(fluid.getZ()));
-System.out.println("Phase fractions: " + Arrays.toString(fluid.getPhaseFraction()));
-System.out.println("GOR (Sm3/Sm3): " + fluid.getGOR());
-```
-
-For constant-volume or differential liberation sequences demonstrated in
-Colab, iterate flashes while updating pressure or removing produced
-vapour, mirroring the loop constructs in the notebooks.
-
-### LNG, dehydration, and membranes
-
-Process notebooks under `notebooks/LNG` and `notebooks/AI` connect
-streams to unit operations like heat exchangers, expanders, membranes,
-and glycol dehydrators. Build the same flows in Java using
-`ProcessSystem` and the corresponding unit classes.
+The program below represents the direct-Java side of a notebook TP-flash cell. The
+constructor values are 288.15 K and 100 bara. Assertions are deliberately part of the
+example so a changed phase or nonphysical property stops automated validation instead
+of producing a plausible-looking report.
 
 ```java
-ProcessSystem process = new ProcessSystem();
-Stream feed = new Stream("feed", fluid);
-feed.setFlowRate(1.0, "MSm3/day");
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-Heater chiller = new Heater("pre-cooler", feed);
-chiller.setOutTemperature(248.15);
+public final class ColabFlashTranslation {
+  private static final Logger logger = LogManager.getLogger(ColabFlashTranslation.class);
 
-ThrottlingValve expander = new ThrottlingValve("expander", chiller.getOutletStream());
-expander.setOutletPressure(5.0); // bar
+  private ColabFlashTranslation() {}
 
-Separator coldSeparator = new Separator("cold separator", expander.getOutletStream());
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(288.15, 100.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("n-hexane", 0.02);
+    fluid.setMixingRule("classic");
 
-process.add(feed);
-process.add(chiller);
-process.add(expander);
-process.add(coldSeparator);
-process.run();
-```
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
 
-Use `getOutletStream()` from each unit to pass streams to downstream
-operations. For dehydration, connect `Separator` gas outlets to
-`GlycolDehydrationlModule` and set specifications just as the notebook
-cells set target water content.
+    double densityKgM3 = fluid.getDensity("kg/m3");
+    double compressibility = fluid.getPhase(0).getZ();
 
-### Dynamic and digital-twin notebooks
+    assert fluid.getNumberOfPhases() >= 1;
+    assert Double.isFinite(densityKgM3) && densityKgM3 > 0.0;
+    assert Double.isFinite(compressibility) && compressibility > 0.0;
 
-The Industry 4.0 notebooks in `notebooks/AI` stream dynamic results to
-plots. In Java, enable dynamics by switching the `ProcessSystem` to
-transient mode and stepping the solver while logging sensor variables.
-
-```java
-process.setTimeStep(0.5); // hours
-process.setMaxNumberOfTimeSteps(200);
-process.runTransient();
-
-double[] pressureTrace = expander.getOutletStream().getPressureProfile();
-```
-
-Attach PID controllers (`ControllerDevice`) to match the control loops in
-those notebooks—for instance, controlling separator pressure via valve
-opening or maintaining dew point via coolant temperature.
-
-### Exporting results for notebooks
-
-When you want to feed Java results back into a notebook (for validation
-or training), export stream tables as CSV or JSON. The Colab notebooks
-usually turn `pandas` DataFrames into charts; in Java, you can write the
-same tables using standard libraries.
-
-```java
-try (PrintWriter writer = new PrintWriter("cold-separator-summary.csv")) {
-    writer.println("step,pressure_bar,gas_rate_kgph,liquid_rate_kgph");
-    for (int step = 0; step < pressureTrace.length; step++) {
-        double p = coldSeparator.getGasOutStream().getPressureProfile()[step];
-        double gas = coldSeparator.getGasOutStream().getFlowRateProfile("kg/hr")[step];
-        double liq = coldSeparator.getLiquidOutStream().getFlowRateProfile("kg/hr")[step];
-        writer.printf("%d,%.3f,%.3f,%.3f%n", step, p, gas, liq);
-    }
+    logger.info("Phases: {}", fluid.getNumberOfPhases());
+    logger.info("System density: {} kg/m3", densityKgM3);
+    logger.info("Phase-0 compressibility factor: {}", compressibility);
+  }
 }
 ```
 
-You can then load these CSVs in Colab with `pandas.read_csv` to compare
-Java transient trajectories with the notebook runs.
+This is an API and physical-sanity check, not laboratory validation. For a decision
+case, compare the translated result against the notebook at the recorded commit and
+against appropriate measurements or a recognized reference.
 
-## Tips for staying aligned with the notebooks
+## Translate process and transient notebooks safely
 
-* Use the same unit systems shown in the cells (usually SI). The
-  `setTemperature`/`setPressure` methods accept unit strings identical to
-  the notebook helpers.
-* Keep the same mixing rules and volume shift settings to reproduce
-  liquid yields, Wobbe indices, and dew-point calculations from the
-  Colab examples.
-* For LPG and LNG cases, ensure low-temperature property packages (CPA or
-  SRK with volume correction) match the selections called out in the
-  notebook markdown cells.
-* Dynamic notebooks often ramp valve openings or compressor speeds—mirror
-  these with `setOpening` or `setCompressorSpeed` in a timestep loop for
-  close alignment.
+Do not guess a Java method from a Python variable name. Verify every call against the
+[current JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html) and source, then
+use maintained workflow guides:
 
-For additional notebook context and datasets, browse the
-[NeqSim-Colab repository](https://github.com/EvenSol/NeqSim-Colab) and
-open the relevant `.ipynb` files next to this Java guide.
+- [process simulation](process_simulation) for streams, equipment, and steady-state execution;
+- [dynamic process simulation](../process/dynamic-simulation) for explicit transient stepping;
+- [pipeline transient simulation](pipeline_transient_simulation) for distributed profiles;
+- [reading fluid properties](../thermo/reading_fluid_properties) for phase-aware property access.
+
+`ProcessSystem.runTransient()` performs one transient step for the configured time
+increment; it is not a request for an implicit number of steps. Equipment-specific
+profile methods belong only to classes that declare them. A generic `Stream` does not
+provide pressure- or flow-history arrays, so record observations in the calling loop
+or use the reporting API documented for the selected equipment.
+
+## Result exchange and reproducibility
+
+Prefer an explicit result schema over ad hoc console or CSV fragments. Include:
+
+- notebook repository, path, and commit;
+- NeqSim version and Java runtime distribution;
+- model, mixing rule, composition, temperature, pressure, and units;
+- flash/process operation sequence and convergence state;
+- phase selected for every reported property;
+- assertions and the comparison tolerance.
+
+Java file I/O and table serialization are application concerns. Choose a maintained
+CSV or JSON library, test the written schema, and keep output generation separate from
+the thermodynamic calculation. Never treat agreement between two unvalidated scripts
+as engineering qualification.
+
+## Translation checklist
+
+1. Freeze the source notebook path and commit.
+2. Record the complete calculation basis and units.
+3. Verify every Java constructor and method against current source.
+4. Compile with Java 8 source compatibility when contributing an example to NeqSim.
+5. Run with assertions enabled.
+6. Compare the same phase, property, and unit against the notebook.
+7. Investigate deviations before changing tolerances or model configuration.

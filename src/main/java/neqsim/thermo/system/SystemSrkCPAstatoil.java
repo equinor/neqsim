@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkCPAs;
 
@@ -64,6 +65,40 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
       phaseArray[numberOfPhases - 1].setPressure(P);
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
+  }
+
+  /**
+   * Select the caloric-data-fitted water alpha function while retaining legacy CPA for all other components.
+   *
+   * <p>
+   * Disabled by default. Can be called before or after adding components; reflash and initialize properties after
+   * changing the setting. Pure-water heat capacity is calibrated at 5-60 degrees C near 1 bar, with independent caloric
+   * checks through 150 degrees C and 100 bar. Mixture equilibrium/caloric accuracy, electrolytes and near-critical
+   * behavior require separate qualification. No ideal-gas heat capacity or association parameters are changed. See
+   * docs/thermo/cpa_water_caloric.md.
+   * </p>
+   *
+   * @param enabled true to use the caloric water alpha, false to restore the legacy alpha
+   */
+  public void setUseCaloricWaterAlpha(boolean enabled) {
+    attractiveTermNumber = enabled ? 23 : 15;
+    setAttractiveTerm(attractiveTermNumber);
+    // Reference phases may already contain the other alpha, and clones can share those references.
+    // Invalidate the arrays instead of modifying reference-phase objects in place.
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      if (phaseArray[i] != null) {
+        phaseArray[i].setRefPhase((PhaseInterface[]) null);
+      }
+    }
+  }
+
+  /**
+   * Check whether the opt-in caloric water alpha is selected.
+   *
+   * @return true if the caloric water alpha is selected
+   */
+  public boolean isUsingCaloricWaterAlpha() {
+    return attractiveTermNumber == 23;
   }
 
   /** {@inheritDoc} */

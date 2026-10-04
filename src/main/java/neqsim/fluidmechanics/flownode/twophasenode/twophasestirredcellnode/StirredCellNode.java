@@ -24,8 +24,8 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StirredCellNode.class);
 
-  private double[] stirrerRate = { 1.0, 1.0 };
-  private double[] stirrerDiameter = { 1.0, 1.0 };
+  private double[] stirrerRate = {1.0, 1.0};
+  private double[] stirrerDiameter = {1.0, 1.0};
   private double dt = 1.0;
 
   /**

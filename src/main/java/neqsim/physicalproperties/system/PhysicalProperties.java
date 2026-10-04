@@ -70,7 +70,7 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   public double density = 0;
   public double viscosity = 0;
   public double conductivity = 0;
-  private double[] waxViscosityParameter = { 37.82, 83.96, 8.559e6 };
+  private double[] waxViscosityParameter = {37.82, 83.96, 8.559e6};
 
   /**
    * Constructor for PhysicalProperties.

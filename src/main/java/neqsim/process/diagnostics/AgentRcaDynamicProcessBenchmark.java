@@ -267,7 +267,7 @@ public final class AgentRcaDynamicProcessBenchmark {
   private static void setNormalFeeds(ProcessFixture fixture) {
     fixture.gasFeed.setFlowRate(BASE_GAS_FLOW_KG_HR, "kg/hr");
     fixture.liquidFeed.setFlowRate(BASE_LIQUID_FLOW_KG_HR, "kg/hr");
-    fixture.exportSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
+    fixture.exportSplitter.setSplitFactors(new double[] {1.0, 0.0});
     fixture.inletValve.setFoulingFraction(0.0);
   }
 
@@ -276,7 +276,7 @@ public final class AgentRcaDynamicProcessBenchmark {
     switch (scenario) {
     case EXPORT_GAS_LEAK:
       double leakFraction = 0.25 * severity;
-      fixture.exportSplitter.setSplitFactors(new double[] { 1.0 - leakFraction, leakFraction });
+      fixture.exportSplitter.setSplitFactors(new double[] {1.0 - leakFraction, leakFraction});
       break;
     case INLET_BLOCKAGE:
       fixture.inletValve.setFoulingFraction(0.75 * severity);
@@ -339,7 +339,7 @@ public final class AgentRcaDynamicProcessBenchmark {
     gasOutletValve.setCalculateSteadyState(false);
 
     Splitter exportSplitter = new Splitter("export gas leak junction", gasOutletValve.getOutletStream(), 2);
-    exportSplitter.setSplitFactors(new double[] { 1.0, 0.0 });
+    exportSplitter.setSplitFactors(new double[] {1.0, 0.0});
 
     ThrottlingValve liquidOutletValve = new ThrottlingValve("liquid outlet valve", separator.getLiquidOutStream());
     liquidOutletValve.setOutletPressure(5.0, "bara");
@@ -378,7 +378,7 @@ public final class AgentRcaDynamicProcessBenchmark {
     if (!Double.isFinite(level) || level < 0.0 || level > 1.0) {
       throw new IllegalStateException("separator liquid level must remain within [0, 1]");
     }
-    double[] flows = { inletFlowKgHr, gasExportFlowKgHr, liquidExportFlowKgHr, leakFlowKgHr };
+    double[] flows = {inletFlowKgHr, gasExportFlowKgHr, liquidExportFlowKgHr, leakFlowKgHr};
     for (double flow : flows) {
       if (!Double.isFinite(flow) || flow < -1.0e-9) {
         throw new IllegalStateException("all process flows must remain finite and non-negative");

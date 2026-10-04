@@ -175,7 +175,7 @@ class EquipmentValidationTest {
     @DisplayName("Valid splitter passes validation")
     void testValidSplitterPasses() {
       Splitter splitter = new Splitter("TestSplitter", validStream, 2);
-      splitter.setSplitFactors(new double[] { 0.5, 0.5 });
+      splitter.setSplitFactors(new double[] {0.5, 0.5});
       ValidationResult result = splitter.validateSetup();
       assertTrue(result.isValid(), "Valid splitter should pass: " + result.getReport());
     }

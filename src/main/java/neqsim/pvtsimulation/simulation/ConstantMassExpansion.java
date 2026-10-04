@@ -194,7 +194,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       for (int i = 0; i < experimentalData[0].length; i++) {
         CMEFunction function = new CMEFunction();
         double[] guess = new double[] {
-            getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0 };
+            getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0};
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
@@ -203,9 +203,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = { temperature, pressures[i] };
+        double[] sample1 = {temperature, pressures[i]};
         double relativeVolume = experimentalData[0][i];
-        double[] standardDeviation1 = { 1.5 };
+        double[] standardDeviation1 = {1.5};
         SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
@@ -271,9 +271,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     // double a = CMEsim.getSaturationPressure();
 
     CMEsim.setTemperaturesAndPressures(
-        new double[] { 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9 },
-        new double[] { 400, 300.0, 250.0, 200.0, 100.0 });
-    double[][] expData = { { 0.95, 0.99, 1.12, 1.9 } };
+        new double[] {273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9},
+        new double[] {400, 300.0, 250.0, 200.0, 100.0});
+    double[][] expData = {{0.95, 0.99, 1.12, 1.9}};
     CMEsim.setExperimentalData(expData);
     // CMEsim.runTuning();
     CMEsim.runCalc();

@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection;
 import neqsim.process.equipment.stream.Stream;
@@ -66,6 +67,7 @@ public class TwoFluidPipeCondensationTest {
    * </p>
    */
   @Test
+  @Tag("slow")
   public void testCondensationIncreasesHoldup() {
     // Pipeline parameters
     double pipeLength = 70000.0; // m (70 km)
@@ -173,7 +175,7 @@ public class TwoFluidPipeCondensationTest {
     double[] gasVelocityTF = pipeTF.getGasVelocityProfile();
     double[] liquidVelocityTF = pipeTF.getLiquidVelocityProfile();
     logger.info("  Position\tT(C)\t\tP(bara)\t\tVgas(m/s)\tVliq(m/s)\tHoldup(%)");
-    for (int idx : new int[] { 0, 25, 50, 75, last }) {
+    for (int idx : new int[] {0, 25, 50, 75, last}) {
       logger.info("  " + idx + ":\t\t" + String.format("%.1f", temperatureTF[idx] - 273.15) + "\t\t"
           + String.format("%.1f", pressureTF[idx] / 1e5) + "\t\t" + String.format("%.2f", gasVelocityTF[idx]) + "\t\t"
           + String.format("%.4f", liquidVelocityTF[idx]) + "\t\t" + String.format("%.4f", liquidHoldupTF[idx] * 100));
@@ -182,7 +184,7 @@ public class TwoFluidPipeCondensationTest {
     // Calculate and print no-slip holdup (lambdaL) at each position
     logger.info("\nNo-slip holdup calculation:");
     double pipeArea = Math.PI * pipeDiameter * pipeDiameter / 4.0;
-    for (int idx : new int[] { 0, 50, last }) {
+    for (int idx : new int[] {0, 50, last}) {
       // Calculate superficial velocities from actual velocities and holdup
       double alphaL = liquidHoldupTF[idx];
       double alphaG = 1.0 - alphaL;

@@ -17,9 +17,9 @@ You align PaperLab work with external publication windows and themed calls.
 
 ## Loaded Skills
 
-- `paperlab_publication_calendar_scout`
-- `paperlab_journal_positioning`
-- `paperlab_publication_opportunity_mining`
+- `paperlab-publication-calendar-scout`
+- `paperlab-journal-positioning`
+- `paperlab-publication-opportunity-mining`
 
 ## Required Context
 

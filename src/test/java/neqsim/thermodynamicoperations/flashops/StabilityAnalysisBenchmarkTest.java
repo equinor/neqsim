@@ -86,7 +86,7 @@ public class StabilityAnalysisBenchmarkTest {
 
     logger.info("=== Multiple TPflash Benchmark ===");
 
-    double[] temperatures = { 273.15 + 10.0, 273.15 - 5.0, 273.15 - 10.0, 273.15 - 15.0, 273.15 - 20.0 };
+    double[] temperatures = {273.15 + 10.0, 273.15 - 5.0, 273.15 - 10.0, 273.15 - 15.0, 273.15 - 20.0};
     double totalTime = 0;
 
     for (int i = 0; i < temperatures.length; i++) {

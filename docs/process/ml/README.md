@@ -1,245 +1,177 @@
 ---
-title: Machine Learning Integration
-description: This module provides infrastructure for integrating machine learning models with physics-based simulation.
+title: Machine Learning Surrogate Integration
+description: Register bounded surrogate models with validated physics fallback and explicit engineering limits.
 ---
 
-# Machine Learning Integration
+# Machine Learning Surrogate Integration
 
-This module provides infrastructure for integrating machine learning models with physics-based simulation.
+`SurrogateModelRegistry` coordinates fast surrogate predictions with a caller-supplied
+physics fallback. It validates vector shape and numeric values, tracks use outside the
+declared training range, and rejects invalid results. It does not define feature names,
+units, normalization, physical constraints, or model accuracy: the application owns
+those contracts.
 
-## Overview
+## Executable bounded-fallback example
 
-The future of process simulation combines physics rigor with ML efficiency:
+This example uses two inputs in a fixed order:
 
-- **Surrogate Models**: Fast ML approximations of expensive calculations
-- **Physics Constraints**: Ensure ML predictions respect thermodynamic laws
-- **Hybrid Execution**: Seamless switching between physics and ML
-- **Safety Guardrails**: Prevent physically impossible recommendations
+1. temperature in K;
+2. pressure in bara.
 
-## Classes
-
-### SurrogateModelRegistry
-
-Central registry for managing trained ML surrogate models.
-
-#### Key Features
-
-- **Model Caching**: Keep frequently-used models in memory
-- **Automatic Fallback**: Fall back to physics when ML fails
-- **Validity Tracking**: Monitor extrapolation and failure rates
-- **Persistence**: Save/load models to disk
-
-#### Usage Example
+The single output is an illustrative positive screening value. The surrogate is used
+only inside its inclusive training bounds. An out-of-range request is sent to the
+physics callback without running the surrogate.
 
 ```java
-// Get singleton registry
-SurrogateModelRegistry registry = SurrogateModelRegistry.getInstance();
+import java.util.function.Function;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.ml.surrogate.SurrogateModelRegistry;
+import neqsim.process.ml.surrogate.SurrogateModelRegistry.SurrogateMetadata;
+import neqsim.process.ml.surrogate.SurrogateModelRegistry.SurrogateModel;
 
-// Register a surrogate model
-registry.register("flash-separator-1", new SurrogateModel() {
-    @Override
-    public double[] predict(double[] input) {
-        // Neural network inference
-        return neuralNet.forward(input);
-    }
-    
-    @Override
-    public int getInputDimension() { return 5; }
-    
-    @Override
-    public int getOutputDimension() { return 3; }
-});
+public final class SurrogateFallbackExample {
+  private static final Logger logger = LogManager.getLogger(SurrogateFallbackExample.class);
 
-// Use with automatic physics fallback
-double[] result = registry.predictWithFallback(
-    "flash-separator-1",
-    input,
-    physicsModel::calculate  // Fallback function
-);
-```
+  private SurrogateFallbackExample() {}
 
-#### Metadata and Monitoring
-
-```java
-// Register with metadata
-SurrogateMetadata metadata = new SurrogateMetadata();
-metadata.setModelType("neural-network");
-metadata.setTrainingDataSource("simulation-data-2024");
-metadata.setInputBounds(
-    new double[]{0.0, 0.0, 0.0},    // min values
-    new double[]{100.0, 500.0, 1.0} // max values
-);
-
-registry.register("flash-model", model, metadata);
-
-// Check model statistics
-Optional<SurrogateMetadata> stats = registry.getMetadata("flash-model");
-if (stats.isPresent()) {
-    double failureRate = stats.get().getFailureRate();
-    double extrapolationRate = stats.get().getExtrapolationRate();
-}
-```
-
-#### Model Persistence
-
-```java
-// Save model to disk
-registry.saveModel("flash-model", "models/flash_model.ser");
-
-// Load model from disk
-registry.loadModel("flash-model", "models/flash_model.ser");
-```
-
-### PhysicsConstraintValidator
-
-Validates AI-proposed actions against thermodynamic and safety constraints.
-
-#### Key Features
-
-- **Default Physical Bounds**: Temperature > 0, pressure > 0, etc.
-- **Equipment Limits**: Custom limits per equipment
-- **Mass/Energy Balance**: Check conservation laws
-- **Rejection Explanation**: Clear reasons for rejected actions
-
-#### Usage Example
-
-```java
-ProcessSystem process = new ProcessSystem();
-// ... configure process ...
-
-PhysicsConstraintValidator validator = new PhysicsConstraintValidator(process);
-
-// Add equipment-specific limits
-validator.addPressureLimit("separator", 10.0, 80.0, "bara");
-validator.addTemperatureLimit("heater-outlet", 0.0, 300.0, "C");
-validator.addFlowLimit("feed", 0.0, 1000.0, "kg/hr");
-
-// Set tolerances
-validator.setMassBalanceTolerance(0.01);  // 1%
-validator.setEnergyBalanceTolerance(0.05); // 5%
-
-// Validate an AI-proposed action
-Map<String, Double> proposedAction = new HashMap<>();
-proposedAction.put("heater.duty", 5000000.0);
-proposedAction.put("valve.opening", 0.85);
-
-ValidationResult result = validator.validate(proposedAction);
-
-if (result.isValid()) {
-    // Safe to apply action
-    applyAction(proposedAction);
-} else {
-    // Action rejected - explain why
-    System.out.println("Rejected: " + result.getRejectionReason());
-    for (ConstraintViolation v : result.getViolations()) {
-        System.out.println("  - " + v.getMessage());
-    }
-}
-```
-
-#### Default Constraints
-
-The validator includes sensible default constraints:
-
-| Variable Pattern | Min | Max | Reason |
-|------------------|-----|-----|--------|
-| `temperature` | 0 K | ∞ | Absolute zero limit |
-| `pressure` | 0 Pa | ∞ | Physical minimum |
-| `flow` | 0 | ∞ | Non-negative flows |
-| `valve.opening` | 0 | 1 | Percentage bounds |
-
-#### Validation Modes
-
-```java
-// Enable/disable specific checks
-validator.setEnforceMassBalance(true);
-validator.setEnforceEnergyBalance(true);
-validator.setEnforcePhysicalBounds(true);
-
-// Validate current state (not a proposed action)
-ValidationResult currentState = validator.validateCurrentState();
-```
-
-## Integration Patterns
-
-### Hybrid Physics-ML Execution
-
-```java
-// Decision logic for using surrogate vs physics
-public double[] calculate(double[] input) {
+  public static void main(String[] args) {
     SurrogateModelRegistry registry = SurrogateModelRegistry.getInstance();
-    
-    // Check if surrogate is suitable
-    Optional<SurrogateMetadata> meta = registry.getMetadata("my-model");
-    if (meta.isPresent() && meta.get().isInputValid(input)) {
-        // Use surrogate with physics fallback
-        return registry.predictWithFallback(
-            "my-model", 
-            input, 
-            this::physicsCalculation
-        );
-    } else {
-        // Use physics directly
-        return physicsCalculation(input);
-    }
+    registry.clear();
+    registry.setEnableFallback(true);
+
+    SurrogateMetadata metadata = new SurrogateMetadata();
+    metadata.setModelType("bounded-screening-example");
+    metadata.setTrainingDataSource("illustrative-generated-data");
+    metadata.setInputBounds(new double[] {250.0, 1.0}, new double[] {400.0, 100.0});
+
+    SurrogateModel surrogate = new SurrogateModel() {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public double[] predict(double[] input) {
+        double pressureBara = input[1];
+        return new double[] {0.96 * pressureBara};
+      }
+
+      @Override
+      public int getInputDimension() {
+        return 2;
+      }
+
+      @Override
+      public int getOutputDimension() {
+        return 1;
+      }
+    };
+
+    String modelId = "bounded-pressure-screen";
+    registry.register(modelId, surrogate, metadata);
+
+    Function<double[], double[]> physicsFallback = input -> {
+      double pressureBara = input[1];
+      return new double[] {1.02 * pressureBara};
+    };
+
+    double[] surrogateResult =
+        registry.predictWithFallback(modelId, new double[] {320.0, 50.0}, physicsFallback);
+    double[] fallbackResult =
+        registry.predictWithFallback(modelId, new double[] {320.0, 120.0}, physicsFallback);
+
+    assert surrogateResult.length == 1;
+    assert Double.isFinite(surrogateResult[0]);
+    assert surrogateResult[0] > 0.0;
+    assert Math.abs(surrogateResult[0] - 48.0) < 1.0e-12;
+
+    assert fallbackResult.length == 1;
+    assert Double.isFinite(fallbackResult[0]);
+    assert fallbackResult[0] > 0.0;
+    assert Math.abs(fallbackResult[0] - 122.4) < 1.0e-12;
+
+    SurrogateMetadata statistics = registry.getMetadata(modelId).orElseThrow(
+        () -> new IllegalStateException("Registered model metadata is missing"));
+    assert statistics.getPredictionCount() == 1;
+    assert statistics.getFailureCount() == 0;
+    assert Math.abs(statistics.getFailureRate()) < 1.0e-12;
+    assert Math.abs(statistics.getExtrapolationRate() - 0.5) < 1.0e-12;
+
+    logger.info("Validated surrogate and fallback results for {}", modelId);
+    registry.unregister(modelId);
+  }
 }
 ```
 
-### Reinforcement Learning Safety
+Run documentation examples with assertions enabled. The repository documentation
+contract compiles this exact fence for Java 8 source compatibility and invokes it with
+assertions enabled.
 
-```java
-// RL agent proposes action
-Map<String, Double> rlAction = agent.proposeAction(state);
+## Request and result contract
 
-// Validate before execution
-ValidationResult result = validator.validate(rlAction);
-if (!result.isValid()) {
-    // Penalize agent for invalid action
-    agent.recordPenalty(rlAction, result.getViolations());
-    
-    // Use safe fallback action
-    rlAction = getSafeDefaultAction();
-}
+Declare positive input and output dimensions whenever they are known.
+`-1` means unknown; zero and values below `-1` are rejected. If metadata bounds
+are present, their dimension must agree with the model input dimension.
 
-// Execute validated action
-executeAction(rlAction);
-```
+`setInputBounds(min, max)` copies nonempty arrays of equal length. Every entry must
+be finite and each minimum must be less than or equal to its maximum. Bounds are
+inclusive. Leave bounds unset for an unbounded numerical range; infinity is not a
+supported bound convention.
 
-### Surrogate Model Training Pipeline
+Each `predictWithFallback` request behaves as follows:
 
-```java
-// 1. Generate training data using physics
-List<double[]> inputs = generateInputSamples();
-List<double[]> outputs = new ArrayList<>();
-for (double[] input : inputs) {
-    outputs.add(physicsModel.calculate(input));
-}
+| Condition | Behavior |
+| --- | --- |
+| Null, empty, nonfinite, or wrong-length input | Throws `IllegalArgumentException` before either callback; counters are unchanged. |
+| Well-formed input inside the bounds | Runs the surrogate and validates its result. |
+| Well-formed input outside the bounds | Records extrapolation and runs physics without calling the surrogate. |
+| Missing model | Runs physics; no model counters exist. |
+| Surrogate throws or returns null, empty, nonfinite, or wrong-length output | Records one surrogate failure, then runs physics. |
+| Physics throws or returns an invalid output | Throws `IllegalStateException` and preserves available causes. |
+| Fallback is required but disabled or absent | Throws `IllegalStateException`; the registry does not extrapolate the surrogate. |
 
-// 2. Train ML model (external tool)
-// ... Python/TensorFlow/PyTorch training ...
+Both callbacks receive independent copies of the request vector. A failed surrogate
+therefore cannot corrupt the caller's input or the physics request.
 
-// 3. Register trained model
-SurrogateModel trained = loadTrainedModel("model.onnx");
-SurrogateMetadata meta = new SurrogateMetadata();
-meta.setInputBounds(getMinBounds(inputs), getMaxBounds(inputs));
-meta.setTrainingDataSource("neqsim-generated-2024");
+## Monitoring semantics
 
-registry.register("trained-model", trained, meta);
+For registered models:
 
-// 4. Monitor in production
-// Fallback rate, extrapolation rate tracked automatically
-```
+- `getPredictionCount()` counts accepted surrogate results only.
+- `getFailureCount()` counts surrogate exceptions or rejected surrogate results.
+- `getFailureRate()` divides failures by completed surrogate attempts.
+- `getExtrapolationRate()` divides out-of-range requests by all well-formed requests
+  to the registered model.
+- `getLastUsed()` is updated after an accepted surrogate prediction.
 
-## Best Practices
+Record feature names, order, units, normalization, training-data revision, model
+revision, physics-fallback revision, and acceptance thresholds outside the numeric
+vectors. The registry cannot infer them.
 
-1. **Fallback Strategy**: Always provide physics fallback for ML models
-2. **Input Validation**: Check inputs are within training range
-3. **Constraint Checking**: Validate all AI actions before execution
-4. **Monitoring**: Track failure and extrapolation rates
-5. **Versioning**: Version both ML models and physics models together
+## Persistence boundary
 
-## Related Documentation
+`saveModel(modelId, path)` serializes the registered model and metadata;
+`loadModel(modelId, path)` validates the restored schema before registration.
+Only load trusted files. Java serialization is not a portable exchange format and
+must not be used with untrusted input. A loaded model still requires the same
+external feature, unit, provenance, and physical-validation contract.
 
-- [Advisory Systems](../advisory/) - Use predictions for operator guidance
-- [Batch Studies](../optimization/) - Generate training data efficiently
-- [AI Platform Integration](../../integration/ai_platform_integration) - External ML platform integration
+## Engineering boundary
+
+Finite values, matching dimensions, training-range membership, and a successful
+fallback establish software-contract validity only. They do not prove:
+
+- thermodynamic consistency or phase stability;
+- mass or energy conservation;
+- prediction accuracy or uncertainty;
+- suitability for extrapolation, control, optimization, or safety decisions;
+- equipment limits, operating envelopes, or regulatory compliance.
+
+Apply independent physical checks to both surrogate and physics results. Keep the
+physics route directly testable, monitor drift and fallback rates, version the
+surrogate with its data and feature contract, and require accountable engineering
+review before operational use.
+
+## Related documentation
+
+- [AI validation framework](../../integration/ai_validation_framework)
+- [Digital-twin integration](../digital-twin-integration)
+- [Batch studies and optimization](../optimization/)

@@ -102,6 +102,9 @@ public final class GeneralCapabilityRunner {
     try {
       JsonObject request = JsonParser.parseString(json).getAsJsonObject();
       String action = requiredString(request, "action");
+      if ("coverage".equalsIgnoreCase(action)) {
+        return EngineeringCoverageCatalog.query(request).toString();
+      }
       if ("search".equalsIgnoreCase(action)) {
         return search(requiredString(request, "query"), optionalInt(request, "limit", DEFAULT_RESULT_LIMIT));
       }
@@ -299,7 +302,7 @@ public final class GeneralCapabilityRunner {
    * @param targetType target Java class
    * @return converted value
    */
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static Object convertArgument(JsonElement value, Class<?> targetType) {
     if (value == null || value.isJsonNull()) {
       if (targetType.isPrimitive()) {

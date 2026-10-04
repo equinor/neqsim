@@ -48,6 +48,9 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Check Phase 0 documentation accounting
+        run: python neqsim-mcp-server/test_phase0_documentation.py
+
       - name: Install exact NeqSim core without tests
         run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
 
@@ -90,11 +93,32 @@ jobs:
       - name: Run focused bounded risk-matrix Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.RiskMatrixRunnerTest test -ntp
 
+      - name: Run focused bounded LOPA Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.LOPARunnerTest test -ntp
+
       - name: Run focused pre-flight validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
 
       - name: Run focused result-validator Java contract
         run: mvn -B -Dtest=neqsim.mcp.runners.EngineeringValidatorTest test -ntp
+
+      - name: Run focused process-comparison Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.ProcessComparisonRunnerTest test -ntp
+
+      - name: Run focused bounded operational-study Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.OperationalStudyRunnerTest test -ntp
+
+      - name: Run focused HAZOP-scenario Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.HazopScenarioRunnerTest test -ntp
+
+      - name: Run focused safety-system-performance Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.SafetySystemPerformanceRunnerTest test -ntp
+
+      - name: Run focused open-drain-review Java contract
+        run: mvn -B -Dtest=neqsim.mcp.runners.OpenDrainReviewRunnerTest test -ntp
+
+      - name: Run focused NORSOK S-001 Clause 10 review Java contracts
+        run: mvn -B -Dtest=neqsim.mcp.runners.NorsokS001Clause10ReviewRunnerTest,neqsim.process.safety.processsafetysystem.ProcessSafetySystemReviewEngineTest test -ntp
 
       - name: Run focused reporting Java contracts
         run: mvn -B -Dtest=neqsim.mcp.runners.ReportRunnerTest test -ntp
@@ -130,6 +154,30 @@ jobs:
       - name: Run focused real-MCP adjustable-parameter qualification
         run: cd neqsim-mcp-server && python test_adjustable_parameters_protocol.py
 
+      - name: Run focused real-MCP process-loop qualification
+        run: cd neqsim-mcp-server && python test_process_loop_protocol.py
+
+      - name: Run focused real-MCP utility-design qualification
+        run: cd neqsim-mcp-server && python test_utility_design_protocol.py
+
+      - name: Run focused real-MCP chemistry qualification
+        run: cd neqsim-mcp-server && python test_chemistry_protocol.py
+
+      - name: Run focused real-MCP flare-radiation qualification
+        run: cd neqsim-mcp-server && python test_flare_radiation_protocol.py
+
+      - name: Run focused real-MCP HAZOP-scenario qualification
+        run: cd neqsim-mcp-server && python test_hazop_scenario_protocol.py
+
+      - name: Run focused real-MCP safety-system-performance qualification
+        run: cd neqsim-mcp-server && python test_safety_system_performance_protocol.py
+
+      - name: Run focused real-MCP open-drain-review qualification
+        run: cd neqsim-mcp-server && python test_open_drain_review_protocol.py
+
+      - name: Run focused real-MCP NORSOK S-001 Clause 10 review qualification
+        run: cd neqsim-mcp-server && python test_norsok_s001_clause10_review_protocol.py
+
       - name: Run focused real-MCP simulation-variable mutation qualification
         run: cd neqsim-mcp-server && python test_simulation_variable_write_protocol.py
 
@@ -159,6 +207,21 @@ jobs:
 
       - name: Run focused real-MCP bounded risk-matrix qualification
         run: cd neqsim-mcp-server && python test_risk_matrix_protocol.py
+
+      - name: Run focused real-MCP bounded LOPA qualification
+        run: cd neqsim-mcp-server && python test_lopa_protocol.py
+
+      - name: Run focused real-MCP bounded SIL qualification
+        run: cd neqsim-mcp-server && python test_sil_protocol.py
+
+      - name: Run focused real-MCP process-comparison qualification
+        run: cd neqsim-mcp-server && python test_process_comparison_protocol.py
+
+      - name: Run focused real-MCP barrier-register qualification
+        run: cd neqsim-mcp-server && python test_barrier_register_protocol.py
+
+      - name: Run focused real-MCP operational-study qualification
+        run: cd neqsim-mcp-server && python test_operational_study_protocol.py
 
       - name: Run focused real-MCP pre-flight validation qualification
         run: cd neqsim-mcp-server && python test_validate_input_protocol.py

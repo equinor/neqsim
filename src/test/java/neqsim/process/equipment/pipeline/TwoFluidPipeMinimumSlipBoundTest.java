@@ -79,9 +79,10 @@ class TwoFluidPipeMinimumSlipBoundTest {
   /**
    * Runs a level, liquid-rich line, where the bound applies because the section is not downhill.
    *
+   * @param slugUnitClosure whether the slug-unit closure is selected
    * @return the pipe after it has been run
    */
-  private TwoFluidPipe runLiquidRichLine() {
+  private TwoFluidPipe runLiquidRichLine(boolean slugUnitClosure) {
     Stream stream = new Stream("feed", buildFluid());
     stream.setFlowRate(MASS_FLOW, "kg/hr");
     stream.setPressure(INLET_PRESSURE, "bara");
@@ -94,8 +95,27 @@ class TwoFluidPipeMinimumSlipBoundTest {
     pipe.setRoughness(ROUGHNESS);
     pipe.setNumberOfSections(SECTIONS);
     pipe.setElevationProfile(new double[SECTIONS + 1]);
+    pipe.setSlugUnitClosureEnabled(slugUnitClosure);
     pipe.run();
     return pipe;
+  }
+
+  /**
+   * A slug unit carries its own slip and is exempt from the floor, but it must never let the liquid outrun the gas.
+   */
+  @Test
+  @DisplayName("The slug-unit holdup keeps the gas at least as fast as the liquid")
+  void testSlugUnitHoldupHasPhysicalSlip() {
+    TwoFluidPipe pipe = runLiquidRichLine(true);
+    Assertions.assertTrue(pipe.isSteadyStateConverged(), "the liquid-rich line must converge");
+    double[] holdup = pipe.getLiquidHoldupProfile();
+    double[] gasVelocity = pipe.getGasVelocityProfile();
+    double[] liquidVelocity = pipe.getLiquidVelocityProfile();
+    for (int i = 0; i < holdup.length; i++) {
+      Assertions.assertTrue(holdup[i] < HOLDUP_CLAMP, "section " + i + " sits at the hold-up clamp");
+      Assertions.assertTrue(gasVelocity[i] >= liquidVelocity[i] - 1.0e-9,
+          "section " + i + " has the liquid outrunning the gas");
+    }
   }
 
   /**
@@ -104,7 +124,7 @@ class TwoFluidPipeMinimumSlipBoundTest {
   @Test
   @DisplayName("The minimum-slip bound must not degenerate into the hold-up clamp on a liquid-rich line")
   void testBoundStaysASlipStatementAtHighLiquidLoading() {
-    TwoFluidPipe pipe = runLiquidRichLine();
+    TwoFluidPipe pipe = runLiquidRichLine(false);
     Assertions.assertTrue(pipe.isSteadyStateConverged(), "the liquid-rich line must converge");
 
     double[] holdup = pipe.getLiquidHoldupProfile();

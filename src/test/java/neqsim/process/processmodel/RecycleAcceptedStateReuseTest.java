@@ -68,7 +68,7 @@ class RecycleAcceptedStateReuseTest {
 
     Separator separator = new Separator("separator", mixer.getOutletStream());
     Splitter splitter = new Splitter("splitter", separator.getGasOutStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.2, 0.8 });
+    splitter.setSplitFactors(new double[] {0.2, 0.8});
 
     Recycle recycle = new Recycle("recycle");
     recycle.addStream(splitter.getSplitStream(1));
@@ -178,7 +178,7 @@ class RecycleAcceptedStateReuseTest {
     long splitterCalls = calls(fixture.process, "splitter");
     long recycleCalls = calls(fixture.process, "recycle");
 
-    fixture.splitter.setFlowRates(new double[] { 50000.0, 0.0 }, "kg/hr");
+    fixture.splitter.setFlowRates(new double[] {50000.0, 0.0}, "kg/hr");
     run(fixture, ExecutionMode.SEQUENTIAL, UUID.randomUUID());
 
     assertEquals(2L, calls(fixture.process, "mixer") - mixerCalls);

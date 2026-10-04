@@ -11,7 +11,8 @@ import java.util.List;
  * <p>
  * The projection multiplies the existing molality-basis mean total-sulfide loss rates and reacted molalities by a
  * caller-supplied liquid-water inventory. It does not derive water holdup, assign reaction products, consume oxygen, or
- * mutate a process or thermodynamic system.
+ * mutate a process or thermodynamic system. Product-agnostic sulfur-equivalent mass views use the shared sulfur atomic
+ * molar mass from {@link IronSulfideWallInventory}; they are elemental bookkeeping, not an elemental-sulfur yield.
  * </p>
  *
  * @author esol
@@ -108,6 +109,107 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
             "Upper-rate trajectory closure residual"));
   }
 
+  /**
+   * Locate when an absolute remaining total-sulfide target is reached at constant water inventory.
+   *
+   * <p>
+   * The dimensional threshold is converted to a remaining fraction and delegated to the existing piecewise analytical
+   * crossing calculation. No product identity, oxygen demand, or process source term is inferred.
+   * </p>
+   *
+   * @param initialTotalSulfideMolality initial total-sulfide molality [mol/kg water]
+   * @param targetRemainingMoles requested remaining total sulfide [mol]
+   * @param waterInventoryKg constant liquid-water inventory [kg]
+   * @param segments non-empty ordered exposure segments
+   * @return immutable dimensional threshold and piecewise crossing evidence
+   * @throws IllegalArgumentException when inputs are outside the source or numerical domain, the target exceeds the
+   * initial dimensional inventory, or every fit-scatter path cannot reach the target
+   */
+  public static RemainingMolesTargetResult timeToRemainingMolesRange(double initialTotalSulfideMolality,
+      double targetRemainingMoles, double waterInventoryKg,
+      List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments) {
+    if (!Double.isFinite(initialTotalSulfideMolality)
+        || initialTotalSulfideMolality < AqueousHydrogenSulfideOxidationTrajectory.MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY
+        || initialTotalSulfideMolality > AqueousHydrogenSulfideOxidationTrajectory.MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY) {
+      throw new IllegalArgumentException("Initial total-sulfide molality must be within the source experiment range");
+    }
+    requirePositiveFinite(waterInventoryKg, "Water inventory");
+
+    double initialTotalSulfideMoles = finiteProduct(initialTotalSulfideMolality, waterInventoryKg,
+        "Initial total sulfide");
+    if (!Double.isFinite(targetRemainingMoles) || targetRemainingMoles <= 0.0
+        || targetRemainingMoles > initialTotalSulfideMoles) {
+      throw new IllegalArgumentException(
+          "Target remaining total sulfide must be finite, positive, and no greater than the initial inventory");
+    }
+
+    double targetReactedMoles = finiteDifference(initialTotalSulfideMoles, targetRemainingMoles,
+        "Target reacted total sulfide");
+    if (targetRemainingMoles < initialTotalSulfideMoles && targetReactedMoles == 0.0) {
+      throw new IllegalArgumentException(
+          "Target remaining total sulfide cannot be represented at this inventory scale");
+    }
+    double targetRemainingFraction = targetRemainingMoles / initialTotalSulfideMoles;
+    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0 || targetRemainingFraction > 1.0) {
+      throw new IllegalArgumentException("Target remaining fraction must be finite and in the interval (0, 1]");
+    }
+
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(targetRemainingFraction, segments);
+    return new RemainingMolesTargetResult(initialTotalSulfideMolality, waterInventoryKg, initialTotalSulfideMoles,
+        targetRemainingMoles, targetReactedMoles, targetRemainingFraction, crossingRange);
+  }
+
+  /**
+   * Locate when an absolute reacted total-sulfide target is reached at constant water inventory.
+   *
+   * <p>
+   * The dimensional target is converted to a remaining fraction and delegated to the existing piecewise analytical
+   * crossing calculation. No product identity, oxygen demand, or process source term is inferred.
+   * </p>
+   *
+   * @param initialTotalSulfideMolality initial total-sulfide molality [mol/kg water]
+   * @param targetReactedMoles requested reacted total sulfide [mol]
+   * @param waterInventoryKg constant liquid-water inventory [kg]
+   * @param segments non-empty ordered exposure segments
+   * @return immutable dimensional target and piecewise crossing evidence
+   * @throws IllegalArgumentException when inputs are outside the source or numerical domain, the target is not less
+   * than the initial dimensional inventory, or every fit-scatter path cannot reach the target
+   */
+  public static ReactedMolesTargetResult timeToReactedMolesRange(double initialTotalSulfideMolality,
+      double targetReactedMoles, double waterInventoryKg,
+      List<AqueousHydrogenSulfideOxidationTrajectory.Segment> segments) {
+    if (!Double.isFinite(initialTotalSulfideMolality)
+        || initialTotalSulfideMolality < AqueousHydrogenSulfideOxidationTrajectory.MINIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY
+        || initialTotalSulfideMolality > AqueousHydrogenSulfideOxidationTrajectory.MAXIMUM_INITIAL_TOTAL_SULFIDE_MOLALITY) {
+      throw new IllegalArgumentException("Initial total-sulfide molality must be within the source experiment range");
+    }
+    requirePositiveFinite(waterInventoryKg, "Water inventory");
+
+    double initialTotalSulfideMoles = finiteProduct(initialTotalSulfideMolality, waterInventoryKg,
+        "Initial total sulfide");
+    if (!Double.isFinite(targetReactedMoles) || targetReactedMoles < 0.0
+        || targetReactedMoles >= initialTotalSulfideMoles) {
+      throw new IllegalArgumentException(
+          "Target reacted total sulfide must be finite, non-negative, and less than the initial inventory");
+    }
+
+    double targetRemainingMoles = finiteDifference(initialTotalSulfideMoles, targetReactedMoles,
+        "Target remaining total sulfide");
+    if (targetRemainingMoles <= 0.0 || (targetReactedMoles > 0.0 && targetRemainingMoles == initialTotalSulfideMoles)) {
+      throw new IllegalArgumentException("Target reacted total sulfide cannot be represented at this inventory scale");
+    }
+    double targetRemainingFraction = targetRemainingMoles / initialTotalSulfideMoles;
+    if (!Double.isFinite(targetRemainingFraction) || targetRemainingFraction <= 0.0 || targetRemainingFraction > 1.0) {
+      throw new IllegalArgumentException("Target remaining fraction must be finite and in the interval (0, 1]");
+    }
+
+    AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange = AqueousHydrogenSulfideOxidationTrajectory
+        .timeToRemainingFractionRange(targetRemainingFraction, segments);
+    return new ReactedMolesTargetResult(initialTotalSulfideMolality, waterInventoryKg, initialTotalSulfideMoles,
+        targetReactedMoles, targetRemainingMoles, targetRemainingFraction, crossingRange);
+  }
+
   private static void requirePositiveFinite(double value, String name) {
     if (!Double.isFinite(value) || value <= 0.0) {
       throw new IllegalArgumentException(name + " must be finite and positive");
@@ -136,6 +238,137 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
       throw new IllegalArgumentException(name + " is not finite");
     }
     return difference;
+  }
+
+  private static double sulfurEquivalentMassKg(double sulfurAtomMoles, String name) {
+    double mass = sulfurAtomMoles * IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL;
+    if (!Double.isFinite(mass)
+        || (sulfurAtomMoles != 0.0 && IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL != 0.0 && mass == 0.0)) {
+      throw new IllegalArgumentException(name + " is not finite or representable");
+    }
+    return mass;
+  }
+
+  /** Immutable dimensional remaining-moles target and piecewise crossing evidence. */
+  public static final class RemainingMolesTargetResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double initialTotalSulfideMolality;
+    private final double waterInventoryKg;
+    private final double initialTotalSulfideMoles;
+    private final double targetRemainingMoles;
+    private final double targetReactedMoles;
+    private final double targetRemainingFraction;
+    private final AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange;
+
+    private RemainingMolesTargetResult(double initialTotalSulfideMolality, double waterInventoryKg,
+        double initialTotalSulfideMoles, double targetRemainingMoles, double targetReactedMoles,
+        double targetRemainingFraction,
+        AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange) {
+      this.initialTotalSulfideMolality = initialTotalSulfideMolality;
+      this.waterInventoryKg = waterInventoryKg;
+      this.initialTotalSulfideMoles = initialTotalSulfideMoles;
+      this.targetRemainingMoles = targetRemainingMoles;
+      this.targetReactedMoles = targetReactedMoles;
+      this.targetRemainingFraction = targetRemainingFraction;
+      this.crossingRange = crossingRange;
+    }
+
+    /** @return initial total-sulfide molality [mol/kg water]. */
+    public double getInitialTotalSulfideMolality() {
+      return initialTotalSulfideMolality;
+    }
+
+    /** @return caller-supplied constant liquid-water inventory [kg]. */
+    public double getWaterInventoryKg() {
+      return waterInventoryKg;
+    }
+
+    /** @return initial total-sulfide inventory [mol]. */
+    public double getInitialTotalSulfideMoles() {
+      return initialTotalSulfideMoles;
+    }
+
+    /** @return requested remaining total sulfide [mol]. */
+    public double getTargetRemainingMoles() {
+      return targetRemainingMoles;
+    }
+
+    /** @return reacted total sulfide at the requested target [mol]. */
+    public double getTargetReactedMoles() {
+      return targetReactedMoles;
+    }
+
+    /** @return remaining fraction corresponding to the requested dimensional threshold. */
+    public double getTargetRemainingFraction() {
+      return targetRemainingFraction;
+    }
+
+    /** @return immutable lower, nominal, and upper piecewise crossing evidence. */
+    public AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult getCrossingRange() {
+      return crossingRange;
+    }
+  }
+
+  /** Immutable dimensional reacted-moles target and piecewise crossing evidence. */
+  public static final class ReactedMolesTargetResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final double initialTotalSulfideMolality;
+    private final double waterInventoryKg;
+    private final double initialTotalSulfideMoles;
+    private final double targetReactedMoles;
+    private final double targetRemainingMoles;
+    private final double targetRemainingFraction;
+    private final AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange;
+
+    private ReactedMolesTargetResult(double initialTotalSulfideMolality, double waterInventoryKg,
+        double initialTotalSulfideMoles, double targetReactedMoles, double targetRemainingMoles,
+        double targetRemainingFraction,
+        AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult crossingRange) {
+      this.initialTotalSulfideMolality = initialTotalSulfideMolality;
+      this.waterInventoryKg = waterInventoryKg;
+      this.initialTotalSulfideMoles = initialTotalSulfideMoles;
+      this.targetReactedMoles = targetReactedMoles;
+      this.targetRemainingMoles = targetRemainingMoles;
+      this.targetRemainingFraction = targetRemainingFraction;
+      this.crossingRange = crossingRange;
+    }
+
+    /** @return initial total-sulfide molality [mol/kg water]. */
+    public double getInitialTotalSulfideMolality() {
+      return initialTotalSulfideMolality;
+    }
+
+    /** @return caller-supplied constant liquid-water inventory [kg]. */
+    public double getWaterInventoryKg() {
+      return waterInventoryKg;
+    }
+
+    /** @return initial total-sulfide inventory [mol]. */
+    public double getInitialTotalSulfideMoles() {
+      return initialTotalSulfideMoles;
+    }
+
+    /** @return requested reacted total sulfide [mol]. */
+    public double getTargetReactedMoles() {
+      return targetReactedMoles;
+    }
+
+    /** @return remaining total sulfide at the requested target [mol]. */
+    public double getTargetRemainingMoles() {
+      return targetRemainingMoles;
+    }
+
+    /** @return remaining fraction corresponding to the requested dimensional target. */
+    public double getTargetRemainingFraction() {
+      return targetRemainingFraction;
+    }
+
+    /** @return immutable lower, nominal, and upper piecewise crossing evidence. */
+    public AqueousHydrogenSulfideOxidationTrajectory.TargetCrossingRangeResult getCrossingRange() {
+      return crossingRange;
+    }
   }
 
   /** Immutable dimensional projection for one constant-water trajectory. */
@@ -197,6 +430,29 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
       return upperRateReactedMoles;
     }
 
+    /**
+     * Return cumulative lower-rate sulfur-equivalent loss.
+     *
+     * <p>
+     * This is sulfur-atom accounting, not an S8 or other product yield.
+     * </p>
+     *
+     * @return cumulative lower-rate reacted sulfur equivalent [kg S-equivalent]
+     */
+    public double getLowerRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(lowerRateReactedMoles, "Lower-rate reacted sulfur-equivalent mass");
+    }
+
+    /** @return cumulative nominal reacted sulfur equivalent [kg S-equivalent]. */
+    public double getNominalReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(nominalReactedMoles, "Nominal reacted sulfur-equivalent mass");
+    }
+
+    /** @return cumulative upper-rate reacted sulfur equivalent [kg S-equivalent]. */
+    public double getUpperRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(upperRateReactedMoles, "Upper-rate reacted sulfur-equivalent mass");
+    }
+
     /** @return lower-rate constant-water inventory closure residual [mol]. */
     public double getLowerRateClosureResidualMoles() {
       return lowerRateClosureResidualMoles;
@@ -210,6 +466,24 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     /** @return upper-rate constant-water inventory closure residual [mol]. */
     public double getUpperRateClosureResidualMoles() {
       return upperRateClosureResidualMoles;
+    }
+
+    /** @return lower-rate sulfur-equivalent trajectory closure residual [kg S-equivalent]. */
+    public double getLowerRateSulfurEquivalentClosureResidualKg() {
+      return sulfurEquivalentMassKg(lowerRateClosureResidualMoles,
+          "Lower-rate sulfur-equivalent trajectory closure residual");
+    }
+
+    /** @return nominal sulfur-equivalent trajectory closure residual [kg S-equivalent]. */
+    public double getNominalSulfurEquivalentClosureResidualKg() {
+      return sulfurEquivalentMassKg(nominalClosureResidualMoles,
+          "Nominal sulfur-equivalent trajectory closure residual");
+    }
+
+    /** @return upper-rate sulfur-equivalent trajectory closure residual [kg S-equivalent]. */
+    public double getUpperRateSulfurEquivalentClosureResidualKg() {
+      return sulfurEquivalentMassKg(upperRateClosureResidualMoles,
+          "Upper-rate sulfur-equivalent trajectory closure residual");
     }
   }
 
@@ -286,6 +560,44 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
       return upperRateMeanLossMolesPerHour / SECONDS_PER_HOUR;
     }
 
+    /**
+     * Return the lower-rate mean sulfur-equivalent loss rate.
+     *
+     * <p>
+     * This is sulfur-atom accounting, not an S8 or other product rate.
+     * </p>
+     *
+     * @return lower-rate mean sulfur-equivalent loss [kg S-equivalent/h]
+     */
+    public double getLowerRateMeanSulfurEquivalentMassRateKgPerHour() {
+      return sulfurEquivalentMassKg(lowerRateMeanLossMolesPerHour, "Lower-rate mean sulfur-equivalent loss rate");
+    }
+
+    /** @return nominal mean sulfur-equivalent loss [kg S-equivalent/h]. */
+    public double getNominalMeanSulfurEquivalentMassRateKgPerHour() {
+      return sulfurEquivalentMassKg(nominalMeanLossMolesPerHour, "Nominal mean sulfur-equivalent loss rate");
+    }
+
+    /** @return upper-rate mean sulfur-equivalent loss [kg S-equivalent/h]. */
+    public double getUpperRateMeanSulfurEquivalentMassRateKgPerHour() {
+      return sulfurEquivalentMassKg(upperRateMeanLossMolesPerHour, "Upper-rate mean sulfur-equivalent loss rate");
+    }
+
+    /** @return lower-rate mean sulfur-equivalent loss [kg S-equivalent/s]. */
+    public double getLowerRateMeanSulfurEquivalentMassRateKgPerSecond() {
+      return getLowerRateMeanSulfurEquivalentMassRateKgPerHour() / SECONDS_PER_HOUR;
+    }
+
+    /** @return nominal mean sulfur-equivalent loss [kg S-equivalent/s]. */
+    public double getNominalMeanSulfurEquivalentMassRateKgPerSecond() {
+      return getNominalMeanSulfurEquivalentMassRateKgPerHour() / SECONDS_PER_HOUR;
+    }
+
+    /** @return upper-rate mean sulfur-equivalent loss [kg S-equivalent/s]. */
+    public double getUpperRateMeanSulfurEquivalentMassRateKgPerSecond() {
+      return getUpperRateMeanSulfurEquivalentMassRateKgPerHour() / SECONDS_PER_HOUR;
+    }
+
     /** @return reacted total sulfide for the lower-rate path [mol]. */
     public double getLowerRateReactedMoles() {
       return lowerRateReactedMoles;
@@ -299,6 +611,21 @@ public final class AqueousHydrogenSulfideOxidationWaterInventoryProjection {
     /** @return reacted total sulfide for the upper-rate path [mol]. */
     public double getUpperRateReactedMoles() {
       return upperRateReactedMoles;
+    }
+
+    /** @return lower-rate reacted sulfur equivalent [kg S-equivalent]. */
+    public double getLowerRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(lowerRateReactedMoles, "Lower-rate reacted sulfur-equivalent mass");
+    }
+
+    /** @return nominal reacted sulfur equivalent [kg S-equivalent]. */
+    public double getNominalReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(nominalReactedMoles, "Nominal reacted sulfur-equivalent mass");
+    }
+
+    /** @return upper-rate reacted sulfur equivalent [kg S-equivalent]. */
+    public double getUpperRateReactedSulfurEquivalentMassKg() {
+      return sulfurEquivalentMassKg(upperRateReactedMoles, "Upper-rate reacted sulfur-equivalent mass");
     }
   }
 }

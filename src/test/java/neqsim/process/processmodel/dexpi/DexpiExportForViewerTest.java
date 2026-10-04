@@ -59,7 +59,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     gasComp.setOutletPressure(120.0);
 
     Cooler aftercooler = new Cooler("E-101 Aftercooler", gasComp.getOutletStream());
-    aftercooler.setOutTemperature(273.15 + 40.0);
+    aftercooler.setOutletTemperature(273.15 + 40.0);
 
     Separator scrubber = new Separator("V-102 Scrubber", aftercooler.getOutletStream());
 
@@ -67,7 +67,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     liqValve.setOutletPressure(10.0);
 
     Heater oilHeater = new Heater("E-102 Oil Heater", liqValve.getOutletStream());
-    oilHeater.setOutTemperature(273.15 + 60.0);
+    oilHeater.setOutletTemperature(273.15 + 60.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -105,7 +105,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     stage1.setOutletPressure(20.0);
 
     Cooler ic1 = new Cooler("E-201 Intercooler", stage1.getOutletStream());
-    ic1.setOutTemperature(273.15 + 35.0);
+    ic1.setOutletTemperature(273.15 + 35.0);
 
     Separator knockOut1 = new Separator("V-201 KO Drum", ic1.getOutletStream());
 
@@ -113,7 +113,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     stage2.setOutletPressure(80.0);
 
     Cooler ac = new Cooler("E-202 Aftercooler", stage2.getOutletStream());
-    ac.setOutTemperature(273.15 + 40.0);
+    ac.setOutletTemperature(273.15 + 40.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -171,7 +171,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     compressor.setOutletPressure(120.0);
 
     Cooler aftercooler = new Cooler("E-101 Aftercooler", compressor.getOutletStream());
-    aftercooler.setOutTemperature(273.15 + 40.0);
+    aftercooler.setOutletTemperature(273.15 + 40.0);
 
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
@@ -228,7 +228,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     gasComp.setOutletPressure(130.0);
 
     Cooler aftercooler = new Cooler("E-101 Aftercooler", gasComp.getOutletStream());
-    aftercooler.setOutTemperature(273.15 + 40.0);
+    aftercooler.setOutletTemperature(273.15 + 40.0);
 
     Separator scrubber = new Separator("V-102 Scrubber", aftercooler.getOutletStream());
 
@@ -236,7 +236,7 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     liqValve.setOutletPressure(10.0);
 
     Heater oilHeater = new Heater("E-102 Oil Heater", liqValve.getOutletStream());
-    oilHeater.setOutTemperature(273.15 + 65.0);
+    oilHeater.setOutletTemperature(273.15 + 65.0);
 
     ProcessSystem process = new ProcessSystem("Gas Processing Plant - PID-001");
     process.add(feed);

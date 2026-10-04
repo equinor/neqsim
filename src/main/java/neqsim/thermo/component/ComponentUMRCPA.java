@@ -103,10 +103,19 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
     // physical PR term is consistent with the association term. Pure-component critical
     // properties, association energy/volume, scheme and the aCPA_PR/bCPA_PR/mCPA_PR parameters
     // are read from the component database (see Component.createComponent).
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       a = aCPA;
       b = bCPA;
     }
+  }
+
+  /**
+   * Association-site metadata alone does not imply fitted CPA physical parameters.
+   *
+   * @return true when both fitted energy and co-volume parameters are available
+   */
+  private boolean hasCpaPhysicalParameters() {
+    return cpaon == 1 && Double.isFinite(aCPA) && aCPA > 0.0 && Double.isFinite(bCPA) && bCPA > 0.0;
   }
 
   /** {@inheritDoc} */
@@ -178,7 +187,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
         }
       }
     }
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       // Associating compounds (water, glycols, ...). When a dedicated UMR-CPA Mathias-Copeman
       // alpha is available (UMRCPA_MC columns, see Tasios et al., Fluid Phase Equilibria 2025),
       // install the five-parameter Mathias-Copeman term (term 22) so the energy parameter uses
@@ -225,7 +234,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double calca() {
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       return aCPA;
     }
     return super.calca();
@@ -234,7 +243,7 @@ public class ComponentUMRCPA extends ComponentPR implements ComponentCPAInterfac
   /** {@inheritDoc} */
   @Override
   public double calcb() {
-    if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
+    if (hasCpaPhysicalParameters()) {
       return bCPA;
     }
     return super.calcb();

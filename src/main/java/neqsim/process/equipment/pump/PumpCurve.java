@@ -18,9 +18,9 @@ public class PumpCurve implements java.io.Serializable {
    * Constructor for PumpCurve.
    */
   public PumpCurve() {
-    flow = new double[] { 453.2, 600.0, 750.0 };
-    head = new double[] { 1000.0, 900.0, 800.0 };
-    efficiency = new double[] { 78.0, 79.0, 78.0 };
+    flow = new double[] {453.2, 600.0, 750.0};
+    head = new double[] {1000.0, 900.0, 800.0};
+    efficiency = new double[] {78.0, 79.0, 78.0};
   }
 
   /**

@@ -56,7 +56,7 @@
  * // 3. When steady, reconcile
  * if (ssResult.isAtSteadyState()) {
  *   DataReconciliationEngine engine = ssd.createReconciliationEngine();
- *   engine.addMassBalanceConstraint("Sep", new String[] { "feed" }, new String[] { "gas", "liquid" });
+ *   engine.addMassBalanceConstraint("Sep", new String[] {"feed"}, new String[] {"gas", "liquid"});
  *   ReconciliationResult recResult = engine.reconcile();
  *   System.out.println(recResult.toReport());
  * }

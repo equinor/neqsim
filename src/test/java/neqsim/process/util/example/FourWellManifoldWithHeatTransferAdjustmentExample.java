@@ -123,10 +123,10 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     // Routing configuration: 0 = route to LP, 1 = route to HP
     // Well 1 and Well 2 go to HP manifold
     // Well 3 and Well 4 go to LP manifold
-    double[] well1SplitFactors = { 1.0, 0.0 }; // 100% HP, 0% LP
-    double[] well2SplitFactors = { 1.0, 0.0 }; // 100% HP, 0% LP
-    double[] well3SplitFactors = { 0.0, 1.0 }; // 0% HP, 100% LP
-    double[] well4SplitFactors = { 0.0, 1.0 }; // 0% HP, 100% LP
+    double[] well1SplitFactors = {1.0, 0.0}; // 100% HP, 0% LP
+    double[] well2SplitFactors = {1.0, 0.0}; // 100% HP, 0% LP
+    double[] well3SplitFactors = {0.0, 1.0}; // 0% HP, 100% LP
+    double[] well4SplitFactors = {0.0, 1.0}; // 0% HP, 100% LP
 
     // ========================================
     // CREATE WELL STREAMS
@@ -428,7 +428,7 @@ public class FourWellManifoldWithHeatTransferAdjustmentExample {
     logger.info("╚══════════════════════════════════════════════════════════════════════╝");
 
     // Change routing: move Well 3 from LP to HP
-    double[] newWell3SplitFactors = { 1.0, 0.0 }; // Now 100% HP, 0% LP
+    double[] newWell3SplitFactors = {1.0, 0.0}; // Now 100% HP, 0% LP
     splitter3.setSplitFactors(newWell3SplitFactors);
 
     logger.info("New routing configuration:");

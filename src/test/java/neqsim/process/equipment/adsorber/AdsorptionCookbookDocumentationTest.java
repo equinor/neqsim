@@ -30,7 +30,7 @@ class AdsorptionCookbookDocumentationTest {
     gas.setMixingRule("classic");
     new ThermodynamicOperations(gas).TPflash();
 
-    String[] materials = new String[] { "AC Calgon F400", "Zeolite 13X", "Zeolite 5A", "Silica Gel", "MOF HKUST-1" };
+    String[] materials = new String[] {"AC Calgon F400", "Zeolite 13X", "Zeolite 5A", "Silica Gel", "MOF HKUST-1"};
 
     for (String material : materials) {
       LangmuirAdsorption model = new LangmuirAdsorption(gas);

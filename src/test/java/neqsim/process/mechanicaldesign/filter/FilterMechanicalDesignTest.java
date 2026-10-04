@@ -36,8 +36,8 @@ public class FilterMechanicalDesignTest {
     filter.setTerminalDeltaP(1.0);
     filter.setElementCollapsePressure(5.0);
     filter.setElementIntegrityVerified(true);
-    FilterPerformanceCurve performance = new FilterPerformanceCurve(new double[] { 1.0, 3.0, 10.0 },
-        new double[] { 10.0, 1000.0, 10000.0 });
+    FilterPerformanceCurve performance = new FilterPerformanceCurve(new double[] {1.0, 3.0, 10.0},
+        new double[] {10.0, 1000.0, 10000.0});
     performance.setTestStandard("ISO 16889:2022 supplier-equivalent data");
     filter.setPerformanceCurve(performance);
     filter.run();

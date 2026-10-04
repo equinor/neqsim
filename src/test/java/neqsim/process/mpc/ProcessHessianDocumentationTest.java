@@ -44,8 +44,7 @@ class ProcessHessianDocumentationTest extends neqsim.NeqSimTest {
               "UTF-8", "-source", "8", "-target", "8", "-proc:none"),
           null, manager.getJavaFileObjects(source.toFile())).call(), diagnostics.getDiagnostics().toString());
     }
-    try (
-        URLClassLoader loader = new URLClassLoader(new URL[] { output.toUri().toURL() }, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {output.toUri().toURL()}, getClass().getClassLoader())) {
       Class<?> example = loader.loadClass("ScalarHessianExample");
       double[][] hessian = (double[][]) example.getMethod("calculate").invoke(null);
       assertEquals(3, hessian.length);

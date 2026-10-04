@@ -79,7 +79,7 @@ class ThreePhaseSeparatorTest {
 
     testOps.TPflash();
 
-    double[] intParameter = { -0.24, // "CO2"
+    double[] intParameter = {-0.24, // "CO2"
         -0.721, // "methane"
         0.11, // "ethane"
         0.205, // "propane"
@@ -201,7 +201,7 @@ class ThreePhaseSeparatorTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "volume", "mass", "mole" })
+  @ValueSource(strings = {"volume", "mass", "mole"})
   void testEntrainmentSep(String specification) {
     neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 
@@ -471,7 +471,7 @@ class ThreePhaseSeparatorTest {
    * fractions are achieved.
    */
   @ParameterizedTest
-  @ValueSource(strings = { "mole", "mass", "volume" })
+  @ValueSource(strings = {"mole", "mass", "volume"})
   void testThreePhaseSeparatorEntrainmentSpecTypes(String specType) {
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
     fluid.addComponent("methane", 72.0);

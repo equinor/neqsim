@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemUMRCPAEoS;
 /** Regression coverage for association-site initialization from the overall composition. */
 class CPAAssociationInitializationTest extends neqsim.NeqSimTest {
   @ParameterizedTest
-  @ValueSource(strings = { "srk", "statoil", "electrolyte", "umr" })
+  @ValueSource(strings = {"srk", "statoil", "electrolyte", "umr"})
   void reinitializationRestoresAssociatingComponentsFromOverallMoles(String model) {
     SystemInterface fluid = createFluid(model);
     fluid.addComponent("CO2", 1.0);
@@ -43,7 +43,7 @@ class CPAAssociationInitializationTest extends neqsim.NeqSimTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = { "srk", "statoil", "electrolyte", "umr" })
+  @ValueSource(strings = {"srk", "statoil", "electrolyte", "umr"})
   void pureWaterActivityIsUnityWithFreshReferencePhase(String model) {
     SystemInterface fluid = createFluid(model);
     fluid.addComponent("water", 10.0);

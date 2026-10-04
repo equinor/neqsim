@@ -176,10 +176,19 @@ final class ColumnMeshResidualEvaluator {
     for (int trayIndex = 0; trayIndex < column.getTrays().size(); trayIndex++) {
       SimpleTray tray = column.getTray(trayIndex);
       try {
-        double targetEnthalpy = finiteOrZero(tray.calcMixStreamEnthalpy());
-        SystemInterface traySystem = tray.getThermoSystem().clone();
-        traySystem.init(3);
-        double actualEnthalpy = finiteOrZero(traySystem.getEnthalpy());
+        double targetEnthalpy;
+        if (tray instanceof Reboiler) {
+          targetEnthalpy = tray.calcMixStreamEnthalpy0() + ((Reboiler) tray).getDuty();
+        } else if (tray instanceof Condenser) {
+          targetEnthalpy = tray.calcMixStreamEnthalpy0() + ((Condenser) tray).getDuty();
+        } else {
+          targetEnthalpy = tray.calcMixStreamEnthalpy();
+        }
+        double actualEnthalpy = tray.getMaterialOutletEnthalpy();
+        if (!Double.isFinite(targetEnthalpy) || !Double.isFinite(actualEnthalpy)) {
+          builder.add(Double.POSITIVE_INFINITY, ColumnMeshEquationType.ENERGY, trayIndex, null);
+          continue;
+        }
         double scale = Math.max(1.0, Math.abs(targetEnthalpy) + Math.abs(actualEnthalpy));
         builder.add((actualEnthalpy - targetEnthalpy) / scale, ColumnMeshEquationType.ENERGY, trayIndex, null);
       } catch (Exception ex) {
@@ -363,16 +372,6 @@ final class ColumnMeshResidualEvaluator {
     } catch (Exception ex) {
       return 0.0;
     }
-  }
-
-  /**
-   * Convert a non-finite diagnostic value to zero.
-   *
-   * @param value value to sanitize
-   * @return value when finite, otherwise zero
-   */
-  private static double finiteOrZero(double value) {
-    return Double.isFinite(value) ? value : 0.0;
   }
 
   /** Builder for residual vectors and metadata. */

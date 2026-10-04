@@ -19,8 +19,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   // public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6,
   // -25.314e-6, -0.05813e-6, -44.383e-6};
   /** Constant <code>furstParams</code>. */
-  public static double[] furstParams = { 0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606,
-      -0.0000217950 };
+  public static double[] furstParams = {0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606,
+      -0.0000217950};
   // public static double[] furstParams = {0.0000001018, 0.0000064366,
   // 0.0001103447, -0.0001631115, -0.0000000565, -0.0000565052};
   // public static double[] furstParams = {0.10688e-6, 6.5665e-6, 35.09e-6,
@@ -129,7 +129,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Some ions (KCl, CaCl2) may have numerical issues at certain compositions
       8.0e-05, -1.5e-04, 1.0e-07, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17 };
+      9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17};
 
   // 0.0000001880, 0.0000014139, 0.0000284666, 0.0000389043, -0.0000000451,
   // 0.0000088136
@@ -168,7 +168,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Na+, K+, Li+, Br salts, and divalent cations all tested
       8.0e-05, -1.15e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      9.6e-05, -1.38e-04, -4.4e-08, -6.0e-17 };
+      9.6e-05, -1.38e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in methanol solvent.
@@ -198,7 +198,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Methanol has higher dielectric than ethanol so needs different balance
       6.0e-05, -8.0e-05, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - adjusted for higher γ
-      5.0e-05, -5.0e-05, -4.4e-08, -6.0e-17 };
+      5.0e-05, -5.0e-05, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in ethanol solvent.
@@ -229,7 +229,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Similar to MEG but adjusted for ethanol's lower dielectric constant (24.5)
       9.0e-05, -1.3e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent (1.2x)
-      1.08e-04, -1.56e-04, -4.4e-08, -6.0e-17 };
+      1.08e-04, -1.56e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in MEA (monoethanolamine) solvent.
@@ -265,7 +265,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Parameters fitted for reasonable γ± across Na+, K+, Li+, divalent cations
       1.3e-04, -1.6e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      1.56e-04, -1.92e-04, -4.4e-08, -6.0e-17 };
+      1.56e-04, -1.92e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in TEG (triethylene glycol) solvent.
@@ -291,7 +291,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // SR parameters for monovalent (1+) cations [2-5] - NEED FITTING
       4.98e-05, -1.22e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - NEED FITTING
-      5.4e-05, -1.72e-04, -4.4e-08, -6.0e-17 };
+      5.4e-05, -1.72e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Temperature-dependent Wij parameters for electrolyte interactions.
@@ -332,7 +332,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // wij[1] for 2+ cation-anion: prefactor, intercept
       -3.0e-06, 1.2e-02,
       // wij[2] for 2+ cation-anion: prefactor, intercept
-      -6.0e-09, 2.3e-05 };
+      -6.0e-09, 2.3e-05};
 
   /**
    * Dummy constructor, not for use. Class is to be considered static.
@@ -923,7 +923,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
     }
-    ionSpecificWij.put(cation + "-" + anion, new double[] { wijCatWater, wijCatAnion });
+    ionSpecificWij.put(cation + "-" + anion, new double[] {wijCatWater, wijCatAnion});
   }
 
   /**

@@ -132,6 +132,12 @@ fluid.setSolidPhaseCheck(true);
 ops.TPflash(true);  // Includes solid equilibrium
 ```
 
+Both `setSolidPhaseCheck(true)` and `setSolidPhaseCheck(name)` preserve the caller's
+`doMultiPhaseCheck()` setting. Enable `setMultiPhaseCheck(true)` separately when
+additional liquid phases are required. Solid storage allocation does not select a
+different fluid equilibrium mode. Code that previously relied on the solid setter
+implicitly enabling the fluid multiphase search must now enable it explicitly.
+
 Call `fluid.setSolidPhaseCheck(false)` to disable solid checking for all components,
 including those in cached phases. This is safe before any solid phase has been
 allocated and can be called repeatedly. Disabling preserves the existing phase
@@ -242,7 +248,33 @@ for i in range(fluid.getNumberOfPhases()):
 **How it works internally:**
 1. `TPflash` first solves the standard two-phase problem
 2. If `doMultiPhaseCheck()` is true, `TPmultiflash` is invoked
-3. `TPmultiflash` performs additional stability analysis against all existing phases and adds/removes phases until Gibbs energy is minimized
+3. `TPmultiflash` performs additional stability analysis against existing phases and adds/removes phases to seek a lower-Gibbs equilibrium
+
+For neutral, water-rich feeds with multiphase checking enabled, a final gas/oil
+split or single OIL endpoint is compared with a seeded oil/aqueous equilibrium
+when the overall water mole fraction is at least 5%. This also runs on the
+single-phase stability-return path: phase cleanup near a bubble point can remove
+an aqueous phase even after the stability analysis detected it. The trial runs
+on a clone and must conserve every component and satisfy phase normalization and
+log-fugacity equality within `1e-8`. It must lower Gibbs energy relative to a valid
+incumbent by more than `max(1e-6 J, 1e-8 abs(G))`. Phase-role locks, chemical,
+ionic, solid-check, and wax-check systems retain their existing paths. Dry feeds,
+already-aqueous endpoints, and genuine three-phase states do not run this trial.
+The bounded recovery does not prove global stability against every possible
+phase set.
+
+The public-API regression for issue #3955 retains water at all 81 points from
+11–31 °C and 1.8–5.0 bara. For its 3781.0149 kg/h pump inlet at 298.15 K and
+2.67 bara, compression to 19 bara gives approximately 2.824 kW and 298.669 K.
+The inlet EOS-volume estimate `Q * deltaP` is 2.829 kW. Using the separately
+volume-corrected physical density gives a different hydraulic estimate; the
+EOS volume is the consistent comparison for this enthalpy/entropy calculation.
+The regression also checks component balance, phase fugacities, repeated flashes,
+warm starts, and the pump entropy balance.
+
+When restarting a process from a saved fluid, run a TP flash before taking
+its inlet entropy if the saved phase split may have been computed with an older
+version; the pump's isentropic outlet depends on that inlet entropy.
 
 **When to use:** Any system containing water + hydrocarbons, glycol systems, methanol injection, or other mixtures where two liquid phases can coexist.
 
@@ -768,6 +800,19 @@ Note the sign conventions used in NeqSim for thermodynamic derivatives:
 
 Calculate the bubble point (onset of vaporization) at a given temperature or pressure.
 
+Saturation calculations throw `IsNaNException` when no valid finite, positive solution is
+obtained or the solver reports a supercritical outcome. A warm starting state can make
+the bubble-temperature iteration collapse to equal vapor and liquid compositions. For a
+nonreactive mixture with valid critical properties, the solver then tries one bounded
+restart from a Wilson bubble-temperature estimate. Wilson values only initialize the
+iteration; the selected EOS still determines the final equilibrium. A failed restart
+remains an error, so callers such as total condensers cannot silently use the trivial root.
+The non-derivative bubble-pressure solver similarly retries a trivial mixture root from
+half the Wilson pressure estimate. For nonreactive, water-free mixtures, the
+non-derivative dew-temperature solver can retry from the Wilson temperature estimate
+and two nearby lower temperatures (95% and 90% of the estimate). These bounded retries
+do not suppress exceptions or accept failed equilibrium calculations.
+
 **Temperature flash (find T at given P):**
 ```java
 void bubblePointTemperatureFlash()
@@ -889,6 +934,19 @@ solver supports one pure solid alongside the fluid phases and rejects multiple
 precipitating candidates with `UnsupportedOperationException` before adding a solid
 phase. See the [sulfur precipitation guide](../chemicalreactions/sulfur_deposition_analysis.md#2-tpsolidflash--sulfur-solubility-and-precipitation)
 for a selected-S8 example and component-balance checks.
+
+The empirical `ComponentSolid` model excludes methane using a large fugacity
+coefficient (`1e30`). The returned coefficient and stored coefficient are identical,
+so selecting methane cannot introduce an artificial zero-fugacity solid or destroy
+the fluid split. This exclusion is a model limitation, not a methane melting-curve
+prediction; do not use this model to assess cryogenic methane freezing.
+
+As a regression example, SRK with mixing rule 2 for 0.30 mol methane and 0.70 mol
+n-heptane at 333.15 K and 60 bara gives a gas fraction of approximately 0.09223165
+and an oil fraction of 0.90776835. Selecting methane for the solid check retains
+that gas/oil equilibrium with either fluid multiphase setting and conserves both
+component inventories. `SolidCheckFluidEquilibriumTest` exercises this case,
+nearby temperatures, repeated flashes and the separate `TPSolidflash()` route.
 
 **Example - Wax precipitation:**
 ```java

@@ -359,7 +359,7 @@ public class PVTRegression {
   private void addCCESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CCE, 1.0);
     for (CCEDataPoint point : cceData) {
-      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.CCE.ordinal(), 0 }; // 0
+      double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.CCE.ordinal(), 0}; // 0
       // =
       // relative
       // volume
@@ -379,13 +379,13 @@ public class PVTRegression {
     double weight = experimentWeights.getOrDefault(ExperimentType.CVD, 1.0);
     for (CVDDataPoint point : cvdData) {
       // Liquid dropout
-      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 0 };
+      double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 0};
       SampleValue sample = new SampleValue(point.getLiquidDropout(), 0.01 / weight, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
 
       // Z-factor
-      double[] dependentValues2 = { point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 1 };
+      double[] dependentValues2 = {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 1};
       SampleValue sample2 = new SampleValue(point.getZFactor(), 0.01 / weight, dependentValues2);
       sample2.setFunction(function.clone());
       sampleList.add(sample2);
@@ -402,19 +402,19 @@ public class PVTRegression {
     double weight = experimentWeights.getOrDefault(ExperimentType.DLE, 1.0);
     for (DLEDataPoint point : dleData) {
       // Rs
-      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 0 };
+      double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 0};
       SampleValue sample = new SampleValue(point.getRs(), 0.01 / weight, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
 
       // Bo
-      double[] dependentValues2 = { point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 1 };
+      double[] dependentValues2 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 1};
       SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
       sample2.setFunction(function.clone());
       sampleList.add(sample2);
 
       // Oil density
-      double[] dependentValues3 = { point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 2 };
+      double[] dependentValues3 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 2};
       SampleValue sample3 = new SampleValue(point.getOilDensity(), 0.01 / weight, dependentValues3);
       sample3.setFunction(function.clone());
       sampleList.add(sample3);
@@ -431,15 +431,15 @@ public class PVTRegression {
     double weight = experimentWeights.getOrDefault(ExperimentType.SEPARATOR, 1.0);
     for (SeparatorDataPoint point : separatorData) {
       // GOR
-      double[] dependentValues = { point.getSeparatorPressure(), point.getSeparatorTemperature(),
-          ExperimentType.SEPARATOR.ordinal(), 0, point.getReservoirTemperature() };
+      double[] dependentValues = {point.getSeparatorPressure(), point.getSeparatorTemperature(),
+          ExperimentType.SEPARATOR.ordinal(), 0, point.getReservoirTemperature()};
       SampleValue sample = new SampleValue(point.getGor(), 0.01 / weight, dependentValues);
       sample.setFunction(function.clone());
       sampleList.add(sample);
 
       // Bo
-      double[] dependentValues2 = { point.getSeparatorPressure(), point.getSeparatorTemperature(),
-          ExperimentType.SEPARATOR.ordinal(), 1, point.getReservoirTemperature() };
+      double[] dependentValues2 = {point.getSeparatorPressure(), point.getSeparatorTemperature(),
+          ExperimentType.SEPARATOR.ordinal(), 1, point.getReservoirTemperature()};
       SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
       sample2.setFunction(function.clone());
       sampleList.add(sample2);
@@ -455,8 +455,8 @@ public class PVTRegression {
   private void addViscositySamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.VISCOSITY, 1.0);
     for (ViscosityDataPoint point : viscosityData) {
-      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.VISCOSITY.ordinal(),
-          point.getPhaseIndex() };
+      double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.VISCOSITY.ordinal(),
+          point.getPhaseIndex()};
       double standardDeviation = Math.max(Math.abs(point.getViscosity()) * 0.02, 1.0e-10) / weight;
       SampleValue sample = new SampleValue(point.getViscosity(), standardDeviation, dependentValues);
       sample.setFunction(function.clone());
@@ -603,8 +603,8 @@ public class PVTRegression {
 
     for (SeparatorDataPoint point : separatorData) {
       SeparatorTest sepTest = new SeparatorTest(tunedFluid.clone());
-      sepTest.setSeparatorConditions(new double[] { point.getSeparatorTemperature() },
-          new double[] { point.getSeparatorPressure() });
+      sepTest.setSeparatorConditions(new double[] {point.getSeparatorTemperature()},
+          new double[] {point.getSeparatorPressure()});
 
       sepTest.runCalc();
 
@@ -639,8 +639,8 @@ public class PVTRegression {
     PVTRegressionFunction function = new PVTRegressionFunction(tunedFluid.clone(),
         new ArrayList<RegressionParameterConfig>(), experimentWeights);
     for (ViscosityDataPoint point : viscosityData) {
-      double[] dependentValues = { point.getPressure(), point.getTemperature(), ExperimentType.VISCOSITY.ordinal(),
-          point.getPhaseIndex() };
+      double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.VISCOSITY.ordinal(),
+          point.getPhaseIndex()};
       double calcViscosity = function.calcValue(dependentValues);
       if (point.getViscosity() > 0.0) {
         objective += Math.pow((calcViscosity - point.getViscosity()) / point.getViscosity(), 2.0);

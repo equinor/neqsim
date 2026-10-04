@@ -48,6 +48,13 @@ assuming a fallback.
 
 ## Available Models
 
+The `Viscosity` liquid mixture method uses tabulated `gijvisc` interactions from
+the `inter` component-pair table in its Grunberg-Nissan mixing expression.
+Pairs without tabulated data use zero interaction. Ions and TBP fractions are
+excluded from this pair lookup; their presence does not suppress later valid
+component pairs. These parameters affect the liquid mixture method, not the
+separate `LBCViscosityMethod` implementation described below.
+
 ### LBC (Lohrenz-Bray-Clark)
 
 The Lohrenz-Bray-Clark (1964) method is widely used in reservoir simulation. It combines a dilute gas correlation with a dense fluid polynomial correction.

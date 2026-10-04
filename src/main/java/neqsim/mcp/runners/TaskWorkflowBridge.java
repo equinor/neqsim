@@ -286,7 +286,7 @@ public final class TaskWorkflowBridge {
   private static void extractEconomicsResults(JsonObject output, JsonObject kr) {
     if (output.has("results")) {
       JsonObject econResults = output.getAsJsonObject("results");
-      for (String key : new String[] { "npv_musd", "irr_pct", "payback_years" }) {
+      for (String key : new String[] {"npv_musd", "irr_pct", "payback_years"}) {
         if (econResults.has(key)) {
           kr.add(key, econResults.get(key));
         }

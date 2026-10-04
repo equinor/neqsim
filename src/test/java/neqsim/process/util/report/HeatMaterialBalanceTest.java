@@ -40,7 +40,7 @@ public class HeatMaterialBalanceTest extends neqsim.NeqSimTest {
     compressor.setOutletPressure(100.0);
 
     Cooler cooler = new Cooler("After Cooler", compressor.getOutletStream());
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     process = new ProcessSystem();
     process.add(feed);

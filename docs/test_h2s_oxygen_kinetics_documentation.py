@@ -37,6 +37,26 @@ WATER_INVENTORY_PROJECTION_TEST = (
     / "src/test/java/neqsim/process/equipment/reactor/"
     / "AqueousHydrogenSulfideOxidationWaterInventoryProjectionTest.java"
 )
+ELEMENTAL_SULFUR_ALLOCATION = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationElementalSulfurAllocation.java"
+)
+ELEMENTAL_SULFUR_ALLOCATION_TEST = (
+    ROOT
+    / "src/test/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationElementalSulfurAllocationTest.java"
+)
+S8_TRANSFER = (
+    ROOT
+    / "src/main/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationS8Transfer.java"
+)
+S8_TRANSFER_TEST = (
+    ROOT
+    / "src/test/java/neqsim/process/equipment/reactor/"
+    / "AqueousHydrogenSulfideOxidationS8TransferTest.java"
+)
 
 
 class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
@@ -56,6 +76,14 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
         cls.water_inventory_projection_test = WATER_INVENTORY_PROJECTION_TEST.read_text(
             encoding="utf-8"
         )
+        cls.elemental_sulfur_allocation = ELEMENTAL_SULFUR_ALLOCATION.read_text(
+            encoding="utf-8"
+        )
+        cls.elemental_sulfur_allocation_test = (
+            ELEMENTAL_SULFUR_ALLOCATION_TEST.read_text(encoding="utf-8")
+        )
+        cls.s8_transfer = S8_TRANSFER.read_text(encoding="utf-8")
+        cls.s8_transfer_test = S8_TRANSFER_TEST.read_text(encoding="utf-8")
         cls.normalized = " ".join(cls.guide.split())
 
     def test_source_equation_and_units_are_explicit(self):
@@ -370,6 +398,213 @@ class HydrogenSulfideOxygenKineticsDocumentationTest(unittest.TestCase):
             "testTrajectoryProjectionMatchesSingleSegmentAndIsSplitInvariant",
             "testTrajectoryProjectionZeroDurationIsExactAndResultIsDefensive",
             "testTrajectoryProjectionFailsClosedForMissingOrInvalidWaterInventory",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
+    def test_sulfur_equivalent_budget_is_documented_and_executable(self):
+        for token in (
+            "Product-agnostic sulfur-equivalent budget",
+            "one mole of sulfur atoms",
+            r"\dot m_{S,\mathrm{equiv},r,i}",
+            r"n_{r,i,\mathrm{reacted}}M_S",
+            "M_S = 0.032065 kg/mol",
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+            "mean sulfur-equivalent loss in kg/h and kg/s",
+            "mass-basis closure residual",
+            "not an elemental-sulfur or S8 yield",
+            "separately qualified stoichiometry and selectivity",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+            "sulfurEquivalentMassKg(",
+            "getLowerRateMeanSulfurEquivalentMassRateKgPerHour()",
+            "getNominalMeanSulfurEquivalentMassRateKgPerSecond()",
+            "getUpperRateReactedSulfurEquivalentMassKg()",
+            "getLowerRateSulfurEquivalentClosureResidualKg()",
+            "getNominalReactedSulfurEquivalentMassKg()",
+            "getUpperRateSulfurEquivalentClosureResidualKg()",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testSegmentSulfurEquivalentMassUsesSharedAuthorityAndClosesRateIntegral",
+            "testTrajectorySulfurEquivalentMassClosesAllPathsAndSegmentSums",
+            "assertSulfurEquivalentPath(",
+            "IronSulfideWallInventory.SULFUR_MOLAR_MASS_KG_PER_MOL",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
+    def test_elemental_sulfur_allocation_boundary_is_documented_and_executable(self):
+        for token in (
+            "Explicit elemental-sulfur allocation boundary",
+            "`AqueousHydrogenSulfideOxidationElementalSulfurAllocation.allocate(...)`",
+            "caller-defined elemental-sulfur scenario",
+            r"\dot m_{S,\mathrm{allocated}}=f_{ES}\dot m_{S,\mathrm{equiv}}",
+            r"m_{S,\mathrm{unallocated}}=m_{S,\mathrm{equiv}}-m_{S,\mathrm{allocated}}",
+            "unallocated sulfur-equivalent remainder",
+            "presence does not qualify that basis",
+            "must not apply both the original source budget and the unallocated remainder",
+            "does not create S8 molecular amounts",
+            "execute a solid flash",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static Result allocate(",
+            "elementalSulfurAllocationFraction",
+            "allocationBasisIdentifier",
+            "getSourceSulfurEquivalentMassRateKgPerHour()",
+            "getAllocatedElementalSulfurMassRateKgPerHour()",
+            "getUnallocatedSulfurEquivalentMassRateKgPerHour()",
+            "getRateClosureResidualKgPerHour()",
+            "getAllocatedElementalSulfurMassKg()",
+            "getUnallocatedSulfurEquivalentMassKg()",
+            "getMassClosureResidualKg()",
+            "finiteProduct(",
+            "finiteDifference(",
+        ):
+            self.assertIn(token, self.elemental_sulfur_allocation)
+
+        for token in (
+            "testQuarterAllocationClosesEveryFitPathAndPreservesOrdering",
+            "testZeroAndFullAllocationAreExactIdentities",
+            "testAllocationScalesWithWaterInventoryAndIsSegmentSplitInvariant",
+            "testAllocationReceiptIsSerializableAndDeterministic",
+            "testMissingInvalidOrUnrepresentableAllocationFailsClosed",
+        ):
+            self.assertIn(token, self.elemental_sulfur_allocation_test)
+
+    def test_mass_based_s8_transfer_receipt_is_documented_and_executable(self):
+        for token in (
+            "Explicit mass-based S8 transfer receipt",
+            "`AqueousHydrogenSulfideOxidationS8Transfer.create(...)`",
+            "selects exactly one lower-rate, nominal, or upper-rate path",
+            r"\dot m_{S8,\mathrm{transfer}}=\dot m_{S,\mathrm{allocated}}",
+            r"m_{S8,\mathrm{transfer}}=m_{S,\mathrm{allocated}}",
+            "avoids calculating S8 moles",
+            "product-identity identifier",
+            "downstream idempotency key",
+            "must apply the transferred mass only once",
+            "narrow mass-unit seam",
+            "does not add `S8` to a stream",
+            "independently qualified product identity and application evidence",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            'public static final String S8_COMPONENT_NAME = "S8"',
+            "public enum FitPath",
+            "LOWER_RATE",
+            "NOMINAL",
+            "UPPER_RATE",
+            "public static Result create(",
+            "getComponentName()",
+            "getFitPath()",
+            "getProductIdentityBasisIdentifier()",
+            "getDownstreamIdempotencyKey()",
+            "getTransferredS8MassRateKgPerHour()",
+            "getTransferredS8MassKg()",
+            "getUnallocatedSulfurEquivalentMassKg()",
+            "Selected allocation closure evidence is inconsistent",
+        ):
+            self.assertIn(token, self.s8_transfer)
+
+        for forbidden in (
+            "SystemInterface",
+            "StreamInterface",
+            "addComponent(",
+            "TPSolidflash(",
+            "SulfurDepositionAnalyser(",
+            "SulfurFilter(",
+        ):
+            self.assertNotIn(forbidden, self.s8_transfer)
+
+        for token in (
+            "testEveryFitPathIsSelectedExplicitlyWithoutMassConversion",
+            "testZeroAndFullAllocationPreserveExactIdentities",
+            "testWaterScalingAndSegmentSplitMassSumsArePreserved",
+            "testReceiptRoundTripsThroughSerializationAndPreservesProvenance",
+            "testMissingOrInvalidTransferEvidenceFailsClosed",
+        ):
+            self.assertIn(token, self.s8_transfer_test)
+
+
+    def test_absolute_reacted_moles_target_is_documented_and_executable(self):
+        for token in (
+            "Absolute reacted-moles target crossing",
+            "`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToReactedMolesRange(...)`",
+            r"n_0=c_0m_w",
+            r"f_{\mathrm{target}}=\frac{n_0-n_{\mathrm{target}}}{n_0}",
+            "shortest, nominal, and longest crossing times and segment indices",
+            "remaining fraction of `0.5`",
+            "nominal time is `22.4288 h`",
+            "Scaling both the constant water inventory and reacted-moles target",
+            "target of exactly zero crosses at time zero",
+            "strictly less than the initial dimensional total-sulfide inventory",
+            "not a calculated holdup",
+            "not a residence-time design",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static ReactedMolesTargetResult timeToReactedMolesRange(",
+            "public static final class ReactedMolesTargetResult",
+            "getInitialTotalSulfideMoles()",
+            "getTargetReactedMoles()",
+            "getTargetRemainingMoles()",
+            "getTargetRemainingFraction()",
+            "getCrossingRange()",
+            "cannot be represented at this inventory scale",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testReactedMolesTargetReproducesHalfInventoryAndForwardExposure",
+            "testReactedMolesTargetIsMonotonicAndPreservesLinearWaterScaling",
+            "testReactedMolesTargetIsSplitInvariantAndPreservesCrossingSegment",
+            "testReactedMolesTargetIdentityAndInvalidInputsFailClosed",
+            "assertTargetReaction(",
+        ):
+            self.assertIn(token, self.water_inventory_projection_test)
+
+    def test_absolute_remaining_moles_target_is_documented_and_executable(self):
+        for token in (
+            "Absolute remaining-moles target crossing",
+            "`AqueousHydrogenSulfideOxidationWaterInventoryProjection.timeToRemainingMolesRange(...)`",
+            r"n_0=c_0m_w",
+            r"f_{\mathrm{target}}=\frac{n_{\mathrm{remaining,target}}}{n_0}",
+            r"n_{\mathrm{reacted,target}}=n_0-n_{\mathrm{remaining,target}}",
+            "shortest, nominal, and longest crossing times and segment indices",
+            "nominal crossing is `22.4288 h`",
+            "reacted-moles inverse when the two dimensional targets are complements",
+            "Scaling both the constant water inventory and remaining-moles target",
+            "target equal to the initial inventory crosses at exact time zero",
+            "strictly positive, and no greater than the initial dimensional inventory",
+            "not a water-holdup calculation",
+            "not a water-holdup calculation, residence- time design",
+        ):
+            self.assertIn(token, self.normalized)
+
+        for token in (
+            "public static RemainingMolesTargetResult timeToRemainingMolesRange(",
+            "public static final class RemainingMolesTargetResult",
+            "getInitialTotalSulfideMoles()",
+            "getTargetRemainingMoles()",
+            "getTargetReactedMoles()",
+            "getTargetRemainingFraction()",
+            "getCrossingRange()",
+            "cannot be represented at this inventory scale",
+        ):
+            self.assertIn(token, self.water_inventory_projection)
+
+        for token in (
+            "testRemainingMolesTargetReproducesHalfInventoryAndAgreesWithComplement",
+            "testRemainingMolesTargetIsMonotonicAndPreservesLinearWaterScaling",
+            "testRemainingMolesTargetIsSplitInvariantAndIdentityIsExact",
+            "testRemainingMolesTargetInvalidInputsAndUnreachableTrajectoryFailClosed",
+            "assertTargetRemaining(",
         ):
             self.assertIn(token, self.water_inventory_projection_test)
 

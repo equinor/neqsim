@@ -733,15 +733,15 @@ When revising a draft, do a find-replace audit:
 ### Flash Algorithm Papers
 
 Refer to the existing skills:
-- `design_flash_benchmark/SKILL.md` — Fluid families, PT grids, stress cases
-- `run_flash_experiments/SKILL.md` — Execution patterns, timing, JSONL output
-- `analyze_convergence/SKILL.md` — Figure catalog, statistical analysis
+- `design-flash-benchmark/SKILL.md` — Fluid families, PT grids, stress cases
+- `run-flash-experiments/SKILL.md` — Execution patterns, timing, JSONL output
+- `analyze-convergence/SKILL.md` — Figure catalog, statistical analysis
 
 ### Chemical Equilibrium / Reactor Papers
 
 Refer to:
-- `design_reactor_benchmark/SKILL.md` — Reaction systems, validation against JANAF/NASA
-- `analyze_gibbs_convergence/SKILL.md` — Jacobian conditioning, element balance verification
+- `design-reactor-benchmark/SKILL.md` — Reaction systems, validation against JANAF/NASA
+- `analyze-gibbs-convergence/SKILL.md` — Jacobian conditioning, element balance verification
 
 Key considerations for reactor papers:
 - Validate against JANAF/NASA-CEA thermochemical data
@@ -800,7 +800,7 @@ Publication figures must use:
 - **Short system IDs** (A1, B1, C1) instead of full system names as labels
 - **Manual annotation offsets** for scatter plots with clustered points
 
-See the `generate_publication_figures` skill for copy-paste templates.
+See the `generate-publication-figures` skill for copy-paste templates.
 
 ### 13. Post-render validation catches silent failures
 

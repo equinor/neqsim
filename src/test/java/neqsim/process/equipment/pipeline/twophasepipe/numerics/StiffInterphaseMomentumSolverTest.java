@@ -9,13 +9,13 @@ class StiffInterphaseMomentumSolverTest {
 
   @Test
   void twoPhaseSolveIsConservativeDissipativeAndStableAcrossStiffnessRange() {
-    double[] masses = { 2.0, 3.0 };
-    double[] momenta = { 8.0, -3.0 };
+    double[] masses = {2.0, 3.0};
+    double[] momenta = {8.0, -3.0};
     double pairCoefficient = 7.5;
-    double[][] coefficients = { { 0.0, pairCoefficient }, { pairCoefficient, 0.0 } };
+    double[][] coefficients = {{0.0, pairCoefficient}, {pairCoefficient, 0.0}};
     double initialSlip = momenta[0] / masses[0] - momenta[1] / masses[1];
     double relaxationTime = 1.0 / (pairCoefficient * (1.0 / masses[0] + 1.0 / masses[1]));
-    double[] stiffnessRatios = { 1.0e-3, 0.1, 1.0, 10.0, 1.0e3 };
+    double[] stiffnessRatios = {1.0e-3, 0.1, 1.0, 10.0, 1.0e3};
 
     for (double stiffnessRatio : stiffnessRatios) {
       double[] result = StiffInterphaseMomentumSolver.solve(masses, momenta, coefficients,
@@ -31,9 +31,9 @@ class StiffInterphaseMomentumSolverTest {
 
   @Test
   void threePhaseSolvePreservesMomentumAndCannotCreateKineticEnergy() {
-    double[] masses = { 1.0, 2.0, 3.0 };
-    double[] momenta = { 1.0, 2.8, 0.0 };
-    double[][] coefficients = { { 0.0, 4.0, 2.0 }, { 4.0, 0.0, 1.5 }, { 2.0, 1.5, 0.0 } };
+    double[] masses = {1.0, 2.0, 3.0};
+    double[] momenta = {1.0, 2.8, 0.0};
+    double[][] coefficients = {{0.0, 4.0, 2.0}, {4.0, 0.0, 1.5}, {2.0, 1.5, 0.0}};
 
     double[] result = StiffInterphaseMomentumSolver.solve(masses, momenta, coefficients, 100.0);
 
@@ -47,9 +47,9 @@ class StiffInterphaseMomentumSolverTest {
 
   @Test
   void absentPhaseIsEliminatedWithoutMassFloor() {
-    double[] masses = { 1.0, 2.0, 0.0 };
-    double[] momenta = { 1.0, -2.0, 7.0e-9 };
-    double[][] coefficients = { { 0.0, 3.0, 20.0 }, { 3.0, 0.0, 10.0 }, { 20.0, 10.0, 0.0 } };
+    double[] masses = {1.0, 2.0, 0.0};
+    double[] momenta = {1.0, -2.0, 7.0e-9};
+    double[][] coefficients = {{0.0, 3.0, 20.0}, {3.0, 0.0, 10.0}, {20.0, 10.0, 0.0}};
 
     double[] result = StiffInterphaseMomentumSolver.solve(masses, momenta, coefficients, 2.0);
 
@@ -60,10 +60,10 @@ class StiffInterphaseMomentumSolverTest {
 
   @Test
   void solveIsSignSymmetricAndBackwardEulerConvergesAtFirstOrder() {
-    double[] masses = { 2.0, 3.0 };
-    double[] momenta = { 8.0, -3.0 };
-    double[][] coefficients = { { 0.0, 7.5 }, { 7.5, 0.0 } };
-    double[] reverseMomenta = { -momenta[0], -momenta[1] };
+    double[] masses = {2.0, 3.0};
+    double[] momenta = {8.0, -3.0};
+    double[][] coefficients = {{0.0, 7.5}, {7.5, 0.0}};
+    double[] reverseMomenta = {-momenta[0], -momenta[1]};
     double[] forward = StiffInterphaseMomentumSolver.solve(masses, momenta, coefficients, 0.2);
     double[] reverse = StiffInterphaseMomentumSolver.solve(masses, reverseMomenta, coefficients, 0.2);
 

@@ -13,10 +13,10 @@ import neqsim.thermo.characterization.AlDiwiniyaAtmosphericReference.ProductRefe
 public class AlDiwiniyaAtmosphericReferenceTest {
   @Test
   public void partialTbpCurvePreservesAllPublishedCoordinates() {
-    double[] expectedVolumePercent = { 2.0, 3.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0,
-        50.0, 55.0, 60.0 };
-    double[] expectedCelsius = { 40.0, 52.0, 62.0, 77.0, 95.0, 112.0, 128.0, 143.0, 159.0, 189.0, 218.0, 249.0, 279.0,
-        310.0, 342.0, 373.0, 405.0 };
+    double[] expectedVolumePercent = {2.0, 3.5, 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0,
+        50.0, 55.0, 60.0};
+    double[] expectedCelsius = {40.0, 52.0, 62.0, 77.0, 95.0, 112.0, 128.0, 143.0, 159.0, 189.0, 218.0, 249.0, 279.0,
+        310.0, 342.0, 373.0, 405.0};
 
     assertArrayEquals(expectedVolumePercent, AlDiwiniyaAtmosphericReference.getTbpCumulativeVolumePercent(), 0.0);
     assertArrayEquals(expectedCelsius, AlDiwiniyaAtmosphericReference.getTbpTemperatureCelsius(), 0.0);
@@ -42,7 +42,7 @@ public class AlDiwiniyaAtmosphericReferenceTest {
 
     int[] trays = AlDiwiniyaAtmosphericReference.getHeavyNaphthaDrawTrays();
     trays[0] = 1;
-    assertArrayEquals(new int[] { 24, 22 }, AlDiwiniyaAtmosphericReference.getHeavyNaphthaDrawTrays());
+    assertArrayEquals(new int[] {24, 22}, AlDiwiniyaAtmosphericReference.getHeavyNaphthaDrawTrays());
   }
 
   @Test

@@ -117,7 +117,7 @@ public class TPflash extends Flash {
   /** Minimum feed fraction of the least volatile component for large-volatility refinement. */
   private static final double LARGE_VOLATILITY_LEAST_VOLATILE_FEED_FRACTION = 1.0e-2;
   /** Cubic phase roots evaluated by the post-convergence root checks. */
-  private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = { PhaseType.GAS, PhaseType.LIQUID };
+  private static final PhaseType[] CUBIC_ROOT_PHASE_TYPES = {PhaseType.GAS, PhaseType.LIQUID};
   /** Iteration limit for damped direct gamma-phi flashes near a phase-fraction boundary. */
   private static final int DIRECT_GAMMA_PHI_MAXIMUM_ITERATIONS = 500;
   /**
@@ -979,6 +979,7 @@ public class TPflash extends Flash {
         rescueSinglePhaseMultiphaseEndpoint();
         normalizeQualifiedNeutralSinglePhaseEndpoint();
         polishNearCriticalNeutralTwoPhaseEndpoint();
+        rescueWaterRichMissingAqueousPhase();
         return;
       }
     }
@@ -1208,6 +1209,7 @@ public class TPflash extends Flash {
     normalizeQualifiedNeutralSinglePhaseEndpoint();
     polishNearCriticalNeutralTwoPhaseEndpoint();
     refineIonicGasAqueousEndpoint();
+    rescueWaterRichMissingAqueousPhase();
 
     // TPmultiflash already finalized coupled chemistry on a multiphase configuration. For an
     // ordinary single-topology calculation, solve chemistry after all phase reordering here.
@@ -1249,7 +1251,7 @@ public class TPflash extends Flash {
     int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
     int componentCount = system.getPhase(0).getNumberOfComponents();
     double[] equilibriumRatios = new double[componentCount];
-    double[] originalBeta = { system.getBeta(0), system.getBeta(1) };
+    double[] originalBeta = {system.getBeta(0), system.getBeta(1)};
     double[][] originalComposition = new double[2][componentCount];
     for (int phase = 0; phase < 2; phase++) {
       for (int component = 0; component < componentCount; component++) {
@@ -1370,7 +1372,7 @@ public class TPflash extends Flash {
     if (!Double.isFinite(betaSum) || Math.abs(betaSum - 1.0) > 1.0e-12) {
       return false;
     }
-    for (int phase : new int[] { gasPhase, aqueousPhase }) {
+    for (int phase : new int[] {gasPhase, aqueousPhase}) {
       double compositionSum = 0.0;
       for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
         double composition = system.getPhase(phase).getComponent(component).getx();
@@ -4330,5 +4332,14 @@ public class TPflash extends Flash {
       return false;
     }
     return true;
+  }
+
+  /** Rechecks water-rich oil endpoints after the other TP refinements have finished. */
+  private void rescueWaterRichMissingAqueousPhase() {
+    if (system.doMultiPhaseCheck() && system.hasPhaseType(PhaseType.OIL)
+        && (system.getNumberOfPhases() == 1 || (system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)))
+        && system.hasComponent("water") && system.getComponent("water").getz() >= 0.05) {
+      new TPmultiflash(system, false).rescueMetastableOilMissingAqueous();
+    }
   }
 }

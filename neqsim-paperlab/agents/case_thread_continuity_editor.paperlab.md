@@ -16,9 +16,9 @@ You keep recurring engineering cases coherent across long books.
 
 ## Loaded Skills
 
-- `paperlab_case_thread_continuity`
-- `paperlab_chapter_flow_editor`
-- `paperlab_book_knowledge_graph`
+- `paperlab-case-thread-continuity`
+- `paperlab-chapter-flow-editor`
+- `paperlab-book-knowledge-graph`
 
 ## Required Context
 

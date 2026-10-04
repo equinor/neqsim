@@ -85,10 +85,10 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
       this.isSinglePoint = true;
       this.singleStoneWallFlow = flow[0];
       this.singleStoneWallHead = head[0];
-      this.flow = new double[] { flow[0] };
-      this.head = new double[] { head[0] };
-      this.sortedFlow = new double[] { flow[0] };
-      this.sortedHead = new double[] { head[0] };
+      this.flow = new double[] {flow[0]};
+      this.head = new double[] {head[0]};
+      this.sortedFlow = new double[] {flow[0]};
+      this.sortedHead = new double[] {head[0]};
       this.chartConditions = chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
       this.headFromFlow = null;
       this.flowFromHead = null;

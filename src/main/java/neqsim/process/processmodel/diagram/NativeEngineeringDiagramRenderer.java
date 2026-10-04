@@ -578,8 +578,8 @@ public final class NativeEngineeringDiagramRenderer {
       double[] bounds = commandBounds(shape);
       for (Map.Entry<String, Point> object : positions.entrySet()) {
         Point center = object.getValue();
-        if (boundsOverlap(bounds, new double[] { center.x - OBJECT_WIDTH / 2.0, center.y - OBJECT_HEIGHT / 2.0,
-            center.x + OBJECT_WIDTH / 2.0, center.y + OBJECT_HEIGHT / 2.0 })) {
+        if (boundsOverlap(bounds, new double[] {center.x - OBJECT_WIDTH / 2.0, center.y - OBJECT_HEIGHT / 2.0,
+            center.x + OBJECT_WIDTH / 2.0, center.y + OBJECT_HEIGHT / 2.0})) {
           diagnostics.add(diagnostic(Severity.WARNING, "DIAGRAM_RENDER_SCENE_PROPOSAL_OBJECT_COLLISION",
               "P&ID proposal marker overlaps object envelope " + object.getKey(), shape.id));
         }
@@ -599,10 +599,10 @@ public final class NativeEngineeringDiagramRenderer {
       double width = estimatedTextWidth(command.text, command.size);
       double left = "middle".equals(command.anchor) ? command.x - width / 2.0
           : "end".equals(command.anchor) ? command.x - width : command.x;
-      return new double[] { left, command.y - command.size / 2.0, left + width, command.y + command.size / 2.0 };
+      return new double[] {left, command.y - command.size / 2.0, left + width, command.y + command.size / 2.0};
     }
     if ("rect".equals(command.type)) {
-      return new double[] { command.x, command.y, command.x + command.width, command.y + command.height };
+      return new double[] {command.x, command.y, command.x + command.width, command.y + command.height};
     }
     double left = Double.POSITIVE_INFINITY;
     double top = Double.POSITIVE_INFINITY;
@@ -614,7 +614,7 @@ public final class NativeEngineeringDiagramRenderer {
       right = Math.max(right, point.x);
       bottom = Math.max(bottom, point.y);
     }
-    return new double[] { left, top, right, bottom };
+    return new double[] {left, top, right, bottom};
   }
 
   private static boolean boundsOverlap(double[] first, double[] second) {
@@ -1371,7 +1371,7 @@ public final class NativeEngineeringDiagramRenderer {
         "pid-proposal:overlay-status", "end"));
     Map<String, Object> registerData = pidRegisters.toMap();
     Map<String, List<Map<String, Object>>> rowsByEquipment = new TreeMap<String, List<Map<String, Object>>>();
-    for (String register : new String[] { "nozzles", "valves", "instruments", "interfaces" }) {
+    for (String register : new String[] {"nozzles", "valves", "instruments", "interfaces"}) {
       for (Map<String, Object> row : proposalRows(registerData, register)) {
         String equipmentId = textValue(row.get("semanticEquipmentId"));
         if (!positions.containsKey(equipmentId)) {
@@ -1878,7 +1878,7 @@ public final class NativeEngineeringDiagramRenderer {
         continue;
       }
       double segmentLength = Math.abs(end.x - start.x);
-      for (double fraction : new double[] { 0.5, 0.25, 0.75 }) {
+      for (double fraction : new double[] {0.5, 0.25, 0.75}) {
         Point candidate = new Point(start.x + (end.x - start.x) * fraction, start.y);
         int score = routeLabelCollisionScore(label, candidate, positions, routes, pageWidth, contentBottom);
         if (score < bestScore || score == bestScore && segmentLength > bestSegmentLength) {

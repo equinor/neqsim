@@ -18,12 +18,12 @@ output you receive.
 
 ## Example 1: Simple Property Lookup
 
-**Difficulty:** Beginner | **Agent:** `@thermo.fluid` | **Time:** seconds
+**Difficulty:** Beginner | **Agent:** `@thermo-fluid` | **Time:** seconds
 
 ### The Prompt
 
 ```
-@thermo.fluid What is the density and viscosity of methane at 200 bara and 40°C?
+@thermo-fluid What is the density and viscosity of methane at 200 bara and 40°C?
 ```
 
 ### What the Agent Does
@@ -54,12 +54,12 @@ At 200 bara and 40°C, methane is a supercritical fluid:
 
 ## Example 2: Process Simulation Notebook
 
-**Difficulty:** Intermediate | **Agent:** `@solve.process` | **Time:** minutes
+**Difficulty:** Intermediate | **Agent:** `@solve-process` | **Time:** minutes
 
 ### The Prompt
 
 ```
-@solve.process Build a 3-stage compression train from 5 to 150 bara with
+@solve-process Build a 3-stage compression train from 5 to 150 bara with
 intercooling to 35°C for a natural gas at 100,000 Sm3/day
 ```
 
@@ -105,12 +105,12 @@ A complete Jupyter notebook with:
 
 ## Example 3: Flow Assurance Study
 
-**Difficulty:** Intermediate | **Agent:** `@flow.assurance` | **Time:** minutes
+**Difficulty:** Intermediate | **Agent:** `@flow-assurance` | **Time:** minutes
 
 ### The Prompt
 
 ```
-@flow.assurance Check if a wet gas pipeline from platform to shore has
+@flow-assurance Check if a wet gas pipeline from platform to shore has
 hydrate risk. The gas is 90% methane, 5% ethane, 3% propane, 2% CO2
 at 120 bara. Pipeline is 80 km subsea at 4°C seabed temperature.
 What concentration of MEG is needed for inhibition?
@@ -163,12 +163,12 @@ Notebook saved with hydrate curve and MEG sensitivity plots.
 
 ## Example 4: Full Engineering Task with Report
 
-**Difficulty:** Advanced | **Agent:** `@solve.task` | **Time:** 30-60 minutes
+**Difficulty:** Advanced | **Agent:** `@solve-task` | **Time:** 30-60 minutes
 
 ### The Prompt
 
 ```
-@solve.task Design a TEG dehydration unit for a 50 MMSCFD wet natural gas
+@solve-task Design a TEG dehydration unit for a 50 MMSCFD wet natural gas
 at 70 bara and 35°C. Target water dew point is -18°C per NORSOK P-001.
 Include equipment sizing, TEG circulation rate, and reboiler duty.
 Compare results against GPSA Engineering Data Book correlations.
@@ -264,10 +264,10 @@ The router detects four sub-tasks spanning three disciplines:
 
 ```
 Request Analysis:
-├── Sub-task 1: Pipeline hydraulics     → @process.model
-├── Sub-task 2: Hydrate check           → @flow.assurance
-├── Sub-task 3: Wall thickness          → @mechanical.design
-└── Sub-task 4: Cost estimation         → @mechanical.design
+├── Sub-task 1: Pipeline hydraulics     → @process-model
+├── Sub-task 2: Hydrate check           → @flow-assurance
+├── Sub-task 3: Wall thickness          → @mechanical-design
+└── Sub-task 4: Cost estimation         → @mechanical-design
 ```
 
 **Dependencies:**
@@ -280,19 +280,19 @@ skill schema.
 
 ### Execution Sequence
 
-**Phase 1:** `@process.model` creates a `PipeBeggsAndBrills` or
+**Phase 1:** `@process-model` creates a `PipeBeggsAndBrills` or
 `AdiabaticPipe` model for the 120 km pipeline. Output: pressure and
 temperature at every point along the pipeline.
 
-**Phase 2a:** `@flow.assurance` takes the P,T profile and overlays
+**Phase 2a:** `@flow-assurance` takes the P,T profile and overlays
 the hydrate equilibrium curve. Determines if any point along the pipeline
 enters the hydrate region. Calculates MEG dosage if needed.
 
-**Phase 2b:** `@mechanical.design` takes the maximum operating pressure
+**Phase 2b:** `@mechanical-design` takes the maximum operating pressure
 and applies DNV-OS-F101 wall thickness calculation. Selects material grade
 (API 5L X65), applies design factors, corrosion allowance.
 
-**Phase 3:** `@mechanical.design` uses wall thickness, pipeline length,
+**Phase 3:** `@mechanical-design` uses wall thickness, pipeline length,
 material grade, and installation method to estimate costs using
 NeqSim's SURF cost estimation classes.
 
@@ -306,12 +306,12 @@ on maximum pressure of 142 bara at inlet from hydraulic simulation").
 
 ## Example 6: Capability Gap Discovery
 
-**Difficulty:** Advanced | **Agent:** `@capability.scout` | **Time:** minutes
+**Difficulty:** Advanced | **Agent:** `@capability-scout` | **Time:** minutes
 
 ### The Prompt
 
 ```
-@capability.scout Can NeqSim handle HPHT (high pressure high temperature)
+@capability-scout Can NeqSim handle HPHT (high pressure high temperature)
 well design for a 280°C, 1200 bara reservoir with H2S and CO2?
 ```
 
@@ -337,22 +337,22 @@ Capability Assessment for HPHT Well Design:
     NIP: Create HPHTMaterialSelector class in process.mechanicaldesign
 
 Recommended Agent Pipeline:
-  1. @thermo.fluid — Create HPHT fluid with H2S, CO2 at extreme conditions
-  2. @flow.assurance — Corrosion assessment at reservoir conditions
-  3. @mechanical.design — Casing design with HPHT design factors
-  4. @solve.task — Full study with uncertainty and reporting
+  1. @thermo-fluid — Create HPHT fluid with H2S, CO2 at extreme conditions
+  2. @flow-assurance — Corrosion assessment at reservoir conditions
+  3. @mechanical-design — Casing design with HPHT design factors
+  4. @solve-task — Full study with uncertainty and reporting
 ```
 
 ---
 
 ## Example 7: Gas Quality Compliance
 
-**Difficulty:** Beginner | **Agent:** `@gas.quality` | **Time:** seconds
+**Difficulty:** Beginner | **Agent:** `@gas-quality` | **Time:** seconds
 
 ### The Prompt
 
 ```
-@gas.quality Check if this gas meets EN 16726 H-gas specification:
+@gas-quality Check if this gas meets EN 16726 H-gas specification:
 methane 89%, ethane 6%, propane 2.5%, CO2 1.5%, N2 1%
 ```
 
@@ -383,12 +383,12 @@ Result: GAS MEETS EN 16726 H-GAS SPECIFICATION ✅
 
 ## Example 8: Field Development Concept Selection
 
-**Difficulty:** Advanced | **Agent:** `@field.development` | **Time:** 30-60 minutes
+**Difficulty:** Advanced | **Agent:** `@field-development` | **Time:** 30-60 minutes
 
 ### The Prompt
 
 ```
-@field.development Evaluate two development concepts for a 25 km subsea
+@field-development Evaluate two development concepts for a 25 km subsea
 tieback of a lean gas field (85% methane, 8% ethane, 4% propane, 2% CO2,
 1% N2) at 350 m water depth:
 - Concept A: Direct tieback to existing host platform (20-inch pipeline)
@@ -425,10 +425,10 @@ CAPEX breakdown, and a recommendation with risk assessment.
 
 ```
 # Less effective:
-@process.model Simulate a separator
+@process-model Simulate a separator
 
 # More effective:
-@process.model Simulate a 3-phase separator at 70 bara and 80°C for a
+@process-model Simulate a 3-phase separator at 70 bara and 80°C for a
 gas-condensate with 95% methane, 3% propane, 1% n-hexane, 1% water
 at 200,000 Sm3/day
 ```
@@ -437,10 +437,10 @@ at 200,000 Sm3/day
 
 ```
 # Without standard:
-@mechanical.design Calculate wall thickness for a 12-inch pipeline at 100 bara
+@mechanical-design Calculate wall thickness for a 12-inch pipeline at 100 bara
 
 # With standard (triggers deeper analysis):
-@mechanical.design Calculate wall thickness for a 12-inch subsea pipeline
+@mechanical-design Calculate wall thickness for a 12-inch subsea pipeline
 at 100 bara per DNV-OS-F101 with Equinor TR requirements
 ```
 
@@ -448,10 +448,10 @@ at 100 bara per DNV-OS-F101 with Equinor TR requirements
 
 ```
 # Vague:
-@solve.task Study TEG dehydration
+@solve-task Study TEG dehydration
 
 # Specific:
-@solve.task Design a TEG dehydration unit for 50 MMSCFD at 70 bara.
+@solve-task Design a TEG dehydration unit for 50 MMSCFD at 70 bara.
 Target -18°C water dew point per NORSOK P-001. Deliver a notebook with
 validation against GPSA and a Word report.
 ```
@@ -460,7 +460,7 @@ validation against GPSA and a Word report.
 
 ```
 # Before starting a complex task:
-@capability.scout Can NeqSim handle mercury removal from LNG feed gas
+@capability-scout Can NeqSim handle mercury removal from LNG feed gas
 with activated carbon adsorption and mercury mass balance?
 ```
 

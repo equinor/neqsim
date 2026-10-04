@@ -173,6 +173,14 @@ public class AdvisoryService {
 
 Use surrogates for speed, physics for accuracy:
 
+Declare model input/output dimensions and training bounds before registering a
+surrogate. The registry rejects malformed requests before either callback and
+validates numeric results from both paths; see the [ML validation and fallback
+contract](ml/README.md#input-schema-output-validation-and-fallback). Apply
+model-specific conservation and physical checks before using the result to
+update the process. Fallback failures are explicit errors, so the caller must
+retain the previous valid state or otherwise handle the unavailable result.
+
 ```java
 public class HybridExecutionService {
     private final ProcessSystem physicsModel;

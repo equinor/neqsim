@@ -32,12 +32,12 @@ public final class SarirAtmosphericAssay {
   public static final double BULK_MOLAR_MASS_TOLERANCE_KG_PER_MOL = 0.001;
 
   private static final double KILOGRAM_PER_CUBIC_METRE_PER_SPECIFIC_GRAVITY = 1000.0;
-  private static final double[] CUT_VOLUME_PERCENT = { 7.44, 3.03, 3.36, 7.33, 7.36, 3.02, 6.49, 3.73, 2.92, 7.29, 7.22,
-      4.31, 9.02, 3.09, 3.05, 2.39, 2.65, 16.30 };
-  private static final String[] CUT_NAMES = { "SARIR_TBP_70_MINUS", "SARIR_TBP_70_90", "SARIR_TBP_90_110",
+  private static final double[] CUT_VOLUME_PERCENT = {7.44, 3.03, 3.36, 7.33, 7.36, 3.02, 6.49, 3.73, 2.92, 7.29, 7.22,
+      4.31, 9.02, 3.09, 3.05, 2.39, 2.65, 16.30};
+  private static final String[] CUT_NAMES = {"SARIR_TBP_70_MINUS", "SARIR_TBP_70_90", "SARIR_TBP_90_110",
       "SARIR_TBP_110_150", "SARIR_TBP_150_195", "SARIR_TBP_195_215", "SARIR_TBP_215_255", "SARIR_TBP_255_275",
       "SARIR_TBP_275_295", "SARIR_TBP_295_335", "SARIR_TBP_335_370", "SARIR_TBP_370_400", "SARIR_TBP_400_460",
-      "SARIR_TBP_460_480", "SARIR_TBP_480_500", "SARIR_TBP_500_520", "SARIR_TBP_520_550", "SARIR_TBP_550_PLUS" };
+      "SARIR_TBP_460_480", "SARIR_TBP_480_500", "SARIR_TBP_500_520", "SARIR_TBP_520_550", "SARIR_TBP_550_PLUS"};
 
   private SarirAtmosphericAssay() {
   }

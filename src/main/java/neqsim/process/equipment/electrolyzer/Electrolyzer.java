@@ -182,9 +182,9 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("Electrolyzer '" + getName() + "' requires a non-null inlet stream");
     }
     this.waterInlet = inletStream;
-    SystemInterface h2System = new Fluid().create2(new String[] { "hydrogen" }, new double[] { 1.0 }, "mole/sec");
+    SystemInterface h2System = new Fluid().create2(new String[] {"hydrogen"}, new double[] {1.0}, "mole/sec");
     hydrogenOutStream = new Stream("hydrogenOutStream", h2System);
-    SystemInterface o2System = new Fluid().create2(new String[] { "oxygen" }, new double[] { 1.0 }, "mole/sec");
+    SystemInterface o2System = new Fluid().create2(new String[] {"oxygen"}, new double[] {1.0}, "mole/sec");
     oxygenOutStream = new Stream("oxygenOutStream", o2System);
 
     double pressure = inletStream.getPressure("bara");

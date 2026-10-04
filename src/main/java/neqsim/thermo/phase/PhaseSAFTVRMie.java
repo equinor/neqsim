@@ -157,8 +157,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * Effective packing fraction parameterization coefficients from Lafitte 2013. c_i(lambda) = A[i][0] +
    * A[i][1]/(lambda-3) + A[i][2]/(lambda-3)^2 + A[i][3]/(lambda-3)^3 Rows: c1, c2, c3, c4.
    */
-  static final double[][] etaEffCoeffs = { { 0.81096, 1.7888, -37.578, 92.284 }, { 1.0205, -19.341, 151.26, -463.50 },
-      { -1.9057, 22.845, -228.14, 973.92 }, { 1.08850, -6.1962, 106.98, -677.64 } };
+  static final double[][] etaEffCoeffs = {{0.81096, 1.7888, -37.578, 92.284}, {1.0205, -19.341, 151.26, -463.50},
+      {-1.9057, 22.845, -228.14, 973.92}, {1.08850, -6.1962, 106.98, -677.64}};
 
   /**
    * Pad\u00e9 coefficient matrix for f1-f6 functions (Lafitte 2013 Table 3).
@@ -169,13 +169,13 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * phi[2][m]*alpha^2 + phi[3][m]*alpha^3) / (1 + phi[4][m]*alpha + phi[5][m]*alpha^2 + phi[6][m]*alpha^3).
    * </p>
    */
-  static final double[][] phiPade = { { 7.5365557, -359.440, 1550.9, -1.199320, -1911.2800, 9236.9 },
-      { -37.604630, 1825.60, -5070.1, 9.063632, 21390.175, -129430.0 },
-      { 71.745953, -3168.00, 6534.6, -17.94820, -51320.700, 357230.0 },
-      { -46.835520, 1884.20, -3288.7, 11.34027, 37064.540, -315530.0 },
-      { -2.4679820, -0.82376, -2.7171, 20.52142, 1103.7420, 1390.2 },
-      { -0.5027200, -3.19350, 2.0883, -56.63770, -3264.6100, -4518.2 },
-      { 8.0956883, 3.70900, 0.0000, 40.53683, 2556.1810, 4241.6 } };
+  static final double[][] phiPade = {{7.5365557, -359.440, 1550.9, -1.199320, -1911.2800, 9236.9},
+      {-37.604630, 1825.60, -5070.1, 9.063632, 21390.175, -129430.0},
+      {71.745953, -3168.00, 6534.6, -17.94820, -51320.700, 357230.0},
+      {-46.835520, 1884.20, -3288.7, 11.34027, 37064.540, -315530.0},
+      {-2.4679820, -0.82376, -2.7171, 20.52142, 1103.7420, 1390.2},
+      {-0.5027200, -3.19350, 2.0883, -56.63770, -3264.6100, -4518.2},
+      {8.0956883, 3.70900, 0.0000, 40.53683, 2556.1810, 4241.6}};
 
   /**
    * Dufal 2015 association integral I(T*, rho*) coefficient matrix.
@@ -187,26 +187,26 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * </p>
    */
   static final double[][] DUFAL_C = {
-      { 0.0756425183020431, -0.128667137050961, 0.128350632316055, -0.0725321780970292, 0.0257782547511452,
+      {0.0756425183020431, -0.128667137050961, 0.128350632316055, -0.0725321780970292, 0.0257782547511452,
           -0.00601170055221687, 0.000933363147191978, -9.55607377143667e-05, 6.19576039900837e-06,
-          -2.30466608213628e-07, 3.74605718435540e-09 },
-      { 0.134228218276565, -0.182682168504886, 0.0771662412959262, -0.000717458641164565, -0.00872427344283170,
+          -2.30466608213628e-07, 3.74605718435540e-09},
+      {0.134228218276565, -0.182682168504886, 0.0771662412959262, -0.000717458641164565, -0.00872427344283170,
           0.00297971836051287, -0.000484863997651451, 4.35262491516424e-05, -2.07789181640066e-06, 4.13749349344802e-08,
-          0 },
-      { -0.565116428942893, 1.00930692226792, -0.660166945915607, 0.214492212294301, -0.0388462990166792,
-          0.00406016982985030, -0.000239515566373142, 7.25488368831468e-06, -8.58904640281928e-08, 0, 0 },
-      { -0.387336382687019, -0.211614570109503, 0.450442894490509, -0.176931752538907, 0.0317171522104923,
-          -0.00291368915845693, 0.000130193710011706, -2.14505500786531e-06, 0, 0, 0 },
-      { 2.13713180911797, -2.02798460133021, 0.336709255682693, 0.00118106507393722, -0.00600058423301506,
-          0.000626343952584415, -2.03636395699819e-05, 0, 0, 0, 0 },
-      { -0.300527494795524, 2.89920714512243, -0.567134839686498, 0.0518085125423494, -0.00239326776760414,
-          4.15107362643844e-05, 0, 0, 0, 0, 0 },
-      { -6.21028065719194, -1.92883360342573, 0.284109761066570, -0.0157606767372364, 0.000368599073256615, 0, 0, 0, 0,
-          0, 0 },
-      { 11.6083532818029, 0.742215544511197, -0.0823976531246117, 0.00186167650098254, 0, 0, 0, 0, 0, 0, 0 },
-      { -10.2632535542427, -0.125035689035085, 0.0114299144831867, 0, 0, 0, 0, 0, 0, 0, 0 },
-      { 4.65297446837297, -0.00192518067137033, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-      { -0.867296219639940, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } };
+          0},
+      {-0.565116428942893, 1.00930692226792, -0.660166945915607, 0.214492212294301, -0.0388462990166792,
+          0.00406016982985030, -0.000239515566373142, 7.25488368831468e-06, -8.58904640281928e-08, 0, 0},
+      {-0.387336382687019, -0.211614570109503, 0.450442894490509, -0.176931752538907, 0.0317171522104923,
+          -0.00291368915845693, 0.000130193710011706, -2.14505500786531e-06, 0, 0, 0},
+      {2.13713180911797, -2.02798460133021, 0.336709255682693, 0.00118106507393722, -0.00600058423301506,
+          0.000626343952584415, -2.03636395699819e-05, 0, 0, 0, 0},
+      {-0.300527494795524, 2.89920714512243, -0.567134839686498, 0.0518085125423494, -0.00239326776760414,
+          4.15107362643844e-05, 0, 0, 0, 0, 0},
+      {-6.21028065719194, -1.92883360342573, 0.284109761066570, -0.0157606767372364, 0.000368599073256615, 0, 0, 0, 0,
+          0, 0},
+      {11.6083532818029, 0.742215544511197, -0.0823976531246117, 0.00186167650098254, 0, 0, 0, 0, 0, 0, 0},
+      {-10.2632535542427, -0.125035689035085, 0.0114299144831867, 0, 0, 0, 0, 0, 0, 0, 0},
+      {4.65297446837297, -0.00192518067137033, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+      {-0.867296219639940, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
   /**
    * Evaluates the Dufal 2015 association integral I(Tr, rhoStar).
@@ -680,6 +680,19 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return weighted average ln(g)
    */
   private double calcLnGChainEffective(double etaVal, double alpha) {
+    return calcLnGChainEffective(etaVal, alpha, temperature, null);
+  }
+
+  /**
+   * Evaluates the contact value at an independent temperature without mutating phase or component caches.
+   *
+   * @param etaVal packing fraction
+   * @param alpha Mie blending fraction
+   * @param trialTemperature temperature in K
+   * @param diameters trial segment diameters, or null for the current state
+   * @return effective logarithmic contact value
+   */
+  private double calcLnGChainEffective(double etaVal, double alpha, double trialTemperature, double[] diameters) {
     double lnGWeighted = 0.0;
     double totalWeight = 0.0;
 
@@ -691,9 +704,9 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
         continue;
       }
       double sigmaI = ci.getSigmaSAFTi();
-      double dI = ci.getdSAFTi();
+      double dI = diameters == null ? ci.getdSAFTi() : diameters[i];
       double x0I = (dI > 0) ? sigmaI / dI : 1.0;
-      double epsOvKTI = ci.getEpsikSAFT() / temperature;
+      double epsOvKTI = ci.getEpsikSAFT() / trialTemperature;
       double lrI = ci.getLambdaRSAFTVRMie();
       double laI = ci.getLambdaASAFTVRMie();
       double cMieI = ComponentSAFTVRMie.calcMiePrefactor(lrI, laI);
@@ -1390,7 +1403,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       }
     }
 
-    return new double[] { a1sum, a2sum, a3sum };
+    return new double[] {a1sum, a2sum, a3sum};
   }
 
   /**
@@ -2180,31 +2193,66 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
    * @return derivative
    */
   public double dF_HC_SAFTdT() {
-    return getNumberOfMolesInPhase() * (mSAFT * daHSSAFTdN * dNSAFTdT - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdT);
+    double step = Math.max(0.01, temperature * 2e-4);
+    return (hardChainAt(temperature - 2 * step, volumeSAFT) - 8 * hardChainAt(temperature - step, volumeSAFT)
+        + 8 * hardChainAt(temperature + step, volumeSAFT) - hardChainAt(temperature + 2 * step, volumeSAFT))
+        / (12 * step);
   }
 
   /**
-   * d2F_HC/dT2.
+   * Second temperature derivative of the complete hard-chain energy at fixed volume and composition. Includes the
+   * Barker-Henderson diameter curvature and explicit contact-value temperature dependence.
    *
-   * @return derivative
+   * @return derivative in K^-2
    */
   public double dF_HC_SAFTdTdT() {
-    double n = getNumberOfMolesInPhase();
-    return n * (mSAFT * daHSSAFTdNdN * dNSAFTdT * dNSAFTdT + mSAFT * daHSSAFTdN * dNSAFTdTdT
-        + mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dNSAFTdT
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dNSAFTdT - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdT);
+    double step = Math.max(0.05, temperature * 1e-3);
+    return (hardChainAt(temperature + step, volumeSAFT) - 2 * hardChainAt(temperature, volumeSAFT)
+        + hardChainAt(temperature - step, volumeSAFT)) / (step * step);
   }
 
   /**
-   * d2F_HC/dTdV.
+   * Mixed temperature/volume derivative of the complete hard-chain energy at fixed composition.
    *
-   * @return derivative
+   * @return derivative with respect to K and total volume in m^3
    */
   public double dF_HC_SAFTdTdV() {
-    double n = getNumberOfMolesInPhase();
-    return n * (mSAFT * daHSSAFTdNdN * dNSAFTdT * dnSAFTdV + mSAFT * daHSSAFTdN * dNSAFTdTdV
-        + mmin1SAFT * Math.pow(ghsSAFT, -2.0) * Math.pow(dgHSSAFTdN, 2.0) * dNSAFTdT * dnSAFTdV
-        - mmin1SAFT / ghsSAFT * dgHSSAFTdNdN * dNSAFTdT * dnSAFTdV - mmin1SAFT / ghsSAFT * dgHSSAFTdN * dNSAFTdTdV);
+    double stepT = Math.max(0.05, temperature * 1e-3);
+    double stepV = volumeSAFT * 5e-4;
+    return (hardChainAt(temperature + stepT, volumeSAFT + stepV) - hardChainAt(temperature + stepT, volumeSAFT - stepV)
+        - hardChainAt(temperature - stepT, volumeSAFT + stepV) + hardChainAt(temperature - stepT, volumeSAFT - stepV))
+        / (4 * stepT * stepV);
+  }
+
+  /**
+   * Computes hard-chain energy for a thermal finite-difference stencil. Each diameter and the explicit epsilon/(kT)
+   * contact term use the same trial temperature; the receiver is unchanged.
+   *
+   * @param trialTemperature temperature in K
+   * @param trialVolume total volume in m^3
+   * @return dimensionless hard-chain Helmholtz energy
+   */
+  private double hardChainAt(double trialTemperature, double trialVolume) {
+    double[] diameters = new double[numberOfComponents];
+    double moment = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie component = (ComponentSAFTVRMie) getComponent(i);
+      diameters[i] = ComponentSAFTVRMie.calcEffectiveDiameter(component.getSigmaSAFTi(), component.getEpsikSAFT(),
+          trialTemperature, component.getLambdaRSAFTVRMie(), component.getLambdaASAFTVRMie());
+      moment += component.getNumberOfMolesInPhase() * component.getmSAFTi() * Math.pow(diameters[i], 3.0);
+    }
+    double eta = Math.PI / 6.0 * ThermodynamicConstantsInterface.avagadroNumber * moment / trialVolume;
+    double om = 1.0 - eta;
+    double hardSphere = (4.0 * eta - 3.0 * eta * eta) / (om * om);
+    double logContact = Math.log((1.0 - eta / 2.0) / Math.pow(om, 3.0));
+    if (mmin1SAFT > 1e-10 && eta > 1e-10 && eta < 0.55) {
+      double candidate = calcLnGChainEffective(eta, gMieCorrectionEnabled ? gMieBlendFraction : 0.0, trialTemperature,
+          diameters);
+      if (Double.isFinite(candidate)) {
+        logContact = candidate;
+      }
+    }
+    return getNumberOfMolesInPhase() * (mSAFT * hardSphere - mmin1SAFT * logContact);
   }
 
   // ===== Dispersion contribution (Lafitte 2013) =====
@@ -2445,7 +2493,7 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
         // No bracket found (P below spinodal minimum — no liquid root at this P).
         // Fall back to homotopy: best-effort volume for the VLE solver.
         setMolarVolume(initialVmNeqsim);
-        double[] alphaStepsFb = new double[] { 0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0 };
+        double[] alphaStepsFb = new double[] {0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0};
         for (double alpha : alphaStepsFb) {
           gMieBlendFraction = alpha;
           double logVm = Math.log(getMolarVolume());
@@ -2553,8 +2601,8 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
       }
     } else {
       // --- Non-associated MONOMER (m=1): homotopy continuation + Newton ---
-      double[] alphaSteps = needsChainCorrection ? new double[] { 0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0 }
-          : new double[] { 0.0 };
+      double[] alphaSteps = needsChainCorrection ? new double[] {0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0}
+          : new double[] {0.0};
       double logVmTol = needsChainCorrection ? 1.0e-8 : 1.0e-10;
 
       for (double alpha : alphaSteps) {
@@ -2682,12 +2730,27 @@ public class PhaseSAFTVRMie extends PhaseSrkEos {
   }
 
   /**
-   * Second temperature derivative of dSAFT (zero approx).
+   * Second temperature derivative of the segment-diameter moment, evaluated from the BH quadrature.
    *
    * @return d2(dSAFT)/dT2
    */
   public double getd2DSAFTdTdT() {
-    return 0.0;
+    double step = Math.max(0.01, temperature * 1e-3);
+    double result = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      ComponentSAFTVRMie component = (ComponentSAFTVRMie) getComponent(i);
+      double sigma = component.getSigmaSAFTi();
+      double epsilon = component.getEpsikSAFT();
+      double repulsive = component.getLambdaRSAFTVRMie();
+      double attractive = component.getLambdaASAFTVRMie();
+      double plus = ComponentSAFTVRMie.calcEffectiveDiameter(sigma, epsilon, temperature + step, repulsive, attractive);
+      double center = ComponentSAFTVRMie.calcEffectiveDiameter(sigma, epsilon, temperature, repulsive, attractive);
+      double minus = ComponentSAFTVRMie.calcEffectiveDiameter(sigma, epsilon, temperature - step, repulsive,
+          attractive);
+      result += component.getNumberOfMolesInPhase() / getNumberOfMolesInPhase() * component.getmSAFTi()
+          * (Math.pow(plus, 3.0) - 2 * Math.pow(center, 3.0) + Math.pow(minus, 3.0)) / (step * step);
+    }
+    return result;
   }
 
   // ===== Legacy / compatibility getters needed by ComponentSAFTVRMie =====

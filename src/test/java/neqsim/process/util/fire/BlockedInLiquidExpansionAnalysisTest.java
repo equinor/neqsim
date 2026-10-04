@@ -29,7 +29,7 @@ public class BlockedInLiquidExpansionAnalysisTest {
     double originalTemperatureK = fluid.getTemperature();
     double originalPressureBara = fluid.getPressure();
 
-    double[] temperaturesK = { t0, t0 + 2.0, t0 + 4.0, t0 + 6.0, t0 + 8.0, t0 + 10.0 };
+    double[] temperaturesK = {t0, t0 + 2.0, t0 + 4.0, t0 + 6.0, t0 + 8.0, t0 + 10.0};
     double[] pressuresPa = BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(fluid, temperaturesK);
 
     assertEquals(temperaturesK.length, pressuresPa.length);
@@ -60,7 +60,7 @@ public class BlockedInLiquidExpansionAnalysisTest {
     assertTrue(kappa > 0.0, "Isothermal compressibility should be positive");
 
     double deltaTK = 5.0;
-    double[] temperaturesK = { t0, t0 + deltaTK };
+    double[] temperaturesK = {t0, t0 + deltaTK};
     double[] pressuresPa = BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(fluid, temperaturesK);
     double actualDeltaPPa = pressuresPa[1] - pressuresPa[0];
 
@@ -87,7 +87,7 @@ public class BlockedInLiquidExpansionAnalysisTest {
     assertThrows(IllegalArgumentException.class,
         () -> BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(fluid, new double[0]));
     assertThrows(IllegalArgumentException.class,
-        () -> BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(null, new double[] { 300.0 }));
+        () -> BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(null, new double[] {300.0}));
     assertThrows(IllegalArgumentException.class,
         () -> BlockedInLiquidExpansionAnalysis.estimateThermalExpansionCoefficient(fluid, 0.0));
     assertThrows(IllegalArgumentException.class,

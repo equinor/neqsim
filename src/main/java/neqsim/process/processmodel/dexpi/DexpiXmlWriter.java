@@ -728,15 +728,15 @@ public final class DexpiXmlWriter {
 
     // Symbol legend (ISO 10628)
     List<String[]> legendEntries = new ArrayList<>();
-    legendEntries.add(new String[] { "Process", "Process Line", "0" });
-    legendEntries.add(new String[] { "Measure", "Measuring Connection", "0" });
-    legendEntries.add(new String[] { "Electric", "Electrical Signal", "2" });
-    legendEntries.add(new String[] { "Pneumatic", "Pneumatic Command", "3" });
+    legendEntries.add(new String[] {"Process", "Process Line", "0"});
+    legendEntries.add(new String[] {"Measure", "Measuring Connection", "0"});
+    legendEntries.add(new String[] {"Electric", "Electrical Signal", "2"});
+    legendEntries.add(new String[] {"Pneumatic", "Pneumatic Command", "3"});
     DexpiLayoutEngine.appendSymbolLegend(document, root, legendEntries);
 
     // Revision history (NORSOK Z-003)
     List<String[]> revisions = new ArrayList<>();
-    revisions.add(new String[] { "0", today, "Engineering Proposal", "NeqSim", "-" });
+    revisions.add(new String[] {"0", today, "Engineering Proposal", "NeqSim", "-"});
     DexpiLayoutEngine.appendRevisionHistory(document, root, revisions, sheetSize[0]);
 
     writeDocument(document, outputStream);
@@ -997,7 +997,7 @@ public final class DexpiXmlWriter {
         Map.Entry<String, MeasurementDeviceInterface> deviceEntry = devices.get(index);
         String tag = deviceEntry.getKey();
         String nozzleId = uniqueIdentifier("Nozzle", equipmentName + "-" + tag + "-LevelTap", usedIds);
-        nozzlePositions.put(nozzleId, new double[] { position.x - 18.0, startY - index * 8.0 });
+        nozzlePositions.put(nozzleId, new double[] {position.x - 18.0, startY - index * 8.0});
         Element nozzle = appendNozzle(document, equipmentElement, nozzleId, usedIds, nozzlePositions);
         if (nozzle == null) {
           continue;
@@ -1235,21 +1235,21 @@ public final class DexpiXmlWriter {
     // Mechanical-design lengths (inner diameter, wall thickness, tan-to-tan length) are stored
     // internally in metres. Convert to millimetres for the P&ID data bar.
     if (md.getInnerDiameter() > 0) {
-      rows.add(new String[] { "ID", formatMechValue(md.getInnerDiameter() * 1000.0) + " mm" });
+      rows.add(new String[] {"ID", formatMechValue(md.getInnerDiameter() * 1000.0) + " mm"});
     }
     if (md.getWallThickness() > 0) {
-      rows.add(new String[] { "Wall Thk.", formatMechValue(md.getWallThickness() * 1000.0) + " mm" });
+      rows.add(new String[] {"Wall Thk.", formatMechValue(md.getWallThickness() * 1000.0) + " mm"});
     }
     if (md.getTantanLength() > 0) {
-      rows.add(new String[] { "Length", formatMechValue(md.getTantanLength() * 1000.0) + " mm" });
+      rows.add(new String[] {"Length", formatMechValue(md.getTantanLength() * 1000.0) + " mm"});
     }
     String material = md.getConstrutionMaterial();
     if (material != null && !material.trim().isEmpty() && !"steel".equals(material)) {
-      rows.add(new String[] { "Material", material });
+      rows.add(new String[] {"Material", material});
     }
     boolean designPressureSet = md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0;
     if (designPressureSet) {
-      rows.add(new String[] { "Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara" });
+      rows.add(new String[] {"Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara"});
     }
     // Only emit a design temperature when it has been meaningfully set. The field defaults to the
     // placeholder value 100.0 K (-173.1 C); emitting that for every unmodified unit produced a
@@ -1257,10 +1257,10 @@ public final class DexpiXmlWriter {
     boolean designTemperatureSet = Math.abs(md.getMaxOperationTemperature() - 100.0) > 0.5;
     if (designTemperatureSet) {
       double designTempC = md.getMaxOperationTemperature() - 273.15;
-      rows.add(new String[] { "Design T.", formatMechValue(designTempC) + " \u00B0C" });
+      rows.add(new String[] {"Design T.", formatMechValue(designTempC) + " \u00B0C"});
     }
     if (md.getWeightTotal() > 0) {
-      rows.add(new String[] { "Weight", formatMechValue(md.getWeightTotal()) + " kg" });
+      rows.add(new String[] {"Weight", formatMechValue(md.getWeightTotal()) + " kg"});
     }
     return rows;
   }
@@ -1538,7 +1538,7 @@ public final class DexpiXmlWriter {
       return;
     }
     // Inlet nozzle at left edge of equipment shape (center height)
-    nozzlePositions.put(inNozzle, new double[] { position.x - 18.0, position.y });
+    nozzlePositions.put(inNozzle, new double[] {position.x - 18.0, position.y});
 
     // Phase-aware nozzle placement per P&ID convention (ISO 10628):
     // Gas exits TOP of equipment (highest Y in Y-up coords)
@@ -1546,20 +1546,20 @@ public final class DexpiXmlWriter {
     // Water exits below oil (heaviest phase at very bottom)
     if (outNozzles.size() == 1) {
       // Single outlet — same height as center (TwoPortEquipment)
-      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y });
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y});
     } else if (outNozzles.size() == 2) {
       // 2-phase separator: gas at top, liquid at bottom
-      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y + 8.0 }); // gas
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
       // (top)
-      nozzlePositions.put(outNozzles.get(1), new double[] { position.x + 18.0, position.y - 8.0 }); // liquid
+      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 8.0}); // liquid
       // (bottom)
     } else if (outNozzles.size() >= 3) {
       // 3-phase separator: gas top, oil middle, water bottom
-      nozzlePositions.put(outNozzles.get(0), new double[] { position.x + 18.0, position.y + 8.0 }); // gas
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
       // (top)
-      nozzlePositions.put(outNozzles.get(1), new double[] { position.x + 18.0, position.y - 4.0 }); // oil
+      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 4.0}); // oil
       // (middle-low)
-      nozzlePositions.put(outNozzles.get(2), new double[] { position.x + 18.0, position.y - 12.0 }); // water
+      nozzlePositions.put(outNozzles.get(2), new double[] {position.x + 18.0, position.y - 12.0}); // water
       // (bottom)
     }
   }
@@ -1773,9 +1773,9 @@ public final class DexpiXmlWriter {
       double x2 = points[i + 1][0];
       double y2 = points[i + 1][1];
       if (Math.abs(y1 - y2) < 0.5) {
-        horizontalSegments.add(new double[] { x1, x2, y1 });
+        horizontalSegments.add(new double[] {x1, x2, y1});
       } else if (Math.abs(x1 - x2) < 0.5) {
-        verticalSegments.add(new double[] { x1, y1, y2 });
+        verticalSegments.add(new double[] {x1, y1, y2});
       }
     }
   }
@@ -2285,7 +2285,7 @@ public final class DexpiXmlWriter {
         cx = pos[0];
         cy = pos[1];
         hasPosition = true;
-        instrumentPositions.add(new double[] { cx, cy });
+        instrumentPositions.add(new double[] {cx, cy});
       }
 
       // ProcessInstrumentationFunction (the instrument bubble)
@@ -2311,9 +2311,9 @@ public final class DexpiXmlWriter {
 
         String topText = category + functions;
         appendInstrumentLabelText(document, label, topText, cx, cy + 2.25, pifId,
-            new String[] { "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions" });
+            new String[] {"ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions"});
         appendInstrumentLabelText(document, label, loopNumber, cx, cy - 1.2, pifId,
-            new String[] { "ProcessInstrumentationFunctionNumber" });
+            new String[] {"ProcessInstrumentationFunctionNumber"});
 
         pif.appendChild(label);
       }
@@ -2512,7 +2512,7 @@ public final class DexpiXmlWriter {
         }
         if (hasPosition) {
           appendInstrumentPosition(document, ctrlPif, ctrlCx, ctrlCy);
-          instrumentPositions.add(new double[] { ctrlCx, ctrlCy });
+          instrumentPositions.add(new double[] {ctrlCx, ctrlCy});
 
           // Controller label
           String ctrlLabelId = uniqueIdentifier("ProcessInstrumentationFunctionLabel", controllerTag, usedIds);
@@ -2524,9 +2524,9 @@ public final class DexpiXmlWriter {
 
           String ctrlTopText = ctrlCategory + ctrlFunctions;
           appendInstrumentLabelText(document, ctrlLabel, ctrlTopText, ctrlCx, ctrlCy + 2.25, controllerPifId,
-              new String[] { "ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions" });
+              new String[] {"ProcessInstrumentationFunctionCategory", "ProcessInstrumentationFunctions"});
           appendInstrumentLabelText(document, ctrlLabel, loopNumber, ctrlCx, ctrlCy - 1.2, controllerPifId,
-              new String[] { "ProcessInstrumentationFunctionNumber" });
+              new String[] {"ProcessInstrumentationFunctionNumber"});
           ctrlPif.appendChild(ctrlLabel);
         }
 
@@ -3000,12 +3000,12 @@ public final class DexpiXmlWriter {
           + Math.abs(route[index + 1][1] - route[index][1]);
       if (remaining <= segmentLength || index + 2 == route.length) {
         double fraction = segmentLength <= 0.0 ? 0.0 : remaining / segmentLength;
-        return new double[] { route[index][0] + fraction * (route[index + 1][0] - route[index][0]),
-            route[index][1] + fraction * (route[index + 1][1] - route[index][1]) };
+        return new double[] {route[index][0] + fraction * (route[index + 1][0] - route[index][0]),
+            route[index][1] + fraction * (route[index + 1][1] - route[index][1])};
       }
       remaining -= segmentLength;
     }
-    return new double[] { fromX, fromY };
+    return new double[] {fromX, fromY};
   }
 
   private static ProcessEquipmentInterface findFinalControlElement(ControllerDeviceInterface controller,
@@ -3239,11 +3239,11 @@ public final class DexpiXmlWriter {
    */
   private static String[] parseIsaTag(String tag) {
     if (tag == null || tag.isEmpty()) {
-      return new String[] { "", "", tag };
+      return new String[] {"", "", tag};
     }
     int dashIndex = tag.indexOf('-');
     if (dashIndex <= 0) {
-      return new String[] { "", "", tag };
+      return new String[] {"", "", tag};
     }
     String prefix = tag.substring(0, dashIndex);
     String loopNumber = tag.substring(dashIndex + 1);
@@ -3253,7 +3253,7 @@ public final class DexpiXmlWriter {
     // Remaining letters are the function (T, IC, C, etc.)
     String functions = prefix.length() > 1 ? prefix.substring(1) : "T";
 
-    return new String[] { category, functions, loopNumber };
+    return new String[] {category, functions, loopNumber};
   }
 
   /**

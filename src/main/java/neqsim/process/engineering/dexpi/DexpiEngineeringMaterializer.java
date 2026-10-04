@@ -806,8 +806,8 @@ public final class DexpiEngineeringMaterializer {
     int column = index % columns;
     int row = index / columns;
     double startX = equipment.x - (columns - 1) * INSTRUMENT_X_SPACING / 2.0;
-    return new double[] { startX + column * INSTRUMENT_X_SPACING,
-        equipment.annotationTopY + INSTRUMENT_VERTICAL_CLEARANCE + row * INSTRUMENT_ROW_SPACING };
+    return new double[] {startX + column * INSTRUMENT_X_SPACING,
+        equipment.annotationTopY + INSTRUMENT_VERTICAL_CLEARANCE + row * INSTRUMENT_ROW_SPACING};
   }
 
   private static int currentIndex(Map<String, Integer> indexes, String equipmentTag) {
@@ -829,14 +829,14 @@ public final class DexpiEngineeringMaterializer {
       if (locations.getLength() > 0) {
         Element location = (Element) locations.item(0);
         try {
-          return new double[] { Double.parseDouble(location.getAttribute("X")),
-              Double.parseDouble(location.getAttribute("Y")) };
+          return new double[] {Double.parseDouble(location.getAttribute("X")),
+              Double.parseDouble(location.getAttribute("Y"))};
         } catch (NumberFormatException ignored) {
           // Fall through to a deterministic default for non-graphical DEXPI input.
         }
       }
     }
-    return new double[] { 30.0, 30.0 };
+    return new double[] {30.0, 30.0};
   }
 
   private static String findGenericAttribute(Element parent, String name) {

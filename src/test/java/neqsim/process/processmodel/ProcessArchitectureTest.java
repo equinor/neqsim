@@ -107,7 +107,7 @@ public class ProcessArchitectureTest {
   public void testSplitterStreams() {
     Stream feed = createTestStream("splitFeed");
     Splitter splitter = new Splitter("splitter", feed, 3);
-    splitter.setSplitFactors(new double[] { 0.5, 0.3, 0.2 });
+    splitter.setSplitFactors(new double[] {0.5, 0.3, 0.2});
     splitter.run();
 
     List<StreamInterface> inlets = splitter.getInletStreams();

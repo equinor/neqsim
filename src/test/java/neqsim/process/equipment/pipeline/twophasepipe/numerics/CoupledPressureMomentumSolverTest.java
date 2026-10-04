@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 class CoupledPressureMomentumSolverTest {
   @Test
   void feasibleIncomingCorrectionSuppliesThroughFlowInEitherDirection() {
-    for (boolean reverse : new boolean[] { false, true }) {
+    for (boolean reverse : new boolean[] {false, true}) {
       double[][] state = new double[3][7];
-      double[][] density = { filled(3, 1.0), filled(3, 800.0), filled(3, 1000.0) };
+      double[][] density = {filled(3, 1.0), filled(3, 800.0), filled(3, 1000.0)};
       for (int cell = 0; cell < 3; cell++) {
         state[cell][0] = 1.0;
       }
@@ -21,7 +21,7 @@ class CoupledPressureMomentumSolverTest {
       int receiver = reverse ? 0 : 2;
       state[donor][0] = 100.0;
       density[0][donor] = 100.0;
-      double[] correction = reverse ? new double[] { 0.0, 2.0, 4.0 } : new double[] { 4.0, 2.0, 0.0 };
+      double[] correction = reverse ? new double[] {0.0, 2.0, 4.0} : new double[] {4.0, 2.0, 0.0};
       double[] initialMass = totalPhaseMass(state);
       CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 1.0, correction,
           phaseAreas(state, density), filled(3, 1.0), filled(3, 1.0), density, false);
@@ -37,11 +37,11 @@ class CoupledPressureMomentumSolverTest {
 
   @Test
   void reducedIncomingCorrectionPropagatesWithoutOverdrawingDownstreamCells() {
-    for (boolean reverse : new boolean[] { false, true }) {
+    for (boolean reverse : new boolean[] {false, true}) {
       double[][] state = new double[6][7];
-      double[][] density = { filled(6, 0.1), filled(6, 800.0), filled(6, 1000.0) };
+      double[][] density = {filled(6, 0.1), filled(6, 800.0), filled(6, 1000.0)};
       double[] correction = new double[6];
-      double[] lengths = { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 };
+      double[] lengths = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
       for (int cell = 0; cell < 6; cell++) {
         state[cell][0] = 0.1;
         correction[cell] = reverse ? 100.0 * cell : 100.0 * (5 - cell);
@@ -60,7 +60,7 @@ class CoupledPressureMomentumSolverTest {
 
   @Test
   void volumeClosedPredictorStillEnforcesChangedOutletPressure() {
-    for (boolean checkerboard : new boolean[] { false, true }) {
+    for (boolean checkerboard : new boolean[] {false, true}) {
       for (CoupledPressureMomentumSolver.GasDensityModel model : CoupledPressureMomentumSolver.GasDensityModel
           .values()) {
         CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
@@ -184,14 +184,14 @@ class CoupledPressureMomentumSolverTest {
   @Test
   void pressureCorrectionCannotExportAnAbsentDonorPhase() {
     for (int donor = 0; donor < 2; donor++) {
-      double[][] state = { { 4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+      double[][] state = {{4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
       state[donor][0] = 0.0;
       state[donor][1] = 800.08;
-      double[] length = { 2.0, 3.0 };
+      double[] length = {2.0, 3.0};
       double[] initialMass = weightedPhaseMass(state, length);
-      double[] correction = { 0.0, 0.0 };
+      double[] correction = {0.0, 0.0};
       correction[donor] = 1000.0;
-      double[][] density = { filled(2, 10.0), filled(2, 800.0), filled(2, 1000.0) };
+      double[][] density = {filled(2, 10.0), filled(2, 800.0), filled(2, 1000.0)};
       double[] outlet = CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.01, correction,
           phaseAreas(state, density), filled(2, 1.0), length, density, false);
       assertEquals(0.0, state[donor][0], 0.0);
@@ -204,14 +204,14 @@ class CoupledPressureMomentumSolverTest {
   /** A donor with two outgoing faces has one inventory budget, also on nonuniform cells. */
   @Test
   void simultaneousOutgoingCorrectionsCannotOverdrawPhaseInventory() {
-    for (double sign : new double[] { -1.0, 1.0 }) {
-      double[][] state = { { 1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 1e-6, 799.99992, 0.0, 0.0, 0.0, 0.0, 1e6 },
-          { 1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
-      double[] length = { 1.0, 2.0, 3.0 };
+    for (double sign : new double[] {-1.0, 1.0}) {
+      double[][] state = {{1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {1e-6, 799.99992, 0.0, 0.0, 0.0, 0.0, 1e6},
+          {1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
+      double[] length = {1.0, 2.0, 3.0};
       double[] initialMass = weightedPhaseMass(state, length);
-      double[][] density = { filled(3, 10.0), filled(3, 800.0), filled(3, 1000.0) };
-      CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1,
-          new double[] { 0.0, sign * 1e5, 0.0 }, phaseAreas(state, density), filled(3, 1.0), length, density, false);
+      double[][] density = {filled(3, 10.0), filled(3, 800.0), filled(3, 1000.0)};
+      CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0, sign * 1e5, 0.0},
+          phaseAreas(state, density), filled(3, 1.0), length, density, false);
       assertNonnegativePhaseMasses(state);
       assertArrayEquals(initialMass, weightedPhaseMass(state, length), 1e-10);
       for (double[] cell : state) {
@@ -224,9 +224,9 @@ class CoupledPressureMomentumSolverTest {
   @Test
   void gasFreeOverfilledCellConvergesWithoutCrossPhaseMassRepair() {
     for (int donor = 0; donor < 2; donor++) {
-      for (boolean outletFixed : new boolean[] { false, true }) {
+      for (boolean outletFixed : new boolean[] {false, true}) {
         CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
-        double[][] state = { { 4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+        double[][] state = {{4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
         state[donor][0] = 0.0;
         state[donor][1] = 800.08;
         double[] length = filled(2, 1.0);
@@ -253,10 +253,10 @@ class CoupledPressureMomentumSolverTest {
   @Test
   void donorMobilityClosesVolumeAcrossGasDisappearanceAndDensityContrast() {
     for (int gasFreeCell = 0; gasFreeCell < 2; gasFreeCell++) {
-      for (double volumeError : new double[] { -0.03, 0.03 }) {
-        for (double timeStep : new double[] { 0.001, 0.01 }) {
+      for (double volumeError : new double[] {-0.03, 0.03}) {
+        for (double timeStep : new double[] {0.001, 0.01}) {
           CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
-          double[][] state = { { 2.1, 256.8, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 2.1, 256.8, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+          double[][] state = {{2.1, 256.8, 0.0, 0.0, 0.0, 0.0, 1e6}, {2.1, 256.8, 0.0, 0.0, 0.0, 0.0, 1e6}};
           state[gasFreeCell][0] = 0.0;
           state[gasFreeCell][1] = 856.0 * (1.0 + volumeError);
           double[] gasDensity = filled(2, 3.0);
@@ -291,15 +291,15 @@ class CoupledPressureMomentumSolverTest {
   @Test
   void boundedNewtonDirectionConvergesWithoutCyclingFaceDonors() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
-    double[][] state = { { 0.0053312, 533.12, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 0.0, 804.8, 0.0, 0.0, 0.0, 0.0, 1e6 },
-        { 67.599, 218.4, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 0.50688, 430.08, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+    double[][] state = {{0.0053312, 533.12, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.0, 804.8, 0.0, 0.0, 0.0, 0.0, 1e6},
+        {67.599, 218.4, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.50688, 430.08, 0.0, 0.0, 0.0, 0.0, 1e6}};
     double[] lengths = filled(4, 1.0);
     double[] initialMass = weightedPhaseMass(state, lengths);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.0018,
-        new double[] { 140000.0, 7600000.0, 136000.0, 1340000.0 }, filled(4, 1.0), lengths,
-        new double[] { 0.017, 10.0, 87.0, 1.2 }, filled(4, 800.0), filled(4, 1000.0), filled(4, 300.0),
-        filled(4, 1200.0), filled(4, 1200.0), 1e5, false);
+        new double[] {140000.0, 7600000.0, 136000.0, 1340000.0}, filled(4, 1.0), lengths,
+        new double[] {0.017, 10.0, 87.0, 1.2}, filled(4, 800.0), filled(4, 1000.0), filled(4, 300.0), filled(4, 1200.0),
+        filled(4, 1200.0), 1e5, false);
 
     assertTrue(result.isConverged(), "Bounded Newton solve stalled at residual "
         + result.getMaximumRelativeVolumeResidual() + " after " + result.getIterations() + " iterations");
@@ -323,7 +323,7 @@ class CoupledPressureMomentumSolverTest {
   @Test
   void subatmosphericPressureClosesVolumeWithoutAtmosphericFloor() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
-    double[][] state = { { 0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+    double[][] state = {{0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
     double[] lengths = filled(2, 1.0);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 80000.0), filled(2, 1.0),
@@ -349,7 +349,7 @@ class CoupledPressureMomentumSolverTest {
   void pressureFloorUsesActualPressureChangeAndReportsInfeasibleVolume() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     solver.setMinimumPressure(1e5);
-    double[][] state = { { 0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+    double[][] state = {{0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
     double[][] original = copy(state);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 1e5), filled(2, 1.0),
@@ -385,7 +385,7 @@ class CoupledPressureMomentumSolverTest {
     assertEquals(1.0, solver.getMinimumPressure(), 0.0);
     solver.setMinimumPressure(90000.0);
     assertEquals(90000.0, solver.getMinimumPressure(), 0.0);
-    for (double invalid : new double[] { 0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY }) {
+    for (double invalid : new double[] {0.0, -1.0, Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY}) {
       assertThrows(IllegalArgumentException.class, () -> solver.setMinimumPressure(invalid));
     }
   }
@@ -394,7 +394,7 @@ class CoupledPressureMomentumSolverTest {
   @Test
   void densityPositivityDampingPreservesTheActualAcousticPressureResponse() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
-    double[][] state = { { 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+    double[][] state = {{0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
     double[] lengths = filled(2, 1.0);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 5e6), filled(2, 1.0), lengths,
@@ -426,7 +426,7 @@ class CoupledPressureMomentumSolverTest {
   @Test
   void absentPhaseDensityDoesNotConstrainSinglePhaseLiquidCorrection() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
-    double[][] state = { { 0.0, 792.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { 0.0, 792.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+    double[][] state = {{0.0, 792.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.0, 792.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
     double[] lengths = filled(2, 1.0);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 5e7), filled(2, 1.0), lengths,
@@ -570,14 +570,14 @@ class CoupledPressureMomentumSolverTest {
   /** Every cell mass change must be explained by the exact shared correction-face transfer ledger. */
   @Test
   void correctionFaceLedgerExplainsEveryCellPhaseMassChange() {
-    for (boolean interpolationEnabled : new boolean[] { false, true }) {
-      for (boolean outletFixed : new boolean[] { false, true }) {
+    for (boolean interpolationEnabled : new boolean[] {false, true}) {
+      for (boolean outletFixed : new boolean[] {false, true}) {
         CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
         solver.setCheckerboardCorrectionEnabled(interpolationEnabled);
         double[][] state = uniformState();
         state[1][0] -= 0.2;
         state[2][0] += 0.2;
-        double[] lengths = { 1.0, 2.0, 3.0, 4.0 };
+        double[] lengths = {1.0, 2.0, 3.0, 4.0};
 
         CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.001, filled(4, 5e6), filled(4, 1.0),
             lengths, filled(4, 10.0), filled(4, 800.0), filled(4, 1000.0), filled(4, 300.0), filled(4, 1200.0),
@@ -616,7 +616,7 @@ class CoupledPressureMomentumSolverTest {
    * @return two identical gas-only sealed cells
    */
   private static double[][] sealedGasState(double mass) {
-    return new double[][] { { mass, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 }, { mass, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6 } };
+    return new double[][] {{mass, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {mass, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
   }
 
   /**

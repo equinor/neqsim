@@ -276,6 +276,46 @@ imported. The resource is parsed lazily on the first catalog-eligible Pitzer eva
 one immutable catalog. Neutral EOS paths do no catalog I/O or lookup work; a Pitzer phase performs
 automatic topology selection only once when its parameter dataset is first loaded.
 
+#### Stored neutral rows versus supported aqueous species
+
+The 37 neutral-family source rows are an archival inventory, not 37 usable interactions for
+registered NeqSim components. Nine rows use `CO2` (eight `lambda` and one `zeta`); the other
+28 contain the source-only species below. The bundled block contains no `mu` or `eta` rows;
+those supported equation families require an explicit caller-supplied dataset.
+
+| Source species | Current support boundary |
+|---|---|
+| `CO2` | Automatic complete neutral topology is CO2 / Na+ / SO4--. CO2 in chloride brines needs caller-supplied missing `zeta` values through `applyPhreeqcCo2ChlorideParameters`. |
+| `B(OH)3` | No registered boron component/speciation model for these rows. Preserved for source completeness. |
+| `H4SiO4` | No registered silica component/speciation model for these rows. Preserved for source completeness. |
+| `H2Sg`, `(H2Sg)2` | No automatic alias to `H2S`. The source distinguishes dissolved monomer and dimer; NeqSim does not model that dimer here. It also lacks the required explicit monomer self-`lambda` row. |
+| `Hdg` | No automatic alias to `hydrogen`. Its self-`lambda` row is absent; activating an aqueous hydrogen model needs complete interactions and a validated species/standard-state mapping. |
+
+In this exact source version, `zeta(H2Sg, Na+, Cl-)` **is present**, while
+`lambda(H2Sg, H2Sg)` is absent. Renaming `H2S` alone therefore cannot produce a complete
+supported topology. The remaining source-only neutrals also lack self-`lambda` rows.
+Adding names or assuming missing coefficients are zero would not qualify those chemistries.
+
+For water / Na+ / Cl- with `H2S`, `hydrogen`, or `CO2`, automatic selection retains the legacy
+binary dataset and `hasNeutralPitzerInteractions()` is false. The neutral Pitzer contribution is
+then ideal (`gamma = 1`); this does **not** validate salting-out or solubility for that neutral.
+Call `applyCompletePhreeqcPitzerCatalog` explicitly when missing source coverage should be an
+error: it reports the missing family and species tuple. If supplying a complete neutral dataset,
+use `auditNeutralPitzerParameterCoverage()` to check it before relying on the result.
+
+`PitzerNeutralCatalogSupportTest` checks these exact source rows, absence of implicit aliases,
+legacy fallback, and explicit missing-coverage diagnostics. Existing CO2 / Na+ / SO4-- tests
+retain independent IPhreeqc activity references.
+
+#### Dilute-limit numerical contract
+
+Activity and volumetric calculations share `PitzerAttenuation`: `g(0) = 1` and the scaled
+derivative `(x/2) dg/dx` tends to zero. A convergent series avoids subtracting nearly equal
+numbers near zero. Both `beta1` and `beta2`, including PHREEQC common-ion terms, use this
+evaluation without discarding small positive ionic strengths. Independent integral references
+and amplified dilute-activity probes cover the limit and series transition; existing brine
+reference tests cover ordinary concentrations.
+
 The default selector and explicit `applyCompletePhreeqcPitzerCatalog` API select rows by the active
 aqueous species. Every active opposite-sign pair requires explicit `B0`, `B1`, and `C0`; every
 same-sign pair requires `theta`;

@@ -27,7 +27,7 @@ class TwoFluidPipeSlugOutletContractTest {
 
   @Test
   void testSimplifiedArrivalUsesPhysicalOutletForDifferentGrids() throws Exception {
-    for (int cellCount : new int[] { 4, 20 }) {
+    for (int cellCount : new int[] {4, 20}) {
       TwoFluidPipe pipe = new TwoFluidPipe("outlet-grid-" + cellCount);
       TwoFluidSection[] sections = configureSections(pipe, cellCount);
       SlugTracker tracker = pipe.getSlugTracker();

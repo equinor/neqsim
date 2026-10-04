@@ -70,6 +70,9 @@ JSON_TOOL_ARGS = {
     "runFieldEconomics": "economicsJson",
     "runDynamic": "dynamicJson",
     "runBioprocess": "bioprocessJson",
+    "runRelief": "reliefJson",
+    "runFlareNetwork": "flareJson",
+    "runHazopScenario": "scenarioJson",
     "sizeEquipment": "sizingJson",
     "designUtilities": "utilityJson",
     "compareProcesses": "comparisonJson",
@@ -98,7 +101,10 @@ JSON_TOOL_ARGS = {
 def start_server():
     global proc
     proc = subprocess.Popen(
-        ["java", "-jar", JAR],
+        # This comprehensive harness asserts the complete discovery contract.
+        # Disable transport trimming only for this test process so the growing
+        # capability inventory cannot hide fields that the harness validates.
+        ["java", "-Dneqsim.mcp.maxResponseBytes=0", "-jar", JAR],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -318,6 +324,24 @@ def test_protocol():
              "runRootCauseAnalysis", "runProcessLoop", "designUtilities"]
     for name in tier2:
         check(f"tier2 tool '{name}'", name in tool_names)
+
+    lopa_tool = next((tool for tool in tools if tool.get("name") == "runLOPA"), {})
+    lopa_description = lopa_tool.get("description", "")
+    check("bounded LOPA discovery contract",
+          "16384 UTF-8 bytes" in lopa_description
+          and "100 layers" in lopa_description
+          and "does not identify hazards" in lopa_description
+          and "qualified process-safety review" in lopa_description,
+          lopa_description)
+
+    sil_tool = next((tool for tool in tools if tool.get("name") == "runSIL"), {})
+    sil_description = sil_tool.get("description", "")
+    check("bounded SIL discovery contract",
+          "16384 UTF-8 bytes" in sil_description
+          and "100 components" in sil_description
+          and "does not select or approve SIL" in sil_description
+          and "independent functional-safety assessment" in sil_description,
+          sil_description)
 
     # Tier 3 — Experimental (15 tools)
     tier3 = ["manageSession", "solveTask", "composeWorkflow", "generateReport",
@@ -752,14 +776,15 @@ def test_bubble_point_pressure():
 
 
 def test_dew_point_pressure():
-    """Dew point pressure for rich gas at 0C."""
-    print("\n=== Dew Point Pressure (0C) ===")
+    """Dew point pressure at a temperature with a verified gas/oil saturation solution."""
+    print("\n=== Dew Point Pressure (-30C) ===")
 
     r = run_flash(
         {"methane": 0.85, "ethane": 0.10, "propane": 0.05},
-        0.0, 50.0, flash_type="dewPointP"
+        -30.0, 50.0, flash_type="dewPointP"
     )
-    check("status=success", r.get("status") == "success", r.get("message", ""))
+    check("status=success", r.get("status") == "success", json.dumps(r.get("errors", [])))
+    check("flashType=dewPointP", r.get("flash", {}).get("flashType") == "dewPointP")
 
 
 def test_bubble_point_temperature():
@@ -1480,9 +1505,16 @@ def test_capabilities():
     check("implementation inventory resolves 60 classes",
           implementation.get("implementationClassCount") == 60,
           str(implementation))
-    check("implementation inventory exposes 207 factory equipment types",
-          implementation.get("equipmentTypeCount") == 207,
+    equipment_types = implementation.get("supportedEquipmentTypes", [])
+    contract_equipment_types = r.get("processJsonContract", {}).get(
+        "supportedEquipmentTypes", [])
+    check("implementation inventory matches process JSON equipment contract",
+          implementation.get("equipmentTypeCount") == len(equipment_types)
+          and equipment_types == contract_equipment_types,
           str(implementation))
+    check("implementation inventory exposes MountainCavern",
+          "MountainCavern" in equipment_types,
+          str(equipment_types))
     report_paths = implementation.get("reportPaths", [])
     check("implementation inventory exposes two report paths",
           implementation.get("reportPathCount") == 2
@@ -1503,8 +1535,8 @@ def test_capabilities():
     check("evidence inventory freezes 72 Java test classes",
           tests.get("javaTestClassCount") == 72,
           str(tests))
-    check("evidence inventory freezes 94 protocol scenarios",
-          tests.get("protocolScenarioCount") == 94,
+    check("evidence inventory freezes 102 protocol scenarios",
+          tests.get("protocolScenarioCount") == 102,
           str(tests))
     check("evidence inventory lists eight MCP guides",
           guides.get("guideCount") == 8
@@ -1565,17 +1597,135 @@ def test_capabilities():
         "getSimulationVariable", "setSimulationVariable",
         "saveSimulationState", "compareSimulationStates", "generateVisualization",
         "runPlugin", "runCapability", "composeWorkflow", "solveTask", "streamSimulation",
-        "composeMultiServerWorkflow", "diagnoseAutomation", "getAutomationLearningReport",
+        "composeMultiServerWorkflow", "runRiskMatrix", "runLOPA", "runSIL", "runBarrierRegister",
+        "runRelief", "runOperationalStudy", "compareProcesses", "runProcessLoop",
+        "designUtilities",
+        "runChemistry",
+        "runFlareNetwork",
+        "runHazopScenario",
+        "runSafetySystemPerformance",
+        "runOpenDrainReview",
+        "runNorsokS001Clause10Review",
+        "diagnoseAutomation", "getAutomationLearningReport",
     }
     coverage_records = limitations.get("coverageRecords", {})
-    check("thirty-five bounded software contracts have direct evidence",
-          evidence.get("inventoryVersion") == "1.35"
-          and limitations.get("contractTestedToolCount") == 35
-          and limitations.get("confirmedGapToolCount") == 16
+    check("fifty bounded software contracts have direct evidence",
+          evidence.get("inventoryVersion") == "1.50"
+          and limitations.get("contractTestedToolCount") == 50
+          and limitations.get("confirmedGapToolCount") == 1
           and set(limitations.get("contractTestedTools", [])) == contract_tools
           and all(coverage_records.get(tool, {}).get("coverageStatus")
                   == "CONTRACT_TESTED" for tool in contract_tools),
           str(limitations))
+    comparison = coverage_records.get("compareProcesses", {})
+    check("process comparison has bounded canonical execution evidence",
+          comparison.get("coverageStatus") == "CONTRACT_TESTED"
+          and comparison.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_COMPARISON_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_process_comparison_protocol.py"
+          in comparison.get("contractEvidenceSources", [])
+          and "canonical ProcessRunner delegation"
+          in comparison.get("evidenceBoundary", "")
+          and "case comparability" in comparison.get("evidenceBoundary", ""),
+          str(comparison))
+    barrier_register = coverage_records.get("runBarrierRegister", {})
+    check("barrier-register screening has bounded canonical evidence",
+          barrier_register.get("coverageStatus") == "CONTRACT_TESTED"
+          and barrier_register.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_BARRIER_REGISTER_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_barrier_register_protocol.py"
+          in barrier_register.get("contractEvidenceSources", [])
+          and "canonical NeqSim barrier model"
+          in barrier_register.get("evidenceBoundary", "")
+          and "does not identify hazards"
+          in barrier_register.get("evidenceBoundary", ""),
+          str(barrier_register))
+    relief = coverage_records.get("runRelief", {})
+    check("pressure-relief sizing has bounded canonical evidence",
+          relief.get("coverageStatus") == "CONTRACT_TESTED"
+          and relief.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_PRESSURE_RELIEF_SIZING_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_mcp_server.py"
+          in relief.get("contractEvidenceSources", [])
+          and "canonical NeqSim ReliefValveSizing" in relief.get("evidenceBoundary", "")
+          and "relief-scenario completeness" in relief.get("evidenceBoundary", ""),
+          str(relief))
+    operational_study = coverage_records.get("runOperationalStudy", {})
+    check("operational-study orchestration has bounded canonical evidence",
+          operational_study.get("coverageStatus") == "CONTRACT_TESTED"
+          and operational_study.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_OPERATIONAL_STUDY_ORCHESTRATION_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_operational_study_protocol.py"
+          in operational_study.get("contractEvidenceSources", [])
+          and "canonical JsonProcessBuilder" in operational_study.get("evidenceBoundary", "")
+          and "no-plant-write" in operational_study.get("evidenceBoundary", ""),
+          str(operational_study))
+    process_loop = coverage_records.get("runProcessLoop", {})
+    check("process-loop orchestration has bounded canonical evidence",
+          process_loop.get("coverageStatus") == "CONTRACT_TESTED"
+          and process_loop.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_PROCESS_LOOP_ORCHESTRATION_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_process_loop_protocol.py"
+          in process_loop.get("contractEvidenceSources", [])
+          and "ProcessAutomation.evaluate" in process_loop.get("evidenceBoundary", "")
+          and "does not establish global or local optimization"
+          in process_loop.get("evidenceBoundary", ""),
+          str(process_loop))
+    utility_design = coverage_records.get("designUtilities", {})
+    check("utility design has canonical screening evidence",
+          utility_design.get("coverageStatus") == "CONTRACT_TESTED"
+          and utility_design.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_CANONICAL_UTILITY_DESIGN_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_utility_design_protocol.py"
+          in utility_design.get("contractEvidenceSources", [])
+          and "canonical NeqSim Boiler" in utility_design.get("evidenceBoundary", "")
+          and "design-basis completeness" in utility_design.get("evidenceBoundary", ""),
+          str(utility_design))
+    chemistry = coverage_records.get("runChemistry", {})
+    check("chemistry has canonical dispatch evidence",
+          chemistry.get("coverageStatus") == "CONTRACT_TESTED"
+          and chemistry.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_CANONICAL_CHEMISTRY_DISPATCH_AND_TRANSPORT_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_chemistry_protocol.py"
+          in chemistry.get("contractEvidenceSources", [])
+          and "Canonical ChemistryRunner dispatch" in chemistry.get("evidenceBoundary", "")
+          and "thermodynamic" in chemistry.get("evidenceBoundary", ""),
+          str(chemistry))
+    flare = coverage_records.get("runFlareNetwork", {})
+    check("flare radiation has bounded canonical screening evidence",
+          flare.get("coverageStatus") == "CONTRACT_TESTED"
+          and flare.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_CANONICAL_FLARE_RADIATION_SCREENING_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_flare_radiation_protocol.py"
+          in flare.get("contractEvidenceSources", [])
+          and "canonical NeqSim Flare delegation" in flare.get("evidenceBoundary", "")
+          and "standards or regulatory compliance" in flare.get("evidenceBoundary", ""),
+          str(flare))
+
+    hazop_scenario = coverage_records.get("runHazopScenario", {})
+    check("HAZOP scenario has focused simulation-backed contract evidence",
+          hazop_scenario.get("coverageStatus") == "CONTRACT_TESTED"
+          and hazop_scenario.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_SIMULATION_BACKED_HAZOP_SCENARIO_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_hazop_scenario_protocol.py"
+          in hazop_scenario.get("contractEvidenceSources", [])
+          and "Canonical ProcessSystem" in hazop_scenario.get("evidenceBoundary", "")
+          and "hazard-identification" in hazop_scenario.get("evidenceBoundary", ""),
+          str(hazop_scenario))
+
+    safety_performance = coverage_records.get("runSafetySystemPerformance", {})
+    check("safety-system performance has bounded transport evidence",
+          safety_performance.get("coverageStatus") == "CONTRACT_TESTED"
+          and safety_performance.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SAFETY_SYSTEM_PERFORMANCE_SOFTWARE_CONTRACT"
+          and "neqsim-mcp-server/test_safety_system_performance_protocol.py"
+          in safety_performance.get("contractEvidenceSources", [])
+          and "standards applicability or conformance"
+          in safety_performance.get("evidenceBoundary", "")
+          and "accountable functional-safety"
+          in safety_performance.get("evidenceBoundary", ""),
+          str(safety_performance))
+
     adjustable_parameters = coverage_records.get("getAdjustableParameters", {})
     check("adjustable-parameter discovery has bounded contract evidence",
           adjustable_parameters.get("coverageStatus") == "CONTRACT_TESTED"
@@ -1725,6 +1875,63 @@ def test_capabilities():
           and "accountable engineering approval"
           in multi_server_composition.get("evidenceBoundary", ""),
           str(multi_server_composition))
+    risk_matrix = coverage_records.get("runRiskMatrix", {})
+    check("bounded risk-matrix screening has direct contract evidence",
+          risk_matrix.get("coverageStatus") == "CONTRACT_TESTED"
+          and risk_matrix.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_GENERIC_RISK_SCREENING_SOFTWARE_CONTRACT"
+          and risk_matrix.get("contractEvidenceCount") == 7
+          and "src/main/java/neqsim/process/safety/risk/RiskMatrix.java"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/RiskMatrixRunnerTest.java"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_risk_matrix_protocol.py"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/RISK_MATRIX_SCREENING_CONTRACT.md"
+          in risk_matrix.get("contractEvidenceSources", [])
+          and "does not identify hazards"
+          in risk_matrix.get("evidenceBoundary", "")
+          and "qualified safety-engineering review"
+          in risk_matrix.get("evidenceBoundary", ""),
+          str(risk_matrix))
+    lopa = coverage_records.get("runLOPA", {})
+    check("bounded LOPA screening has direct contract evidence",
+          lopa.get("coverageStatus") == "CONTRACT_TESTED"
+          and lopa.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_LOPA_SCREENING_SOFTWARE_CONTRACT"
+          and lopa.get("contractEvidenceCount") == 7
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+          in lopa.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/LOPARunnerTest.java"
+          in lopa.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_lopa_protocol.py"
+          in lopa.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/LOPA_SCREENING_CONTRACT.md"
+          in lopa.get("contractEvidenceSources", [])
+          and "does not identify hazards" in lopa.get("evidenceBoundary", "")
+          and "qualified process-safety review" in lopa.get("evidenceBoundary", ""),
+          str(lopa))
+    sil = coverage_records.get("runSIL", {})
+    check("bounded SIF PFD screening has direct contract evidence",
+          sil.get("coverageStatus") == "CONTRACT_TESTED"
+          and sil.get("benchmarkApplicability")
+          == "NOT_APPLICABLE_BOUNDED_SIF_PFD_SCREENING_SOFTWARE_CONTRACT"
+          and sil.get("contractEvidenceCount") == 8
+          and "src/main/java/neqsim/mcp/runners/SILRunner.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SafetyInstrumentedFunction.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/main/java/neqsim/process/safety/risk/sis/SILVerificationResult.java"
+          in sil.get("contractEvidenceSources", [])
+          and "src/test/java/neqsim/mcp/runners/SILRunnerTest.java"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/test_sil_protocol.py"
+          in sil.get("contractEvidenceSources", [])
+          and "neqsim-mcp-server/docs/evidence/SIL_SCREENING_CONTRACT.md"
+          in sil.get("contractEvidenceSources", [])
+          and "does not establish SRS completeness" in sil.get("evidenceBoundary", "")
+          and "independent functional-safety assessment" in sil.get("evidenceBoundary", ""),
+          str(sil))
     contract_sources = [
         source
         for tool in contract_tools
@@ -1742,7 +1949,7 @@ def test_capabilities():
           limitations.get("publishedToolCount") == 71
           and limitations.get("explicitTrustToolCount") == 20
           and limitations.get("genericTrustToolCount") == 51
-          and limitations.get("confirmedGapToolCount") == 16
+          and limitations.get("confirmedGapToolCount") == 1
           and limitations.get("unsupportedConditionCount") == 0
           and limitations.get("complete") is False
           and evidence.get("complete") is False,
@@ -1752,6 +1959,15 @@ def test_capabilities():
 def test_run_capability_search_and_invoke():
     """Discover and execute a runtime capability through the generic MCP route."""
     print("\n=== Generic Runtime Capability ===")
+
+    coverage = call_tool("runCapability", {
+        "capabilityJson": json.dumps({"action": "coverage", "view": "apis", "limit": 2})
+    })
+    check("coverage page succeeds", coverage.get("status") == "success", str(coverage))
+    check("coverage page is bounded", len(coverage.get("entries", [])) == 2, str(coverage))
+    check("coverage does not claim completion", coverage.get("complete") is False, str(coverage))
+    check("coverage has continuation", coverage.get("nextOffset") == 2
+          and bool(coverage.get("catalogDigest")), str(coverage))
 
     search = call_tool("runCapability", {
         "capabilityJson": json.dumps({
@@ -1990,6 +2206,188 @@ def test_size_compressor():
     check("size comp status=success", r.get("status") == "success", r.get("message", ""))
 
 
+# --- Chemistry tools ---
+
+def test_chemistry_contract():
+    """Exercise four fast canonical chemistry routes through packaged MCP."""
+    print("\n=== Chemistry Contract ===")
+    cases = [
+        {"analysis": "electrolyteScale", "temperature_C": 60.0, "pH": 7.5,
+         "pCO2_bar": 1.0, "ca_mgL": 600.0, "hco3_mgL": 300.0},
+        {"analysis": "mechanisticCorrosion", "temperature_C": 60.0,
+         "pressure_bara": 80.0, "co2_mol": 0.05, "velocity_ms": 2.0,
+         "diameter_m": 0.15, "dose_mgL": 50.0},
+        {"analysis": "langmuirInhibitor", "temperature_C": 60.0,
+         "dose_mgL": 50.0, "targetEfficiency": 0.5},
+        {"analysis": "packedBedScavenger", "diameter_m": 0.5,
+         "height_m": 2.0, "k_per_s": 8.0, "cInlet_molm3": 1.0,
+         "flow_m3s": 0.005, "nCells": 20, "nTimeSteps": 50,
+         "simTime_s": 864000.0},
+    ]
+    for case in cases:
+        r = call_tool("runChemistry", {"chemistryJson": json.dumps(case)})
+        check("chemistry " + case["analysis"] + " status=success",
+              r.get("status") == "success", r.get("message", str(r)))
+
+
+# --- Flare-radiation screening ---
+
+def test_flare_radiation_contract():
+    """Exercise bounded canonical flare-radiation screening through packaged MCP."""
+    print("\n=== Flare Radiation Contract ===")
+    r = call_tool("runFlareNetwork", {
+        "heatDuty_MW": 50.0,
+        "flameHeight_m": 40.0,
+        "radiantFraction": 0.2,
+        "distances_m": [20.0, 50.0, 100.0],
+    })
+    data = r.get("data", r)
+    check("flare radiation status=success", r.get("status") == "success", str(r))
+    check("flare radiation profile and contour",
+          len(data.get("radiationProfile", [])) == 3
+          and len(data.get("safeDistanceContour", [])) == 4,
+          str(r))
+    check("flare radiation advisory boundary",
+          data.get("screeningOnly") is True
+          and data.get("standardConformanceClaimed") is False
+          and data.get("engineeringReviewRequired") is True,
+          str(r))
+
+
+# --- Simulation-backed HAZOP scenario ---
+
+def test_hazop_scenario_contract():
+    """Exercise one focused simulation-backed HAZOP deviation through packaged MCP."""
+    print("\n=== HAZOP Scenario Contract ===")
+    definition = {
+        "nodeTag": "2nd Stage",
+        "guideWord": "MORE",
+        "parameter": "TEMPERATURE",
+        "limits": {
+            "maxDischargeTemperatureC": 150.0,
+            "maxDischargeTemperatureByUnit": {"2nd Stage": 170.0},
+        },
+        "process": {
+            "fluid": {
+                "model": "SRK",
+                "temperature": 298.15,
+                "pressure": 10.0,
+                "mixingRule": "classic",
+                "components": {"methane": 0.90, "ethane": 0.07, "propane": 0.03},
+            },
+            "process": [
+                {"type": "Stream", "name": "feed",
+                 "properties": {"flowRate": [5000.0, "kg/hr"]}},
+                {"type": "Compressor", "name": "2nd Stage", "inlet": "feed",
+                 "properties": {"outletPressure": [80.0, "bara"]}},
+            ],
+        },
+    }
+    response = call_tool("runHazopScenario", {"scenarioJson": json.dumps(definition)})
+    data = response.get("data", response)
+    findings = data.get("findings", [])
+    check("HAZOP scenario status=success",
+          response.get("status") == "success" and data.get("status") == "ok", str(response))
+    check("HAZOP scenario returns auditable quantified finding",
+          data.get("matchCount", 0) >= 1 and findings
+          and findings[0].get("guideWord") == "MORE"
+          and findings[0].get("parameter") == "TEMPERATURE"
+          and findings[0].get("standardReference")
+          and findings[0].get("limitBasis"),
+          str(response))
+
+
+# --- Safety-system performance software contract ---
+
+def test_safety_system_performance_contract():
+    """Exercise the catalog safety-system example through packaged MCP."""
+    print("\n=== Safety System Performance Contract ===")
+    example = call_tool("getExample", {
+        "category": "safety",
+        "name": "safety-system-performance",
+    })
+    response = call_tool("runSafetySystemPerformance", {
+        "safetySystemJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    summary = data.get("summary", {})
+    check("safety-system performance status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("safety-system performance report and templates",
+          summary.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and "assessments" in data.get("performanceReport", {})
+          and "NORSOK-S-001" in data.get("standardsTemplates", {})
+          and "causeAndEffect" in data.get("stidExtractionTemplates", {}),
+          str(response))
+
+
+# --- NORSOK S-001 Clause 10 review software contract ---
+
+def test_norsok_s001_clause10_review_contract():
+    """Exercise the catalog Clause 10 review through packaged MCP."""
+    print("\n=== NORSOK S-001 Clause 10 Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "process-safety-review",
+        "name": "norsok-s001-clause10",
+    })
+    response = call_tool("runNorsokS001Clause10Review", {
+        "clause10ReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("Clause 10 review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("Clause 10 review report and provenance",
+          data.get("reviewType") == "norsok_s001_clause10_review"
+          and data.get("overallVerdict") == "PASS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 0
+          and data.get("itemCount") == 5
+          and len(data.get("results", [])) == 5
+          and "NORSOK S-001:2020+AC:2021 Clause 10"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "NORSOK S-001 Clause 10 process safety system review",
+          str(response))
+
+
+# --- Open-drain review software contract ---
+
+def test_open_drain_review_contract():
+    """Exercise the catalog open-drain example through packaged MCP."""
+    print("\n=== Open Drain Review Contract ===")
+    example = call_tool("getExample", {
+        "category": "open-drain-review",
+        "name": "norsok-s001-stid",
+    })
+    response = call_tool("runOpenDrainReview", {
+        "openDrainReviewJson": json.dumps(example),
+    })
+    data = response.get("data", response)
+    check("open-drain review status=success",
+          response.get("status") == "success"
+          and response.get("validation", {}).get("valid") is True
+          and response.get("qualityGate", {}).get("verdict") == "passed",
+          str(response))
+    check("open-drain review report and provenance",
+          data.get("reviewType") == "open_drain_review"
+          and data.get("overallVerdict") == "PASS_WITH_WARNINGS"
+          and data.get("failedItems") == 0
+          and data.get("warningItems") == 1
+          and data.get("itemCount") == 2
+          and len(data.get("results", [])) == 2
+          and "NORSOK S-001:2020+AC:2021 Clause 9"
+          in data.get("standardsApplied", [])
+          and response.get("provenance", {}).get("calculationType")
+          == "open drain review",
+          str(response))
+
+
 # --- Utility design tools ---
 
 def test_design_utilities():
@@ -2003,6 +2401,15 @@ def test_design_utilities():
         "duties": json.dumps([{"name": "Reboiler", "dutyKW": 5000.0}]),
     })
     check("boiler status=success", r.get("status") == "success", r.get("message", ""))
+
+    r = call_tool("designUtilities", {
+        "utilityType": "deaerator",
+        "name": "Feedwater Deaerator",
+        "feedwaterFlowKgh": 12000.0,
+        "feedwaterInletTempC": 85.0,
+        "operatingPressureBara": 1.2,
+    })
+    check("deaerator status=success", r.get("status") == "success", r.get("message", ""))
 
     r = call_tool("designUtilities", {
         "utilityType": "refrigeration",
@@ -2043,29 +2450,46 @@ def test_design_utilities():
 # --- Process comparison tools ---
 
 def test_compare_processes():
-    """Compare two process cases side by side."""
+    """Compare two canonical process cases with explicit completion accounting."""
     print("\n=== Process Comparison ===")
     case = {
         "fluid": {
             "components": {"methane": 0.9, "ethane": 0.1},
             "model": "SRK",
-            "temperature_C": 25.0,
-            "pressure_bara": 50.0,
+            "temperature": 298.15,
+            "pressure": 50.0,
+            "mixingRule": "classic",
         },
-        "process": {
-            "equipment": [
-                {"type": "stream", "name": "feed", "flowRate": {"value": 1000.0, "unit": "kg/hr"}},
-                {"type": "separator", "name": "sep", "inlet": "feed"},
-            ]
-        },
+        "process": [
+            {
+                "type": "Stream",
+                "name": "feed",
+                "properties": {"flowRate": [1000.0, "kg/hr"]},
+            },
+            {"type": "Separator", "name": "sep", "inlet": "feed"},
+        ],
     }
     r = call_tool("compareProcesses", {
-        "cases": json.dumps([
-            {"name": "Case-A", **case},
-            {"name": "Case-B", **case},
-        ]),
+        "comparisonJson": json.dumps({
+            "cases": [
+                {"name": "Case-A", **case},
+                {"name": "Case-B", **case},
+            ]
+        }),
     })
     check("compare status=success", r.get("status") == "success", r.get("message", ""))
+    check("compare complete=true", r.get("complete") is True, str(r))
+    check("compare case accounting",
+          r.get("caseCount") == 2
+          and r.get("successfulCaseCount") == 2
+          and r.get("failedCaseCount") == 0,
+          str(r))
+    check("compare order preserved", r.get("caseNames") == ["Case-A", "Case-B"], str(r))
+    check("compare cases converged",
+          all(item.get("converged") is True
+              and item.get("result", {}).get("status") == "success"
+              for item in r.get("cases", [])),
+          str(r))
 
 
 # --- Validation tools ---
@@ -2080,6 +2504,82 @@ def test_validate_results():
         "context": "general",
     })
     check("validateResults status=success", r.get("status") == "success", r.get("message", ""))
+
+
+def test_relief_screening_contract():
+    """Exercise the bounded pressure-relief screening contract."""
+    print("\n=== Relief Sizing Screening Contract ===")
+    r = call_tool("runRelief", {
+        "case": "gas",
+        "massFlowRate_kg_s": 10.0,
+        "setPressure_bara": 20.0,
+        "temperature_K": 350.0,
+        "molecularWeight_kg_mol": 0.020,
+        "compressibility": 0.95,
+        "specificHeatRatio": 1.3,
+    })
+    check("relief screening status=success", r.get("status") == "success", r.get("message", ""))
+    check("relief screening boundary is explicit",
+          r.get("screeningOnly") is True
+          and r.get("standardConformanceClaimed") is False
+          and "qualified pressure-relief" in r.get("advisoryBoundary", "")
+          and "not certification" in r.get("advisoryBoundary", ""),
+          str(r))
+    sizing = r.get("sizing", {})
+    check("relief sizing result is finite and conservative",
+          isinstance(sizing.get("requiredArea_mm2"), (int, float))
+          and math.isfinite(sizing.get("requiredArea_mm2"))
+          and sizing.get("requiredArea_mm2") > 0.0
+          and sizing.get("selectedArea_mm2", 0.0) >= sizing.get("requiredArea_mm2"),
+          str(sizing))
+    invalid = call_tool("runRelief", {
+        "case": "gas",
+        "massFlowRate_kg_s": -1.0,
+        "setPressure_bara": 20.0,
+        "temperature_K": 350.0,
+        "molecularWeight_kg_mol": 0.020,
+    })
+    check("relief invalid input fails closed",
+          invalid.get("status") == "error"
+          and invalid.get("screeningOnly") is True,
+          str(invalid))
+
+
+def test_sil_screening_contract():
+    """Exercise bounded SIF PFD screening without changing inventory status."""
+    print("\n=== SIL Screening Contract ===")
+    r = call_tool("runSIL", {
+        "silJson": json.dumps({
+            "name": "Synthetic shutdown",
+            "claimedSIL": 2,
+            "architecture": "1oo1",
+            "proofTestInterval_hours": 8760,
+            "components": [
+                {"name": "PT", "type": "sensor", "pfd": 0.001},
+                {"name": "Logic", "type": "logic", "pfd": 0.0005},
+                {"name": "Valve", "type": "finalElement", "pfd": 0.005},
+            ],
+        }),
+    })
+    check("SIL screening status=success", r.get("status") == "success", r.get("message", ""))
+    check("SIL screening boundary is explicit",
+          r.get("screeningOnly") is True
+          and r.get("standardConformanceClaimed") is False
+          and r.get("inputBasis") == "CALLER_SUPPLIED_COMPONENT_PFD_OR_FAILURE_RATE",
+          str(r))
+    screening = r.get("screening", {})
+    check("SIL canonical component sum is exposed",
+          screening.get("pfdAvg") == 0.0065
+          and screening.get("silBandIsIndicative") is True
+          and screening.get("architectureSuitabilityVerified") is False,
+          str(screening))
+    invalid = call_tool("runSIL", {"silJson": "[]"})
+    error_code = invalid.get("code")
+    if error_code is None and invalid.get("errors"):
+        error_code = invalid["errors"][0].get("code")
+    check("SIL malformed input fails closed",
+          invalid.get("status") == "error" and error_code == "INVALID_INPUT",
+          str(invalid))
 
 
 # --- Cross-validation tools ---
@@ -2538,8 +3038,16 @@ if __name__ == "__main__":
         test_size_separator()
         test_size_compressor()
         test_design_utilities()
+        test_chemistry_contract()
+        test_flare_radiation_contract()
+        test_hazop_scenario_contract()
+        test_safety_system_performance_contract()
+        test_open_drain_review_contract()
+        test_norsok_s001_clause10_review_contract()
         test_compare_processes()
         test_validate_results()
+        test_relief_screening_contract()
+        test_sil_screening_contract()
         test_cross_validate_models()
         test_parametric_study()
 

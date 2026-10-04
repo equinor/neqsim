@@ -85,7 +85,7 @@ process.add(separator)
 
 # 5. Add compressor on gas outlet
 compressor = Compressor("Gas Compressor", separator.getGasOutStream())
-compressor.setOutletPressure(80.0)  # bara
+compressor.setOutletPressure(80.0, "bara")
 compressor.setIsentropicEfficiency(0.75)
 process.add(compressor)
 
@@ -135,7 +135,7 @@ PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
 |-------|----------|
 | `TypeError: unsupported format string` | Java String needs conversion: `str(java_string)` |
 | `AttributeError: 'NoneType'` | JVM not started - use `from neqsim import jneqsim` |
-| Wrong density values | Use `getDensity("kg/m3")` with unit for Peneloux correction |
+| Unexpected density | Selecting a density unit does not enable Peneloux volume correction; correction is a separate validated model choice |
 | Temperature seems wrong | NeqSim uses **Kelvin**. Convert: `T_K = T_C + 273.15` |
 | `JVMNotFoundException` | Install Java 8+ and set JAVA_HOME |
 
@@ -165,7 +165,7 @@ stream.setTemperature(30.0, "C")      # Celsius
 stream.setPressure(50.0, "bara")      # bara
 
 # Getting with units
-density = fluid.getDensity("kg/m3")   # IMPORTANT: includes Peneloux correction
+density = fluid.getDensity("kg/m3")   # Explicit unit; correction is a separate model choice
 viscosity = fluid.getViscosity("cP")
 enthalpy = fluid.getEnthalpy("kJ/kg")
 ```

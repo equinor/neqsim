@@ -100,9 +100,9 @@ public class MultiInputMixerPhaseRegressionTest {
 
   private ProcessSystem buildProcess() {
     SystemInterface feed = new SystemSrkCPAstatoil(298.15, 1.01325);
-    String[] names = { "N2", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
-        "c-C5", "22-dim-C3", "n-hexane", "n-heptane", "n-octane", "n-nonane" };
-    double[] amounts = { 0.41, 9.249, 73.263, 9.269, 4.75, 0.52, 1.34, 0.29, 0.36, 0.02, 0.02, 0.29, 0.25, 0.05, 0.02 };
+    String[] names = {"N2", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane",
+        "c-C5", "22-dim-C3", "n-hexane", "n-heptane", "n-octane", "n-nonane"};
+    double[] amounts = {0.41, 9.249, 73.263, 9.269, 4.75, 0.52, 1.34, 0.29, 0.36, 0.02, 0.02, 0.29, 0.25, 0.05, 0.02};
     for (int index = 0; index < names.length; index++) {
       feed.addComponent(names[index], amounts[index]);
     }

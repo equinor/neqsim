@@ -24,6 +24,46 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
     super(name, moles, molesInPhase, compIndex);
   }
 
+  /**
+   * Preserves this empirical reactive model's calibrated database reference convention. A generic mole-fraction
+   * conversion cannot be applied independently of its reaction constants.
+   *
+   * @param temperature temperature in K
+   * @return legacy molality-scale reference or the finite unsupported-solute limit
+   */
+  @Override
+  protected double getEffectiveHenryCoefficient(double temperature) {
+    double coefficient = getHenryCoef(temperature);
+    return isHenryCoefficientCapped(coefficient) ? INSOLUBLE_HENRY_COEFFICIENT : coefficient;
+  }
+
+  /**
+   * Differentiates this model's ideal activities and empirical Henry convention.
+   *
+   * @param phase owning Kent-Eisenberg phase
+   * @return d(ln phi)/dT in 1/K
+   */
+  @Override
+  public double fugcoefDiffTemp(PhaseInterface phase) {
+    double temperature = phase.getTemperature();
+    dfugdt = referenceStateType.equals("solvent")
+        ? getAntoineVaporPressuredT(temperature) / getAntoineVaporPressure(temperature)
+        : ionicCharge == 0 ? getLnHenryCoefficientTemperatureDerivative(temperature) : 0.0;
+    return dfugdt;
+  }
+
+  /**
+   * Differentiates the explicit pressure denominator or the constant ionic fugacity coefficient.
+   *
+   * @param phase owning Kent-Eisenberg phase
+   * @return d(ln phi)/dP in 1/bar
+   */
+  @Override
+  public double fugcoefDiffPres(PhaseInterface phase) {
+    dfugdp = referenceStateType.equals("solvent") || ionicCharge == 0 ? -1.0 / phase.getPressure() : 0.0;
+    return dfugdp;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
@@ -34,7 +74,7 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
     } else {
       double activinf = 1.0;
       if (ionicCharge == 0) {
-        fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
+        fugacityCoefficient = activinf * getEffectiveHenryCoefficient(phase.getTemperature()) / phase.getPressure();
       } else {
         fugacityCoefficient = 1e8;
       }

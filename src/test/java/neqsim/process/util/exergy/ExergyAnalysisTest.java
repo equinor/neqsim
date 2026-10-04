@@ -41,7 +41,7 @@ public class ExergyAnalysisTest {
     comp.setIsentropicEfficiency(0.75);
 
     Cooler cooler = new Cooler("cooler", comp.getOutletStream());
-    cooler.setOutTemperature(273.15 + 30.0);
+    cooler.setOutletTemperature(273.15 + 30.0);
 
     ThrottlingValve valve = new ThrottlingValve("valve", cooler.getOutletStream());
     valve.setOutletPressure(80.0);

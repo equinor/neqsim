@@ -19,7 +19,7 @@ Pipeline
 
    * skip if checkpoint says ``done`` (unless ``--force``);
    * call the LLM with: chapter context, previous-section tail (continuity),
-     current section spec, refs.bib slice, neqsim_in_writing rules;
+     current section spec, refs.bib slice, neqsim-in-writing rules;
    * append the returned markdown to ``chapters/<ch>/sections/<id>.md``;
    * mark ``done`` in ``.book_write_progress.json``;
    * on transient failure, log to checkpoint and continue (or stop with

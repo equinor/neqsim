@@ -72,11 +72,17 @@ NeqSim supports two common hydrate crystal structures:
 
 ### Structure Selection
 
-The algorithm automatically selects the most stable structure based on Gibbs energy minimization. For mixed gases, the structure depends on composition:
+The default hydrate component model compares the water fugacity of sI and sII at the current fluid guest fugacities.
+`TPHydrateFlash` updates this selection as guests are withdrawn and the fluid is reflashed. It retains one hydrate
+structure; this is not a global Gibbs minimization over simultaneous sI, sII, sH, ice and other solids. The selected
+hydrate composition includes both cavity populations and their empty-site fractions. See
+[Hydrate flash operations](../thermodynamicoperations/hydrate_flash_operations.md) for equations, diagnostics and limits.
+
+For mixed gases, the structure depends on composition:
 
 ```java
 // Get the stable hydrate structure (1 = sI, 2 = sII)
-int structure = fluid.getPhase(PhaseType.HYDRATE).getComponent("methane").getHydrateStructure();
+int structure = ((PhaseHydrate) fluid.getPhase(PhaseType.HYDRATE)).getStableHydrateStructure();
 ```
 
 ---

@@ -115,14 +115,12 @@ public class PropylbenzeneUnifacGroupsTest extends neqsim.NeqSimTest {
   }
 
   @Test
-  void testDewTemperatureIsConsistentWithTheHomologousSeries() {
-    // Counting envelope points does not discriminate here: methane paired with any heavy
-    // component terminates the trace after one point at these conditions, and ethylbenzene and
-    // nC10 do so too despite having carried group assignments all along. The dew temperature
-    // itself does discriminate, because it must rise with molar mass along the alkylbenzenes.
-    double toluene = firstDewTemperature("toluene");
-    double ethylbenzene = firstDewTemperature("ethylbenzene");
-    double propylbenzene = firstDewTemperature("propylbenzene");
+  void testDewTemperatureIsConsistentWithTheHomologousSeries() throws Exception {
+    // Compare saturation at the same pressure. A full heavy-mixture envelope can reach its
+    // pressure limit and is not needed to validate the UNIFAC group assignments.
+    double toluene = dewTemperatureAtOneBar("toluene");
+    double ethylbenzene = dewTemperatureAtOneBar("ethylbenzene");
+    double propylbenzene = dewTemperatureAtOneBar("propylbenzene");
 
     assertTrue(Double.isFinite(propylbenzene),
         "propylbenzene dew temperature was " + propylbenzene + "; a missing group assignment makes this NaN");
@@ -135,21 +133,17 @@ public class PropylbenzeneUnifacGroupsTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * First point of the traced dew curve.
-   *
-   * <p>
-   * The envelope arrays carry a trailing NaN sentinel, so only the leading entries are meaningful.
-   * </p>
+   * Dew temperature at 1 bara, independently of whether the full envelope closes.
    *
    * @param heavyComponent the heavy component paired with methane
-   * @return dew temperature of the first envelope point in K
+   * @return dew temperature in K
+   * @throws Exception if the saturation flash fails
    */
-  private double firstDewTemperature(String heavyComponent) {
+  private double dewTemperatureAtOneBar(String heavyComponent) throws Exception {
     SystemInterface fluid = createFluid(heavyComponent);
+    fluid.setPressure(1.0);
     ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-    operations.calcPTphaseEnvelope();
-    double[] dewTemperatures = operations.getOperation().get("dewT");
-    assertTrue(dewTemperatures.length > 0, heavyComponent + " produced no dew curve at all");
-    return dewTemperatures[0];
+    operations.dewPointTemperatureFlash();
+    return fluid.getTemperature();
   }
 }

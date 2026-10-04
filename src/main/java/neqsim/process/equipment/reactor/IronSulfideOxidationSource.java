@@ -364,7 +364,7 @@ public class IronSulfideOxidationSource extends TwoPortEquipment {
   }
 
   private void ensureOutletComponents(SystemInterface system) {
-    String[] components = { "H2S", "oxygen", "S8", "hydrogen", "CO2", "water" };
+    String[] components = {"H2S", "oxygen", "S8", "hydrogen", "CO2", "water"};
     for (String component : components) {
       HydrogenProductionUtils.ensureComponent(system, component);
     }

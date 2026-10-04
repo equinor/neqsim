@@ -159,7 +159,7 @@ class DatabaseCsvDuplicateTest extends NeqSimTest {
     for (Map.Entry<String, List<CsvRow>> entry : rowsByKey.entrySet()) {
       if (hasDifferentValues(entry.getValue(), valueColumn)) {
         duplicateMessages
-            .add(formatDuplicate(resourcePath, new String[] { keyColumn }, entry.getKey(), entry.getValue()));
+            .add(formatDuplicate(resourcePath, new String[] {keyColumn}, entry.getKey(), entry.getValue()));
       }
     }
     return duplicateMessages;

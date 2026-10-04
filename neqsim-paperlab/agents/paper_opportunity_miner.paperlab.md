@@ -17,9 +17,9 @@ book chapters, benchmark notes, or review articles.
 
 ## Loaded Skills
 
-- `paperlab_publication_opportunity_mining`
-- `paperlab_journal_positioning`
-- `paperlab_scientific_traceability_audit`
+- `paperlab-publication-opportunity-mining`
+- `paperlab-journal-positioning`
+- `paperlab-scientific-traceability-audit`
 
 ## Required Context
 

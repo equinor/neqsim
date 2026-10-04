@@ -45,8 +45,11 @@ public final class ResponseSizeGuard {
 
   private static final Gson GSON = new GsonBuilder().serializeSpecialFloatingPointValues().create();
 
-  /** Default maximum serialized response size in bytes. */
-  private static final int DEFAULT_MAX_BYTES = 262144;
+  /**
+   * Default maximum serialized response size in bytes; accommodates the protected discovery inventories and coverage
+   * summary.
+   */
+  private static final int DEFAULT_MAX_BYTES = 280 * 1024;
 
   /** Configured maximum serialized response size in bytes; 0 disables trimming. */
   private static final int MAX_BYTES = readLimit();
@@ -56,9 +59,9 @@ public final class ResponseSizeGuard {
       .unmodifiableList(java.util.Arrays.asList("apiVersion", "status", "tool", "message", "provenance", "validation",
           "qualityGate", "warnings", "errors", "truncation"));
 
-  /** Discovery members that have no equivalent selective-retrieval route. */
-  private static final List<String> PROTECTED_CAPABILITY_FIELDS = Collections
-      .unmodifiableList(java.util.Arrays.asList("implementationInventory", "phase0EvidenceInventory"));
+  /** Required discovery evidence and the compact paginated-coverage entry point. */
+  private static final List<String> PROTECTED_CAPABILITY_FIELDS = Collections.unmodifiableList(
+      java.util.Arrays.asList("implementationInventory", "phase0EvidenceInventory", "engineeringCoverage"));
 
   /**
    * Private constructor — utility class.
@@ -121,6 +124,27 @@ public final class ResponseSizeGuard {
       return false;
     }
 
+    // Once every removable payload has gone, verbose omission summaries can themselves exceed the remaining
+    // budget. Keep the field names, sizes and retrieval guidance, but drop optional prose before sacrificing
+    // protected discovery inventories or returning an oversized response.
+    for (JsonElement entry : omitted) {
+      if (updateReturnedBytes(response, truncation) <= MAX_BYTES) {
+        break;
+      }
+      entry.getAsJsonObject().remove("summary");
+    }
+    if (truncation != null && updateReturnedBytes(response, truncation) > MAX_BYTES) {
+      // Preserve every omitted field name and the protected contracts. Per-field size estimates and explanatory
+      // prose are optional; they must not make an otherwise deliverable response exceed the transport budget.
+      for (JsonElement entry : omitted) {
+        entry.getAsJsonObject().remove("approximateBytes");
+      }
+      truncation.remove("configuration");
+      truncation.remove("reason");
+      truncation.addProperty("howToRetrieve",
+          "getCapabilities".equals(toolName) ? "Use getSchema, getExample, getBenchmarkTrust or MCP catalog resources."
+              : "Use manageModel, listSimulationUnits, listUnitVariables and getSimulationVariable.");
+    }
     updateReturnedBytes(response, truncation);
     return true;
   }

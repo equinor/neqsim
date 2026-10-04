@@ -97,7 +97,6 @@ public class ComponentPRvolcor extends ComponentPR {
     return super.getVolumeCorrection();
   }
 
-  /** {@inheritDoc} */
   /**
    * getc.
    *

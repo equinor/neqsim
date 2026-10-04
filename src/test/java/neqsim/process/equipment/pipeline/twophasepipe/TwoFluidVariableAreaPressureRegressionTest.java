@@ -1,14 +1,36 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.junit.jupiter.api.Test;
 
 class TwoFluidVariableAreaPressureRegressionTest {
   @Test
+  void stationaryPhaseContactsBalanceWithoutInterfacialStabilization() {
+    TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, 1.0), cell(2.0, 2.0, 0.2, 0.4), cell(4.5, 3.0, 0.15, 0.0)};
+    cells[1].setWaterCut(0.2);
+    cells[2].setWaterCut(1.0);
+    for (TwoFluidSection section : cells) {
+      section.updateConservativeVariables();
+    }
+    TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
+    equations.setConsistentPhasePressureEnabled(true);
+    assertFalse(equations.isEnableInterfacialPressure());
+    double[][] rhs = equations.calcRHS(cells, 1.0);
+    for (int cell = 0; cell < cells.length; cell++) {
+      for (int phase = 0; phase < 3; phase++) {
+        assertEquals(0.0, rhs[cell][phase], 1.0e-12);
+        assertEquals(0.0, rhs[cell][phase + 3], 1.0e-9,
+            "Stationary phase contact must not accelerate cell " + cell + ", phase " + phase);
+      }
+    }
+  }
+
+  @Test
   void constantPressureAtRestIsBalancedAcrossChangingAreaInEveryPhase() {
-    for (double gasHoldup : new double[] { 1.0, 0.4, 0.0 }) {
-      TwoFluidSection[] cells = { cell(0.5, 1.0, 0.1, gasHoldup), cell(2.0, 2.0, 0.2, gasHoldup),
-          cell(4.5, 3.0, 0.15, gasHoldup) };
+    for (double gasHoldup : new double[] {1.0, 0.4, 0.0}) {
+      TwoFluidSection[] cells = {cell(0.5, 1.0, 0.1, gasHoldup), cell(2.0, 2.0, 0.2, gasHoldup),
+          cell(4.5, 3.0, 0.15, gasHoldup)};
       TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
       equations.setEnableInterfacialPressure(true);
 

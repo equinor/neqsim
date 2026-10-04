@@ -83,7 +83,7 @@ public class PressureBoundaryOptimizerTest {
     comp.setPolytropicEfficiency(0.75);
 
     Cooler cooler = new Cooler("Aftercooler", comp.getOutletStream());
-    cooler.setOutTemperature(313.15); // 40°C
+    cooler.setOutletTemperature(313.15); // 40°C
 
     Stream export = new Stream("Export", cooler.getOutletStream());
 
@@ -163,8 +163,8 @@ public class PressureBoundaryOptimizerTest {
 
     // Generate lift curve table with feasible pressure combinations
     // For a valve, outlet must be less than inlet
-    double[] inletPressures = { 80.0, 90.0, 100.0 };
-    double[] outletPressures = { 60.0, 70.0, 75.0 }; // Must be less than inlet
+    double[] inletPressures = {80.0, 90.0, 100.0};
+    double[] outletPressures = {60.0, 70.0, 75.0}; // Must be less than inlet
 
     PressureBoundaryOptimizer.LiftCurveTable table = optimizer.generateLiftCurveTable(inletPressures, outletPressures,
         "bara");
@@ -192,7 +192,7 @@ public class PressureBoundaryOptimizerTest {
 
     // Generate capacity curve at fixed inlet pressure
     double inletPressure = 80.0;
-    double[] outletPressures = { 60.0, 65.0, 70.0, 75.0 };
+    double[] outletPressures = {60.0, 65.0, 70.0, 75.0};
 
     double[] flowRates = optimizer.generateCapacityCurve(inletPressure, outletPressures, "bara");
 
@@ -208,11 +208,11 @@ public class PressureBoundaryOptimizerTest {
   @Test
   public void testLiftCurveTableJsonFormat() {
     // Create a simple table
-    double[] inletP = { 70.0, 80.0 };
-    double[] outletP = { 60.0, 65.0 };
-    double[][] flows = { { 50000, 40000 }, { 70000, 60000 } };
-    double[][] powers = { { 100, 90 }, { 150, 130 } };
-    String[][] bottlenecks = { { "Valve", "Valve" }, { "Valve", "Valve" } };
+    double[] inletP = {70.0, 80.0};
+    double[] outletP = {60.0, 65.0};
+    double[][] flows = {{50000, 40000}, {70000, 60000}};
+    double[][] powers = {{100, 90}, {150, 130}};
+    String[][] bottlenecks = {{"Valve", "Valve"}, {"Valve", "Valve"}};
 
     PressureBoundaryOptimizer.LiftCurveTable table = new PressureBoundaryOptimizer.LiftCurveTable("TestTable", inletP,
         outletP, flows, powers, bottlenecks, "bara", "kg/hr");

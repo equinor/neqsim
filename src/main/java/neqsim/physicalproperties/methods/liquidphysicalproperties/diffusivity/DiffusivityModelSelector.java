@@ -195,7 +195,7 @@ public class DiffusivityModelSelector {
    * @return true if amines are present
    */
   private static boolean hasAmineComponents(PhaseInterface phase) {
-    String[] amineNames = { "MDEA", "MDEA+", "MEA", "MEA+", "DEA", "DEA+", "MAPA", "Piperazine" };
+    String[] amineNames = {"MDEA", "MDEA+", "MEA", "MEA+", "DEA", "DEA+", "MAPA", "Piperazine"};
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       String name = phase.getComponent(i).getComponentName();
       for (String amine : amineNames) {

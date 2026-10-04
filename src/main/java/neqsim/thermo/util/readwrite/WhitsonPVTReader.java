@@ -354,7 +354,7 @@ public class WhitsonPVTReader {
    */
   private void applyLBCViscosityModel(SystemInterface fluid) {
     // LBC parameters array: [P0, P1, P2, P3, P4]
-    double[] lbcParams = new double[] { lbcP0, lbcP1, lbcP2, lbcP3, lbcP4 };
+    double[] lbcParams = new double[] {lbcP0, lbcP1, lbcP2, lbcP3, lbcP4};
 
     // Set LBC viscosity model for all phases
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
@@ -574,7 +574,7 @@ public class WhitsonPVTReader {
    * @return array of [P0, P1, P2, P3, P4, F0]
    */
   public double[] getLBCParameters() {
-    return new double[] { lbcP0, lbcP1, lbcP2, lbcP3, lbcP4, lbcF0 };
+    return new double[] {lbcP0, lbcP1, lbcP2, lbcP3, lbcP4, lbcF0};
   }
 
   /**
@@ -583,7 +583,7 @@ public class WhitsonPVTReader {
    * @return array of [shape, bound]
    */
   public double[] getGammaParameters() {
-    return new double[] { gammaShape, gammaBound };
+    return new double[] {gammaShape, gammaBound};
   }
 
   /**

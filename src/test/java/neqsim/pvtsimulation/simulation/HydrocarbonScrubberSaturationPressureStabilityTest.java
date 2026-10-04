@@ -47,11 +47,11 @@ class HydrocarbonScrubberSaturationPressureStabilityTest extends neqsim.NeqSimTe
 
   private static ThreePhaseSeparator runScrubberProcess() {
     SystemInterface fluid = new SystemUMRPRUMCEos(280.0, 10.0);
-    String[] componentNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
+    String[] componentNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane",
         "n-pentane", "2-m-C5", "3-m-C5", "n-hexane", "c-hexane", "n-heptane", "benzene", "n-octane", "c-C7", "toluene",
-        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12" };
-    double[] componentAmounts = { 0.01, 0.01, 0.9, 0.1, 0.03, 0.01, 0.01, 0.01, 0.001, 0.001, 0.001, 0.001, 0.001,
-        0.001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.00001, 0.00001, 3.0e-12, 3.0e-12, 3.0e-12 };
+        "n-nonane", "c-C8", "m-Xylene", "nC10", "nC11", "nC12"};
+    double[] componentAmounts = {0.01, 0.01, 0.9, 0.1, 0.03, 0.01, 0.01, 0.01, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+        0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.00001, 0.00001, 3.0e-12, 3.0e-12, 3.0e-12};
     for (int componentIndex = 0; componentIndex < componentNames.length; componentIndex++) {
       fluid.addComponent(componentNames[componentIndex], componentAmounts[componentIndex]);
     }

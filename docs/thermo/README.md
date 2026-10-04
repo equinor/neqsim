@@ -36,6 +36,8 @@ thermo/
 
 ### Core Guides
 
+- [CPA Water Caloric Alpha](cpa_water_caloric): Opt-in liquid-water heat-capacity improvement, IAPWS-95 calibration, thermodynamic consistency and validation limits.
+- [Homogeneous-equilibrium Acoustic Speed](equilibrium_sound_speed): Explicit isentropic EOS-density derivative for single-phase and vapor-liquid fluids, with closure, step convergence and phase-boundary diagnostics; distinct from legacy phase averaging.
 - [Thermodynamic Models Guide](thermodynamic_models): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
 - [Experimental Solid Helmholtz Models](solid_helmholtz_models): **Pure solid-state and freezing-point workflows** for solid argon and para-hydrogen, with explicit units, validity ranges, structured convergence diagnostics, and opt-in limitations.
 - [Mercury Thermodynamics](mercury_thermodynamics): **Mercury-focused workflow** for SRK-TwuCoon-Statoil-EOS, TPflash setup, INTER-table usage, and thesis-linked correlation guidance.
@@ -60,6 +62,7 @@ thermo/
 
 - [Mathematical Models](mathematical_models): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
 - [GERG-2008 and EOS-CG](gerg2008_eoscg): Detailed guide to the reference equations of state for natural gas and CCS applications.
+- [EOS-CG CO2/SO2 Mixture](eoscg_co2_so2): Executable mixture flash with phase densities, pressure closure, component balances, and a bounded numerical validation range.
 
 ### Acid Gas and Sour Fluid Modeling
 

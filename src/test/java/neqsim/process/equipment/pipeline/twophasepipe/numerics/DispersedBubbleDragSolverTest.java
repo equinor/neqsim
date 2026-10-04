@@ -20,13 +20,13 @@ class DispersedBubbleDragSolverTest {
   @Test
   void nonlinearDragIsStableConservativeAndMonotoneThroughDtOverTauOneThousand() {
     InterfacialFriction dragLaw = new InterfacialFriction();
-    double[] masses = { 1.0, 4.0, 0.0 };
-    double[] momenta = { 1.0, 0.0, 0.0 };
+    double[] masses = {1.0, 4.0, 0.0};
+    double[] momenta = {1.0, 0.0, 0.0};
     double initialSlip = 1.0;
     double force = Math.abs(dragLaw.calcCorrectedBubbleDragForce(FlowRegime.BUBBLE, initialSlip, 0.0, GAS_DENSITY,
         LIQUID_DENSITY, GAS_VISCOSITY, LIQUID_VISCOSITY, LIQUID_HOLDUP, DIAMETER, SURFACE_TENSION));
     double relaxationTime = initialSlip / ((1.0 / masses[0] + 1.0 / masses[1]) * force);
-    double[] stiffnessRatios = { 1.0e-3, 0.1, 1.0, 10.0, 1.0e3 };
+    double[] stiffnessRatios = {1.0e-3, 0.1, 1.0, 10.0, 1.0e3};
 
     for (double stiffnessRatio : stiffnessRatios) {
       double[] result = relax(FlowRegime.BUBBLE, masses, momenta, stiffnessRatio * relaxationTime, dragLaw);
@@ -42,10 +42,10 @@ class DispersedBubbleDragSolverTest {
   @Test
   void reverseSlipIsSymmetricAndZeroSlipIsAnExactFixedPoint() {
     InterfacialFriction dragLaw = new InterfacialFriction();
-    double[] masses = { 1.0, 4.0, 0.0 };
-    double[] forwardMomenta = { 1.0, 0.0, 0.0 };
-    double[] reverseMomenta = { -1.0, 0.0, 0.0 };
-    double[] zeroSlipMomenta = { 1.0, 4.0, 0.0 };
+    double[] masses = {1.0, 4.0, 0.0};
+    double[] forwardMomenta = {1.0, 0.0, 0.0};
+    double[] reverseMomenta = {-1.0, 0.0, 0.0};
+    double[] zeroSlipMomenta = {1.0, 4.0, 0.0};
 
     double[] forward = relax(FlowRegime.DISPERSED_BUBBLE, masses, forwardMomenta, 2.0, dragLaw);
     double[] reverse = relax(FlowRegime.DISPERSED_BUBBLE, masses, reverseMomenta, 2.0, dragLaw);
@@ -60,8 +60,8 @@ class DispersedBubbleDragSolverTest {
   @Test
   void threePhasePseudoLiquidPreservesOilWaterSlipAndDissipates() {
     InterfacialFriction dragLaw = new InterfacialFriction();
-    double[] masses = { 1.0, 2.0, 3.0 };
-    double[] momenta = { 1.0, 2.8, 0.0 };
+    double[] masses = {1.0, 2.0, 3.0};
+    double[] momenta = {1.0, 2.8, 0.0};
     double initialOilWaterSlip = momenta[1] / masses[1] - momenta[2] / masses[2];
 
     double[] result = relax(FlowRegime.BUBBLE, masses, momenta, 5.0, dragLaw);
@@ -75,10 +75,10 @@ class DispersedBubbleDragSolverTest {
   @Test
   void absentPhasesAreNotCreatedAndNonBubbleRegimeIsUntouched() {
     InterfacialFriction dragLaw = new InterfacialFriction();
-    double[] oilOnlyLiquidMasses = { 1.0, 4.0, 0.0 };
-    double[] momenta = { 1.0, 0.0, 0.2 };
-    double[] noGasMasses = { 0.0, 4.0, 0.0 };
-    double[] noGasMomenta = { 3.0e-9, 2.0, 0.0 };
+    double[] oilOnlyLiquidMasses = {1.0, 4.0, 0.0};
+    double[] momenta = {1.0, 0.0, 0.2};
+    double[] noGasMasses = {0.0, 4.0, 0.0};
+    double[] noGasMomenta = {3.0e-9, 2.0, 0.0};
 
     double[] oilOnly = relax(FlowRegime.BUBBLE, oilOnlyLiquidMasses, momenta, 1.0, dragLaw);
     double[] noGas = relax(FlowRegime.BUBBLE, noGasMasses, noGasMomenta, 1.0, dragLaw);
@@ -95,8 +95,8 @@ class DispersedBubbleDragSolverTest {
   @Test
   void repeatedCallsAreDeterministicAndDoNotMutateInputs() {
     InterfacialFriction dragLaw = new InterfacialFriction();
-    double[] masses = { 1.0, 2.0, 3.0 };
-    double[] momenta = { 1.0, 2.8, 0.0 };
+    double[] masses = {1.0, 2.0, 3.0};
+    double[] momenta = {1.0, 2.8, 0.0};
     double[] originalMasses = masses.clone();
     double[] originalMomenta = momenta.clone();
 
@@ -111,8 +111,8 @@ class DispersedBubbleDragSolverTest {
   @Test
   void bubbleClassificationsAgreeAndNonlinearRefinementConverges() {
     InterfacialFriction dragLaw = new InterfacialFriction();
-    double[] masses = { 1.0, 4.0, 0.0 };
-    double[] momenta = { 1.0, 0.0, 0.0 };
+    double[] masses = {1.0, 4.0, 0.0};
+    double[] momenta = {1.0, 0.0, 0.0};
     double totalTime = 0.2;
     double[] bubble = relax(FlowRegime.BUBBLE, masses, momenta, totalTime, dragLaw);
     double[] dispersed = relax(FlowRegime.DISPERSED_BUBBLE, masses, momenta, totalTime, dragLaw);
@@ -126,8 +126,8 @@ class DispersedBubbleDragSolverTest {
   @Test
   void tracePositivePhaseRemainsFiniteWithoutAHiddenMassFloor() {
     InterfacialFriction dragLaw = new InterfacialFriction();
-    double[] masses = { 1.0e-12, 4.0, 0.0 };
-    double[] momenta = { 1.0e-12, 0.0, 0.0 };
+    double[] masses = {1.0e-12, 4.0, 0.0};
+    double[] momenta = {1.0e-12, 0.0, 0.0};
 
     double[] result = relax(FlowRegime.BUBBLE, masses, momenta, 1.0, dragLaw);
 

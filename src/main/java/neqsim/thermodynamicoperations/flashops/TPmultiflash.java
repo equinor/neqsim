@@ -1640,16 +1640,16 @@ public class TPmultiflash extends TPflash {
               logger.error("Fallback matrix solve failed: " + ex.getMessage());
               logger.debug("Attempting pseudo-inverse fallback...");
               try {
-                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
+                DMatrixRMaj pinv = new DMatrixRMaj(df.getDDRM().getNumCols(), df.getDDRM().getNumRows());
                 CommonOps_DDRM.pinv(df.getDDRM(), pinv);
-                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
+                DMatrixRMaj result = new DMatrixRMaj(df.getDDRM().getNumCols(), 1);
                 CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
                 dx = SimpleMatrix.wrap(result).negative();
                 logger.warn("Used pseudo-inverse matrix solve.");
               } catch (Exception ex2) {
                 logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
                 logger.warn("Setting dx to zero matrix as a last resort.");
-                dx = new SimpleMatrix(f.numRows(), f.numCols());
+                dx = new SimpleMatrix(f.getDDRM().getNumRows(), f.getDDRM().getNumCols());
               }
             }
           }
@@ -2514,6 +2514,8 @@ public class TPmultiflash extends TPflash {
   private static final class PhaseSplitSnapshot {
     private final int numberOfPhases;
     private final PhaseType[] phaseTypes;
+    /** Physical phase-array slot backing each logical phase, so a restore cannot re-map the phases. */
+    private final int[] phaseIndices;
     private final double[] betas;
     private final double[][] compositions;
     private final double[] kValues;
@@ -2522,11 +2524,13 @@ public class TPmultiflash extends TPflash {
       numberOfPhases = source.getNumberOfPhases();
       int numberOfComponents = source.getPhase(0).getNumberOfComponents();
       phaseTypes = new PhaseType[numberOfPhases];
+      phaseIndices = new int[numberOfPhases];
       betas = new double[numberOfPhases];
       compositions = new double[numberOfPhases][numberOfComponents];
       kValues = new double[numberOfComponents];
       for (int phase = 0; phase < numberOfPhases; phase++) {
         phaseTypes[phase] = source.getPhase(phase).getType();
+        phaseIndices[phase] = source.getPhaseIndex(phase);
         betas[phase] = source.getBeta(phase);
         for (int comp = 0; comp < numberOfComponents; comp++) {
           compositions[phase][comp] = source.getPhase(phase).getComponent(comp).getx();
@@ -2541,12 +2545,19 @@ public class TPmultiflash extends TPflash {
   /**
    * Reinstates a retained phase split after a rejected multiphase restart.
    *
+   * <p>
+   * The recorded phase-array slots are reinstated as well. Forcing the logical phases onto slots {@code 0..n-1} instead
+   * would move each phase onto a different physical phase object, and {@link SystemInterface#setPhaseType} is silently
+   * ignored when {@link SystemInterface#allowPhaseShift()} is false, so the compositions and the phase types could end
+   * up describing different phases.
+   * </p>
+   *
    * @param snapshot converged split captured before the restart
    */
   private void restorePhaseSplit(PhaseSplitSnapshot snapshot) {
     system.setNumberOfPhases(snapshot.numberOfPhases);
     for (int phase = 0; phase < snapshot.numberOfPhases; phase++) {
-      system.setPhaseIndex(phase, phase);
+      system.setPhaseIndex(phase, snapshot.phaseIndices[phase]);
       system.setPhaseType(phase, snapshot.phaseTypes[phase]);
       system.setBeta(phase, snapshot.betas[phase]);
       for (int comp = 0; comp < snapshot.compositions[phase].length; comp++) {
@@ -2556,6 +2567,25 @@ public class TPmultiflash extends TPflash {
     }
     system.normalizeBeta();
     system.init(1);
+  }
+
+  /**
+   * Checks that an adopted restart endpoint is at least as good as the split it replaced.
+   *
+   * @param referenceGibbs extensive Gibbs energy of the converged endpoint before the restart, in J
+   * @return {@code true} when the adopted split still holds a gas phase and a finite, not worse Gibbs energy
+   */
+  private boolean adoptedSplitIsUsable(double referenceGibbs) {
+    try {
+      if (!system.hasPhaseType(PhaseType.GAS)) {
+        return false;
+      }
+      double gibbs = system.getGibbsEnergy();
+      return !Double.isNaN(gibbs) && !Double.isInfinite(gibbs) && gibbs <= referenceGibbs;
+    } catch (Exception ex) {
+      logger.debug("Vapour-appearance restart verification failed: {}", ex.getMessage());
+      return false;
+    }
   }
 
   /**
@@ -2572,14 +2602,20 @@ public class TPmultiflash extends TPflash {
    *
    * <p>
    * The restart is accepted only when it keeps every phase type the converged endpoint already had, adds a gas phase,
-   * and lowers the extensive Gibbs energy; otherwise the retained split is reinstated. The repair can therefore only
-   * ever add the missing vapour, never trade an existing liquid phase for it, and the endpoint can never become worse
-   * than the one already converged. Recursion is blocked on two levels: the caller sets the one-shot
-   * {@code vapourPhaseSeedAttempted} flag before entry, and {@link #VAPOUR_RESTART_ACTIVE} stops the nested
-   * {@link TPmultiflash} instance created below from starting a restart of its own.
+   * and lowers the extensive Gibbs energy. The restart runs on a clone, so a rejected restart leaves the converged
+   * split untouched rather than rewriting it. The repair can therefore only ever add the missing vapour, never trade an
+   * existing liquid phase for it, and the endpoint can never become worse than the one already converged. Recursion is
+   * blocked on two levels: the caller sets the one-shot {@code vapourPhaseSeedAttempted} flag before entry, and
+   * {@link #VAPOUR_RESTART_ACTIVE} stops the nested {@link TPmultiflash} instance created below from starting a restart
+   * of its own.
    * </p>
    */
   private void restartMultiphaseFromFreshEstimate() {
+    // Adoption re-types phases, which setPhaseType silently refuses to do when phase shifts are
+    // disallowed; the repair would then leave compositions and phase types describing different phases.
+    if (!system.allowPhaseShift()) {
+      return;
+    }
     double referenceGibbs;
     PhaseSplitSnapshot snapshot;
     try {
@@ -2589,6 +2625,7 @@ public class TPmultiflash extends TPflash {
       logger.debug("Vapour-appearance restart snapshot failed: {}", ex.getMessage());
       return;
     }
+    boolean convergedSplitReplaced = false;
     try {
       SystemInterface trial = system.clone();
       trial.setNumberOfPhases(2);
@@ -2618,13 +2655,19 @@ public class TPmultiflash extends TPflash {
           logger.debug("Vapour-appearance restart recovered a gas phase: G {} -> {} J", referenceGibbs,
               trial.getGibbsEnergy());
         }
+        convergedSplitReplaced = true;
         restorePhaseSplit(new PhaseSplitSnapshot(trial));
-        return;
+        if (!adoptedSplitIsUsable(referenceGibbs)) {
+          logger.debug("Vapour-appearance restart did not survive adoption; keeping the converged endpoint");
+          restorePhaseSplit(snapshot);
+        }
       }
     } catch (Exception ex) {
       logger.debug("Vapour-appearance restart failed: {}", ex.getMessage());
+      if (convergedSplitReplaced) {
+        restorePhaseSplit(snapshot);
+      }
     }
-    restorePhaseSplit(snapshot);
   }
 
   /**
@@ -3647,6 +3690,92 @@ public class TPmultiflash extends TPflash {
         }
       }
       restoreIonsToAqueousPhase(ionFreeOverallZ);
+    }
+  }
+
+  /**
+   * Tests a water-rich OIL or GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
+   *
+   * <p>
+   * Stability trials or phase cleanup can lose the water-rich minimum after the hydrocarbon split has converged,
+   * including collapse to a single oil phase near the bubble point. The incumbent may satisfy gas/oil fugacity equality
+   * yet have a much higher Gibbs energy than OIL/AQUEOUS. Start a material-balanced oil/aqueous active set on a clone
+   * and replace the incumbent only after solving equilibrium and checking component conservation and fugacities. Never
+   * accept the raw aqueous seed itself.
+   * </p>
+   */
+  void rescueMetastableOilMissingAqueous() {
+    boolean singleOil = system.getNumberOfPhases() == 1 && system.hasPhaseType(PhaseType.OIL);
+    boolean gasOil = system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)
+        && system.hasPhaseType(PhaseType.OIL);
+    if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
+        || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
+        || system.getComponent("water").getz() < 0.05) {
+      return;
+    }
+    boolean validReference = isFeasiblePhaseEquilibrium(system);
+    double referenceGibbs = system.getGibbsEnergy();
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbs) * 1.0e-8);
+    try {
+      SystemInterface candidate = system.clone();
+      int oil = candidate.getPhaseNumberOfPhase("oil");
+      if (singleOil) {
+        // Phase removal can leave inactive logical indices pointing to an active physical slot.
+        // Rebuild unused indices before adding a trial, preserving the existing oil phase object.
+        int oilSlot = candidate.getPhaseIndex(oil);
+        int freeSlot = 0;
+        for (int phase = 1; phase < candidate.getMaxNumberOfPhases(); phase++) {
+          if (freeSlot == oilSlot) {
+            freeSlot++;
+          }
+          candidate.setPhaseIndex(phase, freeSlot++);
+        }
+        candidate.addPhase();
+      }
+      int aqueous = singleOil ? candidate.getNumberOfPhases() - 1 : candidate.getPhaseNumberOfPhase("gas");
+      candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        candidate.getPhase(aqueous).getComponent(component).setx(
+            "water".equals(candidate.getPhase(aqueous).getComponent(component).getComponentName()) ? 1.0 : 1.0e-16);
+      }
+      candidate.getPhase(aqueous).normalize();
+      double aqueousSeed = Math.min(0.05, 0.5 * candidate.getComponent("water").getz());
+      candidate.setBeta(aqueous, aqueousSeed);
+      candidate.setBeta(oil, 1.0 - aqueousSeed);
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        double feed = candidate.getPhase(oil).getComponent(component).getz();
+        double waterPhase = candidate.getPhase(aqueous).getComponent(component).getx();
+        candidate.getPhase(oil).getComponent(component)
+            .setx(Math.max(0.0, (feed - aqueousSeed * waterPhase) / (1.0 - aqueousSeed)));
+      }
+      candidate.getPhase(oil).normalize();
+      candidate.normalizeBeta();
+      candidate.init(1);
+
+      TPmultiflash solver = new TPmultiflash(candidate, false);
+      solver.doStabilityAnalysis = false;
+      solver.multiPhaseTest = true;
+      solver.run();
+      candidate.init(1);
+      if (!candidate.hasPhaseType(PhaseType.AQUEOUS) || !isFeasiblePhaseEquilibrium(candidate)
+          || (validReference && !(candidate.getGibbsEnergy() < referenceGibbs - gibbsTolerance))) {
+        return;
+      }
+
+      PhaseSplitSnapshot original = new PhaseSplitSnapshot(system);
+      try {
+        restorePhaseSplit(new PhaseSplitSnapshot(candidate));
+        if (!isFeasiblePhaseEquilibrium(system)
+            || (validReference && system.getGibbsEnergy() >= referenceGibbs - gibbsTolerance)) {
+          restorePhaseSplit(original);
+        }
+      } catch (Exception ex) {
+        restorePhaseSplit(original);
+        logger.debug("Aqueous active-set adoption failed: {}", ex.getMessage());
+      }
+    } catch (Exception ex) {
+      logger.debug("Aqueous active-set trial failed: {}", ex.getMessage());
     }
   }
 

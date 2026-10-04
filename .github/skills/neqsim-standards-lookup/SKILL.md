@@ -20,6 +20,33 @@ Before any simulation or analysis, identify applicable standards:
 | **Standard** | Table of applicable standards with scope and status |
 | **Comprehensive** | Full table with clause numbers, design values, and compliance evidence |
 
+## Search the Local Standards Library First (MANDATORY)
+
+Before paraphrasing a standard from memory, citing it second-hand, or declaring
+it unobtainable, search the user's configured document root. It holds full PDFs
+and is more authoritative than recall:
+
+```bash
+neqsim --show-document-root       # may be unset - then there is no library
+neqsim documents "521"            # recursive, case-insensitive substring search
+```
+
+Every task folder also carries the listing at
+`step1_scope_and_research/references/document_root_index.md` — read it, since a
+subagent may have no CLI access. Refresh it with `neqsim documents --index .`.
+
+- **Cite clause numbers from the PDF**, not from memory. A remembered limit that
+  turns out to be the previous edition is a silent compliance error.
+- **File names are indicative only.** A document can contain the standard you
+  need without naming it (company guidelines often embed API/NORSOK
+  requirements), so open likely candidates before concluding it is absent.
+- Copy the standards actually used into `references/literature/` (or `manual/`
+  for company documents) so the task folder stays self-contained, and cite the
+  document number in `standards_applied`.
+- Only after this search comes up empty may a standard be recorded as a
+  `data_gap`. When no document root is configured, say so explicitly in the gap
+  entry rather than implying the standard does not exist.
+
 ## Equipment → Standards Mapping
 
 NeqSim's standards database is in `src/main/resources/designdata/standards/`.

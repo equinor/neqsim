@@ -43,7 +43,7 @@ public class TEGstripperProcess {
     dryFeedGas.setPressure(1.21, "bara");
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
-    feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.09, 0.91 });
+    feedTEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.09, 0.91});
 
     Stream TEGFeed = new Stream("feed TEG", feedTEG);
     TEGFeed.setFlowRate(6.1 * 1100.0, "kg/hr");

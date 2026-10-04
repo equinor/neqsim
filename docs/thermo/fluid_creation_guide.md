@@ -288,7 +288,14 @@ import neqsim.thermo.system.SystemUNIFAC;
 SystemInterface fluid = new SystemUNIFAC(300.0, 1.0);
 fluid.addComponent("methanol", 0.3);
 fluid.addComponent("water", 0.7);
+fluid.setMixingRule("classic");
+fluid.init(0);
 ```
+
+UNIFAC group lists and indexed arrays are synchronized automatically during component
+construction and group alignment. Repeated initialization requires no manual group
+copying. `SystemUNIFACpsrk` uses the same group assignments with its temperature-dependent
+interaction parameters; UMR-PRU retains its separate group table.
 
 ### 6.2 NRTL
 
@@ -304,7 +311,13 @@ fluid.addComponent("water", 0.6);
 
 ### 6.3 GE-Wilson
 
-Wilson equation for activity coefficients.
+Wilson equation for activity coefficients. The calculated coefficients are stored for use by
+both solvent vapor-pressure and solute Henry-law fugacity calculations.
+
+Standalone UNIQUAC is currently unsupported: direct UNIQUAC construction and the
+`"UNIQUAC"`/`"UNIQUAQ"` Huron–Vidal selectors throw `UnsupportedOperationException` because
+the implementation and parameter data are incomplete. Use a supported GE model explicitly;
+see [GE model support](thermodynamic_models.md#64-other-ge-models).
 
 ```java
 import neqsim.thermo.system.SystemGEWilson;
@@ -390,6 +403,13 @@ activity-based scale-potential screening after reactive gas-aqueous or gas-oil-a
 saturation ratio; explicit mineral precipitation, solid amounts, solid-phase equilibrium and wax checks are not yet
 supported by the hybrid strategy.
 
+Hybrid initialization preserves the EOS gas root, EOS oil root and GE liquid role
+through the inner phase-fraction iterations, including phase-specific
+initialization. An oil trial temporarily classified as gas by density does not
+change the EOS root used at the next iteration. Pure fluids use the supported
+remaining role; no water Henry coefficient is interpreted as a pure-fluid EOS.
+See [integrated reference conventions and derivative validation](henry_water_database.md#integrated-eos-gasoil-and-ge-liquid-references).
+
 Neutral-gas dissolution also requires a qualified Henry-law reference and, for brines, separately qualified Pitzer
 neutral-ion interactions. See [Henry-law reference states and aqueous gas-solubility evidence](henry_law_reference.md)
 for the implemented temperature law, derivative contract, current coefficient audit, source matrix and adoption gates.
@@ -412,7 +432,14 @@ new ThermodynamicOperations(fluid).TPflash();
 `enableHybridEosGeFlash()` configures topology, not electrolyte parameters. Scale calculations require a GE phase
 with meaningful activities for all requested aqueous species. Pitzer has the broadest concentrated-brine parameter
 coverage; the amine models retain their narrower component and validity ranges. `SystemDuanSun` remains excluded from
-this topology because its current public API accepts only CO2.
+this topology because its current public API accepts only CO2. Accordingly, `setModel("Duan-Sun")`
+rejects conversion explicitly: it cannot preserve a brine's water and ion inventory. The historical
+`SystemDuanSun` constructor remains available for compatibility, but is not a usable gas-in-brine
+system. `PhaseDuanSun` remains available for direct correlation evaluation with explicitly supplied
+state and salinity; this does not establish a complete or validated multiphase brine model.
+
+`setModel` throws `IllegalArgumentException` with the original cause when conversion fails,
+including unknown model names. It never returns a partially copied fluid as a successful conversion.
 
 For imported Pitzer datasets, check both interaction coverage and scientific qualification. Coverage answers whether
 the active binary, same-sign, ternary, and neutral topology is explicit; qualification answers which systems and

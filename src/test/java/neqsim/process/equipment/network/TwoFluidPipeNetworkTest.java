@@ -73,9 +73,9 @@ class TwoFluidPipeNetworkTest {
   }
 
   private static UpstreamCompressibleVolume createVolume(double pressurePa, double volumeM3) {
-    double[] density = { 45.0, 700.0, 1000.0 };
-    double[] soundSpeed = { 350.0, 1200.0, 1450.0 };
-    double[] mass = { 0.90 * volumeM3 * density[0], 0.10 * volumeM3 * density[1], 0.0 };
+    double[] density = {45.0, 700.0, 1000.0};
+    double[] soundSpeed = {350.0, 1200.0, 1450.0};
+    double[] mass = {0.90 * volumeM3 * density[0], 0.10 * volumeM3 * density[1], 0.0};
     return new UpstreamCompressibleVolume(volumeM3, pressurePa, mass, density, soundSpeed);
   }
 }

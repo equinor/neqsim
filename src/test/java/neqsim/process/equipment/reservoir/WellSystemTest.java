@@ -84,7 +84,7 @@ class WellSystemTest {
     double operatingRate = well.getOperatingFlowRate("Sm3/day");
     double reservoirPressure = well.getReservoirPressure("bara");
     double expectedBhp = Math.sqrt(reservoirPressure * reservoirPressure - operatingRate / productivityIndex);
-    double vlpBhp = well.generateVLPCurve(new double[] { operatingRate })[1][0];
+    double vlpBhp = well.generateVLPCurve(new double[] {operatingRate})[1][0];
 
     assertEquals(expectedBhp, well.getBottomHolePressure("bara"), 1.0e-9,
         "Stored BHP must be evaluated at the stored operating rate");

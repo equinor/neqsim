@@ -744,7 +744,11 @@ public class NaphtaliSandholmSolver {
       // energy is in the 1-5% range, run Sum-Rates (which adjusts T from the
       // energy balance) — that refines T without invoking Newton, which is
       // documented to diverge for the no-condenser/T-spec topology.
-      if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01 && meshClosureAcceptable("Bubble-Point")) {
+      // With both terminal stages, require Newton correction unless the full residual passed
+      // above. The no-condenser shortcut otherwise publishes only approximate tray traffic,
+      // including the previous traffic after a small temperature or feed change.
+      if (useOverallMBClosure && !hasCondenser && mbErrorBP < 0.005 && energyErrorBP < 0.01
+          && meshClosureAcceptable("Bubble-Point")) {
         logger.info("NS: mass+energy balance OK (mb={}%, E={}%), accepting solution",
             String.format("%.4f", mbErrorBP * 100), String.format("%.2f", energyErrorBP * 100));
         logger.debug("NS: accepting Bubble-Point solution without Sum-Rates correction");
@@ -786,7 +790,7 @@ public class NaphtaliSandholmSolver {
         // sensitivities propagate exponentially — observed Newton blowup
         // from ||F||=4 to 1e5 in one step). Once SR has closed mass balance
         // and energy balance, accept that result and skip Newton.
-        if (useOverallMBClosure && mbAfterSR < 0.05 && energyAfterSR < 0.05
+        if (useOverallMBClosure && !hasCondenser && mbAfterSR < 0.05 && energyAfterSR < 0.05
             && meshClosureAcceptable("Sum-Rates without Newton")) {
           logger.debug("NS: accepting Sum-Rates result without Newton because overall-MB closure is ill-conditioned "
               + "(mass balance={}%, energy={}%);", mbAfterSR * 100, energyAfterSR * 100);

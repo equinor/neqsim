@@ -30,7 +30,7 @@ public abstract class Component implements ComponentInterface {
   /** Conversion factor from mmHg to bar. */
   private static final double MMHG_TO_BAR = 1.0 / 750.061683;
 
-  double[] surfTensInfluenceParam = { 0.28367, -0.05164, -0.81594, 1.06810, -1.1147 };
+  double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
   /** Index number of Component in database. */
   protected int index;
   /** Index number of Component in Phase object component array. */
@@ -189,6 +189,11 @@ public abstract class Component implements ComponentInterface {
   double meltingPointTemperature = 110.0;
 
   private double idealGasEnthalpyOfFormation = 0.0;
+  /** Provenance of a reviewed ideal-gas formation enthalpy at 298.15 K; null means unavailable. */
+  private String formationEnthalpySource;
+  /** Opt-in formation reference; old serialized components retain the legacy sensible reference. */
+  private boolean useIdealGasEnthalpyOfFormation;
+
   double idealGasGibbsEnergyOfFormation = 0.0;
   double idealGasAbsoluteEntropy = 0.0;
 
@@ -339,10 +344,6 @@ public abstract class Component implements ComponentInterface {
         AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
         AntoineE = Double.parseDouble(dataSet.getString("ANTOINEE"));
         normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil")) + 273.15;
-        if (AntoineA == 0) {
-          AntoineA = 1.0;
-          AntoineB = getNormalBoilingPoint() - 273.15;
-        }
 
         AntoineASolid = Double.parseDouble(dataSet.getString("ANTOINESolidA"));
         AntoineBSolid = Double.parseDouble(dataSet.getString("ANTOINESolidB"));
@@ -462,8 +463,7 @@ public abstract class Component implements ComponentInterface {
         liquidConductivityParameter[1] = Double.parseDouble(dataSet.getString("liquidConductivity2"));
         liquidConductivityParameter[2] = Double.parseDouble(dataSet.getString("liquidConductivity3"));
 
-        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
-            || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
+        if (this instanceof ComponentSrkCPA) {
           parachorParameter = Double.parseDouble(dataSet.getString("PARACHOR_CPA"));
         } else {
           parachorParameter = Double.parseDouble(dataSet.getString("parachor"));
@@ -478,7 +478,15 @@ public abstract class Component implements ComponentInterface {
 
         Hsub = Double.parseDouble(dataSet.getString("Hsub"));
 
-        setIdealGasEnthalpyOfFormation(Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
+        idealGasEnthalpyOfFormation = Double.parseDouble(dataSet.getString("EnthalpyOfFormation"));
+        // Older/custom databases have no provenance column: keep legacy operation available,
+        // but do not silently certify their placeholder formation properties.
+        formationEnthalpySource = null;
+        try {
+          formationEnthalpySource = dataSet.getString("FORMATIONENTHALPYSOURCE");
+        } catch (java.sql.SQLException missingOptionalColumn) {
+          logger.debug("No formation-enthalpy provenance column for {}", name);
+        }
         idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
         idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
@@ -621,27 +629,49 @@ public abstract class Component implements ComponentInterface {
       }
       index = 1000 + componentNumber;
       if (NeqSimDataBase.createTemporaryTables()) {
-        database.execute("insert into " + databaseName + " VALUES (" + (1000 + componentNumber) + ", '" + componentName
-            + "', '00-00-0','" + getComponentType() + "', " + index + ", 'HC', " + (molarMass * 1000.0) + ", "
-            + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + ","
-            + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", "
-            + getCpC() + ", " + getCpD() + ", " + getCpE()
+        // Name the legacy columns so optional database extensions do not shift values.
+        // InChIKey is intentionally unset for structure-undefined pseudo-components.
+        String columns = "ID,NAME,CASnumber,COMPTYPE,COMPINDEX,FORMULA,MOLARMASS"
+            + ",LIQDENS,TC,PC,ACSFACT,NORMBOIL,MWAVG,CRITVOL" + ",PVMODEL,Href,CPA,CPB,CPC,CPD,CPE"
+            + ",AntoineVapPresLiqType,ANTOINEA,ANTOINEB,ANTOINEC,ANTOINED,ANTOINEE,DIPOLEMOMENT"
+            + ",VISCFACT,RACKETZ,volcorrSRK_T,LJDIAMETER,LJEPS,SphericalCoreRadius,LIQVISCMODEL"
+            + ",LIQVISC1,LIQVISC2,LIQVISC3,LIQVISC4,GIBBSENERGYOFFORMATION,DIELECTRICPARAMETER1,DIELECTRICPARAMETER2"
+            + ",DIELECTRICPARAMETER3,DIELECTRICPARAMETER4,DIELECTRICPARAMETER5,IONICCHARGE,REFERENCESTATETYPE,HenryCoef1,HenryCoef2"
+            + ",HenryCoef3,HenryCoef4,SCHWARTZENTRUBER1,SCHWARTZENTRUBER2,SCHWARTZENTRUBER3,LIQUIDCONDUCTIVITY1,LIQUIDCONDUCTIVITY2"
+            + ",LIQUIDCONDUCTIVITY3,PARACHOR,HEATOFFUSION,TRIPLEPOINTDENSITY,TRIPLEPOINTPRESSURE,TRIPLEPOINTTEMPERATURE,MELTINGPOINTTEMPERATURE"
+            + ",ENTHALPYOFFORMATION,ABSOLUTEENTROPY,SOLIDDENSITYCOEFS1,SOLIDDENSITYCOEFS2,SOLIDDENSITYCOEFS3,SOLIDDENSITYCOEFS4,SOLIDDENSITYCOEFS5"
+            + ",LIQUIDDENSITYCOEFS1,LIQUIDDENSITYCOEFS2,LIQUIDDENSITYCOEFS3,LIQUIDDENSITYCOEFS4,LIQUIDDENSITYCOEFS5,HEATOFVAPORIZATIONCOEFS1,HEATOFVAPORIZATIONCOEFS2"
+            + ",HEATOFVAPORIZATIONCOEFS3,HEATOFVAPORIZATIONCOEFS4,HEATOFVAPORIZATIONCOEFS5,STDDENS,MC1,MC2,MC3"
+            + ",MC1Solid,MC2Solid,MC3Solid,TwuCoon1,TwuCoon2,TwuCoon3,associationsites"
+            + ",associationscheme,racketZCPA,volcorrCPA_T,associationboundingvolume_SRK,associationenergy,aCPA_SRK,bCPA_SRK"
+            + ",mCPA_SRK,aCPA_PR,bCPA_PR,mCPA_PR,associationboundingvolume_PR,calcActivity,ANTOINESolidA"
+            + ",ANTOINESolidB,ANTOINESolidC,Hsub,criticalViscosity,HydrateA1Small,HydrateB1Small,HydrateA1Large"
+            + ",HydrateB1Large,HydrateA2Small,HydrateB2Small,HydrateA2Large,HydrateB2Large,HydrateFormer,mSAFT"
+            + ",sigmaSAFT,epsikSAFT,associationboundingvolume_PCSAFT,associationenergy_PCSAFT,LJDIAMETERHYDRATE,LJEPSHYDRATE,SphericalCoreRadiusHYDRATE"
+            + ",DeshMatIonicDiameter,waxformer,B2_largeGF,A1_smallGF,B1_smallGF,A1_largeGF,B1_largeGF"
+            + ",A2_smallGF,B2_smallGF,A2_largeGF,CPsolid1,CPsolid2,CPsolid3,CPsolid4"
+            + ",CPsolid5,CPliquid1,CPliquid2,CPliquid3,CPliquid4,CPliquid5,MCPR1"
+            + ",MCPR2,MCPR3,PARACHOR_CPA,lambdaRSAFTVRMie,lambdaASAFTVRMie,mSAFTVRMie,sigmaSAFTVRMie"
+            + ",epsikSAFTVRMie,associationenergy_SAFTVRMie,associationvolume_SAFTVRMie,UMRCPA_MC1,UMRCPA_MC2,UMRCPA_MC3,UMRCPA_MC4"
+            + ",UMRCPA_MC5,UMRCPA_a0,UMRCPA_b,UMRCPA_assocEnergy,UMRCPA_assocVolume,UMRCPA_assocScheme,UMRCPA_associating"
+            + ",UMRCPA_racketZ,UMRCPA_volcorr_T";
+        database.execute("insert into " + databaseName + " (" + columns + ") VALUES (" + (1000 + componentNumber)
+            + ", '" + componentName + "', '00-00-0','" + getComponentType() + "', " + index + ", 'HC', "
+            + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", "
+            + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, "
+            + getCpA() + ", " + getCpB() + ", " + getCpC() + ", " + getCpD() + ", " + getCpE()
             + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
             + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
             + getMeltingPointTemperature()
             + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
             + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT() + ", 0, 0,0,0,0,0," + isW
             + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" + ", 12.0, 6.0, 0, 0, 0, 0, 0"
-            // Trailing values for the UMR-CPA columns appended to COMP.csv
+            // Values for the explicitly named UMR-CPA columns
             // (UMRCPA_MC1..5, UMRCPA_a0, UMRCPA_b, UMRCPA_assocEnergy,
             // UMRCPA_assocVolume,
             // UMRCPA_assocScheme, UMRCPA_associating, UMRCPA_racketZ,
             // UMRCPA_volcorr_T).
-            // Pseudo-components are non-associating, so all are zero. These must be
-            // present
-            // because comptemp is created as "SELECT * FROM comp" and the
-            // positional INSERT must
-            // match the full column count.
+            // Pseudo-components are non-associating, so these values are zero.
             + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0)");
       }
       CASnumber = "00-00-0";
@@ -879,7 +909,7 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final void setTC(double val, String unit) {
     TemperatureUnit inValue = new TemperatureUnit(val, unit);
-    criticalTemperature = inValue.getValue(val, unit, "K");
+    criticalTemperature = inValue.getValue("K");
   }
 
   /** {@inheritDoc} */
@@ -892,7 +922,7 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final void setPC(double val, String unit) {
     PressureUnit inValue = new PressureUnit(val, unit);
-    criticalPressure = inValue.getValue(val, unit, "bara");
+    criticalPressure = inValue.getValue("bara");
   }
 
   /** {@inheritDoc} */
@@ -1444,10 +1474,55 @@ public abstract class Component implements ComponentInterface {
     componentNumber = numb;
   }
 
+  /**
+   * Identify the five-parameter DIPPR correlation, including database rows labelled {@code log}. Explicit base-ten
+   * correlation labels retain their existing precedence.
+   *
+   * @return true when the nonzero exponent selects DIPPR-101
+   */
+  private boolean usesDipprVaporPressureCorrelation() {
+    return Math.abs(AntoineE) > 1e-12 && !"pow10".equals(antoineLiqVapPresType)
+        && !"pow10KPa".equals(antoineLiqVapPresType);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasAntoineVaporPressureCorrelation() {
+    return ionicCharge == 0 && !isIsIon() && antoineLiqVapPresType != null && !antoineLiqVapPresType.trim().isEmpty()
+        && !"none".equals(antoineLiqVapPresType)
+        && (AntoineA != 0.0 || AntoineB != 0.0 || AntoineC != 0.0 || AntoineD != 0.0 || AntoineE != 0.0);
+  }
+
+  /**
+   * Check the liquid-vapor domain without treating a correlation as an equation of state.
+   *
+   * @param temperature temperature in K
+   * @return true if a correlation exists and temperature is positive, finite and no greater than Tc
+   */
+  private boolean isLiquidVaporPressureApplicable(double temperature) {
+    return hasAntoineVaporPressureCorrelation() && Double.isFinite(temperature) && temperature > 0.0
+        && Double.isFinite(criticalTemperature) && temperature <= criticalTemperature;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporPressure(double temp) {
-    if (antoineLiqVapPresType.equals("pow10")) {
+    double value = evaluateAntoineVaporPressure(temp);
+    return Double.isFinite(value) && value > 0.0 && Double.isFinite(criticalPressure) && value <= criticalPressure
+        ? value
+        : Double.NaN;
+  }
+
+  /** Evaluate the correlation before enforcing its finite, positive, subcritical-pressure output contract. */
+  private double evaluateAntoineVaporPressure(double temp) {
+    if (!isLiquidVaporPressureApplicable(temp)) {
+      return Double.NaN;
+    }
+    if (usesDipprVaporPressureCorrelation()) {
+      // DIPPR-101 coefficients produce pressure in Pa; convert to bar.
+      return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
+          / 100000;
+    } else if (antoineLiqVapPresType.equals("pow10")) {
       // equation and parameter from properties of gases (poling 5th ed)
       // correlation returns pressure in bar
       return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15)));
@@ -1457,9 +1532,6 @@ public abstract class Component implements ComponentInterface {
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       // equation and parameter from properties o and gases (poling 5th ed)
       return Math.exp(AntoineA - (AntoineB / (temp + AntoineC)));
-    } else if (Math.abs(AntoineE) > 1e-12) {
-      return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
-          / 100000;
     } else {
       double x = 1 - (temp / criticalTemperature);
       return (Math
@@ -1472,23 +1544,51 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporPressuredT(double temp) {
-    if (antoineLiqVapPresType.equals("pow10")) {
+    if (!Double.isFinite(getAntoineVaporPressure(temp))) {
+      return Double.NaN;
+    }
+    double value = evaluateAntoineVaporPressuredT(temp);
+    return Double.isFinite(value) ? value : Double.NaN;
+  }
+
+  /** Evaluate the derivative using the same pressure scale as the correlation. */
+  private double evaluateAntoineVaporPressuredT(double temp) {
+    if (!isLiquidVaporPressureApplicable(temp)) {
+      return Double.NaN;
+    }
+    if (usesDipprVaporPressureCorrelation()) {
+      return getAntoineVaporPressure(temp)
+          * (-AntoineB / (temp * temp) + AntoineC / temp + AntoineD * AntoineE * Math.pow(temp, AntoineE - 1.0));
+    } else if (antoineLiqVapPresType.equals("pow10")) {
       // derivative of Antoine correlation returning pressure in bar
       double denom = AntoineC + temp - 273.15;
       double pressure = Math.pow(10.0, AntoineA - AntoineB / denom);
       return pressure * AntoineB * Math.log(10.0) / (denom * denom);
+    } else if (antoineLiqVapPresType.equals("pow10KPa")) {
+      // Reuse the legacy pressure scale so the derivative is in bar/K.
+      double denom = temp + AntoineC;
+      return getAntoineVaporPressure(temp) * AntoineB * Math.log(10.0) / (denom * denom);
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       // (B*exp(A - B/(C + x)))/(C + x)^2
       double ans = AntoineB * (Math.exp(AntoineA - AntoineB / (AntoineC + temp))) / Math.pow((AntoineC + temp), 2.0);
       return ans;
     } else {
-      return 0.0;
+      double x = 1.0 - temp / criticalTemperature;
+      double numerator = AntoineA * x + AntoineB * Math.pow(x, 1.5) + AntoineC * Math.pow(x, 3)
+          + AntoineD * Math.pow(x, 6);
+      double derivative = AntoineA + 1.5 * AntoineB * Math.sqrt(x) + 3.0 * AntoineC * x * x
+          + 6.0 * AntoineD * Math.pow(x, 5);
+      return -getAntoineVaporPressure(temp) * (derivative / temp + criticalTemperature * numerator / (temp * temp));
     }
   }
 
   /** {@inheritDoc} */
   @Override
   public double getAntoineVaporTemperature(double pres) {
+    if (!hasAntoineVaporPressureCorrelation() || !Double.isFinite(pres) || pres <= 0.0
+        || !Double.isFinite(criticalPressure) || pres > criticalPressure) {
+      return Double.NaN;
+    }
     double nyPres = 0.0;
     double nyTemp = criticalTemperature * 0.7;
     int iter = 0;
@@ -1496,6 +1596,10 @@ public abstract class Component implements ComponentInterface {
       iter++;
       nyPres = getAntoineVaporPressure(nyTemp);
       double dPdT = getAntoineVaporPressuredT(nyTemp);
+      if (!Double.isFinite(nyPres) || !Double.isFinite(dPdT)) {
+        nyTemp = Double.NaN;
+        break;
+      }
       if (dPdT != 0.0) {
         nyTemp -= (nyPres - pres) / dPdT;
       } else {
@@ -1510,8 +1614,13 @@ public abstract class Component implements ComponentInterface {
       double high = tCrit;
       for (int i = 0; i < 100; i++) {
         nyTemp = 0.5 * (low + high);
-        nyPres = getAntoineVaporPressure(nyTemp);
-        if (Math.abs((nyPres - pres) / pres) < 1e-5) {
+        // Retain the raw value for bracketing: an extrapolation above Pc is above every admitted target,
+        // not an unavailable value to be interpreted as below the target. The final result is checked below.
+        nyPres = evaluateAntoineVaporPressure(nyTemp);
+        if (Double.isNaN(nyPres) || nyPres < 0.0) {
+          return Double.NaN;
+        }
+        if (Math.abs((nyPres - pres) / pres) < 1e-10) {
           break;
         }
         if (nyPres > pres) {
@@ -1521,7 +1630,8 @@ public abstract class Component implements ComponentInterface {
         }
       }
     }
-    return nyTemp;
+    double finalPressure = getAntoineVaporPressure(nyTemp);
+    return Double.isFinite(finalPressure) && Math.abs((finalPressure - pres) / pres) <= 1.0e-5 ? nyTemp : Double.NaN;
   }
 
   /** {@inheritDoc} */
@@ -1556,13 +1666,35 @@ public abstract class Component implements ComponentInterface {
         + getCpE() * Math.pow(temperature, 4) - R;
   }
 
-  // integralet av Cp0 mhp T
   /** {@inheritDoc} */
   @Override
   public final double getHID(double T) {
-    return 0 * getIdealGasEnthalpyOfFormation()
-        + (getCpA() * T
-            + 1.0 / 2.0 * getCpB() * T * T + 1.0 / 3.0 * getCpC() * T * T * T + 1.0 / 4.0 * getCpD() * T * T * T * T)
+    return getHID(T, useIdealGasEnthalpyOfFormation);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public final double getHID(double T, boolean includeFormationEnthalpy) {
+    double sensible = getSensibleIdealGasEnthalpy(T);
+    if (!includeFormationEnthalpy) {
+      return sensible;
+    }
+    if (!hasIdealGasEnthalpyOfFormation()) {
+      throw new IllegalStateException("No reviewed ideal-gas formation enthalpy for " + componentName
+          + "; supply a value in J/mol at 298.15 K before enabling the formation reference");
+    }
+    return idealGasEnthalpyOfFormation + (sensible - getSensibleIdealGasEnthalpy(298.15));
+  }
+
+  /**
+   * Integrate the existing Cp polynomial from the legacy 273.15 K reference.
+   *
+   * @param T temperature in K
+   * @return sensible ideal-gas molar enthalpy in J/mol
+   */
+  private double getSensibleIdealGasEnthalpy(double T) {
+    return (getCpA() * T + 1.0 / 2.0 * getCpB() * T * T + 1.0 / 3.0 * getCpC() * T * T * T
+        + 1.0 / 4.0 * getCpD() * T * T * T * T)
         + 1.0 / 5.0 * getCpE() * T * T * T * T * T
         - (getCpA() * referenceTemperature + 1.0 / 2.0 * getCpB() * referenceTemperature * referenceTemperature
             + 1.0 / 3.0 * getCpC() * referenceTemperature * referenceTemperature * referenceTemperature
@@ -2142,19 +2274,44 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public boolean hasHenryCorrelation() {
+    if (henryCoefParameter == null || henryCoefParameter.length != 4) {
+      return false;
+    }
+    boolean nonzero = false;
+    for (double parameter : henryCoefParameter) {
+      if (!Double.isFinite(parameter)) {
+        return false;
+      }
+      nonzero |= parameter != 0.0;
+    }
+    // Historical 900/0/0/0 rows are absence markers, never measured insolubility.
+    return nonzero && !(henryCoefParameter[0] >= 700.0 && henryCoefParameter[1] == 0.0 && henryCoefParameter[2] == 0.0
+        && henryCoefParameter[3] == 0.0);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getHenryCoef(double temperature) {
-    // System.out.println("henry " +
-    // Math.exp(henryCoefParameter[0]+henryCoefParameter[1] /
-    // temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
-    return Math.exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
-        + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature) * 0.01802 * 100;
+    if (!hasHenryCorrelation() || !Double.isFinite(temperature) || temperature <= 0.0) {
+      return Double.NaN;
+    }
+    double logarithm = henryCoefParameter[0] + henryCoefParameter[1] / temperature
+        + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature + Math.log(1.802);
+    double coefficient = Math.exp(logarithm);
+    return Double.isFinite(coefficient) && coefficient > 0.0 ? coefficient : Double.NaN;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getHenryCoefdT(double temperature) {
-    return getHenryCoef(temperature) * (-henryCoefParameter[1] / (temperature * temperature)
+    double coefficient = getHenryCoef(temperature);
+    if (!Double.isFinite(coefficient)) {
+      return Double.NaN;
+    }
+    double derivative = coefficient * (-henryCoefParameter[1] / (temperature * temperature)
         + henryCoefParameter[2] / temperature + henryCoefParameter[3]);
+    return Double.isFinite(derivative) ? derivative : Double.NaN;
   }
 
   /** {@inheritDoc} */
@@ -2654,7 +2811,48 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation) {
-    this.idealGasEnthalpyOfFormation = idealGasEnthalpyOfFormation;
+    setIdealGasEnthalpyOfFormation(idealGasEnthalpyOfFormation, "user-supplied");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setIdealGasEnthalpyOfFormation(double value, String source) {
+    if (!Double.isFinite(value)) {
+      throw new IllegalArgumentException("Formation enthalpy must be finite, in J/mol at 298.15 K");
+    }
+    this.idealGasEnthalpyOfFormation = value;
+    formationEnthalpySource = source;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasIdealGasEnthalpyOfFormation() {
+    return formationEnthalpySource != null && !formationEnthalpySource.trim().isEmpty()
+        && Double.isFinite(idealGasEnthalpyOfFormation) && getIonicCharge() == 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getFormationEnthalpySource() {
+    return formationEnthalpySource == null ? "" : formationEnthalpySource;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isUsingIdealGasEnthalpyOfFormation() {
+    return useIdealGasEnthalpyOfFormation;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setUseIdealGasEnthalpyOfFormation(boolean useFormationEnthalpy) {
+    if (useFormationEnthalpy == useIdealGasEnthalpyOfFormation) {
+      return;
+    }
+    if (useFormationEnthalpy) {
+      getHID(298.15, true); // Validate before changing the reference.
+    }
+    useIdealGasEnthalpyOfFormation = useFormationEnthalpy;
   }
 
   /** {@inheritDoc} */

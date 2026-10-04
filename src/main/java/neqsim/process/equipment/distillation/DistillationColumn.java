@@ -2796,11 +2796,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       // Set current guess temperatures
       if (adjustTop) {
         double currentTopTemp = (outerIter == 0) ? topTemp0 : topTemp1;
-        getCondenser().setOutTemperature(currentTopTemp);
+        getCondenser().setOutletTemperature(currentTopTemp);
       }
       if (adjustBottom) {
         double currentBottomTemp = (outerIter == 0) ? bottomTemp0 : bottomTemp1;
-        getReboiler().setOutTemperature(currentBottomTemp);
+        getReboiler().setOutletTemperature(currentBottomTemp);
       }
       applySpecificationTemperatureGuess(adjustTop, adjustBottom,
           adjustTop ? (outerIter == 0 ? topTemp0 : topTemp1) : Double.NaN,
@@ -3053,8 +3053,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * </p>
    *
    * @param id calculation identifier
-   * @return {@code true} when the solver accepted its direct result and, for active side draws, the applied state
-   * satisfies the active rigorous convergence gates
+   * @return {@code true} when the solver accepted its direct result and the published streams and duties satisfy the
+   * active rigorous convergence gates
    */
   boolean solveNaphtaliSandholm(UUID id) {
     captureDirectExternalTrayFeeds();
@@ -3118,6 +3118,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (initialized) {
       this.init();
     }
+    StreamInterface[] previousGasOutlets = new StreamInterface[numberOfTrays];
+    StreamInterface[] previousLiquidOutlets = new StreamInterface[numberOfTrays];
+    for (int i = 0; i < numberOfTrays; i++) {
+      previousGasOutlets[i] = trays.get(i).getGasOutStream();
+      previousLiquidOutlets[i] = trays.get(i).getLiquidOutStream();
+    }
     prepareColumnForSolve();
 
     NaphtaliSandholmSolver solver = new NaphtaliSandholmSolver(this, originalFeedSystems, originalFeedFlowRates);
@@ -3137,21 +3143,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     storeNaphtaliTelemetry(solver);
     markSolverTypeUsed(SolverType.NAPHTALI_SANDHOLM);
 
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i)
+          .setCachedGasOutStream(adoptSolvedProductStream(previousGasOutlets[i], trays.get(i).getGasOutStream()));
+      trays.get(i).setCachedLiquidOutStream(
+          adoptSolvedProductStream(previousLiquidOutlets[i], trays.get(i).getLiquidOutStream()));
+    }
+    synchronizeAppliedTrayInlets(id);
+    if (hasReboiler) {
+      getReboiler().updateDutyFromPublishedStreams();
+    }
+    if (hasCondenser) {
+      getCondenser().updateDutyFromPublishedStreams();
+    }
+
     double temperatureResidual = accepted ? solver.getLastTemperatureResidual() : 1.0e10;
     finalizeNaphtaliSolve(id, accepted, solver.getLastIterations(), temperatureResidual,
-        solver.getLastMassBalanceError(), solver.getLastEnergyResidual(), startTime);
+        solver.getLastMassBalanceError(), getEnergyBalanceError(), startTime);
     hasBeenSolvedBefore = true;
     lastTotalFeedFlow = -1.0;
     // The solver wrote the tray network of this column instance, so the state is eligible for the
     // warm-state cache. init() has already recorded the matching thermodynamic identity.
     naphtaliSandholmStateOwned = true;
     trayStateThermodynamicIdentitySignature = thermodynamicIdentitySignature;
-    boolean hasActiveSideDraw = hasActiveSideDrawFractions();
-    // This PR makes the applied-state gate authoritative for side-draw columns because
-    // intermediate products expose any species leakage. Preserve the established direct
-    // solver acceptance contract for columns without side draws; broadening that contract
-    // changes their warm-state/fallback behavior and belongs in a separate migration.
-    boolean appliedResultAccepted = accepted && (!hasActiveSideDraw || solved());
+    boolean appliedResultAccepted = accepted && solved();
     hasNaphtaliSandholmWarmState = appliedResultAccepted;
     if (appliedResultAccepted) {
       lastNaphtaliSandholmInputSignature = inputSignature;
@@ -3162,6 +3177,53 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           getName());
     }
     return appliedResultAccepted;
+  }
+
+  /**
+   * Refresh existing tray inlet objects from one snapshot of the applied adjacent outlets and external feeds.
+   *
+   * <p>
+   * Snapshot every source before writing any inlet because the initialized tray network can share stream objects.
+   * Updating thermodynamic systems in place keeps caller-held inlet references current without another tray flash.
+   * External feeds and pumparound returns precede the generated vapor and liquid inlets.
+   * </p>
+   *
+   * @param id calculation identifier for the applied state
+   */
+  private void synchronizeAppliedTrayInlets(UUID id) {
+    List<List<SystemInterface>> inletSystems = new ArrayList<>();
+    for (int i = 0; i < numberOfTrays; i++) {
+      List<SystemInterface> sources = new ArrayList<>();
+      for (StreamInterface feed : getExternalFeedStreams(i)) {
+        sources.add(feed.getThermoSystem().clone());
+      }
+      for (ColumnPumparound pumparound : pumparounds) {
+        if (pumparound.getReturnTrayNumber() == i && pumparound.getReturnStream() != null) {
+          sources.add(pumparound.getReturnStream().getThermoSystem().clone());
+        }
+      }
+      if (i > 0) {
+        sources.add(trays.get(i - 1).getGasOutStream().getThermoSystem().clone());
+      }
+      if (i + 1 < numberOfTrays) {
+        sources.add(trays.get(i + 1).getLiquidOutStream().getThermoSystem().clone());
+      }
+      inletSystems.add(sources);
+    }
+    for (int i = 0; i < numberOfTrays; i++) {
+      SimpleTray tray = trays.get(i);
+      List<SystemInterface> sources = inletSystems.get(i);
+      if (tray.getNumberOfInputStreams() != sources.size()) {
+        throw new IllegalStateException("Applied tray inlet topology does not match tray " + i);
+      }
+      for (int k = 0; k < sources.size(); k++) {
+        tray.getStream(k).setThermoSystem(sources.get(k));
+        tray.getStream(k).setCalculationIdentifier(id);
+      }
+      tray.getGasOutStream().setCalculationIdentifier(id);
+      tray.getLiquidOutStream().setCalculationIdentifier(id);
+      tray.getOutletStream().setCalculationIdentifier(id);
+    }
   }
 
   /**
@@ -3295,6 +3357,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setCalculationIdentifier(id);
     for (int trayIndex = 0; trayIndex < numberOfTrays; trayIndex++) {
       trays.get(trayIndex).setCalculationIdentifier(id);
+      trays.get(trayIndex).getGasOutStream().setCalculationIdentifier(id);
+      trays.get(trayIndex).getLiquidOutStream().setCalculationIdentifier(id);
+      trays.get(trayIndex).getOutletStream().setCalculationIdentifier(id);
+      for (int k = 0; k < trays.get(trayIndex).getNumberOfInputStreams(); k++) {
+        trays.get(trayIndex).getStream(k).setCalculationIdentifier(id);
+      }
     }
     setCalculationIdentifier(id);
     lastSolveStatusReason = "Reused unchanged Naphtali-Sandholm solution";
@@ -3546,7 +3614,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Feed streams and the optional top/bottom {@link ColumnSpecification}s are not the whole input. Column pressure and
    * the reboiler/condenser temperature, operating mode, and ratio settings change the solution just as much, and
    * several of their setters ({@link #setTopPressure(double)}, {@link #setBottomPressure(double)},
-   * {@code getReboiler().setOutTemperature(...)}) deliberately do not mark the column for re-initialization. Without
+   * {@code getReboiler().setOutletTemperature(...)}) deliberately do not mark the column for re-initialization. Without
    * them in the fingerprint, a parametric sweep or optimizer that varies column pressure or a column-end temperature
    * against an unchanged feed silently receives the previous solution.
    * </p>
@@ -3736,6 +3804,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     liquidOutStream.setThermoSystem(trays.get(0).getLiquidOutStream().getThermoSystem());
     liquidOutStream.setCalculationIdentifier(id);
 
+    // A prior fallback can leave terminal draw snapshots from another accepted state or fluid.
+    // The direct result has no product reconciliation: capture its actual terminal outlets.
+    captureTerminalProductDrawStreams(id);
+
     // Recompute the balance diagnostics from the applied state. The solver reports its own
     // internal mass balance only, and never touched lastInternalTrafficRatio at all, so a stale
     // ratio from a previous solver run used to leak into the solved() gate.
@@ -3745,25 +3817,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
     }
-    if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
-      updateMeshResiduals();
-    }
-    boolean hasActiveSideDraw = hasActiveSideDrawFractions();
-    if (accepted && hasActiveSideDraw && residualConvergenceSatisfied()) {
+    updateMeshResiduals();
+    if (accepted && residualConvergenceSatisfied() && Double.isFinite(getLastMeshEnergyResidualNorm())) {
       lastSolveStatus = SolveStatus.RIGOROUS_CONVERGED;
-      lastSolveStatusReason = "Naphtali-Sandholm side-draw products satisfy the active rigorous convergence gates";
-    } else if (accepted && !hasActiveSideDraw
-        && (!hasCondenser || getCondenser() == null || getCondenser().isFixedLiquidRefluxSpecificationSatisfied())) {
-      lastSolveStatus = SolveStatus.RECONCILED_PRODUCTS;
-      lastSolveStatusReason = "Naphtali-Sandholm direct products were applied";
+      lastSolveStatusReason = "Published Naphtali-Sandholm streams and duties satisfy the active convergence gates";
     } else {
       lastSolveStatus = SolveStatus.FAILED;
       if (accepted && hasCondenser && getCondenser() != null
           && !getCondenser().isFixedLiquidRefluxSpecificationSatisfied()) {
         lastSolveStatusReason = "Available condenser liquid was insufficient for the fixed liquid reflux specification";
       } else {
-        lastSolveStatusReason = accepted
-            ? "Applied Naphtali-Sandholm side-draw state failed the active convergence gates"
+        lastSolveStatusReason = accepted ? "Published Naphtali-Sandholm state failed the active convergence gates"
             : "Naphtali-Sandholm solver did not accept its result";
       }
     }
@@ -5584,7 +5648,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (lightKey == null || heavyKey == null || lightKey.equalsIgnoreCase(heavyKey)) {
       return null;
     }
-    return new String[] { lightKey, heavyKey };
+    return new String[] {lightKey, heavyKey};
   }
 
   /**
@@ -6009,7 +6073,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private double[] getEconomicRatioCandidates(double[] ratios) {
     if (ratios == null || ratios.length == 0) {
-      return new double[] { Double.NaN };
+      return new double[] {Double.NaN};
     }
     double[] sanitized = new double[ratios.length];
     int count = 0;
@@ -6020,7 +6084,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
     if (count == 0) {
-      return new double[] { Double.NaN };
+      return new double[] {Double.NaN};
     }
     double[] result = new double[count];
     System.arraycopy(sanitized, 0, result, 0, count);
@@ -6288,7 +6352,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         reboiler.setRefluxRatio(state.reboilerRefluxRatio);
       }
       if (state.reboilerHasSetTemperature) {
-        reboiler.setOutTemperature(state.reboilerTemperature);
+        reboiler.setOutletTemperature(state.reboilerTemperature);
       }
       trays.add(reboiler);
     }
@@ -6309,7 +6373,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         condenser.setRefluxRatio(state.condenserRefluxRatio);
       }
       if (state.condenserHasSetTemperature) {
-        condenser.setOutTemperature(state.condenserTemperature);
+        condenser.setOutletTemperature(state.condenserTemperature);
       }
       trays.add(condenser);
     }
@@ -6740,7 +6804,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           energyErr);
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
@@ -7246,7 +7310,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           // Log inner iteration (inner iters don't count in outer iteration budget)
           logger.debug("inside-out INNER step {}/{} tempErr={}", inner + 1, innerLoopSteps, innerTempResidual);
           if (convergenceHistory != null) {
-            convergenceHistory.add(new double[] { innerTempResidual, massErr, energyErr, kValueResidual });
+            convergenceHistory.add(new double[] {innerTempResidual, massErr, energyErr, kValueResidual});
           }
           // If inner loop has converged, no need for more inner steps
           if (innerTempResidual < baseTempTolerance * 0.5) {
@@ -7329,7 +7393,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
           iter, relaxation, err, massErr, energyErr, kValueResidual, totalFlashSweeps);
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr, kValueResidual });
+        recordConvergence(new double[] {err, massErr, energyErr, kValueResidual});
       }
 
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
@@ -8097,7 +8161,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("Wegstein iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
@@ -8378,7 +8442,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("sum-rates iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
@@ -8471,7 +8535,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (convergenceHistory != null) {
         massErr = getMassBalanceError();
         energyErr = getEnergyBalanceError();
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("newton warm-up iteration {} tempErr={}", iter, err);
@@ -8522,7 +8586,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       energyErr = getEnergyBalanceError();
 
       if (convergenceHistory != null) {
-        recordConvergence(new double[] { err, massErr, energyErr });
+        recordConvergence(new double[] {err, massErr, energyErr});
       }
 
       logger.debug("newton iteration {} tempErr={} massErr={} energyErr={}", iter, err, massErr, energyErr);
@@ -11658,7 +11722,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void setReboilerTemperature(double reboilerTemperature) {
     this.reboilerTemperature = reboilerTemperature;
     if (hasReboiler) {
-      getReboiler().setOutTemperature(reboilerTemperature);
+      getReboiler().setOutletTemperature(reboilerTemperature);
     }
   }
 
@@ -11690,7 +11754,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public void setCondenserTemperature(double condenserTemperature) {
     this.condenserTemperature = condenserTemperature;
     if (hasCondenser) {
-      getCondenser().setOutTemperature(condenserTemperature);
+      getCondenser().setOutletTemperature(condenserTemperature);
     }
   }
 
@@ -12044,6 +12108,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       if (includeSideDraws && trays.get(i).getLiquidSideDrawFraction() > 0.0) {
         outlet += getFiniteStreamEnthalpy(trays.get(i).getLiquidSideDrawStream(), true);
       }
+      if (includeSideDraws && trays.get(i) instanceof Condenser) {
+        Condenser condenser = (Condenser) trays.get(i);
+        if (!condenser.isTotalCondenser() && condenser.getLiquidProductStream() != null) {
+          outlet += getFiniteStreamEnthalpy(condenser.getLiquidProductStream(), true);
+        }
+      }
       if (includeSideDraws) {
         for (ColumnPumparound pumparound : pumparounds) {
           if (pumparound.getDrawTrayNumber() == i && pumparound.getDrawFraction() > 0.0) {
@@ -12053,9 +12123,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       if (trays.get(i) instanceof Reboiler) {
-        inlet += getFiniteDiagnosticValue(((Reboiler) trays.get(i)).getDuty());
+        double duty = ((Reboiler) trays.get(i)).getDuty();
+        inlet += ignoreZeroFlowStreams ? duty : getFiniteDiagnosticValue(duty);
       } else if (trays.get(i) instanceof Condenser) {
-        inlet += getFiniteDiagnosticValue(((Condenser) trays.get(i)).getDuty());
+        double duty = ((Condenser) trays.get(i)).getDuty();
+        inlet += ignoreZeroFlowStreams ? duty : getFiniteDiagnosticValue(duty);
       }
 
       double absInlet = Math.abs(inlet);
@@ -12072,21 +12144,20 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Read stream enthalpy for diagnostics, treating non-finite values as no contribution.
+   * Read stream enthalpy for diagnostics, preserving the historical adaptive-controller signal when requested.
    *
    * @param stream stream to inspect
-   * @param ignoreZeroFlow whether zero-flow streams are excluded before reading enthalpy
-   * @return finite stream enthalpy contribution
+   * @param ignoreZeroFlow whether to initialize the published state and exclude zero-flow templates
+   * @return material enthalpy contribution, including non-finite values in the published-state diagnostic
    */
   private double getFiniteStreamEnthalpy(StreamInterface stream, boolean ignoreZeroFlow) {
     if (stream == null || stream.getThermoSystem() == null) {
       return 0.0;
     }
     if (ignoreZeroFlow) {
-      double flowRate = Math.abs(stream.getThermoSystem().getFlowRate("kg/hr"));
-      if (!Double.isFinite(flowRate) || flowRate <= 1.0e-12) {
-        return 0.0;
-      }
+      // Phase extraction can leave enthalpy properties uninitialized. Read an initialized clone
+      // so diagnostics do not change the cached state consumed by the adaptive controller.
+      return SimpleTray.getMaterialStreamEnthalpy(stream.clone());
     }
     double enthalpy = stream.getFluid().getEnthalpy();
     if (Double.isFinite(enthalpy)) {
@@ -12453,6 +12524,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     for (int i = 0; i < numberOfTrays; i++) {
       trays.get(i).setCalculationIdentifier(id);
     }
+    // Product reconciliation and property finalization can change the exposed phase streams.
+    // Refresh terminal duties from those same streams before qualifying their energy balance.
+    if (hasReboiler) {
+      getReboiler().updateDutyFromPublishedStreams();
+    }
+    if (hasCondenser) {
+      getCondenser().updateDutyFromPublishedStreams();
+    }
+    lastEnergyResidual = getEnergyBalanceError();
     if (isEffectiveMeshResidualToleranceEnforced() || lastMeshResidual != null) {
       updateMeshResiduals();
     }
@@ -15479,7 +15559,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * @return this builder
      */
     public Builder addFeedStream(StreamInterface feed, int trayIndex) {
-      this.feeds.add(new Object[] { feed, trayIndex });
+      this.feeds.add(new Object[] {feed, trayIndex});
       return this;
     }
 

@@ -461,7 +461,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     double calculatedSize = Math.sqrt(cv / 10.0);
 
     // Round to standard pipe sizes
-    double[] standardSizes = { 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0 };
+    double[] standardSizes = {0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0};
 
     nominalSizeInches = standardSizes[0];
     for (double size : standardSizes) {
@@ -1019,7 +1019,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = { "Name", "Value", "Unit" };
+    String[] names = {"Name", "Value", "Unit"};
 
     String[][] table = new String[20][3];
 

@@ -30,7 +30,7 @@ class GeneralizedNetworkOptimizerTest {
     optimizer.addObjective(NetworkObjectives.maximizeThroughput(1.0));
     optimizer.addConstraint(NetworkConstraints.convergence());
 
-    NetworkCandidateEvaluation evaluation = optimizer.evaluateCandidate(new double[] { 0.5 });
+    NetworkCandidateEvaluation evaluation = optimizer.evaluateCandidate(new double[] {0.5});
 
     assertNotNull(evaluation);
     assertEquals(0.5, evaluation.getDecisions().get("edge.export.availability"), 1.0e-12);
@@ -65,8 +65,8 @@ class GeneralizedNetworkOptimizerTest {
           }
         }));
 
-    NetworkCandidateEvaluation smallViolation = optimizer.evaluateCandidate(new double[] { 0.7 });
-    NetworkCandidateEvaluation largeViolation = optimizer.evaluateCandidate(new double[] { 0.4 });
+    NetworkCandidateEvaluation smallViolation = optimizer.evaluateCandidate(new double[] {0.7});
+    NetworkCandidateEvaluation largeViolation = optimizer.evaluateCandidate(new double[] {0.4});
 
     assertTrue(largeViolation.getPenalty() > smallViolation.getPenalty());
   }
@@ -108,7 +108,7 @@ class GeneralizedNetworkOptimizerTest {
           }
         }));
 
-    NetworkCandidateEvaluation evaluation = optimizer.evaluateCandidate(new double[] { 0.2 });
+    NetworkCandidateEvaluation evaluation = optimizer.evaluateCandidate(new double[] {0.2});
 
     assertFalse(evaluation.isFeasible());
     assertTrue(evaluation.getPenalty() >= 1.0e9);

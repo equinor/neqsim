@@ -1,7 +1,7 @@
 ---
 name: neqsim-compressor-antisurge-recycle
 version: "1.0.0"
-description: "Set up anti-surge recycle control and coordinated minimum-speed recycle control for centrifugal compressors in NeqSim, including compressor performance chart generation, anti-surge calculation, MinimumSpeedRecycleControllerStructure use for coordinated pressure/speed/recycle split-range control, fuel gas savings, CO2 emission reductions, and monetary cost evaluations. USE WHEN: a task needs to protect a compressor from surge, coordinate speed and recycle valve control at minimum speed, eliminate uncoordinated recycle valve opening, or evaluate power and CO2 savings from control loop optimization."
+description: "Anti-surge recycle and coordinated minimum-speed recycle control for centrifugal compressors in NeqSim: chart generation, anti-surge calculation, MinimumSpeedRecycleControllerStructure split-range control, fuel-gas, CO2 and cost savings. USE WHEN: a task must protect a compressor from surge, coordinate speed and recycle valve at minimum speed, stop uncoordinated recycle opening, or value power/CO2 savings from control optimization."
 last_verified: "2026-08-26"
 requires:
   java_packages: [neqsim.process.equipment.compressor, neqsim.process.controllerdevice.structure, neqsim.process.controllerdevice]

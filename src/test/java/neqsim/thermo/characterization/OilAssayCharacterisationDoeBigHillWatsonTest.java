@@ -11,10 +11,10 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Public DOE refinery-assay qualification of per-cut UOP/Watson characterization factors. */
 public class OilAssayCharacterisationDoeBigHillWatsonTest {
-  private static final double[] LOWER_BOUNDARY_F = { 375.0, 530.0, 650.0, 850.0 };
-  private static final double[] UPPER_BOUNDARY_F = { 530.0, 650.0, 850.0, 1050.0 };
-  private static final double[] SPECIFIC_GRAVITY = { 0.8297, 0.8604, 0.9039, 0.9336 };
-  private static final double[] DOE_WATSON_FACTOR = { 11.7, 11.8, 11.8, 12.0 };
+  private static final double[] LOWER_BOUNDARY_F = {375.0, 530.0, 650.0, 850.0};
+  private static final double[] UPPER_BOUNDARY_F = {530.0, 650.0, 850.0, 1050.0};
+  private static final double[] SPECIFIC_GRAVITY = {0.8297, 0.8604, 0.9039, 0.9336};
+  private static final double[] DOE_WATSON_FACTOR = {11.7, 11.8, 11.8, 12.0};
 
   @Test
   public void doeBoundedCutsReproducePublishedWatsonFactors() {

@@ -160,10 +160,7 @@ public class FlashRunner {
     }
 
     // --- Parse mixing rule ---
-    String mixingRule = "classic";
-    if (input.has("mixingRule")) {
-      mixingRule = input.get("mixingRule").getAsString();
-    }
+    String mixingRule = FluidDefaults.resolveMixingRule(input, model);
     addApplicabilityWarnings(warnings, model, pressureBara, components);
 
     // --- Parse optional flash specs ---
@@ -268,7 +265,7 @@ public class FlashRunner {
         break;
       case "hydrateTP":
         fluid.setHydrateCheck(true);
-        ops.hydrateTPflash();
+        ops.hydrateFormationTemperature();
         break;
       default:
         return errorJson("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,
@@ -640,7 +637,8 @@ public class FlashRunner {
     }
 
     // --- Parse mixing rule ---
-    String mixingRule = request.getMixingRule() != null ? request.getMixingRule() : "classic";
+    String mixingRule = request.getMixingRule() != null ? request.getMixingRule()
+        : FluidDefaults.defaultMixingRule(model);
     addApplicabilityWarnings(warnings, model, pressureBara, components);
 
     // --- Validate flash specs ---
@@ -702,7 +700,7 @@ public class FlashRunner {
         break;
       case "hydrateTP":
         fluid.setHydrateCheck(true);
-        ops.hydrateTPflash();
+        ops.hydrateFormationTemperature();
         break;
       default:
         return typedError("UNKNOWN_FLASH_TYPE", "Unknown flash type: " + flashType,

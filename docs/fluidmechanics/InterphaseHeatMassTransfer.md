@@ -5,6 +5,14 @@ description: "Theory and numerical methods for non-equilibrium interphase mass a
 
 ## Overview
 
+The corrected film factors change finite-rate dissolution distances. In the
+synthetic methane-bubble/oil regression, the 1% remaining injected-gas mass
+criterion is reached after approximately 3.82 m; a 0.10 m segment retains about
+94.2% of the tracked gas mass. The completion test therefore uses a 5 m domain
+and checks axial-step refinement, component conservation and energy closure.
+These are numerical regression results, not experimental validation of the
+mass-transfer correlations.
+
 This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. The approach is based on **non-equilibrium thermodynamics** where the gas and liquid phases are not assumed to be in thermodynamic equilibrium at the interface.
 
 **Related Documentation:**
@@ -124,20 +132,44 @@ The Krishna-Standart model extends the Maxwell-Stefan equations to film theory f
 
 $$(\mathbf{N}) = c_t [\mathbf{k}](\mathbf{x}^{int} - \mathbf{x}^{bulk}) + x_t^{avg} N_t$$
 
-Where $[\mathbf{k}]$ is the matrix of mass transfer coefficients:
+The implementation uses column-vector composition differences. Let $K=R^{-1}$
+be the inverse film resistance matrix formed from the binary transfer coefficients,
+$\Gamma$ the thermodynamic factor, and $\Xi$ the finite-flux correction. Its
+composition is
 
-$$[\mathbf{k}] = [\mathbf{B}]^{-1} [\mathbf{\Xi}]$$
+$$k_{\mathrm{total}}=\Xi K\Gamma.$$
 
-**Bootstrap Matrix [Ξ]:**
+The zero-flux Maxwell–Stefan relation $R J=c_t\Gamma\Delta x$ gives
+$J=c_t K\Gamma\Delta x$. Thus $\Gamma$ acts on the composition driving force
+before the inverse resistance. The finite-flux correction is applied on the left,
+consistent with the existing finite-flux-only branch. Each disabled correction is
+an identity matrix. A zero **total** flux does not disable either correction:
+individual component fluxes can remain nonzero during counterdiffusion.
 
-The bootstrap matrix $[\mathbf{\Xi}]$ accounts for the effect of finite mass transfer rates (high flux correction):
+For the matrix of dimensionless component fluxes $\Phi$, the eigenvalue function is
 
-$$[\mathbf{\Xi}] = \mathbf{\Phi} [\exp(\mathbf{\Phi}) - \mathbf{I}]^{-1}$$
+$$f(z)=\frac{z\exp(z)}{\exp(z)-1},\qquad f(0)=1.$$
 
-Where:
-$$\mathbf{\Phi} = [\mathbf{B}_0]^{-1} N_t / c_t$$
+The implementation uses the analytic continuation $1+z/2+z^2/12$ near zero and
+`expm1` away from zero. When every component flux vanishes, $\Xi=I$. For equal
+binary transfer coefficients, equimolar counterdiffusion also gives $\Phi=0$:
+its diagonal contains the sum of the *other* component fluxes plus the reference
+component term, rather than repeated copies of one component's flux.
 
-At low fluxes: $[\mathbf{\Xi}] \rightarrow \mathbf{I}$ (identity matrix)
+**Compatibility and validation:** older code used $K\Gamma$ for thermodynamic
+correction alone but $\Xi\Gamma K$ when both corrections were enabled, and skipped
+all corrections at zero net flux. Those branches disagreed even with $\Xi=I$.
+Corrected matrices now use one order and own their storage; repeated reactive
+row enhancement cannot overwrite or compound the unenhanced matrix. Results can
+change when corrections are enabled or reactive coefficients are recalculated.
+
+These conventions are tested using noncommuting matrices, zero-flux limits,
+equal-diffusivity counterdiffusion, repeated enhancement and existing multicomponent
+transfer tests. They do not establish experimental accuracy at high flux and strong
+nonideality. Solbraa (2002), equation 4.62, prints a different product order;
+agreement with that printed expression alone is not a validation criterion. The
+finite-flux/nonideality approximation requires domain review against the flux
+variables used by the solver.
 
 ### 2.5 Mass Transfer Coefficients
 
@@ -562,6 +594,22 @@ public class HeatMassTransferExample {
 ```
 
 ---
+
+### 8.6 Reactive enhancement selection
+
+`ReactiveKrishnaStandartFilmModel` supports algebraic enhancement, selected by
+`setEnhancementType(1)` and used by default. It estimates CO2 enhancement in the
+liquid phase using the configured reaction kinetics; other components and the gas
+phase receive unit enhancement.
+
+Numerical reactive enhancement is **not implemented**. Previously, any type other
+than `1` selected an unfinished class whose zero-initialized enhancement vector
+silently suppressed mass transfer. Such selections now throw
+`UnsupportedOperationException` immediately and retain the previously selected
+model. Direct construction of `EnhancementFactorNumeric` also throws. Existing
+callers requesting type `0`, `2`, or another value must explicitly choose the
+algebraic model if its assumptions suit their application. This correction does
+not supply or validate a numerical reaction-diffusion solver.
 
 ## 9. Validation and Benchmarks
 

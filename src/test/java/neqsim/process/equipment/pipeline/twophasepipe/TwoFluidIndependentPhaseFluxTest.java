@@ -14,7 +14,7 @@ class TwoFluidIndependentPhaseFluxTest {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setEnableWaterOilSlip(true);
     equations.setAllowOutletPhaseBackflow(true);
-    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] { left, right }, 1.0);
+    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {left, right}, 1.0);
     assertTrue(flux[1][1] > 0.0, "Oil advects downstream");
     assertTrue(flux[1][2] < 0.0, "Water advects upstream independently of bulk liquid flow");
     assertEquals(left.getOilMassPerLength() * 2.0, flux[1][1], 1e-10);
@@ -33,7 +33,7 @@ class TwoFluidIndependentPhaseFluxTest {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setEnableWaterOilSlip(true);
     equations.setEnableInterfacialPressure(true);
-    double[][] rhs = equations.calcRHS(new TwoFluidSection[] { left, right }, 1.0);
+    double[][] rhs = equations.calcRHS(new TwoFluidSection[] {left, right}, 1.0);
     for (double[] cell : rhs) {
       for (int phase = 0; phase < 3; phase++) {
         assertEquals(0.0, cell[phase], 1e-10, "Resting phase mass");
@@ -50,7 +50,7 @@ class TwoFluidIndependentPhaseFluxTest {
     left.updateConservativeVariables();
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     double expected = left.getGasMassPerLength() * 3.0;
-    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] { left, left.clone() }, 1.0);
+    double[][] flux = equations.calcPhaseMassFaceFluxes(new TwoFluidSection[] {left, left.clone()}, 1.0);
     for (int face = 0; face < 3; face++) {
       assertEquals(expected, flux[face][0], 1e-12, "Positive density must not be replaced at face " + face);
     }

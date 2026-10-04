@@ -367,6 +367,13 @@ The solver uses a **secant + bisection hybrid** on temperature, wrapping an inne
 
 The **secant method** is essential for reactive systems because it naturally captures the effective $dH/dT$ including reaction enthalpy contributions (Le Chatelier shift), unlike a Cp-only derivative that misses the enthalpy change from equilibrium composition shifts. For strongly endothermic reactions like steam methane reforming ($\Delta H \approx +206$ kJ/mol), the effective $dH/dT$ can be 3-5× larger than the sensible $C_p$ alone.
 
+When `SystemInterface.setUseIdealGasEnthalpyOfFormation(true)` is enabled before
+calculating the feed enthalpy, the PH solver uses that formation-referenced stream
+enthalpy directly. It does not add the formation inventory a second time. With the
+default legacy reference, the existing sensible-plus-formation correction remains
+in place. See [formation enthalpy references](reading_fluid_properties.md#formation-enthalpy-reference)
+for the 298.15 K convention, supported data and migration of numerical PH targets.
+
 **Convergence**: Typically 5-10 outer iterations for perturbations up to ±400 K, with sub-millikelvin temperature accuracy.
 
 ### Java Example

@@ -18,10 +18,10 @@ public class OilAssayCharacterisationDoeBigHillPianoTest {
   private static final PianoHydrocarbonFamily I = PianoHydrocarbonFamily.ISO_PARAFFIN;
   private static final PianoHydrocarbonFamily A = PianoHydrocarbonFamily.AROMATIC;
   private static final PianoHydrocarbonFamily N = PianoHydrocarbonFamily.NAPHTHENE;
-  private static final PianoHydrocarbonFamily[] FAMILIES = { P, P, P, P, P, I, I, I, I, I, A, A, N, N, N, N };
-  private static final int[] CARBON_NUMBERS = { 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 6, 7, 5, 6, 7, 8 };
-  private static final double[] MASS_PERCENT = { 0.32, 3.49, 21.47, 15.28, 0.94, 0.59, 10.96, 17.99, 4.04, 0.05, 3.34,
-      0.12, 3.39, 14.38, 3.60, 0.05 };
+  private static final PianoHydrocarbonFamily[] FAMILIES = {P, P, P, P, P, I, I, I, I, I, A, A, N, N, N, N};
+  private static final int[] CARBON_NUMBERS = {3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 6, 7, 5, 6, 7, 8};
+  private static final double[] MASS_PERCENT = {0.32, 3.49, 21.47, 15.28, 0.94, 0.59, 10.96, 17.99, 4.04, 0.05, 3.34,
+      0.12, 3.39, 14.38, 3.60, 0.05};
   private static final double EXPECTED_MOLAR_MASS_KG_PER_MOL = 0.07915383665629189;
 
   @Test
@@ -67,21 +67,19 @@ public class OilAssayCharacterisationDoeBigHillPianoTest {
     assertThrows(IllegalArgumentException.class,
         () -> OilAssayCharacterisation.calculatePianoMolarMassKgPerMol(null, CARBON_NUMBERS, MASS_PERCENT));
     assertThrows(IllegalArgumentException.class, () -> OilAssayCharacterisation
-        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] { P }, new int[] {}, new double[] { 100.0 }));
+        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] {P}, new int[] {}, new double[] {100.0}));
     assertThrows(IllegalArgumentException.class, () -> OilAssayCharacterisation
         .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] {}, new int[] {}, new double[] {}));
-    assertThrows(IllegalArgumentException.class,
-        () -> OilAssayCharacterisation.calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] { null },
-            new int[] { 5 }, new double[] { 100.0 }));
     assertThrows(IllegalArgumentException.class, () -> OilAssayCharacterisation
-        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] { A }, new int[] { 5 }, new double[] { 100.0 }));
+        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] {null}, new int[] {5}, new double[] {100.0}));
     assertThrows(IllegalArgumentException.class, () -> OilAssayCharacterisation
-        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] { P }, new int[] { 5 }, new double[] { -1.0 }));
-    assertThrows(IllegalArgumentException.class,
-        () -> OilAssayCharacterisation.calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] { P },
-            new int[] { 5 }, new double[] { Double.NaN }));
+        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] {A}, new int[] {5}, new double[] {100.0}));
     assertThrows(IllegalArgumentException.class, () -> OilAssayCharacterisation
-        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] { P }, new int[] { 5 }, new double[] { 99.0 }));
+        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] {P}, new int[] {5}, new double[] {-1.0}));
+    assertThrows(IllegalArgumentException.class, () -> OilAssayCharacterisation
+        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] {P}, new int[] {5}, new double[] {Double.NaN}));
+    assertThrows(IllegalArgumentException.class, () -> OilAssayCharacterisation
+        .calculatePianoMolarMassKgPerMol(new PianoHydrocarbonFamily[] {P}, new int[] {5}, new double[] {99.0}));
   }
 
   private static double sumFamily(PianoHydrocarbonFamily family) {

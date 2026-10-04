@@ -85,10 +85,10 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
       this.isSinglePoint = true;
       this.singleSurgeFlow = flow[0];
       this.singleSurgeHead = head[0];
-      this.flow = new double[] { flow[0] };
-      this.head = new double[] { head[0] };
-      this.sortedFlow = new double[] { flow[0] };
-      this.sortedHead = new double[] { head[0] };
+      this.flow = new double[] {flow[0]};
+      this.head = new double[] {head[0]};
+      this.sortedFlow = new double[] {flow[0]};
+      this.sortedHead = new double[] {head[0]};
       this.chartConditions = chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
       this.headFromFlow = null;
       this.flowFromHead = null;

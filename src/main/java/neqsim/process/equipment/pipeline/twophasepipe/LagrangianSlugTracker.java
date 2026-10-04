@@ -1198,8 +1198,7 @@ public class LagrangianSlugTracker implements Serializable {
     double pickup = frontSpeed * aheadMass - aheadFlux;
     double shedding = tailSpeed * behindMass - behindFlux;
     double filmVelocity = aheadMass > 0.0 ? aheadFlux / aheadMass : 0.0;
-    return new double[] { frontSpeed, tailSpeed, pickup, shedding, bodyVelocity, filmVelocity,
-        ahead.getLiquidHoldup() };
+    return new double[] {frontSpeed, tailSpeed, pickup, shedding, bodyVelocity, filmVelocity, ahead.getLiquidHoldup()};
   }
 
   /**
@@ -1273,9 +1272,9 @@ public class LagrangianSlugTracker implements Serializable {
       if (totalOverlap <= 0.0) {
         continue;
       }
-      double[] densities = { cell.getGasDensity(),
+      double[] densities = {cell.getGasDensity(),
           cell.getOilDensity() > 0.0 ? cell.getOilDensity() : cell.getLiquidDensity(),
-          cell.getWaterDensity() > 0.0 ? cell.getWaterDensity() : 1000.0 };
+          cell.getWaterDensity() > 0.0 ? cell.getWaterDensity() : 1000.0};
       for (int i = 0; i < slugs.size(); i++) {
         SlugBubbleUnit slug = slugs.get(i);
         double assignedLength = section.getLength() * reconstruction.getBodyFraction() * overlap[i] / totalOverlap;
@@ -1868,7 +1867,7 @@ public class LagrangianSlugTracker implements Serializable {
     double speed = 0.0;
     for (SlugBubbleUnit slug : slugs) {
       double[] velocities = conservativeFilmCouplingEnabled ? conservativeKinematics(slug, sections)
-          : new double[] { slug.frontVelocity, slug.tailVelocity };
+          : new double[] {slug.frontVelocity, slug.tailVelocity};
       speed = Math.max(speed, Math.max(Math.abs(velocities[0]), Math.abs(velocities[1])));
     }
     return speed;

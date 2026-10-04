@@ -57,7 +57,7 @@ class RecycleDynamicModeTest {
     mixer.addStream(recycleReturn);
     Heater processUnit = new Heater("process unit", mixer.getOutletStream());
     Splitter splitter = new Splitter("splitter", processUnit.getOutletStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.8, 0.2 });
+    splitter.setSplitFactors(new double[] {0.8, 0.2});
     Recycle recycle = new Recycle("recycle");
     recycle.addStream(splitter.getSplitStream(1));
     recycle.setOutletStream(recycleReturn);

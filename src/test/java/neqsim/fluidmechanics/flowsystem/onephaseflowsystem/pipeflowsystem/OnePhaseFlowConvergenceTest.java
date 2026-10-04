@@ -90,7 +90,7 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
 
   @Test
   void coupledSolveConvergesAcrossGridRefinement() {
-    for (int nodes : new int[] { 3, 12, 40 }) {
+    for (int nodes : new int[] {3, 12, 40}) {
       OnePhaseFlowConvergenceReport report = runCompositionStep(createInitializedPipe(nodes), 30.0);
 
       assertEquals(ConvergenceReason.CONVERGED, report.getReason(),
@@ -151,8 +151,8 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     PipeFlowSystem pipe = createInitializedPipe();
     double[] pressure = pressures(pipe);
     double[] velocity = velocities(pipe);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, 30.0 });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { createGas(0.95, 0.05) });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, 30.0});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {createGas(0.95, 0.05)});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
     pipe.setFailOnNonConvergence(true);
 
@@ -175,8 +175,8 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
 
   private static void configureCompositionStep(PipeFlowSystem pipe, double timeStep) {
     SystemInterface eventGas = createGas(0.80, 0.20);
-    pipe.getTimeSeries().setTimes(new double[] { 0.0, timeStep });
-    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] { eventGas });
+    pipe.getTimeSeries().setTimes(new double[] {0.0, timeStep});
+    pipe.getTimeSeries().setInletThermoSystems(new SystemInterface[] {eventGas});
     pipe.getTimeSeries().setNumberOfTimeStepsInInterval(1);
   }
 
@@ -190,17 +190,17 @@ class OnePhaseFlowConvergenceTest extends neqsim.NeqSimTest {
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(nodes);
 
-    GeometryDefinitionInterface[] geometry = { new PipeData(), new PipeData() };
+    GeometryDefinitionInterface[] geometry = {new PipeData(), new PipeData()};
     for (GeometryDefinitionInterface section : geometry) {
       section.setDiameter(0.5);
       section.setInnerSurfaceRoughness(1.0e-5);
     }
     pipe.setEquipmentGeometry(geometry);
-    pipe.setLegHeights(new double[] { 0.0, 0.0 });
-    pipe.setLegPositions(new double[] { 0.0, 15000.0 });
-    pipe.setLegOuterTemperatures(new double[] { TEMPERATURE_K, TEMPERATURE_K });
-    pipe.setLegWallHeatTransferCoefficients(new double[] { 0.0, 0.0 });
-    pipe.setLegOuterHeatTransferCoefficients(new double[] { 0.0, 0.0 });
+    pipe.setLegHeights(new double[] {0.0, 0.0});
+    pipe.setLegPositions(new double[] {0.0, 15000.0});
+    pipe.setLegOuterTemperatures(new double[] {TEMPERATURE_K, TEMPERATURE_K});
+    pipe.setLegWallHeatTransferCoefficients(new double[] {0.0, 0.0});
+    pipe.setLegOuterHeatTransferCoefficients(new double[] {0.0, 0.0});
     pipe.createSystem();
     pipe.init();
     pipe.solveSteadyState(1);

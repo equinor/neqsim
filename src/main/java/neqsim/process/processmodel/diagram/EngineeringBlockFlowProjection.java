@@ -91,7 +91,7 @@ public final class EngineeringBlockFlowProjection {
       String id = "block-flow:" + encode(from) + ":" + encode(to);
       if (!connections.containsKey(id)) {
         connections.put(id, new ArrayList<String>());
-        endpoints.put(id, new String[] { from, to });
+        endpoints.put(id, new String[] {from, to});
       }
       connections.get(id).add(connection.getId());
       recycles.put(id, Boolean.valueOf(

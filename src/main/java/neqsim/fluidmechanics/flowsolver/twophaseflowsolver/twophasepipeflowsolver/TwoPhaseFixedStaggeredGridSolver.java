@@ -124,7 +124,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   private transient MassTransferConfig massTransferConfig = new MassTransferConfig();
 
   /** Track phases that have disappeared during simulation. */
-  private boolean[] phasePresent = { true, true, true };
+  private boolean[] phasePresent = {true, true, true};
 
   /** Cumulative mass transfer for monitoring. */
   private double[][] cumulativeMassTransfer;
@@ -1873,7 +1873,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public double[] getMassTransferSummary() {
     if (cumulativeMassTransfer == null) {
-      return new double[] { 0.0, 0.0, 0.0 };
+      return new double[] {0.0, 0.0, 0.0};
     }
     double totalDissolution = 0.0;
     double totalEvaporation = 0.0;
@@ -1887,7 +1887,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
       }
     }
-    return new double[] { totalDissolution, totalEvaporation, totalDissolution - totalEvaporation };
+    return new double[] {totalDissolution, totalEvaporation, totalDissolution - totalEvaporation};
   }
 
   /**

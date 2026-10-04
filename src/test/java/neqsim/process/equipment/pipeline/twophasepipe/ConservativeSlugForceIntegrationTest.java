@@ -55,8 +55,8 @@ class ConservativeSlugForceIntegrationTest {
         force[2], 1e-12);
     assertEquals(0.0, force[2] + force[3], 0.0);
     assertArrayEquals(before, cell.getStateVector(), 0.0);
-    double[][] advanced = equations.applyConservativeSlugFriction(new double[][] { before },
-        new TwoFluidSection[] { cell }, 10.0);
+    double[][] advanced = equations.applyConservativeSlugFriction(new double[][] {before}, new TwoFluidSection[] {cell},
+        10.0);
     for (int phase = 0; phase < 3; phase++) {
       assertEquals(before[phase], advanced[0][phase], 0.0);
     }
@@ -73,8 +73,8 @@ class ConservativeSlugForceIntegrationTest {
     assertTrue(finalKinetic <= initialKinetic);
     equations.setConservativeSlugs(Collections.emptyList());
     assertNull(equations.conservativeSlugForces(cell));
-    double[][] unchanged = equations.applyConservativeSlugFriction(new double[][] { before },
-        new TwoFluidSection[] { cell }, 10.0);
+    double[][] unchanged = equations.applyConservativeSlugFriction(new double[][] {before},
+        new TwoFluidSection[] {cell}, 10.0);
     assertArrayEquals(before, unchanged[0], 0.0);
   }
 

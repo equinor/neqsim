@@ -79,8 +79,8 @@ public class ProcessModelConvergenceFilterTest extends neqsim.NeqSimTest {
    */
   private Map<StreamInterface, double[]> previousStates() {
     Map<StreamInterface, double[]> previous = new LinkedHashMap<StreamInterface, double[]>();
-    previous.put(bigStream, new double[] { BIG_PREVIOUS_FLOW, 300.0, 60.0 });
-    previous.put(tinyStream, new double[] { TINY_PREVIOUS_FLOW, 300.0, 60.0 });
+    previous.put(bigStream, new double[] {BIG_PREVIOUS_FLOW, 300.0, 60.0});
+    previous.put(tinyStream, new double[] {TINY_PREVIOUS_FLOW, 300.0, 60.0});
     return previous;
   }
 
@@ -91,8 +91,8 @@ public class ProcessModelConvergenceFilterTest extends neqsim.NeqSimTest {
    */
   private Map<StreamInterface, double[]> currentStates() {
     Map<StreamInterface, double[]> current = new LinkedHashMap<StreamInterface, double[]>();
-    current.put(bigStream, new double[] { BIG_CURRENT_FLOW, 300.0, 60.0 });
-    current.put(tinyStream, new double[] { TINY_CURRENT_FLOW, 300.0, 60.0 });
+    current.put(bigStream, new double[] {BIG_CURRENT_FLOW, 300.0, 60.0});
+    current.put(tinyStream, new double[] {TINY_CURRENT_FLOW, 300.0, 60.0});
     return current;
   }
 
@@ -123,8 +123,8 @@ public class ProcessModelConvergenceFilterTest extends neqsim.NeqSimTest {
     Map<StreamInterface, double[]> current = new LinkedHashMap<StreamInterface, double[]>();
     for (int streamIndex = 0; streamIndex < 3; streamIndex++) {
       StreamInterface stream = new Stream("boundary " + streamIndex);
-      previous.put(stream, new double[] { 1000.0 + streamIndex, 300.0, 60.0 });
-      current.put(stream, new double[] { 1000.1 + streamIndex, 300.1, 60.1 });
+      previous.put(stream, new double[] {1000.0 + streamIndex, 300.0, 60.0});
+      current.put(stream, new double[] {1000.1 + streamIndex, 300.1, 60.1});
     }
 
     model.calculateConvergenceErrors(previous, current);

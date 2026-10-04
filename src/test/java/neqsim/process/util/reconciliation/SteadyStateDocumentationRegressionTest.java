@@ -9,8 +9,8 @@ class SteadyStateDocumentationRegressionTest {
   @Test
   void constantDecimalReadingsPassTheSteadyStateGateAndReconcile() {
     SteadyStateDetector detector = new SteadyStateDetector(30);
-    double[] readings = { 10050.123456789, 6000.987654321, 4050.135802468 };
-    String[] names = { "feed", "gas", "liquid" };
+    double[] readings = {10050.123456789, 6000.987654321, 4050.135802468};
+    String[] names = {"feed", "gas", "liquid"};
     for (String name : names) {
       detector.addVariable(new SteadyStateVariable(name, 30).setUnit("kg/hr").setUncertainty(20.0));
     }
@@ -27,7 +27,7 @@ class SteadyStateDocumentationRegressionTest {
       assertEquals(0.0, variable.getSlope(), 0.0);
     }
     DataReconciliationEngine engine = detector.createReconciliationEngine();
-    engine.addMassBalanceConstraint("separator", new String[] { "feed" }, new String[] { "gas", "liquid" });
+    engine.addMassBalanceConstraint("separator", new String[] {"feed"}, new String[] {"gas", "liquid"});
     ReconciliationResult result = engine.reconcile();
     assertTrue(result.isConverged());
     assertTrue(result.isGlobalTestPassed());

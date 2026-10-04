@@ -104,7 +104,7 @@ class PhysicalPropertiesPackageDocumentationTest {
   @Test
   void clonedTemperatureSweepFlashesEachClone() {
     SystemInterface baseFluid = createNaturalGas(298.15, 50.0);
-    double[] temperaturesK = { 280.0, 300.0, 320.0 };
+    double[] temperaturesK = {280.0, 300.0, 320.0};
 
     for (double temperatureK : temperaturesK) {
       SystemInterface fluid = baseFluid.clone();

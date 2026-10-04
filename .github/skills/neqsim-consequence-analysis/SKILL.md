@@ -1,7 +1,7 @@
 ---
 name: neqsim-consequence-analysis
 version: "1.0.0"
-description: "Quantitative consequence analysis for oil & gas hazards — jet fire, pool fire, vapour cloud explosion (VCE), BLEVE, Gaussian plume and heavy-gas dispersion, probit-based fatality probabilities, individual and societal risk roll-up. USE WHEN: a task requires fire-radiation contours, dispersion to LFL/IDLH/ERPG, BLEVE thermal/missile assessment, or QRA-style risk integration of multiple release outcomes. Anchors on neqsim.process.safety.fire, neqsim.process.safety.dispersion, neqsim.process.safety.qra."
+description: "Quantitative consequence analysis - jet/pool fire, VCE, BLEVE, Gaussian and heavy-gas dispersion, probit fatality, individual and societal risk. USE WHEN: a task requires fire-radiation contours, dispersion to LFL/IDLH/ERPG, BLEVE thermal/missile assessment, or QRA-style integration of release outcomes. Anchors on neqsim.process.safety.fire, .dispersion and .qra."
 last_verified: "2026-04-26"
 requires:
   java_packages:

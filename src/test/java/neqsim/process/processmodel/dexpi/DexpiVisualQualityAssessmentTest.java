@@ -233,9 +233,9 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     Element equipmentElement = document.createElement("Equipment");
     root.appendChild(equipmentElement);
     List<String[]> extraRows = new ArrayList<String[]>();
-    extraRows.add(new String[] { "Design P.", "110 bara" });
-    extraRows.add(new String[] { "Length", "5000 mm" });
-    extraRows.add(new String[] { "ID", "1000 mm" });
+    extraRows.add(new String[] {"Design P.", "110 bara"});
+    extraRows.add(new String[] {"Length", "5000 mm"});
+    extraRows.add(new String[] {"ID", "1000 mm"});
     DexpiLayoutEngine.appendEquipmentBarLabel(document, equipmentElement, "20-VA-001", equipment, "BAR-1",
         "ID-20-VA-001", 60.0, 30.0, 0.3, extraRows);
     double[] instrument = DexpiLayoutEngine.computeInstrumentPosition(equipment, 0, 1);
@@ -248,7 +248,7 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     positions.put("20-VA-001", equipment);
     List<double[]> instrumentPositions = new ArrayList<double[]>();
     instrumentPositions.add(instrument);
-    double[] rightmostInstrument = new double[] { 160.0, 170.0 };
+    double[] rightmostInstrument = new double[] {160.0, 170.0};
     instrumentPositions.add(rightmostInstrument);
     DexpiLayoutEngine.appendBatteryLimitBoundary(document, root, positions, instrumentPositions, "Area 20");
     Element boundary = identifiedElement(document, "BatteryLimit-1");
@@ -302,7 +302,7 @@ class DexpiVisualQualityAssessmentTest extends NeqSimTest {
     Heater heater = new Heater("50-HA-001", mixer.getOutletStream());
     heater.setOutTemperature(35.0, "C");
     Splitter splitter = new Splitter("50-SP-001", heater.getOutletStream(), 2);
-    splitter.setSplitFactors(new double[] { 0.8, 0.2 });
+    splitter.setSplitFactors(new double[] {0.8, 0.2});
     Stream product = new Stream("50-PRODUCT-001", splitter.getSplitStream(0));
     Recycle recycle = new Recycle("50-RC-001");
     recycle.addStream(splitter.getSplitStream(1));

@@ -69,7 +69,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
 
       // Count rows first to size the result table dynamically
       java.util.List<String[]> results = new java.util.ArrayList<String[]>();
-      results.add(new String[] { "Salt", "relative solubility", "" });
+      results.add(new String[] {"Salt", "relative solubility", ""});
 
       while (dataSet.next()) {
         saltName = dataSet.getString("SaltName").trim();
@@ -178,7 +178,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
           logger.info("mol/kg " + name1 + "=" + x1 + ", " + name2 + "=" + x2);
           logger.info("Scale potential factor " + scalePotentialFactor);
 
-          results.add(new String[] { saltName, Double.toString(scalePotentialFactor), "" });
+          results.add(new String[] {saltName, Double.toString(scalePotentialFactor), ""});
         }
       }
 

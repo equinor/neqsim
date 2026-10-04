@@ -47,9 +47,9 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
   private double recycleTolerance = 1.0e-6;
   private int maximumRecycleIterations = 20;
   private double recycleRelaxationFactor = 0.5;
-  private double[] converterInletTemperaturesK = { 513.15, 493.15, 473.15 };
-  private ClausCatalyticConverter.CatalystType[] catalystTypes = { ClausCatalyticConverter.CatalystType.ALUMINA,
-      ClausCatalyticConverter.CatalystType.ALUMINA, ClausCatalyticConverter.CatalystType.TITANIA };
+  private double[] converterInletTemperaturesK = {513.15, 493.15, 473.15};
+  private ClausCatalyticConverter.CatalystType[] catalystTypes = {ClausCatalyticConverter.CatalystType.ALUMINA,
+      ClausCatalyticConverter.CatalystType.ALUMINA, ClausCatalyticConverter.CatalystType.TITANIA};
 
   private final AirDemandController airDemandController = new AirDemandController();
   private ClausReactionFurnace reactionFurnace;

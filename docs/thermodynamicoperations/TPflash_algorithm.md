@@ -327,6 +327,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the same two-phase topology infeasible; a valid GAS↔OIL root transition, genuine three-phase result, or already feasible endpoint is retained |
 | Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with `max abs(Delta z_i) > 1e-8`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
+| Missing aqueous phase after oil-endpoint cleanup | Explicit multiphase, neutral OIL or GAS+OIL endpoint, water feed `>= 0.05`, phase shifting allowed, no solid/wax check | On both the normal and stable-single-phase return paths, solve a balanced OIL+AQUEOUS trial on a clone. Rebuild inactive phase indices before adding a phase to a single-oil endpoint so the aqueous trial cannot alias the oil object. Adopt only an aqueous equilibrium with positive normalized phases, component balance and log-fugacity residuals within `1e-8`, and a Gibbs decrease exceeding `max(1e-6 J, 1e-8 abs(G))` relative to a valid incumbent; otherwise retain the original state. This is bounded active-set recovery, not a global stability certificate. |
 | Final neutral gas/oil equilibrium refinement | `1e-8 <= max abs(Delta ln(f_i)) <= 1e-5`; at most 8 SSI updates | Repair only balanced, near-converged vapor-liquid endpoints after post-convergence root handling. Preserve both phase types and roll back unless phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the strict acceptance checks. |
 | Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive fluid phases only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state. A pending solid check is preserved and runs after fluid recovery; active solid phases are excluded. |
 | Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
@@ -1549,15 +1550,21 @@ by volatile screening components.
 Directly appending a gas phase is not used because `SystemInterface.addPhase()` can expose a stale phase slot whose
 requested type need not survive initialization. Instead, the algorithm snapshots the converged endpoint, clones it,
 resets the clone to a fresh two-phase GAS/liquid estimate, calls `init(0)` and `init(1)`, and runs one nested
-`TPmultiflash`. A thread-local guard and a per-operation one-shot flag prevent reciprocal recursion.
+`TPmultiflash`. The snapshot retains both logical phase roles and their physical phase-array slots. A thread-local guard
+and a per-operation one-shot flag prevent reciprocal recursion.
 
 The trial replaces the retained endpoint only if it preserves every original phase role, adds GAS, stays within the
 configured phase-count limit, and lowers extensive Gibbs energy. An exception, missing phase, non-improving Gibbs
 energy, or rejected trial leaves the snapshot in place; beta, phase compositions, K-values, and initialized properties
-are restored. Thus the Wilson screen triggers an equilibrium calculation but does not itself decide phase stability.
+are restored on their original physical phase-array slots. If phase shifting is disabled, the restart is skipped because
+the trial cannot reliably adopt or restore phase roles. Thus the Wilson screen triggers an equilibrium calculation but
+does not itself decide phase stability.
 
 ```java
 if (oilAndAqueousWithoutGas && neutral && wilsonSubmixtureBracketsTwoPhases) {
+    if (!system.allowPhaseShift()) {
+        return;
+    }
     PhaseSplitSnapshot retained = snapshot(system);
     SystemInterface trial = freshGasLiquidEstimate(system);
     new TPmultiflash(trial, solidCheck).run();
@@ -1926,6 +1933,7 @@ Recommended regression coverage should include both numerical convergence and ph
 | Polar/VLLE systems | Water, CO2, H2S, methanol, glycols, and CPA/electrolyte examples | Correct aqueous/oil/gas phase count and stable final split |
 | CPA aqueous appearance | Ordinary and explicit-multiphase flashes above and below the water-fugacity screen, including aqueous fractions near `1e-6` | Same stable phase set, beta, phase compositions, properties, material balance, fugacity equality, and deterministic repeatability |
 | Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
+| Missing aqueous phase near a bubble point (#3955) | Public-API 23-component SRK/classic pump inlet; all 81 temperature/pressure cells from 11–31 °C and 1.8–5.0 bara; warm starts, repeats, aliased inactive phase slots, and phase-role lock | Retain AQUEOUS with normalized phases, `1e-8` component/fugacity closure, lower Gibbs energy on recovery, and positive pump work with less than 1 K temperature rise; preserve locked states |
 | Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
 
 #### 6.4.1 Hydrogen-Rich Cubic-EOS Qualification
@@ -2267,10 +2275,12 @@ At the reference state, both equations of state must recover the fresh public `T
 within `1e-12` of a bound and from an ordinary two-phase endpoint passed directly to `TPmultiflash`. Reused systems
 must agree with fresh calculations after a nearby pressure change, after return to the reference pressure, and on an
 immediate deterministic repeat. A water-free GAS+OIL control verifies that the aqueous-only guard does not broaden the
-restart to dry flashes.
+restart to dry flashes. A locked-phase regression invokes the bounded restart guard directly and requires the phase-role
+lock, logical-to-physical phase mapping, equilibrium state, and frozen numerical gates to remain unchanged.
 
-The focused class executes 34 complete flashes. That bounded count is the performance evidence for this test-only
-qualification; no wall-clock threshold or production speedup is claimed. Production solver code, public APIs, model
+The focused class executes 35 complete flashes plus one direct locked-phase guard invocation. That bounded count is the
+performance evidence for this test-only qualification; no wall-clock threshold or production speedup is claimed.
+Production solver code, public APIs, model
 parameters/defaults, electrolyte and reactive paths, solids/wax, saturation search, Column Solver, Process Performance,
 and Huldra are outside this tranche.
 
@@ -2408,8 +2418,8 @@ Process Performance, proprietary data, and Huldra are outside this tranche.
 
 The synthetic PC-SAFT qualification uses `SystemPCSAFT`, mixing rule 1, and an
 equimolar methane/n-hexane feed. Its local phase-split envelope is 248-252 K and
-9-11 bara. At 250 K and 10 bara, the existing total heat-capacity reference is
-`172.3659584364608 J/K` with an absolute tolerance of `0.1 J/K`. This is
+9-11 bara. At 250 K and 10 bara, the corrected total heat-capacity reference is
+`219.08347126863538 J/K` with an absolute tolerance of `0.1 J/K`. This is
 deterministic numerical qualification of the current Java calculation, not
 independent experimental validation or a re-fit of PC-SAFT parameters.
 
@@ -2431,6 +2441,41 @@ parameter or association changes, petroleum characterization, PH/PS operations,
 process equipment, saturation operations, public APIs, MCP payloads, Column
 Solver, Process Performance, proprietary data, and Huldra are outside this
 tranche.
+
+### 6.4.16 SAFT-VR Mie fresh-feed lifecycle qualification
+
+The synthetic SAFT-VR Mie qualification uses `SystemSAFTVRMie`, the classic
+mixing rule, and a feed of 0.60 methane and 0.40 n-butane at 200 K and 250 K
+and 30 bara. It compares direct `TPflashSAFT` execution with public
+`ThermodynamicOperations.TPflash()` dispatch after merged PR #3831 corrected
+fresh-feed initialization. This is deterministic numerical qualification, not
+independent validation or a re-fit of SAFT-VR Mie parameters.
+
+Every qualified state must contain GAS and OIL phases with finite bounded phase
+fractions and compositions. Beta and phase compositions must normalize within
+`5e-12`, maximum component material-balance residual must remain below
+`1e-10`, and the maximum methane/n-butane interphase log-fugacity residual
+must remain below `1e-6`. Both phases require positive finite compressibility,
+and total Gibbs energy and enthalpy must remain finite.
+
+Fresh and explicitly initialized feeds, and direct and public dispatch, must
+agree within `1e-8`. The regression also qualifies recovery from beta values
+within `1e-12` of a bound, a reused 200 K to 250 K state change, return to the
+200 K state, and an immediate deterministic repeat.
+
+The focused class performs 14 complete TP flashes. This fixed workload is
+regression evidence only; no wall-clock threshold or speedup is claimed.
+SAFT-VR Mie derivatives or parameters, saturation and phase-envelope
+operations, electrolytes, public APIs, process equipment, proprietary data,
+and Huldra are outside this tranche.
+
+The fugacity gate matches the production `TPflashSAFT` stopping criterion of
+`1e-6` relative K-value change. Windows Java 21 recorded residuals up to
+`3.66e-7`; the earlier `1e-8` test threshold required precision beyond that
+contract. This qualification does not change solver tolerances or claim
+`1e-8` equilibrium closure. The final Rachford-Rice solve now uses the
+accepted K-values rather than the preceding K iterate, removing the former
+`5.51e-8` stale-beta inventory residual without another fugacity evaluation.
 
 ### 6.5 Hybrid EOS-GE ionic-capacity safeguard
 
@@ -2739,3 +2784,93 @@ These public synthetic fluids qualify numerical closure and lifecycle behavior a
 repair. They do not independently validate UMR-PRU interaction parameters, phase-envelope accuracy,
 or experimental PVT predictions. No solver algorithm, public API, table entry, model default, or
 wall-clock performance claim is introduced by this qualification.
+
+
+## Add-fluid order-invariance qualification
+
+A bounded synthetic SRK regression qualifies TP-flash behavior when two independently constructed
+fluids are combined in opposite orders and a petroleum pseudo-component exists only in the
+hydrocarbon-liquid input. The public case combines methane (0.50 mol) and ethane (0.05 mol) with
+n-heptane (0.40 mol) and a synthetic `C10_PC` TBP fraction (0.05 mol, molar mass 0.142 kg/mol,
+relative density 0.82) at 280 K and 28–32 bara using the classic mixing rule.
+
+The regression executes both ordinary and multiphase-enabled `TPflash()` paths. It compares feed
+inventories and phase compositions by component name rather than array position, resolves phases by
+`PhaseType`, starts from beta values within `1e-12` of a bound, changes and restores pressure on
+reused systems, and repeats the settled calculation. Acceptance requires GAS+OIL topology, beta and
+composition normalization within `1e-12`, component material balance below `1e-10`, maximum
+comparable interphase log-fugacity residual below `1e-8`, and order-to-order beta and composition
+agreement within `1e-10`. Compressibility must be finite and positive, and Gibbs energy and
+enthalpy must be finite.
+
+This is numerical qualification of a public synthetic case related to issue #1362. The original
+Matlab/private-fluid composition is unavailable, so the regression neither reproduces that case nor
+establishes general order invariance for arbitrary pseudo-component characterizations. It changes no
+`addFluid` API, pseudo-component characterization, mixing rule, solver tolerance, or model default.
+The bounded flash count is workload evidence only; no wall-clock performance claim is made.
+
+
+### Expanded UMR-PRU component flash lifecycle
+
+The standard component and `UNIFACcompUMRPRU.csv` tables were expanded together so
+`SystemUMRPRUMCEos` can use additional chromatographic hydrocarbon families through the
+`HV` / `UNIFAC_UMRPRU` mixing rule. Database-integrity and finite-density checks establish
+that the rows load, but they do not qualify complete TP-flash equilibrium or state reuse. The
+expanded-table qualification therefore applies the common lifecycle gates to representative new
+aromatic, cyclic, branched-paraffin, and olefin entries.
+
+The synthetic matrix uses the following nominal states. Mole amounts are normalized by the
+thermodynamic system, and pressure is absolute.
+
+| Case | Components and mole amounts | Temperature (K) | Pressure (bara) |
+| --- | --- | ---: | ---: |
+| Aromatic | methane 0.90, 1,2,4-trimethylbenzene 0.10 | 298.15 | 10.0 |
+| Cyclic | methane 0.80, 1,1,2-trimethylcyclopentane 0.10, trans-1,3-dimethylcyclohexane 0.10 | 285.15 | 20.0 |
+| Branched paraffin | methane 0.85, 2,4-dimethylheptane 0.15 | 280.15 | 30.0 |
+| Olefin | methane 0.88, 1-hexene 0.12 | 285.15 | 20.0 |
+
+The bounded 32-flash regression compares ordinary and explicit-multiphase calculations, starts
+from beta values within `1e-12` of a bound, changes temperature by 1 K and pressure by 2%, returns
+to the nominal state, and repeats the settled calculation. Acceptance requires phase and beta
+normalization within `5e-12`, component material balance below `1e-10`, comparable interphase
+log-fugacity residual below `1e-8`, bounded finite compositions and phase fractions, positive
+compressibility, and finite Gibbs energy and enthalpy. Single-phase states additionally require
+`beta = 1` and `x = z`; the matrix must exercise at least two multiphase endpoints.
+
+These public synthetic fluids qualify numerical closure and lifecycle behavior for the expanded
+tables. They do not independently validate component-property corrections, UMR-PRU group or
+interaction parameters, phase-envelope accuracy, experimental PVT predictions, or the
+missing-interaction policy tracked by issue #3727. No solver algorithm, public API, table entry,
+model default, or wall-clock performance claim is introduced.
+
+
+### Translated Peng-Robinson flash lifecycle
+
+The translated Peng-Robinson system (`SystemPrEosvolcor`) solves the ordinary PR cubic before
+applying its volume shift. This preserves mechanically stable liquid roots whose translated molar
+volume is below the untranslated co-volume. Level-zero phase initialization also refreshes the
+translation properties used by a subsequent flash. These shared phase changes support phase-envelope
+work, but TP-flash equilibrium and state reuse are qualified independently.
+
+The bounded synthetic qualification uses the classic mixing rule and the following nominal states.
+Mole amounts are normalized by the thermodynamic system, and pressure is absolute.
+
+| Case | Components and mole amounts | Temperature (K) | Pressure (bara) |
+| --- | --- | ---: | ---: |
+| Large volatility | methane 0.90, n-heptane 0.10 | 260.0 | 200.0 |
+| Rich gas | nitrogen 0.01, carbon dioxide 0.02, methane 0.72, ethane 0.08, propane 0.06, n-butane 0.05, n-hexane 0.06 | 273.15 | 100.0 |
+| Aromatic | methane 0.90, cumene 0.10 | 298.15 | 10.0 |
+| Light control | methane 0.70, ethane 0.20, n-butane 0.10 | 298.15 | 30.0 |
+
+The 32-flash lifecycle matrix compares ordinary and explicit-multiphase calculations, starts from
+beta values within `1e-12` of a bound, changes temperature by 1 K and pressure by 2%, returns to
+the nominal state, and repeats the settled calculation. Acceptance requires phase and composition
+normalization within `5e-12`, component material balance below `1e-10`, comparable interphase
+log-fugacity residual below `1e-8`, bounded finite compositions and phase fractions, positive
+compressibility, and finite Gibbs energy and enthalpy. Single-phase states additionally require
+`beta = 1` and `x = z`; at least two nominal states must be multiphase.
+
+These public synthetic fluids qualify translated-PR TP-flash closure and lifecycle behavior. They
+do not validate the volume-translation correlation or parameters, phase-envelope accuracy,
+experimental PVT predictions, PS/PH flashes, or acoustic-speed calculations. No production solver,
+public API, model parameter, unit, default, or wall-clock performance claim is introduced.

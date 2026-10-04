@@ -13,7 +13,8 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * PhaseGEUniquac class.
+ * Base for UNIFAC phase implementations. Standalone UNIQUAC is not supported because its activity-coefficient
+ * implementation and parameter data are incomplete. Direct construction fails before invalid results can be used.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,8 +31,14 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /**
    * Constructor for PhaseGEUniquac.
+   *
+   * @throws UnsupportedOperationException when constructing the unsupported standalone UNIQUAC phase
    */
   public PhaseGEUniquac() {
+    if (getClass().equals(PhaseGEUniquac.class)) {
+      throw new UnsupportedOperationException(
+          "Standalone UNIQUAC is not supported: activity-coefficient implementation and parameter data are incomplete.");
+    }
     componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
@@ -43,9 +50,14 @@ public class PhaseGEUniquac extends PhaseGE {
    * @param Dij an array of type double
    * @param mixRule an array of {@link java.lang.String} objects
    * @param intparam an array of type double
+   * @throws UnsupportedOperationException when constructing the unsupported standalone UNIQUAC phase
    */
   public PhaseGEUniquac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
       double[][] intparam) {
+    if (getClass().equals(PhaseGEUniquac.class)) {
+      throw new UnsupportedOperationException(
+          "Standalone UNIQUAC is not supported: activity-coefficient implementation and parameter data are incomplete.");
+    }
     this.mixRule = mixRule;
     this.alpha = alpha;
     this.Dij = Dij;

@@ -36,7 +36,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     // attractiveParameter = new AttractiveTermSchwartzentruber(this);
     setAttractiveParameter(new AttractiveTermSrk(this));
 
-    double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157 };
+    double[] surfTensInfluenceParamtemp = {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
     this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 

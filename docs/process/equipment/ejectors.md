@@ -1,359 +1,167 @@
 ---
 title: Ejector Equipment
-description: "Documentation for ejector equipment in NeqSim process simulation, including Transvac-style vendor parameters (entrainment ratio, compression ratio, critical back pressure, area ratio, Mach numbers)."
+description: Source-backed ejector setup, results, sizing diagnostics, and engineering limits.
 ---
 
-Documentation for ejector equipment in NeqSim process simulation.
+NeqSim's `Ejector` mixes a high-pressure motive stream with a lower-pressure suction
+stream and flashes the combined stream to a specified discharge pressure. Use it for
+screening and process integration, then qualify the selected geometry and operating
+envelope against vendor data and accountable engineering review.
 
-## Table of Contents
-- [Overview](#overview)
-- [Ejector Class](#ejector-class)
-- [Operating Principles](#operating-principles)
-- [Design Parameters](#design-parameters)
-- [Transvac-Style Vendor Parameters](#transvac-style-vendor-parameters)
-- [Performance Curves](#performance-curves)
-- [Usage Examples](#usage-examples)
+## Model and input contract
 
----
+The current implementation performs one quasi-one-dimensional energy, momentum, and
+diffuser-recovery calculation. Although ejector literature distinguishes
+constant-pressure mixing (CPM) and constant-area mixing (CAM), the public `Ejector` API
+does not expose a CPM/CAM model selector. Do not describe a run as a selected CPM or CAM
+calculation.
 
-## Overview
+Use these input conventions:
 
-**Location:** `neqsim.process.equipment.ejector`
+- temperature in K when constructing the fluid, or an explicit temperature unit on a
+  stream setter;
+- absolute pressure in bara;
+- mass flow in `kg/sec` or another explicit supported mass-flow unit;
+- efficiencies as fractions from zero to one; and
+- connection lengths and design velocities in m and m/s.
 
-**Classes:**
-| Class | Description |
-|-------|-------------|
-| `Ejector` | Steam/gas ejector for compression |
-| `EjectorDesignResult` | Design calculation results (immutable) |
+The motive and suction fluids must use compatible component definitions and mixing
+rules. The discharge pressure is a required operating target. A manually supplied
+mixing pressure is limited to the suction pressure by the implementation.
 
-Ejectors use the kinetic energy of a high-pressure motive stream to entrain and compress a low-pressure suction stream. Common applications include:
-- Vapor recovery systems
-- Vacuum generation
-- Flare gas recovery (Transvac, Croll Reynolds)
-- LP gas compression without rotating equipment
+## Executable gas-ejector example
 
-The NeqSim ejector model supports both constant-pressure mixing (CPM) and constant-area
-mixing (CAM) approaches, and calculates Transvac-style vendor parameters including
-entrainment ratio, compression ratio, critical back pressure, area ratio, and Mach numbers.
-
----
-
-## Ejector Class
-
-### Basic Usage
+The following complete Java 8 program is compiled and executed by the documentation
+test. Run with assertions enabled, for example `java -ea EjectorProcessExample`.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.ejector.EjectorMechanicalDesign;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Create ejector with motive and suction streams
-Ejector ejector = new Ejector("Ejector-100", motiveStream, suctionStream);
-ejector.setDischargePressure(5.0);  // bara
-ejector.setEfficiencyIsentropic(0.75);  // Nozzle efficiency
-ejector.setDiffuserEfficiency(0.80);    // Diffuser efficiency
-ejector.run();
+public final class EjectorProcessExample {
+  private static final Logger logger = LogManager.getLogger(EjectorProcessExample.class);
 
-// Get mixed stream
-StreamInterface mixedStream = ejector.getMixedStream();
-double dischargeT = mixedStream.getTemperature("C");
-double dischargeP = mixedStream.getPressure("bara");
-```
+  private EjectorProcessExample() {}
 
-### Stream Setup
+  public static void main(String[] args) {
+    SystemInterface motiveFluid = new SystemSrkEos(293.15, 10.0);
+    motiveFluid.addComponent("methane", 1.0);
+    motiveFluid.createDatabase(true);
+    motiveFluid.setMixingRule(2);
 
-```java
-// High-pressure motive stream (e.g., HP steam or gas)
-SystemInterface motiveFluid = new SystemSrkEos(250.0, 10.0);
-motiveFluid.addComponent("water", 1.0);
-motiveFluid.setMixingRule("classic");
+    Stream motive = new Stream("motive gas", motiveFluid);
+    motive.setFlowRate(0.50, "kg/sec");
 
-Stream motiveStream = new Stream("Motive Steam", motiveFluid);
-motiveStream.setFlowRate(1000.0, "kg/hr");
-motiveStream.run();
+    SystemInterface suctionFluid = new SystemSrkEos(293.15, 1.0);
+    suctionFluid.addComponent("methane", 1.0);
+    suctionFluid.createDatabase(true);
+    suctionFluid.setMixingRule(2);
 
-// Low-pressure suction stream
-SystemInterface suctionFluid = new SystemSrkEos(300.0, 1.5);
-suctionFluid.addComponent("methane", 0.95);
-suctionFluid.addComponent("ethane", 0.05);
-suctionFluid.setMixingRule("classic");
+    Stream suction = new Stream("suction gas", suctionFluid);
+    suction.setFlowRate(0.15, "kg/sec");
 
-Stream suctionStream = new Stream("Suction Gas", suctionFluid);
-suctionStream.setFlowRate(500.0, "kg/hr");
-suctionStream.run();
-```
+    Ejector ejector = new Ejector("gas booster", motive, suction);
+    ejector.setDischargePressure(3.0);
+    ejector.setEfficiencyIsentropic(0.75);
+    ejector.setSuctionNozzleEfficiency(0.90);
+    ejector.setMixingEfficiency(0.85);
+    ejector.setDiffuserEfficiency(0.80);
 
----
+    ProcessSystem process = new ProcessSystem();
+    process.add(motive);
+    process.add(suction);
+    process.add(ejector);
+    process.run();
 
-## Operating Principles
+    StreamInterface discharge = ejector.getMixedStream();
+    EjectorMechanicalDesign design = ejector.getMechanicalDesign();
+    double entrainmentRatio = ejector.getEntrainmentRatio();
+    double compressionRatio = ejector.getCompressionRatio();
+    double expansionRatio = ejector.getExpansionRatio();
 
-### Ejector Sections
+    assert Math.abs(discharge.getPressure("bara") - 3.0) < 1.0e-4;
+    assert Math.abs(ejector.getMassBalance("kg/sec")) < 1.0e-6;
+    assert Math.abs(entrainmentRatio - 0.30) < 1.0e-10;
+    assert Math.abs(compressionRatio - 3.0) < 1.0e-2;
+    assert Math.abs(expansionRatio - 10.0 / 3.0) < 1.0e-2;
+    assert design.getMotiveNozzleThroatArea() > 0.0;
+    assert design.getMixingChamberArea() > 0.0;
+    assert design.getDiffuserOutletArea() > 0.0;
 
-An ejector consists of four main sections:
-
-1. **Nozzle**: Converts motive stream pressure to velocity
-2. **Suction Chamber**: Entrains low-pressure gas
-3. **Mixing Chamber**: Momentum exchange between streams
-4. **Diffuser**: Converts velocity back to pressure
-
-### Energy Balance
-
-The ejector performs isentropic expansion and compression:
-
-$$\eta_{nozzle} = \frac{h_1 - h_2}{h_1 - h_{2s}}$$
-
-$$\eta_{diffuser} = \frac{h_{4s} - h_3}{h_4 - h_3}$$
-
-Where:
-- $h_1$ = motive inlet enthalpy
-- $h_2$ = nozzle outlet enthalpy (actual)
-- $h_{2s}$ = nozzle outlet enthalpy (isentropic)
-- $h_3$ = mixing section outlet enthalpy
-- $h_4$ = diffuser outlet enthalpy (actual)
-- $h_{4s}$ = diffuser outlet enthalpy (isentropic)
-
-### Entrainment Ratio
-
-The entrainment ratio (ER) is defined as:
-
-$$ER = \frac{\dot{m}_{suction}}{\dot{m}_{motive}}$$
-
----
-
-## Design Parameters
-
-### Efficiency Settings
-
-```java
-// Nozzle isentropic efficiency (typically 0.7-0.9)
-ejector.setEfficiencyIsentropic(0.75);
-
-// Diffuser efficiency (typically 0.7-0.85)
-ejector.setDiffuserEfficiency(0.80);
-```
-
-### Discharge Pressure
-
-```java
-// Set target discharge pressure
-ejector.setDischargePressure(5.0);  // bara
-```
-
-### Design Velocities
-
-```java
-// Optional: Override default suction and diffuser velocities
-ejector.setDesignSuctionVelocity(30.0);  // m/s
-ejector.setDesignDiffuserOutletVelocity(20.0);  // m/s
-```
-
-### Connection Lengths
-
-```java
-// Optional: Set connection pipe lengths for pressure drop
-ejector.setSuctionConnectionLength(2.0);  // m
-ejector.setDischargeConnectionLength(3.0);  // m
-```
-
----
-
-## Mechanical Design
-
-```java
-// Get mechanical design parameters
-EjectorMechanicalDesign mechDesign = ejector.getMechanicalDesign();
-
-// Calculate sizing
-mechDesign.calcDesign();
-
-// Get geometry
-double throatDiameter = mechDesign.getThroatDiameter();  // m
-double nozzleLength = mechDesign.getNozzleLength();  // m
-double mixingLength = mechDesign.getMixingLength();  // m
-double diffuserLength = mechDesign.getDiffuserLength();  // m
-```
-
----
-
-## Usage Examples
-
-### Flare Gas Recovery
-
-```java
-ProcessSystem process = new ProcessSystem();
-
-// High-pressure motive gas from compressor discharge
-Stream motiveGas = new Stream("HP Gas", hpGasFluid);
-motiveGas.setFlowRate(2000.0, "kg/hr");
-motiveGas.setTemperature(60.0, "C");
-motiveGas.setPressure(40.0, "bara");
-process.add(motiveGas);
-
-// Low-pressure flare header gas
-Stream flareGas = new Stream("Flare Gas", flareGasFluid);
-flareGas.setFlowRate(500.0, "kg/hr");
-flareGas.setTemperature(40.0, "C");
-flareGas.setPressure(1.2, "bara");
-process.add(flareGas);
-
-// Ejector to recover flare gas
-Ejector fgr = new Ejector("FGR Ejector", motiveGas, flareGas);
-fgr.setDischargePressure(8.0);  // bara
-fgr.setEfficiencyIsentropic(0.75);
-fgr.setDiffuserEfficiency(0.80);
-process.add(fgr);
-
-// Run process
-process.run();
-
-// Results
-double entrainmentRatio = flareGas.getFlowRate("kg/hr") / motiveGas.getFlowRate("kg/hr");
-System.out.println("Entrainment ratio: " + entrainmentRatio);
-System.out.println("Discharge pressure: " + fgr.getMixedStream().getPressure("bara") + " bara");
-```
-
-### Steam Ejector Vacuum System
-
-```java
-// HP steam as motive fluid
-Stream hpSteam = new Stream("HP Steam", steamFluid);
-hpSteam.setFlowRate(1500.0, "kg/hr");
-hpSteam.setTemperature(200.0, "C");
-hpSteam.setPressure(10.0, "bara");
-
-// Vacuum overhead vapor
-Stream vacuumVapor = new Stream("Vacuum Vapor", vaporFluid);
-vacuumVapor.setFlowRate(300.0, "kg/hr");
-vacuumVapor.setTemperature(50.0, "C");
-vacuumVapor.setPressure(0.1, "bara");
-
-// First stage ejector
-Ejector ejector1 = new Ejector("1st Stage", hpSteam, vacuumVapor);
-ejector1.setDischargePressure(0.5);  // bara
-ejector1.run();
-
-// Intercondenser
-Cooler intercondenser = new Cooler("Intercondenser", ejector1.getMixedStream());
-intercondenser.setOutTemperature(40.0, "C");
-
-// Second stage ejector
-Ejector ejector2 = new Ejector("2nd Stage", hpSteam2, intercondenser.getOutletStream());
-ejector2.setDischargePressure(1.1);  // bara
-ejector2.run();
-```
-
----
-
-## Transvac-Style Vendor Parameters
-
-After calling `ejector.run()`, the following vendor-style parameters are available.
-These correspond directly to the parameters used in Transvac, Croll Reynolds, and
-Schutte & Koerting ejector datasheets and performance curves.
-
-### Key Parameters
-
-| Parameter | Method | Description |
-|-----------|--------|-------------|
-| Entrainment Ratio (ER) | `getEntrainmentRatio()` | Suction mass flow / motive mass flow |
-| Compression Ratio (CR) | `getCompressionRatio()` | Discharge pressure / suction pressure |
-| Expansion Ratio | `getExpansionRatio()` | Motive pressure / discharge pressure |
-| Critical Back Pressure | `getCriticalBackPressure()` | Max discharge pressure before breakdown (bara) |
-| Area Ratio | `getAreaRatio()` | Mixing area / motive nozzle throat area |
-| Motive Nozzle Mach | `getMotiveNozzleMach()` | Mach number at motive nozzle exit |
-| Suction Mach | `getSuctionMach()` | Mach number of suction flow at mixing entrance |
-| Mixing Mach | `getMixingMach()` | Mach number of mixed flow in mixing section |
-| Motive Choked | `isMotiveChoked()` | Whether motive nozzle flow is sonic |
-| Suction Choked | `isSuctionChoked()` | Whether suction flow is sonic |
-| In Breakdown | `isInBreakdown()` | Whether discharge exceeds critical back pressure |
-
-### Efficiency Settings
-
-Three independent efficiencies control the ejector model:
-
-```java
-ejector.setEfficiencyIsentropic(0.75);     // Motive nozzle isentropic efficiency (0.7-0.9)
-ejector.setSuctionNozzleEfficiency(0.90);  // Suction nozzle efficiency (0.85-0.95)
-ejector.setMixingEfficiency(0.85);         // Mixing section momentum transfer (0.80-0.95)
-ejector.setDiffuserEfficiency(0.80);       // Diffuser pressure recovery (0.7-0.85)
-```
-
-### Critical Back Pressure
-
-The critical back pressure (CBP) is the most important parameter in ejector specification.
-It represents the maximum discharge pressure at which the ejector maintains stable
-entrainment. The CBP is calculated from the stagnation (total) enthalpy of the mixed
-flow and the diffuser efficiency using a rigorous thermodynamic flash.
-
-```java
-ejector.run();
-double cbp = ejector.getCriticalBackPressure();  // bara
-boolean stable = !ejector.isInBreakdown();
-
-if (ejector.isInBreakdown()) {
-    System.out.println("WARNING: Operating beyond critical back pressure!");
-    System.out.println("Reduce discharge pressure below " + cbp + " bara");
+    logger.info(
+        "Pd={} bara, ER={}, CR={}, expansion ratio={}",
+        discharge.getPressure("bara"),
+        entrainmentRatio,
+        compressionRatio,
+        expansionRatio);
+  }
 }
 ```
 
-### Example: Reading All Vendor Parameters
+The example uses prescribed inlet mass flows. Therefore the entrainment ratio is the
+identity
 
-```java
-ejector.run();
+$$ER=\frac{\dot m_{suction}}{\dot m_{motive}}$$
 
-System.out.println("Entrainment Ratio: " + ejector.getEntrainmentRatio());
-System.out.println("Compression Ratio: " + ejector.getCompressionRatio());
-System.out.println("Expansion Ratio:   " + ejector.getExpansionRatio());
-System.out.println("Critical Back P:   " + ejector.getCriticalBackPressure() + " bara");
-System.out.println("Area Ratio:        " + ejector.getAreaRatio());
-System.out.println("Motive Mach:       " + ejector.getMotiveNozzleMach());
-System.out.println("Suction Mach:      " + ejector.getSuctionMach());
-System.out.println("Mixing Mach:       " + ejector.getMixingMach());
-System.out.println("Motive Choked:     " + ejector.isMotiveChoked());
-System.out.println("Suction Choked:    " + ejector.isSuctionChoked());
-System.out.println("In Breakdown:      " + ejector.isInBreakdown());
-```
+and is not solved from ejector geometry or a vendor capacity curve.
 
----
+## Results and mechanical design
 
-## Performance Curves
+After `run()`, inspect:
 
-### Generate Performance Curve
+| Quantity | Method | Interpretation |
+|---|---|---|
+| Discharge stream | `getMixedStream()` | Combined stream at the specified discharge pressure |
+| Entrainment ratio | `getEntrainmentRatio()` | Prescribed suction mass flow divided by prescribed motive mass flow |
+| Compression ratio | `getCompressionRatio()` | Discharge absolute pressure divided by suction absolute pressure |
+| Expansion ratio | `getExpansionRatio()` | Motive absolute pressure divided by discharge absolute pressure |
+| Critical back pressure | `getCriticalBackPressure()` | Internal thermodynamic screening estimate in bara |
+| Area ratio | `getAreaRatio()` | Calculated mixing area divided by motive-nozzle throat area |
+| Mach diagnostics | `getMotiveNozzleMach()`, `getSuctionMach()`, `getMixingMach()` | Calculated local velocity divided by estimated speed of sound |
+| Breakdown flag | `isInBreakdown()` | True when the specified discharge exceeds the calculated critical back pressure |
 
-The `generatePerformanceCurve()` method produces Transvac-style performance data showing
-how entrainment ratio varies with discharge pressure at constant motive and suction conditions:
+`getMechanicalDesign()` exposes calculated areas, velocities, characteristic lengths,
+and volumes. These values are preliminary process-model sizing outputs. They are not a
+fabrication drawing, materials assessment, code check, nozzle-stress analysis, or vendor
+guarantee.
 
-```java
-// Generate a performance curve with 10 points from 1.5 to 5.0 bara discharge
-List<double[]> curve = ejector.generatePerformanceCurve(1.5, 5.0, 10);
+## Performance-curve semantics
 
-for (double[] point : curve) {
-    double dischargePressure = point[0];
-    double entrainmentRatio = point[1];
-    double compressionRatio = point[2];
-    System.out.printf("Pd=%.2f bara, ER=%.3f, CR=%.2f%n",
-        dischargePressure, entrainmentRatio, compressionRatio);
-}
-```
+`generatePerformanceCurve(minPd, maxPd, points)` reruns the same ejector object at a
+series of discharge pressures. Each returned row is
+`[dischargePressureBara, entrainmentRatio, compressionRatio]`.
 
-### Entrainment vs Compression Ratio
+Because the inlet stream flow rates remain fixed, the reported entrainment ratio also
+remains fixed unless the caller changes an inlet flow. The method does not solve the
+suction capacity available at each back pressure and must not be presented as a
+predictive vendor performance map. Failed pressure points are logged and omitted, so
+callers must check the returned row count. The original discharge pressure is restored
+and the ejector is rerun before the method returns; do not operate the same mutable
+ejector concurrently.
 
-For a given motive pressure and geometry, ejector performance follows characteristic curves:
+## Engineering limits
 
-```java
-// Calculate performance at different suction pressures
-double[] suctionPressures = {0.5, 1.0, 1.5, 2.0};  // bara
-for (double Ps : suctionPressures) {
-    suctionStream.setPressure(Ps, "bara");
-    suctionStream.run();
-    ejector.run();
+- Efficiency defaults and suggested ranges are modelling assumptions, not universal
+  equipment constants.
+- The calculated critical back pressure is an internal screening estimate based on the
+  mixed-flow stagnation enthalpy and diffuser efficiency. Validate it against vendor or
+  experimental curves.
+- Choking flags and Mach numbers are diagnostics from the quasi-one-dimensional model;
+  they do not replace nozzle-profile, shock, condensation, or multiphase analysis.
+- Steam ejectors, condensing service, liquid entrainment, fouling, erosion, acoustic
+  limits, turndown, start-up, and off-design stability need service-specific evidence.
+- Final selection requires vendor confirmation and independent process and mechanical
+  review over the full operating envelope.
 
-    double compressionRatio = ejector.getMixedStream().getPressure("bara") / Ps;
-    System.out.println("Suction P: " + Ps + " bara, CR: " + compressionRatio);
-}
-```
+## Related documentation
 
----
-
-## Related Documentation
-
-- [Compressors](compressors) - Gas compression alternatives
-- [Streams](streams) - Stream handling
-- [Process Package](../) - Package overview
+- [Compressors](compressors) — rotating-equipment compression alternatives
+- [Streams](streams) — stream construction and units
+- [Process equipment](./) — equipment guide index

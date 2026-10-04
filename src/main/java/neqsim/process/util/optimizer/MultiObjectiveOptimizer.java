@@ -420,7 +420,7 @@ public class MultiObjectiveOptimizer implements Serializable {
       return front;
     }
 
-    double[] rawValues = new double[] { objective.evaluate(processCopy) };
+    double[] rawValues = new double[] {objective.evaluate(processCopy)};
 
     Map<String, Double> decisionVars = new HashMap<>();
     decisionVars.put("flowRate", result.getOptimalRate());
@@ -581,7 +581,7 @@ public class MultiObjectiveOptimizer implements Serializable {
       // Simple linear interpolation for 2 objectives
       for (int i = 0; i <= numCombinations; i++) {
         double w1 = (double) i / numCombinations;
-        weights.add(new double[] { w1, 1.0 - w1 });
+        weights.add(new double[] {w1, 1.0 - w1});
       }
     } else {
       // For more objectives, use simplex lattice design
@@ -718,7 +718,7 @@ public class MultiObjectiveOptimizer implements Serializable {
       }
       double maxValue = obj.evaluate(processCopy);
 
-      bounds.put(obj, new double[] { Math.min(minValue, maxValue), Math.max(minValue, maxValue) });
+      bounds.put(obj, new double[] {Math.min(minValue, maxValue), Math.max(minValue, maxValue)});
     }
 
     return bounds;
@@ -742,7 +742,7 @@ public class MultiObjectiveOptimizer implements Serializable {
       double[] bound = bounds.get(obj);
       for (int i = 0; i <= gridPoints; i++) {
         double epsilon = bound[0] + (bound[1] - bound[0]) * i / gridPoints;
-        grid.add(new double[] { epsilon });
+        grid.add(new double[] {epsilon});
       }
     } else {
       // Multiple constrained objectives - full grid

@@ -32,7 +32,7 @@ class TPflashWellFluidConsistencyTest {
     assertClosedEquilibrium(reference, "base reference");
     assertEquivalentEquilibrium(reference, poorGuess, "base poor beta initialization");
 
-    for (double pressureBara : new double[] { 64.5, 65.0, 65.5 }) {
+    for (double pressureBara : new double[] {64.5, 65.0, 65.5}) {
       assertClosedEquilibrium(flashBaseWellFluid(303.15, pressureBara, false),
           "base nearby pressure " + pressureBara + " bara");
     }
@@ -61,7 +61,7 @@ class TPflashWellFluidConsistencyTest {
         "established phase-zero density reference in kg/m3");
     assertEquivalentEquilibrium(reference, poorGuess, "water-rich poor beta initialization");
 
-    for (double temperatureK : new double[] { 338.54, 339.04, 339.54 }) {
+    for (double temperatureK : new double[] {338.54, 339.04, 339.54}) {
       assertClosedEquilibrium(flashWaterRichWellFluid(temperatureK, 1.5, false),
           "water-rich nearby temperature " + temperatureK + " K");
     }
@@ -92,9 +92,9 @@ class TPflashWellFluidConsistencyTest {
 
   private SystemInterface flashWaterRichWellFluid(double temperatureK, double pressureBara, boolean poorGuess) {
     SystemInterface system = createWellFluid();
-    system.setMolarComposition(new double[] { 0.0, 4.76579e-6, 1.21459e-5, 1.3409e-3, 3.30439e-2, 5.06e-3, 7.34e-3,
+    system.setMolarComposition(new double[] {0.0, 4.76579e-6, 1.21459e-5, 1.3409e-3, 3.30439e-2, 5.06e-3, 7.34e-3,
         1.53e-3, 4.11e-3, 1.58e-3, 2.255e-3, 2.8779e-4, 8.58e-4, 8.73e-4, 8.5e-4, 3.88e-3, 7.36e-2, 1.47e-1, 6.176e-2,
-        3.69e-2, 7.735e-3, 1.023e-2, 6.19e-3, 4.3e-3, 1.2e-2, 8.96e-3, 1.539e-3, 5.9921e-1 });
+        3.69e-2, 7.735e-3, 1.023e-2, 6.19e-3, 4.3e-3, 1.2e-2, 8.96e-3, 1.539e-3, 5.9921e-1});
     system.setTemperature(temperatureK, "K");
     system.setPressure(pressureBara, "bara");
     prepareGuess(system, poorGuess);

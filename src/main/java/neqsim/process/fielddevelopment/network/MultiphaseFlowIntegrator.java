@@ -702,7 +702,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
       throw new IllegalArgumentException("Arrival pressure and maximum velocity ratio must be finite and positive");
     }
     // Try standard pipe sizes (inches to meters)
-    double[] standardSizes = { 0.1524, 0.2032, 0.254, 0.3048, 0.3556, 0.4064, 0.4572, 0.508 };
+    double[] standardSizes = {0.1524, 0.2032, 0.254, 0.3048, 0.3556, 0.4064, 0.4572, 0.508};
 
     double originalDiameter = pipelineDiameterM;
 

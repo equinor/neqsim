@@ -124,12 +124,12 @@ public class OnePhasePipeLineCompositionalTest {
 
     UUID id = UUID.randomUUID();
     pipe.run(id);
-    pipe.runConservativeTransient(new double[] { 0.0, 30.0, 60.0, 90.0 },
-        new SystemInterface[] { pulseGas, pulseGas, baselineGas }, 1, id);
+    pipe.runConservativeTransient(new double[] {0.0, 30.0, 60.0, 90.0},
+        new SystemInterface[] {pulseGas, pulseGas, baselineGas}, 1, id);
 
     OnePhaseSpeciesConservationHistory history = pipe.getSpeciesConservationHistory();
     assertEquals(3, history.size());
-    assertArrayEquals(new double[] { 30.0, 60.0, 90.0 }, history.getElapsedTimeSeconds(), 0.0);
+    assertArrayEquals(new double[] {30.0, 60.0, 90.0}, history.getElapsedTimeSeconds(), 0.0);
     for (OnePhaseSpeciesConservationReport report : history.getReports()) {
       assertTrue(report.isConverged(), report.getMessage());
       assertTrue(report.getMaximumRelativeInventoryResidual() <= 1.0e-8, report.getMessage());
@@ -192,7 +192,7 @@ public class OnePhasePipeLineCompositionalTest {
 
     UUID id = UUID.randomUUID();
     pipe.run(id);
-    pipe.runConservativeTransient(new double[] { 0.0, 60.0 }, new SystemInterface[] { pulseGas }, 1, id);
+    pipe.runConservativeTransient(new double[] {0.0, 60.0}, new SystemInterface[] {pulseGas}, 1, id);
 
     OnePhaseSpeciesConservationReport report = pipe.getSpeciesConservationHistory().getReport(0);
     assertTrue(report.isConverged(), report.getMessage());
@@ -224,7 +224,7 @@ public class OnePhasePipeLineCompositionalTest {
     double[] baselineTemperatureK = pipe.getTemperatureProfile("K");
     double[] baselineVelocityMetersPerSecond = pipe.getVelocityProfile();
 
-    pipe.runConservativeTransient(new double[] { 0.0, 1800.0 }, new SystemInterface[] { pulseGas }, 30, id);
+    pipe.runConservativeTransient(new double[] {0.0, 1800.0}, new SystemInterface[] {pulseGas}, 30, id);
     OnePhaseSpeciesConservationHistory pulseHistory = pipe.getSpeciesConservationHistory();
     assertEquals(30, pulseHistory.size());
     assertEquals(60.0, pulseGas.getFlowRate("kg/sec"), 1.0e-12,
@@ -234,7 +234,7 @@ public class OnePhasePipeLineCompositionalTest {
     double[] pulseTemperatureK = pipe.getTemperatureProfile("K");
     double[] pulseVelocityMetersPerSecond = pipe.getVelocityProfile();
 
-    pipe.runConservativeTransient(new double[] { 0.0, 3600.0 }, new SystemInterface[] { baselineGas }, 60, id);
+    pipe.runConservativeTransient(new double[] {0.0, 3600.0}, new SystemInterface[] {baselineGas}, 60, id);
     OnePhaseSpeciesConservationHistory recoveryHistory = pipe.getSpeciesConservationHistory();
     assertEquals(60, recoveryHistory.size());
     assertEquals(5400.0, pipe.getSimulationTime(), 0.0);
@@ -326,7 +326,7 @@ public class OnePhasePipeLineCompositionalTest {
     pipe.setConservativeCompositionalTracking(true);
 
     IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> pipe
-        .runConservativeTransient(new double[] { 0.0, 30.0 }, new SystemInterface[] { null }, 1, UUID.randomUUID()));
+        .runConservativeTransient(new double[] {0.0, 30.0}, new SystemInterface[] {null}, 1, UUID.randomUUID()));
 
     assertTrue(exception.getMessage().contains("non-null inlet system"));
     assertEquals(0.0, pipe.getSimulationTime(), 0.0, "Rejected input must not advance the pipeline clock.");
@@ -347,8 +347,8 @@ public class OnePhasePipeLineCompositionalTest {
     pipe.run(UUID.randomUUID());
 
     IllegalStateException exception = assertThrows(IllegalStateException.class,
-        () -> pipe.runConservativeTransient(new double[] { 0.0, 30.0 },
-            new SystemInterface[] { createKnownGasOilFluid() }, 1, UUID.randomUUID()));
+        () -> pipe.runConservativeTransient(new double[] {0.0, 30.0}, new SystemInterface[] {createKnownGasOilFluid()},
+            1, UUID.randomUUID()));
 
     assertTrue(exception.getMessage().contains("one gas phase only"));
     assertEquals(0.0, pipe.getSimulationTime(), 0.0, "Rejected phase appearance must not advance the pipeline clock.");
@@ -370,9 +370,8 @@ public class OnePhasePipeLineCompositionalTest {
 
     SystemInterface reversedGas = createTransmissionGas(0.80, 0.20);
     reversedGas.setTotalFlowRate(-50.0, "kg/sec");
-    IllegalStateException exception = assertThrows(IllegalStateException.class,
-        () -> pipe.runConservativeTransient(new double[] { 0.0, 30.0 }, new SystemInterface[] { reversedGas }, 1,
-            UUID.randomUUID()));
+    IllegalStateException exception = assertThrows(IllegalStateException.class, () -> pipe
+        .runConservativeTransient(new double[] {0.0, 30.0}, new SystemInterface[] {reversedGas}, 1, UUID.randomUUID()));
 
     assertTrue(exception.getMessage().contains("strictly positive inlet mass flow only"));
     assertEquals(0.0, pipe.getSimulationTime(), 0.0, "Rejected reversed flow must not advance the pipeline clock.");
@@ -396,8 +395,8 @@ public class OnePhasePipeLineCompositionalTest {
     UUID id = UUID.randomUUID();
     pipe.run(id);
     double baselineOutlet = pipe.getOutletMassFraction("nitrogen");
-    pipe.runConservativeTransient(new double[] { 0.0, 1800.0, 5400.0 }, new SystemInterface[] { pulseGas, baselineGas },
-        60, id);
+    pipe.runConservativeTransient(new double[] {0.0, 1800.0, 5400.0}, new SystemInterface[] {pulseGas, baselineGas}, 60,
+        id);
 
     OnePhaseSpeciesConservationHistory history = pipe.getSpeciesConservationHistory();
     assertEquals(120, history.size());
@@ -448,11 +447,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
-    pipe.setLegPositions(new double[] { 0.0, 100.0 });
-    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
-    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
-    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
+    pipe.setPipeDiameters(new double[] {0.1, 0.1});
+    pipe.setLegPositions(new double[] {0.0, 100.0});
+    pipe.setHeightProfile(new double[] {0.0, 0.0});
+    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
+    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
 
     pipe.run();
 
@@ -472,11 +471,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
-    pipe.setLegPositions(new double[] { 0.0, 100.0 });
-    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
-    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
-    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
+    pipe.setPipeDiameters(new double[] {0.1, 0.1});
+    pipe.setLegPositions(new double[] {0.0, 100.0});
+    pipe.setHeightProfile(new double[] {0.0, 0.0});
+    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
+    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
 
     // Initial steady state
     UUID id = UUID.randomUUID();
@@ -564,11 +563,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
-    pipe.setLegPositions(new double[] { 0.0, 100.0 });
-    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
-    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
-    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
+    pipe.setPipeDiameters(new double[] {0.1, 0.1});
+    pipe.setLegPositions(new double[] {0.0, 100.0});
+    pipe.setHeightProfile(new double[] {0.0, 0.0});
+    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
+    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
 
     pipe.run();
 
@@ -603,11 +602,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
-    pipe.setLegPositions(new double[] { 0.0, 100.0 });
-    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
-    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
-    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
+    pipe.setPipeDiameters(new double[] {0.1, 0.1});
+    pipe.setLegPositions(new double[] {0.0, 100.0});
+    pipe.setHeightProfile(new double[] {0.0, 0.0});
+    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
+    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
 
     pipe.run();
 
@@ -645,11 +644,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("3 km conservative gas pipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(12);
-    pipe.setPipeDiameters(new double[] { 0.5, 0.5 });
-    pipe.setLegPositions(new double[] { 0.0, 3000.0 });
-    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
-    pipe.setPipeWallRoughness(new double[] { 1.0e-5, 1.0e-5 });
-    pipe.setOuterTemperatures(new double[] { 288.15, 288.15 });
+    pipe.setPipeDiameters(new double[] {0.5, 0.5});
+    pipe.setLegPositions(new double[] {0.0, 3000.0});
+    pipe.setHeightProfile(new double[] {0.0, 0.0});
+    pipe.setPipeWallRoughness(new double[] {1.0e-5, 1.0e-5});
+    pipe.setOuterTemperatures(new double[] {288.15, 288.15});
     return pipe;
   }
 
@@ -684,8 +683,8 @@ public class OnePhasePipeLineCompositionalTest {
     UUID id = UUID.randomUUID();
     pipe.run(id);
     int stepsPerThirtyMinutes = (int) Math.round(1800.0 / timeStepSeconds);
-    pipe.runConservativeTransient(new double[] { 0.0, 1800.0, 3600.0, 5400.0 },
-        new SystemInterface[] { pulseGas, baselineGas, baselineGas.clone() }, stepsPerThirtyMinutes, id);
+    pipe.runConservativeTransient(new double[] {0.0, 1800.0, 3600.0, 5400.0},
+        new SystemInterface[] {pulseGas, baselineGas, baselineGas.clone()}, stepsPerThirtyMinutes, id);
     return pipe;
   }
 

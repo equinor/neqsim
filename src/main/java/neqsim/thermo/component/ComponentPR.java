@@ -65,7 +65,7 @@ public class ComponentPR extends ComponentEos {
     delta2 = 1.0 - Math.sqrt(2.0);
     setAttractiveParameter(new AttractiveTermPr(this));
 
-    double[] surfTensInfluenceParamtemp = { 1.3192, 1.6606, 1.1173, 0.8443 };
+    double[] surfTensInfluenceParamtemp = {1.3192, 1.6606, 1.1173, 0.8443};
     this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
@@ -277,7 +277,7 @@ public class ComponentPR extends ComponentEos {
    * @param m2 coefficient m2 in mol^(2/3), linear slope correction
    */
   public void setCachadinaInfluenceParameters(double m0, double m1, double m2) {
-    this.cachadinaCoeff = new double[] { m0, m1, m2 };
+    this.cachadinaCoeff = new double[] {m0, m1, m2};
   }
 
   /**

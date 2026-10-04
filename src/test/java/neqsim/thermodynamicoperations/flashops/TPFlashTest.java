@@ -76,7 +76,7 @@ class TPFlashTest {
         "multiphase endpoint must not raise Gibbs energy");
     assertEquivalentWaterBearingState(reference, poorGuess, 1.0e-8, "poor beta initialization");
 
-    for (double pressure : new double[] { 9.9, 10.0, 10.1 }) {
+    for (double pressure : new double[] {9.9, 10.0, 10.1}) {
       assertClosedEquilibrium(flashWaterBearingPr(298.15, pressure, true, false),
           "nearby low-pressure endpoint at " + pressure + " bara");
     }
@@ -128,7 +128,7 @@ class TPFlashTest {
 
   @Test
   void waterBearingPrHighPressureOrdinaryAndMultiphaseEndpointsAgree() {
-    for (double pressure : new double[] { 499.0, 500.0, 501.0 }) {
+    for (double pressure : new double[] {499.0, 500.0, 501.0}) {
       SystemInterface ordinary = flashWaterBearingPr(288.15, pressure, false, false);
       SystemInterface multiphase = flashWaterBearingPr(288.15, pressure, true, false);
       assertClosedEquilibrium(ordinary, "ordinary high-pressure endpoint at " + pressure + " bara");
@@ -586,8 +586,8 @@ class TPFlashTest {
    */
   @Test
   void testMethaneHeptaneKnownPhaseMapSpotsResolveToStablePhaseState() {
-    double[][] singleOilConditions = new double[][] { { 78.5, 194.0 }, { 81.0, 194.0 } };
-    double[][] gasOilConditions = new double[][] { { 186.0, 424.0 }, { 191.0, 418.0 } };
+    double[][] singleOilConditions = new double[][] {{78.5, 194.0}, {81.0, 194.0}};
+    double[][] gasOilConditions = new double[][] {{186.0, 424.0}, {191.0, 418.0}};
 
     for (int spotIndex = 0; spotIndex < singleOilConditions.length; spotIndex++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
@@ -630,8 +630,8 @@ class TPFlashTest {
    */
   @Test
   void testMethaneHeptaneSpuriousCollapseLeavesClosedPhaseSet() {
-    double[][] collapsedCells = new double[][] { { 47.5, 180.0 }, { 55.0, 188.0 }, { 70.0, 192.0 }, { 78.5, 194.0 },
-        { 81.0, 194.0 } };
+    double[][] collapsedCells = new double[][] {{47.5, 180.0}, {55.0, 188.0}, {70.0, 192.0}, {78.5, 194.0},
+        {81.0, 194.0}};
 
     for (int i = 0; i < collapsedCells.length; i++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
@@ -658,7 +658,7 @@ class TPFlashTest {
    */
   @Test
   void testMethaneHeptanePhaseMapPhaseFractionsRemainClosed() {
-    double[][] nonClosedCells = new double[][] { { 20.0, 166.0 }, { 87.5, 196.0 }, { 105.0, 198.0 }, { 150.0, 450.0 } };
+    double[][] nonClosedCells = new double[][] {{20.0, 166.0}, {87.5, 196.0}, {105.0, 198.0}, {150.0, 450.0}};
 
     for (int i = 0; i < nonClosedCells.length; i++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
@@ -684,7 +684,7 @@ class TPFlashTest {
    */
   @Test
   void testMethaneHeptaneSpuriousLowDensitySpikesAreCollapsed() {
-    double[][] spuriousCells = new double[][] { { 80.0, 175.0 }, { 90.0, 180.0 }, { 92.5, 180.0 }, { 95.0, 182.0 } };
+    double[][] spuriousCells = new double[][] {{80.0, 175.0}, {90.0, 180.0}, {92.5, 180.0}, {95.0, 182.0}};
 
     for (int i = 0; i < spuriousCells.length; i++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();

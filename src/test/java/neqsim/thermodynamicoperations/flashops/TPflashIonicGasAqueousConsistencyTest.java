@@ -10,8 +10,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression coverage for constrained ionic GAS+AQUEOUS TP-flash finalization. */
 class TPflashIonicGasAqueousConsistencyTest {
-  private static final String[] COMPONENTS = { "methane", "water", "Na+", "Cl-" };
-  private static final double[] AMOUNTS = { 0.1, 1.0, 0.001, 0.001 };
+  private static final String[] COMPONENTS = {"methane", "water", "Na+", "Cl-"};
+  private static final double[] AMOUNTS = {0.1, 1.0, 0.001, 0.001};
 
   @Test
   void ordinaryAndMultiphaseEndpointsAreBalancedAndEquivalent() {
@@ -121,7 +121,7 @@ class TPflashIonicGasAqueousConsistencyTest {
 
   private void assertEquivalentEndpoint(SystemInterface expected, SystemInterface actual) {
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
-    for (String phaseType : new String[] { "gas", "aqueous" }) {
+    for (String phaseType : new String[] {"gas", "aqueous"}) {
       int expectedPhase = expected.getPhaseNumberOfPhase(phaseType);
       int actualPhase = actual.getPhaseNumberOfPhase(phaseType);
       assertEquals(expected.getBeta(expectedPhase), actual.getBeta(actualPhase), 1.0e-10);

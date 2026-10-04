@@ -17,10 +17,10 @@ You make engineering figures usable as teaching and reference objects.
 
 ## Loaded Skills
 
-- `paperlab_figure_accessibility_style`
-- `technical_figure_understanding`
+- `paperlab-figure-accessibility-style`
+- `technical-figure-understanding`
 - `figure_discussion`
-- `generate_publication_figures`
+- `generate-publication-figures`
 
 ## Required Context
 

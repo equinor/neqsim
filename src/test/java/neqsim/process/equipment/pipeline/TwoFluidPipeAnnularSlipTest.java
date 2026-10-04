@@ -40,11 +40,11 @@ class TwoFluidPipeAnnularSlipTest {
         TwoFluidSection.class, double.class, double.class, double.class);
     closure.setAccessible(true);
 
-    double[] superficialGasVelocities = { 4.0, 8.0, 16.0, 32.0 };
-    double[] expectedSlipRatios = { 1.65625, 2.125, 4.0, 4.0 };
+    double[] superficialGasVelocities = {4.0, 8.0, 16.0, 32.0};
+    double[] expectedSlipRatios = {1.65625, 2.125, 4.0, 4.0};
     for (int gasCase = 0; gasCase < superficialGasVelocities.length; gasCase++) {
       double gasSuperficialVelocity = superficialGasVelocities[gasCase];
-      for (double noSlipLiquidFraction : new double[] { 0.01, 0.1, 0.3 }) {
+      for (double noSlipLiquidFraction : new double[] {0.01, 0.1, 0.3}) {
         double liquidSuperficialVelocity = gasSuperficialVelocity * noSlipLiquidFraction / (1.0 - noSlipLiquidFraction);
         double[] holdup = (double[]) closure.invoke(pipe, section, null,
             gasSuperficialVelocity * section.getGasDensity() * section.getArea(),
