@@ -103,9 +103,17 @@ final class ColumnMeshState implements Serializable {
       }
       for (int compIndex = 0; compIndex < componentCount; compIndex++) {
         String name = componentNames[compIndex];
-        externalOutletComponentFlows[trayIndex][compIndex] = componentFlow(tray.getGasSideDrawStream(), name)
-            + componentFlow(tray.getLiquidSideDrawStream(), name)
-            + componentFlow(tray.getLiquidPumparoundDrawStream(), name);
+        double externalOutletFlow = 0.0;
+        if (tray.getGasSideDrawFraction() > 0.0) {
+          externalOutletFlow += componentFlow(tray.getGasSideDrawStream(), name);
+        }
+        if (tray.getLiquidSideDrawFraction() > 0.0) {
+          externalOutletFlow += componentFlow(tray.getLiquidSideDrawStream(), name);
+        }
+        if (tray.getLiquidPumparoundDrawFraction() > 0.0) {
+          externalOutletFlow += componentFlow(tray.getLiquidPumparoundDrawStream(), name);
+        }
+        externalOutletComponentFlows[trayIndex][compIndex] = externalOutletFlow;
         if (tray instanceof Condenser && !((Condenser) tray).isTotalCondenser()) {
           externalOutletComponentFlows[trayIndex][compIndex] += componentFlow(
               ((Condenser) tray).getLiquidProductStream(), name);
