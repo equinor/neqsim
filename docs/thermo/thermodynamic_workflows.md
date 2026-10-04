@@ -96,8 +96,8 @@ rule (`EosMixingRuleType.CLASSIC`, legacy value 2).
 
 Prefer named mixing rules over raw legacy integers. The maintained
 [fluid-creation guide](fluid_creation_guide.md#8-mixing-rules) lists current names, compatibility
-values, and model-specific recommendations. Legacy value 1 is the no-interaction rule with all
-binary interaction parameters set to zero; it is not the database-backed classic rule.
+values, and model-specific recommendations. The legacy value 1 is the no-interaction rule, with
+all binary interaction parameters set to zero; it is not the database-backed classic rule.
 
 ## Select an equilibrium specification
 
