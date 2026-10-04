@@ -1011,3 +1011,26 @@ Added fail-closed mass/every-element checks at burner inlet mixing/PSRs, common 
 **Keywords:** distillation, simultaneous MESH, reflux, boilup, heterogeneous feeds, pumparound
 **Solution:** Added the missing active terminal flow-ratio equations to the full and local finite-difference residuals. Direct specifications now fail closed, including non-finite residuals. Isolated guarded correction retains return streams and accounts for side products/pumparound draws, named feed components and phase-flow-weighted feed enthalpies. Explicit Naphtali-Sandholm is not redundantly rerun after its guarded fallback. The correction-only initializer bypasses Sum-Rates terminal-duty equations; standalone initialization is unchanged.
 **Validation:** Integrated master `bc0ffeb416b3ea9a2404f3da373ba3f680249f41`. The final focused six tests pass: the original nearby-ratio and coordinated-flow regressions, a new reordered/subset-feed and copied-pumparound regression, inside-out telemetry, nearby K-value telemetry and complete atmospheric fractionation. A broader 104-test Maven run on the preceding candidate had 7 failures, 8 errors and 1 skip; the additional K-telemetry failure was reproduced against the passing original head, traced to redundant simultaneous correction, and eliminated by the final focused check. Existing scalar telemetry, two rejected-candidate-count assertions, three atmospheric and eight vacuum qualification failures remain open; no acceptance assertion, tolerance or iteration budget was relaxed. Vacuum investigation isolated a Sum-Rates dry-condenser seed and subsequent ill-conditioned Newton convergence. This remains a partial draft repair, not a merge qualification.
+
+### 2026-10-04 — Gas-limited stop choke list from allocation data (PEPR 80302059)
+**Type:** B (Process / production optimisation)
+**Keywords:** choke list, strupeliste, GOR, gas handling, regass scrubber, PDM allocation basis, compressor meter basis, WAG, backtest
+**Solution:** Two-constraint LP on the per-well PDM table with the gas budget calibrated on a previous stop; cross-checked with `ChokeAndGasLiftAllocationOptimizer`; stage-separation sweep for 3rd-stage pressure and scrubber temperature; gas injectors ranked from 12 months of per-well injection.
+**Notes:** A compressor-meter capacity is not the allocated well gas: on the studied platform allocated gas was 0.79 of the meter flow with a compressor train out of service, so planning on the meter figure over-promised about 1,050 Sm3/d of oil. The previous stop gave a free backtest (every GOR above 1,000 well was shut in both; oil within -6.5/+8.2 %). GOR had moved by a factor 4-5 for two wells since the last stop. A simple stage model under-predicted recompressor load by 12-38 % but gave the right slope for RVP against 3rd-stage pressure (0.30 vs 0.28 bar/bar). Tooling: PEPR skill now resolves the task root; PDM skill documents injection and basis; production-optimization skill has the natural-flow recipe.
+
+
+### 2026-10-04 — PR #4127 diagnostic and total-condenser repairs
+
+- Reproduced absent side-draw diagnostics throwing on a diagnostic tray without a mixed stream.
+  Inactive draws now contribute zero without constructing unused phase streams; active draws
+  retain component accounting.
+- Product reconciliation changed total-condenser distillate while leaving reflux on its old
+  flow basis. Synchronize the identical liquid compositions and specified reflux split before
+  evaluating final energy and MESH residuals; strengthen the existing mass-balance regression
+  with an explicit physical reflux-ratio assertion.
+- Atmospheric/vacuum qualification remains unresolved. Additional Newton flow sweeps reached
+  300 iterations without closing the atmospheric ratio or tray balance, and a ratio-aware
+  initializer experiment did not qualify either representative case. Both experiments were
+  discarded; no physical tolerances, iteration budgets or assertions were loosened.
+- Documentation impact: total-condenser publication and inactive-draw diagnostic semantics
+  documented in the distillation guide.

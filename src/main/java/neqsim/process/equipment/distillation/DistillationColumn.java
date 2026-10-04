@@ -12695,6 +12695,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void synchronizeColumnEndProductStreams(UUID id) {
     if (hasCondenser && gasOutStream != null && getCondenser() != null) {
       synchronizeProductStream(getCondenser().getProductOutStream(), gasOutStream, id);
+      if (getCondenser().isTotalCondenser() && getCondenser().isRefluxSet()) {
+        StreamInterface reflux = getCondenser().getLiquidOutStream();
+        synchronizeProductStream(reflux, gasOutStream, id);
+        reflux.setFlowRate(getCondenser().getRefluxRatio() * gasOutStream.getFlowRate("mol/hr"), "mol/hr");
+      }
     }
     if (hasReboiler && liquidOutStream != null && getReboiler() != null) {
       synchronizeProductStream(getReboiler().getLiquidOutStream(), liquidOutStream, id);

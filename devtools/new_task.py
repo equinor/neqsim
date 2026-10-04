@@ -394,8 +394,9 @@ def find_documents(pattern="", document_root=None, limit=0):
     Parameters
     ----------
     pattern : str
-        Case-insensitive substring matched against the path relative to the
-        document root. Empty lists every file.
+        Case-insensitive words, each of which must occur in the path relative to
+        the document root (so "API 521" finds "API STD 521 ..."). Empty lists
+        every file.
     document_root : str or None
         Explicit folder that overrides environment and saved settings.
     limit : int
@@ -410,7 +411,7 @@ def find_documents(pattern="", document_root=None, limit=0):
     if root is None:
         raise ValueError(
             "No document root configured. Set one: neqsim --set-document-root \"PATH\"")
-    needle = (pattern or "").strip().lower()
+    needles = (pattern or "").lower().split()
     matches = []
     visited = set()
     # followlinks reaches a junction/symlink subfolder, which a library assembled
@@ -426,7 +427,8 @@ def find_documents(pattern="", document_root=None, limit=0):
             if name.startswith("."):
                 continue
             path = os.path.join(folder, name)
-            if needle and needle not in os.path.relpath(path, root).lower():
+            relative = os.path.relpath(path, root).lower()
+            if not all(word in relative for word in needles):
                 continue
             matches.append(path)
             if limit and len(matches) >= limit:

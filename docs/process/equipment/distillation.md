@@ -297,7 +297,12 @@ The `NEWTON` finite-difference sweeps and final `WEGSTEIN` synchronization alway
 relaxation. They therefore install one owned clone of each already-flashed internal outlet directly
 as the target tray inlet, without previous-stream arrays or a second cache clone. The owned
 snapshot still follows the established relaxation and reflash path, preserving downstream
-tear-state thermodynamic semantics. Audit the work with
+tear-state thermodynamic semantics. For a ratio-controlled total condenser, reconciled distillate and reflux use the same liquid
+composition, and reflux flow remains the specified ratio times distillate flow. Tray material and
+energy residuals are evaluated after this split is synchronized. In MESH material diagnostics, inactive side draws and
+pumparound draws contribute zero without constructing phase streams. This also permits diagnostic
+tray implementations that expose outlet streams without a mixed stream. Active draws remain part
+of the component balance. Audit the work with
 `getLastAcceleratedFullTraySweepCount()` and
 `getLastAcceleratedInternalStreamTransferCount()`. The counters describe attempted accelerator
 work, survive accepted `AUTO` candidate adoption, and can remain nonzero if a coordinated fallback
