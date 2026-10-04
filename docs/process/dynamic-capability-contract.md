@@ -266,7 +266,7 @@ boundary has an audited state-ownership category:
 - algebraic: standard `Stream` execution, composite module containers, `EnergyNetworkSolver`, ISO-5167 `Orifice`,
   `WellFlow` IPR pressure-flow relations, `Heater`, `Mixer`, `Splitter`, `MembraneSeparator`, and the quasi-steady
   `AdiabaticPipe`;
-- lumped: separators, tanks and `VesselDepressurization`, two-stream heat exchangers, compressors/expanders, pumps,
+- lumped: separators, `Tank`, `MountainCavern` and `VesselDepressurization`, two-stream heat exchangers, compressors/expanders, pumps,
   throttling/control/safety valves, `EnergyConverter` families, `BatteryStorage`, `Filter`,
   `CommittedEnergyGenerator`, `Electrolyzer`, and `ReleaseInventory`;
 - distributed: `OnePhasePipeLine`, `TwoFluidPipe`, drift-flux `TransientPipe`, `WaterHammerPipe`, the generic
@@ -291,6 +291,13 @@ audited category.
 
 An audit category states what kind of state the implementation owns. It does **not** establish conservation,
 timestep/mesh independence, transient stability, benchmark parity, restart, rollback, controls, or safety maturity.
+`MountainCavern` owns a persistent component inventory and a scalar pressure-relaxation state, so its category is
+`DYNAMIC_LUMPED`. Runtime activation remains `UNVERIFIED`. This is an isothermal screening model: the drop line is
+represented by an empirical relaxation time rather than coupled hydraulic and mass-transfer equations. Its current
+transient step uses hours, and the vent modifies an equilibrium-target clone rather than removing gas from the
+persistent inventory. The classification does not qualify seconds-based `ProcessSystem` integration, conservative
+vent discharge, outlet-flow accounting, or relief sizing; those require separate implementation and validation.
+
 In particular, `PipeBeggsAndBrills` owns spatially distributed transient profile state but has no conservative
 mass-storage/line-pack term. Its distributed category must not be used as evidence for severe slugging, liquid-rich
 transients, line pack, or another storage-driven claim; route those studies to the separately qualified `TwoFluidPipe`

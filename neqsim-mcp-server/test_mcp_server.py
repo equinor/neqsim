@@ -1505,9 +1505,16 @@ def test_capabilities():
     check("implementation inventory resolves 60 classes",
           implementation.get("implementationClassCount") == 60,
           str(implementation))
-    check("implementation inventory exposes 207 factory equipment types",
-          implementation.get("equipmentTypeCount") == 207,
+    equipment_types = implementation.get("supportedEquipmentTypes", [])
+    contract_equipment_types = r.get("processJsonContract", {}).get(
+        "supportedEquipmentTypes", [])
+    check("implementation inventory matches process JSON equipment contract",
+          implementation.get("equipmentTypeCount") == len(equipment_types)
+          and equipment_types == contract_equipment_types,
           str(implementation))
+    check("implementation inventory exposes MountainCavern",
+          "MountainCavern" in equipment_types,
+          str(equipment_types))
     report_paths = implementation.get("reportPaths", [])
     check("implementation inventory exposes two report paths",
           implementation.get("reportPathCount") == 2
