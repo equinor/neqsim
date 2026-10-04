@@ -1033,6 +1033,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
           - interpolateCumulativeVolumePercent(normalizedLowerBoundary);
       double specificGravityWeightedLiquidVolumePercent = 0.0;
       double liquidVolumeWeightedBoilingPointKelvinPercent = 0.0;
+      double liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent = 0.0;
       for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
         double overlapLowerBoundary = Math.max(normalizedLowerBoundary, boilingPointKelvin[sourceCutIndex]);
         double overlapUpperBoundary = Math.min(normalizedUpperBoundary, boilingPointKelvin[sourceCutIndex + 1]);
@@ -1042,11 +1043,16 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
           specificGravityWeightedLiquidVolumePercent += overlapLiquidVolumePercent * specificGravity[sourceCutIndex];
           liquidVolumeWeightedBoilingPointKelvinPercent += overlapLiquidVolumePercent * 0.5
               * (overlapLowerBoundary + overlapUpperBoundary);
+          liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent += overlapLiquidVolumePercent
+              * (overlapLowerBoundary * overlapLowerBoundary + overlapLowerBoundary * overlapUpperBoundary
+                  + overlapUpperBoundary * overlapUpperBoundary)
+              / 3.0;
         }
       }
 
       return new TbpBoilingRangeProperties(normalizedLowerBoundary, normalizedUpperBoundary, liquidVolumePercent,
-          specificGravityWeightedLiquidVolumePercent, liquidVolumeWeightedBoilingPointKelvinPercent);
+          specificGravityWeightedLiquidVolumePercent, liquidVolumeWeightedBoilingPointKelvinPercent,
+          liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent);
     }
 
     /**
@@ -1418,19 +1424,27 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     private final double liquidVolumePercent;
     private final double specificGravityWeightedLiquidVolumePercent;
     private final double liquidVolumeWeightedBoilingPointKelvinPercent;
+    private final double liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent;
     private final double averageSpecificGravity;
     private final double averageBoilingPointKelvin;
+    private final double boilingPointVarianceKelvinSquared;
 
     private TbpBoilingRangeProperties(double lowerBoilingPointKelvin, double upperBoilingPointKelvin,
         double liquidVolumePercent, double specificGravityWeightedLiquidVolumePercent,
-        double liquidVolumeWeightedBoilingPointKelvinPercent) {
+        double liquidVolumeWeightedBoilingPointKelvinPercent,
+        double liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent) {
       this.lowerBoilingPointKelvin = lowerBoilingPointKelvin;
       this.upperBoilingPointKelvin = upperBoilingPointKelvin;
       this.liquidVolumePercent = liquidVolumePercent;
       this.specificGravityWeightedLiquidVolumePercent = specificGravityWeightedLiquidVolumePercent;
       this.liquidVolumeWeightedBoilingPointKelvinPercent = liquidVolumeWeightedBoilingPointKelvinPercent;
+      this.liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent = liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent;
       this.averageSpecificGravity = specificGravityWeightedLiquidVolumePercent / liquidVolumePercent;
       this.averageBoilingPointKelvin = liquidVolumeWeightedBoilingPointKelvinPercent / liquidVolumePercent;
+      double averageSquaredBoilingPointKelvinSquared = liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent
+          / liquidVolumePercent;
+      this.boilingPointVarianceKelvinSquared = Math.max(0.0,
+          averageSquaredBoilingPointKelvinSquared - averageBoilingPointKelvin * averageBoilingPointKelvin);
     }
 
     /** @return normalized lower boiling boundary in K */
@@ -1487,9 +1501,28 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       return liquidVolumeWeightedBoilingPointKelvinPercent;
     }
 
+    /**
+     * Return the liquid-volume-weighted second raw boiling-temperature moment.
+     *
+     * @return second raw boiling-temperature moment in K squared liquid-volume percent
+     */
+    public double getLiquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent() {
+      return liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent;
+    }
+
     /** @return liquid-volume-weighted mean TBP boiling point in K */
     public double getAverageBoilingPointKelvin() {
       return averageBoilingPointKelvin;
+    }
+
+    /** @return liquid-volume-weighted boiling-temperature variance in K squared */
+    public double getBoilingPointVarianceKelvinSquared() {
+      return boilingPointVarianceKelvinSquared;
+    }
+
+    /** @return liquid-volume-weighted boiling-temperature standard deviation in K */
+    public double getBoilingPointStandardDeviationKelvin() {
+      return Math.sqrt(boilingPointVarianceKelvinSquared);
     }
 
     /** @return liquid-volume-weighted mean TBP boiling point in degC */
