@@ -467,3 +467,77 @@ def test_glob_declared_outputs_are_matched_not_taken_literally(tmp_path):
     out = _run(task).stdout
     assert "declares an output that is missing: results/steady_*.json" not in out
     assert "declares an output that is missing: results/none_*.json" in out
+
+
+def test_right_hand_header_logo_stays_on_page_when_template_is_rotated(tmp_path):
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls, qn
+    from docx.enum.section import WD_ORIENT
+    from docx.shared import Cm
+
+    template = tmp_path / "landscape_logo.docx"
+    doc = docx.Document()
+    section = doc.sections[0]
+    section.orientation = WD_ORIENT.LANDSCAPE
+    section.page_width, section.page_height = Cm(29.7), Cm(21.0)
+    section.left_margin = section.right_margin = Cm(3.0)
+    cx = Cm(3.0)
+    offset = Cm(29.7 - 3.0 - 3.0 - 3.0 - 1.0)
+    anchor = parse_xml(
+        '<wp:anchor {} simplePos="0" relativeHeight="1" behindDoc="1" locked="0" '
+        'layoutInCell="1" allowOverlap="1" distT="0" distB="0" distL="0" distR="0">'
+        '<wp:simplePos x="0" y="0"/>'
+        '<wp:positionH relativeFrom="column"><wp:posOffset>{}</wp:posOffset></wp:positionH>'
+        '<wp:positionV relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionV>'
+        '<wp:extent cx="{}" cy="{}"/><wp:wrapNone/></wp:anchor>'.format(
+            nsdecls("wp"), int(offset), int(cx), int(cx)))
+    header = section.header
+    header.is_linked_to_previous = False
+    header.paragraphs[0].add_run()._r.append(anchor)
+    doc.save(str(template))
+
+    task = _make_task(tmp_path)
+    _run(task, "--template", str(template), "--title", "Logo check")
+
+    report = docx.Document(str(_report_docx(task)))
+    section = report.sections[0]
+    assert section.page_width < section.page_height
+    anchor = next(report.sections[0].header._element.iter(qn("wp:anchor")))
+    pos_h = anchor.find(qn("wp:positionH"))
+    x_left = (section.page_width - section.right_margin
+              + int(pos_h.find(qn("wp:posOffset")).text))
+    assert pos_h.get("relativeFrom") == "rightMargin"
+    assert x_left + int(anchor.find(qn("wp:extent")).get("cx")) <= section.page_width
+
+
+def _write_config(task, template_value):
+    (task / "study_config.yaml").write_text(
+        'study:\n  title: "Config template"\nreport:\n  template: "{}"\n'.format(
+            template_value), encoding="utf-8")
+
+
+def _header_text(task):
+    return docx.Document(str(_report_docx(task))).sections[0].header.paragraphs[0].text
+
+
+def test_study_config_template_applies_and_relative_path_resolves(tmp_path):
+    template = _make_template(tmp_path / "t.docx", header_text="CONFIG BRAND")
+    task = _make_task(tmp_path)
+    shutil.copy(str(template), str(task / "t.docx"))
+    _write_config(task, "t.docx")
+
+    _run(task)
+
+    assert _header_text(task) == "CONFIG BRAND"
+
+
+def test_study_config_template_none_and_cli_override(tmp_path):
+    template = _make_template(tmp_path / "t.docx", header_text="CLI BRAND")
+    task = _make_task(tmp_path)
+    _write_config(task, "none")
+    _run(task)
+    assert _header_text(task) != "CLI BRAND"
+
+    _write_config(task, "missing.docx")
+    _run(task, "--template", str(template))
+    assert _header_text(task) == "CLI BRAND"

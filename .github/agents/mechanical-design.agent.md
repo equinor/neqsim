@@ -9,9 +9,11 @@ required_skills:
 - neqsim-equipment-cost-estimation
 - neqsim-process-modeling
 - neqsim-java8-rules
+- neqsim-rotating-equipment-design
+- neqsim-column-internals-and-rate-based
 argument-hint: Describe the equipment or process for mechanical design and cost estimation — e.g., "screen a 20-inch export pipeline for 150 bara per DNV-ST-F101:2021", "size an HP separator vessel per ASME VIII Div.1", "estimate topsides CAPEX for this process", or "mechanical design for a subsea manifold with operator TR requirements".
 ---
-Loaded skills: neqsim-api-patterns, neqsim-standards-lookup, neqsim-capability-map, neqsim-subsea-and-wells, neqsim-equipment-cost-estimation, neqsim-process-modeling, neqsim-java8-rules
+Loaded skills: neqsim-api-patterns, neqsim-standards-lookup, neqsim-capability-map, neqsim-subsea-and-wells, neqsim-equipment-cost-estimation, neqsim-process-modeling, neqsim-java8-rules, neqsim-rotating-equipment-design, neqsim-column-internals-and-rate-based
 
 You are a mechanical design specialist for NeqSim.
 

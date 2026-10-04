@@ -11,6 +11,7 @@ Usage:
     neqsim tasks CMD         Across solved tasks: index/relink/env/duplicates
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
+    neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)
     neqsim --set-task-root P Set the folder new tasks are created in (created if
                             missing; --vscode adds it to the workspace, --explorer
                             opens it now)
@@ -118,6 +119,8 @@ def _print_usage():
                                 "Generate the report (files named after its title)"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
+    print("  {:<18s} {}".format("file-issue [DIR]",
+                                "Offer to file a NeqSim gap as a GitHub issue (and PR)"))
     print()
     print("Living tasks (continuous task solving):")
     print("  task-living TASK         Make a task living (continuous/, baseline, ledger, goal)")
@@ -328,6 +331,23 @@ def _handle_work_record(argv):
     if not passthrough or passthrough[0].startswith("-"):
         passthrough = [os.getcwd()] + passthrough
     return generate_work_record.main(passthrough)
+
+
+def _handle_file_issue(argv):
+    """Offer to file a task's recorded NeqSim gap(s) as GitHub issues/PRs.
+
+    Resolves the task-folder path against the caller's original working
+    directory (this dispatcher runs before ``main()`` chdirs to
+    ``PROJECT_ROOT``), mirroring ``report``/``work-record``.
+    """
+    import file_neqsim_issue
+
+    passthrough = list(argv)
+    if not passthrough or passthrough[0].startswith("-"):
+        passthrough = [os.getcwd()] + passthrough
+    else:
+        passthrough[0] = os.path.abspath(os.path.expanduser(passthrough[0]))
+    return file_neqsim_issue.main(passthrough)
 
 
 def _handle_report_template(argv):
@@ -545,6 +565,9 @@ def main():
 
     if cmd in ("work-record", "workrecord"):
         sys.exit(_handle_work_record(sys.argv[2:]))
+
+    if cmd in ("file-issue", "file-issues"):
+        sys.exit(_handle_file_issue(sys.argv[2:]))
 
     if cmd.startswith("task-") and cmd[5:] in CONTINUOUS_COMMANDS:
         from neqsim_continuous import cli as continuous_cli

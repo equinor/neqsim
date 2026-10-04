@@ -495,6 +495,17 @@ normal report tools.
 
 ### 10.2 On a Linux server
 
+Use `--every-hours 2` instead of `--daily` for a recurring interval. Supported
+intervals are 1, 2, 3, 4, 6, 8, 12 and 24 whole hours, anchored at local midnight
+on both Windows and cron. Other intervals are rejected because cron hour steps
+reset each day and would not preserve the requested spacing. Use only one timing
+option; daily times must be between 00:00 and 23:59. These are local wall-clock
+schedules, so daylight-saving transitions may change elapsed spacing.
+
+Windows runs a quoted `continuous/run_cycle.cmd` wrapper to support paths with
+spaces. If the wrapper path itself exceeds the Task Scheduler command limit,
+installation reports a failure and asks for a shorter task path.
+
 `task-schedule` prints the cron line instead of installing it:
 
 ```bash

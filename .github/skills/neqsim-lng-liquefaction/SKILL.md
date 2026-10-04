@@ -1,7 +1,7 @@
 ---
 name: neqsim-lng-liquefaction
 description: LNG liquefaction modelling in NeqSim. USE WHEN: building or sizing a liquefaction plant (SMR, DMR, C3MR, cascade, nitrogen expander), calibrating a mixed refrigerant, computing liquefaction specific energy or power, scaling to trains, choosing gas-turbine against electric drive and the resulting carbon intensity, or sizing LNG storage and cargo loading. Covers LNGProcessBuilder, LNGProcessModel, the mandatory specific-energy benchmark gate, and the LNG bubble-point trap.
-last_verified: "2026-09-24"
+last_verified: "2026-10-03"
 ---
 
 # LNG liquefaction with NeqSim
@@ -170,3 +170,57 @@ each.
 - `neqsim-equipment-cost-estimation` — costing the trains (watch the correlation validity range)
 - `neqsim-ccs-hydrogen` — if the CO2 removed upstream is captured rather than vented
 - `neqsim-benchmark-reference-data` — the reference-data comparison layer for the validation gate
+
+## LNG storage, ageing, rollover and shipping
+
+Use these classes for LNG storage and voyage ageing; they complement, not replace, the liquefaction-train design above.
+
+| Class | Package | Role and verified entry points |
+|---|---|---|
+| `LNGTankLayeredModel`, `LNGTankLayer` | `neqsim.process.equipment.lng` | Stratified tank state; `initialise(double)`, `step(double,double)`, `getLayers()` |
+| `LNGAgeingScenario`, `LNGAgeingResult` | `neqsim.process.equipment.lng` | Process-equipment wrapper and time-series result; setters below, `getResults()`, `getBogMassFlowRate()`, `getLiquidComposition()` |
+| `LNGVaporSpaceModel` | `neqsim.process.equipment.lng` | Headspace pressure and BOG bookkeeping; constructor `(double)`, `update(double,double,double,Map,double)` |
+| `LNGRolloverDetector` | `neqsim.process.equipment.lng` | Stratification/inversion assessment; `assess(List<LNGTankLayer>)` |
+| `TankHeatTransferModel`, `TankGeometry` | `neqsim.process.equipment.lng` | Zone-based heat ingress and tank geometry; `TankHeatTransferModel(TankGeometry,double)`, `TankGeometry(ContainmentType,double)` |
+| `LNGBOGHandlingNetwork`, `LNGHeelManager` | `neqsim.process.equipment.lng` | BOG disposition and idealized cargo/heel mixing; `calculateDisposition(double)`, `calculateMixedComposition(Map<String,Double>,double,double)` |
+| `LNGVoyageProfile`, `LNGSloshingModel` | `neqsim.process.equipment.lng` | Voyage conditions and sloshing model; `LNGVoyageProfile(String)`, `addSegment(Segment)` |
+| `LNGShipModel` | `neqsim.process.equipment.lng` | Multiple tank scenarios and aggregate reporting; `addTank(LNGAgeingScenario)`, `run()`, `getTankResults()`, `getShipResults()` |
+| `MethaneNumberCalculator` | `neqsim.process.equipment.lng` | Methane-number calculation from gas composition; `calculate(Map<String,Double>)` |
+| `LNGTank`, `Tank`, `MountainCavern`, `VesselDepressurization` | `neqsim.process.equipment.tank` | Storage equipment, cavern and vessel depressurization models; use the equipment-specific API and tests before combining with ageing scenarios |
+
+Minimal Java 8 ageing pattern, following the source example:
+
+```java
+SystemInterface lng = new SystemSrkEos(111.0, 1.013);
+lng.addComponent("methane", 0.92);
+lng.addComponent("ethane", 0.05);
+lng.addComponent("propane", 0.02);
+lng.addComponent("nitrogen", 0.01);
+lng.setMixingRule("classic");
+Stream feed = new Stream("LNG feed", lng);
+feed.setFlowRate(140000.0, "m3/hr");
+feed.run();
+LNGAgeingScenario scenario = new LNGAgeingScenario("Laden Voyage", feed);
+scenario.setTankVolume(140000.0);
+scenario.setInitialFillingRatio(0.98);
+scenario.setSimulationTime(480.0);
+scenario.setTimeStepHours(1.0);
+scenario.setOverallHeatTransferCoeff(0.045);
+scenario.setAmbientTemperature(308.15);
+scenario.run();
+List<LNGAgeingResult> results = scenario.getResults();
+LNGAgeingResult finalState = results.get(results.size() - 1);
+double finalBogRateKgHr = finalState.getBogMassFlowRate();
+double finalTankPressureBara = finalState.getPressure();
+```
+
+### Storage-model gotchas
+
+- Temperatures passed to `setAmbientTemperature` are K; tank pressure is bara; volume is m3; overall U is W/(m2 K); time and step are hours. Do not reuse the liquefaction builder's Celsius setter assumptions here.
+- `LNGAgeingScenario` initializes layered storage from a single feed stream and configured fill ratio. Confirm feed composition, pressure, phase state, tank geometry and heat-transfer basis before treating results as cargo predictions.
+- `LNGRolloverDetector` identifies a stratification risk from supplied layer states; it is not a validated rollover-event CFD or safety model.
+- `LNGShipModel` runs each tank scenario independently, then aggregates each time-step's results. It does not solve a fully coupled shared BOG header, ship motion, loading dynamics or cargo interaction.
+- `LNGHeelManager.calculateMixedComposition(...)` documents instantaneous ideal mixing. It does not model incomplete mixing or a transient interface.
+- BOG disposition, methane number, sloshing, heat-transfer zones and geometry are separate model components. Do not infer full fidelity merely because the orchestrator exposes their classes.
+- Results include composition/quality values and BOG rate; verify getter units in `LNGAgeingResult` before reporting. In particular `getBogMassFlowRate()` is kg/hr and `getTimeHours()` is hours.
+- The ageing model's source and unit tests are regression evidence, not independent LNG cargo validation. Benchmark density, BOG, heat ingress and quality change against an approved reference case before design use.
