@@ -129,13 +129,13 @@ class ProcessModelCompiledEvaluationPlanTest {
     assertEquals(1, plan.getExpectedBoundaryIdentities().size());
     assertTrue(plan.getCompilationEvidence().isFeasible());
 
-    EvaluationResult result = plan.evaluate(new double[] { 700.0, 300.0 });
+    EvaluationResult result = plan.evaluate(new double[] {700.0, 300.0});
     assertEquals(Outcome.ACCEPTED, result.getOutcome(), result.getDiagnostics().toString());
     assertTrue(result.isAccepted());
     assertTrue(result.getCandidateEvidence().isFeasible());
     assertTrue(result.getCandidateEvidence().isBaselineRestored());
     assertTrue(result.getCandidateEvidence().isBaselineSimulationConverged());
-    assertArrayEquals(new double[] { 600.0, 400.0 }, result.getCandidateEvidence().getBaselineValues(), 1.0e-8);
+    assertArrayEquals(new double[] {600.0, 400.0}, result.getCandidateEvidence().getBaselineValues(), 1.0e-8);
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
 
@@ -158,8 +158,8 @@ class ProcessModelCompiledEvaluationPlanTest {
         "Compiled allocation", "controlled two-producer qualification", "master-test-baseline", evaluator);
     int evaluationsBefore = evaluator.getSimulationEvaluator().getEvaluationCount();
 
-    EvaluationResult nonFinite = plan.evaluate(new double[] { Double.NaN, 300.0 });
-    EvaluationResult wrongLength = plan.evaluate(new double[] { 700.0 });
+    EvaluationResult nonFinite = plan.evaluate(new double[] {Double.NaN, 300.0});
+    EvaluationResult wrongLength = plan.evaluate(new double[] {700.0});
 
     assertEquals(Outcome.CANDIDATE_VECTOR_INVALID, nonFinite.getOutcome());
     assertEquals(Outcome.CANDIDATE_VECTOR_INVALID, wrongLength.getOutcome());
@@ -182,7 +182,7 @@ class ProcessModelCompiledEvaluationPlanTest {
     Stream addedAfterCompilation = new Stream("late stream", fixture.producerA.getThermoSystem().clone());
     fixture.wells.add(addedAfterCompilation);
 
-    EvaluationResult result = plan.evaluate(new double[] { 700.0, 300.0 });
+    EvaluationResult result = plan.evaluate(new double[] {700.0, 300.0});
 
     assertEquals(Outcome.PLAN_STALE, result.getOutcome(), result.getDiagnostics().toString());
     assertFalse(plan.isCurrent());
@@ -204,7 +204,7 @@ class ProcessModelCompiledEvaluationPlanTest {
     evaluator.getSimulationEvaluator().setProcessModel(replacement.model);
 
     assertFalse(plan.isCurrent());
-    EvaluationResult result = plan.evaluate(new double[] { 700.0, 300.0 });
+    EvaluationResult result = plan.evaluate(new double[] {700.0, 300.0});
     assertEquals(Outcome.PLAN_STALE, result.getOutcome(), result.getDiagnostics().toString());
     assertNull(result.getCandidateEvidence());
     assertEquals(evaluationsBefore, evaluator.getSimulationEvaluator().getEvaluationCount());
@@ -226,7 +226,7 @@ class ProcessModelCompiledEvaluationPlanTest {
     int evaluationsBefore = evaluator.getSimulationEvaluator().getEvaluationCount();
 
     assertFalse(plan.isCurrent());
-    EvaluationResult result = plan.evaluate(new double[] { 700.0, 300.0 });
+    EvaluationResult result = plan.evaluate(new double[] {700.0, 300.0});
     assertEquals(Outcome.PLAN_STALE, result.getOutcome(), result.getDiagnostics().toString());
     assertNull(result.getCandidateEvidence());
     assertEquals(evaluationsBefore, evaluator.getSimulationEvaluator().getEvaluationCount());
@@ -242,7 +242,7 @@ class ProcessModelCompiledEvaluationPlanTest {
         "Compiled rating", "controlled rating qualification", "master-test-baseline", ratingEvaluator);
     ratingFixture.sharedCapacity.setDesignValue(1300.0);
 
-    EvaluationResult changedRating = ratingPlan.evaluate(new double[] { 700.0, 300.0 });
+    EvaluationResult changedRating = ratingPlan.evaluate(new double[] {700.0, 300.0});
     assertEquals(Outcome.PLAN_STALE, changedRating.getOutcome(), changedRating.getDiagnostics().toString());
     assertTrue(changedRating.getDiagnostics().toString().contains("rating"));
 
@@ -252,7 +252,7 @@ class ProcessModelCompiledEvaluationPlanTest {
         "Compiled definition", "controlled evaluator qualification", "master-test-baseline", definitionEvaluator);
     definitionEvaluator.getSimulationEvaluator().addConstraintUpperBound("late constraint", model -> 0.0, 1.0);
 
-    EvaluationResult changedDefinition = definitionPlan.evaluate(new double[] { 700.0, 300.0 });
+    EvaluationResult changedDefinition = definitionPlan.evaluate(new double[] {700.0, 300.0});
     assertEquals(Outcome.PLAN_STALE, changedDefinition.getOutcome(), changedDefinition.getDiagnostics().toString());
     assertTrue(changedDefinition.getDiagnostics().toString().contains("evaluator definition"));
   }
@@ -265,7 +265,7 @@ class ProcessModelCompiledEvaluationPlanTest {
         "Compiled allocation", "controlled two-producer qualification", "master-test-baseline",
         createEvaluator(fixture));
 
-    EvaluationResult result = plan.evaluate(new double[] { 800.0, 500.0 });
+    EvaluationResult result = plan.evaluate(new double[] {800.0, 500.0});
 
     assertEquals(Outcome.CANDIDATE_REJECTED, result.getOutcome(), result.getDiagnostics().toString());
     assertFalse(result.isAccepted());
@@ -286,7 +286,7 @@ class ProcessModelCompiledEvaluationPlanTest {
     ProcessModelCompiledEvaluationPlan plan = ProcessModelCompiledEvaluationPlan.compile("allocation-plan",
         "Compiled allocation", "controlled two-producer qualification", "master-test-baseline",
         createEvaluator(fixture));
-    EvaluationResult original = plan.evaluate(new double[] { 700.0, 300.0 });
+    EvaluationResult original = plan.evaluate(new double[] {700.0, 300.0});
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -298,14 +298,14 @@ class ProcessModelCompiledEvaluationPlanTest {
 
     assertTrue(restored.isAccepted());
     assertEquals("allocation-plan", restored.getPlanId());
-    assertArrayEquals(new double[] { 700.0, 300.0 }, restored.getCandidateValues(), 0.0);
+    assertArrayEquals(new double[] {700.0, 300.0}, restored.getCandidateValues(), 0.0);
     assertTrue(restored.getCandidateEvidence().isFeasible());
     assertTrue(plan.toJson().contains("compilationEvidence"));
     assertFalse(plan.toJson().contains("NaN"));
     assertFalse(plan.toJson().contains("Infinity"), plan.toJson());
     double[] values = restored.getCandidateValues();
     values[0] = -1.0;
-    assertArrayEquals(new double[] { 700.0, 300.0 }, restored.getCandidateValues(), 0.0);
+    assertArrayEquals(new double[] {700.0, 300.0}, restored.getCandidateValues(), 0.0);
     assertFalse(restored.toJson().contains("NaN"));
     assertFalse(restored.toJson().contains("Infinity"));
   }
