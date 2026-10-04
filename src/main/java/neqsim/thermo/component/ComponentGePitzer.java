@@ -75,6 +75,21 @@ public class ComponentGePitzer extends ComponentGE {
   }
 
   /**
+   * Differentiates the Pitzer molality activity without a symmetric-to-Henry activity normalization.
+   *
+   * @param phase owning Pitzer phase
+   * @return d(ln phi)/dT in 1/K
+   */
+  @Override
+  public double fugcoefDiffTemp(PhaseInterface phase) {
+    if (Math.abs(getIonicCharge()) < 0.5 && !"water".equalsIgnoreCase(getComponentName())) {
+      dfugdt = getLnActivityTemperatureDerivative(phase) + getLnHenryCoefficientTemperatureDerivative(phase);
+      return dfugdt;
+    }
+    return super.fugcoefDiffTemp(phase);
+  }
+
+  /**
    * Returns the Pitzer molality-scale Henry reference.
    *
    * <p>
@@ -135,43 +150,6 @@ public class ComponentGePitzer extends ComponentGE {
   @Override
   protected boolean isHenryCoefficientCapped(double henryCoefficient) {
     return super.isHenryCoefficientCapped(henryCoefficient) || isHydrocarbon() || isIsTBPfraction();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public boolean isHydrocarbon() {
-    return super.isHydrocarbon() || hasHydrocarbonFormula();
-  }
-
-  /**
-   * Check the database molecular formula for a pure hydrocarbon.
-   *
-   * <p>
-   * Some GE initialization paths classify a normal database component as {@code normal} instead of {@code HC}. The
-   * formula check keeps Pitzer aqueous-reference and parameter-topology decisions independent of that initialization
-   * detail.
-   * </p>
-   *
-   * @return {@code true} when the formula contains carbon and hydrogen only
-   */
-  private boolean hasHydrocarbonFormula() {
-    String formula = getFormulae();
-    if (formula == null || formula.isEmpty()) {
-      return false;
-    }
-    boolean carbon = false;
-    boolean hydrogen = false;
-    for (int index = 0; index < formula.length(); index++) {
-      char character = formula.charAt(index);
-      if (character == 'C') {
-        carbon = true;
-      } else if (character == 'H') {
-        hydrogen = true;
-      } else if (!Character.isDigit(character)) {
-        return false;
-      }
-    }
-    return carbon && hydrogen;
   }
 
   /** {@inheritDoc} */

@@ -30,12 +30,22 @@ This guide provides detailed documentation of the COMP database, which stores pu
 
 ## Database Overview
 
-The component, blob, experiment, and fluid database wrappers have separate
-connection lifecycles. Tests of a wrapper must use its current API: the legacy
-blob and experiment wrappers expose JDBC resources but do not implement
-`AutoCloseable`, so callers close their statements and connections explicitly.
-The blob wrapper loads the H2 driver for `H2` and `H2RT`; these configurations
-do not require the removed JDBC-ODBC bridge.
+The component, blob, experiment, and fluid database wrappers share JDBC lifecycle
+handling through `NeqSimDatabaseBase`. All four wrappers implement `AutoCloseable`
+and should be closed with Java try-with-resources. Each instance owns its statement
+and connection; repeated initialization reuses them. Closing attempts both resources,
+even if statement cleanup fails, and preserves additional SQL errors as suppressed
+exceptions. A subsequent query or execution can reopen a closed wrapper. Wrappers
+are not thread-safe and should not be shared between concurrent operations.
+
+Existing concrete APIs remain compatible: `NeqSimDataBase.execute(String)` returns
+a boolean, while blob, experiment, and fluid `execute(String)` methods return void.
+The fluid wrapper retains its legacy log-and-return error behavior and
+`getResultSet(String database, String sqlString)` overload; the database label does
+not change the active connection. Other wrappers propagate SQL failures with their
+original cause. The inherited `FileSystemSettings` constants remain available for
+existing callers. The blob wrapper loads the H2 driver for `H2` and `H2RT`, without
+the removed JDBC-ODBC bridge.
 
 The **COMP** table is the primary pure component property database in NeqSim. It contains over 150 parameters per component, organized into functional groups that support different thermodynamic models and property calculations.
 

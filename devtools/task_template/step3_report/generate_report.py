@@ -679,15 +679,20 @@ KEEP_TEMPLATE_CONTENT = False   # --keep-template-content keeps the template bod
 TEMPLATE_NUMBERS_HEADINGS = False  # template Heading styles carry their own numbering
 
 
-def resolve_report_template(explicit=None, allow_saved=True):
+def resolve_report_template(explicit=None, allow_saved=True, configured=None):
     """Resolve the Word template reports are built from, or None if unset.
 
     Parameters
     ----------
     explicit : str or None
-        Template path from --template; overrides environment and settings.
+        Template path from --template; overrides everything else.
     allow_saved : bool
-        When False (--no-template), the saved user setting is ignored.
+        When False (--no-template), study_config, environment and the saved
+        user setting are all ignored.
+    configured : str or None
+        ``report.template`` from study_config.yaml; relative paths resolve from
+        the task folder and ``none`` selects the built-in styling. Overrides
+        the environment and the saved user setting.
 
     Returns
     -------
@@ -699,6 +704,12 @@ def resolve_report_template(explicit=None, allow_saved=True):
     ValueError
         If a template is configured but is not a readable Word file.
     """
+    configured = (configured or "").strip()
+    if not explicit and allow_saved and configured:
+        if configured.lower() in ("none", "off", "builtin", "built-in"):
+            return None
+        explicit = (configured if os.path.isabs(os.path.expanduser(configured))
+                    else os.path.join(TASK_DIR, configured))
     selected = explicit or os.environ.get("NEQSIM_REPORT_TEMPLATE")
     if not selected and allow_saved and os.path.exists(TASK_DEFAULTS_FILE):
         with open(TASK_DEFAULTS_FILE, encoding="utf-8-sig") as source:
@@ -838,11 +849,54 @@ def _apply_document_language(doc):
     _set_run_language(r_pr, locale)
 
 
+def _anchor_header_drawings_to_right_margin(doc):
+    """Keep right-hand header/footer drawings (logo) on the page after a flip.
+
+    Corporate templates place the logo with a fixed offset from the left
+    column. Rotating a landscape template to portrait leaves that offset
+    beyond the page edge, so the logo vanishes. Re-expressing the offset
+    relative to the right margin keeps the same gap in either orientation.
+    """
+    seen = set()
+    for section in doc.sections:
+        left = section.left_margin or 0
+        right = section.right_margin or 0
+        page_w = section.page_width
+        parts = (section.header, section.first_page_header,
+                 section.even_page_header, section.footer,
+                 section.first_page_footer, section.even_page_footer)
+        for part in parts:
+            if part.is_linked_to_previous:
+                continue
+            root = part._element
+            if id(root) in seen:
+                continue
+            seen.add(id(root))
+            for anchor in root.iter(qn("wp:anchor")):
+                pos_h = anchor.find(qn("wp:positionH"))
+                extent = anchor.find(qn("wp:extent"))
+                if pos_h is None or extent is None:
+                    continue
+                offset = pos_h.find(qn("wp:posOffset"))
+                if offset is None:
+                    continue
+                base = {"column": left, "margin": left, "leftMargin": left,
+                        "page": 0}.get(pos_h.get("relativeFrom"))
+                if base is None:
+                    continue
+                x_left = base + int(offset.text)
+                if x_left + int(extent.get("cx")) / 2.0 < page_w / 2.0:
+                    continue
+                pos_h.set("relativeFrom", "rightMargin")
+                offset.text = str(int(x_left - (page_w - right)))
+
+
 def _normalize_page_setup(doc):
     """Set the body on a readable measure, whatever the template declares."""
     if REPORT_ORIENTATION == "template":
         return
     want_landscape = REPORT_ORIENTATION == "landscape"
+    _anchor_header_drawings_to_right_margin(doc)
     for section in doc.sections:
         if (section.page_width > section.page_height) != want_landscape:
             section.page_width, section.page_height = (
@@ -7414,17 +7468,18 @@ if __name__ == "__main__":
             sys.exit(2)
         explicit_template = sys.argv[template_index]
     KEEP_TEMPLATE_CONTENT = "--keep-template-content" in sys.argv
+    study_config = load_study_config()
     try:
         REPORT_TEMPLATE = resolve_report_template(
-            explicit_template, allow_saved="--no-template" not in sys.argv)
+            explicit_template, allow_saved="--no-template" not in sys.argv,
+            configured=study_config.get("report", {}).get("template"))
     except (OSError, ValueError) as error:
         print("ERROR: {}".format(error))
-        print("Fix the path, pass --template PATH, or run:")
+        print("Fix the path, set report.template in study_config.yaml, pass --template PATH, or run:")
         print("  neqsim --set-report-template \"PATH\"   (or --reset-report-template)")
         sys.exit(2)
 
     # Auto-read task data
-    study_config = load_study_config()
     results = load_results()
     task_spec = load_task_spec()
     record_environment(results)

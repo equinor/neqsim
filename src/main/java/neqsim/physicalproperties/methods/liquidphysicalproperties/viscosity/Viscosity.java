@@ -21,6 +21,27 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
   public double[] pureComponentViscosity;
 
   /**
+   * Calculates the viscosity of liquid water, fitted to IAPWS-95 values for 2 to 300 C and 1 to 700 bara (rms 0.5 %,
+   * max 3 % at 300 C).
+   *
+   * <p>
+   * The form is {@code mu = exp(a + b / (T - c) + d T) (1 + beta(T) (P - 1))}. The pressure factor replaces the Lucas
+   * correction for water, which has the wrong sign below about 30 C.
+   * </p>
+   *
+   * @param temperature temperature in K
+   * @param pressure pressure in bara
+   * @return water viscosity in mPa s (cP)
+   */
+  public static double calcWaterViscosity(double temperature, double pressure) {
+    double theta = (temperature - 273.15) / 100.0;
+    double beta = (-0.4235598452 + 1.3346846586 * theta - 0.0849147132 * theta * theta) * 1.0e-4;
+    double muSat = Math
+        .exp(-3.0264021713 + 466.6084425990 / (temperature - 151.8006576577) - 9.263702394e-4 * temperature);
+    return muSat * (1.0 + beta * (pressure - 1.0));
+  }
+
+  /**
    * Constructor for Viscosity.
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
@@ -63,7 +84,8 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
         double wigthFracj = liquidPhase.getPhase().getWtFrac(j);
         if (i != j) {
-          tempVar2 += wigthFraci * wigthFracj * liquidPhase.getMixingRule().getViscosityGij(i, j);
+          tempVar2 += wigthFraci * wigthFracj
+              * liquidPhase.getMixingRule().getViscosityGij(i, j, liquidPhase.getPhase().getTemperature());
           // System.out.println("gij " + liquidPhase.getMixingRule().getViscosityGij(i,
           // j));
         }
@@ -84,6 +106,10 @@ public class Viscosity extends LiquidPhysicalPropertyMethod implements Viscosity
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       if (liquidPhase.getPhase().getTemperature() > liquidPhase.getPhase().getComponent(i).getTC()) {
         pureComponentViscosity[i] = 5.0e-1;
+      } else if ("water".equalsIgnoreCase(liquidPhase.getPhase().getComponent(i).getComponentName())) {
+        pureComponentViscosity[i] = calcWaterViscosity(liquidPhase.getPhase().getTemperature(),
+            liquidPhase.getPhase().getPressure());
+        continue;
       } else if (liquidPhase.getPhase().getComponent(i).getLiquidViscosityModel() == 1) {
         pureComponentViscosity[i] = liquidPhase.getPhase().getComponent(i).getLiquidViscosityParameter(0)
             * Math.pow(liquidPhase.getPhase().getTemperature(),

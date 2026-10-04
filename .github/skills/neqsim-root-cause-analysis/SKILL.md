@@ -301,6 +301,33 @@ Compares current (latest) values to STID design values.
 - **STRONG**: > 20% deviation from design
 - **MODERATE**: 10-20% deviation
 
+### Weather as Evidence (ambient/met-ocean conditions)
+
+Some trips and performance shifts correlate with **weather at the equipment's
+location**, not with anything in the historian: an air-cooler/fin-fan or a
+gas-turbine driver losing margin on a hot day, a flare/dispersion or
+fire-water-monitor case degraded by wind, a marine/topside motion event during
+a storm, or a cold snap driving a hydrate/freeze-related valve or instrument
+failure. When the hypothesis list includes an ambient-condition driver, pull
+the historical weather for the equipment's location and the trip/event window
+with the community `neqsim-weather-data` skill (`WeatherDataService.get_historical`
+or the `installation-weather-agent`) and compare it against the equipment's
+design/rated ambient envelope (ISO ambient for a gas turbine, design ambient
+for an air cooler, etc.):
+
+- **STRONG**: the ambient condition at the event time is outside the
+  equipment's design/rated envelope (e.g. ambient above ISO plus derate margin).
+- **MODERATE**: inside the envelope but at a seasonal or historical extreme
+  for the site (compare against `design_site_conditions`'s percentiles).
+- Treat this like the control-loop correlation trap above: a weather match is
+  circumstantial evidence, not proof. Score it, do not promote it to a
+  confirmed cause without a NeqSim verification run (e.g. re-flash the gas
+  turbine or air cooler at the observed ambient condition and check the
+  predicted margin against what was actually seen).
+- There is no built-in ambient-temperature hypothesis in the compressor/pump/
+  separator/heat-exchanger/valve libraries above; add one as a custom
+  hypothesis (see Extending the Framework) when weather is a candidate driver.
+
 ## Simulation Verification
 
 The verifier clones the process system, applies a perturbation matching each
@@ -346,6 +373,7 @@ emitted in `RootCauseReport.toJson()` and MCP JSON.
 | `neqsim-troubleshooting` | Recovery strategies after diagnosis |
 | `neqsim-process-safety` | Link RCA findings to barrier management |
 | `neqsim-pid-process-operations` | P&ID context for equipment relationships |
+| `neqsim-weather-data` (community) | Historical ambient temperature, wind and sea-state for the equipment's location and event window, when weather is a candidate driver |
 
 **When the symptom is unknown**, do not ask the user "what should I look for?".
 Chain `neqsim-plant-data → neqsim-autonomous-investigation → this skill`: the

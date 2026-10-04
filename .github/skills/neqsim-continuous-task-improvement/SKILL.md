@@ -145,6 +145,56 @@ drift:
 Step and criterion triggers (`triggers.kpi_step`, `triggers.criteria: {kpi: "< 0.785"}`)
 fire on **crossing**, so a persistent state raises one trigger, not one per day.
 
+## Production optimisation loop (advisory)
+
+`neqsim task-living <task> --template production` writes a plan, a goal with constraints and an empty
+`continuous/user_input.yaml`. Stages, in order: `sense`, `inputs`, `script:model_update` (live data into the
+model, run, residual KPIs), `script:optimize` (search, returns `proposals`), `kpis`, `gates`, `constraints`,
+`guard`, `drift`, `goal`, `diff`, `outcome`, `ledger`, `digest`, `notify`. The loop is advisory: it never
+writes to a control system and every proposal carries `requires_approval`.
+
+- **Levers**: by default every operator-adjustable parameter is a lever; the plan lists them under
+  `production.levers`. The task-local `optimize.py` of the Snorre A reference task supports three kinds:
+  `separator_pressure`, `well_rate` (choke opening: scales a manifold feed at constant GOR/water cut; assumes the
+  reservoir and tubing deliver it, so proposals carry `needs_well_check`) and `equipment_setpoint` (any
+  unit-operation setter: `{tag, setter, getter, unit, step, lo, hi}`; not yet run on a real model, so check the
+  getter and setter signatures first). Bounds are the operating-experience
+  envelope. Each lever is stepped both ways, positive moves are then simulated together (moves interact, so the
+  gains are not summed). Call `lever_limits(ctx, name, lo, hi)` so user restrictions apply.
+- **Gates** (`gates:` in the plan: `{name, kpi, abs_max|max|min}`): no advice while the model residuals,
+  mass balance, input age or live-data flag are outside limits. A missing KPI fails the gate.
+- **Constraints** (`constraints:` in `goal.yaml`: `{name, kpi, op, limit, margin, warn, hard, source}`):
+  `margin` tightens the limit (use the lab-vs-model scatter for a product spec; for equipment use
+  `demonstrated_limit(history, quantile, design)` = larger of design and experience). A hard constraint
+  with no `limit` is **unconfirmed** and withholds all advice. Slack becomes the KPI `slack_<name>`.
+- **Proposals** must carry `setpoints`, `expected_gain` and `predicted` (a value for every hard-constrained
+  KPI). The `guard` stage keeps only proposals that satisfy every hard constraint with margin; the rest are
+  listed in `guard.json` with the reasons.
+- **Outcome**: ledger items set to `implemented` with `objective_kpi` and `baseline_value` are compared with
+  the realised gain each cycle (`outcome_confirmed` / `outcome_miss`); the engineer decides on `verified`.
+- **Boundary conditions**: read the measured process boundary (here gas export and injection pressure and
+  temperature, via `production.gas_tags`) every cycle as KPIs `<name>_meas`, with `<name>_model`/`_resid`
+  when the model has the counterpart, so a model that drifts from the boundary is visible.
+
+### Comments and restrictions from the engineers
+
+The engineer can steer the loop between cycles without touching code. Entries live in
+`continuous/user_input.yaml`; the `inputs` stage reads them first in every cycle, applies the effects,
+prints them in the digest and the living report, and raises `user_input:<id>` once when an entry is new or
+changed (`user_input_expired:<id>` when it expires). Add, list and resolve with the CLI:
+
+```text
+neqsim task-note <task> "Vigdis HP choke limited by sand, max +5 %" --lever "Vigdis HP wells" --hi 5 --by NAME
+neqsim task-note <task> "Spec is 0.70 bara RVP per lab" --constraint rvp_spec --kpi export_rvp_bara --limit 0.70 --margin 0.05
+neqsim task-note <task> "Keep 3rd stage fixed during the trial" --freeze "20D-VA60 3rd stage" --expires 2026-11-01
+neqsim task-note <task> "Lab bias measured" --setting production.rvp_bias_bara=0.05
+neqsim task-note <task> --list           # or --resolve U-001 --by NAME
+```
+
+Effects: `lever_bound` (replaces the plan bounds, so it can also widen), `lever_freeze`, `constraint`
+(sets or adds a goal constraint, which also confirms an unset limit), `setting` (dotted plan key) and `gate`.
+A note with no effect is free text that the digest and the agent see. Resolve an entry to stop its effects;
+the file is the audit trail, so do not delete entries.
 ## Plugins (public-first)
 
 Entry-point groups `neqsim_continuous.adapters`, `.stages`, `.notifiers`.

@@ -238,6 +238,14 @@ double minColdUtility = pinch.getMinColdUtility();
 - Standards: See `neqsim-standards-lookup` skill for equipment design standards
 - Dynamic simulation: See `neqsim-dynamic-simulation` skill for transient analysis
 - Troubleshooting: See `neqsim-troubleshooting` skill for convergence recovery
+- Domain units (load only when the flowsheet contains them; or delegate to the named agent):
+  - Claus / sulfur recovery: `neqsim-sulfur-recovery`; amine, membrane, PSA: `neqsim-acid-gas-treating` (`@gas-processing-refining`)
+  - Crude assay, blending, hydrotreating: `neqsim-refinery-crude-processing`; tray/packed/rate-based column hydraulics: `neqsim-column-internals-and-rate-based`
+  - Produced water, solids, filtration: `neqsim-produced-water-and-solids-separation`
+  - Looped networks, linepack, terminals: `neqsim-pipeline-and-terminal-networks`; energy bus, electrification, GT dispatch: `neqsim-energy-systems-and-electrification` (`@network-energy-systems`)
+  - Compressor/expander/pump charts and mechanical screening: `neqsim-rotating-equipment-design` (`@rotating-equipment`)
+  - Capacity limits and bottlenecks: `neqsim-capacity-and-utilization-analysis`
+  - Engineering package, P&ID synthesis, DEXPI: `neqsim-engineering-design-package`; superstructure screening: `neqsim-process-synthesis-research`
 
 ## API Verification
 ALWAYS read the actual class source to verify method signatures before using them. Do NOT assume API patterns — check constructors, method names, and parameter types.

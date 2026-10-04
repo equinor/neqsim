@@ -45,8 +45,11 @@ public final class ResponseSizeGuard {
 
   private static final Gson GSON = new GsonBuilder().serializeSpecialFloatingPointValues().create();
 
-  /** Default maximum serialized response size in bytes; accommodates both protected discovery views. */
-  private static final int DEFAULT_MAX_BYTES = 272 * 1024;
+  /**
+   * Default maximum serialized response size in bytes; accommodates the protected discovery inventories and coverage
+   * summary.
+   */
+  private static final int DEFAULT_MAX_BYTES = 280 * 1024;
 
   /** Configured maximum serialized response size in bytes; 0 disables trimming. */
   private static final int MAX_BYTES = readLimit();
@@ -56,9 +59,9 @@ public final class ResponseSizeGuard {
       .unmodifiableList(java.util.Arrays.asList("apiVersion", "status", "tool", "message", "provenance", "validation",
           "qualityGate", "warnings", "errors", "truncation"));
 
-  /** Discovery members that have no equivalent selective-retrieval route. */
-  private static final List<String> PROTECTED_CAPABILITY_FIELDS = Collections
-      .unmodifiableList(java.util.Arrays.asList("implementationInventory", "phase0EvidenceInventory"));
+  /** Required discovery evidence and the compact paginated-coverage entry point. */
+  private static final List<String> PROTECTED_CAPABILITY_FIELDS = Collections.unmodifiableList(
+      java.util.Arrays.asList("implementationInventory", "phase0EvidenceInventory", "engineeringCoverage"));
 
   /**
    * Private constructor — utility class.

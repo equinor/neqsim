@@ -111,6 +111,114 @@
       "expect_skills_top5": [
         "neqsim-process-modeling"
       ]
+    },
+    {
+      "id": "claus-sru",
+      "prompt": "Claus sulfur recovery unit with tail gas treatment and recycle, sulfur recovery efficiency and stack SO2",
+      "expect_agent_top3": ["gas-processing-refining", "process-model"],
+      "expect_skills_top5": ["neqsim-sulfur-recovery"]
+    },
+    {
+      "id": "amine-sweetening",
+      "prompt": "MDEA amine sweetening absorber and regenerator for CO2 and H2S removal, rich loading and reboiler duty",
+      "expect_agent_top3": ["gas-processing-refining", "process-model", "thermo-fluid"],
+      "expect_skills_top5": ["neqsim-acid-gas-treating"]
+    },
+    {
+      "id": "crude-assay-blend",
+      "prompt": "characterize two crude assays and blend them to a sulfur limit, then hydrotreating hydrogen demand",
+      "expect_agent_top3": ["gas-processing-refining", "thermo-fluid", "pvt-simulation"],
+      "expect_skills_top5": ["neqsim-refinery-crude-processing"]
+    },
+    {
+      "id": "packed-column-flooding",
+      "prompt": "packed column diameter, flooding margin and HETP for a rate-based absorber versus trays",
+      "expect_agent_top3": ["gas-processing-refining", "process-model", "mechanical-design"],
+      "expect_skills_top5": ["neqsim-column-internals-and-rate-based"]
+    },
+    {
+      "id": "produced-water-train",
+      "prompt": "produced water hydrocyclone and gas flotation train to hit 30 mg/L oil in water",
+      "expect_agent_top3": ["gas-processing-refining", "production-chemistry"],
+      "expect_skills_top5": ["neqsim-produced-water-and-solids-separation"]
+    },
+    {
+      "id": "looped-network-quality",
+      "prompt": "looped gas gathering network with choke optimisation and a CO2 quality limit at the delivery point",
+      "expect_agent_top3": ["network-energy-systems", "field-development", "optimize"],
+      "expect_skills_top5": ["neqsim-pipeline-and-terminal-networks"]
+    },
+    {
+      "id": "terminal-cargo-schedule",
+      "prompt": "crude oil terminal tank inventory and cargo nomination schedule with crude blending",
+      "expect_agent_top3": ["network-energy-systems", "field-development"],
+      "expect_skills_top5": ["neqsim-pipeline-and-terminal-networks"]
+    },
+    {
+      "id": "power-from-shore",
+      "prompt": "power from shore versus gas turbine drivers with CO2 tax, wind dispatch and energy bus balance",
+      "expect_agent_top3": ["network-energy-systems", "emissions-environmental", "utility-design"],
+      "expect_skills_top5": ["neqsim-energy-systems-and-electrification"]
+    },
+    {
+      "id": "host-tiein-capacity",
+      "prompt": "host facility tie-in capacity, well test matching and gas lift allocation for a satellite field",
+      "expect_agent_top3": ["network-energy-systems", "field-development"],
+      "expect_skills_top5": ["neqsim-integrated-production-and-lifecycle"]
+    },
+    {
+      "id": "compressor-chart-extrapolation",
+      "prompt": "load vendor compressor chart, calibrate surge line and check the operating point does not extrapolate beyond stonewall",
+      "expect_agent_top3": ["rotating-equipment", "process-model", "mechanical-design"],
+      "expect_skills_top5": ["neqsim-rotating-equipment-design"]
+    },
+    {
+      "id": "pump-npsh-api610",
+      "prompt": "pump NPSH margin and API 610 screening for a booster pump",
+      "expect_agent_top3": ["rotating-equipment", "mechanical-design"],
+      "expect_skills_top5": ["neqsim-rotating-equipment-design"]
+    },
+    {
+      "id": "engineering-design-loop",
+      "prompt": "engineering design loop with P&ID synthesis, DEXPI export and CFIHOS handover and change impact analysis",
+      "expect_agent_top3": ["engineering-deliverables", "process-model", "standards-review"],
+      "expect_skills_top5": ["neqsim-engineering-design-package"]
+    },
+    {
+      "id": "mpc-virtual-flow",
+      "prompt": "model predictive control step response model and virtual flow meter soft sensor",
+      "expect_agent_top3": ["control-system", "plant-data", "optimize"],
+      "expect_skills_top5": ["neqsim-advanced-control-mpc-and-virtual-sensing"]
+    },
+    {
+      "id": "process-superstructure",
+      "prompt": "process synthesis superstructure candidate flowsheet generation from feed to product",
+      "expect_agent_top3": ["optimize", "extract-process", "process-model"],
+      "expect_skills_top5": ["neqsim-process-synthesis-research"]
+    },
+    {
+      "id": "release-source-term",
+      "prompt": "time resolved leak source term for a 25 mm hole with flashing liquid, homogeneous equilibrium model",
+      "expect_agent_top3": ["safety-depressuring", "consequence-analysis"],
+      "expect_skills_top5": ["neqsim-release-source-terms"]
+    },
+    {
+      "id": "esd-test-open-drain",
+      "prompt": "ESD logic test run, open drain review and dynamic safety scenario with operational risk simulation",
+      "expect_agent_top3": ["safety-depressuring", "standards-review"],
+      "expect_skills_top5": ["neqsim-operational-risk-and-safety-validation"]
+    },
+    {
+      "id": "lng-rollover",
+      "prompt": "LNG tank ageing, boil-off gas and rollover risk during a ship voyage",
+      "expect_agent_top3": ["lng-value-chain", "process-model"],
+      "expect_skills_top5": ["neqsim-lng-liquefaction"]
+    },
+    {
+      "id": "flowsheet-bottleneck",
+      "prompt": "which equipment is the bottleneck in the flowsheet, utilization snapshot and capacity margin",
+      "expect_agent_top3": ["optimize", "optimize-processmodel", "process-model", "network-energy-systems"],
+      "expect_skills_top5": ["neqsim-capacity-and-utilization-analysis"]
     }
   ],
   "contracts": [

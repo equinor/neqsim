@@ -76,7 +76,7 @@ public class ViscositySimTest {
     ops.TPflash();
     sys.initPhysicalProperties();
     double mu = sys.getPhase("aqueous").getPhysicalProperties().getViscosity(); // Pa·s
-    assertEquals(3.07e-3, mu, 6e-6);
+    assertEquals(3.07e-3, mu, 1.5e-5);
 
     sys.addComponent("methane", 1);
     sys.setMixingRule("classic");
@@ -85,6 +85,6 @@ public class ViscositySimTest {
     ops.TPflash();
     sys.initPhysicalProperties();
     mu = sys.getPhase("aqueous").getPhysicalProperties().getViscosity(); // Pa·s
-    assertEquals(3.07e-3, mu, 6e-6);
+    assertEquals(3.07e-3, mu, 1.5e-5);
   }
 }

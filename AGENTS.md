@@ -27,6 +27,9 @@
   interpolators) must be `private transient` (SpotBugs SE_BAD_FIELD).
 - **Verify APIs before use:** find the class, read constructor/method signatures, never assume
   convenience overloads, enum locations or getter arguments.
+- **Agent/MCP coverage:** after Java formatting or agent/skill mapping changes, run
+  `python devtools/build_engineering_coverage.py` and commit the generated inventory.
+  Register new engineering operations with routes and evidence; source presence is not validation.
 - **Documentation code must be test-verified:** every Java/Python snippet in docs gets a JUnit
   test (e.g. `DocExamplesCompilationTest`) that is run and passes before the doc is done.
 - **Notebooks must be executed** end to end (NeqSim Runner by default); unexecuted = incomplete.
@@ -98,7 +101,16 @@ Non-negotiables:
    for tooling gaps), commit and push each fix to the repo that owns it, and record it in
    `neqsim_improvements.md` and `results.json` `improvements` (or state that nothing was needed).
    Never commit task output or company data to a code repo.
-7. Close with a privacy-safe `docs/development/TASK_LOG.md` entry.
+7. **Close the loop upstream.** Prefer the connected GitHub capability when available or required.
+   Honor existing user/campaign authorization for issues and PRs; otherwise ask once whether
+   to file it on `equinor/neqsim` now: `neqsim file-issue <task>` (`--list` to preview, `--pr` to
+   also propose opening a PR for an already-implemented gap). Every issue and PR is confirmed
+   interactively (or needs `--yes`) and `--dry-run` never calls `gh`/`git` — never file or push
+   without authorization. `--yes` can reuse existing authorization. Remove private task data.
+   Without a connector, no `gh`/no local checkout (the common case for plugin
+   users) falls back to a pre-filled `github.com/.../issues/new` link opened in a browser —
+   a form is not a filed issue. Details: `neqsim-task-workflow` §6.4.
+8. Close with a privacy-safe `docs/development/TASK_LOG.md` entry.
 
 Quick tasks skip the ceremony: answer with units, assumptions and a validation note.
 
