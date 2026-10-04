@@ -34,6 +34,8 @@ class CapabilitiesRunnerTest {
     assertTrue(obj.has("calculationModes"));
     assertTrue(obj.has("toolCapabilities"));
     assertTrue(obj.has("implementationInventory"));
+    assertTrue(obj.has("engineeringCoverage"));
+    assertFalse(obj.getAsJsonObject("engineeringCoverage").get("complete").getAsBoolean());
     assertTrue(obj.has("phase0EvidenceInventory"));
     assertTrue(obj.has("setupTemplates"));
     assertTrue(obj.has("processJsonContract"));

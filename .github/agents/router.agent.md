@@ -9,6 +9,12 @@ request, classify it, and delegate to the most appropriate specialist agent(s).
 
 ## Routing Decision Table
 
+For a capability or exposure question, use `runCapability` with `action="coverage"`
+to find registered API/skill/agent/tool mappings and explicit evidence gaps.
+Inspect the returned tool schema before execution. Missing registrations require
+source/API investigation; they do not prove that NeqSim lacks the functionality.
+Never present a skill mention or declared route as engineering qualification.
+
 Analyze the request and match it to one or more agents:
 
 | Signal in Request | Primary Agent | Secondary Agent(s) |

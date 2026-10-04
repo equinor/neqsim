@@ -130,6 +130,8 @@ class ResponseSizeGuardTest {
     assertEquals(originalImplementation, response.getAsJsonObject("implementationInventory"));
     assertEquals(originalImplementation, response.getAsJsonObject("data").getAsJsonObject("implementationInventory"));
     assertEquals(originalEvidence, response.getAsJsonObject("phase0EvidenceInventory"));
+    assertTrue(response.has("engineeringCoverage"));
+    assertFalse(response.getAsJsonObject("engineeringCoverage").get("complete").getAsBoolean());
     assertEquals(originalEvidence, response.getAsJsonObject("data").getAsJsonObject("phase0EvidenceInventory"));
     JsonObject implementationInventory = response.getAsJsonObject("implementationInventory");
     assertTrue(implementationInventory.get("complete").getAsBoolean());

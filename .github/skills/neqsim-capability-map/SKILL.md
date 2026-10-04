@@ -9,6 +9,16 @@ last_verified: "2026-08-02"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
+For measured agent/MCP coverage, inspect `getCapabilities.engineeringCoverage`
+and use `runCapability` with `action="coverage"`, `view="capabilities"` or
+`view="apis"`, a query and bounded pagination. Follow the returned tool, API,
+skill and agent references; retrieve the schema and inspect setup before running.
+Reuse the catalog digest across pages. Declared routes and source/test mentions
+are not successful execution or engineering qualification. An unmapped API needs
+review, not an automatic conclusion that it is unsupported. See
+`docs/development/ENGINEERING_CAPABILITY_COVERAGE.md` for the evidence contract
+and campaign #3153 completion gates.
+
 **Last updated:** 2026-08-02
 
 ---
