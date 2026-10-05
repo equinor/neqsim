@@ -170,6 +170,8 @@ public class TPflash extends Flash {
   private boolean waterBearingRescueAttempted = false;
   /** True only when this run removed a negligible phase during final cleanup. */
   private boolean phaseRemovedDuringFlash = false;
+  /** Allows an iterative outer flash to retain a qualified conserved homogeneous trial state. */
+  private boolean conservativeHomogeneousRecoveryAllowed = false;
   /** Cold initial state retained only for a screened asymmetric endpoint retry. */
   private transient SystemInterface multiphaseEndpointRescueSeed;
   /** Prevents a bounded water-rich cross-algorithm fallback from recursively starting another fallback. */
@@ -266,6 +268,22 @@ public class TPflash extends Flash {
    */
   private HybridEosGeFlashModel getHybridEosGeFlashModel() {
     return hybridEosGeFlashModel;
+  }
+
+  /**
+   * Allows a bounded outer flash trial to retain the better conserved homogeneous root when both split-recovery solvers
+   * reject their candidates.
+   *
+   * <p>
+   * Ordinary user-facing TP flashes keep this disabled. A PS temperature iteration may enable it because a rejected
+   * intermediate temperature must remain conservative before the outer entropy solver can move to another trial. The
+   * retained state still passes the ordinary normalization, component-balance, neutrality and Gibbs gates.
+   * </p>
+   *
+   * @param allowed {@code true} only for a bounded iterative outer-flash trial
+   */
+  void setConservativeHomogeneousRecoveryAllowed(boolean allowed) {
+    conservativeHomogeneousRecoveryAllowed = allowed;
   }
 
   /**
@@ -661,8 +679,10 @@ public class TPflash extends Flash {
    * multiphase stability flash on a clone instead determines the topology. The candidate must close component balance
    * within {@code 1e-10}, satisfy the existing normalization and fugacity gates, and have no higher Gibbs energy than
    * the better homogeneous root evaluated at the conserved feed. A two-phase candidate must strictly lower that Gibbs
-   * energy. The live state is copied only after qualification; an unsuccessful recovery is reported rather than
-   * returning a nonconservative fluid.
+   * energy. For an explicitly enabled outer-flash trial, if both split solvers reject their candidates, the
+   * already-evaluated better homogeneous root may be retained only after the same conservation and normalization
+   * checks. Ordinary TP flashes keep that fallback disabled. The live state is copied only after qualification; an
+   * unsuccessful recovery is reported rather than returning a nonconservative fluid.
    * </p>
    *
    * <p>
@@ -695,10 +715,15 @@ public class TPflash extends Flash {
       }
       candidate.getPhase(0).normalize();
       double homogeneousGibbs = Double.POSITIVE_INFINITY;
+      PhaseType homogeneousRoot = null;
       for (PhaseType root : CUBIC_ROOT_PHASE_TYPES) {
         candidate.setPhaseType(0, root);
         candidate.init(1, 0);
-        homogeneousGibbs = Math.min(homogeneousGibbs, candidate.getGibbsEnergy());
+        double rootGibbs = candidate.getGibbsEnergy();
+        if (Double.isFinite(rootGibbs) && rootGibbs < homogeneousGibbs) {
+          homogeneousGibbs = rootGibbs;
+          homogeneousRoot = root;
+        }
       }
 
       candidate.setMultiPhaseCheck(true);
@@ -727,6 +752,22 @@ public class TPflash extends Flash {
       candidate.init(1);
       if (acceptConservativeHydrocarbonRecovery(candidate, homogeneousGibbs)) {
         return;
+      }
+
+      if (conservativeHomogeneousRecoveryAllowed && homogeneousRoot != null) {
+        candidate = system.clone();
+        candidate.setNumberOfPhases(1);
+        candidate.setBeta(0, 1.0);
+        candidate.setPhaseType(0, homogeneousRoot);
+        for (int componentIndex = 0; componentIndex < candidate.getPhase(0).getNumberOfComponents(); componentIndex++) {
+          candidate.getPhase(0).getComponent(componentIndex)
+              .setx(candidate.getPhase(0).getComponent(componentIndex).getz());
+        }
+        candidate.getPhase(0).normalize();
+        candidate.init(1, 0);
+        if (acceptConservativeHydrocarbonRecovery(candidate, homogeneousGibbs)) {
+          return;
+        }
       }
     } catch (Exception ex) {
       throw new IllegalStateException("TPflash could not recover a conservative hydrocarbon endpoint; component "
@@ -784,7 +825,7 @@ public class TPflash extends Flash {
       return false;
     }
     copyConvergedNeutralFlashState(candidate);
-    recordStabilityOutcome("recovered nonconservative hydrocarbon endpoint by multiphase stability flash");
+    recordStabilityOutcome("recovered nonconservative hydrocarbon endpoint by conserved-feed requalification");
     return true;
   }
 
