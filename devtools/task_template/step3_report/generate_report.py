@@ -125,6 +125,8 @@ INLINE_EQ_FONT_PT = BODY_PT
 # table sized for a portrait page leaves a third of the width empty.
 # "template" keeps whatever the template declares.
 REPORT_ORIENTATION = "portrait"   # portrait | landscape | template
+REPORT_FRONT_LISTS = "auto"      # auto | always | never (lists of figures and tables)
+FRONT_LISTS_MIN_ITEMS = 20        # auto: only list when figures + tables reach this
 MAX_MEASURE_IN = 6.7              # widest column we set continuous prose on
 MIN_SIDE_MARGIN_IN = 0.79         # 20 mm — never narrower when widening margins
 # Room left under a full-width figure for its caption and the following gap.
@@ -594,6 +596,12 @@ def resolve_report_orientation(study_config):
         print("NOTE: unknown report.orientation '{}'; using portrait.".format(value))
         return "portrait"
     return value
+
+
+def resolve_front_matter_lists(study_config):
+    """``report.front_matter_lists``: auto (long reports only) | always | never."""
+    value = str((study_config or {}).get("report", {}).get("front_matter_lists") or "auto").strip().lower()
+    return value if value in ("auto", "always", "never") else "auto"
 
 
 def resolve_report_language(study_config):
@@ -5832,8 +5840,12 @@ def _add_figure_and_table_lists(doc, results):
     """Add a list of figures and a list of tables, when there is anything to list.
 
     Word builds these from the SEQ fields in the captions, so a reader can find
-    a named figure without scrolling the whole report.
+    a named figure without scrolling the whole report. Short reports skip them
+    (``report.front_matter_lists``) so the reader reaches the summary at once.
     """
+    n_items = len(get_figures() or []) + len((results or {}).get("tables") or [])
+    if REPORT_FRONT_LISTS == "never" or (REPORT_FRONT_LISTS == "auto" and n_items < FRONT_LISTS_MIN_ITEMS):
+        return
     added = False
     if get_figures():
         _front_matter_heading(doc, _t("List of Figures"))
@@ -7490,6 +7502,7 @@ if __name__ == "__main__":
     print("")
     print("Generating outputs for: {}".format(TITLE))
     REPORT_ORIENTATION = resolve_report_orientation(study_config)
+    REPORT_FRONT_LISTS = resolve_front_matter_lists(study_config)
     if REPORT_LANGUAGE != DEFAULT_REPORT_LANGUAGE:
         print("Report language: {} ({})".format(REPORT_LANGUAGE, _report_locale()))
     pdf_requested = want_pdf_output(study_config)
