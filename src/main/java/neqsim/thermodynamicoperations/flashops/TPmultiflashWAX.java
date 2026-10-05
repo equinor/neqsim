@@ -8,7 +8,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * TPmultiflashWAX class.
+ * Multiphase TP flash with wax-phase stability analysis and phase-fraction iteration.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -28,32 +28,45 @@ public class TPmultiflashWAX extends TPflash {
   boolean doStabilityAnalysis = true;
 
   /**
-   * Constructor for TPmultiflashWAX.
+   * Creates a multiphase TP flash for the supplied thermodynamic system.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system thermodynamic system to flash
    */
   public TPmultiflashWAX(SystemInterface system) {
     super(system);
   }
 
   /**
-   * Constructor for TPmultiflashWAX.
+   * Creates a multiphase TP flash with an explicit solid-phase check setting.
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param checkForSolids Set true to do solid phase check and calculations
+   * @param system thermodynamic system to flash
+   * @param checkForSolids {@code true} to enable solid-phase checks
    */
   public TPmultiflashWAX(SystemInterface system, boolean checkForSolids) {
     super(system, checkForSolids);
   }
 
   /**
-   * calcMultiPhaseBeta.
+   * Multiphase beta-calculation hook.
+   *
+   * <p>
+   * This implementation is intentionally empty; phase fractions are updated by {@link #solveBeta(boolean)}.
+   * </p>
    */
   public void calcMultiPhaseBeta() {
   }
 
   /**
-   * setXY.
+   * Recalculates component mole fractions in each active phase from the current phase fugacity coefficients and phase
+   * fractions.
+   *
+   * <p>
+   * Here {@code x} is the component mole fraction stored by each phase; the method does not maintain a separate vapor
+   * {@code y} array. Neutral components with a non-trace overall fraction are distributed using their overall
+   * composition and phase fugacity coefficients using {@code x[k][i] = z[i] / (E[i] * phi[k][i])}. Ions are kept at
+   * trace fractions outside aqueous phases and are assigned from their phase mole inventories in aqueous phases. Each
+   * phase composition is normalized after the update.
+   * </p>
    */
   public void setXY() {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -71,16 +84,18 @@ public class TPmultiflashWAX extends TPflash {
           system.getPhase(k).getComponent(i).setx(
               system.getPhase(k).getComponent(i).getNumberOfmoles() / system.getPhase(k).getNumberOfMolesInPhase());
         }
-        if (system.hasPhaseType("wax")) {
-          system.getPhaseOfType("wax").getComponent(i).setx(0);
-        }
       }
       system.getPhase(k).normalize();
     }
   }
 
   /**
-   * calcE.
+   * Calculates the component distribution denominator used by {@link #setXY()} and {@link #calcQ()}.
+   *
+   * <p>
+   * For component {@code i}, {@code E[i]} is the sum over active phases of the phase fraction divided by that phase's
+   * fugacity coefficient.
+   * </p>
    */
   public void calcE() {
     E = new double[system.getPhase(0).getNumberOfComponents()];
@@ -93,9 +108,14 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * calcQ.
+   * Evaluates the phase-fraction objective and refreshes its gradient and approximate Hessian.
    *
-   * @return a double
+   * <p>
+   * The objective is the sum of phase fractions minus the overall-composition-weighted logarithm of {@code E[i]}. The
+   * gradient and Hessian are stored in {@code dQdbeta} and {@code Qmatrix} for {@link #solveBeta(boolean)}.
+   * </p>
+   *
+   * @return current phase-fraction objective value
    */
   public double calcQ() {
     Q = 0;
@@ -139,9 +159,14 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * solveBeta.
+   * Iteratively updates phase fractions by a damped Newton step on the phase-fraction objective.
    *
-   * @param updateFugacities a boolean
+   * <p>
+   * Each update is bounded away from zero and one. When requested, phase thermodynamic properties are reinitialized
+   * after the phase compositions are updated.
+   * </p>
+   *
+   * @param updateFugacities {@code true} to reinitialize thermodynamic properties during iteration
    */
   public void solveBeta(boolean updateFugacities) {
     double[] oldBeta = new double[system.getNumberOfPhases()];
@@ -190,7 +215,16 @@ public class TPmultiflashWAX extends TPflash {
     } while ((ans.norm2() > 1e-6 && iter < 20) || iter < 3);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Tests eligible components for an unstable wax phase and adds a wax phase when one is found.
+   *
+   * <p>
+   * Each candidate is evaluated on a cloned system. Components with negligible overall composition and ions are not
+   * used as wax-forming stability trials. A candidate is accepted when its tangent-plane distance is below the
+   * instability threshold; its composition and a seed phase fraction are then copied to the system. If no candidate is
+   * unstable, the existing phase fractions are normalized.
+   * </p>
+   */
   @Override
   public void stabilityAnalysis() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
@@ -378,7 +412,16 @@ public class TPmultiflashWAX extends TPflash {
     logger.info("tm1: " + tm[0] + "  tm2: " + tm[1]);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Runs wax stability analysis, solves any resulting multiphase split, and finalizes the active phases.
+   *
+   * <p>
+   * When stability analysis adds a phase, phase fractions and compositions are iterated unless the system is chemical.
+   * Chemical equilibrium is then solved for each active phase in chemical systems. Phases with negligible fractions, or
+   * adjacent phases with effectively equal densities, are removed and the flash is repeated. The remaining phases are
+   * ordered by density.
+   * </p>
+   */
   @Override
   public void run() {
     // logger.info("Starting multiphase-flash....");
