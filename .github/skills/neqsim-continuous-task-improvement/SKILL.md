@@ -21,6 +21,7 @@ calls; agents run only when a trigger fires; people decide.
 |------|---------|
 | Keep a finished task up to date (daily, on a server or on demand) | `task-living` then `task-schedule --install` |
 | Solve until the goal is met, or until improvement is marginal | `task-solve --until goal` / `--until converged` |
+| Resume after closing VS Code, rebooting or changing machine | `task-status <task>` then `task-resume <task>` |
 | Start from a Word/Markdown brief | `neqsim new-task "title" --prompt-file brief.docx` then `task-living` |
 | Prove a monitor finds the faults it should (and no others) | `task-backtest --start ... --end ...` |
 | Try everything without company data | `task-reference-case <folder>` |
@@ -51,10 +52,13 @@ All commands run through the shared interpreter:
    ```
    Report: detected / missed expected events, delay, false alarms per month,
    reproducibility. Written to `continuous/backtests/<run>/`; live state is untouched.
-5. **Run cycles** — `neqsim task-cycle <task>` (monitor) or schedule it:
+5. **Resume before starting fresh work** — `neqsim task-status <task>` is the
+   five-second persisted view. If it reports resumable work, run
+   `neqsim task-resume <task>`. The task folder, not prior chat, is authoritative.
+6. **Run cycles** — `neqsim task-cycle <task>` (monitor) or schedule it:
    `neqsim task-schedule <task> --daily 05:00 --install` (Windows Task Scheduler;
    the `cron` line is printed for Linux servers).
-6. **Review and promote** — read `continuous/LIVING_REPORT.md` (the always-current
+7. **Review and promote** — read `continuous/LIVING_REPORT.md` (the always-current
    view) and `cycles/<id>/digest.md`, decide ledger items
    (`task-ledger <task> set OPP-0002 accepted --by NAME`), then
    `neqsim task-promote <task> <cycle-id> --reviewer NAME`.
@@ -206,8 +210,12 @@ and a **degraded** cycle — never a crash.
 
 ## Gotchas
 
-- Cycle ids are UTC; a rerun in the same minute gets `-r2`. A crashed cycle is
-  resumed by rerunning (completed stages are skipped); a stale `LOCK` expires after 6 h.
+- Cycle ids are UTC; a rerun in the same minute gets `-r2`. Use
+  `task-resume` for crashed/interrupted work: it keeps the original cycle id across
+  later days/hosts, skips completed stages, restores completed side-effect metadata,
+  and resumes solve checkpoints. A stale `LOCK` expires after 6 h.
+- `continuous/state.json` is schema-versioned. Legacy 1.0 state migrates to 1.1;
+  newer incompatible state fails closed instead of being silently rewritten.
 - Watermarks only move forward and only on `ok`/`partial` pulls — a failed pull
   is retried next cycle with the same window.
 - `--dry-run` writes the cycle folder but no watermarks, ledger or drift state.

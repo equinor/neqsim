@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from .ledger import CATEGORIES, Ledger
 from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, read_json,
                    write_json)
+from .state import read_state, write_state
 from .stages import neqsim_commit
 
 PLAN_TEMPLATE = """# Living-task cycle plan (neqsim_continuous schema 1.0). Every section is optional.
@@ -238,7 +239,7 @@ def make_living(task_dir, brief=None, template=None):
 
     _write(ledger_path, _ledger)
     _write(os.path.join(cont, "state.json"),
-           lambda p: write_json(p, {"state": "draft", "phase": "draft", "updated": _now()}))
+           lambda p: write_state(task_dir, {"state": "draft", "phase": "draft"}))
 
     config = os.path.join(task_dir, "study_config.yaml")
     if os.path.exists(config):
@@ -291,15 +292,6 @@ def promote(task_dir, cycle_id, reviewer, note=""):
     return meta
 
 
-def read_state(task_dir):
-    return read_json(os.path.join(continuous_dir(task_dir), "state.json"), {}) or {}
-
-
-def write_state(task_dir, state):
-    state = dict(state, updated=_now())
-    write_json(os.path.join(continuous_dir(task_dir), "state.json"), state)
-    return state
-
 
 def note_reopen(task_dir, manifest):
     """Mark a stopped task for reopening when a monitor cycle raised a reopen trigger."""
@@ -315,20 +307,30 @@ def note_reopen(task_dir, manifest):
 
 
 def status(task_dir):
-    """A compact status dict for one living task."""
-    from .cycle import list_cycles, load_cycle
-    cycles = list_cycles(task_dir)
-    last = load_cycle(task_dir, cycles[-1]) if cycles else {}
-    items = Ledger(os.path.join(continuous_dir(task_dir), "ledger", "events.jsonl")).current()
-    open_items = [k for k, v in items.items() if v.get("status") in ("proposed", "under_review", "accepted", "implemented")]
+    """Return the durable five-second status view for one living task."""
+    from .task_status import build
+    return build(task_dir)
+
+
+def resume(task_dir, no_agent=False, max_rounds=None):
+    """Resume interrupted work using the persisted task folder, never chat history."""
+    from .cycle import find_incomplete_cycle, run_cycle
+
+    task_dir = os.path.abspath(str(task_dir))
     state = read_state(task_dir)
-    return {"task": os.path.basename(os.path.abspath(str(task_dir))),
-            "state": state.get("state"), "phase": state.get("phase"),
-            "baseline": load_baseline(task_dir)["meta"].get("id"),
-            "cycles": len(cycles), "last_cycle": last.get("cycle_id"),
-            "last_status": ("degraded" if last.get("degraded") else last.get("status")) if last else None,
-            "last_triggers": last.get("triggers", []) if last else [],
-            "open_ledger_items": len(open_items)}
+    incomplete = find_incomplete_cycle(task_dir)
+    if (incomplete and incomplete.get("mode") == "solve") or state.get("phase") in (
+            "solving", "reopen_requested"):
+        from .solve import solve
+        until = (state.get("solve_session") or {}).get("until") or state.get("until") or "goal"
+        final = solve(task_dir, until=until, max_rounds=max_rounds, no_agent=no_agent)
+        return {"action": "solve", "resumed": True, "state": final}
+    if incomplete:
+        manifest = run_cycle(task_dir, mode=incomplete.get("mode", "monitor"), no_agent=no_agent)
+        note_reopen(task_dir, manifest)
+        return {"action": "cycle", "resumed": True, "cycle": manifest.get("cycle_id"),
+                "status": manifest.get("status"), "degraded": manifest.get("degraded")}
+    return {"action": "none", "resumed": False, "status": status(task_dir)}
 
 
 def dumps(data):
@@ -336,4 +338,4 @@ def dumps(data):
 
 
 __all__ = ["make_living", "promote", "read_state", "write_state", "note_reopen", "status",
-           "CATEGORIES"]
+           "resume", "CATEGORIES"]
