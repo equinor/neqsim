@@ -167,10 +167,10 @@ $$
 double tpc = GasPseudoCriticalProperties.pseudoCriticalTemperatureSutton(0.75);
 double ppc = GasPseudoCriticalProperties.pseudoCriticalPressureSutton(0.75);
 
-// SI units (K and bara)
-double tpcK = GasPseudoCriticalProperties.pseudoCriticalTemperatureSuttonSI(0.75);
-double ppcBara = GasPseudoCriticalProperties.pseudoCriticalPressureSuttonSI(0.75);
+// All public correlation results are already SI: K and bara.
 ```
+
+Standing accepts finite gas specific gravity from 0.55 through 1.80; Sutton accepts 0.57 through 1.68. Values outside those documented ranges fail explicitly. These four sweet-gas methods are available through bounded `runCapability` discovery and invocation. They are screening correlations, not substitutes for composition-based EOS phase behavior or sour-gas correction.
 
 ### Piper-McCain-Corredor Correlation
 
