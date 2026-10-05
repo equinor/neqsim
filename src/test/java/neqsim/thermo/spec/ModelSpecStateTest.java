@@ -326,8 +326,8 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
 
     double[] first = ammoniaState(system, 293.15, 5.0, PhaseType.GAS);
     double[] hotGas = ammoniaState(system, 400.0, 50.0, PhaseType.GAS);
-    double[] warmLiquid = ammoniaState(system, 293.15, 10.0, PhaseType.LIQUID);
-    double[] coldLiquid = ammoniaState(system, 280.0, 10.0, PhaseType.LIQUID);
+    double[] warmLiquid = ammoniaState(system, 293.15, 10.0, PhaseType.OIL);
+    double[] coldLiquid = ammoniaState(system, 280.0, 10.0, PhaseType.OIL);
     assertNotEquals(first[0], hotGas[0], "gas density must refresh");
     assertNotEquals(hotGas[0], warmLiquid[0], "phase-forced density must refresh");
     assertNotEquals(warmLiquid[1], coldLiquid[1], "liquid enthalpy must refresh");
@@ -348,7 +348,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
 
     double[] first = leachmanState(system, 300.0, 10.0, PhaseType.GAS);
     double[] coldGas = leachmanState(system, 100.0, 50.0, PhaseType.GAS);
-    double[] warmLiquid = leachmanState(system, 25.0, 10.0, PhaseType.LIQUID);
+    double[] warmLiquid = leachmanState(system, 25.0, 10.0, PhaseType.OIL);
     double[] coldLiquid = leachmanState(system, 20.0, 5.0, PhaseType.LIQUID);
     assertNotEquals(first[0], coldGas[0], "gas density must refresh");
     assertNotEquals(coldGas[0], warmLiquid[0], "phase-forced density must refresh");
@@ -366,6 +366,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     system.setTemperature(temperature);
     system.setPressure(pressure);
     system.setPhaseType(0, phaseType);
+    system.init(0);
     system.init(3);
     assertEquals(PhaseLeachmanEos.class, system.getPhase(0).getClass());
     PhaseLeachmanEos phase = (PhaseLeachmanEos) system.getPhase(0);
@@ -557,6 +558,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     system.setTemperature(temperature);
     system.setPressure(pressure);
     system.setPhaseType(0, phaseType);
+    system.init(0);
     system.init(3);
     assertEquals(PhaseSpanWagnerEos.class, system.getPhase(0).getClass());
     PhaseSpanWagnerEos phase = (PhaseSpanWagnerEos) system.getPhase(0);
@@ -602,6 +604,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     system.setTemperature(temperature);
     system.setPressure(pressure);
     system.setPhaseType(0, phaseType);
+    system.init(0);
     system.init(3);
     assertEquals(PhaseAmmoniaEos.class, system.getPhase(0).getClass());
     PhaseAmmoniaEos phase = (PhaseAmmoniaEos) system.getPhase(0);
@@ -666,13 +669,13 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
   @Test
   void pcsaftRefreshesForcedRootsAndReturnsToReferenceState() {
     pcsaftRoundTrip(new SystemPCSAFT(300.0, 10.0), PhasePCSAFTRahmat.class, "propane", 300.0, 10.0, PhaseType.GAS,
-        250.0, 20.0, PhaseType.LIQUID);
+        250.0, 20.0, PhaseType.OIL);
     pcsaftRoundTrip(new SystemPCSAFT(450.0, 5.0), PhasePCSAFTRahmat.class, "n-hexane", 450.0, 5.0, PhaseType.GAS, 300.0,
-        10.0, PhaseType.LIQUID);
+        10.0, PhaseType.OIL);
     pcsaftRoundTrip(new SystemPCSAFTa(300.0, 10.0), PhasePCSAFTa.class, "propane", 300.0, 10.0, PhaseType.GAS, 250.0,
         20.0, PhaseType.LIQUID);
     pcsaftRoundTrip(new SystemPCSAFTa(450.0, 5.0), PhasePCSAFTa.class, "n-hexane", 450.0, 5.0, PhaseType.GAS, 300.0,
-        10.0, PhaseType.LIQUID);
+        10.0, PhaseType.OIL);
   }
 
   private static void pcsaftRoundTrip(SystemInterface system, Class<?> expectedPhase, String component,
@@ -680,10 +683,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
       double changedPressure, PhaseType changedType) {
     system.addComponent(component, 1.0);
     system.setMixingRule(1);
-    system.setNumberOfPhases(1);
-    system.setMaxNumberOfPhases(1);
-    system.setForcePhaseTypes(true);
-    system.init(0);
+    system.setForceSinglePhase(firstType);
 
     double[] first = pcsaftState(system, expectedPhase, firstTemperature, firstPressure, firstType);
     double[] changed = pcsaftState(system, expectedPhase, changedTemperature, changedPressure, changedType);
@@ -702,6 +702,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     system.setTemperature(temperature);
     system.setPressure(pressure);
     system.setPhaseType(0, phaseType);
+    system.init(0);
     system.init(3);
     PhaseInterface phase = system.getPhase(0);
     assertEquals(expectedPhase, phase.getClass());
