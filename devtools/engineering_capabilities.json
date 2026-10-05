@@ -1050,6 +1050,153 @@
           ]
         }
       ]
+    },
+    {
+      "id": "sweet-gas-pseudocritical-screening",
+      "title": "Static sweet-gas pseudocritical property screening",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.GasPseudoCriticalProperties"
+      ],
+      "skills": [
+        "neqsim-capability-map"
+      ],
+      "agents": [
+        "capability-scout"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Standing and Sutton sweet-gas correlation screening only, using gas specific gravity relative to air within each published range. It does not qualify sour/non-hydrocarbon corrections, composition-derived pseudocritical mixing, EOS phase behavior, reservoir deliverability or engineering approval.",
+      "operations": [
+        {
+          "id": "standing-pseudocritical-temperature",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalTemperatureStanding",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalTemperature": "K"
+            }
+          },
+          "applicability": "Standing sweet-gas correlation for finite gas specific gravity from 0.55 through 1.80.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 224.84375,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "standing-pseudocritical-pressure",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalPressureStanding",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalPressureStanding(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalPressure": "bara"
+            }
+          },
+          "applicability": "Standing sweet-gas correlation for finite gas specific gravity from 0.55 through 1.80.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 45.99872102483487,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "sutton-pseudocritical-temperature",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalTemperatureSutton",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalTemperatureSutton(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalTemperature": "K"
+            }
+          },
+          "applicability": "Sutton sweet-gas correlation for finite gas specific gravity from 0.57 through 1.68.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 216.5,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "sutton-pseudocritical-pressure",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalPressureSutton",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalPressureSutton(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalPressure": "bara"
+            }
+          },
+          "applicability": "Sutton sweet-gas correlation for finite gas specific gravity from 0.57 through 1.68.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 45.26572346557454,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ]
     }
   ]
 }
