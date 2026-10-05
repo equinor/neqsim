@@ -72,14 +72,10 @@ regression tests; the catalog supplements them.
 
 ## Initial evidence and boundaries
 
-The catalog has 812 cases across sixteen system drivers (RK, SRK, PR, Wilson, NRTL,
-classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia, Leachman, Vega, Span-Wagner and
-IAPWS-IF97), direct
-RK/SRK/PR/Wilson/NRTL/UNIFAC/PSRK/UMR-PRU/GERG-2008/ideal-gas phase adapters, IAPWS-IF97 water through its
-System and exact phase paths, the Gao ammonia
-reference EOS, normal-hydrogen Leachman reference EOS, helium Vega reference EOS and pure-CO2
-Span-Wagner reference EOS through their System and exact phase paths, a component saturation
-adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
+The catalog has 860 cases across curated System and exact-Phase drivers: RK, SRK, PR,
+Wilson, NRTL, classic UNIFAC, PSRK, UMR-PRU, standard GERG-2008, ideal gas, ammonia,
+Leachman, Vega, Span-Wagner, IAPWS-IF97, PC-SAFT and PC-SAFTa. It also includes a
+component saturation adapter and an unsupported phase adapter. This is **not coverage of every NeqSim model or every property**. Campaign
 milestone B owns sourced family qualification and remaining per-property coverage debt.
 The inventory gate below now reconciles every concrete System and Phase type against
 an explicit classification; discovery does not qualify their numerical behavior.
@@ -100,6 +96,7 @@ an explicit classification; discovery does not qualify their numerical behavior.
 | Helium | CoolProp 7.2.0's Ortiz Vega 2019 helium EOS at four gas/supercritical states: molar mass, molar/mass density, Z, U/H/S/G, Cv/Cp, sound speed, Joule-Thomson coefficient and isentropic exponent through `SystemVegaEos` and exact `PhaseVegaEos` entry points |
 | Carbon dioxide | CoolProp 7.2.0's Span-Wagner 1996 CO2 EOS at one gas, one liquid and two supercritical states: molar mass, molar/mass density, Z, fugacity coefficient, U/H/S/G, Cv/Cp, sound speed and Joule-Thomson coefficient through `SystemSpanWagnerEos` and exact `PhaseSpanWagnerEos` entry points |
 | Water/steam | Official IAPWS-IF97 Region 1 Table 5 and Region 2 Table 15 verification points: molar/mass density, Z, U/H/S/G, Cp and sound speed through `SystemWaterIF97` and exact `PhaseWaterIAPWS`; density, Z and G are independently derived from the published specific volume and caloric values |
+| PC-SAFT | CoolProp 7.2.0 HEOS anchors for pure propane and n-hexane at two forced-gas and two forced-liquid states: Z, molar density and mass density through `SystemPCSAFT`, `PhasePCSAFTRahmat`, `SystemPCSAFTa` and `PhasePCSAFTa`; 0.1% relative tolerance |
 | Missing/unsupported | Hydrogen/nC20 correlation absence, Na+ inapplicability, supercritical methane and bare UNIQUAC rejection |
 
 The cubic cases use the original published RK, SRK and PR equations with the declared methane
@@ -224,6 +221,28 @@ Inverse cases supply independently calculated pressure, not the production forwa
 answer. Nonzero E tests explicit-label precedence. These are implementation contracts,
 not physical fits for i-pentane. Other correlation derivatives remain separate debt.
 
+## PC-SAFT catalog scope
+
+The PC-SAFT catalog adds 48 cases: four typed adapters, four exact single-phase
+states and three properties. It exercises `SystemPCSAFT` with exact
+`PhasePCSAFTRahmat`, and `SystemPCSAFTa` with exact `PhasePCSAFTa`, for propane
+at 300 K/10 bar gas and 250 K/20 bar liquid, and n-hexane at 450 K/5 bar gas and
+300 K/10 bar liquid. Every row declares the forced root before evaluation.
+
+The state control traverses gas -> liquid -> gas, repeats initialization, verifies
+exact phase dispatch and rejects stale results. Independent controls reconstruct
+`Z = P/(rho R T)`, relate mass and molar density through the declared molecular
+weight, and require density-volume closure. Negative controls reject zero,
+NaN/infinity, plausible `Z = 1.0` or `1.05` placeholders, and a plausible but
+wrong dense-fluid density.
+
+The 0.1% relative tolerance is a physical cross-port tolerance for the four exact
+states, not an analytical identity tolerance or a claim of experimental accuracy.
+Association-specific accuracy, mixtures, flashes, fugacity, caloric and transport
+properties, saturation, arbitrary states and standalone `PhasePCSAFT` remain
+unqualified. The differential and root contracts below are complementary numerical
+consistency evidence; they do not expand this catalog's physical scope.
+
 ## Inventory-to-catalog gate
 
 `inventory.tsv` classifies 131 concrete types at the initial snapshot: 68 implementations
@@ -242,9 +261,9 @@ fails instead of reporting an empty inventory.
 
 | Classification | Meaning |
 | --- | --- |
-| `PARTIAL` (31 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
+| `PARTIAL` (35 types) | The named adapter, properties and exact catalog cases/domains have evidence; every other property/domain remains unqualified |
 | `UNSUPPORTED` (1 type) | Bare UNIQUAC's declared constructor-rejection contract is tested; this does not label subclasses unsupported |
-| `DEBT` (99 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
+| `DEBT` (95 types) | No numerical claim from this catalog; linked campaign issue and review condition are mandatory |
 
 Every fixture is bound exactly once to its concrete type. Property sets must agree with
 the referenced cases; unknown/stale types, changed kinds, missing cases and duplicate
@@ -366,6 +385,17 @@ domains, sourced anchors and nearby-state/invariant checks before reducing this 
   density, `Z` and `G = H - TS`. The `1e-7` implementation tolerances cover only the
   published tables' rounding. These are official formula-verification values, not
   experimental validation, and were not refreshed from NeqSim output.
+
+- The [CoolProp 7.2.0 propane definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/Propane.json)
+  and [n-hexane definition](https://github.com/CoolProp/CoolProp/blob/v7.2.0/dev/fluids/n-Hexane.json)
+  identify the HEOS reference implementations used to generate the four PC-SAFT
+  state anchors before evaluating NeqSim. This is an independent physical-model
+  comparison, not shared-formula validation. The maximum observed cross-port
+  difference was below 0.015%; the rounded 0.1% relative tolerance covers only the
+  exact declared states. The harness independently reconstructs the gas law and
+  mass/molar-density relationship from SI R and the declared molecular weights.
+  These cases do not claim experimental validation or qualify excluded properties
+  and domains.
 
 NIST WebBook sources were inspected on 2026-09-18 and 2026-09-24, the versioned CoolProp
 definitions on 2026-09-24, 2026-09-25 and 2026-09-26, the NIST AGA8 source on 2026-09-23,
