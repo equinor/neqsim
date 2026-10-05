@@ -203,15 +203,22 @@ public class CricondenbarFlash extends ConstantDutyPressureFlash {
       iterations = 0;
       do {
         iterations++;
-        system.init(3);
         // initMoleFraction();
         localOperation.TPflash();
+        // TPflash can replace the phase state and initializes fugacities only.
+        // Refresh temperature derivatives on the resulting state before using them.
+        system.init(2);
         // system.display();
         Qold = Q1;
         Q1 = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           Q1 -= system.getPhase(1).getComponent(i).getx()
               * (system.getPhase(0).getComponent(i).getdfugdt() - system.getPhase(1).getComponent(i).getdfugdt());
+        }
+        // Test convergence before forming the derivative surrogate -Q1 * 100.
+        // At an exactly zero residual the proposed update would otherwise be 0/0.
+        if (Math.abs(Q1) <= 1.0e-10) {
+          break;
         }
         if (iterations > 3) {
           dQ1dT = (Q1 - Qold) / (system.getTemperature() - oldTemperature);
