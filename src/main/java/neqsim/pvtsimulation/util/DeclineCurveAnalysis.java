@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.util;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.util.annotation.AIExposable;
 
 /**
  * Decline Curve Analysis (DCA) for production forecasting.
@@ -60,6 +61,26 @@ public final class DeclineCurveAnalysis {
     // Utility class
   }
 
+  /**
+   * Validates the shared physical domain for bounded exponential-decline operations.
+   *
+   * @param qi initial production rate
+   * @param di nominal decline rate
+   * @param t elapsed time
+   * @throws IllegalArgumentException if a value is non-finite or negative
+   */
+  private static void validateExponentialInputs(double qi, double di, double t) {
+    if (!Double.isFinite(qi) || qi < 0.0) {
+      throw new IllegalArgumentException("Initial production rate must be finite and non-negative");
+    }
+    if (!Double.isFinite(di) || di < 0.0) {
+      throw new IllegalArgumentException("Nominal decline rate must be finite and non-negative");
+    }
+    if (!Double.isFinite(t) || t < 0.0) {
+      throw new IllegalArgumentException("Elapsed time must be finite and non-negative");
+    }
+  }
+
   // ============================================================
   // Rate calculations
   // ============================================================
@@ -102,8 +123,11 @@ public final class DeclineCurveAnalysis {
    * @param di Nominal decline rate (1/day)
    * @param t Time (days)
    * @return Rate at time t
+   * @throws IllegalArgumentException if an input is non-finite or negative
    */
+  @AIExposable(description = "Calculate exponential decline rate", category = "reservoir", safe = true)
   public static double rateExponential(double qi, double di, double t) {
+    validateExponentialInputs(qi, di, t);
     return rate(qi, di, 0.0, t);
   }
 
@@ -186,8 +210,11 @@ public final class DeclineCurveAnalysis {
    * @param di Nominal decline rate (1/day)
    * @param t Time (days)
    * @return Cumulative production
+   * @throws IllegalArgumentException if an input is non-finite or negative
    */
+  @AIExposable(description = "Calculate exponential cumulative production", category = "reservoir", safe = true)
   public static double cumulativeExponential(double qi, double di, double t) {
+    validateExponentialInputs(qi, di, t);
     return cumulativeProduction(qi, di, 0.0, t);
   }
 
@@ -218,8 +245,14 @@ public final class DeclineCurveAnalysis {
    *
    * @param dNominal Nominal decline rate (1/day)
    * @return Effective annual decline rate (fraction, 0-1)
+   * @throws IllegalArgumentException if the nominal decline is non-finite or negative
    */
+  @AIExposable(description = "Convert nominal daily decline to effective annual decline", category = "reservoir",
+      safe = true)
   public static double nominalToEffectiveAnnual(double dNominal) {
+    if (!Double.isFinite(dNominal) || dNominal < 0.0) {
+      throw new IllegalArgumentException("Nominal decline rate must be finite and non-negative");
+    }
     return 1.0 - Math.exp(-dNominal * 365.25);
   }
 
@@ -228,9 +261,12 @@ public final class DeclineCurveAnalysis {
    *
    * @param dEffective Effective annual decline rate (fraction, 0-1)
    * @return Nominal decline rate (1/day)
+   * @throws IllegalArgumentException if the effective decline is not finite and strictly between 0 and 1
    */
+  @AIExposable(description = "Convert effective annual decline to nominal daily decline", category = "reservoir",
+      safe = true)
   public static double effectiveAnnualToNominal(double dEffective) {
-    if (dEffective <= 0.0 || dEffective >= 1.0) {
+    if (!Double.isFinite(dEffective) || dEffective <= 0.0 || dEffective >= 1.0) {
       throw new IllegalArgumentException("Effective decline rate must be between 0 and 1, got " + dEffective);
     }
     return -Math.log(1.0 - dEffective) / 365.25;
@@ -383,8 +419,14 @@ public final class DeclineCurveAnalysis {
    * @param q2 Rate at time t2 (q2 &lt; q1)
    * @param t2 Time 2 (days, t2 &gt; t1)
    * @return Estimated nominal decline rate (1/day)
+   * @throws IllegalArgumentException if inputs are non-finite or do not describe a positive decline
    */
+  @AIExposable(description = "Estimate exponential decline from two rate-time points", category = "reservoir",
+      safe = true)
   public static double estimateExponentialDecline(double q1, double t1, double q2, double t2) {
+    if (!Double.isFinite(q1) || !Double.isFinite(t1) || !Double.isFinite(q2) || !Double.isFinite(t2)) {
+      throw new IllegalArgumentException("Rates and times must be finite");
+    }
     if (t2 <= t1) {
       throw new IllegalArgumentException("t2 must be greater than t1");
     }
