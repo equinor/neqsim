@@ -95,7 +95,9 @@ class ChemistryRunnerTest {
         + "\"temperature_K\":298.15,\"pressure_bara\":1.01325,\"mineral\":\"CaSO4_A\","
         + "\"components\":{\"water\":55.508,\"Na+\":1.0,\"Ca++\":0.2," + "\"Cl-\":1.0,\"SO4--\":0.2}}";
 
-    JsonObject data = JsonParser.parseString(ChemistryRunner.run(input)).getAsJsonObject().getAsJsonObject("data");
+    JsonObject result = JsonParser.parseString(ChemistryRunner.run(input)).getAsJsonObject();
+    assertEquals("success", result.get("status").getAsString(), result.toString());
+    JsonObject data = result.getAsJsonObject("data");
 
     assertEquals("electrolyte-cpa", data.get("model").getAsString());
     assertTrue(data.get("precipitatedSolid").getAsBoolean());
