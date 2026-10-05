@@ -51,7 +51,6 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark a single TPflash with stability analysis.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Benchmark single TPflash with stability analysis")
@@ -79,7 +78,6 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark multiple TPflash calls to see consistency.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Benchmark multiple TPflash calls")
@@ -115,7 +113,6 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark TPflash with and without multiPhaseCheck to quantify stability analysis cost.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Compare TPflash with and without stability analysis")
@@ -168,7 +165,6 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark phase init() calls which are expensive for electrolyte systems.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Benchmark phase initialization cost")
@@ -217,7 +213,6 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark fugacity coefficient calculations.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Benchmark fugacity coefficient calculation cost")
@@ -249,7 +244,6 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Test without ions to see how much they contribute to slowdown.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Compare performance with and without ions")
@@ -316,7 +310,6 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark system cloning which is used in stability analysis.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Benchmark system cloning cost")
@@ -342,7 +335,6 @@ public class StabilityAnalysisBenchmarkTest {
    * Test that simulates stability analysis: clone, set ions to 0, then init. This tests whether the optimization to
    * skip electrolyte calculations for ion-free trial phases is working.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   @DisplayName("Verify ion-free trial phase optimization")
