@@ -665,14 +665,14 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
 
   @Test
   void pcsaftRefreshesForcedRootsAndReturnsToReferenceState() {
-    pcsaftRoundTrip(new SystemPCSAFT(300.0, 10.0), PhasePCSAFTRahmat.class, "propane", 300.0, 10.0,
-        PhaseType.GAS, 250.0, 20.0, PhaseType.LIQUID);
-    pcsaftRoundTrip(new SystemPCSAFT(450.0, 5.0), PhasePCSAFTRahmat.class, "n-hexane", 450.0, 5.0,
-        PhaseType.GAS, 300.0, 10.0, PhaseType.LIQUID);
-    pcsaftRoundTrip(new SystemPCSAFTa(300.0, 10.0), PhasePCSAFTa.class, "propane", 300.0, 10.0,
-        PhaseType.GAS, 250.0, 20.0, PhaseType.LIQUID);
-    pcsaftRoundTrip(new SystemPCSAFTa(450.0, 5.0), PhasePCSAFTa.class, "n-hexane", 450.0, 5.0,
-        PhaseType.GAS, 300.0, 10.0, PhaseType.LIQUID);
+    pcsaftRoundTrip(new SystemPCSAFT(300.0, 10.0), PhasePCSAFTRahmat.class, "propane", 300.0, 10.0, PhaseType.GAS,
+        250.0, 20.0, PhaseType.LIQUID);
+    pcsaftRoundTrip(new SystemPCSAFT(450.0, 5.0), PhasePCSAFTRahmat.class, "n-hexane", 450.0, 5.0, PhaseType.GAS, 300.0,
+        10.0, PhaseType.LIQUID);
+    pcsaftRoundTrip(new SystemPCSAFTa(300.0, 10.0), PhasePCSAFTa.class, "propane", 300.0, 10.0, PhaseType.GAS, 250.0,
+        20.0, PhaseType.LIQUID);
+    pcsaftRoundTrip(new SystemPCSAFTa(450.0, 5.0), PhasePCSAFTa.class, "n-hexane", 450.0, 5.0, PhaseType.GAS, 300.0,
+        10.0, PhaseType.LIQUID);
   }
 
   private static void pcsaftRoundTrip(SystemInterface system, Class<?> expectedPhase, String component,
@@ -706,8 +706,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     PhaseInterface phase = system.getPhase(0);
     assertEquals(expectedPhase, phase.getClass());
     assertEquals(phaseType, phase.getType());
-    double[] values = {phase.getZ(), phase.getDensity("mol/m3") / 1000.0, phase.getDensity(),
-        phase.getMolarVolume()};
+    double[] values = {phase.getZ(), phase.getDensity("mol/m3") / 1000.0, phase.getDensity(), phase.getMolarVolume()};
     for (double value : values) {
       assertTrue(Double.isFinite(value) && value > 0.0);
     }
