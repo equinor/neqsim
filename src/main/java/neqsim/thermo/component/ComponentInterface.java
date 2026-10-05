@@ -741,14 +741,24 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getK();
 
   /**
-   * Returns the critical temperature of the component.
+   * Returns the critical-temperature parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @return The critical temperature of the component in Kelvin.
    */
   public double getTC();
 
   /**
-   * Returns the critical temperature of the component.
+   * Returns the critical-temperature parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @param unit Unit of return temperature
    * @return The critical temperature of the component in specified unit.
@@ -778,14 +788,24 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setNormalBoilingPoint(double normalBoilingPoint);
 
   /**
-   * Returns the critical pressure of the component.
+   * Returns the critical-pressure parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @return The critical pressure of the component in unit bara.
    */
   public double getPC();
 
   /**
-   * Returns the critical pressure of the component.
+   * Returns the critical-pressure parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @param unit Unit of return pressure
    * @return The critical pressure of the component in specified unit.
