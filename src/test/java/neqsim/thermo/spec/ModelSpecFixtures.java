@@ -622,6 +622,7 @@ final class ModelSpecFixtures {
       PhaseType expectedType = "liquid".equals(s.phase) ? PhaseType.OIL : PhaseType.GAS;
       system.setForceSinglePhase(expectedType);
       system.setBeta(0, 1.0);
+      system.init(0, 0);
       system.init(3);
       PhaseInterface phase = system.getPhase(0);
       if (s.fixture == ModelSpec.Fixture.PCSAFT_PHASE || s.fixture == ModelSpec.Fixture.PCSAFTA_PHASE) {
