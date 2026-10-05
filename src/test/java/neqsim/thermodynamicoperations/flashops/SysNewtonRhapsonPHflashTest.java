@@ -70,7 +70,6 @@ public class SysNewtonRhapsonPHflashTest {
     assertEquals(initialTemperature, testSystem.getTemperature(), 0.2, "Temperature should be recovered in two-phase");
   }
 
-
   @Test
   void testDirectPSFlashTwoPhase() {
     SystemInterface testSystem = new SystemSrkEos(250.0, 20.0);
