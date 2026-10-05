@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -195,6 +196,27 @@ class GasPseudoCriticalPropertiesTest {
 
     double ppr = GasPseudoCriticalProperties.pseudoReducedPressure(137.9, 45.5);
     assertEquals(137.9 / 45.5, ppr, 1e-10);
+  }
+
+
+  @Test
+  void testSweetGasReferenceValues() {
+    assertEquals(224.84375, GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(0.75), 1.0e-12);
+    assertEquals(45.99872102483487, GasPseudoCriticalProperties.pseudoCriticalPressureStanding(0.75), 1.0e-12);
+    assertEquals(216.5, GasPseudoCriticalProperties.pseudoCriticalTemperatureSutton(0.75), 1.0e-12);
+    assertEquals(45.26572346557454, GasPseudoCriticalProperties.pseudoCriticalPressureSutton(0.75), 1.0e-12);
+  }
+
+  @Test
+  void testSweetGasCorrelationRangesFailClosed() {
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(Double.NaN));
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoCriticalProperties.pseudoCriticalPressureStanding(0.54));
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoCriticalProperties.pseudoCriticalTemperatureSutton(1.69));
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoCriticalProperties.pseudoCriticalPressureSutton(Double.POSITIVE_INFINITY));
   }
 
   // ========== INTEGRATION: SUTTON + WICHERT-AZIZ FOR SOUR GAS ==========
