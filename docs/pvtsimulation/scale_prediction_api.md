@@ -281,6 +281,15 @@ composition is reflashed and physical properties are reinitialised. Consequently
 fluid can continue through `Stream`, `Heater`, and `ProcessSystem` calculations. Ions remain in the
 aqueous phase, while gas and oil phases retain their EOS roles.
 
+For reactive electrolyte-CPA feeds containing only water and ions, TP flash first tests an aqueous
+endpoint with closed chemical equilibrium. It accepts that endpoint only when water fugacity is
+no greater than that of the pure-water vapor-root trial at the same temperature and pressure.
+This prevents singular gas trials from being interpreted as
+undersaturation during precipitation searches. Brines above the solvent boiling boundary and
+feeds with any positive neutral solute retain the general phase search. The caller's phase
+configuration is preserved; the scale API's saturation and balance acceptance tolerances are
+unchanged.
+
 Callers should require a complementarity residual such as
 `solid.getComplementarityViolation() <= 1e-5` and independently check total and elemental balances.
 
