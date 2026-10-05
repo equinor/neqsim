@@ -7,9 +7,9 @@ description: "Source inventory, execution-route mappings, evidence boundaries an
 
 This extends [campaign #3153](https://github.com/equinor/neqsim/issues/3153),
 the existing MCP inventories and [agent coverage #4191](https://github.com/equinor/neqsim/pull/4191).
-The active test-layout PR [#4194](https://github.com/equinor/neqsim/pull/4194)
-relocates the protocol harness: preserve these coverage assertions when integrating
-that rename. This user-directed baseline does not replace the autonomous campaign PR.
+The merged test-layout PR [#4194](https://github.com/equinor/neqsim/pull/4194)
+relocated the protocol harness; the coverage assertions use that canonical path.
+This shared baseline remains coordinated with the autonomous campaign.
 
 ## Query the inventory
 
@@ -79,9 +79,9 @@ retain their existing bounded execution policy.
 
 ## Explicit operation contracts
 
-Package 2 starts with eight bounded, source-backed operations: sulfur vapour pressure and seven pure engineering-unit conversions. Each contract records its classification, exact Java signature, units, applicability, existing MCP route, executable example, tolerance, and evidence sources. The generated summary reports classification totals, and the packaged MCP qualification retrieves these records through `runCapability action=coverage` before replaying every supported example through `action=invoke`.
+Package 2 now contains fourteen bounded, source-backed operations: sulfur vapour pressure, eight pure engineering-unit conversions, and five static slug impact-force screening calculations. Each contract records its classification, exact Java signature, units, applicability, existing MCP route, executable example, tolerance, and evidence sources. The generated summary reports classification totals, and the packaged MCP qualification retrieves these records through `runCapability action=coverage` before replaying every supported example through `action=invoke`.
 
-A `supported` operation means only the recorded static signature is supported on the existing bounded runtime route. It does not qualify unlisted methods on the same class, create new reflection authority, or replace canonical stateful process/model runners. Pressure, temperature, temperature-difference, length, time, power, and energy conversions are included; state-dependent rate conversions are intentionally excluded.
+A `supported` operation means only the recorded static signature is supported on the existing bounded runtime route. It does not qualify unlisted methods on the same class, create new reflection authority, or replace canonical stateful process/model runners. Pressure, pressure-difference, temperature, temperature-difference, length, time, power, and energy conversions are included; state-dependent rate conversions are intentionally excluded. The slug operations expose only the documented homogeneous screening equations and circular-area helper; they do not qualify slug prediction, structural response, fatigue, supports, or piping-code acceptance.
 
 ## Completion work packages under #3153
 
