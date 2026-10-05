@@ -155,6 +155,50 @@
           ]
         },
         {
+          "id": "pressure-difference-conversion",
+          "classification": "supported",
+          "api": "neqsim.util.unit.PressureUnit",
+          "method": "convertDifference",
+          "signature": "double neqsim.util.unit.PressureUnit.convertDifference(double, String, String)",
+          "units": {
+            "quantity": "pressure difference",
+            "source": "unit argument",
+            "target": "toUnit argument",
+            "acceptedUnits": [
+              "bara",
+              "bar",
+              "barg",
+              "psi",
+              "psia",
+              "psig",
+              "Pa",
+              "kPa",
+              "MPa",
+              "atm"
+            ]
+          },
+          "applicability": "Signed pressure-difference conversions without atmospheric offsets; gauge aliases use the corresponding absolute scale.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              100,
+              "kPa",
+              "barg"
+            ],
+            "parameterTypes": [
+              "double",
+              "String",
+              "String"
+            ],
+            "expected": 1,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/util/unit/UnitStrategyContractTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
           "id": "temperature-conversion",
           "classification": "supported",
           "api": "neqsim.util.unit.TemperatureUnit",
@@ -436,6 +480,211 @@
       }
     },
     {
+      "id": "exponential-decline-screening",
+      "title": "Static exponential production-decline screening",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.DeclineCurveAnalysis"
+      ],
+      "skills": [
+        "neqsim-production-optimization"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Arps exponential (b = 0) screening only, with unit-consistent non-negative rates, daily nominal decline and elapsed days. It does not establish boundary-dominated flow, forecast uncertainty, reserves classification, economics, facility constraints or development approval.",
+      "operations": [
+        {
+          "id": "exponential-decline-rate",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "rateExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.rateExponential(double, double, double)",
+          "units": {
+            "inputs": {
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
+            },
+            "outputs": {
+              "productionRate": "same as initialRate"
+            }
+          },
+          "applicability": "Arps exponential production-rate screening for finite non-negative initial rate, nominal daily decline and elapsed time.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 694.0231234070969,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "exponential-decline-cumulative-production",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "cumulativeExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.cumulativeExponential(double, double, double)",
+          "units": {
+            "inputs": {
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
+            },
+            "outputs": {
+              "cumulativeProduction": "rate unit"
+            }
+          },
+          "applicability": "Integrated Arps exponential production for finite non-negative initial rate, nominal daily decline and elapsed time.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 305976.87659290305,
+            "absoluteTolerance": 1e-06
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "nominal-to-effective-annual-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "nominalToEffectiveAnnual",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.nominalToEffectiveAnnual(double)",
+          "units": {
+            "inputs": {
+              "nominalDeclineRate": "1/day"
+            },
+            "outputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite non-negative nominal daily decline rate using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.001
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.30597687659290307,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "effective-annual-to-nominal-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "effectiveAnnualToNominal",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.effectiveAnnualToNominal(double)",
+          "units": {
+            "inputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite effective annual decline fraction strictly between 0 and 1 using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.30597687659290307
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.001,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "two-point-exponential-decline-estimate",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "estimateExponentialDecline",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.estimateExponentialDecline(double, double, double, double)",
+          "units": {
+            "inputs": {
+              "firstRate": "rate/day",
+              "firstTime": "day",
+              "secondRate": "rate/day",
+              "secondTime": "day"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Two-point exponential decline estimate for finite positive rates with the second rate lower and the second time later.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0,
+              500,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 0.0018977335538944429,
+            "absoluteTolerance": 1e-15
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ],
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "field-economics",
       "title": "Production profiles and cash flow",
       "domain": "economics",
@@ -583,6 +832,225 @@
         "src/test/java/neqsim/mcp/runners/PVTRunnerTest.java"
       ],
       "limitations": "Experimental input and fluid characterization must be supplied; test presence is not a fluid-specific calibration.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
+      "id": "slug-impact-force-screening",
+      "title": "Static slug impact-force screening",
+      "domain": "flow-assurance",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.process.equipment.pipeline.SlugImpactForce"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Homogeneous momentum-force screening only. Inputs, bend geometry, dynamic load factor, support response, vibration, fatigue, and piping-code acceptance require independent engineering review.",
+      "operations": [
+        {
+          "id": "effective-slug-density",
+          "classification": "supported",
+          "api": "neqsim.process.equipment.pipeline.SlugImpactForce",
+          "method": "effectiveSlugDensity",
+          "signature": "double neqsim.process.equipment.pipeline.SlugImpactForce.effectiveSlugDensity(double, double, double)",
+          "units": {
+            "inputs": {
+              "liquidDensity": "kg/m3",
+              "gasDensity": "kg/m3",
+              "gasVoidFraction": "fraction"
+            },
+            "outputs": {
+              "effectiveDensity": "kg/m3"
+            }
+          },
+          "applicability": "Homogeneous no-slip slug density for positive liquid density, non-negative gas density, and gas void fraction from 0 through 1.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              40,
+              0.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 760,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "slug-momentum-force",
+          "classification": "supported",
+          "api": "neqsim.process.equipment.pipeline.SlugImpactForce",
+          "method": "momentumForce",
+          "signature": "double neqsim.process.equipment.pipeline.SlugImpactForce.momentumForce(double, double, double)",
+          "units": {
+            "inputs": {
+              "density": "kg/m3",
+              "area": "m2",
+              "velocity": "m/s"
+            },
+            "outputs": {
+              "force": "N"
+            }
+          },
+          "applicability": "Axial momentum-force screening for positive density and flow area; the signed velocity is squared.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.031415926535897934,
+              5
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 785.3981633974483,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "slug-bend-force",
+          "classification": "supported",
+          "api": "neqsim.process.equipment.pipeline.SlugImpactForce",
+          "method": "bendForce",
+          "signature": "double neqsim.process.equipment.pipeline.SlugImpactForce.bendForce(double, double, double, double)",
+          "units": {
+            "inputs": {
+              "density": "kg/m3",
+              "area": "m2",
+              "velocity": "m/s",
+              "bendAngle": "deg"
+            },
+            "outputs": {
+              "reactionForce": "N"
+            }
+          },
+          "applicability": "Bend reaction-force magnitude for positive density and area and an engineering bend angle from 0 through 180 degrees.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.031415926535897934,
+              5,
+              90
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 1110.7207345395916,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "slug-design-force",
+          "classification": "supported",
+          "api": "neqsim.process.equipment.pipeline.SlugImpactForce",
+          "method": "designForce",
+          "signature": "double neqsim.process.equipment.pipeline.SlugImpactForce.designForce(double, double, double, double, double, double)",
+          "units": {
+            "inputs": {
+              "liquidDensity": "kg/m3",
+              "gasDensity": "kg/m3",
+              "area": "m2",
+              "velocity": "m/s",
+              "gasVoidFraction": "fraction",
+              "dynamicLoadFactor": "dimensionless"
+            },
+            "outputs": {
+              "designForce": "N"
+            }
+          },
+          "applicability": "Homogeneous two-phase slug momentum-force screening with caller-supplied dynamic load factor; it is not a qualified piping design.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              40,
+              0.031415926535897934,
+              5,
+              0.25,
+              2
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 1193.8052083641214,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "pipe-area-from-diameter",
+          "classification": "supported",
+          "api": "neqsim.process.equipment.pipeline.SlugImpactForce",
+          "method": "areaFromDiameter",
+          "signature": "double neqsim.process.equipment.pipeline.SlugImpactForce.areaFromDiameter(double)",
+          "units": {
+            "inputs": {
+              "diameter": "m"
+            },
+            "outputs": {
+              "area": "m2"
+            }
+          },
+          "applicability": "Circular flow area for a positive internal pipe diameter.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.2
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.031415926535897934,
+            "absoluteTolerance": 1e-15
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ],
       "evidence": {
         "route": "declared",
         "testSources": "present",
@@ -1624,7 +2092,7 @@
     {"id":"neqsim.process.equipment.diffpressure.Orifice","kind":"class","source":"src/main/java/neqsim/process/equipment/diffpressure/Orifice.java","sourceDigest":"6b19dcc569ce7662fc55e09f64cac0d96b64a789072cbeb26666be08b9c84e17","domain":"process","skills":["neqsim-agent-handoff","neqsim-capability-map","neqsim-standards-lookup"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","control-system","emissions-environmental","engineering-deliverables","flow-assurance","gas-quality","literature-scout","lng-value-chain","mechanical-design","process-model","production-chemistry","reaction-engineering","review","rotating-equipment","solve-task","standards-review"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.ColumnSpecification","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/ColumnSpecification.java","sourceDigest":"e2c5ee8f624e5b135a44474d8b25c25dc3c284806c0b854077baa6061f01149f","domain":"process","skills":["neqsim-column-internals-and-rate-based"],"agents":["gas-processing-refining","mechanical-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.Condenser","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/Condenser.java","sourceDigest":"90647a7176bc9c6e482214ab0674fecda913b3b294ab29828e222e5baee67d2a","domain":"process","skills":["neqsim-capability-map","neqsim-distillation-design","neqsim-power-generation","neqsim-process-extraction","neqsim-unisim-reader","neqsim-utility-design"],"agents":["capability-scout","emissions-environmental","engineering-deliverables","extract-process","gas-processing-refining","mechanical-design","network-energy-systems","process-model","rotating-equipment","solve-task","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.distillation.DistillationColumn","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/DistillationColumn.java","sourceDigest":"a2e0fce0a443fc90c66414325e816a17fb1c73cc89f59ab7af4dc8d6c965ce1c","domain":"process","skills":["neqsim-acid-gas-treating","neqsim-api-patterns","neqsim-capability-map","neqsim-column-internals-and-rate-based","neqsim-distillation-design","neqsim-process-extraction","neqsim-refinery-crude-processing","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","gas-processing-refining","gas-quality","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","pvt-simulation","reaction-engineering","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.distillation.DistillationColumn","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/DistillationColumn.java","sourceDigest":"1ee5b8b42c1b8e18c38327ba33a5a25d0790f6a1e0b45e5ee01f6cb438481207","domain":"process","skills":["neqsim-acid-gas-treating","neqsim-api-patterns","neqsim-capability-map","neqsim-column-internals-and-rate-based","neqsim-distillation-design","neqsim-process-extraction","neqsim-refinery-crude-processing","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","gas-processing-refining","gas-quality","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","pvt-simulation","reaction-engineering","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.DistillationColumnMatrixSolver","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/DistillationColumnMatrixSolver.java","sourceDigest":"8af646361ceea22f65b418f8a7a4b2ca9baeecabe03efce137df7cf69d640838","domain":"process","skills":["neqsim-column-internals-and-rate-based"],"agents":["gas-processing-refining","mechanical-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.DistillationInterface","kind":"interface","source":"src/main/java/neqsim/process/equipment/distillation/DistillationInterface.java","sourceDigest":"f27b3bf5bb88bc7a7da352e653ac858f307f44ca4083dfeedc2d41fac7c956f8","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.DoeBigHillVacuumComponentRecovery","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/DoeBigHillVacuumComponentRecovery.java","sourceDigest":"7bfdcd4763687a255eb54dcbabc74b24200672812f5dd06687cf810c7286f395","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -1649,7 +2117,7 @@
     {"id":"neqsim.process.equipment.distillation.SarirAtmosphericPumparoundScreen","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/SarirAtmosphericPumparoundScreen.java","sourceDigest":"1dc2b07968655c15a6d6a0e3dcefc86b9a32b268b29e44efa52c68939adaf164","domain":"process","skills":["neqsim-refinery-crude-processing"],"agents":["gas-processing-refining","thermo-fluid"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.SarirAtmosphericSideStripperContactScreen","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/SarirAtmosphericSideStripperContactScreen.java","sourceDigest":"11d32bbfc14a15026fe648f634d71ef851ff52c7e6bfc517f79dffb1092d9caf","domain":"process","skills":["neqsim-column-internals-and-rate-based","neqsim-refinery-crude-processing"],"agents":["gas-processing-refining","mechanical-design","thermo-fluid"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.ScrubColumn","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/ScrubColumn.java","sourceDigest":"4dcf57a67f30abd41830c89075a801d763c41d95c948ea9519dd6ed8f9271fd8","domain":"process","skills":["neqsim-column-internals-and-rate-based"],"agents":["gas-processing-refining","mechanical-design"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.distillation.ShortcutDistillationColumn","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/ShortcutDistillationColumn.java","sourceDigest":"fb43d8940fd1ca37282e45f544828cc243573484e1b7e451262142c6962e9d56","domain":"process","skills":["neqsim-capability-map","neqsim-column-internals-and-rate-based"],"agents":["capability-scout","engineering-deliverables","gas-processing-refining","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.distillation.ShortcutDistillationColumn","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/ShortcutDistillationColumn.java","sourceDigest":"9fe483064ddd021fd22486921fae6b222603a5727bed0c4e80df8e647614ffbb","domain":"process","skills":["neqsim-capability-map","neqsim-column-internals-and-rate-based"],"agents":["capability-scout","engineering-deliverables","gas-processing-refining","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.SimpleTray","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/SimpleTray.java","sourceDigest":"75edf28ea1964e9dca355e1eca7314844066e3049f2fc5886bd298fd57fc1587","domain":"process","skills":["neqsim-column-internals-and-rate-based"],"agents":["gas-processing-refining","mechanical-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.TrayInterface","kind":"interface","source":"src/main/java/neqsim/process/equipment/distillation/TrayInterface.java","sourceDigest":"d39c0f6de22d37bbad2cccfc39346512ef77448bba3310d4aac8cc2ac10c8193","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.distillation.VLSolidTray","kind":"class","source":"src/main/java/neqsim/process/equipment/distillation/VLSolidTray.java","sourceDigest":"395569ea00733d41d9c4512a6d49c83ab1121a13e82913bf9aff8f37563bdeab","domain":"process","skills":["neqsim-column-internals-and-rate-based"],"agents":["gas-processing-refining","mechanical-design"],"capabilities":[],"disposition":"review_required"},
@@ -1839,7 +2307,7 @@
     {"id":"neqsim.process.equipment.pipeline.RiserConfiguration","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/RiserConfiguration.java","sourceDigest":"338eb7207a486bce31e3d12bf8af0b6caf920b682f7f721af6b33faea048dd64","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.RouteProfile","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/RouteProfile.java","sourceDigest":"6d39ccb627405acb90dd2b0948e1a90cd99bfc712422a4126b249f0317fcfc6e","domain":"process","skills":["neqsim-subsea-and-wells"],"agents":["ccs-hydrogen","field-development","flow-assurance","lng-value-chain","mechanical-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.SimpleTPoutPipeline","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/SimpleTPoutPipeline.java","sourceDigest":"fc28dad15e37fdd0d046b5194ecefe66061c1de7f72be4b565b0c74d3ac28d0e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.pipeline.SlugImpactForce","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/SlugImpactForce.java","sourceDigest":"36d829e4de74b7eecbf07ef2e3e766f3f9ff8783fa027086c13410306d788c36","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.pipeline.SlugImpactForce","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/SlugImpactForce.java","sourceDigest":"81a0c81722ec79734d6e493d85360beff1c08dbf11233d6e3131627bcdd3de72","domain":"process","skills":[],"agents":[],"capabilities":["slug-impact-force-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.pipeline.SteadyStateConvergenceReport","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/SteadyStateConvergenceReport.java","sourceDigest":"3d51a03464f9c9a0231c6d01e97a4ae8fe10173d7a9533f9650067bd683a027a","domain":"process","skills":["neqsim-flow-assurance"],"agents":["ccs-hydrogen","field-development","flow-assurance","lng-value-chain","production-chemistry"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.TopsidePiping","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/TopsidePiping.java","sourceDigest":"43684a19f6b533f3f48c49dd1d28eba4c738fb032a510cf459064e47f46d15da","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.TransientForceCalculator","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/TransientForceCalculator.java","sourceDigest":"e1288e3fc9660c8254247baf97bab1f9b3f972b3f69c32345bd63116877e07dc","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -1962,6 +2430,7 @@
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransition.java","sourceDigest":"c387e9bb3be5022f6f14275f77bb5dff462160f79835de0918443747e3e0c4b2","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChain.java","sourceDigest":"b24ad29371c8cb678e87749f1349a4251aba04a2340b117dabd3d14329c2b299","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpoint.java","sourceDigest":"135c0f25bd761dfe4be686c7892422e79842bc6c7594ecf460fb6ff5dcdefc67","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransition.java","sourceDigest":"80a4569c4ea6b4dc810c9808eeffd9740541a4d356c24976cd99e0891ee05762","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8StreamApplicationPreview","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8StreamApplicationPreview.java","sourceDigest":"20325ec67b741b0745fe845858541a28ac17bbd5541938d4a3dae64082f9519a","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8Transfer","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8Transfer.java","sourceDigest":"fc8231dee84d82fc955047aed0f04a774cfa2b3f1bcb3dea6338a03eb85e682e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reactor.AqueousHydrogenSulfideOxidationS8TransferBatch","kind":"class","source":"src/main/java/neqsim/process/equipment/reactor/AqueousHydrogenSulfideOxidationS8TransferBatch.java","sourceDigest":"eca662b1d83a2fc9d45f780be6af6058c97ec63eccba650d400462165f4b77bd","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -2038,6 +2507,7 @@
     {"id":"neqsim.process.equipment.reservoir.Well","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/Well.java","sourceDigest":"cad09aced79bd293324292757c684a63590b112c61ed5c984de736b5e1c46719","domain":"process","skills":["neqsim-api-patterns","neqsim-capability-map","neqsim-ccs-hydrogen","neqsim-eos-regression","neqsim-field-development","neqsim-field-economics","neqsim-flow-assurance","neqsim-integrated-production-and-lifecycle","neqsim-pipeline-and-terminal-networks","neqsim-platform-modeling","neqsim-process-extraction","neqsim-production-optimization","neqsim-regression-baselines","neqsim-standards-lookup","neqsim-subsea-and-wells","neqsim-technical-document-reading","neqsim-troubleshooting"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","production-chemistry","pvt-simulation","reaction-engineering","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reservoir.WellFlow","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/WellFlow.java","sourceDigest":"60c6f8c7ec6f1b86c74643094effa1447c8db3e861e9911acf6dada9cdae9994","domain":"process","skills":["neqsim-dynamic-equipment-implementation","neqsim-field-development","neqsim-platform-modeling","neqsim-task-workflow","neqsim-troubleshooting"],"agents":["dynamic-equipment","field-development","gas-processing-refining","neqsim-test","notebook-example","optimize-processmodel","process-model","reaction-engineering","root-cause","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.reservoir.WellSystem","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/WellSystem.java","sourceDigest":"5a9c015750f7f0c8f8691db3523507db6b58f4dec5c6977e1e98202a17edcca4","domain":"process","skills":["neqsim-field-development","neqsim-integrated-production-and-lifecycle","neqsim-production-optimization"],"agents":["field-development","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.reservoir.WellUnloadingScreening","kind":"class","source":"src/main/java/neqsim/process/equipment/reservoir/WellUnloadingScreening.java","sourceDigest":"55a5c3c86928d0c6436f7c2017196005640dc354cd799df96c76aa598018e896","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.separator.CryogenicSeparator","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/CryogenicSeparator.java","sourceDigest":"f5ebcf4f51f5d5889167ac94a2994b685920fd2c5af96d9a178d1727a3c51098","domain":"process","skills":["neqsim-produced-water-and-solids-separation"],"agents":["gas-processing-refining","production-chemistry"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.separator.Crystallizer","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/Crystallizer.java","sourceDigest":"5a684849a0ee169395d500be885ec94713737300e3e9faa47acaf8d9dbf840c0","domain":"process","skills":["neqsim-capability-map","neqsim-produced-water-and-solids-separation"],"agents":["capability-scout","engineering-deliverables","gas-processing-refining","mechanical-design","production-chemistry","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.separator.EndFlash","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/EndFlash.java","sourceDigest":"bdd846213ac8a7038bab5c9b6be7ab38a68b85b1401f38c9f94978645a7fcad7","domain":"process","skills":["neqsim-produced-water-and-solids-separation"],"agents":["gas-processing-refining","production-chemistry"],"capabilities":[],"disposition":"review_required"},
@@ -3214,6 +3684,7 @@
     {"id":"neqsim.process.util.optimizer.ProcessModelOperatingAction","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingAction.java","sourceDigest":"75b70fd0df57e49ba6339f1f1c5959156be74d4a5576c271edd5df053655a2a6","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingActionEvaluator.java","sourceDigest":"f7d49d59ba7ff25752fc92a54e5599369cb57d5f9c5acd5e6c6db7b4ef6fe206","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingActionSetEvaluator.java","sourceDigest":"5c4a68308e9373e3d8e4b59932f0a78bf99f20694bb9a9bf0d5d3b75b579cfa5","domain":"process","skills":["neqsim-production-optimization","neqsim-troubleshooting"],"agents":["dynamic-equipment","field-development","gas-processing-refining","neqsim-test","notebook-example","process-model","reaction-engineering","root-cause","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingEnvelopeStudy.java","sourceDigest":"018a5b8f1218e3c7bf813126326bf00bd6dd4eb294d23f1379315a44457c4b81","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelOptimizationView","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOptimizationView.java","sourceDigest":"b0b584469d2eda3b8fab8de4c3728e58b5ff0a39105a8090f2b764dd98de7a0c","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelSimulationEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelSimulationEvaluator.java","sourceDigest":"b7a5ece57d799bbbe12a9eda1096049d83ec7b3746c0f7967281e6a07a0da834","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelThroughputOptimizer","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelThroughputOptimizer.java","sourceDigest":"af226e4cfcc709f43d80414c7cad38d95faae4ea18de3990a6f5bd0dd6664f13","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -3326,7 +3797,7 @@
     {"id":"neqsim.pvtsimulation.util.BlackOilCorrelations","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilCorrelations.java","sourceDigest":"831712aaab0fee69003b87a6323e3a43103773ffc5420802b1b55e103dc6d27b","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilTableValidator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilTableValidator.java","sourceDigest":"116bbfa3cc9d0d7f88ab08f3c4ffca6f257cca484e0440287230e7fdf7c3e61a","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilUnits","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilUnits.java","sourceDigest":"86bb80de016bf3410b85758de684bf09b1355e56c8188a4dd95bc8cf5aa1a457","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"a92984ff870e8621faf952d351f9724a91f73d58e21d93370851f98831f76f17","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"326d8c437e8aa77db684a558b235d9deb638b7b0a1dde6f3af9e091cc06ae908","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task"],"capabilities":["exponential-decline-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoCriticalProperties","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoCriticalProperties.java","sourceDigest":"905c54f1cd773b921c1f5cebd12ade8464d1a42a0f2ff84295e54602bcc65100","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoPressure","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoPressure.java","sourceDigest":"ebc3bc84ed6f441914afcb83455be6129233792ea8d1dc07d5a049fa49a9a2fc","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.PVTReportGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTReportGenerator.java","sourceDigest":"7b318865c264540e984a17ae89a2e7346254bca40b1370645309cd45bb2b890e","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},

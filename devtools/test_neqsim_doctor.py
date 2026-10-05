@@ -1,10 +1,54 @@
 """Health-check regressions for CLI installation before building the JAR."""
 import os
+import subprocess
 import sysconfig
 
 import pytest
 
 import neqsim_doctor as doctor
+
+
+@pytest.mark.parametrize("recovered", [True, False])
+def test_java_startup_timeout_is_retried_once(monkeypatch, recovered):
+    """A slow cold JVM launch gets one bounded retry; persistent timeouts still fail."""
+    monkeypatch.setattr(doctor, "_results", [])
+    monkeypatch.setattr(doctor.shutil, "which", lambda name: "/jdk/bin/java")
+    monkeypatch.setattr(doctor, "_java_home_is_valid", lambda: (False, ""))
+    monkeypatch.setattr(doctor, "_java_missing_hint", lambda: "Check the JVM")
+    monkeypatch.delenv("JAVA_HOME", raising=False)
+    calls = []
+
+    def run_java(command, **kwargs):
+        calls.append(kwargs["timeout"])
+        if len(calls) == 1 or not recovered:
+            raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+        return subprocess.CompletedProcess(command, 0, "", 'openjdk version "17.0.20"')
+
+    monkeypatch.setattr(doctor.subprocess, "run", run_java)
+    doctor.check_java()
+
+    assert calls == [10, 30]
+    installed = next(result for result in doctor._results if result["name"] == "Java installed")
+    assert installed["passed"] is recovered
+    if recovered:
+        assert any(result["name"] == "Java version >= 8" and result["passed"]
+                   for result in doctor._results)
+
+
+def test_java_nonzero_exit_is_a_health_failure(monkeypatch):
+    """A broken JVM executable must not be reported as a successful installation."""
+    monkeypatch.setattr(doctor, "_results", [])
+    monkeypatch.setattr(doctor.shutil, "which", lambda name: "/jdk/bin/java")
+    monkeypatch.setattr(doctor, "_java_home_is_valid", lambda: (False, ""))
+    monkeypatch.setattr(doctor, "_java_missing_hint", lambda: "Check the JVM")
+    monkeypatch.delenv("JAVA_HOME", raising=False)
+    monkeypatch.setattr(doctor.subprocess, "run", lambda command, **kwargs:
+                        subprocess.CompletedProcess(command, 1, "", "Could not create the JVM"))
+
+    doctor.check_java()
+
+    installed = next(result for result in doctor._results if result["name"] == "Java installed")
+    assert not installed["passed"]
 
 
 @pytest.fixture

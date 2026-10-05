@@ -242,7 +242,8 @@ def test_exact_static_invocation(client):
 
 def test_explicit_operation_contracts(client):
     entries = []
-    for capability_id in ("sulfur-vapour-pressure", "engineering-unit-conversions"):
+    for capability_id in ("sulfur-vapour-pressure", "engineering-unit-conversions",
+                          "slug-impact-force-screening", "exponential-decline-screening"):
         coverage_page = assert_success(
             client.call_capability(
                 {"action": "coverage", "view": "capabilities", "query": capability_id,
@@ -257,15 +258,22 @@ def test_explicit_operation_contracts(client):
     operations = [operation for entry in entries for operation in entry.get("operations", [])]
     expected_ids = {
         "sulfur-vapour-pressure-at-temperature", "pressure-conversion",
-        "temperature-conversion", "temperature-difference-conversion",
-        "length-conversion", "time-conversion", "power-conversion", "energy-conversion",
+        "pressure-difference-conversion", "temperature-conversion",
+        "temperature-difference-conversion", "length-conversion", "time-conversion",
+        "power-conversion", "energy-conversion", "effective-slug-density",
+        "slug-momentum-force", "slug-bend-force", "slug-design-force",
+        "pipe-area-from-diameter", "exponential-decline-rate",
+        "exponential-decline-cumulative-production",
+        "nominal-to-effective-annual-decline",
+        "effective-annual-to-nominal-decline",
+        "two-point-exponential-decline-estimate",
     }
     require({operation.get("id") for operation in operations} == expected_ids,
             "explicit operation inventory drifted", operations)
 
     for operation in operations:
         require(operation.get("classification") == "supported",
-                "first operation-contract batch must remain supported", operation)
+                "Package 2 operation contracts must remain supported", operation)
         require(operation.get("units") and operation.get("applicability")
                 and operation.get("route") == "runCapability action=invoke"
                 and operation.get("evidenceSources"),
@@ -283,6 +291,17 @@ def test_explicit_operation_contracts(client):
                 "invoked signature drifted from its operation contract", result)
         require(abs(result.get("result") - example["expected"]) <= example["absoluteTolerance"],
                 "operation example result drifted", {"operation": operation, "result": result})
+
+    assert_error(
+        client.call_capability(
+            {"action": "invoke",
+             "className": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+             "methodName": "rateExponential",
+             "parameterTypes": ["double", "double", "double"],
+             "arguments": [-1, 0.001, 365.25]}
+        ),
+        "INVOCATION_ERROR",
+    )
 
 
 def test_external_class_fails_closed(client):

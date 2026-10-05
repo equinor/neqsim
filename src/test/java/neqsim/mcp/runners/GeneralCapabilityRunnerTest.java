@@ -102,6 +102,56 @@ class GeneralCapabilityRunnerTest {
     assertEquals(1.01325, result.get("result").getAsDouble(), 1.0e-10);
   }
 
+  /** Catalogued slug-impact methods must remain executable through the bounded static route. */
+  @Test
+  void testInvokeRunsCataloguedSlugImpactCalculations() {
+    String[] methods = {"effectiveSlugDensity", "momentumForce", "bendForce", "designForce", "areaFromDiameter"};
+    String[] parameterTypes = {"[\"double\",\"double\",\"double\"]", "[\"double\",\"double\",\"double\"]",
+        "[\"double\",\"double\",\"double\",\"double\"]",
+        "[\"double\",\"double\",\"double\",\"double\",\"double\",\"double\"]", "[\"double\"]"};
+    String[] arguments = {"[1000,40,0.25]", "[1000,0.031415926535897934,5]", "[1000,0.031415926535897934,5,90]",
+        "[1000,40,0.031415926535897934,5,0.25,2]", "[0.2]"};
+    double[] expected = {760.0, 785.3981633974483, 1110.7207345395916, 1193.8052083641214, 0.031415926535897934};
+
+    for (int i = 0; i < methods.length; i++) {
+      String request = "{\"action\":\"invoke\","
+          + "\"className\":\"neqsim.process.equipment.pipeline.SlugImpactForce\"," + "\"methodName\":\"" + methods[i]
+          + "\",\"parameterTypes\":" + parameterTypes[i] + ",\"arguments\":" + arguments[i] + "}";
+      JsonObject result = JsonParser.parseString(GeneralCapabilityRunner.run(request)).getAsJsonObject();
+
+      assertEquals("success", result.get("status").getAsString(), methods[i]);
+      assertEquals(expected[i], result.get("result").getAsDouble(), 1.0e-9, methods[i]);
+    }
+  }
+
+  /** Catalogued exponential-decline operations must remain executable and fail closed outside their domain. */
+  @Test
+  void testInvokeRunsCataloguedExponentialDeclineCalculations() {
+    String[] methods = {"rateExponential", "cumulativeExponential", "nominalToEffectiveAnnual",
+        "effectiveAnnualToNominal", "estimateExponentialDecline"};
+    String[] parameterTypes = {"[\"double\",\"double\",\"double\"]", "[\"double\",\"double\",\"double\"]",
+        "[\"double\"]", "[\"double\"]", "[\"double\",\"double\",\"double\",\"double\"]"};
+    String[] arguments = {"[1000,0.001,365.25]", "[1000,0.001,365.25]", "[0.001]", "[0.30597687659290307]",
+        "[1000,0,500,365.25]"};
+    double[] expected = {694.0231234070969, 305976.87659290305, 0.30597687659290307, 0.001, 0.0018977335538944429};
+
+    for (int i = 0; i < methods.length; i++) {
+      String request = "{\"action\":\"invoke\"," + "\"className\":\"neqsim.pvtsimulation.util.DeclineCurveAnalysis\","
+          + "\"methodName\":\"" + methods[i] + "\",\"parameterTypes\":" + parameterTypes[i] + ",\"arguments\":"
+          + arguments[i] + "}";
+      JsonObject result = JsonParser.parseString(GeneralCapabilityRunner.run(request)).getAsJsonObject();
+      assertEquals("success", result.get("status").getAsString(), methods[i]);
+      assertEquals(expected[i], result.get("result").getAsDouble(), 1.0e-9, methods[i]);
+    }
+
+    JsonObject invalid = JsonParser.parseString(GeneralCapabilityRunner
+        .run("{\"action\":\"invoke\",\"className\":\"neqsim.pvtsimulation.util.DeclineCurveAnalysis\","
+            + "\"methodName\":\"rateExponential\",\"parameterTypes\":[\"double\",\"double\",\"double\"],"
+            + "\"arguments\":[-1,0.001,365.25]}"))
+        .getAsJsonObject();
+    assertEquals("INVOCATION_ERROR", invalid.get("code").getAsString());
+  }
+
   @Test
   void testInvokeRejectsInstanceMethodAndExternalClass() {
     String instanceRequest = "{\"action\":\"invoke\","

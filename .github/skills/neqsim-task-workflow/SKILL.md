@@ -619,7 +619,13 @@ notebooks:
 
 6. **Auto-search for similar past solutions (MANDATORY):**
    Before writing any new code, search for related prior work:
-   - **Semantic search** `task_solve/` folder for keywords from the current task
+   - **Search earlier tasks in the configured task root** (not only `task_solve/`;
+     the root may be elsewhere, e.g. OneDrive): run
+     `neqsim tasks search <equipment fluid standard tag keywords> --exclude <this task>`
+     (`--json` for scripts). Open the top hits' `results.json`, `analysis.md`,
+     `WORK_RECORD.md` and `SOURCES.md`; reuse their documents, models and
+     conclusions instead of re-deriving them, and list the tasks reviewed in `notes.md`.
+     Also use `neqsim tasks index` output (`INDEX.md`/`tasks.json`) when present.
    - **Keyword search** `docs/development/TASK_LOG.md` for task type, equipment, fluid, standards
    - **Search** `docs/development/CODE_PATTERNS.md` for relevant patterns
    - **Search** `src/test/java/neqsim/` for existing tests covering similar equipment/fluids
