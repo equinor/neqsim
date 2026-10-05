@@ -1,5 +1,7 @@
 package neqsim.pvtsimulation.util;
 
+import neqsim.util.annotation.AIExposable;
+
 /**
  * Gas pseudocritical property correlations for natural gas mixtures.
  *
@@ -42,6 +44,22 @@ public final class GasPseudoCriticalProperties {
     // Utility class
   }
 
+  /**
+   * Validate a correlation-specific gas-specific-gravity range.
+   *
+   * @param gammaG gas specific gravity relative to air
+   * @param min inclusive lower correlation bound
+   * @param max inclusive upper correlation bound
+   * @param correlation correlation name used in diagnostics
+   * @throws IllegalArgumentException if the value is non-finite or outside the correlation range
+   */
+  private static void validateGasSpecificGravity(double gammaG, double min, double max, String correlation) {
+    if (!Double.isFinite(gammaG) || gammaG < min || gammaG > max) {
+      throw new IllegalArgumentException(correlation + " gas specific gravity must be finite and within [" + min + ", "
+          + max + "], got " + gammaG);
+    }
+  }
+
   // ==================== STANDING (1981) ====================
 
   /**
@@ -54,7 +72,9 @@ public final class GasPseudoCriticalProperties {
    * @param gammaG Gas specific gravity (air = 1.0). Typical range: 0.55 - 1.8
    * @return Pseudocritical temperature (Kelvin)
    */
+  @AIExposable(description = "Calculate Standing pseudocritical temperature", category = "reservoir", safe = true)
   public static double pseudoCriticalTemperatureStanding(double gammaG) {
+    validateGasSpecificGravity(gammaG, 0.55, 1.8, "Standing");
     double tpcR = 168.0 + 325.0 * gammaG - 12.5 * gammaG * gammaG;
     return tpcR * R_TO_K;
   }
@@ -68,7 +88,9 @@ public final class GasPseudoCriticalProperties {
    * @param gammaG Gas specific gravity (air = 1.0). Typical range: 0.55 - 1.8
    * @return Pseudocritical pressure (bara)
    */
+  @AIExposable(description = "Calculate Standing pseudocritical pressure", category = "reservoir", safe = true)
   public static double pseudoCriticalPressureStanding(double gammaG) {
+    validateGasSpecificGravity(gammaG, 0.55, 1.8, "Standing");
     double ppcPsia = 677.0 + 15.0 * gammaG - 37.5 * gammaG * gammaG;
     return ppcPsia / PSIA_PER_BARA;
   }
@@ -85,7 +107,9 @@ public final class GasPseudoCriticalProperties {
    * @param gammaG Gas specific gravity (air = 1.0). Valid range: 0.57 - 1.68
    * @return Pseudocritical temperature (Kelvin)
    */
+  @AIExposable(description = "Calculate Sutton pseudocritical temperature", category = "reservoir", safe = true)
   public static double pseudoCriticalTemperatureSutton(double gammaG) {
+    validateGasSpecificGravity(gammaG, 0.57, 1.68, "Sutton");
     double tpcR = 169.2 + 349.5 * gammaG - 74.0 * gammaG * gammaG;
     return tpcR * R_TO_K;
   }
@@ -99,7 +123,9 @@ public final class GasPseudoCriticalProperties {
    * @param gammaG Gas specific gravity (air = 1.0). Valid range: 0.57 - 1.68
    * @return Pseudocritical pressure (bara)
    */
+  @AIExposable(description = "Calculate Sutton pseudocritical pressure", category = "reservoir", safe = true)
   public static double pseudoCriticalPressureSutton(double gammaG) {
+    validateGasSpecificGravity(gammaG, 0.57, 1.68, "Sutton");
     double ppcPsia = 756.8 - 131.0 * gammaG - 3.6 * gammaG * gammaG;
     return ppcPsia / PSIA_PER_BARA;
   }
