@@ -103,6 +103,8 @@ def main(argv=None):
                    help="fixed time HH:MM (default 05:00 unless --every-hours is used)")
     timing.add_argument("--every-hours", type=int, choices=(1, 2, 3, 4, 6, 8, 12, 24), default=None,
                         help="whole-hour interval dividing 24, anchored at midnight")
+    p.add_argument("--weekly", default=None, metavar="DAY",
+                   help="run once a week on DAY (MON..SUN) at the --daily time (default 05:00)")
     group = p.add_mutually_exclusive_group()
     group.add_argument("--install", action="store_true")
     group.add_argument("--remove", action="store_true")
@@ -186,7 +188,7 @@ def main(argv=None):
     elif args.command == "schedule":
         from . import schedule
         spec = schedule.build(_task(args.task), daily=args.daily,
-                              every_hours=args.every_hours)
+                              every_hours=args.every_hours, weekly=args.weekly)
         if args.install:
             _print(dict(schedule.install(spec), command=spec["command"]))
         elif args.remove:

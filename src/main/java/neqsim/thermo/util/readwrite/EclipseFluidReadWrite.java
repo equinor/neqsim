@@ -164,10 +164,6 @@ public class EclipseFluidReadWrite {
       return null;
     }
     String trimmedName = name.trim();
-    // PVTsim E300 files use uppercase IC4/IC5 for characterized pseudo-fractions.
-    if ("IC4".equals(trimmedName) || "IC5".equals(trimmedName)) {
-      return null;
-    }
     String normalized = name.trim().replace(" ", "").replace("_", "").replace("-", "").toUpperCase();
     switch (normalized) {
     case "C1":
@@ -279,6 +275,11 @@ public class EclipseFluidReadWrite {
     case "EBENZENE":
       return "ethylbenzene";
     default:
+      // Any other spelling of a database component (case, hyphens, synonyms). Bare Cn names (C7, C10 ...)
+      // are characterized pseudo-fractions in E300 files and are not resolved.
+      if (!normalized.matches("C\\d+") && neqsim.thermo.component.ComponentNameResolver.isKnownName(trimmedName)) {
+        return neqsim.thermo.component.ComponentNameResolver.resolve(trimmedName);
+      }
       return null;
     }
   }

@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 DEVTOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
 
 def task_name(task_dir):
@@ -16,7 +17,7 @@ def task_name(task_dir):
 
 
 def build(task_dir, daily=None, mode="monitor", python=None,
-          standard_first=True, every_hours=None):
+          standard_first=True, every_hours=None, weekly=None):
     """Return the scheduled command for Windows and a cron line for Linux servers.
 
     Use a daily clock time (05:00 by default) or whole-hour intervals dividing
@@ -33,8 +34,8 @@ def build(task_dir, daily=None, mode="monitor", python=None,
     wrapper_path = os.path.join(task_dir, "continuous", "run_cycle.cmd")
     wrapper_script = "@echo off\r\n{}\r\n".format(command)
     if every_hours is not None:
-        if daily is not None:
-            raise ValueError("choose daily or every_hours, not both")
+        if daily is not None or weekly is not None:
+            raise ValueError("choose daily, weekly or every_hours, not several")
         if not math.isfinite(every_hours) or every_hours not in (1, 2, 3, 4, 6, 8, 12, 24):
             raise ValueError("every_hours must be one of 1, 2, 3, 4, 6, 8, 12, 24")
         modifier = int(every_hours)
@@ -47,6 +48,15 @@ def build(task_dir, daily=None, mode="monitor", python=None,
         if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", daily):
             raise ValueError("daily must be HH:MM")
         hour, minute = daily.split(":")
+        if weekly is not None:
+            day = str(weekly).upper()[:3]
+            if day not in WEEKDAYS:
+                raise ValueError("weekly must be one of " + ", ".join(WEEKDAYS))
+            windows = ["schtasks", "/Create", "/F", "/SC", "WEEKLY", "/D", day, "/TN", name,
+                       "/TR", '"{}"'.format(wrapper_path), "/ST", daily]
+            cron = "{} {} * * {} {}".format(int(minute), int(hour), WEEKDAYS.index(day) + 1, command)
+            return {"name": name, "command": command, "windows": windows, "cron": cron,
+                    "wrapper_path": wrapper_path, "wrapper_script": wrapper_script}
         windows = ["schtasks", "/Create", "/F", "/SC", "DAILY", "/TN", name,
                    "/TR", '"{}"'.format(wrapper_path), "/ST", daily]
         cron = "{} {} * * * {}".format(int(minute), int(hour), command)
