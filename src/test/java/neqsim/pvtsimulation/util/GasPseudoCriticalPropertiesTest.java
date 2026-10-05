@@ -198,7 +198,6 @@ class GasPseudoCriticalPropertiesTest {
     assertEquals(137.9 / 45.5, ppr, 1e-10);
   }
 
-
   @Test
   void testSweetGasReferenceValues() {
     assertEquals(224.84375, GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(0.75), 1.0e-12);

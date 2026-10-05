@@ -55,8 +55,8 @@ public final class GasPseudoCriticalProperties {
    */
   private static void validateGasSpecificGravity(double gammaG, double min, double max, String correlation) {
     if (!Double.isFinite(gammaG) || gammaG < min || gammaG > max) {
-      throw new IllegalArgumentException(correlation + " gas specific gravity must be finite and within [" + min + ", "
-          + max + "], got " + gammaG);
+      throw new IllegalArgumentException(
+          correlation + " gas specific gravity must be finite and within [" + min + ", " + max + "], got " + gammaG);
     }
   }
 
