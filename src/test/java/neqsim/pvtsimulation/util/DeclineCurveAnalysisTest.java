@@ -33,6 +33,13 @@ class DeclineCurveAnalysisTest {
   }
 
   @Test
+  void testExponentialScreeningValidation() {
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.rateExponential(-1.0, DI, 365.25));
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.rateExponential(QI, Double.NaN, 365.25));
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.cumulativeExponential(QI, DI, -1.0));
+  }
+
+  @Test
   void testHarmonicRateDecline() {
     double q = DeclineCurveAnalysis.rateHarmonic(QI, DI, 365.25);
     double expected = QI / (1.0 + DI * 365.25);
@@ -136,6 +143,8 @@ class DeclineCurveAnalysisTest {
   void testEffectiveDeclineValidation() {
     assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.effectiveAnnualToNominal(0.0));
     assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.effectiveAnnualToNominal(1.0));
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.effectiveAnnualToNominal(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> DeclineCurveAnalysis.nominalToEffectiveAnnual(-0.001));
   }
 
   @Test
@@ -235,6 +244,8 @@ class DeclineCurveAnalysisTest {
         () -> DeclineCurveAnalysis.estimateExponentialDecline(100, 0, 200, 365));
     assertThrows(IllegalArgumentException.class,
         () -> DeclineCurveAnalysis.estimateExponentialDecline(100, 365, 50, 0));
+    assertThrows(IllegalArgumentException.class,
+        () -> DeclineCurveAnalysis.estimateExponentialDecline(Double.NaN, 0, 50, 365));
   }
 
   @Test

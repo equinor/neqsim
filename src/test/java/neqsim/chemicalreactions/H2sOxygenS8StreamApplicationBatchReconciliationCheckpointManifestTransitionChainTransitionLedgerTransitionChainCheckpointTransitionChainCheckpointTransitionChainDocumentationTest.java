@@ -24,8 +24,8 @@ class H2sOxygenS8StreamApplicationBatchReconciliationCheckpointManifestTransitio
     assertTrue(documentation.contains("previous candidate\ncheckpoint sequence"));
     assertTrue(documentation.contains("Gaps, forks, reordering, duplicate receipt digests"));
     assertTrue(documentation.contains("overflow-detecting exact arithmetic"));
-    assertTrue(documentation.contains(
-        "Receipt-state,\ntransition-state, and represented-entry-state families close exactly"));
+    assertTrue(
+        documentation.contains("Receipt-state,\ntransition-state, and represented-entry-state families close exactly"));
     assertTrue(documentation.contains("versioned canonical SHA-256 digest"));
     assertTrue(documentation.contains("compared in constant time"));
     assertTrue(documentation.contains("allocates no identifier or checkpoint\nsequence"));

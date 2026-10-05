@@ -851,6 +851,205 @@
           ]
         }
       ]
+    },
+    {
+      "id": "exponential-decline-screening",
+      "title": "Static exponential production-decline screening",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.DeclineCurveAnalysis"
+      ],
+      "skills": [
+        "neqsim-production-optimization"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Arps exponential (b = 0) screening only, with unit-consistent non-negative rates, daily nominal decline and elapsed days. It does not establish boundary-dominated flow, forecast uncertainty, reserves classification, economics, facility constraints or development approval.",
+      "operations": [
+        {
+          "id": "exponential-decline-rate",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "rateExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.rateExponential(double, double, double)",
+          "units": {
+            "inputs": {
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
+            },
+            "outputs": {
+              "productionRate": "same as initialRate"
+            }
+          },
+          "applicability": "Arps exponential production-rate screening for finite non-negative initial rate, nominal daily decline and elapsed time.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 694.0231234070969,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "exponential-decline-cumulative-production",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "cumulativeExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.cumulativeExponential(double, double, double)",
+          "units": {
+            "inputs": {
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
+            },
+            "outputs": {
+              "cumulativeProduction": "rate unit"
+            }
+          },
+          "applicability": "Integrated Arps exponential production for finite non-negative initial rate, nominal daily decline and elapsed time.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 305976.87659290305,
+            "absoluteTolerance": 0.000001
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "nominal-to-effective-annual-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "nominalToEffectiveAnnual",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.nominalToEffectiveAnnual(double)",
+          "units": {
+            "inputs": {
+              "nominalDeclineRate": "1/day"
+            },
+            "outputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite non-negative nominal daily decline rate using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.001
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.30597687659290307,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "effective-annual-to-nominal-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "effectiveAnnualToNominal",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.effectiveAnnualToNominal(double)",
+          "units": {
+            "inputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite effective annual decline fraction strictly between 0 and 1 using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.30597687659290307
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.001,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "two-point-exponential-decline-estimate",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "estimateExponentialDecline",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.estimateExponentialDecline(double, double, double, double)",
+          "units": {
+            "inputs": {
+              "firstRate": "rate/day",
+              "firstTime": "day",
+              "secondRate": "rate/day",
+              "secondTime": "day"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Two-point exponential decline estimate for finite positive rates with the second rate lower and the second time later.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0,
+              500,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 0.0018977335538944429,
+            "absoluteTolerance": 1e-15
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ]
     }
   ]
 }
