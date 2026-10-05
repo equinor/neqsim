@@ -68,8 +68,10 @@ relevant source/agent/skill changes. Commit the generated resource at
 
 `--check` fails on stale output, including changes inside an existing Java type.
 The generator rejects unknown API/tool/skill/agent/test references and duplicate
-IDs. The catalog digest binds the generated inventory and source-type digests;
-it is not an execution receipt or a digest of every repository file.
+IDs. The catalog digest is the SHA-256 of the packaged inventory file, so it binds the generated inventory and source-type digests;
+it is not an execution receipt or a digest of every repository file. The summary counts and
+the digest are computed when `EngineeringCoverageCatalog` loads the resource and are not committed:
+a global hash and aggregate counters change in every PR and would conflict between any two PRs.
 
 This adds no reflection invocation permission and no second simulator. Stateful
 models retain their canonical process/model runners; eligible static methods

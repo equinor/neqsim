@@ -3,117 +3,6 @@
   "complete": false,
   "denominator": "public top-level Java source types; not methods or engineering operations",
   "interpretation": "Mentions and declared routes do not prove execution, full class exposure or engineering qualification. Explicit supported operations are bounded to their recorded signatures, units, applicability and examples.",
-  "summary": {
-    "publicTypes": 3344,
-    "registeredCapabilities": 14,
-    "classifiedOperations": 14,
-    "supportedOperations": 14,
-    "internalOperations": 0,
-    "experimentalOperations": 0,
-    "deprecatedOperations": 0,
-    "registeredAnchors": 25,
-    "withSkillMention": 1264,
-    "withAgentMention": 1263,
-    "reviewRequired": 3239,
-    "domains": {
-      "api": {
-        "publicTypes": 1,
-        "registeredAnchors": 0,
-        "withSkillMention": 1,
-        "reviewRequired": 1
-      },
-      "blackoil": {
-        "publicTypes": 8,
-        "registeredAnchors": 0,
-        "withSkillMention": 0,
-        "reviewRequired": 8
-      },
-      "chemicalreactions": {
-        "publicTypes": 13,
-        "registeredAnchors": 0,
-        "withSkillMention": 2,
-        "reviewRequired": 13
-      },
-      "datapresentation": {
-        "publicTypes": 4,
-        "registeredAnchors": 0,
-        "withSkillMention": 0,
-        "reviewRequired": 4
-      },
-      "fluidmechanics": {
-        "publicTypes": 132,
-        "registeredAnchors": 0,
-        "withSkillMention": 9,
-        "reviewRequired": 132
-      },
-      "integration": {
-        "publicTypes": 5,
-        "registeredAnchors": 0,
-        "withSkillMention": 1,
-        "reviewRequired": 5
-      },
-      "mathlib": {
-        "publicTypes": 10,
-        "registeredAnchors": 0,
-        "withSkillMention": 0,
-        "reviewRequired": 10
-      },
-      "mcp": {
-        "publicTypes": 80,
-        "registeredAnchors": 0,
-        "withSkillMention": 6,
-        "reviewRequired": 0
-      },
-      "physicalproperties": {
-        "publicTypes": 107,
-        "registeredAnchors": 0,
-        "withSkillMention": 1,
-        "reviewRequired": 107
-      },
-      "process": {
-        "publicTypes": 2224,
-        "registeredAnchors": 13,
-        "withSkillMention": 1065,
-        "reviewRequired": 2211
-      },
-      "pvtsimulation": {
-        "publicTypes": 83,
-        "registeredAnchors": 2,
-        "withSkillMention": 39,
-        "reviewRequired": 81
-      },
-      "standards": {
-        "publicTypes": 48,
-        "registeredAnchors": 0,
-        "withSkillMention": 35,
-        "reviewRequired": 48
-      },
-      "statistics": {
-        "publicTypes": 37,
-        "registeredAnchors": 0,
-        "withSkillMention": 1,
-        "reviewRequired": 37
-      },
-      "thermo": {
-        "publicTypes": 406,
-        "registeredAnchors": 3,
-        "withSkillMention": 79,
-        "reviewRequired": 403
-      },
-      "thermodynamicoperations": {
-        "publicTypes": 126,
-        "registeredAnchors": 1,
-        "withSkillMention": 16,
-        "reviewRequired": 125
-      },
-      "util": {
-        "publicTypes": 60,
-        "registeredAnchors": 6,
-        "withSkillMention": 9,
-        "reviewRequired": 54
-      }
-    }
-  },
   "capabilities": [
     {
       "id": "corrosion-screen",
@@ -1051,7 +940,6 @@
       }
     }
   ],
-  "catalogDigest": "2349190a597fd51144354f64e82d4f046e81f2ba5abaa240daf1ecc178e01309",
   "apis": [
     {"id":"neqsim.api.ioc.CalculationResult","kind":"class","source":"src/main/java/neqsim/api/ioc/CalculationResult.java","sourceDigest":"9e8bd61a763f407a08785db311578bbcc82114bbbc47644cb03862c3604af17f","domain":"api","skills":["neqsim-java8-rules"],"agents":["documentation","dynamic-equipment","mechanical-design","neqsim-test","optimize","process-model","reaction-engineering","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.blackoil.BlackOilConverter","kind":"class","source":"src/main/java/neqsim/blackoil/BlackOilConverter.java","sourceDigest":"7dfc65a57aec097df8fa898ebb120f4db6d8ee112030d47ce0b4076aa84739aa","domain":"blackoil","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -1250,7 +1138,7 @@
     {"id":"neqsim.mcp.runners.CrossValidationRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/CrossValidationRunner.java","sourceDigest":"a9c907757c5d6b8253ecac4e267590b249391d8ab16da0f3770bc4e02a7f334a","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.DataCatalogRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/DataCatalogRunner.java","sourceDigest":"76b39134730573fa4154c8da0e93eae258ce6086d7b4f555847b2a7a2bdc9343","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.DynamicRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/DynamicRunner.java","sourceDigest":"6d4ef8abc902f49f733b693364a82836a2532d1b60941779d94845e8c267006c","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
-    {"id":"neqsim.mcp.runners.EngineeringCoverageCatalog","kind":"class","source":"src/main/java/neqsim/mcp/runners/EngineeringCoverageCatalog.java","sourceDigest":"c17dc0fc2f22f3efb4d540e51bdec752b9b0a6f4d1e9ad239c73df10c173ebfb","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
+    {"id":"neqsim.mcp.runners.EngineeringCoverageCatalog","kind":"class","source":"src/main/java/neqsim/mcp/runners/EngineeringCoverageCatalog.java","sourceDigest":"9a9df046e2f63a79cdc1d10fd32607b9e9ab955867170420170cb99e51c03e8d","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.EngineeringValidator","kind":"class","source":"src/main/java/neqsim/mcp/runners/EngineeringValidator.java","sourceDigest":"0c4f8bc775210bfda7ac94ec839441707bfaf81229880e4341ad4a08f4ebc0f9","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.EquipmentSizingRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/EquipmentSizingRunner.java","sourceDigest":"37908aa22a66e92f84192b90988fd1319338197c9eb1c35eb11c6dc2b4814018","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.runners.FieldDevelopmentRunner","kind":"class","source":"src/main/java/neqsim/mcp/runners/FieldDevelopmentRunner.java","sourceDigest":"4cbff4d8b3e158a317641a71cd1056c0aa1e6dbf3ca673156c5d5a49970b3ffd","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
