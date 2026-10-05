@@ -152,6 +152,33 @@ class GeneralCapabilityRunnerTest {
     assertEquals("INVOCATION_ERROR", invalid.get("code").getAsString());
   }
 
+
+  /** Catalogued sweet-gas pseudocritical operations must remain executable and range bounded. */
+  @Test
+  void testInvokeRunsCataloguedSweetGasPseudocriticalCalculations() {
+    String[] methods = {"pseudoCriticalTemperatureStanding", "pseudoCriticalPressureStanding",
+        "pseudoCriticalTemperatureSutton", "pseudoCriticalPressureSutton"};
+    double[] expected = {224.84375, 45.99872102483487, 216.5, 45.26572346557454};
+
+    for (int i = 0; i < methods.length; i++) {
+      String request = "{\"action\":\"invoke\","
+          + "\"className\":\"neqsim.pvtsimulation.util.GasPseudoCriticalProperties\","
+          + "\"methodName\":\"" + methods[i]
+          + "\",\"parameterTypes\":[\"double\"],\"arguments\":[0.75]}";
+      JsonObject result = JsonParser.parseString(GeneralCapabilityRunner.run(request)).getAsJsonObject();
+      assertEquals("success", result.get("status").getAsString(), methods[i]);
+      assertEquals(expected[i], result.get("result").getAsDouble(), 1.0e-12, methods[i]);
+    }
+
+    JsonObject invalid = JsonParser.parseString(GeneralCapabilityRunner
+        .run("{\"action\":\"invoke\","
+            + "\"className\":\"neqsim.pvtsimulation.util.GasPseudoCriticalProperties\","
+            + "\"methodName\":\"pseudoCriticalTemperatureSutton\",\"parameterTypes\":[\"double\"],"
+            + "\"arguments\":[0.55]}"))
+        .getAsJsonObject();
+    assertEquals("INVOCATION_ERROR", invalid.get("code").getAsString());
+  }
+
   @Test
   void testInvokeRejectsInstanceMethodAndExternalClass() {
     String instanceRequest = "{\"action\":\"invoke\","
