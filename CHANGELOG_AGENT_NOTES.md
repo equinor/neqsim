@@ -9,6 +9,15 @@
 
 ---
 
+## 2026-10-05 — `WellUnloadingScreening` (drowned-well start-up)
+
+- New `neqsim.process.equipment.reservoir.WellUnloadingScreening`: static wellhead pressure for a gas cap over a
+  liquid column, choke-limited liquid rate when a separator is pulled down (reservoir inflow + choke quadratic),
+  unloading time and liquid share from a downhole gauge. Pure hydrostatic/valve arithmetic, no friction.
+- Basis: PEPR 80302989 (C-16 B, Oseberg C). Test: `WellUnloadingScreeningTest` (5 tests).
+
+---
+
 ## 2026-10-04 — Agent coverage and workflow review (#4191)
 
 - Agent discovery includes gas-processing/refining and network/energy specialists.

@@ -81,6 +81,19 @@ def test_several_roots_are_searched_as_one_corpus(isolated):
                                                    "2026-01-02_beta"]
 
 
+def test_search_ranks_earlier_tasks_and_skips_the_current_one(isolated):
+    root = isolated / "tasks"
+    root.mkdir()
+    make_task(root, "2026-01-01_compressor_vibration_trip", {"title": "x"})
+    make_task(root, "2026-01-02_pipeline_wall_thickness", {"title": "y"})
+    make_task(root, "2026-01-03_compressor_surge_review")
+
+    hits = task_corpus.find_similar_tasks(
+        "compressor vibration", [root], exclude="2026-01-03_compressor_surge_review")
+    assert [h["folder"] for h in hits] == ["2026-01-01_compressor_vibration_trip"]
+    assert hits[0]["matched"] == ["compressor", "vibration"]
+
+
 def test_duplicate_folder_names_are_reported_once_and_flagged(isolated):
     first, second = isolated / "a", isolated / "b"
     first.mkdir()
