@@ -2,6 +2,145 @@
   "schemaVersion": "1.0",
   "capabilities": [
     {
+      "id": "tp-flash",
+      "title": "TP flash of a defined fluid",
+      "domain": "thermodynamics",
+      "tool": "runFlash",
+      "apis": [
+        "neqsim.thermo.system.SystemSrkEos",
+        "neqsim.thermodynamicoperations.ThermodynamicOperations"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/FlashRunnerTest.java"
+      ],
+      "limitations": "Only models and flash modes supported by run_flash schema; not every thermodynamic system or operation."
+    },
+    {
+      "id": "pvt-experiments",
+      "title": "CME and CVD experiments",
+      "domain": "pvt",
+      "tool": "runPVT",
+      "apis": [
+        "neqsim.pvtsimulation.simulation.ConstantMassExpansion",
+        "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion"
+      ],
+      "skills": [
+        "neqsim-eos-regression"
+      ],
+      "agents": [
+        "pvt-simulation"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/PVTRunnerTest.java"
+      ],
+      "limitations": "Experimental input and fluid characterization must be supplied; test presence is not a fluid-specific calibration."
+    },
+    {
+      "id": "process-separation",
+      "title": "Build and solve a separation train",
+      "domain": "process",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.processmodel.ProcessSystem",
+        "neqsim.process.equipment.separator.Separator",
+        "neqsim.process.equipment.stream.Stream"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
+      ],
+      "limitations": "Registration covers JSON builder support, not all equipment setters or every topology."
+    },
+    {
+      "id": "process-compression",
+      "title": "Compressor in a process model",
+      "domain": "rotating-equipment",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.equipment.compressor.Compressor"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
+      ],
+      "limitations": "Vendor maps, operating envelope and driver limits need separate qualification."
+    },
+    {
+      "id": "multi-area-process",
+      "title": "Compose a multi-area process",
+      "domain": "process",
+      "tool": "runProcess",
+      "apis": [
+        "neqsim.process.processmodel.ProcessModel"
+      ],
+      "skills": [
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTypedTest.java"
+      ],
+      "limitations": "Only canonical process-JSON connections and preserved properties are supported."
+    },
+    {
+      "id": "pipeline-hydraulics",
+      "title": "Steady and two-fluid pipeline calculations",
+      "domain": "flow-assurance",
+      "tool": "runPipeline",
+      "apis": [
+        "neqsim.process.equipment.pipeline.PipeBeggsAndBrills",
+        "neqsim.process.equipment.pipeline.TwoFluidPipe"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/PipelineRunnerTest.java"
+      ],
+      "limitations": "Select the applicable solver and closures; transient behavior needs case-specific validation."
+    },
+    {
+      "id": "electrolyte-scale",
+      "title": "Electrolyte scale screening",
+      "domain": "chemistry",
+      "tool": "runChemistry",
+      "apis": [
+        "neqsim.process.chemistry.scale.ElectrolyteScaleCalculator",
+        "neqsim.thermo.system.SystemPitzer"
+      ],
+      "skills": [
+        "neqsim-electrolyte-systems"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/ChemistryRunnerScaleTest.java"
+      ],
+      "limitations": "Parameter availability, minerals and validity ranges must be checked for each brine."
+    },
+    {
       "id": "corrosion-screen",
       "title": "Mechanistic corrosion screening",
       "domain": "chemistry",
@@ -40,24 +179,98 @@
       "limitations": "Not all equipment provides a qualified transient model; preserve initial conditions and event assumptions."
     },
     {
-      "id": "electrolyte-scale",
-      "title": "Electrolyte scale screening",
-      "domain": "chemistry",
-      "tool": "runChemistry",
+      "id": "equipment-sizing",
+      "title": "Separator and compressor sizing",
+      "domain": "engineering-design",
+      "tool": "sizeEquipment",
       "apis": [
-        "neqsim.process.chemistry.scale.ElectrolyteScaleCalculator",
-        "neqsim.thermo.system.SystemPitzer"
+        "neqsim.process.equipment.separator.Separator",
+        "neqsim.process.equipment.compressor.Compressor"
       ],
       "skills": [
-        "neqsim-electrolyte-systems"
+        "neqsim-process-modeling"
       ],
       "agents": [
-        "thermo-fluid"
+        "mechanical-design"
       ],
       "testSources": [
-        "src/test/java/neqsim/mcp/runners/ChemistryRunnerScaleTest.java"
+        "src/test/java/neqsim/mcp/runners/EquipmentSizingRunnerTest.java"
       ],
-      "limitations": "Parameter availability, minerals and validity ranges must be checked for each brine."
+      "limitations": "Sizing support does not expose every mechanical-design API or certify a design."
+    },
+    {
+      "id": "field-economics",
+      "title": "Production profiles and cash flow",
+      "domain": "economics",
+      "tool": "runFieldEconomics",
+      "apis": [
+        "neqsim.process.fielddevelopment.economics.CashFlowEngine",
+        "neqsim.process.fielddevelopment.economics.ProductionProfileGenerator"
+      ],
+      "skills": [
+        "neqsim-field-economics"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/FieldDevelopmentRunnerTest.java"
+      ],
+      "limitations": "Economic assumptions and fiscal-model applicability remain explicit caller inputs."
+    },
+    {
+      "id": "sulfur-vapour-pressure",
+      "title": "Static sulfur vapour pressure",
+      "domain": "thermodynamics",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.thermo.util.sulfur.SulfurThermodynamics"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Search for calculateVapourPressureBar and invoke its exact double signature; this does not qualify other methods.",
+      "operations": [
+        {
+          "id": "sulfur-vapour-pressure-at-temperature",
+          "classification": "supported",
+          "api": "neqsim.thermo.util.sulfur.SulfurThermodynamics",
+          "method": "calculateVapourPressureBar",
+          "signature": "double neqsim.thermo.util.sulfur.SulfurThermodynamics.calculateVapourPressureBar(double)",
+          "units": {
+            "inputs": {
+              "temperature": "K"
+            },
+            "outputs": {
+              "vapourPressure": "bar"
+            }
+          },
+          "applicability": "Pure sulfur vapour pressure for 312.15 K through 1308.15 K; values outside the correlation range are rejected.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              717.76
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 1.01325,
+            "absoluteTolerance": 1e-10
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ]
     },
     {
       "id": "engineering-unit-conversions",
@@ -427,344 +640,6 @@
       ]
     },
     {
-      "id": "equipment-sizing",
-      "title": "Separator and compressor sizing",
-      "domain": "engineering-design",
-      "tool": "sizeEquipment",
-      "apis": [
-        "neqsim.process.equipment.separator.Separator",
-        "neqsim.process.equipment.compressor.Compressor"
-      ],
-      "skills": [
-        "neqsim-process-modeling"
-      ],
-      "agents": [
-        "mechanical-design"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/EquipmentSizingRunnerTest.java"
-      ],
-      "limitations": "Sizing support does not expose every mechanical-design API or certify a design."
-    },
-    {
-      "id": "exponential-decline-screening",
-      "title": "Static exponential production-decline screening",
-      "domain": "reservoir",
-      "tool": "runCapability",
-      "apis": [
-        "neqsim.pvtsimulation.util.DeclineCurveAnalysis"
-      ],
-      "skills": [
-        "neqsim-production-optimization"
-      ],
-      "agents": [
-        "field-development"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
-        "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
-        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
-      ],
-      "limitations": "Arps exponential (b = 0) screening only, with unit-consistent non-negative rates, daily nominal decline and elapsed days. It does not establish boundary-dominated flow, forecast uncertainty, reserves classification, economics, facility constraints or development approval.",
-      "operations": [
-        {
-          "id": "exponential-decline-rate",
-          "classification": "supported",
-          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
-          "method": "rateExponential",
-          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.rateExponential(double, double, double)",
-          "units": {
-            "inputs": {
-              "initialRate": "rate/day",
-              "nominalDeclineRate": "1/day",
-              "elapsedTime": "day"
-            },
-            "outputs": {
-              "productionRate": "same as initialRate"
-            }
-          },
-          "applicability": "Arps exponential production-rate screening for finite non-negative initial rate, nominal daily decline and elapsed time.",
-          "route": "runCapability action=invoke",
-          "example": {
-            "arguments": [
-              1000,
-              0.001,
-              365.25
-            ],
-            "parameterTypes": [
-              "double",
-              "double",
-              "double"
-            ],
-            "expected": 694.0231234070969,
-            "absoluteTolerance": 1e-9
-          },
-          "evidenceSources": [
-            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
-            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
-          ]
-        },
-        {
-          "id": "exponential-decline-cumulative-production",
-          "classification": "supported",
-          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
-          "method": "cumulativeExponential",
-          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.cumulativeExponential(double, double, double)",
-          "units": {
-            "inputs": {
-              "initialRate": "rate/day",
-              "nominalDeclineRate": "1/day",
-              "elapsedTime": "day"
-            },
-            "outputs": {
-              "cumulativeProduction": "rate unit"
-            }
-          },
-          "applicability": "Integrated Arps exponential production for finite non-negative initial rate, nominal daily decline and elapsed time.",
-          "route": "runCapability action=invoke",
-          "example": {
-            "arguments": [
-              1000,
-              0.001,
-              365.25
-            ],
-            "parameterTypes": [
-              "double",
-              "double",
-              "double"
-            ],
-            "expected": 305976.87659290305,
-            "absoluteTolerance": 0.000001
-          },
-          "evidenceSources": [
-            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
-            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
-          ]
-        },
-        {
-          "id": "nominal-to-effective-annual-decline",
-          "classification": "supported",
-          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
-          "method": "nominalToEffectiveAnnual",
-          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.nominalToEffectiveAnnual(double)",
-          "units": {
-            "inputs": {
-              "nominalDeclineRate": "1/day"
-            },
-            "outputs": {
-              "effectiveAnnualDecline": "fraction/year"
-            }
-          },
-          "applicability": "Exponential-decline conversion for a finite non-negative nominal daily decline rate using 365.25 days/year.",
-          "route": "runCapability action=invoke",
-          "example": {
-            "arguments": [
-              0.001
-            ],
-            "parameterTypes": [
-              "double"
-            ],
-            "expected": 0.30597687659290307,
-            "absoluteTolerance": 1e-12
-          },
-          "evidenceSources": [
-            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
-            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
-          ]
-        },
-        {
-          "id": "effective-annual-to-nominal-decline",
-          "classification": "supported",
-          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
-          "method": "effectiveAnnualToNominal",
-          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.effectiveAnnualToNominal(double)",
-          "units": {
-            "inputs": {
-              "effectiveAnnualDecline": "fraction/year"
-            },
-            "outputs": {
-              "nominalDeclineRate": "1/day"
-            }
-          },
-          "applicability": "Exponential-decline conversion for a finite effective annual decline fraction strictly between 0 and 1 using 365.25 days/year.",
-          "route": "runCapability action=invoke",
-          "example": {
-            "arguments": [
-              0.30597687659290307
-            ],
-            "parameterTypes": [
-              "double"
-            ],
-            "expected": 0.001,
-            "absoluteTolerance": 1e-12
-          },
-          "evidenceSources": [
-            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
-            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
-          ]
-        },
-        {
-          "id": "two-point-exponential-decline-estimate",
-          "classification": "supported",
-          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
-          "method": "estimateExponentialDecline",
-          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.estimateExponentialDecline(double, double, double, double)",
-          "units": {
-            "inputs": {
-              "firstRate": "rate/day",
-              "firstTime": "day",
-              "secondRate": "rate/day",
-              "secondTime": "day"
-            },
-            "outputs": {
-              "nominalDeclineRate": "1/day"
-            }
-          },
-          "applicability": "Two-point exponential decline estimate for finite positive rates with the second rate lower and the second time later.",
-          "route": "runCapability action=invoke",
-          "example": {
-            "arguments": [
-              1000,
-              0,
-              500,
-              365.25
-            ],
-            "parameterTypes": [
-              "double",
-              "double",
-              "double",
-              "double"
-            ],
-            "expected": 0.0018977335538944429,
-            "absoluteTolerance": 1e-15
-          },
-          "evidenceSources": [
-            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
-            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "field-economics",
-      "title": "Production profiles and cash flow",
-      "domain": "economics",
-      "tool": "runFieldEconomics",
-      "apis": [
-        "neqsim.process.fielddevelopment.economics.CashFlowEngine",
-        "neqsim.process.fielddevelopment.economics.ProductionProfileGenerator"
-      ],
-      "skills": [
-        "neqsim-field-economics"
-      ],
-      "agents": [
-        "field-development"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/FieldDevelopmentRunnerTest.java"
-      ],
-      "limitations": "Economic assumptions and fiscal-model applicability remain explicit caller inputs."
-    },
-    {
-      "id": "multi-area-process",
-      "title": "Compose a multi-area process",
-      "domain": "process",
-      "tool": "runProcess",
-      "apis": [
-        "neqsim.process.processmodel.ProcessModel"
-      ],
-      "skills": [
-        "neqsim-process-modeling"
-      ],
-      "agents": [
-        "process-model"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/ProcessRunnerTypedTest.java"
-      ],
-      "limitations": "Only canonical process-JSON connections and preserved properties are supported."
-    },
-    {
-      "id": "pipeline-hydraulics",
-      "title": "Steady and two-fluid pipeline calculations",
-      "domain": "flow-assurance",
-      "tool": "runPipeline",
-      "apis": [
-        "neqsim.process.equipment.pipeline.PipeBeggsAndBrills",
-        "neqsim.process.equipment.pipeline.TwoFluidPipe"
-      ],
-      "skills": [
-        "neqsim-flow-assurance"
-      ],
-      "agents": [
-        "flow-assurance"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/PipelineRunnerTest.java"
-      ],
-      "limitations": "Select the applicable solver and closures; transient behavior needs case-specific validation."
-    },
-    {
-      "id": "process-compression",
-      "title": "Compressor in a process model",
-      "domain": "rotating-equipment",
-      "tool": "runProcess",
-      "apis": [
-        "neqsim.process.equipment.compressor.Compressor"
-      ],
-      "skills": [
-        "neqsim-api-patterns"
-      ],
-      "agents": [
-        "process-model"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
-      ],
-      "limitations": "Vendor maps, operating envelope and driver limits need separate qualification."
-    },
-    {
-      "id": "process-separation",
-      "title": "Build and solve a separation train",
-      "domain": "process",
-      "tool": "runProcess",
-      "apis": [
-        "neqsim.process.processmodel.ProcessSystem",
-        "neqsim.process.equipment.separator.Separator",
-        "neqsim.process.equipment.stream.Stream"
-      ],
-      "skills": [
-        "neqsim-process-modeling"
-      ],
-      "agents": [
-        "process-model"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
-      ],
-      "limitations": "Registration covers JSON builder support, not all equipment setters or every topology."
-    },
-    {
-      "id": "pvt-experiments",
-      "title": "CME and CVD experiments",
-      "domain": "pvt",
-      "tool": "runPVT",
-      "apis": [
-        "neqsim.pvtsimulation.simulation.ConstantMassExpansion",
-        "neqsim.pvtsimulation.simulation.ConstantVolumeDepletion"
-      ],
-      "skills": [
-        "neqsim-eos-regression"
-      ],
-      "agents": [
-        "pvt-simulation"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/PVTRunnerTest.java"
-      ],
-      "limitations": "Experimental input and fluid characterization must be supplied; test presence is not a fluid-specific calibration."
-    },
-    {
       "id": "slug-impact-force-screening",
       "title": "Static slug impact-force screening",
       "domain": "flow-assurance",
@@ -978,78 +853,203 @@
       ]
     },
     {
-      "id": "sulfur-vapour-pressure",
-      "title": "Static sulfur vapour pressure",
-      "domain": "thermodynamics",
+      "id": "exponential-decline-screening",
+      "title": "Static exponential production-decline screening",
+      "domain": "reservoir",
       "tool": "runCapability",
       "apis": [
-        "neqsim.thermo.util.sulfur.SulfurThermodynamics"
+        "neqsim.pvtsimulation.util.DeclineCurveAnalysis"
       ],
       "skills": [
-        "neqsim-flow-assurance"
+        "neqsim-production-optimization"
       ],
       "agents": [
-        "flow-assurance"
+        "field-development"
       ],
       "testSources": [
         "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
-        "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
         "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
       ],
-      "limitations": "Search for calculateVapourPressureBar and invoke its exact double signature; this does not qualify other methods.",
+      "limitations": "Arps exponential (b = 0) screening only, with unit-consistent non-negative rates, daily nominal decline and elapsed days. It does not establish boundary-dominated flow, forecast uncertainty, reserves classification, economics, facility constraints or development approval.",
       "operations": [
         {
-          "id": "sulfur-vapour-pressure-at-temperature",
+          "id": "exponential-decline-rate",
           "classification": "supported",
-          "api": "neqsim.thermo.util.sulfur.SulfurThermodynamics",
-          "method": "calculateVapourPressureBar",
-          "signature": "double neqsim.thermo.util.sulfur.SulfurThermodynamics.calculateVapourPressureBar(double)",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "rateExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.rateExponential(double, double, double)",
           "units": {
             "inputs": {
-              "temperature": "K"
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
             },
             "outputs": {
-              "vapourPressure": "bar"
+              "productionRate": "same as initialRate"
             }
           },
-          "applicability": "Pure sulfur vapour pressure for 312.15 K through 1308.15 K; values outside the correlation range are rejected.",
+          "applicability": "Arps exponential production-rate screening for finite non-negative initial rate, nominal daily decline and elapsed time.",
           "route": "runCapability action=invoke",
           "example": {
             "arguments": [
-              717.76
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 694.0231234070969,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "exponential-decline-cumulative-production",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "cumulativeExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.cumulativeExponential(double, double, double)",
+          "units": {
+            "inputs": {
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
+            },
+            "outputs": {
+              "cumulativeProduction": "rate unit"
+            }
+          },
+          "applicability": "Integrated Arps exponential production for finite non-negative initial rate, nominal daily decline and elapsed time.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 305976.87659290305,
+            "absoluteTolerance": 0.000001
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "nominal-to-effective-annual-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "nominalToEffectiveAnnual",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.nominalToEffectiveAnnual(double)",
+          "units": {
+            "inputs": {
+              "nominalDeclineRate": "1/day"
+            },
+            "outputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite non-negative nominal daily decline rate using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.001
             ],
             "parameterTypes": [
               "double"
             ],
-            "expected": 1.01325,
-            "absoluteTolerance": 1e-10
+            "expected": 0.30597687659290307,
+            "absoluteTolerance": 1e-12
           },
           "evidenceSources": [
-            "src/test/java/neqsim/thermo/util/sulfur/SulfurThermodynamicsTest.java",
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "effective-annual-to-nominal-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "effectiveAnnualToNominal",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.effectiveAnnualToNominal(double)",
+          "units": {
+            "inputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite effective annual decline fraction strictly between 0 and 1 using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.30597687659290307
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.001,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "two-point-exponential-decline-estimate",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "estimateExponentialDecline",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.estimateExponentialDecline(double, double, double, double)",
+          "units": {
+            "inputs": {
+              "firstRate": "rate/day",
+              "firstTime": "day",
+              "secondRate": "rate/day",
+              "secondTime": "day"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Two-point exponential decline estimate for finite positive rates with the second rate lower and the second time later.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0,
+              500,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 0.0018977335538944429,
+            "absoluteTolerance": 1e-15
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
             "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
           ]
         }
       ]
-    },
-    {
-      "id": "tp-flash",
-      "title": "TP flash of a defined fluid",
-      "domain": "thermodynamics",
-      "tool": "runFlash",
-      "apis": [
-        "neqsim.thermo.system.SystemSrkEos",
-        "neqsim.thermodynamicoperations.ThermodynamicOperations"
-      ],
-      "skills": [
-        "neqsim-api-patterns"
-      ],
-      "agents": [
-        "thermo-fluid"
-      ],
-      "testSources": [
-        "src/test/java/neqsim/mcp/runners/FlashRunnerTest.java"
-      ],
-      "limitations": "Only models and flash modes supported by run_flash schema; not every thermodynamic system or operation."
     }
   ]
 }
