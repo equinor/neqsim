@@ -39,9 +39,9 @@ public class BlockedInLiquidExpansionDocumentationTest {
       "docs/safety/blocked_in_liquid_thermal_expansion.md";
   private static final Pattern EXECUTABLE_JAVA =
       Pattern.compile(
-          "(?ms)^## Executable Java Workflow.*?^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+          "(?ms)^## Executable Java Workflow.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^\`\`\`java\\r?\\n([\\s\\S]*?)^\`\`\`[ \\t]*$");
+      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
