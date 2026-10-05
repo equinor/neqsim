@@ -5,7 +5,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -71,7 +70,6 @@ public class ProcessProfilingTest {
   /**
    * Profile a large process with the built-in profiling API. Shows per-equipment time breakdown.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   void profileLargeProcess() {
@@ -107,7 +105,6 @@ public class ProcessProfilingTest {
    * -XX:StartFlightRecording=duration=30s,filename=neqsim_profile.jfr,settings=profile
    * </pre>
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   void profileWithJFR() throws Exception {
@@ -183,7 +180,6 @@ public class ProcessProfilingTest {
    * Micro-benchmark individual operations to identify the real CPU cost of each. This doesn't need JFR - it directly
    * measures TPflash, init() levels, etc.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   void microBenchmarkThermodynamicOperations() {
@@ -289,7 +285,6 @@ public class ProcessProfilingTest {
    * Compare sequential vs optimized (hybrid/parallel) on process WITH Mixer and HeatExchanger. This was previously
    * always forced to sequential; now uses graph-based execution.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   void benchmarkHybridExecution() {
@@ -389,7 +384,6 @@ public class ProcessProfilingTest {
    * Thread CPU time profiling - measures actual CPU time vs wall-clock to detect serialization bottlenecks vs true
    * parallelism.
    */
-  @Disabled
   @Tag("benchmark")
   @Test
   void measureCPUVsWallTime() {
