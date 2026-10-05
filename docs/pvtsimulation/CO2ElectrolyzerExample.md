@@ -15,6 +15,8 @@ cell voltage, and current efficiency.
 - `BatteryStorage` capacity and state of charge are in Wh; its discharge
   duration is in hours. The example requests one second of full-duty power.
 - Product selectivities are moles of product per mole of converted CO₂.
+- This selectivity API uses flashed inlet gas-phase component rates. Conversion
+  assertions use that gas-phase CO₂ rate; dissolved CO₂ is outside this screen.
 - The gas separator performs an equilibrium phase split after the simplified
   selectivity calculation. It does not model electrolyzer product purification.
 
@@ -70,6 +72,10 @@ public final class CO2ElectrolyzerQuickStart {
     electrolyzer.setCellVoltage(2.70);
     electrolyzer.setCurrentEfficiency(0.95);
 
+    // Initialize the upstream product before the separator constructs its phase outlets.
+    feed.run();
+    electrolyzer.run();
+
     Separator gasPolisher =
         new Separator("syngas equilibrium polisher", electrolyzer.getGasProductStream());
     ProcessSystem process = new ProcessSystem("CO2 conversion screen");
@@ -89,9 +95,11 @@ public final class CO2ElectrolyzerQuickStart {
     double hydrogenProductMolesPerSecond =
         gasProduct.getComponent(hydrogenName).getFlowRate("mole/sec");
 
-    double expectedConvertedCo2 = co2FeedMolesPerSecond * conversion;
+    double inletGasCo2MolesPerSecond =
+        feed.getThermoSystem().getComponent(co2Name).getFlowRate("mole/sec");
+    double expectedConvertedCo2 = inletGasCo2MolesPerSecond * conversion;
     assert Math.abs(
-            unreactedCo2MolesPerSecond - (co2FeedMolesPerSecond - expectedConvertedCo2))
+            unreactedCo2MolesPerSecond - (inletGasCo2MolesPerSecond - expectedConvertedCo2))
         < 1.0e-8;
     assert Math.abs(coProductMolesPerSecond - expectedConvertedCo2 * coSelectivity)
         < 1.0e-8;
