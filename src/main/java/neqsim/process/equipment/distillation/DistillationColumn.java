@@ -5613,10 +5613,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     shortcut.setHeavyKey(heavyKey);
     shortcut.setLightKeyRecoveryDistillate(lightKeyRecoveryDistillate);
     shortcut.setHeavyKeyRecoveryBottoms(heavyKeyRecoveryBottoms);
-    shortcut.setRefluxRatioMultiplier(refluxRatioMultiplier);
     applyShortcutPressureBasis(shortcut, feedStream);
 
     try {
+      shortcut.setRefluxRatioMultiplier(refluxRatioMultiplier);
       shortcut.run(UUID.randomUUID());
     } catch (Exception exception) {
       logger.warn("Shortcut initialization failed for column {}", getName(), exception);

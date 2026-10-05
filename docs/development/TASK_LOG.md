@@ -1144,3 +1144,10 @@ Integrated master 466cd0f333561fbe442156d47cfa0c9b358687f7, retaining both task-
 histories and regenerating the engineering inventory. Documentation impact: none
 for the test-only correction; the recycle guide already documents the low-flow
 absolute tolerance and the exchanger guide documents the duty/LMTD relation.
+
+
+### 2026-10-04 — Gas-limited stop choke list from allocation data (PEPR 80302059)
+**Type:** B (Process / production optimisation)
+**Keywords:** choke list, strupeliste, GOR, gas handling, regass scrubber, PDM allocation basis, compressor meter basis, WAG, backtest
+**Solution:** Two-constraint LP on the per-well PDM table with the gas budget calibrated on a previous stop; cross-checked with `ChokeAndGasLiftAllocationOptimizer`; stage-separation sweep for 3rd-stage pressure and scrubber temperature; gas injectors ranked from 12 months of per-well injection.
+**Notes:** A compressor-meter capacity is not the allocated well gas: on the studied platform allocated gas was 0.79 of the meter flow with a compressor train out of service, so planning on the meter figure over-promised about 1,050 Sm3/d of oil. The previous stop gave a free backtest (every GOR above 1,000 well shut in both; oil within -6.5/+8.2 %). A simple stage model under-predicted recompressor load by 12-38 % but gave the right RVP slope against 3rd-stage pressure (0.30 vs 0.28 bar/bar). Report generator: `report.front_matter_lists` skips lists of figures and tables on short reports.

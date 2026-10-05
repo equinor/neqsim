@@ -508,10 +508,20 @@ stages to actual trays for cost ranking.
 `ShortcutDistillationColumn` provides Fenske-Underwood-Gilliland estimates. A rigorous column can
 use those estimates directly as a starting design.
 
+Use a finite reflux multiplier greater than one. The shortcut rejects invalid input with
+`IllegalArgumentException` and rejects non-representable Gilliland stages or feed-tray numbering
+with `IllegalStateException`. This includes operating reflux at or below its calculated minimum
+and values so close to minimum that the correlation rounds to its infinite-stage limit or
+exceeds the integer tray range. A failed run clears `isSolved()` and its product/duty/stage
+outputs, including after a previous successful run. Increase reflux and rerun before using the
+design; a shortcut estimate does not establish rigorous-column or hydraulic feasibility.
+`DistillationColumn.initializeFromShortcut(...)` catches these failures and returns an
+infeasible initialization result without changing the rigorous column's trays or feeds.
+
 ```java
 DistillationColumn.ShortcutInitializationResult init = column.initializeFromShortcut(feedStream,
     "ethane", "propane", 0.98, 0.98, 1.3);
-if (init.isFeasible()) {
+if (init.isInitialized()) {
   column.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
   column.run();
 }
