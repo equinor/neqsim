@@ -70,6 +70,35 @@ public class SysNewtonRhapsonPHflashTest {
     assertEquals(initialTemperature, testSystem.getTemperature(), 0.2, "Temperature should be recovered in two-phase");
   }
 
+
+  @Test
+  void testDirectPSFlashTwoPhase() {
+    SystemInterface testSystem = new SystemSrkEos(250.0, 20.0);
+    testSystem.addComponent("methane", 50.0);
+    testSystem.addComponent("propane", 50.0);
+    testSystem.setMixingRule("classic");
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+
+    double beta = testSystem.getBeta();
+    assertTrue(beta > 0.01 && beta < 0.99, "System should be in 2-phase region for this test, beta=" + beta);
+
+    double targetEntropy = testSystem.getEntropy();
+    double initialTemperature = testSystem.getTemperature();
+
+    testSystem.setTemperature(255.0);
+    testSystem.init(3);
+
+    new PSFlash(testSystem, targetEntropy, 1).run();
+
+    assertEquals(targetEntropy, testSystem.getEntropy(), PSFlash.entropyTolerance(testSystem, targetEntropy),
+        "Entropy should match target in two-phase direct PS flash");
+    assertEquals(initialTemperature, testSystem.getTemperature(), 0.2,
+        "Temperature should be recovered in two-phase direct PS flash");
+  }
+
   @Test
   void testDirectPHFlashSinglePhase() {
     // Single phase gas
