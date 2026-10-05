@@ -11,6 +11,16 @@ estimation, and tieback analysis using NeqSim.
 
 ---
 
+## General well/SURF network integration
+
+Load `neqsim-pipeline-and-terminal-networks` for arbitrary gathering/injection
+pressure-flow topology and mixed pipe fidelity. See
+`docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md` for the current source audit.
+Keep mechanical/design equipment as geometry and cost owners; use the existing
+LoopedPipeNetwork for detailed steady hydraulics and TwoFluidPipeNetwork for its
+bounded storage-node transient scope. Architecture builders and PLEM/template
+labels alone do not establish pressure-flow or conservation qualification.
+
 ## Subsea Development Architecture
 
 A typical subsea development consists of:

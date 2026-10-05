@@ -17,6 +17,20 @@ last_verified: "2026-10-03"
 
 Do not substitute the field-development `NetworkSolver` or a `Manifold` for `LoopedPipeNetwork` without checking the question. They are distinct APIs. Use a `Manifold` for stream routing in a conventional process flowsheet; the network package solves its own node-edge model.
 
+## Well/SURF hydraulic fidelity
+
+For campaign #4228, extend the detailed `neqsim.process.equipment.network.LoopedPipeNetwork`
+graph instead of creating a competing SURF solver. Review
+`docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md` and coordinate equipment/design
+with `neqsim-subsea-and-wells` and the field-development agent.
+Use `NetworkPipe.setHydraulicModelType` for PIPE/MULTIPHASE_PIPE edge overrides
+(DARCY_WEISBACH, BEGGS_BRILL, TWO_FLUID); select NEWTON_RAPHSON and inspect
+`getHydraulicModelStatus` plus `getTwoFluidModel().getSteadyStateConvergenceReport()`.
+Changing fidelity preserves identity and geometry. This is steady-state composition;
+it does not qualify mixed-fidelity transients or directly bind a live WellSystem.
+The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
+replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
+
 ## Class map
 
 | Class family | Package | What it does | Verified entry points / result methods |
@@ -29,7 +43,7 @@ Do not substitute the field-development `NetworkSolver` or a `Manifold` for `Loo
 | Quality tracking and mixing: `NetworkQualitySpecification`, `NetworkQualityProfile`, `NetworkQualityLimit`, `NetworkQualityEvaluator`, `NetworkQualityComplianceReport`, `NetworkMixingResult` | `neqsim.process.equipment.network` | Point-specific calculated and measured attributes, component limits, mixing evidence, and compliance status. | `NetworkQualityProfile.addUpperLimit`, `addRange`, `addMeasuredAttributeLimit`, `LoopedPipeNetwork.evaluateQualityProfiles`, `report.isCompliant`, `report.getResults` |
 | Gas linepack and transient history: `GasLinepackState`, `TransientGasNetwork`, `TransientGasNetworkHistory`, `TransientGasNetworkStepReport` | `neqsim.process.equipment.network` | Advances edge inventory and solves transient gas pressure, flow, composition, and conservation histories. | `GasLinepackState.fromSolvedState`, `GasLinepackState.advance`, `setSourceSchedule`, `setFixedPressureBoundary`, `run`, `getHistory` |
 | Prescribed-flow composition transport: `TransientCompositionalPipeNetwork`, `TransientCompositionalPipeNetworkHistory`, `TransientSpeciesConservationReport` | `neqsim.process.equipment.network` | Tracks named component mass fractions through finite-volume gas-pipe cells and junctions. | `addNode`, `addPipe`, `setSourceSchedule`, `run`, `getSpeciesHistory`, `getNodeMassFractionHistory` |
-| Two-fluid transient pipes: `TwoFluidPipeNetwork`, `TwoFluidPipe` | `neqsim.process.equipment.network` and `neqsim.process.equipment.pipeline.twophasepipe` | Couples network nodes to two-fluid pipe state and reports phase mass balances. | `addCompressibleNode`, `addFixedPressureNode`, `addPipe`, `runTransient`, `getNodePressurePa`, `getLastBalanceReport` |
+| Two-fluid transient pipes: `TwoFluidPipeNetwork`, `TwoFluidPipe` | `neqsim.process.equipment.network` and `neqsim.process.equipment.pipeline` | Couples network nodes to two-fluid pipe state and reports phase mass balances. | `addCompressibleNode`, `addFixedPressureNode`, `addPipe`, `runTransient`, `getNodePressurePa`, `getLastBalanceReport` |
 | Oil terminal, cargo, and assay: `OilNetworkSchedule`, `OilTerminalNode`, `OilTerminalTank`, `CrudeAssay`, `CrudeParcel`, `CargoNomination`, `CrudeBlendResult` | `neqsim.process.equipment.network` | Receipts, segregated or mixed inventory, compatible assay blending, and cargo scheduling by period/berth. | `addHourlyPeriods`, `addReceipt`, `addCargoNomination`, `OilNetworkSchedule.optimize`, `CrudeAssay.blend`, `getMassBalanceResidualKg` |
 | Benchmarks and adjacent equipment: `NetworkValidationBenchmarks`, `Manifold`, `PipeBeggsAndBrills` | `neqsim.process.equipment.network`, `neqsim.process.equipment.manifold`, `neqsim.process.equipment.pipeline` | Reproducible network checks; ordinary process-manifold routing and standalone multiphase pipe calculations remain separate. | `NetworkValidationBenchmarks.runAllBenchmarks`, `Manifold.addStream`, `PipeBeggsAndBrills.run` |
 

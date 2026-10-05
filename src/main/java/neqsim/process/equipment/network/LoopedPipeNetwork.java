@@ -22,6 +22,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.Stream;
@@ -153,7 +154,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     /**
      * Beggs-Brill correlation for multiphase oil/gas/water flow.
      */
-    BEGGS_BRILL
+    BEGGS_BRILL,
+
+    /** Existing mechanistic two-fluid steady-state model; network transients are not implied. */
+    TWO_FLUID
   }
 
   /**
@@ -470,6 +474,15 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     private double ambientTemperature = 288.15; // K
     private AdiabaticPipe pipeModel;
     private PipeBeggsAndBrills bbModel;
+
+    /** Optional edge-local hydraulic fidelity; null preserves legacy defaults. */
+    private PipeModelType hydraulicModelType;
+
+    /** Last calculated two-fluid state, rebuilt for each trial boundary/rate. */
+    private transient TwoFluidPipe twoFluidModel;
+
+    /** Explicit evidence for the last edge hydraulic evaluation. */
+    private String hydraulicModelStatus = "NOT_RUN";
     private double[] elevationProfileDistanceM;
     private double[] elevationProfileM;
     private double[] ambientTemperatureProfileDistanceM;
@@ -735,6 +748,51 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
      */
     public void setBBModel(PipeBeggsAndBrills model) {
       this.bbModel = model;
+    }
+
+    /**
+     * Select hydraulic fidelity without changing nodes, geometry or element identity.
+     *
+     * @param type override for PIPE or MULTIPHASE_PIPE; null restores the default
+     * @throws IllegalArgumentException if this element has dedicated non-pipe physics
+     */
+    public void setHydraulicModelType(PipeModelType type) {
+      if (type != null && elementType != NetworkElementType.PIPE && elementType != NetworkElementType.MULTIPHASE_PIPE) {
+        throw new IllegalArgumentException("Hydraulic fidelity applies to PIPE and MULTIPHASE_PIPE edges only");
+      }
+      hydraulicModelType = type;
+      bbModel = null;
+      twoFluidModel = null;
+      inletFluid = null;
+      outletFluid = null;
+      hydraulicModelStatus = "NOT_RUN";
+    }
+
+    /**
+     * Return the optional edge override.
+     *
+     * @return hydraulic model override, or null for legacy defaults
+     */
+    public PipeModelType getHydraulicModelType() {
+      return hydraulicModelType;
+    }
+
+    /**
+     * Obtain the most recently evaluated two-fluid state for profile inspection.
+     *
+     * @return two-fluid pipe, or null before evaluation or after switching fidelity
+     */
+    public TwoFluidPipe getTwoFluidModel() {
+      return twoFluidModel;
+    }
+
+    /**
+     * Return the last evaluation status, including any correlation fallback.
+     *
+     * @return hydraulic evaluation status
+     */
+    public String getHydraulicModelStatus() {
+      return hydraulicModelStatus;
     }
 
     /**
@@ -2357,7 +2415,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param type pipe model type ({@link PipeModelType#DARCY_WEISBACH} or {@link PipeModelType#BEGGS_BRILL})
    */
   public void setPipeModelType(PipeModelType type) {
-    this.pipeModelType = type;
+    this.pipeModelType = Objects.requireNonNull(type, "pipe model type");
   }
 
   /**
@@ -2367,6 +2425,25 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    */
   public PipeModelType getPipeModelType() {
     return pipeModelType;
+  }
+
+  /**
+   * Resolve an edge override or its backward-compatible hydraulic default.
+   *
+   * @param pipeName existing pipe identity
+   * @return effective hydraulic model
+   * @throws IllegalArgumentException if the edge is missing or is not a pipe
+   */
+  public PipeModelType getEffectiveHydraulicModelType(String pipeName) {
+    NetworkPipe pipe = pipes.get(pipeName);
+    if (pipe == null || (pipe.getElementType() != NetworkElementType.PIPE
+        && pipe.getElementType() != NetworkElementType.MULTIPHASE_PIPE)) {
+      throw new IllegalArgumentException("Hydraulic pipe edge '" + pipeName + "' not found");
+    }
+    if (pipe.getHydraulicModelType() != null) {
+      return pipe.getHydraulicModelType();
+    }
+    return pipe.getElementType() == NetworkElementType.MULTIPHASE_PIPE ? PipeModelType.BEGGS_BRILL : pipeModelType;
   }
 
   /**
@@ -4257,7 +4334,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       baseHeadLoss = calculateHeadLossTubing(pipe, fluid);
       break;
     case MULTIPHASE_PIPE:
-      baseHeadLoss = calculateHeadLossMultiphase(pipe, fluid);
+      baseHeadLoss = calculatePipeHydraulicHeadLoss(pipe, fluid);
       break;
     case COMPRESSOR:
       baseHeadLoss = calculateHeadLossCompressor(pipe, fluid);
@@ -4270,11 +4347,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       break;
     case PIPE:
     default:
-      if (pipeModelType == PipeModelType.BEGGS_BRILL) {
-        baseHeadLoss = calculateHeadLossMultiphase(pipe, fluid);
-      } else {
-        baseHeadLoss = calculateHeadLossDarcyWeisbach(pipe, fluid);
-      }
+      baseHeadLoss = calculatePipeHydraulicHeadLoss(pipe, fluid);
       break;
     }
 
@@ -4317,13 +4390,113 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     }
 
     if ((compositionalHydraulicsEnabled || thermalHydraulicsEnabled)
-        && pipe.getElementType() != NetworkElementType.MULTIPHASE_PIPE
         && pipe.getElementType() != NetworkElementType.COMPRESSOR && pipe.getElementType() != NetworkElementType.PUMP
-        && !(pipe.getElementType() == NetworkElementType.PIPE && pipeModelType == PipeModelType.BEGGS_BRILL)) {
+        && !((pipe.getElementType() == NetworkElementType.PIPE
+            || pipe.getElementType() == NetworkElementType.MULTIPHASE_PIPE)
+            && getEffectiveHydraulicModelType(pipe.getName()) != PipeModelType.DARCY_WEISBACH)) {
       updateGenericEdgeThermodynamicState(pipe, fluid);
     }
 
     return baseHeadLoss;
+  }
+
+  /**
+   * Evaluate the existing hydraulic model selected on a pipe edge.
+   *
+   * @param pipe pipe edge
+   * @param fluid initialized physical upstream fluid
+   * @return signed pressure drop in Pa
+   */
+  private double calculatePipeHydraulicHeadLoss(NetworkPipe pipe, SystemInterface fluid) {
+    PipeModelType model = getEffectiveHydraulicModelType(pipe.getName());
+    pipe.hydraulicModelStatus = "NOT_RUN";
+    switch (model) {
+    case TWO_FLUID:
+      return calculateTwoFluidHeadLoss(pipe, fluid);
+    case BEGGS_BRILL:
+      double loss = calculateHeadLossMultiphase(pipe, fluid);
+      if ("NOT_RUN".equals(pipe.hydraulicModelStatus)) {
+        pipe.hydraulicModelStatus = Math.abs(pipe.getFlowRate()) < 1.0e-10 ? "ZERO_FLOW_STATIC" : "BEGGS_BRILL";
+      }
+      return loss;
+    default:
+      pipe.hydraulicModelStatus = "DARCY_WEISBACH";
+      return calculateHeadLossDarcyWeisbach(pipe, fluid);
+    }
+  }
+
+  /**
+   * Evaluate mechanistic steady-state pressure loss with the existing two-fluid pipe. Uses inlet pressure and trial
+   * rate, leaving outlet pressure to the pipe momentum solve. No downstream pressure is imposed on this resistance
+   * calculation.
+   *
+   * @param pipe network route, traversed in the physical flow direction
+   * @param fluid physical upstream fluid
+   * @return signed head loss in Pa
+   * @throws IllegalStateException if the pipe does not converge or reaches a pressure floor
+   */
+  private double calculateTwoFluidHeadLoss(NetworkPipe pipe, SystemInterface fluid) {
+    pipe.twoFluidModel = null;
+    if (Math.abs(pipe.getFlowRate()) < 1.0e-10) {
+      pipe.hydraulicModelStatus = "ZERO_FLOW_STATIC";
+      return calculateHeadLossDarcyWeisbach(pipe, fluid);
+    }
+    boolean forward = pipe.getFlowRate() > 0.0;
+    NetworkNode upstream = nodes.get(forward ? pipe.getFromNode() : pipe.getToNode());
+    SystemInterface inletFluid = fluid.clone();
+    inletFluid.setPressure(upstream.getPressure(), "Pa");
+    inletFluid.setTemperature(upstream.getTemperature(), "K");
+    Stream inlet = new Stream(pipe.getName() + "_tfInlet", inletFluid);
+    inlet.setFlowRate(Math.abs(pipe.getFlowRate()), "kg/sec");
+    inlet.run();
+    TwoFluidPipe model = new TwoFluidPipe(pipe.getName() + "_twoFluid", inlet);
+    model.setLength(pipe.getLength());
+    model.setDiameter(pipe.getDiameter());
+    model.setRoughness(pipe.getRoughness());
+    int cells = Math.max(2, pipe.getMultiphaseSegments());
+    model.setNumberOfSections(cells);
+    double[] elevations = new double[cells + 1];
+    double[] ambient = new double[cells];
+    double[] heatTransfer = new double[cells];
+    for (int face = 0; face <= cells; face++) {
+      double distance = pipe.getLength() * face / cells;
+      elevations[face] = getRouteElevation(pipe, forward ? distance : pipe.getLength() - distance);
+      if (face < cells) {
+        double midpoint = pipe.getLength() * (face + 0.5) / cells;
+        double routeDistance = forward ? midpoint : pipe.getLength() - midpoint;
+        ambient[face] = pipe.getAmbientTemperatureAt(routeDistance);
+        heatTransfer[face] = thermalHydraulicsEnabled ? pipe.getHeatTransferAt(routeDistance) : 0.0;
+      }
+    }
+    model.setCellFaceElevationProfile(elevations);
+    if (thermalHydraulicsEnabled) {
+      model.setSurfaceTemperatureProfile(ambient);
+      model.setHeatTransferProfile(heatTransfer);
+      model.setIncludeEnergyEquation(true);
+    }
+    pipe.hydraulicModelStatus = "TWO_FLUID_FAILED";
+    model.run();
+    pipe.twoFluidModel = model;
+    if (!model.isSteadyStateConverged() || model.isSteadyStatePressureFloorLimited()
+        || model.isSteadyStateWallClockLimited()) {
+      throw new IllegalStateException("Two-fluid edge '" + pipe.getName()
+          + "' did not converge; inspect getTwoFluidModel().getSteadyStateConvergenceReport()");
+    }
+    double pressureLoss = inlet.getPressure("Pa") - model.getOutletStream().getPressure("Pa");
+    if (!Double.isFinite(pressureLoss)) {
+      throw new IllegalStateException("Two-fluid edge '" + pipe.getName() + "' returned a non-finite pressure loss");
+    }
+    pipe.setThermodynamicState(inlet.getFluid(), model.getOutletStream().getFluid(), forward);
+    pipe.setOutletTemperature(model.getOutletStream().getTemperature("K"));
+    pipe.setLiquidHoldup(model.getAverageLiquidHoldup());
+    pipe.setVelocity(model.getMaxMixtureVelocity());
+    pipe.setFlowRegime("TwoFluid-" + model.getDominantFlowRegime());
+    pipe.hydraulicModelStatus = "TWO_FLUID_CONVERGED";
+    double efficiency = pipe.getPipeEfficiency();
+    if (efficiency > 0.01 && efficiency < 1.0) {
+      pressureLoss /= efficiency;
+    }
+    return Math.signum(pipe.getFlowRate()) * pressureLoss;
   }
 
   /**
@@ -4807,7 +4980,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         inletStream.run();
       }
 
+      bbPipe.setLength(pipe.getLength());
+      bbPipe.setDiameter(pipe.getDiameter());
+      bbPipe.setPipeWallRoughness(pipe.getRoughness());
+      bbPipe.setNumberOfIncrements(pipe.getMultiphaseSegments());
+      bbPipe.setAngle(0.0);
       double dz = downstreamNode.getElevation() - upstreamNode.getElevation();
+      bbPipe.setElevation(dz);
       if (pipe.getLength() > 0 && Math.abs(dz) > 0.01) {
         double sine = Math.max(-1.0, Math.min(1.0, dz / pipe.getLength()));
         double angle = Math.toDegrees(Math.asin(sine));
@@ -4834,6 +5013,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     } catch (Exception ex) {
       logger.warn("Beggs-Brill calculation failed for {}, falling back to Darcy-Weisbach: {}", pipe.getName(),
           ex.getMessage());
+      pipe.hydraulicModelStatus = "BEGGS_BRILL_FALLBACK_DARCY";
       double fallbackHeadLoss = calculateHeadLossDarcyWeisbach(pipe, fluid);
       updateGenericEdgeThermodynamicState(pipe, fluid);
       return fallbackHeadLoss;
@@ -4902,6 +5082,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     } catch (Exception ex) {
       logger.warn("Profiled Beggs-Brill calculation failed for {}, falling back to unprofiled Darcy-Weisbach: {}",
           pipe.getName(), ex.getMessage());
+      pipe.hydraulicModelStatus = "BEGGS_BRILL_FALLBACK_DARCY";
       double fallbackHeadLoss = calculateHeadLossDarcyWeisbach(pipe, fluid);
       updateGenericEdgeThermodynamicState(pipe, fluid);
       return fallbackHeadLoss;
@@ -5234,6 +5415,25 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     double flowKgs = Math.abs(pipe.getFlowRate());
     if (flowKgs < 1e-10) {
       flowKgs = 1e-10;
+    }
+
+    if ((pipe.getElementType() == NetworkElementType.PIPE
+        || pipe.getElementType() == NetworkElementType.MULTIPHASE_PIPE)
+        && getEffectiveHydraulicModelType(pipe.getName()) == PipeModelType.TWO_FLUID) {
+      double original = pipe.getFlowRate();
+      double step = Math.max(Math.abs(original) * 1.0e-3, 1.0e-6);
+      double lower = original >= 0.0 ? Math.max(1.0e-10, original - step) : original - step;
+      double upper = original >= 0.0 ? original + step : Math.min(-1.0e-10, original + step);
+      try {
+        pipe.setFlowRate(upper);
+        double highLoss = calculateHeadLoss(pipe, fluid);
+        pipe.setFlowRate(lower);
+        double lowLoss = calculateHeadLoss(pipe, fluid);
+        return Math.max(1.0e-10, (highLoss - lowLoss) / (upper - lower));
+      } finally {
+        pipe.setFlowRate(original);
+        calculateHeadLoss(pipe, fluid);
+      }
     }
 
     switch (pipe.getElementType()) {
@@ -5660,6 +5860,15 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     converged = false;
     for (NetworkPipe pipe : pipes.values()) {
+      if ((pipe.getHydraulicModelType() != null || pipeModelType == PipeModelType.TWO_FLUID)
+          && solverType != SolverType.NEWTON_RAPHSON) {
+        pipe.hydraulicModelStatus = "UNSUPPORTED_SOLVER";
+        throw new IllegalStateException("Explicit hydraulic fidelity requires NEWTON_RAPHSON");
+      }
+      if (pipe.getHydraulicModelType() != null && pipe.getElementType() != NetworkElementType.PIPE
+          && pipe.getElementType() != NetworkElementType.MULTIPHASE_PIPE) {
+        throw new IllegalStateException("Hydraulic fidelity is not applicable to element '" + pipe.getName() + "'");
+      }
       if (pipe.getElementType() == NetworkElementType.CHOKE && pipe.isChokeUseValveModel()
           && solverType != SolverType.NEWTON_RAPHSON) {
         pipe.chokeModelStatus = "UNSUPPORTED_SOLVER";
@@ -9167,6 +9376,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       JsonObject pipeJson = new JsonObject();
       pipeJson.addProperty("name", pipe.getName());
       pipeJson.addProperty("elementType", pipe.getElementType().name());
+      if (pipe.getHydraulicModelType() != null) {
+        pipeJson.addProperty("hydraulicModelType", pipe.getHydraulicModelType().name());
+      }
+      if (pipe.getElementType() == NetworkElementType.PIPE
+          || pipe.getElementType() == NetworkElementType.MULTIPHASE_PIPE) {
+        pipeJson.addProperty("effectiveHydraulicModelType", getEffectiveHydraulicModelType(pipe.getName()).name());
+      }
+      pipeJson.addProperty("hydraulicModelStatus", pipe.getHydraulicModelStatus());
       pipeJson.addProperty("fromNode", pipe.getFromNode());
       pipeJson.addProperty("toNode", pipe.getToNode());
       pipeJson.addProperty("length_m", pipe.getLength());
@@ -9186,6 +9403,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pipeJson.addProperty("frictionFactor", pipe.getFrictionFactor());
       pipeJson.addProperty("flowRegime", pipe.getFlowRegime());
       pipeJson.addProperty("pipeEfficiency", pipe.getPipeEfficiency());
+      pipeJson.addProperty("multiphaseSegments", pipe.getMultiphaseSegments());
+      pipeJson.addProperty("ambientTemperature_K", pipe.getAmbientTemperature());
+      pipeJson.addProperty("overallHeatTransferCoefficient_Wm2K", pipe.getOverallHeatTransferCoeff());
       pipeJson.addProperty("availability", pipe.getAvailability());
       pipeJson.addProperty("thermodynamicStateForward", pipe.isThermodynamicStateForward());
       pipeJson.addProperty("outletTemperature_K", pipe.getOutletTemperature());
@@ -9515,8 +9735,20 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       if (pipeJson.has("pipeEfficiency")) {
         pipe.setPipeEfficiency(pipeJson.get("pipeEfficiency").getAsDouble());
       }
+      if (pipeJson.has("multiphaseSegments")) {
+        pipe.setMultiphaseSegments(pipeJson.get("multiphaseSegments").getAsInt());
+      }
+      if (pipeJson.has("ambientTemperature_K")) {
+        pipe.setAmbientTemperature(pipeJson.get("ambientTemperature_K").getAsDouble());
+      }
+      if (pipeJson.has("overallHeatTransferCoefficient_Wm2K")) {
+        pipe.setOverallHeatTransferCoeff(pipeJson.get("overallHeatTransferCoefficient_Wm2K").getAsDouble());
+      }
       if (pipeJson.has("availability")) {
         pipe.setAvailability(pipeJson.get("availability").getAsDouble());
+      }
+      if (pipeJson.has("hydraulicModelType")) {
+        pipe.setHydraulicModelType(PipeModelType.valueOf(pipeJson.get("hydraulicModelType").getAsString()));
       }
       restoreElementConfiguration(pipe, pipeJson);
       restoreRouteProfile(pipe, pipeJson);

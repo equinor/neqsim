@@ -307,6 +307,16 @@ pipes or elements created with specialized methods such as `addChoke` and
 
 ---
 
+## Per-edge hydraulic fidelity
+
+Use `NetworkPipe.setHydraulicModelType` to select `BEGGS_BRILL`, `TWO_FLUID`
+or `DARCY_WEISBACH` on an individual pipe without rebuilding topology.
+Explicit overrides require `NEWTON_RAPHSON`. Inspect `getHydraulicModelStatus`
+and the two-fluid steady convergence report before accepting results.
+The tubing VLP element and dedicated transient network keep their own contracts.
+See [Well and SURF Network Integration](../../fielddevelopment/SURF_NETWORK_INTEGRATION.md)
+for the tested mixed-fidelity example, current-functionality audit and limitations.
+
 ## Building a Production Network
 
 ### Step-by-Step Pattern

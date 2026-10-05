@@ -9,6 +9,8 @@ The high-level helpers are screening tools. They do not by themselves provide a 
 
 ---
 
+See [Well and SURF Network Integration](SURF_NETWORK_INTEGRATION) for the current capability audit, edge-local Beggs-Brill/two-fluid selection and remaining campaign qualification.
+
 ## Overview Documents
 
 | Document | Description |

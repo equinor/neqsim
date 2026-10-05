@@ -27,6 +27,14 @@ and environmental considerations into coherent development studies.
 
 ---
 
+For integrated well/SURF campaign #4228, read
+`docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md` and load
+`neqsim-pipeline-and-terminal-networks` together with `neqsim-subsea-and-wells`.
+Reuse the detailed network, well physics, existing transient engine and lifecycle
+models; report screening versus qualified behavior explicitly. Pipe-edge fidelity
+selection is steady-state and does not imply live WellSystem coupling or general
+mixed-fidelity dynamic qualification.
+
 ## Core Expertise
 
 You are an expert in these field development disciplines:
