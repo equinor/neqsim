@@ -23,11 +23,16 @@ public class PHflash extends Flash {
   int type = 0;
 
   /**
-   * Constructor for PHflash.
+   * Constructor for PHflash operation.
+   *
+   * <p>
+   * Uses a specialized single-component PH flash if the system contains only one component and the specified enthalpy
+   * is within the valid range.
+   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
-   * @param type a int
+   * @param type a int, flash type (0 = standard) or (1 = direct PH flash if not pure component)
    */
   public PHflash(SystemInterface system, double Hspec, int type) {
     this.system = system;

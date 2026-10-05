@@ -2,10 +2,11 @@ package neqsim.thermodynamicoperations.flashops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
-import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 
 /**
  * sysNewtonRhapsonPHflash class.
@@ -35,21 +36,15 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   double PC1 = 0;
   double PC2 = 0;
   double specVar = 0;
-  Matrix Jac;
-  Matrix fvec;
-  Matrix gTvec;
-  Matrix gPvec;
-  Matrix u;
-  Matrix uold;
-  Matrix Xgij;
+  DMatrixRMaj Jac;
+  DMatrixRMaj fvec;
+  DMatrixRMaj u;
+  private DMatrixRMaj rhs;
+  private DMatrixRMaj jacWork;
+  private transient LinearSolverDense<DMatrixRMaj> linearSolver;
   SystemInterface system;
   int numberOfComponents;
   int speceq = 0;
-  Matrix a = new Matrix(4, 4);
-  Matrix s = new Matrix(1, 4);
-  Matrix xg;
-  Matrix xcoef;
-  NewtonRhapson solver;
   boolean etterCP = false;
   boolean etterCP2 = false;
   double dVdT = 0;
@@ -67,17 +62,13 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     neq = numberOfComponents;
-    Jac = new Matrix(neq + 2, neq + 2);
-    fvec = new Matrix(neq + 2, 1);
-    gTvec = new Matrix(neq, 1);
-    gPvec = new Matrix(neq, 1);
-    u = new Matrix(neq + 2, 1);
-    Xgij = new Matrix(neq + 2, 4);
+    Jac = new DMatrixRMaj(neq + 2, neq + 2);
+    fvec = new DMatrixRMaj(neq + 2, 1);
+    u = new DMatrixRMaj(neq + 2, 1);
+    rhs = new DMatrixRMaj(neq + 2, 1);
+    jacWork = new DMatrixRMaj(neq + 2, neq + 2);
+    linearSolver = LinearSolverFactory_DDRM.lu(neq + 2);
     setu();
-    uold = u.copy();
-    // logger.info("Spec : " +speceq);
-    solver = new NewtonRhapson();
-    solver.setOrder(3);
   }
 
   /**
@@ -132,7 +123,6 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * setJac.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
     double dij = 0.0;
 
     double tempJ = 0.0;
@@ -309,22 +299,36 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     iter = 1;
+    ensureSolverInitialized();
+    double residualNorm;
     do {
       iter++;
       init();
       setfvec();
       setJac();
-      // fvec.print(10, 10);
-      // Jac.print(10, 10);
-      u = Jac.solve(fvec.times(-1.0));
-      // u.equals(dx.timesEquals(1.0));
-      // fvec.print(10, 10);
-      // logger.info("iter: " + iter);
-    } while (fvec.norm2() > 1.e-10 && iter < 1000); // && Double.isNaN(dx.norm2()));
+      double residualNormSquared = 0.0;
+      for (int i = 0; i < neq + 2; i++) {
+        double residual = fvec.get(i, 0);
+        rhs.set(i, 0, -residual);
+        residualNormSquared += residual * residual;
+      }
+      residualNorm = Math.sqrt(residualNormSquared);
+
+      jacWork.setTo(Jac);
+      linearSolver.setA(jacWork);
+      linearSolver.solve(rhs, u);
+    } while (residualNorm > 1.e-10 && iter < 1000);
     // logger.info("iter: " + iter);
     // logger.info("temperature: " + system.getTemperature());
     // logger.info("pressure: " + system.getPressure());
     init();
     return iter;
+  }
+
+  /** Lazily initializes the EJML solver after deserialization. */
+  private void ensureSolverInitialized() {
+    if (linearSolver == null) {
+      linearSolver = LinearSolverFactory_DDRM.lu(neq + 2);
+    }
   }
 }

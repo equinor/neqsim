@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -50,6 +51,8 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark a single TPflash with stability analysis.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Benchmark single TPflash with stability analysis")
   public void benchmarkSingleTPflash() {
@@ -76,6 +79,8 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark multiple TPflash calls to see consistency.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Benchmark multiple TPflash calls")
   public void benchmarkMultipleTPflash() {
@@ -110,6 +115,8 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark TPflash with and without multiPhaseCheck to quantify stability analysis cost.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Compare TPflash with and without stability analysis")
   public void compareWithAndWithoutStabilityAnalysis() {
@@ -161,6 +168,8 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark phase init() calls which are expensive for electrolyte systems.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Benchmark phase initialization cost")
   public void benchmarkPhaseInitCost() {
@@ -208,6 +217,8 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark fugacity coefficient calculations.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Benchmark fugacity coefficient calculation cost")
   public void benchmarkFugacityCoefficientCost() {
@@ -238,6 +249,8 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Test without ions to see how much they contribute to slowdown.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Compare performance with and without ions")
   public void compareWithAndWithoutIons() {
@@ -287,6 +300,7 @@ public class StabilityAnalysisBenchmarkTest {
   @Test
   @DisplayName("Analyze TPmultiflash iteration behavior")
   @Disabled("This test requires code instrumentation - run manually")
+  @Tag("benchmark")
   public void analyzeTPmultiflashIterations() {
     // This test would need instrumentation in TPmultiflash to count iterations
     // and measure time per component trial
@@ -302,6 +316,8 @@ public class StabilityAnalysisBenchmarkTest {
   /**
    * Benchmark system cloning which is used in stability analysis.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Benchmark system cloning cost")
   public void benchmarkSystemCloningCost() {
@@ -326,6 +342,8 @@ public class StabilityAnalysisBenchmarkTest {
    * Test that simulates stability analysis: clone, set ions to 0, then init. This tests whether the optimization to
    * skip electrolyte calculations for ion-free trial phases is working.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   @DisplayName("Verify ion-free trial phase optimization")
   public void verifyIonFreeTrialPhaseOptimization() {

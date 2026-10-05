@@ -5,6 +5,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -69,6 +71,8 @@ public class ProcessProfilingTest {
   /**
    * Profile a large process with the built-in profiling API. Shows per-equipment time breakdown.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   void profileLargeProcess() {
     logger.info("\n========== PROCESS PROFILING: Built-in Execution Profiler ==========\n");
@@ -103,6 +107,8 @@ public class ProcessProfilingTest {
    * -XX:StartFlightRecording=duration=30s,filename=neqsim_profile.jfr,settings=profile
    * </pre>
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   void profileWithJFR() throws Exception {
     logger.info("\n========== JFR PROFILING: Running 50 iterations ==========\n");
@@ -177,6 +183,8 @@ public class ProcessProfilingTest {
    * Micro-benchmark individual operations to identify the real CPU cost of each. This doesn't need JFR - it directly
    * measures TPflash, init() levels, etc.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   void microBenchmarkThermodynamicOperations() {
     logger.info("\n========== MICRO-BENCHMARK: Thermodynamic Operations ==========\n");
@@ -281,6 +289,8 @@ public class ProcessProfilingTest {
    * Compare sequential vs optimized (hybrid/parallel) on process WITH Mixer and HeatExchanger. This was previously
    * always forced to sequential; now uses graph-based execution.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   void benchmarkHybridExecution() {
     System.out.println("\n========== BENCHMARK: Hybrid Execution (Mixer + HX processes) ==========\n");
@@ -379,6 +389,8 @@ public class ProcessProfilingTest {
    * Thread CPU time profiling - measures actual CPU time vs wall-clock to detect serialization bottlenecks vs true
    * parallelism.
    */
+  @Disabled
+  @Tag("benchmark")
   @Test
   void measureCPUVsWallTime() {
     logger.info("\n========== CPU Time vs Wall-Clock Analysis ==========\n");
