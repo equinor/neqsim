@@ -48,4 +48,3 @@ The capability introduces no sulfur yield, reaction selectivity, oxidation rate,
 precipitation, deposition, corrosion, phase, hydraulic, or transport assumption. It performs no flash calculation and
 no stream, fluid, process, pipeline, or injection mutation. The scientific and numerical boundary remains inherited
 unchanged from the already-qualified #3318 evidence chain.
-
