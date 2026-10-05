@@ -247,8 +247,7 @@ public final class DeclineCurveAnalysis {
    * @return Effective annual decline rate (fraction, 0-1)
    * @throws IllegalArgumentException if the nominal decline is non-finite or negative
    */
-  @AIExposable(description = "Convert nominal daily decline to effective annual decline", category = "reservoir",
-      safe = true)
+  @AIExposable(description = "Convert nominal daily decline to effective annual decline", category = "reservoir", safe = true)
   public static double nominalToEffectiveAnnual(double dNominal) {
     if (!Double.isFinite(dNominal) || dNominal < 0.0) {
       throw new IllegalArgumentException("Nominal decline rate must be finite and non-negative");
@@ -263,8 +262,7 @@ public final class DeclineCurveAnalysis {
    * @return Nominal decline rate (1/day)
    * @throws IllegalArgumentException if the effective decline is not finite and strictly between 0 and 1
    */
-  @AIExposable(description = "Convert effective annual decline to nominal daily decline", category = "reservoir",
-      safe = true)
+  @AIExposable(description = "Convert effective annual decline to nominal daily decline", category = "reservoir", safe = true)
   public static double effectiveAnnualToNominal(double dEffective) {
     if (!Double.isFinite(dEffective) || dEffective <= 0.0 || dEffective >= 1.0) {
       throw new IllegalArgumentException("Effective decline rate must be between 0 and 1, got " + dEffective);
@@ -421,8 +419,7 @@ public final class DeclineCurveAnalysis {
    * @return Estimated nominal decline rate (1/day)
    * @throws IllegalArgumentException if inputs are non-finite or do not describe a positive decline
    */
-  @AIExposable(description = "Estimate exponential decline from two rate-time points", category = "reservoir",
-      safe = true)
+  @AIExposable(description = "Estimate exponential decline from two rate-time points", category = "reservoir", safe = true)
   public static double estimateExponentialDecline(double q1, double t1, double q2, double t2) {
     if (!Double.isFinite(q1) || !Double.isFinite(t1) || !Double.isFinite(q2) || !Double.isFinite(t2)) {
       throw new IllegalArgumentException("Rates and times must be finite");
