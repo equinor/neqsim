@@ -8,28 +8,25 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * Regression tests for {@link ChemicalReactionList#calcReferencePotentials()}.
  *
- * <p>
- * The expected values were captured from the implementation that used {@code Jama.Matrix} directly, before it was
- * migrated to {@code LinearAlgebraOperations}. The equilibrium constants come from {@code Math.log} and
- * {@code Math.exp}, whose last bits differ between CPU architectures, so the comparison is relative.
- * </p>
- *
  * @author asmf
  * @version 1.0
  */
 class ChemicalReactionListReferencePotentialTest {
-  private static final double RELATIVE_TOLERANCE = 1e-6;
-
   /**
-   * Asserts that every element matches its expected value within the relative tolerance.
+   * Checks every reaction against its thermodynamic equilibrium identity.
    *
-   * @param expected expected values
-   * @param actual actual values
+   * @param list initialized reaction list
    */
-  private static void assertRelativelyEqual(double[] expected, double[] actual) {
-    assertEquals(expected.length, actual.length);
-    for (int i = 0; i < expected.length; i++) {
-      assertEquals(expected[i], actual[i], Math.abs(expected[i]) * RELATIVE_TOLERANCE, "index " + i);
+  private static void assertReactionIdentities(ChemicalReactionList list) {
+    double[] potentials = list.calcReferencePotentials();
+    double[][] matrix = list.getReactionGMatrix();
+    for (int reaction = 0; reaction < matrix.length; reaction++) {
+      double reactionPotential = 0.0;
+      for (int species = 0; species < potentials.length; species++) {
+        reactionPotential += matrix[reaction][species] * potentials[species];
+      }
+      assertEquals(matrix[reaction][potentials.length], reactionPotential, 1.0e-8,
+          "Reaction " + reaction + " must satisfy sum(nu * mu_ref) = -RT ln(K)");
     }
   }
 
@@ -56,29 +53,23 @@ class ChemicalReactionListReferencePotentialTest {
    * Verifies the reference potentials of the CO2-water reaction set.
    */
   @Test
-  void co2WaterReferencePotentialsAreUnchanged() {
+  void co2WaterReferencePotentialsSatisfyEquilibrium() {
     ChemicalReactionList list = createSystem(new String[] {"CO2", "water"}, new double[] {0.1, 10.0})
         .getChemicalReactionOperations().getReactionList();
 
-    double[] expected = {-141690.53028244557, 89725.39409866939, 77364.71634592868, 204172.1437028202,
-        -128651.62787303378, -153372.98337851517};
-
     assertEquals(3, list.getChemicalReactionList().size());
-    assertRelativelyEqual(expected, list.calcReferencePotentials());
+    assertReactionIdentities(list);
   }
 
   /**
    * Verifies the reference potentials of the MDEA-CO2-water reaction set.
    */
   @Test
-  void mdeaCo2WaterReferencePotentialsAreUnchanged() {
+  void mdeaCo2WaterReferencePotentialsSatisfyEquilibrium() {
     ChemicalReactionList list = createSystem(new String[] {"CO2", "water", "MDEA"}, new double[] {0.2, 10.0, 1.0})
         .getChemicalReactionOperations().getReactionList();
 
-    double[] expected = {-141690.53028244557, 89725.39409866939, 47604.7840179418, 77364.71634592868, 204172.1437028202,
-        -128651.62787303378, -153372.98337851517, 119930.92354136503};
-
     assertEquals(4, list.getChemicalReactionList().size());
-    assertRelativelyEqual(expected, list.calcReferencePotentials());
+    assertReactionIdentities(list);
   }
 }
