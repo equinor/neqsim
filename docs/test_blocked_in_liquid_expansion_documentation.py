@@ -49,10 +49,9 @@ class BlockedInLiquidExpansionDocumentationContractTest(unittest.TestCase):
 
     def test_jekyll_structure_math_and_internal_links(self):
         self.assertTrue(self.guide.startswith("---\n"))
-        self.assertEqual(
-            self.guide.count("# Blocked-In Liquid Thermal Expansion Screening"),
-            1,
-        )
+        front_matter = self.guide.split("---", 2)[1]
+        self.assertIn("title: Blocked-In Liquid Thermal Expansion Screening", front_matter)
+        self.assertNotRegex(self.guide, r"(?m)^# ")
         self.assertEqual(self.guide.count("```") % 2, 0)
         without_fences = re.sub(
             r"```.*?```",

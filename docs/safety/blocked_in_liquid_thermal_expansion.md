@@ -3,7 +3,6 @@ title: Blocked-In Liquid Thermal Expansion Screening
 description: Equation-of-state isochoric pressure-rise and local beta/kappa screening for initialized single-liquid blocked-in inventories, with explicit units, numerical boundaries, and relief-design handoff.
 ---
 
-# Blocked-In Liquid Thermal Expansion Screening
 
 A liquid-full segment with fixed mass, rigid volume, no vapour space, and no open relief path can
 develop a large pressure rise when heated. This guide separates two engineering questions:
@@ -75,41 +74,96 @@ The following state and step sizes are exercised by
 `BlockedInLiquidExpansionAnalysisTest`:
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.util.fire.BlockedInLiquidExpansionAnalysis;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-double referenceTemperatureK = 293.15;
-double referencePressureBara = 15.0;
+/** Runs a bounded blocked-in liquid thermal-expansion screening calculation. */
+public final class BlockedInLiquidThermalExpansionExample {
+  private static final Logger logger =
+      LogManager.getLogger(BlockedInLiquidThermalExpansionExample.class);
 
-SystemInterface liquid =
-    new SystemSrkEos(referenceTemperatureK, referencePressureBara);
-liquid.addComponent("propane", 1.0);
-liquid.setMixingRule("classic");
+  /**
+   * Executes the example with assertions enabled.
+   *
+   * @param args command-line arguments; not used
+   */
+  public static void main(String[] args) {
+    double referenceTemperatureK = 293.15;
+    double referencePressureBara = 15.0;
+    double referencePressurePa = referencePressureBara * 1.0e5;
 
-double[] temperaturesK = {
-    referenceTemperatureK,
-    referenceTemperatureK + 2.0,
-    referenceTemperatureK + 4.0,
-    referenceTemperatureK + 6.0,
-    referenceTemperatureK + 8.0,
-    referenceTemperatureK + 10.0
-};
-double[] absolutePressuresPa =
-    BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(
-        liquid, temperaturesK);
+    SystemInterface liquid =
+        new SystemSrkEos(referenceTemperatureK, referencePressureBara);
+    liquid.addComponent("propane", 1.0);
+    liquid.setMixingRule("classic");
 
-double betaPerK =
-    BlockedInLiquidExpansionAnalysis.estimateThermalExpansionCoefficient(
-        liquid, 0.5);
-double kappaPerPa =
-    BlockedInLiquidExpansionAnalysis.estimateIsothermalCompressibility(
-        liquid, 2.0e5);
+    double[] temperaturesK = {
+        referenceTemperatureK,
+        referenceTemperatureK + 2.0,
+        referenceTemperatureK + 4.0,
+        referenceTemperatureK + 6.0,
+        referenceTemperatureK + 8.0,
+        referenceTemperatureK + 10.0
+    };
+    double[] absolutePressuresPa =
+        BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(
+            liquid, temperaturesK);
 
-double comparisonTemperatureRiseK = 5.0;
-double simplifiedPressureRisePa =
-    BlockedInLiquidExpansionAnalysis.simplifiedPressureRise(
-        betaPerK, kappaPerPa, comparisonTemperatureRiseK);
+    assert absolutePressuresPa.length == temperaturesK.length;
+    assert Math.abs(absolutePressuresPa[0] - referencePressurePa)
+        <= referencePressurePa * 1.0e-3;
+    for (int i = 0; i < absolutePressuresPa.length; i++) {
+      assert Double.isFinite(absolutePressuresPa[i]);
+      assert absolutePressuresPa[i] > 0.0;
+      if (i > 0) {
+        assert absolutePressuresPa[i] > absolutePressuresPa[i - 1];
+      }
+    }
+
+    double betaPerK =
+        BlockedInLiquidExpansionAnalysis.estimateThermalExpansionCoefficient(
+            liquid, 0.5);
+    double kappaPerPa =
+        BlockedInLiquidExpansionAnalysis.estimateIsothermalCompressibility(
+            liquid, 2.0e5);
+    assert betaPerK > 0.0;
+    assert kappaPerPa > 0.0;
+
+    double comparisonTemperatureRiseK = 5.0;
+    double[] comparisonTemperaturesK = {
+        referenceTemperatureK,
+        referenceTemperatureK + comparisonTemperatureRiseK
+    };
+    double[] comparisonPressuresPa =
+        BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(
+            liquid, comparisonTemperaturesK);
+    double eosPressureRisePa =
+        comparisonPressuresPa[1] - comparisonPressuresPa[0];
+    double simplifiedPressureRisePa =
+        BlockedInLiquidExpansionAnalysis.simplifiedPressureRise(
+            betaPerK, kappaPerPa, comparisonTemperatureRiseK);
+
+    assert eosPressureRisePa > 0.0;
+    assert simplifiedPressureRisePa > 0.0;
+    double relativeDifference =
+        Math.abs(eosPressureRisePa - simplifiedPressureRisePa)
+            / eosPressureRisePa;
+    assert relativeDifference < 0.30;
+    assert liquid.getTemperature() == referenceTemperatureK;
+    assert liquid.getPressure() == referencePressureBara;
+
+    logger.info(
+        "At {} K the absolute blocked-in pressure is {} Pa; the 5 K "
+            + "EOS rise is {} Pa and the local beta/kappa rise is {} Pa",
+        temperaturesK[temperaturesK.length - 1],
+        absolutePressuresPa[absolutePressuresPa.length - 1],
+        eosPressureRisePa,
+        simplifiedPressureRisePa);
+  }
+}
 ```
 
 `absolutePressuresPa` contains absolute pressures, not pressure rises. If the first requested
