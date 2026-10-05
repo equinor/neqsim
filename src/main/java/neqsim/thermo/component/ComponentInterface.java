@@ -741,14 +741,24 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getK();
 
   /**
-   * Returns the critical temperature of the component.
+   * Returns the critical-temperature parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @return The critical temperature of the component in Kelvin.
    */
   public double getTC();
 
   /**
-   * Returns the critical temperature of the component.
+   * Returns the critical-temperature parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @param unit Unit of return temperature
    * @return The critical temperature of the component in specified unit.
@@ -778,14 +788,24 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setNormalBoilingPoint(double normalBoilingPoint);
 
   /**
-   * Returns the critical pressure of the component.
+   * Returns the critical-pressure parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @return The critical pressure of the component in unit bara.
    */
   public double getPC();
 
   /**
-   * Returns the critical pressure of the component.
+   * Returns the critical-pressure parameter used by the component model.
+   *
+   * <p>
+   * Database values and user overrides drive EOS terms and correlations. For ordinary water, the established model
+   * parameter differs from the IAPWS physical reference exposed by {@link neqsim.thermo.WaterReferenceConstants}.
+   * </p>
    *
    * @param unit Unit of return pressure
    * @return The critical pressure of the component in specified unit.
@@ -881,7 +901,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getHeatOfVapourization(double temp);
 
   /**
-   * getNumberOfmoles.
+   * Getter for the number of moles of the component in System.
+   *
+   * <p>
+   * Ideally <code>numberOfMoles = totalNumberOfMoles * z</code>.
+   * </p>
    *
    * @return a double
    */
@@ -918,16 +942,20 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setReferencePotential(double ref);
 
   /**
-   * getNumberOfMolesInPhase.
+   * Getter for the number of moles of the component in the phase.
+   *
+   * <p>
+   * Ideally <code>totalNumberOfMoles * x * beta</code>.
+   * </p>
    *
    * @return a double
    */
   public double getNumberOfMolesInPhase();
 
   /**
-   * setNumberOfMolesInPhase.
+   * Sets the component phase inventory to the supplied total phase moles times its stored mole fraction.
    *
-   * @param moles a double
+   * @param moles total number of moles in the phase
    */
   public void setNumberOfMolesInPhase(double moles);
 
@@ -940,21 +968,23 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getIdEntropy(double temperature);
 
   /**
-   * setx.
+   * Setter for the mole fraction of Component in Phase <code>x</code>. Exact zero and finite positive trace fractions
+   * are retained. Negative input is bounded to a positive numerical floor, values above 5 are capped, and non-finite
+   * input leaves the previous value unchanged.
    *
    * @param newx a double
    */
   public void setx(double newx);
 
   /**
-   * setz.
+   * Setter for the mole fraction of component in system <code>z</code>.
    *
    * @param newz a double
    */
   public void setz(double newz);
 
   /**
-   * setK.
+   * Setter for the equilibrium ratio K.
    *
    * @param newK a double
    */

@@ -1007,8 +1007,112 @@ Update 3: living tasks use the general task root (`neqsim --show-task-root`): ev
 Added fail-closed mass/every-element checks at burner inlet mixing/PSRs, common mixing including bypass air and post-flame PFR, retaining signed roundoff and exact mechanism inventories. Initial branch head `0c139de311e20b0f5b082f8a8f6c98575f422622`; validated against merge ref `ed75b0909f584d1e36540096a861f8b7612754e8` containing current master `529ea9c358ab1e15917c5244ae0ede2ff272cce5`. Nineteen Python tests and twelve focused Java tests passed; native seven/five burners and 10–40 MW scale examples executed from compiled workspace classes. Synthetic seven/five CO was 0.110188/0.103241 kg/h at equal total supply, with about 26.27 MW oil heat. Default projection bounds remain unchanged. Carbon-free hydrogen exposed absent-carbon integrator roundoff at scalar atol 1e-18/1e-22; selected 1e-28/1e-32 integration passed the same strict element bound. The historical EOS hydrogen rejection remains unreproduced. No plant calibration or experimental C2/C3 qualification claim; next dependency is benchmark provenance and the broader operating envelope. Evidence and blockers are tracked in #4151.
 
 
+### 2026-10-04 — Conservative condensate endpoint recovery (#4202, numerical roadmap #2937)
+
+Reproduced the SRK 353.15 K / 350 bara condensate on master
+`21ec52b309ab16a3129089ec1cf2b7bc18ace7e9`: the ordinary flash removed a phase
+and retained a composition with maximum component-balance error `3.45422e-5`.
+An invalid dry SRK/PR single-phase endpoint now triggers a cold multiphase
+stability flash on a clone, with conserved-feed Gibbs, normalization, component
+balance and fugacity acceptance gates. Failed recovery throws rather than
+returning an unbalanced fluid. The corrected ordinary path retains two phases;
+four repeats have balance error at most `2.0e-13` and log-fugacity residual below
+`5.5e-13`. Five regression tests cover the exact case, nearby conditions, reuse,
+warm starts, PR and all 750 phase-map points from NeqSim-Colab PR #187. The map's
+maximum balance error is `5.25e-12`, retaining its original `1e-7` acceptance
+tolerance. All 301 selected Java flash/stability, pump, separator and documentation
+tests and 12 engineering-coverage Python tests passed. Direct Spotless apply/check,
+both pre-commit stages, documentation search and flash-package Javadoc passed;
+the environment-only Javadoc launcher uses the installed JDK module. Updated the
+flash guide, initialization skill and generated engineering inventory. Numerical
+qualification does not establish experimental accuracy or global stability of
+every possible phase set.
+
+
+### 2026-10-04 — Minimize condensate recovery cost (#4202, PR #4205)
+
+Gated endpoint screening on a per-run final-phase-removal flag: ordinary results
+without cleanup add only a boolean reset/check, with no recovery component scan,
+clone or EOS initialization. The invalid endpoint first tries the multiphase
+stability/beta solver directly from the conserved homogeneous gas-root seed;
+a fresh-clone cold TP flash remains the fallback. Direct candidates are ordered
+by density before final initialization to preserve gas/oil identity. Eligible
+trace-phase cleanup preserves all feed moles. Both trials retain identical
+component, normalization, fugacity and Gibbs qualification. Added a regression
+for reuse of the same operation after cleanup, gas/oil identity and preservation
+of every component inventory over 128 repeats, plus a standalone complete-flash
+benchmark with elapsed/thread-CPU clocks covering seven workload families, cold
+recovery, unchanged conditions and alternating nearby conditions. All 337 selected Java tests and 12
+engineering-coverage Python tests passed; the 750-point map is retained.
+
+Paired benchmark against initial PR commit
+`24467a8ad9313c7dc7a5c5d85ec1510ee7d0b4d5`: two JVMs per version, one pinned CPU,
+Java 17, 256 MB heap, Serial GC and `-Xbatch`; 48 flashes per batch, five batches,
+128 warmups (4096 for the fast gas/two-phase cases). Median thread CPU time for
+fresh exact condensate recovery fell from 9.38 to 6.34 ms (32%), repeated
+unchanged condensate from 11.11 to 6.59 ms (41%), and changing condensate from
+10.42 to 8.36 ms (20%). Fresh-recovery elapsed time fell from 9.54 to 6.54 ms;
+elapsed times elsewhere show host scheduling variation. Fast ordinary workloads
+changed by at most about 1.8 microseconds of median thread CPU time in this sample;
+this is not a universal timing bound. All 140 optimized snapshots passed the
+existing benchmark's strict conservation/equilibrium screen. The 30 initial-fix
+failed snapshots (trace mass residual about 2.3e-12 against its 1e-12 screen)
+remain recorded, without tolerance relaxation; optimized mass/mole residuals
+were zero. Across initial/final snapshots the largest beta difference was
+2.30e-11 and composition difference 3.92e-12, with matching phase identities.
+
+Initial full CI found five failures in WellSystemTest and reactor mechanical
+design tests. Those endpoints reach recovery with unnormalized overall fractions
+(the well sum was 0.99908; reactor fractions exceeded one). Recovery eligibility
+now requires a finite, nonnegative normalized feed; these legacy states retain
+their prior path rather than entering a conserved-feed repair they cannot pass.
+Candidate acceptance tolerances are unchanged. The two complete affected test
+classes (34 tests) pass with this prerequisite.
+
+### 2026-10-04 — Repair PR #4205 CI and master integration
+
+Reproduced the cricondenbar NaN and strict multistage side-draw failures from
+workflow 37215992029 on head `6c596a18b611338990259c2026623907d7c7500f`.
+The legacy cricondenbar loop now initializes temperature derivatives after TPflash
+with `init(2)`, replacing its stale pre-flash `init(3)`, and checks convergence
+before a possible zero-over-zero temperature correction. This repairs state
+initialization, not the accuracy qualification of the legacy pressure search.
+Trace-phase cleanup now preserves full feed inventory only for an eligible dry
+endpoint already failing the `1e-10` balance gate and requiring recovery.
+Balanced endpoints retain established cleanup; the recovery acceptance gates,
+ordinary no-cleanup path and all original regression tolerances are unchanged.
+Experimental distillation-controller changes and increased test budgets were
+rejected during validation and are not included. Synchronized with master
+`bc0ffeb416b3ea9a2404f3da373ba3f680249f41`, resolving the generated engineering
+inventory conflict by regeneration. Updated the flash guide and initialization
+skill for the changed behavior.
+
+Validation on Java 17.0.20: 244 flash/well/mechanical-design tests pass, including
+the seven condensate regressions and 750-point map. The unchanged high-flow
+side-draw regression and both critical-point tests also pass. Direct Spotless
+apply/check, both all-file pre-commit stages, documentation search and flash-package
+Javadoc pass; Javadoc uses the installed JDK module through an environment-only
+launcher. Full GitHub CI is pending on the repair commit.
+The remaining twelve side-draw tests pass as well: 259 distinct affected tests
+pass in total, without changing any existing test target, tolerance or budget.
+
 ### 2026-10-04 — Gas-limited stop choke list from allocation data (PEPR 80302059)
 **Type:** B (Process / production optimisation)
 **Keywords:** choke list, strupeliste, GOR, gas handling, regass scrubber, PDM allocation basis, compressor meter basis, WAG, backtest
 **Solution:** Two-constraint LP on the per-well PDM table with the gas budget calibrated on a previous stop; cross-checked with `ChokeAndGasLiftAllocationOptimizer`; stage-separation sweep for 3rd-stage pressure and scrubber temperature; gas injectors ranked from 12 months of per-well injection.
 **Notes:** A compressor-meter capacity is not the allocated well gas: on the studied platform allocated gas was 0.79 of the meter flow with a compressor train out of service, so planning on the meter figure over-promised about 1,050 Sm3/d of oil. The previous stop gave a free backtest (every GOR above 1,000 well was shut in both; oil within -6.5/+8.2 %). GOR had moved by a factor 4-5 for two wells since the last stop. A simple stage model under-predicted recompressor load by 12-38 % but gave the right slope for RVP against 3rd-stage pressure (0.30 vs 0.28 bar/bar). Tooling: PEPR skill now resolves the task root; PDM skill documents injection and basis; production-optimization skill has the natural-flow recipe.
+
+### 2026-10-04 — Converge exchanger regression before millikelvin assertions (PR #4205)
+
+The final fast-test failure reproduced at 14.1455588737 C with recycle tolerance
+1e-3. At sub-1 kg/s flow that tolerance is absolute kg/s. Tightening to 1e-4,
+1e-6 and 1e-8 gave 14.1482251294, 14.1485165096 and 14.1485165096 C;
+both recycle objects reported convergence. The regression now uses 1e-6 before
+checking exchanger performance, retaining its original expected temperatures and
+acceptance tolerances. Added recycle-convergence, duty-direction, positive-terminal-
+temperature and independently reconstructed UA checks against the existing 0.1%
+UA solver criterion. Production code and its runtime cost are unchanged.
+Integrated master 466cd0f333561fbe442156d47cfa0c9b358687f7, retaining both task-log
+histories and regenerating the engineering inventory. Documentation impact: none
+for the test-only correction; the recycle guide already documents the low-flow
+absolute tolerance and the exchanger guide documents the duty/LMTD relation.

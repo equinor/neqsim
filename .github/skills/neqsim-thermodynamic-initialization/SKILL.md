@@ -24,6 +24,18 @@ Do not call `init(2)` or `init(3)` merely to be safe. Before increasing a level,
 
 For fixed-T/P cubic-root selection and fugacity/Gibbs equilibrium checks, prefer `init(1)`. Temperature derivative caches such as `loc_AT` and `loc_ATT` support caloric properties; they are not by themselves evidence that a fixed-T/P flash-Gibbs comparison requires `init(2)`.
 
+When a caller consumes temperature derivatives after `TPflash`, initialize them on
+the resulting phase state with `init(2)`. Initializing before the flash is insufficient
+when it replaces phases; the legacy cricondenbar iteration is a regression example.
+
+After phase removal, verify component inventory as well as normalized compositions:
+`sum(beta[p] * x[p][i])` must reconstruct the feed. Do not repair a failed endpoint
+only by assigning `x = z`; that can conceal a genuine phase instability. Compare
+Gibbs energies at the same conserved feed and mole amount, recheck topology through
+stability analysis, and require fugacity equality for a recovered split. The dry
+SRK/PR condensate regression for issue #4202 is
+`TPflashCondensateEndpointConservationTest`.
+
 For a retained phase outside the active phase count, do not assume a fluid-only flash has synchronized its temperature, pressure, composition, or EOS state. Set the retained phase state explicitly and initialize it at the minimum level required before reading it. This is especially important for inactive solid phases used by freezing or precipitation searches.
 
 For pure phases backed by independent fundamental EOS models, compare molar chemical potentials or Gibbs energies directly at the same temperature and pressure. Do not force the comparison through exponentiated fugacity coefficients when a native Gibbs value is available; large reference offsets can overflow `exp(ln phi)` even though the Gibbs residual is finite. Mixture solid-equilibrium paths may still require logarithmic fugacity or activity expressions.
