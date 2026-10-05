@@ -23,27 +23,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Compiles and executes the complete example in
- * {@code docs/safety/blocked_in_liquid_thermal_expansion.md}.
+ * Compiles and executes the complete example in {@code docs/safety/blocked_in_liquid_thermal_expansion.md}.
  *
  * <p>
- * The exact published fence covers equation-of-state and local beta/kappa pressure-rise
- * screening without presenting the result as a relief-device design.
+ * The exact published fence covers equation-of-state and local beta/kappa pressure-rise screening without presenting
+ * the result as a relief-device design.
  * </p>
  *
  * @author OpenAI
  * @version 1.0
  */
 public class BlockedInLiquidExpansionDocumentationTest {
-  private static final String GUIDE =
-      "docs/safety/blocked_in_liquid_thermal_expansion.md";
-  private static final Pattern EXECUTABLE_JAVA =
-      Pattern.compile(
-          "(?ms)^## Executable Java Workflow.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern ALL_JAVA =
-      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final String GUIDE = "docs/safety/blocked_in_liquid_thermal_expansion.md";
+  private static final Pattern EXECUTABLE_JAVA = Pattern
+      .compile("(?ms)^## Executable Java Workflow.*?^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern ALL_JAVA = Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -94,10 +90,8 @@ public class BlockedInLiquidExpansionDocumentationTest {
 
   /** Reads the safety guide from the repository root. */
   private String readGuide() throws Exception {
-    Path repositoryRoot =
-        Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    return new String(
-        Files.readAllBytes(repositoryRoot.resolve(GUIDE)), StandardCharsets.UTF_8);
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    return new String(Files.readAllBytes(repositoryRoot.resolve(GUIDE)), StandardCharsets.UTF_8);
   }
 
   /** Compiles one extracted Java source and invokes its main method with assertions enabled. */
@@ -114,39 +108,18 @@ public class BlockedInLiquidExpansionDocumentationTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty(
-            "surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-classpath",
-            classPath,
-            "-d",
-            outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(javaSource.toFile()))
-              .call();
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
