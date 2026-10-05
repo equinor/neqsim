@@ -619,11 +619,8 @@ final class ModelSpecFixtures {
       return result;
     }
     if (isPcsaftFixture(s.fixture)) {
-      system.setNumberOfPhases(1);
-      system.setMaxNumberOfPhases(1);
-      system.setForcePhaseTypes(true);
-      PhaseType expectedType = "liquid".equals(s.phase) ? PhaseType.LIQUID : PhaseType.GAS;
-      system.setPhaseType(0, expectedType);
+      PhaseType expectedType = "liquid".equals(s.phase) ? PhaseType.OIL : PhaseType.GAS;
+      system.setForceSinglePhase(expectedType);
       system.init(3);
       PhaseInterface phase = system.getPhase(0);
       if (s.fixture == ModelSpec.Fixture.PCSAFT_PHASE || s.fixture == ModelSpec.Fixture.PCSAFTA_PHASE) {
