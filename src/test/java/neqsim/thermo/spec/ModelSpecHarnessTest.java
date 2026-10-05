@@ -135,6 +135,14 @@ class ModelSpecHarnessTest {
         }
       }
     }
+    for (String fixture : new String[] {"pcsaft-system", "pcsaft-phase", "pcsafta-system", "pcsafta-phase"}) {
+      for (String state : new String[] {"propane-gas-300-10", "propane-liquid-250-20", "n-hexane-gas-450-5",
+          "n-hexane-liquid-300-10"}) {
+        for (String property : new String[] {"z", "molar-density", "mass-density"}) {
+          ids.add(fixture + "-" + state + "-" + property);
+        }
+      }
+    }
     return ids;
   }
 
@@ -667,6 +675,42 @@ class ModelSpecHarnessTest {
     }
     ModelSpecTest.check(checkedGamma, checkedGamma.expected);
     ModelSpecTest.check(checkedLog, checkedLog.expected);
+  }
+
+  @Test
+  void pcsaftReferencesSatisfyIndependentDensityAndGasLawRelations() throws IOException {
+    int checked = 0;
+    for (String fixture : new String[] {"pcsaft-system", "pcsaft-phase", "pcsafta-system", "pcsafta-phase"}) {
+      for (String state : new String[] {"propane-gas-300-10", "propane-liquid-250-20", "n-hexane-gas-450-5",
+          "n-hexane-liquid-300-10"}) {
+        String prefix = fixture + "-" + state + "-";
+        ModelSpec z = find(prefix + "z");
+        ModelSpec molarDensity = find(prefix + "molar-density");
+        ModelSpec massDensity = find(prefix + "mass-density");
+        double molarMass = state.startsWith("propane") ? 0.044096 : 0.086177;
+        double gasLawZ =
+            z.pressure * 1.0e5 / (molarDensity.expected * 1000.0 * 8.31446261815324 * z.temperature);
+        assertEquals(z.expected, gasLawZ, 1.0e-12, prefix + "Z=P/(rho*R*T)");
+        assertEquals(massDensity.expected, molarDensity.expected * 1000.0 * molarMass, 1.0e-10,
+            prefix + "mass/molar density consistency");
+        checked += 3;
+      }
+    }
+    assertEquals(48, checked, "every CoolProp PC-SAFT anchor must satisfy independent identities");
+  }
+
+  @Test
+  void pcsaftAnchorsRejectZeroNonfiniteAndPlausiblePlaceholders() throws IOException {
+    ModelSpec gasZ = find("pcsaft-system-propane-gas-300-10-z");
+    ModelSpec liquidDensity = find("pcsafta-phase-propane-liquid-250-20-mass-density");
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 1.05}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(gasZ, bad));
+    }
+    for (double bad : new double[] {0.0, Double.NaN, Double.POSITIVE_INFINITY, 1.0, 500.0}) {
+      assertThrows(AssertionError.class, () -> ModelSpecTest.check(liquidDensity, bad));
+    }
+    ModelSpecTest.check(gasZ, gasZ.expected);
+    ModelSpecTest.check(liquidDensity, liquidDensity.expected);
   }
 
   @Test
