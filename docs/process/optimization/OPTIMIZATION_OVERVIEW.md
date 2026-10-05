@@ -35,6 +35,7 @@ This document provides a high-level introduction to the process optimization cap
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | Optimize full multi-area process models | `ProcessModelSimulationEvaluator` | Use area-qualified `ProcessAutomation` addresses and installed `CapacityConstraint` limits |
+| Sample fail-closed 1D/2D operating-envelope slices | `ProcessModelOperatingEnvelopeStudy` | Reuse `ProcessModelOperatingActionSetEvaluator`; every point retains complete candidate/restoration evidence |
 | Ramp producers until a full facility reaches a bottleneck | `ProcessModelThroughputOptimizer` | Use producer mappings, installed capacity tables, and exported case traces |
 | Compare one installed capacity alternative with the same search policy | `ProcessModelDebottleneckStudy` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#paired-installed-capacity-alternatives) |
 | Rank independently documented capacity alternatives on one compatible metric | `ProcessModelDebottleneckRanking` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#ranking-independent-debottleneck-alternatives) |
@@ -236,6 +237,7 @@ logger.info("Optimal rate: {} kg/hr", result.getOptimalRate());
 | "Optimize pressure AND flow rate together" | `ProductionOptimizer` | Multi-variable support |
 | "Trade off throughput vs power consumption" | `ProductionOptimizer.optimizePareto()` | Pareto multi-objective |
 | "Increase several producers until the full facility reaches a bottleneck" | `ProcessModelThroughputOptimizer` | Maps producers, loads installed capacities, and records the active bottleneck per case |
+| "Trace how the feasible region and installed bottleneck change across one or two declared actions" | `ProcessModelOperatingEnvelopeStudy` | Samples the existing transactional action evaluator, keeps infeasible points, and stops on unsafe baseline recovery |
 | "Quantify one documented equipment expansion against the installed case" | `ProcessModelDebottleneckStudy` | Pairs identical searches, metrics, evidence, and state recovery |
 | "Rank several independently evaluated equipment alternatives" | `ProcessModelDebottleneckRanking` | Requires one exact metric definition and one identical deterministic baseline; rejects unlike evidence |
 | "Evaluate 100 scenarios in parallel" | `ProductionOptimizer` | Has parallel evaluation |
@@ -248,6 +250,8 @@ logger.info("Optimal rate: {} kg/hr", result.getOptimalRate());
 Use `ProcessModelThroughputOptimizer` for large fixed-equipment studies such as increasing one or more producer feed rates until a separator, compressor, valve, heat exchanger, or export train reaches its installed capacity. It is the ergonomic layer for the common full-facility throughput-to-bottleneck task.
 
 Use `ProcessModelSimulationEvaluator` directly when you need a lower-level black-box bridge to SciPy, NLopt, SQP, Pyomo, or another external optimizer.
+
+Use `ProcessModelOperatingEnvelopeStudy` when the engineering question is a sampled one- or two-dimensional operating envelope over already-declared `ProcessModelOperatingAction` controls. The study reuses `ProcessModelOperatingActionSetEvaluator` for every grid point, so failed or infeasible points retain the same constraint and restoration evidence and sampling stops immediately if the mutable baseline cannot be restored and reconverged. Adjacent bottleneck-transition rows compare only the already-ranked finite installed-equipment evidence. Shared-resource or other differently scaled constraints remain in each candidate result and must not be numerically ranked against equipment utilization without an explicit engineering scale. A sampled slice is not proof of a continuous feasible boundary or optimizer active set.
 
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
