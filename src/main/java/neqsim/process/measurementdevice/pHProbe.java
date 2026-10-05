@@ -56,7 +56,14 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass
   }
 
   /**
-   * run.
+   * Calculates pH on the extracted aqueous phase after adding the configured alkalinity.
+   *
+   * <p>
+   * The isolated sample remains a single aqueous phase while chemical equilibrium is solved. Gas/liquid phase selection
+   * must not replace the sampled aqueous phase.
+   * </p>
+   *
+   * @throws IllegalStateException if chemical reactions, charge or elemental balances do not close
    */
   public void run() {
     hasCachedPH = false;
@@ -74,6 +81,9 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass
       reactiveThermoSystem.chemicalReactionInit();
       reactiveThermoSystem.setMixingRule(10);
       reactiveThermoSystem.setMultiPhaseCheck(false);
+      // The probe samples an existing aqueous phase; retain its liquid root during reaction solving.
+      reactiveThermoSystem.setForceSinglePhase(neqsim.thermo.phase.PhaseType.AQUEOUS);
+      reactiveThermoSystem.init(1);
       thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
       thermoOps.TPflash();
       boolean reactionConverged = false;
