@@ -1,5 +1,7 @@
 package neqsim.thermo.util.humidair;
 
+import neqsim.thermo.WaterReferenceConstants;
+
 /**
  * Utility class for common humid air calculations.
  *
@@ -33,8 +35,8 @@ public final class HumidAir {
   public static double saturationPressureWater(double temperature) {
     if (temperature >= 273.16) {
       // IAPWS formulation for saturation pressure of liquid water
-      double Tc = 647.096; // K
-      double Pc = 22064000; // Pa
+      double Tc = WaterReferenceConstants.CRITICAL_TEMPERATURE_K;
+      double Pc = WaterReferenceConstants.CRITICAL_PRESSURE_PA;
       double theta = 1 - temperature / Tc;
       double a1 = -7.85951783;
       double a2 = 1.84408259;
