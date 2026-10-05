@@ -367,6 +367,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     system.setPressure(pressure);
     system.setForceSinglePhase(phaseType);
     system.setBeta(0, 1.0);
+    system.init(0, 0);
     system.init(3);
     assertEquals(PhaseLeachmanEos.class, system.getPhase(0).getClass());
     PhaseLeachmanEos phase = (PhaseLeachmanEos) system.getPhase(0);
