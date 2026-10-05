@@ -34,11 +34,7 @@ public class SysNewtonRhapsonPHflashTest {
     testSystem.init(3);
 
     // Run direct PH flash (type 1)
-    try {
-      testOps.PHflash(targetEnthalpy, 1);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    testOps.PHflash(targetEnthalpy, 1);
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
         "Enthalpy should match target");
@@ -67,11 +63,7 @@ public class SysNewtonRhapsonPHflashTest {
     testSystem.init(3);
 
     // Run direct PH flash (type 1)
-    try {
-      testOps.PHflash(targetEnthalpy, 1);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    testOps.PHflash(targetEnthalpy, 1);
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
         "Enthalpy should match target in two-phase");
@@ -100,11 +92,7 @@ public class SysNewtonRhapsonPHflashTest {
     testSystem.init(3);
 
     // Run direct PH flash (type 1)
-    try {
-      testOps.PHflash(targetEnthalpy, 1);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    testOps.PHflash(targetEnthalpy, 1);
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
         "Enthalpy should match target in single phase");
