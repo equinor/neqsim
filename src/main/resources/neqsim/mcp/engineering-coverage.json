@@ -480,6 +480,211 @@
       }
     },
     {
+      "id": "exponential-decline-screening",
+      "title": "Static exponential production-decline screening",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.DeclineCurveAnalysis"
+      ],
+      "skills": [
+        "neqsim-production-optimization"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Arps exponential (b = 0) screening only, with unit-consistent non-negative rates, daily nominal decline and elapsed days. It does not establish boundary-dominated flow, forecast uncertainty, reserves classification, economics, facility constraints or development approval.",
+      "operations": [
+        {
+          "id": "exponential-decline-rate",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "rateExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.rateExponential(double, double, double)",
+          "units": {
+            "inputs": {
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
+            },
+            "outputs": {
+              "productionRate": "same as initialRate"
+            }
+          },
+          "applicability": "Arps exponential production-rate screening for finite non-negative initial rate, nominal daily decline and elapsed time.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 694.0231234070969,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "exponential-decline-cumulative-production",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "cumulativeExponential",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.cumulativeExponential(double, double, double)",
+          "units": {
+            "inputs": {
+              "initialRate": "rate/day",
+              "nominalDeclineRate": "1/day",
+              "elapsedTime": "day"
+            },
+            "outputs": {
+              "cumulativeProduction": "rate unit"
+            }
+          },
+          "applicability": "Integrated Arps exponential production for finite non-negative initial rate, nominal daily decline and elapsed time.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0.001,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 305976.87659290305,
+            "absoluteTolerance": 1e-06
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "nominal-to-effective-annual-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "nominalToEffectiveAnnual",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.nominalToEffectiveAnnual(double)",
+          "units": {
+            "inputs": {
+              "nominalDeclineRate": "1/day"
+            },
+            "outputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite non-negative nominal daily decline rate using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.001
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.30597687659290307,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "effective-annual-to-nominal-decline",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "effectiveAnnualToNominal",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.effectiveAnnualToNominal(double)",
+          "units": {
+            "inputs": {
+              "effectiveAnnualDecline": "fraction/year"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Exponential-decline conversion for a finite effective annual decline fraction strictly between 0 and 1 using 365.25 days/year.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.30597687659290307
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 0.001,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "two-point-exponential-decline-estimate",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.DeclineCurveAnalysis",
+          "method": "estimateExponentialDecline",
+          "signature": "double neqsim.pvtsimulation.util.DeclineCurveAnalysis.estimateExponentialDecline(double, double, double, double)",
+          "units": {
+            "inputs": {
+              "firstRate": "rate/day",
+              "firstTime": "day",
+              "secondRate": "rate/day",
+              "secondTime": "day"
+            },
+            "outputs": {
+              "nominalDeclineRate": "1/day"
+            }
+          },
+          "applicability": "Two-point exponential decline estimate for finite positive rates with the second rate lower and the second time later.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              1000,
+              0,
+              500,
+              365.25
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 0.0018977335538944429,
+            "absoluteTolerance": 1e-15
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ],
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "field-economics",
       "title": "Production profiles and cash flow",
       "domain": "economics",
@@ -3618,7 +3823,7 @@
     {"id":"neqsim.pvtsimulation.util.BlackOilCorrelations","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilCorrelations.java","sourceDigest":"831712aaab0fee69003b87a6323e3a43103773ffc5420802b1b55e103dc6d27b","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilTableValidator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilTableValidator.java","sourceDigest":"116bbfa3cc9d0d7f88ab08f3c4ffca6f257cca484e0440287230e7fdf7c3e61a","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilUnits","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilUnits.java","sourceDigest":"86bb80de016bf3410b85758de684bf09b1355e56c8188a4dd95bc8cf5aa1a457","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"a92984ff870e8621faf952d351f9724a91f73d58e21d93370851f98831f76f17","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"326d8c437e8aa77db684a558b235d9deb638b7b0a1dde6f3af9e091cc06ae908","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task"],"capabilities":["exponential-decline-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoCriticalProperties","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoCriticalProperties.java","sourceDigest":"905c54f1cd773b921c1f5cebd12ade8464d1a42a0f2ff84295e54602bcc65100","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoPressure","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoPressure.java","sourceDigest":"ebc3bc84ed6f441914afcb83455be6129233792ea8d1dc07d5a049fa49a9a2fc","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.PVTReportGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTReportGenerator.java","sourceDigest":"7b318865c264540e984a17ae89a2e7346254bca40b1370645309cd45bb2b890e","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
