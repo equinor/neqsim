@@ -133,4 +133,3 @@ NeqSim version, class, table selection, and result unit with every reported valu
   procedure*.
 - Klosek, J., and McKinley, C. (1968), *Densities of Liquefied Natural Gas and of Low Molecular
   Weight Hydrocarbons*.
-
