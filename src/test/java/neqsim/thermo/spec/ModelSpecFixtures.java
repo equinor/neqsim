@@ -27,6 +27,8 @@ import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhaseWaterIAPWS;
+import neqsim.thermo.phase.PhasePCSAFTRahmat;
+import neqsim.thermo.phase.PhasePCSAFTa;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseRK;
 import neqsim.thermo.phase.PhaseSrkEos;
@@ -41,6 +43,8 @@ import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemWaterIF97;
 import neqsim.thermo.system.SystemNRTL;
+import neqsim.thermo.system.SystemPCSAFT;
+import neqsim.thermo.system.SystemPCSAFTa;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemRKEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -123,6 +127,14 @@ final class ModelSpecFixtures {
       return SystemWaterIF97.class;
     case WATER_IF97_PHASE:
       return PhaseWaterIAPWS.class;
+    case PCSAFT:
+      return SystemPCSAFT.class;
+    case PCSAFT_PHASE:
+      return PhasePCSAFTRahmat.class;
+    case PCSAFTA:
+      return SystemPCSAFTa.class;
+    case PCSAFTA_PHASE:
+      return PhasePCSAFTa.class;
     case UNIQUAC:
       return PhaseGEUniquac.class;
     default:
@@ -230,6 +242,16 @@ final class ModelSpecFixtures {
           && ("gas".equals(s.phase) || "liquid".equals(s.phase)) && "none".equals(s.mixingRule)
           && "iapws-if97-region1-region2".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE
           && s.componentIndex == 0, "invalid water IF97 reference fixture");
+      break;
+    case PCSAFT:
+    case PCSAFT_PHASE:
+    case PCSAFTA:
+    case PCSAFTA_PHASE:
+      ModelSpec.require(isPcsaftProperty(s.property) && s.components.size() == 1
+          && (s.components.containsKey("propane") || s.components.containsKey("n-hexane"))
+          && ("gas".equals(s.phase) || "liquid".equals(s.phase)) && "classic".equals(s.mixingRule)
+          && "coolprop-7.2.0-heos-pure".equals(s.operation) && s.outcome == ModelSpec.Outcome.VALUE
+          && s.componentIndex == 0, "invalid pure-fluid PC-SAFT reference fixture");
       break;
     case WILSON_ANALYTIC:
     case WILSON_PHASE:
@@ -431,6 +453,11 @@ final class ModelSpecFixtures {
     }
   }
 
+  private static boolean isPcsaftProperty(ModelSpec.Property property) {
+    return property == ModelSpec.Property.Z || property == ModelSpec.Property.MOLAR_DENSITY
+        || property == ModelSpec.Property.MASS_DENSITY;
+  }
+
   private static void validateGe(ModelSpec s, String mixingRule, String operation) {
     ModelSpec.require(s.outcome == ModelSpec.Outcome.VALUE && "liquid".equals(s.phase)
         && mixingRule.equals(s.mixingRule) && operation.equals(s.operation), "invalid GE fixture");
@@ -589,6 +616,29 @@ final class ModelSpecFixtures {
       double result = readWaterIf97(s.property, phase);
       system.init(2);
       assertEquals(result, readWaterIf97(s.property, phase), 0.0, s + " repeat initialization");
+      return result;
+    }
+    if (isPcsaftFixture(s.fixture)) {
+      system.setNumberOfPhases(1);
+      system.setMaxNumberOfPhases(1);
+      system.setForcePhaseTypes(true);
+      PhaseType expectedType = "liquid".equals(s.phase) ? PhaseType.LIQUID : PhaseType.GAS;
+      system.setPhaseType(0, expectedType);
+      system.init(3);
+      PhaseInterface phase = system.getPhase(0);
+      if (s.fixture == ModelSpec.Fixture.PCSAFT_PHASE || s.fixture == ModelSpec.Fixture.PCSAFTA_PHASE) {
+        assertEquals(type(s.fixture), phase.getClass(), s.toString());
+      }
+      assertEquals(expectedType, phase.getType(), s.toString());
+      double result = readPcsaft(s.property, phase);
+      double molarDensity = phase.getDensity("mol/m3");
+      positive(phase.getZ(), s.toString());
+      positive(molarDensity, s.toString());
+      positive(phase.getDensity(), s.toString());
+      assertEquals(1.0, molarDensity * phase.getMolarVolume() / 1.0e5, 1.0e-10,
+          s + " density-volume closure");
+      system.init(3);
+      assertEquals(result, readPcsaft(s.property, system.getPhase(0)), 0.0, s + " repeat initialization");
       return result;
     }
     if (s.fixture == ModelSpec.Fixture.RK || s.fixture == ModelSpec.Fixture.SRK || s.fixture == ModelSpec.Fixture.PR
@@ -862,6 +912,19 @@ final class ModelSpecFixtures {
     }
   }
 
+  private static double readPcsaft(ModelSpec.Property property, PhaseInterface phase) {
+    switch (property) {
+    case Z:
+      return phase.getZ();
+    case MOLAR_DENSITY:
+      return phase.getDensity("mol/m3") / 1000.0;
+    case MASS_DENSITY:
+      return phase.getDensity();
+    default:
+      throw new IllegalArgumentException("unmapped PC-SAFT property " + property);
+    }
+  }
+
   private static double readGe(ModelSpec s, PhaseInterface liquid) {
     ComponentGEInterface c = (ComponentGEInterface) liquid.getComponent(s.componentIndex);
     if (s.fixture == ModelSpec.Fixture.NRTL_ANALYTIC || s.fixture == ModelSpec.Fixture.NRTL_PHASE) {
@@ -1001,6 +1064,14 @@ final class ModelSpecFixtures {
     case WATER_IF97_PHASE:
       system = new SystemWaterIF97(s.temperature, s.pressure);
       break;
+    case PCSAFT:
+    case PCSAFT_PHASE:
+      system = new SystemPCSAFT(s.temperature, s.pressure);
+      break;
+    case PCSAFTA:
+    case PCSAFTA_PHASE:
+      system = new SystemPCSAFTa(s.temperature, s.pressure);
+      break;
     default:
       throw new IllegalArgumentException("no system factory for " + s.fixture);
     }
@@ -1013,7 +1084,9 @@ final class ModelSpecFixtures {
         system.addComponent(entry.getKey(), entry.getValue());
       }
     }
-    if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
+    if (isPcsaftFixture(s.fixture)) {
+      system.setMixingRule(1);
+    } else if (s.fixture == ModelSpec.Fixture.UMR || s.fixture == ModelSpec.Fixture.UMR_PHASE) {
       system.setMixingRule("HV", "UNIFAC_UMRPRU");
     } else if (s.fixture != ModelSpec.Fixture.GERG && s.fixture != ModelSpec.Fixture.GERG_PHASE
         && s.fixture != ModelSpec.Fixture.IDEAL_GAS && s.fixture != ModelSpec.Fixture.IDEAL_GAS_PHASE
@@ -1035,7 +1108,13 @@ final class ModelSpecFixtures {
         || fixture == ModelSpec.Fixture.GERG_PHASE || fixture == ModelSpec.Fixture.IDEAL_GAS_PHASE
         || fixture == ModelSpec.Fixture.AMMONIA_PHASE || fixture == ModelSpec.Fixture.LEACHMAN_PHASE
         || fixture == ModelSpec.Fixture.VEGA_PHASE || fixture == ModelSpec.Fixture.SPAN_WAGNER_PHASE
-        || fixture == ModelSpec.Fixture.WATER_IF97_PHASE;
+        || fixture == ModelSpec.Fixture.WATER_IF97_PHASE || fixture == ModelSpec.Fixture.PCSAFT_PHASE
+        || fixture == ModelSpec.Fixture.PCSAFTA_PHASE;
+  }
+
+  private static boolean isPcsaftFixture(ModelSpec.Fixture fixture) {
+    return fixture == ModelSpec.Fixture.PCSAFT || fixture == ModelSpec.Fixture.PCSAFT_PHASE
+        || fixture == ModelSpec.Fixture.PCSAFTA || fixture == ModelSpec.Fixture.PCSAFTA_PHASE;
   }
 
   static void positive(double value, String context) {
