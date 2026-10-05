@@ -316,14 +316,12 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
 
       jacWork.setTo(Jac);
       if (!linearSolver.setA(jacWork)) {
-        throw new IllegalStateException(
-            "PH/PS Newton flash failed: singular Jacobian at iteration " + iter);
+        throw new IllegalStateException("PH/PS Newton flash failed: singular Jacobian at iteration " + iter);
       }
       linearSolver.solve(rhs, u);
       for (int i = 0; i < neq + 2; i++) {
         if (!Double.isFinite(u.get(i, 0))) {
-          throw new IllegalStateException(
-              "PH/PS Newton flash failed: non-finite Newton step at iteration " + iter);
+          throw new IllegalStateException("PH/PS Newton flash failed: non-finite Newton step at iteration " + iter);
         }
       }
     } while (residualNorm > 1.e-10 && iter < 1000);
