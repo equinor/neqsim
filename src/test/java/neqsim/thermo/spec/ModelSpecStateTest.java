@@ -21,6 +21,8 @@ import neqsim.thermo.phase.PhaseLeachmanEos;
 import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.thermo.phase.PhaseVegaEos;
 import neqsim.thermo.phase.PhaseWaterIAPWS;
+import neqsim.thermo.phase.PhasePCSAFTRahmat;
+import neqsim.thermo.phase.PhasePCSAFTa;
 import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseRK;
 import neqsim.thermo.phase.PhaseSrkEos;
@@ -35,6 +37,8 @@ import neqsim.thermo.system.SystemSpanWagnerEos;
 import neqsim.thermo.system.SystemVegaEos;
 import neqsim.thermo.system.SystemWaterIF97;
 import neqsim.thermo.system.SystemNRTL;
+import neqsim.thermo.system.SystemPCSAFT;
+import neqsim.thermo.system.SystemPCSAFTa;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemRKEos;
 import neqsim.thermo.system.SystemSrkEos;
@@ -657,6 +661,66 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     }
     system.init(0);
     return system;
+  }
+
+  @Test
+  void pcsaftRefreshesForcedRootsAndReturnsToReferenceState() {
+    pcsaftRoundTrip(new SystemPCSAFT(300.0, 10.0), PhasePCSAFTRahmat.class, "propane", 300.0, 10.0,
+        PhaseType.GAS, 250.0, 20.0, PhaseType.LIQUID);
+    pcsaftRoundTrip(new SystemPCSAFT(450.0, 5.0), PhasePCSAFTRahmat.class, "n-hexane", 450.0, 5.0,
+        PhaseType.GAS, 300.0, 10.0, PhaseType.LIQUID);
+    pcsaftRoundTrip(new SystemPCSAFTa(300.0, 10.0), PhasePCSAFTa.class, "propane", 300.0, 10.0,
+        PhaseType.GAS, 250.0, 20.0, PhaseType.LIQUID);
+    pcsaftRoundTrip(new SystemPCSAFTa(450.0, 5.0), PhasePCSAFTa.class, "n-hexane", 450.0, 5.0,
+        PhaseType.GAS, 300.0, 10.0, PhaseType.LIQUID);
+  }
+
+  private static void pcsaftRoundTrip(SystemInterface system, Class<?> expectedPhase, String component,
+      double firstTemperature, double firstPressure, PhaseType firstType, double changedTemperature,
+      double changedPressure, PhaseType changedType) {
+    system.addComponent(component, 1.0);
+    system.setMixingRule(1);
+    system.setNumberOfPhases(1);
+    system.setMaxNumberOfPhases(1);
+    system.setForcePhaseTypes(true);
+    system.init(0);
+
+    double[] first = pcsaftState(system, expectedPhase, firstTemperature, firstPressure, firstType);
+    double[] changed = pcsaftState(system, expectedPhase, changedTemperature, changedPressure, changedType);
+    assertNotEquals(first[0], changed[0], component + " PC-SAFT Z must refresh");
+    assertNotEquals(first[1], changed[1], component + " PC-SAFT density must refresh");
+
+    double[] returned = pcsaftState(system, expectedPhase, firstTemperature, firstPressure, firstType);
+    for (int i = 0; i < first.length; i++) {
+      assertEquals(first[i], returned[i], Math.max(1.0e-12, Math.abs(first[i]) * 1.0e-12),
+          component + " PC-SAFT returned property " + i);
+    }
+  }
+
+  private static double[] pcsaftState(SystemInterface system, Class<?> expectedPhase, double temperature,
+      double pressure, PhaseType phaseType) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    system.setPhaseType(0, phaseType);
+    system.init(3);
+    PhaseInterface phase = system.getPhase(0);
+    assertEquals(expectedPhase, phase.getClass());
+    assertEquals(phaseType, phase.getType());
+    double[] values = {phase.getZ(), phase.getDensity("mol/m3") / 1000.0, phase.getDensity(),
+        phase.getMolarVolume()};
+    for (double value : values) {
+      assertTrue(Double.isFinite(value) && value > 0.0);
+    }
+    assertEquals(1.0, values[1] * 1000.0 * values[3] / 1.0e5, 1.0e-10);
+
+    system.init(3);
+    PhaseInterface repeated = system.getPhase(0);
+    double[] repeatedValues = {repeated.getZ(), repeated.getDensity("mol/m3") / 1000.0, repeated.getDensity(),
+        repeated.getMolarVolume()};
+    for (int i = 0; i < values.length; i++) {
+      assertEquals(values[i], repeatedValues[i], 0.0, "PC-SAFT repeat property " + i);
+    }
+    return values;
   }
 
   private static SystemInterface cubicSystem(String model, double temperature, double pressure, double moles) {
