@@ -127,7 +127,12 @@ public class DistillationColumnWarmStateCacheTest {
     assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0,
         "activating ratio mode must update the bottoms flow");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+    double vaporReturn = column.getReboiler().getGasOutStream().getFlowRate("mol/hr");
+    double bottoms = column.getReboiler().getLiquidOutStream().getFlowRate("mol/hr");
+    assertEquals(storedRatio, vaporReturn / bottoms, 1.0e-6,
+        "the activated reboiler must achieve its physical boilup ratio");
+    // Cold feed can condense all vapor before the overhead on this condenser-free stripper.
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(3).get(0), column);
   }
 
   /**
