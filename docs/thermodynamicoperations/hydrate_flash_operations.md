@@ -713,3 +713,18 @@ to tune or claim experimental validation of this fix.
 - [Flash Calculations Guide](../thermo/flash_calculations_guide) - General flash operations
 - [Fluid Creation Guide](../thermo/fluid_creation_guide) - Setting up fluids
 - [Process Equipment](../process/) - Process integration
+
+## Exact-zero composition and numerical safeguards
+
+TP flash bounds successive-substitution K-values to the same numerical range
+used by the ionic gas/aqueous endpoint refinement (1e-50 to 1e50). Stability-trial
+weights are normalized after scaling by their largest value, so finite weights
+whose sum overflows cannot erase an entire phase. These safeguards act on solver
+iterates; the component setter still preserves exact zero and positive traces.
+
+The legacy high-salinity regression contains 0.06 mol water and 0.02 mol each of
+Na+ and Cl-, corresponding to about 52 wt% salt in the brine, not 10 wt%. It is
+retained as a numerical stress test, not a physical validation of concentrated
+brine or sub-freezing equilibria. Separate 10 wt% brine tests at 80 and 100 bara
+check finite hydrate temperatures and inhibition without relaxing the inventory
+or independent-equilibrium checks.

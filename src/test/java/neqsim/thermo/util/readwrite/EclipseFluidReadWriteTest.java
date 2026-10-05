@@ -1263,6 +1263,31 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * FluidMagic universal P/A E300 files have an unclosed EOS block (no slash after PR) and a separate PRCORR line. The
+   * reader must still produce a 26-component PR-1978 fluid that flashes.
+   */
+  @Test
+  void testReadFluidMagicPaUniversalFile() {
+    String paFile = file.getAbsolutePath() + "/pa_universal.e300";
+    SystemInterface fluid = EclipseFluidReadWrite.read(paFile);
+
+    assertEquals(26, fluid.getNumberOfComponents());
+    Assertions.assertTrue(fluid instanceof neqsim.thermo.system.SystemPrEos1978);
+    assertEquals(190.6, fluid.getComponent(2).getTC(), 0.05, "C1 critical temperature from TCRIT");
+
+    double sumZi = 0.0;
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      sumZi += fluid.getComponent(i).getz();
+    }
+    assertEquals(1.0, sumZi, 1e-4);
+
+    fluid.setPressure(100.0, "bara");
+    fluid.setTemperature(90.0, "C");
+    new ThermodynamicOperations(fluid).TPflash();
+    Assertions.assertTrue(fluid.getNumberOfPhases() >= 1);
+  }
+
+  /**
    * A plain (1976) Peng-Robinson fluid must not be written with PRCORR, otherwise it is read back as PR-1978 and the
    * saturation pressure shifts. Also checks that PR-1978 and the regressed binary interaction parameters survive the
    * round trip.

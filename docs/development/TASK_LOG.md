@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-04 — Multi-platform offshore oil process model with historian hold-out validation
+**Type:** B (Process)
+**Keywords:** ProcessModel, multi-platform, Uleberg P/A split, setpoint-driven topology, GOR factor, compressor efficiency calibration, hold-out window, scrubber K utilisation
+**Solution:** Private task folder (redacted): ProcessPilot-format package with platform layout helper, historian-window workbook builder, 31-item model-versus-plant comparison, calibration loop and 6 regression tests.
+**Notes:** Three formation fluids tuned to the common paraffin/aromatic model (saturation pressure 10-12 % low). Oil, water, total gas, platform gas split, export-gas mole weight (within 0.8 %) and compressor discharge temperatures reproduced; 25 of 32 scored items pass (23 of 32 on a hold-out window). Searching the historian catalog for discriminating signals overturned a first diagnosis: gas composition and anti-surge recycle were ruled out, and the stage 3/4 machines needed an effective efficiency of 0.35-0.42, which the unfitted train motor power then confirmed within -13 to -27 %. Lesson: before widening an efficiency bound, check mole weight, recycle-valve opening and motor power. Separator gas flow meters still disagree with the gas balance (basis unresolved).
+
 ### 2026-10-03 — Source-locked quantitative C1 ignition-delay comparison
 **Type:** G (Workflow)
 **Keywords:** combustion qualification, ReSpecTh, methane, shock tube, ignition delay, CRECK-S, Cantera, uncertainty, provenance
