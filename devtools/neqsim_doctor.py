@@ -187,10 +187,19 @@ def check_java():
     major = None
     if java_on_path:
         try:
-            result = subprocess.run(
-                ["java", "-version"],
-                capture_output=True, text=True, timeout=10
-            )
+            try:
+                result = subprocess.run(
+                    ["java", "-version"],
+                    capture_output=True, text=True, timeout=10
+                )
+            except subprocess.TimeoutExpired:
+                # Cold JVM startup can exceed ten seconds on busy Windows runners.
+                # Retry only a timeout, with a bounded longer launch allowance.
+                result = subprocess.run(
+                    ["java", "-version"],
+                    capture_output=True, text=True, timeout=30
+                )
+            result.check_returncode()
             # Java writes its version banner to stderr.
             version_output = result.stderr or result.stdout or ""
             version_line = version_output.strip().split("\n")[0]

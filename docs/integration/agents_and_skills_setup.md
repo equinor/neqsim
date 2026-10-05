@@ -79,6 +79,10 @@ neqsim --help
 neqsim doctor --skip-jar
 ```
 
+The Java health check retries a timed-out JVM launch once with a 30-second limit
+after its initial 10-second check. Persistent timeouts and nonzero Java exits
+remain health-check failures.
+
 Optionally choose where the agents save solved tasks (otherwise they use
 `<repo>/task_solve`):
 
