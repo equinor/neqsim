@@ -688,8 +688,7 @@ class ModelSpecHarnessTest {
         ModelSpec molarDensity = find(prefix + "molar-density");
         ModelSpec massDensity = find(prefix + "mass-density");
         double molarMass = state.startsWith("propane") ? 0.044096 : 0.086177;
-        double gasLawZ =
-            z.pressure * 1.0e5 / (molarDensity.expected * 1000.0 * 8.31446261815324 * z.temperature);
+        double gasLawZ = z.pressure * 1.0e5 / (molarDensity.expected * 1000.0 * 8.31446261815324 * z.temperature);
         assertEquals(z.expected, gasLawZ, 1.0e-12, prefix + "Z=P/(rho*R*T)");
         assertEquals(massDensity.expected, molarDensity.expected * 1000.0 * molarMass, 1.0e-10,
             prefix + "mass/molar density consistency");
