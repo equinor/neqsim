@@ -122,6 +122,31 @@ class TPflashTwuSourFluidConservationTest {
     assertThrows(IllegalStateException.class, () -> separator.run());
   }
 
+  /**
+   * Invalid acentric factors must fail before any characterized feed inventory changes.
+   *
+   * @param acentricFactor invalid heavy-end acentric factor
+   */
+  @ParameterizedTest
+  @CsvSource({"-1.0", "-38.44693197351764", "NaN"})
+  void invalidPetroleumFractionFailsBeforeChangingInventory(double acentricFactor) {
+    SystemInterface fluid = createFluid(343.15, 33.0);
+    for (PhaseInterface phase : fluid.getPhases()) {
+      if (phase != null) {
+        phase.getComponent(11).setAcentricFactor(acentricFactor);
+      }
+    }
+    SystemInterface inventory = fluid.clone();
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> new ThermodynamicOperations(fluid).TPflash());
+    assertTrue(failure.getMessage().contains("acentric factor"));
+    assertEquals(inventory.getTotalNumberOfMoles(), fluid.getTotalNumberOfMoles(), 0.0);
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+      assertEquals(inventory.getComponent(component).getNumberOfmoles(),
+          fluid.getComponent(component).getNumberOfmoles(), 0.0);
+    }
+  }
+
   @Test
   void exactReportedSeparatorConservesEveryComponent() {
     SystemInterface fluid = createFluid(343.15, 33.0);

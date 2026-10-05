@@ -153,6 +153,17 @@ double a_i = methane.getActivity();
 double gamma = methane.getActivityCoefficient();
 ```
 
+### Mole-fraction assignment
+
+`setx(0.0)` now stores exact zero instead of retaining the previous composition. Finite
+positive trace fractions, including values below `1e-50`, survive assignment and retrieval
+unchanged. Negative finite inputs retain the existing `1e-50` numerical floor, values above
+5 retain the existing cap, and non-finite input leaves the previous value unchanged. These
+are numerical assignment bounds; physical phase compositions still require normalization.
+
+Code that needs a positive seed for a logarithmic calculation must supply that seed explicitly.
+`setx` changes the stored fraction only; it does not update component mole inventories.
+
 ### Partial Properties
 
 ```java
