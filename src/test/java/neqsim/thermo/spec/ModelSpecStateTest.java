@@ -673,7 +673,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     pcsaftRoundTrip(new SystemPCSAFT(450.0, 5.0), PhasePCSAFTRahmat.class, "n-hexane", 450.0, 5.0, PhaseType.GAS, 300.0,
         10.0, PhaseType.OIL);
     pcsaftRoundTrip(new SystemPCSAFTa(300.0, 10.0), PhasePCSAFTa.class, "propane", 300.0, 10.0, PhaseType.GAS, 250.0,
-        20.0, PhaseType.LIQUID);
+        20.0, PhaseType.OIL);
     pcsaftRoundTrip(new SystemPCSAFTa(450.0, 5.0), PhasePCSAFTa.class, "n-hexane", 450.0, 5.0, PhaseType.GAS, 300.0,
         10.0, PhaseType.OIL);
   }
