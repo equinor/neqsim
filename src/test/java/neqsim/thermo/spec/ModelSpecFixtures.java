@@ -635,8 +635,7 @@ final class ModelSpecFixtures {
       positive(phase.getZ(), s.toString());
       positive(molarDensity, s.toString());
       positive(phase.getDensity(), s.toString());
-      assertEquals(1.0, molarDensity * phase.getMolarVolume() / 1.0e5, 1.0e-10,
-          s + " density-volume closure");
+      assertEquals(1.0, molarDensity * phase.getMolarVolume() / 1.0e5, 1.0e-10, s + " density-volume closure");
       system.init(3);
       assertEquals(result, readPcsaft(s.property, system.getPhase(0)), 0.0, s + " repeat initialization");
       return result;
