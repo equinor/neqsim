@@ -419,6 +419,15 @@ column.calcColumnInternals();          // uses default "sieve"
 
 Fenske-Underwood-Gilliland (FUG) shortcut method for conceptual column design.
 
+The reflux multiplier must be finite and greater than one. Invalid multipliers now throw
+`IllegalArgumentException` instead of continuing after a warning. `run()` also rejects a
+calculated reflux at or below minimum, a Gilliland result rounded to its infinite-stage limit,
+and a stage count above the supported integer tray range. Such a run throws
+`IllegalStateException` and leaves `isSolved()` false. Increase reflux above minimum before
+retrying; no fallback stage count or feed tray is published. Ordinary finite designs retain the
+same FUG correlations and results. These checks validate the shortcut's numerical domain;
+they do not establish rigorous-column convergence or hydraulic feasibility.
+
 ### Results Provided
 
 - Minimum stages (Fenske equation)
