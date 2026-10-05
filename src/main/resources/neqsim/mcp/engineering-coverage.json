@@ -676,7 +676,13 @@
             "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
           ]
         }
-      ]
+      ],
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
     },
     {
       "id": "field-economics",
