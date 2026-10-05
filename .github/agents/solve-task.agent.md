@@ -67,6 +67,7 @@ before the folder exists.
 2. **Confirm** the folder `task_solve/YYYY-MM-DD_task_slug/` was created
 3. **Read** the generated `task_solve/YYYY-MM-DD_task_slug/README.md`
 4. **Open `user_input.md`** and verify section 1 contains the original prompt. If it is empty (e.g. you forgot `--prompt`), paste the verbatim user message there now.
+5. **Search earlier tasks** in the configured task root: `neqsim tasks search <keywords> --exclude <this task>`; review the top hits and record them in `step1_scope_and_research/notes.md` (workflow step 6).
 
 **ALL deliverables go inside this task folder** (layout is in its generated `README.md`: `step1_scope_and_research/`, `step2_analysis/`, `step3_report/`, `figures/`, `results.json`, `user_input.md`).
 
