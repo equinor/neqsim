@@ -228,6 +228,9 @@ states and three properties. It exercises `SystemPCSAFT` with exact
 `PhasePCSAFTRahmat`, and `SystemPCSAFTa` with exact `PhasePCSAFTa`, for propane
 at 300 K/10 bar gas and 250 K/20 bar liquid, and n-hexane at 450 K/5 bar gas and
 300 K/10 bar liquid. Every row declares the forced root before evaluation.
+The adapters initialize the mass-density physical-property cache after the EOS
+state, before reading density with units; the state round-trip uses the same
+initialization order.
 
 The state control traverses gas -> liquid -> gas, repeats initialization, verifies
 exact phase dispatch and rejects stale results. Independent controls reconstruct

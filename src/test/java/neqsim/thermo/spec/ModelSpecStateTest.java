@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
 import neqsim.thermo.component.ComponentGEInterface;
@@ -708,6 +709,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     PhaseInterface phase = system.getPhase(0);
     assertEquals(expectedPhase, phase.getClass());
     assertEquals(phaseType, phase.getType());
+    phase.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double[] values = {phase.getZ(), phase.getDensity("mol/m3") / 1000.0, phase.getDensity(), phase.getMolarVolume()};
     for (double value : values) {
       assertTrue(Double.isFinite(value) && value > 0.0);

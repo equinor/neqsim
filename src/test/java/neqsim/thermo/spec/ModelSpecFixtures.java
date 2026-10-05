@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEWilson;
@@ -629,6 +630,7 @@ final class ModelSpecFixtures {
         assertEquals(type(s.fixture), phase.getClass(), s.toString());
       }
       assertEquals(expectedType, phase.getType(), s.toString());
+      phase.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       double result = readPcsaft(s.property, phase);
       double molarDensity = phase.getDensity("mol/m3");
       positive(phase.getZ(), s.toString());
