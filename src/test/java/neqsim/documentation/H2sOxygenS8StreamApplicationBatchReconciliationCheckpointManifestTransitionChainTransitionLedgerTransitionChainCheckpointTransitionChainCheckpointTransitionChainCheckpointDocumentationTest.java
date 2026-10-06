@@ -19,11 +19,12 @@ class H2sOxygenS8StreamApplicationBatchReconciliationCheckpointManifestTransitio
   void testDocumentationContract() throws IOException {
     String content = new String(Files.readAllBytes(DOCUMENT), StandardCharsets.UTF_8);
 
-    assertTrue(content.contains("AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint"));
+    assertTrue(content.contains(
+        "AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint"));
     assertTrue(content.contains("create(identifier, sequence, chain)"));
     assertTrue(content.contains("non-negative monotonically allocated sequence"));
     assertTrue(content.contains("constant time"));
-    assertTrue(content.contains("defensive copies"));
+    assertTrue(content.matches("(?s).*defensive\\s+copies.*"));
     assertTrue(content.contains("fail closed"));
     assertTrue(content.contains("no sulfur yield"));
     assertTrue(content.contains("no flash calculation"));
