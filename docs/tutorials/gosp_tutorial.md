@@ -124,14 +124,11 @@ public final class GospScreeningExample {
         Math.abs(recoveredMassFlow - feedMassFlow) / feedMassFlow;
     double vpcr4Bara = exportOil.getRVP(37.8, "C", "bara");
 
-    requireFinitePositive("gas mass flow", gasMassFlow);
-    requireFinitePositive("water mass flow", waterMassFlow);
-    requireFinitePositive("oil mass flow", oilMassFlow);
-    requireFinitePositive("VPCR4", vpcr4Bara);
-    if (relativeMassBalanceError > 1.0e-3) {
-      throw new IllegalStateException(
-          "Relative material-balance error exceeds 0.1%: " + relativeMassBalanceError);
-    }
+    assert Double.isFinite(gasMassFlow) && gasMassFlow > 0.0;
+    assert Double.isFinite(waterMassFlow) && waterMassFlow > 0.0;
+    assert Double.isFinite(oilMassFlow) && oilMassFlow > 0.0;
+    assert Double.isFinite(vpcr4Bara) && vpcr4Bara > 0.0;
+    assert relativeMassBalanceError <= 1.0e-3;
 
     logger.info("Gas products: {} kg/hr", gasMassFlow);
     logger.info("Water products: {} kg/hr", waterMassFlow);
@@ -139,14 +136,11 @@ public final class GospScreeningExample {
     logger.info("Relative material-balance error: {}", relativeMassBalanceError);
     logger.info("Model VPCR4 at 37.8 C: {} bara", vpcr4Bara);
   }
-
-  private static void requireFinitePositive(String name, double value) {
-    if (!Double.isFinite(value) || value <= 0.0) {
-      throw new IllegalStateException(name + " is not finite and positive: " + value);
-    }
-  }
 }
 ```
+
+Run with assertions enabled (`-ea`). The repository documentation contract extracts this exact
+fence, compiles it with the Java 8 language target, and executes it.
 
 ## Interpret the Results
 
