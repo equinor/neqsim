@@ -57,26 +57,25 @@ class CO2KClHydrateAccuracyAssessmentTest {
       DiagnosticResult kcl = calculate(point, "KCl", 0.0, 1.0, 0.0);
       double pureTemperature = pure == null ? Double.NaN : pure.temperature;
       report.add(kcl.toCsv(point, point.measuredTemperature, pureTemperature));
-      logger.info("{} at {} bara: measured={} K, calculated={} K, error={} K, awProxy={}, xCO2aq={}, fCO2={} bara, "
-          + "fWaterHydrate={} bara", point.recipe, point.pressureBara, point.measuredTemperature, kcl.temperature,
+      logger.info(
+          "{} at {} bara: measured={} K, calculated={} K, error={} K, awProxy={}, xCO2aq={}, fCO2={} bara, "
+              + "fWaterHydrate={} bara",
+          point.recipe, point.pressureBara, point.measuredTemperature, kcl.temperature,
           kcl.temperature - point.measuredTemperature, kcl.waterActivityProxy, kcl.aqueousCo2MoleFraction,
           kcl.guestCo2Fugacity, kcl.hydrateWaterFugacity);
 
       if (point.diagnosticEndpoint) {
         report.add(calculate(point, "NaCl-equal-mass", 1.0, 0.0, 0.0).toCsv(point, Double.NaN, pure.temperature));
         report.add(calculate(point, "CaCl2-equal-mass", 0.0, 0.0, 1.0).toCsv(point, Double.NaN, pure.temperature));
-        report.add(calculate(point, "NaCl-KCl-equal-mass", 0.5, 0.5, 0.0).toCsv(point, Double.NaN,
-            pure.temperature));
-        report.add(calculate(point, "NaCl-CaCl2-equal-mass", 0.5, 0.0, 0.5).toCsv(point, Double.NaN,
-            pure.temperature));
+        report.add(calculate(point, "NaCl-KCl-equal-mass", 0.5, 0.5, 0.0).toCsv(point, Double.NaN, pure.temperature));
+        report.add(calculate(point, "NaCl-CaCl2-equal-mass", 0.5, 0.0, 0.5).toCsv(point, Double.NaN, pure.temperature));
       }
     }
 
     assertEquals(4, diagnosticEndpointCount);
     assertEquals(29, report.size());
     Files.createDirectories(Paths.get("target"));
-    Files.write(Paths.get("target/co2-kcl-hydrate-dholabhai1993-assessment.csv"), report,
-        StandardCharsets.UTF_8);
+    Files.write(Paths.get("target/co2-kcl-hydrate-dholabhai1993-assessment.csv"), report, StandardCharsets.UTF_8);
   }
 
   private static DiagnosticResult calculate(ReferencePoint point, String scenario, double naclFraction,
@@ -110,8 +109,8 @@ class CO2KClHydrateAccuracyAssessmentTest {
     ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
     operations.hydrateFormationTemperature(278.15);
     CO2BrineHydratePhaseStateTest.assertEndpoint(fluid, true);
-    HydrateEquilibriumDiagnostics diagnostics =
-        ((HydrateFormationTemperatureFlash) operations.getOperation()).getDiagnostics();
+    HydrateEquilibriumDiagnostics diagnostics = ((HydrateFormationTemperatureFlash) operations.getOperation())
+        .getDiagnostics();
     assertTrue(diagnostics.isConverged());
     assertTrue(diagnostics.isSaturatedCO2Boundary());
 
@@ -124,9 +123,9 @@ class CO2KClHydrateAccuracyAssessmentTest {
     double aqueousWaterFugacity = aqueous.getFugacity("water");
     double hydrateWaterFugacity = fluid.getPhase(4).getFugacity("water");
 
-    for (double value : new double[] {fluid.getTemperature(), waterActivityProxy,
-        aqueous.getComponent("CO2").getx(), guestCo2Fugacity, aqueousWaterFugacity, hydrateWaterFugacity,
-        diagnostics.getHydrateResidual(), diagnostics.getComponentBalanceResidual(), diagnostics.getChargeResidual()}) {
+    for (double value : new double[] {fluid.getTemperature(), waterActivityProxy, aqueous.getComponent("CO2").getx(),
+        guestCo2Fugacity, aqueousWaterFugacity, hydrateWaterFugacity, diagnostics.getHydrateResidual(),
+        diagnostics.getComponentBalanceResidual(), diagnostics.getChargeResidual()}) {
       assertTrue(Double.isFinite(value), scenario + " produced a non-finite diagnostic");
     }
     return new DiagnosticResult(scenario, fractionSum == 0.0 ? 0.0 : point.kclMassPercent, fluid.getTemperature(),
@@ -159,9 +158,8 @@ class CO2KClHydrateAccuracyAssessmentTest {
         String line;
         while ((line = reader.readLine()) != null) {
           String[] values = line.split(",");
-          points.add(new ReferencePoint(values[0], Double.parseDouble(values[1]),
-              10.0 * Double.parseDouble(values[2]), Double.parseDouble(values[3]),
-              Boolean.parseBoolean(values[5])));
+          points.add(new ReferencePoint(values[0], Double.parseDouble(values[1]), 10.0 * Double.parseDouble(values[2]),
+              Double.parseDouble(values[3]), Boolean.parseBoolean(values[5])));
         }
       }
     }
@@ -197,8 +195,8 @@ class CO2KClHydrateAccuracyAssessmentTest {
     private final HydrateEquilibriumDiagnostics diagnostics;
 
     private DiagnosticResult(String scenario, double totalSaltMassPercent, double temperature,
-        double waterActivityProxy, double aqueousCo2MoleFraction, double guestCo2Fugacity,
-        double aqueousWaterFugacity, double hydrateWaterFugacity, HydrateEquilibriumDiagnostics diagnostics) {
+        double waterActivityProxy, double aqueousCo2MoleFraction, double guestCo2Fugacity, double aqueousWaterFugacity,
+        double hydrateWaterFugacity, HydrateEquilibriumDiagnostics diagnostics) {
       this.scenario = scenario;
       this.totalSaltMassPercent = totalSaltMassPercent;
       this.temperature = temperature;
@@ -214,10 +212,10 @@ class CO2KClHydrateAccuracyAssessmentTest {
       double error = Double.isFinite(measuredTemperature) ? temperature - measuredTemperature : Double.NaN;
       double suppression = Double.isFinite(pureWaterTemperature) ? pureWaterTemperature - temperature : Double.NaN;
       return point.recipe + "," + scenario + "," + totalSaltMassPercent + "," + point.pressureBara + ","
-          + measuredTemperature + "," + temperature + "," + error + "," + pureWaterTemperature + ","
-          + suppression + "," + waterActivityProxy + "," + aqueousCo2MoleFraction + "," + guestCo2Fugacity
-          + "," + aqueousWaterFugacity + "," + hydrateWaterFugacity + "," + diagnostics.getHydrateResidual()
-          + "," + diagnostics.getFluidFugacityResidual() + "," + diagnostics.getComponentBalanceResidual() + ","
+          + measuredTemperature + "," + temperature + "," + error + "," + pureWaterTemperature + "," + suppression + ","
+          + waterActivityProxy + "," + aqueousCo2MoleFraction + "," + guestCo2Fugacity + "," + aqueousWaterFugacity
+          + "," + hydrateWaterFugacity + "," + diagnostics.getHydrateResidual() + ","
+          + diagnostics.getFluidFugacityResidual() + "," + diagnostics.getComponentBalanceResidual() + ","
           + diagnostics.getChargeResidual() + "," + String.join("+", diagnostics.getPhaseTypes()) + ","
           + diagnostics.isSaturatedCO2Boundary();
     }
