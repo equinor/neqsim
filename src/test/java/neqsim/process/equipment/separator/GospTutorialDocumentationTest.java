@@ -54,10 +54,10 @@ class GospTutorialDocumentationTest extends NeqSimTest {
     assertTrue(source.contains("getWaterOutStream"));
     assertTrue(source.contains("getGasOutStream"));
     assertTrue(source.contains("getOilOutStream"));
-    assertTrue(source.contains("addTBPfraction(\\"C11\\", 0.050, 0.150, 0.78)"));
-    assertTrue(source.contains("addTBPfraction(\\"C15\\", 0.040, 0.210, 0.82)"));
-    assertTrue(source.contains("addTBPfraction(\\"C20\\", 0.060, 0.350, 0.88)"));
-    assertTrue(source.contains("getRVP(37.8, \\"C\\", \\"bara\\")"));
+    assertTrue(source.contains("addTBPfraction(\"C11\", 0.050, 0.150, 0.78)"));
+    assertTrue(source.contains("addTBPfraction(\"C15\", 0.040, 0.210, 0.82)"));
+    assertTrue(source.contains("addTBPfraction(\"C20\", 0.060, 0.350, 0.88)"));
+    assertTrue(source.contains("getRVP(37.8, \"C\", \"bara\")"));
     assertTrue(source.contains("LogManager.getLogger(GospScreeningExample.class)"));
     assertTrue(source.contains("assert Double.isFinite(gasMassFlow) && gasMassFlow > 0.0"));
     assertTrue(source.contains("assert Double.isFinite(waterMassFlow) && waterMassFlow > 0.0"));
