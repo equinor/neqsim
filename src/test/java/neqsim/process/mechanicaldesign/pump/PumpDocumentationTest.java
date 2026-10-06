@@ -5,9 +5,25 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
@@ -15,8 +31,17 @@ import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator.DataSourc
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-/** Executes the complete Java example in {@code docs/process/equipment/pumps.md}. */
+/** Executes the published pump documentation examples. */
 public class PumpDocumentationTest {
+  private static final String QUICK_REFERENCE = "docs/wiki/pump_usage_guide.md";
+  private static final Pattern JAVA_FENCE =
+      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS =
+      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+
+  @TempDir
+  Path temporaryDirectory;
+
   @Test
   public void testPumpAndApi610GuideExample() {
     SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
@@ -77,5 +102,87 @@ public class PumpDocumentationTest {
     assertTrue(responseObject.has("api610Screening"));
     assertTrue(responseObject.has("api610TypeCode"));
     assertEquals("OH2", responseObject.get("api610TypeCode").getAsString());
+  }
+
+  @Test
+  public void testQuickReferenceProgramCompilesAndRunsWithAssertions() throws Exception {
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    String guide = read(repositoryRoot.resolve(QUICK_REFERENCE));
+    Matcher fences = JAVA_FENCE.matcher(guide);
+
+    assertFalse(guide.contains("# Pump Usage Guide - Quick Reference"));
+    assertFalse(guide.contains("```python"));
+    assertTrue(fences.find(), "Quick reference must contain one complete Java program");
+    String source = fences.group(1);
+    assertTrue(source.contains("public final class PumpUsageGuideExample"));
+    assertTrue(source.contains("LogManager.getLogger(PumpUsageGuideExample.class)"));
+    assertTrue(source.contains("setFlowRate(100.0, \"m3/hr\")"));
+    assertTrue(source.contains("setHeadUnit(\"meter\")"));
+    assertTrue(source.contains("setNPSHCurve(npshRequiredM)"));
+    assertTrue(source.contains("setNPSHMargin(1.15)"));
+    assertTrue(source.contains("assert Double.isFinite(powerKw) && powerKw > 0.0"));
+    assertTrue(source.contains("assert npshAvailableM > requiredNpshM"));
+    assertTrue(source.contains("assert !pump.isCavitating()"));
+    assertFalse(source.contains("System.out"));
+    compileAndRun(source);
+    assertFalse(fences.find(), "Quick reference must contain exactly one Java program");
+  }
+
+  private String read(Path path) throws Exception {
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+  }
+
+  private void compileAndRun(String source) throws Exception {
+    Matcher className = PUBLIC_CLASS.matcher(source);
+    assertTrue(className.find(), "Java fence must contain a complete public class");
+    String name = className.group(1);
+    assertFalse(className.find(), "Java fence must contain one public class");
+
+    Path outputDirectory = temporaryDirectory.resolve(name);
+    Files.createDirectories(outputDirectory);
+    Path javaSource = outputDirectory.resolve(name + ".java");
+    Files.write(javaSource, source.getBytes(StandardCharsets.UTF_8));
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "Documentation examples require a JDK compiler");
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath =
+        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList(
+        "-source",
+        "8",
+        "-target",
+        "8",
+        "-classpath",
+        classPath,
+        "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager =
+        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful =
+          compiler
+              .getTask(
+                  null,
+                  manager,
+                  diagnostics,
+                  options,
+                  null,
+                  manager.getJavaFileObjects(javaSource.toFile()))
+              .call();
+      assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
+    }
+
+    try (URLClassLoader loader =
+        new URLClassLoader(
+            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+      loader.setDefaultAssertionStatus(true);
+      Class<?> example = Class.forName(name, true, loader);
+      assertTrue(example.desiredAssertionStatus());
+      try {
+        example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+      } catch (InvocationTargetException exception) {
+        throw new AssertionError(name + " failed", exception.getCause());
+      }
+    }
   }
 }
