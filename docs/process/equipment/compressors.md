@@ -961,3 +961,58 @@ print(f"Mechanical efficiency: {comp.getMechanicalEfficiency()*100:.1f}%")
 - [Process Package](../) - Package overview
 - [Expanders](expanders.md) - Expansion equipment
 - [Pumps](pumps.md) - Liquid compression
+
+## Algebraic minimum-flow spill
+
+`MinimumFlowSpill` is a steady-state assembly for a prescribed minimum compressor
+suction flow. It avoids a numerical `Recycle` loop when the return is assumed to
+have the feed composition and is cooled back to feed suction temperature and pressure.
+The gross suction is the larger of the minimum flow and net feed; the external
+forward discharge keeps the net feed flow. Internal spill is not an external outlet.
+
+Configure the internal compressor through `getCompressor()`. Add the assembly to
+the process once; adding its internal compressor separately would execute it twice.
+Capacity constraints delegate to that compressor and therefore use gross suction.
+ProcessSystem power includes the gross compression work and cooler duty includes
+the ideal spill heat rejection with the usual negative cooling sign.
+
+```java
+SystemSrkEos fluid = new SystemSrkEos(303.15, 10.0);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.1);
+fluid.setMixingRule("classic");
+Stream feed = new Stream("feed", fluid);
+feed.setFlowRate(0.2, "kg/sec");
+feed.run();
+MinimumFlowSpill spill = new MinimumFlowSpill("LP compressor", feed);
+spill.setMinimumInletFlow(10.0, "kg/sec");
+spill.getCompressor().setOutletPressure(30.0);
+spill.getCompressor().setIsentropicEfficiency(0.75);
+ProcessSystem process = new ProcessSystem("compression");
+process.add(feed);
+process.add(spill);
+boolean converged = process.runUntilConverged(3);
+```
+
+Imports are `neqsim.thermo.system.SystemSrkEos`,
+`neqsim.process.equipment.stream.Stream`,
+`neqsim.process.equipment.compressor.MinimumFlowSpill`, and
+`neqsim.process.processmodel.ProcessSystem`. This example is executed by
+`MinimumFlowSpillTest.spillClosesMassAndEnergyWithoutRecycle`.
+It produces 10 kg/s gross suction, 9.8 kg/s internal spill and 0.2 kg/s forward flow.
+
+| API | Basis |
+| --- | --- |
+| `setMinimumInletFlow(value, unit)` | Imposed gross suction minimum; finite and non-negative |
+| `getNetFlow(unit)` | Net feed at suction conditions |
+| `getSpillFlow(unit)` | Circulation at suction conditions, including actual-volume units |
+| `getOutletStream()` | Net discharge at compressor outlet conditions |
+| `getSpillStream()` | Internal spill at discharge conditions, for inspection |
+| `getPower(unit)` | Gross compressor power |
+| `getSpillCoolingDuty(unit)` | Heat rejected to restore spill to suction state; W, kW or MW |
+
+This fixed minimum is not a surge curve or a dynamic protection system. The
+internal compressor's `AntiSurge` flow modification must be disabled. Use an
+explicit recycle valve and cooler when condensation, separation, mixing
+temperature, valve capacity or dynamic response must be solved. No asset data
+or vendor qualification is implied by the synthetic example.
