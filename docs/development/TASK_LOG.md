@@ -1123,3 +1123,10 @@ absolute tolerance and the exchanger guide documents the duty/LMTD relation.
 **Keywords:** choke list, strupeliste, GOR, gas handling, regass scrubber, PDM allocation basis, compressor meter basis, WAG, backtest
 **Solution:** Two-constraint LP on the per-well PDM table with the gas budget calibrated on a previous stop; cross-checked with `ChokeAndGasLiftAllocationOptimizer`; stage-separation sweep for 3rd-stage pressure and scrubber temperature; gas injectors ranked from 12 months of per-well injection.
 **Notes:** A compressor-meter capacity is not the allocated well gas: on the studied platform allocated gas was 0.79 of the meter flow with a compressor train out of service, so planning on the meter figure over-promised about 1,050 Sm3/d of oil. The previous stop gave a free backtest (every GOR above 1,000 well shut in both; oil within -6.5/+8.2 %). A simple stage model under-predicted recompressor load by 12-38 % but gave the right RVP slope against 3rd-stage pressure (0.30 vs 0.28 bar/bar). Report generator: `report.front_matter_lists` skips lists of figures and tables on short reports.
+
+
+### 2026-10-05 — Well/SURF network integration audit and steady hydraulic fidelity
+**Type:** E (Feature)
+**Keywords:** subsea, SURF, gathering, injection, Beggs-Brill, two-fluid, topology, campaign 4228
+**Solution:** `LoopedPipeNetwork`, `NetworkHydraulicFidelityTest`, `docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md`.
+**Notes:** Reuse the detailed steady graph, existing well physics, dedicated storage-node two-fluid transient network and lifecycle/design models. Pipe-edge fidelity overrides preserve topology and JSON replay. Two-fluid failures remain explicit; cached Beggs-Brill geometry is refreshed. Eight new regression tests and the affected network suites pass (152 passed, one existing skip). Live WellSystem/injection boundaries, independent field benchmarks and mixed-fidelity dynamic junction qualification remain campaign work.
