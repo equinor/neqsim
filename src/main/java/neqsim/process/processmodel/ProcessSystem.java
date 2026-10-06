@@ -3158,7 +3158,17 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     lastRunStatus.markComplete(!runThrew);
     List<String> openRecycles = getOpenRecycles();
-    boolean converged = !runThrew && openRecycles.isEmpty() && solved();
+    boolean converged = !runThrew && openRecycles.isEmpty() && recycleController.solvedAll();
+    if (converged) {
+      // Active states were prepared before dispatch. Reuse them here instead of
+      // calling solved(), which would repeat the locked-inactive scan.
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (unit.isActive() && !unit.solved()) {
+          converged = false;
+          break;
+        }
+      }
+    }
     String reason = runThrew ? "FAILED"
         : converged ? "CONVERGED"
             : Thread.currentThread().isInterrupted() ? "INTERRUPTED"
