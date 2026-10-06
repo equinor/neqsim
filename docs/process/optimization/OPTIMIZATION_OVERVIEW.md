@@ -384,8 +384,9 @@ single-row path for a shared shaft-power or electrical-demand budget. Missing, s
 out-of-validity, mismatched or incomplete evidence fails closed through `PlantUtilizationSnapshot`.
 Optimizer arrays retain dimensionless utilization and margin, while
 `EvaluationResult.getPlantConstraintEvidence()` preserves physical units, provenance, coverage and
-operating status in registration order. Runtime callbacks are transient; re-register them after
-deserializing an evaluator.
+operating status in registration order. Runtime callbacks are transient. A deserialized evaluator
+therefore retains its registration metadata but fails closed; construct a fresh evaluator and
+re-register the callbacks before resuming optimization.
 
 `ProcessModelSimulationEvaluator` complements rather than replaces the other optimizers. Use `ProcessOptimizationEngine` for compact throughput cases on one process, `ProductionOptimizer` for existing single-system objective workflows, and `ProcessModelSimulationEvaluator` when the optimization boundary is the full plant model.
 
