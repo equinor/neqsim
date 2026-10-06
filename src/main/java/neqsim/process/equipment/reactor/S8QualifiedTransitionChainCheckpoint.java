@@ -20,7 +20,7 @@ import java.security.NoSuchAlgorithmException;
  * @author esol
  * @version $Id: $
  */
-public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint {
+public final class S8QualifiedTransitionChainCheckpoint {
   /** Digest algorithm used by chain checkpoints. */
   public static final String DIGEST_ALGORITHM = "SHA-256";
 
@@ -28,7 +28,7 @@ public final class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconc
   public static final String SCHEMA_IDENTIFIER = "neqsim-s8-stream-application-batch-reconciliation-checkpoint-manifest-transition-chain-transition-ledger-transition-chain-checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-v1";
 
   /** Prevent instantiation. */
-  private AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint() {
+  private S8QualifiedTransitionChainCheckpoint() {
   }
 
   /**

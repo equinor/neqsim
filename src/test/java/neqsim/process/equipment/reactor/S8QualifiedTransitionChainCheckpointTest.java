@@ -19,7 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
 
 /** Tests immutable checkpoints of qualified S8 checkpoint-transition-chain checkpoint-transition chains. */
-class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpointTest {
+class S8QualifiedTransitionChainCheckpointTest {
   private static final double INITIAL_TOTAL_SULFIDE_MOLALITY = 2.5e-5;
   private static final double WATER_INVENTORY_KG = 1000.0;
   private static final String ALLOCATION_BASIS = "caller-owned elemental sulfur scenario";
@@ -29,7 +29,7 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   @Test
   void testCheckpointRetainsQualifiedChainEvidence() {
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result checkpoint = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
+    S8QualifiedTransitionChainCheckpoint.Result checkpoint = S8QualifiedTransitionChainCheckpoint
         .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain);
 
     assertEquals("SHA-256", checkpoint.getDigestAlgorithm());
@@ -51,21 +51,19 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
     assertEquals(chain.getAddedReconciliationCount(), checkpoint.getAddedReconciliationCount());
     assertEquals(chain.getAddedEntryCount(), checkpoint.getAddedEntryCount());
     assertEquals(chain.getChainDigestHex(), checkpoint.getChainDigestHex());
-    assertTrue(
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
-            .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain, checkpoint));
+    assertTrue(S8QualifiedTransitionChainCheckpoint
+        .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain, checkpoint));
   }
 
   /** Verify deterministic serialization and defensive raw-digest copies. */
   @Test
   void testCheckpointIsDeterministicSerializableAndDefensive() throws Exception {
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result first = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
+    S8QualifiedTransitionChainCheckpoint.Result first = S8QualifiedTransitionChainCheckpoint
         .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result repeated = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
+    S8QualifiedTransitionChainCheckpoint.Result repeated = S8QualifiedTransitionChainCheckpoint
         .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain);
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result restored = serializeCheckpoint(
-        first);
+    S8QualifiedTransitionChainCheckpoint.Result restored = serializeCheckpoint(first);
     byte[] firstDigest = first.getCheckpointDigestBytes();
     byte[] secondDigest = first.getCheckpointDigestBytes();
     byte[] firstPriorDigest = first.getFirstPriorCheckpointDigestBytes();
@@ -87,27 +85,20 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   @Test
   void testMissingInputsAndIdentityDriftFailClosed() {
     AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChain.Result chain = checkpointTransitionChainCheckpointTransitionChain();
-    AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result checkpoint = AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
+    S8QualifiedTransitionChainCheckpoint.Result checkpoint = S8QualifiedTransitionChainCheckpoint
         .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
-            .create(" ", 31L, chain));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
-            .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", -1L, chain));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
-            .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, null));
-    assertThrows(IllegalArgumentException.class,
-        () -> AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
-            .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain, null));
-    assertFalse(
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
-            .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-B", 31L, chain, checkpoint));
-    assertFalse(
-        AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint
-            .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 32L, chain, checkpoint));
+    assertThrows(IllegalArgumentException.class, () -> S8QualifiedTransitionChainCheckpoint.create(" ", 31L, chain));
+    assertThrows(IllegalArgumentException.class, () -> S8QualifiedTransitionChainCheckpoint
+        .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", -1L, chain));
+    assertThrows(IllegalArgumentException.class, () -> S8QualifiedTransitionChainCheckpoint
+        .create("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, null));
+    assertThrows(IllegalArgumentException.class, () -> S8QualifiedTransitionChainCheckpoint
+        .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 31L, chain, null));
+    assertFalse(S8QualifiedTransitionChainCheckpoint
+        .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-B", 31L, chain, checkpoint));
+    assertFalse(S8QualifiedTransitionChainCheckpoint
+        .verify("checkpoint-transition-chain-checkpoint-transition-chain-checkpoint-A", 32L, chain, checkpoint));
   }
 
   /** Build one qualified checkpoint-transition-chain checkpoint-transition chain. */
@@ -369,16 +360,14 @@ class AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheck
   }
 
   /** Serialize and restore one checkpoint-transition-chain checkpoint-transition-chain checkpoint. */
-  private static AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result serializeCheckpoint(
-      AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result result)
-      throws Exception {
+  private static S8QualifiedTransitionChainCheckpoint.Result serializeCheckpoint(
+      S8QualifiedTransitionChainCheckpoint.Result result) throws Exception {
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(result);
     }
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
-      return (AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint.Result) input
-          .readObject();
+      return (S8QualifiedTransitionChainCheckpoint.Result) input.readObject();
     }
   }
 

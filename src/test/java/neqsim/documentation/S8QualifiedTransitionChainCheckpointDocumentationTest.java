@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
 /** Tests the S8 checkpoint-transition-chain checkpoint-transition-chain checkpoint documentation contract. */
-class H2sOxygenS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpointDocumentationTest {
+class S8QualifiedTransitionChainCheckpointDocumentationTest {
   private static final Path DOCUMENT = Paths.get("docs", "chemicalreactions",
       "h2s_oxygen_s8_stream_application_batch_reconciliation_checkpoint_manifest_transition_chain_transition_ledger_transition_chain_checkpoint_transition_chain_checkpoint_transition_chain_checkpoint.md");
 
@@ -19,8 +19,7 @@ class H2sOxygenS8StreamApplicationBatchReconciliationCheckpointManifestTransitio
   void testDocumentationContract() throws IOException {
     String content = new String(Files.readAllBytes(DOCUMENT), StandardCharsets.UTF_8);
 
-    assertTrue(content.contains(
-        "AqueousHydrogenSulfideOxidationS8StreamApplicationBatchReconciliationCheckpointManifestTransitionChainTransitionLedgerTransitionChainCheckpointTransitionChainCheckpointTransitionChainCheckpoint"));
+    assertTrue(content.contains("S8QualifiedTransitionChainCheckpoint"));
     assertTrue(content.contains("create(identifier, sequence, chain)"));
     assertTrue(content.contains("non-negative monotonically allocated sequence"));
     assertTrue(content.contains("constant time"));
