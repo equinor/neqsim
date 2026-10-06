@@ -49,6 +49,58 @@ RECOMMENDED_KEYS = [
     "benchmark_validation",
 ]
 
+#: Phrases that mean the task tuned a fluid model to measured PVT data.
+PVT_TUNING_HINTS = (
+    "tuned to pvt", "tuned to the pvt", "tune to pvt", "fluid symphony", "pvt tuning", "eos tuning",
+    "tuned the eos", "split factor", "regression against measured pvt", "kij tuning",
+)
+
+
+def _validate_pvt_tuning_quality(block) -> Tuple[List[str], List[str]]:
+    """Validate the pvt_tuning_quality block (the fluid-tuning reporting standard).
+
+    Required content: a before/after error for every experiment type used, the tuned parameters with their
+    bounds and an at-bound flag, and the samples or data left out of the tuning with the reason.
+    Returns (errors, warnings).
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    if not isinstance(block, dict):
+        return ["pvt_tuning_quality: must be a JSON object"], warnings
+    exps = block.get("experiments")
+    if not isinstance(exps, list) or not exps:
+        warnings.append("pvt_tuning_quality.experiments: add one row per sample and experiment type with before/after error")
+    else:
+        for i, e in enumerate(exps):
+            if not isinstance(e, dict):
+                errors.append(f"pvt_tuning_quality.experiments[{i}]: must be an object")
+                continue
+            for need in ("sample", "type", "metric", "before", "after"):
+                if need not in e:
+                    warnings.append(f"pvt_tuning_quality.experiments[{i}].{need}: missing field")
+    params = block.get("parameters")
+    if not isinstance(params, list) or not params:
+        warnings.append("pvt_tuning_quality.parameters: list the tuned parameters with initial, tuned, lower, upper and at_bound")
+    else:
+        for i, p in enumerate(params):
+            if not isinstance(p, dict):
+                errors.append(f"pvt_tuning_quality.parameters[{i}]: must be an object")
+                continue
+            for need in ("name", "tuned", "lower", "upper", "at_bound"):
+                if need not in p:
+                    warnings.append(f"pvt_tuning_quality.parameters[{i}].{need}: missing field")
+    if "exclusions" not in block:
+        warnings.append("pvt_tuning_quality.exclusions: list excluded samples/data with reasons (use [] when none)")
+    if not block.get("figures"):
+        warnings.append("pvt_tuning_quality.figures: add the parity/curve figure files of the tuning")
+    return errors, warnings
+
+
+def _mentions_pvt_tuning(results: dict) -> bool:
+    text = " ".join(str(results.get(k, "")) for k in ("approach", "conclusions", "objective", "task_statement")).lower()
+    return any(h in text for h in PVT_TUNING_HINTS)
+
+
 
 def _validate_benchmark(bench) -> List[str]:
     """Validate the benchmark_validation block. Returns a list of error strings.
@@ -184,6 +236,18 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
     bench = results.get("benchmark_validation")
     if bench is not None:
         errors.extend(_validate_benchmark(bench))
+
+    # pvt_tuning_quality (mandatory reporting block when a fluid is tuned to PVT data)
+    ptq = results.get("pvt_tuning_quality")
+    if ptq is not None:
+        e, w = _validate_pvt_tuning_quality(ptq)
+        errors.extend(e)
+        warnings.extend(w)
+    elif _mentions_pvt_tuning(results):
+        warnings.append(
+            "pvt_tuning_quality: the task tunes a fluid to PVT data but reports no pvt_tuning_quality block "
+            "(before/after error per experiment, tuned parameters with bounds, exclusions, figures)"
+        )
 
     # figure_discussion entries
     fd = results.get("figure_discussion")
