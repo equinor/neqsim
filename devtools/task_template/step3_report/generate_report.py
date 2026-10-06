@@ -2384,6 +2384,8 @@ def _prose_to_html(text):
 def _benchmark_tests(results):
     """Normalize legacy ``tests`` lists and named benchmark mappings for all outputs."""
     benchmark = (results or {}).get("benchmark_validation") or {}
+    if isinstance(benchmark, list):
+        benchmark = {"tests": benchmark}
     if not isinstance(benchmark, dict):
         return []
     listed = next((benchmark[key] for key in ("tests", "points")
@@ -4514,7 +4516,7 @@ def format_benchmark_html(results):
     bv = results.get("benchmark_validation", {})
     if not bv:
         return ""
-    source = bv.get("source", "")
+    source = bv.get("source", "") if isinstance(bv, dict) else ""
     h = '<p>{}: {}</p>\n'.format(_t("Reference source"), _html_escape(str(source))) if source else ""
     headers, rows, status_idx = _benchmark_table(results)
     h += '<table class="benchmark-table"><thead><tr>'
@@ -4773,7 +4775,7 @@ def add_benchmark_word_table(doc, results):
     bv = results.get("benchmark_validation", {})
     if not bv:
         return
-    if bv.get("source"):
+    if isinstance(bv, dict) and bv.get("source"):
         doc.add_paragraph("{}: {}".format(_t("Reference source"), bv["source"]))
     headers, data_rows, status_idx = _benchmark_table(results)
     if not data_rows:
