@@ -76,6 +76,9 @@ class CO2KClHydrateAccuracyAssessmentTest {
     assertEquals(29, report.size());
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get("target/co2-kcl-hydrate-dholabhai1993-assessment.csv"), report, StandardCharsets.UTF_8);
+    for (String row : report) {
+      System.out.println("CO2_KCL_HYDRATE_DIAGNOSTIC," + row);
+    }
   }
 
   private static DiagnosticResult calculate(ReferencePoint point, String scenario, double naclFraction,
