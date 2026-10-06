@@ -243,7 +243,8 @@ def test_exact_static_invocation(client):
 def test_explicit_operation_contracts(client):
     entries = []
     for capability_id in ("sulfur-vapour-pressure", "engineering-unit-conversions",
-                          "slug-impact-force-screening", "exponential-decline-screening"):
+                          "slug-impact-force-screening", "exponential-decline-screening",
+                          "sweet-gas-pseudocritical-screening"):
         coverage_page = assert_success(
             client.call_capability(
                 {"action": "coverage", "view": "capabilities", "query": capability_id,
@@ -267,6 +268,8 @@ def test_explicit_operation_contracts(client):
         "nominal-to-effective-annual-decline",
         "effective-annual-to-nominal-decline",
         "two-point-exponential-decline-estimate",
+        "standing-pseudocritical-temperature", "standing-pseudocritical-pressure",
+        "sutton-pseudocritical-temperature", "sutton-pseudocritical-pressure",
     }
     require({operation.get("id") for operation in operations} == expected_ids,
             "explicit operation inventory drifted", operations)
@@ -299,6 +302,18 @@ def test_explicit_operation_contracts(client):
              "methodName": "rateExponential",
              "parameterTypes": ["double", "double", "double"],
              "arguments": [-1, 0.001, 365.25]}
+        ),
+        "INVOCATION_ERROR",
+    )
+
+
+    assert_error(
+        client.call_capability(
+            {"action": "invoke",
+             "className": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+             "methodName": "pseudoCriticalTemperatureSutton",
+             "parameterTypes": ["double"],
+             "arguments": [0.55]}
         ),
         "INVOCATION_ERROR",
     )

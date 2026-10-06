@@ -321,6 +321,23 @@ tier of the reference, whether the deviation is inside the reference's own
 uncertainty, and the three-graded-point check. Prefer it over hand-writing the
 block with pasted reference literals.
 
+## Principle 9a — Fluid tuning quality (any report that uses a tuned fluid)
+
+When a fluid was characterised or tuned to PVT data, the report must show **how
+good the tuning is**, not only that it was done. Required content: (1) per fluid,
+raw vs tuned vs lab for GOR, stock-tank density and saturation pressure with the
+tuned parameters and **bound flags** (a parameter pinned at its bound is a
+finding); (2) per-sample *prediction* error (Psat, GOR, STO, CME above/below Psat,
+DLE Rs/Bo, viscosity) with mean and worst case; (3) parity and CME/DLE overlay
+figures; (4) untuned or out-of-method fluids (gas cap, gas condensate) named and
+marked NOT TUNED, and lab inconsistencies flagged rather than fitted; (5) what of
+the tuning is carried into the downstream model. Put the numbers in
+`results.json` `tables` and `figure_captions`. A model that is validated against
+plant data but whose fluid quality is not shown is incomplete. Detailed recipe:
+`enterprise-process-notebook-workspace` (section "Fluid tuning quality is reported,
+always") and the community skills `neqsim-pvt-regression-characterization-factor`
+and `neqsim-pseudocomponent-split-characterization`.
+
 ## Principle 9b — Evidence Matrix for Safety Studies
 
 For safety-critical studies, especially trapped-liquid fire rupture, relief,
