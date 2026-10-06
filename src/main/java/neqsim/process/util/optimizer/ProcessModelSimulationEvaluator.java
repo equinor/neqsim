@@ -65,6 +65,53 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     ProcessBoundaryConstraintEvidence.Sample evaluate(ProcessModel model);
   }
 
+  /** Serializable callback that samples one registered group of plant-wide constraints after a model run. */
+  public interface PlantConstraintSampleGroupEvaluator extends Serializable {
+    /**
+     * Samples the complete registered group exactly once for one completed model evaluation.
+     *
+     * @param model completed process-model operating point
+     * @param calculationId evaluator-owned identity for this exact model evaluation
+     * @return immutable samples; missing registered rows are retained as unavailable evidence
+     */
+    List<PlantConstraintSample> evaluate(ProcessModel model, String calculationId);
+  }
+
+  /** Serializable callback that samples one typed plant constraint after a completed model run. */
+  public interface PlantConstraintSampleEvaluator extends Serializable {
+    /**
+     * Samples one exact plant constraint.
+     *
+     * @param model completed process-model operating point
+     * @param calculationId evaluator-owned identity for this exact model evaluation
+     * @return immutable sample, or null to retain explicit missing evidence
+     */
+    PlantConstraintSample evaluate(ProcessModel model, String calculationId);
+  }
+
+  /** Frozen plant-constraint group registration with a transient runtime sampler. */
+  private static final class PlantConstraintGroupRegistration implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /** Stable group identity. */
+    private final String id;
+
+    /** Immutable definitions sampled by the group. */
+    private final List<PlantConstraintDefinition> definitions;
+
+    /** Runtime sampler, intentionally not serialized with evaluator metadata. */
+    private final transient PlantConstraintSampleGroupEvaluator evaluator;
+
+    /** Creates one frozen group registration. */
+    private PlantConstraintGroupRegistration(String id, List<PlantConstraintDefinition> definitions,
+        PlantConstraintSampleGroupEvaluator evaluator) {
+      this.id = id;
+      this.definitions = Collections.unmodifiableList(new ArrayList<PlantConstraintDefinition>(definitions));
+      this.evaluator = evaluator;
+    }
+  }
+
   /** Finite-difference stencil used for objective gradients and constraint Jacobians. */
   public enum FiniteDifferenceMethod {
     /** One forward evaluation, or a backward evaluation when the upper bound is active. */
@@ -1477,6 +1524,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   /** Constraint definitions. */
   private List<ConstraintDefinition> constraints = new ArrayList<ConstraintDefinition>();
 
+  /** Plant-wide/shared/coupled constraint groups sampled once per completed model evaluation. */
+  private List<PlantConstraintGroupRegistration> plantConstraintGroups = new ArrayList<PlantConstraintGroupRegistration>();
+
   /** Step size for finite-difference sensitivities. */
   private double finiteDifferenceStep = 1e-4;
 
@@ -1995,6 +2045,12 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Frozen direct or strategy-generated origin. */
     private InstalledEquipmentCapacityEvidence.ConstraintOrigin capacityConstraintOrigin = InstalledEquipmentCapacityEvidence.ConstraintOrigin.UNKNOWN;
 
+    /** Typed plant-wide/shared/coupled definition, or null for ordinary constraints. */
+    private PlantConstraintDefinition plantConstraintDefinition;
+
+    /** Stable sampler-group identity for typed plant constraints. */
+    private String plantConstraintGroupId;
+
     /** Default constructor for serialization frameworks. */
     public ConstraintDefinition() {
     }
@@ -2354,6 +2410,32 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       this.capacityConstraintOrigin = origin == null ? InstalledEquipmentCapacityEvidence.ConstraintOrigin.UNKNOWN
           : origin;
       this.capturedCapacityConstraint = capacityConstraint;
+    }
+
+    /** @return true when this definition represents typed plant-wide/shared/coupled evidence */
+    public boolean isPlantConstraint() {
+      return plantConstraintDefinition != null;
+    }
+
+    /** @return immutable typed plant definition, or null for an ordinary constraint */
+    public PlantConstraintDefinition getPlantConstraintDefinition() {
+      return plantConstraintDefinition;
+    }
+
+    /** @return stable plant sampler-group identity, or null for an ordinary constraint */
+    public String getPlantConstraintGroupId() {
+      return plantConstraintGroupId;
+    }
+
+    /**
+     * Marks this normalized evaluator constraint as one typed plant registration.
+     *
+     * @param definition immutable plant definition
+     * @param groupId stable sampler-group identity
+     */
+    private void setPlantConstraintMetadata(PlantConstraintDefinition definition, String groupId) {
+      this.plantConstraintDefinition = definition;
+      this.plantConstraintGroupId = groupId;
     }
 
     /**
@@ -2863,6 +2945,9 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     /** Immutable qualified process-boundary evidence for this evaluated model state. */
     private List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence = Collections.emptyList();
 
+    /** Immutable typed plant-wide/shared/coupled evidence in registration order. */
+    private List<PlantConstraintEvidence> plantConstraintEvidence = Collections.emptyList();
+
     /** Additional scalar outputs. */
     private Map<String, Double> additionalOutputs = new LinkedHashMap<String, Double>();
 
@@ -3125,6 +3210,31 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       }
       processBoundaryConstraintEvidence = Collections
           .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(evidence));
+    }
+
+    /**
+     * Gets typed plant-wide/shared/coupled evidence sampled at this completed operating point.
+     *
+     * @return fresh immutable evidence in group and definition registration order
+     */
+    public List<PlantConstraintEvidence> getPlantConstraintEvidence() {
+      if (plantConstraintEvidence == null || plantConstraintEvidence.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return Collections.unmodifiableList(new ArrayList<PlantConstraintEvidence>(plantConstraintEvidence));
+    }
+
+    /**
+     * Sets typed plant evidence using a defensive immutable copy.
+     *
+     * @param evidence typed evidence in registration order
+     */
+    public void setPlantConstraintEvidence(List<PlantConstraintEvidence> evidence) {
+      if (evidence == null || evidence.isEmpty()) {
+        plantConstraintEvidence = Collections.emptyList();
+        return;
+      }
+      plantConstraintEvidence = Collections.unmodifiableList(new ArrayList<PlantConstraintEvidence>(evidence));
     }
 
     /**
@@ -3583,6 +3693,115 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   }
 
   /**
+   * Registers one typed plant-wide, shared-resource, or coupled-equipment constraint.
+   *
+   * <p>
+   * The supplied callback is invoked exactly once after each completed process-model run. Its sample must use the
+   * evaluator-owned calculation identity passed to the callback. Missing, stale, non-finite, incomplete, or mismatched
+   * evidence fails closed through {@link PlantUtilizationSnapshot}; physical units and provenance remain in the typed
+   * evidence while optimizer arrays use normalized utilization and margin.
+   * </p>
+   *
+   * @param definition immutable plant constraint definition
+   * @param sampleEvaluator exact-calculation sample callback
+   * @return this evaluator for chaining
+   */
+  public ProcessModelSimulationEvaluator addPlantConstraint(final PlantConstraintDefinition definition,
+      final PlantConstraintSampleEvaluator sampleEvaluator) {
+    if (definition == null || sampleEvaluator == null) {
+      throw new IllegalArgumentException("Plant constraint definition and sampler are required");
+    }
+    return addPlantConstraintGroup(definition.getQualifiedId(), Arrays.asList(definition),
+        new PlantConstraintSampleGroupEvaluator() {
+          private static final long serialVersionUID = 1L;
+
+          /** {@inheritDoc} */
+          @Override
+          public List<PlantConstraintSample> evaluate(ProcessModel model, String calculationId) {
+            return Arrays.asList(sampleEvaluator.evaluate(model, calculationId));
+          }
+        });
+  }
+
+  /**
+   * Registers a coupled group of typed plant constraints that must be sampled together exactly once.
+   *
+   * <p>
+   * This grouped path is intended for adapters such as {@link PlantCommonShaftEvidence}, where speed agreement,
+   * casing-map margins, shaft power, driver power, torque, and gearbox evidence belong to the same completed model
+   * state. The group callback may return samples in any order; identity matching is exact and missing rows remain
+   * explicit fail-closed evidence.
+   * </p>
+   *
+   * @param groupId stable sampler-group identity
+   * @param definitions non-empty immutable plant definitions with unique qualified identities
+   * @param sampleEvaluator exact-calculation group callback
+   * @return this evaluator for chaining
+   */
+  public ProcessModelSimulationEvaluator addPlantConstraintGroup(String groupId,
+      List<PlantConstraintDefinition> definitions, PlantConstraintSampleGroupEvaluator sampleEvaluator) {
+    String validatedGroupId = requireNonBlank(groupId, "Plant constraint group identifier");
+    if (definitions == null || definitions.isEmpty() || sampleEvaluator == null) {
+      throw new IllegalArgumentException("Plant constraint group requires definitions and a sampler");
+    }
+    List<PlantConstraintDefinition> validated = new ArrayList<PlantConstraintDefinition>();
+    for (PlantConstraintDefinition definition : definitions) {
+      if (definition == null) {
+        throw new IllegalArgumentException("Plant constraint group must not contain null definitions");
+      }
+      if (hasPlantConstraintDefinition(definition.getQualifiedId(), validated)) {
+        throw new IllegalArgumentException("Duplicate plant constraint identity: " + definition.getQualifiedId());
+      }
+      validated.add(definition);
+    }
+    for (PlantConstraintGroupRegistration group : plantConstraintGroups) {
+      if (validatedGroupId.equals(group.id)) {
+        throw new IllegalArgumentException("Duplicate plant constraint group identity: " + validatedGroupId);
+      }
+      for (PlantConstraintDefinition definition : validated) {
+        if (hasPlantConstraintDefinition(definition.getQualifiedId(), group.definitions)) {
+          throw new IllegalArgumentException("Plant constraint is already registered: " + definition.getQualifiedId());
+        }
+      }
+    }
+
+    plantConstraintGroups.add(new PlantConstraintGroupRegistration(validatedGroupId, validated, sampleEvaluator));
+    for (PlantConstraintDefinition definition : validated) {
+      if (!definition.isEnabled()) {
+        continue;
+      }
+      ConstraintDefinition normalized = new ConstraintDefinition();
+      normalized.setName(definition.getQualifiedId());
+      normalized.setUnit("1");
+      normalized.setType(ConstraintDefinition.Type.UPPER_BOUND);
+      normalized.setUpperBound(1.0);
+      normalized.setHard(definition.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
+          || definition.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD);
+      normalized.setPlantConstraintMetadata(definition, validatedGroupId);
+      constraints.add(normalized);
+    }
+    return this;
+  }
+
+  /** Checks one qualified identity against an existing definition list. */
+  private static boolean hasPlantConstraintDefinition(String qualifiedId, List<PlantConstraintDefinition> definitions) {
+    for (PlantConstraintDefinition definition : definitions) {
+      if (qualifiedId.equals(definition.getQualifiedId())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Validates required public registration text. */
+  private static String requireNonBlank(String value, String label) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException(label + " must not be blank");
+    }
+    return value.trim();
+  }
+
+  /**
    * Gets all constraints.
    *
    * @return constraint definitions
@@ -3758,6 +3977,46 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     return false;
   }
 
+  /** Samples every registered plant group once and preserves fail-closed typed evidence. */
+  private List<PlantConstraintEvidence> snapshotPlantConstraintEvidence(ProcessModel model, String calculationId,
+      boolean convergenceComplete) {
+    List<PlantConstraintEvidence> evidence = new ArrayList<PlantConstraintEvidence>();
+    for (PlantConstraintGroupRegistration group : plantConstraintGroups) {
+      PlantConstraintRegistry registry = new PlantConstraintRegistry();
+      for (PlantConstraintDefinition definition : group.definitions) {
+        registry.register(definition);
+      }
+      PlantUtilizationSnapshot.Builder builder = PlantUtilizationSnapshot.builder(registry, calculationId)
+          .convergenceComplete(convergenceComplete);
+      try {
+        if (group.evaluator == null) {
+          throw new IllegalStateException("Plant constraint sampler is unavailable after serialization");
+        }
+        List<PlantConstraintSample> samples = group.evaluator.evaluate(model, calculationId);
+        if (samples != null) {
+          for (PlantConstraintSample sample : samples) {
+            if (sample != null) {
+              builder.sample(sample);
+            }
+          }
+        }
+      } catch (RuntimeException exception) {
+        builder = PlantUtilizationSnapshot.builder(registry, calculationId).convergenceComplete(convergenceComplete);
+        String diagnostic = exception.getMessage() == null || exception.getMessage().trim().isEmpty()
+            ? exception.getClass().getSimpleName()
+            : exception.getMessage();
+        for (PlantConstraintDefinition definition : group.definitions) {
+          builder.sample(PlantConstraintSample.builder(definition.getQualifiedId(), calculationId)
+              .status(PlantConstraintSample.SampleStatus.EXCEPTION).unit(definition.getUnit())
+              .basis(definition.getBasis()).provenance(definition.getProvenance())
+              .diagnostic("Plant constraint group " + group.id + " failed: " + diagnostic).build());
+        }
+      }
+      evidence.addAll(builder.build().getEvidence());
+    }
+    return Collections.unmodifiableList(evidence);
+  }
+
   /**
    * Gets optimization bounds as a matrix.
    *
@@ -3885,10 +4144,38 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       for (InstalledEquipmentCapacityEvidence evidence : installedCapacityEvidence) {
         installedCapacityByIdentity.put(evidence.getQualifiedConstraintName(), evidence);
       }
+      String calculationId = "process-model-evaluation-" + evaluationCount;
+      List<PlantConstraintEvidence> plantConstraintEvidence = snapshotPlantConstraintEvidence(processModel,
+          calculationId, processModel.isModelConverged());
+      Map<String, PlantConstraintEvidence> plantConstraintByIdentity = new LinkedHashMap<String, PlantConstraintEvidence>();
+      for (PlantConstraintEvidence evidence : plantConstraintEvidence) {
+        plantConstraintByIdentity.put(evidence.getQualifiedConstraintId(), evidence);
+      }
       double penaltySum = 0.0;
       boolean feasible = processModel.isModelConverged();
       for (int constraintIndex = 0; constraintIndex < constraints.size(); constraintIndex++) {
         ConstraintDefinition constraint = constraints.get(constraintIndex);
+        PlantConstraintEvidence evaluatedPlant = constraint.isPlantConstraint()
+            ? plantConstraintByIdentity.get(constraint.getPlantConstraintDefinition().getQualifiedId())
+            : null;
+        if (constraint.isPlantConstraint()) {
+          if (evaluatedPlant == null || !evaluatedPlant.hasAvailableEvidence()) {
+            constraintValues[constraintIndex] = Double.NaN;
+            margins[constraintIndex] = Double.NEGATIVE_INFINITY;
+            penaltySum += constraint.getPenaltyWeight();
+            feasible = false;
+            continue;
+          }
+          constraintValues[constraintIndex] = evaluatedPlant.getNormalizedUtilization();
+          margins[constraintIndex] = -evaluatedPlant.getNormalizedResidual();
+          if (margins[constraintIndex] < 0.0) {
+            penaltySum += constraint.penaltyFromMargin(margins[constraintIndex]);
+          }
+          if (!evaluatedPlant.isFeasible()) {
+            feasible = false;
+          }
+          continue;
+        }
         ProcessBoundaryConstraintEvidence evaluatedBoundary = null;
         if (constraint.isBoundaryConstraint()) {
           ProcessBoundaryConstraintEvidence.Sample sample = constraint.evaluateBoundarySample(processModel);
@@ -3950,6 +4237,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       result.setPenaltySum(penaltySum);
       result.setInstalledEquipmentCapacityEvidence(installedCapacityEvidence);
       result.setProcessBoundaryConstraintEvidence(boundaryEvidence);
+      result.setPlantConstraintEvidence(plantConstraintEvidence);
       List<BottleneckStatus> rankedCapacityConstraints = toBottleneckStatuses(installedCapacityEvidence);
       result.setRankedCapacityConstraints(rankedCapacityConstraints);
       result.setActiveBottleneck(selectActiveBottleneck(rankedCapacityConstraints));
@@ -3976,6 +4264,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       double[] margins = new double[constraints.size()];
       Arrays.fill(margins, Double.NEGATIVE_INFINITY);
       result.setConstraintMargins(margins);
+      result.setPlantConstraintEvidence(Collections.<PlantConstraintEvidence>emptyList());
     }
 
     result.setEvaluationTimeMs(System.currentTimeMillis() - startTime);

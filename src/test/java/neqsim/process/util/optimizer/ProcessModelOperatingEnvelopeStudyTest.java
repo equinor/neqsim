@@ -218,9 +218,10 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("producer-a-rate", first.getAxisActionId());
     assertEquals(0, first.getFromSequenceIndex());
     assertEquals(2, first.getToSequenceIndex());
-    assertEquals("producer-b-rate", second.getAxisActionId());
-    assertEquals(2, second.getFromSequenceIndex());
+    assertEquals("producer-a-rate", second.getAxisActionId());
+    assertEquals(1, second.getFromSequenceIndex());
     assertEquals(3, second.getToSequenceIndex());
+    assertEquals("gathering::gathering sink/producer A rate", second.getToConstraint());
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }
