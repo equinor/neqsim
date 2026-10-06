@@ -217,18 +217,23 @@ liquid reflux divided by distillate flow (L/D), or reboiler vapor return divided
 flow (V/B), minus the target. Duty residuals are the published duty minus the target in W.
 An unavailable ratio reports `NaN` and prevents acceptance. Direct controls participate in
 specification acceptance even though they do not need the outer temperature-specification loop.
-Product reconciliation can change a terminal ratio; the MESH solver then attempts an isolated
-simultaneous correction and accepts it only if the published specifications and residual gates pass.
+Product reconciliation can change a terminal ratio; the MESH solver first attempts an isolated
+simultaneous correction. If Newton is rejected and the ratio remains unsatisfied, a fresh isolated
+candidate uses sequential tray sweeps from the retained state. These sweeps update terminal ratio
+flashes and connected material flows together. Sequential recovery must satisfy all physical
+convergence gates and improve the MESH residual; rejected candidates leave the original column
+unchanged. Recovery uses the existing convergence settings and iteration limit. It does not guarantee
+convergence of every crude-fractionation or sensitivity case; an unsolved column remains invalid
+for product evaluation.
 
 The simultaneous solver enforces partial-condenser `L - R D = 0` and reboiler
 `V - B L = 0` instead of a fixed terminal duty equation. A terminal temperature supplied with an
 active ratio is an initialization seed; the solved duty follows from the material-stream enthalpy
 balance. Both full residual evaluation and finite-difference Jacobian evaluation use the same
 boundary equations.
-For the guarded correction of unsatisfied ratios, Newton starts directly from the bubble-point seed; the
-Sum-Rates energy correction assumes terminal duty equations and can collapse a required
-liquid reflux stream. Explicit standalone Naphtali-Sandholm retains its established initialization
-sequence. Both paths enforce the same terminal equations and acceptance gates.
+Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
+sequential ratio correction preserves the current tray state instead of replacing it with a
+bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.
 
 Terminal ratio flashes use the bracketed vapor-fraction temperature search. A vapor-only
 condenser inlet can therefore cool into the two-phase region, and a liquid-only reboiler

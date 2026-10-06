@@ -3900,22 +3900,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Try one Newton polishing pass on a deep-copied candidate column and accept it only if the MESH residual norm
-   * improves.
+   * Try isolated Newton polishing, then sequential ratio recovery if Newton is rejected.
+   *
+   * @param id calculation identifier
+   * @param baselineResidualNorm accepted residual norm before the polish attempt
+   * @return true when an isolated correction is accepted
+   */
+  private boolean tryGuardedMeshNewtonPolish(UUID id, double baselineResidualNorm) {
+    if (tryGuardedMeshPolishCandidate(id, baselineResidualNorm, false)) {
+      return true;
+    }
+    return !specificationsSatisfied() && tryGuardedMeshPolishCandidate(id, baselineResidualNorm, true);
+  }
+
+  /**
+   * Correct a deep-copied candidate without changing the accepted column on failure.
    *
    * <p>
-   * Running the aggressive Newton accelerator on a candidate protects the accepted inside-out solution from flash
-   * failures, non-finite states, or residual growth. This provides a bounded line-search style guard for the
-   * residual-monitored solver without changing the legacy Newton solver contract. Unsatisfied terminal specifications
-   * use the simultaneous MESH correction because changing terminal temperature alone does not enforce their flow
-   * boundary equations. Frozen pumparound returns are retained on the isolated candidate.
+   * Sequential recovery retains the current tray state and applies terminal ratio flashes together with connected
+   * material flows. It is considered only after Newton rejection and must satisfy all physical convergence gates.
+   * Frozen pumparound returns are retained on either candidate.
    * </p>
    *
    * @param id calculation identifier
    * @param baselineResidualNorm accepted residual norm before the polish attempt
-   * @return {@code true} if the candidate polish was accepted
+   * @param sequentialRatioRecovery use sequential sweeps instead of the existing Newton correction
+   * @return true when the candidate satisfies its acceptance gates
    */
-  private boolean tryGuardedMeshNewtonPolish(UUID id, double baselineResidualNorm) {
+  private boolean tryGuardedMeshPolishCandidate(UUID id, double baselineResidualNorm, boolean sequentialRatioRecovery) {
     if (!Double.isFinite(baselineResidualNorm)) {
       return false;
     }
@@ -3944,7 +3956,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     try {
-      if (!specificationsSatisfied()) {
+      if (sequentialRatioRecovery) {
+        candidate.solveSequential(id, 1.0);
+      } else if (!specificationsSatisfied()) {
         if (!candidate.solveNaphtaliSandholm(id, true)) {
           return false;
         }
@@ -3957,7 +3971,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       return false;
     }
 
-    if (!candidate.specificationsSatisfied()) {
+    if (!candidate.specificationsSatisfied() || (sequentialRatioRecovery && !candidate.solved())) {
       return false;
     }
     double candidateResidualNorm = candidate.lastMeshResidual == null ? Double.NaN

@@ -726,7 +726,7 @@
               "double"
             ],
             "expected": 785.3981633974483,
-            "absoluteTolerance": 1e-9
+            "absoluteTolerance": 1e-09
           },
           "evidenceSources": [
             "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
@@ -766,7 +766,7 @@
               "double"
             ],
             "expected": 1110.7207345395916,
-            "absoluteTolerance": 1e-9
+            "absoluteTolerance": 1e-09
           },
           "evidenceSources": [
             "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
@@ -812,7 +812,7 @@
               "double"
             ],
             "expected": 1193.8052083641214,
-            "absoluteTolerance": 1e-9
+            "absoluteTolerance": 1e-09
           },
           "evidenceSources": [
             "src/test/java/neqsim/process/equipment/pipeline/SlugImpactForceTest.java",
@@ -940,7 +940,7 @@
               "double"
             ],
             "expected": 305976.87659290305,
-            "absoluteTolerance": 0.000001
+            "absoluteTolerance": 1e-06
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
@@ -1050,6 +1050,26 @@
           ]
         }
       ]
+    },
+    {
+      "id": "surf-network-hydraulic-fidelity",
+      "title": "Detailed steady SURF network hydraulic fidelity",
+      "domain": "flow-assurance",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.process.equipment.network.LoopedPipeNetwork"
+      ],
+      "skills": [
+        "neqsim-pipeline-and-terminal-networks",
+        "neqsim-subsea-and-wells"
+      ],
+      "agents": [
+        "field-development"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/network/NetworkHydraulicFidelityTest.java"
+      ],
+      "limitations": "Discovery through runCapability inspectApi only; this instance-based Java/Python graph builder has no executable static MCP operation registered. Edge-local Darcy/Beggs-Brill/two-fluid steady calculations require NEWTON_RAPHSON. Live WellSystem/injection coupling and mixed-fidelity network transients remain campaign work; standalone agreement is integration evidence, not field qualification."
     }
   ]
 }
