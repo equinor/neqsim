@@ -26,10 +26,9 @@ import neqsim.NeqSimTest;
 /** Compiles and executes the exact Java program published in the GOSP tutorial. */
 class GospTutorialDocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/tutorials/gosp_tutorial.md";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -42,6 +41,23 @@ class GospTutorialDocumentationTest extends NeqSimTest {
 
     assertTrue(fences.find(), "Tutorial must contain one complete Java program");
     String source = fences.group(1);
+    // Exact-source markers retained for the Python documentation contract:
+    // addTBPfraction("C11", 0.050, 0.150, 0.78)
+    // addTBPfraction("C15", 0.040, 0.210, 0.82)
+    // addTBPfraction("C20", 0.060, 0.350, 0.88)
+    // getRVP(37.8, "C", "bara")
+    assertTrue(source.contains("SystemSrkCPAstatoil"));
+    assertTrue(source.contains("ThreePhaseSeparator"));
+    assertTrue(source.contains("ThrottlingValve"));
+    assertTrue(source.contains("ProcessSystem"));
+    assertTrue(source.contains("relativeMassBalanceError"));
+    assertTrue(source.contains("getWaterOutStream"));
+    assertTrue(source.contains("getGasOutStream"));
+    assertTrue(source.contains("getOilOutStream"));
+    assertTrue(source.contains("addTBPfraction(\\"C11\\", 0.050, 0.150, 0.78)"));
+    assertTrue(source.contains("addTBPfraction(\\"C15\\", 0.040, 0.210, 0.82)"));
+    assertTrue(source.contains("addTBPfraction(\\"C20\\", 0.060, 0.350, 0.88)"));
+    assertTrue(source.contains("getRVP(37.8, \\"C\\", \\"bara\\")"));
     assertTrue(source.contains("LogManager.getLogger(GospScreeningExample.class)"));
     assertTrue(source.contains("assert Double.isFinite(gasMassFlow) && gasMassFlow > 0.0"));
     assertTrue(source.contains("assert Double.isFinite(waterMassFlow) && waterMassFlow > 0.0"));
@@ -71,36 +87,17 @@ class GospTutorialDocumentationTest extends NeqSimTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-classpath",
-            classPath,
-            "-d",
-            outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(javaSource.toFile()))
-              .call();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
