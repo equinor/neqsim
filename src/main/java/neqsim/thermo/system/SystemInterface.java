@@ -119,13 +119,22 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void addComponent(String name, double moles);
 
   /**
-   * addComponent.
+   * Add a component with user supplied critical properties.
+   *
+   * <p>
+   * If {@code name} is in the NeqSim database the database component is used and only Tc, Pc and the acentric factor
+   * are overridden. If it is not (for example "C7P"), a placeholder component is created: its ideal-gas heat capacity
+   * (CpA..CpE) is a generic default, not a value for the given substance, so Cp, enthalpy and temperature changes
+   * (compressors, coolers, JT) are wrong even though density and phase equilibrium look correct. Use
+   * {@link #addTBPfraction(String, double, double, double)} for hydrocarbon pseudo components, or set the coefficients
+   * with {@code ComponentInterface.setCpA..setCpE}.
+   * </p>
    *
    * @param name Name of the component to add. See NeqSim database for component in the database.
    * @param moles number of moles (per second) of the component to be added to the fluid
    * @param TC Critical temperature [K]
    * @param PC Critical pressure [bara]
-   * @param acs a double
+   * @param acs acentric factor
    */
   public void addComponent(String name, double moles, double TC, double PC, double acs);
 

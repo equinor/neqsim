@@ -88,7 +88,14 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.IsNaNException;
 
 /**
- * ThermodynamicOperations class.
+ * Class for running thermodynamic calculations on a {@link SystemInterface}.
+ *
+ * <p>
+ * This class dispatches flash, phase-boundary, hydrate, solid, and related calculations to their corresponding
+ * operation implementations. Construct it with a thermodynamic system, then call the method for the desired
+ * calculation. Operations generally update that associated system in place; {@link #getOperation()} provides access to
+ * the most recently selected operation and its results.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -154,8 +161,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a flash at given temperature, pressure and specified volume. The number of moles in the system
-   * are changed to match the specified volume.
+   * Perform a flash at given temperature, pressure and specified volume. The number of moles in the system are changed
+   * to match the specified volume.
    *
    * @param volumeSpec is the specified volume
    * @param unit Supported units are m3
@@ -164,12 +171,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     unit = "m3";
     TPflash();
     double startVolume = system.getVolume(unit);
-    system.setTotalNumberOfMoles(system.getNumberOfMoles() * volumeSpec / startVolume);
+    system.setTotalNumberOfMoles(system.getTotalNumberOfMoles() * volumeSpec / startVolume);
     system.init(3);
   }
 
   /**
-   * TPflash.
+   * Perform a temperature-pressure flash.
    */
   public void TPflash() {
     // Check if system is Soreide-Whitson and use the special flash if so
@@ -250,7 +257,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * TPflash.
+   * Perform a temperature-pressure flash.
    *
    * @param checkForSolids Set true to do solid phase check and calculations
    */
@@ -444,10 +451,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * PHflash.
+   * Perform a pressure-enthalpy flash.
+   *
+   * <p>
+   * Uses a specialized single-component PH flash if the system contains only one component and the specified enthalpy
+   * is within the valid range.
+   * </p>
    *
    * @param Hspec a double
-   * @param type a int
+   * @param type flash type (0 = standard) or (1 = direct PH flash if not pure component)
    */
   public void PHflash(double Hspec, int type) {
     if (isPureComponentWithinEnthalpyRange(Hspec)) {
@@ -458,6 +470,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     getOperation().run();
   }
 
+  /**
+   * Checks if the system contains only one component and the specified enthalpy is within the valid range for a
+   * single-component PH flash.
+   *
+   * @param Hspec specified total enthalpy in J
+   * @return true if the system is a pure component and the enthalpy is within the valid range, false otherwise
+   */
   private boolean isPureComponentWithinEnthalpyRange(double Hspec) {
     if (system.getPhase(0).getNumberOfComponents() != 1) {
       return false;
