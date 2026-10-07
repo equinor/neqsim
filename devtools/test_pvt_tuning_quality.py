@@ -1,9 +1,7 @@
 """Tests of the pvt_tuning_quality reporting standard: validator checks and report table expansion."""
 
 import importlib.util
-import os
 import sys
-import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
