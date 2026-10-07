@@ -287,7 +287,7 @@ public class ComponentNameResolverTest {
 
     assertTrue(guide.startsWith("---\n"));
     assertTrue(guide.contains("absolute bara"));
-    assertTrue(guide.contains("molar mass is read in kg/mol"));
+    assertTrue(guide.replaceAll("\\s+", " ").contains("molar mass is read in kg/mol"));
     assertTrue(guide.contains("../component_list#component-name-resolution"));
     assertTrue(guide.contains("## Database and pseudo-components"));
     assertFalse(guide.contains("System.out"));
@@ -306,7 +306,7 @@ public class ComponentNameResolverTest {
     String source = fence.group(1);
 
     assertTrue(source.contains("new SystemSrkEos(298.15, 50.0)"));
-    assertTrue(source.contains("fluid.addComponent(\"2,2,4-trimethylpentane\", 0.10)"));
+    assertTrue(source.contains("fluid.addComponent(\"2,2,4-trimethylpentane\", 1.0)"));
     assertTrue(source.contains("fluid.getComponent(\"isooctane\")"));
     assertTrue(source.contains("phase.getComponent(\"ISOOCTANE\")"));
     assertTrue(source.contains("operations.TPflash()"));
@@ -322,7 +322,8 @@ public class ComponentNameResolverTest {
   /** Reads the component package guide from the repository root. */
   private String readComponentGuide() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    return new String(Files.readAllBytes(repositoryRoot.resolve(COMPONENT_GUIDE)), StandardCharsets.UTF_8);
+    return new String(Files.readAllBytes(repositoryRoot.resolve(COMPONENT_GUIDE)), StandardCharsets.UTF_8)
+        .replace("\r\n", "\n");
   }
 
   /** Compiles one extracted Java source and invokes its main method with assertions enabled. */

@@ -31,9 +31,9 @@ public final class ComponentPropertiesExample {
 
   public static void main(String[] args) {
     SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
-    fluid.addComponent("methane", 0.80);
-    fluid.addComponent("ethane", 0.10);
-    fluid.addComponent("2,2,4-trimethylpentane", 0.10);
+    fluid.addComponent("methane", 8.0);
+    fluid.addComponent("ethane", 1.0);
+    fluid.addComponent("2,2,4-trimethylpentane", 1.0);
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
@@ -44,6 +44,8 @@ public final class ComponentPropertiesExample {
     ComponentInterface alias = fluid.getComponent("isooctane");
     assert canonical != null;
     assert alias != null;
+    assert fluid.hasComponent("ISOOCTANE");
+    assert fluid.getPhase(0).getComponent("ISOOCTANE") != null;
     assert canonical.getComponentName().equals(alias.getComponentName());
 
     ComponentInterface methane = fluid.getComponent("methane");
@@ -97,12 +99,12 @@ fixed: they depend on the selected model, mixing rule, composition, temperature,
 
 ## Names and aliases
 
-`addComponent`, `hasComponent`, and `getComponent` use the shared component-name resolver.
-Recognized systematic names, common aliases, database spellings, and letter-case variants resolve
+`addComponent`, `hasComponent(String)`, and `getComponent` use the shared component-name resolver.
+Recognized aliases, systematic names, and case variants resolve
 to the same canonical database name. In the example, `2,2,4-trimethylpentane`, `isooctane`, and
 `224-TM-C5` identify the same component.
 
-Unknown or ambiguous text is not guessed. Check `hasComponent(name)` before dereferencing a
+Unknown, ambiguous, and near-miss inputs are not guessed. Check `hasComponent(name)` before dereferencing a
 user-supplied name, and treat a `null` result from `getComponent(name)` as an input-validation
 failure. The [component reference list](../component_list#component-name-resolution) documents
 the supported name-resolution and mutation rules.
