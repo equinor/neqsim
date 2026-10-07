@@ -274,3 +274,104 @@ def test_cli_defaults_to_the_task_root(tmp_path, monkeypatch, capsys):
     assert "reference_compressor_station" in capsys.readouterr().out
     with pytest.raises(SystemExit, match="also looked in the task root"):
         cli.main(["cycle", "no_such_task"])
+
+
+
+def test_state_schema_migrates_and_future_schema_fails_closed(reference, tmp_path):
+    from neqsim_continuous.state import read_state
+
+    task = _copy(reference, tmp_path, "state_schema")
+    path = os.path.join(task, "continuous", "state.json")
+    with open(path, encoding="utf-8") as state_file:
+        legacy = json.load(state_file)
+    legacy.pop("schema_version", None)
+    with open(path, "w", encoding="utf-8") as state_file:
+        json.dump(legacy, state_file)
+    migrated = read_state(task)
+    assert migrated["schema_version"] == "1.1"
+    assert migrated["migrated_from"] == "1.0"
+    with open(path, encoding="utf-8") as state_file:
+        migrated_on_disk = json.load(state_file)
+    assert migrated_on_disk["schema_version"] == "1.1"
+
+    future = dict(migrated, schema_version="2.0")
+    with open(path, "w", encoding="utf-8") as state_file:
+        json.dump(future, state_file)
+    with pytest.raises(nc.StateSchemaError, match="Upgrade NeqSim"):
+        nc.status(task)
+
+
+def test_cycle_resumes_same_id_on_another_day(reference, tmp_path):
+    task = _copy(reference, tmp_path, "cross_day_cycle")
+    first = run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc), no_agent=True)
+    cycle_path = os.path.join(task, "continuous", "cycles", first["cycle_id"], "cycle.json")
+    with open(cycle_path, encoding="utf-8") as cycle_file:
+        interrupted = json.load(cycle_file)
+    interrupted["status"] = "running"
+    interrupted["stages"] = interrupted["stages"][:3]
+    interrupted.pop("finished_at", None)
+    with open(cycle_path, "w", encoding="utf-8") as cycle_file:
+        json.dump(interrupted, cycle_file)
+
+    resumed = run_cycle(task, now=datetime(2025, 11, 2, tzinfo=timezone.utc), no_agent=True)
+    assert resumed["cycle_id"] == first["cycle_id"]
+    assert resumed["status"] == "complete"
+    assert resumed["resume_count"] == 1
+    assert resumed["recovery"]["kind"] == "interrupted_cycle"
+    assert len(list_cycles(task)) == 1
+
+
+def test_cycle_resume_preserves_completed_side_effect_metadata(reference, tmp_path):
+    task = _copy(reference, tmp_path, "resume_side_effects")
+    first = run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc), no_agent=True)
+    assert first["notifications"]
+    assert first["agent_review"]
+    cycle_path = os.path.join(task, "continuous", "cycles", first["cycle_id"], "cycle.json")
+    with open(cycle_path, encoding="utf-8") as cycle_file:
+        interrupted = json.load(cycle_file)
+    interrupted["status"] = "running"
+    interrupted.pop("finished_at", None)
+    with open(cycle_path, "w", encoding="utf-8") as cycle_file:
+        json.dump(interrupted, cycle_file)
+
+    resumed = run_cycle(task, now=datetime(2025, 11, 2, tzinfo=timezone.utc), no_agent=True)
+    assert resumed["cycle_id"] == first["cycle_id"]
+    assert resumed["notifications"] == first["notifications"]
+    assert resumed["agent_review"] == first["agent_review"]
+
+
+def test_solve_adopts_completed_uncheckpointed_cycle(reference, tmp_path):
+    from neqsim_continuous.solve import DEFAULT_SOLVE_STAGES
+    from neqsim_continuous.state import write_state
+
+    task = _copy(reference, tmp_path, "solve_recovery")
+    manifest = run_cycle(task, mode="solve",
+                         now=datetime(2025, 11, 1, tzinfo=timezone.utc),
+                         stages=DEFAULT_SOLVE_STAGES, no_agent=True)
+    write_state(task, {
+        "state": "solving", "phase": "solving", "history": [], "agent_sessions": 0,
+        "until": "goal",
+        "solve_session": {"id": "S-test", "status": "running",
+                          "started_at": "2025-11-01T00:00:00+00:00", "until": "goal"},
+    })
+    state = nc.solve(task, until="goal", no_agent=True)
+    matching = [entry for entry in state["history"] if entry["cycle"] == manifest["cycle_id"]]
+    assert len(matching) == 1
+    assert matching[0]["recovered"] is True
+    assert state["solve_session"]["status"] == "complete"
+
+
+def test_five_second_status_and_resume_cli(reference, tmp_path, capsys):
+    task = _copy(reference, tmp_path, "five_second_status")
+    state = nc.solve(task, until="goal", no_agent=True)
+    view = nc.status(task)
+    for key in ("goal", "conclusion", "baseline_result", "best_validated", "attempts",
+                "rejected_hypotheses", "blockers", "evidence", "what_changed",
+                "next_action", "last_run", "next_run", "resume", "state_schema"):
+        assert key in view
+    assert view["attempts"] == len(state["history"])
+    assert view["state_schema"] == "1.1"
+    assert cli.main(["resume", task, "--no-agent"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["resumed"] is False
+    assert payload["status"]["state"] == "goal_met"

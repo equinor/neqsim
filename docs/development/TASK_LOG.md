@@ -1168,3 +1168,20 @@ absolute tolerance and the exchanger guide documents the duty/LMTD relation.
 **Keywords:** tie-in, host bottleneck, utilisation register, plan profiles by field, annual-mean and p90-day rates, linear response per (unit, metric), ullage, Monte Carlo on response surface, turndown versus capacity
 **Solution:** Every manifold of the existing platform model is split into oil, gas and water at standard conditions with the model EOS and scaled to the plan rates of its field; the satellite fluid is mapped to the model pseudo-components by molar-mass interpolation and mixed into the HP manifold. Eleven cases (host plan, three satellite profiles, host upside, x2 satellite) at annual-mean and p90-day rates ran as resumable parallel jobs; ullage, tornado and a 20 000-draw Monte Carlo come from a response surface fitted per (unit, metric) to the runs.
 **Notes:** Scale every manifold of a field, including the test-separator manifold; leaving it out added about 1 MSm3/d gas to every case. Interpolate per (unit, metric): the binding metric of a vessel switched from water to oil when the satellite oil was added and the best-metric slope was wrong by a factor of three. Surge and minimum-flow rows are turndown, not capacity. Annual-mean plan rates hid the exceedances that appear at p90-day rates (PDM p90 over mean 1.17-1.21). Case runs at low gas flow (swing compressors idle) took 15-60 min or did not converge; plan the run budget for the declining years. `generate_work_record.py` now accepts a list-form `figure_captions`. Produced water and water injection are outside the model: use demonstrated peaks and one STID design case and say so.
+
+### 2026-10-07 — Backport conservative optimizer bracket discovery to live-well PR
+**Type:** G (Workflow)
+**Keywords:** optimizer, compressor, replay, feasible bracket, CI
+**Solution:** `BottleneckAnalysisOptimizerTest.testTwoStageOptimizationRecommendedApproach`
+**Notes:** Backported the existing master probe reserve to PR #4257. Bracket discovery uses a 0.5% utilization reserve; stage-two optimization and all repeated physical-capacity assertions retain the strict 100% limit. The original CI replay failure did not reproduce in the focused local run. Documentation impact: none for public APIs or user guides; only the test's conservative bracket discovery changes.
+
+### 2026-10-07 — Repair gas value-chain surrogate PR #4261
+**Type:** G (Repository maintenance)
+**Keywords:** merge conflict, engineering coverage, gas surrogates, work-record captions
+**Solution:** Preserved both branches' task-log additions while incorporating master;
+regenerated the engineering inventory for the new gas-chain APIs and retained master's
+live-well registrations. Added dictionary/list caption regression tests and documented
+pressure conventions, rate units, surrogate assumptions and validation boundaries.
+**Notes:** On the repaired tree, 20 focused Java tests and 30 Python tests passed.
+Direct Spotless apply/check, pre-commit/pre-push, documentation-search and engineering
+coverage checks passed. Full cross-platform CI is required on the published merge commit.
