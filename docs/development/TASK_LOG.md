@@ -1130,3 +1130,9 @@ absolute tolerance and the exchanger guide documents the duty/LMTD relation.
 **Keywords:** subsea, SURF, gathering, injection, Beggs-Brill, two-fluid, topology, campaign 4228
 **Solution:** `LoopedPipeNetwork`, `NetworkHydraulicFidelityTest`, `docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md`.
 **Notes:** Reuse the detailed steady graph, existing well physics, dedicated storage-node two-fluid transient network and lifecycle/design models. Pipe-edge fidelity overrides preserve topology and JSON replay. Two-fluid failures remain explicit; cached Beggs-Brill geometry is refreshed. Eight new regression tests and the affected network suites pass (152 passed, one existing skip). Live WellSystem/injection boundaries, independent field benchmarks and mixed-fidelity dynamic junction qualification remain campaign work.
+
+### 2026-10-07 — Backport conservative optimizer bracket discovery to live-well PR
+**Type:** G (Workflow)
+**Keywords:** optimizer, compressor, replay, feasible bracket, CI
+**Solution:** `BottleneckAnalysisOptimizerTest.testTwoStageOptimizationRecommendedApproach`
+**Notes:** Backported the existing master probe reserve to PR #4257. Bracket discovery uses a 0.5% utilization reserve; stage-two optimization and all repeated physical-capacity assertions retain the strict 100% limit. The original CI replay failure did not reproduce in the focused local run. Documentation impact: none for public APIs or user guides; only the test's conservative bracket discovery changes.
