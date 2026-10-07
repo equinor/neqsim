@@ -250,11 +250,8 @@ Explicit standalone Naphtali-Sandholm retains its established initialization seq
 sequential ratio correction preserves the current tray state instead of replacing it with a
 bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.
 
-Water-bearing tray flashes screen an already-balanced gas/oil endpoint (or a single SRK gas phase) with a bounded aqueous
-stability trial before invoking the full reciprocal flash. Stable endpoints retain their existing
-state; recovered endpoints still require the established equilibrium, material-balance and Gibbs
-checks. SRK gas-endpoint trials prepare the thermodynamic phase workspace without evaluating transport
-properties. Other models, liquid endpoints and trace-water reciprocal trials retain their existing initialization.
+Water-bearing tray flashes use the shared TP-flash stability, reciprocal-candidate and
+phase-initialization paths. Distillation does not bypass those thermodynamic checks.
 
 Product normal-boiling-point distributions retain strictly increasing, representable cumulative
 mole fractions. A positive trace too small to advance the cumulative fraction does not create a

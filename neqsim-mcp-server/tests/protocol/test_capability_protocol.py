@@ -244,7 +244,8 @@ def test_explicit_operation_contracts(client):
     entries = []
     for capability_id in ("sulfur-vapour-pressure", "engineering-unit-conversions",
                           "slug-impact-force-screening", "exponential-decline-screening",
-                          "sweet-gas-pseudocritical-screening"):
+                          "sweet-gas-pseudocritical-screening",
+                          "gas-pseudopressure-screening"):
         coverage_page = assert_success(
             client.call_capability(
                 {"action": "coverage", "view": "capabilities", "query": capability_id,
@@ -270,6 +271,8 @@ def test_explicit_operation_contracts(client):
         "two-point-exponential-decline-estimate",
         "standing-pseudocritical-temperature", "standing-pseudocritical-pressure",
         "sutton-pseudocritical-temperature", "sutton-pseudocritical-pressure",
+        "correlation-gas-pseudopressure",
+        "absolute-correlation-gas-pseudopressure-difference",
     }
     require({operation.get("id") for operation in operations} == expected_ids,
             "explicit operation inventory drifted", operations)
@@ -302,6 +305,17 @@ def test_explicit_operation_contracts(client):
              "methodName": "rateExponential",
              "parameterTypes": ["double", "double", "double"],
              "arguments": [-1, 0.001, 365.25]}
+        ),
+        "INVOCATION_ERROR",
+    )
+
+    assert_error(
+        client.call_capability(
+            {"action": "invoke",
+             "className": "neqsim.pvtsimulation.util.GasPseudoPressure",
+             "methodName": "calculateFromCorrelation",
+             "parameterTypes": ["double", "double", "double", "double", "double"],
+             "arguments": [206.84, 1.01325, 366.48, 0.5, 16.04]}
         ),
         "INVOCATION_ERROR",
     )

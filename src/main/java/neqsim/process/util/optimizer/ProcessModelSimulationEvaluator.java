@@ -89,6 +89,23 @@ public class ProcessModelSimulationEvaluator implements Serializable {
     PlantConstraintSample evaluate(ProcessModel model, String calculationId);
   }
 
+  /** Serializable callback that freezes one common-shaft evidence snapshot after a completed model run. */
+  public interface PlantCommonShaftEvidenceEvaluator extends Serializable {
+    /**
+     * Captures the common-shaft state for one exact process-model evaluation.
+     *
+     * <p>
+     * The callback must assign {@code calculationId} as the evidence identity. Equipment freshness may be checked
+     * independently with {@link PlantCommonShaftEvidence.Builder#sourceCalculationId(String)}.
+     * </p>
+     *
+     * @param model completed process-model operating point
+     * @param calculationId evaluator-owned identity for this exact model evaluation
+     * @return immutable common-shaft evidence, or null to report missing evidence
+     */
+    PlantCommonShaftEvidence evaluate(ProcessModel model, String calculationId);
+  }
+
   /** Frozen plant-constraint group registration with a transient runtime sampler. */
   private static final class PlantConstraintGroupRegistration implements Serializable {
     /** Serialization version UID. */
@@ -3724,6 +3741,46 @@ public class ProcessModelSimulationEvaluator implements Serializable {
   }
 
   /**
+   * Registers every typed constraint exposed by a common-shaft evidence adapter as one atomic group.
+   *
+   * <p>
+   * Definitions are frozen from {@code registrationEvidence}. Each completed candidate must return evidence with the
+   * evaluator-owned calculation identity and the exact same canonical definitions. Missing evidence, identity drift,
+   * definition drift, stale equipment observations, or incomplete shaft evidence therefore fails closed through the
+   * existing grouped plant-constraint path.
+   * </p>
+   *
+   * @param groupId stable sampler-group identity
+   * @param registrationEvidence evidence whose immutable definitions establish the registration contract
+   * @param evidenceEvaluator exact-calculation common-shaft callback
+   * @return this evaluator for chaining
+   */
+  public ProcessModelSimulationEvaluator addCommonShaftConstraintGroup(String groupId,
+      PlantCommonShaftEvidence registrationEvidence, final PlantCommonShaftEvidenceEvaluator evidenceEvaluator) {
+    if (registrationEvidence == null || evidenceEvaluator == null) {
+      throw new IllegalArgumentException("Common-shaft registration evidence and sampler are required");
+    }
+    final List<PlantConstraintDefinition> definitions = registrationEvidence.getDefinitions();
+    return addPlantConstraintGroup(groupId, definitions, new PlantConstraintSampleGroupEvaluator() {
+      private static final long serialVersionUID = 1L;
+
+      /** {@inheritDoc} */
+      @Override
+      public List<PlantConstraintSample> evaluate(ProcessModel model, String calculationId) {
+        PlantCommonShaftEvidence evidence = evidenceEvaluator.evaluate(model, calculationId);
+        if (evidence == null) {
+          return null;
+        }
+        if (!calculationId.equals(evidence.getCalculationId())) {
+          throw new IllegalStateException("Common-shaft evidence calculation identity differs");
+        }
+        requireMatchingPlantDefinitions(definitions, evidence.getDefinitions());
+        return evidence.getSamples();
+      }
+    });
+  }
+
+  /**
    * Registers a coupled group of typed plant constraints that must be sampled together exactly once.
    *
    * <p>
@@ -3791,6 +3848,33 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       }
     }
     return false;
+  }
+
+  /**
+   * Rejects runtime evidence whose frozen constraint contract differs from registration.
+   *
+   * @param expected registered immutable definitions
+   * @param actual definitions exposed by the runtime evidence
+   * @throws IllegalStateException when the canonical definition sets differ
+   */
+  private static void requireMatchingPlantDefinitions(List<PlantConstraintDefinition> expected,
+      List<PlantConstraintDefinition> actual) {
+    if (actual == null || expected.size() != actual.size()) {
+      throw new IllegalStateException("Common-shaft constraint definitions differ from registration");
+    }
+    Map<String, String> expectedCanonical = new LinkedHashMap<String, String>();
+    for (PlantConstraintDefinition definition : expected) {
+      expectedCanonical.put(definition.getQualifiedId(), definition.canonicalForm());
+    }
+    for (PlantConstraintDefinition definition : actual) {
+      String registered = expectedCanonical.remove(definition.getQualifiedId());
+      if (registered == null || !registered.equals(definition.canonicalForm())) {
+        throw new IllegalStateException("Common-shaft constraint definitions differ from registration");
+      }
+    }
+    if (!expectedCanonical.isEmpty()) {
+      throw new IllegalStateException("Common-shaft constraint definitions differ from registration");
+    }
   }
 
   /** Validates required public registration text. */

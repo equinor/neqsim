@@ -995,8 +995,11 @@ public class BottleneckAnalysisOptimizerTest {
     double upperRate = originalFlow * 1.15;
     for (int step = 50; step >= 0; step--) {
       double candidateRate = originalFlow * (0.9 + 0.005 * step);
+      // Keep the lower bracket inside the feasible region. A near-boundary probe can drift across
+      // the stage-2 limit when the compressor train is solved again after rejected search points.
+      // This reserve affects only bracket discovery; stage 2 retains its original strict limit.
       OptimizationConfig probeConfig = new OptimizationConfig(candidateRate, candidateRate).rateUnit("kg/hr")
-          .selectedPointReplays(4).utilizationMarginFraction(1.0e-4).defaultUtilizationLimit(1.0)
+          .selectedPointReplays(4).utilizationMarginFraction(5.0e-3).defaultUtilizationLimit(1.0)
           .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
       OptimizationResult probe = optimizer.optimize(processSystem, inletStream, probeConfig,
           Collections.singletonList(throughputObjective), Collections.emptyList());
