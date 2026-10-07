@@ -1154,7 +1154,8 @@
       "tool": "runCapability",
       "apis": [
         "neqsim.process.equipment.network.LoopedPipeNetwork",
-        "neqsim.process.equipment.network.FieldNetworkTopology"
+        "neqsim.process.equipment.network.FieldNetworkTopology",
+        "neqsim.process.equipment.network.FieldWellNetworkCoupler"
       ],
       "skills": [
         "neqsim-pipeline-and-terminal-networks",
@@ -1165,9 +1166,10 @@
       ],
       "testSources": [
         "src/test/java/neqsim/process/equipment/network/NetworkHydraulicFidelityTest.java",
-        "src/test/java/neqsim/process/equipment/network/FieldNetworkTopologyTest.java"
+        "src/test/java/neqsim/process/equipment/network/FieldNetworkTopologyTest.java",
+        "src/test/java/neqsim/process/equipment/network/FieldWellNetworkCouplerTest.java"
       ],
-      "limitations": "Discovery through runCapability inspectApi only; these instance-based Java/Python graph builders have no executable static MCP operation registered. FieldNetworkTopology is a typed identity/port view over LoopedPipeNetwork, not a second solver, and runtime equipment bindings are not serialized. Edge-local Darcy/Beggs-Brill/two-fluid steady calculations require NEWTON_RAPHSON. Live WellSystem/injection coupling, independent field qualification and mixed-fidelity network transients remain campaign work; standalone agreement is integration evidence, not field qualification.",
+      "limitations": "Discovery through runCapability inspectApi only; these instance-based Java/Python graph builders have no executable static MCP operation registered. FieldNetworkTopology is a typed identity/port view over LoopedPipeNetwork, not a second solver, and runtime equipment bindings are not serialized. FieldWellNetworkCoupler iterates live WellSystem and production/injection WellFlow pressure-rate boundaries against that same graph; it requires NEWTON_RAPHSON and does not own reservoir depletion. Edge-local Darcy/Beggs-Brill/two-fluid steady calculations remain independently selectable. Independent field qualification, controlled steady-to-transient initialization and mixed-fidelity network transients remain campaign work; integration and conservation tests are not field qualification.",
       "evidence": {
         "route": "declared",
         "testSources": "present",
@@ -2447,7 +2449,8 @@
     {"id":"neqsim.process.equipment.network.CrudeAssay","kind":"class","source":"src/main/java/neqsim/process/equipment/network/CrudeAssay.java","sourceDigest":"cb0b10b3686b561761ee3ba39550f329243462a75aaf76f30e444423d7e56227","domain":"process","skills":["neqsim-capability-map","neqsim-pipeline-and-terminal-networks"],"agents":["capability-scout","engineering-deliverables","field-development","flow-assurance","mechanical-design","network-energy-systems","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.CrudeBlendResult","kind":"class","source":"src/main/java/neqsim/process/equipment/network/CrudeBlendResult.java","sourceDigest":"29bf936f72c1c598d27c76cbe7eb0d6fc8fad61b18a4a7a51e81b2a8bfbc31f2","domain":"process","skills":["neqsim-pipeline-and-terminal-networks"],"agents":["field-development","flow-assurance","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.CrudeParcel","kind":"class","source":"src/main/java/neqsim/process/equipment/network/CrudeParcel.java","sourceDigest":"718487b58c2f95f6f1761868d40dd81f0f322223c2b42c1da8fbc312bd22924b","domain":"process","skills":["neqsim-pipeline-and-terminal-networks"],"agents":["field-development","flow-assurance","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.network.FieldNetworkTopology","kind":"class","source":"src/main/java/neqsim/process/equipment/network/FieldNetworkTopology.java","sourceDigest":"1f06144feb2743b5b844d042a9a24b674ed241c22e822248bfb277ef2e0da007","domain":"process","skills":[],"agents":[],"capabilities":["surf-network-hydraulic-fidelity"],"disposition":"registered_anchor"},
+    {"id":"neqsim.process.equipment.network.FieldNetworkTopology","kind":"class","source":"src/main/java/neqsim/process/equipment/network/FieldNetworkTopology.java","sourceDigest":"06b8a577844e34b33db67c8d71bf18107a0cbfeff722fced687c86f0e3f335e6","domain":"process","skills":[],"agents":[],"capabilities":["surf-network-hydraulic-fidelity"],"disposition":"registered_anchor"},
+    {"id":"neqsim.process.equipment.network.FieldWellNetworkCoupler","kind":"class","source":"src/main/java/neqsim/process/equipment/network/FieldWellNetworkCoupler.java","sourceDigest":"349b5e554c93bf48e9a1a89eb3d8c1bed927a2217e0f90cafb22aabe03d9ca89","domain":"process","skills":[],"agents":[],"capabilities":["surf-network-hydraulic-fidelity"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.network.GasLinepackState","kind":"class","source":"src/main/java/neqsim/process/equipment/network/GasLinepackState.java","sourceDigest":"7eb4b8f59fe2601603d5dbd0f882f829122dcf209fc989b0c359d5daa64030d3","domain":"process","skills":["neqsim-capability-map","neqsim-pipeline-and-terminal-networks"],"agents":["capability-scout","engineering-deliverables","field-development","flow-assurance","mechanical-design","network-energy-systems","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.GasQualityMetric","kind":"enum","source":"src/main/java/neqsim/process/equipment/network/GasQualityMetric.java","sourceDigest":"23b8f66a72f2ee31a8a5b3f71c5c2c797d69f4dcee2c3d1d789055bbb484ffa0","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.LoopDetector","kind":"class","source":"src/main/java/neqsim/process/equipment/network/LoopDetector.java","sourceDigest":"2862d83ae012efcb8cba56340a85d3b1638379bacc4408b8ee66a32dddd43820","domain":"process","skills":["neqsim-pipeline-and-terminal-networks"],"agents":["field-development","flow-assurance","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
