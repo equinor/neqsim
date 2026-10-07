@@ -332,3 +332,16 @@ of percent.
   step above.
 - `neqsim-relief-flare-network` — PSV sizing per API 520/521 and flare loads.
 - `neqsim-depressurization-mdmt` — blowdown time and low-temperature screening.
+
+## Diagnose unresolved recycles before accepting a plant result
+
+After `ProcessSystem.runUntilConverged(n)`, inspect `getRunStatus().isConverged()`
+and `getOpenRecycles()`. `RunStatus.isSuccess()` means execution did not fail;
+it does not prove numerical convergence. The status also names open loops,
+reports their count, the full-process pass count and a termination reason.
+Never accept repeated mass-balance values as a convergence criterion while loops
+remain open. Separator constraints expose `getRawValue()`, `getDesignLimit()`,
+`getUnit()` and `getBasis()`; built-in limits are defaults and explicit setters
+are custom unless actual datasheet provenance is declared.
+For a fixed minimum-flow compressor return at suction state, see
+`neqsim-compressor-antisurge-recycle` and `MinimumFlowSpill` in the compressor guide.

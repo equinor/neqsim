@@ -77,7 +77,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * @param factors an array of type double
    */
   public void setSplitFactors(double[] factors) {
-    splitFactor = factors;
+    splitFactor = factors == null ? null : factors.clone();
   }
 
   /**
@@ -87,7 +87,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * @param basis {@code "molar"} or {@code "mass"} (case-insensitive); any other value defaults to molar
    */
   public void setSplitFactors(double[] factors, String basis) {
-    splitFactor = factors;
+    setSplitFactors(factors);
     setSplitBasis(basis);
   }
 
@@ -119,7 +119,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
    * @return an array of type double with the split factors
    */
   public double[] getSplitFactors() {
-    return splitFactor;
+    return splitFactor == null ? null : splitFactor.clone();
   }
 
   /**
@@ -180,6 +180,18 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    neqsim.util.validation.ValidationResult validation = validateSetup();
+    if (!validation.isValid()) {
+      throw new IllegalArgumentException(validation.toString());
+    }
+    if (inletStream.getFlowRate("kg/hr") == 0.0) {
+      for (StreamInterface outlet : splitStream) {
+        outlet.setThermoSystem(inletStream.getThermoSystem().clone());
+        outlet.setCalculationIdentifier(id);
+      }
+      setCalculationIdentifier(id);
+      return;
+    }
     boolean massBasis = "mass".equalsIgnoreCase(splitBasis);
     for (int i = 0; i < 2; i++) {
       thermoSystem = inletStream.getThermoSystem().clone();
@@ -217,10 +229,38 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
         // The composition changed; TPflash alone does not rebuild caloric properties.
         splitStream[i].getThermoSystem().init(2);
       } else {
+        // Keep the inlet's initialized composition/phase state for an empty branch.
+        // An empty, uninitialized clone can resurrect inventory when run downstream.
+        thermoSystem = inletStream.getThermoSystem().clone();
+        thermoSystem.setTotalFlowRate(0.0, "kg/hr");
         splitStream[i].setThermoSystem(thermoSystem);
       }
+      splitStream[i].setCalculationIdentifier(id);
     }
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
+    if (inletStream == null || inletStream.getThermoSystem() == null) {
+      result.addError("stream", "No inlet fluid connected", "Connect an inlet stream before running the splitter");
+      return result;
+    }
+    if (splitFactor == null || splitFactor.length != inletStream.getThermoSystem().getNumberOfComponents()) {
+      result.addError("split", "One factor per feed component is required",
+          "Set factors in feed component order; each factor must be between zero and one");
+    } else {
+      for (double factor : splitFactor) {
+        if (!Double.isFinite(factor) || factor < 0.0 || factor > 1.0) {
+          result.addError("split", "Split factor outside the finite range [0, 1]",
+              "Use zero for complete removal or one for complete forwarding");
+          break;
+        }
+      }
+    }
+    return result;
   }
 
   /** {@inheritDoc} */

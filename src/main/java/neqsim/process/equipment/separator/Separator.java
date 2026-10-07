@@ -409,6 +409,15 @@ public class Separator extends ProcessEquipmentBaseClass
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
     thermoSystem = inletStream.getThermoSystem().clone();
+    if (thermoSystem.getTotalNumberOfMoles() == 0.0) {
+      // Phase extraction initializes an empty phase and can manufacture a numerical
+      // inventory or NaN CPA state. Empty topology connections need no phase flash.
+      gasSystem = thermoSystem.clone();
+      liquidSystem = thermoSystem.clone();
+      gasOutStream = new Stream("gasOutStream", gasSystem);
+      liquidOutStream = new Stream("liquidOutStream", liquidSystem);
+      return;
+    }
     gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
     gasOutStream = new Stream("gasOutStream", gasSystem);
 
@@ -1695,7 +1704,8 @@ public class Separator extends ProcessEquipmentBaseClass
     // tracking
     CapacityConstraint constraint = capacityConstraints.get("gasLoadFactor");
     if (constraint != null) {
-      constraint.setDesignValue(kFactor);
+      constraint.setDesignValue(kFactor).setDataSource("equipment")
+          .setSource(CapacityConstraint.ConstraintSource.USER_RULE);
     }
   }
 
@@ -2107,7 +2117,8 @@ public class Separator extends ProcessEquipmentBaseClass
     // Enable the gasLoadFactor constraint since autoSize uses K-factor sizing
     CapacityConstraint gasLoadConstraint = capacityConstraints.get("gasLoadFactor");
     if (gasLoadConstraint != null) {
-      gasLoadConstraint.setEnabled(true);
+      gasLoadConstraint.setEnabled(true).setDataSource("mechanicalDesign")
+          .setSource(CapacityConstraint.ConstraintSource.AUTO_SIZE);
     }
 
     autoSized = true;
@@ -3296,6 +3307,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * </p>
    */
   protected void initializeCapacityConstraints() {
+    // Built-in limits are defaults, even when inspired by a named standard.
+    // A vessel datasheet basis must be declared explicitly by the caller.
     // Gas load factor constraint (legacy) - disabled by default for backwards
     // compatibility with optimizer which uses getLiquidLevel() for separators.
     // Enable via useGasCapacityConstraints(), useEquinorConstraints(), or
@@ -3380,6 +3393,11 @@ public class Separator extends ProcessEquipmentBaseClass
             return 999.0; // Return high value if no water
           }
         }));
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if ("not_set".equals(constraint.getDataSource())) {
+        constraint.setDataSource("default");
+      }
+    }
   }
 
   /**
@@ -3390,7 +3408,8 @@ public class Separator extends ProcessEquipmentBaseClass
   public void setKValueLimit(double limit) {
     CapacityConstraint constraint = capacityConstraints.get("kValue");
     if (constraint != null) {
-      constraint.setDesignValue(limit).setMaxValue(limit);
+      constraint.setDesignValue(limit).setMaxValue(limit).setDataSource("equipment")
+          .setSource(CapacityConstraint.ConstraintSource.USER_RULE);
     }
   }
 
@@ -3402,7 +3421,8 @@ public class Separator extends ProcessEquipmentBaseClass
   public void setDropletCutSizeLimit(double limitMicrons) {
     CapacityConstraint constraint = capacityConstraints.get("dropletCutSize");
     if (constraint != null) {
-      constraint.setDesignValue(limitMicrons).setMaxValue(limitMicrons);
+      constraint.setDesignValue(limitMicrons).setMaxValue(limitMicrons).setDataSource("equipment")
+          .setSource(CapacityConstraint.ConstraintSource.USER_RULE);
     }
   }
 
@@ -3414,7 +3434,8 @@ public class Separator extends ProcessEquipmentBaseClass
   public void setInletMomentumLimit(double limitPa) {
     CapacityConstraint constraint = capacityConstraints.get("inletMomentum");
     if (constraint != null) {
-      constraint.setDesignValue(limitPa).setMaxValue(limitPa);
+      constraint.setDesignValue(limitPa).setMaxValue(limitPa).setDataSource("equipment")
+          .setSource(CapacityConstraint.ConstraintSource.USER_RULE);
     }
   }
 
@@ -3426,7 +3447,8 @@ public class Separator extends ProcessEquipmentBaseClass
   public void setMinOilRetentionTime(double minMinutes) {
     CapacityConstraint constraint = capacityConstraints.get("oilRetentionTime");
     if (constraint != null) {
-      constraint.setDesignValue(minMinutes).setMinValue(minMinutes);
+      constraint.setDesignValue(Double.MAX_VALUE).setMinValue(minMinutes).setDataSource("equipment")
+          .setSource(CapacityConstraint.ConstraintSource.USER_RULE);
     }
   }
 
@@ -3438,7 +3460,8 @@ public class Separator extends ProcessEquipmentBaseClass
   public void setMinWaterRetentionTime(double minMinutes) {
     CapacityConstraint constraint = capacityConstraints.get("waterRetentionTime");
     if (constraint != null) {
-      constraint.setDesignValue(minMinutes).setMinValue(minMinutes);
+      constraint.setDesignValue(Double.MAX_VALUE).setMinValue(minMinutes).setDataSource("equipment")
+          .setSource(CapacityConstraint.ConstraintSource.USER_RULE);
     }
   }
 
@@ -4194,8 +4217,8 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * <p>
    * After deserialization, the capacity constraints need to be reinitialized because the valueSupplier lambdas are
-   * transient and cannot be serialized. This method clears any deserialized constraints and creates fresh ones with
-   * proper value suppliers bound to this separator instance.
+   * transient and cannot be serialized. Fresh built-in suppliers are bound to this separator while retaining the
+   * serialized limits, enabled flags and provenance.
    * </p>
    *
    * @param in the ObjectInputStream to read from
@@ -4204,14 +4227,21 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     in.defaultReadObject();
-    // Reinitialize capacity constraints with fresh value suppliers
-    // The map was deserialized but lambdas (transient) are null
-    if (capacityConstraints == null) {
-      capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
-    } else {
-      capacityConstraints.clear();
-    }
+    Map<String, CapacityConstraint> saved = capacityConstraints;
+    capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
     initializeCapacityConstraints();
+    if (saved != null) {
+      for (Map.Entry<String, CapacityConstraint> entry : saved.entrySet()) {
+        CapacityConstraint fresh = capacityConstraints.get(entry.getKey());
+        if (fresh != null) {
+          CapacityConstraint original = entry.getValue();
+          original.setValueSupplier(fresh::getCurrentValue);
+          capacityConstraints.put(entry.getKey(), original);
+        } else {
+          capacityConstraints.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
   }
 
   /**

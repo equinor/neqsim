@@ -1060,6 +1060,16 @@ kept separate so callers can distinguish a valid process solve from invalid opti
 Invalid evidence receives a deterministic terminal penalty and must not be accepted or cached by an
 external optimizer.
 
+The scalar callback form below is suitable for an ordinary model constraint. For a shared plant
+budget or coupled equipment group, prefer `addPlantConstraint(...)` or
+`addPlantConstraintGroup(...)` with the existing `PlantSharedResourceEvidence` or
+`PlantCommonShaftEvidence` adapters. Those registrations preserve stable scope, physical unit,
+basis, provenance, coverage and exact-calculation identity in
+`EvaluationResult.getPlantConstraintEvidence()`. Each group callback runs once per completed
+candidate. Missing, stale, non-finite, mismatched, out-of-validity or incomplete evidence fails
+closed; the evaluator does not infer electrical efficiency from shaft power or compare unlike
+physical units to choose a rejection cause.
+
 ```java
 ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(plant);
 evaluator.addParameter("separation::feed.flowRate", 500.0, 12000.0, "kg/hr");

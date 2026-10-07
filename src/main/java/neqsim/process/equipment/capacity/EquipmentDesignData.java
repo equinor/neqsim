@@ -175,13 +175,14 @@ public final class EquipmentDesignData {
       boolean hasDesignInput = designCapacities != null && designCapacities.has(equip.getName());
 
       for (CapacityConstraint constraint : constraints.values()) {
-        if ("not_set".equals(constraint.getDataSource())) {
+        String dataSource = constraint.getDataSource();
+        if (hasDesignInput && ("not_set".equals(dataSource) || "default".equals(dataSource))) {
+          constraint.setDataSource(DATA_SOURCE_DESIGN_CAPACITIES);
+        } else if ("not_set".equals(dataSource)) {
           // Tag based on whether design data was provided and whether the constraint has
           // a
           // meaningful design value
-          if (hasDesignInput) {
-            constraint.setDataSource(DATA_SOURCE_DESIGN_CAPACITIES);
-          } else if (constraint.getDesignValue() > 0 && constraint.getDesignValue() < Double.MAX_VALUE) {
+          if (constraint.getDesignValue() > 0 && constraint.getDesignValue() < Double.MAX_VALUE) {
             constraint.setDataSource(DATA_SOURCE_EQUIPMENT);
           }
         }

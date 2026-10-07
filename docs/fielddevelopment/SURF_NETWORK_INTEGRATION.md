@@ -6,7 +6,8 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
 The baseline inspected was `237364c074ddb0c0f191f00d52528a9cf19ffdc0`.
 Source implementation, regression evidence and field qualification are different maturity levels.
-This first increment supplies edge-local steady hydraulic fidelity; it does not complete the campaign.
+The first increment supplied edge-local steady hydraulic fidelity. The current increment adds typed
+field/equipment identity and builders over that graph; neither completes the campaign.
 
 ## Current functionality and reuse decisions
 
@@ -107,22 +108,53 @@ is integration evidence, not an independent physical benchmark. Public multiphas
 B&B versus two-fluid comparisons, mesh sensitivity, energy/component closure,
 large-field performance and the 20 km/riser campaign cases remain qualification work.
 
+## Typed field and equipment identity
+
+`FieldNetworkTopology` is a semantic view over the same `LoopedPipeNetwork`; it is
+not another solver or connectivity graph. A field node or edge ID is exactly the
+wrapped hydraulic node or edge name. The view adds:
+
+- typed production, injection and shared services;
+- well, tree, template, manifold, PLEM, PLET, host and brownfield node roles;
+- wellbore, choke, jumper, flowline, trunkline, pipeline, riser, header, pump,
+  compressor and tie-in edge roles;
+- stable equipment tags, endpoint port names and declared forward/bidirectional
+  operation for DEXPI/P&ID and agent-facing identity;
+- optional runtime binding to existing NeqSim process equipment, so subsea equipment
+  and mechanical design remain the owners of geometry, design and cost;
+- pre-execution diagnostics for missing classification, duplicate port use, service
+  mismatch, isolated/disconnected topology, edge-role/solver incompatibility and
+  cycles unsupported by the selected solver, plus undeclared reverse flow after a
+  converged solve;
+- JSON replay and definition copying of hydraulic topology plus semantic identity.
+
+The builder requires hydraulic fidelity explicitly for every new pipe-like edge and
+delegates it to `NetworkPipe.setHydraulicModelType`. Production, injection, direct
+tieback, daisy-chain, clustered and multi-template layouts are therefore composed
+with the same node/edge builder instead of architecture-specific physics. Existing
+graphs can be registered without reconstruction; unclassified existing nodes or
+edges fail validation. Runtime equipment objects and external fluids are deliberately
+not duplicated by JSON replay and must be rebound after loading.
+
+`FieldNetworkTopologyTest` exercises multi-template production plus injection
+definitions, PLEM/manifold bindings, direct production and injection execution,
+conservative mass flow, identity/port/service errors, loop diagnostics and replay.
+These tests qualify the identity/integration contract; they do not independently
+qualify B&B or two-fluid correlations, live well coupling or field design.
+
 ## Dependency-ordered continuation
 
-1. Add typed field/equipment identity and builders as a view over the existing graph,
-   including templates, PLEM/PLET and injection-source/host roles. Validate connectivity,
-   duplicate identity and solver applicability before equipment execution.
-2. Bind live `WellSystem` and production/injection `WellFlow` pressure/rate contracts.
+1. Bind live `WellSystem` and production/injection `WellFlow` pressure/rate contracts.
    Reuse full IPR/VLP/injectivity and report inner well residuals; include reservoir
    pressure updates, shut-in, fracture/BHP limits and incompatible fluid diagnostics.
-3. Qualify multi-template, daisy-chain, branches/loops and brownfield networks with
+2. Qualify multi-template, daisy-chain, branches/loops and brownfield networks with
    differing well fluids, B&B/two-fluid comparison and representative field sizes.
    Include water, gas and CO2 injection with pump/compressor and shared host constraints.
-4. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
+3. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
    / process optimization, then detailed lifecycle models and reduced-order surrogates.
-5. Coordinate conservative transient junction/component/energy integration and steady
+4. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
-6. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
+5. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
    (#2899/#1332). Use synthetic/public acceptance cases and retain reproducible results.
 
 Related guides: [production networks](../process/equipment/production_well_networks.md),

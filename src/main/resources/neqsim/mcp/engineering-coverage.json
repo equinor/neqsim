@@ -5,6 +5,32 @@
   "interpretation": "Mentions and declared routes do not prove execution, full class exposure or engineering qualification. Explicit supported operations are bounded to their recorded signatures, units, applicability and examples.",
   "capabilities": [
     {
+      "id": "algebraic-minimum-flow-spill",
+      "title": "Steady-state compressor minimum-flow circulation",
+      "domain": "process",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.compressor.MinimumFlowSpill"
+      ],
+      "skills": [
+        "neqsim-compressor-antisurge-recycle",
+        "neqsim-process-modeling"
+      ],
+      "agents": [
+        "process-model"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/compressor/MinimumFlowSpillTest.java"
+      ],
+      "limitations": "Java/Python object API discovered through inspectApi; not a runProcess JSON equipment type. Fixed minimum, same-composition return at suction state; no dynamic anti-surge qualification.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "corrosion-screen",
       "title": "Mechanistic corrosion screening",
       "domain": "chemistry",
@@ -803,7 +829,10 @@
         "process-model"
       ],
       "testSources": [
-        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java"
+        "src/test/java/neqsim/mcp/runners/ProcessRunnerTest.java",
+        "src/test/java/neqsim/process/processmodel/ProcessSystemOpenRecycleTest.java",
+        "src/test/java/neqsim/process/equipment/separator/SeparatorConstraintBasisTest.java",
+        "src/test/java/neqsim/process/equipment/splitter/ComponentSplitterZeroFlowTest.java"
       ],
       "limitations": "Registration covers JSON builder support, not all equipment setters or every topology.",
       "evidence": {
@@ -1124,7 +1153,8 @@
       "domain": "flow-assurance",
       "tool": "runCapability",
       "apis": [
-        "neqsim.process.equipment.network.LoopedPipeNetwork"
+        "neqsim.process.equipment.network.LoopedPipeNetwork",
+        "neqsim.process.equipment.network.FieldNetworkTopology"
       ],
       "skills": [
         "neqsim-pipeline-and-terminal-networks",
@@ -1134,9 +1164,163 @@
         "field-development"
       ],
       "testSources": [
-        "src/test/java/neqsim/process/equipment/network/NetworkHydraulicFidelityTest.java"
+        "src/test/java/neqsim/process/equipment/network/NetworkHydraulicFidelityTest.java",
+        "src/test/java/neqsim/process/equipment/network/FieldNetworkTopologyTest.java"
       ],
-      "limitations": "Discovery through runCapability inspectApi only; this instance-based Java/Python graph builder has no executable static MCP operation registered. Edge-local Darcy/Beggs-Brill/two-fluid steady calculations require NEWTON_RAPHSON. Live WellSystem/injection coupling and mixed-fidelity network transients remain campaign work; standalone agreement is integration evidence, not field qualification.",
+      "limitations": "Discovery through runCapability inspectApi only; these instance-based Java/Python graph builders have no executable static MCP operation registered. FieldNetworkTopology is a typed identity/port view over LoopedPipeNetwork, not a second solver, and runtime equipment bindings are not serialized. Edge-local Darcy/Beggs-Brill/two-fluid steady calculations require NEWTON_RAPHSON. Live WellSystem/injection coupling, independent field qualification and mixed-fidelity network transients remain campaign work; standalone agreement is integration evidence, not field qualification.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
+      "id": "sweet-gas-pseudocritical-screening",
+      "title": "Static sweet-gas pseudocritical property screening",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.GasPseudoCriticalProperties"
+      ],
+      "skills": [
+        "neqsim-capability-map"
+      ],
+      "agents": [
+        "capability-scout"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Standing and Sutton sweet-gas correlation screening only, using gas specific gravity relative to air within each published range. It does not qualify sour/non-hydrocarbon corrections, composition-derived pseudocritical mixing, EOS phase behavior, reservoir deliverability or engineering approval.",
+      "operations": [
+        {
+          "id": "standing-pseudocritical-temperature",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalTemperatureStanding",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalTemperature": "K"
+            }
+          },
+          "applicability": "Standing sweet-gas correlation for finite gas specific gravity from 0.55 through 1.80.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 224.84375,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "standing-pseudocritical-pressure",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalPressureStanding",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalPressureStanding(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalPressure": "bara"
+            }
+          },
+          "applicability": "Standing sweet-gas correlation for finite gas specific gravity from 0.55 through 1.80.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 45.99872102483487,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "sutton-pseudocritical-temperature",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalTemperatureSutton",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalTemperatureSutton(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalTemperature": "K"
+            }
+          },
+          "applicability": "Sutton sweet-gas correlation for finite gas specific gravity from 0.57 through 1.68.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 216.5,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "sutton-pseudocritical-pressure",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoCriticalProperties",
+          "method": "pseudoCriticalPressureSutton",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoCriticalProperties.pseudoCriticalPressureSutton(double)",
+          "units": {
+            "inputs": {
+              "gasSpecificGravity": "dimensionless; air = 1"
+            },
+            "outputs": {
+              "pseudoCriticalPressure": "bara"
+            }
+          },
+          "applicability": "Sutton sweet-gas correlation for finite gas specific gravity from 0.57 through 1.68.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              0.75
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 45.26572346557454,
+            "absoluteTolerance": 1e-12
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoCriticalPropertiesTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ],
       "evidence": {
         "route": "declared",
         "testSources": "present",
@@ -1344,7 +1528,7 @@
     {"id":"neqsim.mathlib.nonlinearsolver.NewtonRhapson","kind":"class","source":"src/main/java/neqsim/mathlib/nonlinearsolver/NewtonRhapson.java","sourceDigest":"53cdaf291121e46d53fb023638b142e06628327269a2b25bded4f869552ad707","domain":"mathlib","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.mathlib.nonlinearsolver.NumericalDerivative","kind":"class","source":"src/main/java/neqsim/mathlib/nonlinearsolver/NumericalDerivative.java","sourceDigest":"9a208c0da3ef58978204a3bff6baf595dae027c8de5e75f140203accc961ed29","domain":"mathlib","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.mathlib.nonlinearsolver.NumericalIntegration","kind":"class","source":"src/main/java/neqsim/mathlib/nonlinearsolver/NumericalIntegration.java","sourceDigest":"aedda8471b6304e3131d9675ecb3323e5c62b08acb40e3df8c446ed15a43806b","domain":"mathlib","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.mathlib.nonlinearsolver.SysNewtonRhapson","kind":"class","source":"src/main/java/neqsim/mathlib/nonlinearsolver/SysNewtonRhapson.java","sourceDigest":"409adc29c938086148da608be544b32b2c617b06d0fce14a2cccf25532b5b0e2","domain":"mathlib","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.mathlib.nonlinearsolver.SysNewtonRhapson","kind":"class","source":"src/main/java/neqsim/mathlib/nonlinearsolver/SysNewtonRhapson.java","sourceDigest":"07155e075fda4f044bdb20704ea7f4cc0401ddab70050816a9fc8dd725acd521","domain":"mathlib","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.mcp.catalog.ExampleCatalog","kind":"class","source":"src/main/java/neqsim/mcp/catalog/ExampleCatalog.java","sourceDigest":"be30f59dc3ab92f7e4f0347264254b1601a96095445ca3ae7dedc7db97076f7b","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.catalog.SchemaCatalog","kind":"class","source":"src/main/java/neqsim/mcp/catalog/SchemaCatalog.java","sourceDigest":"11f2ac73bca44f8f23f1936cf6f9b88832343cdf3c27bd2af13cf44f61b1f155","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
     {"id":"neqsim.mcp.catalog.SchemaChecker","kind":"class","source":"src/main/java/neqsim/mcp/catalog/SchemaChecker.java","sourceDigest":"f0df94a2e3a593537808f8fc2bfdfd962cb8de0b31c1100bcf8aff4587c577a7","domain":"mcp","skills":[],"agents":[],"capabilities":[],"disposition":"infrastructure"},
@@ -2020,7 +2204,7 @@
     {"id":"neqsim.process.equipment.capacity.BottleneckResult","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/BottleneckResult.java","sourceDigest":"31571e9d2eb439ddd7ae0ab8a2443eabb20fa2b2494f267dc141ff187ab1b368","domain":"process","skills":["neqsim-capacity-and-utilization-analysis"],"agents":["network-energy-systems","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.BottleneckTracker","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/BottleneckTracker.java","sourceDigest":"0fff2bb7fc50c4babc8b94678642a330ee3892a65d6bfdd78ab0d6296bf15762","domain":"process","skills":["neqsim-capability-map","neqsim-capacity-and-utilization-analysis"],"agents":["capability-scout","engineering-deliverables","mechanical-design","network-energy-systems","optimize","optimize-processmodel","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.CapacityConstrainedEquipment","kind":"interface","source":"src/main/java/neqsim/process/equipment/capacity/CapacityConstrainedEquipment.java","sourceDigest":"181c3cbd546a61ace7e2605c6db4b9ca74cafd2b4abc6c4dbfbbf47885c412f3","domain":"process","skills":["neqsim-agentic-process-optimization","neqsim-capacity-and-utilization-analysis"],"agents":["continuous-improvement","network-energy-systems","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.capacity.CapacityConstraint","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/CapacityConstraint.java","sourceDigest":"794d8fdd0797658b4b78e23a3ad225df3d699141e1476638a06c6f420d9fbf7d","domain":"process","skills":["neqsim-agentic-process-optimization","neqsim-capability-map","neqsim-capacity-and-utilization-analysis","neqsim-production-optimization"],"agents":["capability-scout","continuous-improvement","engineering-deliverables","field-development","mechanical-design","network-energy-systems","optimize","optimize-processmodel","solve-task"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.capacity.CapacityConstraint","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/CapacityConstraint.java","sourceDigest":"827ac63f32915eb64e816f89d7eee06402ffd883339af7a84288bc437cbf367a","domain":"process","skills":["neqsim-agentic-process-optimization","neqsim-capability-map","neqsim-capacity-and-utilization-analysis","neqsim-production-optimization"],"agents":["capability-scout","continuous-improvement","engineering-deliverables","field-development","mechanical-design","network-energy-systems","optimize","optimize-processmodel","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.CompressorCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/CompressorCapacityStrategy.java","sourceDigest":"047fbd79ad21cbb3859c9f31d37c3880aa4710ebf7aa61cfeda403f440b1ceac","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.DistillationColumnCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/DistillationColumnCapacityStrategy.java","sourceDigest":"68792b753d257c312eef285f46f5be0fe993325eaf31a706aee3171f2fd42154","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.EjectorCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/EjectorCapacityStrategy.java","sourceDigest":"25bf0c7d4005134735a41bf36a2d208f0a58a47acd85b3a2d27db67d5661f715","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -2028,7 +2212,7 @@
     {"id":"neqsim.process.equipment.capacity.EmpiricalCarryOverConstraint","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/EmpiricalCarryOverConstraint.java","sourceDigest":"0cb37813a7bfeb56ba35aa916ae216db339f6d10f833e394f91404296891307f","domain":"process","skills":["neqsim-capacity-and-utilization-analysis"],"agents":["network-energy-systems","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.EquipmentCapacityStrategy","kind":"interface","source":"src/main/java/neqsim/process/equipment/capacity/EquipmentCapacityStrategy.java","sourceDigest":"96fc5fc6d19528362920fd1faf8c8ccb32185608141da8f5cb92169b7ddfe293","domain":"process","skills":["neqsim-capacity-and-utilization-analysis"],"agents":["network-energy-systems","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/EquipmentCapacityStrategyRegistry.java","sourceDigest":"fe8adcbcc1edbcdfced360764c870612a5f985f9f36f425109bf030219d0eac5","domain":"process","skills":["neqsim-capacity-and-utilization-analysis","neqsim-controllability-operability"],"agents":["control-system","network-energy-systems","optimize","optimize-processmodel","process-model"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.capacity.EquipmentDesignData","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/EquipmentDesignData.java","sourceDigest":"8010d75873b0b6b4a578bb1fca2b93dbdb5847eb145fd0d703a1b37eedab66bc","domain":"process","skills":["neqsim-capacity-and-utilization-analysis"],"agents":["network-energy-systems","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.capacity.EquipmentDesignData","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/EquipmentDesignData.java","sourceDigest":"90dbc372338b4bbeb73c8cfffc8ddd5e71ae41426f3af0d7da0fb8f01480757e","domain":"process","skills":["neqsim-capacity-and-utilization-analysis"],"agents":["network-energy-systems","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.ExpanderCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/ExpanderCapacityStrategy.java","sourceDigest":"61f4f94c708fc1e0f9b752967abd1b7f2d5ac5982a650df6c198de62a4e95c68","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.FilterAdsorberCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/FilterAdsorberCapacityStrategy.java","sourceDigest":"6a123d0bbdf23e578171e4828c5889b154249a19204b725e707f493ba520b60d","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.HeatExchangerCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/HeatExchangerCapacityStrategy.java","sourceDigest":"1533fe3b00fc66ff89775e13b7e89ea5773eca29f1a113a025c7596e8812cd40","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -2045,7 +2229,7 @@
     {"id":"neqsim.process.equipment.capacity.ValveCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/ValveCapacityStrategy.java","sourceDigest":"836e6476521456d3e049b24490b2b27e313f5a70775fd4d40c4ae50a7555e67f","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.capacity.WellFlowCapacityStrategy","kind":"class","source":"src/main/java/neqsim/process/equipment/capacity/WellFlowCapacityStrategy.java","sourceDigest":"6663693381a63b2589336991ff27b8ecc43527de5c88eefba5d9bb9df6a5d05d","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.AdvancedAntiSurgeControlSystem","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/AdvancedAntiSurgeControlSystem.java","sourceDigest":"399ce43b700a85dde097a84c6d0e2956ef19e523a6380e40e2708f639fe91a65","domain":"process","skills":["neqsim-rotating-equipment-design"],"agents":["mechanical-design","root-cause","rotating-equipment"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.compressor.AntiSurge","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/AntiSurge.java","sourceDigest":"0656adba268fbf51c1bd0952f2843c090c539ecbb550c92d3c9fff05cb9a353c","domain":"process","skills":["neqsim-process-extraction"],"agents":["extract-process","unisim-reader"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.compressor.AntiSurge","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/AntiSurge.java","sourceDigest":"0656adba268fbf51c1bd0952f2843c090c539ecbb550c92d3c9fff05cb9a353c","domain":"process","skills":["neqsim-compressor-antisurge-recycle","neqsim-process-extraction"],"agents":["extract-process","rotating-equipment","unisim-reader"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.AntiSurgeRecycleCalculator","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/AntiSurgeRecycleCalculator.java","sourceDigest":"a9f5b900538905c6c3a42a70de756eb85a18382cc82018b230cb772f15ea0284","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.BoundaryCurve","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/BoundaryCurve.java","sourceDigest":"0727c7d3b435ba59d443af8b21acad1e77aaee3cd17c1e1d06da4c6ad8f62f4e","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.BoundaryCurveInterface","kind":"interface","source":"src/main/java/neqsim/process/equipment/compressor/BoundaryCurveInterface.java","sourceDigest":"135b4afddd9df72f762fbc3c32c175e172bb59a7ad67a7a1df68b4dc3deaf09d","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -2097,6 +2281,7 @@
     {"id":"neqsim.process.equipment.compressor.DryGasSealMonitor","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/DryGasSealMonitor.java","sourceDigest":"3c4c03b1ecbaf7a703a5a41b9bd3abc2be7f889f5413a9041ef4c0986ccd2ce0","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.EntrainedSaltDepositSource","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/EntrainedSaltDepositSource.java","sourceDigest":"4e76d7c91578e63a51823719341cd55f2bd011783e0232a8086974ba8d5a360f","domain":"process","skills":["neqsim-api-patterns","neqsim-flow-assurance"],"agents":["capability-scout","ccs-hydrogen","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","field-development","flow-assurance","gas-processing-refining","gas-quality","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","production-chemistry","pvt-simulation","reaction-engineering","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.InletGuideVaneModel","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/InletGuideVaneModel.java","sourceDigest":"107bc28243ff97faf232d46163dd5aca2f425a6763bf40d9ae67698f96345c78","domain":"process","skills":["neqsim-platform-modeling"],"agents":["optimize-processmodel","process-model","solve-task"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.compressor.MinimumFlowSpill","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/MinimumFlowSpill.java","sourceDigest":"46aa82930fefc71ed55978eb42a838f4427f92c37b0e230cbc62164f4cf4227f","domain":"process","skills":["neqsim-compressor-antisurge-recycle","neqsim-process-modeling"],"agents":["capability-scout","dynamic-equipment","engineering-deliverables","gas-processing-refining","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","process-model","rotating-equipment","solve-process","solve-task","unisim-reader"],"capabilities":["algebraic-minimum-flow-spill"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.compressor.OperatingEnvelope","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/OperatingEnvelope.java","sourceDigest":"9b725338fd31df6c875d9b26e6df5f84effce46a38e8488056980f0c77cd0fe0","domain":"process","skills":["neqsim-rotating-equipment-design"],"agents":["mechanical-design","root-cause","rotating-equipment"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.ReciprocatingCompressorPerformance","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/ReciprocatingCompressorPerformance.java","sourceDigest":"01b8dde041baeb758a4be905af191a06ab9b4c1819911cb2e4b36be5ac819139","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.compressor.RecycleFlowCoordinator","kind":"class","source":"src/main/java/neqsim/process/equipment/compressor/RecycleFlowCoordinator.java","sourceDigest":"3d5e1c87e0dff84f27f07848c491492dc3c3cd7729b0909a6c635666eb8e3af3","domain":"process","skills":["neqsim-rotating-equipment-design"],"agents":["mechanical-design","root-cause","rotating-equipment"],"capabilities":[],"disposition":"review_required"},
@@ -2262,6 +2447,7 @@
     {"id":"neqsim.process.equipment.network.CrudeAssay","kind":"class","source":"src/main/java/neqsim/process/equipment/network/CrudeAssay.java","sourceDigest":"cb0b10b3686b561761ee3ba39550f329243462a75aaf76f30e444423d7e56227","domain":"process","skills":["neqsim-capability-map","neqsim-pipeline-and-terminal-networks"],"agents":["capability-scout","engineering-deliverables","field-development","flow-assurance","mechanical-design","network-energy-systems","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.CrudeBlendResult","kind":"class","source":"src/main/java/neqsim/process/equipment/network/CrudeBlendResult.java","sourceDigest":"29bf936f72c1c598d27c76cbe7eb0d6fc8fad61b18a4a7a51e81b2a8bfbc31f2","domain":"process","skills":["neqsim-pipeline-and-terminal-networks"],"agents":["field-development","flow-assurance","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.CrudeParcel","kind":"class","source":"src/main/java/neqsim/process/equipment/network/CrudeParcel.java","sourceDigest":"718487b58c2f95f6f1761868d40dd81f0f322223c2b42c1da8fbc312bd22924b","domain":"process","skills":["neqsim-pipeline-and-terminal-networks"],"agents":["field-development","flow-assurance","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.network.FieldNetworkTopology","kind":"class","source":"src/main/java/neqsim/process/equipment/network/FieldNetworkTopology.java","sourceDigest":"1f06144feb2743b5b844d042a9a24b674ed241c22e822248bfb277ef2e0da007","domain":"process","skills":[],"agents":[],"capabilities":["surf-network-hydraulic-fidelity"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.network.GasLinepackState","kind":"class","source":"src/main/java/neqsim/process/equipment/network/GasLinepackState.java","sourceDigest":"7eb4b8f59fe2601603d5dbd0f882f829122dcf209fc989b0c359d5daa64030d3","domain":"process","skills":["neqsim-capability-map","neqsim-pipeline-and-terminal-networks"],"agents":["capability-scout","engineering-deliverables","field-development","flow-assurance","mechanical-design","network-energy-systems","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.GasQualityMetric","kind":"enum","source":"src/main/java/neqsim/process/equipment/network/GasQualityMetric.java","sourceDigest":"23b8f66a72f2ee31a8a5b3f71c5c2c797d69f4dcee2c3d1d789055bbb484ffa0","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.network.LoopDetector","kind":"class","source":"src/main/java/neqsim/process/equipment/network/LoopDetector.java","sourceDigest":"2862d83ae012efcb8cba56340a85d3b1638379bacc4408b8ee66a32dddd43820","domain":"process","skills":["neqsim-pipeline-and-terminal-networks"],"agents":["field-development","flow-assurance","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
@@ -2546,7 +2732,7 @@
     {"id":"neqsim.process.equipment.separator.PressureFilter","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/PressureFilter.java","sourceDigest":"a52be944dd7c9b1b4cae26ed8ea1e3bd1fd21ec4eeeea09bbfac53435a46321f","domain":"process","skills":["neqsim-produced-water-and-solids-separation"],"agents":["gas-processing-refining","production-chemistry"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.separator.RotaryVacuumFilter","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/RotaryVacuumFilter.java","sourceDigest":"e4cf7d8eb9c89104534db027542cee4155467087990141e800d22adfd03ad748","domain":"process","skills":["neqsim-capability-map","neqsim-produced-water-and-solids-separation"],"agents":["capability-scout","engineering-deliverables","gas-processing-refining","mechanical-design","production-chemistry","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.separator.ScrewPress","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/ScrewPress.java","sourceDigest":"dc2a13e22dce4976a215990b9fdc995a7a80cf11bad126fad9f11345a34fc32a","domain":"process","skills":["neqsim-produced-water-and-solids-separation"],"agents":["gas-processing-refining","production-chemistry"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.separator.Separator","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/Separator.java","sourceDigest":"44fb3d122100f352a68d1b54504b1b279ee41caca6656130fbf162fcf4c5240e","domain":"process","skills":["neqsim-advanced-control-mpc-and-virtual-sensing","neqsim-agent-handoff","neqsim-api-patterns","neqsim-capability-map","neqsim-controllability-operability","neqsim-dynamic-equipment-implementation","neqsim-dynamic-simulation","neqsim-input-validation","neqsim-model-calibration-and-data-reconciliation","neqsim-notebook-patterns","neqsim-operational-risk-and-safety-validation","neqsim-physics-explanations","neqsim-pid-process-operations","neqsim-platform-modeling","neqsim-process-extraction","neqsim-process-modeling","neqsim-process-synthesis-research","neqsim-produced-water-and-solids-separation","neqsim-production-optimization","neqsim-reaction-engineering","neqsim-regression-baselines","neqsim-root-cause-analysis","neqsim-standards-lookup","neqsim-stid-retriever","neqsim-subsea-and-wells","neqsim-task-workflow","neqsim-technical-document-reading","neqsim-troubleshooting","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","plant-data","process-model","production-chemistry","pvt-simulation","reaction-engineering","review","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":["process-separation","equipment-sizing"],"disposition":"registered_anchor"},
+    {"id":"neqsim.process.equipment.separator.Separator","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/Separator.java","sourceDigest":"2033fd7f9cc39cadacbb8d887e7722968a6de23bca292da5d4e9ab2188d61a0a","domain":"process","skills":["neqsim-advanced-control-mpc-and-virtual-sensing","neqsim-agent-handoff","neqsim-api-patterns","neqsim-capability-map","neqsim-controllability-operability","neqsim-dynamic-equipment-implementation","neqsim-dynamic-simulation","neqsim-input-validation","neqsim-model-calibration-and-data-reconciliation","neqsim-notebook-patterns","neqsim-operational-risk-and-safety-validation","neqsim-physics-explanations","neqsim-pid-process-operations","neqsim-platform-modeling","neqsim-process-extraction","neqsim-process-modeling","neqsim-process-synthesis-research","neqsim-produced-water-and-solids-separation","neqsim-production-optimization","neqsim-reaction-engineering","neqsim-regression-baselines","neqsim-root-cause-analysis","neqsim-standards-lookup","neqsim-stid-retriever","neqsim-subsea-and-wells","neqsim-task-workflow","neqsim-technical-document-reading","neqsim-troubleshooting","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","plant-data","process-model","production-chemistry","pvt-simulation","reaction-engineering","review","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":["process-separation","equipment-sizing"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.separator.SeparatorCapacityAssessment","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/SeparatorCapacityAssessment.java","sourceDigest":"98f29eec6eda46f6e5285f53cb6eef095e16d98df4556c1d38c34d44a795334f","domain":"process","skills":["neqsim-produced-water-and-solids-separation"],"agents":["gas-processing-refining","production-chemistry"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.separator.SeparatorInterface","kind":"interface","source":"src/main/java/neqsim/process/equipment/separator/SeparatorInterface.java","sourceDigest":"07bcc34fd42d010f092ad47fcabca507dd11daa4355a447b6b0787825686692c","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.separator.SolidsCentrifuge","kind":"class","source":"src/main/java/neqsim/process/equipment/separator/SolidsCentrifuge.java","sourceDigest":"7abbd9c06445ce29ef1a2275638920d1296bb9720579fb459c0e6a67d3f702fb","domain":"process","skills":["neqsim-produced-water-and-solids-separation"],"agents":["gas-processing-refining","production-chemistry"],"capabilities":[],"disposition":"review_required"},
@@ -2579,7 +2765,7 @@
     {"id":"neqsim.process.equipment.solidhandling.BioFeedstockPreparation","kind":"class","source":"src/main/java/neqsim/process/equipment/solidhandling/BioFeedstockPreparation.java","sourceDigest":"17dc085db3c5bb35193d67e302834609d6e86651e77de91e7290957d4934b157","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.splitter.BiogasUpgrader","kind":"class","source":"src/main/java/neqsim/process/equipment/splitter/BiogasUpgrader.java","sourceDigest":"57e5ae71c2018f1ac67ffc97b0ecf596508105e9617b4dc2ab8bc24296f7113a","domain":"process","skills":["neqsim-capability-map","neqsim-reaction-engineering"],"agents":["capability-scout","engineering-deliverables","mechanical-design","reaction-engineering","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.splitter.ComponentCaptureUnit","kind":"class","source":"src/main/java/neqsim/process/equipment/splitter/ComponentCaptureUnit.java","sourceDigest":"d0c6a05cade241a320554617267a86a36b21a005b290571e67677f001e06fc45","domain":"process","skills":["neqsim-hydrogen-production"],"agents":["ccs-hydrogen"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.equipment.splitter.ComponentSplitter","kind":"class","source":"src/main/java/neqsim/process/equipment/splitter/ComponentSplitter.java","sourceDigest":"5ab0df93b3198b473f5d39336f209605243939192f3674797d0b08ae418bbfc9","domain":"process","skills":["neqsim-api-patterns","neqsim-capability-map","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","gas-processing-refining","gas-quality","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","pvt-simulation","reaction-engineering","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.splitter.ComponentSplitter","kind":"class","source":"src/main/java/neqsim/process/equipment/splitter/ComponentSplitter.java","sourceDigest":"1d033552a91425b7edf97dfdc5946bf16a55aa8ad46c3f4a064a05b846c26425","domain":"process","skills":["neqsim-api-patterns","neqsim-capability-map","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","gas-processing-refining","gas-quality","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","pvt-simulation","reaction-engineering","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.splitter.Splitter","kind":"class","source":"src/main/java/neqsim/process/equipment/splitter/Splitter.java","sourceDigest":"bb4743f96f7b098a9feb8bd42f17a9ed613a4cd788d0a623cd4e1e765f1aaa41","domain":"process","skills":["neqsim-agentic-process-optimization","neqsim-api-patterns","neqsim-capability-map","neqsim-dynamic-simulation","neqsim-notebook-patterns","neqsim-platform-modeling","neqsim-power-generation","neqsim-process-extraction","neqsim-process-modeling","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","gas-processing-refining","gas-quality","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","pvt-simulation","reaction-engineering","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.splitter.SplitterInterface","kind":"interface","source":"src/main/java/neqsim/process/equipment/splitter/SplitterInterface.java","sourceDigest":"c6a3008fd4273f60a4733ac2effb2f47755978d86c1d2fc2787c8e6e1506e169","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.stream.EnergyAllocation","kind":"class","source":"src/main/java/neqsim/process/equipment/stream/EnergyAllocation.java","sourceDigest":"f7d0241ce63b1d4b8cb9b1d9edb99f97409dfb5a21da7f719507640b01db57ab","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -3225,9 +3411,9 @@
     {"id":"neqsim.process.processmodel.ProcessModule","kind":"class","source":"src/main/java/neqsim/process/processmodel/ProcessModule.java","sourceDigest":"05541f77f08319025086ec2bc7ca8b83d8bdd0cde8bf98d22561c9c6799489ca","domain":"process","skills":["neqsim-api-patterns","neqsim-notebook-patterns","neqsim-process-extraction","neqsim-unisim-reader"],"agents":["capability-scout","ccs-hydrogen","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","gas-processing-refining","gas-quality","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","pvt-simulation","reaction-engineering","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.ProcessModuleBaseClass","kind":"class","source":"src/main/java/neqsim/process/processmodel/ProcessModuleBaseClass.java","sourceDigest":"6898fe0be57b3914eebbf271cf424e30c88182a3aeb135d8132c9e4dd01eb1e7","domain":"process","skills":["neqsim-process-extraction"],"agents":["extract-process","unisim-reader"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.ProcessSimulationSession","kind":"class","source":"src/main/java/neqsim/process/processmodel/ProcessSimulationSession.java","sourceDigest":"4d62b1226eaab92e54cce30441dd726fae04ada40ebc6afde15b919ea80e8299","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.processmodel.ProcessSystem","kind":"class","source":"src/main/java/neqsim/process/processmodel/ProcessSystem.java","sourceDigest":"7e5162e388bc1bb2c367e4dda4a5c959f04aa9e2e4be3db08e262bea589c5aaa","domain":"process","skills":["design-reactor-benchmark","neqsim-advanced-control-mpc-and-virtual-sensing","neqsim-agentic-process-optimization","neqsim-api-patterns","neqsim-capability-map","neqsim-capacity-and-utilization-analysis","neqsim-ccs-hydrogen","neqsim-controllability-operability","neqsim-dynamic-simulation","neqsim-engineering-design-package","neqsim-field-development","neqsim-heat-integration","neqsim-hydrogen-production","neqsim-in-writing","neqsim-integrated-production-and-lifecycle","neqsim-lng-liquefaction","neqsim-notebook-patterns","neqsim-operational-risk-and-safety-validation","neqsim-optimization-and-doe","neqsim-pid-process-operations","neqsim-plant-data","neqsim-platform-modeling","neqsim-power-generation","neqsim-process-extraction","neqsim-process-modeling","neqsim-process-safety","neqsim-process-synthesis-research","neqsim-production-chemistry","neqsim-reaction-engineering","neqsim-root-cause-analysis","neqsim-standards-lookup","neqsim-task-workflow","neqsim-troubleshooting","neqsim-unisim-reader","neqsim-utility-design"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","paperlab","plant-data","process-model","production-chemistry","pvt-simulation","reaction-engineering","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":["process-separation"],"disposition":"registered_anchor"},
+    {"id":"neqsim.process.processmodel.ProcessSystem","kind":"class","source":"src/main/java/neqsim/process/processmodel/ProcessSystem.java","sourceDigest":"7ce0a6ceab942e9ffc0617466459706f8fd527fe11ebafc4910c6bd247f5fb93","domain":"process","skills":["design-reactor-benchmark","neqsim-advanced-control-mpc-and-virtual-sensing","neqsim-agentic-process-optimization","neqsim-api-patterns","neqsim-capability-map","neqsim-capacity-and-utilization-analysis","neqsim-ccs-hydrogen","neqsim-compressor-antisurge-recycle","neqsim-controllability-operability","neqsim-dynamic-simulation","neqsim-engineering-design-package","neqsim-field-development","neqsim-heat-integration","neqsim-hydrogen-production","neqsim-in-writing","neqsim-integrated-production-and-lifecycle","neqsim-lng-liquefaction","neqsim-notebook-patterns","neqsim-operational-risk-and-safety-validation","neqsim-optimization-and-doe","neqsim-pid-process-operations","neqsim-plant-data","neqsim-platform-modeling","neqsim-power-generation","neqsim-process-extraction","neqsim-process-modeling","neqsim-process-safety","neqsim-process-synthesis-research","neqsim-production-chemistry","neqsim-reaction-engineering","neqsim-root-cause-analysis","neqsim-standards-lookup","neqsim-task-workflow","neqsim-troubleshooting","neqsim-unisim-reader","neqsim-utility-design"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","paperlab","plant-data","process-model","production-chemistry","pvt-simulation","reaction-engineering","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":["process-separation"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.processmodel.ProcessSystemGraphvizExporter","kind":"class","source":"src/main/java/neqsim/process/processmodel/ProcessSystemGraphvizExporter.java","sourceDigest":"87d61d0560896cc8b0cf50d54b4a9f27f169cac8fe75efe6819c2c50788520f2","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.processmodel.RunStatus","kind":"class","source":"src/main/java/neqsim/process/processmodel/RunStatus.java","sourceDigest":"035866d27f6808222c6c063b1bd1c44ff0a5003e7c586079c45a587dd5b9cb97","domain":"process","skills":["neqsim-agentic-process-optimization"],"agents":["continuous-improvement","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.processmodel.RunStatus","kind":"class","source":"src/main/java/neqsim/process/processmodel/RunStatus.java","sourceDigest":"af36f602b7dc42121a389ab85634985fccbe61f8a46494d6263086379497ef44","domain":"process","skills":["neqsim-agentic-process-optimization"],"agents":["continuous-improvement","optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.SimulationResult","kind":"class","source":"src/main/java/neqsim/process/processmodel/SimulationResult.java","sourceDigest":"86ab2954189e16900d751a0d4907bd24b864ee17cc7b686248c3e03a3f836202","domain":"process","skills":["neqsim-process-extraction"],"agents":["extract-process","unisim-reader"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.UnitRunStatus","kind":"class","source":"src/main/java/neqsim/process/processmodel/UnitRunStatus.java","sourceDigest":"2d68161ed0547f4cdbd45c0baef03f729aa6bbe3388a6cc3df5cd878df232f39","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.processmodel.XmlUtil","kind":"class","source":"src/main/java/neqsim/process/processmodel/XmlUtil.java","sourceDigest":"e9c4618c94f6218d3aff2cd50791c11d8a8d54de3fc30b50bc2c3982d57e94fd","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -3710,10 +3896,10 @@
     {"id":"neqsim.process.util.optimizer.ProcessModelDebottleneckStudy","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelDebottleneckStudy.java","sourceDigest":"9d81a9e6a1ccf6bc0fecca96bd843d0a1614c673adaef099bfafeb4dbd7d5876","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelOperatingAction","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingAction.java","sourceDigest":"75b70fd0df57e49ba6339f1f1c5959156be74d4a5576c271edd5df053655a2a6","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingActionEvaluator.java","sourceDigest":"f7d49d59ba7ff25752fc92a54e5599369cb57d5f9c5acd5e6c6db7b4ef6fe206","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingActionSetEvaluator.java","sourceDigest":"5c4a68308e9373e3d8e4b59932f0a78bf99f20694bb9a9bf0d5d3b75b579cfa5","domain":"process","skills":["neqsim-production-optimization","neqsim-troubleshooting"],"agents":["dynamic-equipment","field-development","gas-processing-refining","neqsim-test","notebook-example","process-model","reaction-engineering","root-cause","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingEnvelopeStudy.java","sourceDigest":"018a5b8f1218e3c7bf813126326bf00bd6dd4eb294d23f1379315a44457c4b81","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingActionSetEvaluator.java","sourceDigest":"2f0fc96599a6942b3be0b4be9e0433b5fd462245b30e83c1d33cb6ba344f4562","domain":"process","skills":["neqsim-production-optimization","neqsim-troubleshooting"],"agents":["dynamic-equipment","field-development","gas-processing-refining","neqsim-test","notebook-example","process-model","reaction-engineering","root-cause","rotating-equipment","solve-process","solve-task","thermo-fluid","unisim-reader"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOperatingEnvelopeStudy.java","sourceDigest":"26e23bb6660a3eb90b32ad03ca0802057628b44c3924748cad67c7cf80a8dae1","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelOptimizationView","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelOptimizationView.java","sourceDigest":"b0b584469d2eda3b8fab8de4c3728e58b5ff0a39105a8090f2b764dd98de7a0c","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.process.util.optimizer.ProcessModelSimulationEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelSimulationEvaluator.java","sourceDigest":"b7a5ece57d799bbbe12a9eda1096049d83ec7b3746c0f7967281e6a07a0da834","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.util.optimizer.ProcessModelSimulationEvaluator","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelSimulationEvaluator.java","sourceDigest":"1d342e7b3bdcf75b553ebc81d8d7db1d113883614fd75b12bdad005b6f73e85d","domain":"process","skills":["neqsim-production-optimization"],"agents":["field-development"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelThroughputOptimizer","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelThroughputOptimizer.java","sourceDigest":"af226e4cfcc709f43d80414c7cad38d95faae4ea18de3990a6f5bd0dd6664f13","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessModelThroughputResult","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessModelThroughputResult.java","sourceDigest":"f10068cc120a3b433355c25cc2a7c08105b3801d3cb4076096bcbe51e08ae95a","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.util.optimizer.ProcessOptimizationEngine","kind":"class","source":"src/main/java/neqsim/process/util/optimizer/ProcessOptimizationEngine.java","sourceDigest":"2f9964f26b028e66e5f06d3366f6cb28a81aa55ad77d5a3551bcec0bb9f49984","domain":"process","skills":["neqsim-optimization-and-doe"],"agents":["optimize","optimize-processmodel"],"capabilities":[],"disposition":"review_required"},
@@ -3808,7 +3994,7 @@
     {"id":"neqsim.pvtsimulation.simulation.ConstantVolumeDepletion","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletion.java","sourceDigest":"cd5bef0ceacafb4a706a52bfebbd9f088404eff2e2cf93e1634a830d1036ea67","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-eos-regression","neqsim-task-workflow"],"agents":["capability-scout","engineering-deliverables","mechanical-design","pvt-simulation","solve-task","thermo-fluid"],"capabilities":["pvt-experiments"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.simulation.DensitySim","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/DensitySim.java","sourceDigest":"9a14045388280c8374c1d01512255c6752a63524dc0995d394bf8c483678db1e","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.simulation.DifferentialLiberation","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/DifferentialLiberation.java","sourceDigest":"dbae2f5978a6d124df36eb9cf67d8c0b6f2303ad25b63da8226afa676478afe7","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.pvtsimulation.simulation.GOR","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/GOR.java","sourceDigest":"42a8fe2e141a333742b620f5b7abea2d8c0348dd6de50eda3b4b0ac35f364c2b","domain":"pvtsimulation","skills":["neqsim-advanced-control-mpc-and-virtual-sensing","neqsim-capability-map","neqsim-capacity-and-utilization-analysis","neqsim-continuous-task-improvement","neqsim-controllability-operability","neqsim-eos-regression","neqsim-model-calibration-and-data-reconciliation","neqsim-process-modeling","neqsim-production-optimization","neqsim-task-workflow","neqsim-technical-document-reading"],"agents":["capability-scout","continuous-improvement","control-system","dynamic-equipment","engineering-deliverables","field-development","gas-processing-refining","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","plant-data","process-model","pvt-simulation","root-cause","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.simulation.GOR","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/GOR.java","sourceDigest":"42a8fe2e141a333742b620f5b7abea2d8c0348dd6de50eda3b4b0ac35f364c2b","domain":"pvtsimulation","skills":["neqsim-advanced-control-mpc-and-virtual-sensing","neqsim-capability-map","neqsim-capacity-and-utilization-analysis","neqsim-continuous-task-improvement","neqsim-controllability-operability","neqsim-eos-regression","neqsim-model-calibration-and-data-reconciliation","neqsim-process-modeling","neqsim-production-optimization","neqsim-professional-reporting","neqsim-task-workflow","neqsim-technical-document-reading"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","field-development","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","plant-data","process-model","production-chemistry","pvt-simulation","review","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.simulation.MMPCalculator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/MMPCalculator.java","sourceDigest":"aa41e4180a4ac32ee61693fb1f6dde45d618bb601ce1ecafcd42409b4dd3f358","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.simulation.MultiStageSeparatorTest","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/MultiStageSeparatorTest.java","sourceDigest":"d42d32e11bb40d3a95dd18692a32cb365179abeebc360fc49b88b63c1d5a1893","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.simulation.SaturationPressure","kind":"class","source":"src/main/java/neqsim/pvtsimulation/simulation/SaturationPressure.java","sourceDigest":"c985d47fc69d4e070ebe44f11edd47d5f405000f03b574d919ff4978dab7cb79","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-task-workflow"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
@@ -3825,7 +4011,7 @@
     {"id":"neqsim.pvtsimulation.util.BlackOilTableValidator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilTableValidator.java","sourceDigest":"116bbfa3cc9d0d7f88ab08f3c4ffca6f257cca484e0440287230e7fdf7c3e61a","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.BlackOilUnits","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilUnits.java","sourceDigest":"86bb80de016bf3410b85758de684bf09b1355e56c8188a4dd95bc8cf5aa1a457","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"326d8c437e8aa77db684a558b235d9deb638b7b0a1dde6f3af9e091cc06ae908","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task"],"capabilities":["exponential-decline-screening"],"disposition":"registered_anchor"},
-    {"id":"neqsim.pvtsimulation.util.GasPseudoCriticalProperties","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoCriticalProperties.java","sourceDigest":"905c54f1cd773b921c1f5cebd12ade8464d1a42a0f2ff84295e54602bcc65100","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.util.GasPseudoCriticalProperties","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoCriticalProperties.java","sourceDigest":"64a5f0daa74fd1424e5b0ed10d71882a797fd622627532882171f1a69d9a8af6","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":["sweet-gas-pseudocritical-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoPressure","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoPressure.java","sourceDigest":"ebc3bc84ed6f441914afcb83455be6129233792ea8d1dc07d5a049fa49a9a2fc","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.PVTReportGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTReportGenerator.java","sourceDigest":"7b318865c264540e984a17ae89a2e7346254bca40b1370645309cd45bb2b890e","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.SaturationPressureCorrelation","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/SaturationPressureCorrelation.java","sourceDigest":"908edd67352adb8bf34044bb595aa8254ee2630563b6c84bcbff14a04e27ddf1","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
@@ -3928,7 +4114,7 @@
     {"id":"neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtBiasDev","kind":"class","source":"src/main/java/neqsim/statistics/parameterfitting/nonlinearparameterfitting/LevenbergMarquardtBiasDev.java","sourceDigest":"1abac5f446e7e25ea44155de757c0a1648173d7a72f27602154e067f78af7e15","domain":"statistics","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction","kind":"class","source":"src/main/java/neqsim/statistics/parameterfitting/nonlinearparameterfitting/LevenbergMarquardtFunction.java","sourceDigest":"84067e48815fd34b936c0331a7400aaa203a44b3051a8fef9b0ff0a9f4ee3979","domain":"statistics","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult","kind":"class","source":"src/main/java/neqsim/statistics/parameterfitting/nonlinearparameterfitting/LevenbergMarquardtResult.java","sourceDigest":"b513d26de1300fab378286d0b8c2e3a1897296aa97dc228b19e32ae913a722b8","domain":"statistics","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.thermo.Fluid","kind":"class","source":"src/main/java/neqsim/thermo/Fluid.java","sourceDigest":"bd40f240be118148c3f9f2d9e5822741f3f00f97fb46dfc28876b7cdd98a3b0a","domain":"thermo","skills":["analyze-convergence","design-flash-benchmark","generate-publication-figures","journal-formatting","neqsim-agent-handoff","neqsim-api-patterns","neqsim-capability-map","neqsim-compressor-antisurge-recycle","neqsim-eos-regression","neqsim-field-development","neqsim-hydrogen-production","neqsim-input-validation","neqsim-notebook-patterns","neqsim-platform-modeling","neqsim-process-extraction","neqsim-process-modeling","neqsim-production-optimization","neqsim-release-source-terms","neqsim-task-workflow","neqsim-technical-document-reading","neqsim-trapped-liquid-fire-rupture","neqsim-unisim-reader","neqsim-wax-calculations","write-methods-section"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","paperlab","process-model","production-chemistry","pvt-simulation","reaction-engineering","review","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.thermo.Fluid","kind":"class","source":"src/main/java/neqsim/thermo/Fluid.java","sourceDigest":"bd40f240be118148c3f9f2d9e5822741f3f00f97fb46dfc28876b7cdd98a3b0a","domain":"thermo","skills":["analyze-convergence","design-flash-benchmark","generate-publication-figures","journal-formatting","neqsim-agent-handoff","neqsim-api-patterns","neqsim-capability-map","neqsim-compressor-antisurge-recycle","neqsim-eos-regression","neqsim-field-development","neqsim-hydrogen-production","neqsim-input-validation","neqsim-notebook-patterns","neqsim-platform-modeling","neqsim-process-extraction","neqsim-process-modeling","neqsim-production-optimization","neqsim-professional-reporting","neqsim-release-source-terms","neqsim-task-workflow","neqsim-technical-document-reading","neqsim-trapped-liquid-fire-rupture","neqsim-unisim-reader","neqsim-wax-calculations","write-methods-section"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","continuous-improvement","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","extract-process","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","paperlab","process-model","production-chemistry","pvt-simulation","reaction-engineering","review","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.thermo.FluidCreator","kind":"class","source":"src/main/java/neqsim/thermo/FluidCreator.java","sourceDigest":"a7530efc6835eebc1e9a868786f0e8cf4230dd0f19de3af00f37b96e5df8742e","domain":"thermo","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.thermo.ThermodynamicConstantsInterface","kind":"interface","source":"src/main/java/neqsim/thermo/ThermodynamicConstantsInterface.java","sourceDigest":"3bc4564ff9a17462fc61befe2029c594b69cc2de89541ee6d1cb68fde8450d95","domain":"thermo","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.thermo.ThermodynamicModelSettings","kind":"interface","source":"src/main/java/neqsim/thermo/ThermodynamicModelSettings.java","sourceDigest":"9430f4b29f5c533a9611f278f8f74c69c6cf78459f66e4a10e82e07776d26423","domain":"thermo","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},

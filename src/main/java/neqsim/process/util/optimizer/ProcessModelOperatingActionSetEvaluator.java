@@ -696,7 +696,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
       this.name = definition.getName();
       this.type = definition.getType();
       this.unit = definition.getUnit();
-      this.physicalUnit = definition.getCapacityPhysicalUnit();
+      this.physicalUnit = definition.isPlantConstraint() ? definition.getPlantConstraintDefinition().getUnit()
+          : definition.getCapacityPhysicalUnit();
       this.hard = definition.isHard();
       this.penaltyWeight = definition.getPenaltyWeight();
       this.lowerBound = definition.getLowerBound();
@@ -865,6 +866,9 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** Complete qualified boundary evidence from the candidate operating point. */
     private final List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence;
 
+    /** Complete typed plant-wide/shared/coupled evidence from the candidate operating point. */
+    private final List<PlantConstraintEvidence> plantConstraintEvidence;
+
     /** Immutable diagnostics. */
     private final List<String> diagnostics;
 
@@ -877,7 +881,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
         double[] constraintValues, double[] constraintMargins, List<CandidateConstraintEvidence> constraintEvidence,
         List<HydraulicConstraintSnapshot> hydraulicConstraints,
         List<InstalledEquipmentCapacityEvidence> installedEquipmentCapacityEvidence,
-        List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence, List<String> diagnostics) {
+        List<ProcessBoundaryConstraintEvidence> processBoundaryConstraintEvidence,
+        List<PlantConstraintEvidence> plantConstraintEvidence, List<String> diagnostics) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -903,6 +908,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           .unmodifiableList(new ArrayList<InstalledEquipmentCapacityEvidence>(installedEquipmentCapacityEvidence));
       this.processBoundaryConstraintEvidence = Collections
           .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+      this.plantConstraintEvidence = Collections
+          .unmodifiableList(new ArrayList<PlantConstraintEvidence>(plantConstraintEvidence));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
     }
 
@@ -915,7 +922,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
           new double[0], Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
           Collections.<CandidateConstraintEvidence>emptyList(), Collections.<HydraulicConstraintSnapshot>emptyList(),
           Collections.<InstalledEquipmentCapacityEvidence>emptyList(),
-          Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
+          Collections.<ProcessBoundaryConstraintEvidence>emptyList(), Collections.<PlantConstraintEvidence>emptyList(),
+          diagnostics);
     }
 
     /** Creates a result from an optional candidate simulation. */
@@ -931,14 +939,15 @@ public final class ProcessModelOperatingActionSetEvaluator {
             Collections.<CandidateObjectiveEvidence>emptyList(), new double[0], new double[0],
             Collections.<CandidateConstraintEvidence>emptyList(), hydraulicConstraints,
             Collections.<InstalledEquipmentCapacityEvidence>emptyList(),
-            Collections.<ProcessBoundaryConstraintEvidence>emptyList(), diagnostics);
+            Collections.<ProcessBoundaryConstraintEvidence>emptyList(),
+            Collections.<PlantConstraintEvidence>emptyList(), diagnostics);
       }
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
           copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), objectiveEvidence,
           copy(evaluation.getConstraintValues()), copy(evaluation.getConstraintMargins()), constraintEvidence,
           hydraulicConstraints, evaluation.getInstalledEquipmentCapacityEvidence(),
-          evaluation.getProcessBoundaryConstraintEvidence(), diagnostics);
+          evaluation.getProcessBoundaryConstraintEvidence(), evaluation.getPlantConstraintEvidence(), diagnostics);
     }
 
     /** Snapshots objective definitions and sampled values without retaining evaluator callbacks. */
@@ -1101,6 +1110,11 @@ public final class ProcessModelOperatingActionSetEvaluator {
     public List<ProcessBoundaryConstraintEvidence> getProcessBoundaryConstraintEvidence() {
       return Collections
           .unmodifiableList(new ArrayList<ProcessBoundaryConstraintEvidence>(processBoundaryConstraintEvidence));
+    }
+
+    /** @return fresh immutable typed plant evidence in registration order */
+    public List<PlantConstraintEvidence> getPlantConstraintEvidence() {
+      return Collections.unmodifiableList(new ArrayList<PlantConstraintEvidence>(plantConstraintEvidence));
     }
 
     /** @return fresh immutable diagnostics */
