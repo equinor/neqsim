@@ -8,7 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import org.h2.tools.Csv;
 import java.util.ArrayList;
@@ -16,8 +23,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -30,6 +45,14 @@ import neqsim.thermo.system.SystemSrkEos;
 public class ComponentNameResolverTest {
   /** Names as spelled in data/COMP.csv. */
   private static List<String> databaseNames;
+  private static final String COMPONENT_GUIDE = "docs/thermo/component/README.md";
+  private static final Pattern COMPONENT_GUIDE_JAVA =
+      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS =
+      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+
+  @TempDir
+  Path temporaryDirectory;
 
   /**
    * Read the component names straight from the CSV resource, so the test fails if the resolver tables drift away from
@@ -257,4 +280,101 @@ public class ComponentNameResolverTest {
     assertEquals("224-TM-C5", fluid.getPhase(0).getComponent(1).getComponentName());
     assertEquals("i-pentane", fluid.getPhase(0).getComponent(2).getComponentName());
   }
+
+  /** The component package guide must publish one complete, unit-explicit Java program. */
+  @Test
+  public void componentPackageGuideHasOneExecutableProgram() throws Exception {
+    String guide = readComponentGuide();
+
+    assertTrue(guide.startsWith("---\n"));
+    assertTrue(guide.contains("absolute bara"));
+    assertTrue(guide.contains("molar mass is read in kg/mol"));
+    assertTrue(guide.contains("../component_list.md#component-name-resolution"));
+    assertTrue(guide.contains("database-versus-pseudo-component"));
+    assertFalse(guide.contains("System.out"));
+    assertFalse(guide.contains("```python"));
+
+    Matcher fences = COMPONENT_GUIDE_JAVA.matcher(guide);
+    assertTrue(fences.find(), "Component guide must publish one Java program");
+    assertFalse(fences.find(), "Component guide must not publish unverified Java fragments");
+  }
+
+  /** Compiles the exact component guide fence for Java 8 and executes it with assertions enabled. */
+  @Test
+  public void componentPackageGuideCompilesAndRuns() throws Exception {
+    Matcher fence = COMPONENT_GUIDE_JAVA.matcher(readComponentGuide());
+    assertTrue(fence.find(), "Executable component example is missing");
+    String source = fence.group(1);
+
+    assertTrue(source.contains("new SystemSrkEos(298.15, 50.0)"));
+    assertTrue(source.contains("fluid.addComponent(\"2,2,4-trimethylpentane\", 0.10)"));
+    assertTrue(source.contains("fluid.getComponent(\"isooctane\")"));
+    assertTrue(source.contains("phase.getComponent(\"ISOOCTANE\")"));
+    assertTrue(source.contains("operations.TPflash()"));
+    assertTrue(source.contains("fluid.initProperties()"));
+    assertTrue(source.contains("assert Math.abs(overallFractionSum - 1.0) < 1.0e-10"));
+    assertTrue(source.contains("getFugacityCoefficient() > 0.0"));
+    assertFalse(source.contains("System.out"));
+
+    compileAndRunComponentGuide(source);
+    assertFalse(fence.find(), "Executable section must contain one Java program");
+  }
+
+  /** Reads the component package guide from the repository root. */
+  private String readComponentGuide() throws Exception {
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    return new String(Files.readAllBytes(repositoryRoot.resolve(COMPONENT_GUIDE)),
+        StandardCharsets.UTF_8);
+  }
+
+  /** Compiles one extracted Java source and invokes its main method with assertions enabled. */
+  private void compileAndRunComponentGuide(String source) throws Exception {
+    Matcher className = PUBLIC_CLASS.matcher(source);
+    assertTrue(className.find(), "Java fence must contain a complete public class");
+    String name = className.group(1);
+    assertFalse(className.find(), "Java fence must contain one public class");
+
+    Path outputDirectory = temporaryDirectory.resolve(name);
+    Files.createDirectories(outputDirectory);
+    Path javaSource = outputDirectory.resolve(name + ".java");
+    Files.write(javaSource, source.getBytes(StandardCharsets.UTF_8));
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "Documentation examples require a JDK compiler");
+    DiagnosticCollector<JavaFileObject> diagnostics =
+        new DiagnosticCollector<JavaFileObject>();
+    String classPath =
+        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = java.util.Arrays.asList(
+        "-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager =
+        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful =
+          compiler
+              .getTask(
+                  null,
+                  manager,
+                  diagnostics,
+                  options,
+                  null,
+                  manager.getJavaFileObjects(javaSource.toFile()))
+              .call();
+      assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
+    }
+
+    try (URLClassLoader loader =
+        new URLClassLoader(
+            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+      loader.setDefaultAssertionStatus(true);
+      Class<?> example = Class.forName(name, true, loader);
+      assertTrue(example.desiredAssertionStatus());
+      try {
+        example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+      } catch (InvocationTargetException exception) {
+        throw new AssertionError(name + " failed", exception.getCause());
+      }
+    }
+  }
+
 }
