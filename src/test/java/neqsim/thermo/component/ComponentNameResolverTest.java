@@ -46,10 +46,9 @@ public class ComponentNameResolverTest {
   /** Names as spelled in data/COMP.csv. */
   private static List<String> databaseNames;
   private static final String COMPONENT_GUIDE = "docs/thermo/component/README.md";
-  private static final Pattern COMPONENT_GUIDE_JAVA =
-      Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern COMPONENT_GUIDE_JAVA = Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -289,7 +288,7 @@ public class ComponentNameResolverTest {
     assertTrue(guide.startsWith("---\n"));
     assertTrue(guide.contains("absolute bara"));
     assertTrue(guide.contains("molar mass is read in kg/mol"));
-    assertTrue(guide.contains("../component_list.md#component-name-resolution"));
+    assertTrue(guide.contains("../component_list#component-name-resolution"));
     assertTrue(guide.contains("## Database and pseudo-components"));
     assertFalse(guide.contains("System.out"));
     assertFalse(guide.contains("```python"));
@@ -323,8 +322,7 @@ public class ComponentNameResolverTest {
   /** Reads the component package guide from the repository root. */
   private String readComponentGuide() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    return new String(Files.readAllBytes(repositoryRoot.resolve(COMPONENT_GUIDE)),
-        StandardCharsets.UTF_8);
+    return new String(Files.readAllBytes(repositoryRoot.resolve(COMPONENT_GUIDE)), StandardCharsets.UTF_8);
   }
 
   /** Compiles one extracted Java source and invokes its main method with assertions enabled. */
@@ -341,31 +339,18 @@ public class ComponentNameResolverTest {
 
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
-    DiagnosticCollector<JavaFileObject> diagnostics =
-        new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = java.util.Arrays.asList(
-        "-source", "8", "-target", "8", "-classpath", classPath, "-d",
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = java.util.Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
         outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(javaSource.toFile()))
-              .call();
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
