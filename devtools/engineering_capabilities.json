@@ -1224,6 +1224,115 @@
       ]
     },
     {
+      "id": "gas-pseudopressure-screening",
+      "title": "Static sweet-gas pseudopressure screening",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.GasPseudoPressure"
+      ],
+      "skills": [
+        "neqsim-capability-map"
+      ],
+      "agents": [
+        "capability-scout"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Correlation-only sweet-gas screening using canonical Standing pseudocritical properties, Hall-Yarborough Z-factor and Lee-Gonzalez-Eakin viscosity. Both absolute pressures and molecular weight must be positive, gas specific gravity must remain from 0.55 through 1.80, reduced temperature must exceed 1.0 and maximum reduced pressure must remain below 25. It does not qualify sour-gas corrections, compositional EOS phase behavior, well deliverability or engineering approval.",
+      "operations": [
+        {
+          "id": "correlation-gas-pseudopressure",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoPressure",
+          "method": "calculateFromCorrelation",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.calculateFromCorrelation(double,double,double,double,double)",
+          "units": {
+            "inputs": {
+              "pressureBara": "bara absolute",
+              "referencePressureBara": "bara absolute",
+              "temperatureK": "K",
+              "gasSpecificGravity": "dimensionless; air = 1",
+              "molecularWeight": "g/mol; numerically equal to kg/kmol"
+            },
+            "outputs": {
+              "pseudopressureDifference": "bara^2/cP; signed"
+            }
+          },
+          "applicability": "Finite positive absolute pressures and molecular weight; Standing gas specific gravity from 0.55 through 1.80; Hall-Yarborough reduced temperature above 1.0 and maximum reduced pressure below 25.0.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              206.84,
+              1.01325,
+              366.48,
+              0.65,
+              16.04
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 2865418.4358585374,
+            "absoluteTolerance": 1e-6
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "absolute-correlation-gas-pseudopressure-difference",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoPressure",
+          "method": "deltaPseudoPressure",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.deltaPseudoPressure(double,double,double,double,double)",
+          "units": {
+            "inputs": {
+              "firstPressure": "bara absolute",
+              "secondPressure": "bara absolute",
+              "temperatureK": "K",
+              "gasSpecificGravity": "dimensionless; air = 1",
+              "molecularWeight": "g/mol; numerically equal to kg/kmol"
+            },
+            "outputs": {
+              "absolutePseudopressureDifference": "bara^2/cP"
+            }
+          },
+          "applicability": "Finite positive absolute pressures and molecular weight; Standing gas specific gravity from 0.55 through 1.80; Hall-Yarborough reduced temperature above 1.0 and maximum reduced pressure below 25.0.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              206.84,
+              68.95,
+              366.48,
+              0.65,
+              16.04
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 2520842.0799756097,
+            "absoluteTolerance": 1e-6
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ]
+    },
+    {
       "id": "algebraic-minimum-flow-spill",
       "title": "Steady-state compressor minimum-flow circulation",
       "domain": "process",
