@@ -104,7 +104,7 @@ to the same canonical database name. In the example, `2,2,4-trimethylpentane`, `
 
 Unknown or ambiguous text is not guessed. Check `hasComponent(name)` before dereferencing a
 user-supplied name, and treat a `null` result from `getComponent(name)` as an input-validation
-failure. The [component reference list](../component_list.md#component-name-resolution) documents
+failure. The [component reference list](../component_list#component-name-resolution) documents
 the supported name-resolution and mutation rules.
 
 ## System and phase component state
@@ -146,10 +146,10 @@ model assumptions before using implementation-specific parameters.
 
 ## Related documentation
 
-- [Component reference list](../component_list.md)
-- [Component database guide](../component_database_guide.md)
-- [Fluid creation guide](../fluid_creation_guide.md)
-- [System package](../system/README.md)
-- [Phase package](../phase/README.md)
-- [Mixing rules](../mixingrule/README.md)
-- [Thermodynamics overview](../README.md)
+- [Component reference list](../component_list)
+- [Component database guide](../component_database_guide)
+- [Fluid creation guide](../fluid_creation_guide)
+- [System package](../system/)
+- [Phase package](../phase/)
+- [Mixing rules](../mixingrule/)
+- [Thermodynamics overview](../)
