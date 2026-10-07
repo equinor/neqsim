@@ -1156,3 +1156,17 @@ absolute tolerance and the exchanger guide documents the duty/LMTD relation.
 **Keywords:** well to export, oil rim and gas cap, gas injection window, Uleberg P/A split factor, global kij offset, untuned-EOS benchmark, hold-out windows, non-iterative anti-surge spill gas, minimum-flow line, utilisation register, throughput sweep
 **Solution:** About 30 wells recombined from three tuned fluids (gas cap, Sognefjord oil rim, Oseberg oil) to PDM allocated rates; five ProcessSystems in a ProcessModel; three plant windows (calibration, hold-out, injection window); anti-surge minimum flow taken from the calibration window and implemented as spill gas built in a Calculator callback; one oil basis factor fitted on one window; utilisation register, throughput sweep and sensitivity; pvt_tuning_quality block with before/after per sample.
 **Notes:** A Recycle/Wegstein anti-surge loop oscillated for small LP flows and a mass-balance-only stagnation stop hid unconverged loops: use recycle.solved() in the stop test or avoid the loop. Measured compressor inlet flows that stay flat across windows with different gas rates mean the machines sit on the minimum-flow line. Allocated oil is not additive with the EOS stock-tank basis (per-well std flash 0-12 % high, near-zero-oil wells get condensate from the gas-cap yield): check per well. A ComponentSplitter water factor of 0 blew up the scrubber liquid. Gas alpha and S sit at their bounds. Fuel, Troll A and injection gas are inputs, not validations.
+
+### 2026-10-07 — Beggs and Brill flow-solve acceptance (#4258)
+**Type:** E (Feature / numerical correctness)
+**Keywords:** pipeline, flow capacity, pressure residual, iteration limit, rollback, JPype
+**Solution:** `PipeBeggsAndBrills`, immutable `FlowSolveReport`, and monitor JSON now expose
+pressure-to-flow termination evidence. A failed candidate throws and restores stream fluids;
+only final forward replay within pressure tolerance is accepted. Arbitrary property failures
+are no longer converted to excessive-flow bounds. This also improves agent/optimizer evidence:
+`solved()` is false after failure and JSON carries the same termination contract.
+**Validation:** Public reproducer first failed the new regression on original master. Updated
+Java suite: 24 passing tests and two existing skips, including six flow-solve regressions;
+JPype/JSON parity and recovery passed. The reproducer's 0.437220209 bar iteration-limit residual
+is rejected; normal budget converges in 13 trials to a 0.002861683 bar residual against 0.008 bar.
+**Documentation:** Updated pipeline guide, Javadocs and executable Python bridge example.

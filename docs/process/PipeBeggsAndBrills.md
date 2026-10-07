@@ -54,6 +54,48 @@ pipe.setFlowConvergenceTolerance(1e-4);
 
 ---
 
+### Flow-solve convergence contract
+
+In `CALCULATE_FLOW_RATE` mode, `run()` returns normally only when a final forward replay
+satisfies `abs(outletPressure - targetPressure) <= targetPressure * flowConvergenceTolerance`,
+with pressures converted to bara. The default relative tolerance remains `1e-4` and the
+bisection budget remains 50. A narrow flow bracket alone is not convergence.
+
+`getFlowSolveReport()` returns immutable evidence: `isConverged()`, termination reason,
+bisection count, bracket expansion count, lower/upper flow bounds and attempted rate (kg/hr),
+signed pressure residual and absolute tolerance (bar). The attempted rate is **not a rated
+capacity on failure**. `report.toJson()` exposes the same diagnostics; unavailable numerical
+fields are omitted. Equipment `toJson()` includes the report as `flowSolveReport`.
+
+| Termination reason | Meaning |
+| --- | --- |
+| `CONVERGED` | Final forward replay meets the pressure tolerance |
+| `ITERATION_LIMIT` | Bisection exhausted the configured budget |
+| `BRACKET_LIMIT` | No bracket after 20 upper-bound doublings, minimum-flow infeasibility, or floating-point bracket stagnation |
+| `INNER_FAILURE` | Unclassified inner property/numerical exception; original cause is preserved |
+| `NON_FINITE_OUTPUT` | A forward calculation returned a non-finite pressure |
+| `INVALID_INPUT` | Invalid geometry, bounds, pressure, initial rate, tolerance, or iteration budget |
+| `REPLAY_FAILURE` | Final replay no longer meets the pressure tolerance |
+
+Failure throws `IllegalStateException`, restores the original inlet and outlet fluids and their
+calculation identifiers, clears the pipe calculation identifier, and makes `solved()` false. Profile data from a failed
+run must not be consumed. Only a specifically identified non-positive hydraulic pressure is
+used as an excessive-flow bound; arbitrary runtime exceptions never tighten the bracket.
+
+Existing setters and successful flow-mode behavior remain supported. The initial rate must be
+finite and positive, the target must be positive and below the inlet pressure, and the relative
+tolerance must be finite and between zero and one. The lower search bound is the smaller of
+1 kg/hr and the initial rate. Forward pressure mode clears the last flow report. A report is
+evidence of the last attempted solve; changing settings does not perform a new solve.
+
+For the methane/n-decane reproducer in issue #4258, use `setMaxFlowIterations(1)` to exercise
+the failure contract, catch the exception and inspect `getFlowSolveReport()`, then restore the
+normal budget and rerun before using the capacity. The executable Java example/regression is
+`PipeBeggsAndBrillsFlowSolveTest`; the Python/JSON example is
+[`validate_beggs_brill_flow_solve_jpype.py`](../../devtools/validate_beggs_brill_flow_solve_jpype.py).
+Run that script with `--classpath-file` pointing to a Maven dependency classpath file after
+compiling the workspace classes.
+
 ## Flow Regime Determination
 
 The Beggs and Brill correlation classifies two-phase flow into four regimes based on dimensionless parameters.

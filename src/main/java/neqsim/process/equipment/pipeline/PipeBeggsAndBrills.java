@@ -277,7 +277,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * pipe.setFlowConvergenceTolerance(1e-4);
  * pipe.run();
  *
- * System.out.println("Calculated flow: " + pipe.getOutletStream().getFlowRate("kg/hr") + " kg/hr");
+ * FlowSolveReport report = pipe.getFlowSolveReport();
+ * // run() throws IllegalStateException on failure; inspect report before using a rated capacity.
+ * double acceptedFlowKgPerHour = report.getCandidateFlowKgPerHour();
  * }</pre>
  *
  * <h2>Transient Simulation</h2>
@@ -463,6 +465,51 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private double solvedInletPressure = Double.NaN;
   private String specifiedOutletPressureUnit = "bara";
   private int maxFlowIterations = 50;
+  private FlowSolveReport flowSolveReport;
+
+  /**
+   * Returns the last flow solve evidence, or null before a solve or after a forward run.
+   *
+   * @return immutable report; inspect isConverged before using a capacity
+   */
+  public FlowSolveReport getFlowSolveReport() {
+    return flowSolveReport;
+  }
+
+  /**
+   * Expected hydraulic-domain failure used only to bound the flow solve.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static class HydraulicDomainException extends IllegalStateException {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Creates a pressure-domain failure.
+     *
+     * @param pressure rejected pressure in bara
+     */
+    HydraulicDomainException(double pressure) {
+      super("Non-positive pipeline pressure: " + pressure + " bara");
+    }
+  }
+
+  /**
+   * Non-finite forward output must never be used as a bracket.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static class NonFinitePressureException extends IllegalStateException {
+    private static final long serialVersionUID = 1L;
+
+    /** Creates a non-finite output failure. */
+    NonFinitePressureException() {
+      super("Non-finite pipeline outlet pressure");
+    }
+  }
+
   private double flowConvergenceTolerance = 1e-4;
 
   // Unit for maximum flow
@@ -1067,7 +1114,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the maximum number of iterations for flow rate calculation when outlet pressure is specified.
+   * Sets the positive bisection budget. Exhaustion throws IllegalStateException and reports ITERATION_LIMIT; a
+   * candidate is never accepted solely because this budget expires.
    *
    * @param maxIterations the maximum number of iterations
    */
@@ -1076,7 +1124,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the convergence tolerance for flow rate calculation when outlet pressure is specified.
+   * Sets the finite relative pressure tolerance between zero and one. Final replay must satisfy the absolute
+   * outlet-pressure residual divided by target pressure, using bara.
    *
    * @param tolerance the relative convergence tolerance (default 1e-4)
    */
@@ -1572,6 +1621,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
+      runWithSpecifiedOutletPressure(id);
+      return;
+    }
+    flowSolveReport = null;
     // Input validation
     if (insideDiameter <= 0) {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
@@ -1582,9 +1636,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
           "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
     }
 
-    if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
-      runWithSpecifiedOutletPressure(id);
-    } else if (calculationMode == CalculationMode.CALCULATE_INLET_PRESSURE) {
+    if (calculationMode == CalculationMode.CALCULATE_INLET_PRESSURE) {
       runWithSpecifiedArrivalPressure(id);
     } else {
       if (applyLowFlowBypass(id)) {
@@ -1592,6 +1644,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       }
       runWithSpecifiedFlowRate(id);
     }
+    isSolved = true;
   }
 
   /**
@@ -1822,9 +1875,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       pressureOut = inletPressure - pressureDrop;
       pressureProfile.add(pressureOut);
 
-      if (pressureOut < 0) {
-        throw new RuntimeException(new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills",
-            "run: calcOutletPressure", "pressure out", "- Outlet pressure is negative" + pressureOut));
+      if (!Double.isFinite(pressureOut)) {
+        throw new NonFinitePressureException();
+      }
+      if (pressureOut <= 0) {
+        throw new HydraulicDomainException(pressureOut);
       }
 
       system.setPressure(pressureOut);
@@ -1880,137 +1935,171 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Run pipeline calculation with specified outlet pressure (calculate flow rate). Uses bisection method to find the
-   * flow rate that achieves the target outlet pressure.
+   * Solves flow by pressure residual, replaying the accepted candidate. Failures restore the inlet and outlet fluids
+   * and invalidate the calculation identifier; profile data from a failed run must not be consumed. Only non-positive
+   * hydraulic pressure is a valid excessive-flow bound.
    *
    * @param id calculation identifier
+   * @throws IllegalStateException on invalid inputs or a failed solve; see getFlowSolveReport()
    */
   private void runWithSpecifiedOutletPressure(UUID id) {
-    if (Double.isNaN(specifiedOutletPressure)) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "must be set when using CALCULATE_FLOW_RATE mode"));
-    }
-
-    // Convert specified outlet pressure to bara
-    double targetPressure = specifiedOutletPressure;
-    if (!specifiedOutletPressureUnit.equals("bara")) {
-      // Create a temporary system to convert pressure units
-      SystemInterface tempSystem = inStream.getThermoSystem().clone();
-      tempSystem.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
-      targetPressure = tempSystem.getPressure("bara");
-    }
-
-    double inletPressureBara = inStream.getThermoSystem().getPressure("bara");
-    if (targetPressure >= inletPressureBara) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "must be less than inlet pressure (" + inletPressureBara + " bara)"));
-    }
-    if (targetPressure <= 0) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "must be positive"));
-    }
-
-    // Save original flow rate
-    String flowUnit = "kg/hr";
-    double originalFlowRate = inStream.getFlowRate(flowUnit);
-
-    // Use bisection method to find flow rate
-    // Start with a wide range
-    double flowLow = 1.0; // Minimum 1 kg/hr
-    double flowHigh = originalFlowRate * 100.0; // Up to 100x original
-
-    // First, find a valid low flow rate (where outlet pressure > target)
-    double pressureAtLowFlow = tryCalculatePressure(flowLow, flowUnit, id);
-    if (pressureAtLowFlow < targetPressure) {
-      // Even at minimum flow, can't achieve target pressure
-      inStream.setFlowRate(originalFlowRate, flowUnit);
-      inStream.run();
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "cannot be achieved - pressure drop too high even at minimum flow"));
-    }
-
-    // Find a valid high flow rate (where outlet pressure < target)
-    // Start from a reasonable multiple and increase if needed
-    flowHigh = originalFlowRate * 2.0;
-    double pressureAtHighFlow = tryCalculatePressure(flowHigh, flowUnit, id);
-
-    // If pressure is still too high, increase flow rate
-    int boundSearchIter = 0;
-    while (pressureAtHighFlow > targetPressure && boundSearchIter < 20) {
-      flowHigh *= 2.0;
-      pressureAtHighFlow = tryCalculatePressure(flowHigh, flowUnit, id);
-      boundSearchIter++;
-    }
-
-    // If we couldn't find a high bound with positive pressure that gives low enough
-    // outlet pressure
-    // it means we need very high flow (or it's infeasible)
-    if (pressureAtHighFlow > targetPressure) {
-      inStream.setFlowRate(originalFlowRate, flowUnit);
-      inStream.run();
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
-          "specifiedOutletPressure", "cannot be achieved - requires extremely high flow rate"));
-    }
-
-    // Bisection iteration
-    double flowMid = 0;
-    double pressureMid = 0;
-    int iterCount = 0;
-
-    while (iterCount < maxFlowIterations) {
-      flowMid = (flowLow + flowHigh) / 2.0;
-      pressureMid = tryCalculatePressure(flowMid, flowUnit, id);
-
-      double relativeError = Math.abs(pressureMid - targetPressure) / targetPressure;
-
-      if (relativeError < flowConvergenceTolerance) {
-        // Converged
-        break;
+    flowSolveReport = null;
+    isSolved = false;
+    SystemInterface systemBaseline = system;
+    double pressureBaseline = pressureOut;
+    double dropBaseline = totalPressureDrop;
+    SystemInterface inletBaseline = inStream == null ? null : inStream.getThermoSystem();
+    SystemInterface outletBaseline = outStream == null ? null : outStream.getThermoSystem();
+    UUID inletId = inStream == null ? null : inStream.getCalculationIdentifier();
+    UUID outletId = outStream == null ? null : outStream.getCalculationIdentifier();
+    double target = Double.NaN;
+    double tolerance = Double.NaN;
+    double low = Double.NaN;
+    double high = Double.NaN;
+    double candidate = Double.NaN;
+    double pressure = Double.NaN;
+    int iterations = 0;
+    int bracketIterations = 0;
+    FlowSolveReport.TerminationReason reason = FlowSolveReport.TerminationReason.INVALID_INPUT;
+    try {
+      if (inletBaseline == null || !Double.isFinite(insideDiameter) || insideDiameter <= 0
+          || !Double.isFinite(totalLength) || totalLength <= 0 || numberOfIncrements <= 0
+          || !Double.isFinite(pipeWallRoughness) || pipeWallRoughness < 0 || !Double.isFinite(specifiedOutletPressure)
+          || maxFlowIterations <= 0 || !Double.isFinite(flowConvergenceTolerance) || flowConvergenceTolerance <= 0
+          || flowConvergenceTolerance >= 1) {
+        throw new IllegalArgumentException("Invalid geometry, target pressure, iteration budget or tolerance");
       }
-
-      if (pressureMid > targetPressure) {
-        // Need more pressure drop, increase flow
-        flowLow = flowMid;
-      } else {
-        // Need less pressure drop, decrease flow
-        flowHigh = flowMid;
+      SystemInterface conversion = inletBaseline.clone();
+      conversion.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
+      target = conversion.getPressure("bara");
+      double inlet = inletBaseline.getPressure("bara");
+      double originalFlow = inletBaseline.getFlowRate("kg/hr");
+      if (!Double.isFinite(target) || target <= 0 || !Double.isFinite(inlet) || target >= inlet
+          || !Double.isFinite(originalFlow) || originalFlow <= 0) {
+        throw new IllegalArgumentException("Require finite positive flow and 0 < target < inlet pressure");
       }
-
-      // Check if bounds have converged
-      if (Math.abs(flowHigh - flowLow) / flowMid < flowConvergenceTolerance) {
-        break;
+      tolerance = target * flowConvergenceTolerance;
+      low = Math.min(1.0, originalFlow);
+      high = Math.max(2.0 * originalFlow, 2.0 * low);
+      if (!Double.isFinite(high) || high <= low || !Double.isFinite(tolerance) || tolerance <= 0) {
+        throw new IllegalArgumentException("Invalid flow bounds or pressure tolerance");
       }
-
-      iterCount++;
+      // Trials must not mutate a shared inlet fluid, including on a successful solve.
+      inStream.setThermoSystem(inletBaseline.clone());
+      reason = FlowSolveReport.TerminationReason.INNER_FAILURE;
+      candidate = low;
+      pressure = checkedFlowPressure(low, id);
+      if (pressure < target - tolerance) {
+        reason = FlowSolveReport.TerminationReason.BRACKET_LIMIT;
+        throw new IllegalStateException("Target cannot be bracketed above the minimum flow");
+      }
+      if (Math.abs(pressure - target) > tolerance) {
+        candidate = high;
+        pressure = checkedFlowPressure(high, id);
+        while (pressure > target + tolerance && bracketIterations < 20) {
+          high *= 2.0;
+          if (!Double.isFinite(high)) {
+            reason = FlowSolveReport.TerminationReason.INVALID_INPUT;
+            throw new IllegalArgumentException("Flow bracket overflow");
+          }
+          bracketIterations++;
+          candidate = high;
+          pressure = checkedFlowPressure(high, id);
+        }
+        if (pressure > target + tolerance) {
+          reason = FlowSolveReport.TerminationReason.BRACKET_LIMIT;
+          throw new IllegalStateException("Target not bracketed after 20 expansions");
+        }
+      }
+      while (Math.abs(pressure - target) > tolerance && iterations < maxFlowIterations) {
+        candidate = low + (high - low) / 2.0;
+        iterations++;
+        pressure = checkedFlowPressure(candidate, id);
+        if (Math.abs(pressure - target) <= tolerance) {
+          break;
+        }
+        if (candidate == low || candidate == high) {
+          reason = FlowSolveReport.TerminationReason.BRACKET_LIMIT;
+          throw new IllegalStateException("Flow bracket stalled before pressure convergence");
+        }
+        if (pressure > target) {
+          low = candidate;
+        } else {
+          high = candidate;
+        }
+      }
+      if (Math.abs(pressure - target) > tolerance) {
+        reason = FlowSolveReport.TerminationReason.ITERATION_LIMIT;
+        throw new IllegalStateException("Flow iteration budget exhausted");
+      }
+      // Replay through the forward solver: only the replay residual qualifies the published state.
+      pressure = checkedFlowPressure(candidate, id);
+      if (!Double.isFinite(pressure) || Math.abs(pressure - target) > tolerance) {
+        reason = FlowSolveReport.TerminationReason.REPLAY_FAILURE;
+        throw new IllegalStateException("Final replay failed pressure acceptance");
+      }
+      isSolved = true;
+      flowSolveReport = new FlowSolveReport(FlowSolveReport.TerminationReason.CONVERGED, iterations, bracketIterations,
+          low, high, candidate, pressure - target, tolerance);
+    } catch (RuntimeException failure) {
+      if (reason == FlowSolveReport.TerminationReason.INNER_FAILURE) {
+        pressure = Double.NaN;
+      }
+      if (failure instanceof NonFinitePressureException) {
+        reason = FlowSolveReport.TerminationReason.NON_FINITE_OUTPUT;
+        pressure = Double.NaN;
+      }
+      flowSolveReport = new FlowSolveReport(reason, iterations, bracketIterations, low, high, candidate,
+          pressure - target, tolerance);
+      if (inStream != null && inletBaseline != null) {
+        inStream.setThermoSystem(inletBaseline);
+        inStream.setCalculationIdentifier(inletId);
+      }
+      if (outStream != null && outletBaseline != null) {
+        outStream.setThermoSystem(outletBaseline);
+        outStream.setCalculationIdentifier(outletId);
+      }
+      system = systemBaseline;
+      pressureOut = pressureBaseline;
+      totalPressureDrop = dropBaseline;
+      isSolved = false;
+      setCalculationIdentifier(null);
+      throw new IllegalStateException("Flow solve failed: " + reason + " for " + getName(), failure);
     }
-
-    // Final run with converged flow rate - already done in tryCalculatePressure
-    // Just ensure the state is set correctly
-    inStream.setFlowRate(flowMid, flowUnit);
-    inStream.run();
-    runWithSpecifiedFlowRate(id);
   }
 
   /**
-   * Helper method to calculate outlet pressure for a given flow rate, handling exceptions when pressure goes negative
-   * (indicating flow rate is too high).
+   * Checks alternate trial implementations as well as the standard forward solver.
    *
-   * @param flowRate the flow rate to test
-   * @param flowUnit the unit for flow rate
+   * @param flowRate trial mass rate in kg/hr
    * @param id calculation identifier
-   * @return the outlet pressure, or a very low value if calculation fails (pressure went negative)
+   * @return checked trial pressure
    */
-  private double tryCalculatePressure(double flowRate, String flowUnit, UUID id) {
-    inStream.setFlowRate(flowRate, flowUnit);
-    inStream.run();
+  private double checkedFlowPressure(double flowRate, UUID id) {
     try {
-      runWithSpecifiedFlowRate(id);
-      return getOutletPressure();
-    } catch (RuntimeException e) {
-      // If calculation fails (e.g., negative pressure), return very low pressure
-      // This helps the bisection algorithm know this flow rate is too high
-      return -1e6; // Return a very negative value to indicate "too high flow"
+      double pressure = evaluateFlowPressure(flowRate, id);
+      if (!Double.isFinite(pressure)) {
+        throw new NonFinitePressureException();
+      }
+      return pressure;
+    } catch (HydraulicDomainException failure) {
+      return Double.NEGATIVE_INFINITY;
     }
+  }
+
+  /**
+   * Evaluates a forward trial in kg/hr. Property and numerical failures propagate to the report.
+   *
+   * @param flowRate trial mass rate in kg/hr
+   * @param id calculation identifier
+   * @return outlet pressure in bara
+   * @throws RuntimeException for hydraulic, property or numerical failures
+   */
+  protected double evaluateFlowPressure(double flowRate, UUID id) {
+    inStream.setFlowRate(flowRate, "kg/hr");
+    inStream.run();
+    runWithSpecifiedFlowRate(id);
+    return getOutletPressure();
   }
 
   /**
