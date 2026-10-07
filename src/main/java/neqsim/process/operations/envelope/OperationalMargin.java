@@ -72,6 +72,10 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
   private final String constraintType;
   private final String severity;
   private final String dataSource;
+  private final double designValue;
+  private final String applicableLimitRole;
+  private final String applicableLimitSource;
+  private final String applicableLimitSourceReference;
   private final String description;
   private final boolean minimumConstraint;
   private final boolean hardLimitExceeded;
@@ -97,6 +101,36 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
   public OperationalMargin(String equipmentName, String constraintName, double currentValue, double limitValue,
       double utilizationPercent, double marginPercent, String unit, String constraintType, String severity,
       String dataSource, String description, boolean minimumConstraint, boolean hardLimitExceeded) {
+    this(equipmentName, constraintName, currentValue, limitValue, utilizationPercent, marginPercent, unit,
+        constraintType, severity, dataSource, limitValue, "DESIGN_RATED", "DEFAULT", "", description, minimumConstraint,
+        hardLimitExceeded);
+  }
+
+  /**
+   * Creates an operational margin with explicit applicable-limit identity.
+   *
+   * @param equipmentName equipment name
+   * @param constraintName constraint name
+   * @param currentValue current value in the constraint unit
+   * @param limitValue applicable limit in the constraint unit
+   * @param utilizationPercent current utilization in percent
+   * @param marginPercent remaining margin in percent
+   * @param unit engineering unit
+   * @param constraintType constraint type name
+   * @param severity constraint severity name
+   * @param dataSource design/default data source
+   * @param designValue preserved design/default limit
+   * @param applicableLimitRole applicable-limit role
+   * @param applicableLimitSource applicable-limit authority
+   * @param applicableLimitSourceReference applicable-limit reference
+   * @param description human-readable constraint description
+   * @param minimumConstraint true when lower values are worse
+   * @param hardLimitExceeded true when an absolute hard limit is exceeded
+   */
+  private OperationalMargin(String equipmentName, String constraintName, double currentValue, double limitValue,
+      double utilizationPercent, double marginPercent, String unit, String constraintType, String severity,
+      String dataSource, double designValue, String applicableLimitRole, String applicableLimitSource,
+      String applicableLimitSourceReference, String description, boolean minimumConstraint, boolean hardLimitExceeded) {
     this.equipmentName = clean(equipmentName);
     this.constraintName = clean(constraintName);
     this.key = this.equipmentName + "." + this.constraintName;
@@ -108,6 +142,10 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
     this.constraintType = clean(constraintType);
     this.severity = clean(severity);
     this.dataSource = clean(dataSource);
+    this.designValue = designValue;
+    this.applicableLimitRole = clean(applicableLimitRole);
+    this.applicableLimitSource = clean(applicableLimitSource);
+    this.applicableLimitSourceReference = clean(applicableLimitSourceReference);
     this.description = clean(description);
     this.minimumConstraint = minimumConstraint;
     this.hardLimitExceeded = hardLimitExceeded;
@@ -127,9 +165,11 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
       throw new IllegalArgumentException("constraint must not be null");
     }
     double current = constraint.getCurrentValue();
-    return new OperationalMargin(equipmentName, constraint.getName(), current, constraint.getDisplayDesignValue(),
+    return new OperationalMargin(equipmentName, constraint.getName(), current, constraint.getApplicableLimit(),
         constraint.getUtilizationPercent(), constraint.getMarginPercent(), constraint.getUnit(),
         constraint.getType().name(), constraint.getSeverity().name(), constraint.getDataSource(),
+        constraint.getDisplayDesignValue(), constraint.getApplicableLimitRole().name(),
+        constraint.getApplicableLimitSource().name(), constraint.getApplicableLimitSourceReference(),
         constraint.getDescription(), constraint.isMinimumConstraint(), constraint.isHardLimitExceeded());
   }
 
@@ -255,6 +295,26 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
     return dataSource;
   }
 
+  /** @return preserved design/default limit */
+  public double getDesignValue() {
+    return designValue;
+  }
+
+  /** @return role of the limit used to calculate the margin */
+  public String getApplicableLimitRole() {
+    return applicableLimitRole;
+  }
+
+  /** @return authority backing the applicable limit */
+  public String getApplicableLimitSource() {
+    return applicableLimitSource;
+  }
+
+  /** @return reference supporting the applicable limit */
+  public String getApplicableLimitSourceReference() {
+    return applicableLimitSourceReference;
+  }
+
   /**
    * Returns the description.
    *
@@ -304,6 +364,10 @@ public final class OperationalMargin implements Serializable, Comparable<Operati
     json.addProperty("status", status.name());
     json.addProperty("currentValue", currentValue);
     json.addProperty("limitValue", limitValue);
+    json.addProperty("designValue", designValue);
+    json.addProperty("applicableLimitRole", applicableLimitRole);
+    json.addProperty("applicableLimitSource", applicableLimitSource);
+    json.addProperty("applicableLimitSourceReference", applicableLimitSourceReference);
     json.addProperty("utilizationPercent", utilizationPercent);
     json.addProperty("marginPercent", marginPercent);
     json.addProperty("unit", unit);

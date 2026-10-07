@@ -266,6 +266,15 @@ public final class ProcessModelDebottleneckStudy {
     private final double designValue;
     private final double maximumValue;
     private final double minimumValue;
+    private final boolean operatingLimitSet;
+    private final double operatingLimit;
+    private final CapacityConstraint.ConstraintSource operatingLimitSource;
+    private final String operatingLimitSourceReference;
+    private final boolean operatingLimitConfidenceSet;
+    private final double operatingLimitConfidence;
+    private final boolean operatingLimitValidityRangeSet;
+    private final double operatingLimitValidityMinimum;
+    private final double operatingLimitValidityMaximum;
     private final double warningThreshold;
     private final String unit;
     private final CapacityConstraint.ConstraintSeverity severity;
@@ -282,6 +291,17 @@ public final class ProcessModelDebottleneckStudy {
       designValue = constraint.getDesignValue();
       maximumValue = constraint.getMaxValue();
       minimumValue = constraint.getMinValue();
+      operatingLimitSet = constraint.hasOperatingLimit();
+      operatingLimit = operatingLimitSet ? constraint.getOperatingLimit() : Double.NaN;
+      operatingLimitSource = constraint.getOperatingLimitSource();
+      operatingLimitSourceReference = safeText(constraint.getOperatingLimitSourceReference());
+      operatingLimitConfidenceSet = constraint.hasOperatingLimitConfidence();
+      operatingLimitConfidence = operatingLimitConfidenceSet ? constraint.getOperatingLimitConfidence() : Double.NaN;
+      operatingLimitValidityRangeSet = constraint.hasOperatingLimitValidityRange();
+      operatingLimitValidityMinimum = operatingLimitValidityRangeSet ? constraint.getOperatingLimitValidityMinimum()
+          : Double.NaN;
+      operatingLimitValidityMaximum = operatingLimitValidityRangeSet ? constraint.getOperatingLimitValidityMaximum()
+          : Double.NaN;
       warningThreshold = constraint.getWarningThreshold();
       unit = safeText(constraint.getUnit());
       severity = constraint.getSeverity();
@@ -307,7 +327,55 @@ public final class ProcessModelDebottleneckStudy {
       return minimumValue;
     }
 
+    /** @return true when a separate operating limit is configured */
+    public boolean hasOperatingLimit() {
+      return operatingLimitSet;
+    }
+
+    /** @return configured operating limit, or NaN */
+    public double getOperatingLimit() {
+      return operatingLimitSet ? operatingLimit : Double.NaN;
+    }
+
+    /** @return authority backing the operating limit, or null */
+    public CapacityConstraint.ConstraintSource getOperatingLimitSource() {
+      return operatingLimitSet ? operatingLimitSource : null;
+    }
+
+    /** @return reference supporting the operating limit */
+    public String getOperatingLimitSourceReference() {
+      return operatingLimitSet ? operatingLimitSourceReference : "";
+    }
+
+    /** @return true when operating-limit confidence is set */
+    public boolean hasOperatingLimitConfidence() {
+      return operatingLimitSet && operatingLimitConfidenceSet;
+    }
+
+    /** @return operating-limit confidence, or NaN */
+    public double getOperatingLimitConfidence() {
+      return hasOperatingLimitConfidence() ? operatingLimitConfidence : Double.NaN;
+    }
+
+    /** @return true when operating-limit validity is set */
+    public boolean hasOperatingLimitValidityRange() {
+      return operatingLimitSet && operatingLimitValidityRangeSet;
+    }
+
+    /** @return lower operating-limit validity bound, or NaN */
+    public double getOperatingLimitValidityMinimum() {
+      return hasOperatingLimitValidityRange() ? operatingLimitValidityMinimum : Double.NaN;
+    }
+
+    /** @return upper operating-limit validity bound, or NaN */
+    public double getOperatingLimitValidityMaximum() {
+      return hasOperatingLimitValidityRange() ? operatingLimitValidityMaximum : Double.NaN;
+    }
+
     public double getApplicableLimit() {
+      if (operatingLimitSet) {
+        return operatingLimit;
+      }
       return minimumValue > 0.0 && designValue == Double.MAX_VALUE ? minimumValue : designValue;
     }
 
@@ -1263,31 +1331,23 @@ public final class ProcessModelDebottleneckStudy {
     if (actual != alternative.getLimitDirection()) {
       throw new IllegalArgumentException("Alternative direction does not match the installed constraint");
     }
-    if (!isFinite(constraint.getDisplayDesignValue()) || constraint.getDisplayDesignValue() == Double.MAX_VALUE
-        || constraint.getDisplayDesignValue() <= 0.0) {
+    if (!isFinite(constraint.getApplicableLimit()) || constraint.getApplicableLimit() == Double.MAX_VALUE
+        || constraint.getApplicableLimit() <= 0.0) {
       throw new IllegalArgumentException("Installed applicable limit must be finite and positive");
     }
     return new CapacityTarget(constraint);
   }
 
   private void applyAlternative(CapacityConstraint constraint) {
-    if (alternative.getLimitDirection() == LimitDirection.MINIMUM) {
-      constraint.setMinValue(alternative.getProposedLimit());
-    } else {
-      constraint.setDesignValue(alternative.getProposedLimit());
-    }
-    constraint.setDataSource(alternative.getProposalSource());
+    constraint.setOperatingLimit(alternative.getProposedLimit(), CapacityConstraint.ConstraintSource.USER_RULE,
+        alternative.getProposalSource());
     if (alternative.hasConfidence()) {
-      constraint.setConfidence(alternative.getConfidence());
-    } else {
-      constraint.clearConfidence();
+      constraint.setOperatingLimitConfidence(alternative.getConfidence());
     }
     if (alternative.hasValidityRange()) {
-      constraint.setValidityRange(alternative.getValidityMinimum(), alternative.getValidityMaximum());
-    } else {
-      constraint.clearValidityRange();
+      constraint.setOperatingLimitValidityRange(alternative.getValidityMinimum(), alternative.getValidityMaximum());
     }
-    if (Double.doubleToLongBits(constraint.getDisplayDesignValue()) != Double
+    if (Double.doubleToLongBits(constraint.getApplicableLimit()) != Double
         .doubleToLongBits(alternative.getProposedLimit())) {
       throw new IllegalStateException("Proposed installed limit failed exact read-back verification");
     }
@@ -1441,6 +1501,19 @@ public final class ProcessModelDebottleneckStudy {
     constraint.setDesignValue(state.getDesignValue());
     constraint.setMaxValue(state.getMaximumValue());
     constraint.setMinValue(state.getMinimumValue());
+    if (state.hasOperatingLimit()) {
+      constraint.setOperatingLimit(state.getOperatingLimit(), state.getOperatingLimitSource(),
+          state.getOperatingLimitSourceReference());
+      if (state.hasOperatingLimitConfidence()) {
+        constraint.setOperatingLimitConfidence(state.getOperatingLimitConfidence());
+      }
+      if (state.hasOperatingLimitValidityRange()) {
+        constraint.setOperatingLimitValidityRange(state.getOperatingLimitValidityMinimum(),
+            state.getOperatingLimitValidityMaximum());
+      }
+    } else {
+      constraint.clearOperatingLimit();
+    }
     constraint.setWarningThreshold(state.getWarningThreshold());
     constraint.setSeverity(state.getSeverity());
     constraint.setEnabled(state.isEnabled());
@@ -1460,7 +1533,17 @@ public final class ProcessModelDebottleneckStudy {
 
   private static boolean statesEqual(CapacityState first, CapacityState second) {
     return bitsEqual(first.designValue, second.designValue) && bitsEqual(first.maximumValue, second.maximumValue)
-        && bitsEqual(first.minimumValue, second.minimumValue)
+        && bitsEqual(first.minimumValue, second.minimumValue) && first.operatingLimitSet == second.operatingLimitSet
+        && (!first.operatingLimitSet || bitsEqual(first.operatingLimit, second.operatingLimit)
+            && first.operatingLimitSource == second.operatingLimitSource
+            && first.operatingLimitSourceReference.equals(second.operatingLimitSourceReference)
+            && first.operatingLimitConfidenceSet == second.operatingLimitConfidenceSet
+            && (!first.operatingLimitConfidenceSet
+                || bitsEqual(first.operatingLimitConfidence, second.operatingLimitConfidence))
+            && first.operatingLimitValidityRangeSet == second.operatingLimitValidityRangeSet
+            && (!first.operatingLimitValidityRangeSet
+                || bitsEqual(first.operatingLimitValidityMinimum, second.operatingLimitValidityMinimum)
+                    && bitsEqual(first.operatingLimitValidityMaximum, second.operatingLimitValidityMaximum)))
         && bitsEqual(first.warningThreshold, second.warningThreshold) && first.unit.equals(second.unit)
         && first.severity == second.severity && first.enabled == second.enabled
         && first.dataSource.equals(second.dataSource) && first.confidenceSet == second.confidenceSet

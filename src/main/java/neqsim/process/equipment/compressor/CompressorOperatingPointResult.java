@@ -73,6 +73,10 @@ public final class CompressorOperatingPointResult implements Serializable {
     private final CapacityConstraint.ConstraintSeverity severity;
     private final double currentValue;
     private final double designValue;
+    private final double applicableLimit;
+    private final CapacityConstraint.ApplicableLimitRole applicableLimitRole;
+    private final CapacityConstraint.ConstraintSource applicableLimitSource;
+    private final String applicableLimitSourceReference;
     private final double minimumValue;
     private final double maximumValue;
     private final double utilization;
@@ -94,6 +98,10 @@ public final class CompressorOperatingPointResult implements Serializable {
       severity = constraint.getSeverity();
       currentValue = safeDouble(constraint::getCurrentValue);
       designValue = constraint.getDisplayDesignValue();
+      applicableLimit = constraint.getApplicableLimit();
+      applicableLimitRole = constraint.getApplicableLimitRole();
+      applicableLimitSource = constraint.getApplicableLimitSource();
+      applicableLimitSourceReference = constraint.getApplicableLimitSourceReference();
       minimumValue = constraint.getMinValue();
       maximumValue = constraint.getMaxValue();
       utilization = safeDouble(constraint::getUtilization);
@@ -156,6 +164,26 @@ public final class CompressorOperatingPointResult implements Serializable {
      */
     public double getDesignValue() {
       return designValue;
+    }
+
+    /** @return physical limit used for utilization and feasibility */
+    public double getApplicableLimit() {
+      return applicableLimit;
+    }
+
+    /** @return role of the applicable limit */
+    public CapacityConstraint.ApplicableLimitRole getApplicableLimitRole() {
+      return applicableLimitRole;
+    }
+
+    /** @return authority backing the applicable limit */
+    public CapacityConstraint.ConstraintSource getApplicableLimitSource() {
+      return applicableLimitSource;
+    }
+
+    /** @return reference supporting the applicable limit */
+    public String getApplicableLimitSourceReference() {
+      return applicableLimitSourceReference;
     }
 
     /**
@@ -231,7 +259,7 @@ public final class CompressorOperatingPointResult implements Serializable {
     }
   }
 
-  private final String schemaVersion = "1.0";
+  private final String schemaVersion = "1.1";
   private final String compressorName;
   private final double flowM3PerHour;
   private final double polytropicHeadKJPerKg;
