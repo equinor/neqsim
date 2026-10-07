@@ -1170,3 +1170,9 @@ Java suite: 24 passing tests and two existing skips, including six flow-solve re
 JPype/JSON parity and recovery passed. The reproducer's 0.437220209 bar iteration-limit residual
 is rejected; normal budget converges in 13 trials to a 0.002861683 bar residual against 0.008 bar.
 **Documentation:** Updated pipeline guide, Javadocs and executable Python bridge example.
+
+### 2026-10-07 — PR #4260 report-audit syntax repair
+
+- Reproduced the inherited `devtools/audit_report.py` syntax error reported by CodeQL: command-line directory assignment and the fallback `if` were joined on one line.
+- Restored the statement boundary; `py_compile`, explicit-directory dispatch, and the no-report auto-discovery path pass. No pipeline or report comparison behavior changed.
+- Documentation impact: none; this restores the existing report-audit CLI without changing its inputs or outputs.
