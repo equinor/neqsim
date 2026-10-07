@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
@@ -18,6 +20,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** No-fit KCl-water reference and controlled CO2-addition assessment for issue 4234. */
 class KClWaterActivityReferenceAssessmentTest {
+  private static final Logger logger = LogManager.getLogger(KClWaterActivityReferenceAssessmentTest.class);
   private static final double WATER_MOLAR_MASS_KG_PER_MOL = 0.01801528;
   private static final double REFERENCE_TEMPERATURE_K = 273.15;
   private static final double REFERENCE_PRESSURE_BARA = 1.01325;
@@ -25,7 +28,8 @@ class KClWaterActivityReferenceAssessmentTest {
   @Tag("slow")
   @Test
   void saltOnlyReferenceAndControlledPressureCo2SequenceRemainSeparate() throws Exception {
-    Reference[] references = {new Reference("K10", 1.49371, 0.95369), new Reference("K15", 2.36154, 0.92701)};
+    Reference[] references = {new Reference("K10", 1.49371, 0.95369, 0.9515361468935398),
+        new Reference("K15", 2.36154, 0.92701, 0.9223375797090876)};
     double[] controlledPressuresBara = {14.15, 35.75};
     List<String> report = new ArrayList<String>();
     report.add("recipe,stage,molality_mol_per_kg,temperature_K,pressure_bara,co2_moles,"
@@ -33,8 +37,8 @@ class KClWaterActivityReferenceAssessmentTest {
 
     for (Reference reference : references) {
       Result saltOnlyReference = calculate(reference, REFERENCE_PRESSURE_BARA, 0.0);
-      assertEquals(reference.archerWaterActivity, saltOnlyReference.waterActivity, 0.01,
-          reference.recipe + " salt-only water activity differs by more than 0.01");
+      assertEquals(reference.expectedModelWaterActivity, saltOnlyReference.waterActivity, 1.0e-8,
+          reference.recipe + " salt-only water-activity regression changed");
       report.add(saltOnlyReference.toCsv(reference, "salt-only-reference"));
 
       for (double pressureBara : controlledPressuresBara) {
@@ -53,7 +57,7 @@ class KClWaterActivityReferenceAssessmentTest {
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get("target/kcl-water-activity-archer-assessment.csv"), report, StandardCharsets.UTF_8);
     for (String row : report) {
-      System.out.println("KCL_WATER_ACTIVITY_DIAGNOSTIC," + row);
+      logger.info("KCL_WATER_ACTIVITY_DIAGNOSTIC,{}", row);
     }
   }
 
@@ -105,11 +109,13 @@ class KClWaterActivityReferenceAssessmentTest {
     private final String recipe;
     private final double molality;
     private final double archerWaterActivity;
+    private final double expectedModelWaterActivity;
 
-    private Reference(String recipe, double molality, double archerWaterActivity) {
+    private Reference(String recipe, double molality, double archerWaterActivity, double expectedModelWaterActivity) {
       this.recipe = recipe;
       this.molality = molality;
       this.archerWaterActivity = archerWaterActivity;
+      this.expectedModelWaterActivity = expectedModelWaterActivity;
     }
   }
 

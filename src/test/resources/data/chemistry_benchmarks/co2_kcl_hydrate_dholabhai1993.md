@@ -67,6 +67,35 @@ hydrate discrepancy. This sequence does not uniquely identify an interaction
 parameter, qualify KCl hydrate prediction, or justify an empirical offset.
 Independent CO2-in-KCl solubility data remain the next evidence boundary.
 
+## Independent CO2-in-KCl solubility boundary
+
+`KClCO2SolubilityReferenceAssessmentTest` executes the complete 273.15 K
+series compiled by
+[NIST SRD 106, system 62_229](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_229)
+from He and Morse (1993), *Geochimica et Cosmochimica Acta* **57**,
+3533-3554. The six source points hold reported CO2 partial pressure at
+0.966 atm while KCl molality rises from 0.100 to 3.508 mol/kg water. Measured
+CO2 molality falls monotonically from 0.0713 to 0.0525 mol/kg water. NIST
+reports relative solubility uncertainty of 0.012 and temperature uncertainty
+of 0.1 K.
+
+The no-fit `SystemElectrolyteCPAstatoil` calculation iterates total pressure so
+that gas-phase `y_CO2 * P` matches the reported partial pressure, then compares
+aqueous CO2 molality on the same kilogram-water basis. The model instead rises
+monotonically from 0.05701 to 0.68685 mol/kg water. Its signed relative residual
+moves from -20.0% at 0.100 molal KCl to +1208% at 3.508 molal KCl. All six
+states retain GAS+AQUEOUS topology, the target partial pressure and equal
+aqueous K+/Cl- inventories. The generated
+`target/kcl-co2-solubility-he-morse1993-assessment.csv` retains every source
+value, uncertainty, calculated value, residual and phase diagnostic.
+
+This independent salt-out series changes the leading diagnostic from a broad
+CO2-loaded-aqueous suspicion to a demonstrated concentration-dependent CO2/KCl
+salting-direction error at low pressure. It does not identify a unique
+interaction parameter, directly qualify the 14.15-35.75 bara hydrate states,
+or justify fitting before an independent domain review of the electrolyte-CPA
+CO2/KCl interaction treatment.
+
 ## Existing evidence and stop boundary
 
 The source-pinned notebook at EvenSol/NeqSim-Colab draft PR 189, head
