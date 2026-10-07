@@ -943,7 +943,7 @@
               "double"
             ],
             "expected": 305976.87659290305,
-            "absoluteTolerance": 1e-06
+            "absoluteTolerance": 1e-6
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
@@ -1061,7 +1061,8 @@
       "tool": "runCapability",
       "apis": [
         "neqsim.process.equipment.network.LoopedPipeNetwork",
-        "neqsim.process.equipment.network.FieldNetworkTopology"
+        "neqsim.process.equipment.network.FieldNetworkTopology",
+        "neqsim.process.equipment.network.FieldWellNetworkCoupler"
       ],
       "skills": [
         "neqsim-pipeline-and-terminal-networks",
@@ -1072,9 +1073,10 @@
       ],
       "testSources": [
         "src/test/java/neqsim/process/equipment/network/NetworkHydraulicFidelityTest.java",
-        "src/test/java/neqsim/process/equipment/network/FieldNetworkTopologyTest.java"
+        "src/test/java/neqsim/process/equipment/network/FieldNetworkTopologyTest.java",
+        "src/test/java/neqsim/process/equipment/network/FieldWellNetworkCouplerTest.java"
       ],
-      "limitations": "Discovery through runCapability inspectApi only; these instance-based Java/Python graph builders have no executable static MCP operation registered. FieldNetworkTopology is a typed identity/port view over LoopedPipeNetwork, not a second solver, and runtime equipment bindings are not serialized. Edge-local Darcy/Beggs-Brill/two-fluid steady calculations require NEWTON_RAPHSON. Live WellSystem/injection coupling, independent field qualification and mixed-fidelity network transients remain campaign work; standalone agreement is integration evidence, not field qualification."
+      "limitations": "Discovery through runCapability inspectApi only; these instance-based Java/Python graph builders have no executable static MCP operation registered. FieldNetworkTopology is a typed identity/port view over LoopedPipeNetwork, not a second solver, and runtime equipment bindings are not serialized. FieldWellNetworkCoupler iterates live WellSystem and production/injection WellFlow pressure-rate boundaries against that same graph; it requires NEWTON_RAPHSON and does not own reservoir depletion. Edge-local Darcy/Beggs-Brill/two-fluid steady calculations remain independently selectable. Independent field qualification, controlled steady-to-transient initialization and mixed-fidelity network transients remain campaign work; integration and conservation tests are not field qualification."
     },
     {
       "id": "sweet-gas-pseudocritical-screening",
