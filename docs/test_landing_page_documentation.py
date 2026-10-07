@@ -12,6 +12,7 @@ FAQ = DOCS_DIR / "wiki" / "faq.md"
 GITHUB_GUIDE = DOCS_DIR / "wiki" / "Getting-started-with-NeqSim-and-Github.md"
 GETTING_STARTED = DOCS_DIR / "wiki" / "getting_started.md"
 USAGE_EXAMPLES = DOCS_DIR / "wiki" / "usage_examples.md"
+PIPELINE_INDEX = DOCS_DIR / "wiki" / "pipeline_index.md"
 POM = DOCS_DIR.parent / "pom.xml"
 
 
@@ -91,6 +92,7 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
             GITHUB_GUIDE: GITHUB_GUIDE.read_text(encoding="utf-8"),
             GETTING_STARTED: GETTING_STARTED.read_text(encoding="utf-8"),
             USAGE_EXAMPLES: USAGE_EXAMPLES.read_text(encoding="utf-8"),
+            PIPELINE_INDEX: PIPELINE_INDEX.read_text(encoding="utf-8"),
         }
 
     def test_front_matter_title_structure_and_fences(self):
@@ -124,6 +126,40 @@ class LandingPageDocumentationContractTest(unittest.TestCase):
                             fragment,
                             heading_slugs(target_path.read_text(encoding="utf-8")),
                         )
+
+    def test_pipeline_hub_routes_current_capabilities(self):
+        content = self.documents[PIPELINE_INDEX]
+        required_destinations = (
+            "../process/equipment/pipeline_simulation.md",
+            "../cookbook/pipeline-recipes.md",
+            "pipeline_model_recommendations.md",
+            "pipeline_flow_equations.md",
+            "../process/equipment/multiphase_flow_correlations.md",
+            "multiphase_transient_model.md",
+            "transient_multiphase_pipe.md",
+            "water_hammer_implementation.md",
+            "../fluidmechanics/README.md",
+            "../fluidmechanics/TwoPhasePipeFlowModel.md",
+            "../process/pipeline_network_optimization.md",
+            "../fielddevelopment/SURF_NETWORK_INTEGRATION.md",
+            "../process/pipeline_mechanical_design.md",
+        )
+        for destination in required_destinations:
+            with self.subTest(destination=destination):
+                self.assertIn(f"]({destination})", content)
+
+        for stale_route in (
+            "](two_fluid_model)",
+            "](two_fluid_reporting_and_validation)",
+            "](friction_factor_models)",
+        ):
+            with self.subTest(stale_route=stale_route):
+                self.assertNotIn(stale_route, content)
+
+        self.assertNotIn("## Validation Summary", content)
+        self.assertNotIn("## Version History", content)
+        self.assertNotIn("```", content)
+        self.assertIn("do not treat it as a drift-flux alias", content)
 
     def test_wiki_uses_current_release_and_api_destinations(self):
         current_version = re.search(

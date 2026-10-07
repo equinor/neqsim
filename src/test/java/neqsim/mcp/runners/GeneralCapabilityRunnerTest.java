@@ -176,6 +176,32 @@ class GeneralCapabilityRunnerTest {
     assertEquals("INVOCATION_ERROR", invalid.get("code").getAsString());
   }
 
+  /** Catalogued gas-pseudopressure operations must remain executable and fail closed outside their domain. */
+  @Test
+  void testInvokeRunsCataloguedGasPseudoPressureCalculations() {
+    String[] methods = {"calculateFromCorrelation", "deltaPseudoPressure"};
+    String[] arguments = {"[206.84,1.01325,366.48,0.65,16.04]", "[206.84,68.95,366.48,0.65,16.04]"};
+    double[] expected = {2865418.4358585374, 2520842.0799756097};
+
+    for (int i = 0; i < methods.length; i++) {
+      String request = "{\"action\":\"invoke\"," + "\"className\":\"neqsim.pvtsimulation.util.GasPseudoPressure\","
+          + "\"methodName\":\"" + methods[i]
+          + "\",\"parameterTypes\":[\"double\",\"double\",\"double\",\"double\",\"double\"]," + "\"arguments\":"
+          + arguments[i] + "}";
+      JsonObject result = JsonParser.parseString(GeneralCapabilityRunner.run(request)).getAsJsonObject();
+      assertEquals("success", result.get("status").getAsString(), methods[i]);
+      assertEquals(expected[i], result.get("result").getAsDouble(), 1.0e-6, methods[i]);
+    }
+
+    JsonObject invalid = JsonParser.parseString(GeneralCapabilityRunner
+        .run("{\"action\":\"invoke\",\"className\":\"neqsim.pvtsimulation.util.GasPseudoPressure\","
+            + "\"methodName\":\"calculateFromCorrelation\","
+            + "\"parameterTypes\":[\"double\",\"double\",\"double\",\"double\",\"double\"],"
+            + "\"arguments\":[206.84,1.01325,366.48,0.5,16.04]}"))
+        .getAsJsonObject();
+    assertEquals("INVOCATION_ERROR", invalid.get("code").getAsString());
+  }
+
   @Test
   void testInvokeRejectsInstanceMethodAndExternalClass() {
     String instanceRequest = "{\"action\":\"invoke\","

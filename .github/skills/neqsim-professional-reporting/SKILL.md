@@ -338,6 +338,31 @@ plant data but whose fluid quality is not shown is incomplete. Detailed recipe:
 always") and the community skills `neqsim-pvt-regression-characterization-factor`
 and `neqsim-pseudocomponent-split-characterization`.
 
+**Machine-readable block.** Put the quality data in a `pvt_tuning_quality` block of
+`results.json`; `devtools/validate_task_results.py` checks it (and warns when a task
+text says it tuned to PVT data but has no block), and the report generator turns it
+into three tables (before/after error, tuned parameters with bounds, excluded data).
+Schema (one entry per sample and experiment type, not per fluid average):
+
+```json
+"pvt_tuning_quality": {
+  "summary": "...", "eos": "...", "data_source": "...", "objective": "...",
+  "experiments": [{"sample": "810102", "type": "dew point", "metric": "error vs lab",
+                   "before": 43.4, "after": 8.2, "unit": "%"}],
+  "parameters": [{"name": "S", "initial": 0.5, "tuned": 0.98, "lower": 0.05, "upper": 0.98, "at_bound": true}],
+  "exclusions": [{"sample": "TE CME", "reason": "lab CME flat near 1.0 = run on separator liquid"}],
+  "figures": ["step2_analysis/figures/fig01_pvt_tuning_quality.png"]
+}
+```
+
+For gas condensate the experiment types are dew point, C7+ density, CME (average
+absolute deviation), CVD cumulative production and CVD Z; for oil they are Psat, GOR,
+STO density, CME above/below Psat, DLE Rs/Bo and viscosity. "Before" is the untuned
+template, so the tuning gain is visible. A lab experiment that is physically
+invalid for the fluid (for example a gas "CME" that stays at 1.0 because it was run
+on separator liquid) is listed under `exclusions`, never fitted. Reference example:
+the Troll A task (2026-10-06).
+
 ## Principle 9b — Evidence Matrix for Safety Studies
 
 For safety-critical studies, especially trapped-liquid fire rupture, relief,

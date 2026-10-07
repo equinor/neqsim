@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,8 +40,8 @@ import neqsim.process.equipment.stream.MechanicalShaft;
  */
 public final class PlantCommonShaftEvidence implements Serializable {
   private static final long serialVersionUID = 1L;
-  private static final String SCHEMA_VERSION = "1.0";
-  private static final double MATCH_TOLERANCE = 1.0e-10;
+  private static final String SCHEMA_VERSION = "1.1";
+  private static final double MATCH_TOLERANCE = 1.0e-9;
 
   /** Overall evidence status. */
   public enum Status {
@@ -203,6 +205,7 @@ public final class PlantCommonShaftEvidence implements Serializable {
   }
 
   private final String calculationId;
+  private String sourceCalculationId;
   private final String shaftName;
   private final String driverParticipantId;
   private final String gearboxIdentity;
@@ -225,6 +228,7 @@ public final class PlantCommonShaftEvidence implements Serializable {
 
   private PlantCommonShaftEvidence(Builder builder) {
     calculationId = PlantConstraintScope.requireText(builder.calculationId, "Calculation id");
+    sourceCalculationId = PlantConstraintScope.requireText(builder.sourceCalculationId, "Source calculation id");
     provenance = PlantConstraintScope.requireText(builder.provenance, "Common-shaft provenance");
     shaftName = PlantConstraintScope.requireText(builder.shaft.getName(), "Mechanical shaft name");
     driverParticipantId = PlantConstraintScope.requireText(builder.driverParticipantId, "Driver participant id");
@@ -272,7 +276,7 @@ public final class PlantCommonShaftEvidence implements Serializable {
     boolean casingTotalAvailable = true;
     for (CasingInput input : new TreeMap<String, CasingInput>(builder.casings).values()) {
       EnergyAllocation allocation = allocations.remove(input.participantId);
-      CasingEvidence casing = captureCasing(input, allocation, calculationId, provenance);
+      CasingEvidence casing = captureCasing(input, allocation, sourceCalculationId, provenance);
       captured.add(casing);
       if (!casing.isUsable()) {
         findings.add(input.participantId + "=" + casing.getStatus().name() + diagnosticSuffix(casing.getDiagnostic()));
@@ -356,12 +360,26 @@ public final class PlantCommonShaftEvidence implements Serializable {
   }
 
   /**
+   * Restores the source identity for snapshots written before schema 1.1.
+   *
+   * @param input serialized object input
+   * @throws IOException when the serialized data cannot be read
+   * @throws ClassNotFoundException when a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (sourceCalculationId == null || sourceCalculationId.trim().isEmpty()) {
+      sourceCalculationId = calculationId;
+    }
+  }
+
+  /**
    * Starts a callback-free common-shaft evidence builder.
    *
    * @param modelName stable process-model name
    * @param areaName stable process-area name
    * @param groupName stable common-shaft group name
-   * @param calculationId exact completed calculation UUID string
+   * @param calculationId identity assigned to the frozen evidence and all emitted constraint samples
    * @param shaft solved mechanical shaft to sample immediately
    * @param provenance source of the completed train state
    * @return new evidence builder
@@ -419,7 +437,8 @@ public final class PlantCommonShaftEvidence implements Serializable {
       }
       if (!approximatelyEqual(power, allocation.getRequestedPower() / 1000.0)) {
         return unavailableCasing(input.participantId, equipmentName, CasingStatus.METADATA_MISMATCH, provenance,
-            "Compressor power differs from the shaft request");
+            "Compressor power differs from the shaft request: observed=" + power + " kW, requested="
+                + allocation.getRequestedPower() / 1000.0 + " kW");
       }
       if (input.outOfService) {
         if (power == 0.0 && allocation.getRequestedPower() == 0.0) {
@@ -629,6 +648,15 @@ public final class PlantCommonShaftEvidence implements Serializable {
     return calculationId;
   }
 
+  /**
+   * Gets the completed equipment calculation identity used to reject stale casing observations.
+   *
+   * @return exact source calculation identity
+   */
+  public String getSourceCalculationId() {
+    return sourceCalculationId;
+  }
+
   /** @return mechanical shaft name */
   public String getShaftName() {
     return shaftName;
@@ -737,6 +765,7 @@ public final class PlantCommonShaftEvidence implements Serializable {
     JsonObject root = new JsonObject();
     root.addProperty("schemaVersion", SCHEMA_VERSION);
     root.addProperty("calculationId", calculationId);
+    root.addProperty("sourceCalculationId", sourceCalculationId);
     root.addProperty("shaftName", shaftName);
     root.addProperty("driverParticipantId", driverParticipantId);
     root.addProperty("gearboxIdentity", gearboxIdentity);
@@ -821,6 +850,7 @@ public final class PlantCommonShaftEvidence implements Serializable {
     private final String areaName;
     private final String groupName;
     private final String calculationId;
+    private String sourceCalculationId;
     private final MechanicalShaft shaft;
     private final String provenance;
     private final Map<String, CasingInput> casings = new LinkedHashMap<String, CasingInput>();
@@ -839,6 +869,7 @@ public final class PlantCommonShaftEvidence implements Serializable {
       this.areaName = PlantConstraintScope.requireText(areaName, "Area name");
       this.groupName = PlantConstraintScope.requireText(groupName, "Coupled group name");
       this.calculationId = calculationId;
+      this.sourceCalculationId = calculationId;
       if (shaft == null) {
         throw new IllegalArgumentException("Mechanical shaft is required");
       }
@@ -871,6 +902,24 @@ public final class PlantCommonShaftEvidence implements Serializable {
         throw new IllegalArgumentException("Duplicate casing participant " + id);
       }
       casings.put(id, new CasingInput(id, compressor, outOfService));
+      return this;
+    }
+
+    /**
+     * Sets the completed process-equipment calculation identity used for freshness checks.
+     *
+     * <p>
+     * This may differ from the caller-owned evidence identity. For example, {@link ProcessModelSimulationEvaluator}
+     * assigns a deterministic evaluation identity after {@link neqsim.process.processmodel.ProcessModel#run()}, while
+     * each underlying process area records the UUID of its completed equipment calculation. The default is the evidence
+     * calculation identity for backward compatibility.
+     * </p>
+     *
+     * @param value exact calculation identity recorded by every registered compressor casing
+     * @return this builder
+     */
+    public Builder sourceCalculationId(String value) {
+      sourceCalculationId = PlantConstraintScope.requireText(value, "Source calculation id");
       return this;
     }
 

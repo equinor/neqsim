@@ -363,6 +363,9 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   private transient RunStatus lastRunStatus = new RunStatus();
 
+  /** Whether the latest recycle iteration loop detected stagnation. */
+  private transient boolean recycleSolveStagnated = false;
+
   /**
    * Immutable success records reused while the unit structure, names and types remain unchanged.
    */
@@ -2373,6 +2376,7 @@ public class ProcessSystem extends SimulationBaseClass {
             recycleNoProgress++;
           }
           if (recycleNoProgress >= RECYCLE_NO_PROGRESS_WINDOW && iter >= RECYCLE_MIN_STALL_ITERATIONS) {
+            recycleSolveStagnated = true;
             logger.debug(
                 "Recycle solve stalled in {}: worst normalized error {} not improving for {} iterations; "
                     + "stopping at iteration {} of 100.",
@@ -3086,6 +3090,7 @@ public class ProcessSystem extends SimulationBaseClass {
       lastRunStatus = new RunStatus();
     }
     lastRunStatus.reset();
+    recycleSolveStagnated = false;
     boolean runThrew = false;
     try {
       resetExecutionProfile();
@@ -3152,6 +3157,23 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     lastRunStatus.markComplete(!runThrew);
+    List<String> openRecycles = getOpenRecycles();
+    boolean converged = !runThrew && openRecycles.isEmpty() && recycleController.solvedAll();
+    if (converged) {
+      // Active states were prepared before dispatch. Reuse them here instead of
+      // calling solved(), which would repeat the locked-inactive scan.
+      for (ProcessEquipmentInterface unit : unitOperations) {
+        if (unit.isActive() && !unit.solved()) {
+          converged = false;
+          break;
+        }
+      }
+    }
+    String reason = runThrew ? "FAILED"
+        : converged ? "CONVERGED"
+            : Thread.currentThread().isInterrupted() ? "INTERRUPTED"
+                : recycleSolveStagnated ? "STAGNATED" : "NOT_CONVERGED";
+    lastRunStatus.recordConvergence(converged, recycleSolveStagnated, 1, openRecycles, reason);
   }
 
   /**
@@ -3285,6 +3307,8 @@ public class ProcessSystem extends SimulationBaseClass {
 
     boolean isConverged = true;
     int iter = 0;
+    double bestRecycleError = Double.POSITIVE_INFINITY;
+    int recycleNoProgress = 0;
     do {
       iter++;
       isConverged = true;
@@ -3341,6 +3365,17 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       }
+      if (hasRecycle && !recycleController.solvedAll()) {
+        double error = recycleController.getMaxNormalizedError();
+        if (Double.isFinite(error) && error < bestRecycleError * (1.0 - RECYCLE_STALL_IMPROVEMENT_FRACTION)) {
+          bestRecycleError = error;
+          recycleNoProgress = 0;
+        } else {
+          recycleNoProgress++;
+        }
+      } else {
+        recycleNoProgress = 0;
+      }
       if (implicitRecycle) {
         Map<StreamInterface, SystemInterface> currentState = captureImplicitRecycleState(executionOrder);
         isConverged = implicitRecycleStatesMatch(previousImplicitState, currentState) && isConverged;
@@ -3349,6 +3384,8 @@ public class ProcessSystem extends SimulationBaseClass {
     } while (((!isConverged || (iter < 2 && hasRecycle && (requireRecycleConfirmation || hasAutoDeactivatedRecycle())))
         && iter < 100) && !runStep && !Thread.currentThread().isInterrupted());
 
+    recycleSolveStagnated = hasRecycle && !recycleController.solvedAll()
+        && recycleNoProgress >= RECYCLE_NO_PROGRESS_WINDOW && iter >= RECYCLE_MIN_STALL_ITERATIONS;
     if (implicitRecycle && !isConverged && !runStep) {
       throw new IllegalStateException("Implicit recycle loop did not converge after " + iter + " iterations in process "
           + getName() + "; add an explicit Recycle for convergence control");
@@ -4223,12 +4260,19 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     int passes = 1;
-    while (passes < maxIterations && (tuned || !solved())) {
+    while (passes < maxIterations && !Thread.currentThread().isInterrupted()
+        && (tuned || !solved() || !getOpenRecycles().isEmpty())) {
       run();
       passes++;
       tuned = false;
     }
-    return solved();
+    boolean converged = solved() && getOpenRecycles().isEmpty();
+    RunStatus status = getRunStatus();
+    String reason = converged ? "CONVERGED"
+        : Thread.currentThread().isInterrupted() ? "INTERRUPTED"
+            : recycleSolveStagnated ? "STAGNATED" : "ITERATION_LIMIT";
+    status.recordConvergence(converged, recycleSolveStagnated, passes, getOpenRecycles(), reason);
+    return converged;
   }
 
   /**
@@ -5258,14 +5302,29 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Build a human-readable convergence diagnostic report for the process system.
+   * Returns the names of active, unsolved Recycle units in execution order.
    *
    * <p>
-   * The report lists unsolved unit operations and expands distillation column residual diagnostics so notebook users
-   * can identify the unit and convergence gate that prevented the process from solving.
+   * Loops are identified by equipment type, regardless of their name. Disabled loops are excluded consistently with the
+   * process solved check.
    * </p>
    *
-   * @return multi-line diagnostic report for recycle and unit-operation convergence
+   * @return immutable list of open recycle names; inactive and locked units are excluded
+   */
+  public List<String> getOpenRecycles() {
+    List<String> names = new ArrayList<String>();
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle && !unit.isLockedInactive() && unit.isActive() && !unit.solved()) {
+        names.add(unit.getName());
+      }
+    }
+    return Collections.unmodifiableList(names);
+  }
+
+  /**
+   * Builds a human-readable diagnostic report including open recycle names.
+   *
+   * @return convergence diagnostics
    */
   public String getConvergenceDiagnostics() {
     StringBuilder diagnostics = new StringBuilder();
@@ -5273,6 +5332,7 @@ public class ProcessSystem extends SimulationBaseClass {
     diagnostics.append("  Name: ").append(getName()).append("\n");
     diagnostics.append("  Units: ").append(unitOperations.size()).append("\n");
     diagnostics.append("  Recycles solved: ").append(recycleController.solvedAll()).append("\n");
+    diagnostics.append("  Open recycles: ").append(getOpenRecycles()).append("\n");
 
     int unsolvedUnits = 0;
     diagnostics.append("  Unsolved units:\n");
@@ -6839,6 +6899,8 @@ public class ProcessSystem extends SimulationBaseClass {
       ProcessEquipmentInterface unitOp = unitOperations.get(i);
       if (unitOp instanceof Compressor) {
         power += ((Compressor) unitOp).getPower();
+      } else if (unitOp instanceof neqsim.process.equipment.compressor.MinimumFlowSpill) {
+        power += ((neqsim.process.equipment.compressor.MinimumFlowSpill) unitOp).getPower("W");
       } else if (unitOp instanceof Pump) {
         power += ((Pump) unitOp).getPower();
       }
@@ -6864,6 +6926,8 @@ public class ProcessSystem extends SimulationBaseClass {
       ProcessEquipmentInterface unitOp = unitOperations.get(i);
       if (unitOp instanceof Cooler) {
         heat += ((Cooler) unitOp).getDuty();
+      } else if (unitOp instanceof neqsim.process.equipment.compressor.MinimumFlowSpill) {
+        heat -= ((neqsim.process.equipment.compressor.MinimumFlowSpill) unitOp).getSpillCoolingDuty("W");
       }
     }
     if (unit.equals("MW")) {

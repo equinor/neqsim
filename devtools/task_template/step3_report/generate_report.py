@@ -1261,11 +1261,56 @@ def _normalize_validation(data):
     return data
 
 
+def _expand_pvt_tuning_tables(data):
+    """Turn results['pvt_tuning_quality'] into report tables (before/after, tuned parameters, exclusions).
+
+    The tables are appended to ``data['tables']`` so that the HTML and Word renderers show the fluid-tuning
+    quality without block-specific code. Existing tables with the same title are kept as they are.
+    """
+    block = data.get("pvt_tuning_quality") if isinstance(data, dict) else None
+    if not isinstance(block, dict):
+        return data
+    tables = data.setdefault("tables", [])
+    if not isinstance(tables, list):
+        return data
+    have = {t.get("title") for t in tables if isinstance(t, dict)}
+
+    def fmt(value):
+        if value is None or value == "":
+            return "n/a"
+        if isinstance(value, bool):
+            return "yes" if value else "no"
+        if isinstance(value, float):
+            return "{:.4g}".format(value)
+        return str(value)
+
+    exps = [e for e in block.get("experiments", []) if isinstance(e, dict)]
+    title = "PVT tuning quality: error before and after tuning"
+    if exps and title not in have:
+        tables.append({"title": title,
+                       "headers": ["Sample", "Experiment", "Metric", "Before", "After", "Unit"],
+                       "rows": [[fmt(e.get("sample")), fmt(e.get("type")), fmt(e.get("metric")), fmt(e.get("before")),
+                                 fmt(e.get("after")), fmt(e.get("unit"))] for e in exps]})
+    params = [p for p in block.get("parameters", []) if isinstance(p, dict)]
+    title = "PVT tuning quality: tuned parameters and bounds"
+    if params and title not in have:
+        tables.append({"title": title,
+                       "headers": ["Parameter", "Initial", "Tuned", "Lower", "Upper", "At bound"],
+                       "rows": [[fmt(p.get("name")), fmt(p.get("initial")), fmt(p.get("tuned")), fmt(p.get("lower")),
+                                 fmt(p.get("upper")), fmt(p.get("at_bound"))] for p in params]})
+    excl = [x for x in block.get("exclusions", []) if isinstance(x, dict)]
+    title = "PVT tuning quality: data excluded from the tuning"
+    if excl and title not in have:
+        tables.append({"title": title, "headers": ["Sample or data", "Reason"],
+                       "rows": [[fmt(x.get("sample")), fmt(x.get("reason"))] for x in excl]})
+    return data
+
+
 def load_results():
     """Load results.json if it exists. Returns dict or None."""
     if os.path.exists(RESULTS_FILE):
         with open(RESULTS_FILE, "r", encoding="utf-8") as f:
-            data = _normalize_validation(json.load(f))
+            data = _expand_pvt_tuning_tables(_normalize_validation(json.load(f)))
         print("  Loaded results.json ({} keys)".format(len(data)))
         return data
     print("  No results.json found (using manual sections)")
@@ -2339,6 +2384,8 @@ def _prose_to_html(text):
 def _benchmark_tests(results):
     """Normalize legacy ``tests`` lists and named benchmark mappings for all outputs."""
     benchmark = (results or {}).get("benchmark_validation") or {}
+    if isinstance(benchmark, list):
+        benchmark = {"tests": benchmark}
     if not isinstance(benchmark, dict):
         return []
     listed = next((benchmark[key] for key in ("tests", "points")
@@ -4218,7 +4265,7 @@ def format_references_html(results):
         return ""
     h = '<ol class="reference-list">\n'
     for ref in refs:
-        ref_id = ref.get("id", "")
+        ref_id = ref.get("id", "") if isinstance(ref, dict) else ""
         ref_text = _reference_text(ref)
         if ref_id:
             h += '  <li id="ref-{}"><strong>[{}]</strong> {}</li>\n'.format(
@@ -4469,7 +4516,7 @@ def format_benchmark_html(results):
     bv = results.get("benchmark_validation", {})
     if not bv:
         return ""
-    source = bv.get("source", "")
+    source = bv.get("source", "") if isinstance(bv, dict) else ""
     h = '<p>{}: {}</p>\n'.format(_t("Reference source"), _html_escape(str(source))) if source else ""
     headers, rows, status_idx = _benchmark_table(results)
     h += '<table class="benchmark-table"><thead><tr>'
@@ -4728,7 +4775,7 @@ def add_benchmark_word_table(doc, results):
     bv = results.get("benchmark_validation", {})
     if not bv:
         return
-    if bv.get("source"):
+    if isinstance(bv, dict) and bv.get("source"):
         doc.add_paragraph("{}: {}".format(_t("Reference source"), bv["source"]))
     headers, data_rows, status_idx = _benchmark_table(results)
     if not data_rows:
@@ -5613,7 +5660,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     if results and results.get("references"):
         ref_lines = []
         for i, ref in enumerate(results["references"], 1):
-            ref_id = ref.get("id", "")
+            ref_id = ref.get("id", "") if isinstance(ref, dict) else ""
             ref_text = _reference_text(ref)
             if ref_id:
                 ref_lines.append("[{}] {}".format(i, ref_text))

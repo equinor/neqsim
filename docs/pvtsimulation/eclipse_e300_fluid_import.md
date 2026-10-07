@@ -292,30 +292,23 @@ LBCCOEF
    0.1023000  0.0233640  0.0585330  -0.0407580  0.0093324 /
 ```
 
-### Component Name Mapping
+### Component Name Resolution
 
-NeqSim maps E300 shorthand component names to its internal database names:
+NeqSim resolves each `CNAMES` entry in this order:
 
-| E300 Name                              | NeqSim Name                                  |
-| -------------------------------------- | -------------------------------------------- |
-| `N2`                                   | nitrogen                                     |
-| `CO2`                                  | CO2                                          |
-| `C1`                                   | methane                                      |
-| `C2`                                   | ethane                                       |
-| `C3`                                   | propane                                      |
-| `iC4`                                  | i-butane                                     |
-| `C4`                                   | n-butane                                     |
-| `iC5`                                  | i-pentane                                    |
-| `C5`                                   | n-pentane                                    |
-| `C6`                                   | n-hexane                                     |
-| `H2O`                                  | water                                        |
-| Any other name (e.g., `C7`, `C10-C12`) | Treated as a pseudo-component (TBP fraction) |
+1. Standard E300 shorthands are mapped to their canonical database components. Examples include `N2` → `nitrogen`, `C1` → `methane`, `iC4` → `i-butane`, and `H2O` → `water`.
+2. Other known database spellings and aliases are resolved through `ComponentNameResolver`. Matching is tolerant of supported case, hyphen, and synonym variants; for example, `IC4`, `NC4`, `Nc5`, and `c1` resolve to the same database components as their standard E300 spellings.
+3. Bare carbon-number names such as `C7` and `C10`, grouped cuts such as `C10-C12`, and other unresolved names are treated as characterized TBP pseudo-fractions.
 
-Pseudo-components (C7+, grouped fractions like `C10-C12`, `C22-C28`, etc.) are added as TBP fractions using the critical properties, molecular weight, and an estimated density from the correlation:
+Recognized database components retain NeqSim's database properties, including ideal-gas heat-capacity coefficients. Binary interaction parameters are then applied through the selected mixing rule or imported `BIC` data. This avoids replacing a known component with a generic pseudo-fraction merely because the E300 file uses an alias.
 
-$$
+Pseudo-fractions are added with the E300 molecular weight converted from g/mol to kg/mol and a standard liquid density in kg/L (numerically equal to g/cm³) estimated from:
+
+$
 \rho_{std} = 0.5046 \times \frac{MW}{1000} + 0.668468
-$$
+$
+
+Here `MW` is the E300 value in g/mol; `MW / 1000` is the kg/mol value passed to the TBP-fraction API. Treat the density correlation as an initialization estimate and replace it with measured or characterized data when available.
 
 ### Binary Interaction Coefficients (BIC)
 
