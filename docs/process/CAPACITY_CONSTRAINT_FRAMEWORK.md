@@ -208,8 +208,11 @@ model.
 `PlantCommonShaftEvidence` freezes the already solved `MechanicalShaft` allocation together with
 the declared `CompressorDriver`, `Gearbox`, and every casing `Compressor` operating point. The
 adapter performs no equipment run and retains no mutable equipment. The caller supplies the exact
-calculation ID, driver and casing participant IDs, speed and power-balance tolerances, and an
-independently approved maximum torque.
+evidence calculation ID, driver and casing participant IDs, speed and power-balance tolerances, and
+an independently approved maximum torque. When an outer evaluator owns a different candidate ID,
+set `sourceCalculationId(...)` to the UUID recorded by the completed compressor casings. The source
+ID is used only for freshness checks; emitted samples retain the evaluator-owned evidence ID. If it
+is omitted, both identities are the same for backward compatibility.
 
 The resulting common snapshot contains distinct constraints for casing-to-shaft speed agreement,
 shaft maximum speed, unmet shaft power, driver speed range and available power, gearbox maximum
@@ -225,6 +228,17 @@ point outside its map or beyond a declared speed, power, gearbox, or torque limi
 but infeasible. Explicitly out-of-service casings qualify only with verified zero requested and
 observed shaft load. Java getters, serialization, `toPlantUtilizationSnapshot()`, and `toJson()`
 expose the same immutable evidence; unavailable JSON numbers are `null`, never zero.
+
+Register the whole adapter atomically with
+`ProcessModelSimulationEvaluator.addCommonShaftConstraintGroup(...)`. Freeze definitions from one
+registration snapshot, then rebuild evidence after every completed candidate using the callback's
+`calculationId` as the builder's evidence identity and the current compressor calculation UUID as
+`sourceCalculationId`. The executable two-casing pattern is covered by
+`ProcessModelPlantConstraintIntegrationTest`.
+
+The evaluator freezes the canonical definition set and rejects null evidence, candidate-ID drift,
+or definition drift. The normal snapshot rules then reject stale, unconverged, non-finite,
+chartless, unexpected-participant, or partially sampled candidates.
 
 ### Strict separator evidence
 
@@ -2194,4 +2208,3 @@ double util = expander.getMaxUtilization(); // |getPower| / 5000 kW, no spurious
 - [Mechanical Design](mechanical_design)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
 - [Optimization Examples](../examples/index)
-

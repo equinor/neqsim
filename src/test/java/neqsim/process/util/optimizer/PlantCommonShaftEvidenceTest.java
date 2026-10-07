@@ -47,7 +47,8 @@ class PlantCommonShaftEvidenceTest {
     assertTrue(evidence.toPlantUtilizationSnapshot().isComplete());
 
     JsonObject json = JsonParser.parseString(evidence.toJson()).getAsJsonObject();
-    assertEquals("1.0", json.get("schemaVersion").getAsString());
+    assertEquals("1.1", json.get("schemaVersion").getAsString());
+    assertEquals(CALCULATION_ID, json.get("sourceCalculationId").getAsString());
     assertEquals("AVAILABLE", json.get("status").getAsString());
     assertEquals(2, json.getAsJsonArray("casings").size());
     assertTrue(json.getAsJsonObject("utilizationSnapshot").get("complete").getAsBoolean());
@@ -166,6 +167,41 @@ class PlantCommonShaftEvidenceTest {
     PlantCommonShaftEvidence restored = fixture.evidence(400.0, 350.0, 10000.0, 0.12, 0.18, 0.08, 0.21, true);
     assertTrue(restored.isComplete(), restored.getDiagnostics().toString());
     assertEquals(cold.toJson(), restored.toJson());
+  }
+
+  @Test
+  void evaluatorIdentityCanDifferFromFreshEquipmentCalculationIdentity() {
+    TrainFixture fixture = trainFixture(800.0, 900.0);
+    String evaluatorId = "process-model-evaluation-7";
+    StubCompressor casingA = new StubCompressor("casing A", 10000.0, 400.0, 0.12, 0.18, true,
+        UUID.fromString(CALCULATION_ID));
+    StubCompressor casingB = new StubCompressor("casing B", 10000.0, 350.0, 0.08, 0.21, true,
+        UUID.fromString(CALCULATION_ID));
+
+    PlantCommonShaftEvidence evidence = PlantCommonShaftEvidence
+        .builder("medium production model", "compression", "export train", evaluatorId, fixture.shaft,
+            "completed evaluator candidate")
+        .sourceCalculationId(CALCULATION_ID).casing(fixture.casingAPort.getParticipantId(), casingA)
+        .casing(fixture.casingBPort.getParticipantId(), casingB)
+        .driver(fixture.driverPort.getParticipantId(), fixture.driver).gearbox("gearbox-1", fixture.gearbox)
+        .speedToleranceRpm(1.0).powerBalanceToleranceKw(1.0e-6).maximumTorqueNm(800.0).convergenceComplete(true)
+        .build();
+
+    assertTrue(evidence.isComplete(), evidence.getDiagnostics().toString());
+    assertEquals(evaluatorId, evidence.getCalculationId());
+    assertEquals(CALCULATION_ID, evidence.getSourceCalculationId());
+    assertTrue(evidence.getSamples().stream().allMatch(sample -> evaluatorId.equals(sample.getCalculationId())));
+
+    PlantCommonShaftEvidence stale = PlantCommonShaftEvidence
+        .builder("medium production model", "compression", "export train", evaluatorId, fixture.shaft,
+            "completed evaluator candidate")
+        .sourceCalculationId(UUID.randomUUID().toString()).casing(fixture.casingAPort.getParticipantId(), casingA)
+        .casing(fixture.casingBPort.getParticipantId(), casingB)
+        .driver(fixture.driverPort.getParticipantId(), fixture.driver).gearbox("gearbox-1", fixture.gearbox)
+        .speedToleranceRpm(1.0).powerBalanceToleranceKw(1.0e-6).maximumTorqueNm(800.0).convergenceComplete(true)
+        .build();
+    assertFalse(stale.isComplete());
+    assertTrue(stale.getDiagnostics().stream().anyMatch(value -> value.contains("STALE")));
   }
 
   private static PlantCommonShaftEvidence roundTrip(PlantCommonShaftEvidence evidence) throws Exception {
