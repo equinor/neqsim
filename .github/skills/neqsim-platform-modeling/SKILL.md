@@ -527,6 +527,49 @@ Typical NCS platform has 4-6 recycle loops:
 | Anti-surge R3 | R3 compressor outlet | R3 compressor suction | Surge protection |
 | Anti-surge export | Export compressor outlet | Export compressor suction | Surge protection |
 
+### 4.4 Anti-surge minimum flow without a Recycle loop (Troll B)
+
+A `Recycle` + Wegstein loop per compressor oscillated (flow error stuck at 5-9 %, mass balance
+unchanged for many passes) when the net flow was a few percent of the minimum flow (LP stages).
+The spill gas has the suction composition and state, so it does not need iteration. Build it
+inside a `Calculator` callback and remove it after the compressor:
+
+```python
+# suction (TP setter) -> Calculator -> spill Stream -> Mixer(suction, spill) -> Compressor -> Splitter
+spill = Stream(f"{tag} spill gas", suction.getOutStream().getFluid().clone())
+splitter = Splitter(f"{tag} recycle splitter", compressor.getOutletStream()); splitter.setSplitNumber(2)
+
+def set_spill(inputs, output):                       # Calculator: input = suction outlet, output = spill
+    net = inputs[0].getFlowRate("kg/hr")
+    q = max(q_min - net, 1e-3)
+    fluid = inputs[0].getFluid().clone(); fluid.setTotalFlowRate(q, "kg/hr")
+    output.setThermoSystem(fluid)                    # rebuild each pass; do NOT use Stream(name, stream)
+    splitter.setFlowRates([q, -1], "kg/hr")          # spill leaves, forward flow = net
+```
+
+Add the units in the order `suction, Calculator, spill stream, mixer, compressor, splitter`.
+`Stream(name, otherStream)` did not track later changes of the source stream in a process run
+(wrong flows); set the thermo system in the callback. The spill is returned uncooled (no
+Joule-Thomson effect) and is not a product, so the mass balance is unaffected. Report the
+spill flow as the anti-surge recycle in the utilisation register.
+
+When a plant has remaining `Recycle` units (condensate returns), a plain mass-balance stagnation
+check stops the run too early: also require `recycle.solved()` for every loop. A
+`ComponentSplitter` dehydrator with split factor 0 for water blew up the downstream scrubber
+liquid (3e9 kg/h); keep a few tenths of a percent of the water in the dry gas.
+
+Measured compressor inlet flows that are flat across windows with very different gas rates
+(Troll B stages 3-5: about 200 t/h per stage in all windows) mean the machines sit on their
+minimum-flow line; take the minimum flow from a calibration window and test it on hold-out windows.
+
+### 4.5 Allocation oil is not additive with the EOS stock-tank basis
+
+Per-well std flash of the rebuilt well stream gave 0-12 % more stock-tank oil than the allocated
+oil, and wells with near-zero allocated oil received 5-13 Sm3/d from the gas-cap condensate yield.
+Check each well stream with a std flash (15 C, 1.01325 bara) before running the plant, report the
+residual, and if one global factor on the allocated oil closes the export oil, fit it on one
+window only, keep other windows hold-out and state it as an assumption, not a physical constant.
+
 ---
 
 ## 5. Recompression Train Pattern
@@ -1069,8 +1112,8 @@ When building a new platform model from design documents:
       the carry-over path of any vessel above its gas-load limit. A separator
       over capacity sends liquid to the compressor, the dehydration bed or the
       flare KO drum — that is a safety finding, not just a production one. See
-      
-eqsim-process-modeling and 
+
+eqsim-process-modeling and
 eqsim-relief-flare-network.
 - [ ] **State the fluid characterization tier per feed**: measured PVT,
       inherited from an old design case, assumed, or absent. A tie-in study is
