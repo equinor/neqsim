@@ -220,9 +220,24 @@ specification acceptance even though they do not need the outer temperature-spec
 Product reconciliation can change a terminal ratio; the MESH solver first attempts an isolated
 simultaneous correction. If Newton is rejected and the ratio remains unsatisfied, a fresh isolated
 candidate uses sequential tray sweeps from the retained state. These sweeps update terminal ratio
-flashes and connected material flows together. Sequential recovery must satisfy all physical
-convergence gates and improve the MESH residual; rejected candidates leave the original column
-unchanged. Recovery uses the existing convergence settings and iteration limit. It does not guarantee
+flashes and connected material flows together. Copied candidates preserve the current phase outlet
+inventories and initialization identity. Recovery checks connected tray component balances before
+publication, tries an isolated simultaneous correction from that state, and can further refine the
+component closure if product reconciliation still changes the ratio. A provisional refinement
+checks physical qualification before attempting the tightest component target. Pumparound returns
+and draws are included on the inner control-volume basis while the outer tear is open; their
+inventories cancel when the tear converges. Ratio-constrained Newton
+recovery permits up to twenty fugacity sweeps per tray, stopping at the existing inner tolerance.
+For pumparound-only MESH tears, subsequent iterations retain the tray state and connect newly created
+returns to the receiving tray while preserving both its mixed fluid and cached phase outlets.
+Newton recovery reconstructs phase flows before withdrawals rather
+than rescaling the post-withdrawal outlets as a new feed. After the accepted return update, public
+products, terminal duties and residuals are reconciled on the closed external-feed basis.
+Sequential recovery must satisfy all physical convergence gates. A candidate that restores every
+active gate can be accepted even if its trace-component MESH infinity norm increases within its
+configured limit; otherwise the existing residual-improvement guard applies. Rejected candidates
+leave the original column unchanged. Recovery retains the user's convergence settings and each
+candidate's iteration limit. It does not guarantee
 convergence of every crude-fractionation or sensitivity case; an unsolved column remains invalid
 for product evaluation.
 
@@ -234,6 +249,17 @@ boundary equations.
 Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
 sequential ratio correction preserves the current tray state instead of replacing it with a
 bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.
+
+Water-bearing tray flashes screen an already-balanced gas/oil endpoint (or a single SRK gas phase) with a bounded aqueous
+stability trial before invoking the full reciprocal flash. Stable endpoints retain their existing
+state; recovered endpoints still require the established equilibrium, material-balance and Gibbs
+checks. SRK gas-endpoint trials prepare the thermodynamic phase workspace without evaluating transport
+properties. Other models, liquid endpoints and trace-water reciprocal trials retain their existing initialization.
+
+Product normal-boiling-point distributions retain strictly increasing, representable cumulative
+mole fractions. A positive trace too small to advance the cumulative fraction does not create a
+duplicate support point; it still contributes to the mole-weighted mean. This handles highly
+separated products without inventing a probability increment or rejecting a valid column result.
 
 Terminal ratio flashes use the bracketed vapor-fraction temperature search. A vapor-only
 condenser inlet can therefore cool into the two-phase region, and a liquid-only reboiler

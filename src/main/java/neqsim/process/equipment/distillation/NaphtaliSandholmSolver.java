@@ -67,6 +67,9 @@ public class NaphtaliSandholmSolver {
   /** Maximum forced-root fugacity sweeps when refining a retained column state. */
   private static final int THERMO_WARM_START_K_VALUE_ITERATIONS = 3;
 
+  /** Maximum fugacity sweeps for ratio-constrained recovery requiring a consistent Newton residual. */
+  private static final int THERMO_TERMINAL_RECOVERY_K_VALUE_ITERATIONS = 20;
+
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
   private static final double THERMO_K_VALUE_TOLERANCE = 1.0e-8;
 
@@ -1421,19 +1424,21 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
-   * Initialize MESH variables from the current column tray state for a changed-input warm solve.
+   * Initialize MESH variables from the current column tray state for warm solving or terminal recovery.
    *
    * <p>
    * The prior converged phase flows are scaled to the new total feed rate. The subsequent Newton correction then
    * resolves material and energy residuals for the changed feed without repeating the cold Bubble-Point and Sum-Rates
-   * basin-finding stages.
+   * basin-finding stages. Terminal recovery instead preserves the current flow basis and reconstructs gross phase
+   * inventories before side-draw and pumparound withdrawals, with the current return streams held fixed.
    * </p>
    *
    * @param totalFeedMoles current total external feed flow in mol/hr
    * @return {@code true} when every tray supplied finite gas and liquid phase flows
    */
   private boolean initializeTrayStateFromColumn(double totalFeedMoles) {
-    if (!column.getSideDrawSpecifications().isEmpty() || !column.getPumparounds().isEmpty()) {
+    if (!terminalRatioNewtonSeed
+        && (!column.getSideDrawSpecifications().isEmpty() || !column.getPumparounds().isEmpty())) {
       logger.info("NS: skipping scaled warm MESH state because side draws or pumparounds are configured");
       return false;
     }
@@ -1443,7 +1448,7 @@ public class NaphtaliSandholmSolver {
     if (!(previousTotalFeedMoles > 1.0e-12) || !Double.isFinite(previousTotalFeedMoles)) {
       return false;
     }
-    double flowScaleFactor = totalFeedMoles / previousTotalFeedMoles;
+    double flowScaleFactor = terminalRatioNewtonSeed ? 1.0 : totalFeedMoles / previousTotalFeedMoles;
     if (!(flowScaleFactor > 0.0) || !Double.isFinite(flowScaleFactor)) {
       return false;
     }
@@ -1461,6 +1466,14 @@ public class NaphtaliSandholmSolver {
       StreamInterface liquidStream = tray.getLiquidOutStream();
       double gasFlow = gasStream.getFlowRate("mol/hr") * flowScaleFactor;
       double liquidFlow = liquidStream.getFlowRate("mol/hr") * flowScaleFactor;
+      if (terminalRatioNewtonSeed) {
+        if (!(internalVaporFraction[trayIndex] > 0.0) || !(internalLiquidFraction[trayIndex] > 0.0)) {
+          return false;
+        }
+        // The retained outlets are after withdrawals; MESH variables represent the full phase inventories.
+        gasFlow /= internalVaporFraction[trayIndex];
+        liquidFlow /= internalLiquidFraction[trayIndex];
+      }
       double trayTemperature = tray.getTemperature();
       if (!(gasFlow > 0.0) || !(liquidFlow > 0.0) || !Double.isFinite(gasFlow) || !Double.isFinite(liquidFlow)
           || !Double.isFinite(trayTemperature)) {
@@ -3664,6 +3677,9 @@ public class NaphtaliSandholmSolver {
     if (kOk) {
       int maximumKValueIterations = warmStartFromColumn ? THERMO_WARM_START_K_VALUE_ITERATIONS
           : THERMO_K_VALUE_ITERATIONS;
+      if (terminalRatioNewtonSeed) {
+        maximumKValueIterations = THERMO_TERMINAL_RECOVERY_K_VALUE_ITERATIONS;
+      }
       for (int sweep = 0; sweep < maximumKValueIterations; sweep++) {
         if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
           kOk = false;

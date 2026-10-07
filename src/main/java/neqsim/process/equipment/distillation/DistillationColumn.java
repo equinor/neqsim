@@ -1456,6 +1456,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         updateSideDrawSpecificationResidualsOnly();
         lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
         lastColumnTearConverged = lastColumnTearResidual <= tolerance;
+        if (lastColumnTearConverged && hasPumparoundTearVariablesOnly()) {
+          reconcileProductsAfterPumparoundConvergence(id);
+        }
         finalizeColumnTearConvergenceStatus(tolerance);
         return;
       }
@@ -1466,11 +1469,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         finalizeColumnTearConvergenceStatus(tolerance);
         return;
       }
-      if (iteration < iterationLimit - 1) {
+      if (iteration < iterationLimit - 1
+          && (!hasPumparoundTearVariablesOnly() || solverType != SolverType.MESH_RESIDUAL)) {
         setDoInitializion(true);
       }
     }
-    setDoInitializion(true);
+    if (!hasPumparoundTearVariablesOnly() || solverType != SolverType.MESH_RESIDUAL) {
+      setDoInitializion(true);
+    }
     solveConfiguredColumn(id);
     lastColumnTearInnerIterationCount += Math.max(0, lastIterationCount);
     updateSideDrawSpecificationResidualsOnly();
@@ -1486,6 +1492,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean hasSingleSideDrawFlowSpecificationOnly() {
     return sideDrawSpecifications.size() == 1 && pumparounds.isEmpty() && !hydraulicPressureDropCouplingEnabled;
+  }
+
+  /**
+   * Reconcile published products after the accepted pumparound update closes its internal inventory.
+   *
+   * @param id calculation identifier
+   */
+  private void reconcileProductsAfterPumparoundConvergence(UUID id) {
+    boolean productReconciled = updateProductsFromExternalComponentBalance(id);
+    canonicalizeTerminalTracePhase(gasOutStream, true, id);
+    canonicalizeTerminalTracePhase(liquidOutStream, false, id);
+    synchronizeColumnEndProductStreams(id);
+    synchronizeTerminalProductDrawStreams(id);
+    if (hasReboiler) {
+      getReboiler().updateDutyFromPublishedStreams();
+    }
+    if (hasCondenser) {
+      getCondenser().updateDutyFromPublishedStreams();
+    }
+    lastMassResidual = getExternalMassBalanceError();
+    lastEnergyResidual = getEnergyBalanceError();
+    updateSpecificationResiduals();
+    updateMeshResiduals();
+    updateLastSolveStatus(productReconciled, lastUsedFeedFlashFallback);
   }
 
   /**
@@ -1988,11 +2018,57 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       StreamInterface drawStream = getTray(pumparound.getDrawTrayNumber()).getLiquidPumparoundDrawStream();
       maxRelativeChange = Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
     }
+    synchronizePumparoundReturnTrayInputs();
     lastPumparoundRelativeChange = maxRelativeChange;
     if (maxRelativeChange > 1.0e-12) {
       columnTearVariablesChanged = true;
     }
     return maxRelativeChange;
+  }
+
+  /**
+   * Connect newly created or copied pumparound returns without discarding the current tray phase inventories.
+   */
+  private void synchronizePumparoundReturnTrayInputs() {
+    Set<Integer> returnTrays = new HashSet<Integer>();
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnStream() != null) {
+        returnTrays.add(Integer.valueOf(pumparound.getReturnTrayNumber()));
+      }
+    }
+    for (Integer returnTrayIndex : returnTrays) {
+      int index = returnTrayIndex.intValue();
+      SimpleTray tray = trays.get(index);
+      SystemInterface mixedSystem = tray.getThermoSystem();
+      StreamInterface gasOutlet = tray.getGasOutStream();
+      StreamInterface liquidOutlet = tray.getLiquidOutStream();
+      StreamInterface gasSideDraw = tray.getGasSideDrawStream();
+      StreamInterface liquidSideDraw = tray.getLiquidSideDrawStream();
+      StreamInterface pumparoundDraw = tray.getLiquidPumparoundDrawStream();
+      List<StreamInterface> inputs = new ArrayList<StreamInterface>();
+      for (int externalIndex = 0; externalIndex < getExternalFeedStreams(index).size(); externalIndex++) {
+        inputs.add(tray.getStream(externalIndex));
+      }
+      for (ColumnPumparound pumparound : pumparounds) {
+        if (pumparound.getReturnTrayNumber() == index && pumparound.getReturnStream() != null) {
+          inputs.add(pumparound.getReturnStream());
+        }
+      }
+      if (index > 0) {
+        inputs.add(trays.get(index - 1).getGasOutStream());
+      }
+      if (index < numberOfTrays - 1) {
+        inputs.add(trays.get(index + 1).getLiquidOutStream());
+      }
+      tray.resetInputStreams(inputs);
+      // Rebuilding inlet topology recreates the mixed stream; retain its accepted gross phase inventory.
+      tray.getOutletStream().setThermoSystem(mixedSystem);
+      tray.setCachedGasOutStream(gasOutlet);
+      tray.setCachedLiquidOutStream(liquidOutlet);
+      tray.setCachedGasSideDrawStream(gasSideDraw);
+      tray.setCachedLiquidSideDrawStream(liquidSideDraw);
+      tray.setCachedLiquidPumparoundDrawStream(pumparoundDraw);
+    }
   }
 
   /**
@@ -3939,15 +4015,32 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       candidate = (DistillationColumn) this.copy();
       candidate.hasBeenSolvedBefore = hasBeenSolvedBefore;
       candidate.trayStateThermodynamicIdentitySignature = trayStateThermodynamicIdentitySignature;
+      candidate.lastSequentialInitializationSignature = lastSequentialInitializationSignature;
       candidate.lastInsideOutOuterFlashSweeps = lastInsideOutOuterFlashSweeps;
       candidate.lastInsideOutInnerLoopIterations = lastInsideOutInnerLoopIterations;
       candidate.lastInsideOutKValueResidual = lastInsideOutKValueResidual;
       candidate.lastInsideOutSurrogateResidual = lastInsideOutSurrogateResidual;
       candidate.lastInsideOutSurrogateResetCount = lastInsideOutSurrogateResetCount;
+      for (int index = 0; index < numberOfTrays; index++) {
+        SimpleTray sourceTray = trays.get(index);
+        SimpleTray candidateTray = candidate.trays.get(index);
+        candidateTray.setCachedGasOutStream(sourceTray.getGasOutStream().clone());
+        candidateTray.setCachedLiquidOutStream(sourceTray.getLiquidOutStream().clone());
+        candidateTray.setCachedGasSideDrawStream(sourceTray.getGasSideDrawStream().clone());
+        candidateTray.setCachedLiquidSideDrawStream(sourceTray.getLiquidSideDrawStream().clone());
+        candidateTray.setCachedLiquidPumparoundDrawStream(sourceTray.getLiquidPumparoundDrawStream().clone());
+      }
       for (int index = 0; index < pumparounds.size(); index++) {
         StreamInterface returnStream = pumparounds.get(index).getReturnStream();
         if (returnStream != null) {
-          candidate.pumparounds.get(index).returnStream = returnStream.clone();
+          ColumnPumparound candidatePumparound = candidate.pumparounds.get(index);
+          candidatePumparound.returnStream = returnStream.clone();
+          SimpleTray returnTray = candidate.trays.get(candidatePumparound.getReturnTrayNumber());
+          for (int streamIndex = 0; streamIndex < returnTray.getNumberOfInputStreams(); streamIndex++) {
+            if (returnStream.getName().equals(returnTray.getStream(streamIndex).getName())) {
+              returnTray.replaceStream(streamIndex, candidatePumparound.returnStream);
+            }
+          }
         }
       }
     } catch (RuntimeException exception) {
@@ -3957,7 +4050,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     try {
       if (sequentialRatioRecovery) {
-        candidate.solveSequential(id, 1.0);
+        candidate.solveSequential(id, 1.0, trayMaterialBalanceTolerance);
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.tryGuardedMeshPolishCandidate(id, candidate.getLastMeshResidualNorm(), false);
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.solveSequential(id, 1.0, Math.min(trayMaterialBalanceTolerance, 5.0e-6));
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.tryGuardedMeshPolishCandidate(id, candidate.getLastMeshResidualNorm(), false);
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.solveSequential(id, 1.0, Math.min(trayMaterialBalanceTolerance, 1.0e-8));
+        }
       } else if (!specificationsSatisfied()) {
         if (!candidate.solveNaphtaliSandholm(id, true)) {
           return false;
@@ -3981,7 +4086,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         && candidateResidualNorm < baselineResidualNorm * 0.999;
     boolean productDrawGateRecovered = productDrawGateRecovered(candidateResidualNorm, candidateProductDrawResidual,
         baselineResidualNorm, baselineProductDrawResidual);
-    if (!residualImproved && !productDrawGateRecovered) {
+    // A trace-component infinity norm can grow while every physical gate recovers.
+    // Accept that fully qualified state rather than retaining a column with an unmet specification.
+    boolean physicalGatesRecovered = !solved() && candidate.solved();
+    if (!residualImproved && !productDrawGateRecovered && !physicalGatesRecovered) {
       logger.debug("MESH Newton polish rejected: residual {} did not improve baseline {}.",
           Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
       return false;
@@ -3998,8 +4106,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     acceptSolvedStateCandidate(candidate);
-    logger.debug("MESH Newton polish accepted: residual {} improved baseline {}.",
-        Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
+    logger.debug("MESH Newton polish accepted: residual {}, baseline {}.", Double.valueOf(candidateResidualNorm),
+        Double.valueOf(baselineResidualNorm));
     return true;
   }
 
@@ -6639,6 +6747,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
+    solveSequential(id, initialRelaxation, Double.POSITIVE_INFINITY);
+  }
+
+  /**
+   * Solve connected sequential tray states, optionally qualifying a terminal recovery before publication.
+   *
+   * @param id calculation identifier
+   * @param initialRelaxation initial stream relaxation
+   * @param connectedMaterialTolerance connected component closure target before product reconciliation
+   */
+  private void solveSequential(UUID id, double initialRelaxation, double connectedMaterialTolerance) {
     long invocationStartTime = System.nanoTime();
     lastSequentialWarmStateReused = false;
     captureDirectExternalTrayFeeds();
@@ -6926,7 +7045,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
+      double connectedMaterialResidual = Double.isFinite(connectedMaterialTolerance)
+          ? ColumnMeshResidualEvaluator.evaluateMaxTrayMaterialImbalance(this)
+          : 0.0;
+      boolean connectedMaterialSatisfied = connectedMaterialResidual <= connectedMaterialTolerance;
+      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase
+          && connectedMaterialSatisfied;
 
       if (withinBaseTolerance) {
         boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
@@ -12924,7 +13048,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Updates products so the exposed streams close the external component balance.
+   * Updates products to close external feeds plus the current net frozen-return/current-draw pumparound inventory.
    *
    * @param id calculation identifier to assign to the updated stream
    * @return {@code true} if product component amounts were materially changed
@@ -12935,6 +13059,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     double[] feedComponentMoles = getFeedComponentMoles();
+    // Frozen return and current draw inventories need not cancel during an outer tear iteration.
+    String[] componentNames = getColumnComponentNames();
+    Set<Integer> pumparoundDrawTrays = new HashSet<Integer>();
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnStream() != null) {
+        addComponentMolesOnBasis(feedComponentMoles, componentNames, pumparound.getReturnStream().getThermoSystem());
+      }
+      pumparoundDrawTrays.add(Integer.valueOf(pumparound.getDrawTrayNumber()));
+    }
+    double[] pumparoundDrawComponentMoles = new double[feedComponentMoles.length];
+    for (Integer drawTray : pumparoundDrawTrays) {
+      addComponentMolesOnBasis(pumparoundDrawComponentMoles, componentNames,
+          trays.get(drawTray.intValue()).getLiquidPumparoundDrawStream().getThermoSystem());
+    }
+    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+      feedComponentMoles[componentIndex] -= pumparoundDrawComponentMoles[componentIndex];
+    }
     double[] sideDrawComponentMoles = getSideDrawComponentMoles(feedComponentMoles.length);
     // Sum only gas-phase moles for the top product and only liquid-like phase moles for the bottom
     // product. Tray terminal thermo systems can carry both phases (e.g. a reboiler holding a 2-

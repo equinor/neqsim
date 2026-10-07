@@ -2017,19 +2017,21 @@ public class TPflash extends Flash {
    * process flashes outside the minor-phase trace-water screen on the existing fast path. A trace-water gas/oil
    * endpoint whose fugacity residual is already outside the equilibrium tolerance may still use the cloned stability
    * calculation because it is not an acceptable result. A cheap aqueous tangent-plane trial and safeguarded multiphase
-   * beta solve are used for trace-water gas/oil endpoints whose small hydrocarbon liquid disproportionately
-   * concentrates water. Full recursive flashing is avoided. A multiphase-enabled water-rich gas/aqueous endpoint uses
-   * one cold ordinary candidate; a genuine oil/aqueous liquid-liquid endpoint remains on the multiphase path. A
-   * water-rich multiphase endpoint that collapsed to one hydrocarbon phase also uses a cold ordinary candidate, whose
-   * invalid two-phase cubic-root split may seed the multiphase solver. An ordinary neutral non-CPA water-rich
-   * asymmetric feed retains its pre-iteration state for this reciprocal calculation; cloning the final endpoint can
-   * retain the collapsed phase/root history and miss the cold phase set. For an ordinary endpoint, an existing invalid
-   * two-phase split is retained as the multiphase phase-set seed when the existing cold candidate is rejected. Trying
-   * the cold candidate first preserves its gas/oil cubic-root classification whenever it already reaches the same
-   * feasible equilibrium. The nested candidates cannot start a reciprocal fallback cycle. A candidate replaces the
-   * original state only after strict phase-fraction, composition-normalization, material-balance, fugacity,
-   * distinct-composition, and lower-Gibbs checks pass. A collapsed multiphase endpoint additionally requires the
-   * candidate to restore the missing aqueous phase, keeping ordinary gas appearance outside this fallback's scope.
+   * beta solve are also used to screen already-balanced gas/oil endpoints and single SRK gas phases before a full
+   * reciprocal flash. Stable endpoints retain their qualified state. The same bounded calculation handles trace-water
+   * endpoints whose liquid disproportionately concentrates water. Full recursive flashing is avoided. A
+   * multiphase-enabled water-rich gas/aqueous endpoint uses one cold ordinary candidate; a genuine oil/aqueous
+   * liquid-liquid endpoint remains on the multiphase path. A water-rich multiphase endpoint that collapsed to one
+   * hydrocarbon phase also uses a cold ordinary candidate, whose invalid two-phase cubic-root split may seed the
+   * multiphase solver. An ordinary neutral non-CPA water-rich asymmetric feed retains its pre-iteration state for this
+   * reciprocal calculation; cloning the final endpoint can retain the collapsed phase/root history and miss the cold
+   * phase set. For an ordinary endpoint, an existing invalid two-phase split is retained as the multiphase phase-set
+   * seed when the existing cold candidate is rejected. Trying the cold candidate first preserves its gas/oil cubic-root
+   * classification whenever it already reaches the same feasible equilibrium. The nested candidates cannot start a
+   * reciprocal fallback cycle. A candidate replaces the original state only after strict phase-fraction,
+   * composition-normalization, material-balance, fugacity, distinct-composition, and lower-Gibbs checks pass. A
+   * collapsed multiphase endpoint additionally requires the candidate to restore the missing aqueous phase, keeping
+   * ordinary gas appearance outside this fallback's scope.
    * </p>
    */
   private void rescueWaterRichEndpoint() {
@@ -2072,6 +2074,32 @@ public class TPflash extends Flash {
     }
 
     double referenceGibbsEnergy = system.getGibbsEnergy();
+    boolean gasOilEndpoint = system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)
+        && (system.hasPhaseType(PhaseType.OIL) || system.hasPhaseType(PhaseType.LIQUID));
+    boolean singleGasEndpoint = system.getNumberOfPhases() == 1 && system.hasPhaseType(PhaseType.GAS)
+        && "SRK-EOS".equals(system.getModelName());
+    if (!system.doMultiPhaseCheck() && !hasAqueousPhase && (gasOilEndpoint || singleGasEndpoint)
+        && isBalancedEquilibriumCandidate(system)) {
+      // Screen an already-qualified gas endpoint before a full reciprocal flash.
+      try {
+        SystemInterface stabilityCandidate = system.clone();
+        setThermodynamicMultiphaseCheck(stabilityCandidate, true);
+        boolean activeSetConverged = refineWaterAqueousCandidateActiveSet(stabilityCandidate);
+        if (activeSetConverged && stabilityCandidate.getNumberOfPhases() == 2
+            && isBalancedEquilibriumCandidate(stabilityCandidate)
+            && shouldAcceptWaterRichCandidate(stabilityCandidate, referenceGibbsEnergy, false, false)) {
+          copyFlashStateFrom(stabilityCandidate);
+          return;
+        }
+        if (stabilityCandidate.getNumberOfPhases() == system.getNumberOfPhases()
+            && stabilityCandidate.hasPhaseType(PhaseType.GAS) && !stabilityCandidate.hasPhaseType(PhaseType.AQUEOUS)
+            && isBalancedEquilibriumCandidate(stabilityCandidate)) {
+          return;
+        }
+      } catch (Exception ex) {
+        logger.debug("Balanced water-bearing stability screen failed: {}", ex.getMessage());
+      }
+    }
     boolean invalidOrdinaryTwoPhaseSeed = !system.doMultiPhaseCheck() && !hasAqueousPhase
         && system.getNumberOfPhases() == 2 && !isBalancedEquilibriumCandidate(system);
     boolean ordinaryFallback = (gasAqueousMultiphaseEndpoint || singlePhaseWaterRichMultiphaseEndpoint)
@@ -2095,10 +2123,14 @@ public class TPflash extends Flash {
       candidate = system.clone();
     }
     try {
-      candidate.setMultiPhaseCheck(!system.doMultiPhaseCheck());
+      if (system.hasPhaseType(PhaseType.GAS) && waterFeedFraction >= WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+        setThermodynamicMultiphaseCheck(candidate, !system.doMultiPhaseCheck());
+      } else {
+        candidate.setMultiPhaseCheck(!system.doMultiPhaseCheck());
+      }
       boolean candidateConverged;
       if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
-        candidateConverged = refineTraceWaterAqueousCandidateActiveSet(candidate);
+        candidateConverged = refineWaterAqueousCandidateActiveSet(candidate);
       } else {
         TPflash candidateFlash = new TPflash(candidate, candidate.doSolidPhaseCheck());
         candidateFlash.waterRichCrossAlgorithmFallbackAllowed = singlePhaseWaterRichMultiphaseEndpoint;
@@ -2125,6 +2157,28 @@ public class TPflash extends Flash {
     if (invalidOrdinaryTwoPhaseSeed) {
       trySeededWaterRichPhaseSet(referenceGibbsEnergy, materialBalanceInvalid);
     }
+  }
+
+  /**
+   * Prepare a non-associating SRK phase trial without evaluating transport properties; retain other models'
+   * initialization.
+   *
+   * @param candidate isolated equilibrium candidate
+   * @param enabled whether multiphase checking is enabled
+   */
+  private void setThermodynamicMultiphaseCheck(SystemInterface candidate, boolean enabled) {
+    if (!"SRK-EOS".equals(candidate.getModelName())) {
+      candidate.setMultiPhaseCheck(enabled);
+      return;
+    }
+    if (enabled && candidate.getMaxNumberOfPhases() < 3) {
+      PhaseInterface trialPhase = candidate.getPhases()[1].clone();
+      trialPhase.resetMixingRule(candidate.getPhases()[0].getMixingRuleType());
+      trialPhase.resetPhysicalProperties();
+      candidate.setPhase(trialPhase, 2);
+      candidate.setMaxNumberOfPhases(3);
+    }
+    candidate.setMultiPhaseCheck(enabled);
   }
 
   /**
@@ -2272,10 +2326,11 @@ public class TPflash extends Flash {
    * rebuilt. The caller performs the final thermodynamic acceptance checks.
    * </p>
    *
-   * @param candidate cloned gas/oil endpoint
-   * @return true when exactly one disappearing or duplicate phase was removed and the two remaining phases converged
+   * @param candidate cloned single-gas or gas/oil endpoint
+   * @return true when the added aqueous phase forms a converged two-phase set, after removing at most one disappearing
+   * or duplicate phase
    */
-  private boolean refineTraceWaterAqueousCandidateActiveSet(SystemInterface candidate) {
+  private boolean refineWaterAqueousCandidateActiveSet(SystemInterface candidate) {
     int initialPhaseCount = candidate.getNumberOfPhases();
     TPmultiflash operation = new TPmultiflash(candidate, false);
     operation.stabilityAnalysis();

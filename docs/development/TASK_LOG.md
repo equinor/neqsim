@@ -1171,3 +1171,45 @@ vacuum cases recover; Sarir and two vacuum sensitivity points remain unqualified
 An adaptive tightening experiment was rejected because it did not qualify Sarir and
 increased runtime beyond its test budget. No tolerance or iteration limit was relaxed.
 Updated the distillation guide and regenerated engineering coverage.
+
+## 2026-10-07: PR #4127 physical terminal recovery qualification
+
+Reproduced the remaining Sarir atmospheric and Big Hill vacuum feed-temperature/reflux
+failures on the current PR head. Deep-copy recovery lost transient tray outlet caches
+and the sequential initialization identity. Preserve these inventories, qualify the
+connected component balances during recovery, and try isolated Newton correction before
+an optional tighter component-closure pass. Ratio-constrained Newton recovery permits
+up to twenty fugacity sweeps with the existing early-stop tolerance. A candidate restoring
+every active physical gate can replace an unqualified source even when its trace-component
+MESH norm increases within the configured limit. User convergence settings and iteration
+limits and physical acceptance tolerances are unchanged.
+
+Qualified separation exposed a product-distribution reporting failure: positive traces
+below cumulative floating-point resolution created duplicate support points. Omit those
+points while retaining their contribution to the mean; two focused regressions cover
+heavy and light traces. The heavy-trace regression fails against the previous implementation.
+MESH pumparound continuation now preserves gross phase inventory and connects newly created returns
+while retaining the mixed tray fluid. Other solvers retain their established cold outer initialization.
+It reconciles products and terminal duties after the accepted return update. The qualified
+Sarir draw tray has positive liquid traffic; its negative reporting test explicitly zeros the
+published draw after a successful positive-flow screen instead of assuming a dry tray. Its
+original zero-flow rejection assertion remains, with additional conservation and cooler checks.
+Side-stripper contacts now use the same qualified material-draw mapping. Negative tests explicitly
+zero the published side draws or swap their compositions at conserved mass and enthalpy rates,
+retaining the rejection messages and all physical tolerances instead of relying on dry or inverted products from an unqualified solve.
+Water-bearing tray flashes use a bounded stability preflight for balanced gas/oil endpoints
+and single SRK gas phases before full reciprocal flashing. SRK gas-endpoint trials defer
+transport initialization; liquid endpoints, trace-water reciprocal trials and other models
+retain existing initialization.
+Documentation impact: recovery, pumparound publication and trace-distribution semantics in the
+distillation guide, plus the bounded stability path in the TP flash algorithm guide. Engineering
+coverage is regenerated after final formatting.
+
+Validation: 539 unique tests pass across the affected fast/slow distillation, TP flash,
+PV-reflux and documentation regressions, with two existing disabled tests. A clean final
+pumparound rerun passes 44 tests with one existing disabled test. Restrict warm outer
+continuation to MESH to preserve the other solvers' established repeat-run behavior.
+Validated NeqSim 3.23.0 with OpenJDK 17.0.20 and Python 3.12.14; all seven edited Java
+sources also compile with `--release 8`. Stable double Spotless apply, Spotless check,
+Javadoc, documentation-search audit and regenerated engineering-coverage check pass.
+The pre-commit executable is unavailable; all required direct gates ran.
