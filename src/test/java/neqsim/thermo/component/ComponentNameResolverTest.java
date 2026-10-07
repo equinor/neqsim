@@ -290,7 +290,7 @@ public class ComponentNameResolverTest {
     assertTrue(guide.contains("absolute bara"));
     assertTrue(guide.contains("molar mass is read in kg/mol"));
     assertTrue(guide.contains("../component_list.md#component-name-resolution"));
-    assertTrue(guide.contains("database-versus-pseudo-component"));
+    assertTrue(guide.contains("## Database and pseudo-components"));
     assertFalse(guide.contains("System.out"));
     assertFalse(guide.contains("```python"));
 
