@@ -42,6 +42,31 @@ hydrate-reference terms, and retain the single- and mixed-salt comparisons.
 The independent Burgass et al. (2023) NaCl assessment remains in
 `CO2BrineHydrateReferenceAssessmentTest` and is not weakened by this test.
 
+## Independent KCl-water reference and controlled sequence
+
+`KClWaterActivityReferenceAssessmentTest` separates the salt-only water
+activity from pressure and CO2 loading. The Dholabhai K10 and K15 recipes are
+1.49371 and 2.36154 mol KCl/kg water. A no-fit calculation from Archer's
+273.15 K KCl-H2O Pitzer parameters gives water activities 0.95369 and 0.92701
+([doi:10.1063/1.556034](https://doi.org/10.1063/1.556034)). These values are
+salt-only, near-atmospheric reference checkpoints, not hydrate acceptance
+limits.
+
+At 273.15 K and 1.01325 bara, `SystemElectrolyteCPAstatoil` gives 0.95154 and
+0.92234, residuals of -0.00215 and -0.00467. Raising pressure alone to 14.15
+or 35.75 bara changes either result by less than 0.00013. Adding 10 mol CO2 at
+the same fixed temperature raises the K15 proxy to 0.97147 at 14.15 bara and
+0.94559 at 35.75 bara, while dissolved aqueous CO2 mole fractions become
+0.07179 and 0.02793. The generated
+`target/kcl-water-activity-archer-assessment.csv` retains every stage and phase
+topology. The calculation explicitly selects the ion-rich aqueous phase.
+
+The close salt-only agreement and negligible pressure-only response make the
+CO2-loaded aqueous treatment the leading diagnostic location for the KCl
+hydrate discrepancy. This sequence does not uniquely identify an interaction
+parameter, qualify KCl hydrate prediction, or justify an empirical offset.
+Independent CO2-in-KCl solubility data remain the next evidence boundary.
+
 ## Existing evidence and stop boundary
 
 The source-pinned notebook at EvenSol/NeqSim-Colab draft PR 189, head
