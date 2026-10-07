@@ -83,6 +83,7 @@ report:
   # headings stay English and the generator says so. The scientific paper
   # (include_paper) stays English for journal submission.
   orientation: portrait  # portrait | landscape | template
+  front_matter_lists: auto  # auto | always | never - lists of figures and tables (auto: only when 20+ items)
   # A corporate Word template is often landscape because it was built for forms;
   # "template" keeps that, the default puts the report body on a readable measure.
   template: ""         # Word template for this task only (.docx/.dotx; relative to the task folder), or none

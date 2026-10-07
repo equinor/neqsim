@@ -39,6 +39,25 @@ fugacity equality, repeated/cloned runs, and nearby pressure/temperature cases.
 
 ---
 
+## Water-and-ion electrolyte-CPA endpoint
+
+A reactive electrolyte-CPA feed whose only neutral component is water has a constrained vapor
+composition: ions stay in the aqueous phase. TP flash therefore tests an aqueous chemical-equilibrium
+candidate before the general phase search. It accepts this candidate only if aqueous water fugacity
+is no greater than pure-water vapor-root trial fugacity at the requested temperature and pressure.
+Both fugacities must be finite and positive. At higher pressure the pure-water cubic equation can
+have a single liquid-like root; relative compressibility alone does not determine solvent stability.
+The comparison uses the same electrolyte-CPA model and retains the input phase options.
+
+The candidate must pass the existing reaction, charge, and element closure gates. Feeds with any
+positive neutral solute, including trace methane or CO2, and water-and-ion feeds above their boiling
+boundary retain the general algorithm. Solid and hydrate calculations retain their existing route.
+This handles reactive precipitation trials that previously lost their aqueous root or returned
+invalid ion inventories. No equilibrium constant, salt solubility product, or physical acceptance
+tolerance is changed. `TPflashWaterIonBrineTest`, `SaltPrecipitationTest`, and `ChemistryRunnerTest`
+cover repeated salt removal, nearby states, vapor-unstable rejection, trace-solute rejection, and
+scale equilibrium through Java and MCP.
+
 ## Table of Contents
 
 1. [Two-Phase Flash Algorithm](#1-two-phase-flash-algorithm)

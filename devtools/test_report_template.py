@@ -248,6 +248,8 @@ def _field_results(report, instruction_prefix):
 def test_contents_and_lists_are_prefilled_without_word(tmp_path):
     """TOC and list of tables carry real entries even when Word never updates fields."""
     task = _make_task(tmp_path)
+    (task / "study_config.yaml").write_text(
+        "report:\n  front_matter_lists: always\n", encoding="utf-8")
     _run(task, "--no-template")
     report = docx.Document(str(_report_docx(task)))
 
@@ -260,6 +262,24 @@ def test_contents_and_lists_are_prefilled_without_word(tmp_path):
     # The update-on-open flag stays, so Word adds page numbers on first open.
     settings = report.settings.element
     assert settings.find(W_NS + "updateFields") is not None
+
+
+@pytest.mark.parametrize("mode", ["auto", "never"])
+def test_short_report_omits_front_matter_lists(tmp_path, mode):
+    """Short reports retain their contents while omitting optional figure/table lists."""
+    task = _make_task(tmp_path)
+    (task / "study_config.yaml").write_text(
+        "report:\n  front_matter_lists: {}\n".format(mode), encoding="utf-8")
+    _run(task, "--no-template")
+    report = docx.Document(str(_report_docx(task)))
+
+    toc = _field_results(report, 'TOC \\o')
+    assert len(toc) == 1 and "Conclusions" in toc[0]
+    assert not _field_results(report, 'TOC \\h \\z \\c "Table"')
+    assert not _field_results(report, 'TOC \\h \\z \\c "Figure"')
+    headings = [paragraph.text for paragraph in report.paragraphs]
+    assert "List of Tables" not in headings
+    assert "List of Figures" not in headings
 
 
 def test_keep_template_content_retains_boilerplate(tmp_path):

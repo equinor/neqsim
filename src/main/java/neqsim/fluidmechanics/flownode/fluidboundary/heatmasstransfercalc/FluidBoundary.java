@@ -100,6 +100,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     interphaseSystem = bulkSystem.clone();
     interphaseSystem.setNumberOfPhases(2);
 
+    // Phase-specific bulk inventories need overall fractions and initial K values before calc_x_y().
+    interphaseSystem.init(0);
     interphaseSystem.initBeta();
     interphaseSystem
         .setTemperature((bulkSystem.getPhase(0).getTemperature() + bulkSystem.getPhase(1).getTemperature()) / 2.0);

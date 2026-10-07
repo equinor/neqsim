@@ -112,6 +112,33 @@ public abstract class Flash extends BaseOperation {
   }
 
   /**
+   * Normalizes non-negative stability weights without overflowing their sum.
+   *
+   * @param phase trial phase receiving the normalized composition
+   * @param weights finite trial weights in component order
+   * @throws IllegalStateException if the trial has invalid weights or no positive weight
+   */
+  static void normalizeStabilityTrial(neqsim.thermo.phase.PhaseInterface phase, double[] weights) {
+    double largestWeight = 0.0;
+    for (double weight : weights) {
+      if (!Double.isFinite(weight) || weight < 0.0) {
+        throw new IllegalStateException("Invalid stability trial weight");
+      }
+      largestWeight = Math.max(largestWeight, weight);
+    }
+    if (!(largestWeight > 0.0)) {
+      throw new IllegalStateException("Stability trial has no positive weight");
+    }
+    double scaledSum = 0.0;
+    for (double weight : weights) {
+      scaledSum += weight / largestWeight;
+    }
+    for (int component = 0; component < weights.length; component++) {
+      phase.getComponent(component).setx((weights[component] / largestWeight) / scaledSum);
+    }
+  }
+
+  /**
    * Resets the diagnostic fields before a new stability decision is attempted.
    */
   protected void resetStabilityDiagnostics() {
@@ -787,8 +814,8 @@ public abstract class Flash extends BaseOperation {
 
         for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
           deltalogWi[i] = logWi[i] - oldlogw[i];
-          clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
         }
+        normalizeStabilityTrial(clonedSystem.getPhase(j), Wi[j]);
         olderror = error[j];
       } while ((oneNorm(f) > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
           || (iterations % accelerateInterval) == 0 || iterations < 3);

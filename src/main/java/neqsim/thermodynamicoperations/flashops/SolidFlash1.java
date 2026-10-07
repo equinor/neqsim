@@ -460,7 +460,7 @@ public class SolidFlash1 extends TPflash {
         continue;
       }
       // Each stability trial uses a normalized pure-component reference phase.
-      // Component.setx(0.0) leaves the previous value unchanged, so clear other candidates with a trace fraction.
+      // Keep non-candidate solid components at trace fractions during fugacity evaluation.
       for (int j = 0; j < system.getNumberOfComponents(); j++) {
         system.getPhases()[3].getComponent(j).setx(j == k ? 1.0 : 1e-50);
       }

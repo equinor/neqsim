@@ -222,3 +222,21 @@ pressure loss through a physical mixing element is part of the engineering quest
 - [Heat exchangers](heat_exchangers)
 - [Valves](valves)
 - [Controllers and recycles](../controllers)
+
+## Exact component removal and empty outlets
+
+`ComponentSplitter` accepts factors of exactly zero and one. A factor is the
+fraction of that component's feed sent to outlet zero; outlet one receives the
+remainder. `validateSetup()` requires one finite factor in [0, 1] for every feed
+component, and `run()` rejects invalid specifications before changing outlets.
+Input arrays and returned factors are defensively copied.
+
+When every routed component has zero flow, the splitter publishes an empty clone
+with the initialized feed composition and phase state. It does not flash an
+uninitialized zero-inventory fluid. This preserves a usable zero-flow topology
+connection for downstream streams and separators. No trace water workaround is
+needed for the qualified synthetic CPA dehydration cases.
+The retained composition is a numerical reference only: an empty branch contains
+no components and has no physically defined molar enthalpy. `ComponentSplitterZeroFlowTest`
+checks downstream empty-branch execution and repeated exact water removal with
+mass conservation.

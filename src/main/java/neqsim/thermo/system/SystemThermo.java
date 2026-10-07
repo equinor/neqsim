@@ -411,9 +411,13 @@ public abstract class SystemThermo implements SystemInterface {
     componentName = ComponentInterface.getComponentNameFromAlias(componentName);
 
     String comNam = componentName;
-    if (getPhase(0).hasComponent(componentName)) {
+    if (getPhase(0).hasComponent(componentName) || neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+      // Database components (also via aliases such as C1, iC4) keep their database Cp coefficients.
       addComponent(componentName, moles);
     } else {
+      logger.warn(
+          "Component {} is not in the database: ideal-gas Cp is a generic placeholder. Use addTBPfraction or set CpA..CpE.",
+          componentName);
       addComponent("default", moles);
       comNam = "default";
       // componentNames.set(componentNames.indexOf("default"), componentName);

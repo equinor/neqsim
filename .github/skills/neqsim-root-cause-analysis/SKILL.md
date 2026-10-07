@@ -22,6 +22,15 @@ multi-source reliability data, plant historian time-series, and STID design cond
 - Valve erosion or malfunction
 - Any operational anomaly requiring structured root cause identification
 
+## Already-closed incident with a "document learning" ask
+
+When the failure is already resolved and recorded (for example a closed Blalys whose
+only open subtask is to document learning), do not re-derive the cause. Cite the
+recorded cause, test it for consistency against the historian and alarm evidence
+(consistent, contradicted or not testable), then deliver a consequence and learning
+screening: capacity impact (for a derated driver use `Compressor.getDriverLimitedEnvelope()`),
+the barrier or early indicator that would have shortened the outage, and the cost of
+recurrence. Mark causal claims beyond the recorded cause as hypotheses.
 ## Rapid Triage Mode (live disturbance)
 
 A full RCA is a study. When the plant is **still down** and a response team needs a

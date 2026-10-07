@@ -546,8 +546,8 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     for (int i = 0; i < components.length; i++) {
       double currentMoles = system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
           .getNumberOfMolesInPhase();
-      double targetMoles = Math.max(newMoles[i], 1e-45); // Ensure small positive value for
-      // numerical stability
+      // Keep the positive LP seed representable when applied as a delta to the current inventory.
+      double targetMoles = Math.max(newMoles[i], Math.max(1.0e-45, 2.0 * Math.ulp(currentMoles)));
       double delta = targetMoles - currentMoles;
 
       // Use addMolesChemReac(component, dn, 0) to ONLY change phase moles

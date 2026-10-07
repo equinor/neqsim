@@ -71,7 +71,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
 
     SystemInterface baseSystem = system.clone();
 
-    if (system instanceof neqsim.thermo.system.SystemPitzer || "FeCO3".equals(saltName)) {
+    // Reactive speciation changes between trials. Rebuild each candidate from the
+    // same feed so bisection does not accumulate reaction and inventory history.
+    if (system instanceof neqsim.thermo.system.SystemPitzer || system.isChemicalSystem()) {
       while (upperSaturationRatio < 1.0 && bracketIterations < MAX_SATURATION_ITERATIONS) {
         upperSaturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, upperAddition);
         if (upperSaturationRatio < 1.0) {

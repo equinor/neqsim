@@ -457,6 +457,37 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Verifies inhibition for an actual 10 wt% NaCl brine at nearby pressures.
+   *
+   * @throws Exception if hydrate equilibrium fails
+   */
+  @Test
+  public void testHydrateTenWeightPercentBrine() throws Exception {
+    for (double pressure : new double[] {80.0, 100.0}) {
+      double[] temperatures = new double[2];
+      for (int salted = 0; salted < 2; salted++) {
+        SystemInterface fluid = new SystemElectrolyteCPAstatoil(283.15, pressure);
+        fluid.addComponent("methane", 0.85);
+        fluid.addComponent("ethane", 0.05);
+        fluid.addComponent("water", 0.10);
+        if (salted == 1) {
+          double saltMoles = 0.10 * 0.01801528 / 0.05844277 * 0.10 / 0.90;
+          fluid.addComponent("Na+", saltMoles);
+          fluid.addComponent("Cl-", saltMoles);
+        }
+        fluid.setMixingRule(10);
+        fluid.setHydrateCheck(true);
+        new ThermodynamicOperations(fluid).hydrateFormationTemperature();
+        temperatures[salted] = fluid.getTemperature();
+        assertTrue(Double.isFinite(temperatures[salted]));
+      }
+      double inhibition = temperatures[0] - temperatures[1];
+      assertTrue(inhibition > 2.0 && inhibition < 10.0,
+          "10 wt% brine inhibition at " + pressure + " bara: " + inhibition);
+    }
+  }
+
+  /**
    * Test high salinity brine.
    */
   @Test
@@ -476,7 +507,9 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     opsRef.hydrateFormationTemperature();
     double hydrateTempRef = fluidRef.getTemperature() - 273.15;
 
-    // High salinity (~10 wt% NaCl equivalent)
+    // Legacy numerical stress case: about 52 wt% NaCl equivalent in the brine.
+    // Retain this composition to cover the exact-zero flash regression; it is not
+    // a physical validation point for a 10 wt% brine.
     SystemInterface fluidHighSalt = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 80.0);
     fluidHighSalt.addComponent("methane", 0.85);
     fluidHighSalt.addComponent("ethane", 0.05);

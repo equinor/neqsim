@@ -56,7 +56,9 @@ public class PSFlash extends QfuncFlash {
    */
   public PSFlash(SystemInterface system, double Sspec, int type) {
     this.system = system;
-    this.tpFlash = new TPflash(system);
+    TPflash innerTpFlash = new TPflash(system);
+    innerTpFlash.setConservativeHomogeneousRecoveryAllowed(true);
+    this.tpFlash = innerTpFlash;
     this.Sspec = Sspec;
     this.type = type;
   }
@@ -257,7 +259,9 @@ public class PSFlash extends QfuncFlash {
     double continuationGibbsEnergy = system.getGibbsEnergy();
 
     SystemInterface coldCandidate = system.clone();
-    new TPflash(coldCandidate).run();
+    TPflash coldFlash = new TPflash(coldCandidate);
+    coldFlash.setConservativeHomogeneousRecoveryAllowed(true);
+    coldFlash.run();
     coldCandidate.init(2);
     double coldGibbsEnergy = coldCandidate.getGibbsEnergy();
     if (!Double.isFinite(continuationGibbsEnergy) || !Double.isFinite(coldGibbsEnergy)) {
