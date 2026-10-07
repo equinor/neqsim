@@ -42824,10 +42824,20 @@ stages to actual trays for cost ranking.</p>
 <p><code>ShortcutDistillationColumn</code> provides Fenske-Underwood-Gilliland estimates. A rigorous column can
 use those estimates directly as a starting design.</p>
 
+<p>Use a finite reflux multiplier greater than one. The shortcut rejects invalid input with
+<code>IllegalArgumentException</code> and rejects non-representable Gilliland stages or feed-tray numbering
+with <code>IllegalStateException</code>. This includes operating reflux at or below its calculated minimum
+and values so close to minimum that the correlation rounds to its infinite-stage limit or
+exceeds the integer tray range. A failed run clears <code>isSolved()</code> and its product/duty/stage
+outputs, including after a previous successful run. Increase reflux and rerun before using the
+design; a shortcut estimate does not establish rigorous-column or hydraulic feasibility.
+<code>DistillationColumn.initializeFromShortcut(...)</code> catches these failures and returns an
+infeasible initialization result without changing the rigorous column's trays or feeds.</p>
+
 <div class="codehilite">
 <pre><span></span><code><span class="n">DistillationColumn</span><span class="p">.</span><span class="na">ShortcutInitializationResult</span><span class="w"> </span><span class="n">init</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">column</span><span class="p">.</span><span class="na">initializeFromShortcut</span><span class="p">(</span><span class="n">feedStream</span><span class="p">,</span>
 <span class="w">    </span><span class="s">&quot;ethane&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;propane&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">0.98</span><span class="p">,</span><span class="w"> </span><span class="mf">0.98</span><span class="p">,</span><span class="w"> </span><span class="mf">1.3</span><span class="p">);</span>
-<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">init</span><span class="p">.</span><span class="na">isFeasible</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">init</span><span class="p">.</span><span class="na">isInitialized</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">column</span><span class="p">.</span><span class="na">setSolverType</span><span class="p">(</span><span class="n">DistillationColumn</span><span class="p">.</span><span class="na">SolverType</span><span class="p">.</span><span class="na">INSIDE_OUT</span><span class="p">);</span>
 <span class="w">  </span><span class="n">column</span><span class="p">.</span><span class="na">run</span><span class="p">();</span>
 <span class="p">}</span>

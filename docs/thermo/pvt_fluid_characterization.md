@@ -155,6 +155,14 @@ Before relying on a characterized fluid:
 5. obtain independent PVT/model review for reserves, facilities, flow assurance,
    custody, or safety-critical decisions.
 
+TP flash rejects a present TBP or plus fraction with a non-finite acentric factor or a factor at
+or below -1 before changing its inventories. By definition, the acentric factor is
+$\omega = -\log_{10}(P_{sat}(0.7T_c)/P_c)-1$; a factor at or below -1 implies a saturation
+pressure at or above the critical pressure below the critical temperature. This guard preserves
+explicit failure for the legacy Twu sour-fluid fixture with an acentric factor of approximately
+-38.45. It does not establish that other fitted petroleum-fraction properties are qualified;
+retain the assay and laboratory validation steps above.
+
 Asphaltene, wax, hydrate, electrolyte, and solid-phase behavior require their
 own qualified models and data. A characterized hydrocarbon slate does not
 establish those risks.

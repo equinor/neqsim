@@ -11,6 +11,7 @@ stop a corpus from being reusable by someone else:
     python devtools/task_corpus.py env TASK       # stamp the software
                                                   #   environment into results.json
     python devtools/task_corpus.py duplicates     # folders present in >1 root
+    python devtools/task_corpus.py search TERMS   # rank earlier tasks for a new one
 
 `relink` and `env` are dry-run by default; pass --apply to write. `env` only
 touches task folders named on the command line — reports stamp themselves as
@@ -420,7 +421,114 @@ def render_index(records, roots, out_dir=None):
     return "\n".join(lines)
 
 
+# ── task search ────────────────────────────────────────────────────────
+
+SEARCH_FILES = ("study_config.yaml", "README.md", "results.json",
+                "step1_scope_and_research/notes.md",
+                "step1_scope_and_research/analysis.md",
+                "step3_report/WORK_RECORD.md")
+SEARCH_MAX_BYTES = 300000
+STOP_WORDS = frozenset("""the and for with from that this into over under per are was
+were has have its not but can will use using used via task solve study analysis""".split())
+
+
+def search_terms(query):
+    """Split a free-text query into lower-case search terms."""
+    words = re.findall(r"[A-Za-z0-9][A-Za-z0-9\-\.]*", query.lower())
+    return [w for w in dict.fromkeys(words) if len(w) >= 3 and w not in STOP_WORDS]
+
+
+def _read_text(path):
+    """Return up to SEARCH_MAX_BYTES of a text file, or an empty string."""
+    try:
+        with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+            return handle.read(SEARCH_MAX_BYTES).lower()
+    except OSError:
+        return ""
+
+
+def score_task(folder, terms):
+    """Return (score, matched_terms) for one task folder against the terms.
+
+    A hit in the folder name, title or standards counts more than a hit in
+    the body text, and a term that matches anywhere counts once per location
+    class so that one long document cannot dominate.
+    """
+    record = summarize_task(folder)
+    headline = " ".join([folder.name, record["title"], record["headline"],
+                         " ".join(record["standards"])]).lower()
+    body = "\n".join(_read_text(folder / name) for name in SEARCH_FILES)
+    score, matched = 0, []
+    for term in terms:
+        in_headline = term in headline
+        hits = min(body.count(term), 5)
+        if in_headline or hits:
+            matched.append(term)
+            score += (5 if in_headline else 0) + hits
+    return score, matched
+
+
+def find_similar_tasks(query, roots, exclude=None, limit=10):
+    """Rank earlier task folders by how well they match a free-text query.
+
+    Parameters
+    ----------
+    query : str
+        Task description or keywords (equipment, fluid, standard, tag).
+    roots : list of Path
+        Task roots to search.
+    exclude : str, optional
+        Folder name or path of the current task, left out of the ranking.
+    limit : int
+        Maximum number of tasks returned.
+
+    Returns
+    -------
+    list of dict
+        Records with ``folder``, ``path``, ``title``, ``score`` and ``matched``,
+        best first; tasks matching no term are dropped.
+    """
+    terms = search_terms(query)
+    skip = Path(exclude).name if exclude else None
+    ranked = []
+    for folder in find_task_folders(roots):
+        if folder.name == skip:
+            continue
+        score, matched = score_task(folder, terms)
+        if matched:
+            record = summarize_task(folder)
+            ranked.append({"folder": folder.name, "path": str(folder),
+                           "title": record["title"], "score": score,
+                           "matched": matched, "has_results": record["has_results"]})
+    ranked.sort(key=lambda r: (len(r["matched"]), r["score"], r["folder"]),
+                reverse=True)
+    return ranked[:limit]
+
+
 # ── commands ───────────────────────────────────────────────────────────
+
+def cmd_search(args):
+    """Print the earlier tasks that best match the query."""
+    roots = resolve_task_roots(args.task_root)
+    query = " ".join(args.terms)
+    if not search_terms(query):
+        print("Give at least one search term of 3+ letters.")
+        return 2
+    hits = find_similar_tasks(query, roots, args.exclude, args.limit)
+    if args.json:
+        print(json.dumps(hits, indent=2, ensure_ascii=False))
+        return 0
+    print("Roots: {}".format(describe(roots)))
+    if not hits:
+        print("No earlier task matches: {}".format(query))
+        return 0
+    for hit in hits:
+        print("{:>4}  {}  [{}]".format(hit["score"], hit["folder"],
+                                      ", ".join(hit["matched"])))
+        print("      {}".format(hit["title"]))
+        print("      {}".format(hit["path"]))
+    return 0
+
 
 def cmd_index(args):
     """Write INDEX.md and tasks.json describing the whole corpus."""
@@ -560,6 +668,16 @@ def main(argv=None):
     p_env.add_argument("--force", action="store_true",
                        help="Overwrite an existing environment block")
     p_env.set_defaults(func=cmd_env)
+
+    p_search = sub.add_parser(
+        "search", help="Rank earlier tasks by similarity to a description")
+    p_search.add_argument("terms", nargs="+",
+                          help="Equipment, fluid, standard, tag or task text")
+    p_search.add_argument("--exclude", help="Current task folder to leave out")
+    p_search.add_argument("--limit", type=int, default=10)
+    p_search.add_argument("--json", action="store_true", help="Machine-readable output")
+    add_task_root_argument(p_search)
+    p_search.set_defaults(func=cmd_search)
 
     p_dup = sub.add_parser("duplicates", help="List folders present in >1 root")
     add_task_root_argument(p_dup)

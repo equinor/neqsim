@@ -184,8 +184,10 @@ def main(argv=None):
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args(argv)
     data = build(ROOT)
-    # One API per line keeps regeneration diffs reviewable across domain PRs.
-    header = {key: value for key, value in data.items() if key != "apis"}
+    # One API per line keeps regeneration diffs reviewable across domain PRs. The summary and
+    # catalogDigest change with every PR, so they are derived at load time by
+    # EngineeringCoverageCatalog instead of being committed (they made every pair of PRs conflict).
+    header = {key: value for key, value in data.items() if key not in ("apis", "summary", "catalogDigest")}
     rendered = json.dumps(header, ensure_ascii=True, indent=2)[:-1].rstrip() + ',\n  "apis": [\n'
     rendered += ",\n".join("    " + json.dumps(row, ensure_ascii=True, separators=(",", ":"))
                            for row in data["apis"])

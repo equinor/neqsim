@@ -524,14 +524,51 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
-   * Gets the utilization as a fraction of design value.
+   * Gets the raw operating value before normalization by the design limit.
    *
-   * <p>
-   * For normal constraints (higher is worse), returns current/design. For minimum constraints (lower is worse), returns
-   * design/current.
-   * </p>
+   * @return current operating value in {@link #getUnit()}
+   */
+  public double getRawValue() {
+    return getCurrentValue();
+  }
+
+  /**
+   * Returns the denominator used for utilization, including minimum requirements.
    *
-   * @return utilization as fraction (1.0 = 100% of design)
+   * @return design limit in {@link #getUnit()}, or Double.MAX_VALUE if unset
+   */
+  public double getDesignLimit() {
+    return isMinimumConstraint() ? minValue : designValue;
+  }
+
+  /**
+   * Returns the declared engineering basis without inferring vendor certification.
+   *
+   * @return default, datasheet, autoSize, standard, empirical, or custom
+   */
+  public String getBasis() {
+    if (source == ConstraintSource.VENDOR_DATASHEET) {
+      return "datasheet";
+    }
+    if (source == ConstraintSource.AUTO_SIZE) {
+      return "autoSize";
+    }
+    if (source == ConstraintSource.CONFORMITY_STANDARD) {
+      return "standard";
+    }
+    if (source == ConstraintSource.PROCESS_EMPIRICAL) {
+      return "empirical";
+    }
+    if (source == ConstraintSource.USER_RULE || (!"default".equals(dataSource) && !"not_set".equals(dataSource))) {
+      return "custom";
+    }
+    return "default";
+  }
+
+  /**
+   * Gets utilization as a fraction of the declared design limit.
+   *
+   * @return utilization fraction
    */
   public double getUtilization() {
     return getUtilization(getCurrentValue());

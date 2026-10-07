@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-04 — Multi-platform offshore oil process model with historian hold-out validation
+**Type:** B (Process)
+**Keywords:** ProcessModel, multi-platform, Uleberg P/A split, setpoint-driven topology, GOR factor, compressor efficiency calibration, hold-out window, scrubber K utilisation
+**Solution:** Private task folder (redacted): ProcessPilot-format package with platform layout helper, historian-window workbook builder, 31-item model-versus-plant comparison, calibration loop and 6 regression tests.
+**Notes:** Three formation fluids tuned to the common paraffin/aromatic model (saturation pressure 10-12 % low). Oil, water, total gas, platform gas split, export-gas mole weight (within 0.8 %) and compressor discharge temperatures reproduced; 25 of 32 scored items pass (23 of 32 on a hold-out window). Searching the historian catalog for discriminating signals overturned a first diagnosis: gas composition and anti-surge recycle were ruled out, and the stage 3/4 machines needed an effective efficiency of 0.35-0.42, which the unfitted train motor power then confirmed within -13 to -27 %. Lesson: before widening an efficiency bound, check mole weight, recycle-valve opening and motor power. Separator gas flow meters still disagree with the gas balance (basis unresolved).
+
 ### 2026-10-03 — Source-locked quantitative C1 ignition-delay comparison
 **Type:** G (Workflow)
 **Keywords:** combustion qualification, ReSpecTh, methane, shock tube, ignition delay, CRECK-S, Cantera, uncertainty, provenance
@@ -1110,3 +1116,17 @@ Integrated master 466cd0f333561fbe442156d47cfa0c9b358687f7, retaining both task-
 histories and regenerating the engineering inventory. Documentation impact: none
 for the test-only correction; the recycle guide already documents the low-flow
 absolute tolerance and the exchanger guide documents the duty/LMTD relation.
+
+
+### 2026-10-04 — Gas-limited stop choke list from allocation data (PEPR 80302059)
+**Type:** B (Process / production optimisation)
+**Keywords:** choke list, strupeliste, GOR, gas handling, regass scrubber, PDM allocation basis, compressor meter basis, WAG, backtest
+**Solution:** Two-constraint LP on the per-well PDM table with the gas budget calibrated on a previous stop; cross-checked with `ChokeAndGasLiftAllocationOptimizer`; stage-separation sweep for 3rd-stage pressure and scrubber temperature; gas injectors ranked from 12 months of per-well injection.
+**Notes:** A compressor-meter capacity is not the allocated well gas: on the studied platform allocated gas was 0.79 of the meter flow with a compressor train out of service, so planning on the meter figure over-promised about 1,050 Sm3/d of oil. The previous stop gave a free backtest (every GOR above 1,000 well shut in both; oil within -6.5/+8.2 %). A simple stage model under-predicted recompressor load by 12-38 % but gave the right RVP slope against 3rd-stage pressure (0.30 vs 0.28 bar/bar). Report generator: `report.front_matter_lists` skips lists of figures and tables on short reports.
+
+
+### 2026-10-05 — Well/SURF network integration audit and steady hydraulic fidelity
+**Type:** E (Feature)
+**Keywords:** subsea, SURF, gathering, injection, Beggs-Brill, two-fluid, topology, campaign 4228
+**Solution:** `LoopedPipeNetwork`, `NetworkHydraulicFidelityTest`, `docs/fielddevelopment/SURF_NETWORK_INTEGRATION.md`.
+**Notes:** Reuse the detailed steady graph, existing well physics, dedicated storage-node two-fluid transient network and lifecycle/design models. Pipe-edge fidelity overrides preserve topology and JSON replay. Two-fluid failures remain explicit; cached Beggs-Brill geometry is refreshed. Eight new regression tests and the affected network suites pass (152 passed, one existing skip). Live WellSystem/injection boundaries, independent field benchmarks and mixed-fidelity dynamic junction qualification remain campaign work.

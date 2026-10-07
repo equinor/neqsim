@@ -127,3 +127,19 @@ for r_frac in [0.0, 0.10, 0.20, 0.30]:
 - [ ] Benchmark split-range mapping with `MinimumSpeedRecycleControllerStructure`
 - [ ] Quantify annual MWh, fuel gas tonnes, CO2 tonnes, and MNOK cost savings across operating hours
 - [ ] Generate dynamic time-series comparison plots (Pressure, Speed, Recycle, Power & CO2)
+
+## Fixed minimum flow without a numerical recycle loop
+
+For steady-state screening with a prescribed minimum suction flow and a return
+cooled to the net-feed suction state, use
+`neqsim.process.equipment.compressor.MinimumFlowSpill(name, netFeed)`.
+Set `setMinimumInletFlow(value, unit)` and configure `getCompressor()`.
+Add the assembly once to ProcessSystem; the net forward outlet is
+`getOutletStream()`, while `getSpillStream()` is an internal discharge spill.
+`getSpillFlow(unit)` uses suction conditions even for actual volume.
+Use `getPower(unit)` for gross compression and `getSpillCoolingDuty(unit)` for
+ideal heat rejection. The assembly delegates capacity constraints to its compressor.
+Disable internal AntiSurge flow modification. Use physical valve/cooler/recycle
+equipment for composition changes, condensation, finite cooler approach or dynamics.
+See [compressor equipment guide](../../../docs/process/equipment/compressors.md#algebraic-minimum-flow-spill)
+and `MinimumFlowSpillTest` for the executed synthetic material/energy checks.

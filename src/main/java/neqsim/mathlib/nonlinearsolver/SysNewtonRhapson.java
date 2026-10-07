@@ -1,6 +1,10 @@
 package neqsim.mathlib.nonlinearsolver;
 
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -29,18 +33,24 @@ public class SysNewtonRhapson implements java.io.Serializable {
   double TC2 = 0;
   double PC1 = 0;
   double PC2 = 0;
-  Matrix Jac;
-  Matrix fvec;
-  Matrix u;
-  Matrix uold;
-  Matrix Xgij;
+  DMatrixRMaj Jac;
+  DMatrixRMaj fvec;
+  DMatrixRMaj u;
+  DMatrixRMaj uold;
+  DMatrixRMaj Xgij;
   SystemInterface system;
   int numberOfComponents;
   int speceq = 0;
-  Matrix a = new Matrix(4, 4);
-  Matrix s = new Matrix(1, 4);
-  Matrix xg;
-  Matrix xcoef;
+  DMatrixRMaj a = new DMatrixRMaj(4, 4);
+  DMatrixRMaj s = new DMatrixRMaj(1, 4);
+  private DMatrixRMaj jacWork;
+  private DMatrixRMaj dxds;
+  private DMatrixRMaj dx;
+  private DMatrixRMaj aWork;
+  private DMatrixRMaj xgTranspose;
+  private DMatrixRMaj xcoef;
+  private transient LinearSolverDense<DMatrixRMaj> jacSolver;
+  private transient LinearSolverDense<DMatrixRMaj> polynomialSolver;
   NewtonRhapson solver;
   boolean etterCP = false;
   boolean etterCP2 = false;
@@ -62,12 +72,20 @@ public class SysNewtonRhapson implements java.io.Serializable {
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     neq = numberOfComponents + 2;
-    Jac = new Matrix(neq, neq);
-    fvec = new Matrix(neq, 1);
-    u = new Matrix(neq, 1);
-    Xgij = new Matrix(neq, 4);
+    Jac = new DMatrixRMaj(neq, neq);
+    fvec = new DMatrixRMaj(neq, 1);
+    u = new DMatrixRMaj(neq, 1);
+    uold = new DMatrixRMaj(neq, 1);
+    Xgij = new DMatrixRMaj(neq, 4);
+    jacWork = new DMatrixRMaj(neq, neq);
+    dxds = new DMatrixRMaj(neq, 1);
+    dx = new DMatrixRMaj(neq, 1);
+    aWork = new DMatrixRMaj(4, 4);
+    xgTranspose = new DMatrixRMaj(4, 1);
+    xcoef = new DMatrixRMaj(4, 1);
+    initializeSolvers();
     setu();
-    uold = u.copy();
+    uold.setTo(u);
     findSpecEqInit();
     // System.out.println("Spec : " +speceq);
     solver = new NewtonRhapson();
@@ -131,7 +149,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
    * setJac.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
+    Jac.zero();
     double dij = 0.0;
     double[] dxidlnk = new double[numberOfComponents];
     double[] dyidlnk = new double[numberOfComponents];
@@ -202,16 +220,16 @@ public class SysNewtonRhapson implements java.io.Serializable {
 
     findSpecEq();
     int nofc = numberOfComponents;
-    fvec.timesEquals(0.0);
+    fvec.zero();
     fvec.set(nofc + 1, 0, 1.0);
-    Matrix dxds = Jac.solve(fvec);
+    solveJacobian(fvec, dxds);
     if (np < 5) {
       double dp = 0.01;
       ds = dp / dxds.get(nofc + 1, 0);
-      Xgij.setMatrix(0, nofc + 1, np - 1, np - 1, u);
-      dxds.timesEquals(ds);
+      CommonOps_DDRM.insert(u, Xgij, 0, np - 1);
+      CommonOps_DDRM.scale(ds, dxds);
       // dxds.print(0,10);
-      u.plusEquals(dxds);
+      CommonOps_DDRM.addEquals(u, dxds);
       // Xgij.print(0,10);
       // u.print(0,10);
     } else {
@@ -248,9 +266,15 @@ public class SysNewtonRhapson implements java.io.Serializable {
           ds = 0.5 * ds;
         }
 
-        Xgij.setMatrix(0, nofc + 1, 0, 2, Xgij.getMatrix(0, nofc + 1, 1, 3));
-        Xgij.setMatrix(0, nofc + 1, 3, 3, u);
-        s.setMatrix(0, 0, 0, 3, Xgij.getMatrix(speceq, speceq, 0, 3));
+        for (int row = 0; row < neq; row++) {
+          for (int column = 0; column < 3; column++) {
+            Xgij.set(row, column, Xgij.get(row, column + 1));
+          }
+        }
+        CommonOps_DDRM.insert(u, Xgij, 0, 3);
+        for (int column = 0; column < 4; column++) {
+          s.set(0, column, Xgij.get(speceq, column));
+        }
         // s.print(0,10);
         // System.out.println("ds1 : " + ds);
         calcInc2(np);
@@ -268,18 +292,17 @@ public class SysNewtonRhapson implements java.io.Serializable {
    */
   public void calcInc2(int np) {
     for (int j = 0; j < neq; j++) {
-      xg = Xgij.getMatrix(j, j, 0, 3);
       for (int i = 0; i < 4; i++) {
         a.set(i, 0, 1.0);
         a.set(i, 1, s.get(0, i));
         a.set(i, 2, s.get(0, i) * s.get(0, i));
         a.set(i, 3, a.get(i, 2) * s.get(0, i));
       }
-      xcoef = a.solve(xg.transpose());
+      solvePolynomial(j);
       double sny = ds + s.get(0, 3);
       u.set(j, 0, xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
     }
-    uold = u.copy();
+    uold.setTo(u);
     // s.print(0,10);
     // Xgij.print(0,10);
     double xlnkmax = 0;
@@ -302,8 +325,6 @@ public class SysNewtonRhapson implements java.io.Serializable {
       // System.exit(0);
       ic03p = np;
       testcrit = 0;
-      xg = Xgij.getMatrix(numb, numb, 0, 3);
-
       for (int i = 0; i < 4; i++) {
         a.set(i, 0, 1.0);
         a.set(i, 1, s.get(0, i));
@@ -311,7 +332,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
         a.set(i, 3, a.get(i, 2) * s.get(0, i));
       }
 
-      Matrix xcoef = a.solve(xg.transpose());
+      solvePolynomial(numb);
 
       double[] coefs = new double[4];
       coefs[0] = xcoef.get(3, 0);
@@ -340,8 +361,6 @@ public class SysNewtonRhapson implements java.io.Serializable {
     } else if ((xlnkmax < avscp && testcrit != 1) && (np != ic03p && !etterCP)) {
       // System.out.println("hei fra her");
       testcrit = 1;
-      xg = Xgij.getMatrix(numb, numb, 0, 3);
-
       for (int i = 0; i < 4; i++) {
         a.set(i, 0, 1.0);
         a.set(i, 1, s.get(0, i));
@@ -351,7 +370,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
       // a.print(0,10);
       // xg.print(0,10);
 
-      Matrix xcoef = a.solve(xg.transpose());
+      solvePolynomial(numb);
       // xcoef.print(0,10);
 
       double[] coefs = new double[4];
@@ -409,15 +428,15 @@ public class SysNewtonRhapson implements java.io.Serializable {
    * @param np a int
    */
   public void solve(int np) {
-    Matrix dx;
+    ensureSolversInitialized();
     iter = 0;
     do {
       iter++;
       init();
       setfvec();
       setJac();
-      dx = Jac.solve(fvec);
-      u.minusEquals(dx);
+      solveJacobian(fvec, dx);
+      CommonOps_DDRM.subtractEquals(u, dx);
       if (iter > 6) {
         System.out.println("iter > " + iter);
         calcInc(np);
@@ -425,9 +444,56 @@ public class SysNewtonRhapson implements java.io.Serializable {
         break;
       }
       // System.out.println("feilen: "+dx.norm2());
-    } while (dx.norm2() / u.norm2() > 1.e-8 && Double.isNaN(dx.norm2()));
+    } while (NormOps_DDRM.normF(dx) / NormOps_DDRM.normF(u) > 1.e-8 && Double.isNaN(NormOps_DDRM.normF(dx)));
     // System.out.println("iter: "+iter);
     init();
+  }
+
+  /** Initializes transient EJML solvers, including after deserialization. */
+  private void initializeSolvers() {
+    jacSolver = LinearSolverFactory_DDRM.lu(neq);
+    polynomialSolver = LinearSolverFactory_DDRM.lu(4);
+  }
+
+  /** Ensures the transient EJML solvers are available. */
+  private void ensureSolversInitialized() {
+    if (jacSolver == null || polynomialSolver == null) {
+      initializeSolvers();
+    }
+  }
+
+  /**
+   * Solves the system Jacobian for the supplied right-hand side.
+   *
+   * @param rightHandSide right-hand-side vector
+   * @param solution destination for the solution vector
+   * @throws IllegalStateException if the Jacobian is singular
+   */
+  private void solveJacobian(DMatrixRMaj rightHandSide, DMatrixRMaj solution) {
+    ensureSolversInitialized();
+    jacWork.setTo(Jac);
+    if (!jacSolver.setA(jacWork)) {
+      throw new IllegalStateException("Phase-envelope Jacobian is singular");
+    }
+    jacSolver.solve(rightHandSide, solution);
+  }
+
+  /**
+   * Solves the cubic predictor interpolation system for one history row.
+   *
+   * @param historyRow row in the continuation history matrix
+   * @throws IllegalStateException if the interpolation matrix is singular
+   */
+  private void solvePolynomial(int historyRow) {
+    ensureSolversInitialized();
+    for (int column = 0; column < 4; column++) {
+      xgTranspose.set(column, 0, Xgij.get(historyRow, column));
+    }
+    aWork.setTo(a);
+    if (!polynomialSolver.setA(aWork)) {
+      throw new IllegalStateException("Phase-envelope predictor interpolation matrix is singular");
+    }
+    polynomialSolver.solve(xgTranspose, xcoef);
   }
 
   /**

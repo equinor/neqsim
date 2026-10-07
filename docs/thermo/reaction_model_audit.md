@@ -77,3 +77,23 @@ Use this diagnostic to freeze model-specific validation questions before changin
 5. Split reaction tables or activate/deactivate model-specific reactions only when the scientific evidence requires it.
 
 Relevant foundations include Plummer and Busenberg (1982), DOI `10.1016/0016-7037(82)90056-4`, for carbonate equilibria and the Pitzer electrolyte framework for activity-coefficient treatment. NeqSim does not infer model-specific parameter validity merely because two sources retain the same reaction name.
+
+## Reaction reference potentials
+
+The chemical-equilibrium initializer and Newton solver share reference potentials
+that satisfy `sum(nu_i * mu_i_ref) = -R*T*ln(K)` for every active reaction.
+Dependent species define a zero reference; the independent species potentials
+are solved together. Their absolute numerical values are reference-dependent,
+so regression tests check all reaction identities rather than snapshots of
+individual potentials. Changing a dependent potential after that solve would
+invalidate the equilibrium constants used by the minimizer.
+
+This corrects a sign and reference-assignment error exposed by exact-zero mole
+fractions: FeCO3 saturation could deplete the solvent and lose its aqueous phase.
+No equilibrium-constant data, activity convention, or closure tolerance is changed.
+
+Reactive salt-saturation trial additions are evaluated from a fresh clone of the
+same feed, as already done for FeCO3 and Pitzer calculations. This prevents
+successive bisection trials from accumulating speciation and inventory history.
+The carbonate regressions require an undersaturated starting fluid, a converged
+saturation result, and unit saturation after a separate TP flash.

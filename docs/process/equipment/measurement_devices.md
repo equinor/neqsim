@@ -582,7 +582,9 @@ double phValue = ph.getMeasuredValue("");  // pH
 ```
 
 The probe extracts the stream's aqueous phase and solves it as a single-phase
-`Electrolyte-CPA-EOS-statoil` system. `setAlkalinity(value)` adds NaOH on a
+`Electrolyte-CPA-EOS-statoil` system with the aqueous liquid root retained during reaction
+solving. This avoids replacing the sampled liquid with a gas phase during phase selection.
+`setAlkalinity(value)` adds NaOH on a
 mmol/kg-water basis. The calculation fails closed if the selected reactions do not satisfy
 aqueous charge, element-balance, and reaction-residual gates after bounded refinement; it does
 not return an uncertified intermediate pH.

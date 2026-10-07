@@ -8,7 +8,7 @@ Usage:
     neqsim doctor            Check your environment is healthy
     neqsim contribute        Guided wizard for your first contribution
     neqsim new-task TITLE    Create a task-solving workspace
-    neqsim tasks CMD         Across solved tasks: index/relink/env/duplicates
+    neqsim tasks CMD         Across solved tasks: index/search/relink/env/duplicates
     neqsim report [DIR]      Generate the report (files named after its title)
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)

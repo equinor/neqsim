@@ -343,8 +343,7 @@ public class TPHydrateFlash extends TPflash {
         totalHydrate += amounts[i];
       }
     }
-    // Initialize from component amounts, including exact zeros. Component.setx(0) leaves the
-    // previous x unchanged, which otherwise carries feed hydrocarbons/inhibitors into the hydrate lattice.
+    // Initialize the hydrate composition from component amounts so prior fluid compositions cannot leak into it.
     for (int i = 0; i < z.length; i++) {
       hydrate.getComponent(i).setNumberOfmoles(totalHydrate > 0.0 ? amounts[i] : (i == water ? 1.0 : 0.0));
       ((ComponentHydrate) hydrate.getComponent(i)).setHydrateStructure(structure);
