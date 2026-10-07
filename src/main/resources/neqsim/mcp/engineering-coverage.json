@@ -762,7 +762,7 @@
           "classification": "supported",
           "api": "neqsim.pvtsimulation.util.GasPseudoPressure",
           "method": "calculateFromCorrelation",
-          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.calculateFromCorrelation(double,double,double,double,double)",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.calculateFromCorrelation(double, double, double, double, double)",
           "units": {
             "inputs": {
               "pressureBara": "bara absolute",
@@ -805,7 +805,7 @@
           "classification": "supported",
           "api": "neqsim.pvtsimulation.util.GasPseudoPressure",
           "method": "deltaPseudoPressure",
-          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.deltaPseudoPressure(double,double,double,double,double)",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.deltaPseudoPressure(double, double, double, double, double)",
           "units": {
             "inputs": {
               "firstPressure": "bara absolute",
