@@ -177,6 +177,10 @@ fluid.getCharacterization().characterisePlusFraction();
 - [ ] Z-factor within ±2% of CVD data
 - [ ] Oil formation volume factor within ±3%
 - [ ] Viscosity within ±20% (transport properties have larger uncertainty)
+- [ ] Gas condensate: dew point within 10 % and C7+ density within 3 %; CME/CVD not degraded by the tuning
+- [ ] Report the result as a `pvt_tuning_quality` block (before = untuned template, after = tuned, parameters with
+      bounds and at-bound flags, excluded data with reasons): see `neqsim-professional-reporting` Principle 9a
+- [ ] Lab data checked for physical validity first: a gas "CME" that stays near 1.0 was run on separator liquid
 
 ## Common Pitfalls
 

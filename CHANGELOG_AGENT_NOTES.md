@@ -9,6 +9,14 @@
 
 ---
 
+## 2026-10-07 — `SealGasSupplyConditioning` (seal gas supply side) and report generator fix
+
+- New `neqsim.process.equipment.compressor.SealGasSupplyConditioning`: dew point margin (water and hydrocarbon) of seal gas after the isenthalpic reduction over the supply valve, optional heater, `calculateRequiredInletTemperatureC`, and static `impliedLiquidLoadKgPerMSm3` / `sumpFillTimeDays` for filter sump evidence. Complements `DryGasSealAnalyzer` (leakage side). 5 tests in `SealGasSupplyConditioningTest`.
+- `devtools/task_template/step3_report/generate_report.py`: `results.json` `references` may now be plain strings (two `ref.get` calls crashed with `AttributeError`).
+- Skills updated: `neqsim-rotating-equipment-design` (seal gas section), community `neqsim-dry-gas-seal-screening`, enterprise `enterprise-maintenance-api` (notification text as design evidence), agent `enterprise-pepr-solve-task-agent` workflow step 5d. Source task: PEPR 80302027 (Grane).
+
+---
+
 ## 2026-10-05 — `WellUnloadingScreening` (drowned-well start-up)
 
 - New `neqsim.process.equipment.reservoir.WellUnloadingScreening`: static wellhead pressure for a gas cap over a

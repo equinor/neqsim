@@ -1106,6 +1106,12 @@ progress.set_next_action("Create analysis artifact: 01_XXXX.ipynb or run_XXXX.py
 
 ### Benchmark Validation (required for Development; recommended for Design when benchmark data exists)
 
+12a. **Fluid tuned to PVT data?** Then also write the `pvt_tuning_quality` block of
+`results.json` (before/after error per sample and experiment type, tuned parameters with
+bounds and `at_bound` flags, excluded data with reasons, figures). The validator warns when
+a task says it tuned a fluid but has no block, and the report generator renders it as
+tables. Schema and rules: `neqsim-professional-reporting` Principle 9a.
+
 12b. Create benchmark validation evidence in one of these forms:
   - Separate notebook (`XX_benchmark_validation.ipynb`) for Standard/Comprehensive tasks
   - Section within the main notebook for Quick tasks

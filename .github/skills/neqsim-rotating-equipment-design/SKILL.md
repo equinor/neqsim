@@ -39,6 +39,15 @@ Use this skill when an agent needs to create, correct, apply or interpret compre
 
 Turboexpander map work is separate: create `TurboExpanderMapIngestion`, add vendor/test anchor points with velocity ratio, IGV opening and measured efficiency, configure the reference fluid and impeller diameters, then validate against the expander/compressor operating envelope. Geometry-derived maps and `ExpanderChartKhader` are correlations/models, not converted vendor data.
 
+## Seal gas supply and contamination (added after the Grane PEPR 80302027 study)
+
+Dry gas seals fail from liquid in the supply as often as from the machine. Two classes in `neqsim.process.equipment.compressor` split the problem:
+
+- `DryGasSealAnalyzer`: leakage side, JT condensation in the primary vent and standpipes.
+- `SealGasSupplyConditioning`: supply side. `setSource(P, "barg", T, "C")`, `setSupplyPressure(P, "barg")`, optional `setHeaterOutletTemperature`, then `getSupplyTemperatureC()`, `getWaterDewPointC()`, `getHydrocarbonDewPointC()`, `getMinimumMarginK()`, `isMarginMet()` (API 692 practice 20 K) and `calculateRequiredInletTemperatureC(maxC)`. Static helpers `impliedLiquidLoadKgPerMSm3(...)` and `sumpFillTimeDays(...)` turn a filter sump filling rate into kg of liquid per MSm3 to compare with the filter datasheet contaminant basis (Grane CA-23-0026: 10-20 kg/MSm3).
+
+Rules of thumb checked on Grane: JT cooling over the supply valve of a dense lean gas is 15-20 K, so a seal gas taken at 45 C and 92 barg has about 0 K margin at 49 barg without a heater; a take-off at an impeller exit has 7-36 K depending on the head already produced; a take-off at the stage discharge has more than 40 K. Fuel gas used as seal gas (2nd/3rd stage on Grane) is cooled to about 20 C, where the model gives 370 kg/MSm3 of equilibrium condensate and none at 28 C, so check the fuel gas temperature before blaming the filters. Natural experiments (import gas as fuel, set-point steps) discriminate better than regressions on daily data.
+
 ## Build pattern
 
 This Java 8 example follows the `CompressorTrain` usage shown in source. It creates a simple gas feed, runs a scrubber-compressor-aftercooler unit and reads shaft power. Replace the illustrative conditions and efficiencies with a controlled design basis.
