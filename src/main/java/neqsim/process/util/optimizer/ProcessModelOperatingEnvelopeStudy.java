@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicConstraintSnapshot;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateConstraintEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult;
 
 /**
@@ -15,8 +17,11 @@ import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.Can
  * Every point is a complete action vector evaluated by {@link ProcessModelOperatingActionSetEvaluator}. Infeasible
  * candidates remain in the trace when baseline recovery succeeds. Sampling stops immediately when restoration or
  * restored-baseline convergence fails. Leading-bottleneck transitions use only the evaluator's already ranked, finite
- * installed-equipment evidence; they are sampled identity changes, not proof of a continuous boundary, an optimizer
- * active set, or operating approval.
+ * installed-equipment evidence for feasible points. Infeasible points retain the exact fail-closed rejection source:
+ * first the applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated
+ * hard registered model constraint in declaration order. Physical values with unlike units are never numerically ranked
+ * against each other. Transitions are sampled identity changes, not proof of a continuous boundary, an optimizer active
+ * set, or operating approval.
  * </p>
  *
  * @author NeqSim Development Team
@@ -161,7 +166,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
     if (outcome == Outcome.COMPLETE) {
       diagnostics.add("All requested points completed with safe baseline recovery");
     }
-    diagnostics.add("Transitions are sampled installed-equipment bottleneck changes only");
+    diagnostics.add(
+        "Transitions use unit-safe installed evidence at feasible points and exact fail-closed rejection identity at infeasible points");
     return new SliceResult(id, name, provenance, evaluator.getId(), axisIds, axes, anchor, pointCount(axes), outcome,
         points, transitions, diagnostics);
   }
@@ -184,7 +190,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       candidate[actionIndexes[axis]] = coordinates[axis];
     }
     CandidateSetEvaluationResult result = evaluator.evaluate(candidate);
-    return new Point(sequence, gridIndexes, coordinates, candidate, result, leading(result));
+    InstalledEquipmentCapacityEvidence installed = leadingInstalled(result);
+    return new Point(sequence, gridIndexes, coordinates, candidate, result, leading(result, installed), installed);
   }
 
   /**
@@ -203,13 +210,64 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @param result completed candidate result
    * @return leading evidence or null
    */
-  private static InstalledEquipmentCapacityEvidence leading(CandidateSetEvaluationResult result) {
+  private static InstalledEquipmentCapacityEvidence leadingInstalled(CandidateSetEvaluationResult result) {
     for (InstalledEquipmentCapacityEvidence evidence : result.getInstalledEquipmentCapacityEvidence()) {
       if (evidence.isEnabled() && evidence.hasFiniteEvidence()) {
         return evidence;
       }
     }
     return null;
+  }
+
+  /** Selects the unit-safe leading constraint or exact fail-closed rejection source. */
+  private static LeadingConstraintEvidence leading(CandidateSetEvaluationResult result,
+      InstalledEquipmentCapacityEvidence installed) {
+    switch (result.getOutcome()) {
+    case REQUIRED_CONSTRAINT_MISSING:
+    case CONSTRAINT_VALUE_UNAVAILABLE:
+    case HYDRAULIC_CONSTRAINT_VIOLATED:
+    case EVIDENCE_OUTSIDE_VALIDITY_RANGE:
+      for (HydraulicConstraintSnapshot snapshot : result.getHydraulicConstraints()) {
+        if (matchesHydraulicOutcome(result.getOutcome(), snapshot)) {
+          return LeadingConstraintEvidence.fromHydraulic(snapshot);
+        }
+      }
+      break;
+    case OTHER_MODEL_CONSTRAINT_VIOLATED:
+      for (PlantConstraintEvidence evidence : result.getPlantConstraintEvidence()) {
+        if (evidence.getDefinition().isEnabled() && (!evidence.hasAvailableEvidence() || !evidence.isFeasible())) {
+          return LeadingConstraintEvidence.fromPlant(evidence);
+        }
+      }
+      for (CandidateConstraintEvidence evidence : result.getConstraintEvidence()) {
+        if (evidence.isHard() && !evidence.isSatisfied()) {
+          return LeadingConstraintEvidence.fromRegisteredConstraint(evidence);
+        }
+      }
+      break;
+    case FEASIBLE:
+    default:
+      break;
+    }
+    return installed == null ? null : LeadingConstraintEvidence.fromInstalled(installed);
+  }
+
+  /** Matches one required-hydraulic snapshot to the evaluator's fail-closed outcome. */
+  private static boolean matchesHydraulicOutcome(ProcessModelOperatingActionSetEvaluator.Outcome outcome,
+      HydraulicConstraintSnapshot snapshot) {
+    switch (outcome) {
+    case REQUIRED_CONSTRAINT_MISSING:
+      return !snapshot.isPresent();
+    case CONSTRAINT_VALUE_UNAVAILABLE:
+      return snapshot.isPresent() && !snapshot.hasFiniteValue();
+    case HYDRAULIC_CONSTRAINT_VIOLATED:
+      return snapshot.hasFiniteValue() && !snapshot.isFeasible();
+    case EVIDENCE_OUTSIDE_VALIDITY_RANGE:
+      return snapshot
+          .getEvidenceApplicability() == ProcessModelSimulationEvaluator.BottleneckStatus.EvidenceApplicability.OUTSIDE_VALIDITY_RANGE;
+    default:
+      return false;
+    }
   }
 
   /**
@@ -222,8 +280,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @param axisPosition coordinate position
    */
   private static void transition(List<Transition> transitions, String axisId, Point from, Point to, int axisPosition) {
-    InstalledEquipmentCapacityEvidence first = from.getLeadingInstalledConstraint();
-    InstalledEquipmentCapacityEvidence second = to.getLeadingInstalledConstraint();
+    LeadingConstraintEvidence first = from.getLeadingConstraint();
+    LeadingConstraintEvidence second = to.getLeadingConstraint();
     if (first == null || second == null
         || first.getQualifiedConstraintName().equals(second.getQualifiedConstraintName())) {
       return;
@@ -344,6 +402,152 @@ public final class ProcessModelOperatingEnvelopeStudy {
     return value.trim();
   }
 
+  /** Immutable unit-safe identity and headroom for one leading or rejecting constraint. */
+  public static final class LeadingConstraintEvidence implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Evidence layer that supplied the selected constraint. */
+    public enum Source {
+      /** Utilization-ranked installed equipment evidence at a feasible point. */
+      INSTALLED_EQUIPMENT,
+      /** Exact required hydraulic binding that rejected the point. */
+      REQUIRED_HYDRAULIC,
+      /** Typed plant-wide, shared-resource, or coupled-equipment evidence. */
+      PLANT_CONSTRAINT,
+      /** Ordinary hard evaluator constraint selected in declaration order. */
+      REGISTERED_MODEL_CONSTRAINT
+    }
+
+    private final Source source;
+    private final String qualifiedConstraintName;
+    private final double normalizedUtilization;
+    private final double normalizedMargin;
+    private final double currentValue;
+    private final double applicableLimit;
+    private final double physicalMargin;
+    private final String physicalUnit;
+    private final boolean feasible;
+    private final String diagnostic;
+
+    /** Creates immutable leading-constraint evidence. */
+    private LeadingConstraintEvidence(Source source, String qualifiedConstraintName, double normalizedUtilization,
+        double normalizedMargin, double currentValue, double applicableLimit, double physicalMargin,
+        String physicalUnit, boolean feasible, String diagnostic) {
+      this.source = source;
+      this.qualifiedConstraintName = qualifiedConstraintName;
+      this.normalizedUtilization = normalizedUtilization;
+      this.normalizedMargin = normalizedMargin;
+      this.currentValue = currentValue;
+      this.applicableLimit = applicableLimit;
+      this.physicalMargin = physicalMargin;
+      this.physicalUnit = physicalUnit == null ? "" : physicalUnit;
+      this.feasible = feasible;
+      this.diagnostic = diagnostic == null ? "" : diagnostic;
+    }
+
+    /** Creates evidence from one installed equipment constraint. */
+    private static LeadingConstraintEvidence fromInstalled(InstalledEquipmentCapacityEvidence evidence) {
+      return new LeadingConstraintEvidence(Source.INSTALLED_EQUIPMENT, evidence.getQualifiedConstraintName(),
+          evidence.getNormalizedUtilization(), evidence.getNormalizedMargin(), evidence.getCurrentValue(),
+          evidence.getApplicableLimit(), evidence.getPhysicalMargin(), evidence.getPhysicalUnit(),
+          evidence.isFeasible(), evidence.getEvidenceStatus().name());
+    }
+
+    /** Creates evidence from one required hydraulic snapshot. */
+    private static LeadingConstraintEvidence fromHydraulic(HydraulicConstraintSnapshot evidence) {
+      double physicalMargin = evidence.isMinimumConstraint() ? evidence.getCurrentValue() - evidence.getDesignValue()
+          : evidence.getDesignValue() - evidence.getCurrentValue();
+      return new LeadingConstraintEvidence(Source.REQUIRED_HYDRAULIC,
+          evidence.getBinding().getQualifiedConstraintName(), evidence.getUtilization(), evidence.getMargin(),
+          evidence.getCurrentValue(), evidence.getDesignValue(), physicalMargin, evidence.getUnit(),
+          evidence.isFeasible(), evidence.isPresent() ? evidence.getEvidenceApplicability().name() : "MISSING");
+    }
+
+    /** Creates evidence from one typed plant constraint row. */
+    private static LeadingConstraintEvidence fromPlant(PlantConstraintEvidence evidence) {
+      PlantConstraintSample sample = evidence.getSample();
+      return new LeadingConstraintEvidence(Source.PLANT_CONSTRAINT, evidence.getQualifiedConstraintId(),
+          evidence.getNormalizedUtilization(), -evidence.getNormalizedResidual(),
+          sample == null ? Double.NaN : sample.getSampledValue(),
+          sample == null ? Double.NaN : sample.getApplicableLimit(),
+          sample == null ? Double.NaN : sample.getPhysicalMargin(), evidence.getDefinition().getUnit(),
+          evidence.isFeasible(), evidence.getDiagnostic());
+    }
+
+    /** Creates evidence from one ordinary registered hard constraint. */
+    private static LeadingConstraintEvidence fromRegisteredConstraint(CandidateConstraintEvidence evidence) {
+      double limit;
+      switch (evidence.getType()) {
+      case LOWER_BOUND:
+      case EQUALITY:
+        limit = evidence.getLowerBound();
+        break;
+      case UPPER_BOUND:
+        limit = evidence.getUpperBound();
+        break;
+      case RANGE:
+      default:
+        limit = Math.abs(evidence.getValue() - evidence.getLowerBound()) <= Math
+            .abs(evidence.getUpperBound() - evidence.getValue()) ? evidence.getLowerBound() : evidence.getUpperBound();
+        break;
+      }
+      String physicalUnit = evidence.getPhysicalUnit() == null ? evidence.getUnit() : evidence.getPhysicalUnit();
+      return new LeadingConstraintEvidence(Source.REGISTERED_MODEL_CONSTRAINT, evidence.getName(), Double.NaN,
+          Double.NaN, evidence.getValue(), limit, evidence.getMargin(), physicalUnit, evidence.isSatisfied(),
+          "DECLARATION_ORDER_HARD_CONSTRAINT");
+    }
+
+    /** @return evidence layer that supplied the selected constraint */
+    public Source getSource() {
+      return source;
+    }
+
+    /** @return stable or area-qualified constraint identity */
+    public String getQualifiedConstraintName() {
+      return qualifiedConstraintName;
+    }
+
+    /** @return normalized utilization, or NaN when the source is not normalized */
+    public double getNormalizedUtilization() {
+      return normalizedUtilization;
+    }
+
+    /** @return normalized remaining margin, or NaN when unavailable */
+    public double getNormalizedMargin() {
+      return normalizedMargin;
+    }
+
+    /** @return current physical value, or NaN when unavailable */
+    public double getCurrentValue() {
+      return currentValue;
+    }
+
+    /** @return applicable physical limit, or NaN when unavailable */
+    public double getApplicableLimit() {
+      return applicableLimit;
+    }
+
+    /** @return signed physical headroom in {@link #getPhysicalUnit()}, or NaN */
+    public double getPhysicalMargin() {
+      return physicalMargin;
+    }
+
+    /** @return physical engineering unit, possibly empty */
+    public String getPhysicalUnit() {
+      return physicalUnit;
+    }
+
+    /** @return true when the selected evidence is feasible */
+    public boolean isFeasible() {
+      return feasible;
+    }
+
+    /** @return concise evidence diagnostic */
+    public String getDiagnostic() {
+      return diagnostic;
+    }
+  }
+
   /**
    * Immutable evidence for one sampled operating point.
    *
@@ -357,6 +561,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final double[] axisValues;
     private final double[] candidateValues;
     private final CandidateSetEvaluationResult evaluation;
+    private final LeadingConstraintEvidence leadingConstraint;
     private final InstalledEquipmentCapacityEvidence leadingInstalledConstraint;
 
     /**
@@ -367,15 +572,18 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param axisValues physical axis values
      * @param candidateValues complete candidate
      * @param evaluation complete evaluator evidence
+     * @param leadingConstraint unit-safe leading or rejecting constraint
      * @param leadingInstalledConstraint leading installed evidence or null
      */
     private Point(int sequenceIndex, int[] gridIndexes, double[] axisValues, double[] candidateValues,
-        CandidateSetEvaluationResult evaluation, InstalledEquipmentCapacityEvidence leadingInstalledConstraint) {
+        CandidateSetEvaluationResult evaluation, LeadingConstraintEvidence leadingConstraint,
+        InstalledEquipmentCapacityEvidence leadingInstalledConstraint) {
       this.sequenceIndex = sequenceIndex;
       this.gridIndexes = Arrays.copyOf(gridIndexes, gridIndexes.length);
       this.axisValues = Arrays.copyOf(axisValues, axisValues.length);
       this.candidateValues = Arrays.copyOf(candidateValues, candidateValues.length);
       this.evaluation = evaluation;
+      this.leadingConstraint = leadingConstraint;
       this.leadingInstalledConstraint = leadingInstalledConstraint;
     }
 
@@ -402,6 +610,11 @@ public final class ProcessModelOperatingEnvelopeStudy {
     /** @return complete immutable candidate evaluation */
     public CandidateSetEvaluationResult getEvaluation() {
       return evaluation;
+    }
+
+    /** @return unit-safe leading or exact rejecting constraint, or null */
+    public LeadingConstraintEvidence getLeadingConstraint() {
+      return leadingConstraint;
     }
 
     /** @return leading finite installed-equipment evidence or null */
