@@ -282,16 +282,21 @@ def test_state_schema_migrates_and_future_schema_fails_closed(reference, tmp_pat
 
     task = _copy(reference, tmp_path, "state_schema")
     path = os.path.join(task, "continuous", "state.json")
-    legacy = json.load(open(path, encoding="utf-8"))
+    with open(path, encoding="utf-8") as state_file:
+        legacy = json.load(state_file)
     legacy.pop("schema_version", None)
-    json.dump(legacy, open(path, "w", encoding="utf-8"))
+    with open(path, "w", encoding="utf-8") as state_file:
+        json.dump(legacy, state_file)
     migrated = read_state(task)
     assert migrated["schema_version"] == "1.1"
     assert migrated["migrated_from"] == "1.0"
-    assert json.load(open(path, encoding="utf-8"))["schema_version"] == "1.1"
+    with open(path, encoding="utf-8") as state_file:
+        migrated_on_disk = json.load(state_file)
+    assert migrated_on_disk["schema_version"] == "1.1"
 
     future = dict(migrated, schema_version="2.0")
-    json.dump(future, open(path, "w", encoding="utf-8"))
+    with open(path, "w", encoding="utf-8") as state_file:
+        json.dump(future, state_file)
     with pytest.raises(nc.StateSchemaError, match="Upgrade NeqSim"):
         nc.status(task)
 
@@ -300,11 +305,13 @@ def test_cycle_resumes_same_id_on_another_day(reference, tmp_path):
     task = _copy(reference, tmp_path, "cross_day_cycle")
     first = run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc), no_agent=True)
     cycle_path = os.path.join(task, "continuous", "cycles", first["cycle_id"], "cycle.json")
-    interrupted = json.load(open(cycle_path, encoding="utf-8"))
+    with open(cycle_path, encoding="utf-8") as cycle_file:
+        interrupted = json.load(cycle_file)
     interrupted["status"] = "running"
     interrupted["stages"] = interrupted["stages"][:3]
     interrupted.pop("finished_at", None)
-    json.dump(interrupted, open(cycle_path, "w", encoding="utf-8"))
+    with open(cycle_path, "w", encoding="utf-8") as cycle_file:
+        json.dump(interrupted, cycle_file)
 
     resumed = run_cycle(task, now=datetime(2025, 11, 2, tzinfo=timezone.utc), no_agent=True)
     assert resumed["cycle_id"] == first["cycle_id"]
@@ -320,10 +327,12 @@ def test_cycle_resume_preserves_completed_side_effect_metadata(reference, tmp_pa
     assert first["notifications"]
     assert first["agent_review"]
     cycle_path = os.path.join(task, "continuous", "cycles", first["cycle_id"], "cycle.json")
-    interrupted = json.load(open(cycle_path, encoding="utf-8"))
+    with open(cycle_path, encoding="utf-8") as cycle_file:
+        interrupted = json.load(cycle_file)
     interrupted["status"] = "running"
     interrupted.pop("finished_at", None)
-    json.dump(interrupted, open(cycle_path, "w", encoding="utf-8"))
+    with open(cycle_path, "w", encoding="utf-8") as cycle_file:
+        json.dump(interrupted, cycle_file)
 
     resumed = run_cycle(task, now=datetime(2025, 11, 2, tzinfo=timezone.utc), no_agent=True)
     assert resumed["cycle_id"] == first["cycle_id"]
