@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.util;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.annotation.AIExposable;
 
 /**
  * Gas pseudopressure (real gas potential) calculator.
@@ -150,12 +151,21 @@ public class GasPseudoPressure {
    * @param referencePressureBara Lower pressure (bara)
    * @param temperatureK Temperature (Kelvin)
    * @param gammaG Gas specific gravity (air = 1.0)
-   * @param molecularWeight Gas molecular weight
+   * @param molecularWeight Gas molecular weight (g/mol, numerically equal to kg/kmol)
    * @return Pseudopressure difference (bara^2/cP)
+   * @throws IllegalArgumentException if an input is non-finite, either absolute pressure or the molecular weight is not
+   * positive, the Standing gas-gravity range is exceeded, or Hall-Yarborough reduced-property bounds are exceeded
    */
+  @AIExposable(description = "Calculate signed gas pseudopressure with Standing, Hall-Yarborough, and Lee correlations", category = "reservoir", safe = true)
   public static double calculateFromCorrelation(double pressureBara, double referencePressureBara, double temperatureK,
       double gammaG, double molecularWeight) {
-    return integrateCorrelation(referencePressureBara, pressureBara, temperatureK, gammaG, molecularWeight, 200);
+    validateCorrelationInputs(pressureBara, referencePressureBara, temperatureK, gammaG, molecularWeight);
+    double result = integrateCorrelation(referencePressureBara, pressureBara, temperatureK, gammaG, molecularWeight,
+        200);
+    if (!Double.isFinite(result)) {
+      throw new IllegalArgumentException("Correlation pseudopressure result must be finite");
+    }
+    return result;
   }
 
   /**
@@ -165,9 +175,12 @@ public class GasPseudoPressure {
    * @param p2Bara Second pressure (bara)
    * @param temperatureK Temperature (Kelvin)
    * @param gammaG Gas specific gravity (air = 1.0)
-   * @param molecularWeight Gas molecular weight
+   * @param molecularWeight Gas molecular weight (g/mol, numerically equal to kg/kmol)
    * @return |m(p1) - m(p2)| in bara^2/cP
+   * @throws IllegalArgumentException if an input is non-finite, either absolute pressure or the molecular weight is not
+   * positive, the Standing gas-gravity range is exceeded, or Hall-Yarborough reduced-property bounds are exceeded
    */
+  @AIExposable(description = "Calculate absolute gas pseudopressure difference with empirical correlations", category = "reservoir", safe = true)
   public static double deltaPseudoPressure(double p1Bara, double p2Bara, double temperatureK, double gammaG,
       double molecularWeight) {
     return Math.abs(calculateFromCorrelation(p1Bara, p2Bara, temperatureK, gammaG, molecularWeight));
@@ -292,13 +305,13 @@ public class GasPseudoPressure {
     double tRankine = temperatureK * K_TO_R;
     double pPsia = pBara * BARA_TO_PSIA;
 
-    // Pseudocritical properties from gas SG (Standing correlations in Rankine/psia)
-    double tPC = 168.0 + 325.0 * gammaG - 12.5 * gammaG * gammaG;
-    double pPC = 677.0 + 15.0 * gammaG - 37.5 * gammaG * gammaG;
+    // Use the canonical Standing implementation for pseudocritical properties.
+    double tPcK = GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(gammaG);
+    double pPcBara = GasPseudoCriticalProperties.pseudoCriticalPressureStanding(gammaG);
 
     // Reduced properties (dimensionless)
-    double tPR = tRankine / tPC;
-    double pPR = pPsia / pPC;
+    double tPR = temperatureK / tPcK;
+    double pPR = pBara / pPcBara;
 
     // Z-factor using Hall-Yarborough method
     double z = hallYarboroughZ(tPR, pPR);
@@ -309,8 +322,8 @@ public class GasPseudoPressure {
     // Gas viscosity using Lee-Gonzalez-Eakin (expects Rankine, lb/ft3)
     double mu = BlackOilCorrelations.gasViscosityLeeGonzalezEakin(tRankine, rhoG, mw);
 
-    if (z <= 0.0 || mu <= 0.0) {
-      return 0.0;
+    if (!Double.isFinite(mu) || mu <= 0.0) {
+      throw new IllegalArgumentException("Lee-Gonzalez-Eakin gas viscosity must be finite and positive");
     }
 
     // Return integrand in bara/cP (use pBara, not pPsia)
@@ -329,6 +342,10 @@ public class GasPseudoPressure {
    * @return Gas compressibility factor Z
    */
   static double hallYarboroughZ(double tPR, double pPR) {
+    if (!Double.isFinite(tPR) || !Double.isFinite(pPR) || tPR <= 1.0 || pPR < 0.0 || pPR >= 25.0) {
+      throw new IllegalArgumentException(
+          "Hall-Yarborough requires finite reduced properties with Tpr > 1.0 and 0 <= Ppr < 25.0");
+    }
     if (pPR < 1e-10) {
       return 1.0;
     }
@@ -340,6 +357,7 @@ public class GasPseudoPressure {
     double d = 2.18 + 2.82 * t;
 
     double y = 0.001;
+    boolean converged = false;
     for (int iter = 0; iter < 100; iter++) {
       double fy = a * pPR + (y + y * y + y * y * y - y * y * y * y) / Math.pow(1.0 - y, 3) - b * y * y
           + c * Math.pow(y, d);
@@ -360,16 +378,53 @@ public class GasPseudoPressure {
 
       if (Math.abs(yNew - y) < 1e-12) {
         y = yNew;
+        converged = true;
         break;
       }
       y = yNew;
     }
 
+    if (!converged) {
+      throw new IllegalArgumentException("Hall-Yarborough correlation did not converge");
+    }
     double z = -a * pPR / y;
-    if (z <= 0.0 || Double.isNaN(z) || Double.isInfinite(z)) {
-      return 1.0;
+    if (!Double.isFinite(z) || z <= 0.0) {
+      throw new IllegalArgumentException("Hall-Yarborough compressibility factor must be finite and positive");
     }
     return z;
+  }
+
+  /**
+   * Validate the public correlation contract against its constituent correlation bounds.
+   *
+   * @param pressureBara first absolute pressure (bara)
+   * @param referencePressureBara second absolute pressure (bara)
+   * @param temperatureK absolute temperature (K)
+   * @param gammaG gas specific gravity relative to air
+   * @param molecularWeight gas molecular weight (g/mol)
+   * @throws IllegalArgumentException if an input or reduced property is outside the supported domain
+   */
+  private static void validateCorrelationInputs(double pressureBara, double referencePressureBara, double temperatureK,
+      double gammaG, double molecularWeight) {
+    if (!Double.isFinite(pressureBara) || pressureBara <= 0.0 || !Double.isFinite(referencePressureBara)
+        || referencePressureBara <= 0.0) {
+      throw new IllegalArgumentException("Absolute pressures must be finite and positive in bara");
+    }
+    if (!Double.isFinite(temperatureK) || temperatureK <= 0.0) {
+      throw new IllegalArgumentException("Temperature must be finite and positive in Kelvin");
+    }
+    if (!Double.isFinite(molecularWeight) || molecularWeight <= 0.0) {
+      throw new IllegalArgumentException("Molecular weight must be finite and positive");
+    }
+
+    double tPcK = GasPseudoCriticalProperties.pseudoCriticalTemperatureStanding(gammaG);
+    double pPcBara = GasPseudoCriticalProperties.pseudoCriticalPressureStanding(gammaG);
+    double tPR = temperatureK / tPcK;
+    double maxPPR = Math.max(pressureBara, referencePressureBara) / pPcBara;
+    if (tPR <= 1.0 || maxPPR >= 25.0) {
+      throw new IllegalArgumentException(
+          "Correlation requires Hall-Yarborough reduced properties with Tpr > 1.0 and max Ppr < 25.0");
+    }
   }
 
   // ==================== UTILITY ====================

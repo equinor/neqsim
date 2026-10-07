@@ -47,6 +47,7 @@ class GasPseudoPressureTest {
     // 206.84 bara (~3000 psia), ref 1.01325 bara (~14.696 psia), 366.48 K (~200 F)
     double mP = GasPseudoPressure.calculateFromCorrelation(206.84, 1.01325, 366.48, 0.65, 16.04);
     assertTrue(mP > 0, "Pseudopressure should be positive when p > pRef");
+    assertEquals(2865418.4358585374, mP, 1e-6, "Documented correlation example drifted");
   }
 
   @Test
@@ -60,6 +61,21 @@ class GasPseudoPressureTest {
     double dm1 = GasPseudoPressure.deltaPseudoPressure(206.84, 68.95, 366.48, 0.65, 16.04);
     double dm2 = GasPseudoPressure.deltaPseudoPressure(68.95, 206.84, 366.48, 0.65, 16.04);
     assertEquals(dm1, dm2, dm1 * 0.01, "Delta pseudopressure should be symmetric");
+    assertEquals(2520842.0799756097, dm1, 1e-6, "Documented absolute-difference example drifted");
+  }
+
+  @Test
+  void testCorrelationContractRejectsUnsupportedInputs() {
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoPressure.calculateFromCorrelation(206.84, 0.0, 366.48, 0.65, 16.04));
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoPressure.calculateFromCorrelation(206.84, 1.01325, 366.48, 0.50, 16.04));
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoPressure.calculateFromCorrelation(206.84, 1.01325, 100.0, 0.65, 16.04));
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoPressure.calculateFromCorrelation(206.84, 1.01325, 366.48, 0.65, 0.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> GasPseudoPressure.calculateFromCorrelation(Double.NaN, 1.01325, 366.48, 0.65, 16.04));
   }
 
   @Test

@@ -77,14 +77,21 @@ double[][] profile = calc.pseudoPressureProfile(10.0, 300.0, 50);
 Suitable when only bulk gas properties are available:
 
 ```java
-// Parameters: P (psia), Pref (psia), T (°F), gamma_g, MW
+// Parameters: P (bara absolute), Pref (bara absolute), T (K), gamma_g, MW (g/mol)
 double mP = GasPseudoPressure.calculateFromCorrelation(
-    3000.0, 14.696, 200.0, 0.65, 16.04);
+    206.84, 1.01325, 366.48, 0.65, 16.04);
 
 // Delta pseudopressure (absolute value)
 double deltamP = GasPseudoPressure.deltaPseudoPressure(
-    3000.0, 1500.0, 200.0, 0.65, 16.04);
+    206.84, 68.95, 366.48, 0.65, 16.04);
 ```
+
+The correlation path uses the canonical Standing pseudocritical-property implementation and is available through
+bounded `runCapability` discovery and invocation. Inputs must be finite, both pressures and molecular weight must be
+positive, gas specific gravity must be from 0.55 through 1.80, reduced temperature must exceed 1.0, and the maximum
+reduced pressure must remain below 25. The signed method preserves pressure order; `deltaPseudoPressure` returns the
+absolute difference. This screening contract does not qualify sour-gas corrections, composition-based EOS behavior,
+well deliverability, or engineering approval.
 
 ### Python (via neqsim-python)
 

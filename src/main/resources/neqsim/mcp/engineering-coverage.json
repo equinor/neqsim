@@ -737,6 +737,121 @@
       }
     },
     {
+      "id": "gas-pseudopressure-screening",
+      "title": "Static sweet-gas pseudopressure screening",
+      "domain": "reservoir",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.pvtsimulation.util.GasPseudoPressure"
+      ],
+      "skills": [
+        "neqsim-capability-map"
+      ],
+      "agents": [
+        "capability-scout"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/mcp/runners/GeneralCapabilityRunnerTest.java",
+        "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
+        "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+      ],
+      "limitations": "Correlation-only sweet-gas screening using canonical Standing pseudocritical properties, Hall-Yarborough Z-factor and Lee-Gonzalez-Eakin viscosity. Both absolute pressures and molecular weight must be positive, gas specific gravity must remain from 0.55 through 1.80, reduced temperature must exceed 1.0 and maximum reduced pressure must remain below 25. It does not qualify sour-gas corrections, compositional EOS phase behavior, well deliverability or engineering approval.",
+      "operations": [
+        {
+          "id": "correlation-gas-pseudopressure",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoPressure",
+          "method": "calculateFromCorrelation",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.calculateFromCorrelation(double, double, double, double, double)",
+          "units": {
+            "inputs": {
+              "pressureBara": "bara absolute",
+              "referencePressureBara": "bara absolute",
+              "temperatureK": "K",
+              "gasSpecificGravity": "dimensionless; air = 1",
+              "molecularWeight": "g/mol; numerically equal to kg/kmol"
+            },
+            "outputs": {
+              "pseudopressureDifference": "bara^2/cP; signed"
+            }
+          },
+          "applicability": "Finite positive absolute pressures and molecular weight; Standing gas specific gravity from 0.55 through 1.80; Hall-Yarborough reduced temperature above 1.0 and maximum reduced pressure below 25.0.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              206.84,
+              1.01325,
+              366.48,
+              0.65,
+              16.04
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 2865418.4358585374,
+            "absoluteTolerance": 1e-06
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        },
+        {
+          "id": "absolute-correlation-gas-pseudopressure-difference",
+          "classification": "supported",
+          "api": "neqsim.pvtsimulation.util.GasPseudoPressure",
+          "method": "deltaPseudoPressure",
+          "signature": "double neqsim.pvtsimulation.util.GasPseudoPressure.deltaPseudoPressure(double, double, double, double, double)",
+          "units": {
+            "inputs": {
+              "firstPressure": "bara absolute",
+              "secondPressure": "bara absolute",
+              "temperatureK": "K",
+              "gasSpecificGravity": "dimensionless; air = 1",
+              "molecularWeight": "g/mol; numerically equal to kg/kmol"
+            },
+            "outputs": {
+              "absolutePseudopressureDifference": "bara^2/cP"
+            }
+          },
+          "applicability": "Finite positive absolute pressures and molecular weight; Standing gas specific gravity from 0.55 through 1.80; Hall-Yarborough reduced temperature above 1.0 and maximum reduced pressure below 25.0.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              206.84,
+              68.95,
+              366.48,
+              0.65,
+              16.04
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 2520842.0799756097,
+            "absoluteTolerance": 1e-06
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
+            "neqsim-mcp-server/tests/protocol/test_capability_protocol.py"
+          ]
+        }
+      ],
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "multi-area-process",
       "title": "Compose a multi-area process",
       "domain": "process",
@@ -4014,7 +4129,7 @@
     {"id":"neqsim.pvtsimulation.util.BlackOilUnits","kind":"enum","source":"src/main/java/neqsim/pvtsimulation/util/BlackOilUnits.java","sourceDigest":"86bb80de016bf3410b85758de684bf09b1355e56c8188a4dd95bc8cf5aa1a457","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.DeclineCurveAnalysis","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/DeclineCurveAnalysis.java","sourceDigest":"326d8c437e8aa77db684a558b235d9deb638b7b0a1dde6f3af9e091cc06ae908","domain":"pvtsimulation","skills":["neqsim-capability-map","neqsim-field-development","neqsim-production-optimization"],"agents":["capability-scout","engineering-deliverables","field-development","mechanical-design","solve-task"],"capabilities":["exponential-decline-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.GasPseudoCriticalProperties","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoCriticalProperties.java","sourceDigest":"64a5f0daa74fd1424e5b0ed10d71882a797fd622627532882171f1a69d9a8af6","domain":"pvtsimulation","skills":["neqsim-capability-map"],"agents":["capability-scout","engineering-deliverables","mechanical-design","solve-task"],"capabilities":["sweet-gas-pseudocritical-screening"],"disposition":"registered_anchor"},
-    {"id":"neqsim.pvtsimulation.util.GasPseudoPressure","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoPressure.java","sourceDigest":"ebc3bc84ed6f441914afcb83455be6129233792ea8d1dc07d5a049fa49a9a2fc","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.pvtsimulation.util.GasPseudoPressure","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/GasPseudoPressure.java","sourceDigest":"fea238a3c1176cfdeccfd1285f577676a24b01d3689ff1037c24f79359853373","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":["gas-pseudopressure-screening"],"disposition":"registered_anchor"},
     {"id":"neqsim.pvtsimulation.util.PVTReportGenerator","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/PVTReportGenerator.java","sourceDigest":"7b318865c264540e984a17ae89a2e7346254bca40b1370645309cd45bb2b890e","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.SaturationPressureCorrelation","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/SaturationPressureCorrelation.java","sourceDigest":"908edd67352adb8bf34044bb595aa8254ee2630563b6c84bcbff14a04e27ddf1","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.pvtsimulation.util.WaterPropertyCorrelations","kind":"class","source":"src/main/java/neqsim/pvtsimulation/util/WaterPropertyCorrelations.java","sourceDigest":"cd2eb33e381f9cbd668edb021030cacbd7ee09c9ac4aa92685386623c11d571b","domain":"pvtsimulation","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
