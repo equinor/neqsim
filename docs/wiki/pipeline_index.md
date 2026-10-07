@@ -1,136 +1,47 @@
 ---
 title: "Pipeline Modeling Documentation"
-description: "This documentation covers pipeline pressure drop, flow, and heat transfer calculations in NeqSim."
+description: "Task-oriented navigation for NeqSim pipeline hydraulics, transient flow, networks, transport models, and mechanical design."
 ---
 
-# Pipeline Modeling Documentation
+Use this hub to choose the maintained pipeline guide that matches the engineering question. The
+linked guides own their API examples, units, assumptions, validation evidence, and limitations;
+this page does not duplicate those details.
 
-## Documentation Index
+## Choose a workflow
 
-This documentation covers pipeline pressure drop, flow, and heat transfer calculations in NeqSim.
+| Engineering task | Start here | Scope |
+| --- | --- | --- |
+| Build or compare steady pipeline equipment | [Pipeline simulation guide](../process/equipment/pipeline_simulation.md) | Equipment selection, geometry, pressure drop, elevation, and heat transfer |
+| Run a complete calculation | [Pipeline recipes](../cookbook/pipeline-recipes.md) | Maintained, test-backed Java examples |
+| Select a model for an operating case | [Model recommendations](pipeline_model_recommendations.md) | Decision guidance and model boundaries |
+| Review pressure-drop equations | [Pipeline flow equations](pipeline_flow_equations.md) | Governing equations, friction, elevation, and units |
+| Compare multiphase correlations | [Multiphase-flow correlations](../process/equipment/multiphase_flow_correlations.md) | Beggs-Brill, Hagedorn-Brown, Mukherjee-Brill, and Gray routes |
+| Study detailed transient multiphase flow | [Multiphase transient model](multiphase_transient_model.md) | `TwoFluidPipe` model structure, closures, and diagnostics |
+| Configure transient numerics | [Transient multiphase pipe](transient_multiphase_pipe.md) | Sections, time integration, reporting, and engineering limits |
+| Assess rapid pressure surges | [Water-hammer implementation](water_hammer_implementation.md) | `WaterHammerPipe`, method of characteristics, and surge boundaries |
+| Model low-level heat and mass transfer | [Fluid-mechanics documentation](../fluidmechanics/README.md) | Flow systems, regimes, interphase transport, and detailed profiles |
+| Optimize connected lines and branches | [Pipeline-network optimization](../process/pipeline_network_optimization.md) | Network topology, hydraulic coupling, constraints, and optimization |
+| Connect wells, templates, pipelines, and risers | [SURF network integration](../fielddevelopment/SURF_NETWORK_INTEGRATION.md) | Production and injection system topology |
+| Screen wall thickness and integrity | [Pipeline mechanical design](../process/pipeline_mechanical_design.md) | Design-code workflows kept separate from hydraulic simulation |
 
-### Overview & Getting Started
+## Model and documentation boundaries
 
-| Document | Description |
-|----------|-------------|
-| [Pipeline Pressure Drop](pipeline_pressure_drop) | Overview of all pipeline models, quick start examples |
-| [Model Recommendations](pipeline_model_recommendations) | Which model to use for your application |
+| Capability | Primary NeqSim route | Documentation boundary |
+| --- | --- | --- |
+| Correlation-based steady hydraulics | `PipeBeggsAndBrills` and related pipeline equipment | Use the [pipeline simulation guide](../process/equipment/pipeline_simulation.md) and [correlation guide](../process/equipment/multiphase_flow_correlations.md) |
+| Detailed transient two-fluid hydraulics | `TwoFluidPipe` | Use the [multiphase transient model](multiphase_transient_model.md); do not treat it as a drift-flux alias |
+| Fast liquid-pressure transients | `WaterHammerPipe` | Use the [water-hammer guide](water_hammer_implementation.md) and its stated assumptions |
+| Low-level non-equilibrium transport | `TwoPhasePipeFlowSystem` | Use the [two-phase flow-system guide](../fluidmechanics/TwoPhasePipeFlowModel.md) |
+| Field and gathering topology | Network and SURF APIs | Use the [network optimization](../process/pipeline_network_optimization.md) and [SURF integration](../fielddevelopment/SURF_NETWORK_INTEGRATION.md) guides |
+| Mechanical capacity and integrity | Pipeline mechanical-design APIs | Use the [mechanical-design guide](../process/pipeline_mechanical_design.md); hydraulic results alone are not a design-code check |
 
-### Detailed Model Documentation
+## Supporting indexes
 
-| Document | Description |
-|----------|-------------|
-| [Beggs & Brill Correlation](beggs_and_brill_correlation) | Multiphase flow correlation theory and usage |
-| [Two-Fluid Transient Model](two_fluid_model) | 7-equation two-fluid model with slug tracking, virtual mass, and local losses |
-| [TwoFluidPipe Reporting and Validation](two_fluid_reporting_and_validation) | Profile extraction, transient reporting, closure diagnostics, and reference CSV comparison |
-| [Friction Factor Models](friction_factor_models) | Haaland, Colebrook-White, laminar/turbulent |
-| [Heat Transfer](pipeline_heat_transfer) | Non-adiabatic operation, cooling, Gnielinski |
-| [Transient Simulation](pipeline_transient_simulation) | Dynamic simulation, slow wave propagation |
-| [Water Hammer](water_hammer_implementation) | Fast transients, pressure surges, MOC solver |
+- [Process-equipment documentation](../process/equipment/README.md)
+- [Fluid-mechanics index](../fluidmechanics/index.md)
+- [Wiki learning path](index.md)
+- [Reference manual index](../REFERENCE_MANUAL_INDEX.md)
 
-## Quick Model Selection
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        PIPELINE MODELS                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Single-Phase Gas         →  AdiabaticPipe                     │
-│  Single-Phase Liquid      →  PipeBeggsAndBrills                │
-│  Two-Phase (Gas-Liquid)   →  PipeBeggsAndBrills                │
-│  Three-Phase (G-O-W)      →  PipeBeggsAndBrills / TwoFluidPipe │
-│  With Elevation           →  PipeBeggsAndBrills                │
-│  With Heat Transfer       →  PipeBeggsAndBrills                │
-│  Slow Transient/Dynamic   →  PipeBeggsAndBrills                │
-│  Detailed Transient       →  TwoFluidPipe (slug, terrain)      │
-│  Water Hammer/Fast Trans. →  WaterHammerPipe                   │
-│  Quick Estimate           →  AdiabaticTwoPhasePipe             │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-## Key Classes
-
-| Class | Package | Description |
-|-------|---------|-------------|
-| `PipeBeggsAndBrills` | `neqsim.process.equipment.pipeline` | Multiphase, elevation, heat transfer, slow transient |
-| `WaterHammerPipe` | `neqsim.process.equipment.pipeline` | Water hammer, fast pressure transients (MOC) |
-| `AdiabaticPipe` | `neqsim.process.equipment.pipeline` | Single-phase compressible gas |
-| `AdiabaticTwoPhasePipe` | `neqsim.process.equipment.pipeline` | Two-phase, horizontal |
-| `TwoFluidPipe` | `neqsim.process.equipment.pipeline` | Two-fluid model with drift-flux |
-| `TransientPipe` | `neqsim.process.equipment.pipeline` | Transient drift-flux with AUSM+ scheme |
-| `TwoPhasePipeFlowSystem` | `neqsim.fluidmechanics.flowsystem` | Low-level non-equilibrium mass/heat transfer |
-
-### Low-Level Fluid Mechanics
-
-For detailed non-equilibrium mass and heat transfer calculations, the `TwoPhasePipeFlowSystem` in the `fluidmechanics` package provides:
-
-- **Multicomponent mass transfer** using Krishna-Standart film model
-- **Flow pattern detection** (Taitel-Dukler, Baker, Barnea, Beggs-Brill)
-- **Interfacial area calculations** for all flow patterns
-- **Wall heat transfer** with multiple boundary conditions
-- **Bidirectional mass transfer** (evaporation and dissolution)
-
-See [Fluid Mechanics README](../fluidmechanics/) and [Two-Phase Pipe Flow Model](../fluidmechanics/TwoPhasePipeFlowModel) for details.
-
-## Common Parameters
-
-### Geometry
-- `setLength(double meters)` - Pipe length
-- `setDiameter(double meters)` - Inside diameter
-- `setElevation(double meters)` - Elevation change (+ = uphill)
-- `setPipeWallRoughness(double meters)` - Surface roughness
-
-### Numerical
-- `setNumberOfIncrements(int n)` - Number of calculation segments
-
-### Calculation Mode
-- `setOutletPressure(double bara)` - Specify outlet pressure, calculate flow rate
-- Default mode: Specify flow rate, calculate outlet pressure
-
-### Heat Transfer
-- `setRunAdiabatic(boolean)` - Enable/disable heat exchange
-- `setConstantSurfaceTemperature(double K)` - Ambient temperature
-- `setHeatTransferCoefficient(double W_m2K)` - Overall U-value
-
-### Transient
-- `setCalculateSteadyState(boolean)` - Switch steady/transient mode
-- `runTransient(double dt, UUID id)` - Run one time step
-
-## Typical Roughness Values
-
-| Pipe Material | Roughness (mm) | Roughness (m) |
-|--------------|----------------|---------------|
-| New steel | 0.046 | 4.6×10⁻⁵ |
-| Corroded steel | 0.15-0.3 | 1.5-3×10⁻⁴ |
-| Stainless | 0.015 | 1.5×10⁻⁵ |
-| Plastic/GRP | 0.005 | 5×10⁻⁶ |
-
-## Validation Summary
-
-| Test Case | Model | Deviation |
-|-----------|-------|-----------|
-| Gas (Darcy-Weisbach) | All models | <1% |
-| Liquid turbulent | Beggs-Brill | -1.4% |
-| Liquid laminar | Beggs-Brill | 0% |
-| Uphill two-phase | Beggs-Brill | Validated |
-| Transient convergence | Beggs-Brill | <15% |
-
-## Version History
-
-- **December 2025**: Fixed Java 8 compatibility in TwoPhasePipeFlowSystem tests
-- **December 2025**: Added bidirectional mass transfer mode
-- **December 2025**: Improved solver stability for edge cases
-- **2025**: Added calculate flow from outlet pressure mode
-- **2025**: Fixed AdiabaticPipe and AdiabaticTwoPhasePipe calcFlow() methods
-- **2024**: Added transient with friction and hydrostatic
-- **2024**: Fixed Haaland exponent (^1.11)
-- **2024**: Fixed single-phase liquid handling
-- **2024**: Added Gnielinski heat transfer
-- **2024**: Added flow regime detection
-
-## Support
-
-For questions or issues:
-- GitHub Issues: https://github.com/equinor/neqsim/issues
-- Documentation: https://equinor.github.io/neqsim/
+For API signatures, verify the linked guide against the current Java source and
+[JavaDoc](https://equinor.github.io/neqsim/javadoc/index.html). For defects or missing coverage,
+use the [NeqSim issue tracker](https://github.com/equinor/neqsim/issues).
