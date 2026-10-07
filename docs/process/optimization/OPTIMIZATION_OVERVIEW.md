@@ -379,7 +379,11 @@ Plant-wide budgets and coupled-equipment restrictions should be registered with
 `PlantConstraintDefinition` and exact-calculation `PlantConstraintSample` evidence. A group callback
 is sampled once per completed model evaluation, so a `PlantCommonShaftEvidence` result can contribute
 its common-speed, casing-map, shaft/driver-power, torque and gearbox rows without rebuilding the train
-for each constraint. `PlantSharedResourceEvidence.toPlantConstraintSample()` provides the corresponding
+for each constraint. Prefer `addCommonShaftConstraintGroup(...)` for this adapter: it freezes the
+canonical definition contract and verifies the returned candidate identity before exposing samples.
+Use the callback's evaluator-owned `calculationId` for the evidence and
+`sourceCalculationId(compressor.getCalculationIdentifier().toString())` for casing freshness when
+those identities differ. `PlantSharedResourceEvidence.toPlantConstraintSample()` provides the corresponding
 single-row path for a shared shaft-power or electrical-demand budget. Missing, stale, non-finite,
 out-of-validity, mismatched or incomplete evidence fails closed through `PlantUtilizationSnapshot`.
 Optimizer arrays retain dimensionless utilization and margin, while
