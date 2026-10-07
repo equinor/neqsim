@@ -53,6 +53,16 @@ PVT_SEPARATOR_TEST = (
     DOCS.parent
     / "src/test/java/neqsim/pvtsimulation/PvtSimulationDocumentationTest.java"
 )
+E300_IMPORT_PAGE = DOCS / "pvtsimulation/eclipse_e300_fluid_import.md"
+E300_READER = (
+    DOCS.parent
+    / "src/main/java/neqsim/thermo/util/readwrite/EclipseFluidReadWrite.java"
+)
+E300_READER_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/thermo/util/readwrite/"
+    "EclipseFluidReadWriteTest.java"
+)
 
 
 def metadata_value(metadata, name):
@@ -185,6 +195,46 @@ class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
             "Double.isFinite(separatorTest.getStockTankOilDensity())",
             "separatorTest.getStockTankOilDensity() > 500.0",
             "separatorTest.getStockTankOilDensity() < 1200.0",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
+
+    def test_e300_component_name_resolution_matches_implementation(self):
+        guide = E300_IMPORT_PAGE.read_text(encoding="utf-8")
+        reader = E300_READER.read_text(encoding="utf-8")
+        java_test = E300_READER_TEST.read_text(encoding="utf-8")
+
+        guide_markers = (
+            "### Component Name Resolution",
+            "known database spellings and aliases",
+            "`ComponentNameResolver`",
+            "`C7` and `C10`",
+            "grouped cuts such as `C10-C12`",
+            "ideal-gas heat-capacity coefficients",
+            "from g/mol to kg/mol",
+            "standard liquid density in kg/L",
+        )
+        for marker in guide_markers:
+            with self.subTest(guide_marker=marker):
+                self.assertIn(marker, guide)
+
+        source_markers = (
+            'if (!normalized.matches("C\\\\d+")',
+            "ComponentNameResolver.isKnownName(trimmedName)",
+            "ComponentNameResolver.resolve(trimmedName)",
+            "fluid.addTBPfraction("
+            "name, ZI.get(counter), MW.get(counter) / 1000.0, stddensity)",
+        )
+        for marker in source_markers:
+            with self.subTest(source_marker=marker):
+                self.assertIn(marker, reader)
+
+        regression_markers = (
+            "testE300ShortNamesKeepDatabaseCpAndBinaryParameters",
+            "testE300NameCaseVariantsMapToDatabaseComponents",
+            "imported.getPhase(0).getComponent(i).getCpA()",
+            "imported.getPhase(0).getComponent(i).getComponentName()",
         )
         for marker in regression_markers:
             with self.subTest(regression_marker=marker):
