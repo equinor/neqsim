@@ -4265,7 +4265,7 @@ def format_references_html(results):
         return ""
     h = '<ol class="reference-list">\n'
     for ref in refs:
-        ref_id = ref.get("id", "")
+        ref_id = ref.get("id", "") if isinstance(ref, dict) else ""
         ref_text = _reference_text(ref)
         if ref_id:
             h += '  <li id="ref-{}"><strong>[{}]</strong> {}</li>\n'.format(
@@ -5660,7 +5660,7 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     if results and results.get("references"):
         ref_lines = []
         for i, ref in enumerate(results["references"], 1):
-            ref_id = ref.get("id", "")
+            ref_id = ref.get("id", "") if isinstance(ref, dict) else ""
             ref_text = _reference_text(ref)
             if ref_id:
                 ref_lines.append("[{}] {}".format(i, ref_text))
