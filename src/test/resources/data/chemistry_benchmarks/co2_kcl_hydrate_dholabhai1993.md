@@ -81,13 +81,18 @@ of 0.1 K.
 
 The no-fit `SystemElectrolyteCPAstatoil` calculation iterates total pressure so
 that gas-phase `y_CO2 * P` matches the reported partial pressure, then compares
-aqueous CO2 molality on the same kilogram-water basis. The model instead rises
-monotonically from 0.05701 to 0.68685 mol/kg water. Its signed relative residual
-moves from -20.0% at 0.100 molal KCl to +1208% at 3.508 molal KCl. All six
+aqueous CO2 molality on the same kilogram-water basis. The water-basis
+calculation explicitly divides aqueous CO2 moles by aqueous water moles times
+the water molar mass; it does not use the generic component `getMolality`
+method, whose denominator is total phase mass. The selected aqueous phase
+retains 0.99884-0.99903 kg water across the series. The model instead rises
+monotonically from 0.05757 to 0.89365 mol/kg water. Its signed relative residual
+moves from -19.3% at 0.100 molal KCl to +1602.2% at 3.508 molal KCl. All six
 states retain GAS+AQUEOUS topology, the target partial pressure and equal
 aqueous K+/Cl- inventories. The generated
 `target/kcl-co2-solubility-he-morse1993-assessment.csv` retains every source
-value, uncertainty, calculated value, residual and phase diagnostic.
+value, uncertainty, aqueous water mass, calculated value, residual and phase
+diagnostic.
 
 This independent salt-out series changes the leading diagnostic from a broad
 CO2-loaded-aqueous suspicion to a demonstrated concentration-dependent CO2/KCl

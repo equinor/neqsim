@@ -46,9 +46,9 @@ class KClCO2SolubilityReferenceAssessmentTest {
     List<Reference> references = loadReferences();
     List<String> report = new ArrayList<String>();
     report.add("point_id,temperature_K,target_pco2_bara,actual_pco2_bara,kcl_molality_mol_per_kg_water,"
-        + "experimental_co2_molality_mol_per_kg_water,model_co2_molality_mol_per_kg_water,model_minus_experiment,"
-        + "relative_residual,experimental_relative_uncertainty,temperature_uncertainty_K,total_pressure_bara,"
-        + "aqueous_x_co2,fluid_phases");
+        + "experimental_co2_molality_mol_per_kg_water,model_co2_molality_mol_per_kg_water,aqueous_water_mass_kg,"
+        + "model_minus_experiment,relative_residual,experimental_relative_uncertainty,temperature_uncertainty_K,"
+        + "total_pressure_bara,aqueous_x_co2,fluid_phases");
 
     double previousExperimentalMolality = Double.POSITIVE_INFINITY;
     double previousModelMolality = Double.NEGATIVE_INFINITY;
@@ -109,7 +109,9 @@ class KClCO2SolubilityReferenceAssessmentTest {
     PhaseInterface gas = fluid.getPhase("gas");
     PhaseInterface aqueous = findIonRichPhase(fluid);
     actualPartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
-    double modelCo2Molality = aqueous.getComponent("CO2").getMolality(aqueous);
+    double aqueousWaterMassKg = aqueous.getComponent("water").getNumberOfMolesInPhase() * WATER_MOLAR_MASS_KG_PER_MOL;
+    assertTrue(aqueousWaterMassKg > 0.0, "aqueous phase must retain a positive water mass");
+    double modelCo2Molality = aqueous.getComponent("CO2").getNumberOfMolesInPhase() / aqueousWaterMassKg;
     double aqueousCo2MoleFraction = aqueous.getComponent("CO2").getx();
     assertEquals(reference.kclMolality, aqueous.getComponent("K+").getNumberOfMolesInPhase(), 1.0e-12);
     assertEquals(reference.kclMolality, aqueous.getComponent("Cl-").getNumberOfMolesInPhase(), 1.0e-12);
@@ -118,8 +120,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       phaseTypes.add(fluid.getPhase(phaseIndex).getType().toString());
     }
-    return new Result(actualPartialPressureBara, fluid.getPressure(), modelCo2Molality, aqueousCo2MoleFraction,
-        String.join("+", phaseTypes));
+    return new Result(actualPartialPressureBara, fluid.getPressure(), modelCo2Molality, aqueousWaterMassKg,
+        aqueousCo2MoleFraction, String.join("+", phaseTypes));
   }
 
   /**
@@ -209,6 +211,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
     private final double actualCo2PartialPressureBara;
     private final double totalPressureBara;
     private final double modelCo2Molality;
+    private final double aqueousWaterMassKg;
     private final double aqueousCo2MoleFraction;
     private final String phaseTypes;
 
@@ -218,14 +221,16 @@ class KClCO2SolubilityReferenceAssessmentTest {
      * @param actualCo2PartialPressureBara actual CO2 partial pressure in bara
      * @param totalPressureBara total pressure in bara
      * @param modelCo2Molality calculated aqueous CO2 molality
+     * @param aqueousWaterMassKg water mass in the selected aqueous phase in kilograms
      * @param aqueousCo2MoleFraction calculated aqueous CO2 mole fraction
      * @param phaseTypes phase topology
      */
     private Result(double actualCo2PartialPressureBara, double totalPressureBara, double modelCo2Molality,
-        double aqueousCo2MoleFraction, String phaseTypes) {
+        double aqueousWaterMassKg, double aqueousCo2MoleFraction, String phaseTypes) {
       this.actualCo2PartialPressureBara = actualCo2PartialPressureBara;
       this.totalPressureBara = totalPressureBara;
       this.modelCo2Molality = modelCo2Molality;
+      this.aqueousWaterMassKg = aqueousWaterMassKg;
       this.aqueousCo2MoleFraction = aqueousCo2MoleFraction;
       this.phaseTypes = phaseTypes;
     }
@@ -240,9 +245,9 @@ class KClCO2SolubilityReferenceAssessmentTest {
       double residual = modelCo2Molality - reference.experimentalCo2Molality;
       return reference.pointId + "," + reference.temperatureK + "," + reference.targetCo2PartialPressureBara + ","
           + actualCo2PartialPressureBara + "," + reference.kclMolality + "," + reference.experimentalCo2Molality + ","
-          + modelCo2Molality + "," + residual + "," + residual / reference.experimentalCo2Molality + ","
-          + RELATIVE_SOLUBILITY_UNCERTAINTY + "," + TEMPERATURE_UNCERTAINTY_K + "," + totalPressureBara + ","
-          + aqueousCo2MoleFraction + "," + phaseTypes;
+          + modelCo2Molality + "," + aqueousWaterMassKg + "," + residual + ","
+          + residual / reference.experimentalCo2Molality + "," + RELATIVE_SOLUBILITY_UNCERTAINTY + ","
+          + TEMPERATURE_UNCERTAINTY_K + "," + totalPressureBara + "," + aqueousCo2MoleFraction + "," + phaseTypes;
     }
   }
 }
