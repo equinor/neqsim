@@ -34,6 +34,11 @@ public class RunStatus implements Serializable {
 
   private boolean completed = false;
   private boolean success = false;
+  private boolean converged = false;
+  private boolean stagnated = false;
+  private int passCount = 0;
+  private String terminationReason = "NOT_RUN";
+  private List<String> openRecycles = new ArrayList<String>();
   private String failedUnitName = null;
   private String failedUnitError = null;
   private final List<UnitRunStatus> units = new ArrayList<UnitRunStatus>();
@@ -47,6 +52,11 @@ public class RunStatus implements Serializable {
     failedUnitName = null;
     failedUnitError = null;
     units.clear();
+    converged = false;
+    stagnated = false;
+    passCount = 0;
+    terminationReason = "NOT_RUN";
+    openRecycles = new ArrayList<String>();
   }
 
   /**
@@ -127,6 +137,78 @@ public class RunStatus implements Serializable {
   }
 
   /**
+   * Records convergence separately from successful equipment execution.
+   *
+   * @param converged whether all active units and recycles solved
+   * @param stagnated whether a recycle iteration stagnation guard detected no progress
+   * @param passCount number of full process passes
+   * @param openRecycles names of active unsolved recycle units
+   * @param terminationReason machine-readable reason for stopping
+   */
+  void recordConvergence(boolean converged, boolean stagnated, int passCount, List<String> openRecycles,
+      String terminationReason) {
+    this.converged = converged;
+    this.stagnated = stagnated;
+    this.passCount = passCount;
+    this.openRecycles = new ArrayList<String>(openRecycles);
+    this.terminationReason = terminationReason;
+  }
+
+  /**
+   * Returns true when active units and recycle loops converged.
+   *
+   * @return true when active units and recycle loops converged
+   */
+  public boolean isConverged() {
+    return converged;
+  }
+
+  /**
+   * Returns true when the recycle solve stopped making progress.
+   *
+   * @return true when the recycle solve stopped making progress
+   */
+  public boolean isStagnated() {
+    return stagnated;
+  }
+
+  /**
+   * Returns number of full process passes.
+   *
+   * @return number of full process passes
+   */
+  public int getPassCount() {
+    return passCount;
+  }
+
+  /**
+   * Returns machine-readable termination reason.
+   *
+   * @return machine-readable termination reason
+   */
+  public String getTerminationReason() {
+    return terminationReason == null ? "NOT_RUN" : terminationReason;
+  }
+
+  /**
+   * Returns immutable snapshot of active unsolved recycle names.
+   *
+   * @return immutable snapshot of active unsolved recycle names
+   */
+  public List<String> getOpenRecycles() {
+    return openRecycles == null ? Collections.<String>emptyList() : Collections.unmodifiableList(openRecycles);
+  }
+
+  /**
+   * Returns count of active unsolved recycle units.
+   *
+   * @return count of active unsolved recycle units
+   */
+  public int getOpenRecycleCount() {
+    return openRecycles == null ? 0 : openRecycles.size();
+  }
+
+  /**
    * Returns whether the run has completed.
    *
    * @return true if a run has finished (successfully or not)
@@ -184,6 +266,16 @@ public class RunStatus implements Serializable {
     root.addProperty("failedUnitName", failedUnitName);
     root.addProperty("failedUnitError", failedUnitError);
     root.addProperty("unitCount", units.size());
+    root.addProperty("converged", converged);
+    root.addProperty("stagnated", stagnated);
+    root.addProperty("passCount", passCount);
+    root.addProperty("terminationReason", getTerminationReason());
+    root.addProperty("openRecycleCount", getOpenRecycleCount());
+    JsonArray recycleNames = new JsonArray();
+    for (String name : getOpenRecycles()) {
+      recycleNames.add(name);
+    }
+    root.add("openRecycles", recycleNames);
     JsonArray arr = new JsonArray();
     for (UnitRunStatus u : units) {
       arr.add(u.toJsonObject());

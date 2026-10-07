@@ -1468,3 +1468,33 @@ constraints.
 - [Enhanced Entrainment Modeling](separator-entrainment-modeling.md) - Physics-based performance calculation
 - [Design Framework](../DESIGN_FRAMEWORK) - Auto-sizing and design specifications
 - [Bottleneck Analysis](../../wiki/bottleneck_analysis) - Capacity utilization
+
+## Raw constraint values and design basis
+
+The `CapacityConstraint` objects returned by `getCapacityConstraints()` expose the
+operating value and the limit separately from utilization. For `gasLoadFactor`
+and `kValue`, both quantities are in m/s; `inletMomentum` is in Pa. Retention
+requirements are in minutes and use minimum/current utilization, so shorter
+retention increases utilization.
+
+| API | Meaning |
+| --- | --- |
+| `getRawValue()` | Current operating value, alias of `getCurrentValue()` |
+| `getDesignLimit()` | Value used to normalize utilization, including minimum requirements |
+| `getUnit()` | Unit shared by the operating value and limit |
+| `getBasis()` | `default`, `custom`, `datasheet`, `autoSize`, `standard`, or `empirical` |
+| `getSourceReference()` | Explicit source document or other reference, when supplied |
+
+Built-in separator limits carry a `default` basis, not vessel datasheet evidence.
+Calling a separator limit setter marks the affected constraint `custom`.
+An actual datasheet limit must be assigned together with
+`setSource(ConstraintSource.VENDOR_DATASHEET, reference)`; the enum is nested in
+`CapacityConstraint`. Assigning a number alone never implies a datasheet basis.
+The gas-load constraint derived by `autoSize()` carries `autoSize` provenance.
+Serialization retains assigned limits, enabled flags and source metadata while
+rebinding built-in value suppliers to the restored vessel.
+
+The existing constraint enablement defaults are unchanged. The raw values remain
+available for ranking while disabled; a capacity check requires appropriate geometry,
+phase-property validity and a qualified design basis. `SeparatorConstraintBasisTest`
+verifies the default values, custom minimum direction and datasheet serialization.
