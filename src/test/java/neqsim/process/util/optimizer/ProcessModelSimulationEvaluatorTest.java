@@ -705,7 +705,9 @@ class ProcessModelSimulationEvaluatorTest {
     CapacityConstraint installedCapacity = new CapacityConstraint("installedGasCapacity", "kg/hr", ConstraintType.HARD)
         .setDesignValue(12000.0).setMaxValue(13200.0).setWarningThreshold(0.85).setSeverity(ConstraintSeverity.CRITICAL)
         .setDescription("Synthetic separator gas handling limit").setDataSource("mechanicalDesign:test")
-        .setConfidence(0.95).setValidityRange(8000.0, 14000.0).setValueSupplier(() -> {
+        .setConfidence(0.95).setValidityRange(8000.0, 14000.0)
+        .setOperatingLimit(11000.0, CapacityConstraint.ConstraintSource.USER_RULE, "facility operating procedure OP-17")
+        .setOperatingLimitConfidence(0.90).setOperatingLimitValidityRange(8000.0, 14000.0).setValueSupplier(() -> {
           supplierCalls.incrementAndGet();
           return 13000.0;
         });
@@ -719,8 +721,8 @@ class ProcessModelSimulationEvaluatorTest {
     ProcessModelSimulationEvaluator.EvaluationResult result = evaluator.evaluate(new double[0]);
 
     assertEquals(1, supplierCalls.get(), "one completed point must sample each installed supplier once");
-    assertEquals(13.0 / 12.0, result.getConstraintValues()[0], 1.0e-12);
-    assertEquals(-1.0 / 12.0, result.getConstraintMargins()[0], 1.0e-12);
+    assertEquals(13.0 / 11.0, result.getConstraintValues()[0], 1.0e-12);
+    assertEquals(-2.0 / 11.0, result.getConstraintMargins()[0], 1.0e-12);
     assertEquals("1", evaluator.getConstraints().get(0).getUnit());
     assertEquals("kg/hr", evaluator.getConstraints().get(0).getCapacityPhysicalUnit());
     assertEquals(1, result.getInstalledEquipmentCapacityEvidence().size());
@@ -732,19 +734,25 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals(ConstraintType.HARD, evidence.getConstraintType());
     assertEquals(ConstraintSeverity.CRITICAL, evidence.getSeverity());
     assertTrue(evidence.isEnabled());
-    assertEquals(13.0 / 12.0, evidence.getNormalizedUtilization(), 1.0e-12);
-    assertEquals(-1.0 / 12.0, evidence.getNormalizedMargin(), 1.0e-12);
+    assertEquals(13.0 / 11.0, evidence.getNormalizedUtilization(), 1.0e-12);
+    assertEquals(-2.0 / 11.0, evidence.getNormalizedMargin(), 1.0e-12);
     assertEquals("1", evidence.getNormalizedUnit());
     assertEquals(13000.0, evidence.getCurrentValue(), 0.0);
     assertEquals(12000.0, evidence.getDesignValue(), 0.0);
     assertEquals(0.0, evidence.getMinimumValue(), 0.0);
     assertEquals(13200.0, evidence.getMaximumValue(), 0.0);
-    assertEquals(12000.0, evidence.getApplicableLimit(), 0.0);
-    assertEquals(-1000.0, evidence.getPhysicalMargin(), 0.0);
-    assertEquals(1000.0, evidence.getRequiredRelief(), 0.0);
+    assertEquals(11000.0, evidence.getApplicableLimit(), 0.0);
+    assertEquals(-2000.0, evidence.getPhysicalMargin(), 0.0);
+    assertEquals(2000.0, evidence.getRequiredRelief(), 0.0);
     assertEquals(0.85, evidence.getWarningThreshold(), 0.0);
     assertEquals("kg/hr", evidence.getPhysicalUnit());
     assertEquals("mechanicalDesign:test", evidence.getDataSource());
+    assertTrue(evidence.hasOperatingLimit());
+    assertEquals(11000.0, evidence.getOperatingLimit(), 0.0);
+    assertEquals(CapacityConstraint.ApplicableLimitRole.CONFIGURED_OPERATING, evidence.getApplicableLimitRole());
+    assertEquals(CapacityConstraint.ConstraintSource.USER_RULE, evidence.getApplicableLimitSource());
+    assertEquals("facility operating procedure OP-17", evidence.getApplicableLimitSourceReference());
+    assertEquals(0.90, evidence.getConfidence(), 0.0);
     assertEquals(InstalledEquipmentCapacityEvidence.EvidenceStatus.AVAILABLE, evidence.getEvidenceStatus());
     assertEquals(InstalledEquipmentCapacityEvidence.EvidenceApplicability.WITHIN_VALIDITY_RANGE,
         evidence.getEvidenceApplicability());
@@ -758,7 +766,7 @@ class ProcessModelSimulationEvaluatorTest {
     assertEquals("kg/hr", adapter.getPhysicalUnit());
 
     installedCapacity.setDesignValue(20000.0).setUnit("t/day").setDataSource("mutated later");
-    assertEquals(12000.0, evidence.getApplicableLimit(), 0.0);
+    assertEquals(11000.0, evidence.getApplicableLimit(), 0.0);
     assertEquals("kg/hr", evidence.getPhysicalUnit());
     assertEquals("mechanicalDesign:test", evidence.getDataSource());
 
@@ -773,7 +781,7 @@ class ProcessModelSimulationEvaluatorTest {
 
     InstalledEquipmentCapacityEvidence restoredEvidence = restored.getInstalledEquipmentCapacityEvidence().get(0);
     assertEquals("separation::separator/installedGasCapacity", restoredEvidence.getQualifiedConstraintName());
-    assertEquals(1000.0, restoredEvidence.getRequiredRelief(), 0.0);
+    assertEquals(2000.0, restoredEvidence.getRequiredRelief(), 0.0);
     assertNotSame(restored.getInstalledEquipmentCapacityEvidence(), restored.getInstalledEquipmentCapacityEvidence());
     assertThrows(UnsupportedOperationException.class, () -> restored.getInstalledEquipmentCapacityEvidence().clear());
   }

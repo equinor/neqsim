@@ -14,6 +14,7 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSource;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -83,7 +84,10 @@ class ProcessModelOperatingEnvelopeStudyTest {
 
     CapacityConstraint producerLimit = new CapacityConstraint("producer A rate", "kg/hr", ConstraintType.HARD)
         .setDesignValue(800.0).setSeverity(ConstraintSeverity.HARD).setDataSource("synthetic producer choke envelope")
-        .setConfidence(0.95).setValidityRange(200.0, 1000.0).setValueSupplier(() -> producerA.getFlowRate("kg/hr"));
+        .setConfidence(0.95).setValidityRange(200.0, 1000.0)
+        .setOperatingLimit(800.0, ConstraintSource.USER_RULE, "synthetic facility choke rule")
+        .setOperatingLimitConfidence(0.90).setOperatingLimitValidityRange(200.0, 900.0)
+        .setValueSupplier(() -> producerA.getFlowRate("kg/hr"));
     CapacityConstraint sharedLimit = new CapacityConstraint("shared gathering rate", "kg/hr", ConstraintType.HARD)
         .setDesignValue(1200.0).setSeverity(ConstraintSeverity.HARD).setDataSource("synthetic shared manifold basis")
         .setConfidence(0.95).setValidityRange(400.0, 1600.0)
@@ -158,6 +162,9 @@ class ProcessModelOperatingEnvelopeStudyTest {
         result.getPoints().get(0).getLeadingInstalledConstraint().getQualifiedConstraintName());
     assertEquals("gathering::gathering sink/producer A rate",
         result.getPoints().get(2).getLeadingInstalledConstraint().getQualifiedConstraintName());
+    assertEquals("CONFIGURED_OPERATING", result.getPoints().get(2).getLeadingConstraint().getApplicableLimitRole());
+    assertEquals("synthetic facility choke rule",
+        result.getPoints().get(2).getLeadingConstraint().getApplicableLimitProvenance());
     assertEquals(1, result.getBottleneckTransitions().size());
 
     Transition transition = result.getBottleneckTransitions().get(0);

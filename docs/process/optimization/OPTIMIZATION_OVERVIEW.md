@@ -33,6 +33,7 @@ This document provides a high-level introduction to the process optimization cap
 | Calculate flow rates for pressure boundaries | `FlowRateOptimizer` | [Flow Rate Optimization](flow-rate-optimization.md) |
 | Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipse-vfp-export) |
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
+| Apply a facility operating restriction without replacing the equipment rating | `CapacityConstraint.setOperatingLimit(...)` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md#facility-operating-limits-without-losing-the-design-basis) |
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | Optimize full multi-area process models | `ProcessModelSimulationEvaluator` | Use area-qualified `ProcessAutomation` addresses and installed `CapacityConstraint` limits |
 | Sample fail-closed 1D/2D operating-envelope slices | `ProcessModelOperatingEnvelopeStudy` | Reuse `ProcessModelOperatingActionSetEvaluator`; every point retains complete candidate/restoration evidence |

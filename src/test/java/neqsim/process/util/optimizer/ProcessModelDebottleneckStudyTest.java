@@ -97,10 +97,17 @@ class ProcessModelDebottleneckStudyTest {
 
     assertEquals(1000.0, first.getOriginalCapacityState().getApplicableLimit(), 0.0);
     assertEquals(1200.0, first.getAppliedCapacityState().getApplicableLimit(), 0.0);
+    assertEquals(1000.0, first.getAppliedCapacityState().getDesignValue(), 0.0);
+    assertTrue(first.getAppliedCapacityState().hasOperatingLimit());
+    assertEquals(1200.0, first.getAppliedCapacityState().getOperatingLimit(), 0.0);
     assertEquals(1000.0, first.getBaseline().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
     assertEquals(1200.0, first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimit(), 0.0);
-    assertEquals("synthetic replacement equipment basis",
+    assertEquals("synthetic installed basis",
         first.getAlternative().getInstalledCapacityEvidence().get(0).getDataSource());
+    assertEquals(CapacityConstraint.ApplicableLimitRole.CONFIGURED_OPERATING,
+        first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimitRole());
+    assertEquals("synthetic replacement equipment basis",
+        first.getAlternative().getInstalledCapacityEvidence().get(0).getApplicableLimitSourceReference());
     assertEquals(0.90, first.getAlternative().getInstalledCapacityEvidence().get(0).getConfidence(), 0.0);
     assertOriginalStateRestored(fixture);
 
@@ -262,6 +269,7 @@ class ProcessModelDebottleneckStudyTest {
     assertEquals(500.0, fixture.installedCapacity.getValidityMinimum(), 0.0);
     assertEquals(1400.0, fixture.installedCapacity.getValidityMaximum(), 0.0);
     assertEquals(12.3, fixture.installedCapacity.getShadowPrice(), 0.0);
+    assertFalse(fixture.installedCapacity.hasOperatingLimit());
     assertEquals(800.0, fixture.feed.getFlowRate("kg/hr"), 1.0e-8);
   }
 
