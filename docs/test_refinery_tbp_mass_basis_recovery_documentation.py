@@ -6,7 +6,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GUIDE = ROOT / "docs" / "thermo" / "characterization" / "refinery_assay.md"
 INDEX = ROOT / "docs" / "thermo" / "characterization" / "README.md"
-SOURCE = ROOT / "src" / "main" / "java" / "neqsim" / "thermo" / "characterization" / "OilAssayCharacterisation.java"
+SOURCE = (
+    ROOT
+    / "src"
+    / "main"
+    / "java"
+    / "neqsim"
+    / "thermo"
+    / "characterization"
+    / "OilAssayCharacterisation.java"
+)
 
 
 def test_tbp_mass_basis_recovery_is_documented() -> None:

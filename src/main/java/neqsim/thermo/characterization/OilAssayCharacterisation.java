@@ -1439,6 +1439,13 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * @param targetBoundaryKelvin validated boiling point in K
      * @return cumulative liquid-volume recovery in percent
      */
+    /**
+     * Integrate SG60/60-weighted liquid-volume percentage across one normalized range.
+     *
+     * @param lowerBoilingPointKelvin normalized lower boundary in K
+     * @param upperBoilingPointKelvin normalized upper boundary in K
+     * @return SG-weighted liquid-volume percentage
+     */
     private double integrateSpecificGravityWeightedLiquidVolumePercent(double lowerBoilingPointKelvin,
         double upperBoilingPointKelvin) {
       double impliedMass = 0.0;
@@ -1454,6 +1461,12 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       return impliedMass;
     }
 
+    /**
+     * Validate and snap a cumulative mass-recovery query.
+     *
+     * @param cumulativeMassPercent cumulative mass recovery in percent
+     * @return normalized cumulative mass recovery in percent
+     */
     private double normalizeCumulativeMassQuery(double cumulativeMassPercent) {
       if (!Double.isFinite(cumulativeMassPercent) || cumulativeMassPercent < -PERCENT_TOLERANCE
           || cumulativeMassPercent > 100.0 + PERCENT_TOLERANCE) {
