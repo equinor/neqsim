@@ -140,21 +140,53 @@ not duplicated by JSON replay and must be rebound after loading.
 definitions, PLEM/manifold bindings, direct production and injection execution,
 conservative mass flow, identity/port/service errors, loop diagnostics and replay.
 These tests qualify the identity/integration contract; they do not independently
-qualify B&B or two-fluid correlations, live well coupling or field design.
+qualify B&B or two-fluid correlations or field design.
+
+## Live well pressure-rate coupling
+
+`FieldWellNetworkCoupler` binds normal `WellSystem` and `WellFlow` equipment to
+free-pressure production/injection well nodes created by
+`FieldNetworkTopology.addLiveWellNode`. It does not add a graph, well correlation or
+hydraulic solver. In each outer iteration the live well is evaluated at the current
+well-node pressure, its rate is applied as a conservative node supply (production) or
+demand (injection), and the existing `LoopedPipeNetwork` Newton-Raphson solver updates
+the field pressures and flows.
+
+Production `WellSystem` bindings retain their full IPR/VLP calculation and expose the
+inner convergence flag, pressure residual and iteration count in the coupled result.
+Production `WellFlow` bindings reuse the selected IPR model in pressure-to-rate mode.
+Injection `WellFlow` bindings reuse multi-zone injectivity, zone allocation and
+fracture-pressure checks. Configured production drawdown/minimum-BHP constraints and
+injection fracture limits fail the coupled acceptance result instead of silently
+clipping rate. A well below the configured rate threshold is reported as shut in;
+an otherwise pressure-indeterminate zero-flow branch does not claim coupled
+convergence.
+
+Injection coupling fails closed when the well inlet and network fluid do not use the
+same thermodynamic model, mixing rule and component identity set. Production source
+fluids are registered on their canonical nodes so existing conservative component
+mixing remains the owner of commingling. Runtime well objects and fluids remain outside
+JSON replay and must be rebound after loading a field definition.
+
+The immutable coupling report includes outer iteration count, maximum rate and
+well-node pressure residuals, the hydraulic residual, network mass-balance residual,
+and per-well status. `FieldWellNetworkCouplerTest` covers live `WellSystem`, production
+and multi-zone injection `WellFlow`, repeated execution with a monotonic host
+backpressure response, conservation, shut-in, BHP/drawdown and fracture limits,
+incompatible injection fluids, and semantic binding errors. This is integration and
+conservation evidence, not independent IPR/VLP, injectivity or field qualification.
 
 ## Dependency-ordered continuation
 
-1. Bind live `WellSystem` and production/injection `WellFlow` pressure/rate contracts.
-   Reuse full IPR/VLP/injectivity and report inner well residuals; include reservoir
-   pressure updates, shut-in, fracture/BHP limits and incompatible fluid diagnostics.
-2. Qualify multi-template, daisy-chain, branches/loops and brownfield networks with
+1. Qualify multi-template, daisy-chain, branches/loops and brownfield networks with
    differing well fluids, B&B/two-fluid comparison and representative field sizes.
    Include water, gas and CO2 injection with pump/compressor and shared host constraints.
-3. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
+   Add controlled reservoir-pressure updates without duplicating reservoir ownership.
+2. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
    / process optimization, then detailed lifecycle models and reduced-order surrogates.
-4. Coordinate conservative transient junction/component/energy integration and steady
+3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
-5. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
+4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
    (#2899/#1332). Use synthetic/public acceptance cases and retain reproducible results.
 
 Related guides: [production networks](../process/equipment/production_well_networks.md),

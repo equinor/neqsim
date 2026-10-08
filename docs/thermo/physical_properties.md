@@ -27,6 +27,11 @@ If temperature, pressure, composition, or phase-equilibrium settings change mate
 appropriate flash again before reinitializing physical properties. Calling
 `initPhysicalProperties()` alone does not perform a new equilibrium calculation.
 
+Enabling `setMultiPhaseCheck(true)` allocates an additional equilibrium-search template without
+calculating its transport properties. This avoids viscosity, conductivity and density work for
+an inactive trial phase during repeated flashes. The template initializes those properties on
+first access; initialize the active phases after the flash as described above.
+
 ## Thermodynamic and physical-property APIs are different
 
 Thermodynamic quantities such as compressibility factor, enthalpy, heat capacity, and phase

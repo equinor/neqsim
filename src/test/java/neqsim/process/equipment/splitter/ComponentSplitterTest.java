@@ -1,10 +1,28 @@
 package neqsim.process.equipment.splitter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
@@ -16,6 +34,13 @@ import neqsim.thermo.system.SystemSrkEos;
 
 class ComponentSplitterTest {
   private static final Logger logger = LogManager.getLogger(ComponentSplitterTest.class);
+  private static final String MIXER_SPLITTER_GUIDE = "docs/process/equipment/mixers_splitters.md";
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?ms)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+
+  @TempDir
+  Path temporaryDirectory;
 
   /** Logger object for class. */
 
@@ -378,4 +403,73 @@ class ComponentSplitterTest {
     assertEquals(2.5, result1Stream1, 1e-6);
     assertEquals(2.5, result2Stream1, 1e-6);
   }
+
+  /** Compiles the exact mixer/splitter guide fence for Java 8 and executes its assertions. */
+  @Test
+  public void mixersAndSplittersGuideCompilesAndRuns() throws Exception {
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    String guide = new String(Files.readAllBytes(repositoryRoot.resolve(MIXER_SPLITTER_GUIDE)), StandardCharsets.UTF_8)
+        .replace("\r\n", "\n");
+
+    assertTrue(guide.startsWith("---\n"));
+    assertTrue(guide.contains("pressure is absolute bara"));
+    assertTrue(guide.contains("issue #4073"));
+    assertFalse(guide.contains("System.out"));
+    assertFalse(guide.contains("System.err"));
+    assertFalse(guide.contains("```python"));
+
+    Matcher fence = JAVA_FENCE.matcher(guide);
+    assertTrue(fence.find(), "Mixer/splitter guide must publish one Java program");
+    String source = fence.group(1);
+    assertFalse(fence.find(), "Mixer/splitter guide must not publish dependent Java fragments");
+
+    assertTrue(source.contains("public final class MixerSplitterExample"));
+    assertTrue(source.contains("mixer.isPressureMismatch()"));
+    assertTrue(source.contains("new Splitter(\"SP-100\", mixedGas, 2)"));
+    assertTrue(source.contains("new ComponentSplitter(\"CS-100\", mixedGas)"));
+    assertTrue(source.contains("new double[] {7.0, 3.0}"));
+    assertTrue(source.contains("new double[] {1.0, 0.0, 0.0}"));
+    assertTrue(source.contains("assert Math.abs(mixedFlowKgPerHour - 8000.0) < 1.0e-6"));
+    assertTrue(source.contains("assert Double.isFinite(product.getFluid().getEnthalpy())"));
+
+    compileAndRunGuideExample(source);
+  }
+
+  /** Compiles one extracted Java source and invokes its main method with assertions enabled. */
+  private void compileAndRunGuideExample(String source) throws Exception {
+    Matcher className = PUBLIC_CLASS.matcher(source);
+    assertTrue(className.find(), "Java fence must contain a complete public class");
+    String name = className.group(1);
+    assertFalse(className.find(), "Java fence must contain one public class");
+
+    Path outputDirectory = temporaryDirectory.resolve(name);
+    Files.createDirectories(outputDirectory);
+    Path javaSource = outputDirectory.resolve(name + ".java");
+    Files.write(javaSource, source.getBytes(StandardCharsets.UTF_8));
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "Documentation examples require a JDK compiler");
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = java.util.Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
+    }
+
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
+      loader.setDefaultAssertionStatus(true);
+      Class<?> example = Class.forName(name, true, loader);
+      assertTrue(example.desiredAssertionStatus());
+      try {
+        example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+      } catch (InvocationTargetException exception) {
+        throw new AssertionError(name + " failed", exception.getCause());
+      }
+    }
+  }
+
 }

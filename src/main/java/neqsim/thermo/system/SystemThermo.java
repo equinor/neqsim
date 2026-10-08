@@ -5731,7 +5731,8 @@ public abstract class SystemThermo implements SystemInterface {
           phaseArray[2] = phaseArray[1].clone();
           phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleType());
           phaseArray[2].resetPhysicalProperties();
-          phaseArray[2].initPhysicalProperties();
+          // This is an inactive equilibrium-search template. Transport properties are
+          // initialized lazily if the phase becomes active or a caller requests them.
         }
       } else {
         setMaxNumberOfPhases(2);

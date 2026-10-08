@@ -3121,6 +3121,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
     markSolverTypeUsed(SolverType.MESH_RESIDUAL);
+    // Polishing can adopt a new tray network after inside-out recorded its cache.
+    // Fingerprint the final qualified state so an unchanged invocation reuses it.
+    if (solved()) {
+      commitSequentialWarmState();
+    }
   }
 
   /**
@@ -3478,6 +3483,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long calculateSequentialExactReuseSignature() {
     long signature = calculateNaphtaliSandholmInputSignature();
+    signature = updateNaphtaliSandholmInputSignature(signature, calculateNaphtaliSandholmConvergenceGateSignature());
     signature = updateSequentialStreamStateSignature(signature, gasOutStream);
     signature = updateSequentialStreamStateSignature(signature, liquidOutStream);
     signature = updateNaphtaliSandholmInputSignature(signature, trays.size());
@@ -4050,7 +4056,15 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     try {
       if (sequentialRatioRecovery) {
-        candidate.solveSequential(id, 1.0, trayMaterialBalanceTolerance);
+        // Give the coupled Newton solver an earlier connected-tray checkpoint. A partial
+        // sequential state is only a seed; the same physical acceptance gates still apply.
+        candidate.solveSequential(id, 1.0, trayMaterialBalanceTolerance, 20);
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.tryGuardedMeshPolishCandidate(id, candidate.getLastMeshResidualNorm(), false);
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.solveSequential(id, 1.0, trayMaterialBalanceTolerance);
+        }
         if (!candidate.specificationsSatisfied() || !candidate.solved()) {
           candidate.tryGuardedMeshPolishCandidate(id, candidate.getLastMeshResidualNorm(), false);
         }
@@ -6758,6 +6772,19 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param connectedMaterialTolerance connected component closure target before product reconciliation
    */
   private void solveSequential(UUID id, double initialRelaxation, double connectedMaterialTolerance) {
+    solveSequential(id, initialRelaxation, connectedMaterialTolerance, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Advance connected sequential tray states to convergence or a recovery checkpoint.
+   *
+   * @param id calculation identifier
+   * @param initialRelaxation initial stream relaxation
+   * @param connectedMaterialTolerance connected component closure target before product reconciliation
+   * @param maximumSweeps maximum sweeps before handing the candidate to a coupled solver
+   */
+  private void solveSequential(UUID id, double initialRelaxation, double connectedMaterialTolerance,
+      int maximumSweeps) {
     long invocationStartTime = System.nanoTime();
     lastSequentialWarmStateReused = false;
     captureDirectExternalTrayFeeds();
@@ -6882,7 +6909,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean massEnergyEvaluated = false;
     int balanceCheckStride = Math.max(3, numberOfTrays / 2);
 
-    while (iter < iterationLimit) {
+    while (iter < iterationLimit && iter < maximumSweeps) {
       iter++;
 
       for (int i = 0; i < numberOfTrays; i++) {

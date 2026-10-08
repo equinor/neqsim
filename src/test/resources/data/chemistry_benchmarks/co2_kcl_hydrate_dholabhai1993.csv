@@ -1,0 +1,9 @@
+recipe,kcl_wt_percent,pressure_mpa,measured_temperature_k,source_table,diagnostic_endpoint
+K10,10.02,1.130,269.02,III,true
+K10,10.02,1.848,273.08,III,false
+K10,10.02,2.807,276.34,III,false
+K10,10.02,3.485,277.86,III,true
+K15,14.97,1.415,269.03,III,true
+K15,14.97,2.095,272.22,III,false
+K15,14.97,2.901,274.58,III,false
+K15,14.97,3.575,276.01,III,true

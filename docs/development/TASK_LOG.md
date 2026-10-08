@@ -1264,3 +1264,52 @@ not included in this repair run; previous broader counts are historical evidence
 `python3 devtools/run_spotless.py apply` and `check`, engineering-coverage generation
 and `--check`, `python3 devtools/check_documentation_search.py`, and both exact
 pre-commit hook stages pass. Hosted CI remains pending on the published head.
+### 2026-10-06 - Visund well-to-export model with gas injection and seven formation fluids tuned to Fluid Symphony PVT (ProcessPilot package)
+**Type:** B (Process / production optimisation)
+**Keywords:** well to export, gas condensate and oil, gas injection window, Uleberg P/A split factor, fluid tuning quality before and after, produced-gas heavy-end leaning, stock-tank oil basis, hold-out window, anchored compressor maps, utilisation register, throughput sweep
+**Solution:** Thirteen producers recombined from seven tuned fluid groups to PDM allocated rates; eight ProcessSystems in a ProcessModel (wells, separation, compression, export, injection, oil, recycle, water); three plant windows (calibration, hold-out, 2020 gas-injection window); LP-stage anti-surge recycle derived from measured motor power; throughput sweep and Monte Carlo on the headroom of the 4th-stage GT.
+**Notes:** A single factor on the allocated oil closed the calibration window and failed the hold-outs; the cause was the C5+ content of the standard gas of the discovery-gas fluids. A produced-gas heavy-end leaning fitted on one window carried to the hold-out window (export oil +0.4 %). Benchmark oil on the stock-tank basis (flash to 15 C, 1 atm). Report the untuned fluid next to the tuned fluid per sample and label each metric fit target or check. Window C needs its own leaning and shows that maps anchored on one window do not transfer (4th-stage speed -10 %).
+
+### 2026-10-07 - Tie-in bottleneck study for a satellite oil field to an existing platform process model (ProcessPilot package)
+**Type:** B (Process / host capacity)
+**Keywords:** tie-in, host bottleneck, utilisation register, plan profiles by field, annual-mean and p90-day rates, linear response per (unit, metric), ullage, Monte Carlo on response surface, turndown versus capacity
+**Solution:** Every manifold of the existing platform model is split into oil, gas and water at standard conditions with the model EOS and scaled to the plan rates of its field; the satellite fluid is mapped to the model pseudo-components by molar-mass interpolation and mixed into the HP manifold. Eleven cases (host plan, three satellite profiles, host upside, x2 satellite) at annual-mean and p90-day rates ran as resumable parallel jobs; ullage, tornado and a 20 000-draw Monte Carlo come from a response surface fitted per (unit, metric) to the runs.
+**Notes:** Scale every manifold of a field, including the test-separator manifold; leaving it out added about 1 MSm3/d gas to every case. Interpolate per (unit, metric): the binding metric of a vessel switched from water to oil when the satellite oil was added and the best-metric slope was wrong by a factor of three. Surge and minimum-flow rows are turndown, not capacity. Annual-mean plan rates hid the exceedances that appear at p90-day rates (PDM p90 over mean 1.17-1.21). Case runs at low gas flow (swing compressors idle) took 15-60 min or did not converge; plan the run budget for the declining years. `generate_work_record.py` now accepts a list-form `figure_captions`. Produced water and water injection are outside the model: use demonstrated peaks and one STID design case and say so.
+
+
+## 2026-10-08: PR #4127 main-steam runtime and merge-conflict repair
+
+Reproduced the unchanged main-column steam screen timeout on head `3217716` at
+402 seconds locally. Profiling identified eager transport-property initialization
+on inactive multiphase search templates during repeated tray PH flashes. Defer
+that initialization until the existing lazy property accessor is used; preserve
+phase cloning, mixing rules and every equilibrium/refinement gate. New regressions
+verify deferred first access and identical gas/oil/aqueous splits and final density,
+viscosity and conductivity compared with an eagerly initialized template.
+
+Sequential terminal recovery previously waited through 54 sweeps before a successful
+coupled correction. Add a checkpoint after at most twenty sweeps, try the same isolated
+Newton correction, and continue the existing full recovery sequence if it fails.
+The checkpoint is only a seed: adoption still requires the existing specifications
+and physical convergence gates. Record the final accepted MESH state in the exact-reuse
+fingerprint after polishing, including active convergence settings. Regression checks
+require zero-iteration unchanged reuse and invalidate it after a tolerance change. The unchanged steam suite now passes in 125 seconds,
+including its 240-second timeout and conservation assertions. An experimental PH
+step change was rejected after a two-phase regression; shared PH and TP solvers
+remain unchanged. No expected result, tolerance or user iteration cap is relaxed.
+
+Resolved the master task-log conflict by preserving both histories and incorporated
+master `133bc17` without rewriting the existing PR history. Documentation impact:
+distillation recovery checkpoints and deferred inactive transport initialization
+in the distillation and physical-properties guides; regenerate engineering coverage.
+
+Validation of the final repair: 193 tests run, 192 passing and one existing disabled
+test, with zero failures/errors. Includes slow-tagged distillation, unchanged main
+steam, Sarir pumparound/side-stripper, Big Hill vacuum sensitivities, cache/mode/
+coordinated flow, water-rich phase refinement, PH warm-start policy, oil RVP, pump,
+Eclipse-fluid and host-feed regressions. The main steam method completes in 151.832
+seconds in this combined run. Six edited Java sources/tests compile with `--release 8`.
+NeqSim 3.23.0, OpenJDK 17.0.20 and Python 3.12.14. Repeated stable Spotless apply,
+Spotless check, both all-file hook stages, regenerated engineering-coverage freshness,
+documentation-search audit, Javadoc and diff checks pass. Hosted CI remains pending
+on the published repair; the PR stays draft.

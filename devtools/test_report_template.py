@@ -28,6 +28,7 @@ def _make_task(root):
     (task / "step3_report").mkdir(parents=True)
     (task / "step1_scope_and_research").mkdir()
     shutil.copy(str(GENERATOR), str(task / "step3_report" / "generate_report.py"))
+    shutil.copy(str(GENERATOR.with_name("report_kit.py")), str(task / "step3_report"))
     (task / "results.json").write_text(json.dumps({
         "key_results": {"outlet_temperature_C": -18.5},
         "validation": {"mass_balance_error_pct": 0.01},
@@ -199,11 +200,14 @@ def test_front_matter_equations_and_tables_are_typeset(tmp_path, use_template):
             assert paragraph.text.strip() or paragraph._p.findall(".//" + W_NS + "instrText"), \
                 "page break sits in an otherwise empty paragraph"
 
-    # A display equation is one paragraph: centred picture, right-aligned SEQ number.
+    # A display equation is one paragraph: centred equation (editable OMML, or a picture
+    # when the LaTeX is beyond the converter), right-aligned SEQ number.
     equation = next(p for p in report.paragraphs
                     if any("SEQ Equation" in (t.text or "")
                            for t in p._p.findall(".//" + W_NS + "instrText")))
-    assert equation._p.findall(".//" + W_NS + "drawing")
+    math_ns = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
+    assert (equation._p.findall(".//" + W_NS + "drawing")
+            or equation._p.findall(".//" + math_ns + "oMath"))
     stops = [stop.alignment for stop in equation.paragraph_format.tab_stops]
     assert len(stops) == 2
     assert equation.text.strip().endswith(")")

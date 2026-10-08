@@ -166,6 +166,24 @@ public class DistillationColumnWarmStateCacheTest {
     assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
   }
 
+  /** Verify active convergence-gate changes invalidate exact sequential reuse. */
+  @Test
+  public void sequentialConvergenceGateChangeInvalidatesExactReuse() {
+    DistillationColumn column = buildCondenserColumn();
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused());
+
+    column.setMassBalanceTolerance(column.getMassBalanceTolerance() * 0.5);
+    column.run();
+
+    assertFalse(column.wasSequentialWarmStateReused(), "An active gate change requires a new solver invocation");
+    assertTrue(column.getLastIterationCount() > 0);
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
+  }
+
   /**
    * Switching between the two active reflux equation sets must invalidate an otherwise identical warm state.
    *

@@ -223,7 +223,10 @@ candidate uses sequential tray sweeps from the retained state. These sweeps upda
 flashes and connected material flows together. Copied candidates preserve the current phase outlet
 inventories and initialization identity. Recovery checks connected tray component balances before
 publication, tries an isolated simultaneous correction from that state, and can further refine the
-component closure if product reconciliation still changes the ratio. A provisional refinement
+component closure if product reconciliation still changes the ratio. An initial checkpoint after
+at most twenty sequential sweeps allows an earlier simultaneous correction; this intermediate
+state is only a seed and cannot be adopted without passing the same physical gates. If that
+correction fails, recovery continues with the full sequential convergence target. A provisional refinement
 checks physical qualification before attempting the tightest component target. Pumparound returns
 and draws are included on the inner control-volume basis while the outer tear is open; their
 inventories cancel when the tear converges. Ratio-constrained Newton
@@ -252,6 +255,9 @@ bubble-point seed. Both paths retain the terminal specifications and physical ac
 
 Water-bearing tray flashes use the shared TP-flash stability, reciprocal-candidate and
 phase-initialization paths. Distillation does not bypass those thermodynamic checks.
+Inactive phase-search templates defer transport-property initialization until first access, so
+water-rich recovery does not calculate unused viscosity and conductivity on every tray PH trial.
+The finalized column still initializes physical properties for its active outlet phases.
 
 Product normal-boiling-point distributions retain strictly increasing, representable cumulative
 mole fractions. A positive trace too small to advance the cumulative fraction does not create a
@@ -355,6 +361,8 @@ zero-iteration cache hit. Tolerances for disabled energy and MESH gates, and out
 when no tear variable is configured, do not participate in the cache key. The next invocation
 executes the solver path after an active-gate change and either meets the new contract or reports
 non-convergence explicitly.
+For MESH recovery, the reuse fingerprint is recorded after the final qualified correction so
+the next unchanged call retains the adopted products and tray network.
 
 ## Side Draws
 
