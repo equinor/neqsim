@@ -101,6 +101,45 @@ interaction parameter, directly qualify the 14.15-35.75 bara hydrate states,
 or justify fitting before an independent domain review of the electrolyte-CPA
 CO2/KCl interaction treatment.
 
+## Independent Ostwald-coefficient holdout
+
+`KClCO2OstwaldReferenceAssessmentTest` evaluates the unambiguous 298.15 K
+block compiled by
+[NIST SRD 106, system 62_227](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_227)
+from Yasunishi and Yoshida (1979), *Journal of Chemical and Engineering Data*
+**24**, 11-14. The seven source points hold total pressure at 101.325 kPa while
+KCl concentration rises from 0 to 4.131 mol/L of equilibrium solution. The
+reported Ostwald coefficient falls from 0.8264 to 0.4703; NIST reports relative
+solubility uncertainty of 0.01 and temperature uncertainty of 0.05 K.
+
+The no-fit calculation retains the source observable rather than converting it
+to molality. It computes the model Ostwald coefficient as the equilibrium
+aqueous molecular-CO2 concentration divided by the gas-phase molecular-CO2
+concentration. KCl inventory is iterated until the model aqueous phase matches
+the source mol/L solution coordinate, avoiding an assumed experimental density.
+Six points through 3.505 mol/L are constructed at the source coordinate. The
+4.131 mol/L point is retained as an explicit unmatched state: the present
+calculation reaches 3.8167 mol/L before ion restoration collapses, so its
+residual is withheld rather than evaluated at a different concentration. The
+generated
+`target/kcl-co2-ostwald-yasunishi-yoshida1979-assessment.csv` records target and
+actual KCl concentration, experimental and calculated coefficients, residuals,
+source uncertainty, both CO2 concentrations, aqueous water mass and phase
+topology, and the state-matching status.
+
+Across the six exactly constructed states, the model relative residual changes
+from -17.5% in salt-free water to +34.96%, +117.6%, +447.4%, +1165.6% and
++2790.9% as KCl rises to 3.505 mol/L. The independent observable therefore
+reproduces the wrong KCl salting direction seen in the He and Morse molality
+series; it does not convert the unmatched 4.131 mol/L state into evidence.
+
+The 308.15 K rows are deliberately excluded because the public compilation's
+temperature grouping must be checked against the original article before
+transcription. This cross-source diagnostic is a held-out model assessment, not
+a calibration set or acceptance tolerance. It cannot justify a K+-specific
+interaction value without a separate model-form derivation, calibration source
+and independent scientific review.
+
 ## Existing evidence and stop boundary
 
 The source-pinned notebook at EvenSol/NeqSim-Colab draft PR 189, head
