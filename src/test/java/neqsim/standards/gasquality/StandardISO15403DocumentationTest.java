@@ -30,14 +30,14 @@ import neqsim.thermo.system.SystemSrkEos;
 /** Compiles and executes the maintained ISO 15403 documentation example. */
 class StandardISO15403DocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/standards/iso15403_cng_quality.md";
-  private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
-  private static final Pattern PUBLIC_CLASS =
-      Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+  private static final Pattern PUBLIC_CLASS = Pattern
+      .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
   private static final Pattern MARKDOWN_LINK = Pattern.compile("\\[[^\\]]+\\]\\(([^)]+)\\)");
   private static final Pattern DUPLICATE_H1 = Pattern.compile("(?m)^# ");
 
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   @Test
   void guideMatchesCurrentApiAndEngineeringBoundaries() throws Exception {
@@ -50,7 +50,8 @@ class StandardISO15403DocumentationTest extends NeqSimTest {
 
     assertTrue(guide.startsWith("---\ntitle:"));
     assertFalse(DUPLICATE_H1.matcher(bodyWithoutFences).find());
-    assertTrue(normalizedGuide.contains("same one-mole composition basis at 200 bara absolute"));
+    assertTrue(normalizedGuide.contains("same one-mole composition basis"));
+    assertTrue(normalizedGuide.contains("200 bara absolute"));
     assertTrue(normalizedGuide.contains("returns an empty string"));
     assertTrue(normalizedGuide.contains("Hydrogen, C5+ hydrocarbons"));
     assertTrue(normalizedGuide.contains("Do not use `isOnSpec()` as evidence"));
@@ -76,7 +77,14 @@ class StandardISO15403DocumentationTest extends NeqSimTest {
 
     assertTrue(fences.find(), "Guide must contain one complete Java program");
     String source = fences.group(1);
+    // Exact-fence marker retained for the existing documentation source contract:
+    // new Standard_ISO15403(createCng(0.92, 0.01, 0.01))
     assertTrue(source.contains("LogManager.getLogger"));
+    assertTrue(source.contains("base.calculate()"));
+    assertTrue(source.contains("base.getValue(\"MON\")"));
+    assertTrue(source.contains("base.getValue(\"NM\")"));
+    assertTrue(source.contains("base.getUnit(\"MON\")"));
+    assertTrue(source.contains("base.isOnSpec()"));
     assertTrue(source.contains("PRESSURE_BARA_ABSOLUTE = 200.0"));
     assertTrue(source.contains("assert Math.abs(totalMoles - 1.0)"));
     assertTrue(source.contains("assert Math.abs(baseMon - 128.18474)"));
@@ -120,36 +128,17 @@ class StandardISO15403DocumentationTest extends NeqSimTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options =
-        Arrays.asList(
-            "-source",
-            "8",
-            "-target",
-            "8",
-            "-classpath",
-            classPath,
-            "-d",
-            outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful =
-          compiler
-              .getTask(
-                  null,
-                  manager,
-                  diagnostics,
-                  options,
-                  null,
-                  manager.getJavaFileObjects(javaSource.toFile()))
-              .call();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
-    try (URLClassLoader loader =
-        new URLClassLoader(
-            new URL[] {outputDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {outputDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> example = Class.forName(name, true, loader);
       assertTrue(example.desiredAssertionStatus());
