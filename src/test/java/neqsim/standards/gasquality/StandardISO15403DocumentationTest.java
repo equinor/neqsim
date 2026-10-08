@@ -52,7 +52,7 @@ class StandardISO15403DocumentationTest extends NeqSimTest {
     assertFalse(DUPLICATE_H1.matcher(bodyWithoutFences).find());
     assertTrue(normalizedGuide.contains("same one-mole composition basis"));
     assertTrue(normalizedGuide.contains("200 bara absolute"));
-    assertTrue(normalizedGuide.contains("returns an empty string"));
+    assertTrue(normalizedGuide.contains("Returns an empty string"));
     assertTrue(normalizedGuide.contains("Hydrogen, C5+ hydrocarbons"));
     assertTrue(normalizedGuide.contains("Do not use `isOnSpec()` as evidence"));
     assertTrue(normalizedGuide.contains("not ISO acceptance limits"));
