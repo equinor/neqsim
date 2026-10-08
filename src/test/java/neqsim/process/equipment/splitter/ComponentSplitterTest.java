@@ -408,8 +408,8 @@ class ComponentSplitterTest {
   @Test
   public void mixersAndSplittersGuideCompilesAndRuns() throws Exception {
     Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
-    String guide = new String(Files.readAllBytes(repositoryRoot.resolve(MIXER_SPLITTER_GUIDE)),
-        StandardCharsets.UTF_8).replace("\r\n", "\n");
+    String guide = new String(Files.readAllBytes(repositoryRoot.resolve(MIXER_SPLITTER_GUIDE)), StandardCharsets.UTF_8)
+        .replace("\r\n", "\n");
 
     assertTrue(guide.startsWith("---\n"));
     assertTrue(guide.contains("pressure is absolute bara"));
@@ -450,14 +450,12 @@ class ComponentSplitterTest {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "Documentation examples require a JDK compiler");
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
-    String classPath =
-        System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = java.util.Arrays.asList("-source", "8", "-target", "8",
-        "-classpath", classPath, "-d", outputDirectory.toString());
-    try (StandardJavaFileManager manager =
-        compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
-      Boolean successful = compiler.getTask(null, manager, diagnostics, options, null,
-          manager.getJavaFileObjects(javaSource.toFile())).call();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = java.util.Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        outputDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(javaSource.toFile())).call();
       assertTrue(Boolean.TRUE.equals(successful), diagnostics.getDiagnostics().toString());
     }
 
