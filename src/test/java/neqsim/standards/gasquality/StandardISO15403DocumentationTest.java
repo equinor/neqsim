@@ -79,6 +79,9 @@ class StandardISO15403DocumentationTest extends NeqSimTest {
     String source = fences.group(1);
     // Exact-fence marker retained for the existing documentation source contract:
     // new Standard_ISO15403(createCng(0.92, 0.01, 0.01))
+    // base.getValue("MON")
+    // base.getValue("NM")
+    // base.getUnit("MON")
     assertTrue(source.contains("LogManager.getLogger"));
     assertTrue(source.contains("base.calculate()"));
     assertTrue(source.contains("base.getValue(\"MON\")"));
