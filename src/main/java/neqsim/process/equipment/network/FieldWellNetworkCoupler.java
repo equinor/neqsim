@@ -348,6 +348,49 @@ public final class FieldWellNetworkCoupler {
   }
 
   /**
+   * Get the canonical field topology used by this coupling calculation.
+   *
+   * @return bound field topology
+   */
+  public FieldNetworkTopology getTopology() {
+    return topology;
+  }
+
+  /**
+   * Copy the topology definition, live well bindings and coupling settings into an independent runtime calculation.
+   *
+   * <p>
+   * The canonical network JSON intentionally excludes thermodynamic objects, so this method restores a cloned fluid
+   * template before copying each bound well. Runtime results are not carried into the copy.
+   * </p>
+   *
+   * @return independent configured coupler
+   */
+  public FieldWellNetworkCoupler copy() {
+    FieldNetworkTopology copiedTopology = topology.copyDefinition();
+    SystemInterface fluidTemplate = topology.getHydraulicNetwork().getFluidTemplate();
+    if (fluidTemplate != null) {
+      copiedTopology.getHydraulicNetwork().setFluidTemplate(fluidTemplate.clone());
+    }
+    FieldWellNetworkCoupler copied = new FieldWellNetworkCoupler(copiedTopology);
+    copied.maximumIterations = maximumIterations;
+    copied.rateToleranceKgS = rateToleranceKgS;
+    copied.pressureToleranceBar = pressureToleranceBar;
+    copied.relaxationFactor = relaxationFactor;
+    copied.shutInThresholdKgS = shutInThresholdKgS;
+    for (WellBinding binding : bindings.values()) {
+      if (binding.wellSystem != null) {
+        copied.bindProductionWell(binding.nodeId, (WellSystem) binding.wellSystem.copy());
+      } else if (binding.service == Service.PRODUCTION) {
+        copied.bindProductionWell(binding.nodeId, (WellFlow) binding.wellFlow.copy());
+      } else {
+        copied.bindInjectionWell(binding.nodeId, (WellFlow) binding.wellFlow.copy());
+      }
+    }
+    return copied;
+  }
+
+  /**
    * Bind an integrated production {@link WellSystem} to a production-well node.
    *
    * @param nodeId canonical production-well node identity

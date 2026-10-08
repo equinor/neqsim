@@ -18,6 +18,7 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.network.FieldWellNetworkProcessUnit;
 import neqsim.process.equipment.network.LoopedPipeNetwork;
 import neqsim.process.equipment.pipeline.Pipeline;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
@@ -591,8 +592,9 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
-    if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      return getNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], unitOfMeasure);
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null && parts.length == 3) {
+      return getNetworkProperty(addressableNetwork, parts[1], parts[2], unitOfMeasure);
     }
 
     if (parts.length == 2) {
@@ -646,8 +648,9 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
-    if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      setNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], value, unitOfMeasure);
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null && parts.length == 3) {
+      setNetworkProperty(addressableNetwork, parts[1], parts[2], value, unitOfMeasure);
       this.dirty = true;
       return;
     }
@@ -870,8 +873,9 @@ public class ProcessAutomation {
     List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
     boolean handledOutlets = false;
 
-    if (unit instanceof LoopedPipeNetwork) {
-      return enrichVariableMetadata(buildNetworkVariableList(unitName, (LoopedPipeNetwork) unit));
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null) {
+      return enrichVariableMetadata(buildNetworkVariableList(unitName, addressableNetwork));
     }
 
     // Universal equipment-level outputs
@@ -1175,6 +1179,22 @@ public class ProcessAutomation {
       }
     }
     return vars;
+  }
+
+  /**
+   * Resolve an equipment item whose public automation surface is a looped network.
+   *
+   * @param unit process equipment candidate
+   * @return directly owned or field-coupler-wrapped network, otherwise {@code null}
+   */
+  private LoopedPipeNetwork getAddressableNetwork(ProcessEquipmentInterface unit) {
+    if (unit instanceof LoopedPipeNetwork) {
+      return (LoopedPipeNetwork) unit;
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit) {
+      return ((FieldWellNetworkProcessUnit) unit).getHydraulicNetwork();
+    }
+    return null;
   }
 
   /**
@@ -1787,9 +1807,29 @@ public class ProcessAutomation {
       if (idx < 0 || idx >= sf.length) {
         throw new IllegalArgumentException("Split factor index out of range for " + unit.getName() + ": " + property);
       }
+      if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+        throw new IllegalArgumentException("Split factor must be finite and between 0 and 1");
+      }
       double[] updated = sf.clone();
-      updated[idx] = value;
-      // Splitter renormalises the factors so they sum to 1.
+      if (updated.length == 1) {
+        updated[0] = 1.0;
+      } else {
+        double otherSum = 0.0;
+        for (int i = 0; i < updated.length; i++) {
+          if (i != idx) {
+            otherSum += updated[i];
+          }
+        }
+        double remaining = 1.0 - value;
+        updated[idx] = value;
+        for (int i = 0; i < updated.length; i++) {
+          if (i != idx) {
+            updated[i] = otherSum > 0.0 ? updated[i] * remaining / otherSum : remaining / (updated.length - 1);
+          }
+        }
+      }
+      // Preserve the requested factor exactly while proportionally rescaling the other
+      // outlets before Splitter performs its defensive normalisation.
       sp.setSplitFactors(updated);
       return;
     }
