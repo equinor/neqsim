@@ -559,6 +559,19 @@ HRSG + steam-turbine combined-cycle extension, and reservoir-driven demand.
 | ASME PTC 22 | Gas turbine power performance |
 | ASME PTC 6 | Steam turbine performance |
 
+## Capacity of a platform power system against ambient (field-study pattern)
+
+Use when the question is *"will power capacity bind?"* for a field profile (verified on a FPSO with a mechanical-drive injection turbine and two generator sets):
+
+1. Take the driver ratings from the debottlenecking or datasheet source as sustainable shaft power at a stated ambient (for example 41.4 MW at 5 C and 39.3 MW at 16 C) and fit a lapse per K above the reference. Cross-check the lapse with `GasTurbinePerformanceMap.fromSpec(GasTurbineCatalog.get("SGT_750"))`: the catalog gave 0.205 MW/K against 0.196 from the vendor numbers, and 0.65 %/K for LM2500PLUS_G4. The catalog level is generic (41 MW ISO), so keep the vendor level and use the catalog only for the slope.
+2. Rate against the measured hourly ambient distribution; report utilisation at the hot design day, the mean over the distribution and the gas rate at which the rating is reached at 5 C and at 16 C.
+3. Do not read the certified train power on a compressor datasheet as the limit; it is the duty at the guarantee point.
+4. Electrical load: calibrate to measured generator output and scale the drivers that change (water injection power with injection rate and pressure, recompressors from the model); keep the design offloading step as the peak and the measured p99 minus mean as the empirical peak. Report the N+1 margin as peak load over one generator at hot ambient, not as a production limit.
+5. Heat: demand from the model heaters plus the study utility loads, supply from the vendor WHRU duty against turbine load; check whether both generators must run for heat, which conflicts with a standby unit.
+6. Fuel gas follows the turbine load; the process model usually carries a constant fuel gas flow, so report the fuel change separately and compare with the forecast fuel.
+
+Note: jneqsim 3.5 has no `gasturbine` sub-package; run the catalog cross-check in an environment with a recent jar (3.18 in the shared venv), not in the model environment.
+
 ## Common Pitfalls
 
 | Pitfall | Solution |

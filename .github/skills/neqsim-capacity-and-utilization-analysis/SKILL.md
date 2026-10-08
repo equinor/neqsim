@@ -172,6 +172,7 @@ When a satellite field is tied to a host that has a Python-driven process model 
 
 ## Related skills
 
+- `neqsim-capacity-increase-screening` — turns the constraint map into ranked lever ideas (wells, subsea, topside), an idea register and a maturation pipeline.
 - `neqsim-agentic-process-optimization` — adjustable process inputs, convergence gates, trial feasibility and objectives.
 - `neqsim-optimization-and-doe` — optimizer families, DoE, sweeps, Pareto and uncertainty.
 - `neqsim-controllability-operability` — operating envelopes, turndown and loop response.

@@ -63,3 +63,17 @@ jobs that use `neqsim_init(...)` need no extra step.
 Report "no Java installed" only after the locator finds nothing. The remedy
 then is a portable JDK unpacked into the user profile, which needs no admin
 rights — never a system-wide installer the user cannot run.
+
+## Repo paths in agents and skills, when only the plugin is installed
+
+Agents and skills cite repository paths. Without a NeqSim checkout (agent plugin
+only) map them instead of failing on a missing file:
+
+- `devtools/NAME.py` is the installed toolkit module: run `<python> -m NAME`
+  (for example `-m skill_search`, `-m agent_search`, `-m new_task`,
+  `-m validate_task_results`) or the `neqsim` command. Modules outside the
+  toolkit (build and CI scripts) do not exist for plugin users; skip them.
+- `.github/skills/NAME/SKILL.md` is the skill `NAME`: load it by name from
+  the plugin, do not read that path.
+- A task folder is created with `neqsim new-task`; its templates are packaged,
+  so never copy from a `task_solve/` or `tasks/` path that is not there.

@@ -1,6 +1,6 @@
 ---
 title: "Continuous Task Solving (Living Tasks)"
-description: "How to keep a solved NeqSim engineering task improving over time: persist and resume state, detect evidence changes, analyze impact, selectively rerun calculations, backtest monitoring, and maintain living/current-best reports."
+description: "How to keep a solved NeqSim engineering task improving over time: persist and resume state, detect evidence changes, analyze impact, selectively rerun calculations, backtest monitoring, and maintain living, current-best and final reports."
 ---
 
 # Continuous Task Solving (Living Tasks)
@@ -486,8 +486,10 @@ two concurrent writers.
 
 The **Status** view is the five-second operational summary. The **Living Report** keeps the
 understandable history and change detail. The ordinary Task Solver report remains the clean
-**current-best engineering report**. A later final-report capability will use that same
-canonical report pipeline rather than creating a competing report system.
+**current-best engineering report**. The **Final Report** is an explicitly reviewed, immutable
+delivery revision generated from that same canonical report pipeline; it excludes transient
+cycle history and points to the Living Report, ledger, promoted-cycle manifest and work record
+for auditability.
 
 ## 8.2 Update when evidence changes
 
@@ -787,7 +789,54 @@ the objective) keeps the baseline of the monitored KPIs. With
 `report.formal: on_promote` the Word/HTML report is regenerated; otherwise run
 `neqsim report <task>`.
 
-### 13.5 When the task reopens
+### 13.5 Generate the Final Report
+
+After the latest complete, non-degraded cycle has been reviewed and promoted, and no evidence
+change is pending:
+
+```powershell
+neqsim task-report <task> --final --reviewer "A. Engineer" --note "Issued for delivery"
+```
+
+This invokes the canonical Task Solver Word/HTML generator; it does not fork or replace the
+ordinary report architecture. The ordinary current-best outputs stay in `step3_report/`.
+Final delivery revisions are written separately under `step3_report/final/FR-001/`,
+`FR-002/`, and so on. Each revision includes Word and self-contained HTML plus
+`FINAL_REPORT_MANIFEST.json` with task-relative provenance and SHA-256 hashes. Add `--pdf` when
+the configured host has a supported Word/LibreOffice PDF renderer.
+
+The command fails closed if a cycle is interrupted, the promoted cycle is degraded, evidence is
+pending, `results.json` differs from the promoted snapshot, or the final-report schema is newer
+than the installed runner. Repeating the same finalization is idempotent; a later promoted result
+creates the next revision and preserves earlier deliveries. `task-status` and the Living Report
+show the current final revision and whether changed report inputs have made it stale.
+
+The generated report contains a short **Final Report Record** appendix. It identifies the
+reviewer, promoted baseline and source cycle, and references—but does not copy—the transient
+history in:
+
+- `continuous/LIVING_REPORT.md` (history and change view);
+- `continuous/ledger/events.jsonl` (decision trail);
+- `continuous/cycles/<id>/cycle.json` (promoted-cycle evidence);
+- `step3_report/WORK_RECORD.md` (method, sources and reproducibility record).
+
+#### Multi-day acceptance example
+
+1. **Day 1:** run `task-solve`; close VS Code while a later cycle is incomplete.
+2. **Day 2:** copy or reopen the task folder on another supported machine. Run `task-status`,
+   then `task-resume`. Persisted task state—not chat history—restores the cycle and completed
+   stages. Review and promote the validated result.
+3. **Day 3:** add a revised public datasheet under the task references. `task-status` identifies
+   the changed hash and affected conclusions; `task-update` performs the mapped selective rerun
+   and retains unaffected KPIs. Review and promote the updated result.
+4. Run `task-report --final --reviewer NAME`. The ordinary current-best report remains in place,
+   the Living Report retains the three-day history, and `FR-001` is the standalone delivery.
+
+The synthetic compressor reference case and deterministic devtools tests exercise this sequence,
+including Word/HTML generation, audit references, idempotent re-issue, stale-report detection and
+fail-closed newer-schema handling.
+
+### 13.6 When the task reopens
 
 A monitoring task reopens when the objective drops more than `regress_margin`
 below the baseline, or on `new_evidence` (the references manifest changed),
@@ -835,6 +884,8 @@ Never commit `continuous/data/` or plant data to a public repository.
 | Source `stale` | No new rows for `stale_after_hours` | Check that the export or historian is still delivering |
 | Source `not_installed` | Adapter package missing | Install it into the shared environment (section 14) |
 | Cycle `degraded` | A stage failed or was skipped, or a source was not `ok` | Read `cycle.json` stage messages; rerun the cycle to resume |
+| Final report says evidence changed | Files differ from the accepted evidence inventory | Run `task-update`, validate the selected rerun, then promote it |
+| Final report says results differ from baseline | `results.json` was edited or regenerated after promotion | Validate the result and promote its complete cycle before finalizing |
 | `kpis` stage `warn: no data for ...` | The source returned no rows for that column | Check `column` and `source` names in the plan |
 | Too many drift alarms | Engineering floor missing or too small | Set or raise `min_sigma`; raise `confirm`; backtest again |
 | Agent `not_installed` | `copilot` is not on `PATH` of the scheduled task | Install and sign in to GitHub Copilot CLI, or set `executable` to its full path |
@@ -858,7 +909,8 @@ Never commit `continuous/data/` or plant data to a public repository.
 | `neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]` | Promote a cycle to the baseline |
 | `neqsim task-ledger <task> [list\|show ID\|set ID STATUS --by NAME [--note TEXT]\|merge FILE]` | Improvement ledger |
 | `neqsim task-status [task-or-folder]` | Status of one task, or of all living tasks in a folder (default: the task root) |
-| `neqsim task-report <task> [--formal]` | Rebuild the living report (and the Word/HTML report) |
+| `neqsim task-report <task> [--formal]` | Rebuild the Living Report (`--formal` also rebuilds the ordinary current-best Word/HTML report) |
+| `neqsim task-report <task> --final --reviewer NAME [--note TEXT] [--pdf]` | Generate or reuse an immutable reviewed Final Report revision through the canonical report pipeline |
 | `neqsim task-reference-case [parent-folder]` | Create the public reference task (default: in the task root) |
 
 `<task>` is a folder path, or the name of a folder inside the task root.
