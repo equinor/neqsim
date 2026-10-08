@@ -1176,3 +1176,45 @@ is rejected; normal budget converges in 13 trials to a 0.002861683 bar residual 
 - Reproduced the inherited `devtools/audit_report.py` syntax error reported by CodeQL: command-line directory assignment and the fallback `if` were joined on one line.
 - Restored the statement boundary; `py_compile`, explicit-directory dispatch, and the no-report auto-discovery path pass. No pipeline or report comparison behavior changed.
 - Documentation impact: none; this restores the existing report-audit CLI without changing its inputs or outputs.
+### 2026-10-06 - Visund well-to-export model with gas injection and seven formation fluids tuned to Fluid Symphony PVT (ProcessPilot package)
+**Type:** B (Process / production optimisation)
+**Keywords:** well to export, gas condensate and oil, gas injection window, Uleberg P/A split factor, fluid tuning quality before and after, produced-gas heavy-end leaning, stock-tank oil basis, hold-out window, anchored compressor maps, utilisation register, throughput sweep
+**Solution:** Thirteen producers recombined from seven tuned fluid groups to PDM allocated rates; eight ProcessSystems in a ProcessModel (wells, separation, compression, export, injection, oil, recycle, water); three plant windows (calibration, hold-out, 2020 gas-injection window); LP-stage anti-surge recycle derived from measured motor power; throughput sweep and Monte Carlo on the headroom of the 4th-stage GT.
+**Notes:** A single factor on the allocated oil closed the calibration window and failed the hold-outs; the cause was the C5+ content of the standard gas of the discovery-gas fluids. A produced-gas heavy-end leaning fitted on one window carried to the hold-out window (export oil +0.4 %). Benchmark oil on the stock-tank basis (flash to 15 C, 1 atm). Report the untuned fluid next to the tuned fluid per sample and label each metric fit target or check. Window C needs its own leaning and shows that maps anchored on one window do not transfer (4th-stage speed -10 %).
+
+### 2026-10-07 - Tie-in bottleneck study for a satellite oil field to an existing platform process model (ProcessPilot package)
+**Type:** B (Process / host capacity)
+**Keywords:** tie-in, host bottleneck, utilisation register, plan profiles by field, annual-mean and p90-day rates, linear response per (unit, metric), ullage, Monte Carlo on response surface, turndown versus capacity
+**Solution:** Every manifold of the existing platform model is split into oil, gas and water at standard conditions with the model EOS and scaled to the plan rates of its field; the satellite fluid is mapped to the model pseudo-components by molar-mass interpolation and mixed into the HP manifold. Eleven cases (host plan, three satellite profiles, host upside, x2 satellite) at annual-mean and p90-day rates ran as resumable parallel jobs; ullage, tornado and a 20 000-draw Monte Carlo come from a response surface fitted per (unit, metric) to the runs.
+**Notes:** Scale every manifold of a field, including the test-separator manifold; leaving it out added about 1 MSm3/d gas to every case. Interpolate per (unit, metric): the binding metric of a vessel switched from water to oil when the satellite oil was added and the best-metric slope was wrong by a factor of three. Surge and minimum-flow rows are turndown, not capacity. Annual-mean plan rates hid the exceedances that appear at p90-day rates (PDM p90 over mean 1.17-1.21). Case runs at low gas flow (swing compressors idle) took 15-60 min or did not converge; plan the run budget for the declining years. `generate_work_record.py` now accepts a list-form `figure_captions`. Produced water and water injection are outside the model: use demonstrated peaks and one STID design case and say so.
+
+### 2026-10-07 — Backport conservative optimizer bracket discovery to live-well PR
+**Type:** G (Workflow)
+**Keywords:** optimizer, compressor, replay, feasible bracket, CI
+**Solution:** `BottleneckAnalysisOptimizerTest.testTwoStageOptimizationRecommendedApproach`
+**Notes:** Backported the existing master probe reserve to PR #4257. Bracket discovery uses a 0.5% utilization reserve; stage-two optimization and all repeated physical-capacity assertions retain the strict 100% limit. The original CI replay failure did not reproduce in the focused local run. Documentation impact: none for public APIs or user guides; only the test's conservative bracket discovery changes.
+
+### 2026-10-07 — Repair gas value-chain surrogate PR #4261
+**Type:** G (Repository maintenance)
+**Keywords:** merge conflict, engineering coverage, gas surrogates, work-record captions
+**Solution:** Preserved both branches' task-log additions while incorporating master;
+regenerated the engineering inventory for the new gas-chain APIs and retained master's
+live-well registrations. Added dictionary/list caption regression tests and documented
+pressure conventions, rate units, surrogate assumptions and validation boundaries.
+**Notes:** On the repaired tree, 20 focused Java tests and 30 Python tests passed.
+Direct Spotless apply/check, pre-commit/pre-push, documentation-search and engineering
+coverage checks passed. Full cross-platform CI is required on the published merge commit.
+
+### 2026-10-08 — Repair PR #4260 hydraulic exception compatibility
+**Type:** G (Repository maintenance / numerical compatibility)
+**Keywords:** Beggs and Brill, invalid candidate, exception cause, regression, merge conflict
+**Solution:** Retained `InvalidOutputException` as the cause of the typed hydraulic-domain
+exception so existing process candidate rejection recognizes an infeasible forward pressure.
+The inverse solver still bounds only that typed failure, and property failures retain their
+original causes. Added a forward failure/recovery regression and documented the cause contract.
+Merged current master while preserving both task-log histories and regenerated engineering
+coverage for the combined tree.
+**Validation:** Reproduced the existing extreme-flow compressor test failure on the original
+PR head and the new cause-chain regression before the repair. The unchanged optimizer test,
+pipeline regressions and evaluator suites are the focused acceptance gates; exact results and
+publication-head CI status are recorded in PR #4260.

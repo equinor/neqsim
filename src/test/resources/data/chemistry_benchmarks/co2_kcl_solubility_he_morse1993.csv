@@ -1,0 +1,12 @@
+# He and Morse (1993), as compiled by NIST SRD 106 system 62_229.
+# Source: https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_229
+# Original measurements: Geochimica et Cosmochimica Acta 57 (1993), 3533-3554.
+# CO2 partial pressure is reported by NIST; molalities are on a kg-water basis.
+# Relative CO2-solubility uncertainty: 0.012. Temperature uncertainty: 0.1 K.
+point_id,temperature_K,co2_partial_pressure_atm,solvent_density_g_per_cm3,co2_molality_mol_per_kg_water,kcl_molality_mol_per_kg_water,co2_activity_coefficient
+HM273-KCL0100,273.15,0.966,1.0059,0.0713,0.100,1.06
+HM273-KCL0505,273.15,0.966,1.0248,0.0691,0.505,1.09
+HM273-KCL1008,273.15,0.966,1.0473,0.0629,1.008,1.20
+HM273-KCL2015,273.15,0.966,1.0896,0.0575,2.015,1.32
+HM273-KCL3004,273.15,0.966,1.1275,0.0534,3.004,1.41
+HM273-KCL3508,273.15,0.966,1.1443,0.0525,3.508,1.44

@@ -44,6 +44,7 @@ def _make_task(root):
     (task / "step3_report").mkdir(parents=True)
     (task / "step1_scope_and_research").mkdir()
     shutil.copy(str(GENERATOR), str(task / "step3_report" / "generate_report.py"))
+    shutil.copy(str(GENERATOR.with_name("report_kit.py")), str(task / "step3_report"))
     (task / "results.json").write_text(json.dumps({
         "key_results": {"outlet_temperature_C": -18.5},
         "validation": {"acceptance_criteria_met": True},

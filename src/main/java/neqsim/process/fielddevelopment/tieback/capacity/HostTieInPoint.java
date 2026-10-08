@@ -39,6 +39,9 @@ public final class HostTieInPoint implements Serializable {
   /** Process-rate-unit factor per m3/d total liquid. */
   private double liquidToProcessRateFactor = 0.0;
 
+  /** Optional provider of a load-dependent molar feed; replaces the rate factors when set. */
+  private HostFeedProvider feedProvider;
+
   /**
    * Creates a tie-in point for a process stream.
    *
@@ -131,6 +134,31 @@ public final class HostTieInPoint implements Serializable {
   public HostTieInPoint setLiquidToProcessRateFactor(double factor) {
     this.liquidToProcessRateFactor = factor;
     return this;
+  }
+
+  /**
+   * Sets a provider of the molar feed for each trial load.
+   *
+   * <p>
+   * When set, the planner sets both the composition and the molar rate of the tie-in stream from the provider and the
+   * rate conversion factors are not used. The original composition and rate are restored after each trial.
+   * </p>
+   *
+   * @param feedProvider provider, or null to scale the stream composition-fixed with the rate factors
+   * @return this tie-in point for method chaining
+   */
+  public HostTieInPoint setFeedProvider(HostFeedProvider feedProvider) {
+    this.feedProvider = feedProvider;
+    return this;
+  }
+
+  /**
+   * Gets the molar feed provider.
+   *
+   * @return provider, or null when the stream composition stays fixed
+   */
+  public HostFeedProvider getFeedProvider() {
+    return feedProvider;
   }
 
   /**

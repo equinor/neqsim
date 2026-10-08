@@ -9250,6 +9250,23 @@ public class ProcessSystem extends SimulationBaseClass {
             co.addProperty("utilizationPercent", cu * 100.0);
             co.addProperty("current", c.getCurrentValue());
             co.addProperty("design", c.getDisplayDesignValue());
+            co.addProperty("applicableLimit", c.getApplicableLimit());
+            co.addProperty("applicableLimitRole", c.getApplicableLimitRole().name());
+            co.addProperty("applicableLimitSource", c.getApplicableLimitSource().name());
+            co.addProperty("applicableLimitSourceReference", c.getApplicableLimitSourceReference());
+            co.addProperty("basis", c.getBasis());
+            if (c.hasOperatingLimit()) {
+              co.addProperty("operatingLimit", c.getOperatingLimit());
+              co.addProperty("operatingLimitSource", c.getOperatingLimitSource().name());
+              co.addProperty("operatingLimitSourceReference", c.getOperatingLimitSourceReference());
+              if (c.hasOperatingLimitConfidence()) {
+                co.addProperty("operatingLimitConfidence", c.getOperatingLimitConfidence());
+              }
+              if (c.hasOperatingLimitValidityRange()) {
+                co.addProperty("operatingLimitValidityMinimum", c.getOperatingLimitValidityMinimum());
+                co.addProperty("operatingLimitValidityMaximum", c.getOperatingLimitValidityMaximum());
+              }
+            }
             if (c.getUnit() != null) {
               co.addProperty("unit", c.getUnit());
             }

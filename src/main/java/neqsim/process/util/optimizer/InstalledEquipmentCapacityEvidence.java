@@ -95,6 +95,16 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
   private final String physicalUnit;
   private final String description;
   private final String dataSource;
+  private final String designBasis;
+  private final CapacityConstraint.ConstraintSource designSource;
+  private final String designSourceReference;
+  private final boolean operatingLimitSet;
+  private final double operatingLimit;
+  private final CapacityConstraint.ConstraintSource operatingLimitSource;
+  private final String operatingLimitSourceReference;
+  private final CapacityConstraint.ApplicableLimitRole applicableLimitRole;
+  private final CapacityConstraint.ConstraintSource applicableLimitSource;
+  private final String applicableLimitSourceReference;
   private final boolean confidenceSet;
   private final double confidence;
   private final boolean validityRangeSet;
@@ -135,7 +145,7 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
     this.designValue = constraint.getDesignValue();
     this.minimumValue = constraint.getMinValue();
     this.maximumValue = constraint.getMaxValue();
-    this.applicableLimit = constraint.getDisplayDesignValue();
+    this.applicableLimit = constraint.getApplicableLimit();
     this.normalizedUtilization = constraint.getUtilization(currentValue);
     this.normalizedMargin = 1.0 - this.normalizedUtilization;
     this.physicalMargin = calculatePhysicalMargin(currentValue, this.applicableLimit, this.limitDirection);
@@ -144,11 +154,21 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
     this.physicalUnit = safeText(constraint.getUnit());
     this.description = safeText(constraint.getDescription());
     this.dataSource = safeDataSource(constraint.getDataSource());
-    this.confidenceSet = constraint.hasConfidence();
-    this.confidence = this.confidenceSet ? constraint.getConfidence() : Double.NaN;
-    this.validityRangeSet = constraint.hasValidityRange();
-    this.validityMinimum = this.validityRangeSet ? constraint.getValidityMinimum() : Double.NaN;
-    this.validityMaximum = this.validityRangeSet ? constraint.getValidityMaximum() : Double.NaN;
+    this.designBasis = safeText(constraint.getBasis());
+    this.designSource = constraint.getSource();
+    this.designSourceReference = safeText(constraint.getSourceReference());
+    this.operatingLimitSet = constraint.hasOperatingLimit();
+    this.operatingLimit = this.operatingLimitSet ? constraint.getOperatingLimit() : Double.NaN;
+    this.operatingLimitSource = constraint.getOperatingLimitSource();
+    this.operatingLimitSourceReference = safeText(constraint.getOperatingLimitSourceReference());
+    this.applicableLimitRole = constraint.getApplicableLimitRole();
+    this.applicableLimitSource = constraint.getApplicableLimitSource();
+    this.applicableLimitSourceReference = safeText(constraint.getApplicableLimitSourceReference());
+    this.confidenceSet = constraint.hasApplicableLimitConfidence();
+    this.confidence = this.confidenceSet ? constraint.getApplicableLimitConfidence() : Double.NaN;
+    this.validityRangeSet = constraint.hasApplicableLimitValidityRange();
+    this.validityMinimum = this.validityRangeSet ? constraint.getApplicableLimitValidityMinimum() : Double.NaN;
+    this.validityMaximum = this.validityRangeSet ? constraint.getApplicableLimitValidityMaximum() : Double.NaN;
     this.evidenceApplicability = determineApplicability(this.validityRangeSet, currentValue, this.validityMinimum,
         this.validityMaximum);
     this.evidenceStatus = determineStatus(currentValue, this.applicableLimit, this.normalizedUtilization);
@@ -333,6 +353,60 @@ public final class InstalledEquipmentCapacityEvidence implements Serializable {
   /** @return source of the installed limit */
   public String getDataSource() {
     return dataSource;
+  }
+
+  /** @return provenance-derived basis of the preserved design/default limit */
+  public String getDesignBasis() {
+    return designBasis;
+  }
+
+  /** @return authority backing the preserved design/default limit */
+  public CapacityConstraint.ConstraintSource getDesignSource() {
+    return designSource == null ? CapacityConstraint.ConstraintSource.DEFAULT : designSource;
+  }
+
+  /** @return reference supporting the preserved design/default limit */
+  public String getDesignSourceReference() {
+    return designSourceReference;
+  }
+
+  /** @return true when a separate configured operating limit was sampled */
+  public boolean hasOperatingLimit() {
+    return operatingLimitSet;
+  }
+
+  /** @return configured operating limit, or NaN when absent */
+  public double getOperatingLimit() {
+    return operatingLimitSet ? operatingLimit : Double.NaN;
+  }
+
+  /** @return authority backing the configured operating limit, or null when absent */
+  public CapacityConstraint.ConstraintSource getOperatingLimitSource() {
+    return operatingLimitSet ? operatingLimitSource : null;
+  }
+
+  /** @return configured operating-limit reference, empty when absent */
+  public String getOperatingLimitSourceReference() {
+    return operatingLimitSet ? operatingLimitSourceReference : "";
+  }
+
+  /** @return role of the limit used to calculate utilization and feasibility */
+  public CapacityConstraint.ApplicableLimitRole getApplicableLimitRole() {
+    if (applicableLimitRole != null) {
+      return applicableLimitRole;
+    }
+    return operatingLimitSet ? CapacityConstraint.ApplicableLimitRole.CONFIGURED_OPERATING
+        : CapacityConstraint.ApplicableLimitRole.DESIGN_RATED;
+  }
+
+  /** @return authority backing the applicable limit */
+  public CapacityConstraint.ConstraintSource getApplicableLimitSource() {
+    return applicableLimitSource == null ? getDesignSource() : applicableLimitSource;
+  }
+
+  /** @return reference supporting the applicable limit */
+  public String getApplicableLimitSourceReference() {
+    return applicableLimitSourceReference;
   }
 
   /** @return true when evidence-quality confidence was explicitly assigned */

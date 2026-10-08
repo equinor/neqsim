@@ -82,6 +82,10 @@ calculation identifiers, clears the pipe calculation identifier, and makes `solv
 run must not be consumed. Only a specifically identified non-positive hydraulic pressure is
 used as an excessive-flow bound; arbitrary runtime exceptions never tighten the bracket.
 
+Forward pressure calculations also throw on non-positive hydraulic pressure and retain the
+public `InvalidOutputException` in the cause chain. Process candidate evaluators can use this
+cause to reject the infeasible operating point while direct `run()` continues to throw.
+
 Existing setters and successful flow-mode behavior remain supported. The initial rate must be
 finite and positive, the target must be positive and below the inlet pressure, and the relative
 tolerance must be finite and between zero and one. The lower search bound is the smaller of

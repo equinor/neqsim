@@ -477,7 +477,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Expected hydraulic-domain failure used only to bound the flow solve.
+   * Hydraulic-domain failure used to bound the flow solve. Retains the public invalid-output cause so process candidate
+   * evaluators can recognize an infeasible pressure in forward mode.
    *
    * @author Even Solbraa
    * @version 1.0
@@ -491,7 +492,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
      * @param pressure rejected pressure in bara
      */
     HydraulicDomainException(double pressure) {
-      super("Non-positive pipeline pressure: " + pressure + " bara");
+      super("Non-positive pipeline pressure: " + pressure + " bara",
+          new neqsim.util.exception.InvalidOutputException("PipeBeggsAndBrills", "run: calcOutletPressure",
+              "pressure out", pressure < 0 ? "- Outlet pressure is negative" + pressure : "- Outlet pressure is zero"));
     }
   }
 

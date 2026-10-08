@@ -36,6 +36,25 @@ class PipeBeggsAndBrillsFlowSolveTest {
     return pipe;
   }
 
+  /** A hydraulic-domain bound retains the public invalid-output cause used by candidate rejection. */
+  @Test
+  void forwardHydraulicFailurePreservesInvalidOutputCauseAndRecovers() {
+    PipeBeggsAndBrills pipe = pipe();
+    pipe.setCalculationMode(PipeBeggsAndBrills.CalculationMode.CALCULATE_OUTLET_PRESSURE);
+    pipe.run();
+    assertTrue(pipe.getOutletStream().getPressure("bara") > 0.0);
+    pipe.getInletStream().setFlowRate(1000.0, "kg/sec");
+    pipe.getInletStream().run();
+    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> pipe.run());
+    assertTrue(failure.getCause() instanceof neqsim.util.exception.InvalidOutputException);
+    assertTrue(failure.getCause().getMessage().contains("Outlet pressure is negative"));
+    pipe.getInletStream().setFlowRate(10.0, "kg/sec");
+    pipe.getInletStream().run();
+    pipe.run();
+    assertTrue(pipe.getOutletStream().getPressure("bara") > 0.0);
+    assertNull(pipe.getFlowSolveReport());
+  }
+
   /** An exhausted iteration budget must never return a capacity. */
   @Test
   void iterationLimitThrowsAndRestoresInlet() {

@@ -65,6 +65,19 @@ class KeyLabelTest(unittest.TestCase):
         self.assertEqual(text.count("First finding"), 1)
         self.assertNotIn("Key findings:", text)
 
+    def test_executive_summary_leads_with_conclusions_without_provenance(self):
+        results = {"approach": "Data read from PEPR, STID and SAP as evidence for the study.",
+                   "conclusions": "The heavy-component problem is real.",
+                   "assumptions": [{"assumption": "a"}],
+                   "data_gaps": [{"gap": "g"}],
+                   "validation": {"ok": True},
+                   "benchmark_validation": {"tests": [{"parameter": "p", "pass": True}]}}
+        text = GR.auto_executive_summary(results, "")
+        self.assertTrue(text.startswith("The heavy-component problem is real."))
+        for noise in ("Evidence basis", "could not be obtained", "benchmark comparisons passed",
+                      "did not flag design blockers", "PEPR, STID"):
+            self.assertNotIn(noise, text)
+
     def test_improvement_target_uses_repo_and_file(self):
         text = GR.format_improvements_text({"improvements": [
             {"repo": "neqsim", "file": "devtools/x.py", "change": "fixed"}]})

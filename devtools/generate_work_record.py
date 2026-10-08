@@ -752,6 +752,9 @@ def build_work_record(task_dir: Path, preserved: dict) -> str:
 
     figures_dir = task_dir / "figures"
     captions = results.get("figure_captions") or {}
+    if isinstance(captions, list):
+        captions = {Path(str(c.get("file", ""))).name: c.get("caption") or c.get("title") or "-"
+                    for c in captions if isinstance(c, dict)}
     figure_files = sorted(figures_dir.glob("*.png")) if figures_dir.is_dir() else []
     if figure_files:
         out.append("Figures (`figures/`):")

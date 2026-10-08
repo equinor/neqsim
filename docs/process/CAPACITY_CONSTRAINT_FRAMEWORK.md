@@ -620,6 +620,29 @@ JSON, and CSV. Set a concise provenance tag such as `mechanicalDesign`, `install
 optimizers should retain this tag with recommendations rather than treating all limits as equally
 authoritative.
 
+#### Facility operating limits without losing the design basis
+
+Do not overwrite `designValue` when a temporary or facility-specific operating restriction is
+tighter than the installed rating. Configure a separate operating limit instead. Utilization,
+feasibility, physical margin, operating-envelope rejection, and bottleneck ranking then use the
+operating value, while the original design/default value and provenance remain inspectable. Start
+with the normal `setDesignValue(...)`, `setSource(...)`, and `setDataSource(...)` definition. Then
+call `setOperatingLimit(limit, ConstraintSource.USER_RULE, reference)`, followed when qualified by
+`setOperatingLimitConfidence(...)` and `setOperatingLimitValidityRange(...)`.
+
+`getDisplayDesignValue()` remains `12000 kg/h`; `getApplicableLimit()` is `9000 kg/h`, and
+`getApplicableLimitRole()` reports `CONFIGURED_OPERATING`. Calling `clearOperatingLimit()` restores
+the design/default limit without reconstructing the constraint. Minimum-directed constraints use
+the same override API and retain their direction.
+
+The operating override has its own source/reference, confidence, and applicability range. Changing
+the override clears its prior confidence/range, preventing stale qualification metadata from
+following a new value. `InstalledEquipmentCapacityEvidence`, operational evidence JSON, process
+utilization JSON, compressor operating-point snapshots, and operating-envelope leading-constraint
+evidence preserve both the design/default basis and the applicable operating limit. Paired
+`ProcessModelDebottleneckStudy` alternatives now apply and restore this separate layer rather than
+temporarily replacing the installed rating.
+
 #### Confidence and validity metadata
 
 Use confidence and validity metadata to state how strongly the limit is supported and where its
@@ -766,6 +789,8 @@ Configurable properties (all are optional fluent setters returning `this`):
 | Setter | Purpose | Default |
 |--------|---------|---------|
 | `setDesignValue(double)` | Limit used for utilization = current / design | required |
+| `setOperatingLimit(double, ConstraintSource, String)` | Facility operating override; preserves design/default value and provenance | none |
+| `clearOperatingLimit()` | Restore design/default value as the applicable limit | none |
 | `setValueSupplier(DoubleSupplier)` | **Live** current value, re-evaluated each query | none |
 | `setCurrentValue(double)` | Static current value (use when there is no live source) | Legacy zero; `hasCurrentValue()` is false until assigned |
 | `setMaxValue(double)` | Absolute trip point for `HARD` constraints | none |

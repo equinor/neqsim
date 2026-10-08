@@ -279,8 +279,9 @@ public final class UtilizationCoverageReport implements Serializable {
       unit = PlantConstraintScope.safeText(constraint.getUnit());
       basis = definition == null ? PlantConstraintScope.safeText(declaredBasis) : definition.getBasis();
       String dataSource = PlantConstraintScope.safeText(constraint.getDataSource());
-      String sourceReference = PlantConstraintScope.safeText(constraint.getSourceReference());
-      String liveProvenance = isMissingSource(dataSource) ? sourceReference : dataSource;
+      String sourceReference = PlantConstraintScope.safeText(constraint.getApplicableLimitSourceReference());
+      String liveProvenance = constraint.hasOperatingLimit() ? sourceReference
+          : isMissingSource(dataSource) ? sourceReference : dataSource;
       provenance = definition != null ? definition.getProvenance() : liveProvenance;
       minimumConstraint = constraint.isMinimumConstraint();
       List<Status> gaps = new ArrayList<Status>();
@@ -296,7 +297,7 @@ public final class UtilizationCoverageReport implements Serializable {
         gaps.add(Status.METADATA_MISMATCH);
       }
       Double sampled = null;
-      Double limit = finite(constraint.getDisplayDesignValue());
+      Double limit = finite(constraint.getApplicableLimit());
       if (limit != null && limit.doubleValue() == Double.MAX_VALUE) {
         limit = null;
       }

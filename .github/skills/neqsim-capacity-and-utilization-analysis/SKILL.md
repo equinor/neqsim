@@ -158,6 +158,18 @@ To record bottleneck migration, after each converged model state call `tracker.r
 - Fit production measurements against independently reconciled plant data. Check gas standard conditions, reference conditions, phase presence and water basis before comparing rates; internal regression tests are not a field-data benchmark.
 - When a capacity result drives an operating/design decision, supply a documented basis and compare the limiting condition with vendor, installed, empirical or otherwise approved data. A utilization snapshot is not a safety assessment.
 
+## Tie-in bottleneck study on an existing process model
+
+When a satellite field is tied to a host that has a Python-driven process model and a datasheet utilization register:
+
+- Feed the model plan rates by year, not the calibration day: split every manifold stream into oil, gas and water at standard conditions with the model EOS and scale the three parts to the plan rate of the field. Include every manifold of the field (a test-separator manifold carried 0.96 MSm3/d gas and was missed once). Check that the standard volumes of the feeds sum to the PDM facility rates before running years.
+- Map the satellite fluid into the model pseudo-components (light ends by name, cuts by molar-mass interpolation, moles and mass conserved), check GOR and stock-tank density in the model EOS, and mix it into the intended header with an adiabatic mixer.
+- Run annual-mean and p90-day rates (PDM p90 over mean is 1.17-1.21 for oil, gas and water on a North Sea host); annual means hide the exceedances.
+- Keep surge and minimum-continuous-flow rows apart from capacity rows; they are turndown indicators.
+- Fit linear responses per (unit, metric), never per unit: the binding metric of a vessel can switch (water to oil) when the feed changes. Verify with a run at twice the satellite rate. The multiplier at which a unit reaches 100 % gives the ullage.
+- Units outside the model (produced water, water injection, flare) get a separate screen against demonstrated peaks and any STID design case, labelled as such.
+- Budget the run time: low-flow years can take 15-60 minutes per case or not converge when swing compressors idle; run jobs as resumable parallel processes and write one result line per point.
+
 ## Related skills
 
 - `neqsim-agentic-process-optimization` — adjustable process inputs, convergence gates, trial feasibility and objectives.
