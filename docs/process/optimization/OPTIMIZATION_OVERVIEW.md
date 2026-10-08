@@ -254,6 +254,17 @@ Use `ProcessModelSimulationEvaluator` directly when you need a lower-level black
 
 Use `ProcessModelOperatingEnvelopeStudy` when the engineering question is a sampled one- or two-dimensional operating envelope over already-declared `ProcessModelOperatingAction` controls. The study reuses `ProcessModelOperatingActionSetEvaluator` for every grid point, so failed or infeasible points retain the same constraint and restoration evidence and sampling stops immediately if the mutable baseline cannot be restored and reconverged. Feasible points retain the existing ranked installed-equipment bottleneck. Infeasible points use the exact fail-closed rejection source: the first applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated hard model constraint in declaration order. The result retains physical value, limit, margin, unit and normalized evidence without comparing kW, velocity, rate, surge margin or other unlike quantities. A sampled slice is not proof of a continuous feasible boundary or optimizer active set.
 
+For a live field network, add `FieldWellNetworkProcessUnit` to the normal process area
+and address its canonical choke and edge controls through `ProcessAutomation`. This
+lets the same transactional evaluator run the coupled well/network solve before
+separator, compressor, common-shaft and shared-power evidence is captured. Splitter
+route actions preserve the requested outlet fraction exactly and proportionally
+rescale the remaining outlets, which is required for deterministic candidate
+read-back and exact reverse-order restoration. Common-shaft casing/allocation
+consistency uses the explicitly configured power-balance tolerance; stale calculation
+identities, non-finite evidence and discrepancies outside that tolerance still fail
+closed.
+
 Use `ProcessModelDebottleneckStudy` after the evaluator and direct installed constraints are configured when one documented capacity replacement or expansion must be compared with the installed baseline. It uses the same search policy for both scenarios, freezes immutable objective/constraint/metric evidence, and restores the installed limit plus pre-study operating point. This is a paired screening study, not an equipment-sizing algorithm or economic approval.
 
 Use `ProcessModelDebottleneckRanking` after independent paired studies complete when alternatives

@@ -276,7 +276,8 @@ public final class PlantCommonShaftEvidence implements Serializable {
     boolean casingTotalAvailable = true;
     for (CasingInput input : new TreeMap<String, CasingInput>(builder.casings).values()) {
       EnergyAllocation allocation = allocations.remove(input.participantId);
-      CasingEvidence casing = captureCasing(input, allocation, sourceCalculationId, provenance);
+      CasingEvidence casing = captureCasing(input, allocation, sourceCalculationId, provenance,
+          builder.powerBalanceToleranceKw);
       captured.add(casing);
       if (!casing.isUsable()) {
         findings.add(input.participantId + "=" + casing.getStatus().name() + diagnosticSuffix(casing.getDiagnostic()));
@@ -403,7 +404,7 @@ public final class PlantCommonShaftEvidence implements Serializable {
   }
 
   private static CasingEvidence captureCasing(CasingInput input, EnergyAllocation allocation, String calculationId,
-      String provenance) {
+      String provenance, double powerBalanceToleranceKw) {
     if (input.compressor == null) {
       return unavailableCasing(input.participantId, input.participantId, CasingStatus.MISSING, provenance,
           "Compressor object is missing");
@@ -435,10 +436,12 @@ public final class PlantCommonShaftEvidence implements Serializable {
         return unavailableCasing(input.participantId, equipmentName, CasingStatus.NON_FINITE_VALUE, provenance,
             "Speed or shaft power is unavailable");
       }
-      if (!approximatelyEqual(power, allocation.getRequestedPower() / 1000.0)) {
+      double requestedPowerKw = allocation.getRequestedPower() / 1000.0;
+      if (!approximatelyEqual(power, requestedPowerKw)
+          && Math.abs(power - requestedPowerKw) > powerBalanceToleranceKw) {
         return unavailableCasing(input.participantId, equipmentName, CasingStatus.METADATA_MISMATCH, provenance,
-            "Compressor power differs from the shaft request: observed=" + power + " kW, requested="
-                + allocation.getRequestedPower() / 1000.0 + " kW");
+            "Compressor power differs from the shaft request: observed=" + power + " kW, requested=" + requestedPowerKw
+                + " kW");
       }
       if (input.outOfService) {
         if (power == 0.0 && allocation.getRequestedPower() == 0.0) {

@@ -82,6 +82,20 @@ class PlantCommonShaftEvidenceTest {
   }
 
   @Test
+  void configuredPowerToleranceControlsCasingAllocationConsistency() {
+    TrainFixture fixture = trainFixture(800.0, 900.0);
+
+    PlantCommonShaftEvidence withinTolerance = fixture.evidence(400.0000005, 350.0, 10000.0, 0.12, 0.18, 0.08, 0.21,
+        true);
+    PlantCommonShaftEvidence outsideTolerance = fixture.evidence(400.000002, 350.0, 10000.0, 0.12, 0.18, 0.08, 0.21,
+        true);
+
+    assertTrue(withinTolerance.isComplete(), withinTolerance.getDiagnostics().toString());
+    assertFalse(outsideTolerance.isComplete());
+    assertTrue(outsideTolerance.getDiagnostics().stream().anyMatch(value -> value.contains("METADATA_MISMATCH")));
+  }
+
+  @Test
   void explicitlyUnavailableCasingRequiresAndPreservesVerifiedZeroLoad() {
     TrainFixture fixture = trainFixture(500.0, 900.0);
     fixture.casingBPort.setRequestedPower(0.0, "kW");

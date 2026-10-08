@@ -176,6 +176,33 @@ backpressure response, conservation, shut-in, BHP/drawdown and fracture limits,
 incompatible injection fluids, and semantic binding errors. This is integration and
 conservation evidence, not independent IPR/VLP, injectivity or field qualification.
 
+### Process-system and optimization integration
+
+`FieldWellNetworkProcessUnit` is the process-equipment adapter for the same coupled
+topology. Add it to a `ProcessSystem` before downstream separators, scrubbers,
+splitters and compressors. Its fixed-pressure sink streams are stable process stream
+identities, so the downstream facility remains connected across repeated optimizer
+runs. The unit is solved only when the complete outer coupling result is converged,
+all aggregate and per-well values are finite, and every live well reports accepted
+inner convergence. Iteration limits, physical well limits or incomplete evidence
+therefore leave the unit unsolved instead of exposing a partially accepted candidate.
+
+The adapter exposes the canonical `LoopedPipeNetwork` to `ProcessAutomation` rather
+than adding another network-control model. Existing addresses for choke opening,
+edge availability, regulator pressure, compressor speed and pump work remain
+available under the process-unit name. A copied unit rebuilds the topology definition,
+copies the bound `WellSystem`/`WellFlow` objects and rebinds them before execution;
+accepted runtime state is not shared with the source unit.
+
+The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
+well chokes through individual gathering lines to a host, then routes the stable host
+stream between two separators and mapped compressors on a common shaft. It exercises
+configured well/line/separator operating limits, compressor surge/stonewall evidence,
+driver and gearbox power, a shared plant-power budget, a transactional route action,
+baseline restoration and an operating-envelope slice. A route rejected by compressor
+or other hard evidence remains rejected; the test does not relax physical limits to
+obtain a feasible optimizer result.
+
 ## Dependency-ordered continuation
 
 1. Qualify multi-template, daisy-chain, branches/loops and brownfield networks with
