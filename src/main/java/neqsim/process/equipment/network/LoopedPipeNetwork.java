@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
@@ -784,6 +785,26 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
      */
     public TwoFluidPipe getTwoFluidModel() {
       return twoFluidModel;
+    }
+
+    /**
+     * Create an independent two-fluid pipe initialized from the last accepted network solve.
+     *
+     * <p>
+     * The returned pipe is a deep copy. It retains the converged pressure, temperature, holdup and phase-velocity
+     * fields, so callers can configure transient boundaries and advance it without mutating the network edge or its
+     * hydraulic evidence.
+     * </p>
+     *
+     * @return independent pipe initialized from the converged steady state
+     * @throws IllegalStateException if the edge has no accepted two-fluid steady state
+     */
+    public TwoFluidPipe createInitializedTwoFluidPipe() {
+      if (twoFluidModel == null || !"TWO_FLUID_CONVERGED".equals(hydraulicModelStatus)
+          || !twoFluidModel.isSteadyStateConverged()) {
+        throw new IllegalStateException("Edge '" + name + "' has no converged two-fluid state to initialize");
+      }
+      return SerializationUtils.clone(twoFluidModel);
     }
 
     /**
@@ -3593,6 +3614,20 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       nodeFluidMap.put(sourceNodeName, fluid.clone());
       assignedNodeFluidNames.add(sourceNodeName);
     }
+  }
+
+  /**
+   * Get node names with explicitly assigned boundary fluids.
+   *
+   * <p>
+   * The returned names distinguish user-assigned source states from conservative junction states calculated during
+   * compositional mixing. This is useful when replaying the same hydraulic definition for alternative model fidelities.
+   * </p>
+   *
+   * @return immutable assigned-node name set
+   */
+  public Set<String> getAssignedNodeFluidNames() {
+    return Collections.unmodifiableSet(new HashSet<String>(assignedNodeFluidNames));
   }
 
   /**
