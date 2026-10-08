@@ -6,14 +6,18 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Constrained fluid equilibrium for non-reactive CO2/water/electrolyte-CPA hydrate calculations.
+ * Constrained fluid equilibrium for non-reactive CO2/water/MEG/electrolyte-CPA hydrate calculations.
  *
  * <p>
  * Independent vapour and liquid CO2 trials are compared with a conserved aqueous feed. Ions have zero partition
  * coefficients. An absent CO2 phase must pass a normalized tangent-plane trial; an interior split must close component
  * balances and molecular fugacities. Only accepted states are copied to the caller. This uses the existing EOS
- * parameters, without hydrate or salt-solid material phases, and does not establish experimental model accuracy.
+ * parameters with optional molecular MEG partitioning, without hydrate or salt-solid material phases, and does not
+ * establish experimental model accuracy.
  * </p>
+ *
+ * @author Even Solbraa
+ * @version 1.0
  */
 public final class CO2BrinePhaseEquilibrium {
   private static final double FLOOR = 1.0e-50;
@@ -25,20 +29,21 @@ public final class CO2BrinePhaseEquilibrium {
   /**
    * Creates a fluid-phase calculation without modifying the supplied system.
    *
-   * @param system non-reactive electrolyte-CPA CO2/water feed
+   * @param system non-reactive electrolyte-CPA CO2/water feed with optional MEG
    */
   public CO2BrinePhaseEquilibrium(SystemInterface system) {
     this.system = system;
   }
 
   /**
-   * Checks the composition/model scope of this constrained two-molecular-component calculation.
+   * Checks the composition/model scope of this constrained molecular phase calculation.
    *
    * @param fluid system to inspect
-   * @return true for water-rich, non-reactive electrolyte-CPA CO2/water with optional explicit ions
+   * @return true for non-reactive electrolyte-CPA CO2/water with optional ions and MEG, with water moles exceeding the
+   * combined CO2 and MEG moles
    */
   public static boolean isApplicable(SystemInterface fluid) {
-    return !fluid.isChemicalSystem() && hasSupportedComposition(fluid);
+    return !fluid.isChemicalSystem() && hasSupportedComposition(fluid, true);
   }
 
   /**
@@ -48,19 +53,33 @@ public final class CO2BrinePhaseEquilibrium {
    * @return whether only CO2, water and aqueous ions are present in the supported model
    */
   static boolean hasSupportedComposition(SystemInterface fluid) {
+    return hasSupportedComposition(fluid, false);
+  }
+
+  /**
+   * Checks molecular composition without extending the reactive coupling to organic inhibitors.
+   *
+   * @param fluid system to inspect
+   * @param allowMeg whether molecular MEG may partition between the CO2-rich and aqueous phases
+   * @return whether the model and conserved molecular feed are supported
+   */
+  private static boolean hasSupportedComposition(SystemInterface fluid, boolean allowMeg) {
     if (!(fluid instanceof SystemElectrolyteCPAstatoil) || fluid.doSolidPhaseCheck() || fluid.isForcePhaseTypes()
         || !fluid.getPhase(0).hasComponent("CO2") || !fluid.getPhase(0).hasComponent("water")) {
       return false;
     }
     double water = fluid.getPhase(0).getComponent("water").getNumberOfmoles();
     double co2 = fluid.getPhase(0).getComponent("CO2").getNumberOfmoles();
-    if (!(co2 > 0.0) || !(water > co2)) {
+    double meg = allowMeg && fluid.getPhase(0).hasComponent("MEG")
+        ? fluid.getPhase(0).getComponent("MEG").getNumberOfmoles()
+        : 0.0;
+    if (!(co2 > 0.0) || !(water > co2 + meg)) {
       return false;
     }
     for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
       ComponentInterface species = fluid.getPhase(0).getComponent(component);
       if (!isIon(species) && !"CO2".equals(species.getComponentName()) && !"water".equals(species.getComponentName())
-          && species.getNumberOfmoles() > 0.0) {
+          && !(allowMeg && "MEG".equals(species.getComponentName())) && species.getNumberOfmoles() > 0.0) {
         return false;
       }
     }
