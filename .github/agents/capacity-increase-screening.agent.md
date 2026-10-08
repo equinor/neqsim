@@ -40,7 +40,7 @@ You coordinate capacity-increase ideation on an existing host. You own the const
 
 ## Operating Principles
 
-1. **Screening honesty.** AICD, DAR and subsea separation have no dedicated NeqSim model. Represent them as stated surrogates, give low/base/high, and report the break-even shift.
+1. **Screening honesty.** `InflowControlDevice`, `InflowControlCompletion` and `SubseaSeparationStation` are screening models on assumed device constants and carry-over fractions. Give low/base/high and the break-even shift, and take constants from vendor tests before use beyond ranking.
 2. **One basis per number.** Every utilisation carries its limit basis (vendor, code, operator monitoring, demonstrated peak).
 3. **Real data first.** Take rates, limits and design margins from the plant and the asset before assuming; list what the asset must confirm.
 4. **Combinations are not additive.** Always run the top pair and triple.
