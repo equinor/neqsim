@@ -28,6 +28,12 @@ Use `NetworkPipe.setHydraulicModelType` for PIPE/MULTIPHASE_PIPE edge overrides
 `getHydraulicModelStatus` plus `getTwoFluidModel().getSteadyStateConvergenceReport()`.
 Changing fidelity preserves identity and geometry. This is steady-state composition;
 it does not qualify mixed-fidelity transients or directly bind a live WellSystem.
+Use `NetworkHydraulicModelComparison` to replay selected canonical edges with both
+Beggs-Brill and two-fluid hydraulics. Its normalized position/pressure/temperature/
+holdup/phase-velocity profiles include segmented terrain routes, and
+`compareMeshSensitivity` evaluates selected edges on detached meshes without changing
+the caller topology. Inspect every convergence status and mass-balance residual; these
+comparisons are integration evidence until independently qualified.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
