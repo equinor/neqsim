@@ -109,6 +109,7 @@ public final class FieldWellNetworkProcessUnit extends ProcessEquipmentBaseClass
    *
    * @return immutable sink-stream list
    */
+  @Override
   public List<StreamInterface> getOutletStreams() {
     return getHydraulicNetwork().getOutletStreams();
   }
