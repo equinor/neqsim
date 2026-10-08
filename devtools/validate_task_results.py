@@ -166,6 +166,8 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
             warnings.append("key_results: empty — add numerical outputs")
         else:
             for k, v in kr.items():
+                if isinstance(v, dict) and isinstance(v.get("value"), (int, float, str, bool)):
+                    continue  # headline-marked entry: {"value": ..., "headline": true}
                 if not isinstance(v, (int, float, str, bool)):
                     warnings.append(
                         f"key_results.{k}: value should be a primitive (number or string)"

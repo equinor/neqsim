@@ -822,7 +822,8 @@
   "neqsim-optimization-and-doe"
  ],
  "debottleneck": [
-  "neqsim-optimization-and-doe"
+  "neqsim-optimization-and-doe",
+  "neqsim-capacity-increase-screening"
  ],
  "parameter sweep": [
   "neqsim-optimization-and-doe"
@@ -2271,6 +2272,24 @@
  ],
  "gor fitter": [
   "neqsim-capacity-and-utilization-analysis"
+ ],
+ "capacity increase": [
+  "neqsim-capacity-increase-screening"
+ ],
+ "aicd": [
+  "neqsim-capacity-increase-screening"
+ ],
+ "inflow control device": [
+  "neqsim-capacity-increase-screening"
+ ],
+ "subsea separation": [
+  "neqsim-capacity-increase-screening"
+ ],
+ "idea register": [
+  "neqsim-capacity-increase-screening"
+ ],
+ "maturation pipeline": [
+  "neqsim-capacity-increase-screening"
  ],
  "mpfm fitter": [
   "neqsim-capacity-and-utilization-analysis"

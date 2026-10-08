@@ -55,6 +55,7 @@ Analyze the request and match it to one or more agents:
 | Documentation, guide, tutorial, cookbook, markdown | `@documentation` | — |
 | Field development, NPV, economics, concept selection, multi-discipline | `@field-development` | `@solve-task` for formal report, specialists as needed |
 | Tieback analysis, subsea design, SURF cost, well planning, production forecast | `@field-development` | `@mechanical-design` for detailed equipment |
+| Raise or accelerate production on an existing host, capacity-increase ideas, AICD / ICD / DAR completions, subsea separation or boosting, debottleneck sequencing across wells, subsea and topside, idea register with scope / cost / emissions / HSE / value, maturation pipeline, host ullage for future tie-ins | `@capacity-increase-screening` | `@process-model` for the host baseline; `@field-development` for value; `@mechanical-design` for cost class; `@emissions-environmental`; `@safety-depressuring` for HSE; `@optimize-processmodel` for setpoint search |
 | Whole Norwegian Continental Shelf system: how fields, pipelines, processing plants and terminals connect, shared-capacity bottlenecks, outage impact, tie-in ullage, shelf-wide production/value optimisation | `ncs-value-chain-agent` (community; `enterprise-ncs-value-chain-optimization-agent` for governed RNB/PDM/Gassled data) | `@field-development` for one tie-back, `@optimize-processmodel` for the host plant |
 | Quick process sim, working notebook fast | `@solve-process` | — |
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability-scout` | — |
@@ -171,6 +172,10 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 9: Hydrogen Blending
 **Trigger:** "H2 blending", "hydrogen in gas grid", "Wobbe with hydrogen"
 **Pipeline:** `@ccs-hydrogen` (H2 systems) with `@gas-quality` (Wobbe/GCV impact)
+
+### Pattern 10: Capacity Increase Ideation on an Existing Host
+**Trigger:** "increase capacity", "accelerate production", "debottleneck", "AICD", "subsea separation", "topside modification", "rank ideas", "prepare host for tie-ins"
+**Pipeline:** `@capacity-increase-screening` (constraint map, lever runs, idea register, pipeline) delegating to `@process-model` / `@plant-data` (baseline), `@field-development` (value), `@mechanical-design` (cost class), `@emissions-environmental`, `@safety-depressuring` (HSE), then `@solve-task` or `@review` for the report. With the enterprise plugin installed use `enterprise-capacity-increase-screening-agent` for governed data.
 
 ## Routing Workflow
 

@@ -167,6 +167,12 @@
       "expect_skills_top5": ["neqsim-integrated-production-and-lifecycle"]
     },
     {
+      "id": "capacity-increase-ideation",
+      "prompt": "ideas to increase capacity and accelerate production on an FPSO host: AICD completions, subsea separation, higher separator pressure and scrubber internals, ranked on scope, cost, emissions, HSE and value with a maturation pipeline",
+      "expect_agent_top3": ["capacity-increase-screening", "field-development", "network-energy-systems"],
+      "expect_skills_top5": ["neqsim-capacity-increase-screening"]
+    },
+    {
       "id": "compressor-chart-extrapolation",
       "prompt": "load vendor compressor chart, calibrate surge line and check the operating point does not extrapolate beyond stonewall",
       "expect_agent_top3": ["rotating-equipment", "process-model", "mechanical-design"],
