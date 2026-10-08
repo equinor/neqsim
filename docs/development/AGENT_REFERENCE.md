@@ -515,6 +515,11 @@ FIGURES_DIR.mkdir(exist_ok=True)
 
 results = {
     "key_results": {"outlet_temperature_C": -18.5, "pressure_drop_bar": 3.2},
+    # Optional: mark decisive values so the Results table stays short and the full list
+    # moves to an appendix, e.g.
+    #   "outlet_temperature_C": {"value": -18.46, "unit": "C", "headline": True,
+    #                            "label": "Outlet temperature", "decimals": 1, "group": "Thermal"}
+    # Prose may cross-reference figures with {fig:file_name} (live REF field in Word).
     "validation": {"mass_balance_error_pct": 0.01, "acceptance_criteria_met": True},
     "approach": "Used SRK EOS with classic mixing rule...",
     "conclusions": "The analysis shows...",

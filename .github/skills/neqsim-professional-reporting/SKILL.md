@@ -311,6 +311,25 @@ When the compared value comes from another simulator (OPM Flow, OLGA) write it a
 Figures are numbered in the order of `figure_captions` when the PNG names carry no numeric
 prefix (`fig01_`, `01_`); otherwise alphabetically. Write the captions in narrative order.
 
+**Report presentation conventions** (rendered by `devtools/task_template/step3_report/`):
+
+- A figure named in `figure_discussion[].figure` is shown inside that discussion entry, next
+  to its observation; only figures without a discussion stay in Results. Numbers follow
+  document order.
+- `{fig:fig02_pressure}` (file name, extension optional) in any prose field becomes a live
+  Word cross-reference (REF field) and an HTML link. Never type "Figure 3" by hand.
+- Mark the 5-10 decisive `key_results` with `"headline": true` (plus `label`, `unit`,
+  `decimals`, optional `group`), or list them in a top-level `headline_results` array. The
+  Results section then shows only those; the complete list moves to an appendix. A
+  `key_results` list of more than 15 unmarked rows raises a consistency WARNING.
+- `linked_results` entries print as "Label = value unit", never as raw snake_case keys.
+- Every number quoted in `executive_summary`, `conclusions` or a discussion should exist in
+  `results.json` (or be derived in the text); untraced numbers are listed in the report quality
+  appendix.
+- Equations are written to Word as editable equations when the LaTeX is supported (fractions,
+  scripts, roots, sums, Greek, text); otherwise as images. The HTML bundles KaTeX and works
+  offline. DOCX/PDF carry title, author, keywords, alt text on figures and a results.json hash.
+
 Both `TaskResultValidator` (Java) and `devtools/validate_task_results.py` (the CI
 gate) now check this structure, so a malformed benchmark block fails the gate
 instead of crashing the report generator.
