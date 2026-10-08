@@ -9,6 +9,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.capacity.CapacityConstraint.ApplicableLimitRole;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSource;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 
 /**
@@ -93,7 +95,9 @@ class CapacityConstraintMetadataTest {
   @Test
   void metadataSurvivesSerialization() throws Exception {
     CapacityConstraint constraint = new CapacityConstraint("gasFlow", "kg/h", ConstraintType.HARD)
-        .setDesignValue(12000.0).setCurrentValue(10000.0).setConfidence(0.95).setValidityRange(8000.0, 12000.0);
+        .setDesignValue(12000.0).setCurrentValue(10000.0).setConfidence(0.95).setValidityRange(8000.0, 12000.0)
+        .setOperatingLimit(9000.0, ConstraintSource.USER_RULE, "operating procedure OP-17")
+        .setOperatingLimitConfidence(0.85).setOperatingLimitValidityRange(7000.0, 10000.0);
 
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ObjectOutputStream output = new ObjectOutputStream(bytes);
@@ -110,6 +114,12 @@ class CapacityConstraintMetadataTest {
     assertEquals(8000.0, restored.getValidityMinimum(), 0.0);
     assertEquals(12000.0, restored.getValidityMaximum(), 0.0);
     assertTrue(restored.isCurrentValueWithinValidityRange());
+    assertTrue(restored.hasOperatingLimit());
+    assertEquals(9000.0, restored.getApplicableLimit(), 0.0);
+    assertEquals(ConstraintSource.USER_RULE, restored.getApplicableLimitSource());
+    assertEquals("operating procedure OP-17", restored.getApplicableLimitSourceReference());
+    assertEquals(0.85, restored.getApplicableLimitConfidence(), 0.0);
+    assertTrue(restored.isCurrentValueWithinApplicableLimitValidityRange());
   }
 
   /** Verifies metadata can be cleared without changing the constraint definition. */
@@ -126,5 +136,66 @@ class CapacityConstraintMetadataTest {
     assertTrue(Double.isNaN(constraint.getValidityMinimum()));
     assertTrue(Double.isNaN(constraint.getValidityMaximum()));
     assertEquals(12000.0, constraint.getDesignValue(), 0.0);
+  }
+
+  /** Verifies an operating override preserves the qualified design/default basis. */
+  @Test
+  void operatingLimitPreservesDesignAndUsesSeparateEvidence() {
+    CapacityConstraint constraint = new CapacityConstraint("gasFlow", "kg/h", ConstraintType.HARD)
+        .setDesignValue(12000.0).setCurrentValue(10000.0)
+        .setSource(ConstraintSource.VENDOR_DATASHEET, "vendor sheet rev 4").setDataSource("installedDataSheet")
+        .setConfidence(0.95).setValidityRange(8000.0, 12000.0);
+
+    constraint.setOperatingLimit(9000.0, ConstraintSource.USER_RULE, "operating procedure OP-17")
+        .setOperatingLimitConfidence(0.85).setOperatingLimitValidityRange(7000.0, 10000.0);
+
+    assertEquals(12000.0, constraint.getDesignValue(), 0.0);
+    assertEquals(9000.0, constraint.getApplicableLimit(), 0.0);
+    assertEquals(ApplicableLimitRole.CONFIGURED_OPERATING, constraint.getApplicableLimitRole());
+    assertEquals(ConstraintSource.VENDOR_DATASHEET, constraint.getSource());
+    assertEquals("vendor sheet rev 4", constraint.getSourceReference());
+    assertEquals(ConstraintSource.USER_RULE, constraint.getApplicableLimitSource());
+    assertEquals("operating procedure OP-17", constraint.getApplicableLimitSourceReference());
+    assertEquals(0.85, constraint.getApplicableLimitConfidence(), 0.0);
+    assertTrue(constraint.isCurrentValueWithinApplicableLimitValidityRange());
+    assertTrue(constraint.isViolated());
+
+    constraint.clearOperatingLimit();
+
+    assertFalse(constraint.hasOperatingLimit());
+    assertEquals(12000.0, constraint.getApplicableLimit(), 0.0);
+    assertEquals(ApplicableLimitRole.DESIGN_RATED, constraint.getApplicableLimitRole());
+    assertEquals(ConstraintSource.VENDOR_DATASHEET, constraint.getApplicableLimitSource());
+    assertEquals(0.95, constraint.getApplicableLimitConfidence(), 0.0);
+    assertFalse(constraint.isViolated());
+  }
+
+  /** Verifies operating metadata fails closed when no valid operating limit exists. */
+  @Test
+  void operatingLimitRejectsInvalidOrUnboundMetadata() {
+    final CapacityConstraint constraint = new CapacityConstraint("gasFlow", "kg/h", ConstraintType.HARD)
+        .setDesignValue(12000.0);
+
+    assertThrows(IllegalArgumentException.class,
+        () -> constraint.setOperatingLimit(Double.NaN, ConstraintSource.USER_RULE, "invalid"));
+    assertThrows(IllegalArgumentException.class,
+        () -> constraint.setOperatingLimit(0.0, ConstraintSource.USER_RULE, "invalid"));
+    assertThrows(IllegalStateException.class, () -> constraint.setOperatingLimitConfidence(0.8));
+    assertThrows(IllegalStateException.class, () -> constraint.setOperatingLimitValidityRange(1.0, 2.0));
+  }
+
+  /** Verifies an operating override preserves minimum-directed constraint semantics. */
+  @Test
+  void operatingLimitUsesMinimumConstraintDirection() {
+    CapacityConstraint minimum = new CapacityConstraint("residenceTime", "min", ConstraintType.HARD).setMinValue(4.0)
+        .setCurrentValue(5.0).setOperatingLimit(4.5, ConstraintSource.USER_RULE, "winter operating rule");
+
+    assertTrue(minimum.isMinimumConstraint());
+    assertEquals(0.9, minimum.getUtilization(), 1.0e-12);
+    assertFalse(minimum.isViolated());
+
+    minimum.setCurrentValue(4.0);
+    assertEquals(4.5 / 4.0, minimum.getUtilization(), 1.0e-12);
+    assertTrue(minimum.isViolated());
   }
 }

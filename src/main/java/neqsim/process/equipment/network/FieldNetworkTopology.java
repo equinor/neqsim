@@ -463,6 +463,47 @@ public final class FieldNetworkTopology implements Serializable {
   }
 
   /**
+   * Add a live well boundary whose pressure and rate are solved by {@link FieldWellNetworkCoupler}.
+   *
+   * <p>
+   * The underlying hydraulic node is a normal free-pressure source for production or sink for injection. The coupler
+   * writes a conservative production supply or injection demand at this node and iterates the existing live well
+   * equipment against the pressure solved by {@link LoopedPipeNetwork}. No additional graph or hydraulic element is
+   * created.
+   * </p>
+   *
+   * @param id stable field and hydraulic node identity
+   * @param equipmentTag engineering equipment tag
+   * @param role {@link NodeRole#PRODUCTION_WELL} or {@link NodeRole#INJECTION_WELL}
+   * @param service matching production or injection service
+   * @param initialPressureBar positive initial pressure in bara
+   * @param elevationM node elevation in metres
+   * @return typed field node
+   */
+  public FieldNode addLiveWellNode(String id, String equipmentTag, NodeRole role, Service service,
+      double initialPressureBar, double elevationM) {
+    if (role != NodeRole.PRODUCTION_WELL && role != NodeRole.INJECTION_WELL) {
+      throw new IllegalArgumentException("Live well node role must be PRODUCTION_WELL or INJECTION_WELL");
+    }
+    if ((role == NodeRole.PRODUCTION_WELL && service != Service.PRODUCTION)
+        || (role == NodeRole.INJECTION_WELL && service != Service.INJECTION)) {
+      throw new IllegalArgumentException("Live well node role and service must match");
+    }
+    if (!(initialPressureBar > 0.0)) {
+      throw new IllegalArgumentException("Live well initial pressure must be positive in bara");
+    }
+    checkNewIdentity(id);
+    if (role == NodeRole.PRODUCTION_WELL) {
+      hydraulicNetwork.addSourceNode(id, initialPressureBar, 0.0, elevationM);
+      hydraulicNetwork.getNode(id).setPressureFixed(false);
+    } else {
+      hydraulicNetwork.addSinkNode(id, 0.0, elevationM);
+      hydraulicNetwork.setNodePressure(id, initialPressureBar);
+    }
+    return putNode(id, equipmentTag, role, service);
+  }
+
+  /**
    * Register typed identity for a node that already exists in the wrapped graph.
    *
    * @param id existing hydraulic node name

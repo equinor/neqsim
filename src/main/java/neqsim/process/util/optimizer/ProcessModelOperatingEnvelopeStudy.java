@@ -428,11 +428,29 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final String physicalUnit;
     private final boolean feasible;
     private final String diagnostic;
+    private final String applicableLimitRole;
+    private final String applicableLimitProvenance;
 
-    /** Creates immutable leading-constraint evidence. */
+    /**
+     * Creates immutable leading-constraint evidence.
+     *
+     * @param source evidence layer
+     * @param qualifiedConstraintName stable constraint identity
+     * @param normalizedUtilization dimensionless utilization
+     * @param normalizedMargin dimensionless remaining margin
+     * @param currentValue sampled physical value
+     * @param applicableLimit applicable physical limit
+     * @param physicalMargin signed physical headroom
+     * @param physicalUnit engineering unit
+     * @param feasible whether the selected evidence is feasible
+     * @param diagnostic concise diagnostic
+     * @param applicableLimitRole role or basis of the applicable limit
+     * @param applicableLimitProvenance applicable-limit provenance
+     */
     private LeadingConstraintEvidence(Source source, String qualifiedConstraintName, double normalizedUtilization,
         double normalizedMargin, double currentValue, double applicableLimit, double physicalMargin,
-        String physicalUnit, boolean feasible, String diagnostic) {
+        String physicalUnit, boolean feasible, String diagnostic, String applicableLimitRole,
+        String applicableLimitProvenance) {
       this.source = source;
       this.qualifiedConstraintName = qualifiedConstraintName;
       this.normalizedUtilization = normalizedUtilization;
@@ -443,6 +461,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       this.physicalUnit = physicalUnit == null ? "" : physicalUnit;
       this.feasible = feasible;
       this.diagnostic = diagnostic == null ? "" : diagnostic;
+      this.applicableLimitRole = applicableLimitRole == null ? "" : applicableLimitRole;
+      this.applicableLimitProvenance = applicableLimitProvenance == null ? "" : applicableLimitProvenance;
     }
 
     /** Creates evidence from one installed equipment constraint. */
@@ -450,7 +470,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return new LeadingConstraintEvidence(Source.INSTALLED_EQUIPMENT, evidence.getQualifiedConstraintName(),
           evidence.getNormalizedUtilization(), evidence.getNormalizedMargin(), evidence.getCurrentValue(),
           evidence.getApplicableLimit(), evidence.getPhysicalMargin(), evidence.getPhysicalUnit(),
-          evidence.isFeasible(), evidence.getEvidenceStatus().name());
+          evidence.isFeasible(), evidence.getEvidenceStatus().name(), evidence.getApplicableLimitRole().name(),
+          evidence.getApplicableLimitSourceReference());
     }
 
     /** Creates evidence from one required hydraulic snapshot. */
@@ -460,7 +481,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return new LeadingConstraintEvidence(Source.REQUIRED_HYDRAULIC,
           evidence.getBinding().getQualifiedConstraintName(), evidence.getUtilization(), evidence.getMargin(),
           evidence.getCurrentValue(), evidence.getDesignValue(), physicalMargin, evidence.getUnit(),
-          evidence.isFeasible(), evidence.isPresent() ? evidence.getEvidenceApplicability().name() : "MISSING");
+          evidence.isFeasible(), evidence.isPresent() ? evidence.getEvidenceApplicability().name() : "MISSING",
+          "REQUIRED_HYDRAULIC", evidence.getDataSource());
     }
 
     /** Creates evidence from one typed plant constraint row. */
@@ -471,7 +493,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
           sample == null ? Double.NaN : sample.getSampledValue(),
           sample == null ? Double.NaN : sample.getApplicableLimit(),
           sample == null ? Double.NaN : sample.getPhysicalMargin(), evidence.getDefinition().getUnit(),
-          evidence.isFeasible(), evidence.getDiagnostic());
+          evidence.isFeasible(), evidence.getDiagnostic(), evidence.getDefinition().getBasis(),
+          sample == null ? evidence.getDefinition().getProvenance() : sample.getProvenance());
     }
 
     /** Creates evidence from one ordinary registered hard constraint. */
@@ -494,7 +517,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
       String physicalUnit = evidence.getPhysicalUnit() == null ? evidence.getUnit() : evidence.getPhysicalUnit();
       return new LeadingConstraintEvidence(Source.REGISTERED_MODEL_CONSTRAINT, evidence.getName(), Double.NaN,
           Double.NaN, evidence.getValue(), limit, evidence.getMargin(), physicalUnit, evidence.isSatisfied(),
-          "DECLARATION_ORDER_HARD_CONSTRAINT");
+          "DECLARATION_ORDER_HARD_CONSTRAINT", "REGISTERED_MODEL_CONSTRAINT", "");
     }
 
     /** @return evidence layer that supplied the selected constraint */
@@ -545,6 +568,16 @@ public final class ProcessModelOperatingEnvelopeStudy {
     /** @return concise evidence diagnostic */
     public String getDiagnostic() {
       return diagnostic;
+    }
+
+    /** @return role or basis of the selected physical limit */
+    public String getApplicableLimitRole() {
+      return applicableLimitRole;
+    }
+
+    /** @return provenance or reference supporting the selected physical limit */
+    public String getApplicableLimitProvenance() {
+      return applicableLimitProvenance;
     }
   }
 

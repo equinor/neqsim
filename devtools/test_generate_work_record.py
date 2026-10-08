@@ -1,6 +1,7 @@
 """Tests for the task work-record generator (devtools/generate_work_record.py)."""
 import os
 import sys
+import json
 
 import pytest
 
@@ -161,3 +162,28 @@ def test_assumption_accepts_plain_string_and_unknown_shape():
     assert gwr._format_assumption("plain text") == "plain text"
     # An unrecognised dict still has to produce something, not raise.
     assert gwr._format_assumption({"odd": "shape"})
+
+
+@pytest.mark.parametrize("captions", [
+    {"forecast.png": "Production forecast"},
+    [{"file": "figures/forecast.png", "caption": "Production forecast"}],
+    [None, {"file": "forecast.png", "title": "Production forecast"}],
+])
+def test_figure_captions_accept_dictionary_and_list_forms(task, captions):
+    """Both result-schema caption forms resolve to the figure's basename."""
+    (task / "figures" / "forecast.png").write_bytes(b"figure placeholder")
+    (task / "results.json").write_text(
+        json.dumps({"figure_captions": captions}), encoding="utf-8")
+    assert gwr.main([str(task)]) == 0
+    record = (task / "step3_report" / "WORK_RECORD.md").read_text(encoding="utf-8")
+    assert "| forecast.png | Production forecast |" in record
+
+
+def test_figure_without_caption_uses_placeholder(task):
+    """A list entry without caption text does not interrupt record generation."""
+    (task / "figures" / "forecast.png").write_bytes(b"figure placeholder")
+    (task / "results.json").write_text(
+        json.dumps({"figure_captions": [{"file": "forecast.png"}]}), encoding="utf-8")
+    assert gwr.main([str(task)]) == 0
+    record = (task / "step3_report" / "WORK_RECORD.md").read_text(encoding="utf-8")
+    assert "| forecast.png | - |" in record
