@@ -497,10 +497,23 @@ public class TieInCapacityPlanner implements Serializable {
     }
 
     double originalFlow = Double.NaN;
+    double[] originalComposition = null;
     try {
       originalFlow = stream.getFlowRate(tieInPoint.getProcessRateUnit());
-      double targetFlow = calculateTargetProcessRate(originalFlow, acceptedBase, acceptedSatellite);
-      stream.setFlowRate(targetFlow, tieInPoint.getProcessRateUnit());
+      HostFeedProvider feedProvider = tieInPoint.getFeedProvider();
+      if (feedProvider == null) {
+        double targetFlow = calculateTargetProcessRate(originalFlow, acceptedBase, acceptedSatellite);
+        stream.setFlowRate(targetFlow, tieInPoint.getProcessRateUnit());
+      } else {
+        originalComposition = stream.getFluid().getMolarComposition();
+        HostFeed feed = feedProvider.getFeed(acceptedBase.plus(acceptedSatellite));
+        if (feed.getNumberOfComponents() != originalComposition.length) {
+          throw new IllegalArgumentException("host feed has " + feed.getNumberOfComponents()
+              + " components but the tie-in stream has " + originalComposition.length);
+        }
+        stream.getFluid().setMolarComposition(feed.getMoleFractions());
+        stream.setFlowRate(feed.getMolarRateMolPerSec(), "mole/sec");
+      }
       runDetailedModel(processModel, processSystem);
       BottleneckResult bottleneck = processModel == null ? processSystem.findBottleneck()
           : processModel.findBottleneck();
@@ -517,7 +530,7 @@ public class TieInCapacityPlanner implements Serializable {
       return new ProcessOutcome(true, false, "process model error: " + exception.getMessage(), Double.POSITIVE_INFINITY,
           utilizationSummary);
     } finally {
-      restoreProcessStream(processModel, processSystem, stream, originalFlow);
+      restoreProcessStream(processModel, processSystem, stream, originalFlow, originalComposition);
     }
   }
 
@@ -580,13 +593,17 @@ public class TieInCapacityPlanner implements Serializable {
    * @param processSystem optional single process system containing the stream
    * @param stream stream to restore
    * @param originalFlow original flow rate in the tie-in point rate unit
+   * @param originalComposition original mole fractions to restore, or null when the composition was not changed
    */
   private void restoreProcessStream(ProcessModel processModel, ProcessSystem processSystem, StreamInterface stream,
-      double originalFlow) {
+      double originalFlow, double[] originalComposition) {
     if (Double.isNaN(originalFlow)) {
       return;
     }
     try {
+      if (originalComposition != null) {
+        stream.getFluid().setMolarComposition(originalComposition);
+      }
       stream.setFlowRate(originalFlow, tieInPoint.getProcessRateUnit());
       runDetailedModel(processModel, processSystem);
     } catch (Exception exception) {
