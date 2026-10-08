@@ -235,6 +235,7 @@ def _next_revision(task_dir):
 
 
 def _study_title(task_dir):
+    fallback = os.path.basename(task_dir).replace("_", " ")
     try:
         import yaml
         with open(os.path.join(task_dir, "study_config.yaml"), "r", encoding="utf-8") as handle:
@@ -243,8 +244,9 @@ def _study_title(task_dir):
         if title:
             return str(title)
     except (ImportError, OSError, ValueError, AttributeError):
-        pass
-    return os.path.basename(task_dir).replace("_", " ")
+        # A configured title is optional; report generation can use the task folder name.
+        return fallback
+    return fallback
 
 
 def _default_runner(task_dir, output_dir, metadata_path, title, pdf):
@@ -310,10 +312,8 @@ def finalize(task_dir, reviewer, note="", pdf=False, now=None, runner=None):
     try:
         exit_code = report_runner(task_dir, output_dir, pending_path, title, pdf)
     finally:
-        try:
+        if os.path.isfile(pending_path):
             os.remove(pending_path)
-        except OSError:
-            pass
     if exit_code:
         raise FinalReportError("Canonical Task Solver report generation failed with exit code {}"
                                .format(exit_code))
