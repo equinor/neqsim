@@ -194,7 +194,7 @@ def build(task_dir):
                 for link in provenance
             ])
         if evidence_impact.get("changes"):
-            out += ["", "Pending evidence changes have not yet been accepted. Run "
+            out += ["", "Pending evidence changes have not yet been accepted. Run " +
                     "`neqsim task-update <task>`; an unmapped path causes a conservative full cycle."]
     else:
         out += ["No evidence change is pending. File-level hashes in "
