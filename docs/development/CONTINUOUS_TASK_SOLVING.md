@@ -1,6 +1,6 @@
 ---
 title: "Continuous Task Solving (Living Tasks)"
-description: "How to keep a solved NeqSim engineering task improving over time: make a task living, set a confirmed goal, write a cycle plan and stage scripts, backtest drift detection, run monitor and solve cycles, schedule them on a laptop or server, launch headless agents on triggers, and review the living report, improvement ledger and baseline promotion."
+description: "How to keep a solved NeqSim engineering task improving over time: persist and resume state, detect evidence changes, analyze impact, selectively rerun calculations, backtest monitoring, and maintain living/current-best reports."
 ---
 
 # Continuous Task Solving (Living Tasks)
@@ -24,6 +24,8 @@ folder with a `results.json`.
 6. [Write the cycle plan](#6-write-the-cycle-plan)
 7. [Write a stage script](#7-write-a-stage-script)
 8. [Backtest before you trust it](#8-backtest-before-you-trust-it)
+   - [Stop today, resume tomorrow](#81-stop-today-resume-tomorrow)
+   - [Update when evidence changes](#82-update-when-evidence-changes)
 9. [Run cycles by hand](#9-run-cycles-by-hand)
 10. [Make it run by itself](#10-make-it-run-by-itself)
 11. [Standard-first gate for scheduled tasks](#11-standard-first-gate-for-scheduled-tasks)
@@ -44,7 +46,7 @@ People make every decision that changes the baseline.
 ```
  one cycle (daily, on new data, or on demand)
 
-   sense -> refresh -> script:<model> -> kpis -> drift -> goal -> diff -> ledger
+   sense -> evidence -> refresh -> script:<model> -> kpis -> drift -> goal -> diff -> ledger
          -> digest -> notify -> agent (only when a trigger fired)
 
    writes: cycles/<id>/digest.md  and  LIVING_REPORT.md (always current)
@@ -74,6 +76,7 @@ continuous/
   LIVING_REPORT.md    always-current summary          (generated, never edit)
   report/             KPI trend figure                (generated)
   baseline/           promoted baseline + history
+  evidence/           accepted file hashes and provenance baseline
   ledger/events.jsonl improvement ledger (append-only)
   cycles/<id>/        one folder per cycle: cycle.json, kpis.json, triggers.json, digest.md
   backtests/<run>/    isolated replay runs
@@ -294,7 +297,7 @@ state raises one trigger, not one per day.
 ### 6.5 Stages — the order of work
 
 ```yaml
-stages: [sense, refresh, "script:station_model", kpis, drift, goal, diff, ledger, digest, notify, agent]
+stages: [sense, evidence, refresh, "script:station_model", kpis, drift, goal, diff, ledger, digest, notify, agent]
 ```
 
 | Stage | Does |
@@ -332,7 +335,7 @@ and webhooks are suppressed in dry runs and backtests.
 
 ```yaml
 solve:
-  stages: [sense, "script:solver", goal, diff, ledger, digest]
+  stages: [sense, evidence, "script:solver", goal, diff, ledger, digest]
   max_rounds: 12
   max_branches: 3            # keep at most 3 candidate branches open
   critic: {enabled: false}   # independent agent review before goal_met/converged
@@ -384,7 +387,7 @@ Register it and add it to the stages:
 ```yaml
 scripts:
   gas_density: {file: continuous/stages/gas_density.py, function: run}
-stages: [sense, refresh, "script:gas_density", kpis, drift, diff, ledger, digest, notify]
+stages: [sense, evidence, refresh, "script:gas_density", kpis, drift, diff, ledger, digest, notify]
 ```
 
 What the context gives you:
@@ -485,6 +488,56 @@ The **Status** view is the five-second operational summary. The **Living Report*
 understandable history and change detail. The ordinary Task Solver report remains the clean
 **current-best engineering report**. A later final-report capability will use that same
 canonical report pipeline rather than creating a competing report system.
+
+## 8.2 Update when evidence changes
+
+Use the task folder as the source of truth when a datasheet, drawing, standard, measurement,
+requirement, assumption, model or calculation input changes:
+
+```powershell
+neqsim task-status <task>     # shows pending files, affected stages/conclusions and next action
+neqsim task-update <task>     # records provenance and reruns the affected calculation stages
+```
+
+`task-living` creates `continuous/evidence/inventory.json`, a task-relative SHA-256 inventory.
+The default inventory covers the reference collection, `SOURCES.md`, scope/analysis files,
+`user_input.md`, `study_config.yaml`, `continuous/goal.yaml` and `continuous/user_input.yaml`.
+Override `evidence.include` or
+`evidence.exclude` in `cycle_plan.yaml` for task-specific technical inputs. Absolute paths are
+never persisted, so the inventory remains portable with the task folder.
+The inventory has an explicit schema; an inventory written by a newer incompatible runner
+fails closed with an upgrade instruction instead of being silently rewritten.
+
+Map each evidence family to the stages and conclusions it can affect:
+
+```yaml
+evidence:
+  include:
+    - "step1_scope_and_research/references/**/*"
+    - "step2_analysis/models/**/*"
+  rules:
+    - name: compressor-datasheet
+      match: "**/compressor-datasheets/**"
+      stages: ["script:compressor_model"]
+      kpis: [compressor_power_MW, driver_margin_pct]
+      conclusions: ["compressor power", "driver margin"]
+  dependencies:
+    "script:compressor_model": [refresh]
+```
+
+When every changed path matches a rule, `task-update` reruns only the affected stages, their
+declared dependencies, and the common KPI/goal/diff/ledger/digest pipeline. List recalculated
+metrics under `kpis`; those values are invalidated before the selected stages run. Other KPIs from
+the latest completed cycle are carried forward as unaffected results, with the source cycle recorded in
+`cycle.json`. Added, modified and removed files retain before/after hashes in the immutable cycle
+folder. If an affected KPI is not recomputed, the cycle is degraded and the evidence baseline does
+not advance. If any changed path is unmapped, the runner fails closed to the full planned cycle; it
+never silently assumes that a conclusion is unaffected. A degraded update does not advance the
+accepted inventory, so the same change remains pending for a safe retry.
+
+The Living Report shows the file changes, provenance, affected conclusions and rerun scope. The
+ordinary Task Solver report remains the current-best engineering report and is regenerated only
+through the existing canonical report settings (`report.formal`) or `task-report --formal`.
 
 ---
 
@@ -799,6 +852,7 @@ Never commit `continuous/data/` or plant data to a public repository.
 | `neqsim task-cycle <task> [--mode monitor\|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO]` | Run one cycle |
 | `neqsim task-solve <task> [--until goal\|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed] [--reset]` | Solve loop |
 | `neqsim task-resume <task> [--max-rounds N] [--no-agent]` | Resume interrupted cycle/solve from persisted task state |
+| `neqsim task-update <task> [--no-agent] [--dry-run]` | Detect file-level evidence changes, analyze impact and rerun only mapped stages (full cycle for unmapped changes) |
 | `neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--name N] [--repeat]` | Replay archived data |
 | `neqsim task-schedule <task> [--daily HH:MM] [--install\|--remove\|--show]` | Schedule monitor cycles |
 | `neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]` | Promote a cycle to the baseline |
@@ -815,7 +869,7 @@ For a plant model that should be kept current and used to recommend operating ch
 `neqsim task-living <task> --template production`. The cycle then runs:
 
 ```text
-sense -> inputs -> script:model_update -> script:optimize -> kpis -> gates -> constraints -> guard
+sense -> evidence -> inputs -> script:model_update -> script:optimize -> kpis -> gates -> constraints -> guard
       -> drift -> goal -> diff -> outcome -> ledger -> digest -> notify
 ```
 

@@ -45,7 +45,8 @@ class CycleContext(object):
     """Everything a stage may read or write during one cycle."""
 
     def __init__(self, task_dir, plan, goal, baseline, now, mode, cycle_id, cycle_dir,
-                 state_dir, data_dir, dry_run=False, no_agent=False, next_action=None):
+                 state_dir, data_dir, dry_run=False, no_agent=False, next_action=None,
+                 evidence_analysis=None):
         self.task_dir = str(task_dir)
         self.plan, self.goal, self.baseline = plan, goal, baseline
         self.now, self.mode, self.cycle_id, self.cycle_dir = now, mode, cycle_id, cycle_dir
@@ -58,6 +59,7 @@ class CycleContext(object):
         self.notifications, self.agent_run, self.previous_kpis = [], {}, {}
         self.guard_blocks, self.sections = [], []
         self.user_levers = {}
+        self.evidence_analysis = evidence_analysis
 
 
 class _Lock(object):
@@ -140,7 +142,7 @@ def _append_kpi_history(state_dir, cycle_id, now, kpis):
 
 
 def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no_agent=False,
-              state_dir=None, next_action=None, standard_first=False):
+              state_dir=None, next_action=None, standard_first=False, evidence_analysis=None):
     """Run one cycle and return its manifest (the content of ``cycle.json``)."""
     task_dir = os.path.abspath(str(task_dir))
     plan = load_plan(task_dir)
@@ -172,8 +174,13 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     standard_status = previous.get("standard_first") if resumed else None
     ctx = CycleContext(task_dir, plan, load_goal(task_dir), load_baseline(task_dir), now, mode,
                        cycle_id, cycle_dir, state_dir, data_dir, effective_dry_run, no_agent,
-                       next_action)
+                       next_action, evidence_analysis=evidence_analysis)
     ctx.previous_kpis = _previous_kpis(cycles_dir, cycle_id)
+    if evidence_analysis is not None and not evidence_analysis.get("full_rerun"):
+        ctx.kpis.update(ctx.baseline.get("kpis", {}))
+        ctx.kpis.update(ctx.previous_kpis)
+        for affected_kpi in evidence_analysis.get("affected_kpis") or []:
+            ctx.kpis.pop(affected_kpi, None)
     manifest = {"schema_version": SCHEMA_VERSION, "cycle_id": cycle_id,
                 "task": os.path.basename(task_dir), "mode": mode,
                 "host": previous.get("host", _host()) if resumed else _host(),
@@ -183,6 +190,17 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
                 "baseline_id": previous.get("baseline_id", ctx.baseline.get("meta", {}).get("id")),
                 "status": "running", "stages": [],
                 "versions": dict(previous.get("versions") or {"python": sys.version.split()[0]})}
+    if evidence_analysis is not None:
+        requested = [_stage_name(entry) for entry in (stages or plan["stages"])]
+        planned = [_stage_name(entry) for entry in plan["stages"]]
+        manifest["selective_rerun"] = {
+            "enabled": not evidence_analysis.get("full_rerun"),
+            "requested_stages": requested,
+            "retained_stages": [name for name in planned if name not in requested],
+            "retained_results_from_cycle": next((name for name in reversed(list_cycles(
+                task_dir, state_dir=state_dir)) if name != cycle_id and (load_cycle(
+                    task_dir, name, state_dir=state_dir) or {}).get("status") == "complete"), None),
+        }
     if resumed:
         manifest["resume_count"] = int(previous.get("resume_count", 0) or 0) + 1
         manifest["resumed_at"] = _utc().isoformat()
@@ -217,6 +235,8 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
                     "name", "status", "outputs", "kpis", "triggers", "message")})
                 if name == "refresh":
                     _builtin_stages.restore_refresh(ctx, result)
+                elif name == "evidence":
+                    _builtin_stages.restore_evidence(ctx)
                 if name.startswith("script:") or name == "kpis":
                     ctx.kpis.update(result.kpis)
                 if saved.get("solve"):
@@ -273,11 +293,20 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     manifest["notifications"] = ctx.notifications
     manifest["agent_review"] = ctx.agent_run
     manifest["standard_first"] = standard_status
+    missing_affected_kpis = []
+    if ctx.evidence_analysis is not None:
+        missing_affected_kpis = [name for name in ctx.evidence_analysis.get("affected_kpis") or []
+                                 if name not in ctx.kpis]
+        ctx.evidence_analysis["missing_affected_kpis"] = missing_affected_kpis
     manifest["degraded"] = any(s["status"] in ("fail", "skipped", "not_installed")
                                for s in manifest["stages"]) or any(
         v not in ("ok",) for v in manifest["sources"].values()) or (
-            bool(standard_first) and bool(standard_status) and not standard_status.get("ready"))
+            bool(standard_first) and bool(standard_status) and not standard_status.get("ready")) or bool(
+                missing_affected_kpis)
     manifest["solve"] = ctx.solve
+    if ctx.evidence_analysis is not None:
+        manifest["evidence"] = {key: value for key, value in ctx.evidence_analysis.items()
+                                if key != "inventory"}
     manifest["finished_at"] = _utc().isoformat()
     manifest["status"] = "complete"
     write_json(os.path.join(cycle_dir, "kpis.json"), ctx.kpis)
@@ -285,6 +314,10 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
     if not ctx.dry_run:
         _append_kpi_history(state_dir, cycle_id, now, ctx.kpis)
     write_json(os.path.join(cycle_dir, "cycle.json"), manifest)
+    if (ctx.evidence_analysis is not None and not ctx.dry_run and mode != "backtest"
+            and not manifest["degraded"]):
+        from .evidence import accept
+        accept(task_dir, ctx.evidence_analysis, cycle_id)
     if not ctx.dry_run and mode != "backtest" and os.path.abspath(state_dir) == os.path.abspath(
             continuous_dir(task_dir)):
         from .living_report import update

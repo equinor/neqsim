@@ -22,6 +22,7 @@ from .living import make_living, promote, resume, status
 from .solve import solve
 from .backtest import run_backtest
 from .state import STATE_SCHEMA_VERSION, StateSchemaError
+from .evidence import EvidenceSchemaError, analyze as analyze_evidence, inventory as evidence_inventory
 
 SCHEMA_VERSION = "1.0"
 
@@ -31,4 +32,5 @@ __all__ = [
     "FileDropAdapter", "DriftMonitor", "run_cycle", "make_living", "promote", "resume", "status",
     "solve", "run_backtest", "STATE_SCHEMA_VERSION", "StateSchemaError",
     "demonstrated_limit", "evaluate_constraints", "lever_limits",
+    "analyze_evidence", "evidence_inventory", "EvidenceSchemaError",
 ]

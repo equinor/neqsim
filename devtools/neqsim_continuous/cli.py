@@ -4,6 +4,7 @@
     neqsim task-cycle <task> [--mode monitor|solve] [--stages a,b] [--dry-run] [--no-agent] [--now ISO] [--standard-first]
     neqsim task-solve <task> [--until goal|converged] [--max-rounds N] [--no-agent] [--allow-unconfirmed]
     neqsim task-resume <task> [--max-rounds N] [--no-agent]
+    neqsim task-update <task> [--no-agent] [--dry-run]
     neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--repeat]
     neqsim task-schedule <task> [--daily HH:MM] [--install | --remove | --show]
     neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]
@@ -23,7 +24,7 @@ import json
 import os
 import sys
 
-COMMANDS = ("living", "cycle", "solve", "resume", "backtest", "schedule", "promote", "ledger",
+COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest", "schedule", "promote", "ledger",
             "status", "report", "reference-case", "note")
 
 
@@ -93,6 +94,11 @@ def main(argv=None):
     p.add_argument("task")
     p.add_argument("--max-rounds", type=int)
     p.add_argument("--no-agent", action="store_true")
+
+    p = sub.add_parser("update", help="detect evidence changes and rerun only affected stages")
+    p.add_argument("task")
+    p.add_argument("--no-agent", action="store_true")
+    p.add_argument("--dry-run", action="store_true")
 
     p = sub.add_parser("backtest", help="replay archived data with a simulated clock")
     p.add_argument("task")
@@ -186,6 +192,30 @@ def main(argv=None):
     elif args.command == "resume":
         from .living import resume
         _print(resume(_task(args.task), no_agent=args.no_agent, max_rounds=args.max_rounds))
+    elif args.command == "update":
+        from .cycle import run_cycle
+        from .evidence import analyze, initialize, selected_stages
+        from .living import note_reopen
+        from .plan import load_plan
+        plan = load_plan(args.task)
+        impact = analyze(args.task, plan)
+        public_impact = {key: value for key, value in impact.items() if key != "inventory"}
+        if impact["status"] == "initialized":
+            initialize(args.task, plan)
+            _print(dict(public_impact, message="evidence baseline initialized; no rerun required"))
+        elif not impact["changes"]:
+            _print(dict(public_impact, message="no evidence changes; no rerun required"))
+        else:
+            selected = selected_stages(plan, impact)
+            manifest = run_cycle(args.task, mode="monitor", stages=selected,
+                                 dry_run=args.dry_run, no_agent=args.no_agent,
+                                 evidence_analysis=impact)
+            if not args.dry_run:
+                note_reopen(args.task, manifest)
+            _print(dict(public_impact, selected_stages=selected,
+                        cycle={key: manifest.get(key) for key in
+                               ("cycle_id", "status", "degraded", "selective_rerun")},
+                        accepted=not args.dry_run and not manifest.get("degraded")))
     elif args.command == "backtest":
         from .backtest import run_backtest
         report = run_backtest(_task(args.task), _parse_time(args.start), _parse_time(args.end),
