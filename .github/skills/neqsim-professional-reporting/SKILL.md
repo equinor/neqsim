@@ -331,7 +331,11 @@ finding); (2) per-sample *prediction* error (Psat, GOR, STO, CME above/below Psa
 DLE Rs/Bo, viscosity) with mean and worst case; (3) parity and CME/DLE overlay
 figures; (4) untuned or out-of-method fluids (gas cap, gas condensate) named and
 marked NOT TUNED, and lab inconsistencies flagged rather than fitted; (5) what of
-the tuning is carried into the downstream model. Put the numbers in
+the tuning is carried into the downstream model; (6) every experiment row labelled
+`fit target` or `check (not fitted)`, the untuned "before" computed with the optimiser
+start values, and any process-level calibration (e.g. produced-gas heavy-end leaning)
+listed in the parameters with its bounds and its validation role (calibrated, hold-out,
+fitted separately). Put the numbers in
 `results.json` `tables` and `figure_captions`. A model that is validated against
 plant data but whose fluid quality is not shown is incomplete. Detailed recipe:
 `enterprise-process-notebook-workspace` (section "Fluid tuning quality is reported,

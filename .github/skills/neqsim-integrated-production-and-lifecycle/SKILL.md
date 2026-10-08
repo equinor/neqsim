@@ -121,8 +121,22 @@ For lifecycle work, build a `FieldLifecycleConcept` using `NorwegianOilFieldCase
 - `CashFlowEngine.calculate(discountRate)` returns `CashFlowResult`; its `getNpv()` is MUSD, `getIrr()` a fraction, and `getPaybackYears()` years. Input units differ by commodity: oil barrels, gas Sm3 and NGL barrels per year; CAPEX and cash-flow amounts are MUSD.
 - `ReservoirCouplingExporter.getEclipseKeywords()` returns a text keyword block. `VfpTable.getFlowRates()` is Sm3/day, `getThpValues()` bara, `getWctValues()` fraction and datum depth m.
 
+## Gas history match and facility limit (reservoir to export)
+
+For a gas field with a pressure history and a compression-limited host, use these classes in `process.fielddevelopment.integrated` instead of the constant-Z `MaterialBalanceGasDrive`:
+
+| Need | Class | Key calls |
+|---|---|---|
+| Real-gas p/z tank with influx fraction | `RealGasMaterialBalanceDrive`, `DranchukAbouKassemZ` (any `GasZFactor`) | `getReservoirPressure`, `getPOverZ`, `produce` |
+| GIIP and initial p/z from shut-in pressures | `MaterialBalanceHistoryMatch` | `staticBottomholePressure`, `fitPzLine` (sigma-clipping), `PzFit.getGiip` |
+| Well law q = C (pr^2 - pwh^2)^n | `RawlinsSchellhardtFit`, `WellDeliverabilityCurve.fromRawlinsSchellhardt` | `fit`, `rate`, `wellheadPressureFor` |
+| Whether wells or facility limit the rate | `SupplyCapacityBalance`, `SupplyCapacityBalance.PressureCapacityCurve` | `maximiseRate` returns pressure, rate, `Binding.SUPPLY` or `FACILITY` |
+
+Build the capacity curve from repeated process-model throughput sweeps at several separator pressures (capacity = rate where first-constraint utilisation reaches 1.0). Workflow, hold-out testing and the traps (shut-in proxy, choke-open rows only, joint bootstrap of p/z_i and GIIP, bisection for rate-dependent flowline drop) are in the community skill `neqsim-reservoir-facility-value-chain`; `GasValueChainSurrogatesTest` has deterministic fixtures.
+
 ## Gotchas
 
+- `MaterialBalanceGasDrive` uses one constant Z, so pressure is linear in recovery; with a real p/z history (Z changes 5-10 % over depletion) use `RealGasMaterialBalanceDrive`.
 - `IntegratedProductionModel` is not the full `FieldLifecycleModel`; it couples a simple `ReservoirDrive`, well-curve surrogate and branch network. `MaterialBalanceGasDrive` and `OilTankDrive` are simplified depletion models, not a compositional reservoir simulator.
 - `WellDeliverabilityCurve.fromVogel` is an analytic Vogel-like shape. `fromWellSystem` samples a configured `WellSystem`; failed/nonphysical samples are clamped to zero and sampled rates are forced non-increasing with pressure. Check the source data and fit envelope.
 - `runProfile(years, dtYears)` records `ceil(years/dtYears)+1` points (t = 0 to the endpoint); depletion and cumulative production cover exactly `years` (the extra post-endpoint step was removed 2026-10).
@@ -148,3 +162,4 @@ For lifecycle work, build a `FieldLifecycleConcept` using `NorwegianOilFieldCase
 - `neqsim-agentic-process-optimization` — closed-loop optimization of an already-built process model.
 - `neqsim-process-modeling` — detailed flowsheet construction and convergence checks.
 - `neqsim-e300-fluid-io` — Eclipse E300 fluid import/export; distinct from VFP table generation.
+- `neqsim-reservoir-facility-value-chain` (community) — p/z history match, well law, facility capacity and supply/capacity balance for a gas chain.
