@@ -36,8 +36,8 @@ be interpreted as a hydrogen-fuel rating.
 
 ## Complete Java example
 
-This assertion-enabled Java 8 program keeps every case on the same one-mole
-composition basis at 200 bara absolute. The sensitivity cases replace two mole
+This assertion-enabled Java 8 program uses the same one-mole composition basis
+for every case at 200 bara absolute. The sensitivity cases replace two mole
 percentage points of methane with either carbon dioxide or nitrogen instead of
 adding material to an existing system. Run it with assertions enabled (`java -ea`).
 
@@ -55,8 +55,8 @@ public final class Iso15403Example {
   private Iso15403Example() {}
 
   public static void main(String[] args) {
-    SystemInterface baseGas = createCng(0.92, 0.01, 0.01);
-    Standard_ISO15403 base = new Standard_ISO15403(baseGas);
+    Standard_ISO15403 base =
+        new Standard_ISO15403(createCng(0.92, 0.01, 0.01));
     base.calculate();
     double baseMon = base.getValue("MON");
     double baseNm = base.getValue("NM");
@@ -71,7 +71,6 @@ public final class Iso15403Example {
     nitrogenCase.calculate();
     double nitrogenNm = nitrogenCase.getValue("NM");
 
-    assert Math.abs(baseGas.getPressure("bara") - PRESSURE_BARA_ABSOLUTE) < 1.0e-12;
     assert Double.isFinite(baseMon);
     assert Double.isFinite(baseNm);
     assert Math.abs(baseMon - 128.18474) < 1.0e-8;
@@ -82,6 +81,7 @@ public final class Iso15403Example {
     assert nitrogenNm < baseNm;
     assert "".equals(base.getUnit("MON"));
     assert "".equals(base.getUnit("NM"));
+    assert base.isOnSpec();
 
     logger.info("Base MON={}, base NM={} (dimensionless)", baseMon, baseNm);
     logger.info("NM after replacing methane with CO2={}", carbonDioxideNm);
@@ -94,6 +94,7 @@ public final class Iso15403Example {
     assert Math.abs(totalMoles - 1.0) < 1.0e-12 : "Composition must total one mole";
 
     SystemInterface gas = new SystemSrkEos(288.15, PRESSURE_BARA_ABSOLUTE);
+    assert Math.abs(gas.getPressure("bara") - PRESSURE_BARA_ABSOLUTE) < 1.0e-12;
     gas.addComponent("methane", methane);
     gas.addComponent("ethane", 0.04);
     gas.addComponent("propane", 0.01);
