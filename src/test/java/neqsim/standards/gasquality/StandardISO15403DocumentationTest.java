@@ -31,7 +31,7 @@ import neqsim.thermo.system.SystemSrkEos;
 class StandardISO15403DocumentationTest extends NeqSimTest {
   private static final String GUIDE = "docs/standards/iso15403_cng_quality.md";
   private static final Pattern JAVA_FENCE =
-      Pattern.compile("(?m)^\x60\x60\x60java\\r?\\n([\\s\\S]*?)^\x60\x60\x60[ \\t]*$");
+      Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS =
       Pattern.compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
   private static final Pattern MARKDOWN_LINK = Pattern.compile("\\[[^\\]]+\\]\\(([^)]+)\\)");
