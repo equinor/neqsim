@@ -1010,9 +1010,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Return the complete table's SG60/60-weighted liquid-volume percentage.
      *
      * <p>
-     * This is the ideal-additive-volume mass denominator {@code sum(Delta V_i * SG_i)}, with
-     * {@code Delta V_i} in liquid-volume percent. It is an auditable relative-mass term rather than
-     * a physical mass unit.
+     * This is the ideal-additive-volume mass denominator {@code sum(Delta V_i * SG_i)}, with {@code Delta V_i} in
+     * liquid-volume percent. It is an auditable relative-mass term rather than a physical mass unit.
      * </p>
      *
      * @return complete-table SG-weighted liquid-volume percentage
@@ -1067,8 +1066,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       double targetImpliedMass = normalizedMassPercent * totalImpliedMass / 100.0;
       double cumulativeImpliedMass = 0.0;
       for (int cutIndex = 0; cutIndex < getCutCount(); cutIndex++) {
-        double intervalVolumePercent = cumulativeVolumePercent[cutIndex + 1]
-            - cumulativeVolumePercent[cutIndex];
+        double intervalVolumePercent = cumulativeVolumePercent[cutIndex + 1] - cumulativeVolumePercent[cutIndex];
         double intervalImpliedMass = intervalVolumePercent * specificGravity[cutIndex];
         double nextCumulativeImpliedMass = cumulativeImpliedMass + intervalImpliedMass;
         double nextCumulativeMassPercent = 100.0 * nextCumulativeImpliedMass / totalImpliedMass;
@@ -1607,8 +1605,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
           / liquidVolumePercent;
       this.boilingPointVarianceKelvinSquared = Math.max(0.0,
           averageSquaredBoilingPointKelvinSquared - averageBoilingPointKelvin * averageBoilingPointKelvin);
-      this.massPercent =
-          100.0 * specificGravityWeightedLiquidVolumePercent / totalSpecificGravityWeightedLiquidVolumePercent;
+      this.massPercent = 100.0 * specificGravityWeightedLiquidVolumePercent
+          / totalSpecificGravityWeightedLiquidVolumePercent;
     }
 
     /** @return normalized lower boiling boundary in K */
@@ -1640,9 +1638,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * Return the normalized ideal-additive-volume mass yield for this range.
      *
      * <p>
-     * This is {@code 100 * M_range / M_total}, where each implied mass term is
-     * {@code Delta V_i * SG_i}. It is a basis conversion over the caller-supplied TBP and
-     * SG60/60 table, not a density-temperature or volume-contraction model.
+     * This is {@code 100 * M_range / M_total}, where each implied mass term is {@code Delta V_i * SG_i}. It is a basis
+     * conversion over the caller-supplied TBP and SG60/60 table, not a density-temperature or volume-contraction model.
      * </p>
      *
      * @return normalized mass yield in percent

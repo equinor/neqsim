@@ -28,8 +28,7 @@ class OilAssayCharacterisationTbpMassRecoveryTest {
     TbpBoilingRangeProperties partial = table.getBoilingRangePropertiesKelvin(350.0, 550.0);
     assertEquals(54.5, partial.getSpecificGravityWeightedLiquidVolumePercent(), 1.0e-12);
     assertEquals(100.0 * 54.5 / 84.0, partial.getMassPercent(), 1.0e-12);
-    assertEquals(partial.getMassPercent(),
-        table.getMassPercentBetweenBoilingPointsCelsius(76.85, 276.85), 1.0e-12);
+    assertEquals(partial.getMassPercent(), table.getMassPercentBetweenBoilingPointsCelsius(76.85, 276.85), 1.0e-12);
   }
 
   /** Tests source-node values, partial-cut round trips, and unit parity. */
@@ -62,8 +61,7 @@ class OilAssayCharacterisationTbpMassRecoveryTest {
         + table.getMassPercentBetweenBoilingPointsKelvin(500.0, 700.0);
     assertEquals(100.0, partitionedMassPercent, 1.0e-12);
 
-    double snappedMassPercent =
-        table.getMassPercentBetweenBoilingPointsKelvin(300.0 + 5.0e-9, 400.0 - 5.0e-9);
+    double snappedMassPercent = table.getMassPercentBetweenBoilingPointsKelvin(300.0 + 5.0e-9, 400.0 - 5.0e-9);
     assertEquals(100.0 * 14.0 / 84.0, snappedMassPercent, 0.0);
     assertEquals(300.0, table.getBoilingPointKelvinAtCumulativeMassPercent(-5.0e-9), 0.0);
     assertEquals(700.0, table.getBoilingPointKelvinAtCumulativeMassPercent(100.0 + 5.0e-9), 0.0);
@@ -77,20 +75,13 @@ class OilAssayCharacterisationTbpMassRecoveryTest {
   void rejectsInvalidMassRecoveryQueries() {
     TbpCutTable table = sourceTable();
 
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getCumulativeMassPercentAtBoilingPointKelvin(Double.NaN));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getCumulativeMassPercentAtBoilingPointKelvin(299.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getMassPercentBetweenBoilingPointsKelvin(500.0, 500.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getMassPercentBetweenBoilingPointsKelvin(600.0, 400.0));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingPointKelvinAtCumulativeMassPercent(Double.NaN));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingPointKelvinAtCumulativeMassPercent(-0.1));
-    assertThrows(IllegalArgumentException.class,
-        () -> table.getBoilingPointKelvinAtCumulativeMassPercent(100.1));
+    assertThrows(IllegalArgumentException.class, () -> table.getCumulativeMassPercentAtBoilingPointKelvin(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> table.getCumulativeMassPercentAtBoilingPointKelvin(299.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getMassPercentBetweenBoilingPointsKelvin(500.0, 500.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getMassPercentBetweenBoilingPointsKelvin(600.0, 400.0));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingPointKelvinAtCumulativeMassPercent(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingPointKelvinAtCumulativeMassPercent(-0.1));
+    assertThrows(IllegalArgumentException.class, () -> table.getBoilingPointKelvinAtCumulativeMassPercent(100.1));
   }
 
   private static TbpCutTable sourceTable() {
