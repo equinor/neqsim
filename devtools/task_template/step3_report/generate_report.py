@@ -99,6 +99,56 @@ try:
 except ImportError:
     HAS_MATPLOTLIB = False
 
+
+def _load_report_kit():
+    """Import report_kit.py from beside this script, else from the NeqSim toolkit.
+
+    A task folder may hold a lone copy of this script, so the helper module is
+    also looked up through NEQSIM_PROJECT_ROOT, the saved project root, the
+    pip-installed toolkit and a walk up to a NeqSim checkout.
+    """
+    import importlib.util
+    here = os.path.dirname(os.path.abspath(__file__))
+    relative = os.path.join("devtools", "task_template", "step3_report")
+    candidates = [here]
+    saved = ""
+    try:
+        with open(os.path.join(os.path.expanduser("~"), ".neqsim", "task_defaults.json"),
+                  "r", encoding="utf-8-sig") as handle:
+            saved = json.load(handle).get("project_root") or ""
+    except (OSError, ValueError, AttributeError):
+        pass
+    for root in (os.environ.get("NEQSIM_PROJECT_ROOT"), saved):
+        if root:
+            candidates.append(os.path.join(root, relative))
+    try:
+        spec = importlib.util.find_spec("task_template")
+        for location in (spec.submodule_search_locations or []) if spec else []:
+            candidates.append(os.path.join(location, "step3_report"))
+    except (ImportError, ValueError):
+        pass
+    parent = here
+    for _ in range(8):
+        parent = os.path.dirname(parent)
+        if os.path.isfile(os.path.join(parent, "pom.xml")):
+            candidates.append(os.path.join(parent, relative))
+    for folder in candidates:
+        path = os.path.join(folder, "report_kit.py")
+        if os.path.isfile(path):
+            spec = importlib.util.spec_from_file_location("neqsim_report_kit", path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return module
+    print("ERROR: report_kit.py not found beside generate_report.py or in the NeqSim "
+          "toolkit. Copy it from devtools/task_template/step3_report/ or set "
+          "NEQSIM_PROJECT_ROOT.")
+    sys.exit(1)
+
+
+KIT = _load_report_kit()
+# Word equations as editable OMML; set False to keep rendered images only.
+EQUATIONS_AS_OMML = True
+
 # ── Word typography ──────────────────────────────────────
 # Floors applied to the template's own styles (see _apply_readable_typography).
 BODY_PT = 11.0
@@ -201,6 +251,13 @@ REPORT_STRINGS = {
         "List of Figures": "Figurliste",
         "List of Tables": "Tabelliste",
         "Key Equations": "Sentrale ligninger",
+        "Appendix": "Vedlegg",
+        "Report Quality Checks": "Kvalitetskontroll av rapporten",
+        "Reproducing the Results": "Reprodusere resultatene",
+        "Complete Numerical Results": "Alle numeriske resultater",
+        "Report build": "Rapportbygg",
+        "Complete numerical results": "Alle numeriske resultater",
+        "See": "Se",
         "Appendix A. Report Quality Checks": "Vedlegg A. Kvalitetskontroll av rapporten",
         "Appendix B. Report Quality Checks": "Vedlegg B. Kvalitetskontroll av rapporten",
         "Appendix A. Reproducing the Results": "Vedlegg A. Reprodusere resultatene",
@@ -461,7 +518,8 @@ def _docx_to_pdf_word(docx_path, pdf_path):
         word.DisplayAlerts = 0
         document = word.Documents.Open(docx_path, ReadOnly=True, Visible=False)
         document.ExportAsFixedFormat(pdf_path, wd_export_format_pdf,
-                                     CreateBookmarks=1)
+                                     CreateBookmarks=1, IncludeDocProps=True,
+                                     DocStructureTags=True)
     except Exception as error:  # pragma: no cover - COM surfaces many types
         return "Word automation failed ({})".format(error)
     finally:
@@ -503,8 +561,9 @@ def _docx_to_pdf_libreoffice(docx_path, pdf_path):
     outdir = os.path.dirname(pdf_path)
     try:
         completed = subprocess.run(
-            [executable, "--headless", "--convert-to", "pdf", "--outdir",
-             outdir, docx_path],
+            [executable, "--headless", "--convert-to",
+             'pdf:writer_pdf_Export:{"UseTaggedPDF":{"type":"boolean","value":"true"}}',
+             "--outdir", outdir, docx_path],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=300)
     except (OSError, subprocess.SubprocessError) as error:
         return "LibreOffice call failed ({})".format(error)
@@ -2202,12 +2261,40 @@ def format_list_items_text(items):
     return "\n".join(["- {}".format(_format_list_item_text(item)) for item in iterable])
 
 
+def _build_fingerprint():
+    """Short hashes of results.json and of the generator, to tie a report to its inputs."""
+    def digest(paths):
+        sha = hashlib.sha256()
+        found = False
+        for path in paths:
+            try:
+                with open(path, "rb") as handle:
+                    sha.update(handle.read())
+                found = True
+            except OSError:
+                pass
+        return sha.hexdigest()[:12] if found else ""
+    return {"results": digest([RESULTS_FILE]),
+            "generator": digest([os.path.abspath(__file__), KIT.__file__])}
+
+
 def format_reproducibility_text(results):
     """Format results.json ``reproducibility`` as markdown for the appendix.
 
     Accepts a string, a list of steps, or a dict with ``environment``,
-    ``steps``, ``checks`` and ``what_if`` (each a string or list).
+    ``steps``, ``checks`` and ``what_if`` (each a string or list). A build
+    line ties the report to the exact results.json and generator it came from.
     """
+    text = _reproducibility_body(results)
+    stamp = _build_fingerprint()
+    if text and stamp["results"]:
+        text += "\n\n**{}**\n- results.json SHA-256 {}\u2026; report generator {}\u2026".format(
+            _t("Report build"), stamp["results"], stamp["generator"])
+    return text
+
+
+def _reproducibility_body(results):
+    """The author-written reproducibility content as markdown, or an empty string."""
     repro = (results or {}).get("reproducibility")
     if not repro:
         return ""
@@ -2377,7 +2464,8 @@ def _prose_to_html(text):
         else:
             body = " ".join(line.strip() for line in para.split("\n")
                             if line.strip())
-        out.append("<p>{}</p>".format(_INLINE_CODE_RE.sub(r"<code>\1</code>", body)))
+        out.append("<p>{}</p>".format(
+            _html_xrefs(_INLINE_CODE_RE.sub(r"<code>\1</code>", body))))
     return "".join(out)
 
 
@@ -2411,20 +2499,26 @@ def _benchmark_tests(results):
 
 
 def auto_executive_summary(results, task_spec):
-    """Generate an executive summary from available results data."""
+    """Generate an executive summary that leads with findings, not provenance.
+
+    With written conclusions the summary is the conclusions plus only items that
+    need attention. The approach, evidence counts, data-gap counts and passed
+    checks belong to their own sections and are used only as a fallback.
+    """
     parts = []
+    conclusions = str((results or {}).get("conclusions") or "").strip()
+    has_conclusions = bool(conclusions) and not _is_placeholder_text(conclusions)
+    if has_conclusions:
+        parts.append(conclusions)
     approach = ""
     if results and results.get("approach"):
         approach = results["approach"]
-    if approach and not _is_placeholder_text(approach):
+    if not has_conclusions and approach and not _is_placeholder_text(approach):
         # Skip run-in headings such as "Data." that open a paragraph.
         sentences = [s.strip().rstrip(".") for s in approach.split(". ") if s.strip()]
         first_sentence = next((s for s in sentences if len(s.split()) >= 4),
                               sentences[0] if sentences else "")
         parts.append(first_sentence + ".")
-    conclusions = str((results or {}).get("conclusions") or "").strip()
-    has_conclusions = bool(conclusions) and not _is_placeholder_text(conclusions)
-    # With written conclusions (appended below) a dump of machine key names only adds noise.
     if not has_conclusions and results and results.get("key_results"):
         findings = []
         for label, value, unit, _note in _flatten_key_results(results["key_results"])[:5]:
@@ -2436,14 +2530,14 @@ def auto_executive_summary(results, task_spec):
     readiness = infer_safety_readiness(results) if results else None
     if readiness:
         parts.append("Safety study readiness: {}.".format(readiness["verdict"]))
-    evidence_rows = _document_source_counts(load_collection_manifest()) \
-        or _count_reference_files()
+    evidence_rows = [] if has_conclusions else (
+        _document_source_counts(load_collection_manifest()) or _count_reference_files())
     if evidence_rows:
         parts.append("Evidence basis: {} document(s) from {}.".format(
             sum(row[1] for row in evidence_rows),
             ", ".join("{} ({})".format(name, count)
                       for name, count, _desc in evidence_rows[:6])))
-    if results:
+    if results and not has_conclusions:
         _assumptions, _gaps = _assumption_rows(results)
         if _gaps:
             parts.append("{} item(s) of information could not be obtained; the "
@@ -2462,17 +2556,15 @@ def auto_executive_summary(results, task_spec):
         if failures:
             parts.append("Validation checks requiring attention: {}.".format(
                 ", ".join(failures)))
-        else:
+        elif not has_conclusions:
             parts.append("Validation checks did not flag design blockers.")
     benchmarks = _benchmark_tests(results)
-    if benchmarks:
+    if benchmarks and not has_conclusions:
         passed = sum(test.get("pass") is True for test in benchmarks)
         parts.append("{} of {} benchmark comparisons passed.".format(passed, len(benchmarks)))
     if results and results.get("risk_evaluation", {}).get("overall_risk_level"):
         parts.append("Overall project risk: {}.".format(
             results["risk_evaluation"]["overall_risk_level"]))
-    if results and results.get("conclusions") and not _is_placeholder_text(results["conclusions"]):
-        parts.append(results["conclusions"])
     return "\n\n".join(parts)
 
 
@@ -2745,6 +2837,39 @@ def check_report_consistency(results):
                            "by non-economic factors.".format(prob_neg, overall_risk.title()),
                 "fix_type": "none",
             })
+
+    # --- 9. Numbers quoted in the findings that results.json cannot account for ---
+    quoted, unmatched = KIT.untraced_numbers(results)
+    if len(unmatched) >= 3 and len(unmatched) > len(quoted) / 2.0:
+        listed = ", ".join(_fmt_number(v) for v in unmatched[:10])
+        issues.append({
+            "severity": "WARNING",
+            "message": "{} of {} numbers quoted in the findings are not in results.json "
+                       "({}). Add them to key_results, or state in the text how they were "
+                       "derived, so every figure in the findings can be traced.".format(
+                           len(unmatched), len(quoted), listed),
+            "fix_type": "text",
+        })
+    elif unmatched:
+        issues.append({
+            "severity": "INFO",
+            "message": "Numbers quoted in the findings but not found in results.json: {}. "
+                       "Confirm they are derived values or add them to key_results.".format(
+                           ", ".join(_fmt_number(v) for v in unmatched[:10])),
+            "fix_type": "none",
+        })
+
+    # --- 10. A long key_results list with nothing marked as the headline ---
+    n_rows = len(_flatten_key_results(key_results)) if key_results else 0
+    if n_rows > 15 and not _headline_rows(results):
+        issues.append({
+            "severity": "WARNING",
+            "message": "key_results has {} rows and none is marked \"headline\": true, so the "
+                       "Results table prints all of them with labels derived from key names. "
+                       "Mark the 5-10 decisive values (with label, unit, decimals) and the "
+                       "full list moves to an appendix.".format(n_rows),
+            "fix_type": "text",
+        })
 
     if not issues:
         issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
@@ -3458,8 +3583,96 @@ def _md_table_to_word(doc, table_lines):
 # maths, which is a separate results.json-driven code path) in one pass, so
 # the two kinds of markup can be interleaved in a single sentence.
 _INLINE_TOKEN_RE = re.compile(
-    r"(\*\*.+?\*\*|`[^`\n]+`|\$(?!\$)[^$\n]+?\$(?!\$))")
+    r"(\*\*.+?\*\*|`[^`\n]+`|\{fig:[^}\s]+\}|\$(?!\$)[^$\n]+?\$(?!\$))")
 _INLINE_MATH_CACHE = {}
+
+_FIGURE_PLAN_CACHE = {}
+
+
+def get_figure_plan(results):
+    """Where each figure is shown and its number; shared by Word and HTML.
+
+    A figure with a Discussion entry is shown next to that discussion, the rest
+    stay in Results. Cached per results object so both renderers agree.
+    """
+    key = id(results)
+    if key not in _FIGURE_PLAN_CACHE:
+        discussion = (results or {}).get("figure_discussion") or []
+        _FIGURE_PLAN_CACHE.clear()
+        _FIGURE_PLAN_CACHE[key] = KIT.FigurePlan(get_figures(), discussion)
+    return _FIGURE_PLAN_CACHE[key]
+
+
+def _active_figure_plan():
+    """The plan of the report being built, or an empty plan."""
+    for plan in _FIGURE_PLAN_CACHE.values():
+        return plan
+    return KIT.FigurePlan([], None)
+
+
+def _figure_bookmark(path):
+    """Word bookmark that wraps a figure's "Figure N" caption label."""
+    return "_RefFig_" + KIT.figure_slug(path)
+
+
+_BOOKMARK_IDS = {"next": 100}
+
+
+def _add_ref_field(paragraph, bookmark, text):
+    """Insert a { REF bookmark \\h } cross-reference that Word keeps current."""
+    begin = paragraph.add_run()
+    begin._r.append(parse_xml('<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
+    code = paragraph.add_run()
+    code._r.append(parse_xml(
+        '<w:instrText {} xml:space="preserve"> REF {} \\h </w:instrText>'.format(
+            nsdecls("w"), bookmark)))
+    sep = paragraph.add_run()
+    sep._r.append(parse_xml('<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))))
+    shown = paragraph.add_run(text)
+    end = paragraph.add_run()
+    end._r.append(parse_xml('<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
+    return shown
+
+
+def _add_figure_reference(paragraph, token):
+    """Render a {fig:name} marker as a live cross-reference, or plain text."""
+    plan = _active_figure_plan()
+    path = plan.resolve(token)
+    number = plan.number_of(path) if path else None
+    if number is None:
+        paragraph.add_run("{} ?".format(_t("Figure")))
+        return
+    _add_ref_field(paragraph, _figure_bookmark(path),
+                   "{} {}".format(_t("Figure"), number))
+
+
+def _html_xrefs(text):
+    """Replace {fig:name} markers with links to the figure anchors."""
+    plan = _active_figure_plan()
+
+    def link(match):
+        path = plan.resolve(match.group(1))
+        number = plan.number_of(path) if path else None
+        if number is None:
+            return "{} ?".format(_t("Figure"))
+        return '<a class="xref" href="#fig-{}">{} {}</a>'.format(
+            number, _t("Figure"), number)
+
+    return KIT.FIG_REF_RE.sub(link, str(text))
+
+
+def _append_omml(paragraph, latex_str):
+    """Append an editable Word equation; False when it needs the image fallback."""
+    if not EQUATIONS_AS_OMML:
+        return False
+    xml = KIT.latex_to_omml(_sanitize_equation_latex(latex_str))
+    if not xml:
+        return False
+    try:
+        paragraph._p.append(parse_xml(xml))
+    except Exception:
+        return False
+    return True
 
 
 def _inline_math_image_path(latex_str, font_pt):
@@ -3478,7 +3691,9 @@ def _inline_math_image_path(latex_str, font_pt):
 
 
 def _add_inline_math_run(paragraph, latex_str, font_pt=None):
-    """Insert a small inline-maths image sized to sit on the text line."""
+    """Insert inline maths: an editable equation, else a small image on the line."""
+    if _append_omml(paragraph, latex_str):
+        return
     font_pt = font_pt or INLINE_EQ_FONT_PT
     image_path = _inline_math_image_path(_sanitize_equation_latex(latex_str), font_pt)
     if not image_path:
@@ -3494,16 +3709,28 @@ def _add_inline_math_run(paragraph, latex_str, font_pt=None):
         run.add_picture(image_path, height=Inches(size[1] / float(EQ_RENDER_DPI)))
     else:
         run.add_picture(image_path, height=Pt(font_pt))
+    _set_last_picture_alt(paragraph, _latex_fallback_text(latex_str))
+
+
+def _set_last_picture_alt(paragraph, text):
+    """Give the paragraph's last inline picture alt text (screen readers, PDF tags)."""
+    try:
+        docpr = paragraph._p.xpath(".//wp:docPr")[-1]
+        docpr.set("descr", KIT.plain_alt_text(text))
+    except (IndexError, AttributeError, KeyError):
+        pass
 
 
 def _add_bold_runs(paragraph, text):
-    """Add text with **bold** spans and $...$ inline maths as separate runs."""
+    """Add text with **bold** spans, $...$ inline maths and {fig:name} cross-references."""
     for part in _INLINE_TOKEN_RE.split(text):
         if not part:
             continue
         if part.startswith("**") and part.endswith("**"):
             run = paragraph.add_run(part[2:-2])
             run.bold = True
+        elif part.startswith("{fig:") and part.endswith("}"):
+            _add_figure_reference(paragraph, part[5:-1])
         elif part.startswith("`") and part.endswith("`") and len(part) > 2:
             run = paragraph.add_run(part[1:-1])
             run.font.name = "Consolas"
@@ -3781,7 +4008,7 @@ def _add_equation_fallback_paragraph(doc, label, latex):
     return paragraph
 
 
-def _add_figure_picture(doc, image_path):
+def _add_figure_picture(doc, image_path, alt=None):
     """Place a figure across the measure, shrunk if it would not fit the page.
 
     A fixed picture width makes a tall figure overflow the printable height,
@@ -3798,6 +4025,8 @@ def _add_figure_picture(doc, image_path):
             width_in = max_width * max_height / height_in
     doc.add_picture(image_path, width=Inches(width_in))
     picture_para = doc.paragraphs[-1]
+    if alt:
+        _set_last_picture_alt(picture_para, alt)
     picture_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     # The caption follows the picture, so the picture must not end a page.
     picture_para.paragraph_format.keep_with_next = True
@@ -3846,11 +4075,12 @@ def _add_seq_field(paragraph, label):
 _SEQ_COUNTERS = {}
 
 
-def _add_caption(doc, label, text, keep_with_next=False):
+def _add_caption(doc, label, text, keep_with_next=False, bookmark=None):
     """Add a numbered, styled caption that a list of figures/tables can collect.
 
     The number comes from a Word SEQ field, so inserting a figure renumbers the
     rest of the report instead of leaving the captions to drift out of step.
+    A ``bookmark`` wraps "Figure N" so REF fields can cross-reference it.
     """
     text = _strip_caption_prefix(text)
     try:
@@ -3859,8 +4089,17 @@ def _add_caption(doc, label, text, keep_with_next=False):
         paragraph = doc.add_paragraph()
     paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     paragraph.paragraph_format.keep_with_next = keep_with_next
+    if bookmark:
+        bookmark_id = _BOOKMARK_IDS["next"]
+        _BOOKMARK_IDS["next"] += 1
+        paragraph._p.append(parse_xml(
+            '<w:bookmarkStart {} w:id="{}" w:name="{}"/>'.format(
+                nsdecls("w"), bookmark_id, bookmark)))
     paragraph.add_run("{} ".format(label))
     _add_seq_field(paragraph, label)
+    if bookmark:
+        paragraph._p.append(parse_xml(
+            '<w:bookmarkEnd {} w:id="{}"/>'.format(nsdecls("w"), bookmark_id)))
     if text:
         paragraph.add_run(": {}".format(text))
     for run in paragraph.runs:
@@ -4073,7 +4312,8 @@ def _flatten_key_results(key_results):
                 label_part = value.get("label") or label_part
                 label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
                 note = value.get("description") or value.get("source") or value.get("basis")
-                rows.append((label, value["value"], unit, note))
+                rows.append((label, _apply_decimals(value["value"], value.get("decimals")),
+                             unit, note))
                 return
             if depth >= 5:
                 label = " \u2013 ".join(path_labels) or "Value"
@@ -4117,6 +4357,63 @@ def _flatten_key_results(key_results):
     for top_key, top_val in (key_results or {}).items():
         walk(top_val, top_key, [], 1)
     return rows
+
+
+def _apply_decimals(value, decimals):
+    """Fixed decimals for a numeric result when the author asked for them."""
+    if (isinstance(decimals, int) and not isinstance(decimals, bool) and decimals >= 0
+            and isinstance(value, (int, float)) and not isinstance(value, bool)):
+        return _localize_decimal("{:.{}f}".format(value, decimals))
+    return value
+
+
+def _headline_rows(results):
+    """The decisive results as (group, label, value, unit, note) rows.
+
+    Authors mark them with ``"headline": true`` (plus optional ``label``,
+    ``unit``, ``group``, ``decimals``) inside key_results, or list them in a
+    top-level ``headline_results`` array. Empty when nothing is marked, in
+    which case the Results table keeps printing every key_results row.
+    """
+    rows = []
+    declared = (results or {}).get("headline_results")
+    for item in declared if isinstance(declared, list) else []:
+        if not isinstance(item, dict) or "value" not in item:
+            continue
+        label = item.get("label") or _label_from_key(str(item.get("key", "Value")))
+        rows.append((item.get("group") or "", label,
+                     _apply_decimals(item["value"], item.get("decimals")),
+                     _prettify_declared_unit(item.get("unit")) or "",
+                     item.get("note") or item.get("source") or item.get("description")))
+
+    def walk(key, value):
+        if not isinstance(value, dict):
+            return
+        if "value" in value and not isinstance(value["value"], (dict, list)):
+            if value.get("headline"):
+                label, unit = _leaf_label_and_unit(key, value.get("unit"))
+                rows.append((value.get("group") or "", value.get("label") or label,
+                             _apply_decimals(value["value"], value.get("decimals")), unit,
+                             value.get("description") or value.get("source")
+                             or value.get("basis")))
+            return
+        for sub_key, sub_value in value.items():
+            walk(sub_key, sub_value)
+
+    for top_key, top_value in ((results or {}).get("key_results") or {}).items():
+        walk(top_key, top_value)
+    return rows
+
+
+def _grouped(rows):
+    """Split headline rows into [(group, [(label, value, unit, note)])] in first-seen order."""
+    order, groups = [], {}
+    for group, label, value, unit, note in rows:
+        if group not in groups:
+            groups[group] = []
+            order.append(group)
+        groups[group].append((label, value, unit, note))
+    return [(group, groups[group]) for group in order]
 
 
 def format_results_table(results):
@@ -4187,27 +4484,38 @@ def format_validation_html(results):
                 _t("Check"), _t("Result"), rows))
 
 
-def format_results_html(results):
-    """Format key_results dict as a styled HTML table with units column."""
-    key_results = results.get("key_results", {})
-    if not key_results:
-        return ""
-    flat_rows = _flatten_key_results(key_results)
-    has_notes = any(note for _label, _value, _unit, note in flat_rows)
-    rows = ""
-    for label, value, unit, note in flat_rows:
-        rows += '<tr><td>{}</td><td class="num">{}</td><td>{}</td>'.format(
+def _results_table_html(rows, caption):
+    """One styled results table from (label, value, unit, note) rows."""
+    has_notes = any(note for _label, _value, _unit, note in rows)
+    body = ""
+    for label, value, unit, note in rows:
+        body += '<tr><td>{}</td><td class="num">{}</td><td>{}</td>'.format(
             _html_escape(label), _fmt_cell(value), _html_escape(unit))
         if has_notes:
-            rows += '<td>{}</td>'.format(_html_escape(note) if note else "")
-        rows += '</tr>\n'
-    extra_header = '<th>Source</th>' if has_notes else ""
+            body += '<td>{}</td>'.format(_html_escape(note) if note else "")
+        body += '</tr>\n'
+    extra_header = '<th>{}</th>'.format(_t("Source")) if has_notes else ""
     return (
-        _html_table_caption(_t("Key results"))
+        _html_table_caption(caption)
         + '<table class="results-table"><thead>'
-        '<tr><th>Parameter</th><th>Value</th><th>Unit</th>{}</tr>'
-        '</thead><tbody>\n{}</tbody></table>'.format(extra_header, rows)
+        '<tr><th>{}</th><th>{}</th><th>{}</th>{}</tr>'
+        '</thead><tbody>\n{}</tbody></table>'.format(
+            _t("Parameter"), _t("Value"), _t("Unit"), extra_header, body)
     )
+
+
+def format_results_html(results, full=False):
+    """Format key_results as styled HTML tables (headline view, or all rows when full)."""
+    key_results = results.get("key_results", {})
+    headline = [] if full else _headline_rows(results)
+    if headline:
+        return "".join(_results_table_html(rows, _group_caption(group))
+                       for group, rows in _grouped(headline))
+    if not key_results:
+        return ""
+    return _results_table_html(
+        _flatten_key_results(key_results),
+        _t("Complete numerical results") if full else _t("Key results"))
 
 
 _HTML_TABLE_COUNTER = {"n": 0}
@@ -5065,9 +5373,28 @@ def _scale_table_to_measure(doc, table, col_widths=None, font_pt=TABLE_PT,
         nsdecls("w"), twips_total)))
 
 
-def add_results_word_table(doc, results):
-    """Add key_results as a styled Word table with units column."""
+def _group_caption(group):
+    """Caption for one headline table: "Key results" or "Key results - <group>"."""
+    return "{} \u2013 {}".format(_t("Key results"), group) if group else _t("Key results")
+
+
+def add_results_word_table(doc, results, full=False):
+    """Add key_results as a styled Word table with units column.
+
+    With headline results marked, the Results section shows only those (one
+    table per group); ``full=True`` prints every row for the appendix.
+    """
     key_results = results.get("key_results", {})
+    headline = [] if full else _headline_rows(results)
+    if headline:
+        for group, rows in _grouped(headline):
+            has_notes = any(note for _l, _v, _u, note in rows)
+            headers = [_t("Parameter"), _t("Value"), _t("Unit")] + (
+                [_t("Source")] if has_notes else [])
+            data_rows = [[label, _fmt_cell(value), unit] + ([note or ""] if has_notes else [])
+                         for label, value, unit, note in rows]
+            add_word_table(doc, headers, data_rows, caption=_group_caption(group))
+        return
     if not key_results:
         return
     flat_rows = _flatten_key_results(key_results)
@@ -5083,7 +5410,7 @@ def add_results_word_table(doc, results):
         col_widths = [Inches(3.0), Inches(1.5), Inches(1.5)]
     add_word_table(doc, headers, data_rows,
                    col_widths=col_widths,
-                   caption=_t("Key results"))
+                   caption=_t("Complete numerical results") if full else _t("Key results"))
 
 
 def add_validation_word_table(doc, results):
@@ -5284,16 +5611,56 @@ def add_depth_word_section(doc, results):
                 doc.add_paragraph(line, style="List Bullet")
 
 
+def _key_result_index(results):
+    """Map each key_results key (nested keys too) to its (label, value, unit, note) row."""
+    index = {}
+
+    def visit(mapping):
+        for key, value in (mapping or {}).items():
+            rows = _flatten_key_results({key: value})
+            if len(rows) == 1:
+                index[key] = rows[0]
+            if isinstance(value, dict) and not (
+                    "value" in value and not isinstance(value["value"], (dict, list))):
+                visit(value)
+
+    visit((results or {}).get("key_results"))
+    return index
+
+
+def _linked_result_text(name, index):
+    """Readable form of a linked result: "Label = value unit", never a raw key."""
+    name = str(name)
+    if name in index:
+        label, value, unit, _note = index[name]
+        return "{} = {}{}".format(label, _fmt_cell(value), " " + unit if unit else "")
+    return _label_from_key(name) if re.fullmatch(r"[A-Za-z0-9_]+", name) else name
+
+
+def _discussion_trace(disc, index):
+    """Traceability footer for one discussion entry (links and the question answered)."""
+    parts = []
+    linked = disc.get("linked_results", [])
+    if linked:
+        parts.append("{}: {}".format(
+            _t("Linked results"), "; ".join(_linked_result_text(k, index) for k in linked)))
+    if disc.get("insight_question_ref"):
+        parts.append("Answers: {}".format(disc["insight_question_ref"]))
+    return " | ".join(parts)
+
+
 def format_discussion_html(results):
     """Format figure_discussion from results.json as styled HTML discussion blocks.
 
     Each discussion entry links a figure to its observation, physical mechanism,
     engineering implication, and recommendation — creating traceability from
-    calculation to conclusion.
+    calculation to conclusion. The figure itself is shown inside its block.
     """
     discussions = results.get("figure_discussion", [])
     if not discussions:
         return ""
+    plan = get_figure_plan(results)
+    index = _key_result_index(results)
     h = ""
     for i, disc in enumerate(discussions, 1):
         fig_file = disc.get("figure", "")
@@ -5302,28 +5669,31 @@ def format_discussion_html(results):
         mechanism = disc.get("mechanism", "")
         implication = disc.get("implication", "")
         recommendation = disc.get("recommendation", "")
-        linked = disc.get("linked_results", [])
-        insight_ref = disc.get("insight_question_ref", "")
 
         h += '<div class="discussion-block">\n'
         h += '<h3>{} {}: {}</h3>\n'.format(_t("Discussion"), i, title)
+        if (i - 1) in plan.discussion_figure:
+            h += _figure_html(plan.discussion_figure[i - 1], results, plan,
+                              alt_extra=observation)
+        elif (i - 1) in plan.discussion_ref:
+            number = plan.number_of(plan.discussion_ref[i - 1])
+            h += '<p>{} <a class="xref" href="#fig-{}">{} {}</a>.</p>\n'.format(
+                _t("See"), number, _t("Figure"), number)
         if observation:
-            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Observation"), observation)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(
+                _t("Observation"), _html_xrefs(observation))
         if mechanism:
-            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Physical Mechanism"), mechanism)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(
+                _t("Physical Mechanism"), _html_xrefs(mechanism))
         if implication:
-            h += '<p><strong>{}:</strong> {}</p>\n'.format(_t("Engineering Implication"), implication)
+            h += '<p><strong>{}:</strong> {}</p>\n'.format(
+                _t("Engineering Implication"), _html_xrefs(implication))
         if recommendation:
             h += '<p class="recommendation"><strong>{}:</strong> {}</p>\n'.format(
-                _t("Recommendation"), recommendation)
-        # Traceability footer
-        trace_parts = []
-        if linked:
-            trace_parts.append("{}: {}".format(_t("Linked results"), ", ".join(linked)))
-        if insight_ref:
-            trace_parts.append("Answers: {}".format(insight_ref))
-        if trace_parts:
-            h += '<p class="traceability"><em>{}</em></p>\n'.format(" | ".join(trace_parts))
+                _t("Recommendation"), _html_xrefs(recommendation))
+        trace = _discussion_trace(disc, index)
+        if trace:
+            h += '<p class="traceability"><em>{}</em></p>\n'.format(_html_escape(trace))
         h += '</div>\n'
     return h
 
@@ -5331,12 +5701,14 @@ def format_discussion_html(results):
 def add_discussion_word(doc, results):
     """Add figure discussion entries as styled Word content.
 
-    Each discussion block has: observation, physical mechanism, engineering
-    implication, and recommendation with traceability references.
+    Each discussion block has: its figure, observation, physical mechanism,
+    engineering implication, and recommendation with traceability references.
     """
     discussions = results.get("figure_discussion", [])
     if not discussions:
         return
+    plan = get_figure_plan(results)
+    index = _key_result_index(results)
     for i, disc in enumerate(discussions, 1):
         fig_file = disc.get("figure", "")
         title = disc.get("title", fig_file.replace("_", " ").replace(".png", "").title())
@@ -5344,50 +5716,41 @@ def add_discussion_word(doc, results):
         mechanism = disc.get("mechanism", "")
         implication = disc.get("implication", "")
         recommendation = disc.get("recommendation", "")
-        linked = disc.get("linked_results", [])
-        insight_ref = disc.get("insight_question_ref", "")
 
         _add_heading(doc, "{} {}: {}".format(_t("Discussion"), i, title), level=2)
 
-        if observation:
+        if (i - 1) in plan.discussion_figure:
+            _add_figure_block(doc, plan.discussion_figure[i - 1], results, plan,
+                              alt_extra=observation)
+        elif (i - 1) in plan.discussion_ref:
+            para = doc.add_paragraph()
+            para.add_run(_t("See") + " ")
+            ref_path = plan.discussion_ref[i - 1]
+            _add_ref_field(para, _figure_bookmark(ref_path),
+                           "{} {}".format(_t("Figure"), plan.number_of(ref_path)))
+            para.add_run(".")
+
+        for label, text in ((_t("Observation"), observation),
+                            (_t("Physical Mechanism"), mechanism),
+                            (_t("Engineering Implication"), implication),
+                            (_t("Recommendation"), recommendation)):
+            if not text:
+                continue
             p = doc.add_paragraph()
-            r = p.add_run(_t("Observation") + ": ")
+            r = p.add_run(label + ": ")
             r.bold = True
             r.font.size = Pt(BODY_PT)
-            p.add_run(observation).font.size = Pt(BODY_PT)
+            first = len(p.runs)
+            _add_bold_runs(p, text)
+            for run in p.runs[first:]:
+                run.font.size = Pt(BODY_PT)
+                if label == _t("Recommendation"):
+                    run.font.color.rgb = RGBColor(0x1A, 0x53, 0x7A)
 
-        if mechanism:
+        trace = _discussion_trace(disc, index)
+        if trace:
             p = doc.add_paragraph()
-            r = p.add_run(_t("Physical Mechanism") + ": ")
-            r.bold = True
-            r.font.size = Pt(BODY_PT)
-            p.add_run(mechanism).font.size = Pt(BODY_PT)
-
-        if implication:
-            p = doc.add_paragraph()
-            r = p.add_run(_t("Engineering Implication") + ": ")
-            r.bold = True
-            r.font.size = Pt(BODY_PT)
-            p.add_run(implication).font.size = Pt(BODY_PT)
-
-        if recommendation:
-            p = doc.add_paragraph()
-            r = p.add_run(_t("Recommendation") + ": ")
-            r.bold = True
-            r.font.size = Pt(BODY_PT)
-            r2 = p.add_run(recommendation)
-            r2.font.size = Pt(BODY_PT)
-            r2.font.color.rgb = RGBColor(0x1A, 0x53, 0x7A)
-
-        # Traceability line
-        trace_parts = []
-        if linked:
-            trace_parts.append("{}: {}".format(_t("Linked results"), ", ".join(linked)))
-        if insight_ref:
-            trace_parts.append("Answers: {}".format(insight_ref))
-        if trace_parts:
-            p = doc.add_paragraph()
-            r = p.add_run(" | ".join(trace_parts))
+            r = p.add_run(trace)
             r.font.size = Pt(CAPTION_PT)
             r.font.italic = True
             r.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
@@ -5674,22 +6037,21 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     })
 
     reproducibility_text = format_reproducibility_text(results)
+    appendices = []
+    if results and _headline_rows(results) and results.get("key_results"):
+        appendices.append(("Complete Numerical Results", {
+            "content": "", "has_all_results": True}))
     if reproducibility_text:
-        sections.append({
-            "heading": _t("Appendix A. Reproducing the Results"),
-            "content": reproducibility_text,
-            "has_markdown": True,
-            "appendix": True,
-        })
-
+        appendices.append(("Reproducing the Results", {
+            "content": reproducibility_text, "has_markdown": True}))
     if quality_lines:
-        sections.append({
-            "heading": _t("Appendix B. Report Quality Checks" if reproducibility_text
-                          else "Appendix A. Report Quality Checks"),
-            "content": "\n".join(quality_lines),
-            "has_markdown": True,
-            "appendix": True,
-        })
+        appendices.append(("Report Quality Checks", {
+            "content": "\n".join(quality_lines), "has_markdown": True}))
+    for position, (title, extra) in enumerate(appendices):
+        section = {"heading": "{} {}. {}".format(
+            _t("Appendix"), chr(ord("A") + position), _t(title)), "appendix": True}
+        section.update(extra)
+        sections.append(section)
 
     return _renumber_sections(sections)
 
@@ -6211,9 +6573,77 @@ def _add_task_statement_block(doc):
     doc.add_paragraph("")
 
 
+def _set_document_properties(doc, results):
+    """Fill the document properties that PDF viewers and search indexes read."""
+    props = doc.core_properties
+    # python-docx rejects any property longer than 255 characters.
+    props.title = str(TITLE)[:250]
+    props.subject = "{} {}".format(_t("NeqSim Engineering Report"), _auto_doc_number()).strip()[:250]
+    if AUTHOR:
+        props.author = str(AUTHOR)[:250]
+        props.last_modified_by = str(AUTHOR)[:250]
+    props.keywords = KIT.report_keywords(
+        ["NeqSim"], (value for _label, value in (STUDY_BADGES or [])),
+        (results or {}).get("standards_applied") if isinstance(
+            (results or {}).get("standards_applied"), list) else [])[:250]
+    props.comments = KIT.plain_alt_text(TASK_STATEMENT, 250)
+    props.category = str(CLASSIFICATION)[:250]
+    props.identifier = str(_auto_doc_number())[:250]
+    stamp = _build_fingerprint()
+    if stamp["results"]:
+        props.version = "results.json sha256:{}".format(stamp["results"])
+
+
+def _add_figure_block(doc, fig_path, results, plan, alt_extra=""):
+    """Picture, alt text and numbered caption (with a bookmark for cross-references)."""
+    number = plan.number_of(fig_path)
+    caption_text = get_figure_caption(fig_path, results, number)
+    alt = KIT.plain_alt_text("{} {}".format(_strip_caption_prefix(caption_text), alt_extra))
+    _add_figure_picture(doc, fig_path, alt=alt)
+    _add_caption(doc, _t("Figure"), caption_text, bookmark=_figure_bookmark(fig_path))
+
+
+def _add_display_omml(doc, label, latex):
+    """Numbered display equation as an editable Word equation; False when unsupported."""
+    if not EQUATIONS_AS_OMML:
+        return False
+    xml = KIT.latex_to_omml(_sanitize_equation_latex(latex))
+    if not xml:
+        return False
+    measure = _text_width_in(doc)
+    if label:
+        lead = doc.add_paragraph()
+        run = lead.add_run(_strip_caption_prefix(label))
+        run.italic = True
+        run.font.size = Pt(CAPTION_PT)
+        run.font.color.rgb = RGBColor(90, 90, 90)
+        lead.paragraph_format.space_before = Pt(6)
+        lead.paragraph_format.space_after = Pt(0)
+        lead.paragraph_format.keep_with_next = True
+    paragraph = doc.add_paragraph()
+    fmt = paragraph.paragraph_format
+    fmt.space_before = Pt(2)
+    fmt.space_after = Pt(8)
+    fmt.keep_together = True
+    fmt.tab_stops.add_tab_stop(Inches(measure / 2.0), WD_TAB_ALIGNMENT.CENTER)
+    fmt.tab_stops.add_tab_stop(Inches(measure), WD_TAB_ALIGNMENT.RIGHT)
+    paragraph.add_run("\t")
+    try:
+        paragraph._p.append(parse_xml(xml))
+    except Exception:
+        doc.element.body.remove(paragraph._p)
+        return False
+    paragraph.add_run("\t(")
+    _add_seq_field(paragraph, _t("Equation"))
+    paragraph.add_run(")")
+    return True
+
+
 def build_word_report(sections, results=None):
     """Build the Word document with cover page, TOC, numbered figures, and equations."""
     doc = _new_document()
+    plan = get_figure_plan(results)
+    _set_document_properties(doc, results)
 
     # Cover page with metadata and revision history
     _add_cover_page(doc)
@@ -6233,7 +6663,9 @@ def build_word_report(sections, results=None):
             heading.paragraph_format.page_break_before = True
 
         # Results section: use Word table instead of plain text
-        if section.get("has_figures") and results and results.get("key_results"):
+        if section.get("has_all_results") and results:
+            add_results_word_table(doc, results, full=True)
+        elif section.get("has_figures") and results and results.get("key_results"):
             add_results_word_table(doc, results)
             # Custom tables
             if results.get("tables"):
@@ -6274,15 +6706,12 @@ def build_word_report(sections, results=None):
             for para_text in _word_paragraphs(section["content"]):
                 _add_bold_runs(doc.add_paragraph(), para_text)
 
-        # Embed figures after Results section
+        # Embed figures after Results section (the discussed ones sit in Discussion)
         if section.get("has_figures"):
-            figures = get_figures()
-            if figures:
-                for fig_idx, fig_path in enumerate(figures, 1):
-                    caption_text = get_figure_caption(fig_path, results, fig_idx)
-                    _add_figure_picture(doc, fig_path)
-                    _add_caption(doc, _t("Figure"), caption_text)
-            else:
+            if plan.results_figures:
+                for fig_path in plan.results_figures:
+                    _add_figure_block(doc, fig_path, results, plan)
+            elif not plan.order:
                 doc.add_paragraph(
                     "[No figures found in figures/ directory. "
                     "Save plots as PNG files there and re-run this script.]"
@@ -6301,10 +6730,13 @@ def build_word_report(sections, results=None):
                     latex = eq.get("latex", "")
                     if not latex:
                         continue
+                    if _add_display_omml(doc, label, latex):
+                        continue
                     eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
                     if render_equation_to_image(latex, eq_img_path):
                         _add_display_equation(doc, eq_img_path, label,
                                               _text_width_in(doc))
+                        _set_last_picture_alt(doc.paragraphs[-1], _latex_fallback_text(latex))
                     else:
                         _add_equation_fallback_paragraph(doc, label, latex)
 
@@ -6373,30 +6805,32 @@ def _build_task_block_html():
     )
 
 
+def _figure_html(fig_path, results, plan, alt_extra=""):
+    """One numbered figure with an anchor, embedded image, alt text and caption."""
+    number = plan.number_of(fig_path)
+    caption_text = get_figure_caption(fig_path, results, number)
+    mime = "image/svg+xml" if fig_path.endswith(".svg") else "image/png"
+    with open(fig_path, "rb") as handle:
+        img_data = base64.b64encode(handle.read()).decode("utf-8")
+    alt = _html_escape(KIT.plain_alt_text(
+        "{} {}".format(_strip_caption_prefix(caption_text), alt_extra)))
+    return (
+        '<figure class="figure" id="fig-{}">\n'
+        '    <img src="data:{};base64,{}" alt="{}">\n'
+        '    <figcaption class="caption">{}</figcaption>\n'
+        '</figure>\n'.format(number, mime, img_data, alt, _html_escape(caption_text)))
+
+
 def build_html_report(sections, results=None):
     """Build an HTML report with embedded figures, KaTeX equations, and navigation."""
-    figures = get_figures()
+    plan = get_figure_plan(results)
 
-    # Build figure HTML with base64-embedded images and numbered captions
+    # Figures without a discussion stay in Results; discussed ones sit in Discussion
     figure_html = ""
-    if figures:
-        for fig_idx, fig_path in enumerate(figures, 1):
-            fig_name = os.path.basename(fig_path)
-            caption_text = get_figure_caption(fig_path, results, fig_idx)
-            # Determine MIME type
-            if fig_path.endswith(".svg"):
-                mime = "image/svg+xml"
-            else:
-                mime = "image/png"
-            with open(fig_path, "rb") as f:
-                img_data = base64.b64encode(f.read()).decode("utf-8")
-            figure_html += """
-            <div class="figure">
-                <img src="data:{};base64,{}" alt="{}">
-                <p class="caption">{}</p>
-            </div>
-            """.format(mime, img_data, caption_text, caption_text)
-    else:
+    if plan.results_figures:
+        figure_html = "".join(_figure_html(path, results, plan)
+                              for path in plan.results_figures)
+    elif not plan.order:
         figure_html = "<p><em>No figures found in figures/ directory.</em></p>"
 
     # Build equation HTML (KaTeX rendering with embedded image fallbacks)
@@ -6472,6 +6906,9 @@ def build_html_report(sections, results=None):
         if section.get("has_equations") and equation_html:
             content += equation_html
 
+        if section.get("has_all_results") and results:
+            content = format_results_html(results, full=True)
+
         if section.get("has_validation") and validation_html:
             content = validation_html
 
@@ -6503,14 +6940,24 @@ def build_html_report(sections, results=None):
         </section>
         """.format(section_id, section["heading"], content)
 
-    # KaTeX CDN for equation rendering (only if equations exist)
+    # KaTeX for equations and inline maths: bundled so the report also reads offline
     katex_head = ""
     katex_body_script = ""
-    if equations:
-        katex_head = """
+    needs_math = bool(equations) or any(
+        re.search(r"\$[^$\n]+\$", str(section.get("content", ""))) for section in sections)
+    if needs_math:
+        assets = KIT.katex_assets()
+        if assets:
+            css, katex_js, auto_js = assets
+            katex_head = ("\n    <style>{}</style>\n    <script>{}</script>\n    <script>{}</script>"
+                          .format(css, katex_js.replace("</script", "<\\/script"),
+                                  auto_js.replace("</script", "<\\/script")))
+        else:
+            katex_head = """
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>"""
+    if needs_math:
         katex_body_script = """
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -6541,7 +6988,10 @@ def build_html_report(sections, results=None):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>{katex_head}
+    <title>{title}</title>
+    <meta name="author" content="{meta_author}">
+    <meta name="description" content="{meta_description}">
+    <meta name="neqsim-results-sha256" content="{meta_fingerprint}">{katex_head}
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -6590,6 +7040,7 @@ def build_html_report(sections, results=None):
         .figure img {{ max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
         .caption {{ font-size: 0.85rem; color: #666; font-style: italic;
                     margin-top: 0.3rem; }}
+        a.xref {{ color: #2F5496; text-decoration: none; border-bottom: 1px dotted #2F5496; }}
         .table-caption {{ font-size: 0.85rem; color: #555; font-style: italic;
                     margin: 1.4rem 0 0.2rem 0; }}
         .table-caption + table {{ margin-top: 0; }}
@@ -6710,6 +7161,9 @@ def build_html_report(sections, results=None):
 </body>
 </html>""".format(
         title=TITLE,
+        meta_author=_html_escape(AUTHOR or "").replace('"', "&quot;"),
+        meta_fingerprint=_build_fingerprint()["results"],
+        meta_description=_html_escape(KIT.plain_alt_text(TASK_STATEMENT, 300)).replace('"', "&quot;"),
         lang=_report_locale(),
         subtitle=_t("NeqSim Engineering Report"),
         contents_label=_t("Contents"),

@@ -211,7 +211,6 @@ def main():
             'Auto exec summary - approach': 'SRK EOS',
             'Auto exec summary - key result': 'Outlet T',
             'Auto exec summary - uncertainty': 'P50',
-            'Auto exec summary - benchmark count': 'benchmark comparisons',
             'Auto exec summary - risk level': 'Overall project risk',
             'Auto exec summary - safety readiness': 'Safety study readiness',
             # Auto-generated problem description
