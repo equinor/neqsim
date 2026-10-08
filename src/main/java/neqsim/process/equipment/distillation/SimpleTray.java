@@ -440,6 +440,15 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
+   * Set a pumparound draw materialized from a simultaneous solver state.
+   *
+   * @param stream accepted liquid draw stream
+   */
+  void setCachedLiquidPumparoundDrawStream(StreamInterface stream) {
+    this.cachedLiquidPumparoundDrawStream = stream;
+  }
+
+  /**
    * getGasOutStream.
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object

@@ -198,7 +198,8 @@ public class DistillationColumnModeTest {
     assertTrue(Double.isFinite(column.getEnergyBalanceError()));
     assertTrue(Double.isFinite(column.getLastMeshResidualNorm()));
     assertTrue(Double.isFinite(column.getLastSpecificationResidual()));
-    assertTrue(column.getLastSpecificationResidual() <= column.getTopSpecification().getTolerance());
+    assertTrue(column.getLastSpecificationResidual() <= column.getTopSpecification().getTolerance(),
+        column.getConvergenceDiagnostics());
 
     double[] feedComposition = feed.getThermoSystem().getMolarComposition();
     double[] gasComposition = gas.getThermoSystem().getMolarComposition();

@@ -1416,6 +1416,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     solveInner(id);
     updateSpecificationResiduals();
     updateMeshResiduals();
+    if (!specificationsSatisfied() && lastSolverTypeUsed != SolverType.NAPHTALI_SANDHOLM
+        && solverType != SolverType.NAPHTALI_SANDHOLM && solverType != SolverType.MESH_RESIDUAL) {
+      tryGuardedMeshNewtonPolish(id, lastMeshResidual.getInfinityNorm());
+    }
   }
 
   /**
@@ -1452,6 +1456,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         updateSideDrawSpecificationResidualsOnly();
         lastColumnTearResidual = Math.max(relativeChange, getMaxSideDrawSpecificationResidual());
         lastColumnTearConverged = lastColumnTearResidual <= tolerance;
+        if (lastColumnTearConverged && hasPumparoundTearVariablesOnly()) {
+          reconcileProductsAfterPumparoundConvergence(id);
+        }
         finalizeColumnTearConvergenceStatus(tolerance);
         return;
       }
@@ -1462,11 +1469,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         finalizeColumnTearConvergenceStatus(tolerance);
         return;
       }
-      if (iteration < iterationLimit - 1) {
+      if (iteration < iterationLimit - 1
+          && (!hasPumparoundTearVariablesOnly() || solverType != SolverType.MESH_RESIDUAL)) {
         setDoInitializion(true);
       }
     }
-    setDoInitializion(true);
+    if (!hasPumparoundTearVariablesOnly() || solverType != SolverType.MESH_RESIDUAL) {
+      setDoInitializion(true);
+    }
     solveConfiguredColumn(id);
     lastColumnTearInnerIterationCount += Math.max(0, lastIterationCount);
     updateSideDrawSpecificationResidualsOnly();
@@ -1482,6 +1492,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean hasSingleSideDrawFlowSpecificationOnly() {
     return sideDrawSpecifications.size() == 1 && pumparounds.isEmpty() && !hydraulicPressureDropCouplingEnabled;
+  }
+
+  /**
+   * Reconcile published products after the accepted pumparound update closes its internal inventory.
+   *
+   * @param id calculation identifier
+   */
+  private void reconcileProductsAfterPumparoundConvergence(UUID id) {
+    boolean productReconciled = updateProductsFromExternalComponentBalance(id);
+    canonicalizeTerminalTracePhase(gasOutStream, true, id);
+    canonicalizeTerminalTracePhase(liquidOutStream, false, id);
+    synchronizeColumnEndProductStreams(id);
+    synchronizeTerminalProductDrawStreams(id);
+    if (hasReboiler) {
+      getReboiler().updateDutyFromPublishedStreams();
+    }
+    if (hasCondenser) {
+      getCondenser().updateDutyFromPublishedStreams();
+    }
+    lastMassResidual = getExternalMassBalanceError();
+    lastEnergyResidual = getEnergyBalanceError();
+    updateSpecificationResiduals();
+    updateMeshResiduals();
+    updateLastSolveStatus(productReconciled, lastUsedFeedFlashFallback);
   }
 
   /**
@@ -1984,11 +2018,57 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       StreamInterface drawStream = getTray(pumparound.getDrawTrayNumber()).getLiquidPumparoundDrawStream();
       maxRelativeChange = Math.max(maxRelativeChange, pumparound.updateReturnStream(drawStream, id));
     }
+    synchronizePumparoundReturnTrayInputs();
     lastPumparoundRelativeChange = maxRelativeChange;
     if (maxRelativeChange > 1.0e-12) {
       columnTearVariablesChanged = true;
     }
     return maxRelativeChange;
+  }
+
+  /**
+   * Connect newly created or copied pumparound returns without discarding the current tray phase inventories.
+   */
+  private void synchronizePumparoundReturnTrayInputs() {
+    Set<Integer> returnTrays = new HashSet<Integer>();
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnStream() != null) {
+        returnTrays.add(Integer.valueOf(pumparound.getReturnTrayNumber()));
+      }
+    }
+    for (Integer returnTrayIndex : returnTrays) {
+      int index = returnTrayIndex.intValue();
+      SimpleTray tray = trays.get(index);
+      SystemInterface mixedSystem = tray.getThermoSystem();
+      StreamInterface gasOutlet = tray.getGasOutStream();
+      StreamInterface liquidOutlet = tray.getLiquidOutStream();
+      StreamInterface gasSideDraw = tray.getGasSideDrawStream();
+      StreamInterface liquidSideDraw = tray.getLiquidSideDrawStream();
+      StreamInterface pumparoundDraw = tray.getLiquidPumparoundDrawStream();
+      List<StreamInterface> inputs = new ArrayList<StreamInterface>();
+      for (int externalIndex = 0; externalIndex < getExternalFeedStreams(index).size(); externalIndex++) {
+        inputs.add(tray.getStream(externalIndex));
+      }
+      for (ColumnPumparound pumparound : pumparounds) {
+        if (pumparound.getReturnTrayNumber() == index && pumparound.getReturnStream() != null) {
+          inputs.add(pumparound.getReturnStream());
+        }
+      }
+      if (index > 0) {
+        inputs.add(trays.get(index - 1).getGasOutStream());
+      }
+      if (index < numberOfTrays - 1) {
+        inputs.add(trays.get(index + 1).getLiquidOutStream());
+      }
+      tray.resetInputStreams(inputs);
+      // Rebuilding inlet topology recreates the mixed stream; retain its accepted gross phase inventory.
+      tray.getOutletStream().setThermoSystem(mixedSystem);
+      tray.setCachedGasOutStream(gasOutlet);
+      tray.setCachedLiquidOutStream(liquidOutlet);
+      tray.setCachedGasSideDrawStream(gasSideDraw);
+      tray.setCachedLiquidSideDrawStream(liquidSideDraw);
+      tray.setCachedLiquidPumparoundDrawStream(pumparoundDraw);
+    }
   }
 
   /**
@@ -2506,10 +2586,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return {@code true} if no residual check is needed or the residual is within tolerance
    */
   private boolean specificationSatisfied(ColumnSpecification spec) {
-    if (spec == null || !needsAdjustment(spec)) {
+    if (spec == null) {
       return true;
     }
-    return Math.abs(evaluateSpecError(spec)) <= spec.getTolerance();
+    return Math.abs(evaluateSpecErrorSafely(spec)) <= spec.getTolerance();
   }
 
   /**
@@ -3040,6 +3120,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
             Double.valueOf(residualNorm));
       }
     }
+    markSolverTypeUsed(SolverType.MESH_RESIDUAL);
+    // Polishing can adopt a new tray network after inside-out recorded its cache.
+    // Fingerprint the final qualified state so an unchanged invocation reuses it.
+    if (solved()) {
+      commitSequentialWarmState();
+    }
   }
 
   /**
@@ -3057,6 +3143,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * active rigorous convergence gates
    */
   boolean solveNaphtaliSandholm(UUID id) {
+    return solveNaphtaliSandholm(id, false);
+  }
+
+  /**
+   * Solve simultaneous MESH equations with the initializer selected for the correction context.
+   *
+   * @param id calculation identifier
+   * @param terminalRatioNewtonSeed use a BP seed without terminal-duty Sum-Rates correction
+   * @return true when the published result passes the rigorous convergence gates
+   */
+  private boolean solveNaphtaliSandholm(UUID id, boolean terminalRatioNewtonSeed) {
     captureDirectExternalTrayFeeds();
     if (feedStreams.isEmpty() && directExternalFeedStreams.isEmpty()) {
       resetLastSolveMetrics();
@@ -3103,10 +3200,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     Map<Integer, List<Double>> originalFeedFlowRates = new java.util.HashMap<>();
     Set<Integer> externalFeedTrayNumberSet = new HashSet<Integer>(feedStreams.keySet());
     externalFeedTrayNumberSet.addAll(directExternalFeedStreams.keySet());
+    for (ColumnPumparound pumparound : pumparounds) {
+      externalFeedTrayNumberSet.add(pumparound.getReturnTrayNumber());
+    }
     for (Integer trayNumber : externalFeedTrayNumberSet) {
       List<SystemInterface> clones = new java.util.ArrayList<>();
       List<Double> flowRates = new java.util.ArrayList<>();
-      for (StreamInterface feed : getExternalFeedStreams(trayNumber.intValue())) {
+      for (StreamInterface feed : getInnerSolverFeedStreams(trayNumber.intValue())) {
         clones.add(feed.getThermoSystem().clone());
         flowRates.add(feed.getFlowRate("mol/hr"));
       }
@@ -3131,6 +3231,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     solver.setTolerance(1.0e-8);
     boolean useWarmStart = hasBeenSolvedBefore && !initialized && thermodynamicIdentityMatches;
     solver.setWarmStartFromColumn(useWarmStart);
+    solver.setTerminalRatioNewtonSeed(terminalRatioNewtonSeed);
     boolean accepted = solver.solve(id);
     if (!accepted && useWarmStart) {
       logger.info("Naphtali-Sandholm warm start rejected for column {}; retrying with cold initialization", getName());
@@ -3138,6 +3239,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       solver.setMaxIterations(maxNumberOfIterations);
       solver.setTolerance(1.0e-8);
       solver.setWarmStartFromColumn(false);
+      solver.setTerminalRatioNewtonSeed(terminalRatioNewtonSeed);
       accepted = solver.solve(id);
     }
     storeNaphtaliTelemetry(solver);
@@ -3381,6 +3483,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long calculateSequentialExactReuseSignature() {
     long signature = calculateNaphtaliSandholmInputSignature();
+    signature = updateNaphtaliSandholmInputSignature(signature, calculateNaphtaliSandholmConvergenceGateSignature());
     signature = updateSequentialStreamStateSignature(signature, gasOutStream);
     signature = updateSequentialStreamStateSignature(signature, liquidOutStream);
     signature = updateNaphtaliSandholmInputSignature(signature, trays.size());
@@ -3879,20 +3982,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Try one Newton polishing pass on a deep-copied candidate column and accept it only if the MESH residual norm
-   * improves.
+   * Try isolated Newton polishing, then sequential ratio recovery if Newton is rejected.
+   *
+   * @param id calculation identifier
+   * @param baselineResidualNorm accepted residual norm before the polish attempt
+   * @return true when an isolated correction is accepted
+   */
+  private boolean tryGuardedMeshNewtonPolish(UUID id, double baselineResidualNorm) {
+    if (tryGuardedMeshPolishCandidate(id, baselineResidualNorm, false)) {
+      return true;
+    }
+    return !specificationsSatisfied() && tryGuardedMeshPolishCandidate(id, baselineResidualNorm, true);
+  }
+
+  /**
+   * Correct a deep-copied candidate without changing the accepted column on failure.
    *
    * <p>
-   * Running the aggressive Newton accelerator on a candidate protects the accepted inside-out solution from flash
-   * failures, non-finite states, or residual growth. This provides a bounded line-search style guard for the
-   * residual-monitored solver without changing the legacy Newton solver contract.
+   * Sequential recovery retains the current tray state and applies terminal ratio flashes together with connected
+   * material flows. It is considered only after Newton rejection and must satisfy all physical convergence gates.
+   * Frozen pumparound returns are retained on either candidate.
    * </p>
    *
    * @param id calculation identifier
    * @param baselineResidualNorm accepted residual norm before the polish attempt
-   * @return {@code true} if the candidate polish was accepted
+   * @param sequentialRatioRecovery use sequential sweeps instead of the existing Newton correction
+   * @return true when the candidate satisfies its acceptance gates
    */
-  private boolean tryGuardedMeshNewtonPolish(UUID id, double baselineResidualNorm) {
+  private boolean tryGuardedMeshPolishCandidate(UUID id, double baselineResidualNorm, boolean sequentialRatioRecovery) {
     if (!Double.isFinite(baselineResidualNorm)) {
       return false;
     }
@@ -3902,19 +4019,80 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     DistillationColumn candidate;
     try {
       candidate = (DistillationColumn) this.copy();
+      candidate.hasBeenSolvedBefore = hasBeenSolvedBefore;
+      candidate.trayStateThermodynamicIdentitySignature = trayStateThermodynamicIdentitySignature;
+      candidate.lastSequentialInitializationSignature = lastSequentialInitializationSignature;
+      candidate.lastInsideOutOuterFlashSweeps = lastInsideOutOuterFlashSweeps;
+      candidate.lastInsideOutInnerLoopIterations = lastInsideOutInnerLoopIterations;
+      candidate.lastInsideOutKValueResidual = lastInsideOutKValueResidual;
+      candidate.lastInsideOutSurrogateResidual = lastInsideOutSurrogateResidual;
+      candidate.lastInsideOutSurrogateResetCount = lastInsideOutSurrogateResetCount;
+      for (int index = 0; index < numberOfTrays; index++) {
+        SimpleTray sourceTray = trays.get(index);
+        SimpleTray candidateTray = candidate.trays.get(index);
+        candidateTray.setCachedGasOutStream(sourceTray.getGasOutStream().clone());
+        candidateTray.setCachedLiquidOutStream(sourceTray.getLiquidOutStream().clone());
+        candidateTray.setCachedGasSideDrawStream(sourceTray.getGasSideDrawStream().clone());
+        candidateTray.setCachedLiquidSideDrawStream(sourceTray.getLiquidSideDrawStream().clone());
+        candidateTray.setCachedLiquidPumparoundDrawStream(sourceTray.getLiquidPumparoundDrawStream().clone());
+      }
+      for (int index = 0; index < pumparounds.size(); index++) {
+        StreamInterface returnStream = pumparounds.get(index).getReturnStream();
+        if (returnStream != null) {
+          ColumnPumparound candidatePumparound = candidate.pumparounds.get(index);
+          candidatePumparound.returnStream = returnStream.clone();
+          SimpleTray returnTray = candidate.trays.get(candidatePumparound.getReturnTrayNumber());
+          for (int streamIndex = 0; streamIndex < returnTray.getNumberOfInputStreams(); streamIndex++) {
+            if (returnStream.getName().equals(returnTray.getStream(streamIndex).getName())) {
+              returnTray.replaceStream(streamIndex, candidatePumparound.returnStream);
+            }
+          }
+        }
+      }
     } catch (RuntimeException exception) {
       logger.debug("MESH Newton polish skipped because candidate copy failed.", exception);
       return false;
     }
 
     try {
-      candidate.solveNewton(id);
+      if (sequentialRatioRecovery) {
+        // Give the coupled Newton solver an earlier connected-tray checkpoint. A partial
+        // sequential state is only a seed; the same physical acceptance gates still apply.
+        candidate.solveSequential(id, 1.0, trayMaterialBalanceTolerance, 20);
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.tryGuardedMeshPolishCandidate(id, candidate.getLastMeshResidualNorm(), false);
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.solveSequential(id, 1.0, trayMaterialBalanceTolerance);
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.tryGuardedMeshPolishCandidate(id, candidate.getLastMeshResidualNorm(), false);
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.solveSequential(id, 1.0, Math.min(trayMaterialBalanceTolerance, 5.0e-6));
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.tryGuardedMeshPolishCandidate(id, candidate.getLastMeshResidualNorm(), false);
+        }
+        if (!candidate.specificationsSatisfied() || !candidate.solved()) {
+          candidate.solveSequential(id, 1.0, Math.min(trayMaterialBalanceTolerance, 1.0e-8));
+        }
+      } else if (!specificationsSatisfied()) {
+        if (!candidate.solveNaphtaliSandholm(id, true)) {
+          return false;
+        }
+      } else {
+        candidate.solveNewton(id);
+      }
       candidate.updateMeshResiduals();
     } catch (RuntimeException exception) {
       logger.debug("MESH Newton polish rejected because the candidate solve failed.", exception);
       return false;
     }
 
+    if (!candidate.specificationsSatisfied() || (sequentialRatioRecovery && !candidate.solved())) {
+      return false;
+    }
     double candidateResidualNorm = candidate.lastMeshResidual == null ? Double.NaN
         : candidate.lastMeshResidual.getInfinityNorm();
     double candidateProductDrawResidual = candidate.getLastMeshProductDrawResidualNorm();
@@ -3922,13 +4100,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         && candidateResidualNorm < baselineResidualNorm * 0.999;
     boolean productDrawGateRecovered = productDrawGateRecovered(candidateResidualNorm, candidateProductDrawResidual,
         baselineResidualNorm, baselineProductDrawResidual);
-    if (!residualImproved && !productDrawGateRecovered) {
+    // A trace-component infinity norm can grow while every physical gate recovers.
+    // Accept that fully qualified state rather than retaining a column with an unmet specification.
+    boolean physicalGatesRecovered = !solved() && candidate.solved();
+    if (!residualImproved && !productDrawGateRecovered && !physicalGatesRecovered) {
       logger.debug("MESH Newton polish rejected: residual {} did not improve baseline {}.",
           Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
       return false;
     }
 
-    if (!productDrawGateRecovered && !meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
+    if (specificationsSatisfied() && !productDrawGateRecovered
+        && !meshPolishProductSplitMatches(candidate, baselineGasFlow, baselineLiquidFlow)) {
       logger.debug(
           "MESH Newton polish rejected: product split changed from gas/liquid " + "{}/{} kg/hr to {}/{} kg/hr.",
           Double.valueOf(baselineGasFlow), Double.valueOf(baselineLiquidFlow),
@@ -3938,8 +4120,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     acceptSolvedStateCandidate(candidate);
-    logger.debug("MESH Newton polish accepted: residual {} improved baseline {}.",
-        Double.valueOf(candidateResidualNorm), Double.valueOf(baselineResidualNorm));
+    logger.debug("MESH Newton polish accepted: residual {}, baseline {}.", Double.valueOf(candidateResidualNorm),
+        Double.valueOf(baselineResidualNorm));
     return true;
   }
 
@@ -4302,7 +4484,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private boolean meshResidualNeedsPolishing() {
     return lastMeshResidual == null || !lastMeshResidual.isFinite()
-        || lastMeshResidual.getInfinityNorm() > meshResidualTolerance || !productDrawResidualsSatisfied();
+        || lastMeshResidual.getInfinityNorm() > meshResidualTolerance || !productDrawResidualsSatisfied()
+        || !specificationsSatisfied();
   }
 
   /**
@@ -4339,9 +4522,66 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       double currentFlow = productStream.getFlowRate(spec.getTargetUnit());
       return currentFlow - spec.getTargetValue();
     }
-    default:
-      return 0.0;
+    case REFLUX_RATIO: {
+      double actualRatio = evaluateTerminalRefluxRatio(spec.getLocation());
+      return actualRatio - spec.getTargetValue();
     }
+    case DUTY: {
+      double actualDuty;
+      if (spec.getLocation() == ColumnSpecification.ProductLocation.TOP) {
+        actualDuty = hasCondenser && getCondenser() != null ? getCondenser().getDuty() : Double.NaN;
+      } else {
+        actualDuty = hasReboiler && getReboiler() != null ? getReboiler().getDuty() : Double.NaN;
+      }
+      return actualDuty - spec.getTargetValue();
+    }
+    default:
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Evaluate the physically published reflux or boilup ratio at a terminal.
+   *
+   * <p>
+   * Top reflux ratio is liquid reflux divided by distillate flow (L/D). Bottom boilup ratio is vapor return divided by
+   * bottoms flow (V/B). Returning the configured setpoint here would make an unachieved direct specification appear
+   * converged by construction, so the ratio is calculated from the terminal material streams instead.
+   * </p>
+   *
+   * @param location controlled column end
+   * @return published terminal ratio, or NaN when the ratio cannot be evaluated
+   */
+  private double evaluateTerminalRefluxRatio(ColumnSpecification.ProductLocation location) {
+    StreamInterface numerator;
+    StreamInterface denominator;
+    if (location == ColumnSpecification.ProductLocation.TOP) {
+      if (!hasCondenser || getCondenser() == null) {
+        return Double.NaN;
+      }
+      numerator = getCondenser().getLiquidOutStream();
+      denominator = getCondenser().getGasOutStream();
+    } else {
+      if (!hasReboiler || getReboiler() == null) {
+        return Double.NaN;
+      }
+      numerator = getReboiler().getGasOutStream();
+      denominator = getReboiler().getLiquidOutStream();
+    }
+    if (numerator == null || denominator == null) {
+      return Double.NaN;
+    }
+
+    double numeratorFlow = numerator.getFlowRate("mol/hr");
+    double denominatorFlow = denominator.getFlowRate("mol/hr");
+    if (!Double.isFinite(numeratorFlow) || !Double.isFinite(denominatorFlow) || numeratorFlow < 0.0
+        || denominatorFlow < 0.0) {
+      return Double.NaN;
+    }
+    if (denominatorFlow <= 1.0e-20) {
+      return numeratorFlow <= 1.0e-20 ? Double.NaN : Double.POSITIVE_INFINITY;
+    }
+    return numeratorFlow / denominatorFlow;
   }
 
   /**
@@ -6521,6 +6761,30 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @param initialRelaxation relaxation factor applied to the first iteration
    */
   private void solveSequential(UUID id, double initialRelaxation) {
+    solveSequential(id, initialRelaxation, Double.POSITIVE_INFINITY);
+  }
+
+  /**
+   * Solve connected sequential tray states, optionally qualifying a terminal recovery before publication.
+   *
+   * @param id calculation identifier
+   * @param initialRelaxation initial stream relaxation
+   * @param connectedMaterialTolerance connected component closure target before product reconciliation
+   */
+  private void solveSequential(UUID id, double initialRelaxation, double connectedMaterialTolerance) {
+    solveSequential(id, initialRelaxation, connectedMaterialTolerance, Integer.MAX_VALUE);
+  }
+
+  /**
+   * Advance connected sequential tray states to convergence or a recovery checkpoint.
+   *
+   * @param id calculation identifier
+   * @param initialRelaxation initial stream relaxation
+   * @param connectedMaterialTolerance connected component closure target before product reconciliation
+   * @param maximumSweeps maximum sweeps before handing the candidate to a coupled solver
+   */
+  private void solveSequential(UUID id, double initialRelaxation, double connectedMaterialTolerance,
+      int maximumSweeps) {
     long invocationStartTime = System.nanoTime();
     lastSequentialWarmStateReused = false;
     captureDirectExternalTrayFeeds();
@@ -6645,7 +6909,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean massEnergyEvaluated = false;
     int balanceCheckStride = Math.max(3, numberOfTrays / 2);
 
-    while (iter < iterationLimit) {
+    while (iter < iterationLimit && iter < maximumSweeps) {
       iter++;
 
       for (int i = 0; i < numberOfTrays; i++) {
@@ -6808,7 +7072,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       boolean energyWithinBase = !enforceEnergyBalanceTolerance || energyErr <= baseEnergyTolerance;
-      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase;
+      double connectedMaterialResidual = Double.isFinite(connectedMaterialTolerance)
+          ? ColumnMeshResidualEvaluator.evaluateMaxTrayMaterialImbalance(this)
+          : 0.0;
+      boolean connectedMaterialSatisfied = connectedMaterialResidual <= connectedMaterialTolerance;
+      boolean withinBaseTolerance = err <= baseTempTolerance && massErr <= baseMassTolerance && energyWithinBase
+          && connectedMaterialSatisfied;
 
       if (withinBaseTolerance) {
         boolean energyPolishingAvailable = enforceEnergyBalanceTolerance && polishEnergyTolerance < baseEnergyTolerance;
@@ -11154,6 +11423,22 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
+   * Collect inner-solver feeds, including the current frozen pumparound return.
+   *
+   * @param trayIndex receiving tray
+   * @return external feeds followed by current return streams
+   */
+  List<StreamInterface> getInnerSolverFeedStreams(int trayIndex) {
+    List<StreamInterface> feeds = new ArrayList<>(getExternalFeedStreams(trayIndex));
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnTrayNumber() == trayIndex && pumparound.getReturnStream() != null) {
+        addStreamIfMissingByIdentity(feeds, pumparound.getReturnStream());
+      }
+    }
+    return feeds;
+  }
+
+  /**
    * Get all external feed streams connected to a tray.
    *
    * <p>
@@ -11453,11 +11738,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Check whether a stream is generated by a configured internal pumparound recycle.
    *
    * @param stream stream to inspect
-   * @return {@code true} when the exact stream object is a pumparound return
+   * @return {@code true} when the stream is a configured return or its serialized copy
    */
   private boolean isPumparoundReturnStream(StreamInterface stream) {
     for (ColumnPumparound pumparound : pumparounds) {
-      if (pumparound.getReturnStream() == stream) {
+      if (pumparound.getReturnStream() == stream
+          || (stream != null && (pumparound.getName() + " return").equals(stream.getName()))) {
         return true;
       }
     }
@@ -12574,6 +12860,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void synchronizeColumnEndProductStreams(UUID id) {
     if (hasCondenser && gasOutStream != null && getCondenser() != null) {
       synchronizeProductStream(getCondenser().getProductOutStream(), gasOutStream, id);
+      if (getCondenser().isTotalCondenser() && getCondenser().isRefluxSet()) {
+        StreamInterface reflux = getCondenser().getLiquidOutStream();
+        synchronizeProductStream(reflux, gasOutStream, id);
+        reflux.setFlowRate(getCondenser().getRefluxRatio() * gasOutStream.getFlowRate("mol/hr"), "mol/hr");
+      }
     }
     if (hasReboiler && liquidOutStream != null && getReboiler() != null) {
       synchronizeProductStream(getReboiler().getLiquidOutStream(), liquidOutStream, id);
@@ -12784,7 +13075,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   }
 
   /**
-   * Updates products so the exposed streams close the external component balance.
+   * Updates products to close external feeds plus the current net frozen-return/current-draw pumparound inventory.
    *
    * @param id calculation identifier to assign to the updated stream
    * @return {@code true} if product component amounts were materially changed
@@ -12795,6 +13086,23 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     double[] feedComponentMoles = getFeedComponentMoles();
+    // Frozen return and current draw inventories need not cancel during an outer tear iteration.
+    String[] componentNames = getColumnComponentNames();
+    Set<Integer> pumparoundDrawTrays = new HashSet<Integer>();
+    for (ColumnPumparound pumparound : pumparounds) {
+      if (pumparound.getReturnStream() != null) {
+        addComponentMolesOnBasis(feedComponentMoles, componentNames, pumparound.getReturnStream().getThermoSystem());
+      }
+      pumparoundDrawTrays.add(Integer.valueOf(pumparound.getDrawTrayNumber()));
+    }
+    double[] pumparoundDrawComponentMoles = new double[feedComponentMoles.length];
+    for (Integer drawTray : pumparoundDrawTrays) {
+      addComponentMolesOnBasis(pumparoundDrawComponentMoles, componentNames,
+          trays.get(drawTray.intValue()).getLiquidPumparoundDrawStream().getThermoSystem());
+    }
+    for (int componentIndex = 0; componentIndex < feedComponentMoles.length; componentIndex++) {
+      feedComponentMoles[componentIndex] -= pumparoundDrawComponentMoles[componentIndex];
+    }
     double[] sideDrawComponentMoles = getSideDrawComponentMoles(feedComponentMoles.length);
     // Sum only gas-phase moles for the top product and only liquid-like phase moles for the bottom
     // product. Tray terminal thermo systems can carry both phases (e.g. a reboiler holding a 2-

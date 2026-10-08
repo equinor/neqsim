@@ -127,7 +127,12 @@ public class DistillationColumnWarmStateCacheTest {
     assertNotEquals(firstBottomFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), 1.0,
         "activating ratio mode must update the bottoms flow");
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
-    assertPhysicalAndBalanced(column.getFeedStreams(3).get(0), column);
+    double vaporReturn = column.getReboiler().getGasOutStream().getFlowRate("mol/hr");
+    double bottoms = column.getReboiler().getLiquidOutStream().getFlowRate("mol/hr");
+    assertEquals(storedRatio, vaporReturn / bottoms, 1.0e-6,
+        "the activated reboiler must achieve its physical boilup ratio");
+    // Cold feed can condense all vapor before the overhead on this condenser-free stripper.
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(3).get(0), column);
   }
 
   /**
@@ -157,6 +162,24 @@ public class DistillationColumnWarmStateCacheTest {
     assertFalse(column.wasSequentialWarmStateReused(),
         "activating ratio mode must solve the changed condenser equations instead of reusing equilibrium products");
     assertTrue(column.getLastIterationCount() > 0, "the changed condenser equations must execute tray iterations");
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
+  }
+
+  /** Verify active convergence-gate changes invalidate exact sequential reuse. */
+  @Test
+  public void sequentialConvergenceGateChangeInvalidatesExactReuse() {
+    DistillationColumn column = buildCondenserColumn();
+    column.run();
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    column.run();
+    assertTrue(column.wasSequentialWarmStateReused());
+
+    column.setMassBalanceTolerance(column.getMassBalanceTolerance() * 0.5);
+    column.run();
+
+    assertFalse(column.wasSequentialWarmStateReused(), "An active gate change requires a new solver invocation");
+    assertTrue(column.getLastIterationCount() > 0);
     assertTrue(column.solved(), column.getConvergenceDiagnostics());
     assertPhysicalAndBalancedAllowingZeroProduct(column.getFeedStreams(1).get(0), column);
   }

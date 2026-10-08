@@ -277,6 +277,10 @@ public class DistillationColumnTest {
     String diagnostics = debutanizer.getConvergenceDiagnostics();
     assertTrue(debutanizer.solved(), diagnostics);
     assertTrue(diagnostics.contains("condenser mode: TOTAL, ratio control: true"), diagnostics);
+    assertEquals(0.1,
+        debutanizer.getCondenser().getLiquidOutStream().getFlowRate("mol/hr")
+            / debutanizer.getCondenser().getProductOutStream().getFlowRate("mol/hr"),
+        1.0e-12, "Product reconciliation must retain the physical total-condenser reflux split");
     assertTrue(diagnostics.contains("reboiler mode: EQUILIBRIUM"), diagnostics);
     assertFalse(debutanizer.wasFullFractionatorFastPathApplied(), diagnostics);
     assertEquals(5, debutanizer.getFeedTrayNumber(valve.getOutletStream()),
