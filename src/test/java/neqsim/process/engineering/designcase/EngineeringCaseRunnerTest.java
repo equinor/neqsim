@@ -3,18 +3,36 @@ package neqsim.process.engineering.designcase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.engineering.numerics.EngineeringNumericalHealthCriteria;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** Tests deterministic isolated engineering-case execution. */
 class EngineeringCaseRunnerTest {
+  private static final Path GUIDE = Paths.get("docs", "engineering", "design-cases-and-envelopes.md");
+  private static final Pattern JAVA_FENCE = Pattern.compile("```java\\R(.*?)\\R```", Pattern.DOTALL);
+
+  @TempDir
+  Path temporaryDirectory;
 
   @Test
   void sequentialAndParallelRunsProduceTheSameFingerprintWithoutMutatingBaseProcess() {
@@ -103,6 +121,42 @@ class EngineeringCaseRunnerTest {
     assertTrue(violated.isComplete());
     assertFalse(violated.isAccepted());
     assertEquals(1, violated.getEnvelope().getLimitViolationCount());
+  }
+
+  @Test
+  void documentationExampleCompilesAndRunsWithAssertionsEnabled() throws Exception {
+    String markdown = new String(Files.readAllBytes(GUIDE), StandardCharsets.UTF_8);
+    Matcher matcher = JAVA_FENCE.matcher(markdown);
+    assertTrue(matcher.find(), "Expected one Java fence in " + GUIDE);
+    String source = matcher.group(1);
+    assertFalse(matcher.find(), "Expected exactly one Java fence in " + GUIDE);
+    assertFalse(markdown.contains("```python"));
+    assertFalse(source.contains("System.out"));
+    assertFalse(source.contains("System.err"));
+    assertTrue(source.contains("PROCESS-DESIGN-BASIS-REV-A"));
+    assertTrue(source.contains("feed pressure\", pressureBara, \"bara\""));
+    assertTrue(source.contains("assert report.isComplete()"));
+    assertTrue(source.contains("assert report.isAccepted()"));
+    assertTrue(source.contains("sourcePressureBara"));
+
+    Path sourceFile = temporaryDirectory.resolve("DesignCaseEnvelopeExample.java");
+    Files.write(sourceFile, source.getBytes(StandardCharsets.UTF_8));
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "A full JDK is required to compile the documentation example");
+    int exitCode = compiler.run(null, null, null, "-classpath", System.getProperty("java.class.path"), "-source", "8",
+        "-target", "8", "-d", temporaryDirectory.toString(), sourceFile.toString());
+    assertEquals(0, exitCode, "The exact documentation fence must compile as Java 8");
+
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
+      loader.setDefaultAssertionStatus(true);
+      Class<?> example = Class.forName("DesignCaseEnvelopeExample", true, loader);
+      try {
+        example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+      } catch (InvocationTargetException ex) {
+        throw new AssertionError("The exact documentation fence must run with assertions enabled", ex.getCause());
+      }
+    }
   }
 
   private EngineeringDesignCase caseAtPressure(String id, final double pressureBara, int priority) {
