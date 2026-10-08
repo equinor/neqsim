@@ -1006,6 +1006,17 @@ Update 3: living tasks use the general task root (`neqsim --show-task-root`): ev
 
 Added fail-closed mass/every-element checks at burner inlet mixing/PSRs, common mixing including bypass air and post-flame PFR, retaining signed roundoff and exact mechanism inventories. Initial branch head `0c139de311e20b0f5b082f8a8f6c98575f422622`; validated against merge ref `ed75b0909f584d1e36540096a861f8b7612754e8` containing current master `529ea9c358ab1e15917c5244ae0ede2ff272cce5`. Nineteen Python tests and twelve focused Java tests passed; native seven/five burners and 10–40 MW scale examples executed from compiled workspace classes. Synthetic seven/five CO was 0.110188/0.103241 kg/h at equal total supply, with about 26.27 MW oil heat. Default projection bounds remain unchanged. Carbon-free hydrogen exposed absent-carbon integrator roundoff at scalar atol 1e-18/1e-22; selected 1e-28/1e-32 integration passed the same strict element bound. The historical EOS hydrogen rejection remains unreproduced. No plant calibration or experimental C2/C3 qualification claim; next dependency is benchmark provenance and the broader operating envelope. Evidence and blockers are tracked in #4151.
 
+### 2026-10-04 — Review direct terminal specification residuals (PR #4127)
+**Type:** E (Feature)
+**Keywords:** distillation, reflux, boilup, PVrefluxflash, cached streams, specification residuals
+**Solution:** `PVrefluxflash`, `Condenser`, `Reboiler`; regression coverage in `PVrefluxflashTest`, `TerminalRatioStreamCacheTest`, and `DirectTerminalSpecificationResidualTest`.
+**Notes:** Reproduced a vapor-only condenser moving away from its target and stale terminal outlet flows after changing feed flow. Reused the bracketed vapor-fraction flash and invalidated terminal caches on every run. Thirteen focused tests pass on Java 17, including existing fixed-liquid-reflux coverage. The two existing coupled column regressions still fail; the PR remains a draft and is not qualified for merging. No existing assertion or tolerance was weakened.
+
+### 2026-10-04 — Coupled terminal ratio correction (PR #4127 follow-up)
+**Type:** E (Feature)
+**Keywords:** distillation, simultaneous MESH, reflux, boilup, heterogeneous feeds, pumparound
+**Solution:** Added the missing active terminal flow-ratio equations to the full and local finite-difference residuals. Direct specifications now fail closed, including non-finite residuals. Isolated guarded correction retains return streams and accounts for side products/pumparound draws, named feed components and phase-flow-weighted feed enthalpies. Explicit Naphtali-Sandholm is not redundantly rerun after its guarded fallback. The correction-only initializer bypasses Sum-Rates terminal-duty equations; standalone initialization is unchanged.
+**Validation:** Integrated master `bc0ffeb416b3ea9a2404f3da373ba3f680249f41`. The final focused six tests pass: the original nearby-ratio and coordinated-flow regressions, a new reordered/subset-feed and copied-pumparound regression, inside-out telemetry, nearby K-value telemetry and complete atmospheric fractionation. A broader 104-test Maven run on the preceding candidate had 7 failures, 8 errors and 1 skip; the additional K-telemetry failure was reproduced against the passing original head, traced to redundant simultaneous correction, and eliminated by the final focused check. Existing scalar telemetry, two rejected-candidate-count assertions, three atmospheric and eight vacuum qualification failures remain open; no acceptance assertion, tolerance or iteration budget was relaxed. Vacuum investigation isolated a Sum-Rates dry-condenser seed and subsequent ill-conditioned Newton convergence. This remains a partial draft repair, not a merge qualification.
 
 ### 2026-10-04 — Conservative condensate endpoint recovery (#4202, numerical roadmap #2937)
 
@@ -1102,6 +1113,23 @@ pass in total, without changing any existing test target, tolerance or budget.
 **Solution:** Two-constraint LP on the per-well PDM table with the gas budget calibrated on a previous stop; cross-checked with `ChokeAndGasLiftAllocationOptimizer`; stage-separation sweep for 3rd-stage pressure and scrubber temperature; gas injectors ranked from 12 months of per-well injection.
 **Notes:** A compressor-meter capacity is not the allocated well gas: on the studied platform allocated gas was 0.79 of the meter flow with a compressor train out of service, so planning on the meter figure over-promised about 1,050 Sm3/d of oil. The previous stop gave a free backtest (every GOR above 1,000 well was shut in both; oil within -6.5/+8.2 %). GOR had moved by a factor 4-5 for two wells since the last stop. A simple stage model under-predicted recompressor load by 12-38 % but gave the right slope for RVP against 3rd-stage pressure (0.30 vs 0.28 bar/bar). Tooling: PEPR skill now resolves the task root; PDM skill documents injection and basis; production-optimization skill has the natural-flow recipe.
 
+
+### 2026-10-04 — PR #4127 diagnostic and total-condenser repairs
+
+- Reproduced absent side-draw diagnostics throwing on a diagnostic tray without a mixed stream.
+  Inactive draws now contribute zero without constructing unused phase streams; active draws
+  retain component accounting.
+- Product reconciliation changed total-condenser distillate while leaving reflux on its old
+  flow basis. Synchronize the identical liquid compositions and specified reflux split before
+  evaluating final energy and MESH residuals; strengthen the existing mass-balance regression
+  with an explicit physical reflux-ratio assertion.
+- Atmospheric/vacuum qualification remains unresolved. Additional Newton flow sweeps reached
+  300 iterations without closing the atmospheric ratio or tray balance, and a ratio-aware
+  initializer experiment did not qualify either representative case. Both experiments were
+  discarded; no physical tolerances, iteration budgets or assertions were loosened.
+- Documentation impact: total-condenser publication and inactive-draw diagnostic semantics
+  documented in the distillation guide.
+
 ### 2026-10-04 — Converge exchanger regression before millikelvin assertions (PR #4205)
 
 The final fast-test failure reproduced at 14.1455588737 C with recycle tolerance
@@ -1176,6 +1204,85 @@ is rejected; normal budget converges in 13 trials to a 0.002861683 bar residual 
 - Reproduced the inherited `devtools/audit_report.py` syntax error reported by CodeQL: command-line directory assignment and the fallback `if` were joined on one line.
 - Restored the statement boundary; `py_compile`, explicit-directory dispatch, and the no-report auto-discovery path pass. No pipeline or report comparison behavior changed.
 - Documentation impact: none; this restores the existing report-audit CLI without changing its inputs or outputs.
+
+## 2026-10-06: User-requested PR #4127 terminal-ratio recovery
+
+Reproduced the Big Hill atmospheric regression with an unmet top reflux ratio and
+13.9% tray component imbalance against the unchanged 2% gate. Retained the existing
+Newton correction and added isolated sequential recovery only after Newton rejection.
+The recovery candidate must satisfy all physical convergence gates before adoption;
+failed candidates leave the original column unchanged. Big Hill atmospheric and several
+vacuum cases recover; Sarir and two vacuum sensitivity points remain unqualified.
+An adaptive tightening experiment was rejected because it did not qualify Sarir and
+increased runtime beyond its test budget. No tolerance or iteration limit was relaxed.
+Updated the distillation guide and regenerated engineering coverage.
+
+## 2026-10-07: PR #4127 physical terminal recovery qualification
+
+Reproduced the remaining Sarir atmospheric and Big Hill vacuum feed-temperature/reflux
+failures on the current PR head. Deep-copy recovery lost transient tray outlet caches
+and the sequential initialization identity. Preserve these inventories, qualify the
+connected component balances during recovery, and try isolated Newton correction before
+an optional tighter component-closure pass. Ratio-constrained Newton recovery permits
+up to twenty fugacity sweeps with the existing early-stop tolerance. A candidate restoring
+every active physical gate can replace an unqualified source even when its trace-component
+MESH norm increases within the configured limit. User convergence settings and iteration
+limits and physical acceptance tolerances are unchanged.
+
+Qualified separation exposed a product-distribution reporting failure: positive traces
+below cumulative floating-point resolution created duplicate support points. Omit those
+points while retaining their contribution to the mean; two focused regressions cover
+heavy and light traces. The heavy-trace regression fails against the previous implementation.
+MESH pumparound continuation now preserves gross phase inventory and connects newly created returns
+while retaining the mixed tray fluid. Other solvers retain their established cold outer initialization.
+It reconciles products and terminal duties after the accepted return update. The qualified
+Sarir draw tray has positive liquid traffic; its negative reporting test explicitly zeros the
+published draw after a successful positive-flow screen instead of assuming a dry tray. Its
+original zero-flow rejection assertion remains, with additional conservation and cooler checks.
+Side-stripper contacts now use the same qualified material-draw mapping. Negative tests explicitly
+zero the published side draws or swap their compositions at conserved mass and enthalpy rates,
+retaining the rejection messages and all physical tolerances instead of relying on dry or inverted products from an unqualified solve.
+Water-bearing tray flashes use a bounded stability preflight for balanced gas/oil endpoints
+and single SRK gas phases before full reciprocal flashing. SRK gas-endpoint trials defer
+transport initialization; liquid endpoints, trace-water reciprocal trials and other models
+retain existing initialization.
+Documentation impact: recovery, pumparound publication and trace-distribution semantics in the
+distillation guide, plus the bounded stability path in the TP flash algorithm guide. Engineering
+coverage is regenerated after final formatting.
+
+Validation: 539 unique tests pass across the affected fast/slow distillation, TP flash,
+PV-reflux and documentation regressions, with two existing disabled tests. A clean final
+pumparound rerun passes 44 tests with one existing disabled test. Restrict warm outer
+continuation to MESH to preserve the other solvers' established repeat-run behavior.
+Validated NeqSim 3.23.0 with OpenJDK 17.0.20 and Python 3.12.14; all seven edited Java
+sources also compile with `--release 8`. Stable double Spotless apply, Spotless check,
+Javadoc, documentation-search audit and regenerated engineering-coverage check pass.
+The pre-commit executable is unavailable; all required direct gates ran.
+
+## 2026-10-07: PR #4127 cross-capability regression repair
+
+Reproduced all three hosted failures after merging the existing branch changes with
+master `1768fc1`: wet-oil RVP phase rejection, Eclipse separated-oil enthalpy, and
+an unbracketable condensate-pump entropy target. Controlled runs isolated the latter
+two to the new bounded TP-flash screen and the RVP change to its reduced phase
+initialization path. Restore the shared master TP-flash implementation, keeping the
+terminal-ratio, recovery, pumparound and boiling-distribution improvements. Existing
+regression expectations, physical acceptance tolerances and iteration limits remain
+unchanged. This supersedes the previous entry's TP-flash optimization claims.
+
+Preserved both task-log histories while resolving the master synchronization conflict.
+Documentation impact: update the distillation guide to describe the restored shared
+TP-flash path; remove the unqualified shortcut from the TP-flash guide.
+
+Validation for the repaired tree: 102 tests pass (47 cross-capability/PV-reflux and
+55 focused distillation tests), with zero failures/errors. Includes unchanged oil
+RVP rejection, Eclipse enthalpy and pump/diagram regressions, direct terminal specs,
+cache/mode/coordinated flow, Sarir atmospheric/pumparound/side-stripper and Big Hill
+atmospheric/vacuum feed-temperature/reflux qualification. Slow-tagged suites were
+not included in this repair run; previous broader counts are historical evidence.
+`python3 devtools/run_spotless.py apply` and `check`, engineering-coverage generation
+and `--check`, `python3 devtools/check_documentation_search.py`, and both exact
+pre-commit hook stages pass. Hosted CI remains pending on the published head.
 ### 2026-10-06 - Visund well-to-export model with gas injection and seven formation fluids tuned to Fluid Symphony PVT (ProcessPilot package)
 **Type:** B (Process / production optimisation)
 **Keywords:** well to export, gas condensate and oil, gas injection window, Uleberg P/A split factor, fluid tuning quality before and after, produced-gas heavy-end leaning, stock-tank oil basis, hold-out window, anchored compressor maps, utilisation register, throughput sweep
@@ -1188,33 +1295,40 @@ is rejected; normal budget converges in 13 trials to a 0.002861683 bar residual 
 **Solution:** Every manifold of the existing platform model is split into oil, gas and water at standard conditions with the model EOS and scaled to the plan rates of its field; the satellite fluid is mapped to the model pseudo-components by molar-mass interpolation and mixed into the HP manifold. Eleven cases (host plan, three satellite profiles, host upside, x2 satellite) at annual-mean and p90-day rates ran as resumable parallel jobs; ullage, tornado and a 20 000-draw Monte Carlo come from a response surface fitted per (unit, metric) to the runs.
 **Notes:** Scale every manifold of a field, including the test-separator manifold; leaving it out added about 1 MSm3/d gas to every case. Interpolate per (unit, metric): the binding metric of a vessel switched from water to oil when the satellite oil was added and the best-metric slope was wrong by a factor of three. Surge and minimum-flow rows are turndown, not capacity. Annual-mean plan rates hid the exceedances that appear at p90-day rates (PDM p90 over mean 1.17-1.21). Case runs at low gas flow (swing compressors idle) took 15-60 min or did not converge; plan the run budget for the declining years. `generate_work_record.py` now accepts a list-form `figure_captions`. Produced water and water injection are outside the model: use demonstrated peaks and one STID design case and say so.
 
-### 2026-10-07 — Backport conservative optimizer bracket discovery to live-well PR
-**Type:** G (Workflow)
-**Keywords:** optimizer, compressor, replay, feasible bracket, CI
-**Solution:** `BottleneckAnalysisOptimizerTest.testTwoStageOptimizationRecommendedApproach`
-**Notes:** Backported the existing master probe reserve to PR #4257. Bracket discovery uses a 0.5% utilization reserve; stage-two optimization and all repeated physical-capacity assertions retain the strict 100% limit. The original CI replay failure did not reproduce in the focused local run. Documentation impact: none for public APIs or user guides; only the test's conservative bracket discovery changes.
 
-### 2026-10-07 — Repair gas value-chain surrogate PR #4261
-**Type:** G (Repository maintenance)
-**Keywords:** merge conflict, engineering coverage, gas surrogates, work-record captions
-**Solution:** Preserved both branches' task-log additions while incorporating master;
-regenerated the engineering inventory for the new gas-chain APIs and retained master's
-live-well registrations. Added dictionary/list caption regression tests and documented
-pressure conventions, rate units, surrogate assumptions and validation boundaries.
-**Notes:** On the repaired tree, 20 focused Java tests and 30 Python tests passed.
-Direct Spotless apply/check, pre-commit/pre-push, documentation-search and engineering
-coverage checks passed. Full cross-platform CI is required on the published merge commit.
+## 2026-10-08: PR #4127 main-steam runtime and merge-conflict repair
 
-### 2026-10-08 — Repair PR #4260 hydraulic exception compatibility
-**Type:** G (Repository maintenance / numerical compatibility)
-**Keywords:** Beggs and Brill, invalid candidate, exception cause, regression, merge conflict
-**Solution:** Retained `InvalidOutputException` as the cause of the typed hydraulic-domain
-exception so existing process candidate rejection recognizes an infeasible forward pressure.
-The inverse solver still bounds only that typed failure, and property failures retain their
-original causes. Added a forward failure/recovery regression and documented the cause contract.
-Merged current master while preserving both task-log histories and regenerated engineering
-coverage for the combined tree.
-**Validation:** Reproduced the existing extreme-flow compressor test failure on the original
-PR head and the new cause-chain regression before the repair. The unchanged optimizer test,
-pipeline regressions and evaluator suites are the focused acceptance gates; exact results and
-publication-head CI status are recorded in PR #4260.
+Reproduced the unchanged main-column steam screen timeout on head `3217716` at
+402 seconds locally. Profiling identified eager transport-property initialization
+on inactive multiphase search templates during repeated tray PH flashes. Defer
+that initialization until the existing lazy property accessor is used; preserve
+phase cloning, mixing rules and every equilibrium/refinement gate. New regressions
+verify deferred first access and identical gas/oil/aqueous splits and final density,
+viscosity and conductivity compared with an eagerly initialized template.
+
+Sequential terminal recovery previously waited through 54 sweeps before a successful
+coupled correction. Add a checkpoint after at most twenty sweeps, try the same isolated
+Newton correction, and continue the existing full recovery sequence if it fails.
+The checkpoint is only a seed: adoption still requires the existing specifications
+and physical convergence gates. Record the final accepted MESH state in the exact-reuse
+fingerprint after polishing, including active convergence settings. Regression checks
+require zero-iteration unchanged reuse and invalidate it after a tolerance change. The unchanged steam suite now passes in 125 seconds,
+including its 240-second timeout and conservation assertions. An experimental PH
+step change was rejected after a two-phase regression; shared PH and TP solvers
+remain unchanged. No expected result, tolerance or user iteration cap is relaxed.
+
+Resolved the master task-log conflict by preserving both histories and incorporated
+master `133bc17` without rewriting the existing PR history. Documentation impact:
+distillation recovery checkpoints and deferred inactive transport initialization
+in the distillation and physical-properties guides; regenerate engineering coverage.
+
+Validation of the final repair: 193 tests run, 192 passing and one existing disabled
+test, with zero failures/errors. Includes slow-tagged distillation, unchanged main
+steam, Sarir pumparound/side-stripper, Big Hill vacuum sensitivities, cache/mode/
+coordinated flow, water-rich phase refinement, PH warm-start policy, oil RVP, pump,
+Eclipse-fluid and host-feed regressions. The main steam method completes in 151.832
+seconds in this combined run. Six edited Java sources/tests compile with `--release 8`.
+NeqSim 3.23.0, OpenJDK 17.0.20 and Python 3.12.14. Repeated stable Spotless apply,
+Spotless check, both all-file hook stages, regenerated engineering-coverage freshness,
+documentation-search audit, Javadoc and diff checks pass. Hosted CI remains pending
+on the published repair; the PR stays draft.

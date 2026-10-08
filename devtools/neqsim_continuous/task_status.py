@@ -3,7 +3,7 @@
 import os
 
 from .ledger import Ledger
-from .plan import continuous_dir, load_baseline, load_goal, read_json
+from .plan import continuous_dir, load_baseline, load_goal, load_plan, read_json
 from .state import STATE_SCHEMA_VERSION, read_state
 
 
@@ -21,6 +21,8 @@ def build(task_dir):
                 for key, value in sorted(items.items()) if value.get("status") == "rejected"]
 
     state = read_state(task_dir)
+    from .evidence import analyze
+    evidence_impact = analyze(task_dir, load_plan(task_dir))
     goal = load_goal(task_dir) or {}
     objective = goal.get("objective") or {}
     baseline = load_baseline(task_dir)
@@ -58,6 +60,9 @@ def build(task_dir):
     elif state.get("phase") == "reopen_requested":
         next_action = "resume solving after {}".format(
             ", ".join(state.get("reopen_reasons") or ["reopen request"]))
+    elif evidence_impact.get("changes"):
+        next_action = "run task-update for {} changed evidence file(s)".format(
+            evidence_impact.get("changed_files", 0))
     elif not goal.get("confirmed_by") and objective.get("metric"):
         next_action = "confirm goal in continuous/goal.yaml"
     elif state.get("details", {}).get("next_action"):
@@ -112,9 +117,18 @@ def build(task_dir):
                      "objective_confidence": latest_valid.get("confidence"),
                      "standard_first": (last.get("standard_first") or {}).get("readiness")
                      if last else None,
-                     "baseline_references_sha256": baseline_meta.get("references_sha256")},
+                     "baseline_references_sha256": baseline_meta.get("references_sha256"),
+                     "inventory_status": evidence_impact.get("status"),
+                     "changed_files": evidence_impact.get("changed_files", 0),
+                     "affected_stages": evidence_impact.get("affected_stages", []),
+                     "affected_kpis": evidence_impact.get("affected_kpis", []),
+                     "affected_conclusions": evidence_impact.get("affected_conclusions", []),
+                     "provenance": evidence_impact.get("provenance", []),
+                     "unmapped_paths": evidence_impact.get("unmapped_paths", []),
+                     "full_rerun": evidence_impact.get("full_rerun", False)},
         "what_changed": {"triggers": last.get("triggers", []) if last else [],
                          "kpi_deltas": changed_kpis,
+                         "evidence": evidence_impact.get("changes", []),
                          "recovery": last.get("recovery") if last else None},
         "next_action": next_action,
         "last_run": {"cycle": last.get("cycle_id"), "mode": last.get("mode"),

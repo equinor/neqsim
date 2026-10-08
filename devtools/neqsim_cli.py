@@ -41,7 +41,7 @@ import sys
 
 DEVTOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(DEVTOOLS_DIR)
-CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "resume", "backtest", "schedule", "promote",
+CONTINUOUS_COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest", "schedule", "promote",
                        "ledger", "status", "report", "reference-case", "note")
 
 COMMANDS = {
@@ -127,6 +127,7 @@ def _print_usage():
     print("  task-cycle TASK          Run one monitor or solve cycle (--standard-first for scheduled readiness)")
     print("  task-solve TASK          Solve until the goal is met or improvement is marginal")
     print("  task-resume TASK         Resume interrupted cycle/solve from persisted task state")
+    print("  task-update TASK         Detect evidence changes and rerun affected stages")
     print("  task-backtest TASK       Replay archived data with a simulated clock")
     print("  task-schedule TASK       Schedule daily cycles (Windows Task Scheduler / cron)")
     print("  task-promote TASK CYCLE  Promote a reviewed cycle to the baseline")

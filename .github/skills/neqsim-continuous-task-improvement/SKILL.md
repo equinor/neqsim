@@ -1,7 +1,7 @@
 ---
 name: neqsim-continuous-task-improvement
-description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-backtest/task-schedule/task-promote/task-ledger). USE WHEN: a solved task must keep improving daily or on events, be solved until the goal is met or gains are marginal, reopen on new plant data or a changed brief, turn a Word/Markdown brief into a checkable goal, or backtest monitoring against known fault dates."
-last_verified: "2026-09-25"
+description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-resume/task-update/task-backtest/task-schedule/task-promote/task-ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, detect technical-evidence changes and selectively rerun affected calculations, reopen on new data or a changed brief, or backtest monitoring against known fault dates."
+last_verified: "2026-10-08"
 ---
 
 # Continuous Task Improvement (Living Tasks)
@@ -22,6 +22,7 @@ calls; agents run only when a trigger fires; people decide.
 | Keep a finished task up to date (daily, on a server or on demand) | `task-living` then `task-schedule --install` |
 | Solve until the goal is met, or until improvement is marginal | `task-solve --until goal` / `--until converged` |
 | Resume after closing VS Code, rebooting or changing machine | `task-status <task>` then `task-resume <task>` |
+| Reassess after a datasheet, drawing, standard, measurement or model changes | `task-status <task>` then `task-update <task>` |
 | Start from a Word/Markdown brief | `neqsim new-task "title" --prompt-file brief.docx` then `task-living` |
 | Prove a monitor finds the faults it should (and no others) | `task-backtest --start ... --end ...` |
 | Try everything without company data | `task-reference-case <folder>` |
@@ -55,10 +56,15 @@ All commands run through the shared interpreter:
 5. **Resume before starting fresh work** — `neqsim task-status <task>` is the
    five-second persisted view. If it reports resumable work, run
    `neqsim task-resume <task>`. The task folder, not prior chat, is authoritative.
-6. **Run cycles** — `neqsim task-cycle <task>` (monitor) or schedule it:
+6. **Process evidence changes** — map evidence globs to affected stages and conclusions under
+   `evidence.rules` (`match`, `stages`, affected `kpis`, and `conclusions`); use
+   `neqsim task-update <task>`. Mapped changes rerun only the affected stages and declared
+   dependencies while invalidating affected KPIs and retaining unaffected ones. An unmapped path fails
+   closed to the full plan.
+7. **Run cycles** — `neqsim task-cycle <task>` (monitor) or schedule it:
    `neqsim task-schedule <task> --daily 05:00 --install` (Windows Task Scheduler;
    the `cron` line is printed for Linux servers).
-7. **Review and promote** — read `continuous/LIVING_REPORT.md` (the always-current
+8. **Review and promote** — read `continuous/LIVING_REPORT.md` (the always-current
    view) and `cycles/<id>/digest.md`, decide ledger items
    (`task-ledger <task> set OPP-0002 accepted --by NAME`), then
    `neqsim task-promote <task> <cycle-id> --reviewer NAME`.
@@ -96,6 +102,7 @@ continuous/
   kpi_history.csv   LOCK (while a cycle runs)
   LIVING_REPORT.md  report/kpi_trends.png   always-current view (rebuilt, never edited)
   baseline/         baseline.json, kpis.json, results_snapshot.json, history/<id>/
+  evidence/         inventory.json: accepted task-relative SHA-256 provenance
   ledger/events.jsonl                    append-only; merge between hosts by event_id
   stages/*.py                            task-local stage scripts
   data/<source>/YYYY/MM/part_*.csv       pulled evidence
@@ -216,6 +223,9 @@ and a **degraded** cycle — never a crash.
   and resumes solve checkpoints. A stale `LOCK` expires after 6 h.
 - `continuous/state.json` is schema-versioned. Legacy 1.0 state migrates to 1.1;
   newer incompatible state fails closed instead of being silently rewritten.
+- `task-update` compares task-relative content hashes, not timestamps. A successful mapped
+  update advances the accepted evidence inventory; a degraded update leaves it pending. Every
+  changed path must match an impact rule or the runner conservatively executes the full plan.
 - Watermarks only move forward and only on `ok`/`partial` pulls — a failed pull
   is retried next cycle with the same window.
 - `--dry-run` writes the cycle folder but no watermarks, ledger or drift state.

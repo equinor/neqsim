@@ -69,7 +69,7 @@ public class SarirAtmosphericPumparoundScreenTest {
             new Mapping("Top pump around (TPA)", 30, 32, 0.01), new Mapping("Bottom pump around (BPA)", 30, 15, 0.02)));
   }
 
-  /** Reject a solved explicit mapping when its selected draw tray has no liquid traffic. */
+  /** Qualify positive liquid traffic, then reject an explicitly invalid zero-flow draw. */
   @Test
   @Timeout(value = 240, unit = TimeUnit.SECONDS)
   public void zeroLiquidTrafficMappingFailsClosed() {
@@ -77,10 +77,18 @@ public class SarirAtmosphericPumparoundScreenTest {
     SarirAtmosphericPumparoundScreen screen = SarirAtmosphericPumparoundScreen.configure(model, 20, 1.0e-4,
         new Mapping("Bottom pump around (BPA)", 12, 15, 0.005));
 
-    IllegalStateException error = assertThrows(IllegalStateException.class, () -> screen.run(UUID.randomUUID()));
-    assertTrue(error.getMessage().contains("draw flow"));
+    SarirAtmosphericPumparoundScreen.Result result = screen.run(UUID.randomUUID());
     assertTrue(model.getColumn().solved(), model.getColumn().getConvergenceDiagnostics());
     assertTrue(model.getColumn().isLastColumnTearConverged(), model.getColumn().getConvergenceDiagnostics());
+    SarirAtmosphericPumparoundScreen.PumparoundResult circuit = result.getPumparounds()[0];
+    assertTrue(circuit.getModeledDrawMassFlowKgPerHour() > 0.0);
+    assertEquals(circuit.getModeledDrawMassFlowKgPerHour(), circuit.getModeledReturnMassFlowKgPerHour(), 1.0e-8);
+    assertTrue(circuit.getDutyW() < 0.0 && Double.isFinite(circuit.getDutyW()));
+    assertTrue(model.getColumn().getLastMassResidual() < 1.0e-8);
+
+    model.getColumn().getPumparounds().get(0).getDrawStream().setFlowRate(0.0, "kg/hr");
+    IllegalStateException error = assertThrows(IllegalStateException.class, screen::evaluate);
+    assertTrue(error.getMessage().contains("draw flow"));
   }
 
   private static SarirAtmosphericFractionationCase createModel() {
