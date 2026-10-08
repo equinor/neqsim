@@ -1,6 +1,6 @@
 ---
 name: neqsim-continuous-task-improvement
-description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-resume/task-update/task-backtest/task-schedule/task-promote/task-ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, detect technical-evidence changes and selectively rerun affected calculations, reopen on new data or a changed brief, or backtest monitoring against known fault dates."
+description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-resume/task-update/task-backtest/task-schedule/task-promote/task-report/task-ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, detect technical-evidence changes and selectively rerun affected calculations, reopen on new data or a changed brief, backtest monitoring, or issue a reviewed Final Report."
 last_verified: "2026-10-08"
 ---
 
@@ -23,6 +23,7 @@ calls; agents run only when a trigger fires; people decide.
 | Solve until the goal is met, or until improvement is marginal | `task-solve --until goal` / `--until converged` |
 | Resume after closing VS Code, rebooting or changing machine | `task-status <task>` then `task-resume <task>` |
 | Reassess after a datasheet, drawing, standard, measurement or model changes | `task-status <task>` then `task-update <task>` |
+| Issue a reviewed standalone Word/HTML delivery | Promote the validated cycle, then `task-report <task> --final --reviewer NAME` |
 | Start from a Word/Markdown brief | `neqsim new-task "title" --prompt-file brief.docx` then `task-living` |
 | Prove a monitor finds the faults it should (and no others) | `task-backtest --start ... --end ...` |
 | Try everything without company data | `task-reference-case <folder>` |
@@ -68,6 +69,9 @@ All commands run through the shared interpreter:
    view) and `cycles/<id>/digest.md`, decide ledger items
    (`task-ledger <task> set OPP-0002 accepted --by NAME`), then
    `neqsim task-promote <task> <cycle-id> --reviewer NAME`.
+9. **Finalize explicitly** — only after the accepted result is promoted and evidence is current,
+   run `neqsim task-report <task> --final --reviewer NAME`. This uses the canonical Task Solver
+   generator and writes an immutable `FR-###` Word/HTML delivery plus hashes and audit references.
 
 ## Living report (always up to date)
 
@@ -91,6 +95,12 @@ The formal Word/HTML report (`neqsim report`) follows the plan's `report.formal`
 `never` (default), `on_promote` (recommended: the formal report always matches the
 promoted baseline) or `every_cycle`. `task-report <task> --formal` forces it once.
 
+Do not confuse the four views: `task-status` is the five-second operational summary;
+`continuous/LIVING_REPORT.md` is regenerated history/change detail; `neqsim report` is the
+ordinary current-best engineering report; and `task-report --final --reviewer NAME` creates an
+immutable standalone delivery. A Final Report contains no transient cycle narrative, only a
+short record pointing to the Living Report, ledger, promoted cycle and `WORK_RECORD.md`.
+
 Promotion merges the cycle's KPIs over the previous baseline, so promoting a solve
 round (which reports only the objective) keeps the baseline of the monitored KPIs.
 
@@ -101,6 +111,8 @@ continuous/
   cycle_plan.yaml   goal.yaml   state.json   watermarks.json   drift_state.json
   kpi_history.csv   LOCK (while a cycle runs)
   LIVING_REPORT.md  report/kpi_trends.png   always-current view (rebuilt, never edited)
+  final_report.json                         current immutable Final Report pointer
+  final_reports/FR-###.json                 retained finalization revisions
   baseline/         baseline.json, kpis.json, results_snapshot.json, history/<id>/
   evidence/         inventory.json: accepted task-relative SHA-256 provenance
   ledger/events.jsonl                    append-only; merge between hosts by event_id
@@ -226,6 +238,9 @@ and a **degraded** cycle — never a crash.
 - `task-update` compares task-relative content hashes, not timestamps. A successful mapped
   update advances the accepted evidence inventory; a degraded update leaves it pending. Every
   changed path must match an impact rule or the runner conservatively executes the full plan.
+- Finalization requires a named reviewer, a complete non-degraded promoted cycle, current evidence
+  and a `results.json` matching the promoted snapshot. Report-build environment stamps do not make
+  a final revision stale; engineering-result, study, evidence, figure or report-content changes do.
 - Watermarks only move forward and only on `ok`/`partial` pulls — a failed pull
   is retried next cycle with the same window.
 - `--dry-run` writes the cycle folder but no watermarks, ledger or drift state.
