@@ -1,242 +1,195 @@
 ---
 title: Mixers and Splitters
-description: Combine and divide NeqSim process streams with mass, component, and energy checks.
+description: Combine and divide NeqSim process streams with mass, component, pressure, and energy checks.
 ---
 
-Mixers combine material streams, while splitters divide one stream without changing its
-thermodynamic state or composition. The public classes are in
+Mixers combine material streams. Splitters divide one stream by flow or by component without
+introducing a hydraulic pressure-drop model. The public classes are in
 `neqsim.process.equipment.mixer` and `neqsim.process.equipment.splitter`.
 
-## Capabilities
+## Complete executable example
 
-| Class | Use |
-| --- | --- |
-| `Mixer` | Combine two or more streams and calculate an outlet state |
-| `StaticMixer` | Backward-compatible class name for the standard `Mixer` implementation |
-| `Splitter` | Divide one stream by relative factors or specified outlet flow rates |
-| `ComponentSplitter` | Route a specified fraction of each feed component to the first of two outlets |
-
-The stream accessors return `StreamInterface`. Keep that interface type unless a downstream API
-specifically requires the concrete `Stream` class.
-
-For positive-flow `Splitter` branches, enthalpy and entropy are initialized after the split
-flash. Proportional splitting preserves molar enthalpy and entropy as well as the sum of
-enthalpy and entropy rates of flowing branches, including after reopening a closed branch.
-The thermodynamic getters of a zero-flow branch are not qualified; exclude those branches
-from caloric balances until the empty-state handling tracked in issue #4073 is resolved.
-
-`ComponentSplitter` changes outlet composition and equilibrates each positive-flow outlet at
-the feed temperature and pressure. It initializes enthalpy and entropy before publishing those
-outlets. Component inventories are conserved, but a composition-selective split at imposed T/P
-does not impose an adiabatic energy balance; evaluate the total outlet-minus-inlet enthalpy rate
-if an external heat requirement is needed. Zero-flow outlets have no defined molar enthalpy.
-
-## Mixer
-
-In its default mode, `Mixer` applies total mass and component balances and calculates the outlet
-temperature from an enthalpy balance:
-
-$$
-\dot{m}_{\mathrm{out}}=\sum_i \dot{m}_i
-$$
-
-$$
-\dot{H}_{\mathrm{out}}=\sum_i \dot{H}_i
-$$
-
-For component $j$, the outlet mole fraction is molar-flow weighted:
-
-$$
-x_{j,\mathrm{out}}=
-\frac{\sum_i \dot{n}_i x_{j,i}}{\sum_i \dot{n}_i}
-$$
-
-Here, $\dot{m}$ is mass flow, $\dot{n}$ is molar flow, $\dot{H}$ is enthalpy
-flow, and $x_j$ is mole fraction.
-
-### Complete mixer example
+This Java 8 example mixes two gas feeds, checks the inlet-pressure diagnostic, creates a 70/30
+proportional split, and routes methane separately with `ComponentSplitter`. Temperature is in K,
+pressure is absolute bara, and mass flow is in kg/h.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.splitter.ComponentSplitter;
+import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-SystemSrkEos richFluid = new SystemSrkEos(300.0, 30.0);
-richFluid.addComponent("methane", 0.80);
-richFluid.addComponent("ethane", 0.15);
-richFluid.addComponent("propane", 0.05);
-richFluid.setMixingRule("classic");
+public final class MixerSplitterExample {
+  private static final Logger logger = LogManager.getLogger(MixerSplitterExample.class);
 
-Stream richGas = new Stream("rich gas", richFluid);
-richGas.setFlowRate(5000.0, "kg/hr");
-richGas.run();
+  private MixerSplitterExample() {}
 
-SystemSrkEos leanFluid = new SystemSrkEos(310.0, 32.0);
-leanFluid.addComponent("methane", 0.95);
-leanFluid.addComponent("ethane", 0.04);
-leanFluid.addComponent("propane", 0.01);
-leanFluid.setMixingRule("classic");
+  public static void main(String[] args) {
+    SystemSrkEos richFluid = new SystemSrkEos(300.0, 30.0);
+    richFluid.addComponent("methane", 0.80);
+    richFluid.addComponent("ethane", 0.15);
+    richFluid.addComponent("propane", 0.05);
+    richFluid.setMixingRule("classic");
+    Stream richGas = new Stream("rich gas", richFluid);
+    richGas.setFlowRate(5000.0, "kg/hr");
+    richGas.run();
 
-Stream leanGas = new Stream("lean gas", leanFluid);
-leanGas.setFlowRate(3000.0, "kg/hr");
-leanGas.run();
+    SystemSrkEos leanFluid = new SystemSrkEos(310.0, 32.0);
+    leanFluid.addComponent("methane", 0.95);
+    leanFluid.addComponent("ethane", 0.04);
+    leanFluid.addComponent("propane", 0.01);
+    leanFluid.setMixingRule("classic");
+    Stream leanGas = new Stream("lean gas", leanFluid);
+    leanGas.setFlowRate(3000.0, "kg/hr");
+    leanGas.run();
 
-Mixer mixer = new Mixer("M-100");
-mixer.addStream(richGas);
-mixer.addStream(leanGas);
-mixer.run();
+    Mixer mixer = new Mixer("M-100");
+    mixer.setPressureMismatchTolerance(0.5);
+    mixer.addStream(richGas);
+    mixer.addStream(leanGas);
+    mixer.run();
 
-StreamInterface mixedGas = mixer.getOutletStream();
-double mixedFlowKgPerHour = mixedGas.getFlowRate("kg/hr");
-double mixedTemperatureC = mixedGas.getTemperature("C");
+    StreamInterface mixedGas = mixer.getOutletStream();
+    double mixedFlowKgPerHour = mixedGas.getFlowRate("kg/hr");
+    double inletEnthalpyRate = richGas.getFluid().getEnthalpy()
+        + leanGas.getFluid().getEnthalpy();
+    double mixedEnthalpyRate = mixedGas.getFluid().getEnthalpy();
+    assert Math.abs(mixedFlowKgPerHour - 8000.0) < 1.0e-6;
+    assert Math.abs(mixer.getInletPressureSpread() - 2.0) < 1.0e-10;
+    assert mixer.isPressureMismatch();
+    assert Math.abs(mixedGas.getPressure("bara") - 30.0) < 1.0e-10;
+    assert Math.abs(mixedEnthalpyRate - inletEnthalpyRate)
+        / Math.max(1.0, Math.abs(inletEnthalpyRate)) < 1.0e-6;
+
+    Splitter splitter = new Splitter("SP-100", mixedGas, 2);
+    splitter.setSplitFactors(new double[] {7.0, 3.0});
+    splitter.run();
+    StreamInterface product = splitter.getSplitStream(0);
+    StreamInterface recycle = splitter.getSplitStream(1);
+    assert Math.abs(product.getFlowRate("kg/hr") - 5600.0) < 1.0e-6;
+    assert Math.abs(recycle.getFlowRate("kg/hr") - 2400.0) < 1.0e-6;
+    assert Math.abs(product.getFlowRate("kg/hr") + recycle.getFlowRate("kg/hr")
+        - mixedFlowKgPerHour) < 1.0e-6;
+    assert Double.isFinite(product.getFluid().getEnthalpy());
+    assert Double.isFinite(recycle.getFluid().getEnthalpy());
+
+    double feedMethaneMoles = mixedGas.getFluid().getComponent("methane").getNumberOfmoles();
+    ComponentSplitter componentSplitter = new ComponentSplitter("CS-100", mixedGas);
+    componentSplitter.setSplitFactors(new double[] {1.0, 0.0, 0.0});
+    componentSplitter.run();
+    StreamInterface methaneOutlet = componentSplitter.getSplitStream(0);
+    StreamInterface liquidsOutlet = componentSplitter.getSplitStream(1);
+    double routedMethaneMoles =
+        methaneOutlet.getFluid().getComponent("methane").getNumberOfmoles();
+    double retainedMethaneMoles =
+        liquidsOutlet.getFluid().getComponent("methane").getNumberOfmoles();
+    assert Math.abs(routedMethaneMoles - feedMethaneMoles) < 1.0e-8;
+    assert Math.abs(retainedMethaneMoles) < 1.0e-12;
+    assert Double.isFinite(methaneOutlet.getFluid().getEnthalpy());
+    assert Double.isFinite(liquidsOutlet.getFluid().getEnthalpy());
+
+    logger.info(
+        "mixedFlow={} kg/h productFlow={} kg/h recycleFlow={} kg/h pressureSpread={} bar",
+        mixedFlowKgPerHour,
+        product.getFlowRate("kg/hr"),
+        recycle.getFlowRate("kg/hr"),
+        mixer.getInletPressureSpread());
+  }
+}
 ```
 
-The example produces $8000\ \mathrm{kg/h}$. A focused documentation test verifies the flow,
-enthalpy closure, component result, and pressure diagnostics.
+The documentation regression compiles this exact fence with `-source 8 -target 8` and executes it
+with assertions enabled. The calculated temperature, composition, and enthalpy depend on the
+selected thermodynamic model, mixing rule, feed states, and flow rates.
 
-The mixed result is independent of the order in which inlets are added. NeqSim uses the active
-inlet with the largest mass flow as the thermodynamic template and resolves equal-flow ties from
-the streams' thermodynamic configuration rather than their insertion position. Multiphase
-checking is retained when any active inlet requests it, unless it is explicitly disabled on the
-mixer with `setMultiPhaseCheck(false)`.
+## Mixer behavior
 
-### Pressure behavior and diagnostics
+In its default mode, `Mixer` applies total mass, component, and enthalpy balances:
 
-`Mixer` sets the outlet pressure to the lowest active inlet pressure. It does not provide an
-independent `setOutletPressure` specification. If active inlet pressures differ by more than the
-configured tolerance, the calculation continues at the lowest pressure and records a diagnostic:
+$$\dot{m}_{\mathrm{out}}=\sum_i\dot{m}_i$$
 
-```java
-mixer.setPressureMismatchTolerance(0.5);
-mixer.run();
+$$\dot{H}_{\mathrm{out}}=\sum_i\dot{H}_i$$
 
-boolean pressureMismatch = mixer.isPressureMismatch();
-double pressureSpreadBar = mixer.getInletPressureSpread();
-double minimumInletPressureBara = mixer.getMinInletPressure();
-double maximumInletPressureBara = mixer.getMaxInletPressure();
-```
+For component $j$, the outlet mole fraction is molar-flow weighted:
 
-A material mixer is not a hydraulic pressure-drop model. Use an upstream valve, compressor, pump,
-or pipeline model when pressure equalization or pressure loss must be represented explicitly.
+$$x_{j,\mathrm{out}}=\frac{\sum_i\dot{n}_i x_{j,i}}{\sum_i\dot{n}_i}$$
 
-### Specified outlet temperature
+Here, $\dot{m}$ is mass flow, $\dot{n}$ is molar flow, $\dot{H}$ is enthalpy flow, and $x_j$ is
+mole fraction. The result is independent of inlet insertion order. NeqSim selects a stable active
+inlet as the thermodynamic template and retains multiphase checking when any active inlet requests
+it, unless the mixer explicitly disables that check.
 
-`setOutletTemperature(double)` is available and expects kelvin. It changes the calculation from
-the default enthalpy-balanced mode to a specified-temperature TP flash:
+### Pressure behavior
 
-```java
-mixer.setOutletTemperature(305.15);
-mixer.run();
-```
+`Mixer` sets its outlet pressure to the lowest active inlet pressure. It does not calculate the
+hydraulic loss required to equalize unequal feeds. `setPressureMismatchTolerance(double)`,
+`isPressureMismatch()`, `getInletPressureSpread()`, `getMinInletPressure()`, and
+`getMaxInletPressure()` expose that engineering diagnostic in bar/bara.
 
-Use this mode only when the outlet temperature is an imposed boundary condition. For an auditable
-heating or cooling duty, retain the energy-balanced mixer and add a downstream `Heater` or
-`Cooler`.
+Use an upstream valve, compressor, pump, or pipeline when pressure loss or pressure equalization is
+part of the model. `setOutletTemperature(double)` expects K and replaces the default
+enthalpy-balanced calculation with a specified-temperature TP flash; use a downstream `Heater` or
+`Cooler` when an auditable duty is required.
 
-## Splitter
+`StaticMixer` is a backward-compatible class name for the standard mixer implementation. It does
+not add a pressure-drop calculation.
 
-`Splitter` clones the inlet thermodynamic state and composition into each outlet and changes only
-the amount of material. For normalized split factors $f_k$:
+## Proportional and specified-flow splitting
 
-$$
-\dot{m}_k=f_k\dot{m}_{\mathrm{in}},
-\qquad
-\sum_k f_k=1
-$$
+`Splitter` clones the inlet thermodynamic state and composition into each outlet and changes the
+amount of material. For normalized factors $f_k$:
 
-### Relative split factors
+$$\dot{m}_k=f_k\dot{m}_{\mathrm{in}},\qquad\sum_k f_k=1$$
 
-`setSplitFactors` treats its values as relative weights. It clamps negative values to zero and
-normalizes the remaining weights, so at least one value must be positive. The values do not have
-to sum to one. For example, `{7.0, 3.0}` becomes `{0.7, 0.3}`.
+`setSplitFactors` treats its values as relative weights, clamps negative weights to zero, and
+normalizes the positive remainder. At least one value must be positive; `{7.0, 3.0}` therefore
+means a 70/30 split.
 
-The following splitter snippets continue from `mixedGas`, which is created in the complete mixer
-example above.
+Use `setFlowRates` when outlet rates are specified. `Splitter.REMAINDER` marks material left after
+fixed demands. Multiple remainder outlets share the available flow equally. If positive fixed
+demands exceed the feed, NeqSim scales them to the available flow and gives remainder outlets zero
+flow.
 
-```java
-// Continue from the complete mixer example above.
-Splitter splitter = new Splitter("SP-100", mixedGas, 2);
-splitter.setSplitFactors(new double[] {7.0, 3.0});
-splitter.run();
+Positive-flow proportional branches preserve composition and, after property initialization,
+molar enthalpy and entropy. Their enthalpy and entropy rates sum to the feed rates. A zero-flow
+branch remains a valid topology connection, but its molar thermodynamic getters are not qualified
+for caloric balances; issue #4073 retains that residual-property and condenser/reboiler duty
+boundary.
 
-StreamInterface product = splitter.getSplitStream(0);
-StreamInterface recycle = splitter.getSplitStream(1);
-```
+## Component-selective splitting
 
-### Specified flows and remainder outlets
+`ComponentSplitter` always creates two outlets. Each factor is the fraction of the corresponding
+feed component routed to outlet zero; outlet one receives the remainder. `validateSetup()` requires
+one finite factor in $[0,1]$ for every feed component, and input and returned factor arrays are
+defensively copied.
 
-Use `setFlowRates` when one or more outlet flow rates are known. `Splitter.REMAINDER` (equal to
-`-1.0`) marks an outlet that receives material left after the fixed demands:
+The equipment preserves component inventories and equilibrates each positive-flow outlet at the
+feed temperature and pressure. A composition-selective split at imposed T/P is not an adiabatic
+energy balance. Compare total outlet and inlet enthalpy rates when estimating the external heat
+requirement.
 
-```java
-// Continue from the complete mixer example above.
-Splitter distributor = new Splitter("distribution splitter", mixedGas, 2);
-distributor.setFlowRates(
-    new double[] {2500.0, Splitter.REMAINDER},
-    "kg/hr");
-distributor.run();
-
-StreamInterface fixedDemand = distributor.getSplitStream(0);
-StreamInterface remainingFlow = distributor.getSplitStream(1);
-```
-
-If several outlets use `Splitter.REMAINDER`, they share the leftover flow equally. If fixed
-positive demands exceed the inlet flow, NeqSim scales them proportionally to the available flow
-and assigns zero to remainder outlets. Other negative fixed-flow values are invalid and are
-clamped to zero.
-
-## Static mixer
-
-`StaticMixer` is a backward-compatible type that uses the same mixing implementation as `Mixer`.
-Existing models can retain the `StaticMixer` class name, while new models can normally use
-`Mixer`. This snippet reuses `richGas` and `leanGas` from the complete mixer example:
-
-```java
-// Continue from the complete mixer example above.
-StaticMixer staticMixer = new StaticMixer("MX-101");
-staticMixer.addStream(richGas);
-staticMixer.addStream(leanGas);
-staticMixer.run();
-
-StreamInterface staticMixerOutlet = staticMixer.getOutletStream();
-```
-
-`StaticMixer` does not expose a `setPressureDrop` method. Add a valve or pipe model when the
-pressure loss through a physical mixing element is part of the engineering question.
+An exactly empty outlet retains an initialized reference composition and phase state so downstream
+topology can execute without a trace-component workaround. That reference state does not give the
+empty branch a physical molar enthalpy or component inventory.
 
 ## Validation checklist
 
-- Run every inlet stream before running a stand-alone mixer or splitter.
-- Check mixer mass and enthalpy closure in the default energy-balanced mode.
-- Inspect mixer pressure-mismatch diagnostics; do not silently mix materially different
-  pressures.
-- Check that splitter outlet flows sum to the inlet flow.
-- Use `StreamInterface` for mixer and splitter outlet accessors.
-- Add equipment to a `ProcessSystem` in upstream-to-downstream order for integrated simulations.
+- Run every inlet stream before a stand-alone mixer or splitter.
+- Check mixer mass, component, and enthalpy closure in energy-balanced mode.
+- Inspect pressure-mismatch evidence instead of treating a mixer as a hydraulic model.
+- Confirm that splitter outlet rates sum to the feed rate.
+- Confirm every `ComponentSplitter` factor follows the feed component order.
+- Exclude zero-flow thermodynamic getters from caloric balances.
+- Add equipment to a `ProcessSystem` in upstream-to-downstream order.
 
 ## Related documentation
 
-- [Equipment index](index.md)
+- [Equipment index](index)
 - [Streams](streams)
 - [Heat exchangers](heat_exchangers)
 - [Valves](valves)
 - [Controllers and recycles](../controllers)
-
-## Exact component removal and empty outlets
-
-`ComponentSplitter` accepts factors of exactly zero and one. A factor is the
-fraction of that component's feed sent to outlet zero; outlet one receives the
-remainder. `validateSetup()` requires one finite factor in [0, 1] for every feed
-component, and `run()` rejects invalid specifications before changing outlets.
-Input arrays and returned factors are defensively copied.
-
-When every routed component has zero flow, the splitter publishes an empty clone
-with the initialized feed composition and phase state. It does not flash an
-uninitialized zero-inventory fluid. This preserves a usable zero-flow topology
-connection for downstream streams and separators. No trace water workaround is
-needed for the qualified synthetic CPA dehydration cases.
-The retained composition is a numerical reference only: an empty branch contains
-no components and has no physically defined molar enthalpy. `ComponentSplitterZeroFlowTest`
-checks downstream empty-branch execution and repeated exact water removal with
-mass conservation.
