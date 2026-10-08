@@ -143,8 +143,8 @@ class EngineeringCaseRunnerTest {
     Files.write(sourceFile, source.getBytes(StandardCharsets.UTF_8));
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     assertNotNull(compiler, "A full JDK is required to compile the documentation example");
-    int exitCode = compiler.run(null, null, null, "-classpath", System.getProperty("java.class.path"),
-        "-source", "8", "-target", "8", "-d", temporaryDirectory.toString(), sourceFile.toString());
+    int exitCode = compiler.run(null, null, null, "-classpath", System.getProperty("java.class.path"), "-source", "8",
+        "-target", "8", "-d", temporaryDirectory.toString(), sourceFile.toString());
     assertEquals(0, exitCode, "The exact documentation fence must compile as Java 8");
 
     try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
