@@ -4,16 +4,17 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The baseline inspected was `237364c074ddb0c0f191f00d52528a9cf19ffdc0`.
+The current baseline is `d0c61da34f15a434f545936e00baeb1bd21a730f`.
 Source implementation, regression evidence and field qualification are different maturity levels.
-The first increment supplied edge-local steady hydraulic fidelity. The current increment adds typed
-field/equipment identity and builders over that graph; neither completes the campaign.
+Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity and live well
+pressure-rate coupling. The current increment adds same-topology hydraulic comparison and a guarded
+steady-to-transient handoff; none of these completes independent field qualification.
 
 ## Current functionality and reuse decisions
 
 | Existing functionality | Current scope and evidence | Integration decision / remaining gap |
 |---|---|---|
-| `WellFlow`, `WellSystem`, `TubingPerformance` | Production/injection IPR, layered completions and fracture constraints in `WellFlow`; production nodal IPR/VLP with simplified and full correlation modes in `WellSystem`. See `WellFlow` and `WellSystem` tests. | Reuse the well physics and their convergence diagnostics. A live `WellSystem` pressure/rate boundary in the general network remains to be implemented; the existing network IPR edge is not the same API. |
+| `WellFlow`, `WellSystem`, `TubingPerformance` | Production/injection IPR, layered completions and fracture constraints in `WellFlow`; production nodal IPR/VLP with simplified and full correlation modes in `WellSystem`. `FieldWellNetworkCoupler` now binds both APIs to canonical free-pressure field nodes. | Reuse the well physics and their convergence diagnostics. Continue qualification of coupled well/network inner convergence; the existing network IPR edge remains a separate screening API. |
 | `LoopedPipeNetwork` | Named graph, NR pressure/flow equilibrium, branch/loop topology, IPR/choke/tubing/pump/compressor edges, signed flow, route profiles, local fluids, conservative component/enthalpy mixing, JSON definitions, host coupling, optimization and reservoir attachments. See network operating-point, pump, optimizer and composition tests. | Extend this detailed steady network and its identities. Use its existing solver, thermodynamic coupling and optimizer; do not create a competing field graph or optimizer. |
 | `WellFlowlineNetwork` | `WellFlow` + Beggs-Brill branches, manifold mixing and host endpoint pressure iteration. One downstream manifold connection per node. | Retain its convenient gathering API; do not treat it as a general split/loop/injection graph. A compatibility builder can later target the detailed graph. |
 | `PipeFlowNetwork` | Compositional `OnePhasePipeLine` TDMA tree network with mixer nodes. | Keep its single-phase distributed use cases. It does not become multiphase just by changing the topology labels. |
@@ -60,8 +61,9 @@ mixing algorithm is introduced by hydraulic model selection.
 selection and evaluation evidence. A failed, unconverged, pressure-floor-limited
 or wall-clock-limited two-fluid calculation throws and cannot silently substitute
 Darcy-Weisbach. `getTwoFluidModel()` provides the last steady pipe and convergence/
-holdup/phase-velocity profiles. These are steady trial results, not dynamic state
-owned by the field network. Zero-flow evaluation uses the existing static
+holdup/phase-velocity profiles. `createInitializedTwoFluidPipe()` only succeeds for
+`TWO_FLUID_CONVERGED` evidence and returns an independent deep copy retaining the
+accepted steady fields. Zero-flow evaluation uses the existing static
 Darcy/hydrostatic screening calculation and reports `ZERO_FLOW_STATIC`.
 Legacy Beggs-Brill fallback remains available and reports `BEGGS_BRILL_FALLBACK_DARCY`.
 Inspect this status before accepting an engineering result.
@@ -104,9 +106,50 @@ network.run();
 The tests check branch symmetry, a 4 kg/s trunk rate, manifold/whole-network mass
 balance, pressure ordering, JSON replay, reverse traversal, standalone pipe
 agreement, stale Beggs-Brill geometry and failure propagation. Standalone agreement
-is integration evidence, not an independent physical benchmark. Public multiphase
-B&B versus two-fluid comparisons, mesh sensitivity, energy/component closure,
-large-field performance and the 20 km/riser campaign cases remain qualification work.
+is integration evidence, not an independent physical benchmark.
+
+## Same-topology hydraulic comparison and steady initialization
+
+`NetworkHydraulicModelComparison` accepts a `FieldNetworkTopology` and selected
+canonical edge IDs. It creates two detached definition copies, restores the fluid
+template and only the explicitly assigned node fluids, and changes the selected edges
+to Beggs-Brill or two-fluid hydraulics. All unselected edges retain their configured
+models, so a mixed-fidelity field can be qualified without reconstructing its graph.
+The caller's topology is neither run nor mutated.
+
+Both complete network solves and every requested edge must converge with the requested
+model. Beggs-Brill fallback and stale or failed two-fluid evidence are rejected. The
+result records each model's edge rate and pressure drop, complete pressure (Pa),
+temperature (K), liquid-holdup and superficial gas/liquid velocity (m/s) profiles,
+plus network mass-balance residuals. It also reports pressure-drop, outlet-temperature,
+average-holdup and average phase-velocity differences.
+
+```java
+NetworkHydraulicModelComparison comparison =
+    new NetworkHydraulicModelComparison(fieldTopology);
+NetworkHydraulicModelComparison.Result result = comparison.compare(
+    Arrays.asList("flowline", "riser"), UUID.randomUUID());
+NetworkHydraulicModelComparison.EdgeComparison flowline =
+    result.getEdgeComparison("flowline");
+
+double pressureDifference = flowline.getRelativePressureDropDifference();
+double temperatureDifferenceK = flowline.getOutletTemperatureDifferenceK();
+double holdupDifference = flowline.getAverageLiquidHoldupDifference();
+
+TwoFluidPipe initialized = result.createInitializedTwoFluidPipe("flowline");
+initialized.setTransactionalTransientEnabled(true);
+initialized.runTransient(0.001, UUID.randomUUID());
+```
+
+`NetworkHydraulicModelComparisonTest` exercises two different SRK well fluids through
+a conservative template, 20 km flowline and 500 m riser at 2.0 kg/s and a nearby
+1.5 kg/s point. It checks both network mass balances, physical profile bounds,
+cross-model engineering bounds for all five quantities, preservation of the original
+topology/model selection, clone independence and one accepted transactional transient
+step. This is evidence-ladder level 3/4 (conservation and engineering bounds), not an
+independent correlation benchmark. Terrain-profile aggregation for the segmented
+Beggs-Brill path, mesh sensitivity, transient multi-edge junction conservation,
+energy/component closure and large-field runtime remain open qualification work.
 
 ## Typed field and equipment identity
 
@@ -205,8 +248,8 @@ obtain a feasible optimizer result.
 
 ## Dependency-ordered continuation
 
-1. Qualify multi-template, daisy-chain, branches/loops and brownfield networks with
-   differing well fluids, B&B/two-fluid comparison and representative field sizes.
+1. Extend qualification to multi-template, daisy-chain, branches/loops and brownfield
+   networks, including terrain-profile aggregation and representative large-field runtime.
    Include water, gas and CO2 injection with pump/compressor and shared host constraints.
    Add controlled reservoir-pressure updates without duplicating reservoir ownership.
 2. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
