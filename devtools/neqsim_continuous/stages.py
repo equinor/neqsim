@@ -77,6 +77,45 @@ def sense(ctx, spec):
     return StageResult("sense", "ok", outputs=["sense.json"], triggers=triggers)
 
 
+def _describe_evidence(ctx, report):
+    if report.get("changes"):
+        ctx.sections.append("Evidence changes: {}".format(
+            "; ".join("{} {}".format(row["change"], row["path"])
+                      for row in report["changes"])))
+        ctx.sections.append("Impact: stages [{}]; conclusions [{}]{}".format(
+            ", ".join(report.get("affected_stages") or []) or "none",
+            ", ".join(report.get("affected_conclusions") or []) or "none",
+            "; full rerun because of unmapped evidence" if report.get("full_rerun") else ""))
+
+
+def restore_evidence(ctx):
+    """Restore the frozen evidence snapshot when an interrupted cycle resumes."""
+    report = read_json(os.path.join(ctx.cycle_dir, "evidence_changes.json"), {}) or {}
+    report["inventory"] = read_json(os.path.join(ctx.cycle_dir, "evidence_inventory.json"), {}) or {}
+    ctx.evidence_analysis = report
+    _describe_evidence(ctx, report)
+
+
+def evidence(ctx, spec):
+    """Record file-level evidence provenance and its configured calculation impact."""
+    from .evidence import analyze
+
+    report = ctx.evidence_analysis or analyze(ctx.task_dir, ctx.plan)
+    ctx.evidence_analysis = report
+    relative = "evidence_changes.json"
+    inventory_file = "evidence_inventory.json"
+    write_json(os.path.join(ctx.cycle_dir, relative), {
+        key: value for key, value in report.items() if key != "inventory"
+    })
+    write_json(os.path.join(ctx.cycle_dir, inventory_file), report.get("inventory") or {})
+    _describe_evidence(ctx, report)
+    triggers = ["new_evidence"] if report.get("changes") else []
+    message = "{} changed evidence file(s); {} affected stage(s)".format(
+        report.get("changed_files", 0), len(report.get("affected_stages") or []))
+    return StageResult("evidence", "warn" if report.get("unmapped_paths") else "ok",
+                       outputs=[relative, inventory_file], triggers=triggers, message=message)
+
+
 def _load_rows(ctx, source, paths, time_column, after):
     rows = []
     for path in paths:
@@ -378,7 +417,8 @@ def agent(ctx, spec):
                        message=result.get("status", ""))
 
 
-for _name, _stage in (("sense", sense), ("refresh", refresh), ("script", script), ("kpis", kpis),
+for _name, _stage in (("sense", sense), ("evidence", evidence), ("refresh", refresh),
+                      ("script", script), ("kpis", kpis),
                       ("drift", drift), ("goal", goal), ("diff", diff), ("ledger", ledger),
                       ("digest", digest), ("notify", notify_stage), ("agent", agent)):
     register("stages", _name, _stage)

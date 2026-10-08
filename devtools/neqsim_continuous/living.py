@@ -6,7 +6,7 @@ import shutil
 from datetime import datetime, timezone
 
 from .ledger import CATEGORIES, Ledger
-from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, read_json,
+from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, load_plan, read_json,
                    write_json)
 from .state import read_state, write_state
 from .stages import neqsim_commit
@@ -31,14 +31,19 @@ drift:
 triggers:
   kpi_step: {}
   criteria: {}
-stages: [sense, refresh, kpis, drift, goal, diff, ledger, digest, notify, agent]
+evidence:
+  # include: ["step1_scope_and_research/references/**/*", "continuous/goal.yaml"]
+  rules: []
+  # - {name: datasheet, match: "**/datasheets/**", stages: ["script:model"], conclusions: ["equipment duty"]}
+  dependencies: {}
+stages: [sense, evidence, refresh, kpis, drift, goal, diff, ledger, digest, notify, agent]
 notify:
   channels: [file]
 #   - {type: email, host: smtp.example.com, to: [you@example.com], user: you, password_env: NEQSIM_SMTP_PASSWORD, when: [needs_decision]}
 #   - {type: teams, url_env: NEQSIM_TEAMS_WEBHOOK, when: [needs_decision, stop_state]}
 agent: {enabled: false, agent: continuous-improvement, executable: copilot}
 solve: {}
-#  stages: [sense, refresh, "script:solver", kpis, goal, diff, ledger, digest]
+#  stages: [sense, evidence, refresh, "script:solver", kpis, goal, diff, ledger, digest]
 #  max_rounds: 12
 #  max_branches: 3
 #  critic: {enabled: false}
@@ -74,7 +79,8 @@ drift:
 triggers:
   kpi_step: {}
   criteria: {}
-stages: [sense, inputs, refresh, "script:model_update", "script:optimize", kpis, gates, constraints, guard,
+evidence: {rules: [], dependencies: {}}
+stages: [sense, evidence, inputs, refresh, "script:model_update", "script:optimize", kpis, gates, constraints, guard,
          drift, goal, diff, outcome, ledger, digest, notify, agent]
 notify:
   channels: [file]
@@ -249,6 +255,8 @@ def make_living(task_dir, brief=None, template=None):
             with open(config, "a", encoding="utf-8") as f:
                 f.write("\ncontinuous:\n  enabled: true\n  plan: continuous/cycle_plan.yaml\n")
             report["created"].append("study_config.yaml: continuous block")
+    from .evidence import initialize
+    initialize(task_dir, load_plan(task_dir))
     from .living_report import update
     if update(task_dir, event="living"):
         report["living_report"] = "continuous/LIVING_REPORT.md"

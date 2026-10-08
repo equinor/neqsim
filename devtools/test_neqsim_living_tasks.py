@@ -46,6 +46,8 @@ def test_drift_monitor_detects_step_and_ignores_noise():
 
 
 def test_make_living_never_overwrites(tmp_path):
+    from neqsim_continuous.plan import load_plan
+
     task = tmp_path / "old_task"
     task.mkdir()
     (task / "results.json").write_text(json.dumps(
@@ -59,6 +61,7 @@ def test_make_living_never_overwrites(tmp_path):
     items = nc.Ledger(os.path.join(str(task), "continuous", "ledger", "events.jsonl")).current()
     assert [i["title"] for i in items.values()] == ["Wash compressor B"]
     assert report["created"]
+    assert nc.analyze_evidence(str(task), load_plan(str(task)))["status"] == "unchanged"
     again = make_living(str(task))
     assert not again["created"]
     assert len(nc.Ledger(os.path.join(str(task), "continuous", "ledger", "events.jsonl")).current()) == 1
@@ -375,3 +378,145 @@ def test_five_second_status_and_resume_cli(reference, tmp_path, capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["resumed"] is False
     assert payload["status"]["state"] == "goal_met"
+
+
+def test_evidence_inventory_detects_added_modified_and_removed_files(tmp_path):
+    from neqsim_continuous.evidence import analyze, initialize
+
+    task = tmp_path / "evidence_inventory"
+    references = task / "step1_scope_and_research" / "references"
+    references.mkdir(parents=True)
+    first = references / "datasheet.txt"
+    removed = references / "old-standard.pdf"
+    first.write_text("revision A", encoding="utf-8")
+    removed.write_bytes(b"old")
+    plan = {"stages": ["sense", "evidence", "digest"], "evidence": {
+        "include": ["step1_scope_and_research/references/**/*"],
+        "rules": [{"name": "documents", "match": "**/*",
+                   "stages": ["digest"], "conclusions": ["document basis"]}],
+    }}
+    initialized = initialize(str(task), plan)
+    assert initialized["status"] == "initialized"
+
+    first.write_text("revision B", encoding="utf-8")
+    removed.unlink()
+    (references / "new-data.csv").write_text("x\n1\n", encoding="utf-8")
+    impact = analyze(str(task), plan)
+    changes = {row["path"]: row for row in impact["changes"]}
+    assert changes["step1_scope_and_research/references/datasheet.txt"]["change"] == "modified"
+    assert changes["step1_scope_and_research/references/old-standard.pdf"]["change"] == "removed"
+    assert changes["step1_scope_and_research/references/new-data.csv"]["change"] == "added"
+    assert all(row["before_sha256"] or row["after_sha256"] for row in changes.values())
+    assert not any(str(task) in row["path"] for row in changes.values())
+
+
+def test_evidence_inventory_fails_closed_on_newer_schema(reference, tmp_path):
+    task = _copy(reference, tmp_path, "future_evidence_schema")
+    inventory_path = os.path.join(task, "continuous", "evidence", "inventory.json")
+    with open(inventory_path, encoding="utf-8") as inventory_file:
+        persisted = json.load(inventory_file)
+    persisted["schema_version"] = "2.0"
+    with open(inventory_path, "w", encoding="utf-8") as inventory_file:
+        json.dump(persisted, inventory_file)
+    from neqsim_continuous.plan import load_plan
+    with pytest.raises(nc.EvidenceSchemaError, match="Upgrade NeqSim"):
+        nc.analyze_evidence(task, load_plan(task))
+
+
+def test_task_update_selectively_reruns_mapped_impact_and_retains_kpis(
+        reference, tmp_path, capsys):
+    from neqsim_cli import CONTINUOUS_COMMANDS
+    from neqsim_continuous.evidence import analyze
+    from neqsim_continuous.plan import load_plan
+
+    task = _copy(reference, tmp_path, "selective_evidence_update")
+    assert "update" in CONTINUOUS_COMMANDS
+    plan_path = os.path.join(task, "continuous", "cycle_plan.yaml")
+    with open(plan_path, encoding="utf-8") as plan_file:
+        plan = yaml.safe_load(plan_file)
+    plan["evidence"] = {
+        "rules": [{"name": "brief-method", "match": "**/brief.md",
+                   "stages": ["diff"],
+                   "conclusions": ["power-reduction conclusion"]}],
+        "dependencies": {},
+    }
+    with open(plan_path, "w", encoding="utf-8") as plan_file:
+        yaml.safe_dump(plan, plan_file, sort_keys=False)
+
+    first = run_cycle(task, now=datetime(2025, 11, 1, tzinfo=timezone.utc), no_agent=True)
+    with open(os.path.join(task, "continuous", "cycles", first["cycle_id"], "kpis.json"),
+              encoding="utf-8") as kpi_file:
+        previous_kpis = json.load(kpi_file)
+    brief = os.path.join(task, "step1_scope_and_research", "references", "manual", "brief.md")
+    with open(brief, "a", encoding="utf-8") as brief_file:
+        brief_file.write("\n## Revised evidence\nVendor revision B.\n")
+
+    assert cli.main(["update", task, "--no-agent"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["accepted"] is True
+    assert payload["full_rerun"] is False
+    assert payload["affected_conclusions"] == ["power-reduction conclusion"]
+    assert payload["provenance"][0]["evidence"][0]["sha256"]
+    selected = payload["selected_stages"]
+    assert "evidence" in selected and "diff" in selected
+    assert "refresh" not in selected and "script:station_model" not in selected and "drift" not in selected
+
+    cycle_id = payload["cycle"]["cycle_id"]
+    with open(os.path.join(task, "continuous", "cycles", cycle_id, "cycle.json"),
+              encoding="utf-8") as cycle_file:
+        manifest = json.load(cycle_file)
+    with open(os.path.join(task, "continuous", "cycles", cycle_id, "kpis.json"),
+              encoding="utf-8") as kpi_file:
+        retained_kpis = json.load(kpi_file)
+    assert manifest["selective_rerun"]["enabled"] is True
+    assert "refresh" in manifest["selective_rerun"]["retained_stages"]
+    assert retained_kpis["polytropic_efficiency"] == previous_kpis["polytropic_efficiency"]
+    assert analyze(task, load_plan(task))["status"] == "unchanged"
+    with open(os.path.join(task, "continuous", "LIVING_REPORT.md"),
+              encoding="utf-8") as report_file:
+        living_report = report_file.read()
+    assert "Evidence changes and impact" in living_report
+
+
+def test_unmapped_evidence_change_fails_closed_to_full_cycle(reference, tmp_path):
+    from neqsim_continuous.evidence import analyze, selected_stages
+    from neqsim_continuous.plan import load_plan
+
+    task = _copy(reference, tmp_path, "unmapped_evidence")
+    new_document = os.path.join(task, "step1_scope_and_research", "references", "vendor.pdf")
+    with open(new_document, "wb") as document_file:
+        document_file.write(b"new revision")
+    plan = load_plan(task)
+    impact = analyze(task, plan)
+    assert impact["full_rerun"] is True
+    assert impact["unmapped_paths"] == ["step1_scope_and_research/references/vendor.pdf"]
+    selected = selected_stages(plan, impact)
+    assert set(plan["stages"]).issubset(set(selected))
+
+
+def test_degraded_evidence_update_keeps_change_pending(reference, tmp_path, capsys):
+    from neqsim_continuous.evidence import analyze
+    from neqsim_continuous.plan import load_plan
+
+    task = _copy(reference, tmp_path, "degraded_evidence_update")
+    plan_path = os.path.join(task, "continuous", "cycle_plan.yaml")
+    with open(plan_path, encoding="utf-8") as plan_file:
+        plan = yaml.safe_load(plan_file)
+    plan["evidence"] = {
+        "rules": [{"name": "failing-check", "match": "**/brief.md",
+                   "stages": ["diff"], "kpis": ["candidate_metric"],
+                   "conclusions": ["candidate result"]}],
+        "dependencies": {},
+    }
+    with open(plan_path, "w", encoding="utf-8") as plan_file:
+        yaml.safe_dump(plan, plan_file, sort_keys=False)
+    brief = os.path.join(task, "step1_scope_and_research", "references", "manual", "brief.md")
+    with open(brief, "a", encoding="utf-8") as brief_file:
+        brief_file.write("\nValidation-relevant revision.\n")
+
+    assert cli.main(["update", task, "--no-agent"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["cycle"]["degraded"] is True
+    assert payload["accepted"] is False
+    assert payload["affected_kpis"] == ["candidate_metric"]
+    assert analyze(task, load_plan(task))["status"] == "changed"

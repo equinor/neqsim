@@ -5,7 +5,7 @@ import json
 import os
 import time
 
-DEFAULT_STAGES = ["sense", "refresh", "kpis", "drift", "goal", "diff", "ledger", "digest",
+DEFAULT_STAGES = ["sense", "evidence", "refresh", "kpis", "drift", "goal", "diff", "ledger", "digest",
                   "notify", "agent"]
 PLAN_FILE = "cycle_plan.yaml"
 GOAL_FILE = "goal.yaml"
@@ -45,7 +45,7 @@ def load_plan(task_dir):
     plan = _read_yaml(os.path.join(continuous_dir(task_dir), PLAN_FILE))
     plan.setdefault("schema_version", "1.0")
     plan.setdefault("stages", list(DEFAULT_STAGES))
-    for key in ("sources", "kpis", "scripts", "triggers", "notify", "agent", "solve",
+    for key in ("sources", "kpis", "scripts", "triggers", "notify", "agent", "solve", "evidence",
                 "backtest", "drift", "report", "production"):
         plan.setdefault(key, {})
     plan.setdefault("gates", [])

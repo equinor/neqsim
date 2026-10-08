@@ -139,6 +139,8 @@ def build(task_dir):
     task_dir = os.path.abspath(str(task_dir))
     cont = continuous_dir(task_dir)
     goal, baseline = load_goal(task_dir) or {}, load_baseline(task_dir)
+    from .evidence import analyze
+    evidence_impact = analyze(task_dir, load_plan(task_dir))
     state = read_json(os.path.join(cont, "state.json"), {}) or {}
     meta, base_kpis = baseline.get("meta", {}), baseline.get("kpis", {})
     cycles = _cycles(cont)
@@ -168,6 +170,35 @@ def build(task_dir):
     if state.get("phase") == "reopen_requested":
         out += ["", "**Reopen requested** by cycle {}: {}. Run `neqsim task-solve` to re-enter the "
                 "solve loop.".format(state.get("reopen_cycle"), ", ".join(state.get("reopen_reasons", [])))]
+
+    out += ["", "## Evidence changes and impact", ""]
+    evidence_view = evidence_impact if evidence_impact.get("changes") else ((last or {}).get("evidence") or {})
+    changes = evidence_view.get("changes") or []
+    if changes:
+        out += _table(["Path", "Change", "Kind", "Impact rule"], [
+            (row.get("path"), row.get("change"), row.get("kind"),
+             ", ".join(row.get("impact_rules") or []) or "unmapped") for row in changes
+        ])
+        out += ["", "Affected stages: {}. Invalidated KPIs: {}. Affected conclusions: {}.".format(
+            ", ".join(evidence_view.get("affected_stages") or []) or "none",
+            ", ".join(evidence_view.get("affected_kpis") or []) or "none",
+            ", ".join(evidence_view.get("affected_conclusions") or []) or "none")]
+        provenance = evidence_view.get("provenance") or []
+        if provenance:
+            out += ["", "### Conclusion provenance", ""]
+            out += _table(["Impact rule", "Conclusions", "Evidence version"], [
+                (link.get("rule"), ", ".join(link.get("conclusions") or []),
+                 "; ".join("{} @ {}".format(item.get("path"),
+                                            str(item.get("sha256") or "")[:12])
+                           for item in link.get("evidence") or []))
+                for link in provenance
+            ])
+        if evidence_impact.get("changes"):
+            out += ["", "Pending evidence changes have not yet been accepted. Run "
+                    "`neqsim task-update <task>`; an unmapped path causes a conservative full cycle."]
+    else:
+        out += ["No evidence change is pending. File-level hashes in "
+                "`continuous/evidence/inventory.json` are the accepted provenance baseline."]
 
     series = _history(cont)
     if series:
