@@ -9,6 +9,7 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
  * @version $Id: $Id
  */
 public class PipeBeggsBrillsResponse extends BaseResponse {
+  public neqsim.process.equipment.pipeline.FlowSolveReport flowSolveReport;
   public Double inletPressure;
   public Double outletPressure;
   public Double inletTemperature;
@@ -27,6 +28,7 @@ public class PipeBeggsBrillsResponse extends BaseResponse {
    */
   public PipeBeggsBrillsResponse(PipeBeggsAndBrills pipe) {
     super(pipe);
+    flowSolveReport = pipe.getFlowSolveReport();
     inletPressure = pipe.getInletStream().getPressure("bara");
     outletPressure = pipe.getOutletStream().getPressure("bara");
     inletTemperature = pipe.getInletStream().getTemperature("C");
