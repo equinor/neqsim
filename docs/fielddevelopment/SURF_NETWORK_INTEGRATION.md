@@ -4,12 +4,13 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `1db2650325cf7860f686fb4d8fa7de986b5a915a`.
+The current baseline is `ffde2f43443ae65d57d02497e31fefb71b637555`.
 Source implementation, regression evidence and field qualification are different maturity levels.
 Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
 pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
-The current increment adds terrain-profile aggregation and detached mesh-sensitivity evidence;
-none of these completes independent field qualification.
+The current increment adds typed powered/control-edge builders and representative multi-template,
+daisy-chain, brownfield, injection and large-field acceptance evidence; none of these completes
+independent field qualification.
 
 ## Current functionality and reuse decisions
 
@@ -201,6 +202,38 @@ conservative mass flow, identity/port/service errors, loop diagnostics and repla
 These tests qualify the identity/integration contract; they do not independently
 qualify B&B or two-fluid correlations or field design.
 
+### Powered injection and field-scale acceptance
+
+`FieldNetworkTopology` now creates typed choke, fixed-outlet-pressure pump,
+fixed-differential-pressure pump and compressor edges directly through the existing
+`LoopedPipeNetwork` equations. The stable field edge and canonical hydraulic element
+are created atomically, with validated opening/efficiency/pressure inputs and explicit
+service, direction and endpoint ports. Callers no longer need to create an untyped raw
+edge and then register it. JSON replay preserves the element type and its serializable
+operating definition; externally configured pump/compressor maps and runtime equipment
+still follow the documented rebind contract.
+
+`FieldNetworkScaleAcceptanceTest` adds three synthetic integration cases:
+
+- twelve wells on three daisy-chained templates plus a brownfield satellite tie-in,
+  PLEM, PLET and host riser. Differing but component-compatible source fluids mix at
+  conservative junctions; selected routes use Darcy-Weisbach, Beggs-Brill and two-fluid
+  hydraulics on the same topology. The solve and replay close field mass balance and
+  reproduce the host operating point;
+- a 6 kg/s water-injection pump feeding three 2 kg/s injectors through a 160 bara shared
+  header, plus a CO2-rich 3 kg/s compressor-discharge boundary feeding two 1.5 kg/s gas
+  injectors. The water case checks pump power and the expected hydrostatic pressure gain
+  to deeper wells; the gas case checks conservative shared-header allocation;
+- fifty wells on five templates, retaining a deliberately broad 60 s CI guard. The
+  reference local run completed the solve in about 3.0 s.
+
+These cases qualify canonical composition, conservation, replay and a synthetic runtime
+envelope. They do not qualify the simplified compressor equation or pump/compressor
+maps, CO2 phase behavior across a compression train, injection-well injectivity, field
+data, or independent B&B/two-fluid accuracy. The CO2 case therefore starts at an
+explicit compressor-discharge boundary rather than presenting an unqualified compressor
+train as validated.
+
 ## Live well pressure-rate coupling
 
 `FieldWellNetworkCoupler` binds normal `WellSystem` and `WellFlow` equipment to
@@ -283,11 +316,12 @@ physical limits to obtain a feasible optimizer result.
 
 ## Dependency-ordered continuation
 
-1. Extend qualification to multi-template, daisy-chain, branches/loops and brownfield
-   networks, including representative large-field runtime. Include water, gas and CO2
-   injection with pump/compressor and shared host constraints.
-   Add controlled reservoir-pressure updates without duplicating reservoir ownership.
-2. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
+1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
+   boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
+   controlled reservoir-pressure updates without duplicating reservoir ownership.
+   Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
+2. Map the same geometry/equipment to existing `SubseaProductionSystem` SURF design/cost
+   and `NetworkOptimizer`
    / process optimization, then detailed lifecycle models and reduced-order surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
