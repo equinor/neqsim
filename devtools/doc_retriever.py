@@ -33,6 +33,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timezone
 
 DEVTOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -94,6 +95,12 @@ def load_config(path=None):
         return {}
 
 
+def _fold(text):
+    """Lower-case ASCII fold so 'Åsgard' and 'Asgard' compare equal."""
+    decomposed = unicodedata.normalize("NFKD", str(text))
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch)).lower()
+
+
 def resolve_installation(cfg, name_or_code=None, text=None):
     """Resolve an installation code from a code, a display name, or free text.
 
@@ -113,13 +120,15 @@ def resolve_installation(cfg, name_or_code=None, text=None):
                 return code
             if wanted.lower() == str(name).strip().lower():
                 return code
+            if _fold(wanted) == _fold(str(name).strip()):
+                return code
         return wanted
     if text:
-        lowered = " " + re.sub(r"[_\-]+", " ", text.lower()) + " "
+        lowered = " " + re.sub(r"[_\-]+", " ", _fold(text)) + " "
         spaced = " " + re.sub(r"[_\-]+", " ", text) + " "
         candidates = []
         for code, name in codes.items():
-            label = str(name).strip().lower()
+            label = _fold(str(name).strip())
             if len(label) >= 3 and re.search(
                     r"(?<![a-z0-9])" + re.escape(label) + r"(?![a-z0-9])", lowered):
                 candidates.append((len(label), code))
