@@ -441,7 +441,13 @@ MultiStreamHeatExchanger2(String name)
 | `run()` | Execute the solver |
 | `getOutStream(int index)` | Get outlet stream by index (order of addition) |
 | `getUA()` | Get calculated UA value (W/K) |
-| `getTemperatureApproach()` | Get approach temperature setting |
+| `getTemperatureApproach()` | Get the achieved minimum approach (pinch) of the last solution (°C) |
+| `getSpecifiedTemperatureApproach()` | Get the specified approach temperature (°C) |
+| `getSolverStatus()` | Outcome of the last run: `CONVERGED`, `DEGENERATE`, `INFEASIBLE`, `FALLBACK` or `NOT_RUN` |
+| `getSolverMessage()` | Explanation of the last outcome; empty when converged normally |
+| `isSpecificationMet()` | True for `CONVERGED` and `DEGENERATE` |
+| `getMaximumFeasibleApproach()` | Largest approach the fixed outlets and inlets allow (°C); NaN with fewer than 2 unknowns |
+| `setThrowOnUnmetSpecification(boolean)` | Strict mode: `run()` throws `IllegalStateException` when the approach cannot be met |
 | `getCompositeCurve()` | Get composite curve data for plotting |
 
 ### Solver Configuration
@@ -500,6 +506,33 @@ Always visualize composite curves to verify:
 ---
 
 ## Troubleshooting
+
+### Approach temperature cannot be met with fixed outlets
+
+With energy balance the hot and cold composite curves end at the same load. A fixed cold outlet $T_{c,out}^{fix}$
+therefore limits the warm-end difference, and a fixed hot outlet $T_{h,out}^{fix}$ limits the cold-end difference:
+
+$$
+\Delta T_{min} \le \min\left(T_{h,in}^{max} - T_{c,out}^{fix},\; T_{h,out}^{fix} - T_{c,in}^{min}\right)
+$$
+
+No choice of the unknown outlets can raise the approach above this limit.
+
+- Above the limit the solver reports `INFEASIBLE` and returns an energy-balanced best-effort result.
+- At the limit the pinch is set only by fixed-outlet streams, so the unknown outlets are not unique; the solver reports
+  `DEGENERATE`.
+
+Check the status after `run()`, or enable strict mode to get an exception:
+
+```java
+mshx.setThrowOnUnmetSpecification(true); // optional: throw instead of returning a best-effort result
+mshx.run();
+if (!mshx.isSpecificationMet() || mshx.getSolverStatus() == MultiStreamHeatExchanger2.SolverStatus.DEGENERATE) {
+  logger.warn("{} max feasible approach: {}", mshx.getSolverMessage(), mshx.getMaximumFeasibleApproach());
+}
+```
+
+The status, message and limit are also included in `toJson()`.
 
 ### "Failed to converge after maxIterations"
 

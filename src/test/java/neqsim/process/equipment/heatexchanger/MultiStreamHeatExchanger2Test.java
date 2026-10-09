@@ -1,8 +1,10 @@
 package neqsim.process.equipment.heatexchanger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -527,5 +529,107 @@ public class MultiStreamHeatExchanger2Test {
 
     /* 4. (Optional) get composite-curve data for plotting */
     heatEx.getCompositeCurve();
+  }
+
+  private static final double DPC_HOT_INLET_C = 24.46;
+  private static final double DPC_FIXED_LIQUID_OUTLET_C = 18.02;
+
+  /**
+   * Builds an expander-plant recuperator: rich gas (hot) and cold-separator gas (cold) unknown, with the two reflux
+   * liquids heated to a fixed outlet temperature. The approach can then not exceed hot inlet minus fixed liquid outlet.
+   *
+   * @param approach specified approach temperature in Celsius degrees
+   * @return the configured, not yet run, exchanger
+   */
+  private MultiStreamHeatExchanger2 buildDewPointRecuperator(double approach) {
+    neqsim.thermo.system.SystemInterface rich = new neqsim.thermo.system.SystemSrkEos(273.15 + DPC_HOT_INLET_C, 58.2);
+    rich.addComponent("nitrogen", 0.6);
+    rich.addComponent("CO2", 1.5);
+    rich.addComponent("methane", 78.0);
+    rich.addComponent("ethane", 9.0);
+    rich.addComponent("propane", 5.5);
+    rich.addComponent("i-butane", 1.0);
+    rich.addComponent("n-butane", 1.6);
+    rich.addComponent("i-pentane", 0.6);
+    rich.addComponent("n-pentane", 0.6);
+    rich.addComponent("n-hexane", 0.6);
+    rich.addComponent("n-heptane", 0.5);
+    rich.addComponent("n-octane", 0.3);
+    rich.addComponent("n-nonane", 0.2);
+    rich.setMixingRule("classic");
+
+    Stream hot = new Stream("rich gas", rich.clone());
+    hot.setFlowRate(450000.0, "kg/hr");
+    hot.run();
+
+    Stream chilled = new Stream("chilled rich gas", rich.clone());
+    chilled.setTemperature(-15.0, "C");
+    chilled.setFlowRate(450000.0, "kg/hr");
+    chilled.run();
+    neqsim.process.equipment.separator.Separator scrubber = new neqsim.process.equipment.separator.Separator("scrubber",
+        chilled);
+    scrubber.run();
+
+    Stream expanded = new Stream("expanded gas", scrubber.getGasOutStream().getFluid().clone());
+    expanded.setTemperature(-28.0, "C");
+    expanded.setPressure(44.7, "bara");
+    expanded.setFlowRate(scrubber.getGasOutStream().getFlowRate("kg/hr"), "kg/hr");
+    expanded.run();
+    neqsim.process.equipment.separator.Separator coldSeparator = new neqsim.process.equipment.separator.Separator(
+        "cold separator", expanded);
+    coldSeparator.run();
+
+    MultiStreamHeatExchanger2 exchanger = new MultiStreamHeatExchanger2("recuperator");
+    exchanger.addInStreamMSHE(hot, "hot", null);
+    exchanger.addInStreamMSHE(coldSeparator.getGasOutStream(), "cold", null);
+    exchanger.addInStreamMSHE(scrubber.getLiquidOutStream(), "cold", DPC_FIXED_LIQUID_OUTLET_C);
+    exchanger.addInStreamMSHE(coldSeparator.getLiquidOutStream(), "cold", DPC_FIXED_LIQUID_OUTLET_C);
+    exchanger.setTemperatureApproach(approach);
+    return exchanger;
+  }
+
+  @Test
+  void testSolverStatusConvergedBelowFeasibleApproachLimit() {
+    MultiStreamHeatExchanger2 exchanger = buildDewPointRecuperator(6.0);
+    exchanger.run();
+
+    assertEquals(MultiStreamHeatExchanger2.SolverStatus.CONVERGED, exchanger.getSolverStatus());
+    assertTrue(exchanger.isSpecificationMet());
+    assertEquals(DPC_HOT_INLET_C - DPC_FIXED_LIQUID_OUTLET_C, exchanger.getMaximumFeasibleApproach(), 1e-6);
+    assertEquals(6.0, exchanger.getSpecifiedTemperatureApproach(), 1e-12);
+    assertEquals(6.0, exchanger.getTemperatureApproach(), 0.01);
+    assertEquals(DPC_HOT_INLET_C - 6.0, exchanger.getOutTemperature(1), 0.01);
+  }
+
+  @Test
+  void testSolverStatusDegenerateAtFeasibleApproachLimit() {
+    MultiStreamHeatExchanger2 exchanger = buildDewPointRecuperator(DPC_HOT_INLET_C - DPC_FIXED_LIQUID_OUTLET_C);
+    exchanger.run();
+
+    assertEquals(MultiStreamHeatExchanger2.SolverStatus.DEGENERATE, exchanger.getSolverStatus());
+    assertTrue(exchanger.isSpecificationMet());
+    assertTrue(exchanger.getSolverMessage().contains("not unique"));
+  }
+
+  @Test
+  void testSolverStatusInfeasibleAboveFeasibleApproachLimit() {
+    MultiStreamHeatExchanger2 exchanger = buildDewPointRecuperator(7.0);
+    exchanger.run();
+
+    assertEquals(MultiStreamHeatExchanger2.SolverStatus.INFEASIBLE, exchanger.getSolverStatus());
+    assertFalse(exchanger.isSpecificationMet());
+    assertTrue(exchanger.getSolverMessage().contains("Maximum feasible approach is 6.440 C"));
+    assertEquals(0.0, exchanger.energyDiff(), 1e-2);
+    assertTrue(exchanger.toJson().contains("INFEASIBLE"));
+  }
+
+  @Test
+  void testStrictModeThrowsWhenApproachCannotBeMet() {
+    MultiStreamHeatExchanger2 exchanger = buildDewPointRecuperator(7.0);
+    exchanger.setThrowOnUnmetSpecification(true);
+
+    IllegalStateException ex = assertThrows(IllegalStateException.class, exchanger::run);
+    assertTrue(ex.getMessage().contains("cannot be met"));
+    assertEquals(MultiStreamHeatExchanger2.SolverStatus.INFEASIBLE, exchanger.getSolverStatus());
   }
 }
