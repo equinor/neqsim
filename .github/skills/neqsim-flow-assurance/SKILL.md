@@ -187,6 +187,34 @@ for (double wt : megWtPct) {
 }
 ```
 
+### MEG/Water Film Conditioned by Dry Gas (pipeline drying after glycol swabbing)
+
+Question pattern: "what MEG:H2O ratio does a residual film reach under dry export gas, and why is
+the gas above the dew-point spec?" Worked task: `2026-09-29_steady_state_megh2o_ratio_during_dry_gas_drying_of_a_meg`.
+
+- **Direction:** a 99 wt% MEG film is *drier* than the plateau (about 90 wt% at 6 C, 140 bara), so the
+  gas is the wetter side and the film **absorbs** water. It "dries" only if it starts wetter than the plateau.
+- **Equilibrium curve:** two-phase `SystemSrkCPAstatoil` TPflashes over an MEG sweep give gas water *and MEG*
+  content versus film composition (gas composition depends on the liquid composition, T and P only).
+  Report film composition on a **gas-free** basis, MEG/(MEG+water); dissolved CO2/CH4 is ~0.8 wt%.
+  MEG is not strictly non-volatile: about 5 ppm wt in the gas at 140 bara.
+- **Dew-point spec fixes only the water mole fraction** y_in, not the pipe condition. Hand chain: water
+  fugacity continuity, `a_w = y_in * phiV_w(T,P) * P / f0_w(T,P)`, with `f0_w` = IAPWS vapour pressure x
+  Poynting; `a_w` from the CPA liquid fugacity coefficient divided by the pure-water coefficient. Use binary
+  (gas-free) mole fractions when fitting `ln gamma_w` or the fit mis-predicts at high MEG.
+- **Plateau offset by mass balance:** with a stationary film the gas leaves carrying water and MEG in the
+  film's own ratio, so `(y_out - y_in)/y_in = r * y_MEG / y_in` (about 1.7 %), independent of `K_G` at large NTU.
+  The film inlet zone is stripped of MEG first (a film-free zone grows at ~200 m/day in a 0.4 m, 60 kg/s example).
+- **Flash per time step is backward Euler:** unconditionally stable, plateau independent of step size; an
+  explicit coding is stable only below `2 / (d y*_H2O / d r)` kg gas per kg film MEG per step.
+- **Dew point is logarithmic** (~6 % in water content per K at these conditions) and, for CPA, nearly
+  pressure independent at 70-140 bara: reading the same gas as a dew point at pipe pressure adds ~0.9 K.
+- **Basis traps:** CPA has no ice phase (the -18 C spec is a supercooled-liquid dew point; frost reading is
+  ~16 % lower in y_in); `SystemGERGwaterEos.waterDewPointTemperatureFlash()` is unreliable below 0 C
+  (2.5x below CPA at -18 C/70 bara, below ideal Psat/P at -18 C/140 bara). Carry the spread as a sensitivity.
+- **Numerics:** for N >= 100 film cells use `solve_ivp(method="BDF")`; LSODA stalls on the film-exhaustion
+  switch. Regularise `r = W/(M + delta)` so a film-free cell cannot return a spurious composition.
+
 ## 2. Wax Analysis
 
 ### Wax Appearance Temperature (WAT)

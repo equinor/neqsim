@@ -241,6 +241,9 @@ shown explicitly.
 | Ignoring location                                 | `setLocationByRegion("Norway")` ≈ 1.3× US Gulf Coast for offshore   |
 | Adding a new mechanical design but leaving the base estimator | Assign the unit-specific `costEstimate` in the mechanical design constructor |
 | Passing shell weight to a volume correlation       | Use `calc*ByVolume(volume_m3)` only with vessel volume               |
+| `SURFCostEstimator` for a tie-back or infill template | It adds a default 80 km x 24 in export pipeline (about 340 MUSD) and a 10 km x 14 in infield flowline; call `setExportPipelineLengthKm(0.0)` and set the infield length/diameter, otherwise the SURF total is 2-3 times too high |
+| Expecting PiP, SS-clad or CRA flowline items       | `SURFCostEstimator` prices rigid carbon steel or flexible only; apply an explicit uplift or unit rate (MUSD/km) and state it as an assumption |
+| `WellCostEstimator` well-type strings              | Use `OIL_PRODUCER`, `WATER_INJECTOR`, `GAS_INJECTOR`; rig `SEMI_SUBMERSIBLE`; completion `ICD`, `AICD`, `OPEN_HOLE`, `MULTI_ZONE`; a default rig day rate applies unless overridden |
 
 ## Validation Checklist
 
