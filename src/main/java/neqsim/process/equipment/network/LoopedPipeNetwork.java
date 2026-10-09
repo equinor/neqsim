@@ -9119,7 +9119,19 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     fluid.initProperties();
 
     // Build ordered lists for matrix indexing
-    List<String> pipeList = new ArrayList<>(pipeNames);
+    List<String> pipeList = new ArrayList<String>();
+    for (String pipeName : pipeNames) {
+      NetworkPipe pipe = pipes.get(pipeName);
+      if (pipe.getAvailability() == 0.0) {
+        // A zero availability is an exact closed line-up, not an extremely high resistance. Keeping
+        // a closed edge in the Newton system couples otherwise independent fixed-pressure boundaries
+        // through a badly conditioned derivative and can prevent a valid alternative route from
+        // converging. Fractional derating remains in the hydraulic equations.
+        pipe.setFlowRate(0.0);
+      } else {
+        pipeList.add(pipeName);
+      }
+    }
     List<String> freeNodeList = new ArrayList<>();
     for (NetworkNode node : nodes.values()) {
       if (!node.isPressureFixed()) {
