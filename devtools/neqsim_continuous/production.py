@@ -16,6 +16,7 @@ Stages registered here (all optional, all driven by ``goal.yaml`` and ``cycle_pl
 The optimiser itself stays a task-local ``script:`` stage that returns ``proposals``.
 """
 
+import math
 import os
 
 from .contracts import StageResult, register
@@ -27,16 +28,33 @@ LOWER = (">=", ">")
 
 
 def _number(value):
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except OverflowError:
+        return False
+
+
+OPTIMIZER_EVIDENCE = (
+    ("simulation_converged", "simulation_not_converged"),
+    ("candidate_feasible", "infeasible_candidate"),
+    ("candidate_finite", "non_finite_candidate"),
+    ("constraint_evidence_complete", "constraint_evidence_incomplete"),
+    ("state_restore_complete", "state_restore_incomplete"),
+    ("accepted_point_replayed", "accepted_point_not_replayed"),
+    ("actions_complete", "partial_action_application"),
+)
 
 
 def effective_limit(constraint):
     """Limit tightened by the safety margin, or None when the limit is not set."""
     limit = constraint.get("limit")
-    if not _number(limit):
+    margin = constraint.get("margin", 0.0)
+    op = constraint.get("op", "<=")
+    if not _number(limit) or not _number(margin) or op not in UPPER + LOWER:
         return None
-    margin = float(constraint.get("margin", 0.0) or 0.0)
-    return limit - margin if constraint.get("op", "<=") in UPPER else limit + margin
+    return limit - margin if op in UPPER else limit + margin
 
 
 def slack(constraint, value):
@@ -83,7 +101,7 @@ def demonstrated_limit(values, quantile=0.99, design=None, min_samples=48):
     ``values`` are historian samples of the limiting quantity (power, speed, K-factor, flow).
     With fewer than ``min_samples`` finite samples the design limit is used and the basis says so.
     """
-    clean = sorted(float(v) for v in values if _number(v) and v == v)
+    clean = sorted(float(v) for v in values if _number(v))
     result = {"design": design, "samples": len(clean), "quantile": quantile}
     if len(clean) < min_samples:
         result.update({"limit": design, "demonstrated": None, "basis": "design (too few samples)"})
@@ -154,21 +172,68 @@ def _gain_value(proposal):
     return gain.get("value") if isinstance(gain, dict) else gain
 
 
+def _optimizer_evidence_reasons(ctx, proposal):
+    """Return fail-closed reasons for incomplete or stale optimizer validation evidence."""
+    evidence = proposal.get("optimizer_evidence")
+    if not isinstance(evidence, dict):
+        return ["missing_optimizer_evidence"]
+    reasons = []
+    if evidence.get("cycle_id") != ctx.cycle_id:
+        reasons.append("stale_candidate")
+    for field, reason in OPTIMIZER_EVIDENCE:
+        if evidence.get(field) is not True:
+            reasons.append(reason)
+    evaluation_count = evidence.get("evaluation_count")
+    if (not _number(evaluation_count) or evaluation_count < 1
+            or float(evaluation_count) != int(evaluation_count)):
+        reasons.append("invalid_evaluation_count")
+    runtime_seconds = evidence.get("runtime_seconds")
+    if not _number(runtime_seconds) or runtime_seconds < 0:
+        reasons.append("invalid_runtime_seconds")
+    return reasons
+
+
+def _non_finite_fields(values):
+    """Return sorted keys whose proposed numeric values are absent or non-finite."""
+    if not isinstance(values, dict):
+        return ["<mapping>"]
+    return sorted(str(key) for key, value in values.items() if not _number(value))
+
+
 def guard(ctx, spec):
     """Keep only proposals that are safe to show; record why the others were withheld."""
     settings = ctx.plan.get("production", {}) or {}
-    min_gain = float(settings.get("min_gain", 0.0) or 0.0)
+    configured_min_gain = settings.get("min_gain", 0.0)
+    invalid_min_gain = not _number(configured_min_gain)
+    min_gain = float(configured_min_gain) if not invalid_min_gain else 0.0
     hard = [c for c in (ctx.goal.get("constraints") or [])
             if isinstance(c, dict) and c.get("kpi") and c.get("hard", True) and effective_limit(c) is not None]
     accepted, withheld = [], []
     for proposal in ctx.proposals:
         reasons = list(ctx.guard_blocks)
-        if not proposal.get("setpoints"):
+        if invalid_min_gain:
+            reasons.append("invalid_min_gain")
+        setpoints = proposal.get("setpoints")
+        if not isinstance(setpoints, dict) or not setpoints:
             reasons.append("no_setpoints")
+        else:
+            reasons.extend("non_finite_setpoint:{}".format(name)
+                           for name in _non_finite_fields(setpoints))
         gain = _gain_value(proposal)
         if not _number(gain) or gain <= min_gain:
             reasons.append("gain_not_above_{}".format(min_gain))
-        predicted = proposal.get("predicted") or {}
+        predicted = proposal.get("predicted")
+        if not isinstance(predicted, dict):
+            predicted = {}
+        reasons.extend("non_finite_prediction:{}".format(name)
+                       for name in _non_finite_fields(predicted))
+        if "baseline_value" in proposal and not _number(proposal.get("baseline_value")):
+            reasons.append("non_finite_baseline")
+        elif "baseline_value" not in proposal:
+            reasons.append("missing_baseline")
+        if not isinstance(proposal.get("objective_kpi"), str) or not proposal.get("objective_kpi"):
+            reasons.append("missing_objective_kpi")
+        reasons.extend(_optimizer_evidence_reasons(ctx, proposal))
         for constraint in hard:
             name = constraint.get("name") or constraint["kpi"]
             room = slack(constraint, predicted.get(constraint["kpi"]))
