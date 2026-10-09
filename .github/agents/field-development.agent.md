@@ -289,6 +289,7 @@ This agent orchestrates other agents when needed:
 | Safety analysis | `@safety-depressuring` | Blowdown, PSV sizing, fire case |
 | Gas quality / specs | `@gas-quality` | Export gas spec compliance, heating value |
 | Gap analysis | `@capability-scout` | Check if NeqSim can handle a specific capability |
+| Capacity increase on an existing host | `@capacity-increase-screening` | Ideas across wells, subsea and topside ranked on scope, cost, emissions, HSE and value; host ullage for tie-ins |
 | NCS transport-system context | `ncs-value-chain-agent` (community) | The tie-back's gas/oil shares a trunkline, plant or terminal with other fields: get ullage, shadow price and outage exposure first. Skills `neqsim-ncs-infrastructure-network` (routes, `TiebackAnalyzer` against real hosts, `LoopedPipeNetwork` path check) and `neqsim-ncs-value-chain-optimization` (shelf-wide LP, `DebottleneckingAdvisor` hand-off) |
 
 When delegating, pass the relevant context (fluid composition, operating
