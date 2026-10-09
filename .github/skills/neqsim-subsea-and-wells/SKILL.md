@@ -625,6 +625,20 @@ Map<String, Double> allocation = optimizer.optimize();
 
 ---
 
+## Production choke with a measured opening curve
+
+`ThrottlingValve` takes a full-open `setCv(cv, "US")` (US Cv = 1.156 x Kv, the gal/min/psi of historian choke data) and an opening 0-100. The opening curve is a `ValveCharacteristic`; use `TabulatedValveCharacteristic` for a measured or vendor curve instead of linear or equal percentage:
+
+```java
+TabulatedValveCharacteristic curve = TabulatedValveCharacteristic.fromMeasurements(openingPercent, cv); // sorts, averages repeats, makes it monotone
+valve.getMechanicalDesign().setValveCharacterizationMethod(curve);
+valve.setCv(cvAtLastPoint, "US");   // full-open value = Cv at the last curve point
+```
+
+The curve is monotone (no overshoot, flat dead band kept), so `openingForFlowFraction` has one answer. The Kv path and the multiphase choke path (`setValveSizingStandard("Sachdeva")`, Gilbert and others) both follow the same curve; the choke path scales the open area (diameter times the square root of the curve factor), so with a linear characteristic nothing changes. A 202-point Johan Castberg choke curve (dead band 14.4 %, Cv 205 at 100 %) is reproduced within 1 % (p95 0.1 %). `setFoulingFraction` can only lower the flow; erosion (a choke passing more than its curve) cannot be represented.
+
+IOC choke data (`enterprise-ioc-bottleneck-utilisation`, `choke.py`): the curve is on the choke surveillance model; its measured-looking `Choke Cv` series equals the curve at the measured opening (ratio 1.000 on 12 wells), so it carries no fouling information. Use the daily PDM choke performance models (Cv from measured flow and dP, ELF/Sachdeva/FlowCurve) for calibration.
+
 ## Design Standards Reference
 
 | Domain | Standard | Used For |

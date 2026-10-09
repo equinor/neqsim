@@ -454,6 +454,127 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Represents a pipe in the network.
    */
   public static class NetworkPipe {
+    /**
+     * Immutable normalized profile from the most recent accepted edge hydraulic evaluation.
+     *
+     * @author Even Solbraa
+     * @version 1.0
+     */
+    public static final class HydraulicProfile {
+      private final double[] positionM;
+      private final double[] cellLengthM;
+      private final double[] pressurePa;
+      private final double[] temperatureK;
+      private final double[] liquidHoldup;
+      private final double[] gasSuperficialVelocityMs;
+      private final double[] liquidSuperficialVelocityMs;
+
+      /**
+       * Create normalized edge profile evidence.
+       *
+       * @param positionM cell-centre distance from the physical inlet in m
+       * @param cellLengthM represented cell length in m
+       * @param pressurePa pressure in Pa
+       * @param temperatureK temperature in K
+       * @param liquidHoldup liquid holdup fraction
+       * @param gasSuperficialVelocityMs superficial gas velocity in m/s
+       * @param liquidSuperficialVelocityMs superficial liquid velocity in m/s
+       */
+      private HydraulicProfile(double[] positionM, double[] cellLengthM, double[] pressurePa, double[] temperatureK,
+          double[] liquidHoldup, double[] gasSuperficialVelocityMs, double[] liquidSuperficialVelocityMs) {
+        int count = positionM.length;
+        if (count == 0 || cellLengthM.length != count || pressurePa.length != count || temperatureK.length != count
+            || liquidHoldup.length != count || gasSuperficialVelocityMs.length != count
+            || liquidSuperficialVelocityMs.length != count) {
+          throw new IllegalArgumentException("Hydraulic profile arrays must have one common non-zero length");
+        }
+        double previousPosition = -1.0;
+        for (int index = 0; index < count; index++) {
+          if (!Double.isFinite(positionM[index]) || positionM[index] <= previousPosition
+              || !Double.isFinite(cellLengthM[index]) || cellLengthM[index] <= 0.0
+              || !Double.isFinite(pressurePa[index]) || pressurePa[index] <= 0.0
+              || !Double.isFinite(temperatureK[index]) || temperatureK[index] <= 0.0
+              || !Double.isFinite(liquidHoldup[index]) || liquidHoldup[index] < 0.0 || liquidHoldup[index] > 1.0
+              || !Double.isFinite(gasSuperficialVelocityMs[index])
+              || !Double.isFinite(liquidSuperficialVelocityMs[index])) {
+            throw new IllegalArgumentException(
+                "Hydraulic profile contains invalid physical evidence at index " + index);
+          }
+          previousPosition = positionM[index];
+        }
+        this.positionM = positionM.clone();
+        this.cellLengthM = cellLengthM.clone();
+        this.pressurePa = pressurePa.clone();
+        this.temperatureK = temperatureK.clone();
+        this.liquidHoldup = liquidHoldup.clone();
+        this.gasSuperficialVelocityMs = gasSuperficialVelocityMs.clone();
+        this.liquidSuperficialVelocityMs = liquidSuperficialVelocityMs.clone();
+      }
+
+      /**
+       * Get distance from the physical inlet.
+       *
+       * @return positions in m
+       */
+      public double[] getPositionM() {
+        return positionM.clone();
+      }
+
+      /**
+       * Get the route length represented by each sample.
+       *
+       * @return cell lengths in m
+       */
+      public double[] getCellLengthM() {
+        return cellLengthM.clone();
+      }
+
+      /**
+       * Get pressure profile.
+       *
+       * @return pressure in Pa
+       */
+      public double[] getPressurePa() {
+        return pressurePa.clone();
+      }
+
+      /**
+       * Get temperature profile.
+       *
+       * @return temperature in K
+       */
+      public double[] getTemperatureK() {
+        return temperatureK.clone();
+      }
+
+      /**
+       * Get liquid-holdup profile.
+       *
+       * @return liquid holdup fraction
+       */
+      public double[] getLiquidHoldup() {
+        return liquidHoldup.clone();
+      }
+
+      /**
+       * Get superficial gas-velocity profile.
+       *
+       * @return superficial gas velocity in m/s
+       */
+      public double[] getGasSuperficialVelocityMs() {
+        return gasSuperficialVelocityMs.clone();
+      }
+
+      /**
+       * Get superficial liquid-velocity profile.
+       *
+       * @return superficial liquid velocity in m/s
+       */
+      public double[] getLiquidSuperficialVelocityMs() {
+        return liquidSuperficialVelocityMs.clone();
+      }
+    }
+
     private final String name;
     private final String fromNode;
     private final String toNode;
@@ -481,6 +602,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
 
     /** Last calculated two-fluid state, rebuilt for each trial boundary/rate. */
     private transient TwoFluidPipe twoFluidModel;
+
+    /** Normalized profile from the last accepted Beggs-Brill or two-fluid evaluation. */
+    private transient HydraulicProfile hydraulicProfile;
 
     /** Explicit evidence for the last edge hydraulic evaluation. */
     private String hydraulicModelStatus = "NOT_RUN";
@@ -764,6 +888,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       hydraulicModelType = type;
       bbModel = null;
       twoFluidModel = null;
+      hydraulicProfile = null;
       inletFluid = null;
       outletFluid = null;
       hydraulicModelStatus = "NOT_RUN";
@@ -785,6 +910,21 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
      */
     public TwoFluidPipe getTwoFluidModel() {
       return twoFluidModel;
+    }
+
+    /**
+     * Get normalized profile evidence from the latest accepted detailed hydraulic evaluation.
+     *
+     * <p>
+     * Positions are cell-centre distances from the physical inlet, including for reverse flow. Beggs-Brill and
+     * two-fluid output is normalized to Pa, K and m/s. Darcy-Weisbach and failed or fallback evaluations do not expose
+     * a detailed profile.
+     * </p>
+     *
+     * @return immutable profile, or null when no accepted detailed profile is available
+     */
+    public HydraulicProfile getHydraulicProfile() {
+      return hydraulicProfile;
     }
 
     /**
@@ -4445,6 +4585,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
   private double calculatePipeHydraulicHeadLoss(NetworkPipe pipe, SystemInterface fluid) {
     PipeModelType model = getEffectiveHydraulicModelType(pipe.getName());
     pipe.hydraulicModelStatus = "NOT_RUN";
+    pipe.hydraulicProfile = null;
     switch (model) {
     case TWO_FLUID:
       return calculateTwoFluidHeadLoss(pipe, fluid);
@@ -4526,6 +4667,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     pipe.setLiquidHoldup(model.getAverageLiquidHoldup());
     pipe.setVelocity(model.getMaxMixtureVelocity());
     pipe.setFlowRegime("TwoFluid-" + model.getDominantFlowRegime());
+    pipe.hydraulicProfile = createTwoFluidHydraulicProfile(model);
     pipe.hydraulicModelStatus = "TWO_FLUID_CONVERGED";
     double efficiency = pipe.getPipeEfficiency();
     if (efficiency > 0.01 && efficiency < 1.0) {
@@ -5029,6 +5171,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       }
       configureBeggsBrillHeatTransfer(bbPipe, pipe, pipe.getLength() / 2.0);
       bbPipe.run();
+      pipe.hydraulicProfile = createBeggsBrillHydraulicProfile(Collections.singletonList(bbPipe));
 
       double inletPPa = inletStream.getPressure("Pa");
       double outletP = bbPipe.getOutletStream().getPressure("Pa");
@@ -5063,6 +5206,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @return signed pressure loss in Pa
    */
   private double calculateProfiledBeggsBrillHeadLoss(NetworkPipe pipe, SystemInterface fluid) {
+    pipe.bbModel = null;
     boolean forward = pipe.getFlowRate() > 0.0;
     String upstreamNodeName = forward ? pipe.getFromNode() : pipe.getToNode();
     NetworkNode upstreamNode = nodes.get(upstreamNodeName);
@@ -5070,11 +5214,15 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     currentFluid.setPressure(upstreamNode.getPressure() / 1.0e5, "bara");
     SystemInterface inletFluid = currentFluid.clone();
     List<Double> breakpoints = getRouteBreakpoints(pipe);
+    List<PipeBeggsAndBrills> solvedSegments = new ArrayList<PipeBeggsAndBrills>();
     double totalPressureLossPa = 0.0;
     double flowKgs = Math.abs(pipe.getFlowRate());
 
     try {
       int segmentCount = breakpoints.size() - 1;
+      int requestedIncrements = Math.max(segmentCount, pipe.getMultiphaseSegments());
+      int baseIncrements = requestedIncrements / segmentCount;
+      int additionalIncrements = requestedIncrements % segmentCount;
       for (int traversalIndex = 0; traversalIndex < segmentCount; traversalIndex++) {
         int startIndex = forward ? traversalIndex : segmentCount - traversalIndex;
         int endIndex = forward ? traversalIndex + 1 : segmentCount - traversalIndex - 1;
@@ -5094,13 +5242,14 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         segmentPipe.setPipeWallRoughness(pipe.getRoughness());
         segmentPipe.setLength(segmentLength);
         segmentPipe.setDiameter(pipe.getDiameter());
-        segmentPipe.setNumberOfIncrements(Math.max(1, pipe.getMultiphaseSegments() / segmentCount));
+        segmentPipe.setNumberOfIncrements(baseIncrements + (traversalIndex < additionalIncrements ? 1 : 0));
         if (segmentLength > 0.0) {
           double sine = Math.max(-1.0, Math.min(1.0, elevationChange / segmentLength));
           segmentPipe.setAngle(Math.toDegrees(Math.asin(sine)));
         }
         configureBeggsBrillHeatTransfer(segmentPipe, pipe, midpoint);
         segmentPipe.run();
+        solvedSegments.add(segmentPipe);
 
         totalPressureLossPa += segmentInlet.getPressure("Pa") - segmentPipe.getOutletStream().getPressure("Pa");
         currentFluid = segmentPipe.getOutletStream().getFluid().clone();
@@ -5113,6 +5262,7 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pipe.setThermodynamicState(inletFluid, currentFluid, forward);
       pipe.setFlowRegime("BB-Profiled");
       pipe.setOutletTemperature(currentFluid.getTemperature());
+      pipe.hydraulicProfile = createBeggsBrillHydraulicProfile(solvedSegments);
       return Math.signum(pipe.getFlowRate()) * totalPressureLossPa;
     } catch (Exception ex) {
       logger.warn("Profiled Beggs-Brill calculation failed for {}, falling back to unprofiled Darcy-Weisbach: {}",
@@ -5122,6 +5272,163 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       updateGenericEdgeThermodynamicState(pipe, fluid);
       return fallbackHeadLoss;
     }
+  }
+
+  /**
+   * Aggregate one or more sequential Beggs-Brill calculations into a normalized physical-inlet profile.
+   *
+   * @param segments solved route segments in physical flow order
+   * @return immutable normalized profile
+   */
+  private NetworkPipe.HydraulicProfile createBeggsBrillHydraulicProfile(List<PipeBeggsAndBrills> segments) {
+    List<Double> positions = new ArrayList<Double>();
+    List<Double> cellLengths = new ArrayList<Double>();
+    List<Double> pressures = new ArrayList<Double>();
+    List<Double> temperatures = new ArrayList<Double>();
+    List<Double> holdups = new ArrayList<Double>();
+    List<Double> gasVelocities = new ArrayList<Double>();
+    List<Double> liquidVelocities = new ArrayList<Double>();
+    double routeOffsetM = 0.0;
+
+    for (int segmentIndex = 0; segmentIndex < segments.size(); segmentIndex++) {
+      PipeBeggsAndBrills segment = segments.get(segmentIndex);
+      List<Double> localPositions = segment.getLengthProfile();
+      double[] pressureBar = segment.getPressureProfile();
+      double[] temperatureK = segment.getTemperatureProfile();
+      double[] liquidHoldup = segment.getLiquidHoldupProfile();
+      List<Double> gasVelocity = segment.getGasSuperficialVelocityProfile();
+      List<Double> liquidVelocity = segment.getLiquidSuperficialVelocityProfile();
+      int count = pressureBar.length;
+      if (localPositions.size() != count) {
+        throw new IllegalStateException("Beggs-Brill route positions and pressures have different lengths");
+      }
+      for (int index = 1; index < count; index++) {
+        double start = localPositions.get(index - 1);
+        double end = localPositions.get(index);
+        positions.add(routeOffsetM + (start + end) / 2.0);
+        cellLengths.add(end - start);
+        pressures.add(0.5 * (pressureBar[index - 1] + pressureBar[index]) * 1.0e5);
+        temperatures.add(0.5 * (profileValue(temperatureK, index - 1, count, "temperature")
+            + profileValue(temperatureK, index, count, "temperature")));
+        holdups.add(0.5 * (profileValue(liquidHoldup, index - 1, count, "liquid holdup")
+            + profileValue(liquidHoldup, index, count, "liquid holdup")));
+        gasVelocities.add(0.5 * (profileValue(gasVelocity, index - 1, count, "gas superficial velocity")
+            + profileValue(gasVelocity, index, count, "gas superficial velocity")));
+        liquidVelocities.add(0.5 * (profileValue(liquidVelocity, index - 1, count, "liquid superficial velocity")
+            + profileValue(liquidVelocity, index, count, "liquid superficial velocity")));
+      }
+      routeOffsetM += localPositions.get(localPositions.size() - 1);
+    }
+
+    return new NetworkPipe.HydraulicProfile(toPrimitive(positions), toPrimitive(cellLengths), toPrimitive(pressures),
+        toPrimitive(temperatures), toPrimitive(holdups), toPrimitive(gasVelocities), toPrimitive(liquidVelocities));
+  }
+
+  /**
+   * Normalize an accepted two-fluid calculation to the common edge profile contract.
+   *
+   * @param model accepted two-fluid calculation
+   * @return immutable normalized profile
+   */
+  private NetworkPipe.HydraulicProfile createTwoFluidHydraulicProfile(TwoFluidPipe model) {
+    double[] position = model.getPositionProfile();
+    double[] cellLength = model.getSectionLengths();
+    if (cellLength == null) {
+      cellLength = new double[position.length];
+      for (int index = 0; index < position.length; index++) {
+        cellLength[index] = model.getLength() / position.length;
+      }
+    }
+    double[] pressure = matchProfileLength(model.getPressureProfile(), position.length, "pressure");
+    double[] temperature = matchProfileLength(model.getTemperatureProfile(), position.length, "temperature");
+    double[] holdup = matchProfileLength(model.getLiquidHoldupProfile(), position.length, "liquid holdup");
+    double[] gasVelocity = matchProfileLength(model.getGasVelocityProfile(), position.length, "gas velocity");
+    double[] liquidVelocity = matchProfileLength(model.getLiquidVelocityProfile(), position.length, "liquid velocity");
+    double[] gasSuperficial = new double[position.length];
+    double[] liquidSuperficial = new double[position.length];
+    for (int index = 0; index < position.length; index++) {
+      gasSuperficial[index] = gasVelocity[index] * (1.0 - holdup[index]);
+      liquidSuperficial[index] = liquidVelocity[index] * holdup[index];
+    }
+    return new NetworkPipe.HydraulicProfile(position, cellLength, pressure, temperature, holdup, gasSuperficial,
+        liquidSuperficial);
+  }
+
+  /**
+   * Read one scalar from a primitive Beggs-Brill profile.
+   *
+   * @param values profile values
+   * @param index requested location
+   * @param expectedLength common location count
+   * @param name profile name for diagnostics
+   * @return selected or repeated scalar
+   */
+  private double profileValue(double[] values, int index, int expectedLength, String name) {
+    if (values.length == 1) {
+      return values[0];
+    }
+    if (values.length != expectedLength) {
+      throw new IllegalStateException(
+          "Beggs-Brill " + name + " profile has " + values.length + " values; expected one or " + expectedLength);
+    }
+    return values[index];
+  }
+
+  /**
+   * Read one scalar from a boxed Beggs-Brill profile.
+   *
+   * @param values profile values
+   * @param index requested location
+   * @param expectedLength common location count
+   * @param name profile name for diagnostics
+   * @return selected or repeated scalar
+   */
+  private double profileValue(List<Double> values, int index, int expectedLength, String name) {
+    if (values.size() == 1) {
+      return values.get(0);
+    }
+    if (values.size() != expectedLength) {
+      throw new IllegalStateException(
+          "Beggs-Brill " + name + " profile has " + values.size() + " values; expected one or " + expectedLength);
+    }
+    return values.get(index);
+  }
+
+  /**
+   * Expand a singleton profile or verify a section-aligned profile.
+   *
+   * @param values source values
+   * @param expectedLength section count
+   * @param name profile name for diagnostics
+   * @return profile with the expected length
+   */
+  private double[] matchProfileLength(double[] values, int expectedLength, String name) {
+    if (values.length == expectedLength) {
+      return values;
+    }
+    if (values.length == 1 && expectedLength > 0) {
+      double[] expanded = new double[expectedLength];
+      for (int index = 0; index < expectedLength; index++) {
+        expanded[index] = values[0];
+      }
+      return expanded;
+    }
+    throw new IllegalStateException(
+        "Two-fluid " + name + " profile has " + values.length + " values; expected " + expectedLength);
+  }
+
+  /**
+   * Convert boxed profile values to a primitive array.
+   *
+   * @param values boxed values
+   * @return primitive values
+   */
+  private double[] toPrimitive(List<Double> values) {
+    double[] result = new double[values.size()];
+    for (int index = 0; index < values.size(); index++) {
+      result[index] = values.get(index);
+    }
+    return result;
   }
 
   /**

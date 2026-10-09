@@ -22,11 +22,11 @@ Use this skill when the question is "which ideas lift or accelerate production o
 
 | Domain | Idea | Constraint it relieves | How to model it | Main risk |
 |---|---|---|---|---|
-| Wells | AICD, AICV, ICD, DAR-type autonomous or adjustable completions | Water and gas handling, liquid rate | Multiplier on produced water and gas per barrel of oil at unchanged oil; extra drawdown through the well deliverability curve (`WellDeliverabilityCurve`, `IntegratedProductionModel`) | Benefit is reservoir-dependent and unproven until a well test; productivity penalty |
+| Wells | AICD, AICV, ICD, DAR-type autonomous or adjustable completions | Water and gas handling, liquid rate | `InflowControlCompletion.compareAtSameOil` gives the water and gas change per barrel of oil and the extra drawdown; carry the result into `WellDeliverabilityCurve` / `IntegratedProductionModel` | Benefit is reservoir-dependent and unproven until a well test; productivity penalty |
 | Wells | Gas lift rate, lift-gas allocation, choke strategy | Liquid rate, gas compression | `GasLiftNetworkOptimizer`, `NetworkOptimizer` | Lift gas loads the same compressors |
 | Wells | New or sidetracked wells, infill | Plateau length | Plan profile with new wells; not a debottleneck | Cost class and rig availability |
 | Subsea | Boosting (multiphase pump, wet-gas compression) | Wellhead back-pressure, plateau rate | `SubseaBooster` plus flowline hydraulics (`PipeBeggsAndBrills`, `TwoFluidPipe`) | Power supply, reliability, intervention cost |
-| Subsea | Bulk water or gas separation | Topside water, liquid or gas path | Split the stream before the riser; remove water volume and reinject (`Separator`, `ThreePhaseSeparator`) | No dedicated NeqSim subsea separation class; qualification, power, controls |
+| Subsea | Bulk water or gas separation | Topside water, liquid or gas path | `SubseaSeparationStation`: split gas, liquid and water before the riser, boost liquid and reinject water, read the power | Qualification, power, controls, hydrate and slug control |
 | Subsea | Flowline or riser pressure-drop reduction, slug control | Back-pressure, separator surge | Hydraulic rerun with changed diameter, routing or choking (`neqsim-flow-assurance`) | Hydrate, wax and slugging margin |
 | Topside | Higher separation pressure | Gas compression suction, scrubber load | Pressure setpoint on the inlet separator; recompression power falls | Oil spec, flashing, vessel rating |
 | Topside | Scrubber internals, cyclones, vane packs | Gas load factor (K) and momentum limits | New K limit on the unit; check carry-over (`SeparatorMechanicalDesign`) | Vessel pressure rating, liquid carry-over |
@@ -35,7 +35,15 @@ Use this skill when the question is "which ideas lift or accelerate production o
 | Topside | Produced-water treatment, flare, power capacity | Water discharge, flare load, electrical load | Separate screen against demonstrated peak and design case | Permit limits |
 | System | Debottleneck sequencing across several of the above | The next binding constraint | `DebottleneckingAdvisor`, `ProcessModelDebottleneckRanking` | Interactions |
 
-Name a family as **screened only** when no NeqSim class represents it (subsea separation, AICD and DAR behaviour). State the surrogate used and what a better model needs.
+Name a family as **screened only** when the model rests on assumed constants rather than tests. The completion and separation classes below are screening models: the device constants and the carry-over fractions must come from vendor flow-loop or qualification data before the result is used for more than ranking.
+
+## NeqSim classes for the well and subsea levers
+
+- `InflowControlDevice` (`neqsim.process.equipment.reservoir`): pressure drop of an ICD (nozzle), AICD (`dP = a rho_mix^2/rho_cal (mu_cal/mu_mix)^y q^x`, calibrated on a reference point), AICV (closes on low viscosity) and DAR (density-window restrictor; the window and residual opening are inputs because the characteristic is vendor specific), and the inverse flow for a given pressure drop.
+- `InflowControlCompletion`: zones with productivity index and in-situ water and gas fractions sharing one drawdown. `compareAtSameOil(bareDrawdown, maxDrawdown)` returns the extra drawdown the device needs for the same oil and the water and gas reductions at that oil; `isOilRateReached()` is false when the limit stops it. The phase split of a zone is fixed, so a coning-driven benefit is an upper bound. Use the water and gas reductions as the low/base/high lever in the host model.
+- `SubseaSeparationStation` (`neqsim.process.equipment.subsea`): `ThreePhaseSeparator` with liquid and water pumps; set `setWaterRemovalEfficiency`, `setOilInWaterFraction`, `setGasCarryUnderFraction`, `setLiquidExportPressure`, `setWaterInjectionPressure`. Read `getGasOutStream()`, `getLiquidOutStream()` (to the host), `getWaterOutStream()`, `getWaterRemovedFraction()` and `getTotalPowerKW()`. Feed the liquid and gas streams to the host model in place of the well stream, and put the power in the emissions and electrical-load check.
+
+Other stations (compression, hydrate and slug control, power from shore) are outside these classes; `SubseaBooster` covers boosting.
 
 ## Rules that keep the ranking honest
 
