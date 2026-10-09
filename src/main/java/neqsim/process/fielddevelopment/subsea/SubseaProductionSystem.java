@@ -9,6 +9,7 @@ import neqsim.process.costestimation.CostEstimateBasis;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.equipment.network.FieldNetworkTopology;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
 import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.process.equipment.stream.Stream;
@@ -1133,8 +1134,13 @@ public class SubseaProductionSystem implements Serializable {
     surf.setTreeBoreSizeInches(Math.max(5.0, tubingDiameterInches));
     surf.setHorizontalTrees(true);
     surf.setDualBoreTrees(false);
-    surf.setManifoldSlots(Math.max(wellCount, manifoldCount));
-    surf.setManifoldWeightTonnes(Math.max(80.0, 80.0 + 10.0 * wellCount));
+    int pricedManifoldCount = architecture == SubseaArchitecture.DIRECT_TIEBACK ? 0
+        : manifolds.isEmpty() ? Math.max(0, manifoldCount) : manifolds.size();
+    int slotsPerManifold = pricedManifoldCount == 0 ? 1
+        : Math.max(1, (int) Math.ceil((double) wellCount / pricedManifoldCount));
+    surf.setNumberOfManifolds(pricedManifoldCount);
+    surf.setManifoldSlots(slotsPerManifold);
+    surf.setManifoldWeightTonnes(Math.max(80.0, 80.0 + 10.0 * slotsPerManifold));
     surf.setManifoldHasTestHeader(true);
     surf.setNumberOfPLETs(plets.isEmpty() ? Math.max(2, manifoldCount * 2) : plets.size());
     surf.setNumberOfPLEMs(plems.size());
@@ -1161,6 +1167,84 @@ public class SubseaProductionSystem implements Serializable {
     surf.setExportPipelineDiameterInches(flowlineDiameterInches);
     surf.setPipelineWallThicknessMm(flowlineWallThicknessMm);
     surf.setPipelineDesignPressureBar(Math.max(reservoirPressureBara, wellheadPressureBara));
+    return surf;
+  }
+
+  /**
+   * Create a SURF design basis from the same typed topology used for field hydraulics.
+   *
+   * <p>
+   * The returned object aggregates geometry and equipment counts only. It does not copy, rebuild or solve the field
+   * network, and external process-equipment bindings remain owned by the source topology.
+   * </p>
+   *
+   * @param topology canonical field topology
+   * @return immutable topology-derived design basis
+   */
+  public FieldNetworkSurfDesignBasis createSurfDesignBasis(FieldNetworkTopology topology) {
+    return FieldNetworkSurfDesignBasis.fromTopology(topology);
+  }
+
+  /**
+   * Estimate SURF CAPEX from exact equipment identities and line geometry in a canonical field topology.
+   *
+   * <p>
+   * This method routes the topology-derived basis into the existing {@link SURFCostEstimator}. Hydraulic results and
+   * topology remain owned by {@code FieldNetworkTopology}; this method neither creates a second network nor claims that
+   * the Class 4 screening estimate is detailed design or vendor qualification. Umbilical configuration, material, wall
+   * thickness and regional assumptions remain the explicitly configured values on this system.
+   * </p>
+   *
+   * @param topology canonical field topology
+   * @return detailed screening estimate with material take-off and basis metadata
+   */
+  public CostEstimateResult estimateSurfCosts(FieldNetworkTopology topology) {
+    FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    SURFCostEstimator estimator = createSurfCostEstimator(basis);
+    estimator.calculate();
+    CostEstimateResult estimate = estimator.getDetailedEstimateResult();
+    estimate.addQualityFlag("Canonical topology geometry is aggregated into Class 4 screening quantities: line "
+        + "diameters are length-weighted and parallel manifold/template units share one representative slot/weight basis.");
+    return estimate;
+  }
+
+  /**
+   * Configure the existing SURF estimator from one topology-derived design basis.
+   *
+   * @param basis immutable topology-derived design basis
+   * @return configured existing SURF estimator
+   */
+  private SURFCostEstimator createSurfCostEstimator(FieldNetworkSurfDesignBasis basis) {
+    SURFCostEstimator surf = createSurfCostEstimator();
+    int pricedTreeCount = basis.getTreeCount() > 0 ? basis.getTreeCount() : basis.getTotalWellCount();
+    surf.setNumberOfWells(pricedTreeCount);
+    surf.setNumberOfManifolds(basis.getDistributionUnitCount());
+    surf.setManifoldSlots(Math.max(1, basis.getSlotsPerDistributionUnit()));
+    surf.setManifoldWeightTonnes(Math.max(80.0, 80.0 + 10.0 * basis.getSlotsPerDistributionUnit()));
+    surf.setNumberOfPLETs(basis.getPletCount());
+    surf.setNumberOfPLEMs(basis.getPlemCount());
+    surf.setNumberOfJumpers(basis.getJumperCount());
+    if (basis.getMeanJumperLengthM() > 0.0) {
+      surf.setJumperLengthM(basis.getMeanJumperLengthM());
+      surf.setJumperDiameterInches(basis.getJumperDiameterInches());
+    }
+    surf.setInfieldFlowlineLengthKm(basis.getInfieldFlowlineLengthKm());
+    if (basis.getInfieldFlowlineDiameterInches() > 0.0) {
+      surf.setInfieldFlowlineDiameterInches(basis.getInfieldFlowlineDiameterInches());
+    }
+    surf.setExportPipelineLengthKm(basis.getExportPipelineLengthKm());
+    if (basis.getExportPipelineDiameterInches() > 0.0) {
+      surf.setExportPipelineDiameterInches(basis.getExportPipelineDiameterInches());
+    }
+    surf.setIncludeRisers(basis.getTotalRiserCount() > 0);
+    surf.setNumberOfProductionRisers(basis.getTotalRiserCount());
+    if (basis.getMeanRiserLengthM() > 0.0) {
+      surf.setRiserLengthM(basis.getMeanRiserLengthM());
+      surf.setRiserDiameterInches(basis.getRiserDiameterInches());
+    }
+    if (basis.getWaterDepthM() > 0.0) {
+      surf.setWaterDepthM(basis.getWaterDepthM());
+    }
     return surf;
   }
 
