@@ -604,11 +604,20 @@ public class MultiStreamHeatExchanger2Test {
   @Test
   void testSolverStatusDegenerateAtFeasibleApproachLimit() {
     MultiStreamHeatExchanger2 exchanger = buildDewPointRecuperator(DPC_HOT_INLET_C - DPC_FIXED_LIQUID_OUTLET_C);
+    // Executable counterpart of the strict-mode diagnostic example in the user guide.
+    exchanger.setThrowOnUnmetSpecification(true);
     exchanger.run();
+    if (!exchanger.isSpecificationMet()
+        || exchanger.getSolverStatus() == MultiStreamHeatExchanger2.SolverStatus.DEGENERATE) {
+      logger.warn("{} approach upper bound: {}", exchanger.getSolverMessage(), exchanger.getMaximumFeasibleApproach());
+    }
 
     assertEquals(MultiStreamHeatExchanger2.SolverStatus.DEGENERATE, exchanger.getSolverStatus());
     assertTrue(exchanger.isSpecificationMet());
     assertTrue(exchanger.getSolverMessage().contains("not unique"));
+    assertEquals(0.0, exchanger.energyDiff(), 1e-3);
+    assertEquals(exchanger.getOutTemperature(0), exchanger.getOutStream(0).getTemperature("C"), 1e-8);
+    assertEquals(exchanger.getOutTemperature(1), exchanger.getOutStream(1).getTemperature("C"), 1e-8);
   }
 
   @Test
@@ -618,7 +627,7 @@ public class MultiStreamHeatExchanger2Test {
 
     assertEquals(MultiStreamHeatExchanger2.SolverStatus.INFEASIBLE, exchanger.getSolverStatus());
     assertFalse(exchanger.isSpecificationMet());
-    assertTrue(exchanger.getSolverMessage().contains("Maximum feasible approach is 6.440 C"));
+    assertTrue(exchanger.getSolverMessage().contains("Maximum feasible approach is at most 6.440 C"));
     assertEquals(0.0, exchanger.energyDiff(), 1e-2);
     assertTrue(exchanger.toJson().contains("INFEASIBLE"));
   }
@@ -631,5 +640,25 @@ public class MultiStreamHeatExchanger2Test {
     IllegalStateException ex = assertThrows(IllegalStateException.class, exchanger::run);
     assertTrue(ex.getMessage().contains("cannot be met"));
     assertEquals(MultiStreamHeatExchanger2.SolverStatus.INFEASIBLE, exchanger.getSolverStatus());
+    assertEquals(0.0, exchanger.energyDiff(), 1e-3);
+    assertEquals(exchanger.getOutTemperature(0), exchanger.getOutStream(0).getTemperature("C"), 1e-8);
+    assertEquals(exchanger.getOutTemperature(1), exchanger.getOutStream(1).getTemperature("C"), 1e-8);
+  }
+
+  /** Verifies that diagnostics are recalculated when a recycle changes the specification. */
+  @Test
+  void testStatusRecoversAfterInfeasibleRun() {
+    MultiStreamHeatExchanger2 exchanger = buildDewPointRecuperator(7.0);
+    exchanger.run();
+    assertFalse(exchanger.isSpecificationMet());
+
+    exchanger.setTemperatureApproach(6.0);
+    exchanger.setThrowOnUnmetSpecification(true);
+    exchanger.run();
+    assertEquals(MultiStreamHeatExchanger2.SolverStatus.CONVERGED, exchanger.getSolverStatus());
+    assertTrue(exchanger.isSpecificationMet());
+    assertEquals("", exchanger.getSolverMessage());
+    assertEquals(6.0, exchanger.getTemperatureApproach(), 1e-3);
+    assertEquals(0.0, exchanger.energyDiff(), 1e-3);
   }
 }

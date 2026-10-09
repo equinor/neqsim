@@ -9,6 +9,7 @@ package neqsim.process.equipment.heatexchanger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -50,11 +51,13 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     DEGENERATE,
     /**
      * The requested approach temperature cannot be met because fixed outlet temperatures leave less room than the
-     * approach; an energy-balanced best-effort result is returned.
+     * approach. The two-unknown mode attempts a best-effort result; the three-unknown mode throws without solving.
      */
     INFEASIBLE,
-    /** The solver did not reach the specifications and returned an energy-balanced best-effort result. */
-    FALLBACK
+    /** The solver returned a best-effort result that does not meet every active specification. */
+    FALLBACK,
+    /** The calculation failed before a valid outlet result could be published. */
+    FAILED
   }
 
   /** Logger object for class. */
@@ -84,6 +87,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private SolverStatus solverStatus = SolverStatus.NOT_RUN;
   private String solverMessage = "";
   private double maximumFeasibleApproach = Double.NaN;
+  private boolean fixedOutletLimitsApproach;
   private boolean throwOnUnmetSpecification = false;
 
   private double hotLoad;
@@ -160,11 +164,15 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * setTemperatureApproach.
+   * Sets the requested minimum approach temperature.
    *
-   * @param temperatureApproach a double
+   * @param temperatureApproach finite, non-negative temperature difference in Celsius degrees
+   * @throws IllegalArgumentException if the temperature difference is negative or non-finite
    */
   public void setTemperatureApproach(double temperatureApproach) {
+    if (!Double.isFinite(temperatureApproach) || temperatureApproach < 0.0) {
+      throw new IllegalArgumentException("Approach temperature must be finite and non-negative");
+    }
     this.approachTemperature = temperatureApproach;
   }
 
@@ -181,13 +189,32 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    solverStatus = SolverStatus.NOT_RUN;
+    solverMessage = "";
+    maximumFeasibleApproach = Double.NaN;
+    fixedOutletLimitsApproach = false;
+    try {
+      runCalculation(id);
+    } catch (RuntimeException ex) {
+      if (solverStatus != SolverStatus.INFEASIBLE && solverStatus != SolverStatus.FALLBACK) {
+        solverStatus = SolverStatus.FAILED;
+        solverMessage = getName() + ": calculation failed before publishing a result: " + ex.getMessage();
+      }
+      throw ex;
+    }
+  }
+
+  /**
+   * Solves, publishes and classifies the current exchanger state.
+   *
+   * @param id calculation identifier
+   * @throws IllegalStateException for unsupported specifications or an unmet strict-mode specification
+   */
+  private void runCalculation(UUID id) {
     hInlet.clear();
     fluidInlet.clear();
     prevOutletTemps = null;
     stallCounter = 0;
-    solverStatus = SolverStatus.NOT_RUN;
-    solverMessage = "";
-    maximumFeasibleApproach = Double.NaN;
 
     // Calculate inlet state caches from the current connected streams.
     for (int i = 0; i < inStreams.size(); i++) {
@@ -208,22 +235,23 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
     if (undefinedCount == 0) {
       logger.debug("No Unknown Temperatures to Solve");
-      solverStatus = SolverStatus.CONVERGED;
     } else if (undefinedCount == 1) {
       oneUnknown();
-      solverStatus = SolverStatus.CONVERGED;
     } else if (undefinedCount == 2) {
       checkApproachFeasibility();
       twoUnknowns();
-      classifyTwoUnknownResult();
     } else if (undefinedCount == 3) {
       checkApproachFeasibility();
-      threeUnknowns();
-      if (solverStatus == SolverStatus.NOT_RUN) {
-        solverStatus = SolverStatus.CONVERGED;
+      if (solverStatus == SolverStatus.INFEASIBLE) {
+        solverMessage += " No best-effort result is available for the three-unknown UA solve.";
+        throw new IllegalStateException(solverMessage);
       }
+      if (UA == null || !Double.isFinite(UA) || UA <= 0.0) {
+        throw new IllegalStateException("Three unknown outlets require a finite, positive UA specification");
+      }
+      threeUnknowns();
     } else {
-      logger.debug("Too Many Unknown Temperatures");
+      throw new IllegalStateException("At most three unknown outlet temperatures are supported");
     }
 
     for (int i = 0; i < outStreams.size(); i++) {
@@ -234,9 +262,16 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       logger.debug("Outlet temps before solving: " + outletTemps);
       logger.debug("Unknown flags: " + unknownOutlets);
     }
-    energyDiff();
+    if (undefinedCount == 2) {
+      classifyTwoUnknownResult();
+    } else {
+      classifyActiveResiduals(undefinedCount);
+    }
     publishHeatDuty();
     setCalculationIdentifier(id);
+    if (throwOnUnmetSpecification && !isSpecificationMet()) {
+      throw new IllegalStateException(solverMessage);
+    }
   }
 
   /**
@@ -1428,7 +1463,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * Returns whether the last solution meets the energy balance and the specified approach temperature.
+   * Returns whether the last solution meets every active equation: energy balance in all modes, approach temperature
+   * with two or three unknowns, and UA with three unknowns. An approach specification is not enforced with fewer than
+   * two unknown outlets.
    *
    * @return true when the solver status is {@link SolverStatus#CONVERGED} or {@link SolverStatus#DEGENERATE}
    */
@@ -1437,19 +1474,21 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * Returns the largest approach temperature that the fixed outlet temperatures and inlet temperatures allow. Evaluated
-   * when two or more outlet temperatures are unknown; NaN otherwise.
+   * Returns an upper bound on the approach temperature from the fixed outlets and inlets. Passing this bound is
+   * necessary but not sufficient for feasibility: internal pinches, energy balance and UA can be more restrictive.
+   * Evaluated when two or more outlet temperatures are unknown; NaN otherwise.
    *
-   * @return the maximum feasible approach temperature in Celsius degrees, or NaN when not evaluated
+   * @return the approach upper bound in Celsius degrees, or NaN when not evaluated
    */
   public double getMaximumFeasibleApproach() {
     return maximumFeasibleApproach;
   }
 
   /**
-   * Sets whether {@link #run(UUID)} throws an {@link IllegalStateException} when the specified approach temperature
-   * cannot be met. When false (default) an energy-balanced best-effort result is returned and the outcome is reported
-   * through {@link #getSolverStatus()} and {@link #getSolverMessage()}.
+   * Sets whether {@link #run(UUID)} throws an {@link IllegalStateException} after publishing a best-effort result that
+   * does not meet every active equation. When false (default), the outcome is reported through
+   * {@link #getSolverStatus()} and {@link #getSolverMessage()}. Numerical failures and infeasible three-unknown UA
+   * solves still throw in either mode because no valid best-effort result is available.
    *
    * @param throwOnUnmetSpecification true to throw when the specification is not met
    */
@@ -1458,7 +1497,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * Returns whether {@link #run(UUID)} throws when the specified approach temperature cannot be met.
+   * Returns whether {@link #run(UUID)} throws after publishing a result with an unmet active specification.
    *
    * @return true when strict mode is enabled
    */
@@ -1467,8 +1506,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * Computes the largest approach temperature allowed by the fixed outlet temperatures and the inlet temperatures, and
-   * reports {@link SolverStatus#INFEASIBLE} when the specified approach exceeds it.
+   * Computes an approach upper bound from the fixed outlet temperatures and the inlet temperatures, and reports
+   * {@link SolverStatus#INFEASIBLE} when the specified approach exceeds it.
    *
    * <p>
    * With energy balance the hot and cold composite curves end at the same load, so the warm-end difference is at most
@@ -1487,8 +1526,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       }
     }
     double limit = hottestHotInlet - coldestColdInlet;
-    String limitingDescription = String.format("the hottest hot inlet (%.3f C) and the coldest cold inlet (%.3f C)",
-        hottestHotInlet, coldestColdInlet);
+    String limitingDescription = String.format(Locale.ROOT,
+        "the hottest hot inlet (%.3f C) and the coldest cold inlet (%.3f C)", hottestHotInlet, coldestColdInlet);
     for (int i = 0; i < streamTypes.size(); i++) {
       if (unknownOutlets.get(i)) {
         continue;
@@ -1497,24 +1536,27 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       String description;
       if ("cold".equals(streamTypes.get(i))) {
         room = hottestHotInlet - outletTemps.get(i);
-        description = String.format("the fixed outlet of cold stream %d (%.3f C) and the hottest hot inlet (%.3f C)", i,
-            outletTemps.get(i), hottestHotInlet);
+        description = String.format(Locale.ROOT,
+            "the fixed outlet of cold stream %d (%.3f C) and the hottest hot inlet (%.3f C)", i, outletTemps.get(i),
+            hottestHotInlet);
       } else {
         room = outletTemps.get(i) - coldestColdInlet;
-        description = String.format("the fixed outlet of hot stream %d (%.3f C) and the coldest cold inlet (%.3f C)", i,
-            outletTemps.get(i), coldestColdInlet);
+        description = String.format(Locale.ROOT,
+            "the fixed outlet of hot stream %d (%.3f C) and the coldest cold inlet (%.3f C)", i, outletTemps.get(i),
+            coldestColdInlet);
       }
-      if (room < limit) {
+      if (room <= limit) {
         limit = room;
         limitingDescription = description;
+        fixedOutletLimitsApproach = true;
       }
     }
     maximumFeasibleApproach = limit;
     if (approachTemperature > limit + tolerance) {
       reportUnmetSpecification(SolverStatus.INFEASIBLE,
-          String.format(
+          String.format(Locale.ROOT,
               "%s: specified approach temperature %.3f C cannot be met; %s leave only %.3f C. Maximum feasible approach"
-                  + " is %.3f C. Returning an energy-balanced best-effort result.",
+                  + " is at most %.3f C.",
               getName(), approachTemperature, limitingDescription, limit, limit));
     }
   }
@@ -1523,7 +1565,11 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * Classifies the result of {@link #twoUnknowns()} as converged, degenerate or fall-back.
    */
   private void classifyTwoUnknownResult() {
+    double[] residuals = residualFunctionTwoUnknowns();
     if (solverStatus == SolverStatus.INFEASIBLE) {
+      solverMessage += String.format(Locale.ROOT,
+          " Best-effort result: achieved approach %.3f C, energy residual %.3g kW.", residuals[1] + approachTemperature,
+          residuals[0]);
       return;
     }
     List<Integer> unknownIndices = new ArrayList<>();
@@ -1532,18 +1578,17 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         unknownIndices.add(i);
       }
     }
-    double[] residuals = residualFunctionTwoUnknowns();
-    if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) >= tolerance) {
+    if (!residualsConverged(residuals)) {
       reportUnmetSpecification(SolverStatus.FALLBACK,
-          String.format(
+          String.format(Locale.ROOT,
               "%s: solver did not meet the specified approach temperature %.3f C (achieved %.3f C, energy residual %.3g"
-                  + " kW). Returning an energy-balanced best-effort result.",
+                  + " kW). Returning a best-effort result; inspect both residuals.",
               getName(), approachTemperature, residuals[1] + approachTemperature, residuals[0]));
     } else if (isPinchSetByFixedStreams(unknownIndices)) {
       solverStatus = SolverStatus.DEGENERATE;
-      solverMessage = String.format(
-          "%s: the approach temperature %.3f C is set only by streams with fixed outlet temperatures; the solved"
-              + " outlet temperatures are not unique.",
+      solverMessage = String.format(Locale.ROOT,
+          "%s: the approach temperature %.3f C is limited by fixed outlets and locally insensitive along the energy"
+              + " balance; the solved outlet temperatures are not unique within numerical tolerance.",
           getName(), approachTemperature);
       logger.warn(solverMessage);
     } else {
@@ -1552,44 +1597,91 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   /**
-   * Tests whether the minimum approach is insensitive to every unknown outlet temperature, i.e. set by fixed streams.
+   * Checks the active equations for modes other than the two-unknown solve.
    *
-   * @param unknownIndices unknown outlet-temperature indices
-   * @return true when no unknown outlet temperature moves the pinch
+   * @param unknownCount number of unknown outlet temperatures
    */
-  private boolean isPinchSetByFixedStreams(List<Integer> unknownIndices) {
-    double basePinch = pinch();
-    double step = 1.0e-2;
-    boolean insensitive = true;
-    for (int index : unknownIndices) {
-      double temperature = outletTemps.get(index);
-      double[] bounds = restartBounds(index);
-      outletTemps.set(index, temperature + step <= bounds[1] ? temperature + step : temperature - step);
-      double perturbedPinch = pinch();
-      outletTemps.set(index, temperature);
-      if (Math.abs(perturbedPinch - basePinch) > 1.0e-6) {
-        insensitive = false;
-        break;
-      }
+  private void classifyActiveResiduals(int unknownCount) {
+    double[] residuals = unknownCount == 3 ? residualFunctionThreeUnknowns() : residualFunctionOneUnknown();
+    if (residualsConverged(residuals)) {
+      solverStatus = SolverStatus.CONVERGED;
+    } else {
+      reportUnmetSpecification(SolverStatus.FALLBACK, String.format(Locale.ROOT,
+          "%s: active specifications were not met (energy residual %.3g kW%s)."
+              + " Returning a best-effort result; energy balance is not guaranteed.",
+          getName(), residuals[0],
+          unknownCount == 3
+              ? String.format(Locale.ROOT, ", pinch residual %.3g C, UA residual %.3g W/K", residuals[1], residuals[2])
+              : ""));
     }
-    pinch();
-    return insensitive;
   }
 
   /**
-   * Records an unmet specification, logs it and throws when strict mode is enabled.
+   * Checks finite residuals against the solver tolerance.
+   *
+   * @param residuals residuals in the native units of the active equations
+   * @return true only when every residual is finite and within tolerance
+   */
+  private boolean residualsConverged(double[] residuals) {
+    for (double residual : residuals) {
+      if (!Double.isFinite(residual) || Math.abs(residual) >= tolerance) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Checks for a nearby distinct energy-balanced solution with the same fixed-outlet pinch. Recomputes heat loads for
+   * every trial and restores temperatures, loads and composite curves even when a trial fails.
+   *
+   * @param unknownIndices unknown outlet-temperature indices
+   * @return true when a bounded perturbation along the energy balance preserves the fixed-outlet pinch
+   */
+  private boolean isPinchSetByFixedStreams(List<Integer> unknownIndices) {
+    if (!fixedOutletLimitsApproach || Math.abs(maximumFeasibleApproach - approachTemperature) >= tolerance) {
+      return false;
+    }
+    double basePinch = pinch();
+    double[] temperatures = {outletTemps.get(unknownIndices.get(0)), outletTemps.get(unknownIndices.get(1))};
+    try {
+      for (int position = 0; position < unknownIndices.size(); position++) {
+        int index = unknownIndices.get(position);
+        int balancedIndex = unknownIndices.get(1 - position);
+        double[] bounds = restartBounds(index);
+        double step = Math.max(1.0e-2, (bounds[1] - bounds[0]) * 1.0e-4);
+        for (int direction : new int[] {-1, 1}) {
+          restoreUnknownTemperatures(unknownIndices, temperatures);
+          double trialTemperature = temperatures[position] + direction * step;
+          if (trialTemperature <= bounds[0] || trialTemperature >= bounds[1]) {
+            continue;
+          }
+          outletTemps.set(index, trialTemperature);
+          if (balanceEnergyForIndex(balancedIndex)) {
+            double[] residuals = residualFunctionTwoUnknowns();
+            if (residualsConverged(residuals) && Math.abs(pinch() - basePinch) < 1.0e-6) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    } finally {
+      restoreUnknownTemperatures(unknownIndices, temperatures);
+      residualFunctionTwoUnknowns();
+    }
+  }
+
+  /**
+   * Records and logs an unmet specification. Strict mode throws after the final result has been published.
    *
    * @param status the solver status to record
    * @param message the explanation to record
-   * @throws IllegalStateException when {@link #setThrowOnUnmetSpecification(boolean)} is true
    */
   private void reportUnmetSpecification(SolverStatus status, String message) {
     solverStatus = status;
     solverMessage = message;
     logger.warn(message);
-    if (throwOnUnmetSpecification) {
-      throw new IllegalStateException(message);
-    }
   }
 
   /** {@inheritDoc} */
