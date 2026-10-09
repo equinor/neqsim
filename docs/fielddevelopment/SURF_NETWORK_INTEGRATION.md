@@ -253,14 +253,33 @@ available under the process-unit name. A copied unit rebuilds the topology defin
 copies the bound `WellSystem`/`WellFlow` objects and rebinds them before execution;
 accepted runtime state is not shared with the source unit.
 
+For a well that can be routed to mutually exclusive separator pressure levels, register
+the existing alternative network edges with
+`FieldWellNetworkProcessUnit.registerExclusiveRouteSelector(...)`. Automation then
+exposes `route.<selector>.selection` as a zero-based discrete input. One verified write
+atomically makes the selected edge fully available and every alternative unavailable;
+invalid fractional selections are rejected without changing the line-up. A zero edge
+availability is an exact closed route in the Newton network solve, while fractional
+availability remains a hydraulic derating. The selected HP or LP fixed-pressure sink
+therefore feeds back through the same live well/network coupling instead of acting as a
+downstream flow split. Copies preserve selector definitions but keep independent edge
+state.
+
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
-well chokes through individual gathering lines to a host, then routes the stable host
-stream between two separators and mapped compressors on a common shaft. It exercises
-configured well/line/separator operating limits, compressor surge/stonewall evidence,
-driver and gearbox power, a shared plant-power budget, a transactional route action,
-baseline restoration and an operating-envelope slice. A route rejected by compressor
-or other hard evidence remains rejected; the test does not relax physical limits to
-obtain a feasible optimizer result.
+well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
+fixed-pressure sinks. Those stable sink streams feed separators, compressor-suction
+scrubbers and mapped compressors on a common shaft before a pressure-controlled 100 bara
+gas-export boundary. The workflow exercises configured
+well/per-route-line/separator/scrubber operating limits, compressor surge/stonewall
+evidence, driver and gearbox power, a shared plant-power budget, transactional discrete
+route actions, qualified export-pressure evidence, exact action restoration and an
+operating-envelope slice. A second deterministic acceptance case instantiates ten live
+wells with twenty alternative route edges and verifies complete well, line, vessel,
+shaft, shared-power and export-boundary evidence without changing the two-well physical
+model or introducing a separate optimizer. The lower
+pressure route must reduce well backpressure and increase deliverability. A route
+rejected by compressor or other hard evidence remains rejected; the test does not relax
+physical limits to obtain a feasible optimizer result.
 
 ## Dependency-ordered continuation
 

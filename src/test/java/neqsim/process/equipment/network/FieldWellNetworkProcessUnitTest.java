@@ -3,7 +3,9 @@ package neqsim.process.equipment.network;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.automation.ProcessAutomation;
@@ -72,6 +74,61 @@ class FieldWellNetworkProcessUnitTest {
     assertTrue(copy.getOutletStream("host").getFlowRate("kg/hr") > 0.0);
   }
 
+  /** Route selection must switch distinct-pressure paths atomically and preserve live well feedback. */
+  @Test
+  void switchesExclusivePressureRoutesThroughAutomationAndRestoresExactly() {
+    FieldWellNetworkProcessUnit unit = createRoutedUnit();
+    unit.run(UUID.randomUUID());
+    assertTrue(unit.solved(), unit.getLastCouplingResult().getMessage());
+
+    Separator hpSeparator = new Separator("HP separator", unit.getOutletStream("HP host"));
+    Separator lpSeparator = new Separator("LP separator", unit.getOutletStream("LP host"));
+    ProcessSystem field = new ProcessSystem("routed field and host");
+    field.add(unit);
+    field.add(hpSeparator);
+    field.add(lpSeparator);
+    ProcessModel model = new ProcessModel();
+    model.add("Field", field);
+    model.run();
+    assertTrue(model.isModelConverged());
+    double baselineRate = unit.getOutletStream("HP host").getFlowRate("kg/hr");
+    double baselineWellPressure = unit.getHydraulicNetwork().getNodePressure("producer");
+    assertTrue(baselineRate > 0.0);
+    assertEquals(0.0, unit.getOutletStream("LP host").getFlowRate("kg/hr"), 1.0e-5);
+
+    ProcessAutomation automation = model.getAutomation();
+    String routeAddress = "Field::routed field network.route.producer pressure level.selection";
+    assertTrue(automation.isWritableAddress(routeAddress));
+    assertEquals(0.0, automation.getVariableValue(routeAddress, "-"), 0.0);
+    automation.setVariableValue(routeAddress, 1.0, "-");
+    assertFalse(unit.solved());
+    assertEquals(0.0, unit.getHydraulicNetwork().getPipe("HP route").getAvailability(), 0.0);
+    assertEquals(1.0, unit.getHydraulicNetwork().getPipe("LP route").getAvailability(), 0.0);
+    model.run();
+
+    assertTrue(model.isModelConverged());
+    assertEquals(1.0, automation.getVariableValue(routeAddress, "-"), 0.0);
+    assertEquals(0.0, unit.getOutletStream("HP host").getFlowRate("kg/hr"), 1.0e-5);
+    assertTrue(unit.getOutletStream("LP host").getFlowRate("kg/hr") > baselineRate);
+    assertTrue(unit.getHydraulicNetwork().getNodePressure("producer") < baselineWellPressure);
+
+    assertThrows(IllegalArgumentException.class, () -> automation.setVariableValue(routeAddress, 0.5, "-"));
+    assertEquals(0.0, unit.getHydraulicNetwork().getPipe("HP route").getAvailability(), 0.0);
+    assertEquals(1.0, unit.getHydraulicNetwork().getPipe("LP route").getAvailability(), 0.0);
+    automation.setVariableValue(routeAddress, 0.0, "-");
+    model.run();
+    assertTrue(model.isModelConverged());
+    assertEquals(baselineRate, unit.getOutletStream("HP host").getFlowRate("kg/hr"), baselineRate * 1.0e-5);
+    assertEquals(baselineWellPressure, unit.getHydraulicNetwork().getNodePressure("producer"), 1.0e-5);
+
+    FieldWellNetworkProcessUnit copy = (FieldWellNetworkProcessUnit) unit.copy();
+    assertEquals(Arrays.asList("producer pressure level"), copy.getExclusiveRouteSelectorNames());
+    assertEquals(Arrays.asList("HP route", "LP route"), copy.getExclusiveRouteEdges("producer pressure level"));
+    copy.setExclusiveRouteSelection("producer pressure level", 1.0);
+    assertEquals(0.0, unit.getExclusiveRouteSelection("producer pressure level"), 0.0);
+    assertEquals(1.0, copy.getExclusiveRouteSelection("producer pressure level"), 0.0);
+  }
+
   /** The process unit must remain unsolved when the complete coupled convergence contract is not met. */
   @Test
   void incompleteCouplingFailsClosed() {
@@ -114,6 +171,42 @@ class FieldWellNetworkProcessUnitTest {
     coupler.setRelaxationFactor(0.7);
     coupler.bindProductionWell("producer", well);
     return new FieldWellNetworkProcessUnit("field network", coupler);
+  }
+
+  /** Create one live well with mutually exclusive HP and LP host paths. */
+  private FieldWellNetworkProcessUnit createRoutedUnit() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("routed field network hydraulics");
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    network.setFluidTemplate(gas(150.0));
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(1.0);
+    topology.addLiveWellNode("producer", "XT-201", NodeRole.PRODUCTION_WELL, Service.PRODUCTION, 75.0, -200.0);
+    topology.addJunction("header", "MA-201", NodeRole.MANIFOLD, Service.PRODUCTION, -200.0);
+    topology.addFixedPressureSink("HP host", "SEP-HP", NodeRole.HOST, Service.PRODUCTION, 45.0, 0.0);
+    topology.addFixedPressureSink("LP host", "SEP-LP", NodeRole.HOST, Service.PRODUCTION, 30.0, 0.0);
+    network.addChoke("producer", "header", "production choke", 30.0, 75.0);
+    topology.registerExistingEdge("production choke", "XV-201", EdgeRole.CHOKE, Service.PRODUCTION,
+        FlowDirection.FROM_TO, "well", "header");
+    topology.addPipe("HP route", "FL-HP", EdgeRole.FLOWLINE, Service.PRODUCTION, FlowDirection.FROM_TO, "header",
+        "HP outlet", "HP host", "arrival", 1500.0, 0.20, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("LP route", "FL-LP", EdgeRole.FLOWLINE, Service.PRODUCTION, FlowDirection.FROM_TO, "header",
+        "LP outlet", "LP host", "arrival", 1500.0, 0.20, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+    network.getPipe("HP route").setAvailability(1.0);
+    network.getPipe("LP route").setAvailability(0.0);
+
+    Stream reservoir = new Stream("routed reservoir", gas(200.0));
+    reservoir.setFlowRate(0.02, "MSm3/day");
+    reservoir.run();
+    WellFlow well = new WellFlow("routed producer well");
+    well.setInletStream(reservoir);
+    well.setWellProductionIndex(1.0e-7);
+    FieldWellNetworkCoupler coupler = new FieldWellNetworkCoupler(topology);
+    coupler.setMaximumIterations(100);
+    coupler.setTolerances(1.0e-8, 1.0e-6);
+    coupler.setRelaxationFactor(0.7);
+    coupler.bindProductionWell("producer", well);
+    return new FieldWellNetworkProcessUnit("routed field network", coupler).registerExclusiveRouteSelector(
+        "producer pressure level", Arrays.asList("HP route", "LP route"), "synthetic HP/LP host line-up");
   }
 
   /**
