@@ -18,6 +18,11 @@ evaporation and gas for dissolution. Hydrodynamic holdup or void fraction is nev
 continuous liquid reaches thermodynamic saturation before the injected gas meets the criterion, the result is
 incomplete and reports the full profile to the pipe outlet; the solver does not force phase removal.
 
+For elapsed-time drying of residual liquid after pigging, see the experimental
+[TwoFluidPipe film-transfer route](../process/TwoFluidPipeFilmDrying.md). It initializes liquid
+inventory independently and couples finite-rate transfer to gas and liquid momentum. The axial
+`WALL_FILM` option above does not represent that initial-value problem.
+
 ## Model formulation
 
 At each accepted axial position the model creates a local NeqSim droplet, bubble, or annular flow node and solves the

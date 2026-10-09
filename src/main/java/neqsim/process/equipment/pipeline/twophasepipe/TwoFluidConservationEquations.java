@@ -641,6 +641,31 @@ public class TwoFluidConservationEquations implements Serializable {
     return copy;
   }
 
+  /** Paired gas/aqueous component sources for the current finite-rate Euler stage. */
+  private transient double[][][] finiteRateComponentSources;
+
+  /**
+   * Supply component-specific gas/aqueous source pairs for the next RHS evaluation.
+   *
+   * @param sources cell/phase/component sources in kg/(m s), or null for the default closure
+   */
+  public void setFiniteRateComponentSources(double[][][] sources) {
+    if (sources != null) {
+      for (double[][] cell : sources) {
+        if (cell == null || cell.length != 3 || cell[0] == null || cell[1] == null || cell[2] == null
+            || cell[0].length != cell[1].length || cell[0].length != cell[2].length) {
+          throw new IllegalArgumentException("Finite-rate sources require three matching phase arrays");
+        }
+        for (int i = 0; i < cell[0].length; i++) {
+          if (!Double.isFinite(cell[0][i]) || cell[1][i] != 0.0 || cell[2][i] != -cell[0][i]) {
+            throw new IllegalArgumentException("Finite-rate gas/aqueous sources must be finite and opposite");
+          }
+        }
+      }
+    }
+    finiteRateComponentSources = sources;
+  }
+
   /** Read-only local component-equilibrium states supplied for the current RHS evaluation. */
   private transient SystemInterface[] localEquilibriumStates;
 
@@ -1915,7 +1940,16 @@ public class TwoFluidConservationEquations implements Serializable {
       // Mass transfer source (if enabled)
       PhaseMassTransfer phaseMassTransfer = PhaseMassTransfer.zero(true, true, null);
       if (includeMassTransfer) {
-        if (localEquilibriumStates != null && thermodynamicCoupling != null) {
+        if (finiteRateComponentSources != null) {
+          if (finiteRateComponentSources.length != sections.length) {
+            throw new IllegalStateException("Finite-rate sources must cover every cell");
+          }
+          double gasRate = 0.0;
+          for (double rate : finiteRateComponentSources[i][0]) {
+            gasRate += rate;
+          }
+          phaseMassTransfer = new PhaseMassTransfer(gasRate, 0.0, -gasRate, true, true, null);
+        } else if (localEquilibriumStates != null && thermodynamicCoupling != null) {
           if (localEquilibriumStates.length != sections.length || localEquilibriumStates[i] == null) {
             throw new IllegalStateException("Local equilibrium states must cover every hydrodynamic cell");
           }
@@ -1930,6 +1964,14 @@ public class TwoFluidConservationEquations implements Serializable {
       double Gamma_W = phaseMassTransfer.getWaterSourceKgPerMetreSecond();
       double Gamma_L = Gamma_O + Gamma_W;
       double[] transferMomentum = calcTransferMomentumSources(sec, phaseMassTransfer);
+      if (includeMassTransfer && finiteRateComponentSources != null) {
+        // Opposing component fluxes carry their respective donor momentum even at zero net mass flux.
+        double momentum = 0.0;
+        for (double rate : finiteRateComponentSources[i][0]) {
+          momentum += rate * (rate >= 0.0 ? sec.getWaterVelocity() : sec.getGasVelocity());
+        }
+        transferMomentum = new double[] {momentum, 0.0, -momentum};
+      }
 
       // Assemble source terms - now with separate oil and water mass equations
       sources[i][IDX_GAS_MASS] = Gamma_G;
