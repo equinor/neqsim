@@ -4,11 +4,12 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `d0c61da34f15a434f545936e00baeb1bd21a730f`.
+The current baseline is `1db2650325cf7860f686fb4d8fa7de986b5a915a`.
 Source implementation, regression evidence and field qualification are different maturity levels.
-Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity and live well
-pressure-rate coupling. The current increment adds same-topology hydraulic comparison and a guarded
-steady-to-transient handoff; none of these completes independent field qualification.
+Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
+pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
+The current increment adds terrain-profile aggregation and detached mesh-sensitivity evidence;
+none of these completes independent field qualification.
 
 ## Current functionality and reuse decisions
 
@@ -119,10 +120,19 @@ The caller's topology is neither run nor mutated.
 
 Both complete network solves and every requested edge must converge with the requested
 model. Beggs-Brill fallback and stale or failed two-fluid evidence are rejected. The
-result records each model's edge rate and pressure drop, complete pressure (Pa),
-temperature (K), liquid-holdup and superficial gas/liquid velocity (m/s) profiles,
-plus network mass-balance residuals. It also reports pressure-drop, outlet-temperature,
-average-holdup and average phase-velocity differences.
+result records each model's edge rate and pressure drop, cell-centre distance and represented
+cell length (m), pressure (Pa), temperature (K), liquid-holdup and superficial gas/liquid
+velocity (m/s) profiles, plus network mass-balance residuals. Distance is measured from the
+physical inlet for forward and reverse flow. A route-profiled Beggs-Brill edge is solved as
+sequential local-slope segments; their accepted boundary results are aggregated onto one
+monotonic cell-centre route profile. Reported mean holdup and phase velocities are weighted by
+represented cell length rather than sample count. The requested Beggs-Brill increments are
+distributed across route legs with at least one increment per leg, including non-divisible meshes.
+
+`compareMeshSensitivity(...)` replays the same topology at two or more requested segment counts.
+It applies the count only to selected edges on detached definitions, executes the normal
+fail-closed comparison at every mesh and returns each full result by count. Unselected edge
+fidelity and mesh settings remain unchanged, and the caller topology is not run or mutated.
 
 ```java
 NetworkHydraulicModelComparison comparison =
@@ -139,17 +149,23 @@ double holdupDifference = flowline.getAverageLiquidHoldupDifference();
 TwoFluidPipe initialized = result.createInitializedTwoFluidPipe("flowline");
 initialized.setTransactionalTransientEnabled(true);
 initialized.runTransient(0.001, UUID.randomUUID());
+
+NetworkHydraulicModelComparison.MeshSensitivityResult mesh =
+    comparison.compareMeshSensitivity(
+        Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
+NetworkHydraulicModelComparison.EdgeComparison fine =
+    mesh.getResult(10).getEdgeComparison("flowline");
 ```
 
 `NetworkHydraulicModelComparisonTest` exercises two different SRK well fluids through
-a conservative template, 20 km flowline and 500 m riser at 2.0 kg/s and a nearby
-1.5 kg/s point. It checks both network mass balances, physical profile bounds,
-cross-model engineering bounds for all five quantities, preservation of the original
-topology/model selection, clone independence and one accepted transactional transient
-step. This is evidence-ladder level 3/4 (conservation and engineering bounds), not an
-independent correlation benchmark. Terrain-profile aggregation for the segmented
-Beggs-Brill path, mesh sensitivity, transient multi-edge junction conservation,
-energy/component closure and large-field runtime remain open qualification work.
+a conservative template, an undulating 20 km flowline and a 500 m riser at 2.0 kg/s,
+plus a nearby 1.5 kg/s point. It checks both network mass balances, physical and
+distance-aligned profile bounds, cross-model engineering bounds for all five quantities,
+4/8/10-segment sensitivity, preservation of the original topology/model selection,
+clone independence and one accepted transactional transient step. This is evidence-ladder
+level 3/4 (conservation and engineering bounds), not an independent correlation benchmark.
+Transient multi-edge junction conservation, energy/component closure, representative
+large-field runtime and independent field data remain open qualification work.
 
 ## Typed field and equipment identity
 
@@ -249,8 +265,8 @@ obtain a feasible optimizer result.
 ## Dependency-ordered continuation
 
 1. Extend qualification to multi-template, daisy-chain, branches/loops and brownfield
-   networks, including terrain-profile aggregation and representative large-field runtime.
-   Include water, gas and CO2 injection with pump/compressor and shared host constraints.
+   networks, including representative large-field runtime. Include water, gas and CO2
+   injection with pump/compressor and shared host constraints.
    Add controlled reservoir-pressure updates without duplicating reservoir ownership.
 2. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
    / process optimization, then detailed lifecycle models and reduced-order surrogates.
