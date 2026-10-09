@@ -105,6 +105,53 @@ class PscBidEconomicsTest {
   }
 
   @Test
+  void monteCarloIsRepeatableAndOrdered() {
+    PscBidEconomics.Distribution a = baseBid().monteCarlo(400, 42L, 0.25, 0.30, 0.20);
+    PscBidEconomics.Distribution b = baseBid().monteCarlo(400, 42L, 0.25, 0.30, 0.20);
+    assertEquals(a.getEmvP50(), b.getEmvP50(), 0.0);
+    assertTrue(a.getEmvP90() <= a.getEmvP50() && a.getEmvP50() <= a.getEmvP10());
+    assertTrue(a.getProbabilityLoss() >= 1.0 - 0.30 - 1e-12, "dry outcome always loses money");
+    assertTrue(a.getProbabilityLoss() <= 1.0);
+  }
+
+  @Test
+  void monteCarloWithZeroSpreadReproducesTheBaseCase() {
+    PscBidEconomics bid = baseBid();
+    PscBidEconomics.Distribution d = bid.monteCarlo(50, 1L, 0.0, 0.0, 0.0);
+    assertEquals(bid.evaluate().getEmv(), d.getEmvP50(), 1e-9);
+    assertEquals(d.getEmvP90(), d.getEmvP10(), 1e-9);
+    assertEquals(0.70, d.getProbabilityLoss(), 1e-12);
+    assertThrows(IllegalArgumentException.class, () -> bid.monteCarlo(5, 1L, 0.1, 0.1, 0.1));
+  }
+
+  @Test
+  void tornadoIsOrderedBySwingAndLowBelowHigh() {
+    java.util.Map<String, double[]> rows = baseBid().tornado(0.20);
+    assertEquals(5, rows.size());
+    double previous = Double.POSITIVE_INFINITY;
+    for (double[] row : rows.values()) {
+      assertTrue(row[0] <= row[1]);
+      double swing = row[1] - row[0];
+      assertTrue(swing <= previous + 1e-12);
+      previous = swing;
+    }
+    double[] price = rows.get("oil price");
+    assertTrue(price[1] > price[0]);
+  }
+
+  @Test
+  void priceShareStepsReduceValueAboveTheThreshold() {
+    double flat = baseBid().evaluate().getEmv();
+    PscBidEconomics stepped = baseBid().setPriceShareSteps(new double[] {60.0, 90.0}, new double[] {0.05, 0.10});
+    assertTrue(stepped.evaluate().getEmv() < flat);
+    assertEquals(366.6150651111952, stepped.evaluate().getEmv(), 1e-6);
+    PscBidEconomics below = baseBid().setOilPrice(55.0).setPriceShareSteps(new double[] {60.0}, new double[] {0.05});
+    assertEquals(baseBid().setOilPrice(55.0).evaluate().getEmv(), below.evaluate().getEmv(), 1e-12);
+    assertThrows(IllegalArgumentException.class,
+        () -> new PscBidEconomics().setPriceShareSteps(new double[] {60.0, 50.0}, new double[] {0.1, 0.2}));
+  }
+
+  @Test
   void mismatchedProfileLengthsAreRejected() {
     assertThrows(IllegalArgumentException.class, () -> new PscBidEconomics()
         .setDevelopmentProfile(new double[] {1.0, 2.0}, new double[] {1.0}, new double[] {1.0, 2.0}));

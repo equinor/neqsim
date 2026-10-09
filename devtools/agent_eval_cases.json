@@ -225,6 +225,24 @@
       "prompt": "which equipment is the bottleneck in the flowsheet, utilization snapshot and capacity margin",
       "expect_agent_top3": ["optimize", "optimize-processmodel", "process-model", "network-energy-systems"],
       "expect_skills_top5": ["neqsim-capacity-and-utilization-analysis"]
+    },
+    {
+      "id": "psc-bid-break-even",
+      "prompt": "bid on an exploration block under a production sharing contract, break-even offered profit oil share and EMV",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-psc-bid-economics-screening"]
+    },
+    {
+      "id": "presalt-no-pvt-fluid",
+      "prompt": "Santos Basin pre-salt block with no PVT, CO2-rich associated gas analogue fluid and low base high cases",
+      "expect_agent_top3": ["frontier-block-bid-agent", "fluid-characterization-agent"],
+      "expect_skills_top5": ["neqsim-brazil-presalt-analogue-basis"]
+    },
+    {
+      "id": "anp-open-data",
+      "prompt": "Brazilian ANP open data production by well, bid round blocks and unit conversion",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-anp-open-data"]
     }
   ],
   "contracts": [

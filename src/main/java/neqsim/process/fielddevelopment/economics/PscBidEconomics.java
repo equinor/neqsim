@@ -1,7 +1,14 @@
 package neqsim.process.fielddevelopment.economics;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Screening economics for a bid on a Production Sharing Contract (PSC) exploration block.
@@ -51,6 +58,8 @@ public class PscBidEconomics implements Serializable {
   /** Maximum State profit-oil share allowed in the solver. */
   private static final double MAX_SHARE = 0.99;
 
+  private double[] priceStepThresholds = new double[0];
+  private double[] priceStepShares = new double[0];
   private double oilPrice = 70.0;
   private double discountRate = 0.10;
   private double royaltyRate = 0.15;
@@ -137,6 +146,33 @@ public class PscBidEconomics implements Serializable {
   public PscBidEconomics setPriceLinkedShare(double sharePerUsd, double referencePriceUsd) {
     this.sharePerUsdAboveReference = sharePerUsd;
     this.referencePrice = referencePriceUsd;
+    return this;
+  }
+
+  /**
+   * Sets a price-band table that adds to the State profit-oil share, as found in some contract terms.
+   *
+   * <p>
+   * For an oil price, the added share is the entry whose threshold is the highest one not above the price. Below the
+   * lowest threshold nothing is added. The values must come from the contract; this class does not supply any.
+   * </p>
+   *
+   * @param thresholds oil price thresholds in USD per barrel, in increasing order
+   * @param addedShares added State share of profit oil for each band, as a fraction
+   * @return this object
+   * @throws IllegalArgumentException if the arrays differ in length or thresholds are not increasing
+   */
+  public PscBidEconomics setPriceShareSteps(double[] thresholds, double[] addedShares) {
+    if (thresholds.length != addedShares.length) {
+      throw new IllegalArgumentException("thresholds and addedShares must have the same length");
+    }
+    for (int i = 1; i < thresholds.length; i++) {
+      if (thresholds[i] <= thresholds[i - 1]) {
+        throw new IllegalArgumentException("thresholds must be increasing");
+      }
+    }
+    this.priceStepThresholds = Arrays.copyOf(thresholds, thresholds.length);
+    this.priceStepShares = Arrays.copyOf(addedShares, addedShares.length);
     return this;
   }
 
@@ -350,7 +386,7 @@ public class PscBidEconomics implements Serializable {
     double stateSum = 0.0;
     double netPreTaxSum = 0.0;
     double stateShare = Math.min(MAX_SHARE,
-        share + sharePerUsdAboveReference * Math.max(0.0, oilPrice - referencePrice));
+        share + sharePerUsdAboveReference * Math.max(0.0, oilPrice - referencePrice) + priceStepShare());
     for (int t = 0; t < n; t++) {
       double revenue = production[t] * scale * oilPrice;
       double royalty = royaltyRate * revenue;
@@ -391,6 +427,295 @@ public class PscBidEconomics implements Serializable {
       res.governmentTake = netPreTaxSum > 0.0 ? stateSum / netPreTaxSum : Double.NaN;
     }
     return new double[] {pvContractor, pvState};
+  }
+
+  /**
+   * Gets the share added by the price-band table at the current oil price.
+   *
+   * @return added State share, 0 if no band applies
+   */
+  private double priceStepShare() {
+    double added = 0.0;
+    for (int i = 0; i < priceStepThresholds.length; i++) {
+      if (oilPrice >= priceStepThresholds[i]) {
+        added = priceStepShares[i];
+      }
+    }
+    return added;
+  }
+
+  /**
+   * Creates an independent copy of this object.
+   *
+   * @return copy with the same inputs
+   */
+  public PscBidEconomics copy() {
+    PscBidEconomics c = new PscBidEconomics();
+    c.oilPrice = oilPrice;
+    c.discountRate = discountRate;
+    c.royaltyRate = royaltyRate;
+    c.costOilCap = costOilCap;
+    c.profitOilShareOffered = profitOilShareOffered;
+    c.sharePerUsdAboveReference = sharePerUsdAboveReference;
+    c.referencePrice = referencePrice;
+    c.priceStepThresholds = Arrays.copyOf(priceStepThresholds, priceStepThresholds.length);
+    c.priceStepShares = Arrays.copyOf(priceStepShares, priceStepShares.length);
+    c.taxRate = taxRate;
+    c.depreciationYears = depreciationYears;
+    c.lossOffsetCap = lossOffsetCap;
+    c.workingInterest = workingInterest;
+    c.signatureBonus = signatureBonus;
+    c.explorationProgramCost = explorationProgramCost;
+    c.discoveryDelayYears = discoveryDelayYears;
+    c.chanceOfDiscovery = chanceOfDiscovery;
+    c.production = Arrays.copyOf(production, production.length);
+    c.capex = Arrays.copyOf(capex, capex.length);
+    c.opex = Arrays.copyOf(opex, opex.length);
+    c.volumeScales = Arrays.copyOf(volumeScales, volumeScales.length);
+    c.volumeWeights = Arrays.copyOf(volumeWeights, volumeWeights.length);
+    return c;
+  }
+
+  /**
+   * Runs a Monte Carlo on the development value given a discovery.
+   *
+   * <p>
+   * Oil price, volume and CAPEX are multiplied by independent mean-preserving lognormal factors. The chance of
+   * discovery is kept as a probability: each sample gives an EMV equal to the pre-discovery cost plus the chance of
+   * discovery times the sampled development value. The probability of loss counts the dry outcome, which loses the
+   * pre-discovery cost in every case.
+   * </p>
+   *
+   * @param samples number of samples, at least 10
+   * @param seed random seed for repeatable results
+   * @param priceSigma lognormal sigma of the oil price multiplier
+   * @param volumeSigma lognormal sigma of the volume multiplier
+   * @param capexSigma lognormal sigma of the CAPEX multiplier
+   * @return distribution summary
+   * @throws IllegalArgumentException if fewer than 10 samples are requested
+   */
+  public Distribution monteCarlo(int samples, long seed, double priceSigma, double volumeSigma, double capexSigma) {
+    if (samples < 10) {
+      throw new IllegalArgumentException("samples must be at least 10");
+    }
+    Random rnd = new Random(seed);
+    double[] emv = new double[samples];
+    int lossGivenDiscovery = 0;
+    double sum = 0.0;
+    for (int i = 0; i < samples; i++) {
+      PscBidEconomics c = copy();
+      c.oilPrice = oilPrice * lognormal(rnd, priceSigma);
+      double vm = lognormal(rnd, volumeSigma);
+      for (int k = 0; k < c.volumeScales.length; k++) {
+        c.volumeScales[k] *= vm;
+      }
+      double cm = lognormal(rnd, capexSigma);
+      for (int k = 0; k < c.capex.length; k++) {
+        c.capex[k] *= cm;
+      }
+      Result r = c.evaluateAtShare(profitOilShareOffered);
+      emv[i] = r.emv;
+      sum += r.emv;
+      if (r.pvPreDiscoveryCost + r.pvDevelopmentGivenDiscovery < 0.0) {
+        lossGivenDiscovery++;
+      }
+    }
+    Arrays.sort(emv);
+    Distribution d = new Distribution();
+    d.samples = samples;
+    d.emvMean = sum / samples;
+    d.emvP90 = percentile(emv, 0.10);
+    d.emvP50 = percentile(emv, 0.50);
+    d.emvP10 = percentile(emv, 0.90);
+    d.probabilityLossGivenDiscovery = (double) lossGivenDiscovery / samples;
+    d.probabilityLoss = (1.0 - chanceOfDiscovery) + chanceOfDiscovery * d.probabilityLossGivenDiscovery;
+    return d;
+  }
+
+  /**
+   * Draws a mean-preserving lognormal multiplier.
+   *
+   * @param rnd random generator
+   * @param sigma lognormal sigma
+   * @return multiplier with expected value 1
+   */
+  private static double lognormal(Random rnd, double sigma) {
+    return Math.exp(sigma * rnd.nextGaussian() - 0.5 * sigma * sigma);
+  }
+
+  /**
+   * Gets a percentile of a sorted array by linear interpolation.
+   *
+   * @param sorted ascending values
+   * @param p fraction between 0 and 1
+   * @return interpolated value
+   */
+  private static double percentile(double[] sorted, double p) {
+    double pos = p * (sorted.length - 1);
+    int lo = (int) Math.floor(pos);
+    int hi = (int) Math.ceil(pos);
+    return sorted[lo] + (pos - lo) * (sorted[hi] - sorted[lo]);
+  }
+
+  /**
+   * Runs a one-at-a-time sensitivity of EMV, ordered by swing.
+   *
+   * <p>
+   * Each input is moved down and up by the relative swing and the two EMV values are reported with the lower first. The
+   * chance of discovery is capped at 1.
+   * </p>
+   *
+   * @param relativeSwing relative change, for example 0.2 for plus and minus 20 percent
+   * @return map from input name to a two-element array {lowEmv, highEmv}, largest swing first
+   */
+  public Map<String, double[]> tornado(double relativeSwing) {
+    final Map<String, double[]> unsorted = new LinkedHashMap<String, double[]>();
+    double lo = 1.0 - relativeSwing;
+    double hi = 1.0 + relativeSwing;
+    unsorted.put("oil price", order(copy().setOilPrice(oilPrice * lo).evaluateAtShare(profitOilShareOffered).emv,
+        copy().setOilPrice(oilPrice * hi).evaluateAtShare(profitOilShareOffered).emv));
+    unsorted.put("volume", order(scaledVolume(lo), scaledVolume(hi)));
+    unsorted.put("capex", order(scaledCapex(lo), scaledCapex(hi)));
+    unsorted.put("chance of discovery", order(
+        copy().setChanceOfDiscovery(chanceOfDiscovery * lo).evaluateAtShare(profitOilShareOffered).emv,
+        copy().setChanceOfDiscovery(Math.min(1.0, chanceOfDiscovery * hi)).evaluateAtShare(profitOilShareOffered).emv));
+    unsorted.put("discount rate",
+        order(copy().setDiscountRate(discountRate * lo).evaluateAtShare(profitOilShareOffered).emv,
+            copy().setDiscountRate(discountRate * hi).evaluateAtShare(profitOilShareOffered).emv));
+    List<String> keys = new ArrayList<String>(unsorted.keySet());
+    Collections.sort(keys, new Comparator<String>() {
+      @Override
+      public int compare(String a, String b) {
+        double sa = unsorted.get(a)[1] - unsorted.get(a)[0];
+        double sb = unsorted.get(b)[1] - unsorted.get(b)[0];
+        return Double.compare(sb, sa);
+      }
+    });
+    Map<String, double[]> rows = new LinkedHashMap<String, double[]>();
+    for (String k : keys) {
+      rows.put(k, unsorted.get(k));
+    }
+    return rows;
+  }
+
+  /**
+   * Orders two values ascending.
+   *
+   * @param a first value
+   * @param b second value
+   * @return two-element array with the smaller value first
+   */
+  private static double[] order(double a, double b) {
+    return a <= b ? new double[] {a, b} : new double[] {b, a};
+  }
+
+  /**
+   * Gets the EMV with the volume cases scaled.
+   *
+   * @param factor multiplier on all volume scales
+   * @return EMV in million USD net to the working interest
+   */
+  private double scaledVolume(double factor) {
+    PscBidEconomics c = copy();
+    for (int k = 0; k < c.volumeScales.length; k++) {
+      c.volumeScales[k] *= factor;
+    }
+    return c.evaluateAtShare(profitOilShareOffered).emv;
+  }
+
+  /**
+   * Gets the EMV with the CAPEX scaled.
+   *
+   * @param factor multiplier on the CAPEX profile
+   * @return EMV in million USD net to the working interest
+   */
+  private double scaledCapex(double factor) {
+    PscBidEconomics c = copy();
+    for (int k = 0; k < c.capex.length; k++) {
+      c.capex[k] *= factor;
+    }
+    return c.evaluateAtShare(profitOilShareOffered).emv;
+  }
+
+  /**
+   * Summary of a Monte Carlo run on a PSC bid. Money is in million USD net to the working interest.
+   *
+   * @author ESOL
+   * @version 1.0
+   */
+  public static class Distribution implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private int samples;
+    private double emvMean;
+    private double emvP90;
+    private double emvP50;
+    private double emvP10;
+    private double probabilityLoss;
+    private double probabilityLossGivenDiscovery;
+
+    /**
+     * Gets the number of samples.
+     *
+     * @return sample count
+     */
+    public int getSamples() {
+      return samples;
+    }
+
+    /**
+     * Gets the mean EMV.
+     *
+     * @return mean EMV
+     */
+    public double getEmvMean() {
+      return emvMean;
+    }
+
+    /**
+     * Gets the low EMV, exceeded with 90 percent probability.
+     *
+     * @return P90 EMV
+     */
+    public double getEmvP90() {
+      return emvP90;
+    }
+
+    /**
+     * Gets the median EMV.
+     *
+     * @return P50 EMV
+     */
+    public double getEmvP50() {
+      return emvP50;
+    }
+
+    /**
+     * Gets the high EMV, exceeded with 10 percent probability.
+     *
+     * @return P10 EMV
+     */
+    public double getEmvP10() {
+      return emvP10;
+    }
+
+    /**
+     * Gets the probability that the bid loses money, counting the dry outcome.
+     *
+     * @return probability between 0 and 1
+     */
+    public double getProbabilityLoss() {
+      return probabilityLoss;
+    }
+
+    /**
+     * Gets the probability of loss given a discovery.
+     *
+     * @return probability between 0 and 1
+     */
+    public double getProbabilityLossGivenDiscovery() {
+      return probabilityLossGivenDiscovery;
+    }
   }
 
   /**
