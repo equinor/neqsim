@@ -59,6 +59,8 @@ Other stations (compression, hydrate and slug control, power from shore) are out
 - **Scale rate-dependent case inputs.** Wash water, lift gas and similar fixed inputs in a case runner give mass imbalance at low rates; scale them with rate and check the mass balance in the first and last year.
 - **Record what is ruled out and why** (for example a lever that moves a constraint that is not binding), so it is not re-proposed.
 - **Do not let the model rank ideas it cannot see.** If the dominant limit is outside the model (produced water, flare, power), screen it against demonstrated peaks and label it so.
+- **Match the subsea option to the binding stream.** Water separation helps only when water or liquid binds; when a gas-side cluster binds (gas scrubber K, contactor momentum, injection power), screen gas-liquid separation with local gas reinjection as the subsea alternative, with the compression power from a `Compressor` on the separated gas, and compare it with the topside package it would replace.
+- **Re-run the saved valuation before reusing a task.** Rebuild `results.json` from the scripts; a copied task can hold results from an older script version (one such rerun moved an all-levers NPV by 20 %). Check that valuation scripts still run after any edit, since a line merge can hide an `elif` inside a comment.
 
 ## Idea register schema
 
