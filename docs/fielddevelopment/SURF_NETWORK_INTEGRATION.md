@@ -4,11 +4,13 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `d0c61da34f15a434f545936e00baeb1bd21a730f`.
+The current baseline is `ffde2f43443ae65d57d02497e31fefb71b637555`.
 Source implementation, regression evidence and field qualification are different maturity levels.
-Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity and live well
-pressure-rate coupling. The current increment adds same-topology hydraulic comparison and a guarded
-steady-to-transient handoff; none of these completes independent field qualification.
+Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
+pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
+The current increment adds typed powered/control-edge builders and representative multi-template,
+daisy-chain, brownfield, injection and large-field acceptance evidence; none of these completes
+independent field qualification.
 
 ## Current functionality and reuse decisions
 
@@ -119,10 +121,19 @@ The caller's topology is neither run nor mutated.
 
 Both complete network solves and every requested edge must converge with the requested
 model. Beggs-Brill fallback and stale or failed two-fluid evidence are rejected. The
-result records each model's edge rate and pressure drop, complete pressure (Pa),
-temperature (K), liquid-holdup and superficial gas/liquid velocity (m/s) profiles,
-plus network mass-balance residuals. It also reports pressure-drop, outlet-temperature,
-average-holdup and average phase-velocity differences.
+result records each model's edge rate and pressure drop, cell-centre distance and represented
+cell length (m), pressure (Pa), temperature (K), liquid-holdup and superficial gas/liquid
+velocity (m/s) profiles, plus network mass-balance residuals. Distance is measured from the
+physical inlet for forward and reverse flow. A route-profiled Beggs-Brill edge is solved as
+sequential local-slope segments; their accepted boundary results are aggregated onto one
+monotonic cell-centre route profile. Reported mean holdup and phase velocities are weighted by
+represented cell length rather than sample count. The requested Beggs-Brill increments are
+distributed across route legs with at least one increment per leg, including non-divisible meshes.
+
+`compareMeshSensitivity(...)` replays the same topology at two or more requested segment counts.
+It applies the count only to selected edges on detached definitions, executes the normal
+fail-closed comparison at every mesh and returns each full result by count. Unselected edge
+fidelity and mesh settings remain unchanged, and the caller topology is not run or mutated.
 
 ```java
 NetworkHydraulicModelComparison comparison =
@@ -139,17 +150,23 @@ double holdupDifference = flowline.getAverageLiquidHoldupDifference();
 TwoFluidPipe initialized = result.createInitializedTwoFluidPipe("flowline");
 initialized.setTransactionalTransientEnabled(true);
 initialized.runTransient(0.001, UUID.randomUUID());
+
+NetworkHydraulicModelComparison.MeshSensitivityResult mesh =
+    comparison.compareMeshSensitivity(
+        Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
+NetworkHydraulicModelComparison.EdgeComparison fine =
+    mesh.getResult(10).getEdgeComparison("flowline");
 ```
 
 `NetworkHydraulicModelComparisonTest` exercises two different SRK well fluids through
-a conservative template, 20 km flowline and 500 m riser at 2.0 kg/s and a nearby
-1.5 kg/s point. It checks both network mass balances, physical profile bounds,
-cross-model engineering bounds for all five quantities, preservation of the original
-topology/model selection, clone independence and one accepted transactional transient
-step. This is evidence-ladder level 3/4 (conservation and engineering bounds), not an
-independent correlation benchmark. Terrain-profile aggregation for the segmented
-Beggs-Brill path, mesh sensitivity, transient multi-edge junction conservation,
-energy/component closure and large-field runtime remain open qualification work.
+a conservative template, an undulating 20 km flowline and a 500 m riser at 2.0 kg/s,
+plus a nearby 1.5 kg/s point. It checks both network mass balances, physical and
+distance-aligned profile bounds, cross-model engineering bounds for all five quantities,
+4/8/10-segment sensitivity, preservation of the original topology/model selection,
+clone independence and one accepted transactional transient step. This is evidence-ladder
+level 3/4 (conservation and engineering bounds), not an independent correlation benchmark.
+Transient multi-edge junction conservation, energy/component closure, representative
+large-field runtime and independent field data remain open qualification work.
 
 ## Typed field and equipment identity
 
@@ -184,6 +201,38 @@ definitions, PLEM/manifold bindings, direct production and injection execution,
 conservative mass flow, identity/port/service errors, loop diagnostics and replay.
 These tests qualify the identity/integration contract; they do not independently
 qualify B&B or two-fluid correlations or field design.
+
+### Powered injection and field-scale acceptance
+
+`FieldNetworkTopology` now creates typed choke, fixed-outlet-pressure pump,
+fixed-differential-pressure pump and compressor edges directly through the existing
+`LoopedPipeNetwork` equations. The stable field edge and canonical hydraulic element
+are created atomically, with validated opening/efficiency/pressure inputs and explicit
+service, direction and endpoint ports. Callers no longer need to create an untyped raw
+edge and then register it. JSON replay preserves the element type and its serializable
+operating definition; externally configured pump/compressor maps and runtime equipment
+still follow the documented rebind contract.
+
+`FieldNetworkScaleAcceptanceTest` adds three synthetic integration cases:
+
+- twelve wells on three daisy-chained templates plus a brownfield satellite tie-in,
+  PLEM, PLET and host riser. Differing but component-compatible source fluids mix at
+  conservative junctions; selected routes use Darcy-Weisbach, Beggs-Brill and two-fluid
+  hydraulics on the same topology. The solve and replay close field mass balance and
+  reproduce the host operating point;
+- a 6 kg/s water-injection pump feeding three 2 kg/s injectors through a 160 bara shared
+  header, plus a CO2-rich 3 kg/s compressor-discharge boundary feeding two 1.5 kg/s gas
+  injectors. The water case checks pump power and the expected hydrostatic pressure gain
+  to deeper wells; the gas case checks conservative shared-header allocation;
+- fifty wells on five templates, retaining a deliberately broad 60 s CI guard. The
+  reference local run completed the solve in about 3.0 s.
+
+These cases qualify canonical composition, conservation, replay and a synthetic runtime
+envelope. They do not qualify the simplified compressor equation or pump/compressor
+maps, CO2 phase behavior across a compression train, injection-well injectivity, field
+data, or independent B&B/two-fluid accuracy. The CO2 case therefore starts at an
+explicit compressor-discharge boundary rather than presenting an unqualified compressor
+train as validated.
 
 ## Live well pressure-rate coupling
 
@@ -237,22 +286,42 @@ available under the process-unit name. A copied unit rebuilds the topology defin
 copies the bound `WellSystem`/`WellFlow` objects and rebinds them before execution;
 accepted runtime state is not shared with the source unit.
 
+For a well that can be routed to mutually exclusive separator pressure levels, register
+the existing alternative network edges with
+`FieldWellNetworkProcessUnit.registerExclusiveRouteSelector(...)`. Automation then
+exposes `route.<selector>.selection` as a zero-based discrete input. One verified write
+atomically makes the selected edge fully available and every alternative unavailable;
+invalid fractional selections are rejected without changing the line-up. A zero edge
+availability is an exact closed route in the Newton network solve, while fractional
+availability remains a hydraulic derating. The selected HP or LP fixed-pressure sink
+therefore feeds back through the same live well/network coupling instead of acting as a
+downstream flow split. Copies preserve selector definitions but keep independent edge
+state.
+
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
-well chokes through individual gathering lines to a host, then routes the stable host
-stream between two separators and mapped compressors on a common shaft. It exercises
-configured well/line/separator operating limits, compressor surge/stonewall evidence,
-driver and gearbox power, a shared plant-power budget, a transactional route action,
-baseline restoration and an operating-envelope slice. A route rejected by compressor
-or other hard evidence remains rejected; the test does not relax physical limits to
-obtain a feasible optimizer result.
+well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
+fixed-pressure sinks. Those stable sink streams feed separators, compressor-suction
+scrubbers and mapped compressors on a common shaft before a pressure-controlled 100 bara
+gas-export boundary. The workflow exercises configured
+well/per-route-line/separator/scrubber operating limits, compressor surge/stonewall
+evidence, driver and gearbox power, a shared plant-power budget, transactional discrete
+route actions, qualified export-pressure evidence, exact action restoration and an
+operating-envelope slice. A second deterministic acceptance case instantiates ten live
+wells with twenty alternative route edges and verifies complete well, line, vessel,
+shaft, shared-power and export-boundary evidence without changing the two-well physical
+model or introducing a separate optimizer. The lower
+pressure route must reduce well backpressure and increase deliverability. A route
+rejected by compressor or other hard evidence remains rejected; the test does not relax
+physical limits to obtain a feasible optimizer result.
 
 ## Dependency-ordered continuation
 
-1. Extend qualification to multi-template, daisy-chain, branches/loops and brownfield
-   networks, including terrain-profile aggregation and representative large-field runtime.
-   Include water, gas and CO2 injection with pump/compressor and shared host constraints.
-   Add controlled reservoir-pressure updates without duplicating reservoir ownership.
-2. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
+1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
+   boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
+   controlled reservoir-pressure updates without duplicating reservoir ownership.
+   Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
+2. Map the same geometry/equipment to existing `SubseaProductionSystem` SURF design/cost
+   and `NetworkOptimizer`
    / process optimization, then detailed lifecycle models and reduced-order surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.

@@ -28,6 +28,18 @@ Use `NetworkPipe.setHydraulicModelType` for PIPE/MULTIPHASE_PIPE edge overrides
 `getHydraulicModelStatus` plus `getTwoFluidModel().getSteadyStateConvergenceReport()`.
 Changing fidelity preserves identity and geometry. This is steady-state composition;
 it does not qualify mixed-fidelity transients or directly bind a live WellSystem.
+Use `NetworkHydraulicModelComparison` to replay selected canonical edges with both
+Beggs-Brill and two-fluid hydraulics. Its normalized position/pressure/temperature/
+holdup/phase-velocity profiles include segmented terrain routes, and
+`compareMeshSensitivity` evaluates selected edges on detached meshes without changing
+the caller topology. Inspect every convergence status and mass-balance residual; these
+comparisons are integration evidence until independently qualified.
+Use `FieldNetworkTopology` for stable production/injection node, edge, tag and port
+identity over that same graph. Its typed `addChoke`, `addPump`,
+`addPumpDifferentialPressure` and `addCompressor` methods create the existing canonical
+network elements atomically; they do not add a second solver. Rebind external equipment
+and fluids after JSON replay, and distinguish synthetic conservation/runtime evidence
+from qualified pump/compressor maps or field hydraulics.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
@@ -38,6 +50,7 @@ replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 | Steady looped network: `LoopedPipeNetwork`, `LoopDetector`, `NetworkLoop` | `neqsim.process.equipment.network` | Node-edge gas or multiphase gathering/export model; discovers loops and solves hydraulic operating points. | `setFluidTemplate`, `addSourceNode`, `addJunctionNode`, `addFixedPressureSinkNode`, `addPipe`, `run`, `getNodePressure`, `getTotalSinkFlow` |
 | Hydraulic details: `NetworkLinearSolver`, `NetworkPipe`, pipe-model bindings | `neqsim.process.equipment.network` | Linear solve helpers and per-edge hydraulic state; edges may use Darcy-Weisbach or a configured `PipeBeggsAndBrills` model. | `NetworkLinearSolver.solve`, `NetworkLinearSolver.solveGaussian`, `NetworkPipe.getFlowRate`, `NetworkPipe.getBBModel` |
 | Well and facility elements | `neqsim.process.equipment.network` | IPR, tubing, choke, compressor, pump, regulator, artificial-lift, and related source/edge elements within the network. | `addWellIPR`, `addChoke`; configure through `NetworkPipe` element-specific setters |
+| Typed field/SURF identity: `FieldNetworkTopology` | `neqsim.process.equipment.network` | Stable production/injection roles, equipment tags and ports over the canonical network, including typed choke, pump and compressor construction. | `addPipe`, `addChoke`, `addPump`, `addPumpDifferentialPressure`, `addCompressor`, `validateForExecution`, `copyDefinition` |
 | Constrained optimization: `NetworkOptimizer`, `NetworkConstraints`, `NetworkObjectives`, `NetworkDecisionVariable` | `neqsim.process.equipment.network` | Bounded decision search, objectives, constraints, and production-versus-power Pareto candidates. | `createOptimizer`, `optimizeProductionNLP`, `optimizeMultiObjective`, `NetworkOptimizer.optimize` |
 | Period and nomination planning: `NetworkPlanningHorizon`, `NetworkNomination`, `NetworkPeriod`, `NetworkAvailabilitySchedule` | `neqsim.process.equipment.network` | Period-indexed demand/supply basis, edge availability, and planning-horizon feasibility inputs. | `NetworkNomination.getValue(int)`, `NetworkNomination.getUnit`, `NetworkPeriod.getStart`, `NetworkPeriod.getEnd` |
 | Quality tracking and mixing: `NetworkQualitySpecification`, `NetworkQualityProfile`, `NetworkQualityLimit`, `NetworkQualityEvaluator`, `NetworkQualityComplianceReport`, `NetworkMixingResult` | `neqsim.process.equipment.network` | Point-specific calculated and measured attributes, component limits, mixing evidence, and compliance status. | `NetworkQualityProfile.addUpperLimit`, `addRange`, `addMeasuredAttributeLimit`, `LoopedPipeNetwork.evaluateQualityProfiles`, `report.isCompliant`, `report.getResults` |

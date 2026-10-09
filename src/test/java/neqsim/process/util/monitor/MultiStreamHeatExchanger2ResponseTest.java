@@ -1,6 +1,7 @@
 package neqsim.process.util.monitor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -39,5 +40,10 @@ public class MultiStreamHeatExchanger2ResponseTest {
     JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
     double approach = jsonObject.get("temperatureApproach").getAsDouble();
     assertEquals(5.0, approach, 1e-2);
+    assertEquals(5.0, jsonObject.get("specifiedTemperatureApproach").getAsDouble(), 1e-8);
+    assertEquals(80.0, jsonObject.get("maximumFeasibleApproach").getAsDouble(), 1e-8);
+    assertEquals("CONVERGED", jsonObject.get("solverStatus").getAsString());
+    assertEquals("", jsonObject.get("solverMessage").getAsString());
+    assertTrue(jsonObject.get("specificationMet").getAsBoolean());
   }
 }

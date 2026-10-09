@@ -408,9 +408,26 @@ def _resolve_task_dir() -> str:
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def _resolve_output_dir(task_report_dir):
+    """Return ``--output-dir`` or the task's ordinary report directory.
+
+    Continuous-task finalization uses this option to run the exact canonical
+    renderer into an immutable revision folder without replacing the ordinary
+    current-best Task Solver report.
+    """
+    if "--output-dir" not in sys.argv:
+        return task_report_dir
+    index = sys.argv.index("--output-dir") + 1
+    if index >= len(sys.argv):
+        print("ERROR: --output-dir requires a path")
+        sys.exit(2)
+    return os.path.abspath(sys.argv[index])
+
+
 TASK_DIR = _resolve_task_dir()
 FIG_DIR = os.path.join(TASK_DIR, "figures")
-REPORT_DIR = os.path.join(TASK_DIR, "step3_report")
+TASK_REPORT_DIR = os.path.join(TASK_DIR, "step3_report")
+REPORT_DIR = _resolve_output_dir(TASK_REPORT_DIR)
 REPORT_BASENAME = "Report"      # replaced by the report title in __main__
 DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
 HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
@@ -1240,7 +1257,7 @@ PAPER_SECTIONS = {
 # Hand-written report content lives in step3_report/report_sections.json, not
 # in a forked copy of this script. Keys: title, author, classification,
 # doc_number, revision, manual_sections, paper_sections, paper_* metadata.
-REPORT_SECTIONS_FILE = os.path.join(REPORT_DIR, "report_sections.json")
+REPORT_SECTIONS_FILE = os.path.join(TASK_REPORT_DIR, "report_sections.json")
 
 
 def _load_report_sections():
@@ -1652,7 +1669,7 @@ def _local_report_constant(name):
     override = REPORT_SECTIONS.get(name.lower())
     if isinstance(override, str) and override.strip():
         return override.strip()
-    local_copy = os.path.join(REPORT_DIR, "generate_report.py")
+    local_copy = os.path.join(TASK_REPORT_DIR, "generate_report.py")
     if os.path.abspath(local_copy) == os.path.abspath(__file__):
         return ""
     if not os.path.isfile(local_copy):
@@ -2291,6 +2308,52 @@ def format_reproducibility_text(results):
         text += "\n\n**{}**\n- results.json SHA-256 {}\u2026; report generator {}\u2026".format(
             _t("Report build"), stamp["results"], stamp["generator"])
     return text
+
+
+def _load_final_report_metadata():
+    """Load the continuous-task finalization record supplied by its orchestrator."""
+    path = _cli_option("--final-metadata")
+    if not path:
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8-sig") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError) as error:
+        print("ERROR: could not read final-report metadata {}: {}".format(path, error))
+        sys.exit(2)
+    if not isinstance(data, dict) or not data.get("revision"):
+        print("ERROR: final-report metadata must contain a revision")
+        sys.exit(2)
+    return data
+
+
+def format_final_report_record(metadata):
+    """Render the immutable final-delivery identity and audit references as Markdown."""
+    if not metadata:
+        return ""
+    source = metadata.get("source") or {}
+    audit = metadata.get("audit_trail") or {}
+    lines = [
+        "This standalone deliverable is final-report revision **{}**, generated from "
+        "the latest reviewed Task Solver baseline. Transient cycle history is deliberately "
+        "not reproduced here; the task-folder records below remain the authoritative audit trail."
+        .format(metadata.get("revision")),
+        "",
+        "- Finalized: {}".format(metadata.get("finalized_at") or "-"),
+        "- Reviewed by: {}".format(metadata.get("reviewer") or "-"),
+        "- Promoted baseline: {}".format(source.get("baseline_id") or "-"),
+        "- Source cycle: {}".format(source.get("source_cycle") or "-"),
+    ]
+    if metadata.get("note"):
+        lines.append("- Finalization note: {}".format(metadata.get("note")))
+    lines.extend(["", "**Audit trail and reproducibility companions**"])
+    for label, key in (("Work record", "work_record"),
+                       ("Living Report", "living_report"),
+                       ("Decision ledger", "ledger"),
+                       ("Promoted cycle manifest", "cycle")):
+        if audit.get(key):
+            lines.append("- {}: `{}`".format(label, audit[key]))
+    return "\n".join(lines)
 
 
 def _reproducibility_body(results):
@@ -6037,7 +6100,11 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     })
 
     reproducibility_text = format_reproducibility_text(results)
+    final_report_record = format_final_report_record(_load_final_report_metadata())
     appendices = []
+    if final_report_record:
+        appendices.append(("Final Report Record", {
+            "content": final_report_record, "has_markdown": True}))
     if results and _headline_rows(results) and results.get("key_results"):
         appendices.append(("Complete Numerical Results", {
             "content": "", "has_all_results": True}))

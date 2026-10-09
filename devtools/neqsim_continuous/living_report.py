@@ -141,6 +141,8 @@ def build(task_dir):
     goal, baseline = load_goal(task_dir) or {}, load_baseline(task_dir)
     from .evidence import analyze
     evidence_impact = analyze(task_dir, load_plan(task_dir))
+    from .final_report import status as final_report_status
+    final_report = final_report_status(task_dir)
     state = read_json(os.path.join(cont, "state.json"), {}) or {}
     meta, base_kpis = baseline.get("meta", {}), baseline.get("kpis", {})
     cycles = _cycles(cont)
@@ -170,6 +172,17 @@ def build(task_dir):
     if state.get("phase") == "reopen_requested":
         out += ["", "**Reopen requested** by cycle {}: {}. Run `neqsim task-solve` to re-enter the "
                 "solve loop.".format(state.get("reopen_cycle"), ", ".join(state.get("reopen_reasons", [])))]
+
+    out += ["", "## Report views", ""]
+    out += _table(["View", "Purpose", "Current artifact"], [
+        ("Status", "Five-second operational position and next action", "neqsim task-status <task>"),
+        ("Living Report", "Regenerated history, changes and decisions", "continuous/LIVING_REPORT.md"),
+        ("Current-best Task Solver report", "Latest validated engineering result",
+         "step3_report/ (neqsim report <task>)"),
+        ("Final Report", "Reviewed standalone delivery without transient history",
+         "{}{}".format(final_report.get("revision") or "not generated",
+                       " (stale)" if final_report.get("stale") else "")),
+    ])
 
     out += ["", "## Evidence changes and impact", ""]
     evidence_view = evidence_impact if evidence_impact.get("changes") else ((last or {}).get("evidence") or {})
@@ -309,6 +322,10 @@ def build(task_dir):
     if state.get("state") in ("goal_met", "converged") and history and meta.get("source_cycle") != history[-1].get("cycle"):
         actions.append("Review and promote the solved cycle: `neqsim task-promote <task> {} --reviewer NAME`."
                        .format(history[-1].get("cycle")))
+    if meta.get("source_cycle") and not evidence_impact.get("changes"):
+        if not final_report.get("available") or final_report.get("stale"):
+            actions.append("Generate the reviewed standalone delivery: "
+                           "`neqsim task-report <task> --final --reviewer NAME`.")
     if last and last.get("triggers"):
         actions.append("Triage the triggers of cycle {} (`digest.md`, `triggers.json`).".format(last["cycle_id"]))
     out += ["- " + a for a in actions] or ["- None; the task is in routine monitoring."]
