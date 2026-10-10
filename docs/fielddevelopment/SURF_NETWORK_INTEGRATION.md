@@ -234,6 +234,26 @@ data, or independent B&B/two-fluid accuracy. The CO2 case therefore starts at an
 explicit compressor-discharge boundary rather than presenting an unqualified compressor
 train as validated.
 
+### Canonical topology to SURF design and cost
+
+`SubseaProductionSystem.createSurfDesignBasis(topology)` derives an immutable
+`FieldNetworkSurfDesignBasis` from the same typed nodes and exact `LoopedPipeNetwork`
+edge geometry used by hydraulics. It counts production and injection wells, trees,
+templates/manifolds, PLETs, PLEMs, jumpers and production/injection risers, and aggregates
+the physical jumper, infield-flowline, tie-in, trunkline, pipeline and riser lengths and
+diameters. It is a read-only design view, not another graph or solver.
+
+`SubseaProductionSystem.estimateSurfCosts(topology)` routes that basis into the existing
+`SURFCostEstimator`. Direct tiebacks now carry zero manifold cost, while multi-template
+and multi-manifold layouts price the actual number of distribution units instead of an
+implicit single manifold. The detailed `CostEstimateResult` retains the Class 4 estimate
+basis, material take-off and a quality flag explaining aggregation. Topology geometry is
+reduced to length-weighted line diameters and representative per-unit manifold slots and
+weight because the current estimator accepts one scalar basis per line category. Mixed
+diameters, different manifold designs, route-specific installation methods, umbilical
+routing, wall-thickness design and supplier quotations therefore require disaggregated
+detailed design; this bridge must not be presented as vendor qualification or AFC cost.
+
 ## Live well pressure-rate coupling
 
 `FieldWellNetworkCoupler` binds normal `WellSystem` and `WellFlow` equipment to
@@ -320,9 +340,9 @@ physical limits to obtain a feasible optimizer result.
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
-2. Map the same geometry/equipment to existing `SubseaProductionSystem` SURF design/cost
-   and `NetworkOptimizer`
-   / process optimization, then detailed lifecycle models and reduced-order surrogates.
+2. Extend the topology-derived `SubseaProductionSystem` screening basis to disaggregated
+   route/equipment design cases, then connect it to `NetworkOptimizer` / process
+   optimization, detailed lifecycle models and reduced-order surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export

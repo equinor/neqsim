@@ -60,6 +60,9 @@ public class SURFCostEstimator {
   /** Number of manifold slots. */
   private int manifoldSlots = 4;
 
+  /** Number of subsea manifolds or templates. */
+  private int numberOfManifolds = 1;
+
   /** Manifold dry weight in tonnes. */
   private double manifoldWeightTonnes = 120.0;
 
@@ -304,13 +307,16 @@ public class SURFCostEstimator {
     addLineItem("S", "Christmas Trees", numberOfWells, "ea", treeCost, totalTreeCost,
         est.getVesselDays() * numberOfWells);
 
-    // Manifold
-    est = new SubseaCostEstimator(region);
-    est.calculateManifoldCost(manifoldSlots, manifoldWeightTonnes, waterDepthM, manifoldHasTestHeader);
-    double manifoldCost = est.getTotalCost();
-    subseaCostUSD += manifoldCost;
-    addLineItem("S", "Subsea Manifold (" + manifoldSlots + "-slot)", 1, "ea", manifoldCost, manifoldCost,
-        est.getVesselDays());
+    // Manifolds and templates
+    if (numberOfManifolds > 0) {
+      est = new SubseaCostEstimator(region);
+      est.calculateManifoldCost(manifoldSlots, manifoldWeightTonnes, waterDepthM, manifoldHasTestHeader);
+      double manifoldCost = est.getTotalCost();
+      double totalManifoldCost = manifoldCost * numberOfManifolds;
+      subseaCostUSD += totalManifoldCost;
+      addLineItem("S", "Subsea Manifold/Template (" + manifoldSlots + "-slot)", numberOfManifolds, "ea", manifoldCost,
+          totalManifoldCost, est.getVesselDays() * numberOfManifolds);
+    }
 
     // PLETs
     if (numberOfPLETs > 0) {
@@ -648,6 +654,7 @@ public class SURFCostEstimator {
     // Field configuration
     Map<String, Object> config = new LinkedHashMap<String, Object>();
     config.put("numberOfWells", numberOfWells);
+    config.put("numberOfManifolds", numberOfManifolds);
     config.put("waterDepthM", waterDepthM);
     config.put("region", region.name());
     config.put("contingencyPct", contingencyPct * 100);
@@ -947,6 +954,27 @@ public class SURFCostEstimator {
    */
   public void setManifoldSlots(int manifoldSlots) {
     this.manifoldSlots = manifoldSlots;
+  }
+
+  /**
+   * Set the number of subsea manifolds or templates.
+   *
+   * @param numberOfManifolds number of units; zero represents a direct tieback without a manifold
+   */
+  public void setNumberOfManifolds(int numberOfManifolds) {
+    if (numberOfManifolds < 0) {
+      throw new IllegalArgumentException("Number of manifolds cannot be negative");
+    }
+    this.numberOfManifolds = numberOfManifolds;
+  }
+
+  /**
+   * Get the number of subsea manifolds or templates.
+   *
+   * @return configured unit count
+   */
+  public int getNumberOfManifolds() {
+    return numberOfManifolds;
   }
 
   /**
