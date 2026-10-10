@@ -36,6 +36,49 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-09 — New subsea template with a second-field target versus spare slots and host-platform wells: cannibalisation, shared LP gas, staged option
+**Type:** G (Workflow)
+**Keywords:** subsea template, infill, second field, cannibalisation, incremental share, spare slots, host platform wells, shared LP gas, gas intensity, flowline back-pressure, hydrate, no-touch time, staged option value, Monte Carlo, break-even
+**Solution:** Private task folder (redacted): script-backed screening (open licence polygons and remaining reserves, calibrated flowline curves, NeqSim Beggs-and-Brill and hydrate flash, annual profile model with 3000-draw Monte Carlo, tornado, break-evens, value bridge), results.json and Word report; edits to `neqsim-subsea-and-wells` and `neqsim-capacity-increase-screening` skills.
+**Notes:** Value the cheaper access routes (spare slots, host-platform wells) on the same profile model before a new template: they reach most of the barrels at far lower cost and risk, and a staged route carries an option value for the template. Incremental share per well must decay with well count or acceleration is booked as new oil; shared LP gas is best expressed as gas intensity per barrel per stream. A second fluid on a calibrated chain needs a viscosity or oil-equivalent factor recalibrated against NeqSim. The sign of a third flowline flips with trunk diameter. Gotchas: the report needs `tornado` as a list of dictionaries (keep per-concept tornados under another key); `create_file` cannot overwrite; PowerShell `*>` writes UTF-16.
+
+### 2026-10-09 — Firm exploration well in an unproven play near a host: presence factor, break-even chance and volume, template effect
+**Type:** G (Workflow)
+**Keywords:** APbo, APA, firm well, Rogn, play presence factor, break-even chance of success, break-even volume, host ullage, value of information, play opening, Monte Carlo, Beggs and Brill, hydrate
+**Solution:** Private task folder (redacted): script-backed screening (open well and discovery data, host ullage from a forecast, volume prior, NeqSim tie-back and hydrate screening, post-tax Monte Carlo EMV with tornado and break-even map), results.json and Word report with decision-support appendices.
+**Notes:** When the target formation is absent in public wells near the host, carry reservoir presence as a separate chance factor and treat distant finds as size and fluid analogues only. The go criteria are a pair (volume and chance); break-even chance is cost over success-case value, not cost over value plus cost. Template provisions are worth little in expectation when chance is about 16 percent. Gotchas: read wellstream composition after `init(0)` before building a stream; results.json tornado must be a list of dictionaries for the report; `\mathcal` is not supported in report equations; PowerShell `*>` writes UTF-16.
+
+### 2026-10-09 — Long-reach keeper well from a platform: reach, slot and riser availability, break-even volume
+**Type:** G (Workflow)
+**Keywords:** extended-reach drilling, torque and drag, soft-string, platform slot census, riser slots, sidetrack integrity, erosional velocity, break-even volume, EMV, technical probability, APbo, Monte Carlo
+**Solution:** Private task folder (redacted): script-backed screening (open licence and well data, document census, calibrated torque-and-drag reach model, NeqSim Beggs-and-Brill tubing and riser curves, Monte Carlo EMV), results.json and Word report with decision-support appendices; community skill `neqsim-erd-reach-screening` with tests.
+**Notes:** Reach, not deliverability, is the technical gate: friction calibrated to the longest historic well on the rig gives a technical probability that falls from near 1 to near 0 over a few kilometres, and the rate is capped by erosional velocity at the riser top. The break-even recoverable volume by reach is a better gate than a single EMV when volume and chance of success are unknown. Gotchas: a plateau rate above volume per year releases the whole reserve in one year and inflates value; fixed-point tubing pressure loops diverge for volatile oil and gas condensate (use bisection); PowerShell `*>` writes UTF-16.
+
+### 2026-10-09 — Discovery maturation to a project basis: tie-back route selection with an area host, licence window and CO2 blend
+**Type:** F (Design) / G (Workflow)
+**Keywords:** VPbo, PD01, discovery tie-back, template tie-in versus direct line, HPHT gas condensate, MEG, erosional velocity, host end-of-life, licence decision window, CO2 blend, Monte Carlo, Norwegian cash-flow tax
+**Solution:** Private task folder (redacted): script-backed screening (open licence and reserves data, forecast host profiles, NeqSim fluid, hydrate and Beggs-and-Brill tables, tank model calibrated to a forecast profile, after-tax Monte Carlo), results.json, Word report with project-basis appendices.
+**Notes:** Calibrating gas in place so that the model reproduces the forecast total avoids inventing a volume when the study data are missing. The route concept matters less than volume and gas price; the template path is the single concept-level uncertainty, expressed as a block probability and a tie-in cost at which the ranking flips. Host gas volume is not the constraint; slot, MEG, CO2 and end-of-life are. Gotchas: a CPA hydrate flash hangs above about 30 wt % MEG; Beggs and Brill raises an exception for non-positive pressure; output_parameters in results.json must be percentile dictionaries.
+
+### 2026-10-09 — Appraisal-first versus go-now strategy for a deep HPHT gas-condensate tie-back with an adjacent prospect
+**Type:** F (Design) / G (Workflow)
+**Keywords:** HPHT, shut-in tubing head pressure, 10 ksi, 15 ksi, HIPPS, gas-condensate tie-back, value of information, design-to-cost, dual-target well, APbo, VPbo, Monte Carlo, Norwegian cash-flow tax
+**Solution:** Private task folder (redacted): screening value model with Monte Carlo/VOI, NeqSim shut-in pressure and hydraulics, results.json and Word report; Java `ShutInPressureEstimator` (neqsim.process.mechanicaldesign.subsea) with `ShutInPressureEstimatorTest`.
+**Notes:** Pressure class (shut-in pressure versus 10 ksi) and a volume near break-even decide the strategy, not the line hydraulics; the dense gas column removes about a quarter of the reservoir pressure. A single-field appraisal had negative VOI, a dual-target well (prospect plus appraisal leg) kept most of the value. Post-tax value is 22 percent of pre-tax cash flow under immediate expensing, so show both. Gotchas: PowerShell redirection writes UTF-16 and unencoded JSON writes cp1252; read_file caches by path.
+
+### 2026-10-09 — New subsea template for infill and a prospect: ullage-driven value, exploration VOI and fast-track screening
+**Type:** G (Workflow)
+**Keywords:** infill, subsea template, host ullage, plateau, exploration value of information, PLX well, NCS cash-flow tax, loss refund, break-even EUR, robustness map, appendix sections, Beggs and Brill heat transfer
+**Solution:** Private task folder (redacted): four executed notebooks (host and wells, NeqSim flow assurance, value/VOI/risk, benchmarks), results.json assembled from data files, report with draft decision-document appendices; Java: `FiscalParameters.norwegianCashFlowTax2022()` and `lossRefund` in `GenericTaxModel` with `NorwegianCashFlowTaxTest`.
+**Notes:** Value of an infill on a plateau-limited host is an ullage-timing question: net new oil must subtract displaced booked barrels, and the break-even EUR per well (about 1 MSm3) is more informative than a tornado. The registry Norway model is the pre-2022 uplift regime; use the cash-flow preset (after-tax = 22 % of pre-tax, dry-hole cost 78 % refunded, so exploration break-even chance of success is low). `CashFlowEngine` discounts from the first year with cash flow and ignores negative production years: replicate acceleration cases outside it or compare on a positive-only series. `PipeBeggsAndBrills` is adiabatic unless `setUseOverallHeatTransferCoefficient(true)` and it throws when the outlet pressure goes negative.
+
+
+### 2026-10-09 — Offshore platform as a tie-in hub: host capacity, host-life economics and exploration success case
+**Type:** G (Workflow)
+**Keywords:** host ullage, tie-in, area development, host cessation, tariff principle, fixed-cost sharing, JV value, minimum economic volume, exploration EMV, value of information, hydrate CPA, power from shore CO2
+**Solution:** Private task folder (redacted): data-acquisition and analysis scripts, results.json assembled from data files, and a host-life function with tests in the enterprise host-ullage skill.
+**Notes:** The host had free capacity; only a large gas tie-in made rich gas binding. The decisive result was commercial: under a marginal-cost tariff the incumbent JV lost value from extending the host at any fixed cost, under a pro-rata fixed-cost share it gained; without tie-ins the host ceased within a few years for any plausible fixed cost, because the incumbent decline sets the end. Check the incumbent plan against demonstrated capacity before blaming a tie-in for a binding constraint. A wrong literature value produced an apparent 8 K hydrate error; verify the benchmark first.
+
 ### 2026-10-04 — Multi-platform offshore oil process model with historian hold-out validation
 **Type:** B (Process)
 **Keywords:** ProcessModel, multi-platform, Uleberg P/A split, setpoint-driven topology, GOR factor, compressor efficiency calibration, hold-out window, scrubber K utilisation
@@ -1333,3 +1376,165 @@ Spotless check, both all-file hook stages, regenerated engineering-coverage fres
 documentation-search audit, Javadoc and diff checks pass. Hosted CI remains pending
 on the published repair; the PR stays draft.
 **Notes:** Export gas and water close by construction when allocations are the input; judge the model on oil volume and density, gas density, compressor suction flows and temperatures. The untuned EOS gave nearly the same plant-level numbers although Psat error fell from 11 % to 2 %. Shaft power far below measured points to anti-surge recycle, not efficiency; it stays an open item until recycle and vendor maps are modelled. `getMolarMass()` returns kg/mol, so yields per kmol need a factor 1000. A Souders-Brown K without internals data gave a misleading 3x scrubber load: use an `inferred` row from the connected compressor flow instead. The gas-cap S and heavy scale sit at their bounds, which is a finding.
+
+## 2026-10-09: APbo valuation of an undrilled NCS licence (screening)
+
+- Task: option valuation of an undrilled North Sea licence with four candidate hosts within 20 km; work-process choice, drainage, host, flow assurance, class 5 cost, Monte Carlo and EMV, data strategy, memo outline.
+- Result: subsea tie-back to the longest-lived host is the robust valuation base; ERD from the nearest host is the upside; volume dominates, host life reorders short tie-backs.
+- Gaps found: CashFlowEngine implements the pre-2022 NCS tax regime; TiebackAnalyzer has no host life, tariff or tax and rejects shallower hosts; PipeBeggsAndBrills needs an inlet-pressure solve helper.
+- Tooling: NCS open-data licence-neighbourhood recipe and ownership name form added to community skills; host-cessation warning added to the enterprise area-development workflow skill.
+
+## 2026-10-09: APbo valuation of two unnamed NCS opportunities in a producing licence (screening)
+
+- Task: valuation input for a 2027 well prioritisation of two undrilled targets in a producing North Sea licence; work-process choice, drainage, host, flow assurance, class 5 cost, Monte Carlo and EMV, data strategy, memo outline.
+- Result: a joint subsea tie-back to the nearest existing template, reusing an idle route to the most capable host, is the robust base; wells from existing slots are cheaper but available in a small share of outcomes; drilling both is worth most, gating the second on the first has the best profitability index.
+- Gaps found: same as the previous APbo task (pre-2022 tax regime in CashFlowEngine, TiebackAnalyzer lacks host life, tariff and tax, no inlet-pressure solve helper for PipeBeggsAndBrills); no Java changes were made.
+- Tooling: community NCS data skill got a recipe for producing licences with unnamed opportunities; enterprise area-development workflow skill got three common mistakes (idle infrastructure, EMV versus profitability index, RC5 anchor).
+
+## 2026-10-09: APbo valuation of PL193 Kvitebjorn Nord (screening)
+
+- Task: valuation input for a 2027 well prioritisation of an unnamed near-field target in the producing PL193 (Kvitebjorn platform host); work-process choice, drainage, host headroom, flow assurance, class 5 cost, Monte Carlo and EMV, data strategy, memo outline.
+- Result: a well from the Kvitebjorn platform (slot or sidetrack) is the only concept with positive NPV at the P50 volume; a subsea satellite needs more than 4 MSm3 OE or an isolated, high-rate compartment; Valemon tie-back is ruled out; drilling the platform well in 2027 has the highest EMV, and waiting only pays if data lift the chance of success by 0.10.
+- Gaps found: pre-2022 tax regime in CashFlowEngine, TiebackAnalyzer lacks host life, tariff and tax, no inlet-pressure solve helper for PipeBeggsAndBrills, valuation model copied a third time; no Java changes were made.
+- Tooling: community NCS data skill got a platform-host recipe; enterprise area-development workflow skill got three common mistakes (subsea first, capacity versus pressure, pre-sanction year dropped).
+
+## 2026-10-09: Early removal of a North Sea oil FPSO - storage, P&A, injection and business case (screening)
+
+- Task: consequences of consolidating a producing FPSO into a neighbouring storage unit for tank logistics, well P&A, gas injection, lifetime status and the early-removal business case.
+- Result: storage becomes a tanker-logistics constraint solvable with an overlap policy; P&A of shut-in wells, not the tow-off, sets the earliest removal date unless plugged before cessation; early cessation loses value unless about 86 % of the hosted volumes are re-routed.
+- Gaps found: no Java storage/offloading simulator and no decommissioning schedule/cost class (NIP-1, NIP-2 recorded in the task); no Java changes were made.
+- Tooling: installation inference in doc_retriever is now diacritic-insensitive; the enterprise PDM skill got gotchas for long histories, tied-in fields and multilateral rows.
+
+## 2026-10-09: Gas export crossover and compression-stage bypass on a North Sea satellite platform (screening)
+
+- Task: value of routing satellite gas through a crossover line directly to the host export unit, disconnecting a 2nd compression stage whose gas is let down again, and lowering the 1st-stage separator pressure; timing of the satellite measure versus the host measure.
+- Result: bypassing the 2nd stage saves about 1.7 MW and 10-11 kt CO2/yr with a positive pre-tax NPV but about zero after tax; it does not depend on the host-side change. The host-side measure frees only 11 % of host 1st-stage gas and is bimodal in value (positive only if the host separators bind and gas stays at the high-load level); lowering separator pressure below 27 barg is a late-life option.
+- Gaps found: no usable fixed-speed compressor curves for two of three trains; Java hydrateFormationTemperature on a CPA fluid with free water throws (NIP-1, MCP route used); no Java changes were made.
+- Tooling: neqsim-rotating-equipment-design skill got a gotcha on removing one stage of a fixed-speed train (curve power, not system-pressure path).
+
+## 2026-10-09: Subsea tie-back to a gas host as a supplement to a platform extension: work process, value, timeline (screening)
+
+- Task: evaluate swapping an oil-province well in an ongoing platform-extension project for a third gas-province well and tying the oil-province target back to a gas host as a separate project; choose between two work processes; give a plan to the opportunity-maturity gate.
+- Result: the tie-back alone loses about 0.8 to 1.2 GNOK post-tax in both subsurface readings (positive only if the extension platform has under about 10 MSm3/d of room for the extra wells); the value in the bundle is the third well (about +0.4 to +1.2 GNOK). A fourth well on the extension, or a lower end-of-life host inlet pressure (about +2.9 GNOK for 5 bar before capex), beats the tie-back. The swap decision falls about three years before the tie-back sanction. The tie-back fills only 2 to 7 % of the free export-plant capacity.
+- Gaps found: no reservoir model for connectivity and volume; work-process texts not available; host capacity for the third well unknown. A reused sibling model had a mismatch between notes and headline run (well factor, capacity cap meaning) and a same-year start for both routes in its separate-compartment case; both were corrected and reported. No Java changes (NIP-1 proposes moving the option comparison to Java).
+- Tooling: neqsim-reservoir-facility-value-chain skill got a trap entry on comparing options on one calendar and decomposing bundled proposals.
+
+## 2026-10-09: Subsea prospect tie-back screening and relinquishment decision on an NCS subsea host (screening)
+
+- Task: screen options for an undrilled prospect near an FPSO-hosted subsea field: tie-back potential to a planned neighbouring project, development concepts, value and uncertainty, timing and phasing, maturation scope, as input to a relinquishment decision.
+- Result: conditional on a discovery the tie-back has post-tax NPV P90/P50/P10 of about 0.6 / 1.4 / 2.7 GNOK (100 %) and breaks even at about 0.9 MSm3 at 7 km; an exploration well has a positive EMV (about 0.8 GNOK) down to a chance of success of about 5-6 % because a dry well costs about 22 % after the 78 % refund. Host liquid, water and gas incl. lift limits bind long before oil, so timing (best first oil about 2032) and displaced booked barrels drive the value.
+- Gaps found: no prospect data (position, volume, Pg, PVT), no tie-in design data, no host plan allocation, no Class 4 cost; water modelled as liquid-equivalent rate in the pipe model; licence inferred from open polygons.
+- Tooling: neqsim-capacity-increase-screening got rules on plan-consistent capacity, per-constraint ullage and displaced barrels; neqsim-field-economics got an exploration EMV / break-even Pg section; neqsim-task-workflow L3b notes that read_file caches by path. NIP-01 to NIP-03 proposed (ullage helper, exploration decision class, water in pipe model); no Java changes.
+
+## 2026-10-09: Opportunity screening for an infill sidetrack and two undrilled prospects around a host-limited NCS subsea oil field (screening)
+
+- Task: screen a sidetrack from an existing template and two prospects for more infrastructure near a satellite oil field tied back to an ageing host; subsurface summary, drainage and design-to-cost solutions, value, timing, data-collection strategy and a presentation.
+- Result: the sidetrack is marginally positive (post-tax NPV P10/P50/P90 about -0.06 / 0.08 / 0.25 GNOK, 100 %, break-even EUR about 0.4 MSm3); exploration of either prospect adds no expected value at analogue volumes and placeholder Pg, and turns positive only if the host lives to about 2038 or later. Host life and discovery volume dominate the tornado; a satellite tie is the design-to-cost concept in most successful cases; a new tie-back above about 1.5 kSm3/d needs a dedicated line because the shared trunk back-pressure exceeds the choke headroom.
+- Gaps found: no prospect volumes, Pg or earlier maturation material, no host plan, trunk ID or arrival pressure, no Class 4 cost; early-decline extrapolation under-predicts choked wells by 60-90 %, so type wells are EUR-anchored. A first flowline cost of 220 MNOK/km was caught by a capex sanity check and recalibrated.
+- Tooling: neqsim-field-economics (host life as scenario, concept choice after discovery, VOI, unit-cost sanity check), enterprise-pdm-api (oil in the condensate column, leg summing), neqsim-ncs-infrastructure-network (Sodir query gotchas) and neqsim-flow-assurance (shared trunk back-pressure) updated; NIP-01/02 proposed; no Java changes.
+
+## 2026-10-09: Reroute of a Midgard inlet separator train to the low-pressure reinjection compression system for low-pressure production of a subsea gas-condensate area (screening)
+
+- Task: evaluate rerouting one inlet separator train to the low-pressure compression system; topside options, process safety and capacity, subsea impact, production effect, scope/plan/timing, risk register, class 5 cost and value, maturation pipeline.
+- Result: only a small production uplift (about +0.09 MSm3/d P50, about 3 %) because flowline friction gives back about half of the 22 bar separator pressure reduction; the compression gas-turbine power (binding in about 41 % of cases) and separator gas capacity (about 25 %) bind first; NPV P50 about -70 MNOK (P(NPV>0) 42 %) versus about +110 MNOK (93 %) for a no-hardware HP optimisation; recommendation is to mature the reroute as a late-life option behind decisive reservoir-pressure and capacity data.
+- Gaps found: no reservoir pressure/PI, flowline geometry, line list or 3D model, relief basis for the low-pressure system, cost database or schedule; historian flow meters read a constant factor below allocated volumes; long tagreader reads returned empty frames until chunked.
+- Tooling: neqsim-plant-data got three pitfalls (silent read timeouts, frozen tags, meter basis vs allocation); NIP-01 (PipeBeggsAndBrills single-phase vs condensing-gas validation case) proposed; no Java changes.
+
+## 2026-10-09: Business-level and screening input for a licence with undrilled prospects and an external operator on the NCS (screening)
+
+- Task: decide the business level (screening or full evaluation) needed before a licence drill-or-drop decision, build a prospect inventory from open data, screen hosts and development options, risk the prospects (EMV, Pg, break-even Pg, value of information) and draft the data requests and input outline for the portfolio decision.
+- Result: screening plus a targeted review of the operator package is the right level; a full evaluation or a studied concept costs more than it adds at a 20 % share. Expected value of the drilling programme is small and positive at the assumed Pg (about +1.4 MUSD net, P(commercial) about 15 %), a stand-alone concept is negative, and the programme turns negative below a Pg near 0.19. The best tie-back host is the one with water room; the nearest host is water-limited in the plan years, so host ullage and water, not distance, decide.
+- Gaps found: no operator prospect list, volumes, Pg or seismic status, no business-level definitions, no joint-operating terms, no host design capacities, no class 5 cost database. The first pipe-flow pass had template-pressure rows that were not converged (arrival pressure far from the specified value, non-monotone in route length); they were re-solved with a bracketing fallback and the unverified rows excluded.
+- Tooling: enterprise-prospect-risking got `information_level_choice` (net value of information per business level at a company share); neqsim-ncs-ownership-equity got `licence_milestones` with local Oslo deadlines (epoch read as UTC is one day early); enterprise-area-development-workflow and enterprise-host-ullage-allocation got the late-life host water trap and the business-level rule. NIP-7 (arrival-pressure residual check and bracketing fallback in a pipe inlet-pressure solve) proposed; no Java changes.
+
+## 2026-10-09: Satellite oil discovery development screening and VPbo documentation (NCS subsea host) (screening)
+
+- Task: find a development solution for a 2018 oil discovery 6.4 km from a producing FPSO's nearest template (2.65 MSm3 booked), on hold at DG0 for low economy; subsurface and drainage update, low-cost flow assurance, cost update, timing and synergies, maturation pipeline, VPbo memo, design basis outline and development strategy.
+- Result: a new-template tie-back is break-even on the booked volume (post-tax NPV about 0.04 bn NOK at base, P(NPV>0) about 51 %, break-even Brent 68 USD/bbl, capex 5.7 bn NOK); extended-reach wells from the existing template are worth about 0.6 bn NOK at P50 if feasible (feasible in about 23 % of samples on assumed probabilities); at 1-2 kSm3/d the flowline is limited by heat loss and an unmeasured wax temperature, not by pressure drop; first oil in 2032-33 avoids a host liquid squeeze in 2029-31.
+- Gaps found: no subsurface model, PVT, WAT, tie-in design or cost data; booking not reconciled with Sodir (+16 %, negative rich-gas series).
+- Tooling: community benchmark skill crashed on a text state value (fixed with test); neqsim-flow-assurance got a low-rate tie-back section; enterprise-acquire-api got a Centuries booking gotcha. NIP-01 (satellite concept screener) and NIP-02 (rate-limited recovery) proposed; no Java changes.
+
+## 2026-10-09: Prospect tie-back to an NCS subsea host, prepare-for-success and early onboarding screening (screening)
+
+- Task: risked value, concept, host capacity, flow assurance, well deliverability and timing for an undrilled oil prospect tied back 12 km to an existing subsea template chain with a possible new flowline, as input to a drill / wait / drop decision.
+- Result: the success-case increment is worth about 2.5 BNOK after tax at the brief mean commercial volume on the template chain with a new flowline, 2.4 on the existing chain and 2.1 if the prospect pays a flowline itself; the exploration well has a positive EMV (about 26 MUSD at 100 % with the 78 % refund, about 6 MUSD without). The oil is heavy (24 API, 10 cP) so gas lift is needed from day one and water breakthrough limits the wells; host LP gas binds only in the plateau years; tie-in provisions of 250 MNOK have a negative EMV unless bought after a discovery.
+- Gaps found: no prospect PVT, wax, reservoir model, profiles or costs; brief text and table disagree on in-place volume; the brief EV and EBE could not be reproduced without equity and definitions.
+- Tooling: neqsim-flow-assurance got a tubing-outflow / gas-lift deliverability pattern and the unit of getMixtureViscosityProfile (cP); neqsim-field-economics got a KPI reconciliation bullet. NIP-1 (gas-lift well deliverability helper) and NIP-2 (prospect threshold helper) proposed; no Java changes.
+
+## 2026-10-09: Partner-operated exploration well on a non-Equinor-operated host, APbo decision support (screening)
+
+- Task: Equinor position on a partner (POL) exploration well in a producing NCS gas-condensate area, where the brief requires partner data that were not available.
+- Result: framework and provisional position instead of a validation. With declared placeholders the Equinor (30 %) expected value of drilling is about -1.3 MUSD (P10 -5.1, P90 +3.3), a dry hole costs Equinor about 4.3 MUSD after the 78 % refund, and only a one-well tie-back to existing infrastructure is economic (minimum economic volume about 1.7 MSm3 OE at 100 %). The Equinor EMV is zero at a median volume of about 1.5 MSm3 OE at Pg 0.35. Host processing capacity does not bind; host life (plan ends 2036) does.
+- Gaps found: no partner prospect data, no QAA documents, no host design capacity or tariff, no PDM data for a non-Equinor-operated host (fallback: Centuries plan plus Sodir monthly profiles).
+- Tooling: enterprise-host-ullage-allocation gained a non-operated-host fallback; a profile generator whose economic limit sat above the plateau lost half of the volume (caught by the mass-balance check, fixed). NIP-1 to NIP-3 proposed (2022 NCS tax regime in CashFlowEngine, exploration EMV helper, dewPointPressureFlash robustness); no Java changes.
+
+## 2026-10-09: Increased heat recovery from gas-turbine exhaust to cut electrode-boiler power (NCS field centre) (screening)
+
+- Task: value of a heating-medium coil on the exhaust of two gas turbines that also feed an OTSG and steam turbine, to displace electrode-boiler electricity (BRP item).
+- Result: one hot-end coil of about 6 MW on one turbine (660 m2, 7 t, 63 MNOK class 5) delivers about 4 MW of heat and about 30 GWh/yr of net electricity (35 gross, 5 lost steam-turbine output); NPV +67 MNOK pre-tax and +8 post-tax (post-tax P10/P50/P90 -0.1/+10/+23), break-even 514 NOK/MWh or 3.1 MW of electrode-boiler-served load. A stack-end coil needs 6x the area and has a negative NPV. CO2 is small on a Power-from-Shore grid factor (0.5 kt/yr) and 8.7 kt/yr at a marginal factor; abatement cost negative on both. A restored steam turbine (about 13 MW) is the larger lever.
+- Gaps found: electrode-boiler electric power history, cause of the OTSG/steam-turbine outage, exhaust duct space, OEM back-pressure limit, vendor quote, STS0050/ISO 21905 text.
+- Tooling: neqsim-power-generation got an exhaust-heat-recovery retrofit pattern (hot-end versus stack-end, steam-turbine loss, EB-duty trap, grid-factor basis, tag naming); cross-references and an electrode-boiler gotcha in neqsim-heat-integration and neqsim-energy-systems-and-electrification. NIP-01 (WHRU-to-HM coil class), NIP-02 (GT back-pressure sensitivity), NIP-03 (catalog calibration to measured exhaust) proposed; no Java changes.
+
+## 2026-10-10: Reset of a subsea tie-back extension project (HEP VPbo): design alternatives, design-to-cost and upside (screening)
+
+- Task: BRP item to reset a mature-field subsea extension project for a VPbo: subsea alternatives (CAP-X, 4-slot, re-use, cost reduction), well design-to-cost, flow assurance for different reserves, topside scope, acceleration and exploration upside.
+- Result: template concepts have negative post-tax NPV P50 (-511 / -377 / -325 MNOK for 4-slot / CAP-X / re-use) at PDM-typical EUR of 0.5 MSm3 per well and need 29-37 % lower CAPEX or 1.4 MSm3 per well to break even; slot-recovery sidetracks on the existing templates are positive (+183 MNOK P50, +529 if line and slot gates pass); the 6-in production line cannot carry today's flow (126 bara needed against 46 bara wellhead pressure) while the 10-in line is consistent with PDM (43 bara).
+- Gaps found: no project scope or target volumes, no template design or slot availability, no host nameplate capacities, no Class 4 cost, 6 STID drawings downloaded with 0 bytes.
+- Tooling: gotchas added to neqsim-subsea-and-wells (GOR tuning with the C7+ multiplier, init(0) before getMolarMass, water as a component, model-versus-plant check), neqsim-capacity-increase-screening (gated concepts, allowable CAPEX), neqsim-stid-retriever (empty downloads, extract readable PDFs) and neqsim-task-workflow (detached run pattern). NIP: PipeBeggsAndBrills capacity solver; gated concept evaluation in the field-development package.
+
+## 2026-10-09: Heater solution to enable better control of temperature at Kristin (BRP item, screening)
+
+- Task: value of an inlet heater using waste heat against the Tyrihans DEH for 1st-stage separator temperature, OiW and CO2 (PEPR 80269876).
+- Result: measured Tyrihans DEH averages 2.0 MW (breaker closed 25 % of hours, 9.6 kt CO2/y), so the PEPR 20 kt is a future figure; the heat to hold 35 C peaks at 4.4-4.7 MW in 2030-31 and DEH hits its 8.1 MW ceiling around 2029-30; a waste-heat heater has P50 NPV +119 MNOK (P10 +21, P90 +211, 94 % positive, break-even capex about 260 MNOK); DEH control alone and an electric heater do not pay.
+- Gaps found: heating-medium spare duty, DEH electrical data and Maria DEH tags, other-stream temperatures, OiW causality and value, heater cost, electrification date.
+- Tooling: neqsim-flow-assurance gained a DEH operations and energy-accounting subsection (power from breaker and current, not the trafo tap tag); NIP for CPA hydrateFormationTemperature error handling.
+
+## 2026-10-10: VPbo Afrodite PL293 - development solution, timing and host (screening)
+
+- Type A, standard, AACE class 5; script-backed (Sodir, Centuries, NeqSim PR78/CPA flow assurance, class 5 CAPEX, 2022 NCS tax, Monte Carlo, EVPI/EVSI).
+- Result: two-well HPHT subsea tie-back, base host Kvitebjorn (Visund equal), at break-even (P50 NPV about -7 MUSD, MEFS 6.9 vs 6.4 GSm3); conditional stage-gated GO for the VPbo, value from staged maturation and cluster/Valemon synergies.
+- Gaps: SUB100.02 and the PSS model not available; STID retrieval failed; no appraisal data.
+- Tooling: TiebackAnalyzer water-depth gate, dewPointPressureFlash wrong root at HPHT, staged-option recipe added to neqsim-field-development.
+
+## 2026-10-10: Linnorm Lange development - exploration preparation and host choice (screening)
+
+- Type B, standard, AACE class 5; script-backed (Sodir analogues and geotherm, Centuries, NeqSim SRK/PR/GERG/CPA and PipeBeggsAndBrills, class 5 CAPEX, Monte Carlo, EMV/VoI).
+- Result: Linnorm host preferred (P50-volume NPV about +106 MUSD against -30 Njord joint and -74 Njord stand-alone; break-even 2.3 vs 6.8-7.5 MSm3 oe); Njord gives 3 years earlier gas but does not pay; exploration well EMV negative at declared Pg 0.29 (break-even 0.32-0.49); no dedicated appraisal or keeper well.
+- Gaps: no prospect data (volume, pressure, Pg), Linnorm template/line status, Njord host life and tariff, licence equity, class 4 costs.
+- Tooling: Sodir analogue and geotherm recipe in neqsim-norwegian-continental-shelf-data, EMV flooring and keeper-well pattern in enterprise-prospect-risking, shared-terminal lesson in neqsim-task-workflow.
+
+## 2026-10-10: Revitalization screening of a depleted HPHT gas-condensate field (drainage points, drilling window, value)
+
+- Type B, standard, AACE class 5; script-backed (open and private source-system extracts, NeqSim PR Z and CVD, compartment p/z Monte Carlo, drilling-window and compaction Monte Carlo, option value Monte Carlo and tornado).
+- Result: recoverable gas is several times the booked remaining volume, so reach, isolation across overpressured shale and the CO2 export limit bind rather than volume or host capacity; conventional drilling has no window below about 860 bara, open-hole MPD with strengthening works at 130-390 bara, a liner cemented across the shale has none; rigless keep-alive actions are clearly positive, a gated sidetrack has a negative P50 but a positive expected value.
+- Gaps: casing/integrity data, leak-off and geomechanics, drilling cost basis, compartment connectivity tests, lab PVT.
+- Tooling: depleted-field revitalization recipe added to the reservoir history-match skill (low-rate wet-gas lift, drilling-window screen, common random numbers in tornados); source-system gotchas added to the production-data skill; NIPs for a depletion drilling-window class, Beggs-Brill low-rate wet gas and multi-compartment p/z.
+
+## 2026-10-10: POL opportunities Greater Horda - APbo valuation of five partner-operated licences (screening)
+
+- Type B, standard, AACE class 5; script-backed (Sodir open data and work obligations, Centuries and PDM host ullage, NeqSim SRK/SRK-CPA fluids and PipeBeggsAndBrills, class 5 CAPEX, 2022 NCS tax, per-licence and programme Monte Carlo, break-even Pg, VOI per business level, shared-host joint load).
+- Result: Equinor-net EMV PL1183 S +5.7, PL1293 +2.4, PL1151 about 0, PL1253 -1.1, PL1144 -1.1 MUSD (programme +5.8, P10 -27, P90 +66); price decides (no licence passes at 55 USD/bbl, all at 95); all five decisions to drill fall within 31 days (2027-02-17 to 03-20); three Troll C candidates curtail 32 % oil at P10; Level 2 or 3 evaluation never pays; QAA and commercial involvement for PL1183 S and PL1293.
+- Gaps: no public prospect data (declared analogues), operator packages, Equinor price deck and STEA, STID host capacity, JOA terms, APbo level definitions.
+- Tooling: Sodir gotchas (labels not in Sodir, Norwegian survey types, task-date clustering, hit rate as Pg upper bound) in neqsim-norwegian-continental-shelf-data; closed-form versus integration sign and VOI caps in enterprise-prospect-risking; joint-load check in enterprise-host-ullage-allocation (local edits, not pushed); NIPs for CashFlowEngine 2022 regime, TiebackAnalyzer ullage and a multi-licence valuation module.
+
+## 2026-10-10: POL opportunities Greater Tampen - APbo valuation of four partner-operated licences (screening)
+
+- Type B, standard, AACE class 5; script-backed (Sodir open data and work obligations, reused Centuries and PDM host ullage, NeqSim SRK/SRK-CPA fluids and PipeBeggsAndBrills, class 5 CAPEX, 2022 NCS tax, per-licence and programme Monte Carlo with the Horda seed, break-even Pg and volume, VOI per business level, shared-host joint load, combined nine-licence view).
+- Result: Equinor-net EMV PL1210 +4.1, PL1263 +0.5, PL1264 -1.6, PL1295 -8.0 MUSD (programme -5.0, P10 -31, P90 +32); combined with Greater Horda the nine licences are +0.8 MUSD and the priority set PL1183 S, PL1293, PL1210 +12.2; all four decisions to drill fall within 6 days (2027-03-14 to 03-20); Snorre B is excluded by produced water and three northern candidates curtail 21 % of oil on Snorre A at P10; Level 2 or 3 never pays; QAA and commercial for PL1210.
+- Gaps: no public prospect data (declared analogues), operator packages, result of wildcat 34/10-56 S, Equinor price deck and STEA, STID host capacity, JOA terms, APbo level definitions.
+- Tooling: Sodir neighbourhood gotchas in neqsim-norwegian-continental-shelf-data and the produced-water-binds rule in enterprise-host-ullage-allocation (local edits, not pushed); lesson to save per-draw EMVs so programmes can be added; NIPs for CashFlowEngine 2022 regime, TiebackAnalyzer ullage and a reusable multi-licence valuation.
+
+## 2026-10-10: OFC RC7 Shetland Chalk further development - test planning, drainage strategy and stage-gate pipeline (screening)
+
+- Type A, standard, AACE class 5; script-backed (public Equinor 2007 and Sodir evidence, STID OSB P&IDs text-extracted, Centuries FC2027, NeqSim PR78 P/A fluid, hydrate, scale and acid-job screening, task-local 1-D slab well model validated against the closed-form series, NCS 2022 tax cash flow, 1 500-run Monte Carlo and value of the test).
+- Result: best concept (depletion, propped multi-stage completion) post-tax NPV P10/P50/P90 -61/-13/+72 MUSD, P(NPV>0) 40 %; break-even EUR per well 170 (acid) / 199 (propped) kSm3; test then decide 9.2 MUSD against 1.4 MUSD blind; gate about 263 kSm3 propped test-well EUR with a connected-volume check; EUR is volume-limited, so a rate-only test cannot rank wells; free-b Arps overstates EUR 2.3x.
+- Gaps: no Shetland core, log, test, PVT or water data; OSB test-separator, PWRI and oil handling capacities; rig and slot status; costs class 5; wax, emulsion, asphaltene unknown.
+- Tooling: new skill neqsim-tight-reservoir-test-design, doc_retriever --doc-nos and a stid-retriever cross-reference (local edits, not committed); NIPs for a stimulated tight-well model, a rate-transient utility and a flowback compatibility report.
+
+## 2026-10-10: OSF low export pressure - compression stages and gas-lift booster (screening)
+
+- Type A, standard, AACE class 5; script-backed (live OSF historian 45 tags, STID P&IDs, sibling DX chart model rebuilt as a vectorised NeqSim-PR model, NeqSim Compressor cross-check, class 5 CAPEX from NeqSim cost correlations, annual economics, 3000-run Monte Carlo and tornado).
+- Result: two stages are needed from 2029 (one stage only to 2028, an extra impeller reaches about 107.7 bara and fails 2031-2036; three never needed). The gas-lift booster is tiny (0.2 MW at 150 barg, 0.7 MW at 195 barg, 80-140 m3/h). Stage 3 currently absorbs about 4.4 MW per train; decoupling it and retargeting stages 1-2 to export pressure avoids about 330 kt CO2 in 2029-2040, post-tax NPV +86 MNOK (MC P10/P50/P90 17/66/128, 5 % negative) on CAPEX 205 MNOK; in operation only from 2033 the value falls to about +8 MNOK.
+- Finding: the sibling DX revamp model omitted 1/eta_p in shaft power (71 % of the GT load, corrected 91-93 %), so its savings are about 31 % low.
+- Gaps: stage 3 map and absorbed power, Vestflanken gas-lift pressure, official suction and export pressure forecasts, vendor quote.
+- Tooling: gotcha added to neqsim-rotating-equipment-design; NIP-01 (coupled-shaft chart scan) and NIP-02 (recirculating-stage power) proposed, no Java changes.

@@ -445,3 +445,12 @@ class, search the source to confirm:
 - UK UKCS: 30% ring-fence CT + 10% supplementary charge = 40% marginal rate
 - Generic: Configurable via `GenericTaxModel`
 - Always use `CashFlowEngine` with the correct country code
+
+### Staged-option VPbo / DG1 screening for an unappraised HPHT discovery (lessons from Afrodite PL293)
+
+- Value the decision as a staged option (stop / commit now / mature to DG2 then develop only if positive); an at-break-even project (NPV about 0 at P50) still has positive EMV when maturation is cheap, so state EMV of maturing, not just P50 NPV.
+- Host life is a cost, not a constraint: price the years the profile outlives the host plan (host-alive cost, PV) and report a COP-shift curve; ullage rarely discriminates, host life and cost do.
+- Reservoir-model need is a value-of-information question: EVPI on volume vs EVSI of a sidetrack vs its net cost, with the well-count rule (about 45 % of volume over a 4-year plateau).
+- Cluster upside: report the share of nearby discovered gas that must be tied in for NPV > 0, not a single NPV.
+- Report break-even gas price from the model by bisection, never a rounded literal; keep literals out of narrative strings (derive them from the results dict).
+- HPHT dew point: do not trust `dewPointPressureFlash` (wrong root at 168 C); use a TP-flash bisection and CCE dropout. `TiebackAnalyzer` rejects shallow hosts through its water-depth gate; screen those hosts with the explicit pipe model.

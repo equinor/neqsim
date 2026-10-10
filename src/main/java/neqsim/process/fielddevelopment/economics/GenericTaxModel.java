@@ -110,9 +110,10 @@ public class GenericTaxModel implements TaxModel {
 
     // Corporate tax calculation
     double corporateTaxBase = revenueAfterRoyalty - opex - depreciation;
+    boolean refund = parameters.isLossRefund();
 
-    // Apply loss carry-forward for corporate tax
-    if (parameters.isLossCarryForward()) {
+    // Apply loss carry-forward for corporate tax (not used when losses are refunded immediately)
+    if (parameters.isLossCarryForward() && !refund) {
       if (corporateTaxBase > 0 && corporateTaxLossCarryForward > 0) {
         double usedLoss = Math.min(corporateTaxBase, corporateTaxLossCarryForward);
         corporateTaxBase -= usedLoss;
@@ -125,13 +126,14 @@ public class GenericTaxModel implements TaxModel {
       }
     }
 
-    double corporateTax = Math.max(0, corporateTaxBase) * parameters.getCorporateTaxRate();
+    double corporateTax = (refund ? corporateTaxBase : Math.max(0, corporateTaxBase))
+        * parameters.getCorporateTaxRate();
 
     // Resource/petroleum tax calculation (includes uplift deduction)
     double resourceTaxBase = revenueAfterRoyalty - opex - depreciation - uplift;
 
     // Apply loss carry-forward for resource tax
-    if (parameters.isLossCarryForward()) {
+    if (parameters.isLossCarryForward() && !refund) {
       if (resourceTaxBase > 0 && resourceTaxLossCarryForward > 0) {
         double usedLoss = Math.min(resourceTaxBase, resourceTaxLossCarryForward);
         resourceTaxBase -= usedLoss;
@@ -143,7 +145,7 @@ public class GenericTaxModel implements TaxModel {
       }
     }
 
-    double resourceTax = Math.max(0, resourceTaxBase) * parameters.getResourceTaxRate();
+    double resourceTax = (refund ? resourceTaxBase : Math.max(0, resourceTaxBase)) * parameters.getResourceTaxRate();
 
     // Calculate windfall tax if applicable
     double windfallTax = 0;

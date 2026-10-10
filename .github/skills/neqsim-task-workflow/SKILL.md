@@ -1588,7 +1588,10 @@ Document the independent check in `step2_analysis/notes.md` under a
       "approach": "...", "conclusions": "...", "references": "..."},
       "doc_number": "...", "revision": "...", "revision_history": [...]}`
       (`paper_sections` / `paper_*` keys for `--paper`). Non-empty values
-      override the generator's placeholders.
+      override the generator's placeholders. Extra deliverable documents that
+      the brief asks for (decision-support draft, design-basis outline, ...) go in
+      `"appendix_sections": [{"title": "...", "content": "markdown"}, ...]`,
+      rendered after the references as Appendix A, B, ...
     - Prefer `results.json` `conclusions` over hand-written numbers
     - Ensure all figures from `figures/` will be embedded, **including benchmark plots**
     - The Scope/Standards, Results, Discussion, and Validation sections auto-populate from data files
@@ -2351,6 +2354,20 @@ L3. **Hardcoded numbers in `report_sections.json` go stale.** When equipment dim
    **Best practice:** Write conclusions in `results.json["conclusions"]` and let
    the generator read from there. Only use `report_sections.json` as a fallback.
 
+L3b. **Long runs under parallel agents:** terminals shared with other agents can be
+   interrupted (Ctrl-C) mid-run. Start multi-minute scripts detached
+   (`Start-Process -WindowStyle Hidden ... -RedirectStandardOutput file`), write results to
+   JSON files, and read the files instead of watching the terminal. Python stdout is
+   block-buffered when redirected: use `python -u` or flush. The `read_file` tool caches
+   a file by path: re-reading the same log path can return the old (even empty) content, so
+   write each run to a new log name (`nb02_r2.log`, `nb02_r3.log`) or `Copy-Item` the log to a
+   fresh name before reading it. PowerShell `*>` and `>` redirection writes UTF-16 on Windows
+   PowerShell 5 (use `| Out-File -Encoding utf8`), and Python `json.dump` without
+   `encoding="utf-8"` writes cp1252 so a later `json.load` fails on non-ASCII text: always open
+   result files with `encoding="utf-8"` and read data files with a utf-8 then cp1252 fallback.
+   For many short scripts use a `RUN <script> <outfile>` helper function in the terminal so
+   each script writes to its own output file.
+
 L4. **Figure captions must cover ALL notebooks.** Each notebook (main analysis,
    benchmark validation, uncertainty/risk) generates its own figures. All figure
    filenames must appear in `results.json["figure_captions"]`, otherwise the
@@ -2411,3 +2428,17 @@ L13. **Include a `tables` array for structured data.** Complex comparison tables
 L14. **Tornado data should be sorted by swing.** When writing tornado results to
     results.json, store all parameters even those with zero swing. The renderer
     should sort by swing magnitude for the tornado chart.
+
+## Linnorm Lange task lessons (2026-10)
+
+- **Shared terminal output and cached reads:** a synchronous shared terminal can return another agent's output, and `read_file` caches by path. Run each script from your own async terminal into a new log file name per run and read only that log.
+- **Schedule versus ullage:** a briefed start-year difference between hosts (Njord 2034, Linnorm 2037) is a schedule statement. Run the ullage test with and without the briefed year; report that capacity is consistent with, but does not force, the briefed start.
+- **No prospect data:** build the success case from analogues, regional temperature regression with a leave-out test, and declared pressure; state HPHT probability and give the asset team an explicit list of what replaces each declared item.
+
+## HEP reset task lessons (2026-10)
+
+- **Gated concepts:** when a concept depends on availability of existing infrastructure (line capacity, slot fitness, hardware), sample the gate as Bernoulli with a named fallback concept, report the distribution unconditionally AND conditional on the gate passing, and put the gate in the tornado as a pass/fail swing. A bimodal NPV is hidden by a single P50.
+- **Allowable CAPEX (design-to-cost):** bisect a CAPEX scale factor s on fixed Monte Carlo draws until P50 NPV = 0 (and until the 30th percentile = 0 for a 70 % chance of positive value); report allowable CAPEX, required cut in percent and the break-even EUR per well.
+- **Model-versus-plant check before a capacity claim:** reproduce today's flowing wellhead pressure (PDM) with the line model for the line that is known to carry the flow; only then use the model for headroom (HEP: 10-in P-D 43 bara against PDM median 46 bara).
+- **Verify figure claims against the PNG** before writing the figure discussion; late corrections go through a markdown-cell patch script so executed outputs are kept.
+- **Long notebook or script jobs on a shared terminal:** start them detached (`Start-Process powershell -File runone.ps1 nbNN tag -WindowStyle Hidden`) with a unique log name per attempt, UTF-8 output (`| Out-File -Encoding utf8`) and a `.done` marker; read logs with `read_file`, never trust terminal output of other sessions.
