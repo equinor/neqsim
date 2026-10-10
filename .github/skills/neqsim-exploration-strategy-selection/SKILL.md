@@ -38,6 +38,7 @@ Do nothing is a fifth option with value zero; it is only dominated if the EMV of
 - Cumulative production to date is a lower bound for EUR; do not call a prior that is above the cumulative of the median host well a failure without saying so.
 - A PDM rate benchmark needs one gas-to-oil-equivalent convention for the host plan and the allocated data; Sodir uses 1000 Sm3 gas = 1 Sm3 OE, Centuries rich gas used about 1.15e-3.
 - Hydrate with SRK-CPA needs `setHydrateCheck(True)` before `hydrateFormationTemperature()` (see `neqsim-flow-assurance`); the failure "Can not return phase number 4" means it was forgotten.
+- A stand-alone prospect far from infrastructure has no host to curtail it: anchor CAPEX on Sodir cumulative field investment (`prfInvestmentsMillNOK`, nominal NOK) against peak annual OE rate of stand-alone fields, report the minimum economic volume per infrastructure share borne by the discovery (1.0 stand-alone, 0.4 area hub) instead of a named host, and expect the Sodir sample of far discoveries with a resource estimate to be too small (n = 1) for a size distribution: use the whole frontier distribution and state the bias. Pg for remote wells: Sodir wildcat layer with a distance-to-facility filter (more than 50 km: about 0.35 in the Norwegian Sea and Barents Sea, 2013-2026).
 
 ## 4. Evidence to collect first
 

@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-10 — Partner-led firm exploration well, stand-alone prospect far from infrastructure: volume threshold per infrastructure share, analogue CAPEX, conditional APbo position
+**Type:** G (Workflow)
+**Keywords:** APbo, exploration, firm well, stand-alone development, far from infrastructure, frontier wildcats, minimum economic volume, infrastructure share, area hub, EMV, 78 % refund, Monte Carlo, decision map
+**Solution:** Private task folder (redacted): script-backed screening (Sodir frontier wildcats with distance to the nearest facility, frontier discovery sizes and 16 stand-alone field analogues; read-only Centuries, PDM and document-root probes; NeqSim analogue fluids with hydrate and long export-line arrival; three stand-alone concepts with CAPEX regressed on the analogues, 2022 NCS tax, decision map over volume and infrastructure share, tornado, two 4000-draw Monte Carlo runs), results.json, Word report with APbo draft, data request, partner-package and MDQC checklists; trap added to the exploration-strategy skill.
+**Notes:** With no host the answer is a volume threshold, not a tie-back ranking: the prospect median sits far below it, so EMV is negative and the position is conditional on the partner volume, hub case and strategic value. Gotchas: percent signs in strings that go through `%` formatting must be doubled and plain strings must not be; the consistency check wants every linked key value stated in the figure observation.
+
 ### 2026-10-10 — Onboarding a not-yet-drilled discovery to a host project: four fluid outcomes, trunk delivery limit, timing of a combined decision gate, first-pass design basis, PDS and VP memo
 **Type:** G (Workflow)
 **Keywords:** business opportunity, prepare for success, unknown fluid outcome, subsea tie-back, shared trunk, commingling delivery limit, host demonstrated capacity, combined DG3, schedule Monte Carlo, value of speed, flexibility cost-benefit, design basis, PDS, VP memo, TR3528 APbo, break-even volume, exploration EMV
