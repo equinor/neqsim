@@ -1544,3 +1544,11 @@ on the published repair; the PR stays draft.
 - Finding: the sibling DX revamp model omitted 1/eta_p in shaft power (71 % of the GT load, corrected 91-93 %), so its savings are about 31 % low.
 - Gaps: stage 3 map and absorbed power, Vestflanken gas-lift pressure, official suction and export pressure forecasts, vendor quote.
 - Tooling: gotcha added to neqsim-rotating-equipment-design; NIP-01 (coupled-shaft chart scan) and NIP-02 (recirculating-stage power) proposed, no Java changes.
+
+## 2026-10-10: Partner-operated exploration well in a gas-condensate province - APbo screening with two candidate hosts
+
+- Type B, standard, AACE class 4-5; script-backed (open licence, field, discovery and production data; governed forecasts and allocated production for two hosts; NeqSim SRK-CPA lean gas condensate tuned to the neighbouring field gas/oil ratio, hydrate, dew-point scan with RobustPhaseEnvelope bound, PipeBeggsAndBrills; class 4-5 CAPEX; 2022 NCS tax; 4 000-draw Monte Carlo, tornado and decision map).
+- Result: with placeholder volumes (median 5 MSm3 OE) the non-operating partner's expected value of drilling is positive (+13.6 MUSD at 25 %, P10 -4, P90 +51) and the dry-hole cost is about 3 MUSD net of the 78 % refund; the nearest template (5 km, own-operated host) beats the brief's host by about 56 MUSD at the median volume and the farther host wins only near the P10 volume because of gas capacity; thresholds for the partner numbers: median 1.4-1.8 MSm3 OE at Pg 0.30-0.40.
+- Gaps: no partner package (volumes, Pg, concept, cost), QAA, host design capacity and life, template slot and line capacity, price deck.
+- Tooling: dew-point flash defect quantified in neqsim-phase-envelope (point flash 0.46 bara at 40 C against a scan of 210); host-life (economic cut-off), gross-versus-allocated gas and project-name overwrite gotchas in enterprise-host-ullage-allocation; POL APbo screening pattern in enterprise-prospect-risking (local edits, not pushed); NIPs for a dew-pressure flash fix and an exploration-well EMV helper.
+
