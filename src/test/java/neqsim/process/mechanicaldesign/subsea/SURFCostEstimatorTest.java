@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign.subsea;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
@@ -251,5 +252,63 @@ class SURFCostEstimatorTest {
 
     // More wells = more trees + jumpers = higher cost
     assertTrue(second > first, "8 wells should cost more than 4 wells");
+  }
+
+  /** Manifold cost must follow the actual canonical topology count, including direct tiebacks. */
+  @Test
+  void testZeroAndMultipleManifoldCounts() {
+    SURFCostEstimator est = new SURFCostEstimator(4, 300.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfPLETs(0);
+    est.setNumberOfJumpers(0);
+    est.setIncludeRisers(false);
+    est.setInfieldFlowlineLengthKm(0.0);
+    est.setExportPipelineLengthKm(0.0);
+
+    est.setNumberOfManifolds(0);
+    est.calculate();
+    double directTiebackCost = est.getSubseaCostUSD();
+
+    est.setNumberOfManifolds(2);
+    assertEquals(2, est.getNumberOfManifolds());
+    est.setManifoldSlots(2);
+    est.calculate();
+    double twoManifoldCost = est.getSubseaCostUSD();
+
+    assertTrue(twoManifoldCost > directTiebackCost);
+    int manifoldLineCount = 0;
+    for (Map<String, Object> item : est.getLineItems()) {
+      if (item.get("description").toString().contains("Manifold/Template")) {
+        manifoldLineCount++;
+        assertEquals(2, ((Number) item.get("quantity")).intValue());
+      }
+    }
+    assertEquals(1, manifoldLineCount);
+    assertThrows(IllegalArgumentException.class, () -> est.setNumberOfManifolds(-1));
+  }
+
+  /** Exact route segments must retain their separate geometry instead of a weighted-average diameter. */
+  @Test
+  void testDisaggregatedRouteSegments() {
+    SURFCostEstimator est = new SURFCostEstimator(1, 300.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfManifolds(0);
+    est.setNumberOfPLETs(0);
+    est.addLineSegment("FL-6IN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 1000.0, 6.0);
+    est.addLineSegment("FL-12IN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 2000.0, 12.0);
+    est.addLineSegment("RI-10IN", SURFCostEstimator.LineCategory.RISER, 600.0, 10.0);
+    est.calculate();
+
+    assertEquals(3, est.getLineSegmentCount());
+    boolean hasSixInchRoute = false;
+    boolean hasTwelveInchRoute = false;
+    boolean hasRiser = false;
+    for (Map<String, Object> item : est.getLineItems()) {
+      String description = item.get("description").toString();
+      hasSixInchRoute |= description.contains("FL-6IN 6\"");
+      hasTwelveInchRoute |= description.contains("FL-12IN 12\"");
+      hasRiser |= description.contains("RI-10IN 10\"");
+    }
+    assertTrue(hasSixInchRoute);
+    assertTrue(hasTwelveInchRoute);
+    assertTrue(hasRiser);
   }
 }

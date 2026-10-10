@@ -1,7 +1,9 @@
 """Tests for the production-optimisation stages (gates, constraints, guard, outcome)."""
 import json
+import math
 import os
 import pathlib
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -49,7 +51,20 @@ def run(ctx):
 STAGE_OPTIMIZE = '''
 def run(ctx):
     base = {"title": "%s", "category": "operational", "setpoints": {"p3_barg": 0.5},
-            "expected_gain": {"value": 300.0, "kpi": "oil_Sm3d"}}
+            "expected_gain": {"value": 300.0, "kpi": "oil_Sm3d"},
+            "objective_kpi": "oil_Sm3d", "baseline_value": 12700.0,
+            "optimizer_evidence": {
+                "cycle_id": ctx.cycle_id,
+                "simulation_converged": True,
+                "candidate_feasible": True,
+                "candidate_finite": True,
+                "constraint_evidence_complete": True,
+                "state_restore_complete": True,
+                "accepted_point_replayed": True,
+                "actions_complete": True,
+                "evaluation_count": 12,
+                "runtime_seconds": 1.25,
+            }}
     return {"proposals": [
         dict(base, title="safe", predicted={"rvp_bara": 0.63}),
         dict(base, title="off spec", predicted={"rvp_bara": 0.68}),
@@ -83,6 +98,41 @@ def _guard(task, manifest):
         return json.load(f)
 
 
+def _guard_context(tmp_path, proposal):
+    return SimpleNamespace(
+        cycle_id="C-1",
+        cycle_dir=str(tmp_path),
+        goal={"constraints": [RVP]},
+        guard_blocks=[],
+        plan={"production": {"min_gain": 0.0}},
+        proposals=[proposal],
+        sections=[],
+    )
+
+
+def _valid_proposal():
+    return {
+        "title": "candidate",
+        "setpoints": {"p3_barg": 0.5},
+        "expected_gain": {"value": 300.0, "kpi": "oil_Sm3d"},
+        "predicted": {"rvp_bara": 0.63},
+        "objective_kpi": "oil_Sm3d",
+        "baseline_value": 12700.0,
+        "optimizer_evidence": {
+            "cycle_id": "C-1",
+            "simulation_converged": True,
+            "candidate_feasible": True,
+            "candidate_finite": True,
+            "constraint_evidence_complete": True,
+            "state_restore_complete": True,
+            "accepted_point_replayed": True,
+            "actions_complete": True,
+            "evaluation_count": 12,
+            "runtime_seconds": 1.25,
+        },
+    }
+
+
 def test_cycle_keeps_only_safe_proposals(tmp_path):
     task = _task(tmp_path)
     manifest = run_cycle(task, no_agent=True)
@@ -93,8 +143,95 @@ def test_cycle_keeps_only_safe_proposals(tmp_path):
     assert reasons["no prediction"] == ["no_prediction:rvp"]
     assert reasons["no gain"] == ["gain_not_above_0.0"]
     assert "proposals_withheld" in manifest["triggers"]
-    titles = [v["title"] for v in Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl")).current().values()]
+    items = list(Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl")).current().values())
+    titles = [v["title"] for v in items]
     assert "safe" in titles and "off spec" not in titles
+    safe = next(item for item in items if item["title"] == "safe")
+    assert safe["optimizer_evidence"]["cycle_id"] == manifest["cycle_id"]
+    assert safe["optimizer_evidence"]["accepted_point_replayed"] is True
+
+
+@pytest.mark.parametrize("field, reason", [
+    ("simulation_converged", "simulation_not_converged"),
+    ("candidate_feasible", "infeasible_candidate"),
+    ("candidate_finite", "non_finite_candidate"),
+    ("constraint_evidence_complete", "constraint_evidence_incomplete"),
+    ("state_restore_complete", "state_restore_incomplete"),
+    ("accepted_point_replayed", "accepted_point_not_replayed"),
+    ("actions_complete", "partial_action_application"),
+])
+def test_guard_rejects_incomplete_optimizer_evidence(tmp_path, field, reason):
+    proposal = _valid_proposal()
+    proposal["optimizer_evidence"][field] = False
+    ctx = _guard_context(tmp_path, proposal)
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"] == [reason]
+
+
+def test_guard_rejects_missing_and_stale_optimizer_evidence(tmp_path):
+    missing = _valid_proposal()
+    missing.pop("optimizer_evidence")
+    stale = _valid_proposal()
+    stale["title"] = "stale"
+    stale["optimizer_evidence"]["cycle_id"] = "C-0"
+    ctx = _guard_context(tmp_path, missing)
+    ctx.proposals.append(stale)
+    production.guard(ctx, {})
+    reasons = {row["title"]: row["reasons"]
+               for row in json.loads((tmp_path / "guard.json").read_text())["withheld"]}
+    assert reasons == {"candidate": ["missing_optimizer_evidence"], "stale": ["stale_candidate"]}
+
+
+@pytest.mark.parametrize("field, value, reason", [
+    ("evaluation_count", 0, "invalid_evaluation_count"),
+    ("evaluation_count", 1.5, "invalid_evaluation_count"),
+    ("runtime_seconds", math.nan, "invalid_runtime_seconds"),
+    ("runtime_seconds", -0.1, "invalid_runtime_seconds"),
+])
+def test_guard_rejects_invalid_performance_evidence(tmp_path, field, value, reason):
+    proposal = _valid_proposal()
+    proposal["optimizer_evidence"][field] = value
+    ctx = _guard_context(tmp_path, proposal)
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert reason in json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+
+
+@pytest.mark.parametrize("field, value, reason", [
+    ("setpoint", math.nan, "non_finite_setpoint:p3_barg"),
+    ("setpoint", math.inf, "non_finite_setpoint:p3_barg"),
+    ("prediction", math.nan, "non_finite_prediction:rvp_bara"),
+    ("gain", math.inf, "gain_not_above_0.0"),
+    ("baseline", -math.inf, "non_finite_baseline"),
+])
+def test_guard_rejects_non_finite_candidate_data(tmp_path, field, value, reason):
+    proposal = _valid_proposal()
+    if field == "setpoint":
+        proposal["setpoints"]["p3_barg"] = value
+    elif field == "prediction":
+        proposal["predicted"]["rvp_bara"] = value
+    elif field == "gain":
+        proposal["expected_gain"]["value"] = value
+    else:
+        proposal["baseline_value"] = value
+    ctx = _guard_context(tmp_path, proposal)
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert reason in json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+
+
+def test_guard_rejects_invalid_limit_and_minimum_gain(tmp_path):
+    proposal = _valid_proposal()
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["min_gain"] = math.nan
+    ctx.goal["constraints"][0] = dict(RVP, margin=math.inf)
+    assert production.effective_limit(ctx.goal["constraints"][0]) is None
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"] == [
+        "invalid_min_gain"
+    ]
 
 
 def test_failed_gate_withholds_everything(tmp_path):

@@ -11,6 +11,12 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.equipment.network.FieldNetworkTopology;
+import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
+import neqsim.process.equipment.network.FieldNetworkTopology.FlowDirection;
+import neqsim.process.equipment.network.FieldNetworkTopology.NodeRole;
+import neqsim.process.equipment.network.FieldNetworkTopology.Service;
+import neqsim.process.equipment.network.LoopedPipeNetwork.PipeModelType;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaArchitecture;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaSystemResult;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator.WellLocationType;
@@ -260,6 +266,111 @@ public class SubseaProductionSystemTest {
     assertTrue(summary.contains("Subsea CAPEX"), "Should have CAPEX section");
     assertTrue(summary.contains("Water Depth"), "Should show water depth");
     assertTrue(summary.contains("Tieback Distance"), "Should show tieback distance");
+  }
+
+  /** The same canonical production/injection topology must drive SURF geometry and cost quantities. */
+  @Test
+  public void testCanonicalFieldNetworkSurfDesignBasis() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("canonical field design");
+    topology.addJunction("producer-1", "W-P1", NodeRole.PRODUCTION_WELL, Service.PRODUCTION, -500.0);
+    topology.addJunction("producer-2", "W-P2", NodeRole.PRODUCTION_WELL, Service.PRODUCTION, -500.0);
+    topology.addJunction("injector-1", "W-I1", NodeRole.INJECTION_WELL, Service.INJECTION, -500.0);
+    topology.addJunction("tree-p1", "XT-P1", NodeRole.TREE, Service.PRODUCTION, -500.0);
+    topology.addJunction("tree-p2", "XT-P2", NodeRole.TREE, Service.PRODUCTION, -500.0);
+    topology.addJunction("tree-i1", "XT-I1", NodeRole.TREE, Service.INJECTION, -500.0);
+    topology.addJunction("production-template", "TE-P", NodeRole.TEMPLATE, Service.PRODUCTION, -500.0);
+    topology.addJunction("injection-template", "TE-I", NodeRole.TEMPLATE, Service.INJECTION, -500.0);
+    topology.addJunction("plem", "PLEM-1", NodeRole.PLEM, Service.PRODUCTION, -500.0);
+    topology.addJunction("plet", "PLET-1", NodeRole.PLET, Service.PRODUCTION, -500.0);
+    topology.addJunction("host", "HOST-1", NodeRole.HOST, Service.PRODUCTION, 0.0);
+    topology.addJunction("injection-source", "HOST-I", NodeRole.INJECTION_SOURCE, Service.INJECTION, 0.0);
+
+    topology.addPipe("jumper-p1", "J-P1", EdgeRole.JUMPER, Service.PRODUCTION, FlowDirection.FROM_TO, "producer-1",
+        "outlet", "tree-p1", "well", 30.0, 0.1524, PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("jumper-p2", "J-P2", EdgeRole.JUMPER, Service.PRODUCTION, FlowDirection.FROM_TO, "producer-2",
+        "outlet", "tree-p2", "well", 30.0, 0.1524, PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("jumper-i1", "J-I1", EdgeRole.JUMPER, Service.INJECTION, FlowDirection.FROM_TO, "tree-i1", "well",
+        "injector-1", "inlet", 30.0, 0.1524, PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("tie-in-p1", "TI-P1", EdgeRole.TIE_IN, Service.PRODUCTION, FlowDirection.FROM_TO, "tree-p1",
+        "outlet", "production-template", "inlet-p1", 40.0, 0.1524, PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("tie-in-p2", "TI-P2", EdgeRole.TIE_IN, Service.PRODUCTION, FlowDirection.FROM_TO, "tree-p2",
+        "outlet", "production-template", "inlet-p2", 40.0, 0.1524, PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("tie-in-i1", "TI-I1", EdgeRole.TIE_IN, Service.INJECTION, FlowDirection.FROM_TO,
+        "injection-template", "outlet-i1", "tree-i1", "inlet", 40.0, 0.1524, PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("production-flowline", "FL-P", EdgeRole.FLOWLINE, Service.PRODUCTION, FlowDirection.FROM_TO,
+        "production-template", "outlet", "plem", "inlet", 1000.0, 0.2032, PipeModelType.BEGGS_BRILL);
+    topology.addPipe("injection-flowline", "FL-I", EdgeRole.FLOWLINE, Service.INJECTION, FlowDirection.FROM_TO,
+        "injection-source", "outlet", "injection-template", "inlet", 2000.0, 0.1524, PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("export-pipeline", "PL-P", EdgeRole.PIPELINE, Service.PRODUCTION, FlowDirection.FROM_TO, "plem",
+        "outlet", "plet", "inlet", 10000.0, 0.3048, PipeModelType.BEGGS_BRILL);
+    topology.addPipe("host-riser", "RI-P", EdgeRole.RISER, Service.PRODUCTION, FlowDirection.FROM_TO, "plet", "outlet",
+        "host", "arrival", 750.0, 0.254, PipeModelType.BEGGS_BRILL);
+
+    SubseaProductionSystem subsea = new SubseaProductionSystem("Canonical topology design");
+    FieldNetworkSurfDesignBasis basis = subsea.createSurfDesignBasis(topology);
+
+    assertEquals(2, basis.getProductionWellCount());
+    assertEquals(1, basis.getInjectionWellCount());
+    assertEquals(3, basis.getTreeCount());
+    assertEquals(2, basis.getDistributionUnitCount());
+    assertEquals(2, basis.getSlotsPerDistributionUnit());
+    assertEquals(1, basis.getPletCount());
+    assertEquals(1, basis.getPlemCount());
+    assertEquals(3, basis.getJumperCount());
+    assertEquals(90.0, basis.getTotalJumperLengthM(), 1.0e-12);
+    assertEquals(6.0, basis.getJumperDiameterInches(), 1.0e-12);
+    assertEquals(3.12, basis.getInfieldFlowlineLengthKm(), 1.0e-12);
+    assertEquals(10.0, basis.getExportPipelineLengthKm(), 1.0e-12);
+    assertEquals(1, basis.getProductionRiserCount());
+    assertEquals(0, basis.getInjectionRiserCount());
+    assertEquals(500.0, basis.getWaterDepthM(), 1.0e-12);
+    assertEquals(10, basis.getLineSegments().size());
+
+    CostEstimateResult estimate = subsea.estimateSurfCosts(topology);
+    assertEquals(EstimateClass.CLASS_4, estimate.getBasis().getEstimateClass());
+    assertTrue(estimate.getCapitalCostSummary().get("totalSURF") > 0.0);
+    boolean hasThreeTrees = false;
+    boolean hasTwoDistributionUnits = false;
+    boolean hasProductionFlowline = false;
+    boolean hasInjectionFlowline = false;
+    for (MaterialTakeOffItem item : estimate.getMaterialTakeOff()) {
+      hasThreeTrees |= item.getItem().contains("Christmas Trees") && item.getQuantity() == 3.0;
+      hasTwoDistributionUnits |= item.getItem().contains("Manifold/Template") && item.getQuantity() == 2.0;
+      hasProductionFlowline |= item.getItem().contains("FL-P 8\"") && item.getItem().contains("1 km");
+      hasInjectionFlowline |= item.getItem().contains("FL-I 6\"") && item.getItem().contains("2 km");
+    }
+    assertTrue(hasThreeTrees, "Topology tree identities must set the priced tree quantity");
+    assertTrue(hasTwoDistributionUnits, "Template and manifold identities must set the priced distribution quantity");
+    assertTrue(hasProductionFlowline, "Production route geometry must retain its exact diameter and length");
+    assertTrue(hasInjectionFlowline, "Injection route geometry must retain its exact diameter and length");
+  }
+
+  /** Generated architectures must price the built manifold count rather than an implicit single unit. */
+  @Test
+  public void testGeneratedArchitectureManifoldQuantities() {
+    SubseaProductionSystem clustered = new SubseaProductionSystem("Two clusters");
+    clustered.setArchitecture(SubseaArchitecture.MANIFOLD_CLUSTER).setWaterDepthM(300.0).setTiebackDistanceKm(20.0)
+        .setWellCount(4).setManifoldCount(2).setReservoirFluid(gasFluid);
+    clustered.build();
+    clustered.run();
+
+    int pricedManifoldCount = 0;
+    for (MaterialTakeOffItem item : clustered.getResult().getSurfDetailedEstimateResult().getMaterialTakeOff()) {
+      if (item.getItem().contains("Manifold/Template")) {
+        pricedManifoldCount += (int) item.getQuantity();
+        assertTrue(item.getItem().contains("2-slot"));
+      }
+    }
+    assertEquals(2, pricedManifoldCount);
+
+    SubseaProductionSystem direct = new SubseaProductionSystem("Direct tiebacks");
+    direct.setArchitecture(SubseaArchitecture.DIRECT_TIEBACK).setWaterDepthM(300.0).setTiebackDistanceKm(20.0)
+        .setWellCount(2).setReservoirFluid(gasFluid);
+    direct.build();
+    direct.run();
+    for (MaterialTakeOffItem item : direct.getResult().getSurfDetailedEstimateResult().getMaterialTakeOff()) {
+      assertFalse(item.getItem().contains("Manifold/Template"), "Direct tiebacks must not price a manifold");
+    }
   }
 
   @Test

@@ -592,6 +592,9 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
+      return getFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], unitOfMeasure);
+    }
     LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
     if (addressableNetwork != null && parts.length == 3) {
       return getNetworkProperty(addressableNetwork, parts[1], parts[2], unitOfMeasure);
@@ -648,6 +651,11 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
+      setFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], value, unitOfMeasure);
+      this.dirty = true;
+      return;
+    }
     LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
     if (addressableNetwork != null && parts.length == 3) {
       setNetworkProperty(addressableNetwork, parts[1], parts[2], value, unitOfMeasure);
@@ -875,7 +883,17 @@ public class ProcessAutomation {
 
     LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
     if (addressableNetwork != null) {
-      return enrichVariableMetadata(buildNetworkVariableList(unitName, addressableNetwork));
+      List<SimulationVariable> networkVariables = buildNetworkVariableList(unitName, addressableNetwork);
+      if (unit instanceof FieldWellNetworkProcessUnit) {
+        FieldWellNetworkProcessUnit fieldUnit = (FieldWellNetworkProcessUnit) unit;
+        for (String selectorName : fieldUnit.getExclusiveRouteSelectorNames()) {
+          networkVariables.add(new SimulationVariable(unitName + ".route." + selectorName + ".selection",
+              "route." + selectorName + ".selection", VariableType.INPUT, "-",
+              "Exclusive route index; provenance: " + fieldUnit.getExclusiveRouteProvenance(selectorName)).withBounds(
+                  Double.valueOf(0.0), Double.valueOf(fieldUnit.getExclusiveRouteEdges(selectorName).size() - 1.0)));
+        }
+      }
+      return enrichVariableMetadata(networkVariables);
     }
 
     // Universal equipment-level outputs
@@ -1195,6 +1213,53 @@ public class ProcessAutomation {
       return ((FieldWellNetworkProcessUnit) unit).getHydraulicNetwork();
     }
     return null;
+  }
+
+  /**
+   * Read one field-unit exclusive route selection.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param unitOfMeasure requested dimensionless unit
+   * @return zero-based selected route index
+   */
+  private double getFieldRouteProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route property: " + targetProperty[1]);
+    }
+    return unit.getExclusiveRouteSelection(targetProperty[0]);
+  }
+
+  /**
+   * Write one field-unit exclusive route selection.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param value zero-based selected route index
+   * @param unitOfMeasure requested dimensionless unit
+   */
+  private void setFieldRouteProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty, double value,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route property: " + targetProperty[1]);
+    }
+    unit.setExclusiveRouteSelection(targetProperty[0], value);
+  }
+
+  /**
+   * Require a dimensionless route-selector unit.
+   *
+   * @param unitOfMeasure requested unit
+   */
+  private void requireDimensionlessUnit(String unitOfMeasure) {
+    if (unitOfMeasure != null && !unitOfMeasure.trim().isEmpty() && !"-".equals(unitOfMeasure)) {
+      throw new IllegalArgumentException("Exclusive route selection uses the dimensionless '-' unit");
+    }
   }
 
   /**
