@@ -904,6 +904,9 @@ folder and anyone can reproduce the analysis.
 | Timezone confusion | Specify `tz` parameter in `IMSClient` constructor |
 | Java type errors when passing plant values to NeqSim | Always use `float(value)` — Python numpy types don't auto-convert |
 | Model diverges with noisy plant data | Filter outliers and validate inputs before each `process.run()` |
+| Long read (hundreds of days of hourly data, several tags) returns an empty frame or `n=0` for some tags | The request timed out silently. Read in 60-90 day chunks per tag group, concat, and assert per-tag `n > 0` before using the column; do not treat `n=0` as "no data" |
+| A tag looks valid but never moves (`series.nunique() == 1`, e.g. a pressure stuck at one value) | Exclude constant tags from the basis and say so in the assumptions; a frozen instrument gives a false process "constant" |
+| Historian flow tag disagrees with the allocated/fiscal rate by a constant factor (e.g. 1/3.6) | Unit/basis difference (Sm3/h vs m3/h, per-train, uncorrected). Use the tag only for shares/ratios and take absolute rates from allocation (PDM); record the factor as a data gap |
 
 ## Root Cause Analysis Integration
 

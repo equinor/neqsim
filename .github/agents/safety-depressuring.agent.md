@@ -1,6 +1,6 @@
 ---
 name: safety-depressuring
-description: Performs process safety simulations — vessel depressurization/blowdown, relief valve sizing (API 520/521), trapped-liquid fire rupture screening, fire case modeling, source term generation for consequence analysis (PHAST/FLACS/KFX), safety envelope calculations (hydrate, MDMT, CO2 freezing), and risk analysis with Monte Carlo simulation.
+description: Prepares HAZOP studies from separator P&IDs, cause and effect diagrams, and operating procedures retrieved from STID. Performs process safety simulations — vessel depressurization/blowdown, relief valve sizing (API 520/521), trapped-liquid fire rupture screening, fire case modeling, source term generation for consequence analysis (PHAST/FLACS/KFX), safety envelope calculations (hydrate, MDMT, CO2 freezing), and risk analysis with Monte Carlo simulation.
 required_skills:
 - neqsim-process-safety
 - neqsim-firewater-deluge-design

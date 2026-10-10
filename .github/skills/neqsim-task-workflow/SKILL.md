@@ -250,9 +250,12 @@ checks before writing Step 1 content:
    Persist the plan so it survives context loss and feeds the report:
    - keep `step1_scope_and_research/agent_plan.json` (raw ranking, audit trail),
    - checkpoint it via `progress.store_context("agent_workflow_plan", {...})`,
-   - add an `agent_workflow_plan` object to `results.json` (see schema) and
-     mention the agents/workflow used in the `approach` / `method_summary` text
-     so the generated report documents *how* the task was solved.
+   - add an `agent_workflow_plan` object to `results.json` (see schema) with an
+     `invocation` (`subagent` | `pattern` + `reason` | `skill-only`) per agent,
+     and mention the agents/workflow used in the `approach` / `method_summary`
+     text so the generated report documents *how* the task was solved. Then
+     actually invoke the lead agent for the task family (§5 table) — a plan
+     that lists agents as "(pattern)" without a reason is a finding, not a plan.
 
    For Quick tasks, write a short manual capability + agent note in `notes.md`
    unless a capability gap is suspected.
@@ -1588,7 +1591,10 @@ Document the independent check in `step2_analysis/notes.md` under a
       "approach": "...", "conclusions": "...", "references": "..."},
       "doc_number": "...", "revision": "...", "revision_history": [...]}`
       (`paper_sections` / `paper_*` keys for `--paper`). Non-empty values
-      override the generator's placeholders.
+      override the generator's placeholders. Extra deliverable documents that
+      the brief asks for (decision-support draft, design-basis outline, ...) go in
+      `"appendix_sections": [{"title": "...", "content": "markdown"}, ...]`,
+      rendered after the references as Appendix A, B, ...
     - Prefer `results.json` `conclusions` over hand-written numbers
     - Ensure all figures from `figures/` will be embedded, **including benchmark plots**
     - The Scope/Standards, Results, Discussion, and Validation sections auto-populate from data files
@@ -1931,25 +1937,93 @@ MyClass = ns.JClass("neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
 
 ## 5 ── DELEGATE TO SPECIALIST AGENTS
 
-For complex sub-tasks within your workflow, you may delegate to specialist agents:
+**Delegation is the default, not an option.** A 2026-10 audit of 269 solved
+tasks found that the orchestrator usually listed specialist agents as
+"(pattern)" and re-did their work by hand (the APbo/VPbo batch, the
+well-to-export plant models, the host-ullage studies). That loses the
+specialist's governance, hand-off schemas, data-access rules and the helpers
+in its skill packages, and it is why the same plateau-decline / host-ullage /
+EMV model was hand-coded in four sibling tasks. Rules:
 
-| Sub-task | Agent | When to use |
-|----------|-------|-------------|
-| Fluid setup | `@thermo-fluid` | Complex oil characterization, CPA systems |
-| Process simulation | `@solve-process` | Large flowsheets with recycles/adjusters |
-| PVT experiments | `@pvt-simulation` | Multi-point PVT studies |
-| Gas quality | `@gas-quality` | ISO 6976, AGA calculations |
-| Mechanical design | `@mechanical-design` | Wall thickness, vessel sizing |
-| Flow assurance | `@flow-assurance` | Hydrate curves, wax, corrosion |
-| Safety | `@safety-depressuring` | Blowdown, PSV sizing |
-| Field development | `@field-development` | Concept selection, subsea tieback, NPV/IRR, production forecasting |
-| Document / image reading | `@technical-reader` | Extract data from PDFs, vendor datasheets, P&IDs, mechanical drawings, performance maps, API datasheets |
+1. When `agent_search.py` ranks a registered agent ≥ 0.6 for a sub-task, invoke
+   it (`runSubagent` with the agent name, the absolute task path, the frozen
+   basis and the hand-off schema you expect back). Only fall back to following
+   its workflow by hand when it is not registered in this session, lacks data
+   access, or the sub-task is trivially small — and then record
+   `invocation: "pattern"` with the `reason`.
+2. Record every agent in `results.json` `agent_workflow_plan.agents_used` with
+   `invocation` ∈ {`subagent`, `pattern`, `skill-only`}; the validator warns
+   when a Standard/Comprehensive task lacks the block or a reason.
+3. **Reuse before re-implement.** Before writing a task-local model, run
+   `neqsim tasks search <keywords>` and check the skill packages
+   (`enterprise_prospect_risking`, `enterprise_host_ullage_allocation`,
+   `neqsim_*` community packages). If you find yourself writing the same helper a
+   second time, promote it to the owning skill package (with tests) in the same
+   session and import it — never leave a third copy in a task folder.
+4. Pass the absolute task folder to every subagent; it must write under
+   `step2_analysis/<agent>/` and return a summary plus the files written.
+5. Parallel subagents on one shared terminal mix output: give each a dedicated
+   terminal or uniquely named logs (see §10 lessons).
 
-You don't have to delegate — you can handle everything yourself. But for deep
-specialist work, the dedicated agents have more detailed instructions.
+### Task family → lead agent → supporting agents (from solved tasks)
 
-For **Type G (Workflow)** tasks, you will likely need multiple specialist agents
-in sequence. Coordinate them through the task_spec.md requirements.
+| Task family (seen in task root) | Lead agent (invoke) | Supporting agents / skills |
+|---|---|---|
+| APbo / VPbo / POL review / success-case planning / exploration strategy (firm well vs PLX) | `enterprise-exploration-opportunity-agent` (Equinor) or `field-development` + skill `neqsim-exploration-strategy-selection` | `enterprise-geox-agent` (prospect inventory), `ncs-ownership-equity-agent`, `ncs-value-chain-agent`, `enterprise-host-ullage-agent`, `flow-assurance`, `enterprise-area-development-value-agent`, `enterprise-stea-automation-agent` |
+| Area development / tie-in host selection / host ullage | `enterprise-area-development-agent` | `enterprise-tie-in-solution-agent`, `enterprise-host-ullage-agent`, `enterprise-area-development-value-agent`, `subsea-layout-screening-agent` |
+| PEPR action (bottleneck, optimisation, chemical, control) | `enterprise-pepr-solve-task-agent` | `enterprise-maintenance-agent`, `enterprise-ots-timeseries-agent`, `enterprise-stid-reader-agent`, domain specialist |
+| Blålys / bluelight trip or disturbance | `enterprise-trip-investigation-agent` → `enterprise-incident-response-agent` | `root-cause`, `enterprise-alarm-events-agent`, `enterprise-synergi-agent`, `rotating-equipment` |
+| M1 notification | `enterprise-m1-notification-agent` | `enterprise-maintenance-agent`, `root-cause`, `enterprise-stid-reader-agent` |
+| Well-to-export plant model (ProcessPilot, all wells, formation fluids) | `enterprise-process-notebook-agent` | `enterprise-well-production-routing-agent`, `enterprise-fluid-generation-workflow-agent`, `enterprise-reservoir-history-match-agent`, `enterprise-process-model-build-verify-agent`, `plant-data` |
+| Topside process model from STID / UniSim | `enterprise-process-model-build-verify-agent` (or `unisim-reader`) | `enterprise-stid-reader-agent`, `technical-reader`, `process-model` |
+| Reservoir simulator from open data (OPM Flow) / history match | `reservoir-simulator-agent` / `reservoir-history-match-agent` (enterprise variants with PDM/OSDU) | `near-well-injectivity-agent`, `enterprise-osdu-agent`, `enterprise-smda-opus-agent`, `fluid-characterization-agent` |
+| Capacity increase / debottlenecking on a host | `capacity-increase-screening` (`enterprise-capacity-increase-screening-agent`) | `enterprise-ioc-bottleneck-agent`, `process-model`, `optimize-processmodel`, `field-development` |
+| HAZOP / LOPA / barrier / S-001 clause 10 from STID | `enterprise-stid-safety-study-agent` | `safety-depressuring`, `consequence-analysis`, `technical-reader` |
+| Levetidsprogram / life extension | `enterprise-life-extension-agent` | `enterprise-thelma-agent`, `enterprise-maintenance-agent`, `enterprise-synergi-agent` |
+| Fire-water / deluge coverage | `firewater-coverage-agent` | `consequence-analysis`, `standards-review` |
+| Fluid setup / PVT / phase envelope | `thermo-fluid`, `pvt-simulation` | `fluid-characterization-agent` |
+| Flowsheet with recycles | `process-model` / `solve-process` | `rotating-equipment`, `mechanical-design` |
+| Flow assurance, hydraulics, hydrate/wax | `flow-assurance` | `olga-simulation-agent` for transients |
+| Safety: blowdown, PSV, source terms | `safety-depressuring` | `consequence-analysis`, `standards-review` |
+| Document / image reading | `technical-reader` (`technical-document-intelligence-agent`) | `enterprise-stid-reader-agent` |
+
+For **Type G (Workflow)** tasks you will need several of these in sequence;
+coordinate them through `task_spec.md` and the hand-off schemas in
+`neqsim-agent-handoff`. `router` holds the composition patterns.
+
+### Evidence-source agents (checked for every task, not ranked by similarity)
+
+`agent_search.py` ranks agents by how well their description matches the task
+text, so data-source agents - which describe a *system*, not a *discipline* -
+rarely surface. The 2026-10 audit of 156 tasks measured the result: Thelma was
+applicable in 22 tasks and used in 2, Synergi 33/3, alarm events 17/1, PEPO
+73/0, Emisoft 94/0, GeoX 83/0, AWT 13/0, TR2000 75/3, Centuries 148/13, OTS
+156/21. Before Step 2, walk this table against the task text and record every
+row that applies in `results.json`
+`agent_workflow_plan.evidence_sources: [{agent, status, reason}]` with
+`status` ∈ {`used`, `not_applicable`, `no_access`, `not_registered`}. The
+validator warns when a cue is present and the agent is not recorded.
+
+| Cue in the task text | Evidence agent (Equinor plugin) | Community / fallback |
+|---|---|---|
+| equipment condition, replace, ageing, obsolescence, levetid, lifetime, host cessation or end of life | `enterprise-thelma-agent` | state host/equipment life as an assumption |
+| trip, Blålys, incident, leak, fire, recurrence, root cause, M1 | `enterprise-synergi-agent` | - |
+| trip, Blålys, blackout, first-up, shutdown, alarm | `enterprise-alarm-events-agent` | - |
+| disturbance in a plan period, revisjonsstans, turnaround, deferment, "was work planned" | `enterprise-pepo-agent` | - |
+| CO2, emissions, fuel gas, flaring, energy use, carbon intensity | `enterprise-emisoft-agent` | `emissions-environmental`, `neqsim-co2-emissions-screening` |
+| prospect, APbo, chance of success, firm well, APA | `enterprise-geox-agent` | Sodir analogue prior (`neqsim-norwegian-continental-shelf-data`) |
+| well test, test separator, MPFM, well allocation | `enterprise-awt-agent` | `enterprise-pdm-agent` well tests |
+| plan, forecast, Centuries, RNB, ullage, host capacity per year | `enterprise-acquire-agent` | Sodir production (`ncs-value-chain-agent`) |
+| production, allocated rates, demonstrated capacity, PE | `enterprise-pdm-agent` | Sodir monthly production |
+| historian, trend, tag, measured, plant data | `enterprise-ots-timeseries-agent` | `plant-data` (tagreader), `enterprise-seeq-connect-agent` |
+| M1/M2, work order, notification, PM programme, failure history | `enterprise-maintenance-agent` | - |
+| P&ID, datasheet, drawing, isometric, line list | `enterprise-stid-reader-agent` | `technical-reader` on supplied files |
+| piping class, PCS, material, valve, chemical-injection line | `enterprise-tr2000-agent` | `mechanical-design` |
+| tie-back route, flowline route, template location, bathymetry, licence outline | `enterprise-gis-mapservices-agent` | Sodir map layers (`neqsim-norwegian-continental-shelf-data`) |
+| wellbore, formation tops, discovery master data | `enterprise-smda-opus-agent` | Sodir wellbore pages |
+| static reservoir model, OPM Flow basis | `enterprise-osdu-agent` | `reservoir-simulator-agent` open-data ladder |
+| export gas, Gassled, tariff, entry/exit spec | `enterprise-gassled-tariff-agent`, `enterprise-gas-quality-specification-agent` | `gas-quality` |
+| monitored limits, utilisation, bottleneck, IOC | `enterprise-ioc-bottleneck-agent` | `neqsim-capacity-and-utilization-analysis` |
 
 ---
 
@@ -2351,6 +2425,20 @@ L3. **Hardcoded numbers in `report_sections.json` go stale.** When equipment dim
    **Best practice:** Write conclusions in `results.json["conclusions"]` and let
    the generator read from there. Only use `report_sections.json` as a fallback.
 
+L3b. **Long runs under parallel agents:** terminals shared with other agents can be
+   interrupted (Ctrl-C) mid-run. Start multi-minute scripts detached
+   (`Start-Process -WindowStyle Hidden ... -RedirectStandardOutput file`), write results to
+   JSON files, and read the files instead of watching the terminal. Python stdout is
+   block-buffered when redirected: use `python -u` or flush. The `read_file` tool caches
+   a file by path: re-reading the same log path can return the old (even empty) content, so
+   write each run to a new log name (`nb02_r2.log`, `nb02_r3.log`) or `Copy-Item` the log to a
+   fresh name before reading it. PowerShell `*>` and `>` redirection writes UTF-16 on Windows
+   PowerShell 5 (use `| Out-File -Encoding utf8`), and Python `json.dump` without
+   `encoding="utf-8"` writes cp1252 so a later `json.load` fails on non-ASCII text: always open
+   result files with `encoding="utf-8"` and read data files with a utf-8 then cp1252 fallback.
+   For many short scripts use a `RUN <script> <outfile>` helper function in the terminal so
+   each script writes to its own output file.
+
 L4. **Figure captions must cover ALL notebooks.** Each notebook (main analysis,
    benchmark validation, uncertainty/risk) generates its own figures. All figure
    filenames must appear in `results.json["figure_captions"]`, otherwise the
@@ -2411,3 +2499,17 @@ L13. **Include a `tables` array for structured data.** Complex comparison tables
 L14. **Tornado data should be sorted by swing.** When writing tornado results to
     results.json, store all parameters even those with zero swing. The renderer
     should sort by swing magnitude for the tornado chart.
+
+## Linnorm Lange task lessons (2026-10)
+
+- **Shared terminal output and cached reads:** a synchronous shared terminal can return another agent's output, and `read_file` caches by path. Run each script from your own async terminal into a new log file name per run and read only that log.
+- **Schedule versus ullage:** a briefed start-year difference between hosts (Njord 2034, Linnorm 2037) is a schedule statement. Run the ullage test with and without the briefed year; report that capacity is consistent with, but does not force, the briefed start.
+- **No prospect data:** build the success case from analogues, regional temperature regression with a leave-out test, and declared pressure; state HPHT probability and give the asset team an explicit list of what replaces each declared item.
+
+## HEP reset task lessons (2026-10)
+
+- **Gated concepts:** when a concept depends on availability of existing infrastructure (line capacity, slot fitness, hardware), sample the gate as Bernoulli with a named fallback concept, report the distribution unconditionally AND conditional on the gate passing, and put the gate in the tornado as a pass/fail swing. A bimodal NPV is hidden by a single P50.
+- **Allowable CAPEX (design-to-cost):** bisect a CAPEX scale factor s on fixed Monte Carlo draws until P50 NPV = 0 (and until the 30th percentile = 0 for a 70 % chance of positive value); report allowable CAPEX, required cut in percent and the break-even EUR per well.
+- **Model-versus-plant check before a capacity claim:** reproduce today's flowing wellhead pressure (PDM) with the line model for the line that is known to carry the flow; only then use the model for headroom (HEP: 10-in P-D 43 bara against PDM median 46 bara).
+- **Verify figure claims against the PNG** before writing the figure discussion; late corrections go through a markdown-cell patch script so executed outputs are kept.
+- **Long notebook or script jobs on a shared terminal:** start them detached (`Start-Process powershell -File runone.ps1 nbNN tag -WindowStyle Hidden`) with a unique log name per attempt, UTF-8 output (`| Out-File -Encoding utf8`) and a `.done` marker; read logs with `read_file`, never trust terminal output of other sessions.

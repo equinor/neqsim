@@ -187,6 +187,68 @@ for (double wt : megWtPct) {
 }
 ```
 
+**Sweep gotchas (found building an HPHT tie-back, Fogelberg VPbo task):** `hydrateFormationTemperature()`
+with a rich gas condensate (C7+ pseudo-components) plus water and MEG at 40 wt % MEG did not return
+(CPA hydrate solver loop, no exception, no timeout). Run every MEG/pressure point of a sweep in a
+watchdog thread or subprocess with a hard time limit, keep the sweep to at most 30 wt % MEG, and
+extrapolate the 40-50 wt % rows linearly (about -4.5 K per 10 wt % at 30-400 bara) instead of letting
+the whole script hang. Write the intermediate JSON before the hydrate loop so a kill does not lose the
+fluid and CVD results.
+For flowline hydraulics with `PipeBeggsAndBrills` a trial inlet pressure that is too low throws
+`HydraulicDomainException: Non-positive pipeline pressure` instead of returning a low outlet pressure:
+catch it inside the chain function and return outlet 0 (infeasible). Letting it propagate out of a
+bisection silently turns a whole row of the inlet-pressure table into NaN.
+`ThermodynamicOperations.hydrateFormationTemperature()` is `void`: the answer is left in the fluid
+temperature, so read `fluid.getTemperature() - 273.15` after the call (`float(ops.hydrateFormationTemperature())`
+fails with `NoneType`; found in the Mistral Nord VPbo task). A wellstream built with `SystemSrkEos` plus
+`setHydrateCheck(true)` also under-predicts the hydrate temperature (methane benchmark about -8 K): rebuild
+the composition in `SystemSrkCPAstatoil` (mixing rule 10) and benchmark methane at 43/76/140 bara against
+5/10/15 C before using the numbers (CPA gives -0.03/+0.33/+0.58 K).
+To benchmark `PipeBeggsAndBrills` against Darcy-Weisbach use a dry single-phase gas (pure methane, 60 C,
+`setHeatTransferCoefficient` large): the deviation is then 0.2-0.4 %. A lean-gas condensate line cooled
+to seabed temperature differs by 25-50 % because the liquid holdup is real, so that difference is not a defect.
+Gas-condensate saturation pressure (Tyrihans cellar task): a bubble-point search on a lean gas-condensate fluid returns
+a wrong value because the fluid has a dew point; take the saturation pressure of GOR above about 1500 Sm3/Sm3 fluids
+from the CVD first step (dew point) and record it as a limitation. `hydrateFormationTemperature()` on a GOR 250 oil fluid
+with 3 mol % water at 200 bara did not converge and left the temperature unchanged: check that the returned temperature
+differs from the start temperature before reporting it and report `None` as a gap, not as a hydrate-free result.
+HPHT wellstream hydrates (Erlend / Kristin study): the CPA hydrate solver also stalls (no exception) with the
+C7+ TBP/plus pseudo-components at 50 bara and 1 mol % water, even without MEG. Rebuild the CPA mixture from the
+light components only (C1-C6, N2, CO2, water, renormalised), as C7+ barely moves the hydrate temperature; a
+Kristin-type gas (CGR 300 Sm3/MSm3) with 1 mol % water gave 17.2 / 21.2 / 26.6 / 31.9 C at 50 / 100 / 300 / 600 bara.
+Do not iterate `PipeBeggsAndBrills` inlet pressure by a fixed point `p_in += p_out_target - p_out`: it stalls at high
+pressure drop (unconverged tables looked like data). Use a secant solve, treat a `HydraulicDomainException` as outlet
+pressure 0, store an `ok` flag and exclude `ok == False` rows when interpolating; beyond the last converged rate
+extend the table with dp proportional to q^2 instead of the last slope.
+
+### MEG/Water Film Conditioned by Dry Gas (pipeline drying after glycol swabbing)
+
+Question pattern: "what MEG:H2O ratio does a residual film reach under dry export gas, and why is
+the gas above the dew-point spec?" Worked task: `2026-09-29_steady_state_megh2o_ratio_during_dry_gas_drying_of_a_meg`.
+
+- **Direction:** a 99 wt% MEG film is *drier* than the plateau (about 90 wt% at 6 C, 140 bara), so the
+  gas is the wetter side and the film **absorbs** water. It "dries" only if it starts wetter than the plateau.
+- **Equilibrium curve:** two-phase `SystemSrkCPAstatoil` TPflashes over an MEG sweep give gas water *and MEG*
+  content versus film composition (gas composition depends on the liquid composition, T and P only).
+  Report film composition on a **gas-free** basis, MEG/(MEG+water); dissolved CO2/CH4 is ~0.8 wt%.
+  MEG is not strictly non-volatile: about 5 ppm wt in the gas at 140 bara.
+- **Dew-point spec fixes only the water mole fraction** y_in, not the pipe condition. Hand chain: water
+  fugacity continuity, `a_w = y_in * phiV_w(T,P) * P / f0_w(T,P)`, with `f0_w` = IAPWS vapour pressure x
+  Poynting; `a_w` from the CPA liquid fugacity coefficient divided by the pure-water coefficient. Use binary
+  (gas-free) mole fractions when fitting `ln gamma_w` or the fit mis-predicts at high MEG.
+- **Plateau offset by mass balance:** with a stationary film the gas leaves carrying water and MEG in the
+  film's own ratio, so `(y_out - y_in)/y_in = r * y_MEG / y_in` (about 1.7 %), independent of `K_G` at large NTU.
+  The film inlet zone is stripped of MEG first (a film-free zone grows at ~200 m/day in a 0.4 m, 60 kg/s example).
+- **Flash per time step is backward Euler:** unconditionally stable, plateau independent of step size; an
+  explicit coding is stable only below `2 / (d y*_H2O / d r)` kg gas per kg film MEG per step.
+- **Dew point is logarithmic** (~6 % in water content per K at these conditions) and, for CPA, nearly
+  pressure independent at 70-140 bara: reading the same gas as a dew point at pipe pressure adds ~0.9 K.
+- **Basis traps:** CPA has no ice phase (the -18 C spec is a supercooled-liquid dew point; frost reading is
+  ~16 % lower in y_in); `SystemGERGwaterEos.waterDewPointTemperatureFlash()` is unreliable below 0 C
+  (2.5x below CPA at -18 C/70 bara, below ideal Psat/P at -18 C/140 bara). Carry the spread as a sensitivity.
+- **Numerics:** for N >= 100 film cells use `solve_ivp(method="BDF")`; LSODA stalls on the film-exhaustion
+  switch. Regularise `r = W/(M + delta)` so a film-free cell cannot return a spurious composition.
+
 ## 2. Wax Analysis
 
 ### Wax Appearance Temperature (WAT)
@@ -398,6 +460,16 @@ for (double qgMSm3d : gasRates) {
 > max deliverable rate. To model to a fixed **arrival** (outlet) pressure
 > instead, raise the inlet pressure until the delivered rate matches, or iterate
 > inlet P per rate.
+
+> **PATTERN — tubing outflow (VLP) and gas-lift need on a heavy-oil tie-back.** Put the **bottom-hole**
+> pressure on the inlet stream (`P_bh = P_res - q_liq / PI`), set `setLength(MD)`, `setElevation(+TVD)`,
+> `setAdiabatic(true)` and read the outlet pressure as the wellhead pressure; add lift gas as extra gas in the
+> stream composition (bottom injection slightly over-states the lift). A 24 API oil (10 cP at 85 C) with 2000 m TVD
+> has a hydrostatic head of about 170 bar, so a 205 bar reservoir cannot reach a 40 bar arrival without lift: sweep
+> water cut x rate x lift GLR once, tabulate the WHP margin against `arrival + line dP + choke`, and read the
+> deliverable rate per well and the GLR needed from the table (it falls from about 2.5 kSm3/d per well at 5 % water cut
+> to zero near 85 %). Every `None`/exception in the table is the deliverability limit above, not a failure.
+> `getMixtureViscosityProfile()` / `getSegmentMixtureViscosity()` return **cP**, not Pa.s (do not multiply by 1000).
 
 > **GOTCHA — `getFlowRegime()` naming.** Beggs & Brill regimes are returned as
 > `SEGREGATED` (stratified/annular — gravity-dominated), `TRANSITION`,
@@ -1261,6 +1333,65 @@ compressors and to recommend a wash fluid.
 // If not met: increase insulation, add DEH, reduce flow, or inject inhibitor
 ```
 
+### Low-rate satellite tie-back: heat loss, not friction, sets the design
+
+A short tie-back at 0.5-2 kSm3/d liquid (typical of a small cold, shallow oil such as the Barents
+satellites) has a pressure drop of 1-2 bar in 6-8 in, but a residence time of about a day, so the
+arrival temperature falls towards the seabed. Rank the options on arrival temperature and cost, not
+on hydraulics:
+
+- Run `PipeBeggsAndBrills` with `setUseOverallHeatTransferCoefficient(true)` and U = 12 (bare),
+  4 (wet insulation), 2.5 (thick wet), 1.2 W/m2K (pipe-in-pipe) at 500-4000 Sm3/d, at the real
+  wellhead temperature (area BHT trend gives the reservoir temperature when no BHT is reported).
+- No-touch time must include the steel (and half the insulation) heat capacity per metre; the fluid
+  alone overstates the cooling rate by about 50 %.
+- The WAT is usually the unknown: sweep it (for example 18 / 26 / 34 C) instead of picking one; a
+  passive 12 h no-touch time to a 26 C WAT from 35 C is not reachable even with pipe-in-pipe, so
+  adopt displacement/flush and chemicals for restart, keep DEH as the hedge for a high WAT, and say
+  that WAT, pour point and viscosity are the first data need.
+- Rank options by 15-year life-cycle cost (capex premium + chemical opex) and list the measured-WAT
+  decision rule (low WAT: wet insulation; mid: wet insulation plus displacement; high: DEH or PiP or
+  avoid a new line, for example by extended-reach wells from an existing template).
+```
+
+### DEH operations: how much power, how much temperature, how much energy
+
+Use this when a task asks what a direct-electrical-heating (DEH) system or an inlet heater is worth,
+how much electricity it burns or how its on/off operation relates to arrival temperature. The
+detailed pipe model is `setDirectElectricalHeatingPower` (above); for yearly screening a lumped
+model is enough and is cheap enough for Monte Carlo.
+
+- **Lumped arrival temperature** with distributed DEH power $P$: balance temperature
+  $T_{bal}=T_{sea}+P/UA$, arrival $T=T_{bal}+(T_{in}-T_{bal})e^{-UA/\dot m c_p}$. Fraction of DEH heat
+  that reaches the arrival (heat-exchanger effectiveness) is $\eta=(1-e^{-NTU})/NTU$ with
+  $NTU=UA/\dot m c_p$, so it falls from about 0.55 at 9 MSm3/d to about 0.2 at 2.5 MSm3/d in a
+  30 km line: electric DEH loses most of its heat to the sea at low rate, a heater at the receiving
+  end does not. Take $\dot m c_p$ from NeqSim (recombined wellstream, TP flash, per MSm3/d), not
+  from gas alone: liquids and water add 5-15 %.
+- **Calibrate on two independent anchors** (flow-assurance rate-vs-arrival-temperature curve and a
+  measured DEH step test), fit $(T_{in},UA)$ on one and predict the other; cap $T_{in}$ at a
+  physical wellhead temperature or the pair is degenerate (T_in runs to the optimiser bound).
+- **Never read DEH power from the transformer tap tag.** The tap/step tag is a setting that stays
+  at its last value (for example 12.6 of 13) with the breaker open. Power is breaker state times
+  primary current: $P\approx P_{max}\,I/I_{max}$ (check median current when on against the rated
+  power to find $I_{ref}$). One field showed the breaker closed 25 % of hours at about 7.7 MW,
+  so the time-average power was 2.0 MW (17 GWh/y), not the 7.7 MW the tap tag suggests, and a
+  quoted "halve the DEH, save 20 kt CO2" only applies once DEH runs continuously.
+- **Bang-bang DEH** (fixed power steps, on/off) holds the mean temperature but not the minimum.
+  Report on-fraction per month and the temperature percentiles, not only the mean; a regulated
+  heater saves little energy at equal mean but narrows the band, so value it through the
+  threshold-driven consequence (for example oil-in-water exceedance probability vs temperature
+  bin), not through kWh.
+- **Cross-check hydrate margin in the heated line**, not only at the receiving separator: the
+  arrival temperature without DEH crosses (hydrate formation temperature + margin) years before the
+  separator temperature does. In Python, `hydrateFormationTemperature()` on a CPA fluid with a long
+  component list threw `getPhase ... Can not return` here; `runFlowAssurance` `hydrateRiskMap` (MCP)
+  returned the CPA temperature directly and is the quick route.
+- Calibrate unknown mixing inputs (temperature of the other streams, DEH delivery scale) by
+  approximate Bayesian rejection against the measured energy rather than fixing them: draw from
+  wide priors, keep draws that reproduce the measured average DEH energy, and carry the survivors
+  through the economics.
+
 ## 7. Flow Assurance Decision Matrix
 
 | Threat | Detection | NeqSim Method | Mitigation |
@@ -1389,3 +1520,10 @@ impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet su
 | MEG not reducing hydrate T | Check MEG is partitioning to aqueous phase |
 | No solid S8 phase forms | Use `TPSolidflash()` (not `TPflash()`) and call `setSolidPhaseCheck("S8")` first |
 | S8 deposition risk missed | Saturate the gas at a realistic baseline (scrubber/separator P,T) before checking the letdown point |
+| Tie-back deliverability collapses (recovery 7-13 %) when a NeqSim tubing/flowline table is used as the outflow curve | `PipeBeggsAndBrills` tubing outflow is non-monotonic at low rate (liquid-loading minimum): intersect the inflow with the stable right-hand branch only (rate above the pressure minimum), never the whole table |
+| `PipeBeggsAndBrills` throws a negative-pressure exception while building a Pin(Q, P_arrival) table | Solve the required inlet pressure by bisection inside `try/except`, treat a failure as infeasible (NaN), and replace NaN by a large pressure before interpolating |
+| Hydrate temperature is NaN or MEG suppression is zero | `fluid.setHydrateCheck(True)` before the flash, and a water component present; in a TBP-characterised fluid the pseudo-components are named `<name>_PC` |
+| Arrival temperature equals the inlet in a Beggs-and-Brill cooling study | Call `setConstantSurfaceTemperature(...)` before `setHeatTransferCoefficient(...)`; screening U is about 20 W/m2K for a bare line and 4 for an insulated one |
+| 5.5-inch tubing shows no feasible rate for a 1-3 MSm3/d gas-condensate well | Use 7-inch (ID 0.159 m) as the screening tubing and check the liquid-loading minimum before blaming the flowline |
+| A new tie-back looks feasible on its own line but is routed through a shared trunk | Compute the back-pressure the added rate puts on the trunk inlet and compare it with the choke dP of the existing wells (Trestakk: +23/+51/+93 bar for +1.5/+3/+5 kSm3/d on a 12-in trunk against 14-95 bar of headroom); beyond the headroom the existing wells are throttled out or a dedicated line is needed |
+| Trunk ID and host arrival pressure are unknown | Calibrate the arrival pressure to measured wellhead/choke data for each plausible ID (10 and 12 in), show both, and bracket the arrival pressure with the host PSD window instead of reporting one number |

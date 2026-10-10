@@ -128,6 +128,7 @@ Additional skills as needed:
 - **`neqsim-physics-explanations`** — For educational context
 - **`neqsim-troubleshooting`** — When simulations fail
 - **`neqsim-notebook-patterns`** — For Jupyter notebook formatting
+- **`neqsim-exploration-strategy-selection`** — APbo / VPbo / firm-well / PLX decisions (EMV, VOI, break-even chance of success); pair with `neqsim-tight-reservoir-test-design` for tight targets
 
 ### Step 1: Clarify Scope (Ask Before Starting)
 
@@ -291,6 +292,8 @@ This agent orchestrates other agents when needed:
 | Gap analysis | `@capability-scout` | Check if NeqSim can handle a specific capability |
 | Capacity increase on an existing host | `@capacity-increase-screening` | Ideas across wells, subsea and topside ranked on scope, cost, emissions, HSE and value; host ullage for tie-ins |
 | NCS transport-system context | `ncs-value-chain-agent` (community) | The tie-back's gas/oil shares a trunkline, plant or terminal with other fields: get ullage, shadow price and outage exposure first. Skills `neqsim-ncs-infrastructure-network` (routes, `TiebackAnalyzer` against real hosts, `LoopedPipeNetwork` path check) and `neqsim-ncs-value-chain-optimization` (shelf-wide LP, `DebottleneckingAdvisor` hand-off) |
+| Exploration opportunity (APbo / VPbo, firm well, POL review, exploration strategy, success-case planning) | `enterprise-exploration-opportunity-agent` when the Equinor plugin is installed; otherwise run this agent with `neqsim-exploration-strategy-selection`, `neqsim-norwegian-continental-shelf-data`, `neqsim-ncs-ownership-equity` and `neqsim-uncertainty-quantification` | The decision is "drill / which host / when / what to prepare", not a concept design: risk the prospect (Pg, P90/P50/P10, exploration cost paid in every outcome), value the development per host and timing against host ullage, report EMV, break-even Pg, VOI and the asset-team data requests. Reuse the sibling-task pattern (`neqsim tasks search apbo`) and the skill helpers instead of a new task-local model |
+| Host capacity per year, back-out, shared-host allocation | `enterprise-host-ullage-agent` (Equinor) else `ncs-value-chain-agent` | Any tie-back whose value depends on when the host has room |
 
 When delegating, pass the relevant context (fluid composition, operating
 conditions, constraints) using the structured handoff format from the

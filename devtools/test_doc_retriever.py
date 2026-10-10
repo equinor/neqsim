@@ -69,6 +69,13 @@ def test_resolve_installation_from_name_code_and_text():
     assert dr.resolve_installation(cfg, text="VIS compressor study") == "VIS"
 
 
+def test_resolve_installation_ignores_diacritics():
+    cfg = {"installation_codes": {"ASGA": "Åsgard A", "ASGB": "Asgard B", "ASG": "Åsgard General"}}
+    assert dr.resolve_installation(cfg, text="2026_asgard_a_consolidation study") == "ASGA"
+    assert dr.resolve_installation(cfg, "Asgard A") == "ASGA"
+    assert dr.resolve_installation(cfg, text="Åsgard B storage") == "ASGB"
+
+
 def test_retrieve_for_task_ranks_pid_and_datasheets(backend):
     status = dr.retrieve_for_task(str(backend), keywords=["compressor", "separator"], quiet=True,
                                   tag_search=fake_search, downloader=fake_downloader)

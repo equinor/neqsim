@@ -10,6 +10,9 @@ import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
 import neqsim.process.equipment.network.FieldNetworkTopology;
+import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
+import neqsim.process.equipment.network.NetworkObjective;
+import neqsim.process.equipment.network.NetworkObjectives;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
 import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.process.equipment.stream.Stream;
@@ -28,6 +31,7 @@ import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.TiebackAnalyzer;
 import neqsim.process.fielddevelopment.tieback.TiebackOption;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator;
+import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator.LineCategory;
 import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator.WellLocationType;
@@ -1203,9 +1207,40 @@ public class SubseaProductionSystem implements Serializable {
     SURFCostEstimator estimator = createSurfCostEstimator(basis);
     estimator.calculate();
     CostEstimateResult estimate = estimator.getDetailedEstimateResult();
-    estimate.addQualityFlag("Canonical topology geometry is aggregated into Class 4 screening quantities: line "
-        + "diameters are length-weighted and parallel manifold/template units share one representative slot/weight basis.");
+    estimate.addQualityFlag("Canonical physical line edges are priced separately using exact topology length and "
+        + "hydraulic diameter as the nominal Class 4 cost diameter. Parallel manifold/template units still share one "
+        + "representative slot/weight basis; detailed OD/wall-thickness design remains required.");
     return estimate;
+  }
+
+  /**
+   * Create a composable objective that minimizes topology-derived Class 4 SURF capital cost.
+   *
+   * <p>
+   * Network objectives are maximized, so this term returns negative SURF cost. A typical weight is {@code 1.0e-6} to
+   * express the objective in negative million USD. The objective reads the same mutable canonical topology that the
+   * optimizer has just solved; it does not own or copy network state.
+   * </p>
+   *
+   * @param topology canonical topology optimized by the owning {@code NetworkOptimizer}
+   * @param weight scalarization weight applied to negative USD
+   * @return composable topology-derived SURF capital-cost objective
+   */
+  public NetworkObjective createSurfCapitalCostObjective(final FieldNetworkTopology topology, double weight) {
+    if (topology == null) {
+      throw new IllegalArgumentException("Field network topology cannot be null");
+    }
+    return NetworkObjectives.custom("negativeSurfCapexUSD", weight, new NetworkObjectives.Evaluator() {
+      private static final long serialVersionUID = 1000L;
+
+      @Override
+      public double evaluate(neqsim.process.equipment.network.LoopedPipeNetwork network) {
+        if (network != topology.getHydraulicNetwork()) {
+          throw new IllegalArgumentException("SURF cost objective must be evaluated on its canonical topology network");
+        }
+        return -estimateSurfCosts(topology).getCapitalCostSummary().get("totalSURF");
+      }
+    });
   }
 
   /**
@@ -1244,6 +1279,22 @@ public class SubseaProductionSystem implements Serializable {
     }
     if (basis.getWaterDepthM() > 0.0) {
       surf.setWaterDepthM(basis.getWaterDepthM());
+    }
+    for (FieldNetworkSurfDesignBasis.LineSegment segment : basis.getLineSegments()) {
+      LineCategory category;
+      EdgeRole role = segment.getRole();
+      if (role == EdgeRole.JUMPER) {
+        category = LineCategory.JUMPER;
+      } else if (role == EdgeRole.FLOWLINE || role == EdgeRole.TIE_IN) {
+        category = LineCategory.INFIELD_FLOWLINE;
+      } else if (role == EdgeRole.TRUNKLINE || role == EdgeRole.PIPELINE) {
+        category = LineCategory.EXPORT_PIPELINE;
+      } else if (role == EdgeRole.RISER) {
+        category = LineCategory.RISER;
+      } else {
+        continue;
+      }
+      surf.addLineSegment(segment.getEquipmentTag(), category, segment.getLengthM(), segment.getDiameterInches());
     }
     return surf;
   }

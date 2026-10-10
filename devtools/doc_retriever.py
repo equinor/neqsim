@@ -26,6 +26,7 @@ Usage::
     neqsim fetch-docs <task_dir> --inst MYINST     # explicit installation code
     neqsim fetch-docs <task_dir> --keywords compressor "export gas" --max-docs 80
     neqsim fetch-docs <task_dir> --tags 20VA001 --no-download
+    neqsim fetch-docs <task_dir> --inst OSB --doc-nos 11-1B-PC-CD0-11-EC-00235 11-1B-HM-M78-01364-0041
 """
 
 import argparse
@@ -33,6 +34,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timezone
 
 DEVTOOLS = os.path.dirname(os.path.abspath(__file__))
@@ -94,6 +96,12 @@ def load_config(path=None):
         return {}
 
 
+def _fold(text):
+    """Lower-case ASCII fold so 'Åsgard' and 'Asgard' compare equal."""
+    decomposed = unicodedata.normalize("NFKD", str(text))
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch)).lower()
+
+
 def resolve_installation(cfg, name_or_code=None, text=None):
     """Resolve an installation code from a code, a display name, or free text.
 
@@ -113,13 +121,15 @@ def resolve_installation(cfg, name_or_code=None, text=None):
                 return code
             if wanted.lower() == str(name).strip().lower():
                 return code
+            if _fold(wanted) == _fold(str(name).strip()):
+                return code
         return wanted
     if text:
-        lowered = " " + re.sub(r"[_\-]+", " ", text.lower()) + " "
+        lowered = " " + re.sub(r"[_\-]+", " ", _fold(text)) + " "
         spaced = " " + re.sub(r"[_\-]+", " ", text) + " "
         candidates = []
         for code, name in codes.items():
-            label = str(name).strip().lower()
+            label = _fold(str(name).strip())
             if len(label) >= 3 and re.search(
                     r"(?<![a-z0-9])" + re.escape(label) + r"(?![a-z0-9])", lowered):
                 candidates.append((len(label), code))
@@ -262,7 +272,7 @@ def _status(out_dir, payload):
 
 def retrieve_for_task(task_dir, inst_code=None, keywords=None, tags=None, doc_types=None,
                       max_docs=60, download=True, quiet=False, tag_search=None,
-                      downloader=None):
+                      downloader=None, doc_nos=None, doc_lookup=None):
     """Retrieve documents for a task folder. Never raises for backend errors.
 
     Returns the status dict that is also written to
@@ -296,6 +306,37 @@ def retrieve_for_task(task_dir, inst_code=None, keywords=None, tags=None, doc_ty
     if not inst:
         return _status(out_dir, dict(base, status="no_installation", message=(
             "Could not infer the installation from the task text; pass --inst CODE")))
+
+    if doc_nos:
+        # Known document numbers (for example read off a P&ID list): download them directly, no discovery.
+        if downloader is None:
+            if DEVTOOLS not in sys.path:
+                sys.path.insert(0, DEVTOOLS)
+            from stid_download import download_doc_files as downloader
+        if doc_lookup is None:
+            from stidapi.doc import Doc
+
+            def doc_lookup(inst_code, doc_no):
+                return Doc(inst_code, doc_no).get_files()
+        selection, missing = {}, []
+        for dn in doc_nos:
+            try:
+                files = doc_lookup(inst, dn)
+            except Exception as exc:  # noqa: BLE001
+                missing.append({"docNo": dn, "error": str(exc)[:120]})
+                continue
+            selection[dn] = {"docNo": dn, "docTitle": "", "docType": "", "files": files}
+        import contextlib
+        import io
+        with contextlib.redirect_stdout(io.StringIO()):
+            downloaded, failed = downloader(inst, selection, out_dir) if (download and selection) else ([], [])
+        failed = list(failed) + missing
+        ok_count = sum(1 for d in downloaded if d.get("status") == "downloaded")
+        cached = sum(1 for d in downloaded if d.get("status") == "cached")
+        _write_json(os.path.join(out_dir, MANIFEST_FILE), {"schema_version": "1.0", "source": "stidapi", "inst_code": inst,
+                    "retrieved_at": _now(), "doc_nos": list(doc_nos), "documents_retrieved": downloaded, "documents_failed": failed})
+        return _status(out_dir, dict(base, status="ok" if (downloaded or not download) else "error", documents_selected=len(selection),
+                                     documents_downloaded=ok_count, documents_cached=cached, documents_failed=len(failed)))
 
     keywords = list(keywords) if keywords else list(cfg.get("default_keywords") or DEFAULT_KEYWORDS)
     include_pid = doc_types is None
@@ -409,6 +450,7 @@ def main(argv=None):
     parser.add_argument("--keywords", nargs="+", default=None, help="Tag-description search terms")
     parser.add_argument("--tags", nargs="+", default=None, help="Tag numbers to search")
     parser.add_argument("--doc-types", nargs="+", default=None, help="Optional doc-type filter")
+    parser.add_argument("--doc-nos", nargs="+", default=None, help="Download these known document numbers directly (skips discovery)")
     parser.add_argument("--max-docs", type=int, default=60)
     parser.add_argument("--no-download", action="store_true", help="Discover and rank only")
     parser.add_argument("--json", action="store_true", help="Print the status JSON")
@@ -419,7 +461,7 @@ def main(argv=None):
         return 2
     status = retrieve_for_task(task_dir, inst_code=args.inst, keywords=args.keywords,
                                tags=args.tags, doc_types=args.doc_types, max_docs=args.max_docs,
-                               download=not args.no_download, quiet=args.json)
+                               download=not args.no_download, quiet=args.json, doc_nos=args.doc_nos)
     if args.json:
         print(json.dumps({k: v for k, v in status.items() if k != "message"} , indent=2))
     elif status.get("status") != "ok":
@@ -429,3 +471,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     sys.exit(main())
+

@@ -307,6 +307,16 @@ def _table(headers, rows) -> list:
     return out
 
 
+def _key_result_row(name, value) -> list:
+    """Return a key-results table row; unwrap the report form {value, label, unit}."""
+    if isinstance(value, dict) and "value" in value:
+        text = str(value["value"])
+        if value.get("unit"):
+            text = "{} {}".format(text, value["unit"])
+        return [value.get("label") or name, text]
+    return [name, value]
+
+
 def _rel(path: Path, task_dir: Path) -> str:
     try:
         return path.relative_to(task_dir).as_posix()
@@ -745,7 +755,7 @@ def build_work_record(task_dir: Path, preserved: dict) -> str:
     key_results = results.get("key_results") or {}
     if isinstance(key_results, dict) and key_results:
         out.extend(_table(["Key result", "Value"],
-                          [[name, value] for name, value in key_results.items()]))
+                          [_key_result_row(name, value) for name, value in key_results.items()]))
     else:
         out.append("`results.json` has no `key_results` section.")
         out.append("")

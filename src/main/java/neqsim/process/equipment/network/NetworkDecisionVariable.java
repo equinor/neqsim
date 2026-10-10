@@ -28,6 +28,8 @@ public class NetworkDecisionVariable implements Serializable {
     ROUTE_ALLOCATION,
     /** Edge availability or derating fraction. */
     EDGE_AVAILABILITY,
+    /** Discrete physical pipe-diameter candidate. */
+    PIPE_DIAMETER,
     /** User-supplied getter and setter. */
     CUSTOM
   }
@@ -79,6 +81,7 @@ public class NetworkDecisionVariable implements Serializable {
   private final double upperBound;
   private final Getter customGetter;
   private final Setter customSetter;
+  private final double[] discreteValues;
 
   /**
    * Create a built-in network decision variable.
@@ -93,11 +96,11 @@ public class NetworkDecisionVariable implements Serializable {
    */
   public NetworkDecisionVariable(String name, Type type, String targetName, String unit, RateBasis rateBasis,
       double lowerBound, double upperBound) {
-    this(name, type, targetName, unit, rateBasis, lowerBound, upperBound, null, null);
+    this(name, type, targetName, unit, rateBasis, lowerBound, upperBound, null, null, null);
   }
 
   private NetworkDecisionVariable(String name, Type type, String targetName, String unit, RateBasis rateBasis,
-      double lowerBound, double upperBound, Getter getter, Setter setter) {
+      double lowerBound, double upperBound, Getter getter, Setter setter, double[] candidates) {
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Decision variable name cannot be empty");
     }
@@ -113,6 +116,7 @@ public class NetworkDecisionVariable implements Serializable {
     this.upperBound = upperBound;
     this.customGetter = getter;
     this.customSetter = setter;
+    this.discreteValues = candidates == null ? null : candidates.clone();
   }
 
   /**
@@ -132,7 +136,32 @@ public class NetworkDecisionVariable implements Serializable {
       throw new IllegalArgumentException("Custom getter and setter are required");
     }
     return new NetworkDecisionVariable(name, Type.CUSTOM, null, unit, RateBasis.NONE, lowerBound, upperBound, getter,
-        setter);
+        setter, null);
+  }
+
+  /**
+   * Create a discrete pipe-diameter design variable over existing canonical edge geometry.
+   *
+   * @param name stable decision name
+   * @param edgeName canonical network edge identifier
+   * @param candidateDiametersM increasing candidate inner diameters in metres
+   * @return discrete pipe-diameter variable
+   */
+  public static NetworkDecisionVariable pipeDiameter(String name, String edgeName, double[] candidateDiametersM) {
+    if (candidateDiametersM == null || candidateDiametersM.length < 2) {
+      throw new IllegalArgumentException("At least two pipe-diameter candidates are required");
+    }
+    double[] values = candidateDiametersM.clone();
+    for (int index = 0; index < values.length; index++) {
+      if (!(values[index] > 0.0) || !Double.isFinite(values[index])) {
+        throw new IllegalArgumentException("Pipe-diameter candidates must be finite and positive");
+      }
+      if (index > 0 && values[index] <= values[index - 1]) {
+        throw new IllegalArgumentException("Pipe-diameter candidates must be strictly increasing");
+      }
+    }
+    return new NetworkDecisionVariable(name, Type.PIPE_DIAMETER, edgeName, "m", RateBasis.NONE, values[0],
+        values[values.length - 1], null, null, values);
   }
 
   /** @return variable name */
@@ -202,6 +231,8 @@ public class NetworkDecisionVariable implements Serializable {
     case ROUTE_ALLOCATION:
     case EDGE_AVAILABILITY:
       return edge.getAvailability();
+    case PIPE_DIAMETER:
+      return edge.getDiameter();
     default:
       throw new IllegalStateException("Unsupported decision variable type: " + type);
     }
@@ -216,6 +247,9 @@ public class NetworkDecisionVariable implements Serializable {
   public void setValue(LoopedPipeNetwork network, double value) {
     if (value < lowerBound || value > upperBound || !Double.isFinite(value)) {
       throw new IllegalArgumentException("Value for " + name + " is outside [" + lowerBound + ", " + upperBound + "]");
+    }
+    if (isDiscrete() && !containsDiscreteValue(value)) {
+      throw new IllegalArgumentException("Value for " + name + " is not one of its discrete candidates");
     }
     if (type == Type.CUSTOM) {
       customSetter.set(network, value);
@@ -251,9 +285,42 @@ public class NetworkDecisionVariable implements Serializable {
     case EDGE_AVAILABILITY:
       edge.setAvailability(value);
       break;
+    case PIPE_DIAMETER:
+      edge.setDiameter(value);
+      break;
     default:
       throw new IllegalStateException("Unsupported decision variable type: " + type);
     }
+  }
+
+  /** @return true when this variable must use an explicit discrete candidate */
+  public boolean isDiscrete() {
+    return discreteValues != null;
+  }
+
+  /**
+   * Get the explicit discrete candidates.
+   *
+   * @return defensive candidate copy, or an empty array for a continuous variable
+   */
+  public double[] getDiscreteValues() {
+    return discreteValues == null ? new double[0] : discreteValues.clone();
+  }
+
+  /**
+   * Check an exact candidate with a small floating-point tolerance.
+   *
+   * @param value proposed value
+   * @return true when the value matches a registered candidate
+   */
+  private boolean containsDiscreteValue(double value) {
+    for (double candidate : discreteValues) {
+      double tolerance = 1.0e-12 * Math.max(1.0, Math.abs(candidate));
+      if (Math.abs(value - candidate) <= tolerance) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static double toKgPerSecond(double value, String unit) {
