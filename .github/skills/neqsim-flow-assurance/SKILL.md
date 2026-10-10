@@ -1389,3 +1389,16 @@ impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet su
 | MEG not reducing hydrate T | Check MEG is partitioning to aqueous phase |
 | No solid S8 phase forms | Use `TPSolidflash()` (not `TPflash()`) and call `setSolidPhaseCheck("S8")` first |
 | S8 deposition risk missed | Saturate the gas at a realistic baseline (scrubber/separator P,T) before checking the letdown point |
+
+## Residual MEG/water liquid after pigging
+
+For the bounded experimental Java/Python route, use `TwoFluidPipe` with
+`NonEquilibriumFilmTransfer`, `setInitialAqueousFilm`, and named-component transport.
+Inspect `docs/process/TwoFluidPipeFilmDrying.md` and `TwoFluidPipeFilmDryingTest` before setup.
+The inlet gas and initial liquid compositions are independent; water can absorb while MEG
+evaporates. Select isothermal Euler, CFL <= 0.5, and disable tracked slugs/heating. Coefficients
+are user inputs, not calibrated defaults. This is a gas/aqueous two-fluid route; the axial
+`PipelineEvaporationStudy` wall-film option does not calculate elapsed post-pigging drying time.
+Use `getFilmDryingStatus` with a positive residual threshold and horizon, preserve boundary
+and component ledgers, and distinguish seeded pool motion from validated terrain trapping.
+Short-time conservation, refinement and CPA equilibrium tests do not qualify 10 km drying duration.

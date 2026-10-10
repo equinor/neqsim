@@ -943,7 +943,7 @@
               "double"
             ],
             "expected": 305976.87659290305,
-            "absoluteTolerance": 1e-6
+            "absoluteTolerance": 1e-06
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
@@ -1282,7 +1282,7 @@
               "double"
             ],
             "expected": 2865418.4358585374,
-            "absoluteTolerance": 1e-6
+            "absoluteTolerance": 1e-06
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
@@ -1325,7 +1325,7 @@
               "double"
             ],
             "expected": 2520842.0799756097,
-            "absoluteTolerance": 1e-6
+            "absoluteTolerance": 1e-06
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
@@ -1353,6 +1353,27 @@
         "src/test/java/neqsim/process/equipment/compressor/MinimumFlowSpillTest.java"
       ],
       "limitations": "Java/Python object API discovered through inspectApi; not a runProcess JSON equipment type. Fixed minimum, same-composition return at suction state; no dynamic anti-surge qualification."
+    },
+    {
+      "id": "pipeline-film-transfer",
+      "title": "Experimental post-pigging gas/aqueous film transfer",
+      "domain": "flow-assurance",
+      "apis": [
+        "neqsim.process.equipment.pipeline.TwoFluidPipe",
+        "neqsim.process.equipment.pipeline.twophasepipe.NonEquilibriumFilmTransfer"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/TwoFluidPipeFilmDryingTest.java",
+        "src/test/java/neqsim/process/equipment/pipeline/twophasepipe/NonEquilibriumFilmMomentumTest.java"
+      ],
+      "limitations": "Experimental Java/Python route only; configure finite-rate transfer and independent initial aqueous inventory. Isothermal Euler with CFL <= 0.5, gas/aqueous only, no tracked slugs. Long-time drying and experimental duration accuracy are not qualified; not exposed by runPipeline.",
+      "tool": "inspectApi"
     }
   ]
 }
