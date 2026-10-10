@@ -36,6 +36,13 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-10 — OVP of a small HPHT discovery with undrilled neighbours (Tott East, Tilje, Lynbjorn): cluster value, break-even volume gate, programme EMV, host-trunk ullage by capacity case
+**Type:** G (Workflow)
+**Keywords:** OVP, APbo gate, small discovery, cluster tie-back, undrilled targets, programme EMV, break-even Pg, risked volume, trunk ullage, licence milestones, PDO deadline, schedule Monte Carlo, Linnorm, Asgard B
+**Solution:** Private task folder (redacted): script-backed class 5 screening (Sodir discovery, licence equity and milestones; read-only Centuries and PDM; NeqSim tuned HPHT fluid, shut-in column, leg, direct and trunk hydraulics, CPA hydrates, depletion; concept economics with 10000-draw Monte Carlo; trunk and host ullage by capacity case; schedule Monte Carlo against the PDO milestone), results.json, Word report with decision gates; new programme-EMV helpers in the enterprise prospect-risking skill and a cluster step in the area-development workflow skill.
+**Notes:** A discovery that cannot carry a tie-back alone makes per-well EMV misleading: value the combinations, keep development optional and compare the risked volume with the break-even volume. State the answer as gates for the pending G&G update (volume, Pg, trunk capacity, water) and not as one number. Timing from a shared trunk needs the ullage for several capacity and slip cases. Gotchas: `detach2.ps1` takes a script file name, not a path; the shared terminal is polluted by parallel agents, so write check output to UTF-8 files; matplotlib `errorbar` rejects negative whiskers.
+
+
 ### 2026-10-10 — Partner-led firm exploration well, stand-alone prospect far from infrastructure: volume threshold per infrastructure share, analogue CAPEX, conditional APbo position
 **Type:** G (Workflow)
 **Keywords:** APbo, exploration, firm well, stand-alone development, far from infrastructure, frontier wildcats, minimum economic volume, infrastructure share, area hub, EMV, 78 % refund, Monte Carlo, decision map
