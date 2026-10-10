@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
@@ -44,6 +45,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.Can
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.Outcome;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
+import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.OperatingPointSearchResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -205,43 +207,84 @@ class FieldToFacilityOptimizationAcceptanceTest {
   }
 
   /**
-   * Verify the same canonical route, capacity, compression and export-boundary contracts scale to ten live wells.
+   * Verify mixed choke/routing search and replay scale the complete evidence contract to ten live wells.
    */
   @Test
   void evaluatesTenWellExportBoundaryWithCompleteConstraintEvidence() {
     Fixture fixture = createFixture(10);
     ProcessModelSimulationEvaluator simulation = createSimulationEvaluator(fixture);
-    ProcessModelSimulationEvaluator.EvaluationResult result = simulation.evaluate(new double[0]);
+    List<ProcessModelOperatingAction> actions = createFieldActions(fixture);
+    ProcessModelOperatingActionSetEvaluator candidates = new ProcessModelOperatingActionSetEvaluator(
+        "ten-well-field-actions", "Ten-well field actions", "synthetic full-model mixed search", simulation, actions);
+    for (String suffix : fixture.wellSuffixes) {
+      candidates
+          .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Field", "field network",
+              "producer " + suffix + " deliverability", "synthetic well deliverability")
+          .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+              suffix + " HP route capacity", "synthetic per-line operating limit")
+          .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+              suffix + " LP route capacity", "synthetic per-line operating limit");
+    }
+    double[] seed = new double[actions.size()];
+    for (int index = 0; index < fixture.wellSuffixes.size(); index++) {
+      seed[index] = 70.0;
+      seed[index + fixture.wellSuffixes.size()] = index % 2;
+    }
+    ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer("ten-well-field-search",
+        "Ten-well field search", "synthetic bounded choke and HP/LP routing search", candidates)
+        .setInitialCandidate(seed).setMaximumEvaluations(35).setInitialStepFraction(0.5).setRelativeStepTolerance(0.1)
+        .setObjectiveImprovementTolerance(1.0e-6, "synthetic export-rate comparison tolerance");
+    OperatingPointSearchResult result = optimizer.optimize();
 
-    assertTrue(result.isSimulationConverged());
-    assertTrue(result.isFeasible(), result.getErrorMessage());
+    assertTrue(result.isAcceptedPointReplayed(), result.getOutcome() + ": " + result.getDiagnostics());
+    assertTrue(result.getAcceptedPointReplay().getEvaluation().isFeasible());
+    assertTrue(result.getAcceptedPointReplay().getRawObjective() > result.getCandidates().get(0).getRawObjective());
+    assertTrue(result.isCandidateFinite());
+    assertTrue(result.isConstraintEvidenceComplete());
+    assertTrue(result.isActionsComplete());
+    assertTrue(result.getEvaluationCount() <= 35);
+    assertTrue(Double.isFinite(result.getRuntimeSeconds()) && result.getRuntimeSeconds() >= 0.0);
+    Map<String, Object> evidence = result.getOptimizerEvidence("synthetic-cycle-1");
+    assertEquals("synthetic-cycle-1", evidence.get("cycle_id"));
+    assertEquals(Boolean.TRUE, evidence.get("simulation_converged"));
+    assertEquals(Boolean.TRUE, evidence.get("candidate_feasible"));
+    assertEquals(Boolean.TRUE, evidence.get("candidate_finite"));
+    assertEquals(Boolean.TRUE, evidence.get("constraint_evidence_complete"));
+    assertEquals(Boolean.TRUE, evidence.get("state_restore_complete"));
+    assertEquals(Boolean.TRUE, evidence.get("accepted_point_replayed"));
+    assertEquals(Boolean.TRUE, evidence.get("actions_complete"));
+    assertEquals(result.getEvaluationCount(), evidence.get("evaluation_count"));
     assertEquals(10, fixture.networkUnit.getLastCouplingResult().getWellResults().size());
     assertEquals(10, fixture.networkUnit.getExclusiveRouteSelectorNames().size());
-    assertTrue(result.getInstalledEquipmentCapacityEvidence().size() >= 34);
-    assertTrue(result.getInstalledEquipmentCapacityEvidence().stream()
-        .allMatch(evidence -> evidence.hasFiniteEvidence() && Double.isFinite(evidence.getNormalizedUtilization())));
-    assertEquals(1, result.getProcessBoundaryConstraintEvidence().size());
-    assertTrue(result.getProcessBoundaryConstraintEvidence().get(0).isCalculable());
-    assertTrue(result.getProcessBoundaryConstraintEvidence().get(0).isFeasible());
+    assertTrue(result.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence().size() >= 34);
+    assertTrue(result.getAcceptedPointReplay().getEvaluation().getInstalledEquipmentCapacityEvidence().stream()
+        .allMatch(capacityEvidence -> capacityEvidence.hasFiniteEvidence()
+            && Double.isFinite(capacityEvidence.getNormalizedUtilization())));
+    assertEquals(1, result.getAcceptedPointReplay().getEvaluation().getProcessBoundaryConstraintEvidence().size());
+    assertTrue(
+        result.getAcceptedPointReplay().getEvaluation().getProcessBoundaryConstraintEvidence().get(0).isCalculable());
+    assertTrue(
+        result.getAcceptedPointReplay().getEvaluation().getProcessBoundaryConstraintEvidence().get(0).isFeasible());
 
-    double exportRateKgHr = Math.abs(fixture.exportValve.getOutletStream().getFlowRate("kg/hr"));
-    double coupledWellRateKgHr = fixture.networkUnit.getLastCouplingResult().getWellResults().stream()
-        .mapToDouble(resultRow -> resultRow.getAppliedRateKgS() * 3600.0).sum();
-    assertTrue(Double.isFinite(exportRateKgHr) && exportRateKgHr > 0.0);
-    assertEquals(coupledWellRateKgHr, exportRateKgHr, exportRateKgHr * 1.0e-6);
     assertEquals(100.0, fixture.exportValve.getOutletStream().getPressure("bara"), 1.0e-6);
-    assertEquals(exportRateKgHr, result.getObjectivesRaw()[0], exportRateKgHr * 1.0e-9);
-
-    LoopedPipeNetwork network = fixture.networkUnit.getHydraulicNetwork();
-    for (int index = 0; index < fixture.wellSuffixes.size(); index++) {
-      String suffix = fixture.wellSuffixes.get(index);
-      int expectedRoute = index % 2;
-      assertEquals(expectedRoute,
-          fixture.networkUnit.getExclusiveRouteSelection("producer " + suffix + " pressure level"));
-      assertEquals(expectedRoute == 0 ? 1.0 : 0.0, network.getPipe(suffix + " HP route").getAvailability(), 0.0);
-      assertEquals(expectedRoute == 1 ? 1.0 : 0.0, network.getPipe(suffix + " LP route").getAvailability(), 0.0);
-    }
     assertBaselineRestored(fixture);
+  }
+
+  /** Create all ten-well choke and HP/LP route actions in deterministic groups. */
+  private List<ProcessModelOperatingAction> createFieldActions(Fixture fixture) {
+    List<ProcessModelOperatingAction> actions = new ArrayList<ProcessModelOperatingAction>();
+    for (String suffix : fixture.wellSuffixes) {
+      actions.add(ProcessModelOperatingAction.continuous("choke-" + suffix.toLowerCase(),
+          "Producer " + suffix + " choke", "Field::field network.choke.choke " + suffix + ".opening", 50.0, 95.0, "%",
+          "synthetic choke travel envelope"));
+    }
+    for (String suffix : fixture.wellSuffixes) {
+      actions.add(ProcessModelOperatingAction.discrete("route-" + suffix.toLowerCase(),
+          "Producer " + suffix + " separator pressure level",
+          "Field::field network.route.producer " + suffix + " pressure level.selection", new double[] {0.0, 1.0}, "-",
+          "synthetic qualified HP/LP route line-up"));
+    }
+    return actions;
   }
 
   /** Build and calibrate the complete synthetic field-to-host process. */
