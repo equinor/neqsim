@@ -33,5 +33,5 @@ Reference implementation: `task_solve/2026-10-09_ofc_rc7_shetland_chalk_further_
 
 ## 3. Hand-offs
 
-`neqsim-flow-assurance` (hydrate, wax, scale), `neqsim-production-chemistry` (inhibitor dose, scavenger), `neqsim-subsea-and-wells` (well cost), `neqsim-field-economics` (tax), `neqsim-process-safety` (barriers during stimulation), `neqsim-stid-retriever` (OSB P&IDs: `neqsim fetch-docs <task> --inst OSB --doc-nos ...`).
+`neqsim-flow-assurance` (hydrate, wax, scale), `neqsim-exploration-strategy-selection` (dedicated well versus PLX from a planned producer, EMV and crossovers), `neqsim-production-chemistry` (inhibitor dose, scavenger), `neqsim-subsea-and-wells` (well cost), `neqsim-field-economics` (tax), `neqsim-process-safety` (barriers during stimulation), `neqsim-stid-retriever` (OSB P&IDs: `neqsim fetch-docs <task> --inst OSB --doc-nos ...`).
 

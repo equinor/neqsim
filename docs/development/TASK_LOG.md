@@ -1558,3 +1558,10 @@ on the published repair; the PR stays draft.
 - Gaps: no partner package (volumes, Pg, concept, cost), QAA, host design capacity and life, template slot and line capacity, price deck.
 - Tooling: dew-point flash defect quantified in neqsim-phase-envelope (point flash 0.46 bara at 40 C against a scan of 210); host-life (economic cut-off), gross-versus-allocated gas and project-name overwrite gotchas in enterprise-host-ullage-allocation; POL APbo screening pattern in enterprise-prospect-risking (local edits, not pushed); NIPs for a dew-pressure flash fix and an exploration-well EMV helper.
 
+
+## 2026-10-10: Exploration strategy for a near-field cellar target - dedicated well versus sidetrack from a planned producer (APbo screening)
+
+- Type B, standard, AACE class 5; script-backed (open Sodir data, host plan and allocated rates, NeqSim SRK fluids matched on GOR and SRK-CPA hydrate, task-local volumetric and 2022 NCS tax cash-flow model, 8 000-world Monte Carlo of four strategies with exploration cost paid in every outcome, crossovers, value of information).
+- Result: a sidetrack from the planned producer with a dedicated-well fall-back has the higher EMV (10.5 against 6.2 MUSD at 100 %, paired difference 4.2 +- 0.3); the advantage is cost-driven (about 45 against 117 MUSD gross), not lag-driven, and disappears only if the planned producer is at risk (loss probability about 9 %, value at risk about 300 MUSD, sidetrack longer than about 70 days or a slip beyond about 2036); the dedicated well gives data 1.6 years earlier but not earlier first oil; gross rock volume explains 87 % of the volume variance.
+- Gaps: no prospect data (volume, location, fluid), planned producer plan and barrier study, trajectory reach, host nameplate capacity, licence equity and price deck, class 4 costs.
+- Tooling: new skill neqsim-exploration-strategy-selection (strategy model rules, crossovers, traps); work-record generator now unwraps key results given in the report form (test added).
