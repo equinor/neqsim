@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-10 — OVP screening of a multi-prospect cluster between two producing hosts: host comparison, firm-well candidacy for the next APA round, conditional APbo position
+**Type:** G (Workflow)
+**Keywords:** OVP, APbo, firm well, APA, prospect cluster, host comparison, Monte Carlo EMV, break-even Pg, programme value, host ullage, gas-condensate tie-back, strategy comparison, value of information
+**Solution:** Private task folder (redacted): script-backed class 5 screening with no field-specific data in any source (open Sodir, Centuries and PDM read-only, analogues as declared assumptions); NeqSim gas-condensate fluid and flow-assurance cases, host ullage from demonstrated capacity against plan for two hosts, concept economics with 3000-world Monte Carlo and tornado, strategy and value-of-information comparison, 28 validation checks, results.json, Word report with an APbo draft, development plan and data request as appendices; gotchas added to the enterprise host-ullage and prospect-risking skills.
+**Notes:** When no data exist for the prospects, say so first and show the result as gates (break-even chance of success, volume, timing) rather than one number. A cluster is valued as a programme: the lead alone is negative, the combination is positive. Apply the economic limit on the gas rate for a gas-condensate tie-back, not on the oil rate, or the profile loses a quarter of the gas. Gotchas: the shared terminal output is unreliable, so write scripts to files, run them detached and read UTF-8 logs; a tornado with a smaller sample has a different base than the main run, so state it in the results.
+
 ### 2026-10-10 — OVP of a small HPHT discovery with undrilled neighbours (Tott East, Tilje, Lynbjorn): cluster value, break-even volume gate, programme EMV, host-trunk ullage by capacity case
 **Type:** G (Workflow)
 **Keywords:** OVP, APbo gate, small discovery, cluster tie-back, undrilled targets, programme EMV, break-even Pg, risked volume, trunk ullage, licence milestones, PDO deadline, schedule Monte Carlo, Linnorm, Asgard B
@@ -1594,3 +1600,10 @@ on the published repair; the PR stays draft.
 - Result: a direct line gives a median NPV of about +53 MUSD for a 2031 start (P10 -378, P90 +709), the route through the existing neighbour line is negative (about -158); NPV is flat for starts 2030-2036 with the optimum about 2035 and falls fast after 2036, the hard wall being host life (about 2041); binding constraints by period: host ullage before 2031, neighbour-line back-pressure and the CO2 blend swap 2031-2033, well deliverability 2034-2036, economics then host life.
 - Gaps: no separate volume, CO2, pressure or cost for the cluster (declared ranges), neighbour-line design and slots, host revamp dates, PfS/SSB timeline, no STID documents for the cluster, HPHT guideline not in the document root.
 - Tooling: CO2 blend-swap rule in enterprise-host-ullage-allocation; flow-assurance gotchas (hydrate solver, line table solve) in neqsim-flow-assurance; NIP-1..3 recorded in the task.
+
+## 2026-10-10: Reilly APbo (POL) - Equinor review of a partner-operated exploration well, PL1307 (Big Room Planning screening)
+
+- Type B, standard, AACE class 4-5; script-backed (open Sodir licence, ownership, fields, wells and facilities; cached Centuries and PDM host data of the Spro/Dro sibling; NeqSim SRK-CPA lean gas condensate, hydrate, dew point, Beggs and Brill 12/20/42 km; plateau-decline development model with host curtailment and the 2022 NCS tax; 4 000-draw Monte Carlo, decision map, tornado).
+- Result: provisional position is to support the well; Equinor (30 %) EMV 14.6 MUSD at placeholders (P10 -4.9, P90 56.6), dry hole 4.3 MUSD net of the 78 % refund, MEFS 2.2 MSm3 OE (Norne-area tie-back) against 3.3 (Skarv via Aerfugl) and 5.6 (direct 42 km); the licence is 12 km from the Norne FPSO and 42 km from Skarv, so the operator's Skarv route must be justified (Norne option worth about 50 MUSD more at the median volume, 100 %).
+- Gaps: operator package (geology, volumes, Pg, fluid, concept, cost, host rationale), QAA and prior assessments, host design capacity and life, STID (no installation), Skarv PDM access.
+- Tooling: enterprise-prospect-risking POL section extended (host geometry vs the brief, equity from licence history, GOR bracket, cached same-day host data); NIP-3 dew-point flash defect confirmed on a second case.
