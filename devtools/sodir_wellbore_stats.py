@@ -84,6 +84,7 @@ def beta_posterior(k, n, prior_a=0.5, prior_b=0.5, level=0.8):
         out["p_low"] = float(beta.ppf(tail, a, b))
         out["p_high"] = float(beta.ppf(1.0 - tail, a, b))
     except ImportError:
+        # SciPy is optional; credible interval bounds remain None without it.
         pass
     return out
 

@@ -387,7 +387,8 @@ def check_evidence_sources(task_folder: Path, results: dict) -> List[str]:
             try:
                 text += f.read_text(encoding="utf-8", errors="ignore").lower()
             except OSError:
-                pass
+                # Evidence discovery is best-effort; inspect the remaining task files.
+                continue
     if not text:
         return warnings
     plan = results.get("agent_workflow_plan") or {}

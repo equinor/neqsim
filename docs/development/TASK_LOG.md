@@ -1620,3 +1620,14 @@ on the published repair; the PR stays draft.
 - Result: Morvin is a tail (4 wells, 1-39 % uptime, Centuries profile ends 2027); no candidate is closer to Morvin than to Aasgard B; Fogelberg direct to Aasgard B is worth +1292 MNOK expected pre-tax against +599 via Morvin (break-even keep-alive cost about 7 MNOK/yr against an assumed 80-250); rigless keep-alive +227 MNOK, infill -542, dedicated exploration well -417 and PLX -139 at assumed chance.
 - Gaps: Morvin lifecycle and keep-alive cost, line and riser integrity, free riser slot, Fogelberg licence and fluid, prospect volumes and chance, no Morvin documents in the library.
 - Tooling: neqsim-exploration-strategy-selection rule 14 (infrastructure-reuse screen with route comparison on the same worlds); neqsim-ncs-infrastructure-network note on the Sodir facility IN-list query; NIPs for a B&B turndown helper, an exploration/infra-reuse EMV class and a depleted drilling-window screen.
+
+### 2026-10-10 — PR 4283 agent routing and CI repair
+**Type:** G (Workflow)
+**Keywords:** agent routing, external skills, HAZOP, well-to-export, PR 4283
+**Solution:** Registered the verified community NCS ownership and shelf-data skills in
+`.github/external-skill-refs.txt`; clarified the process-model and safety-depressuring
+agent descriptions so the existing well-to-export and HAZOP routing regressions pass
+in a core-only checkout. Documented intentional optional-dependency and file-read
+exception handling in the Sodir statistics and task-results validators.
+**Notes:** Existing routing expectations were retained. No Java or numerical behavior
+changed. Agent descriptions remain within the 500-character limit.
