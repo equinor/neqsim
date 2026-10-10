@@ -526,10 +526,16 @@ results = {
     "agent_workflow_plan": {
         # How the task was solved — record the discovered/used agents & workflow
         # (from devtools/skill_search.py + devtools/agent_search.py). Feeds the report.
-        # "agents_used": [{"name": "process.model", "repo": "neqsim", "role": "build flowsheet",
-        #                  "loads_skills": ["neqsim-process-modeling"]}],
+        # `invocation`: "subagent" (invoked through the agent runtime), "pattern"
+        # (its workflow followed by hand - give a `reason`), "skill-only".
+        # The validator warns when a Standard/Comprehensive task lacks this block.
+        # "agents_used": [{"name": "process-model", "repo": "neqsim", "role": "build flowsheet",
+        #                  "invocation": "subagent", "loads_skills": ["neqsim-process-modeling"]},
+        #                 {"name": "enterprise-host-ullage-agent", "repo": "neqsim-enterprise-agents",
+        #                  "role": "host ullage", "invocation": "pattern",
+        #                  "reason": "agent not registered in this VS Code session"}],
         # "workflow_type": "composition_pattern",
-        # "workflow": "process.model -> mechanical.design",
+        # "workflow": "process-model -> mechanical-design",
         # "rationale": "..."
     },
     "figure_captions": {

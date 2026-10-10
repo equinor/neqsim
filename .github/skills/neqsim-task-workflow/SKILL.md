@@ -250,9 +250,12 @@ checks before writing Step 1 content:
    Persist the plan so it survives context loss and feeds the report:
    - keep `step1_scope_and_research/agent_plan.json` (raw ranking, audit trail),
    - checkpoint it via `progress.store_context("agent_workflow_plan", {...})`,
-   - add an `agent_workflow_plan` object to `results.json` (see schema) and
-     mention the agents/workflow used in the `approach` / `method_summary` text
-     so the generated report documents *how* the task was solved.
+   - add an `agent_workflow_plan` object to `results.json` (see schema) with an
+     `invocation` (`subagent` | `pattern` + `reason` | `skill-only`) per agent,
+     and mention the agents/workflow used in the `approach` / `method_summary`
+     text so the generated report documents *how* the task was solved. Then
+     actually invoke the lead agent for the task family (§5 table) — a plan
+     that lists agents as "(pattern)" without a reason is a finding, not a plan.
 
    For Quick tasks, write a short manual capability + agent note in `notes.md`
    unless a capability gap is suspected.
@@ -1934,25 +1937,59 @@ MyClass = ns.JClass("neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
 
 ## 5 ── DELEGATE TO SPECIALIST AGENTS
 
-For complex sub-tasks within your workflow, you may delegate to specialist agents:
+**Delegation is the default, not an option.** A 2026-10 audit of 269 solved
+tasks found that the orchestrator usually listed specialist agents as
+"(pattern)" and re-did their work by hand (the APbo/VPbo batch, the
+well-to-export plant models, the host-ullage studies). That loses the
+specialist's governance, hand-off schemas, data-access rules and the helpers
+in its skill packages, and it is why the same plateau-decline / host-ullage /
+EMV model was hand-coded in four sibling tasks. Rules:
 
-| Sub-task | Agent | When to use |
-|----------|-------|-------------|
-| Fluid setup | `@thermo-fluid` | Complex oil characterization, CPA systems |
-| Process simulation | `@solve-process` | Large flowsheets with recycles/adjusters |
-| PVT experiments | `@pvt-simulation` | Multi-point PVT studies |
-| Gas quality | `@gas-quality` | ISO 6976, AGA calculations |
-| Mechanical design | `@mechanical-design` | Wall thickness, vessel sizing |
-| Flow assurance | `@flow-assurance` | Hydrate curves, wax, corrosion |
-| Safety | `@safety-depressuring` | Blowdown, PSV sizing |
-| Field development | `@field-development` | Concept selection, subsea tieback, NPV/IRR, production forecasting |
-| Document / image reading | `@technical-reader` | Extract data from PDFs, vendor datasheets, P&IDs, mechanical drawings, performance maps, API datasheets |
+1. When `agent_search.py` ranks a registered agent ≥ 0.6 for a sub-task, invoke
+   it (`runSubagent` with the agent name, the absolute task path, the frozen
+   basis and the hand-off schema you expect back). Only fall back to following
+   its workflow by hand when it is not registered in this session, lacks data
+   access, or the sub-task is trivially small — and then record
+   `invocation: "pattern"` with the `reason`.
+2. Record every agent in `results.json` `agent_workflow_plan.agents_used` with
+   `invocation` ∈ {`subagent`, `pattern`, `skill-only`}; the validator warns
+   when a Standard/Comprehensive task lacks the block or a reason.
+3. **Reuse before re-implement.** Before writing a task-local model, run
+   `neqsim tasks search <keywords>` and check the skill packages
+   (`enterprise_prospect_risking`, `enterprise_host_ullage_allocation`,
+   `neqsim_*` community packages). If you find yourself writing the same helper a
+   second time, promote it to the owning skill package (with tests) in the same
+   session and import it — never leave a third copy in a task folder.
+4. Pass the absolute task folder to every subagent; it must write under
+   `step2_analysis/<agent>/` and return a summary plus the files written.
+5. Parallel subagents on one shared terminal mix output: give each a dedicated
+   terminal or uniquely named logs (see §10 lessons).
 
-You don't have to delegate — you can handle everything yourself. But for deep
-specialist work, the dedicated agents have more detailed instructions.
+### Task family → lead agent → supporting agents (from solved tasks)
 
-For **Type G (Workflow)** tasks, you will likely need multiple specialist agents
-in sequence. Coordinate them through the task_spec.md requirements.
+| Task family (seen in task root) | Lead agent (invoke) | Supporting agents / skills |
+|---|---|---|
+| APbo / VPbo / POL review / success-case planning / exploration strategy (firm well vs PLX) | `enterprise-exploration-opportunity-agent` (Equinor) or `field-development` + skill `neqsim-exploration-strategy-selection` | `enterprise-geox-agent` (prospect inventory), `ncs-ownership-equity-agent`, `ncs-value-chain-agent`, `enterprise-host-ullage-agent`, `flow-assurance`, `enterprise-area-development-value-agent`, `enterprise-stea-automation-agent` |
+| Area development / tie-in host selection / host ullage | `enterprise-area-development-agent` | `enterprise-tie-in-solution-agent`, `enterprise-host-ullage-agent`, `enterprise-area-development-value-agent`, `subsea-layout-screening-agent` |
+| PEPR action (bottleneck, optimisation, chemical, control) | `enterprise-pepr-solve-task-agent` | `enterprise-maintenance-agent`, `enterprise-ots-timeseries-agent`, `enterprise-stid-reader-agent`, domain specialist |
+| Blålys / bluelight trip or disturbance | `enterprise-trip-investigation-agent` → `enterprise-incident-response-agent` | `root-cause`, `enterprise-alarm-events-agent`, `enterprise-synergi-agent`, `rotating-equipment` |
+| M1 notification | `enterprise-m1-notification-agent` | `enterprise-maintenance-agent`, `root-cause`, `enterprise-stid-reader-agent` |
+| Well-to-export plant model (ProcessPilot, all wells, formation fluids) | `enterprise-process-notebook-agent` | `enterprise-well-production-routing-agent`, `enterprise-fluid-generation-workflow-agent`, `enterprise-reservoir-history-match-agent`, `enterprise-process-model-build-verify-agent`, `plant-data` |
+| Topside process model from STID / UniSim | `enterprise-process-model-build-verify-agent` (or `unisim-reader`) | `enterprise-stid-reader-agent`, `technical-reader`, `process-model` |
+| Reservoir simulator from open data (OPM Flow) / history match | `reservoir-simulator-agent` / `reservoir-history-match-agent` (enterprise variants with PDM/OSDU) | `near-well-injectivity-agent`, `enterprise-osdu-agent`, `enterprise-smda-opus-agent`, `fluid-characterization-agent` |
+| Capacity increase / debottlenecking on a host | `capacity-increase-screening` (`enterprise-capacity-increase-screening-agent`) | `enterprise-ioc-bottleneck-agent`, `process-model`, `optimize-processmodel`, `field-development` |
+| HAZOP / LOPA / barrier / S-001 clause 10 from STID | `enterprise-stid-safety-study-agent` | `safety-depressuring`, `consequence-analysis`, `technical-reader` |
+| Levetidsprogram / life extension | `enterprise-life-extension-agent` | `enterprise-thelma-agent`, `enterprise-maintenance-agent`, `enterprise-synergi-agent` |
+| Fire-water / deluge coverage | `firewater-coverage-agent` | `consequence-analysis`, `standards-review` |
+| Fluid setup / PVT / phase envelope | `thermo-fluid`, `pvt-simulation` | `fluid-characterization-agent` |
+| Flowsheet with recycles | `process-model` / `solve-process` | `rotating-equipment`, `mechanical-design` |
+| Flow assurance, hydraulics, hydrate/wax | `flow-assurance` | `olga-simulation-agent` for transients |
+| Safety: blowdown, PSV, source terms | `safety-depressuring` | `consequence-analysis`, `standards-review` |
+| Document / image reading | `technical-reader` (`technical-document-intelligence-agent`) | `enterprise-stid-reader-agent` |
+
+For **Type G (Workflow)** tasks you will need several of these in sequence;
+coordinate them through `task_spec.md` and the hand-off schemas in
+`neqsim-agent-handoff`. `router` holds the composition patterns.
 
 ---
 

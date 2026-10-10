@@ -347,6 +347,57 @@ def check_capability_assessment(task_folder: Path) -> List[str]:
     return warnings
 
 
+AGENT_INVOCATION_KINDS = ("subagent", "pattern", "skill-only")
+
+
+def check_agent_workflow_plan(task_folder: Path, results: dict) -> List[str]:
+    """Return warnings when a Standard/Comprehensive task did not record how agents were used.
+
+    A 2026-10 audit of 269 solved tasks found an ``agent_workflow_plan`` in only
+    57, and most of those listed specialist agents as "(pattern)" - the
+    orchestrator re-did their work by hand instead of invoking them. Each
+    ``agents_used`` entry therefore needs an ``invocation`` value
+    (``subagent`` = invoked through the agent runtime, ``pattern`` = its
+    workflow was followed by hand, ``skill-only`` = only its skills were loaded)
+    and, for anything but ``subagent``, a ``reason``. Warning, not error, so
+    Quick tasks are not blocked.
+    """
+    warnings: List[str] = []
+    if not _is_standard_or_comprehensive(results, task_folder):
+        return warnings
+    plan = results.get("agent_workflow_plan")
+    if not isinstance(plan, dict) or not plan.get("agents_used"):
+        warnings.append(
+            f"{task_folder.name}: results.json has no agent_workflow_plan.agents_used — "
+            f"record the agents invoked (invocation: subagent | pattern | skill-only) "
+            f"so the report states how the task was solved"
+        )
+        return warnings
+    pattern_without_reason = []
+    missing_invocation = []
+    for entry in plan.get("agents_used") or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name", "?"))
+        kind = entry.get("invocation")
+        if kind not in AGENT_INVOCATION_KINDS:
+            missing_invocation.append(name)
+        elif kind != "subagent" and not str(entry.get("reason", "")).strip():
+            pattern_without_reason.append(name)
+    if missing_invocation:
+        warnings.append(
+            f"{task_folder.name}: agent_workflow_plan entries without an `invocation` "
+            f"(subagent | pattern | skill-only): {', '.join(missing_invocation)}"
+        )
+    if pattern_without_reason:
+        warnings.append(
+            f"{task_folder.name}: agents followed as a pattern instead of invoked, with no "
+            f"`reason` (e.g. agent not registered, no data access): "
+            f"{', '.join(pattern_without_reason)}"
+        )
+    return warnings
+
+
 def check_tooling_improvements(task_folder: Path, results: dict) -> List[str]:
     """Return warnings when the task did not record whether it improved the tooling.
 
@@ -842,6 +893,9 @@ def main() -> int:
             warnings.extend(check_continuous(task_folder))
             warnings.extend(
                 check_tooling_improvements(task_folder, parsed if isinstance(parsed, dict) else {})
+            )
+            warnings.extend(
+                check_agent_workflow_plan(task_folder, parsed if isinstance(parsed, dict) else {})
             )
         if isinstance(parsed, dict) and _is_standard_or_comprehensive(parsed, task_folder):
             if not _has_engineering_validation(parsed):
