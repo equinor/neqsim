@@ -324,18 +324,25 @@ public class SubseaProductionSystemTest {
     assertEquals(1, basis.getProductionRiserCount());
     assertEquals(0, basis.getInjectionRiserCount());
     assertEquals(500.0, basis.getWaterDepthM(), 1.0e-12);
+    assertEquals(10, basis.getLineSegments().size());
 
     CostEstimateResult estimate = subsea.estimateSurfCosts(topology);
     assertEquals(EstimateClass.CLASS_4, estimate.getBasis().getEstimateClass());
     assertTrue(estimate.getCapitalCostSummary().get("totalSURF") > 0.0);
     boolean hasThreeTrees = false;
     boolean hasTwoDistributionUnits = false;
+    boolean hasProductionFlowline = false;
+    boolean hasInjectionFlowline = false;
     for (MaterialTakeOffItem item : estimate.getMaterialTakeOff()) {
       hasThreeTrees |= item.getItem().contains("Christmas Trees") && item.getQuantity() == 3.0;
       hasTwoDistributionUnits |= item.getItem().contains("Manifold/Template") && item.getQuantity() == 2.0;
+      hasProductionFlowline |= item.getItem().contains("FL-P 8\"") && item.getItem().contains("1 km");
+      hasInjectionFlowline |= item.getItem().contains("FL-I 6\"") && item.getItem().contains("2 km");
     }
     assertTrue(hasThreeTrees, "Topology tree identities must set the priced tree quantity");
     assertTrue(hasTwoDistributionUnits, "Template and manifold identities must set the priced distribution quantity");
+    assertTrue(hasProductionFlowline, "Production route geometry must retain its exact diameter and length");
+    assertTrue(hasInjectionFlowline, "Injection route geometry must retain its exact diameter and length");
   }
 
   /** Generated architectures must price the built manifold count rather than an implicit single unit. */

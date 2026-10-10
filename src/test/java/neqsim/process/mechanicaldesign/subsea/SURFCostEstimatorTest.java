@@ -285,4 +285,30 @@ class SURFCostEstimatorTest {
     assertEquals(1, manifoldLineCount);
     assertThrows(IllegalArgumentException.class, () -> est.setNumberOfManifolds(-1));
   }
+
+  /** Exact route segments must retain their separate geometry instead of a weighted-average diameter. */
+  @Test
+  void testDisaggregatedRouteSegments() {
+    SURFCostEstimator est = new SURFCostEstimator(1, 300.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfManifolds(0);
+    est.setNumberOfPLETs(0);
+    est.addLineSegment("FL-6IN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 1000.0, 6.0);
+    est.addLineSegment("FL-12IN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 2000.0, 12.0);
+    est.addLineSegment("RI-10IN", SURFCostEstimator.LineCategory.RISER, 600.0, 10.0);
+    est.calculate();
+
+    assertEquals(3, est.getLineSegmentCount());
+    boolean hasSixInchRoute = false;
+    boolean hasTwelveInchRoute = false;
+    boolean hasRiser = false;
+    for (Map<String, Object> item : est.getLineItems()) {
+      String description = item.get("description").toString();
+      hasSixInchRoute |= description.contains("FL-6IN 6\"");
+      hasTwelveInchRoute |= description.contains("FL-12IN 12\"");
+      hasRiser |= description.contains("RI-10IN 10\"");
+    }
+    assertTrue(hasSixInchRoute);
+    assertTrue(hasTwelveInchRoute);
+    assertTrue(hasRiser);
+  }
 }

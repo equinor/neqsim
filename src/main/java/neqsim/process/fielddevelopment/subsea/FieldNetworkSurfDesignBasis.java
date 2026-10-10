@@ -1,6 +1,9 @@
 package neqsim.process.fielddevelopment.subsea;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import neqsim.process.equipment.network.FieldNetworkTopology;
 import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.FieldEdge;
@@ -45,6 +48,77 @@ public final class FieldNetworkSurfDesignBasis implements Serializable {
   private double riserLengthM;
   private double riserDiameterLengthProductM2;
   private double waterDepthM;
+  private final List<LineSegment> lineSegments = new ArrayList<LineSegment>();
+
+  /**
+   * Immutable identity and geometry for one canonical physical SURF edge.
+   */
+  public static final class LineSegment implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+
+    private final String id;
+    private final String equipmentTag;
+    private final EdgeRole role;
+    private final Service service;
+    private final double lengthM;
+    private final double diameterM;
+
+    /**
+     * Create one route-segment design basis.
+     *
+     * @param id canonical edge identifier
+     * @param equipmentTag stable engineering equipment tag
+     * @param role semantic edge role
+     * @param service production, injection or shared service
+     * @param lengthM exact hydraulic length in metres
+     * @param diameterM exact hydraulic diameter in metres
+     */
+    private LineSegment(String id, String equipmentTag, EdgeRole role, Service service, double lengthM,
+        double diameterM) {
+      this.id = id;
+      this.equipmentTag = equipmentTag;
+      this.role = role;
+      this.service = service;
+      this.lengthM = lengthM;
+      this.diameterM = diameterM;
+    }
+
+    /** @return canonical edge identifier */
+    public String getId() {
+      return id;
+    }
+
+    /** @return stable engineering equipment tag */
+    public String getEquipmentTag() {
+      return equipmentTag;
+    }
+
+    /** @return semantic edge role */
+    public EdgeRole getRole() {
+      return role;
+    }
+
+    /** @return production, injection or shared service */
+    public Service getService() {
+      return service;
+    }
+
+    /** @return exact hydraulic length in metres */
+    public double getLengthM() {
+      return lengthM;
+    }
+
+    /** @return exact hydraulic diameter in metres */
+    public double getDiameterM() {
+      return diameterM;
+    }
+
+    /** @return exact hydraulic diameter in inches */
+    public double getDiameterInches() {
+      return metresToInches(diameterM);
+    }
+  }
 
   /** Create an empty aggregation target. */
   private FieldNetworkSurfDesignBasis() {
@@ -114,6 +188,8 @@ public final class FieldNetworkSurfDesignBasis implements Serializable {
       throw new IllegalArgumentException(
           "SURF edge '" + edge.getId() + "' requires finite positive length and diameter");
     }
+    lineSegments
+        .add(new LineSegment(edge.getId(), edge.getEquipmentTag(), role, edge.getService(), lengthM, diameterM));
     if (role == EdgeRole.JUMPER) {
       jumperCount++;
       jumperLengthM += lengthM;
@@ -287,5 +363,14 @@ public final class FieldNetworkSurfDesignBasis implements Serializable {
   /** @return maximum vertical riser span in m, or zero when elevations do not define one */
   public double getWaterDepthM() {
     return waterDepthM;
+  }
+
+  /**
+   * Get exact canonical physical line segments in deterministic topology insertion order.
+   *
+   * @return immutable route-segment list
+   */
+  public List<LineSegment> getLineSegments() {
+    return Collections.unmodifiableList(lineSegments);
   }
 }

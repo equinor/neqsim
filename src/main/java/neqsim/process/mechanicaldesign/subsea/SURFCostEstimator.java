@@ -34,6 +34,41 @@ import neqsim.process.costestimation.MaterialTakeOffItem;
  */
 public class SURFCostEstimator {
 
+  /** Physical line categories accepted by the disaggregated route-cost API. */
+  public enum LineCategory {
+    /** Well-to-tree or tree-to-manifold jumper. */
+    JUMPER,
+    /** Infield flowline or tie-in spool. */
+    INFIELD_FLOWLINE,
+    /** Export pipeline or trunkline. */
+    EXPORT_PIPELINE,
+    /** Production, injection or shared riser. */
+    RISER
+  }
+
+  /** Immutable internal cost basis for one physical route segment. */
+  private static final class LineSegmentBasis {
+    private final String identifier;
+    private final LineCategory category;
+    private final double lengthM;
+    private final double diameterInches;
+
+    /**
+     * Create one route-segment basis.
+     *
+     * @param identifier stable edge identifier or equipment tag
+     * @param category physical line category
+     * @param lengthM route length in metres
+     * @param diameterInches line diameter in inches
+     */
+    private LineSegmentBasis(String identifier, LineCategory category, double lengthM, double diameterInches) {
+      this.identifier = identifier;
+      this.category = category;
+      this.lengthM = lengthM;
+      this.diameterInches = diameterInches;
+    }
+  }
+
   // ============ Field Configuration ============
   /** Number of production wells. */
   private int numberOfWells = 4;
@@ -191,6 +226,9 @@ public class SURFCostEstimator {
   /** Line-item cost breakdown. */
   private List<Map<String, Object>> lineItems = new ArrayList<Map<String, Object>>();
 
+  /** Exact physical route segments; when populated these replace scalar line-category quantities. */
+  private final List<LineSegmentBasis> routeSegments = new ArrayList<LineSegmentBasis>();
+
   /** Estimate basis for detailed SURF cost reporting. */
   private CostEstimateBasis estimateBasis;
 
@@ -339,7 +377,19 @@ public class SURFCostEstimator {
     }
 
     // Jumpers (well to manifold)
-    if (numberOfJumpers > 0) {
+    if (!routeSegments.isEmpty()) {
+      for (LineSegmentBasis segment : routeSegments) {
+        if (segment.category != LineCategory.JUMPER) {
+          continue;
+        }
+        est = new SubseaCostEstimator(region);
+        est.calculateJumperCost(segment.lengthM, segment.diameterInches, rigidJumpers, waterDepthM);
+        double jumperCost = est.getTotalCost();
+        subseaCostUSD += jumperCost;
+        addLineItem("S", "Jumper " + segment.identifier + " " + String.format("%.0f", segment.diameterInches) + "\" ("
+            + String.format("%.0f", segment.lengthM) + " m)", 1, "ea", jumperCost, jumperCost, est.getVesselDays());
+      }
+    } else if (numberOfJumpers > 0) {
       est = new SubseaCostEstimator(region);
       est.calculateJumperCost(jumperLengthM, jumperDiameterInches, rigidJumpers, waterDepthM);
       double jumperCost = est.getTotalCost();
@@ -370,6 +420,26 @@ public class SURFCostEstimator {
       return;
     }
 
+    if (!routeSegments.isEmpty()) {
+      for (LineSegmentBasis segment : routeSegments) {
+        if (segment.category != LineCategory.RISER) {
+          continue;
+        }
+        SubseaCostEstimator est = new SubseaCostEstimator(region);
+        if (flexibleRiser) {
+          est.calculateFlexiblePipeCost(segment.lengthM, segment.diameterInches, waterDepthM, true, riserHasBuoyancy);
+        } else {
+          est.calculateJumperCost(segment.lengthM, segment.diameterInches, true, waterDepthM);
+        }
+        double riserCost = est.getTotalCost();
+        riserCostUSD += riserCost;
+        addLineItem("R", (flexibleRiser ? "Flexible" : "Rigid") + " Riser " + segment.identifier + " "
+            + String.format("%.0f", segment.diameterInches) + "\" (" + String.format("%.0f", segment.lengthM) + " m)",
+            1, "ea", riserCost, riserCost, est.getVesselDays());
+      }
+      return;
+    }
+
     double effectiveRiserLength = riserLengthM > 0 ? riserLengthM : waterDepthM * 1.5;
 
     for (int i = 0; i < numberOfProductionRisers; i++) {
@@ -391,6 +461,30 @@ public class SURFCostEstimator {
    * Calculate flowline and pipeline costs.
    */
   private void calculateFlowlines() {
+    if (!routeSegments.isEmpty()) {
+      for (LineSegmentBasis segment : routeSegments) {
+        if (segment.category == LineCategory.INFIELD_FLOWLINE) {
+          if (infieldFlowlineFlexible) {
+            SubseaCostEstimator est = new SubseaCostEstimator(region);
+            est.calculateFlexiblePipeCost(segment.lengthM, segment.diameterInches, waterDepthM, false, false);
+            double cost = est.getTotalCost();
+            flowlineCostUSD += cost;
+            addLineItem("F",
+                "Infield Flowline " + segment.identifier + " " + String.format("%.0f", segment.diameterInches) + "\" ("
+                    + String.format("%.2f", segment.lengthM / 1000.0) + " km, flexible)",
+                1, "ea", cost, cost, est.getVesselDays());
+          } else {
+            calculateRigidPipelineCost(segment.lengthM / 1000.0, segment.diameterInches,
+                "Infield Flowline " + segment.identifier);
+          }
+        } else if (segment.category == LineCategory.EXPORT_PIPELINE) {
+          calculateRigidPipelineCost(segment.lengthM / 1000.0, segment.diameterInches,
+              "Export Pipeline " + segment.identifier);
+        }
+      }
+      return;
+    }
+
     // Infield flowline
     if (infieldFlowlineLengthKm > 0) {
       double infieldCost;
@@ -596,6 +690,45 @@ public class SURFCostEstimator {
   }
 
   /**
+   * Replace scalar line-category aggregation with exact physical route segments.
+   *
+   * <p>
+   * Once at least one segment is registered, scalar jumper, flowline, pipeline and riser quantities are ignored. This
+   * prevents double counting while retaining the scalar API for backward compatibility.
+   * </p>
+   *
+   * @param identifier stable edge identifier or equipment tag
+   * @param category physical line category
+   * @param lengthM exact route length in metres
+   * @param diameterInches exact line diameter in inches
+   */
+  public void addLineSegment(String identifier, LineCategory category, double lengthM, double diameterInches) {
+    if (identifier == null || identifier.trim().isEmpty()) {
+      throw new IllegalArgumentException("Line-segment identifier cannot be empty");
+    }
+    if (category == null) {
+      throw new IllegalArgumentException("Line-segment category cannot be null");
+    }
+    if (!(lengthM > 0.0) || !Double.isFinite(lengthM)) {
+      throw new IllegalArgumentException("Line-segment length must be finite and positive");
+    }
+    if (!(diameterInches > 0.0) || !Double.isFinite(diameterInches)) {
+      throw new IllegalArgumentException("Line-segment diameter must be finite and positive");
+    }
+    routeSegments.add(new LineSegmentBasis(identifier, category, lengthM, diameterInches));
+  }
+
+  /** Clear all exact route segments and return to the legacy scalar line basis. */
+  public void clearLineSegments() {
+    routeSegments.clear();
+  }
+
+  /** @return number of exact route segments in the current cost basis */
+  public int getLineSegmentCount() {
+    return routeSegments.size();
+  }
+
+  /**
    * Add a line item to the cost breakdown.
    *
    * @param category SURF category (S, U, R, F)
@@ -655,6 +788,7 @@ public class SURFCostEstimator {
     Map<String, Object> config = new LinkedHashMap<String, Object>();
     config.put("numberOfWells", numberOfWells);
     config.put("numberOfManifolds", numberOfManifolds);
+    config.put("routeSegmentCount", routeSegments.size());
     config.put("waterDepthM", waterDepthM);
     config.put("region", region.name());
     config.put("contingencyPct", contingencyPct * 100);
