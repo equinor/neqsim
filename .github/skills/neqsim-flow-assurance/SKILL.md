@@ -198,6 +198,15 @@ For flowline hydraulics with `PipeBeggsAndBrills` a trial inlet pressure that is
 `HydraulicDomainException: Non-positive pipeline pressure` instead of returning a low outlet pressure:
 catch it inside the chain function and return outlet 0 (infeasible). Letting it propagate out of a
 bisection silently turns a whole row of the inlet-pressure table into NaN.
+`ThermodynamicOperations.hydrateFormationTemperature()` is `void`: the answer is left in the fluid
+temperature, so read `fluid.getTemperature() - 273.15` after the call (`float(ops.hydrateFormationTemperature())`
+fails with `NoneType`; found in the Mistral Nord VPbo task). A wellstream built with `SystemSrkEos` plus
+`setHydrateCheck(true)` also under-predicts the hydrate temperature (methane benchmark about -8 K): rebuild
+the composition in `SystemSrkCPAstatoil` (mixing rule 10) and benchmark methane at 43/76/140 bara against
+5/10/15 C before using the numbers (CPA gives -0.03/+0.33/+0.58 K).
+To benchmark `PipeBeggsAndBrills` against Darcy-Weisbach use a dry single-phase gas (pure methane, 60 C,
+`setHeatTransferCoefficient` large): the deviation is then 0.2-0.4 %. A lean-gas condensate line cooled
+to seabed temperature differs by 25-50 % because the liquid holdup is real, so that difference is not a defect.
 
 ### MEG/Water Film Conditioned by Dry Gas (pipeline drying after glycol swabbing)
 

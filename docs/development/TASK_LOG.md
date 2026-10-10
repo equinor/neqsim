@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-10 — Onboarding a not-yet-drilled discovery to a host project: four fluid outcomes, trunk delivery limit, timing of a combined decision gate, first-pass design basis, PDS and VP memo
+**Type:** G (Workflow)
+**Keywords:** business opportunity, prepare for success, unknown fluid outcome, subsea tie-back, shared trunk, commingling delivery limit, host demonstrated capacity, combined DG3, schedule Monte Carlo, value of speed, flexibility cost-benefit, design basis, PDS, VP memo, TR3528 APbo, break-even volume, exploration EMV
+**Solution:** Private task folder (redacted): script-backed screening (open licence, discovery and well data, forecast plans and allocated production for the host, four NeqSim fluid classes tuned to GOR, density and dew point, Beggs-and-Brill leg and trunk tables, CPA hydrate, MEG, cooldown and M-506 corrosion, class 5 economics with 10000-draw Monte Carlo, schedule Monte Carlo), results.json, Word report with appendices for scenarios, data plan, design basis, PDS and VP memo; edits to the enterprise host-ullage skill (demonstrated capacity helper) and the flow-assurance skill.
+**Notes:** When the prospect has no public record, carry the fluid as discrete outcomes with break-even volumes and decision rules instead of one case. The shared trunk, not the host, limited the tie-in: add the new case to the trunk basis (inlet pressure rise and the rate at which delivery fails) before DG3. Timing is set by the date of the well result, so report the latest result date that keeps a combined gate (50 and 80 % chance) and compare the value of waiting with the cost of deferring the host project. Price flexibility against a break-even development probability. Gotchas: `hydrateFormationTemperature()` is void (read the fluid temperature); validate `uncertainty` with ascending percentiles (p10 low); key_results must be primitives; the shared terminal gets interrupted by parallel agents, so run long jobs detached with a new log name each time.
+
 ### 2026-10-10 — Partner-operated firm exploration well, frontier basin: unnamed prospect, candidate licences from public awards, host gas-reinjection limit
 **Type:** G (Workflow)
 **Keywords:** APbo, firm well, partner-operated, high-risk high-reward, unnamed prospect, licence award, candidate licence, Monte Carlo, break-even Pg, host ullage, gas reinjection, water capacity floor, decision map, tornado, 78 % refund
