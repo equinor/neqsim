@@ -62,6 +62,14 @@ When the question is what to prepare so a discovery can go straight to VPbo (not
 - Schedule risk: Monte Carlo from well result to first oil with and without a prepared path; report the latest result date that still meets the target at P50 and the probability at the latest date.
 - The exploration EMV is Pd times the adaptive success value minus the well in every outcome (after the tax refund); give the break-even Pd both with and without refund.
 
+## 3c. Two targets in one well (combined drilling) and waiting for a neighbour's decision (Lofn Nord task)
+
+- **Combined well = cost increment, not a second well.** Cost the second target as the deepening / extra rig days of the first well (Lofn Nord: 250 MNOK on a 650 MNOK well) and compare four strategies on the same worlds: A alone, B other prospect alone, C two separate wells, D combined, E other prospect first and this one after its result. Combined drilling saves `C_gross(second) - deepening` gross and only `(1 - refund)` of it after tax (92 of 400 MNOK with the 78 % refund, 420 without); the rest of the synergy is the joint-development value when both succeed (shared line).
+- **Pg correlation**: set `P(LN | T success) = Pg(LN) x lift` and show EMV(C, D, E) for lift 1.0-2.4; the combined well wins at every lift, the sequence only gains where the correlation is high and the dry branch avoids the second well.
+- **Evaluate the sequential option on means**: the drill / no-drill decision after the first result is taken on the expected value of the branch, not inside each Monte Carlo draw (a per-draw `max(0, .)` overstates the option).
+- **Value of waiting for a neighbouring project's sanction** (PDO of a tie-in host, flowline): run the success value for sanction go / no-go, with and without one year of delay, common random numbers; `value = P_ext x sum_s p_s max(0, Pg V_s,delayed - C/1.07) - max(0, EMV_now)`. If a second host stays available the neighbour's sanction is worth almost nothing (14 of 2000 MNOK at Lofn Nord) and waiting is negative; the licence initial-period expiry and an extension probability belong in the same formula.
+- A one-way Spearman / tornado on the success case will say volume, price, rate; the decision variables of the exploration tree are the net well cost (tax position) and Pg, so report break-even Pg with and without refund beside it.
+
 ## 4. Evidence to collect first
 
 Sodir FactMaps (wellbore, discovery, field reserves; the wellbore layer shows when a discovery was drilled from a producer template, which is the PLX precedent), host profile (Centuries or equivalent), allocated host and well rates (PDM), a matched fluid from NeqSim (separator GOR against the producer's measured GOR), and the company approval-point data checklist: fluid and water sampling, dynamic data to evaluate boundaries and connectivity, in-situ stress and rock-mechanical data, host capacity, compatibility and schedule.
