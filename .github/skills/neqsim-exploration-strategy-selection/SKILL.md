@@ -5,6 +5,8 @@ description: "Screening workflow for choosing how to explore a near-field target
 
 # Exploration strategy selection (dedicated well vs PLX)
 
+Second implementation with two zones, host-life gate and flow assurance: the Tyrihans cellar task (`tyr_model.py`, `07_strategies.py`, `13_crossovers.py`, `14_build_results.py`).
+
 Reference implementation: `task_solve/2026-10-10_limbus_apbo_exploration_strategy_dedicated_well_vs_plx_from/step2_analysis/scripts` (`limbus_model.py` development economics and volumes, `07_strategies.py` strategies, `08_sensitivity.py` tornado and maps, `13_crossovers.py`). Copy the pattern, not the numbers: every prospect input there is an assumption.
 
 ## 1. Strategies to compare
@@ -15,6 +17,8 @@ Reference implementation: `task_solve/2026-10-10_limbus_apbo_exploration_strateg
 | S2 | PLX from the planned producer | Cost is a sidetrack or lateral (days, not months) and shared with the producer, data later (tied to the producer schedule), shorter lag because the PLX can be completed as a producer, but a harm term when the planned producer is delayed or lost |
 | S2h | S2 with S1 as fall-back | Add a reach probability (trajectory, step-out, torque and drag, ECD); if the PLX cannot reach, the dedicated well is drilled |
 | S3 | PLX in a second, later producer | Later data, equal cost, optional gain in chance of success from the earlier wells |
+
+**S2h only works when the dedicated well it falls back to has a positive EMV.** At Tyrihans (EMV of the dedicated well -13 MUSD) the fall-back made S2h worse than S2; report S2 as "pilot only if reachable, else do nothing" and S2h as the reference, and do not recommend a pre-agreed fall-back until EMV(S1) > 0.
 
 Do nothing is a fifth option with value zero; it is only dominated if the EMV of the best strategy is positive at the honest chance of success.
 
@@ -28,6 +32,12 @@ Do nothing is a fifth option with value zero; it is only dominated if the EMV of
 6. **Data sufficiency** is a probability, not a given. When a PLX does not deliver a sufficient sample, test and pressure data, add an appraisal step (cost and one to two extra years) before sanction.
 7. **Value of information** of perfect knowledge of discovery before drilling = E[max(value, 0)] - max(E[value], 0). It bounds what a cheaper data or reach study may spend.
 8. **Crossovers**: scan the differential EMV(S2h) - EMV(S1) over one input at a time (loss probability, value at risk, PLX duration, planned-producer delay, extra PLX lag, dedicated-well duration, dedicated-well lag) with a fixed seed, and interpolate the zero. A recommendation without crossovers is an opinion.
+
+9. **Several stacked zones** (for example Tilje and Lower Åre under a producing field): sample one shared trap and charge factor plus a zone-specific reservoir factor, so Pg(at least one zone) is below the sum of the zone chances and the discoveries are correlated; report Pg per zone and combined.
+10. **Benchmark Pg against the regional hit rate** of the unit from Sodir wells that penetrated it (`devtools/sodir_wellbore_stats.py`, Beta posterior), and anchor pilot (observation) hole and sidetrack durations on the Sodir pilot holes in the same field.
+11. **Host-life gate**: the value of a late discovery is set by Centuries host profile end year, a subsea compression decision and the licence expiry year (Centuries field metadata carries `licenceExpiryYear` and equity). Report EMV with and without the life extension and treat the licence extension as a gate condition.
+12. **Break-even of the pilot itself** (extension days, cost, producer loss probability at which EMV(S2) = 0) is the gate criterion for the desk phase; the crossover against the dedicated well is a different number.
+13. Monte Carlo EMV of a strategy that is positive in only 5-10 % of worlds moves by about 1-2 MUSD between 1 000 and 8 000 worlds: quote the largest run and call crossovers indicative.
 
 ## 3. Traps
 

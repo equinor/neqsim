@@ -207,6 +207,19 @@ the composition in `SystemSrkCPAstatoil` (mixing rule 10) and benchmark methane 
 To benchmark `PipeBeggsAndBrills` against Darcy-Weisbach use a dry single-phase gas (pure methane, 60 C,
 `setHeatTransferCoefficient` large): the deviation is then 0.2-0.4 %. A lean-gas condensate line cooled
 to seabed temperature differs by 25-50 % because the liquid holdup is real, so that difference is not a defect.
+Gas-condensate saturation pressure (Tyrihans cellar task): a bubble-point search on a lean gas-condensate fluid returns
+a wrong value because the fluid has a dew point; take the saturation pressure of GOR above about 1500 Sm3/Sm3 fluids
+from the CVD first step (dew point) and record it as a limitation. `hydrateFormationTemperature()` on a GOR 250 oil fluid
+with 3 mol % water at 200 bara did not converge and left the temperature unchanged: check that the returned temperature
+differs from the start temperature before reporting it and report `None` as a gap, not as a hydrate-free result.
+HPHT wellstream hydrates (Erlend / Kristin study): the CPA hydrate solver also stalls (no exception) with the
+C7+ TBP/plus pseudo-components at 50 bara and 1 mol % water, even without MEG. Rebuild the CPA mixture from the
+light components only (C1-C6, N2, CO2, water, renormalised), as C7+ barely moves the hydrate temperature; a
+Kristin-type gas (CGR 300 Sm3/MSm3) with 1 mol % water gave 17.2 / 21.2 / 26.6 / 31.9 C at 50 / 100 / 300 / 600 bara.
+Do not iterate `PipeBeggsAndBrills` inlet pressure by a fixed point `p_in += p_out_target - p_out`: it stalls at high
+pressure drop (unconverged tables looked like data). Use a secant solve, treat a `HydraulicDomainException` as outlet
+pressure 0, store an `ok` flag and exclude `ok == False` rows when interpolating; beyond the last converged rate
+extend the table with dp proportional to q^2 instead of the last slope.
 
 ### MEG/Water Film Conditioned by Dry Gas (pipeline drying after glycol swabbing)
 
