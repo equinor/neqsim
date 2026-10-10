@@ -247,12 +247,33 @@ diameters. It is a read-only design view, not another graph or solver.
 `SURFCostEstimator`. Direct tiebacks now carry zero manifold cost, while multi-template
 and multi-manifold layouts price the actual number of distribution units instead of an
 implicit single manifold. The detailed `CostEstimateResult` retains the Class 4 estimate
-basis, material take-off and a quality flag explaining aggregation. Topology geometry is
-reduced to length-weighted line diameters and representative per-unit manifold slots and
-weight because the current estimator accepts one scalar basis per line category. Mixed
-diameters, different manifold designs, route-specific installation methods, umbilical
-routing, wall-thickness design and supplier quotations therefore require disaggregated
-detailed design; this bridge must not be presented as vendor qualification or AFC cost.
+basis, material take-off and a quality flag explaining aggregation. Every canonical
+physical edge is now priced separately under its stable equipment tag, exact route length
+and hydraulic diameter; the length-weighted getters remain available only as summary
+metrics. The hydraulic diameter is a nominal Class 4 cost diameter, not a completed
+outside-diameter or wall-thickness design. Different manifold designs, route-specific
+installation methods, umbilical routing, material selection, supplier quotations and AFC
+cost therefore still require detailed design.
+
+### Discrete hydraulic and SURF design
+
+`NetworkDecisionVariable.pipeDiameter(...)` registers increasing physical diameter
+candidates on an existing canonical edge. When every registered design variable is
+discrete, the existing `NetworkOptimizer` evaluates the complete Cartesian product in
+deterministic order, runs the configured edge-local hydraulics, checks normal network
+constraints and retains the best feasible candidate. It refuses to start if the complete
+design space exceeds `maxEvaluations`, and it rejects mixed continuous-operation and
+discrete-design variables so a partial or relaxed search cannot be reported as a discrete
+optimum. Use staged design and operating optimization when both are required.
+
+`SubseaProductionSystem.createSurfCapitalCostObjective(topology, weight)` contributes
+negative route-specific SURF CAPEX to the same composable objective contract used by
+`NetworkOptimizer`. The optimizer therefore changes the diameter on the hydraulic edge,
+solves that exact topology, verifies pressure/flow/conservation constraints, and prices
+the resulting geometry without rebuilding the field. The synthetic two-route acceptance
+case enumerates four designs and selects the least-cost combination that meets delivery:
+the long segment is upsized while the short segment remains small. This is deterministic
+hydraulic and Class 4 screening evidence, not independent cost or hydraulic qualification.
 
 ## Live well pressure-rate coupling
 
@@ -340,9 +361,9 @@ physical limits to obtain a feasible optimizer result.
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
-2. Extend the topology-derived `SubseaProductionSystem` screening basis to disaggregated
-   route/equipment design cases, then connect it to `NetworkOptimizer` / process
-   optimization, detailed lifecycle models and reduced-order surrogates.
+2. Extend the route-specific discrete SURF design workflow with per-edge material,
+   wall-thickness, installation and thermal/stability cases, then couple design choices to
+   multi-period lifecycle economics and reduced-order surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
