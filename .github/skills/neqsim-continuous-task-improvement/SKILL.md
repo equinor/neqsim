@@ -190,9 +190,14 @@ writes to a control system and every proposal carries `requires_approval`.
   `margin` tightens the limit (use the lab-vs-model scatter for a product spec; for equipment use
   `demonstrated_limit(history, quantile, design)` = larger of design and experience). A hard constraint
   with no `limit` is **unconfirmed** and withholds all advice. Slack becomes the KPI `slack_<name>`.
-- **Proposals** must carry `setpoints`, `expected_gain` and `predicted` (a value for every hard-constrained
-  KPI). The `guard` stage keeps only proposals that satisfy every hard constraint with margin; the rest are
-  listed in `guard.json` with the reasons.
+- **Proposals** must carry finite numeric `setpoints`, `expected_gain`, `predicted` (a value for every
+  hard-constrained KPI), and `optimizer_evidence`. Evidence must name the current `ctx.cycle_id` and set
+  `simulation_converged`, `candidate_feasible`, `candidate_finite`, `constraint_evidence_complete`, `state_restore_complete`,
+  `accepted_point_replayed`, and `actions_complete` to exactly `true`. The `guard` fails closed on missing,
+  stale, non-finite, unconverged, partially restored/replayed, incomplete-constraint, or partially applied
+  candidates. It keeps only proposals that also satisfy every hard constraint with margin; every rejection is
+  listed in `guard.json`. Also record a positive integer `evaluation_count` and finite non-negative
+  `runtime_seconds`; the ledger retains the evidence block for persistent incumbent and performance provenance.
 - **Outcome**: ledger items set to `implemented` with `objective_kpi` and `baseline_value` are compared with
   the realised gain each cycle (`outcome_confirmed` / `outcome_miss`); the engineer decides on `verified`.
 - **Boundary conditions**: read the measured process boundary (here gas export and injection pressure and

@@ -935,13 +935,36 @@ The loop is **advisory**: nothing is written to the control system, and every ac
 | `model_update` (your script) | Reads live data, updates and runs the model, returns KPIs and the residuals against the measurements |
 | `gates` | `gates:` in the plan (`{name, kpi, abs_max\|max\|min}`). A failed or missing KPI blocks all advice (`model_gate:<name>`) |
 | `constraints` | `constraints:` in `goal.yaml` (`{name, kpi, op, limit, margin, warn, hard, source}`). `margin` tightens the limit. A hard constraint with no `limit` is *unconfirmed* and blocks all advice |
-| `optimize` (your script) | Searches the levers and returns `proposals` with `setpoints`, `expected_gain`, `predicted` KPIs, `objective_kpi`, `baseline_value` |
-| `guard` | Keeps a proposal only if it has setpoints, a gain above `production.min_gain`, and a predicted value that satisfies every hard constraint with margin. `guard.json` lists the reasons for every withheld proposal |
+| `optimize` (your script) | Searches the levers and returns `proposals` with `setpoints`, `expected_gain`, `predicted` KPIs, `objective_kpi`, `baseline_value`, and the fail-closed `optimizer_evidence` below |
+| `guard` | Keeps a proposal only if its numeric data are finite, its evidence belongs to the current cycle and proves a fully validated/replayed candidate, it has a gain above `production.min_gain`, and every hard constraint is predicted inside its margin. `guard.json` lists the reasons for every withheld proposal |
 | `outcome` | For ledger items in status `implemented`: realised gain against predicted gain (`outcome_confirmed:` / `outcome_miss:`) |
 
 `demonstrated_limit(values, quantile=0.99, design=...)` gives an equipment limit from operating experience: the
 larger of the design value and a high quantile of historian samples. Use it where equipment has been run above
 its design value before; record who accepted that.
+
+Every optimizer proposal must include this evidence from the same cycle. The guard requires each boolean to be
+exactly `true`; missing, false, or stale evidence withholds the proposal rather than inferring success:
+
+```yaml
+optimizer_evidence:
+  cycle_id: <ctx.cycle_id>
+  simulation_converged: true
+  candidate_feasible: true
+  candidate_finite: true
+  constraint_evidence_complete: true
+  state_restore_complete: true
+  accepted_point_replayed: true
+  actions_complete: true
+  evaluation_count: 42
+  runtime_seconds: 12.8
+```
+
+`state_restore_complete` covers restoration after every rejected/intermediate evaluation;
+`accepted_point_replayed` confirms the selected point was then applied and re-simulated from a known state.
+`actions_complete` must be false when any requested setpoint or routing action was rejected. The accepted ledger
+item retains this block, including the positive integer evaluation count and finite non-negative runtime, so
+resume and change-driven cycles preserve the incumbent's validation and performance provenance.
 
 ### 17.2 Levers: every operator-adjustable parameter
 
