@@ -192,8 +192,12 @@ class FieldToFacilityOptimizationAcceptanceTest {
         new double[] {70.0, 70.0, 0.0, 1.0});
 
     assertTrue(slice.isComplete());
-    assertTrue(slice.getPoints().get(0).isFeasible(), slice.getPoints().get(0).getEvaluation().getOutcome() + ": "
-        + slice.getPoints().get(0).getEvaluation().getDiagnostics());
+    assertTrue(slice.getPoints().get(0).isFeasible(),
+        slice.getPoints().get(0).getEvaluation().getOutcome() + ": "
+            + slice.getPoints().get(0).getEvaluation().getDiagnostics() + " constraints="
+            + slice.getPoints().get(0).getEvaluation().getConstraintEvidence().stream().filter(e -> !e.isSatisfied())
+                .map(e -> e.getName() + " value=" + e.getValue() + " margin=" + e.getMargin())
+                .collect(java.util.stream.Collectors.toList()));
     assertFalse(slice.getPoints().get(1).isFeasible());
     LeadingConstraintEvidence leading = slice.getPoints().get(1).getLeadingConstraint();
     assertEquals(LeadingConstraintEvidence.Source.REQUIRED_HYDRAULIC, leading.getSource());
@@ -415,7 +419,8 @@ class FieldToFacilityOptimizationAcceptanceTest {
     model.run();
     assertTrue(model.isModelConverged());
     double baselineRouteAHigh = massFlow(network, "A HP route");
-    assertTrue(highRouteAHigh > baselineRouteAHigh);
+    assertTrue(highRouteAHigh > baselineRouteAHigh * 1.01,
+        "Choke sweep must change route flow by more than one percent, not solver noise");
     double routeAHighOperatingLimit = 0.5 * (baselineRouteAHigh + highRouteAHigh);
 
     configureInstalledLimits(networkUnit, highPressureSeparator, lowPressureSeparator, highPressureScrubber,
@@ -434,7 +439,9 @@ class FieldToFacilityOptimizationAcceptanceTest {
         initialPressureBara, -200.0);
     topology.addJunction(headerNode, "MA-" + suffix, NodeRole.MANIFOLD, Service.PRODUCTION, -200.0);
     topology.getHydraulicNetwork().setNodePressure(headerNode, initialPressureBara - 5.0);
-    topology.getHydraulicNetwork().addChoke(wellNode, headerNode, "choke " + suffix, 30.0, chokeOpening);
+    // A finite choke pressure drop makes the operating-limit sweep resolve physical flow changes.
+    // Cv=30 leaves the 70-to-90 percent sweep at solver-noise scale for this small synthetic well.
+    topology.getHydraulicNetwork().addChoke(wellNode, headerNode, "choke " + suffix, 0.3, chokeOpening);
     topology.registerExistingEdge("choke " + suffix, "XV-" + suffix, EdgeRole.CHOKE, Service.PRODUCTION,
         FlowDirection.FROM_TO, "well", "header");
   }
