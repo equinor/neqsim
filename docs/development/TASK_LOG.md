@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-10 — Partner-operated firm exploration well, frontier basin: unnamed prospect, candidate licences from public awards, host gas-reinjection limit
+**Type:** G (Workflow)
+**Keywords:** APbo, firm well, partner-operated, high-risk high-reward, unnamed prospect, licence award, candidate licence, Monte Carlo, break-even Pg, host ullage, gas reinjection, water capacity floor, decision map, tornado, 78 % refund
+**Solution:** Private task folder (redacted): script-backed screening (open licence, ownership, well and discovery data, forecast host plans, NeqSim analogue fluids, hydrate and Beggs-and-Brill tables, tie-back model with 2022 cash-flow tax, decision map, tornado, 4000-draw Monte Carlo).
+**Notes:** When the prospect has no public record, identify candidate licences from the latest award batch (operator, equity, distance to hosts) and carry both equity cases instead of guessing. The firm well is a commitment, so the Equinor view is about the exposure (net of the 78 % refund) and endorsement triggers, not go/no-go. A host that reinjects its gas has almost no new-gas ullage: a gas-type success is capped and non-commercial however large (NPV falls with volume); an oil-type success tied back near the host carries the value. Floor a demonstrated water capacity at the host's own plan peak or the tie-in is curtailed to zero. Expected value ended close to zero with a seed-sensitive sign: report break-even Pg and median-volume thresholds rather than the sign.
+
 ### 2026-10-09 — New subsea template with a second-field target versus spare slots and host-platform wells: cannibalisation, shared LP gas, staged option
 **Type:** G (Workflow)
 **Keywords:** subsea template, infill, second field, cannibalisation, incremental share, spare slots, host platform wells, shared LP gas, gas intensity, flowline back-pressure, hydrate, no-touch time, staged option value, Monte Carlo, break-even
