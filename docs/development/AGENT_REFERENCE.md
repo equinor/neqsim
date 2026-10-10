@@ -536,7 +536,12 @@ results = {
         #                  "reason": "agent not registered in this VS Code session"}],
         # "workflow_type": "composition_pattern",
         # "workflow": "process-model -> mechanical-design",
-        # "rationale": "..."
+        # "rationale": "...",
+        # Governed evidence agents the task text cues (neqsim-task-workflow s5 table); the
+        # validator warns when a cue is present and the agent is neither used nor listed here.
+        # "evidence_sources": [{"agent": "enterprise-thelma-agent", "status": "used"},
+        #                      {"agent": "enterprise-pepo-agent", "status": "no_access",
+        #                       "reason": "PEPO bearer consent not granted"}]
     },
     "figure_captions": {
         # "plot.png": "Description of the figure"

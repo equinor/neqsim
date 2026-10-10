@@ -146,6 +146,14 @@ then record `invocation: "pattern"` with the reason in
 model, search sibling tasks (`neqsim tasks search`) and the skill packages; a
 helper written a second time is promoted to its skill package in the same session.
 
+**Evidence-source agents are checked, not ranked.** Data agents (Thelma, Synergi,
+alarm events, PEPO, Emisoft, GeoX, AWT, Centuries, PDM, OTS, STID, TR2000, GIS,
+SMDA, OSDU) describe systems, so similarity ranking never surfaces them - the
+2026-10 audit found Thelma used in 2 of 22 applicable tasks and Synergi in 3 of
+33. Walk the cue table in `neqsim-task-workflow` §5 against the task text and
+record every applicable source in `agent_workflow_plan.evidence_sources`
+(`used` | `not_applicable` | `no_access` | `not_registered` + reason).
+
 ### Core Purpose
 
 This agent's value comes from two things — and both depend on NeqSim:

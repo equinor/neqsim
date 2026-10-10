@@ -349,6 +349,73 @@ def check_capability_assessment(task_folder: Path) -> List[str]:
 
 AGENT_INVOCATION_KINDS = ("subagent", "pattern", "skill-only")
 
+# High-precision cues (task text -> governed evidence agent). Kept narrow on purpose:
+# a false warning costs more trust than a missed one. See neqsim-task-workflow s5.
+EVIDENCE_SOURCE_CUES = (
+    ("enterprise-thelma-agent", r"levetid|life.?extension|lifetime|ageing|aging|obsolesc|end.?of.?life|cessation"),
+    ("enterprise-synergi-agent", r"bl[a\u00e5]lys|bluelight|\btrip\b|tripp|root.?cause|incident|hendelse|lekkasje|\bleak\b|\bm1\b"),
+    ("enterprise-alarm-events-agent", r"bl[a\u00e5]lys|bluelight|\btrip\b|tripp|first.?up|blackout"),
+    ("enterprise-pepo-agent", r"bl[a\u00e5]lys|bluelight|revisjonsstans|turnaround|deferment"),
+    ("enterprise-emisoft-agent", r"co2.?(emission|intensity|tax|avgift)|emission|utslipp|fuel.?gas|carbon.?intensity"),
+    ("enterprise-geox-agent", r"\bapbo\b|prospect|chance of (success|discovery)|firm well|\bapa\s*20"),
+    ("enterprise-awt-agent", r"well.?test|br[o\u00f8]nntest|test.?separator|\bmpfm\b"),
+    ("enterprise-acquire-agent", r"centuries|\brnb\b|ullage|host capacity|forecast 20"),
+    ("enterprise-tr2000-agent", r"piping class|\bpcs\b|tr2000|material selection|chemical.?injection line"),
+    ("enterprise-gis-mapservices-agent", r"bathymetry|flowline route|pipeline route|template location|licence (outline|polygon)"),
+)
+EVIDENCE_STATUS = ("used", "not_applicable", "no_access", "not_registered")
+
+
+def check_evidence_sources(task_folder: Path, results: dict) -> List[str]:
+    """Warn when the task text cues a governed evidence agent that the plan does not account for.
+
+    The 2026-10 audit of 156 tasks found Thelma applicable in 22 tasks and used in 2,
+    Synergi 33/3, alarm events 17/1, PEPO 73/0, Emisoft 94/0, GeoX 83/0. Data-source
+    agents describe a system rather than a discipline, so similarity ranking never
+    surfaces them; this check reads the task text directly. An agent counts as
+    accounted for when it appears in ``agents_used`` or in
+    ``evidence_sources`` with any status (``not_applicable`` / ``no_access`` with a
+    reason is a valid answer). Warning only.
+    """
+    warnings: List[str] = []
+    if not _is_standard_or_comprehensive(results, task_folder):
+        return warnings
+    text = ""
+    for rel in ("user_input.md", os.path.join("step1_scope_and_research", "task_spec.md")):
+        f = task_folder / rel
+        if f.exists():
+            try:
+                text += f.read_text(encoding="utf-8", errors="ignore").lower()
+            except OSError:
+                pass
+    if not text:
+        return warnings
+    plan = results.get("agent_workflow_plan") or {}
+    accounted = set()
+    for entry in (plan.get("agents_used") or []) + (plan.get("evidence_sources") or []):
+        if isinstance(entry, dict):
+            accounted.add(str(entry.get("name") or entry.get("agent") or "").split(" ")[0])
+        elif isinstance(entry, str):
+            accounted.add(entry.split(" ")[0])
+    bad_status = [
+        str(e.get("agent")) for e in (plan.get("evidence_sources") or [])
+        if isinstance(e, dict) and e.get("status") not in EVIDENCE_STATUS
+    ]
+    if bad_status:
+        warnings.append(
+            f"{task_folder.name}: evidence_sources entries with an unknown status "
+            f"(use {' | '.join(EVIDENCE_STATUS)}): {', '.join(bad_status)}"
+        )
+    missing = [agent for agent, cue in EVIDENCE_SOURCE_CUES
+               if re.search(cue, text) and agent not in accounted]
+    if missing:
+        warnings.append(
+            f"{task_folder.name}: task text cues governed evidence agents that the plan does not "
+            f"account for - invoke them or record not_applicable/no_access with a reason in "
+            f"agent_workflow_plan.evidence_sources: {', '.join(missing)}"
+        )
+    return warnings
+
 
 def check_agent_workflow_plan(task_folder: Path, results: dict) -> List[str]:
     """Return warnings when a Standard/Comprehensive task did not record how agents were used.
@@ -896,6 +963,9 @@ def main() -> int:
             )
             warnings.extend(
                 check_agent_workflow_plan(task_folder, parsed if isinstance(parsed, dict) else {})
+            )
+            warnings.extend(
+                check_evidence_sources(task_folder, parsed if isinstance(parsed, dict) else {})
             )
         if isinstance(parsed, dict) and _is_standard_or_comprehensive(parsed, task_folder):
             if not _has_engineering_validation(parsed):
