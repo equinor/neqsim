@@ -70,9 +70,9 @@ class OptimizationIntegrationExamplesTest(unittest.TestCase):
             jpype.startJVM(classpath=classpath.split(os.pathsep))
         cls.external = blocks(ROOT / "docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md")
         cls.network = blocks(ROOT / "docs/process/pipeline_network_optimization.md")
-        if len(cls.external) != 27 or len(cls.network) != 1:
+        if len(cls.external) != 28 or len(cls.network) != 1:
             raise AssertionError("Update the execution groups to cover every published Python fence")
-        groups = [list(range(6)) + [7, 8, 9, 10, 24, 25], [0, 1, 2] + list(range(11, 24)), [26, 6]]
+        groups = [list(range(6)) + [7, 8, 9, 10, 25, 26], [0, 1, 2] + list(range(11, 25)), [27, 6]]
         if set().union(*(set(group) for group in groups)) != set(range(len(cls.external))):
             raise AssertionError("Every external optimizer fence must belong to an execution group")
 
@@ -89,13 +89,13 @@ class OptimizationIntegrationExamplesTest(unittest.TestCase):
 
     def test_basic_scipy_nlopt_and_custom_setters(self):
         require_nlopt(self)
-        namespace = self.execute(self.external, list(range(6)) + [7, 8, 9, 10, 24, 25], "external")
+        namespace = self.execute(self.external, list(range(6)) + [7, 8, 9, 10, 25, 26], "external")
         self.assertAlmostEqual(40000.0, namespace["x_opt"][0], delta=0.01)
         self.assertEqual(2, namespace["evaluator"].getParameterCount())
         self.assertEqual(2, len(namespace["problem"]["constraints"]))
 
     def test_quality_actions_allocations_and_paired_study_ranking(self):
-        namespace = self.execute(self.external, [0, 1, 2] + list(range(11, 24)), "external")
+        namespace = self.execute(self.external, [0, 1, 2] + list(range(11, 25)), "external")
         quality = namespace["quality_result"]
         self.assertAlmostEqual(1.0, quality.getObjectiveGradient()[0], delta=1.0e-6)
         candidate = namespace["candidate"]
@@ -108,7 +108,7 @@ class OptimizationIntegrationExamplesTest(unittest.TestCase):
         self.assertFalse(namespace["rejected_rows"])
 
     def test_complete_compression_and_multiobjective_examples(self):
-        namespace = self.execute(self.external, [26, 6], "external")
+        namespace = self.execute(self.external, [27, 6], "external")
         final = namespace["final_evaluation"]
         self.assertTrue(final.isFeasible())
         self.assertTrue(final.isSimulationConverged())

@@ -1032,6 +1032,49 @@ The evaluator does not optimize the vector, interpolate discrete line-ups, chang
 hydraulic correlations, or establish operating approval. Validate conservation, constraint
 residuals, product specifications and nearby operating points with the underlying NeqSim model.
 
+### Search mixed continuous and discrete operating actions
+
+`ProcessModelOperatingPointOptimizer` composes the same atomic evaluator for a bounded local search
+that may include both continuous setpoints and exact discrete line-ups. Continuous coordinates use
+a shrinking fraction of their own declared ranges; discrete coordinates use only
+`ProcessModelOperatingAction.getAllowedValues()`. The optimizer stops immediately after incomplete
+restoration and reserves its final budgeted evaluation for replay of the selected feasible point.
+
+```python
+OperatingPointOptimizer = (
+    jneqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer
+)
+
+optimizer = OperatingPointOptimizer(
+    "field-operating-point",
+    "Field operating point",
+    "approved well envelopes and qualified line-ups",
+    allocation,
+)
+optimizer.setInitialCandidate([well_a_rate, well_b_rate])
+optimizer.setObjectiveIndex(0)
+optimizer.setInitialStepFraction(0.25)
+optimizer.setRelativeStepTolerance(1.0e-3)
+optimizer.setMaximumEvaluations(100)
+
+search = optimizer.optimize()
+if not search.isAcceptedPointReplayed():
+    raise RuntimeError(list(search.getDiagnostics()))
+
+accepted = list(search.getAcceptedCandidateValues())
+optimizer_evidence = dict(search.getOptimizerEvidence("documentation-cycle"))
+proposal = {
+    "setpoints": dict(zip(["well-a-rate", "well-b-rate"], accepted)),
+    "optimizer_evidence": optimizer_evidence,
+}
+```
+
+The evidence map uses the exact keys required by the continuous production guard. Its booleans are
+derived from the terminal replay and cannot become true for an unconverged, infeasible, non-finite,
+partially applied, partially restored, or unreplayed point. `evaluation_count` includes the replay;
+`runtime_seconds` is measured wall-clock provenance for coordination with performance work, not a
+claim that the generic optimizer or simulator became faster.
+
 ### Search a fixed-total continuous allocation
 
 `ProcessModelAllocationOptimizer` composes the atomic evaluator when all allocation actions are
@@ -1551,6 +1594,16 @@ on `ProcessSimulationEvaluator`.
 | `getRankedHydraulicConstraintsAtBestSampledObjective()` | Stable descending-utilization evidence at the best sampled objective |
 | `getInstalledCapacityEvidenceAtBestFeasible()` | Complete immutable installed-capacity evidence at the feasible incumbent |
 | `getInstalledCapacityEvidenceAtBestSampledObjective()` | Complete immutable installed-capacity evidence at the best sampled objective |
+
+### ProcessModelOperatingPointOptimizer
+
+| Method | Description |
+|--------|-------------|
+| `optimize()` | Run bounded deterministic mixed-action coordinate search through the atomic evaluator and replay the selected point |
+| `OperatingPointSearchResult.getCandidates()` | Complete immutable candidate, restoration, incumbent, and replay trace |
+| `getAcceptedPointReplay()` / `getAcceptedCandidateValues()` | Terminal replay evidence and defensive selected action vector; empty/null after failed acceptance |
+| `isConstraintEvidenceComplete()` / `isActionsComplete()` | Fail-closed terminal completeness checks used by live optimization |
+| `getOptimizerEvidence(cycleId)` | Exact current-cycle guard block with convergence, feasibility, finiteness, constraint/action completeness, recovery, replay, count, and runtime |
 
 ### ProcessModelDebottleneckStudy
 
