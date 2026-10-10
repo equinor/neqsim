@@ -211,16 +211,29 @@ for the mixed-brine regression scope.
 #### CO2/brine phase-state diagnostics
 
 For water-rich, non-reactive `SystemElectrolyteCPAstatoil` fluids containing only
-CO2, water and optional explicit ions, the temperature operation uses
+CO2, water, optional explicit ions and optional MEG, the temperature operation uses
 `CO2BrinePhaseEquilibrium` for each fluid evaluation, including the independent
-verification on a copy of the starting feed. It initializes independent
+verification on a copy of the starting feed. Water moles must exceed the combined
+CO2 and MEG moles. It initializes independent
 vapour and liquid CO2 trials, confines ions to the aqueous phase, and solves the
 constrained component balances and molecular fugacity equations. Conserved
 candidate states are ranked by Gibbs energy. A single aqueous result is accepted
 only when both normalized CO2 stability trials are non-negative within numerical
-tolerance. This path uses the existing EOS and hydrate parameters. Other gases,
-MEG/methanol mixtures, prescribed phase types and solid-phase
+tolerance. MEG is a molecular component: its fugacity equality and material balance
+are solved alongside those of CO2 and water; it is not assigned a zero partition
+coefficient like an ion. This path uses the existing EOS and hydrate parameters. Other gases,
+methanol, additional molecular components, prescribed phase types and solid-phase
 calculations retain their existing fluid solver.
+
+The 44 bara regression uses 10 mol CO2 and 1 kg water, with 10 wt% NaCl on
+water-plus-salt and 5 wt% MEG on water-plus-MEG. It gives approximately
+1.903 °C with a conserved CO2-rich/aqueous split. If the same percentages instead
+mean kilograms per 100 kg water, the smaller salt and MEG inventories give
+approximately 2.708 °C. These are numerical regression results, not experimental
+validation. Independent temperature guesses and adjacent pressure cases are
+tested in `CO2BrineMegHydrateTest`. Ice and salt precipitation are not included.
+The reactive coupling described below retains its CO2/water-only molecular scope;
+adding MEG to a reactive fluid uses the existing general solver.
 
 Water-rich reactive `SystemElectrolyteCPAstatoil` fluids with CO2 and water as
 their only molecular components use `ReactiveCO2BrinePhaseEquilibrium` during

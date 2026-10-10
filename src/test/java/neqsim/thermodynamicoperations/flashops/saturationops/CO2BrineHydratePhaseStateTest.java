@@ -144,11 +144,12 @@ class CO2BrineHydratePhaseStateTest {
     assertTrue(snapshot.isConverged(), "Subsequent mutations must not change the earlier snapshot");
   }
 
+  /** Verifies the general solver remains responsible for methanol and reactive fluids. */
   @Tag("slow")
   @Test
-  void mixedInhibitorsAndReactiveFluidsRetainTheirOwnSolver() {
+  void unsupportedInhibitorsAndReactiveFluidsRetainTheirOwnSolver() {
     SystemInterface mixed = brine(50.0, 5.0, 10.0);
-    mixed.addComponent("MEG", 1.0);
+    mixed.addComponent("methanol", 1.0);
     assertFalse(CO2BrinePhaseEquilibrium.isApplicable(mixed));
     SystemInterface reactive = brine(50.0, 5.0, 10.0);
     reactive.chemicalReactionInit();
