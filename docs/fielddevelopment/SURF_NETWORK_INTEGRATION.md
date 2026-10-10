@@ -4,13 +4,13 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `ffde2f43443ae65d57d02497e31fefb71b637555`.
+The current baseline is `29fec930b31f3eaecb06a60bd949eceadb8fdff3`.
 Source implementation, regression evidence and field qualification are different maturity levels.
 Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
 pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
-The current increment adds typed powered/control-edge builders and representative multi-template,
-daisy-chain, brownfield, injection and large-field acceptance evidence; none of these completes
-independent field qualification.
+The current increment connects per-edge outer diameter, wall thickness, material, installation and
+insulation choices to the existing mechanical-screening and Class 4 cost contracts; none of these
+completes independent field, vendor or current-edition DNV qualification.
 
 ## Current functionality and reuse decisions
 
@@ -255,6 +255,49 @@ outside-diameter or wall-thickness design. Different manifold designs, route-spe
 installation methods, umbilical routing, material selection, supplier quotations and AFC
 cost therefore still require detailed design.
 
+### Route-specific mechanical and installation basis
+
+`SURFCostEstimator.LineDesign` supplements one canonical physical line edge with an
+immutable cost/design basis: outer diameter, explicit or screening-calculated wall
+thickness, API 5L material grade, design pressure and legacy screening code, installation
+method, rigid/flexible construction and insulation type/thickness. Register it by canonical
+edge ID with `SubseaProductionSystem.setLineDesign(...)`. The system rejects missing or
+non-SURF identities and checks that a rigid OD/wall combination agrees with the hydraulic
+inside diameter before costing. Flexible-pipe layer geometry remains supplier-specific and
+is therefore not subjected to the rigid steel consistency check.
+
+Rigid routes reuse `PipeMechanicalDesignCalculator` for screening wall thickness and steel
+weight instead of duplicating the material-strength table. The resulting existing
+`CostEstimateResult`/material-take-off contract records route-specific steel grade, coating,
+insulation volume, field welds and installation. Unconfigured routes retain the previous
+nominal hydraulic-diameter Class 4 basis, so adoption can be incremental.
+
+```java
+SURFCostEstimator.LineDesign flowlineDesign =
+    SURFCostEstimator.LineDesign.builder(8.625)
+        .wallThicknessMm(8.0)
+        .materialGrade("X52")
+        .designPressureBar(140.0)
+        .installationMethod("J-lay")
+        .insulation("PUF", 30.0)
+        .build();
+
+subsea.setLineDesign("production-flowline", flowlineDesign);
+CostEstimateResult estimate = subsea.estimateSurfCosts(topology);
+```
+
+A zero wall thickness asks the existing legacy screening calculator for a rounded-up
+Class 4 basis. This is not the typed current-edition `DNV-ST-F101` limit-state assessment,
+installation analysis, on-bottom stability assessment, flexible-pipe qualification or AFC
+design. Those existing specialist kernels retain ownership and require their full load,
+material, fabrication and environmental inputs.
+
+The current discrete network variable changes hydraulic inside diameter only. If an edge
+also has a `LineDesign`, each staged candidate must provide a compatible OD/wall basis;
+otherwise the consistency check fails closed. Categorical material/installation selection
+and simultaneous OD/ID/wall enumeration remain a later design-variable extension rather
+than being encoded as relaxed continuous operating controls.
+
 ### Discrete hydraulic and SURF design
 
 `NetworkDecisionVariable.pipeDiameter(...)` registers increasing physical diameter
@@ -361,9 +404,9 @@ physical limits to obtain a feasible optimizer result.
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
-2. Extend the route-specific discrete SURF design workflow with per-edge material,
-   wall-thickness, installation and thermal/stability cases, then couple design choices to
-   multi-period lifecycle economics and reduced-order surrogates.
+2. Connect route-specific insulation to solved thermal arrival constraints and explicit
+   DNV-ST-F101/on-bottom-stability screening inputs, then couple the qualified design cases
+   to multi-period lifecycle economics and reduced-order surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
