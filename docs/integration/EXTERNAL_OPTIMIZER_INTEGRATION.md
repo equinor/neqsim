@@ -1048,10 +1048,10 @@ OperatingPointOptimizer = (
 optimizer = OperatingPointOptimizer(
     "field-operating-point",
     "Field operating point",
-    "approved choke envelopes and qualified HP/LP line-ups",
-    action_set,
+    "approved well envelopes and qualified line-ups",
+    allocation,
 )
-optimizer.setInitialCandidate(initial_chokes_and_routes)
+optimizer.setInitialCandidate([well_a_rate, well_b_rate])
 optimizer.setObjectiveIndex(0)
 optimizer.setInitialStepFraction(0.25)
 optimizer.setRelativeStepTolerance(1.0e-3)
@@ -1062,9 +1062,9 @@ if not search.isAcceptedPointReplayed():
     raise RuntimeError(list(search.getDiagnostics()))
 
 accepted = list(search.getAcceptedCandidateValues())
-optimizer_evidence = dict(search.getOptimizerEvidence(str(ctx.cycle_id)))
+optimizer_evidence = dict(search.getOptimizerEvidence("documentation-cycle"))
 proposal = {
-    "setpoints": accepted_setpoint_map(accepted),
+    "setpoints": dict(zip(["well-a-rate", "well-b-rate"], accepted)),
     "optimizer_evidence": optimizer_evidence,
 }
 ```
