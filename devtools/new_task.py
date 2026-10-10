@@ -547,6 +547,42 @@ TASK_TYPES = {
     "G": "Workflow",
 }
 
+# Synonyms accepted by --type besides the letter, so that an agent passing a
+# descriptive type does not silently fall back to type B (Process).
+TASK_TYPE_ALIASES = {
+    "FIELD DEVELOPMENT": "F",
+    "FIELD-DEVELOPMENT": "F",
+    "EXPLORATION": "F",
+    "FEL": "F",
+    "ECONOMICS": "F",
+    "CONCEPT": "F",
+    "CONCEPT SELECTION": "F",
+    "FLOW ASSURANCE": "B",
+    "SIMULATION": "B",
+    "STANDARD": "D",
+    "COMPLIANCE": "D",
+}
+
+
+def resolve_task_type(value):
+    """Resolve a task type given as letter, name or synonym to a letter code.
+
+    Args:
+        value: Raw --type argument (case-insensitive), for example ``F``,
+            ``Design`` or ``field development``.
+
+    Returns:
+        The single-letter key of TASK_TYPES when recognised, otherwise the
+        upper-cased input unchanged so the caller can warn about it.
+    """
+    key = str(value or "").strip().upper()
+    if key in TASK_TYPES:
+        return key
+    for letter, name in TASK_TYPES.items():
+        if key == name.upper():
+            return letter
+    return TASK_TYPE_ALIASES.get(key, key)
+
 
 # ══════════════════════════════════════════════════════════
 # Embedded templates — these are the "source of truth" so
@@ -2533,6 +2569,7 @@ def _main(argv, task_root=None):
         else:
             i += 1
 
+    task_type = resolve_task_type(task_type)
     if task_type not in TASK_TYPES:
         print("WARNING: Unknown task type '{}'. Valid: {}".format(
             task_type, ", ".join(sorted(TASK_TYPES.keys()))))

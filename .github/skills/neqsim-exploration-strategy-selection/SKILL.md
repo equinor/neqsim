@@ -6,6 +6,7 @@ description: "Screening workflow for choosing how to explore a near-field target
 # Exploration strategy selection (dedicated well vs PLX)
 
 Second implementation with two zones, host-life gate and flow assurance: the Tyrihans cellar task (`tyr_model.py`, `07_strategies.py`, `13_crossovers.py`, `14_build_results.py`).
+Third implementation, infrastructure-reuse variant with IOGR, tie-back routes and exploration in one Monte Carlo: the Morvin revitalization task (`mmodel.py`, `20_options.py`, `21_sens.py`).
 
 Reference implementation: `task_solve/2026-10-10_limbus_apbo_exploration_strategy_dedicated_well_vs_plx_from/step2_analysis/scripts` (`limbus_model.py` development economics and volumes, `07_strategies.py` strategies, `08_sensitivity.py` tornado and maps, `13_crossovers.py`). Copy the pattern, not the numbers: every prospect input there is an assumption.
 
@@ -38,6 +39,7 @@ Do nothing is a fifth option with value zero; it is only dominated if the EMV of
 11. **Host-life gate**: the value of a late discovery is set by Centuries host profile end year, a subsea compression decision and the licence expiry year (Centuries field metadata carries `licenceExpiryYear` and equity). Report EMV with and without the life extension and treat the licence extension as a gate condition.
 12. **Break-even of the pilot itself** (extension days, cost, producer loss probability at which EMV(S2) = 0) is the gate criterion for the desk phase; the crossover against the dedicated well is a different number.
 13. Monte Carlo EMV of a strategy that is positive in only 5-10 % of worlds moves by about 1-2 MUSD between 1 000 and 8 000 worlds: quote the largest run and call crossovers indicative.
+14. **Infrastructure-reuse screen (ageing host or tail field, Morvin task)**: before crediting an old template or line with value for new volumes, compare the straight-line distance of each candidate to the old infrastructure and to the host platform (Sodir facility layer 6000 for coordinates). A candidate that is no closer to the old template than to the host gains nothing from routing through it. Evaluate the routes (via old line, direct, via a neighbour's line) on the same worlds, add a keep-alive cost K for the old line (preservation about 0.25 K before first flow), and report the K at which the old route breaks even. At Morvin that K was about 7 MNOK/yr against an assumed 80-250.
 
 ## 3. Traps
 
@@ -49,6 +51,16 @@ Do nothing is a fifth option with value zero; it is only dominated if the EMV of
 - A PDM rate benchmark needs one gas-to-oil-equivalent convention for the host plan and the allocated data; Sodir uses 1000 Sm3 gas = 1 Sm3 OE, Centuries rich gas used about 1.15e-3.
 - Hydrate with SRK-CPA needs `setHydrateCheck(True)` before `hydrateFormationTemperature()` (see `neqsim-flow-assurance`); the failure "Can not return phase number 4" means it was forgotten.
 - A stand-alone prospect far from infrastructure has no host to curtail it: anchor CAPEX on Sodir cumulative field investment (`prfInvestmentsMillNOK`, nominal NOK) against peak annual OE rate of stand-alone fields, report the minimum economic volume per infrastructure share borne by the discovery (1.0 stand-alone, 0.4 area hub) instead of a named host, and expect the Sodir sample of far discoveries with a resource estimate to be too small (n = 1) for a size distribution: use the whole frontier distribution and state the bias. Pg for remote wells: Sodir wildcat layer with a distance-to-facility filter (more than 50 km: about 0.35 in the Norwegian Sea and Barents Sea, 2013-2026).
+
+## 3b. Preparing the development design before the well (fast-track VPbo)
+
+When the question is what to prepare so a discovery can go straight to VPbo (not how to explore):
+
+- Value a **design x outcome-scenario matrix** (base, small, large, compartmentalised, out of reach of an extended-reach well, gas cap) post-tax, then compare a design **fixed before the well** with the design **chosen after the result**. Report regret, EVPI among the fixed designs, break-even volume and Brent per design, and the recovery below which an injector pays (injector only if recovery without it is below the supported-recovery ratio). The adaptive minus best-fixed value is the value of preparing the family.
+- The brief concept (for example producer plus single-slot injector) is one option, not the default: a bare-bone producer-only case is often the cheapest to break even. Always include a stand-alone fallback with a delay penalty and a spare-slot / pre-installed-hardware option with its break-even development probability.
+- **Value of speed depends on host ullage.** With a liquid-limited host, earlier first oil displaces base barrels and can be negative; debottlenecking the host liquid or water handling turns it positive. Model displacement of base production (with a deferral credit) before quoting a per-month value of acceleration.
+- Schedule risk: Monte Carlo from well result to first oil with and without a prepared path; report the latest result date that still meets the target at P50 and the probability at the latest date.
+- The exploration EMV is Pd times the adaptive success value minus the well in every outcome (after the tax refund); give the break-even Pd both with and without refund.
 
 ## 4. Evidence to collect first
 
