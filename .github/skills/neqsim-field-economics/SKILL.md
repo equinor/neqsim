@@ -167,6 +167,14 @@ double totalTax = tax.getTotalTax();
 double effectiveRate = tax.getEffectiveRate();
 ```
 
+**Regime gotcha (verified in task 2026-10-09 Havis screening):** the registry `"NO"` model is the
+pre-2022 uplift regime (6-year depreciation, uplift, loss carry-forward). Projects approved under
+the current 2022 cash-flow tax (78 % on net cash flow, immediate expensing, immediate loss refund,
+so after-tax cash flow = 22 % of pre-tax) must use
+`new GenericTaxModel(FiscalParameters.norwegianCashFlowTax2022())` (`lossRefund(true)`, IMMEDIATE
+depreciation). `CashFlowEngine` discounts at year end; state the convention (mid-year raises NPV by
+about half a year of discounting) or discount outside the engine.
+
 ### UK Continental Shelf (UKCS)
 
 | Component | Rate | Notes |
@@ -261,6 +269,40 @@ for (double rate : new double[]{0.05, 0.08, 0.10, 0.12}) {
 
 ---
 
+## Exploration commitment and relinquishment (EMV, break-even Pg)
+
+A licence decision (keep and drill, or relinquish) is an option valuation, not a project NPV. With the NCS cash-flow tax (tau = 0.78, dry well refunded when a tax position exists):
+
+```text
+EMV = Pg * V_dev - (1 - tau) * C_expl          (V_dev = expected post-tax development value if discovered, > 0 only)
+Pg* = (1 - tau) C_expl / (V_dev + (1 - tau) C_expl)   (break-even chance of success)
+```
+
+- Compute `V_dev` as max(best concept NPV, 0) per Monte Carlo sample so a sub-commercial discovery is not counted; report P(commercial | discovery) separately.
+- A rig-of-opportunity well completed as a producer gets a development credit (30-80 % of the well cost) in the success branch and has no mobilisation cost.
+- Chance of success: Beta posterior from the area wildcat record (discoveries + 1, dry + 1) times a prospect-quality factor; it is an area statistic, not a prospect Pg, and the report must say so.
+- Typical result: break-even Pg of 5-6 % because the dry-well cost after tax is about 22 % of the gross cost. State the refund assumption (partner tax positions) and the break-even discovery size at the used Pg.
+- Report the Equinor-share EMV (equity from the licence record) next to the 100 % value.
+- Compare several routes on the same Monte Carlo draws (standalone well then tie-back, well from a host-template slot, pre-investment in a host slot, direct route to the main host) and put the retention cost in every non-zero strategy; when the best routes are within about 5 % of one another the retention decision does not depend on the route, and the weak route (usually the direct one) is the only one with a negative tail.
+- Cross-check the lognormal Monte Carlo EMV with the Swanson 30/40/30 weights on P90/P50/P10 (`enterprise_prospect_risking.risked_metrics`): a 10-15 % gap (Swanson higher for a right-skewed prize) is normal and should be stated, not tuned away.
+- Value of information of a G&G study with `voi_imperfect` (states: good/poor prospect, Pg +/- 0.15) is zero when the go decision survives the poor signal; say so and justify the study by sizing and phasing, not by the retention decision.
+- Also read the fixed-cost side of the gate: licence work obligations and area fees can dominate a 15-60 MNOK retention assumption; they are a data gap, not a model input to invent.
+- **Host life is a scenario parameter, not a constant.** When a host has a hull or licence limit inside the tie-back window (e.g. first oil 2032-33 against a 2030 limit), sample the host end year (or run 2030/2038/2045 cases on shared draws) and report EMV per case; it flipped the sign of the exploration case in the Trestakk screening and out-ranked every cost item in the tornado.
+- **Choose the concept after the discovery.** Per Monte Carlo sample take `V_dev = max(0, NPV of each concept)` (satellite / template / hub), so the EMV is the option value of design-to-cost; report how often each concept wins and the share of discoveries that support none. A shared hub wins only in the both-succeed branch; evaluate it there.
+- **Value of information = EMV(explore first) - EMV(commit blind)** on the same draws, with the blind case valued as a loss of the committed capex when the prospect fails.
+- **Sanity-check unit costs in NOK/km before running.** A tie-back flowline plus service line/umbilical at 220 MNOK/km (about 21 MUSD/km) made every prospect uneconomic; 70/110/180 MNOK/km all-in is a defensible Class 5 range. Print capex per concept next to oil volume and compare with area analogues first.
+- **Reconcile the brief's own KPIs before recomputing them.** Pc/Pg is P(commercial | discovery); invert the lognormal fitted to P90/P10 for the implied minimum commercial volume (`v_min = median * exp(sigma * z(1 - Pc/Pg))`) and compare the truncated mean with the quoted "mean commercial volume" (MG: 14.4 MMboe and 41.9 against 42.6, so that figure is a conditional, not an unconditional, mean). A quoted EV far below your EMV is usually the exploration cost carried gross (no 78 % refund) or an equity share: compute both variants and the implied share, and tabulate the EBE definitions (EMV = 0 with/without refund, success-case with/without refund) rather than asserting which one the brief used.
+- Related skills: `neqsim-psc-bid-economics-screening` (community, bid-round and PSC fiscal screening), `enterprise-host-ullage-allocation` (host ullage by constraint for tie-in value) and `neqsim-capacity-increase-screening` (plan-consistent capacity and displaced barrels).
+
+**Appraisal-first versus go-now strategies and design-to-cost (Ragnfrid Sor VPbo pattern).**
+
+- Compare strategies on the same Monte Carlo draws: S0 hold, S1 go now plus a separate exploration well, S2 appraise the discovery only (delay 1-3 years, information quality 0.5-0.9, pressure class revealed), S3 dual-target well (exploration plus appraisal leg), then decide. Payoff of S1 is `go_now + exploration EMV`; take care that every strategy carries its well cost and delay.
+- VOI of an appraisal well is usually negative when the base case is already positive and the avoided mistake is cheap (a HIPPS of 0.6 bn NOK); the dual-target well can still win because the exploration well is worth drilling by itself. Report VOI against the pressure-class prior (0.2-0.7) to show it does not flip.
+- Design-to-cost: scale all capex items (0.9/0.8/0.7) inside the Monte Carlo and report P(NPV<0), break-even volume and the capex that gives P(NPV<0) < 10 %; list levers (pressure class, one-well-first, line unit cost, well days, rig synergy, add-on volume) with their post-tax value, not just capex.
+- Post-tax with immediate expensing and loss refund is `0.22 x` the pre-tax cash flow; state that this is an assumption (partner tax positions) and show pre-tax next to it, because a delay or cost effect shrinks to 22 % post-tax and can look unimportant (one year of delay was 100 MNOK pre-tax and 21 MNOK post-tax).
+
+---
+
 ## Decommissioning Cost Estimation
 
 ```java
@@ -288,6 +330,7 @@ double decomCost = decom.estimate();  // MUSD
 | Using nominal discount rate with real cash flows | Wrong NPV | Be consistent: real-real or nominal-nominal |
 | Ignoring decommissioning | Missing 10-30% lifecycle cost | Always include ABEX in project economics |
 | Oil price in wrong currency | Wrong revenue | NOK on NCS, USD internationally; use consistent FX |
+| `runFieldEconomics`/`FiscalRegime` `NO` is the pre-2022 uplift model | A post-2022 NCS project (22 % ordinary, 56 % special tax on cash flow, immediate expensing, refunded losses) gave NPV 0.09 vs 6.3 MUSD in a cross-check (NIP-1, BRP South Breidablikk) | For post-2022 NCS incremental projects build the annual cash flow yourself (7 % real, 6-year straight-line ordinary depreciation, special tax on cash flow) and use NeqSim only as a cross-check; state the regime used |
 
 ---
 

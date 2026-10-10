@@ -225,6 +225,108 @@
       "prompt": "which equipment is the bottleneck in the flowsheet, utilization snapshot and capacity margin",
       "expect_agent_top3": ["optimize", "optimize-processmodel", "process-model", "network-energy-systems"],
       "expect_skills_top5": ["neqsim-capacity-and-utilization-analysis"]
+    },
+    {
+      "id": "psc-bid-break-even",
+      "prompt": "bid on an exploration block under a production sharing contract, break-even offered profit oil share and EMV",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-psc-bid-economics-screening"]
+    },
+    {
+      "id": "presalt-no-pvt-fluid",
+      "prompt": "Santos Basin pre-salt block with no PVT, CO2-rich associated gas analogue fluid and low base high cases",
+      "expect_agent_top3": ["frontier-block-bid-agent", "fluid-characterization-agent"],
+      "expect_skills_top5": ["neqsim-brazil-presalt-analogue-basis"]
+    },
+    {
+      "id": "anp-open-data",
+      "prompt": "Brazilian ANP open data production by well, bid round blocks and unit conversion",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-anp-open-data"]
+    },
+    {
+      "id": "apbo-firm-well",
+      "prompt": "APbo for an exploration prospect: firm well in APA 2027, chance of success, P90 P50 P10 volumes, EMV, tie-in to Asgard B or Heidrun with host ullage, development solution and valuation",
+      "expect_agent_top3": ["enterprise-exploration-opportunity-agent", "enterprise-area-development-agent", "enterprise-tie-in-solution-agent", "field-development"],
+      "expect_skills_top5": ["enterprise-prospect-risking", "neqsim-exploration-strategy-selection"]
+    },
+    {
+      "id": "exploration-strategy-plx",
+      "prompt": "exploration strategy: dedicated exploration well versus a PLX sidetrack from a planned producer, EMV and value of information",
+      "expect_agent_top3": ["enterprise-exploration-opportunity-agent", "field-development"],
+      "expect_skills_top5": ["neqsim-exploration-strategy-selection"]
+    },
+    {
+      "id": "pol-apbo-review",
+      "prompt": "Equinor review of a partner-operated APbo exploration well: EMV, break-even chance of success, risked volume and host alternatives",
+      "expect_agent_top3": ["enterprise-exploration-opportunity-agent", "enterprise-geox-agent", "enterprise-frontier-block-bid-agent"],
+      "expect_skills_top5": ["enterprise-prospect-risking"]
+    },
+    {
+      "id": "vpbo-discovery-host",
+      "prompt": "VPbo for a discovery: development solution, timing and host selection, tie-back to an existing platform with capacity per year, NPV and CO2 abatement cost",
+      "expect_agent_top3": ["enterprise-area-development-agent", "enterprise-exploration-opportunity-agent", "enterprise-area-development-value-agent", "field-development"],
+      "expect_skills_top5": ["enterprise-host-ullage-allocation", "enterprise-area-development-workflow"]
+    },
+    {
+      "id": "pepr-action-bottleneck",
+      "prompt": "PEPR action 80302027 bottleneck study for gas treatment, read the action and attachments, historian data and maintenance notifications, produce a work report",
+      "expect_agent_top3": ["enterprise-pepr-solve-task-agent", "enterprise-pepr-agent"],
+      "expect_skills_top5": ["enterprise-pepr-actions"]
+    },
+    {
+      "id": "bluelight-compressor-trip",
+      "prompt": "Blalys bluelight: third stage compressor tripped, find when production was lost, first-up alarm, root cause and restoration options",
+      "expect_agent_top3": ["enterprise-trip-investigation-agent", "enterprise-incident-response-agent", "root-cause"],
+      "expect_skills_top5": ["enterprise-trip-investigation", "neqsim-root-cause-analysis"]
+    },
+    {
+      "id": "m1-notification-triage",
+      "prompt": "M1 notification 48990782 drain valve replacement: triage, root cause and engineering assessment",
+      "expect_agent_top3": ["enterprise-m1-notification-agent", "enterprise-m1-intake-agent"],
+      "expect_skills_top5": ["enterprise-m1-notification"]
+    },
+    {
+      "id": "well-to-export-plant-model",
+      "prompt": "total well-to-export NeqSim process model with all wells, formation fluids from PVT, ProcessPilot benchmark against PDM and plant data",
+      "expect_agent_top3": ["enterprise-process-notebook-agent", "enterprise-reservoir-history-match-agent", "enterprise-well-production-routing-agent", "process-model"],
+      "expect_skills_top5": ["enterprise-process-notebook-workspace"]
+    },
+    {
+      "id": "reservoir-opm-open-data",
+      "prompt": "reservoir simulator in OPM Flow from open data: Sodir volumes, build grid, history match to production, forecast",
+      "expect_agent_top3": ["reservoir-simulator-agent", "reservoir-history-match-agent", "enterprise-reservoir-history-match-agent"],
+      "expect_skills_top5": ["neqsim-reservoir-model-builder", "neqsim-reservoir-history-match-forecast"]
+    },
+    {
+      "id": "levetidsprogram-fire-doors",
+      "prompt": "levetidsprogram for fire doors: ageing trend from SAP failure history, remaining life to 2040, retain or replace",
+      "expect_agent_top3": ["enterprise-life-extension-agent"],
+      "expect_skills_top5": ["enterprise-life-extension-assessment", "neqsim-ageing-life-extension-screening"]
+    },
+    {
+      "id": "hazop-prep-stid",
+      "prompt": "HAZOP preparation for the first stage separator from STID P&IDs, cause and effect, deviations quantified with NeqSim",
+      "expect_agent_top3": ["enterprise-stid-safety-study-agent", "safety-depressuring"],
+      "expect_skills_top5": ["enterprise-hazop-preparation", "neqsim-hazid-fmea-eta-fta"]
+    },
+    {
+      "id": "host-ullage-area-development",
+      "prompt": "area development: tie-in host evaluation against two platforms, host ullage per year, back-out of incumbents, strategy valuation",
+      "expect_agent_top3": ["enterprise-area-development-agent", "enterprise-host-ullage-agent", "enterprise-area-development-value-agent"],
+      "expect_skills_top5": ["enterprise-host-ullage-allocation", "enterprise-area-development-workflow"]
+    },
+    {
+      "id": "capacity-increase-host-ideas",
+      "prompt": "capacity increase screening for an FPSO: topside, subsea and well ideas ranked on scope, cost, emissions, HSE and value",
+      "expect_agent_top3": ["capacity-increase-screening", "enterprise-capacity-increase-screening-agent"],
+      "expect_skills_top5": ["neqsim-capacity-increase-screening"]
+    },
+    {
+      "id": "firewater-deluge-area",
+      "prompt": "fire water deluge coverage of a process area against NORSOK S-001, nozzles and monitors",
+      "expect_agent_top3": ["firewater-coverage-agent", "consequence-analysis"],
+      "expect_skills_top5": ["neqsim-firewater-deluge-design"]
     }
   ],
   "contracts": [

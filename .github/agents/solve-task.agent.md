@@ -126,6 +126,34 @@ rather than converting screening assumptions into asset-specific conclusions.
 Use the [oil and gas task patterns](../skills/neqsim-process-modeling/references/oil-and-gas-task-patterns.md)
 to discover relevant specialists without loading every skill upfront.
 
+### Delegation by default (task family → lead agent)
+
+Run `devtools/agent_search.py "<task>"` in Step 1 and **invoke** the lead agent
+for the task family through the agent runtime (`runSubagent`), passing the
+absolute task path, the frozen basis and the hand-off schema expected back.
+The family table lives in `neqsim-task-workflow` §5 — APbo/VPbo and
+exploration strategy → `enterprise-exploration-opportunity-agent` (or
+`field-development` + `neqsim-exploration-strategy-selection`); area development
+and host ullage → `enterprise-area-development-agent`; PEPR action →
+`enterprise-pepr-solve-task-agent`; Blålys trip → `enterprise-trip-investigation-agent`;
+well-to-export plant model → `enterprise-process-notebook-agent`; reservoir from
+open data → `reservoir-simulator-agent`; capacity increase →
+`capacity-increase-screening`; HAZOP/LOPA from STID → `enterprise-stid-safety-study-agent`;
+life extension → `enterprise-life-extension-agent`. Follow an agent's workflow by
+hand only when it is not registered in this session or lacks data access, and
+then record `invocation: "pattern"` with the reason in
+`results.json` `agent_workflow_plan.agents_used`. Before writing a task-local
+model, search sibling tasks (`neqsim tasks search`) and the skill packages; a
+helper written a second time is promoted to its skill package in the same session.
+
+**Evidence-source agents are checked, not ranked.** Data agents (Thelma, Synergi,
+alarm events, PEPO, Emisoft, GeoX, AWT, Centuries, PDM, OTS, STID, TR2000, GIS,
+SMDA, OSDU) describe systems, so similarity ranking never surfaces them - the
+2026-10 audit found Thelma used in 2 of 22 applicable tasks and Synergi in 3 of
+33. Walk the cue table in `neqsim-task-workflow` §5 against the task text and
+record every applicable source in `agent_workflow_plan.evidence_sources`
+(`used` | `not_applicable` | `no_access` | `not_registered` + reason).
+
 ### Core Purpose
 
 This agent's value comes from two things — and both depend on NeqSim:
@@ -375,6 +403,9 @@ Non-negotiables restated so they cannot be missed when the skill is not loaded:
   before any report; `assumptions` and `data_gaps` are always populated.
 - Benchmark validation against independent reference data for Design and
   Development; consistency check before the report.
+- The lead specialist agent for the task family is invoked, not imitated; every
+  agent used is recorded in `results.json` `agent_workflow_plan.agents_used`
+  with `invocation` (`subagent` | `pattern` + reason | `skill-only`).
 - The tooling-improvement step (agents, skills, NeqSim code) is executed and
   recorded in `neqsim_improvements.md` and `results.json` `improvements`; a
   `TASK_LOG.md` entry closes the task.
