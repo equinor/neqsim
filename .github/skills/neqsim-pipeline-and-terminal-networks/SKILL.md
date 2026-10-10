@@ -48,9 +48,11 @@ separately while retaining length-weighted summary getters. Use
 `NetworkDecisionVariable.pipeDiameter` with
 `SubseaProductionSystem.createSurfCapitalCostObjective` for deterministic all-discrete
 hydraulic/CAPEX screening. The optimizer rejects incomplete enumeration and mixed
-continuous/discrete searches. Treat hydraulic diameter as a nominal Class 4 cost
-diameter and disaggregate material, wall-thickness and installation design before
-vendor qualification or approval.
+continuous/discrete searches. Register `SURFCostEstimator.LineDesign` by canonical
+edge ID with `SubseaProductionSystem.setLineDesign` when route-specific OD, wall,
+material, installation, rigid/flexible and insulation inputs are available. Rigid
+designs are checked against hydraulic ID and reuse existing pipeline mechanical
+screening; they are not current-edition DNV, vendor or AFC qualification.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
@@ -62,7 +64,8 @@ replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 | Hydraulic details: `NetworkLinearSolver`, `NetworkPipe`, pipe-model bindings | `neqsim.process.equipment.network` | Linear solve helpers and per-edge hydraulic state; edges may use Darcy-Weisbach or a configured `PipeBeggsAndBrills` model. | `NetworkLinearSolver.solve`, `NetworkLinearSolver.solveGaussian`, `NetworkPipe.getFlowRate`, `NetworkPipe.getBBModel` |
 | Well and facility elements | `neqsim.process.equipment.network` | IPR, tubing, choke, compressor, pump, regulator, artificial-lift, and related source/edge elements within the network. | `addWellIPR`, `addChoke`; configure through `NetworkPipe` element-specific setters |
 | Typed field/SURF identity: `FieldNetworkTopology` | `neqsim.process.equipment.network` | Stable production/injection roles, equipment tags and ports over the canonical network, including typed choke, pump and compressor construction. | `addPipe`, `addChoke`, `addPump`, `addPumpDifferentialPressure`, `addCompressor`, `validateForExecution`, `copyDefinition` |
-| Canonical SURF design basis: `FieldNetworkSurfDesignBasis`, `SubseaProductionSystem` | `neqsim.process.fielddevelopment.subsea` | Read-only typed equipment and exact route geometry into existing Class 4 SURF design/cost inputs. | `createSurfDesignBasis`, `estimateSurfCosts`, `createSurfCapitalCostObjective`, `getLineSegments` |
+| Canonical SURF design basis: `FieldNetworkSurfDesignBasis`, `SubseaProductionSystem` | `neqsim.process.fielddevelopment.subsea` | Read-only typed equipment and exact route geometry plus edge-keyed mechanical/cost selections into existing Class 4 SURF contracts. | `createSurfDesignBasis`, `setLineDesign`, `estimateSurfCosts`, `createSurfCapitalCostObjective`, `getLineSegments` |
+| SURF route cost/design: `SURFCostEstimator.LineDesign`, `PipeMechanicalDesignCalculator` | `neqsim.process.mechanicaldesign.subsea`, `neqsim.process.mechanicaldesign.pipeline` | Route-specific OD, wall, material, installation and insulation basis with existing mechanical screening and MTO output. | `LineDesign.builder`, `resolveWallThicknessMm`, `getDetailedEstimateResult` |
 | Constrained optimization: `NetworkOptimizer`, `NetworkConstraints`, `NetworkObjectives`, `NetworkDecisionVariable` | `neqsim.process.equipment.network` | Bounded operating search plus complete fail-closed enumeration of all-discrete physical designs. | `NetworkDecisionVariable.pipeDiameter`, `NetworkOptimizer.optimize`, `optimizeMultiObjective` |
 | Period and nomination planning: `NetworkPlanningHorizon`, `NetworkNomination`, `NetworkPeriod`, `NetworkAvailabilitySchedule` | `neqsim.process.equipment.network` | Period-indexed demand/supply basis, edge availability, and planning-horizon feasibility inputs. | `NetworkNomination.getValue(int)`, `NetworkNomination.getUnit`, `NetworkPeriod.getStart`, `NetworkPeriod.getEnd` |
 | Quality tracking and mixing: `NetworkQualitySpecification`, `NetworkQualityProfile`, `NetworkQualityLimit`, `NetworkQualityEvaluator`, `NetworkQualityComplianceReport`, `NetworkMixingResult` | `neqsim.process.equipment.network` | Point-specific calculated and measured attributes, component limits, mixing evidence, and compliance status. | `NetworkQualityProfile.addUpperLimit`, `addRange`, `addMeasuredAttributeLimit`, `LoopedPipeNetwork.evaluateQualityProfiles`, `report.isCompliant`, `report.getResults` |

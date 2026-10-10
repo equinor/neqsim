@@ -78,6 +78,11 @@ NeqSim has multiple POM files for different purposes:
 
 **For normal development, use `pom.xml` only.**
 
+The Java 8 compatibility build explicitly pins `maven-resources-plugin` to 3.3.1,
+a Java 8-compatible release, so resource processing does not depend on the Maven
+lifecycle defaults installed on a CI runner. Keep this pin when updating build
+plugins; verify both Java 8 CI platforms before changing it.
+
 ### Current Version
 Check `pom.xml` for the current version:
 ```xml

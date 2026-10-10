@@ -19,6 +19,7 @@ import neqsim.process.equipment.network.FieldNetworkTopology.Service;
 import neqsim.process.equipment.network.LoopedPipeNetwork.PipeModelType;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaArchitecture;
 import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem.SubseaSystemResult;
+import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator.LineDesign;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator.WellLocationType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -343,6 +344,30 @@ public class SubseaProductionSystemTest {
     assertTrue(hasTwoDistributionUnits, "Template and manifold identities must set the priced distribution quantity");
     assertTrue(hasProductionFlowline, "Production route geometry must retain its exact diameter and length");
     assertTrue(hasInjectionFlowline, "Injection route geometry must retain its exact diameter and length");
+
+    LineDesign productionDesign = LineDesign.builder(8.625).wallThicknessMm(8.0).materialGrade("X52")
+        .installationMethod("J-lay").designPressureBar(140.0).insulation("PUF", 30.0).build();
+    LineDesign injectionDesign = LineDesign.builder(6.625).wallThicknessMm(8.0).materialGrade("X65")
+        .installationMethod("Reel-lay").designPressureBar(200.0).build();
+    subsea.setLineDesign("production-flowline", productionDesign).setLineDesign("injection-flowline", injectionDesign);
+    assertEquals(2, subsea.getLineDesigns().size());
+    CostEstimateResult routeEstimate = subsea.estimateSurfCosts(topology);
+    boolean hasX52ProductionSteel = false;
+    boolean hasProductionInsulation = false;
+    for (MaterialTakeOffItem item : routeEstimate.getMaterialTakeOff()) {
+      hasX52ProductionSteel |= item.getItem().contains("FL-P") && item.getItem().contains("steel pipe")
+          && "X52".equals(item.getMaterial());
+      hasProductionInsulation |= item.getItem().contains("FL-P") && item.getItem().contains("insulation")
+          && "PUF".equals(item.getMaterial()) && item.getQuantity() > 0.0;
+    }
+    assertTrue(hasX52ProductionSteel, "Route material grade must be retained in the existing MTO contract");
+    assertTrue(hasProductionInsulation, "Route insulation must be retained in the existing MTO contract");
+
+    subsea.setLineDesign("missing-edge", productionDesign);
+    assertThrows(IllegalArgumentException.class, () -> subsea.estimateSurfCosts(topology));
+    subsea.clearLineDesigns();
+    subsea.setLineDesign("production-flowline", LineDesign.builder(12.0).wallThicknessMm(5.0).build());
+    assertThrows(IllegalArgumentException.class, () -> subsea.estimateSurfCosts(topology));
   }
 
   /** Generated architectures must price the built manifold count rather than an implicit single unit. */
