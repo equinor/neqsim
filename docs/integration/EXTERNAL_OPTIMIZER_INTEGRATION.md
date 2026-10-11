@@ -1075,6 +1075,16 @@ partially applied, partially restored, or unreplayed point. `evaluation_count` i
 `runtime_seconds` is measured wall-clock provenance for coordination with performance work, not a
 claim that the generic optimizer or simulator became faster.
 
+For post-search interpretation, construct `ProcessModelOperatingEnvelopeStudy` with the same action
+set evaluator. Its search-result overloads anchor one- or two-dimensional slices at
+`search.getAcceptedCandidateValues()`, while `getAcceptedPointBottleneck(search)` reads the leading
+unit-safe constraint directly from the terminal replay without another simulation. The handoff
+fails closed before mutation if the replay is incomplete, evaluator actions/objectives/constraints
+or required hydraulic bindings changed, installed-limit metadata changed, the current baseline is
+unconverged, or any baseline action value drifted. The runtime evaluator reference is deliberately
+transient, so a deserialized search remains immutable evidence but cannot authorize new model
+mutation. Rerun optimization after such a change; never reuse a stale accepted point.
+
 ### Search a fixed-total continuous allocation
 
 `ProcessModelAllocationOptimizer` composes the atomic evaluator when all allocation actions are
@@ -1604,6 +1614,14 @@ on `ProcessSimulationEvaluator`.
 | `getAcceptedPointReplay()` / `getAcceptedCandidateValues()` | Terminal replay evidence and defensive selected action vector; empty/null after failed acceptance |
 | `isConstraintEvidenceComplete()` / `isActionsComplete()` | Fail-closed terminal completeness checks used by live optimization |
 | `getOptimizerEvidence(cycleId)` | Exact current-cycle guard block with convergence, feasibility, finiteness, constraint/action completeness, recovery, replay, count, and runtime |
+
+### ProcessModelOperatingEnvelopeStudy accepted-point handoff
+
+| Method | Description |
+|--------|-------------|
+| `evaluateOneDimensional(actionId, values, search)` | Validate the accepted replay and sample one axis around its exact action vector |
+| `evaluateTwoDimensional(firstId, firstValues, secondId, secondValues, search)` | Validate the accepted replay and sample two axes around its exact action vector |
+| `getAcceptedPointBottleneck(search)` | Return the replayed point's unit-safe leading constraint without another model evaluation |
 
 ### ProcessModelDebottleneckStudy
 
