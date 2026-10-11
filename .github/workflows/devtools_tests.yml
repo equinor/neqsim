@@ -41,6 +41,7 @@ jobs:
             devtools/test_check_documentation_search.py \
             devtools/test_industrial_sm_benchmark.py \
             devtools/test_skill_search.py \
+            devtools/test_discovery_registry.py \
             devtools/test_verify_agent_skill_refs.py \
             devtools/test_report_workflow.py \
             devtools/test_report_template.py \

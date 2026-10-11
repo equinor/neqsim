@@ -2,8 +2,9 @@
 skill_search.py - Semantic skill retrieval for NeqSim agents.
 
 Combines a small TF-IDF + cosine similarity search over the YAML front-matter
-`description` fields of every SKILL.md under .github/skills/ with a lightweight
-boost from the curated .github/skills/skill-index.json keyword map.
+`description` fields of every SKILL.md under .github/skills/, the sibling *-skills
+repos, installed skills and installed Agent Plugins (see discovery_registry.py),
+with a lightweight boost from the curated .github/skills/skill-index.json keyword map.
 
 Why TF-IDF and not sentence embeddings? Skill descriptions are short and
 keyword-dense. TF-IDF with character n-grams gives ~80% of the recall of
@@ -30,95 +31,36 @@ from typing import List, Tuple
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import bm25  # noqa: E402
+import discovery_registry as registry  # noqa: E402
 
 
 def _parse_skill_md(skill_md: Path) -> Tuple[str, str, str]:
     """Return (name, haystack, path) for one SKILL.md, or ("", "", "") to skip."""
-    try:
-        text = skill_md.read_text(encoding="utf-8")
-    except OSError:
+    parsed = registry.parse_skill_md(skill_md)
+    if not parsed:
         return "", "", ""
-    # Parse YAML front matter — simple, no PyYAML dependency
-    if not text.startswith("---"):
-        return "", "", ""
-    end = text.find("\n---", 3)
-    if end < 0:
-        return "", "", ""
-    front = text[3:end]
-    name = ""
-    desc = ""
-    for line in front.splitlines():
-        line = line.rstrip()
-        if line.startswith("name:"):
-            name = _strip_yaml_value(line[5:])
-        elif line.startswith("description:"):
-            desc = _strip_yaml_value(line[12:])
-    skill_dir = skill_md.parent
-    if not name:
-        name = skill_dir.name
-    # Append the skill folder name to the haystack — improves matching
-    haystack = f"{name} {skill_dir.name} {desc}"
-    return name, haystack, str(skill_md)
+    return parsed["name"], parsed["haystack"], str(skill_md)
 
 
 def _sibling_skill_roots(skills_root: Path) -> List[Path]:
-    """Return sibling skill-repo roots (community + enterprise) if checked out.
+    """Sibling skill-repo roots (community + enterprise) if checked out."""
+    return [root for root, _, _, _ in registry.sibling_skill_roots(skills_root)]
 
-    Keeps skill_search symmetric with agent_search: agents may declare skills
-    that live only in the sibling *-skills repos (e.g. enterprise-pepr-actions,
-    enterprise-rigga-production). Without this, an agent could recommend a skill
-    the skill retriever cannot surface. The neqsim ``.github/skills`` tree stays
-    the primary source and wins on name collisions.
+
+def _load_skill_entries(skills_root: Path) -> List[Tuple[registry.Entry, str]]:
+    """Skills from the neqsim tree, sibling repos, installed copies and plugins.
+
+    One registry (``discovery_registry``) supplies the locations, the same one
+    ``agent_search`` uses, so a skill an agent declares is findable wherever
+    that agent was installed from. The first copy of a name wins.
     """
-    # skills_root is typically <neqsim>/.github/skills → workspace root is 3 up.
-    workspace_root = skills_root.parent.parent.parent
-    out: List[Path] = []
-    for sibling in ("neqsim-community-skills", "neqsim-enterprise-skills"):
-        cand = workspace_root / sibling / "skills"
-        if cand.is_dir():
-            out.append(cand)
-    return out
+    return registry.skill_entries(skills_root)
 
 
 def _load_skills(skills_root: Path) -> List[Tuple[str, str, str]]:
-    """Return list of (skill_name, description, path) tuples.
+    """Return list of (skill_name, haystack, path) tuples."""
+    return [(e.id, hay, e.location) for e, hay in _load_skill_entries(skills_root)]
 
-    Loads the flat ``skills_root`` (neqsim ``.github/skills``) first, then any
-    sibling *-skills repos recursively (their layout is nested by category:
-    ``skills/<category>/<skill>/SKILL.md``). Dedup is by skill folder name so the
-    primary neqsim copy wins and sibling-only skills are still added.
-    """
-    out: List[Tuple[str, str, str]] = []
-    seen = set()
-    # Primary: flat neqsim .github/skills
-    for skill_dir in sorted(skills_root.iterdir()) if skills_root.is_dir() else []:
-        if not skill_dir.is_dir():
-            continue
-        skill_md = skill_dir / "SKILL.md"
-        if not skill_md.is_file():
-            continue
-        name, haystack, path = _parse_skill_md(skill_md)
-        if not path:
-            continue
-        key = name.lower()
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append((name, haystack, path))
-    # Secondary: sibling *-skills repos (nested layout). Dedup by front-matter
-    # name (NOT folder name) because the neqsim mirror renames folders with a
-    # neqsim-/enterprise- prefix while the sibling repo keeps them unprefixed.
-    for sibling_root in _sibling_skill_roots(skills_root):
-        for skill_md in sorted(sibling_root.glob("**/SKILL.md")):
-            name, haystack, path = _parse_skill_md(skill_md)
-            if not path:
-                continue
-            key = name.lower()
-            if key in seen:
-                continue
-            seen.add(key)
-            out.append((name, haystack, path))
-    return out
 
 
 def _strip_yaml_value(s: str) -> str:
@@ -223,10 +165,14 @@ def main() -> int:
     results = search(args.query, Path(args.skills_root), args.top)
 
     if args.json:
+        by_path = {e.location: e for e, _ in _load_skill_entries(Path(args.skills_root))}
         payload = {
             "query": args.query,
             "results": [
-                {"score": round(s, 4), "name": n, "path": p} for s, n, p in results
+                {"score": round(s, 4), "name": n, "path": p,
+                 "source": by_path[p].source if p in by_path else "",
+                 "version": by_path[p].version if p in by_path else ""}
+                for s, n, p in results
             ],
         }
         print(json.dumps(payload, indent=2))
