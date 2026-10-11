@@ -56,6 +56,8 @@ SOURCE_CATALOG = [
     ("pepr", "PEPR", "PEPR action file attachments"),
     ("stid", "STID", "STID controlled documents (datasheets, P&IDs, drawings)"),
     ("tr2000", "TR2000", "Piping-class, valve, material and rating data"),
+    ("equipment-portal", "Equipment Portal", "Equipment-class pages, SPS handbooks and package documents"),
+    ("omnia-maps", "Omnia Maps", "Pipeline Map (ArcGIS Online) layer catalog, access report, routes, templates and waypoints"),
     ("maintenance", "SAP / Maintenance", "Work orders, failure reports, linked documents"),
     ("servicenow", "ServiceNow", "Referenced records (RITM / INC / CHG / SCTASK)"),
     ("tagreader", "Plant historian", "PI / IP.21 (tagreader) signal exports"),
@@ -63,6 +65,8 @@ SOURCE_CATALOG = [
     ("pdm", "PDM", "Production Data Mart allocation and production-accounting evidence"),
     ("rigga", "Rigga (legacy)", "Legacy PDM Streamer production-volume exports"),
     ("vendor", "Vendor", "Vendor datasheets, manuals, performance maps"),
+    ("semi", "SEMI", "Manufacturer equipment model documents from semi.equinor.com (SMI/SDI ids)"),
+    ("equipment-portal", "Equipment Portal", "Equipment Portal pages, reference prices and package documents"),
     ("lab", "Lab / PVT", "Lab, PVT and gas-sample reports"),
     ("osdu", "OSDU Data Platform", "OSDU Storage records and Reservoir DDMS (RESQML) exports"),
     ("fmu", "FMU project share", "Reservoir-model project files (Eclipse includes, ERT, RMS volumes)"),
@@ -73,7 +77,7 @@ SOURCE_CATALOG = [
 ]
 SOURCE_KEYS = [key for key, _name, _desc in SOURCE_CATALOG]
 # Folder names agents already write that belong to a catalogued source.
-SOURCE_FOLDER_ALIASES = {"fmu_share": "fmu", "ores": "osdu", "rddms": "osdu"}
+SOURCE_FOLDER_ALIASES = {"fmu_share": "fmu", "ores": "osdu", "rddms": "osdu", "omnia_maps": "omnia-maps"}
 SOURCE_NAME = {key: name for key, name, _desc in SOURCE_CATALOG}
 SOURCE_DESC = {key: desc for key, _name, desc in SOURCE_CATALOG}
 
@@ -128,6 +132,7 @@ def _infer_source_from_name(name: str) -> str:
         ("seeq", r"seeq"),
         ("pdm", r"\bpdm\b|production_volume"),
         ("rigga", r"rigga"),
+        ("semi", r"\bsemi[_-]|\bsmi-\d|\bsdi-\d"),
         ("tr2000", r"tr2000|\bpcs[_-]|\bvds[_-]|\bmds[_-]|pipe[_-]?class"),
         ("stid", r"stid|p&id|pid[_-]|_pid|datasheet|drawing|\bds[_-]|\baa[_-]|\bmd[_-]"),
         ("vendor", r"vendor|performance|curve|\bmap\b|manual"),

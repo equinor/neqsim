@@ -36,6 +36,13 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-10 — Class A tie-back study of a small undeveloped oil discovery to a nearby platform host
+**Type:** G (Workflow)
+**Keywords:** class A, tie-back, VFPPROD, lift curve, bubble point floor, OPM Flow, water injection, host model impact, availability gates, Monte Carlo, FieldDevelopmentDesignOrchestrator, StudyClass.CLASS_A
+**Solution:** private task folder (redacted); scripts: lift tables per well/line system (PipeBeggsAndBrills secant), OPM Flow runs per zone with VFP + water injection, host ProcessModel with an added wellstream in a separate jneqsim process, concept engine with gates and fiscal terms, Class A package via FieldDevelopmentDesignOrchestrator.
+**Notes:** Tubing + line + host inlet pressure put the bottom-hole floor near the bubble point of an undersaturated 24 API oil, so depletion recovery equals the pressure-limited ceiling (8-14 %) and gas lift adds ~6 %; water injection gives 43-47 %. A shared tie-in line at ~126 bara stops the wells completely. U-shaped VFP BHP-vs-rate tables stalled Flow (0.02-day steps): make BHP monotonic in rate. Deck builders with module-level state need a lock when threaded. Only infrastructure re-use (sidetrack from an existing template slot) was NPV positive; value of verifying the asset gates before FID was ~170 MNOK. Added host-impact and back-pressure recipes to `neqsim-field-development` and the community near-well skill. NeqSim gaps proposed: VFP generator class, SURFCostEstimator calibration (30 MUSD/km), `CALCULATE_INLET_PRESSURE` BRACKET_LIMIT on a vertical riser.
+
+
 ### 2026-10-10 — OVP screening of a multi-prospect cluster between two producing hosts: host comparison, firm-well candidacy for the next APA round, conditional APbo position
 **Type:** G (Workflow)
 **Keywords:** OVP, APbo, firm well, APA, prospect cluster, host comparison, Monte Carlo EMV, break-even Pg, programme value, host ullage, gas-condensate tie-back, strategy comparison, value of information

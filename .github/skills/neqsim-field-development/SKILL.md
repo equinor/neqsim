@@ -373,6 +373,31 @@ analyzer.setFluid(reservoirFluid);
 TiebackReport report = analyzer.analyze();
 ```
 
+### Host impact of a tie-in on a benchmarked host model
+
+When the host already has a benchmarked NeqSim `ProcessModel` (e.g. ProcessPilot `HDSimulator`
+for Heidrun), test the tie-in on it instead of on a capacity number:
+
+1. Run the model in its own Python process - the host packages use the `jneqsim` wheel, the
+   workspace tools use the dev JVM, and one process can load only one.
+2. Build the added wellstream in the HOST EOS: flash the host reservoir oil at 15 C / 1.01325 bara,
+   keep the stock-tank-oil and separator-gas compositions, recombine at the tie-in GOR, water cut and
+   lift-gas rate from moles per Sm3 (never `getz()` before `init(0)`; build the mole vector directly).
+3. Create a `Stream`, run it, and `addStream` it to the first-stage inlet `Mixer` of the separation
+   area after `build_process()`; the model's own mass balance then misses the new inflow, so
+   add its kg/hr to the inflow when closing the balance.
+4. Run plateau, mid-life and late-life points in every benchmark window and report the change in
+   compressor power utilisation, separator utilisation, export oil and produced water.
+   A host already above 90 % power in the benchmark window is the finding, not the 3 % increase.
+
+### Tubing and line back-pressure decides recovery on depletion
+
+For an undersaturated oil the required bottom-hole pressure with an 18-60 bara outlet sits close to the
+bubble point whatever the gas lift, so depletion recovery equals the pressure-limited ceiling and the
+earlier screening model with a 40 bara floor overstates it. Generate the lift table
+(`neqsim-near-well-and-injectivity`), run the reservoir with it, and judge gas lift on its measured gain.
+A template-E-type tie-in whose shared line sets 126 bara at the template cannot flow at all.
+
 ### Subsea System Configuration
 
 ```java

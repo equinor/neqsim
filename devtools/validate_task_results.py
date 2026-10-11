@@ -362,6 +362,8 @@ EVIDENCE_SOURCE_CUES = (
     ("enterprise-acquire-agent", r"centuries|\brnb\b|ullage|host capacity|forecast 20"),
     ("enterprise-tr2000-agent", r"piping class|\bpcs\b|tr2000|material selection|chemical.?injection line"),
     ("enterprise-gis-mapservices-agent", r"bathymetry|flowline route|pipeline route|template location|licence (outline|polygon)"),
+    ("enterprise-equipment-portal-agent", r"equipment portal|\bu100\b|\bu400\b|\bsps handbook|flowline cost|satellite cost|template cost|surf (cost|capex|reference)|design.to.cost"),
+    ("enterprise-semi-search-agent", r"semi\.equinor|\bsemi (search|library|model)|\bsmi-\d|\bsdi-\d|vendor (datasheet|data.?sheet|manual|catalogue|catalog|document)|manufacturer (datasheet|data.?sheet|manual|catalogue|catalog)|\bdemister|inlet device|\bk.?factor limit"),
 )
 EVIDENCE_STATUS = ("used", "not_applicable", "no_access", "not_registered")
 
