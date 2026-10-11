@@ -36,12 +36,17 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-11 — Review source routing and reusable tie-back guidance
+**Type:** E (Feature)
+**Keywords:** source attribution, evidence routing, duplicate manifest, VFP, host model, regression
+**Solution:** PR #4292; `devtools/test_generate_sources_md.py`, `devtools/test_evidence_sources.py`, source-index generator, task validator and workflow skills.
+**Notes:** Removed duplicate source records, covered filename and manifest aliases, and added regression suites to CI. Replaced study-specific pressure/recovery rules with coupled inflow/outflow checks, explicit fluid provenance and baseline accounting. Regenerated the engineering coverage inventory after skill changes.
+
 ### 2026-10-10 — Class A tie-back study of a small undeveloped oil discovery to a nearby platform host
 **Type:** G (Workflow)
-**Keywords:** class A, tie-back, VFPPROD, lift curve, bubble point floor, OPM Flow, water injection, host model impact, availability gates, Monte Carlo, FieldDevelopmentDesignOrchestrator, StudyClass.CLASS_A
+**Keywords:** class A, tie-back, VFPPROD, lift curve, depletion, OPM Flow, water injection, host model impact, availability gates, Monte Carlo, FieldDevelopmentDesignOrchestrator, StudyClass.CLASS_A
 **Solution:** private task folder (redacted); scripts: lift tables per well/line system (PipeBeggsAndBrills secant), OPM Flow runs per zone with VFP + water injection, host ProcessModel with an added wellstream in a separate jneqsim process, concept engine with gates and fiscal terms, Class A package via FieldDevelopmentDesignOrchestrator.
-**Notes:** Tubing + line + host inlet pressure put the bottom-hole floor near the bubble point of an undersaturated 24 API oil, so depletion recovery equals the pressure-limited ceiling (8-14 %) and gas lift adds ~6 %; water injection gives 43-47 %. A shared tie-in line at ~126 bara stops the wells completely. U-shaped VFP BHP-vs-rate tables stalled Flow (0.02-day steps): make BHP monotonic in rate. Deck builders with module-level state need a lock when threaded. Only infrastructure re-use (sidetrack from an existing template slot) was NPV positive; value of verifying the asset gates before FID was ~170 MNOK. Added host-impact and back-pressure recipes to `neqsim-field-development` and the community near-well skill. NeqSim gaps proposed: VFP generator class, SURFCostEstimator calibration (30 MUSD/km), `CALCULATE_INLET_PRESSURE` BRACKET_LIMIT on a vertical riser.
-
+**Notes:** Study-specific recovery, pressure, cost and economic results remain in the private evidence package; they are not reusable model defaults or public validation evidence. Evaluate depletion and gas lift using coupled inflow/outflow and host constraints. Investigate VFP interpolation and control switching before conditioning tables; retain and validate the original physical response. Isolate mutable deck-builder state for parallel runs. Assess existing VFP APIs before proposing a new generator, and require a reproducible case before changing cost calibration or pressure-solver limits. Host-impact and back-pressure guidance is recorded in `neqsim-field-development`.
 
 ### 2026-10-10 — OVP screening of a multi-prospect cluster between two producing hosts: host comparison, firm-well candidacy for the next APA round, conditional APbo position
 **Type:** G (Workflow)
