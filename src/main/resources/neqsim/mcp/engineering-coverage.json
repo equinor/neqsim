@@ -903,6 +903,31 @@
       }
     },
     {
+      "id": "pipeline-pig-mechanics-discovery",
+      "title": "Experimental prescribed-pressure pig mechanics (API discovery only)",
+      "domain": "flow-assurance",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.pipeline.PigMotion"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/PigMotionTest.java"
+      ],
+      "limitations": "Experimental Java/JPype mechanical submodel only. inspectApi discovers constructors and methods; no curated execution operation, TwoFluidPipe coupling, bypass, receiver, experimental pigging qualification or physical flowline-restart claim. See docs/process/pig-motion.md.",
+      "evidence": {
+        "route": "declared",
+        "testSources": "present",
+        "execution": "not_recorded",
+        "engineeringQualification": "not_assessed"
+      }
+    },
+    {
       "id": "process-compression",
       "title": "Compressor in a process model",
       "domain": "rotating-equipment",
@@ -2629,6 +2654,7 @@
     {"id":"neqsim.process.equipment.pipeline.MultilayerThermalCalculator","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/MultilayerThermalCalculator.java","sourceDigest":"91b24fcecb7fe0084c00471022751e19f70d70bf69343d4b3b8b2223921f74ef","domain":"process","skills":["neqsim-pipeline-and-terminal-networks"],"agents":["field-development","flow-assurance","network-energy-systems"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.MultiphasePipe","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/MultiphasePipe.java","sourceDigest":"b12287aff9f8fb007da37277c6366d64e6d0b96242a34b9f1574c4f37f77312f","domain":"process","skills":["neqsim-standards-lookup"],"agents":["capability-scout","ccs-hydrogen","consequence-analysis","control-system","emissions-environmental","engineering-deliverables","flow-assurance","gas-quality","literature-scout","lng-value-chain","mechanical-design","process-model","production-chemistry","reaction-engineering","rotating-equipment","standards-review"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.OnePhasePipeLine","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/OnePhasePipeLine.java","sourceDigest":"f4ab8abae44639c2752bdbcb2908f32b73ba06d22895a4a120d0c15f4e5c2214","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.process.equipment.pipeline.PigMotion","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/PigMotion.java","sourceDigest":"9e6ab52d98bfdd0f8a2249a8edad607c26f41859d2235579a19e2f174c7e97f9","domain":"process","skills":[],"agents":[],"capabilities":["pipeline-pig-mechanics-discovery"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.pipeline.PipeBeggsAndBrills","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/PipeBeggsAndBrills.java","sourceDigest":"3ed5ba3defdc723d779367ad2b3d0adb8103cc4443e5aab9a08eab35ff42d5b8","domain":"process","skills":["neqsim-api-patterns","neqsim-capability-map","neqsim-capacity-increase-screening","neqsim-ccs-hydrogen","neqsim-dynamic-equipment-implementation","neqsim-dynamic-simulation","neqsim-electrolyte-systems","neqsim-flow-assurance","neqsim-notebook-patterns","neqsim-optimization-and-doe","neqsim-pipeline-and-terminal-networks","neqsim-pipeline-survey-processing","neqsim-platform-modeling","neqsim-power-generation","neqsim-production-optimization","neqsim-stid-retriever","neqsim-subsea-and-wells","neqsim-task-workflow","neqsim-troubleshooting","neqsim-unisim-reader"],"agents":["capability-scout","capacity-increase-screening","ccs-hydrogen","control-system","documentation","dynamic-equipment","emissions-environmental","engineering-deliverables","field-development","flow-assurance","gas-processing-refining","gas-quality","literature-scout","lng-value-chain","mechanical-design","neqsim-test","network-energy-systems","notebook-example","optimize","optimize-processmodel","process-model","production-chemistry","pvt-simulation","reaction-engineering","root-cause","rotating-equipment","safety-depressuring","solve-process","solve-task","standards-review","technical-reader","thermo-fluid","unisim-reader","utility-design"],"capabilities":["pipeline-hydraulics"],"disposition":"registered_anchor"},
     {"id":"neqsim.process.equipment.pipeline.PipeGray","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/PipeGray.java","sourceDigest":"11c058b313d59765691c8678336007de1cc3c46c415406f40a45aecc7ed2b8e6","domain":"process","skills":["neqsim-capability-map","neqsim-flow-assurance"],"agents":["capability-scout","ccs-hydrogen","engineering-deliverables","field-development","flow-assurance","lng-value-chain","mechanical-design","production-chemistry","solve-task"],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.process.equipment.pipeline.PipeHagedornBrown","kind":"class","source":"src/main/java/neqsim/process/equipment/pipeline/PipeHagedornBrown.java","sourceDigest":"0bfbf5e2550d4300decb77fe5ff5ca41eed719c2a2061e8bbb57dd06f34c1b76","domain":"process","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
