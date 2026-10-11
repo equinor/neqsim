@@ -2024,6 +2024,16 @@ validator warns when a cue is present and the agent is not recorded.
 | static reservoir model, OPM Flow basis | `enterprise-osdu-agent` | `reservoir-simulator-agent` open-data ladder |
 | export gas, Gassled, tariff, entry/exit spec | `enterprise-gassled-tariff-agent`, `enterprise-gas-quality-specification-agent` | `gas-quality` |
 | monitored limits, utilisation, bottleneck, IOC | `enterprise-ioc-bottleneck-agent` | `neqsim-capacity-and-utilization-analysis` |
+| SURF reference price (flowline per km, template or satellite SPS), SPS handbook, flowline or subsea-system technology guidance, Equipment Portal U100/U400 | `enterprise-equipment-portal-agent` | `neqsim-equipment-cost-estimation`, `neqsim-subsea-and-wells` |
+| vendor datasheet, manufacturer document, manual or catalogue, product limits (demister, inlet device, internals, pump, valve), SEMI search/library/model or SMI/SDI document ID | `enterprise-semi-search-agent` | `neqsim-column-internals-and-rate-based`, supplied vendor documents via `technical-reader` |
+
+File retrieved Equipment Portal, SEMI and Omnia Maps documents under `references/equipment-portal/`,
+`references/semi/` and `references/omnia-maps/`, respectively. The source-index generator also
+accepts `equipment_portal` and `omnia_maps` as folder or manifest source aliases. Explicit source
+folders take precedence over manifest attribution, which takes precedence over filename inference;
+retain provenance in the manifest when a filename alone is ambiguous. Source classification does
+not establish content review or access: record unavailable enterprise agents with the status and
+reason above, and use supplied or public documents through the community fallback.
 
 ---
 
