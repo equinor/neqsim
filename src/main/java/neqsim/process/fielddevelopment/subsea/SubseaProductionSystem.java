@@ -13,6 +13,9 @@ import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
 import neqsim.process.equipment.network.FieldNetworkTopology;
 import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
+import neqsim.process.equipment.network.LoopedPipeNetwork;
+import neqsim.process.equipment.network.NetworkConstraint;
+import neqsim.process.equipment.network.NetworkConstraints;
 import neqsim.process.equipment.network.NetworkObjective;
 import neqsim.process.equipment.network.NetworkObjectives;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
@@ -1261,6 +1264,71 @@ public class SubseaProductionSystem implements Serializable {
           + "hydraulic-diameter Class 4 basis. This is not current-edition DNV qualification or AFC design.");
     }
     return estimate;
+  }
+
+  /**
+   * Apply route-specific steady thermal designs to their exact canonical hydraulic edges.
+   *
+   * <p>
+   * Uniform line-design data never replaces an existing route-dependent U-value or ambient-temperature profile. This
+   * method leaves hydraulic-model selection unchanged, so Darcy-Weisbach, Beggs-Brill and two-fluid edges can share the
+   * same topology and thermal design basis.
+   * </p>
+   *
+   * @param topology canonical field topology owning the hydraulic network
+   * @return number of edges configured for thermal hydraulics
+   */
+  public int applyLineThermalDesigns(FieldNetworkTopology topology) {
+    FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    validateLineDesigns(basis);
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    Map<String, Double> resolvedUValues = new LinkedHashMap<String, Double>();
+    for (Map.Entry<String, LineDesign> entry : lineDesigns.entrySet()) {
+      LineDesign design = entry.getValue();
+      if (!design.hasThermalHydraulicConfiguration()) {
+        continue;
+      }
+      LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(entry.getKey());
+      if (pipe.getHeatTransferProfileWm2K() != null || pipe.getAmbientTemperatureProfileK() != null) {
+        throw new IllegalStateException("Uniform line thermal design for edge '" + entry.getKey()
+            + "' cannot replace an existing route-dependent heat-transfer or ambient-temperature profile");
+      }
+      resolvedUValues.put(entry.getKey(), design.resolveOverallHeatTransferCoefficientWm2K());
+    }
+    for (Map.Entry<String, Double> entry : resolvedUValues.entrySet()) {
+      LineDesign design = lineDesigns.get(entry.getKey());
+      LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(entry.getKey());
+      if (!design.isFlexible()) {
+        pipe.setWallThickness(design.resolveWallThicknessMm() / 1000.0);
+      }
+      pipe.setOverallHeatTransferCoeff(entry.getValue());
+      pipe.setAmbientTemperature(design.getAmbientTemperatureC() + 273.15);
+    }
+    if (!resolvedUValues.isEmpty()) {
+      network.setThermalHydraulicsEnabled(true);
+    }
+    return resolvedUValues.size();
+  }
+
+  /**
+   * Create edge-specific minimum outlet-temperature constraints from the registered line designs.
+   *
+   * @param topology canonical field topology used to validate route identity
+   * @param hard true for hard constraints
+   * @return immutable constraints in line-design insertion order
+   */
+  public List<NetworkConstraint> createMinimumOutletTemperatureConstraints(FieldNetworkTopology topology,
+      boolean hard) {
+    FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    validateLineDesigns(basis);
+    List<NetworkConstraint> constraints = new ArrayList<NetworkConstraint>();
+    for (Map.Entry<String, LineDesign> entry : lineDesigns.entrySet()) {
+      if (entry.getValue().hasMinimumOutletTemperature()) {
+        constraints.add(NetworkConstraints.edgeMinimumOutletTemperature(entry.getKey(),
+            entry.getValue().getMinimumOutletTemperatureC(), hard));
+      }
+    }
+    return Collections.unmodifiableList(constraints);
   }
 
   /**
