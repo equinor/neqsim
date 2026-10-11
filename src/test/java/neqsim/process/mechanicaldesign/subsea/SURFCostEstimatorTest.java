@@ -402,4 +402,29 @@ class SURFCostEstimatorTest {
     assertThrows(IllegalArgumentException.class, () -> SURFCostEstimator.LineDesign.builder(8.625)
         .insulation(RadialThermalLayer.MaterialType.CARBON_STEEL, 30.0));
   }
+
+  /** Typed line-design U-value must match an independent cylindrical resistance calculation. */
+  @Test
+  void testTypedThermalLineDesignMatchesAnalyticalResistance() {
+    double wallM = 0.008;
+    double insulationM = 0.040;
+    double innerHtc = 300.0;
+    double outerHtc = 100.0;
+    SURFCostEstimator.LineDesign design = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(wallM * 1000.0)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, insulationM * 1000.0)
+        .thermalBoundary(4.0, innerHtc, outerHtc).build();
+
+    double innerRadius = design.getResolvedInnerDiameterM() / 2.0;
+    double steelOuterRadius = innerRadius + wallM;
+    double fbeOuterRadius = steelOuterRadius + 0.0004;
+    double insulationOuterRadius = fbeOuterRadius + insulationM;
+    double resistance = 1.0 / (innerHtc * 2.0 * Math.PI * innerRadius)
+        + Math.log(steelOuterRadius / innerRadius) / (2.0 * Math.PI * 50.0)
+        + Math.log(fbeOuterRadius / steelOuterRadius) / (2.0 * Math.PI * 0.3)
+        + Math.log(insulationOuterRadius / fbeOuterRadius) / (2.0 * Math.PI * 0.035)
+        + 1.0 / (outerHtc * 2.0 * Math.PI * insulationOuterRadius);
+    double expectedUValue = 1.0 / (2.0 * Math.PI * innerRadius * resistance);
+
+    assertEquals(expectedUValue, design.resolveOverallHeatTransferCoefficientWm2K(), 1.0e-12);
+  }
 }

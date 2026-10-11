@@ -10,8 +10,14 @@ import neqsim.process.costestimation.CostEstimateBasis;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.engineering.calculation.DnvRpF109OnBottomStabilityKernel;
+import neqsim.process.engineering.calculation.DnvStF101PipelineDesignKernel;
+import neqsim.process.engineering.calculation.EngineeringCalculationContext;
+import neqsim.process.engineering.calculation.EngineeringCalculationResult;
 import neqsim.process.equipment.pipeline.MultilayerThermalCalculator;
 import neqsim.process.equipment.pipeline.RadialThermalLayer;
+import neqsim.process.mechanicaldesign.pipeline.DnvStF101PipelineAssessment;
+import neqsim.process.mechanicaldesign.pipeline.DnvStF101PipelineDesignInput;
 import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
 
 /**
@@ -68,6 +74,8 @@ public class SURFCostEstimator {
     private final double overallHeatTransferCoefficientWm2K;
     private final double minimumOutletTemperatureC;
     private final boolean thermalBoundaryConfigured;
+    private final DnvStF101PipelineDesignInput dnvStF101Input;
+    private final DnvRpF109OnBottomStabilityInput onBottomStabilityInput;
 
     /** Create an immutable line design from a validated builder. */
     private LineDesign(Builder builder) {
@@ -87,6 +95,8 @@ public class SURFCostEstimator {
       overallHeatTransferCoefficientWm2K = builder.overallHeatTransferCoefficientWm2K;
       minimumOutletTemperatureC = builder.minimumOutletTemperatureC;
       thermalBoundaryConfigured = builder.thermalBoundaryConfigured;
+      dnvStF101Input = builder.dnvStF101Input;
+      onBottomStabilityInput = builder.onBottomStabilityInput;
     }
 
     /**
@@ -185,6 +195,48 @@ public class SURFCostEstimator {
       return Double.isFinite(minimumOutletTemperatureC);
     }
 
+    /** @return explicit DNV-ST-F101 screening input, or null when unconfigured */
+    public DnvStF101PipelineDesignInput getDnvStF101Input() {
+      return dnvStF101Input;
+    }
+
+    /** @return explicit DNV-RP-F109 screening input, or null when unconfigured */
+    public DnvRpF109OnBottomStabilityInput getOnBottomStabilityInput() {
+      return onBottomStabilityInput;
+    }
+
+    /** @return true when this route has explicit DNV-ST-F101 limit-state input */
+    public boolean hasDnvStF101Input() {
+      return dnvStF101Input != null;
+    }
+
+    /** @return true when this route has explicit DNV-RP-F109 stability input */
+    public boolean hasOnBottomStabilityInput() {
+      return onBottomStabilityInput != null;
+    }
+
+    /**
+     * Evaluate the existing DNV-ST-F101 screening kernel for this route.
+     *
+     * @param context controlled case and evidence context
+     * @return fail-closed result containing readiness findings and, when calculable, the immutable assessment
+     */
+    public EngineeringCalculationResult<DnvStF101PipelineAssessment> screenDnvStF101(
+        EngineeringCalculationContext context) {
+      return new DnvStF101PipelineDesignKernel().calculate(dnvStF101Input, context);
+    }
+
+    /**
+     * Evaluate the existing DNV-RP-F109 on-bottom-stability screening kernel for this route.
+     *
+     * @param context controlled case and evidence context
+     * @return fail-closed result containing readiness findings and, when calculable, the immutable assessment
+     */
+    public EngineeringCalculationResult<DnvRpF109OnBottomStabilityAssessment> screenOnBottomStability(
+        EngineeringCalculationContext context) {
+      return new DnvRpF109OnBottomStabilityKernel().calculate(onBottomStabilityInput, context);
+    }
+
     /**
      * Resolve the steady overall heat-transfer coefficient on the pipe-bore area basis.
      *
@@ -278,6 +330,8 @@ public class SURFCostEstimator {
       private double overallHeatTransferCoefficientWm2K = Double.NaN;
       private double minimumOutletTemperatureC = Double.NaN;
       private boolean thermalBoundaryConfigured;
+      private DnvStF101PipelineDesignInput dnvStF101Input;
+      private DnvRpF109OnBottomStabilityInput onBottomStabilityInput;
 
       /**
        * Create a line-design builder.
@@ -450,6 +504,34 @@ public class SURFCostEstimator {
         return this;
       }
 
+      /**
+       * Attach complete project-controlled DNV-ST-F101 screening input to this rigid route.
+       *
+       * @param value explicit limit-state input
+       * @return this builder
+       */
+      public Builder dnvStF101Input(DnvStF101PipelineDesignInput value) {
+        if (value == null) {
+          throw new IllegalArgumentException("DNV-ST-F101 line-design input cannot be null");
+        }
+        dnvStF101Input = value;
+        return this;
+      }
+
+      /**
+       * Attach complete project-controlled DNV-RP-F109 on-bottom-stability input to this route.
+       *
+       * @param value explicit environmental and soil input
+       * @return this builder
+       */
+      public Builder onBottomStabilityInput(DnvRpF109OnBottomStabilityInput value) {
+        if (value == null) {
+          throw new IllegalArgumentException("DNV-RP-F109 line-design input cannot be null");
+        }
+        onBottomStabilityInput = value;
+        return this;
+      }
+
       /** @return validated immutable design */
       public LineDesign build() {
         if (wallThicknessMm > 0.0 && 2.0 * wallThicknessMm / 1000.0 >= outerDiameterInches * 0.0254) {
@@ -460,7 +542,46 @@ public class SURFCostEstimator {
           throw new IllegalArgumentException(
               "Calculated line-design wall thickness leaves no positive inside diameter");
         }
+        validateMechanicalScreeningGeometry();
         return result;
+      }
+
+      /** Validate that structural inputs describe this exact route geometry. */
+      private void validateMechanicalScreeningGeometry() {
+        double outsideDiameterM = outerDiameterInches * 0.0254;
+        if (dnvStF101Input != null) {
+          if (flexible) {
+            throw new IllegalArgumentException(
+                "DNV-ST-F101 steel limit-state input cannot be applied to a flexible line");
+          }
+          if (!(wallThicknessMm > 0.0)) {
+            throw new IllegalArgumentException(
+                "DNV-ST-F101 line design requires an explicit wall thickness; legacy screening wall defaults are not authoritative");
+          }
+          requireMatchingGeometry(dnvStF101Input.getOutsideDiameterM(), outsideDiameterM,
+              "DNV-ST-F101 outside diameter");
+          requireMatchingGeometry(dnvStF101Input.getNominalWallThicknessM(), wallThicknessMm / 1000.0,
+              "DNV-ST-F101 nominal wall thickness");
+        }
+        if (onBottomStabilityInput != null) {
+          requireMatchingGeometry(onBottomStabilityInput.getOutsideDiameterM(), outsideDiameterM,
+              "DNV-RP-F109 outside diameter");
+        }
+      }
+
+      /**
+       * Require an exact route-geometry match within a numerical construction tolerance.
+       *
+       * @param actual structural-input dimension in metres
+       * @param expected line-design dimension in metres
+       * @param field field label used in failure diagnostics
+       */
+      private void requireMatchingGeometry(double actual, double expected, String field) {
+        double tolerance = Math.max(1.0e-12, 1.0e-9 * Math.abs(expected));
+        if (!Double.isFinite(actual) || Math.abs(actual - expected) > tolerance) {
+          throw new IllegalArgumentException(
+              field + " " + actual + " m does not match line-design value " + expected + " m");
+        }
       }
     }
   }

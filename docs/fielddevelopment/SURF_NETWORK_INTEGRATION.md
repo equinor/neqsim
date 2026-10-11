@@ -4,14 +4,14 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `c3b4216b330d0d8e85e3e80feff350be5df5d6e9`.
+The current baseline is `b37a84f17ae669ddcc8d6c149b0b6813b1b22d35`.
 Source implementation, regression evidence and field qualification are different maturity levels.
 Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
 pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
-The current increment connects typed per-edge insulation and uniform thermal boundaries to the
-existing steady hydraulic graph and exposes solved outlet-temperature constraints. It extends the
-previous outer-diameter, wall, material, installation and Class 4 cost basis; none of these completes
-independent field, vendor or current-edition DNV qualification.
+The current increment binds explicit DNV-ST-F101 limit-state and DNV-RP-F109 on-bottom-stability
+inputs to those same route identities and independently checks the steady thermal resistance and
+arrival-temperature equations. The specialist screening kernels remain the calculation owners;
+none of this completes field, vendor, independent-verification or AFC qualification.
 
 ## Current functionality and reuse decisions
 
@@ -312,15 +312,33 @@ profiles directly where seabed conditions or insulation vary along the route.
 list evaluate the solved physical outlet in kelvin. They fail closed for an unconverged network,
 disabled thermal coupling, stagnant edge or non-finite temperature. `SubseaLineThermalDesignTest`
 checks canonical identity, unchanged Darcy fidelity, heat loss to a 4 degrees Celsius ambient and
-controlled pass/fail thresholds. `SURFCostEstimatorTest` checks the independent engineering trend
-that thicker PU foam reduces calculated U. These are implementation, conservation and trend checks;
-they are not qualification against measured field arrival temperatures or a commercial simulator.
+controlled pass/fail thresholds and an independent plug-flow energy equation at the solved pressure
+and mass rate. `SURFCostEstimatorTest` checks both the insulation-thickness trend and the U-value
+against an independently assembled cylindrical resistance network. These analytical checks raise
+the implementation evidence level; they are not qualification against measured field arrival
+temperatures or a commercial simulator.
 
-A zero wall thickness asks the existing legacy screening calculator for a rounded-up
-Class 4 basis. This is not the typed current-edition `DNV-ST-F101` limit-state assessment,
-installation analysis, on-bottom stability assessment, flexible-pipe qualification or AFC
-design. Those existing specialist kernels retain ownership and require their full load,
-material, fabrication and environmental inputs.
+For a rigid line, `LineDesign.dnvStF101Input(...)` attaches a complete
+`DnvStF101PipelineDesignInput`; `LineDesign.onBottomStabilityInput(...)` attaches a complete
+`DnvRpF109OnBottomStabilityInput`. `SubseaProductionSystem.assessDnvStF101LineDesigns(...)` and
+`assessOnBottomStabilityLineDesigns(...)` validate the canonical edge and OD/wall/ID consistency,
+then invoke the existing fail-closed engineering kernels and return immutable typed calculation
+results keyed by edge ID. Each result retains readiness findings, standard/input provenance,
+review-required status and the assessment when calculation is permitted.
+Environmental loads and soil data remain outside the hydraulic topology.
+
+No structural value is inferred from hydraulic pressure, depth, material labels or route geometry.
+The DNV-ST-F101 route requires an explicit wall thickness and an exact matching OD/wall input;
+flexible lines cannot use that steel limit-state contract. DNV-RP-F109 input must carry the exact
+hydrodynamic OD plus explicit environmental, hydrodynamic, soil, safety-factor and response-model
+evidence. Incomplete input throws before calculation; a valid but overloaded case returns a failed
+screening assessment rather than being clipped or approved. Every assessment retains its explicit
+engineering-approval-required boundary.
+
+A zero wall thickness still asks the legacy calculator only for a rounded-up Class 4 cost basis. It
+cannot be promoted into DNV input. The typed calculations are option-screening implementations, not
+clause-complete conformity, installation analysis, flexible-pipe qualification, independent
+verification or AFC design.
 
 The current discrete network variable changes hydraulic inside diameter only. If an edge
 also has a `LineDesign`, each staged candidate must provide a compatible OD/wall basis;
@@ -434,10 +452,10 @@ physical limits to obtain a feasible optimizer result.
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
-2. Add explicit DNV-ST-F101 limit-state and on-bottom-stability screening inputs without folding
-   environmental loads into the hydraulic topology. Qualify the new steady arrival-temperature
-   contract against independent pipe heat-transfer cases, then couple qualified design cases to
-   multi-period lifecycle economics and reduced-order surrogates.
+2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
+   field, laboratory or commercial-simulator evidence. Then expose staged OD/ID/wall/material/
+   insulation/stability alternatives to the existing exhaustive design optimizer and couple the
+   qualified cases to multi-period lifecycle economics and reduced-order surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
