@@ -500,7 +500,12 @@ notebooks:
    3. **Standards & jurisdiction**: Which design codes apply (NORSOK, DNV, API,
       ASME)? Which fiscal/tax regime (Norwegian NCS, UK, generic)?
    4. **Economics**: What gas/oil price range and currency? What discount rate?
-      Are cost estimates needed (CAPEX breakdown, OPEX)?
+      Are cost estimates needed (CAPEX breakdown, OPEX)? Is a formal Equinor STEA
+      evaluation required (tax, uplift, owner shares, approved price deck)? If yes and
+      the enterprise plugin is installed, delegate the formal step to
+      `enterprise-stea-automation-agent` (it can build and run a local STEA project in
+      the desktop client), keep the NeqSim result as the labelled screening case and
+      record `economics_engine` in `notes.md`; otherwise use NeqSim economics only.
    5. **Uncertainty scope**: Which parameters are most uncertain? Should Monte
       Carlo use full NeqSim process simulations (slower, more accurate) or
       simplified correlations (faster)?
