@@ -4,13 +4,14 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `29fec930b31f3eaecb06a60bd949eceadb8fdff3`.
+The current baseline is `c3b4216b330d0d8e85e3e80feff350be5df5d6e9`.
 Source implementation, regression evidence and field qualification are different maturity levels.
 Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
 pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
-The current increment connects per-edge outer diameter, wall thickness, material, installation and
-insulation choices to the existing mechanical-screening and Class 4 cost contracts; none of these
-completes independent field, vendor or current-edition DNV qualification.
+The current increment connects typed per-edge insulation and uniform thermal boundaries to the
+existing steady hydraulic graph and exposes solved outlet-temperature constraints. It extends the
+previous outer-diameter, wall, material, installation and Class 4 cost basis; none of these completes
+independent field, vendor or current-edition DNV qualification.
 
 ## Current functionality and reuse decisions
 
@@ -279,12 +280,41 @@ SURFCostEstimator.LineDesign flowlineDesign =
         .materialGrade("X52")
         .designPressureBar(140.0)
         .installationMethod("J-lay")
-        .insulation("PUF", 30.0)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 30.0)
+        .thermalBoundary(4.0, 300.0, 100.0)
+        .minimumOutletTemperatureC(20.0)
         .build();
 
 subsea.setLineDesign("production-flowline", flowlineDesign);
+subsea.applyLineThermalDesigns(topology);
+for (NetworkConstraint constraint :
+    subsea.createMinimumOutletTemperatureConstraints(topology, true)) {
+  optimizer.addConstraint(constraint);
+}
 CostEstimateResult estimate = subsea.estimateSurfCosts(topology);
 ```
+
+The typed insulation overload is the physical thermal input. The legacy string overload remains
+cost metadata and is never mapped to conductivity by name. For a rigid line,
+`resolveOverallHeatTransferCoefficientWm2K()` reuses `MultilayerThermalCalculator` with the resolved
+inside diameter, wall, typed insulation and configured inner/outer film coefficients. Its result is
+on the pipe-bore area basis used by `LoopedPipeNetwork`. A flexible line must provide an explicit
+qualified U-value with `overallHeatTransferCoefficientWm2K(...)`; the rigid steel radial stack is not
+applied to flexible construction.
+
+`applyLineThermalDesigns(topology)` validates stable edge identity and rigid ID consistency, writes
+wall, U-value and ambient temperature to the exact existing `NetworkPipe`, enables the existing
+thermal-hydraulic coupling, and leaves per-edge hydraulic fidelity unchanged. It fails rather than
+replace an existing route-dependent U-value or ambient-temperature profile. Use those existing
+profiles directly where seabed conditions or insulation vary along the route.
+
+`NetworkConstraints.edgeMinimumOutletTemperature(...)` and the `SubseaProductionSystem` constraint
+list evaluate the solved physical outlet in kelvin. They fail closed for an unconverged network,
+disabled thermal coupling, stagnant edge or non-finite temperature. `SubseaLineThermalDesignTest`
+checks canonical identity, unchanged Darcy fidelity, heat loss to a 4 degrees Celsius ambient and
+controlled pass/fail thresholds. `SURFCostEstimatorTest` checks the independent engineering trend
+that thicker PU foam reduces calculated U. These are implementation, conservation and trend checks;
+they are not qualification against measured field arrival temperatures or a commercial simulator.
 
 A zero wall thickness asks the existing legacy screening calculator for a rounded-up
 Class 4 basis. This is not the typed current-edition `DNV-ST-F101` limit-state assessment,
@@ -404,9 +434,10 @@ physical limits to obtain a feasible optimizer result.
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
-2. Connect route-specific insulation to solved thermal arrival constraints and explicit
-   DNV-ST-F101/on-bottom-stability screening inputs, then couple the qualified design cases
-   to multi-period lifecycle economics and reduced-order surrogates.
+2. Add explicit DNV-ST-F101 limit-state and on-bottom-stability screening inputs without folding
+   environmental loads into the hydraulic topology. Qualify the new steady arrival-temperature
+   contract against independent pipe heat-transfer cases, then couple qualified design cases to
+   multi-period lifecycle economics and reduced-order surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
