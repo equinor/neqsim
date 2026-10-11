@@ -2000,45 +2000,43 @@ coordinate them through `task_spec.md` and the hand-off schemas in
 
 `agent_search.py` ranks agents by how well their description matches the task
 text, so data-source agents - which describe a *system*, not a *discipline* -
-rarely surface. The 2026-10 audit of 156 tasks measured the result: Thelma was
-applicable in 22 tasks and used in 2, Synergi 33/3, alarm events 17/1, PEPO
-73/0, Emisoft 94/0, GeoX 83/0, AWT 13/0, TR2000 75/3, Centuries 148/13, OTS
-156/21. Before Step 2, walk this table against the task text and record every
-row that applies in `results.json`
+rarely surface. An audit of 156 tasks found such agents applicable in many tasks
+and used in few. Before Step 2, check whether an installed plugin supplies
+evidence-source agents for this task: its router agent publishes the cue table
+(an `evidence-source-cues` block, read by `validate_task_results.py`). Record every
+applicable agent in `results.json`
 `agent_workflow_plan.evidence_sources: [{agent, status, reason}]` with
 `status` ∈ {`used`, `not_applicable`, `no_access`, `not_registered`}. The
-validator warns when a cue is present and the agent is not recorded.
+validator warns when a published cue is present and the agent is not recorded; with
+no such plugin installed it has nothing to check.
 
-| Cue in the task text | Evidence agent (Equinor plugin) | Community / fallback |
-|---|---|---|
-| equipment condition, replace, ageing, obsolescence, levetid, lifetime, host cessation or end of life | `enterprise-thelma-agent` | state host/equipment life as an assumption |
-| trip, Blålys, incident, leak, fire, recurrence, root cause, M1 | `enterprise-synergi-agent` | - |
-| trip, Blålys, blackout, first-up, shutdown, alarm | `enterprise-alarm-events-agent` | - |
-| disturbance in a plan period, revisjonsstans, turnaround, deferment, "was work planned" | `enterprise-pepo-agent` | - |
-| CO2, emissions, fuel gas, flaring, energy use, carbon intensity | `enterprise-emisoft-agent` | `emissions-environmental`, `neqsim-co2-emissions-screening` |
-| prospect, APbo, chance of success, firm well, APA | `enterprise-geox-agent` | Sodir analogue prior (`neqsim-norwegian-continental-shelf-data`) |
-| well test, test separator, MPFM, well allocation | `enterprise-awt-agent` | `enterprise-pdm-agent` well tests |
-| plan, forecast, Centuries, RNB, ullage, host capacity per year | `enterprise-acquire-agent` | Sodir production (`ncs-value-chain-agent`) |
-| production, allocated rates, demonstrated capacity, PE | `enterprise-pdm-agent` | Sodir monthly production |
-| historian, trend, tag, measured, plant data | `enterprise-ots-timeseries-agent` | `plant-data` (tagreader), `enterprise-seeq-connect-agent` |
-| M1/M2, work order, notification, PM programme, failure history | `enterprise-maintenance-agent` | - |
-| P&ID, datasheet, drawing, isometric, line list | `enterprise-stid-reader-agent` | `technical-reader` on supplied files |
-| piping class, PCS, material, valve, chemical-injection line | `enterprise-tr2000-agent` | `mechanical-design` |
-| tie-back route, flowline route, template location, bathymetry, licence outline | `enterprise-gis-mapservices-agent` | Sodir map layers (`neqsim-norwegian-continental-shelf-data`) |
-| wellbore, formation tops, discovery master data | `enterprise-smda-opus-agent` | Sodir wellbore pages |
-| static reservoir model, OPM Flow basis | `enterprise-osdu-agent` | `reservoir-simulator-agent` open-data ladder |
-| export gas, Gassled, tariff, entry/exit spec | `enterprise-gassled-tariff-agent`, `enterprise-gas-quality-specification-agent` | `gas-quality` |
-| monitored limits, utilisation, bottleneck, IOC | `enterprise-ioc-bottleneck-agent` | `neqsim-capacity-and-utilization-analysis` |
-| SURF reference price (flowline per km, template or satellite SPS), SPS handbook, flowline or subsea-system technology guidance, Equipment Portal U100/U400 | `enterprise-equipment-portal-agent` | `neqsim-equipment-cost-estimation`, `neqsim-subsea-and-wells` |
-| vendor datasheet, manufacturer document, manual or catalogue, product limits (demister, inlet device, internals, pump, valve), SEMI search/library/model or SMI/SDI document ID | `enterprise-semi-search-agent` | `neqsim-column-internals-and-rate-based`, supplied vendor documents via `technical-reader` |
+Without a plugin, use the public fallback for the evidence type:
 
-File retrieved Equipment Portal, SEMI and Omnia Maps documents under `references/equipment-portal/`,
-`references/semi/` and `references/omnia-maps/`, respectively. The source-index generator also
-accepts `equipment_portal` and `omnia_maps` as folder or manifest source aliases. Explicit source
-folders take precedence over manifest attribution, which takes precedence over filename inference;
-retain provenance in the manifest when a filename alone is ambiguous. Source classification does
-not establish content review or access: record unavailable enterprise agents with the status and
-reason above, and use supplied or public documents through the community fallback.
+| Evidence needed | Public fallback |
+|---|---|
+| equipment condition, ageing, host life or end of life | state the life as an assumption |
+| emissions, fuel gas, carbon intensity | `emissions-environmental`, `neqsim-co2-emissions-screening` |
+| prospect, chance of success, exploration volume | Sodir analogue prior (`neqsim-norwegian-continental-shelf-data`) |
+| tie-back or development concept cost, SURF or flowline price | declared parametric cost, labelled as such (`neqsim-equipment-cost-estimation`, `neqsim-subsea-and-wells`) |
+| well tests, allocated production | Sodir monthly production, supplied test data |
+| plan, forecast, host capacity per year | Sodir production (`ncs-value-chain-agent`) |
+| historian, trend, measured plant data | `plant-data` (tagreader) |
+| P&ID, datasheet, drawing, line list | `technical-reader` on supplied files |
+| host limits (separators, inlet facilities) | host limit as an assumption |
+| piping class, material, valve | `mechanical-design` |
+| route, template location, bathymetry, licence outline | Sodir map layers (`neqsim-norwegian-continental-shelf-data`) |
+| wellbore, formation tops, discovery master data | Sodir wellbore pages |
+| static reservoir model | `reservoir-simulator-agent` open-data ladder |
+| export gas specification | `gas-quality` |
+| utilisation, bottleneck | `neqsim-capacity-and-utilization-analysis` |
+| vendor datasheet, product limits (demister, inlet device, internals) | `neqsim-column-internals-and-rate-based`, supplied vendor documents via `technical-reader` |
+
+File retrieved documents under `references/<source>/`; the source-index generator
+(`generate_sources_md.py`) accepts the folder or manifest source alias. Explicit source
+folders take precedence over manifest attribution, which takes precedence over filename
+inference; retain provenance in the manifest when a filename alone is ambiguous. Source
+classification does not establish content review or access: record unavailable agents with
+the status and reason above, and use supplied or public documents through the fallback.
 
 ---
 
