@@ -40,7 +40,9 @@ The project is developed by Equinor with contributions from the community. Conta
 
 ### What Java version is required?
 
-NeqSim requires Java 8 or higher. Java 11+ is recommended for best performance.
+The standard Maven artifact and `neqsim-3.24.0.jar` require Java 17 or newer.
+Use the separate `neqsim-3.24.0-Java8.jar` release asset for Java 8 compatibility.
+The MCP server requires Java 21 or newer.
 
 ---
 
@@ -53,13 +55,13 @@ NeqSim requires Java 8 or higher. Java 11+ is recommended for best performance.
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.23.0</version>
+    <version>3.24.0</version>
 </dependency>
 ```
 
 **Gradle:**
 ```groovy
-implementation 'com.equinor.neqsim:neqsim:3.23.0'
+implementation 'com.equinor.neqsim:neqsim:3.24.0'
 ```
 
 **Direct Download:**

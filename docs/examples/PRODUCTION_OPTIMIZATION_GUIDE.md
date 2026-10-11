@@ -205,8 +205,13 @@ PlantUtilizationSnapshot trainSnapshot =
     trainEvidence.toPlantUtilizationSnapshot();
 ```
 
-`calculationId` is the UUID string stored on every completed casing. Casing power must equal that
-casing's exact shaft-input request. Gearbox input includes its configured idle loss and efficiency.
+`calculationId` is the UUID string stored on every completed casing. Casing power must match that
+casing's shaft-input request, and the total casing power must match the shaft's requested demand.
+Both checks accept the configured absolute `powerBalanceToleranceKw` or the relative floating-point
+matching tolerance. The absolute tolerance applies once to the train total; it is not multiplied by
+the number of casings. This also remains the maximum accepted unmet shaft load. Incomplete constraint
+samples retain the underlying shaft diagnostics so a rejected consistency check can be identified.
+Gearbox input includes its configured idle loss and efficiency.
 The gearbox maximum input power is configured in W, while the driver model and evidence report use
 kW. `maximumTorqueNm` is an independently approved limit, not
 a value estimated by the adapter. A line-up or limit change invalidates the old evidence; solve the
