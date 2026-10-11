@@ -132,7 +132,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
       shaft.solveBalance();
       String sourceCalculationId = highPressureCompressor.getCalculationIdentifier().toString();
       assertEquals(sourceCalculationId, lowPressureCompressor.getCalculationIdentifier().toString());
-      return PlantCommonShaftEvidence
+      PlantCommonShaftEvidence evidence = PlantCommonShaftEvidence
           .builder("synthetic field", "Host", "export common shaft", calculationId, shaft,
               "coupled field-to-facility candidate")
           .sourceCalculationId(sourceCalculationId)
@@ -140,6 +140,8 @@ class FieldToFacilityOptimizationAcceptanceTest {
           .casing(lowPressureCompressor.getEnergyPort("shaftPower").getParticipantId(), lowPressureCompressor)
           .driver(driverPort.getParticipantId(), driver).gearbox("export gearbox", gearbox).speedToleranceRpm(1.0)
           .powerBalanceToleranceKw(1.0e-6).maximumTorqueNm(1.0e6).convergenceComplete(model.isModelConverged()).build();
+      assertTrue(evidence.isComplete(), evidence.getDiagnostics().toString());
+      return evidence;
     }
   }
 
