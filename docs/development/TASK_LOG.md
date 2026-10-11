@@ -1643,3 +1643,10 @@ in a core-only checkout. Documented intentional optional-dependency and file-rea
 exception handling in the Sodir statistics and task-results validators.
 **Notes:** Existing routing expectations were retained. No Java or numerical behavior
 changed. Agent descriptions remain within the 500-character limit.
+
+### 2026-10-11 - Bacalhau well-to-export model for ProcessPilot
+**Type:** B (Process)
+**Keywords:** well-to-export, FPSO, Uleberg fluid tuning, PI historian benchmark, ProcessPilot, bottleneck screening
+**Solution:** One ProcessSystem per area in a ProcessModel (wells, separation, LP/MP compression, gas treatment with parallel HP1-HP2-GIC trains, oil, recycle); Barra Velha fluids tuned on the common P/A EOS to Fluid Symphony PVT with one global C1-heavy kij offset; PI multiphase-meter rates because PDM holds no allocation; oil factor and compressor efficiencies calibrated on one window and held out on two.
+**Result:** Fiscal oil and injection gas within 3 %, hold-out compressor discharge temperatures within 2.6 K, HP1 driver power is the first limit (about 19 % rate headroom with one HP train); stage-wise flash-gas split not validated because the separator gas meters do not close on the compressed gas.
+**Notes:** Tuning quality reported per sample in pvt_tuning_quality. Tooling: Bacalhau lessons added to enterprise-process-notebook-workspace. No NeqSim Java change; GasScrubber classifies dense supercritical gas as liquid (handled in the model).

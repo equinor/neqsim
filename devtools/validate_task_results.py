@@ -351,29 +351,62 @@ AGENT_INVOCATION_KINDS = ("subagent", "pattern", "skill-only")
 
 # High-precision cues (task text -> governed evidence agent). Kept narrow on purpose:
 # a false warning costs more trust than a missed one. See neqsim-task-workflow s5.
-EVIDENCE_SOURCE_CUES = (
-    ("enterprise-thelma-agent", r"levetid|life.?extension|lifetime|ageing|aging|obsolesc|end.?of.?life|cessation"),
-    ("enterprise-synergi-agent", r"bl[a\u00e5]lys|bluelight|\btrip\b|tripp|root.?cause|incident|hendelse|lekkasje|\bleak\b|\bm1\b"),
-    ("enterprise-alarm-events-agent", r"bl[a\u00e5]lys|bluelight|\btrip\b|tripp|first.?up|blackout"),
-    ("enterprise-pepo-agent", r"bl[a\u00e5]lys|bluelight|revisjonsstans|turnaround|deferment"),
-    ("enterprise-emisoft-agent", r"co2.?(emission|intensity|tax|avgift)|emission|utslipp|fuel.?gas|carbon.?intensity"),
-    ("enterprise-geox-agent", r"\bapbo\b|prospect|chance of (success|discovery)|firm well|\bapa\s*20"),
-    ("enterprise-awt-agent", r"well.?test|br[o\u00f8]nntest|test.?separator|\bmpfm\b"),
-    ("enterprise-acquire-agent", r"centuries|\brnb\b|ullage|host capacity|forecast 20"),
-    ("enterprise-tr2000-agent", r"piping class|\bpcs\b|tr2000|material selection|chemical.?injection line"),
-    ("enterprise-gis-mapservices-agent", r"bathymetry|flowline route|pipeline route|template location|licence (outline|polygon)"),
-    ("enterprise-equipment-portal-agent",
-     r"\bequipment[ -]portal\b|\bu(?:100|400)\b|\bsps[ -]handbook\b|"
-     r"\b(?:flowline|satellite|template)\s+(?:reference\s+)?(?:costs?|capex|prices?)\b|"
-     r"\bsurf\s+(?:costs?|capex|reference)\b|\bdesign[ -]to[ -]cost\b|"
-     r"\b(?:flowline|subsea[ -]system)\s+technology\b"),
-    ("enterprise-semi-search-agent",
-     r"\bsemi\.equinor\b|\bsemi[ -](?:search|library|model)\b|"
-     r"(?<![a-z0-9])s[md]i[-_]\d|"
-     r"\b(?:vendor|manufacturer)[ -](?:data[ -]?sheets?|manuals?|catalogues?|catalogs?|documents?)\b|"
-     r"\bdemisters?\b|\binlet[ -]devices?\b|\bk[ -]?factor[ -]limits?\b"),
-)
+# Cues for plugin-supplied data agents are not listed here: an installed agent publishes
+# its own in an ``evidence-source-cues`` fenced block (see ``load_evidence_source_cues``).
+EVIDENCE_SOURCE_CUES: tuple = ()
 EVIDENCE_STATUS = ("used", "not_applicable", "no_access", "not_registered")
+EVIDENCE_AGENT_ALIASES: dict = {}
+_EVIDENCE_CUE_BLOCK = re.compile(r"```evidence-source-cues[ \t]*\n(.*?)```", re.S)
+
+
+def parse_evidence_cue_block(text: str) -> Tuple[List[Tuple[str, str]], dict]:
+    """Parse ``agent :: regex`` and ``alias A = B`` lines from evidence-source-cues blocks."""
+    cues: List[Tuple[str, str]] = []
+    aliases: dict = {}
+    for block in _EVIDENCE_CUE_BLOCK.findall(text):
+        for line in block.splitlines():
+            line = line.strip()
+            if line.startswith("alias ") and " = " in line:
+                name, target = line[6:].split(" = ", 1)
+                aliases[name.strip()] = target.strip()
+            elif " :: " in line:
+                agent, cue = line.split(" :: ", 1)
+                try:
+                    re.compile(cue.strip())
+                except re.error:
+                    continue
+                cues.append((agent.strip(), cue.strip()))
+    return cues, aliases
+
+
+def load_evidence_source_cues() -> Tuple[List[Tuple[str, str]], dict]:
+    """Collect cues published by agents found in a checkout, ``~/.neqsim/agents`` or a plugin.
+
+    Best-effort: without an agent catalog the check simply has no cues to apply.
+    """
+    cues: List[Tuple[str, str]] = list(EVIDENCE_SOURCE_CUES)
+    aliases: dict = dict(EVIDENCE_AGENT_ALIASES)
+    try:
+        import agent_search
+        roots = agent_search._discover_roots(Path(__file__).resolve().parents[1], None)
+    except Exception:  # noqa: BLE001 - discovery must never break validation
+        return cues, aliases
+    for agents_dir, _label, pattern, _fallback in roots:
+        try:
+            files = sorted(agents_dir.glob(pattern))
+        except OSError:
+            continue
+        for f in files:
+            try:
+                text = f.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            if "```evidence-source-cues" not in text:
+                continue
+            found, found_aliases = parse_evidence_cue_block(text)
+            cues.extend(c for c in found if c not in cues)
+            aliases.update(found_aliases)
+    return cues, aliases
 
 
 def check_evidence_sources(task_folder: Path, results: dict) -> List[str]:
@@ -408,6 +441,8 @@ def check_evidence_sources(task_folder: Path, results: dict) -> List[str]:
             accounted.add(str(entry.get("name") or entry.get("agent") or "").split(" ")[0])
         elif isinstance(entry, str):
             accounted.add(entry.split(" ")[0])
+    cues, aliases = load_evidence_source_cues()
+    accounted |= {aliases[a] for a in list(accounted) if a in aliases}
     bad_status = [
         str(e.get("agent")) for e in (plan.get("evidence_sources") or [])
         if isinstance(e, dict) and e.get("status") not in EVIDENCE_STATUS
@@ -417,8 +452,10 @@ def check_evidence_sources(task_folder: Path, results: dict) -> List[str]:
             f"{task_folder.name}: evidence_sources entries with an unknown status "
             f"(use {' | '.join(EVIDENCE_STATUS)}): {', '.join(bad_status)}"
         )
-    missing = [agent for agent, cue in EVIDENCE_SOURCE_CUES
-               if re.search(cue, text) and agent not in accounted]
+    missing = []
+    for agent, cue in cues:
+        if re.search(cue, text) and agent not in accounted and agent not in missing:
+            missing.append(agent)
     if missing:
         warnings.append(
             f"{task_folder.name}: task text cues governed evidence agents that the plan does not "

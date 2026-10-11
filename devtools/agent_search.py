@@ -43,7 +43,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -52,6 +51,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import agent_frontmatter as af  # noqa: E402
 import bm25  # noqa: E402
+import discovery_registry as registry  # noqa: E402
 
 # An agent record is (name, haystack, path, required_skills, repo, handle).
 # ``handle`` is the id used to *invoke* the agent (e.g. "capability.scout" or
@@ -136,68 +136,18 @@ def _load_from_dir(agents_dir: Path, repo: str, pattern: str) -> List[AgentRecor
 
 
 def _installed_agents_root() -> Path:
-    """Return the directory ``neqsim agent install`` places agents into.
-
-    Honors ``NEQSIM_AGENTS_HOME`` so tests (and any caller that needs isolation
-    from the real machine's installed catalog) can redirect this without
-    depending on ``Path.home()``. ``install_agent.py`` reads the same variable
-    for its ``INSTALL_DIR``, so the install location and this search cannot
-    diverge.
-    """
-    override = os.environ.get("NEQSIM_AGENTS_HOME")
-    if override:
-        return Path(override)
-    return Path.home() / ".neqsim" / "agents"
+    """Directory ``neqsim agent install`` places agents into (``NEQSIM_AGENTS_HOME``)."""
+    return registry.installed_agents_root()
 
 
 def _plugin_name(plugin_dir: Path) -> str:
-    """Name from ``plugin.json``, else the folder name (version-hash cache copies)."""
-    try:
-        name = json.loads((plugin_dir / "plugin.json").read_text(encoding="utf-8")).get("name")
-    except (OSError, ValueError, AttributeError):
-        name = None
-    return str(name) if name else plugin_dir.name
+    """Name from ``plugin.json``, else the folder name."""
+    return registry.plugin_name(plugin_dir)
 
 
 def _plugin_agent_roots() -> List[Tuple[Path, str, str, bool]]:
-    """Agent folders of installed Agent Plugins packages - flat ``*.agent.md``.
-
-    A marketplace install is the third way to obtain agents, and on such a machine
-    ``~/.neqsim/agents`` stays empty: the agents live in the plugin package as
-    ``<plugin>/com.github.copilot/agents/*.agent.md``. Labelled with the plugin's own
-    ``plugin.json`` name (``plugin:neqsim-community``) so a community agent is still
-    told apart from its enterprise counterpart, and so the user-data cache copies -
-    which sit under a version-hash folder such as ``…/neqsim-community/1a0c50d1a81/``
-    - do not show up under a meaningless label. One root per plugin name, first
-    location wins. Depth-bounded globs, not ``**``, because the plugin tree also
-    holds hundreds of skill folders. ``NEQSIM_AGENT_PLUGINS_HOME`` replaces the
-    search bases, for tests and for a non-default plugin location.
-    """
-    override = os.environ.get("NEQSIM_AGENT_PLUGINS_HOME")
-    if override:
-        bases = [Path(override)]
-    else:
-        bases = [Path.home() / ".vscode" / "agent-plugins",         # VS Code marketplace
-                 Path.home() / ".copilot" / "installed-plugins"]    # Copilot CLI
-        appdata = os.environ.get("APPDATA")
-        if appdata:
-            bases.append(Path(appdata) / "Code" / "agentPlugins")   # user-data cache copies
-    roots: List[Tuple[Path, str, str, bool]] = []
-    seen = set()
-    for base in bases:
-        if not base.is_dir():
-            continue
-        for depth in range(1, 5):
-            pattern = "/".join(["*"] * depth) + "/com.github.copilot/agents"
-            for agents_dir in sorted(base.glob(pattern)):
-                if not agents_dir.is_dir():
-                    continue
-                name = _plugin_name(agents_dir.parents[1])
-                if name in seen:
-                    continue
-                seen.add(name)
-                roots.append((agents_dir, "plugin:" + name, "*.agent.md", True))
-    return roots
+    """Agent folders of installed Agent Plugins packages (see ``discovery_registry``)."""
+    return registry.plugin_agent_roots()
 
 
 def _discover_roots(repo_root: Path,
@@ -280,21 +230,23 @@ def search(
     return _bm25_search(query, agents, top)
 
 
-def _results_to_payload(query: str, results: List[Tuple[float, AgentRecord]]) -> dict:
-    return {
-        "query": query,
-        "results": [
-            {
-                "score": round(score, 4),
-                "name": rec[0],
-                "handle": rec[5],
-                "repo": rec[4],
-                "loads_skills": rec[3],
-                "path": rec[2],
-            }
-            for score, rec in results
-        ],
-    }
+def _results_to_payload(query: str, results: List[Tuple[float, AgentRecord]],
+                        known_skills: Optional[set] = None) -> dict:
+    """Build the JSON payload; ``known_skills`` adds ``missing_skills`` per agent."""
+    rows = []
+    for score, rec in results:
+        row = {
+            "score": round(score, 4),
+            "name": rec[0],
+            "handle": rec[5],
+            "repo": rec[4],
+            "loads_skills": rec[3],
+            "path": rec[2],
+        }
+        if known_skills is not None:
+            row["missing_skills"] = registry.missing_skills(rec[3], known_skills)
+        rows.append(row)
+    return {"query": query, "results": rows}
 
 
 def main() -> int:
@@ -325,7 +277,8 @@ def main() -> int:
 
     extra = [Path(p).resolve() for p in (args.agents_root or [])]
     results = search(args.query, repo_root, args.top, extra)
-    payload = _results_to_payload(args.query, results)
+    known_skills = registry.skill_ids(repo_root / ".github" / "skills")
+    payload = _results_to_payload(args.query, results, known_skills)
 
     if args.out:
         Path(args.out).write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -343,6 +296,9 @@ def main() -> int:
     for score, rec in results:
         name, _, _, skills, repo, handle = rec
         skill_hint = ("  loads: " + ", ".join(skills[:4])) if skills else ""
+        missing = registry.missing_skills(skills, known_skills)
+        if missing:
+            skill_hint += "  UNRESOLVED: " + ", ".join(missing[:4])
         print("  {:0.3f}  {:<38} (@{}) [{}]{}".format(
             score, name, handle, repo, skill_hint))
     return 0
