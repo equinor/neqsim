@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.equipment.pipeline.RadialThermalLayer;
 import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
 
 /**
@@ -373,5 +374,32 @@ class SURFCostEstimatorTest {
         () -> SURFCostEstimator.LineDesign.builder(8.625).installationMethod("unknown"));
     assertThrows(IllegalArgumentException.class,
         () -> SURFCostEstimator.LineDesign.builder(8.625).materialGrade("unknown"));
+  }
+
+  /** Typed insulation must resolve physical U-values without guessing from cost labels. */
+  @Test
+  void testTypedThermalLineDesign() {
+    SURFCostEstimator.LineDesign thin = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(8.0)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 20.0).thermalBoundary(4.0, 300.0, 100.0)
+        .minimumOutletTemperatureC(20.0).build();
+    SURFCostEstimator.LineDesign thick = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(8.0)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 60.0).thermalBoundary(4.0, 300.0, 100.0).build();
+
+    assertTrue(thin.hasThermalHydraulicConfiguration());
+    assertTrue(thin.hasMinimumOutletTemperature());
+    assertEquals(20.0, thin.getMinimumOutletTemperatureC(), 1.0e-12);
+    assertTrue(thin.resolveOverallHeatTransferCoefficientWm2K() > 0.0);
+    assertTrue(thick.resolveOverallHeatTransferCoefficientWm2K() < thin.resolveOverallHeatTransferCoefficientWm2K());
+
+    SURFCostEstimator.LineDesign flexible = SURFCostEstimator.LineDesign.builder(8.0).flexible(true)
+        .overallHeatTransferCoefficientWm2K(1.5).thermalBoundary(4.0, 300.0, 100.0).build();
+    assertEquals(1.5, flexible.resolveOverallHeatTransferCoefficientWm2K(), 1.0e-12);
+    assertThrows(IllegalStateException.class, () -> SURFCostEstimator.LineDesign.builder(8.0).flexible(true)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 30.0).build().resolveOverallHeatTransferCoefficientWm2K());
+    assertThrows(IllegalStateException.class,
+        () -> SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(8.0).insulation("PUF", 30.0)
+            .thermalBoundary(4.0, 300.0, 100.0).build().resolveOverallHeatTransferCoefficientWm2K());
+    assertThrows(IllegalArgumentException.class, () -> SURFCostEstimator.LineDesign.builder(8.625)
+        .insulation(RadialThermalLayer.MaterialType.CARBON_STEEL, 30.0));
   }
 }

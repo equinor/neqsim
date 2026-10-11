@@ -375,28 +375,42 @@ TiebackReport report = analyzer.analyze();
 
 ### Host impact of a tie-in on a benchmarked host model
 
-When the host already has a benchmarked NeqSim `ProcessModel` (e.g. ProcessPilot `HDSimulator`
-for Heidrun), test the tie-in on it instead of on a capacity number:
+When the host already has a benchmarked NeqSim `ProcessModel`, assess the tie-in on a
+reproducible copy of that model:
 
-1. Run the model in its own Python process - the host packages use the `jneqsim` wheel, the
-   workspace tools use the dev JVM, and one process can load only one.
-2. Build the added wellstream in the HOST EOS: flash the host reservoir oil at 15 C / 1.01325 bara,
-   keep the stock-tank-oil and separator-gas compositions, recombine at the tie-in GOR, water cut and
-   lift-gas rate from moles per Sm3 (never `getz()` before `init(0)`; build the mole vector directly).
-3. Create a `Stream`, run it, and `addStream` it to the first-stage inlet `Mixer` of the separation
-   area after `build_process()`; the model's own mass balance then misses the new inflow, so
-   add its kg/hr to the inflow when closing the balance.
-4. Run plateau, mid-life and late-life points in every benchmark window and report the change in
-   compressor power utilisation, separator utilisation, export oil and produced water.
-   A host already above 90 % power in the benchmark window is the finding, not the 3 % increase.
+1. Record the baseline model version, operating window and constraint basis. If the host package
+   and workspace require incompatible NeqSim JARs, use separate Python processes with explicit
+   classpaths and exchange inputs/results; do not mix those JARs in one JVM.
+2. Use the tie-in fluid's own composition and PVT evidence with compatible EOS, mixing rules and
+   component definitions. If only host-fluid data are available, label that fluid as a surrogate
+   and quantify the sensitivity. Recombine oil, gas, water and lift gas on a molar basis; document
+   standard-volume reference conditions, GOR and water-cut definitions, and verify them by flashing
+   the reconstructed fluid. Initialize compositions before reading mole fractions.
+3. Connect the additional `Stream` to the intended inlet `Mixer` using the host model's supported
+   extension point. Include each external feed exactly once in total and component balances and
+   check the energy balance. An unaccounted feed requires a boundary-accounting correction, not a
+   change that hides a residual. Preserve the baseline for comparison.
+4. Run plateau, mid-life and late-life points over the relevant benchmark windows. Report both
+   absolute and incremental compressor power, separator utilisation, export oil and produced water
+   against documented limits. Identify constraints already exceeded in the baseline separately
+   from those introduced by the tie-in; do not assume a universal utilisation threshold.
 
-### Tubing and line back-pressure decides recovery on depletion
+### Evaluate tubing and line back-pressure during depletion
 
-For an undersaturated oil the required bottom-hole pressure with an 18-60 bara outlet sits close to the
-bubble point whatever the gas lift, so depletion recovery equals the pressure-limited ceiling and the
-earlier screening model with a 40 bara floor overstates it. Generate the lift table
-(`neqsim-near-well-and-injectivity`), run the reservoir with it, and judge gas lift on its measured gain.
-A template-E-type tie-in whose shared line sets 126 bara at the template cannot flow at all.
+Use the coupled reservoir inflow and tubing/flowline outflow response to determine feasible rates
+as reservoir pressure, water cut, GOR, gas lift and host pressure change. Bubble point alone does
+not define a minimum flowing bottom-hole pressure or a recovery ceiling. Establish flow/no-flow
+conditions from the available reservoir pressure and the required pressure at the same datum.
+
+Reuse the current VFP generation and import/export APIs (see `MultiScenarioVFPGenerator` and
+`neqsim-subsea-and-wells`), checking units, datum depth, axis definitions, feasible points and the
+reservoir simulator's table format. Compare gas-lift and injection scenarios on the same basis.
+If a VFP table causes convergence trouble, inspect interpolation, operating branches and control
+switching. Do not force BHP versus rate to be monotonic just to obtain convergence. The
+[OPM VFP consistency guidance](https://opm.github.io/opm-flow-editor-support/keywords/VFPCHK.html)
+discusses crossing curves at adjacent tubing-head pressures, a different check from monotonicity
+with rate. Preserve the original table and validate any justified conditioning against the
+hydraulic model before using it for recovery or economic conclusions.
 
 ### Subsea System Configuration
 

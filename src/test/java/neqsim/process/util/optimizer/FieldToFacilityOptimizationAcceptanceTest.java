@@ -1,5 +1,6 @@
 package neqsim.process.util.optimizer;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -269,6 +270,25 @@ class FieldToFacilityOptimizationAcceptanceTest {
         result.getAcceptedPointReplay().getEvaluation().getProcessBoundaryConstraintEvidence().get(0).isCalculable());
     assertTrue(
         result.getAcceptedPointReplay().getEvaluation().getProcessBoundaryConstraintEvidence().get(0).isFeasible());
+
+    ProcessModelOperatingEnvelopeStudy acceptedPointStudy = new ProcessModelOperatingEnvelopeStudy(
+        "ten-well-accepted-envelope", "Ten-well accepted operating envelope",
+        "synthetic accepted-point bottleneck and nearby slice", candidates);
+    int evaluationsBeforeBottleneck = simulation.getEvaluationCount();
+    LeadingConstraintEvidence acceptedBottleneck = acceptedPointStudy.getAcceptedPointBottleneck(result);
+    assertEquals(evaluationsBeforeBottleneck, simulation.getEvaluationCount());
+    assertTrue(acceptedBottleneck != null && acceptedBottleneck.isFeasible());
+    assertFalse(acceptedBottleneck.getQualifiedConstraintName().trim().isEmpty());
+    double[] accepted = result.getAcceptedCandidateValues();
+    double nearbyChokeA = Math.max(actions.get(0).getLowerBound(), accepted[0] - 5.0);
+    SliceResult acceptedSlice = acceptedPointStudy.evaluateOneDimensional(actions.get(0).getId(),
+        new double[] {nearbyChokeA, accepted[0]}, result);
+    assertTrue(acceptedSlice.isComplete(), acceptedSlice.getDiagnostics().toString());
+    assertArrayEquals(accepted, acceptedSlice.getAnchorValues(), 0.0);
+    assertEquals(2, acceptedSlice.getCompletedPointCount());
+    assertArrayEquals(accepted, acceptedSlice.getPoints().get(1).getCandidateValues(), 0.0);
+    assertTrue(acceptedSlice.getPoints().stream().allMatch(
+        point -> point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()));
 
     assertEquals(100.0, fixture.exportValve.getOutletStream().getPressure("bara"), 1.0e-6);
     assertBaselineRestored(fixture);

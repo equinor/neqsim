@@ -10,6 +10,8 @@ import neqsim.process.costestimation.CostEstimateBasis;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.equipment.pipeline.MultilayerThermalCalculator;
+import neqsim.process.equipment.pipeline.RadialThermalLayer;
 import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
 
 /**
@@ -59,6 +61,13 @@ public class SURFCostEstimator {
     private final boolean flexible;
     private final String insulationType;
     private final double insulationThicknessMm;
+    private final RadialThermalLayer.MaterialType insulationMaterial;
+    private final double innerHeatTransferCoefficientWm2K;
+    private final double outerHeatTransferCoefficientWm2K;
+    private final double ambientTemperatureC;
+    private final double overallHeatTransferCoefficientWm2K;
+    private final double minimumOutletTemperatureC;
+    private final boolean thermalBoundaryConfigured;
 
     /** Create an immutable line design from a validated builder. */
     private LineDesign(Builder builder) {
@@ -71,6 +80,13 @@ public class SURFCostEstimator {
       flexible = builder.flexible;
       insulationType = builder.insulationType;
       insulationThicknessMm = builder.insulationThicknessMm;
+      insulationMaterial = builder.insulationMaterial;
+      innerHeatTransferCoefficientWm2K = builder.innerHeatTransferCoefficientWm2K;
+      outerHeatTransferCoefficientWm2K = builder.outerHeatTransferCoefficientWm2K;
+      ambientTemperatureC = builder.ambientTemperatureC;
+      overallHeatTransferCoefficientWm2K = builder.overallHeatTransferCoefficientWm2K;
+      minimumOutletTemperatureC = builder.minimumOutletTemperatureC;
+      thermalBoundaryConfigured = builder.thermalBoundaryConfigured;
     }
 
     /**
@@ -126,6 +142,77 @@ public class SURFCostEstimator {
     /** @return insulation thickness in mm */
     public double getInsulationThicknessMm() {
       return insulationThicknessMm;
+    }
+
+    /** @return typed insulation material used for thermal resistance, or null for cost-only metadata */
+    public RadialThermalLayer.MaterialType getInsulationMaterial() {
+      return insulationMaterial;
+    }
+
+    /** @return fluid-side heat-transfer coefficient in W/(m2 K) */
+    public double getInnerHeatTransferCoefficientWm2K() {
+      return innerHeatTransferCoefficientWm2K;
+    }
+
+    /** @return ambient-side heat-transfer coefficient in W/(m2 K) */
+    public double getOuterHeatTransferCoefficientWm2K() {
+      return outerHeatTransferCoefficientWm2K;
+    }
+
+    /** @return route ambient temperature in degrees Celsius */
+    public double getAmbientTemperatureC() {
+      return ambientTemperatureC;
+    }
+
+    /** @return explicit U-value in W/(m2 K), or NaN when it must be derived */
+    public double getOverallHeatTransferCoefficientWm2K() {
+      return overallHeatTransferCoefficientWm2K;
+    }
+
+    /** @return minimum solved outlet temperature in degrees Celsius, or NaN when unset */
+    public double getMinimumOutletTemperatureC() {
+      return minimumOutletTemperatureC;
+    }
+
+    /** @return true when this design supplies thermal properties to a hydraulic edge */
+    public boolean hasThermalHydraulicConfiguration() {
+      return thermalBoundaryConfigured || insulationMaterial != null
+          || Double.isFinite(overallHeatTransferCoefficientWm2K);
+    }
+
+    /** @return true when the solved edge has a minimum outlet-temperature requirement */
+    public boolean hasMinimumOutletTemperature() {
+      return Double.isFinite(minimumOutletTemperatureC);
+    }
+
+    /**
+     * Resolve the steady overall heat-transfer coefficient on the pipe-bore area basis.
+     *
+     * <p>
+     * An explicit value is authoritative. Otherwise, rigid-pipe wall and typed insulation data are routed through the
+     * existing multilayer thermal calculator. Flexible constructions require an explicit qualified U-value because a
+     * steel-wall radial model does not represent their layer stack.
+     * </p>
+     *
+     * @return overall heat-transfer coefficient in W/(m2 K)
+     */
+    public double resolveOverallHeatTransferCoefficientWm2K() {
+      if (Double.isFinite(overallHeatTransferCoefficientWm2K)) {
+        return overallHeatTransferCoefficientWm2K;
+      }
+      if (flexible) {
+        throw new IllegalStateException("Flexible line thermal design requires an explicit U-value");
+      }
+      if (insulationThicknessMm > 0.0 && insulationMaterial == null) {
+        throw new IllegalStateException(
+            "Thermal insulation requires a typed material; string insulation labels are cost metadata only");
+      }
+      MultilayerThermalCalculator calculator = new MultilayerThermalCalculator();
+      calculator.setInnerHTC(innerHeatTransferCoefficientWm2K);
+      calculator.setOuterHTC(outerHeatTransferCoefficientWm2K);
+      calculator.createSubseaPipeConfig(getResolvedInnerDiameterM(), resolveWallThicknessMm() / 1000.0,
+          insulationThicknessMm / 1000.0, 0.0, insulationMaterial);
+      return calculator.calculateOverallUValue();
     }
 
     /**
@@ -184,6 +271,13 @@ public class SURFCostEstimator {
       private boolean flexible;
       private String insulationType = "none";
       private double insulationThicknessMm;
+      private RadialThermalLayer.MaterialType insulationMaterial;
+      private double innerHeatTransferCoefficientWm2K = 300.0;
+      private double outerHeatTransferCoefficientWm2K = 100.0;
+      private double ambientTemperatureC = 4.0;
+      private double overallHeatTransferCoefficientWm2K = Double.NaN;
+      private double minimumOutletTemperatureC = Double.NaN;
+      private boolean thermalBoundaryConfigured;
 
       /**
        * Create a line-design builder.
@@ -271,7 +365,88 @@ public class SURFCostEstimator {
         if (thicknessMm < 0.0 || !Double.isFinite(thicknessMm)) {
           throw new IllegalArgumentException("Line-design insulation thickness must be finite and non-negative");
         }
+        insulationMaterial = null;
         insulationThicknessMm = thicknessMm;
+        return this;
+      }
+
+      /**
+       * Configure a typed insulation layer for both cost and steady thermal resistance.
+       *
+       * @param material existing radial thermal material preset
+       * @param thicknessMm thickness in mm
+       * @return this builder
+       */
+      public Builder insulation(RadialThermalLayer.MaterialType material, double thicknessMm) {
+        if (!isInsulationMaterial(material)) {
+          throw new IllegalArgumentException("Line-design thermal insulation requires an insulation material preset");
+        }
+        if (thicknessMm < 0.0 || !Double.isFinite(thicknessMm)) {
+          throw new IllegalArgumentException("Line-design insulation thickness must be finite and non-negative");
+        }
+        insulationMaterial = material;
+        insulationType = material.name();
+        insulationThicknessMm = thicknessMm;
+        return this;
+      }
+
+      /** Return whether a radial material preset is suitable as an insulation layer. */
+      private boolean isInsulationMaterial(RadialThermalLayer.MaterialType material) {
+        return material == RadialThermalLayer.MaterialType.PU_FOAM
+            || material == RadialThermalLayer.MaterialType.SYNTACTIC_FOAM
+            || material == RadialThermalLayer.MaterialType.AEROGEL
+            || material == RadialThermalLayer.MaterialType.MICROPOROUS
+            || material == RadialThermalLayer.MaterialType.AIR_GAP
+            || material == RadialThermalLayer.MaterialType.VACUUM_GAP
+            || material == RadialThermalLayer.MaterialType.GENERIC_INSULATION;
+      }
+
+      /**
+       * Configure the uniform steady thermal boundary for this route.
+       *
+       * @param ambientC ambient temperature in degrees Celsius
+       * @param innerHtcWm2K fluid-side heat-transfer coefficient in W/(m2 K)
+       * @param outerHtcWm2K ambient-side heat-transfer coefficient in W/(m2 K)
+       * @return this builder
+       */
+      public Builder thermalBoundary(double ambientC, double innerHtcWm2K, double outerHtcWm2K) {
+        if (!Double.isFinite(ambientC) || !(innerHtcWm2K > 0.0) || !Double.isFinite(innerHtcWm2K)
+            || !(outerHtcWm2K > 0.0) || !Double.isFinite(outerHtcWm2K)) {
+          throw new IllegalArgumentException(
+              "Thermal boundary requires finite ambient temperature and positive finite heat-transfer coefficients");
+        }
+        ambientTemperatureC = ambientC;
+        innerHeatTransferCoefficientWm2K = innerHtcWm2K;
+        outerHeatTransferCoefficientWm2K = outerHtcWm2K;
+        thermalBoundaryConfigured = true;
+        return this;
+      }
+
+      /**
+       * Set an authoritative uniform U-value, including for qualified flexible-pipe data.
+       *
+       * @param value coefficient in W/(m2 K)
+       * @return this builder
+       */
+      public Builder overallHeatTransferCoefficientWm2K(double value) {
+        if (!(value >= 0.0) || !Double.isFinite(value)) {
+          throw new IllegalArgumentException("Line-design U-value must be finite and non-negative");
+        }
+        overallHeatTransferCoefficientWm2K = value;
+        return this;
+      }
+
+      /**
+       * Set a solved outlet-temperature requirement for this canonical edge.
+       *
+       * @param value minimum temperature in degrees Celsius
+       * @return this builder
+       */
+      public Builder minimumOutletTemperatureC(double value) {
+        if (!Double.isFinite(value) || value <= -273.15) {
+          throw new IllegalArgumentException("Minimum outlet temperature must be finite and above absolute zero");
+        }
+        minimumOutletTemperatureC = value;
         return this;
       }
 

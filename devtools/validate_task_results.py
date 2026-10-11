@@ -362,8 +362,16 @@ EVIDENCE_SOURCE_CUES = (
     ("enterprise-acquire-agent", r"centuries|\brnb\b|ullage|host capacity|forecast 20"),
     ("enterprise-tr2000-agent", r"piping class|\bpcs\b|tr2000|material selection|chemical.?injection line"),
     ("enterprise-gis-mapservices-agent", r"bathymetry|flowline route|pipeline route|template location|licence (outline|polygon)"),
-    ("enterprise-equipment-portal-agent", r"equipment portal|\bu100\b|\bu400\b|\bsps handbook|flowline cost|satellite cost|template cost|surf (cost|capex|reference)|design.to.cost"),
-    ("enterprise-semi-search-agent", r"semi\.equinor|\bsemi (search|library|model)|\bsmi-\d|\bsdi-\d|vendor (datasheet|data.?sheet|manual|catalogue|catalog|document)|manufacturer (datasheet|data.?sheet|manual|catalogue|catalog)|\bdemister|inlet device|\bk.?factor limit"),
+    ("enterprise-equipment-portal-agent",
+     r"\bequipment[ -]portal\b|\bu(?:100|400)\b|\bsps[ -]handbook\b|"
+     r"\b(?:flowline|satellite|template)\s+(?:reference\s+)?(?:costs?|capex|prices?)\b|"
+     r"\bsurf\s+(?:costs?|capex|reference)\b|\bdesign[ -]to[ -]cost\b|"
+     r"\b(?:flowline|subsea[ -]system)\s+technology\b"),
+    ("enterprise-semi-search-agent",
+     r"\bsemi\.equinor\b|\bsemi[ -](?:search|library|model)\b|"
+     r"(?<![a-z0-9])s[md]i[-_]\d|"
+     r"\b(?:vendor|manufacturer)[ -](?:data[ -]?sheets?|manuals?|catalogues?|catalogs?|documents?)\b|"
+     r"\bdemisters?\b|\binlet[ -]devices?\b|\bk[ -]?factor[ -]limits?\b"),
 )
 EVIDENCE_STATUS = ("used", "not_applicable", "no_access", "not_registered")
 

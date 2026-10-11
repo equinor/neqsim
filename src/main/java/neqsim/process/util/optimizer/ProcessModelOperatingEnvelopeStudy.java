@@ -5,9 +5,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicConstraintBinding;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicConstraintSnapshot;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateObjectiveEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult;
+import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.OperatingPointSearchResult;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ConstraintDefinition;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDefinition;
 
 /**
  * Samples one- or two-dimensional operating-envelope slices with the existing fail-closed transactional action
@@ -93,6 +99,24 @@ public final class ProcessModelOperatingEnvelopeStudy {
   }
 
   /**
+   * Samples one action around the accepted and replayed point from a compatible mixed operating-point search.
+   *
+   * <p>
+   * The search result must retain a feasible, finite, completely evidenced accepted-point replay from the same
+   * unchanged evaluator definition. The current process baseline must still be converged and match the replay's
+   * captured baseline action values. Validation is read-only and completes before any slice point is evaluated.
+   * </p>
+   *
+   * @param actionId exact action identifier
+   * @param values ordered axis values
+   * @param search completed mixed operating-point search
+   * @return immutable slice anchored at the accepted replay values
+   */
+  public SliceResult evaluateOneDimensional(String actionId, double[] values, OperatingPointSearchResult search) {
+    return evaluateOneDimensional(actionId, values, validateAcceptedSearch(search));
+  }
+
+  /**
    * Samples two distinct actions in deterministic row-major order.
    *
    * @param firstActionId first-axis action identifier
@@ -106,6 +130,263 @@ public final class ProcessModelOperatingEnvelopeStudy {
       double[] secondValues, double[] anchorValues) {
     return evaluate(new String[] {firstActionId, secondActionId},
         new double[][] {copy(firstValues), copy(secondValues)}, anchorValues);
+  }
+
+  /**
+   * Samples two actions around the accepted and replayed point from a compatible mixed operating-point search.
+   *
+   * @param firstActionId first-axis action identifier
+   * @param firstValues first-axis values
+   * @param secondActionId second-axis action identifier
+   * @param secondValues second-axis values
+   * @param search completed mixed operating-point search
+   * @return immutable slice anchored at the accepted replay values
+   */
+  public SliceResult evaluateTwoDimensional(String firstActionId, double[] firstValues, String secondActionId,
+      double[] secondValues, OperatingPointSearchResult search) {
+    return evaluateTwoDimensional(firstActionId, firstValues, secondActionId, secondValues,
+        validateAcceptedSearch(search));
+  }
+
+  /**
+   * Reports the leading bottleneck retained by a compatible accepted-point replay without rerunning the model.
+   *
+   * <p>
+   * The selected row uses the same unit-safe ranking and exact fail-closed rejection identity as sampled envelope
+   * points. A null result means the replay contains no applicable installed or rejecting constraint evidence. This is
+   * sampled operating evidence, not a shadow price, causal attribution, global active set, or operating approval.
+   * </p>
+   *
+   * @param search completed mixed operating-point search
+   * @return immutable leading constraint evidence, or null when no applicable row exists
+   */
+  public LeadingConstraintEvidence getAcceptedPointBottleneck(OperatingPointSearchResult search) {
+    validateAcceptedSearch(search);
+    CandidateSetEvaluationResult replay = search.getAcceptedPointReplay().getEvaluation();
+    return leading(replay, leadingInstalled(replay));
+  }
+
+  /**
+   * Validates that a replayed accepted point is complete, definition-compatible, and current for this study.
+   *
+   * @param search completed mixed operating-point search
+   * @return defensive accepted action vector
+   */
+  private double[] validateAcceptedSearch(OperatingPointSearchResult search) {
+    if (search == null) {
+      throw new IllegalArgumentException("Operating-point search result must not be null");
+    }
+    if (!search.isAcceptedPointReplayed() || !search.isCandidateFinite() || !search.isActionsComplete()
+        || !search.isConstraintEvidenceComplete()) {
+      throw new IllegalStateException(
+          "Operating-envelope anchoring requires a finite, completely evidenced accepted-point replay");
+    }
+    CandidateSetEvaluationResult replay = search.getAcceptedPointReplay().getEvaluation();
+    if (!replay.isCandidateSimulationConverged() || !replay.isFeasible() || !replay.isBaselineRestored()
+        || !replay.isBaselineSimulationConverged()) {
+      throw new IllegalStateException("Accepted-point replay is not feasible with complete converged recovery");
+    }
+    if (!search.isFromEvaluator(evaluator)) {
+      throw new IllegalStateException(
+          "Operating-envelope anchoring requires the exact runtime evaluator that produced the replay");
+    }
+    if (!sameText(search.getActionSetId(), evaluator.getId()) || !sameText(replay.getId(), evaluator.getId())
+        || !sameText(replay.getName(), evaluator.getName())
+        || !sameText(replay.getProvenance(), evaluator.getProvenance())) {
+      throw new IllegalArgumentException("Operating-point search belongs to a different action-set evaluator");
+    }
+    if (!sameActions(replay.getActions(), evaluator.getActions())
+        || !sameObjectives(replay.getObjectiveEvidence(), evaluator.getSimulationEvaluator().getObjectives())
+        || !sameConstraints(replay.getConstraintEvidence(), evaluator.getSimulationEvaluator().getConstraints(),
+            replay.getInstalledEquipmentCapacityEvidence())
+        || !sameHydraulicBindings(replay.getHydraulicConstraints(), evaluator.getRequiredHydraulicConstraints())) {
+      throw new IllegalStateException("Operating-point evaluator definition changed after accepted-point replay");
+    }
+    if (!evaluator.getSimulationEvaluator().getProcessModel().isModelConverged()) {
+      throw new IllegalStateException("Current process baseline is not converged");
+    }
+    double[] baseline = replay.getBaselineValues();
+    List<ProcessModelOperatingAction> actions = evaluator.getActions();
+    if (baseline.length != actions.size()) {
+      throw new IllegalStateException("Accepted-point replay does not contain a complete baseline action vector");
+    }
+    for (int index = 0; index < actions.size(); index++) {
+      ProcessModelOperatingAction action = actions.get(index);
+      ProcessModelOperatingAction.CapabilityAssessment capability = action
+          .inspectCapability(evaluator.getSimulationEvaluator().getProcessModel());
+      if (!capability.isAvailable() || !capability.isCurrentValueWithinDomain()
+          || !sameActionValue(action, baseline[index], capability.getCurrentValue())) {
+        throw new IllegalStateException("Current process baseline is stale for action " + action.getId());
+      }
+    }
+    return validateAnchor(actions, search.getAcceptedCandidateValues());
+  }
+
+  /** Returns true when two frozen action lists have identical declaration-order definitions. */
+  private static boolean sameActions(List<ProcessModelOperatingAction> frozen,
+      List<ProcessModelOperatingAction> current) {
+    if (frozen.size() != current.size()) {
+      return false;
+    }
+    for (int index = 0; index < frozen.size(); index++) {
+      ProcessModelOperatingAction first = frozen.get(index);
+      ProcessModelOperatingAction second = current.get(index);
+      if (!sameText(first.getId(), second.getId()) || !sameText(first.getName(), second.getName())
+          || !sameText(first.getAddress(), second.getAddress()) || !sameText(first.getUnit(), second.getUnit())
+          || !sameText(first.getProvenance(), second.getProvenance())
+          || first.getValueSemantics() != second.getValueSemantics()
+          || !sameDouble(first.getLowerBound(), second.getLowerBound())
+          || !sameDouble(first.getUpperBound(), second.getUpperBound())
+          || !Arrays.equals(first.getAllowedValues(), second.getAllowedValues())
+          || !sameDouble(first.getReadBackAbsoluteTolerance(), second.getReadBackAbsoluteTolerance())
+          || !sameDouble(first.getReadBackRelativeTolerance(), second.getReadBackRelativeTolerance())
+          || !sameText(first.getReadBackToleranceProvenance(), second.getReadBackToleranceProvenance())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Returns true when frozen objective identities match the current evaluator definition. */
+  private static boolean sameObjectives(List<CandidateObjectiveEvidence> frozen, List<ObjectiveDefinition> current) {
+    if (frozen.size() != current.size()) {
+      return false;
+    }
+    for (int index = 0; index < frozen.size(); index++) {
+      CandidateObjectiveEvidence first = frozen.get(index);
+      ObjectiveDefinition second = current.get(index);
+      if (first.getIndex() != index || !sameText(first.getName(), second.getName())
+          || first.getDirection() != second.getDirection() || !sameText(first.getUnit(), second.getUnit())
+          || !sameDouble(first.getWeight(), second.getWeight())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Returns true when frozen constraint identities match the current evaluator definition. */
+  private static boolean sameConstraints(List<CandidateConstraintEvidence> frozen, List<ConstraintDefinition> current,
+      List<InstalledEquipmentCapacityEvidence> installedEvidence) {
+    if (frozen.size() != current.size()) {
+      return false;
+    }
+    for (int index = 0; index < frozen.size(); index++) {
+      CandidateConstraintEvidence first = frozen.get(index);
+      ConstraintDefinition second = current.get(index);
+      String currentPhysicalUnit = second.isPlantConstraint() ? second.getPlantConstraintDefinition().getUnit()
+          : second.getCapacityPhysicalUnit();
+      if (first.getIndex() != index || !sameText(first.getName(), second.getName())
+          || first.getType() != second.getType() || !sameText(first.getUnit(), second.getUnit())
+          || !sameText(first.getPhysicalUnit(), currentPhysicalUnit) || first.isHard() != second.isHard()
+          || !sameDouble(first.getPenaltyWeight(), second.getPenaltyWeight())
+          || !sameDouble(first.getLowerBound(), second.getLowerBound())
+          || !sameDouble(first.getUpperBound(), second.getUpperBound())
+          || !sameDouble(first.getEqualityTolerance(), second.getEqualityTolerance())
+          || first.isCapacityConstraint() != second.isCapacityConstraint()
+          || !sameText(first.getAreaName(), second.getAreaName())
+          || !sameText(first.getEquipmentName(), second.getEquipmentName())
+          || !sameText(first.getEquipmentConstraintName(), second.getEquipmentConstraintName())
+          || !sameCapacityDefinition(first, second, installedEvidence)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Returns true when a mutable installed-capacity definition still matches its replay snapshot. */
+  private static boolean sameCapacityDefinition(CandidateConstraintEvidence frozen, ConstraintDefinition current,
+      List<InstalledEquipmentCapacityEvidence> installedEvidence) {
+    if (!current.isCapacityConstraint()) {
+      return true;
+    }
+    CapacityConstraint definition = current.getCapturedCapacityConstraint();
+    InstalledEquipmentCapacityEvidence snapshot = findInstalledEvidence(frozen, installedEvidence);
+    return definition != null && snapshot != null && definition.getType() == snapshot.getConstraintType()
+        && definition.getSeverity() == snapshot.getSeverity() && definition.isEnabled() == snapshot.isEnabled()
+        && definition.isMinimumConstraint() == snapshot.isMinimumConstraint()
+        && sameText(definition.getUnit(), snapshot.getPhysicalUnit())
+        && sameDouble(definition.getDesignValue(), snapshot.getDesignValue())
+        && sameDouble(definition.getMinValue(), snapshot.getMinimumValue())
+        && sameDouble(definition.getMaxValue(), snapshot.getMaximumValue())
+        && sameDouble(definition.getApplicableLimit(), snapshot.getApplicableLimit())
+        && sameDouble(definition.getWarningThreshold(), snapshot.getWarningThreshold())
+        && sameSafeText(definition.getDescription(), snapshot.getDescription())
+        && sameText(definition.getDataSource() == null ? "not_set" : definition.getDataSource(),
+            snapshot.getDataSource())
+        && sameSafeText(definition.getBasis(), snapshot.getDesignBasis())
+        && definition.getSource() == snapshot.getDesignSource()
+        && sameSafeText(definition.getSourceReference(), snapshot.getDesignSourceReference())
+        && definition.hasOperatingLimit() == snapshot.hasOperatingLimit()
+        && (!definition.hasOperatingLimit() || sameDouble(definition.getOperatingLimit(), snapshot.getOperatingLimit())
+            && definition.getOperatingLimitSource() == snapshot.getOperatingLimitSource()
+            && sameSafeText(definition.getOperatingLimitSourceReference(), snapshot.getOperatingLimitSourceReference()))
+        && definition.getApplicableLimitRole() == snapshot.getApplicableLimitRole()
+        && definition.getApplicableLimitSource() == snapshot.getApplicableLimitSource()
+        && sameSafeText(definition.getApplicableLimitSourceReference(), snapshot.getApplicableLimitSourceReference())
+        && definition.hasApplicableLimitConfidence() == snapshot.hasConfidence()
+        && (!definition.hasApplicableLimitConfidence()
+            || sameDouble(definition.getApplicableLimitConfidence(), snapshot.getConfidence()))
+        && definition.hasApplicableLimitValidityRange() == snapshot.hasValidityRange()
+        && (!definition.hasApplicableLimitValidityRange()
+            || sameDouble(definition.getApplicableLimitValidityMinimum(), snapshot.getValidityMinimum())
+                && sameDouble(definition.getApplicableLimitValidityMaximum(), snapshot.getValidityMaximum()));
+  }
+
+  /** Finds the exact installed-capacity snapshot corresponding to one registered constraint. */
+  private static InstalledEquipmentCapacityEvidence findInstalledEvidence(CandidateConstraintEvidence constraint,
+      List<InstalledEquipmentCapacityEvidence> evidence) {
+    String qualifiedName = constraint.getAreaName() + "::" + constraint.getEquipmentName() + "/"
+        + constraint.getEquipmentConstraintName();
+    for (InstalledEquipmentCapacityEvidence snapshot : evidence) {
+      if (qualifiedName.equals(snapshot.getQualifiedConstraintName())) {
+        return snapshot;
+      }
+    }
+    return null;
+  }
+
+  /** Returns true when required hydraulic bindings remain identical and in declaration order. */
+  private static boolean sameHydraulicBindings(List<HydraulicConstraintSnapshot> frozen,
+      List<HydraulicConstraintBinding> current) {
+    if (frozen.size() != current.size()) {
+      return false;
+    }
+    for (int index = 0; index < frozen.size(); index++) {
+      HydraulicConstraintBinding first = frozen.get(index).getBinding();
+      HydraulicConstraintBinding second = current.get(index);
+      if (first.getRole() != second.getRole() || !sameText(first.getAreaName(), second.getAreaName())
+          || !sameText(first.getEquipmentName(), second.getEquipmentName())
+          || !sameText(first.getConstraintName(), second.getConstraintName())
+          || !sameText(first.getProvenance(), second.getProvenance())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Returns true when the current baseline action value matches the replay-captured baseline. */
+  private static boolean sameActionValue(ProcessModelOperatingAction action, double expected, double actual) {
+    if (action.isDiscrete()) {
+      return sameDouble(expected, actual);
+    }
+    double tolerance = Math.max(action.getReadBackAbsoluteTolerance(),
+        action.getReadBackRelativeTolerance() * Math.max(1.0, Math.abs(expected)));
+    return Math.abs(actual - expected) <= tolerance;
+  }
+
+  /** Returns true for equal nullable text values. */
+  private static boolean sameText(String first, String second) {
+    return first == null ? second == null : first.equals(second);
+  }
+
+  /** Returns true when nullable definition text matches snapshot text normalized to empty. */
+  private static boolean sameSafeText(String first, String second) {
+    return (first == null ? "" : first).equals(second == null ? "" : second);
+  }
+
+  /** Returns true for bitwise-identical doubles, including infinities used by constraint bounds. */
+  private static boolean sameDouble(double first, double second) {
+    return Double.doubleToLongBits(first) == Double.doubleToLongBits(second);
   }
 
   /**
