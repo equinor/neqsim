@@ -1022,6 +1022,34 @@ sweep and report the rate at which `u_L` crosses `v_c` — that threshold, not t
 present-day margin, is the number operations needs. Do not use erosion headroom
 as a reason to choke a well back without checking it.
 
+### Minimum flow of a tie-back line, on the real route
+
+A line is not "flat plus a riser" once it is longer than about 2 km, and one rate is not a design.
+
+1. **Use the real profile.** Take depths along the route (survey, EMODnet `depth_sample`, or the
+   KP route of an existing line) and build
+   `RouteProfile.fromDepths(kp, depth).withRiser(depthAtHost, airGap).resample(60)`, then
+   `route.applyTo(twoFluidPipe)`; `route.getLowPointKp()` lists the liquid traps.
+   `route.applyTo(PipeBeggsAndBrills)` collapses the route to one averaged leg and logs a warning above
+   5 degrees; it keeps the net rise and loses the undulation. Compare the real profile with a flat
+   bed of the same length and riser on the SAME model before saying the seabed does not matter.
+2. **Fix the outlet, solve the inlet.** `TwoFluidPipe.setOutletPressure(p, "bara")` gives the inlet
+   pressure the line needs, which is the number a VFP or nodal curve wants. Fixing the inlet and
+   reading the outlet hides how fast the line pressure runs away at low rate.
+3. **Sweep the rate downwards** (about 10 to 200 % of plateau, with and without lift gas, at the lowest and
+   highest water cut) and report each limit by name; the minimum flow is the largest of them:
+   - hydraulic: the rate where the required inlet pressure stops falling (U-shape: friction falls,
+     hold-up and hydrostatic head rise);
+   - hold-up and liquid inventory (`getLiquidInventory("m3")`, `getLiquidHoldupProfile()`) and the
+     time to sweep it after a restart;
+   - thermal: arrival temperature minus the hydrate or wax temperature at the line pressure;
+   - sand or solids: `u_L / v_c` (section above);
+   - riser or terrain slugging and the pig rate, which the steady-state model does not give.
+4. **Always check `isSteadyStateConverged()`** and the iteration count; a case that exits after one
+   sweep is not a solution.
+5. State what was not run: severe-slugging limit cycles need a transient run and are not qualified in
+   `TwoFluidPipe` (see the evidence matrix); a steady-state hold-up profile is not a slug size.
+
 ### Get the operating basis right before computing any velocity
 
 A wrong pressure invalidates every velocity, hold-up and transport number
