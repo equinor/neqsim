@@ -20,6 +20,7 @@ import neqsim.process.equipment.pipeline.RadialThermalLayer;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator.LineDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Acceptance tests for canonical line thermal design and solved arrival constraints. */
 class SubseaLineThermalDesignTest {
@@ -82,6 +83,34 @@ class SubseaLineThermalDesignTest {
         .evaluate(network);
     assertFalse(unsolved.isSatisfied());
     assertEquals(1.0e6, unsolved.getResidual(), 1.0e-12);
+  }
+
+  /** The solved steady arrival temperature must match the independent plug-flow energy equation. */
+  @Test
+  void matchesAnalyticalPlugFlowTemperatureForSolvedState() {
+    FieldNetworkTopology topology = createTopology();
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    NetworkPipe pipe = network.getPipe("production-flowline");
+    double uValue = 2.0;
+    double ambientK = 277.15;
+    SubseaProductionSystem subsea = new SubseaProductionSystem("analytical arrival");
+    subsea.setLineDesign("production-flowline", LineDesign.builder(8.625).wallThicknessMm(8.0)
+        .overallHeatTransferCoefficientWm2K(uValue).thermalBoundary(4.0, 300.0, 100.0).build());
+    subsea.applyLineThermalDesigns(topology);
+
+    network.run();
+
+    SystemInterface pressureAdjusted = pipe.getInletFluid();
+    double inletEnthalpy = pressureAdjusted.getEnthalpy();
+    pressureAdjusted.setPressure(pipe.getOutletFluid().getPressure("bara"), "bara");
+    ThermodynamicOperations operations = new ThermodynamicOperations(pressureAdjusted);
+    operations.PHflash(inletEnthalpy);
+    pressureAdjusted.initProperties();
+    double conductance = uValue * Math.PI * pipe.getDiameter() * pipe.getLength();
+    double exponent = -conductance / (Math.abs(pipe.getFlowRate()) * pressureAdjusted.getCp("J/kgK"));
+    double expectedTemperatureK = ambientK + (pressureAdjusted.getTemperature("K") - ambientK) * Math.exp(exponent);
+
+    assertEquals(expectedTemperatureK, pipe.getOutletTemperature(), 1.0e-8);
   }
 
   /** Build one canonical production route with hydraulics and thermal state on the same edge. */

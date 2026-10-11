@@ -11,6 +11,8 @@ import neqsim.process.costestimation.CostEstimateBasis;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.engineering.calculation.EngineeringCalculationContext;
+import neqsim.process.engineering.calculation.EngineeringCalculationResult;
 import neqsim.process.equipment.network.FieldNetworkTopology;
 import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.LoopedPipeNetwork;
@@ -35,6 +37,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.TiebackAnalyzer;
 import neqsim.process.fielddevelopment.tieback.TiebackOption;
+import neqsim.process.mechanicaldesign.pipeline.DnvStF101PipelineAssessment;
+import neqsim.process.mechanicaldesign.subsea.DnvRpF109OnBottomStabilityAssessment;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator.LineCategory;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator.LineDesign;
@@ -1329,6 +1333,73 @@ public class SubseaProductionSystem implements Serializable {
       }
     }
     return Collections.unmodifiableList(constraints);
+  }
+
+  /**
+   * Evaluate configured DNV-ST-F101 limit-state inputs by canonical route identity.
+   *
+   * <p>
+   * The method reuses the existing fail-closed engineering kernel through each {@link LineDesign}. It validates every
+   * registered route and rigid-pipe inside diameter against the same topology used for hydraulics before calculation.
+   * It does not infer missing project load cases, material factors, standard editions, or fabrication data.
+   * </p>
+   *
+   * @param topology canonical field topology owning the route identities
+   * @return immutable fail-closed calculation results keyed by canonical edge ID
+   */
+  public Map<String, EngineeringCalculationResult<DnvStF101PipelineAssessment>> assessDnvStF101LineDesigns(
+      FieldNetworkTopology topology) {
+    FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    validateLineDesigns(basis);
+    Map<String, EngineeringCalculationResult<DnvStF101PipelineAssessment>> assessments = new LinkedHashMap<String, EngineeringCalculationResult<DnvStF101PipelineAssessment>>();
+    for (Map.Entry<String, LineDesign> entry : lineDesigns.entrySet()) {
+      if (entry.getValue().hasDnvStF101Input()) {
+        String standardBasis = entry.getValue().getDnvStF101Input().getEdition() == null ? ""
+            : entry.getValue().getDnvStF101Input().getEdition().getDisplayName();
+        assessments.put(entry.getKey(),
+            entry.getValue().screenDnvStF101(screeningContext(entry.getKey(), standardBasis)));
+      }
+    }
+    return Collections.unmodifiableMap(assessments);
+  }
+
+  /**
+   * Evaluate configured DNV-RP-F109 on-bottom-stability inputs by canonical route identity.
+   *
+   * <p>
+   * Environmental, hydrodynamic, soil, displacement-response, and safety-factor data remain project-controlled design
+   * inputs on the line design. They are not stored in or inferred from the hydraulic topology.
+   * </p>
+   *
+   * @param topology canonical field topology owning the route identities
+   * @return immutable fail-closed calculation results keyed by canonical edge ID
+   */
+  public Map<String, EngineeringCalculationResult<DnvRpF109OnBottomStabilityAssessment>> assessOnBottomStabilityLineDesigns(
+      FieldNetworkTopology topology) {
+    FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    validateLineDesigns(basis);
+    Map<String, EngineeringCalculationResult<DnvRpF109OnBottomStabilityAssessment>> assessments = new LinkedHashMap<String, EngineeringCalculationResult<DnvRpF109OnBottomStabilityAssessment>>();
+    for (Map.Entry<String, LineDesign> entry : lineDesigns.entrySet()) {
+      if (entry.getValue().hasOnBottomStabilityInput()) {
+        String standardBasis = entry.getValue().getOnBottomStabilityInput().getEdition() == null ? ""
+            : entry.getValue().getOnBottomStabilityInput().getEdition().getDisplayName();
+        assessments.put(entry.getKey(),
+            entry.getValue().screenOnBottomStability(screeningContext(entry.getKey(), standardBasis)));
+      }
+    }
+    return Collections.unmodifiableMap(assessments);
+  }
+
+  /**
+   * Create traceable calculation context from a canonical edge and explicit standard basis.
+   *
+   * @param edgeId canonical route identity
+   * @param standardBasis explicit standard-edition label, or empty when missing
+   * @return immutable engineering-calculation context
+   */
+  private EngineeringCalculationContext screeningContext(String edgeId, String standardBasis) {
+    return EngineeringCalculationContext.builder().designCaseId(edgeId).addStandardReference(standardBasis)
+        .attribute("canonicalEdgeId", edgeId).build();
   }
 
   /**
