@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.subsea;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,6 +10,7 @@ import neqsim.process.costestimation.CostEstimateBasis;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
 
 /**
  * SURF (Subsea, Umbilicals, Risers, Flowlines) CAPEX estimator for field development.
@@ -34,6 +36,268 @@ import neqsim.process.costestimation.MaterialTakeOffItem;
  */
 public class SURFCostEstimator {
 
+  /**
+   * Immutable mechanical and installation basis for one physical line segment.
+   *
+   * <p>
+   * The basis is deliberately independent of hydraulic-model selection. It supplements a canonical route with the outer
+   * diameter, wall, material and installation inputs needed for Class 4 costing. A zero wall thickness requests the
+   * existing {@link PipeMechanicalDesignCalculator} screening calculation; it does not represent a qualified
+   * DNV-ST-F101 design.
+   * </p>
+   */
+  public static final class LineDesign implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+
+    private final double outerDiameterInches;
+    private final double wallThicknessMm;
+    private final String materialGrade;
+    private final String installationMethod;
+    private final double designPressureBar;
+    private final String designCode;
+    private final boolean flexible;
+    private final String insulationType;
+    private final double insulationThicknessMm;
+
+    /** Create an immutable line design from a validated builder. */
+    private LineDesign(Builder builder) {
+      outerDiameterInches = builder.outerDiameterInches;
+      wallThicknessMm = builder.wallThicknessMm;
+      materialGrade = builder.materialGrade;
+      installationMethod = builder.installationMethod;
+      designPressureBar = builder.designPressureBar;
+      designCode = builder.designCode;
+      flexible = builder.flexible;
+      insulationType = builder.insulationType;
+      insulationThicknessMm = builder.insulationThicknessMm;
+    }
+
+    /**
+     * Start a route-specific design basis.
+     *
+     * @param outerDiameterInches pipe outer diameter in inches
+     * @return mutable builder with conservative screening defaults
+     */
+    public static Builder builder(double outerDiameterInches) {
+      return new Builder(outerDiameterInches);
+    }
+
+    /** @return pipe outer diameter in inches */
+    public double getOuterDiameterInches() {
+      return outerDiameterInches;
+    }
+
+    /** @return explicit wall thickness in mm, or zero when screening calculation is requested */
+    public double getWallThicknessMm() {
+      return wallThicknessMm;
+    }
+
+    /** @return material grade used for screening */
+    public String getMaterialGrade() {
+      return materialGrade;
+    }
+
+    /** @return route installation method */
+    public String getInstallationMethod() {
+      return installationMethod;
+    }
+
+    /** @return design pressure in bar */
+    public double getDesignPressureBar() {
+      return designPressureBar;
+    }
+
+    /** @return legacy screening design-code identifier */
+    public String getDesignCode() {
+      return designCode;
+    }
+
+    /** @return true for flexible construction */
+    public boolean isFlexible() {
+      return flexible;
+    }
+
+    /** @return insulation material/type label */
+    public String getInsulationType() {
+      return insulationType;
+    }
+
+    /** @return insulation thickness in mm */
+    public double getInsulationThicknessMm() {
+      return insulationThicknessMm;
+    }
+
+    /**
+     * Resolve the cost-basis wall thickness through existing pipeline mechanical screening.
+     *
+     * @return explicit or calculated wall thickness in mm
+     */
+    public double resolveWallThicknessMm() {
+      if (wallThicknessMm > 0.0) {
+        return wallThicknessMm;
+      }
+      if (flexible) {
+        return 0.0;
+      }
+      PipeMechanicalDesignCalculator calculator = createMechanicalCalculator();
+      double calculatedMm = calculator.calculateMinimumWallThickness() * 1000.0;
+      return Math.ceil(calculatedMm * 2.0) / 2.0;
+    }
+
+    /**
+     * Get the inside diameter implied by OD and resolved wall thickness.
+     *
+     * @return inside diameter in metres
+     */
+    public double getResolvedInnerDiameterM() {
+      if (flexible) {
+        return Double.NaN;
+      }
+      return outerDiameterInches * 0.0254 - 2.0 * resolveWallThicknessMm() / 1000.0;
+    }
+
+    /** Create a configured existing mechanical-design calculator. */
+    private PipeMechanicalDesignCalculator createMechanicalCalculator() {
+      PipeMechanicalDesignCalculator calculator = new PipeMechanicalDesignCalculator();
+      calculator.setOuterDiameter(outerDiameterInches, "inch");
+      calculator.setDesignPressure(designPressureBar, "bar");
+      calculator.setMaterialGrade(materialGrade);
+      calculator.setDesignCode(designCode);
+      calculator.setInstallationMethod(installationMethod);
+      calculator.setInsulationType(insulationType);
+      calculator.setInsulationThickness(insulationThicknessMm / 1000.0);
+      if (wallThicknessMm > 0.0) {
+        calculator.setNominalWallThickness(wallThicknessMm, "mm");
+      }
+      return calculator;
+    }
+
+    /** Builder for an immutable {@link LineDesign}. */
+    public static final class Builder {
+      private final double outerDiameterInches;
+      private double wallThicknessMm;
+      private String materialGrade = "X65";
+      private String installationMethod = "S-lay";
+      private double designPressureBar = 165.0;
+      private String designCode = PipeMechanicalDesignCalculator.ASME_B31_8;
+      private boolean flexible;
+      private String insulationType = "none";
+      private double insulationThicknessMm;
+
+      /**
+       * Create a line-design builder.
+       *
+       * @param outerDiameterInches pipe outer diameter in inches
+       */
+      private Builder(double outerDiameterInches) {
+        if (!(outerDiameterInches > 0.0) || !Double.isFinite(outerDiameterInches)) {
+          throw new IllegalArgumentException("Line-design outer diameter must be finite and positive");
+        }
+        this.outerDiameterInches = outerDiameterInches;
+      }
+
+      /** @param value wall thickness in mm; zero requests screening calculation @return this builder */
+      public Builder wallThicknessMm(double value) {
+        if (value < 0.0 || !Double.isFinite(value)) {
+          throw new IllegalArgumentException("Line-design wall thickness must be finite and non-negative");
+        }
+        wallThicknessMm = value;
+        return this;
+      }
+
+      /** @param value API 5L material grade @return this builder */
+      public Builder materialGrade(String value) {
+        String checked = requireLineDesignText(value, "material grade");
+        if (!PipeMechanicalDesignCalculator.isSupportedMaterialGrade(checked)) {
+          throw new IllegalArgumentException("Unsupported line-design API 5L material grade '" + checked + "'");
+        }
+        materialGrade = checked;
+        return this;
+      }
+
+      /** @param value S-lay, J-lay or Reel-lay @return this builder */
+      public Builder installationMethod(String value) {
+        String checked = requireLineDesignText(value, "installation method");
+        if (!"S-lay".equals(checked) && !"J-lay".equals(checked) && !"Reel-lay".equals(checked)) {
+          throw new IllegalArgumentException("Unsupported line-design installation method '" + checked + "'");
+        }
+        installationMethod = checked;
+        return this;
+      }
+
+      /** @param value design pressure in bar @return this builder */
+      public Builder designPressureBar(double value) {
+        if (!(value > 0.0) || !Double.isFinite(value)) {
+          throw new IllegalArgumentException("Line-design pressure must be finite and positive");
+        }
+        designPressureBar = value;
+        return this;
+      }
+
+      /**
+       * Select an existing legacy screening code.
+       *
+       * @param value one of the constants on {@link PipeMechanicalDesignCalculator}
+       * @return this builder
+       */
+      public Builder designCode(String value) {
+        String checked = requireLineDesignText(value, "design code");
+        if (!PipeMechanicalDesignCalculator.ASME_B31_3.equals(checked)
+            && !PipeMechanicalDesignCalculator.ASME_B31_4.equals(checked)
+            && !PipeMechanicalDesignCalculator.ASME_B31_8.equals(checked)
+            && !PipeMechanicalDesignCalculator.DNV_OS_F101.equals(checked)) {
+          throw new IllegalArgumentException("Unsupported line-design screening code '" + checked + "'");
+        }
+        designCode = checked;
+        return this;
+      }
+
+      /** @param value true for flexible construction @return this builder */
+      public Builder flexible(boolean value) {
+        flexible = value;
+        return this;
+      }
+
+      /**
+       * Configure an insulation layer.
+       *
+       * @param type insulation material/type label
+       * @param thicknessMm thickness in mm
+       * @return this builder
+       */
+      public Builder insulation(String type, double thicknessMm) {
+        insulationType = requireLineDesignText(type, "insulation type");
+        if (thicknessMm < 0.0 || !Double.isFinite(thicknessMm)) {
+          throw new IllegalArgumentException("Line-design insulation thickness must be finite and non-negative");
+        }
+        insulationThicknessMm = thicknessMm;
+        return this;
+      }
+
+      /** @return validated immutable design */
+      public LineDesign build() {
+        if (wallThicknessMm > 0.0 && 2.0 * wallThicknessMm / 1000.0 >= outerDiameterInches * 0.0254) {
+          throw new IllegalArgumentException("Line-design wall thickness leaves no positive inside diameter");
+        }
+        LineDesign result = new LineDesign(this);
+        if (!flexible && !(result.getResolvedInnerDiameterM() > 0.0)) {
+          throw new IllegalArgumentException(
+              "Calculated line-design wall thickness leaves no positive inside diameter");
+        }
+        return result;
+      }
+    }
+  }
+
+  /** Validate required line-design text. */
+  private static String requireLineDesignText(String value, String field) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException("Line-design " + field + " cannot be empty");
+    }
+    return value.trim();
+  }
+
   /** Physical line categories accepted by the disaggregated route-cost API. */
   public enum LineCategory {
     /** Well-to-tree or tree-to-manifold jumper. */
@@ -52,6 +316,7 @@ public class SURFCostEstimator {
     private final LineCategory category;
     private final double lengthM;
     private final double diameterInches;
+    private final LineDesign design;
 
     /**
      * Create one route-segment basis.
@@ -61,11 +326,13 @@ public class SURFCostEstimator {
      * @param lengthM route length in metres
      * @param diameterInches line diameter in inches
      */
-    private LineSegmentBasis(String identifier, LineCategory category, double lengthM, double diameterInches) {
+    private LineSegmentBasis(String identifier, LineCategory category, double lengthM, double diameterInches,
+        LineDesign design) {
       this.identifier = identifier;
       this.category = category;
       this.lengthM = lengthM;
       this.diameterInches = diameterInches;
+      this.design = design;
     }
   }
 
@@ -203,6 +470,9 @@ public class SURFCostEstimator {
 
   /** Pipeline coating price per m2 USD. */
   private double coatingPricePerM2 = 80.0;
+
+  /** Pipeline insulation price per m3 USD. */
+  private double insulationPricePerM3 = 150.0;
 
   /** Contingency percentage (0-1). */
   private double contingencyPct = 0.15;
@@ -383,11 +653,16 @@ public class SURFCostEstimator {
           continue;
         }
         est = new SubseaCostEstimator(region);
-        est.calculateJumperCost(segment.lengthM, segment.diameterInches, rigidJumpers, waterDepthM);
+        double diameterInches = segment.design == null ? segment.diameterInches : segment.design.outerDiameterInches;
+        boolean rigid = segment.design == null ? rigidJumpers : !segment.design.flexible;
+        est.calculateJumperCost(segment.lengthM, diameterInches, rigid, waterDepthM);
         double jumperCost = est.getTotalCost();
         subseaCostUSD += jumperCost;
-        addLineItem("S", "Jumper " + segment.identifier + " " + String.format("%.0f", segment.diameterInches) + "\" ("
-            + String.format("%.0f", segment.lengthM) + " m)", 1, "ea", jumperCost, jumperCost, est.getVesselDays());
+        Map<String, Object> item = addLineItem("S",
+            (rigid ? "Rigid" : "Flexible") + " Jumper " + segment.identifier + " "
+                + String.format("%.0f", diameterInches) + "\" (" + String.format("%.0f", segment.lengthM) + " m)",
+            1, "ea", jumperCost, jumperCost, est.getVesselDays());
+        addLineDesignMetadata(item, segment.design);
       }
     } else if (numberOfJumpers > 0) {
       est = new SubseaCostEstimator(region);
@@ -426,16 +701,20 @@ public class SURFCostEstimator {
           continue;
         }
         SubseaCostEstimator est = new SubseaCostEstimator(region);
-        if (flexibleRiser) {
-          est.calculateFlexiblePipeCost(segment.lengthM, segment.diameterInches, waterDepthM, true, riserHasBuoyancy);
+        double diameterInches = segment.design == null ? segment.diameterInches : segment.design.outerDiameterInches;
+        boolean flexible = segment.design == null ? flexibleRiser : segment.design.flexible;
+        if (flexible) {
+          est.calculateFlexiblePipeCost(segment.lengthM, diameterInches, waterDepthM, true, riserHasBuoyancy);
         } else {
-          est.calculateJumperCost(segment.lengthM, segment.diameterInches, true, waterDepthM);
+          est.calculateJumperCost(segment.lengthM, diameterInches, true, waterDepthM);
         }
         double riserCost = est.getTotalCost();
         riserCostUSD += riserCost;
-        addLineItem("R", (flexibleRiser ? "Flexible" : "Rigid") + " Riser " + segment.identifier + " "
-            + String.format("%.0f", segment.diameterInches) + "\" (" + String.format("%.0f", segment.lengthM) + " m)",
+        Map<String, Object> item = addLineItem("R",
+            (flexible ? "Flexible" : "Rigid") + " Riser " + segment.identifier + " "
+                + String.format("%.0f", diameterInches) + "\" (" + String.format("%.0f", segment.lengthM) + " m)",
             1, "ea", riserCost, riserCost, est.getVesselDays());
+        addLineDesignMetadata(item, segment.design);
       }
       return;
     }
@@ -464,22 +743,26 @@ public class SURFCostEstimator {
     if (!routeSegments.isEmpty()) {
       for (LineSegmentBasis segment : routeSegments) {
         if (segment.category == LineCategory.INFIELD_FLOWLINE) {
-          if (infieldFlowlineFlexible) {
+          boolean flexible = segment.design == null ? infieldFlowlineFlexible : segment.design.flexible;
+          double diameterInches = segment.design == null ? segment.diameterInches : segment.design.outerDiameterInches;
+          if (flexible) {
             SubseaCostEstimator est = new SubseaCostEstimator(region);
-            est.calculateFlexiblePipeCost(segment.lengthM, segment.diameterInches, waterDepthM, false, false);
+            est.calculateFlexiblePipeCost(segment.lengthM, diameterInches, waterDepthM, false, false);
             double cost = est.getTotalCost();
             flowlineCostUSD += cost;
-            addLineItem("F",
-                "Infield Flowline " + segment.identifier + " " + String.format("%.0f", segment.diameterInches) + "\" ("
+            Map<String, Object> item = addLineItem("F",
+                "Infield Flowline " + segment.identifier + " " + String.format("%.0f", diameterInches) + "\" ("
                     + String.format("%.2f", segment.lengthM / 1000.0) + " km, flexible)",
                 1, "ea", cost, cost, est.getVesselDays());
+            addLineDesignMetadata(item, segment.design);
           } else {
-            calculateRigidPipelineCost(segment.lengthM / 1000.0, segment.diameterInches,
-                "Infield Flowline " + segment.identifier);
+            calculateRigidPipelineCost(segment.lengthM / 1000.0, diameterInches,
+                "Infield Flowline " + segment.identifier, segment.design);
           }
         } else if (segment.category == LineCategory.EXPORT_PIPELINE) {
-          calculateRigidPipelineCost(segment.lengthM / 1000.0, segment.diameterInches,
-              "Export Pipeline " + segment.identifier);
+          double diameterInches = segment.design == null ? segment.diameterInches : segment.design.outerDiameterInches;
+          calculateRigidPipelineCost(segment.lengthM / 1000.0, diameterInches, "Export Pipeline " + segment.identifier,
+              segment.design);
         }
       }
       return;
@@ -500,14 +783,13 @@ public class SURFCostEstimator {
             1, "ea", infieldCost, infieldCost, est.getVesselDays());
       } else {
         infieldCost = calculateRigidPipelineCost(infieldFlowlineLengthKm, infieldFlowlineDiameterInches,
-            "Infield Flowline");
+            "Infield Flowline", null);
       }
     }
 
     // Export pipeline
     if (exportPipelineLengthKm > 0) {
-      double exportCost = calculateRigidPipelineCost(exportPipelineLengthKm, exportPipelineDiameterInches,
-          "Export Pipeline");
+      calculateRigidPipelineCost(exportPipelineLengthKm, exportPipelineDiameterInches, "Export Pipeline", null);
     }
   }
 
@@ -517,34 +799,42 @@ public class SURFCostEstimator {
    * @param lengthKm pipeline length in km
    * @param diameterInches outer diameter in inches
    * @param label description label
+   * @param design optional route-specific design basis; {@code null} uses scalar legacy settings
    * @return total cost in USD
    */
-  private double calculateRigidPipelineCost(double lengthKm, double diameterInches, String label) {
+  private double calculateRigidPipelineCost(double lengthKm, double diameterInches, String label, LineDesign design) {
     double lengthM = lengthKm * 1000.0;
     double outerDiameterM = diameterInches * 0.0254;
+    String materialGrade = design == null ? pipelineMaterialGrade : design.materialGrade;
+    String installationMethod = design == null ? pipelineInstallMethod : design.installationMethod;
+    double designPressureBar = design == null ? pipelineDesignPressureBar : design.designPressureBar;
+    String designCode = design == null ? PipeMechanicalDesignCalculator.ASME_B31_8 : design.designCode;
+    double insulationThicknessM = design == null ? 0.0 : design.insulationThicknessMm / 1000.0;
+    String insulationType = design == null ? "none" : design.insulationType;
 
-    // Wall thickness calculation (simplified Barlow formula with design factor)
+    // Reuse the existing pipeline mechanical-screening calculator for wall and material quantities.
+    PipeMechanicalDesignCalculator mechanical = new PipeMechanicalDesignCalculator();
+    mechanical.setOuterDiameter(outerDiameterM);
+    mechanical.setDesignPressure(designPressureBar, "bar");
+    mechanical.setMaterialGrade(materialGrade);
+    mechanical.setDesignCode(designCode);
+    mechanical.setPipelineLength(lengthM);
+    mechanical.setInstallationMethod(installationMethod);
+    mechanical.setWaterDepth(waterDepthM);
+    mechanical.setInsulationType(insulationType);
+    mechanical.setInsulationThickness(insulationThicknessM);
     double wallThicknessM;
-    if (pipelineWallThicknessMm > 0) {
-      wallThicknessM = pipelineWallThicknessMm / 1000.0;
+    double requestedWallThicknessMm = design == null ? pipelineWallThicknessMm : design.wallThicknessMm;
+    if (requestedWallThicknessMm > 0.0) {
+      wallThicknessM = requestedWallThicknessMm / 1000.0;
     } else {
-      // Simplified: t = P * D / (2 * SMYS * F * E)
-      double smys = getSMYSForGrade(pipelineMaterialGrade);
-      double designFactor = 0.72; // ASME B31.8 Location Class 1
-      double jointFactor = 1.0;
-      double designPressureMPa = pipelineDesignPressureBar / 10.0;
-      wallThicknessM = designPressureMPa * outerDiameterM / (2.0 * smys * designFactor * jointFactor);
-      // Add corrosion allowance (3mm) and fabrication tolerance (12.5%)
-      wallThicknessM = (wallThicknessM + 0.003) / (1.0 - 0.125);
-      // Round up to nearest 0.5mm
-      wallThicknessM = Math.ceil(wallThicknessM * 2000.0) / 2000.0;
+      wallThicknessM = Math.ceil(mechanical.calculateMinimumWallThickness() * 2000.0) / 2000.0;
     }
+    mechanical.setNominalWallThickness(wallThicknessM);
+    mechanical.calculateWeightsAndAreas();
 
-    // Steel weight per meter
     double innerDiameterM = outerDiameterM - 2.0 * wallThicknessM;
-    double steelAreaM2 = Math.PI * (outerDiameterM * outerDiameterM - innerDiameterM * innerDiameterM) / 4.0;
-    double steelWeightPerM = steelAreaM2 * 7850.0; // kg/m
-    double totalSteelWeight = steelWeightPerM * lengthM;
+    double totalSteelWeight = mechanical.getSteelWeightPerMeter() * lengthM;
 
     // Material cost
     double steelCostUSD = totalSteelWeight * steelPricePerKg;
@@ -553,8 +843,15 @@ public class SURFCostEstimator {
     double externalSurfaceM2 = Math.PI * outerDiameterM * lengthM;
     double coatingCostUSD = externalSurfaceM2 * coatingPricePerM2;
 
+    // Route-specific insulation volume and screening material cost.
+    double insulationVolumeM3 = insulationThicknessM > 0.0
+        ? Math.PI * (Math.pow(outerDiameterM / 2.0 + insulationThicknessM, 2) - Math.pow(outerDiameterM / 2.0, 2))
+            * lengthM
+        : 0.0;
+    double insulationCostUSD = insulationVolumeM3 * insulationPricePerM3;
+
     // Installation cost per meter (varies by method and diameter)
-    double installCostPerM = getInstallationCostPerMeter(pipelineInstallMethod, outerDiameterM, waterDepthM);
+    double installCostPerM = getInstallationCostPerMeter(installationMethod, outerDiameterM, waterDepthM);
     double installCostUSD = installCostPerM * lengthM;
 
     // Welding cost
@@ -564,7 +861,7 @@ public class SURFCostEstimator {
     double weldingCostUSD = numberOfJoints * weldCostPerJoint;
 
     // Direct cost subtotal
-    double directCost = steelCostUSD + coatingCostUSD + installCostUSD + weldingCostUSD;
+    double directCost = steelCostUSD + coatingCostUSD + insulationCostUSD + installCostUSD + weldingCostUSD;
 
     // Indirect costs
     double engineeringUSD = directCost * 0.08;
@@ -576,11 +873,11 @@ public class SURFCostEstimator {
 
     // Estimate vessel days
     double layRateKmPerDay;
-    if ("S-lay".equals(pipelineInstallMethod)) {
+    if ("S-lay".equals(installationMethod)) {
       layRateKmPerDay = 2.0;
-    } else if ("J-lay".equals(pipelineInstallMethod)) {
+    } else if ("J-lay".equals(installationMethod)) {
       layRateKmPerDay = 1.5;
-    } else if ("Reel-lay".equals(pipelineInstallMethod)) {
+    } else if ("Reel-lay".equals(installationMethod)) {
       layRateKmPerDay = 3.0;
     } else {
       layRateKmPerDay = 2.0;
@@ -589,12 +886,21 @@ public class SURFCostEstimator {
 
     Map<String, Object> lineItem = addLineItem("F",
         label + " " + String.format("%.0f", diameterInches) + "\" x " + String.format("%.1f", wallThicknessM * 1000)
-            + "mm WT (" + String.format("%.0f", lengthKm) + " km, " + pipelineMaterialGrade + ")",
+            + "mm WT (" + String.format("%.0f", lengthKm) + " km, " + materialGrade + ", " + installationMethod + ")",
         1, "ea", totalCost, totalCost, vesselDays);
     lineItem.put("length_km", lengthKm);
     lineItem.put("diameter_inches", diameterInches);
     lineItem.put("wallThickness_mm", wallThicknessM * 1000.0);
-    lineItem.put("materialGrade", pipelineMaterialGrade);
+    lineItem.put("outerDiameter_inches", diameterInches);
+    lineItem.put("innerDiameter_m", innerDiameterM);
+    lineItem.put("materialGrade", materialGrade);
+    lineItem.put("installationMethod", installationMethod);
+    lineItem.put("designPressure_bar", designPressureBar);
+    lineItem.put("designCode", designCode);
+    lineItem.put("insulationType", insulationType);
+    lineItem.put("insulationThickness_mm", insulationThicknessM * 1000.0);
+    lineItem.put("insulationVolume_m3", insulationVolumeM3);
+    lineItem.put("insulationCostUSD", insulationCostUSD);
     lineItem.put("steelWeight_kg", totalSteelWeight);
     lineItem.put("steelCostUSD", steelCostUSD);
     lineItem.put("coatingArea_m2", externalSurfaceM2);
@@ -607,29 +913,6 @@ public class SURFCostEstimator {
     lineItem.put("contingencyCostUSD", contingencyUSD);
 
     return totalCost;
-  }
-
-  /**
-   * Get SMYS for common pipe steel grades.
-   *
-   * @param grade material grade (e.g. "X52", "X65", "X70")
-   * @return SMYS in MPa
-   */
-  private double getSMYSForGrade(String grade) {
-    if ("X42".equals(grade)) {
-      return 290.0;
-    } else if ("X52".equals(grade)) {
-      return 359.0;
-    } else if ("X60".equals(grade)) {
-      return 414.0;
-    } else if ("X65".equals(grade)) {
-      return 448.0;
-    } else if ("X70".equals(grade)) {
-      return 483.0;
-    } else if ("X80".equals(grade)) {
-      return 551.0;
-    }
-    return 448.0; // Default to X65
   }
 
   /**
@@ -703,6 +986,31 @@ public class SURFCostEstimator {
    * @param diameterInches exact line diameter in inches
    */
   public void addLineSegment(String identifier, LineCategory category, double lengthM, double diameterInches) {
+    validateLineSegment(identifier, category, lengthM);
+    if (!(diameterInches > 0.0) || !Double.isFinite(diameterInches)) {
+      throw new IllegalArgumentException("Line-segment diameter must be finite and positive");
+    }
+    routeSegments.add(new LineSegmentBasis(identifier, category, lengthM, diameterInches, null));
+  }
+
+  /**
+   * Replace scalar line-category aggregation with one physical route segment and its explicit design basis.
+   *
+   * @param identifier stable edge identifier or equipment tag
+   * @param category physical line category
+   * @param lengthM exact route length in metres
+   * @param design immutable mechanical and installation basis
+   */
+  public void addLineSegment(String identifier, LineCategory category, double lengthM, LineDesign design) {
+    if (design == null) {
+      throw new IllegalArgumentException("Line-segment design cannot be null");
+    }
+    validateLineSegment(identifier, category, lengthM);
+    routeSegments.add(new LineSegmentBasis(identifier, category, lengthM, design.outerDiameterInches, design));
+  }
+
+  /** Validate identity, category and length shared by line-segment registration paths. */
+  private void validateLineSegment(String identifier, LineCategory category, double lengthM) {
     if (identifier == null || identifier.trim().isEmpty()) {
       throw new IllegalArgumentException("Line-segment identifier cannot be empty");
     }
@@ -712,10 +1020,6 @@ public class SURFCostEstimator {
     if (!(lengthM > 0.0) || !Double.isFinite(lengthM)) {
       throw new IllegalArgumentException("Line-segment length must be finite and positive");
     }
-    if (!(diameterInches > 0.0) || !Double.isFinite(diameterInches)) {
-      throw new IllegalArgumentException("Line-segment diameter must be finite and positive");
-    }
-    routeSegments.add(new LineSegmentBasis(identifier, category, lengthM, diameterInches));
   }
 
   /** Clear all exact route segments and return to the legacy scalar line basis. */
@@ -726,6 +1030,23 @@ public class SURFCostEstimator {
   /** @return number of exact route segments in the current cost basis */
   public int getLineSegmentCount() {
     return routeSegments.size();
+  }
+
+  /** Add route-design metadata to one line item when available. */
+  private void addLineDesignMetadata(Map<String, Object> item, LineDesign design) {
+    if (design == null) {
+      return;
+    }
+    item.put("outerDiameter_inches", design.outerDiameterInches);
+    item.put("wallThickness_mm", design.resolveWallThicknessMm());
+    item.put("innerDiameter_m", design.getResolvedInnerDiameterM());
+    item.put("materialGrade", design.materialGrade);
+    item.put("installationMethod", design.installationMethod);
+    item.put("designPressure_bar", design.designPressureBar);
+    item.put("designCode", design.designCode);
+    item.put("flexible", design.flexible);
+    item.put("insulationType", design.insulationType);
+    item.put("insulationThickness_mm", design.insulationThicknessMm);
   }
 
   /**
@@ -850,6 +1171,11 @@ public class SURFCostEstimator {
       result.addMaterialTakeOff(new MaterialTakeOffItem(description + " external coating", category, "pipeline coating",
           getNumber(item.get("coatingArea_m2")), "m2", Double.NaN, getNumber(item.get("coatingCostUSD")),
           "surf-pipeline-sizing"));
+      if (getNumber(item.get("insulationVolume_m3")) > 0.0) {
+        result.addMaterialTakeOff(new MaterialTakeOffItem(description + " insulation", category,
+            getText(item.get("insulationType")), getNumber(item.get("insulationVolume_m3")), "m3", Double.NaN,
+            getNumber(item.get("insulationCostUSD")), "surf-pipeline-sizing"));
+      }
       result.addMaterialTakeOff(
           new MaterialTakeOffItem(description + " field welds", category, "welding", getNumber(item.get("fieldWelds")),
               "ea", Double.NaN, getNumber(item.get("weldingCostUSD")), "surf-pipeline-sizing"));
@@ -1415,6 +1741,18 @@ public class SURFCostEstimator {
    */
   public void setCoatingPricePerM2(double coatingPricePerM2) {
     this.coatingPricePerM2 = coatingPricePerM2;
+  }
+
+  /**
+   * Set pipeline insulation price.
+   *
+   * @param insulationPricePerM3 price per cubic metre in USD
+   */
+  public void setInsulationPricePerM3(double insulationPricePerM3) {
+    if (insulationPricePerM3 < 0.0 || !Double.isFinite(insulationPricePerM3)) {
+      throw new IllegalArgumentException("Insulation price must be finite and non-negative");
+    }
+    this.insulationPricePerM3 = insulationPricePerM3;
   }
 
   /**

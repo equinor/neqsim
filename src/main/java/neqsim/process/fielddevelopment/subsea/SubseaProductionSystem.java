@@ -2,6 +2,8 @@ package neqsim.process.fielddevelopment.subsea;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -32,6 +34,7 @@ import neqsim.process.fielddevelopment.tieback.TiebackAnalyzer;
 import neqsim.process.fielddevelopment.tieback.TiebackOption;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator.LineCategory;
+import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator.LineDesign;
 import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator.WellLocationType;
@@ -158,6 +161,9 @@ public class SubseaProductionSystem implements Serializable {
   private double seabedTemperatureC = 4.0;
   private double insulationThicknessMm = 50.0;
   private String flowlineMaterial = "Carbon Steel"; // CRA, Flexible, etc.
+
+  /** Route-specific mechanical/cost design keyed by canonical field edge ID. */
+  private final Map<String, LineDesign> lineDesigns = new LinkedHashMap<String, LineDesign>();
 
   // Umbilical parameters
   private double umbilicalLengthKm; // Auto-calculated if not set
@@ -433,6 +439,43 @@ public class SubseaProductionSystem implements Serializable {
   public SubseaProductionSystem setFlowlineMaterial(String material) {
     this.flowlineMaterial = material;
     return this;
+  }
+
+  /**
+   * Register a mechanical and installation basis for one canonical physical line edge.
+   *
+   * <p>
+   * The edge identifier is resolved against the supplied {@link FieldNetworkTopology} when costs are estimated. This
+   * keeps hydraulic topology and route design connected by stable identity without copying either model.
+   * </p>
+   *
+   * @param edgeId canonical field edge identifier
+   * @param design immutable route design basis
+   * @return this for chaining
+   */
+  public SubseaProductionSystem setLineDesign(String edgeId, LineDesign design) {
+    if (edgeId == null || edgeId.trim().isEmpty() || !edgeId.equals(edgeId.trim())) {
+      throw new IllegalArgumentException("Line-design edge ID must be non-empty and trimmed");
+    }
+    if (design == null) {
+      throw new IllegalArgumentException("Line design cannot be null");
+    }
+    lineDesigns.put(edgeId, design);
+    return this;
+  }
+
+  /** Clear all route-specific line designs and restore the scalar legacy design basis. */
+  public void clearLineDesigns() {
+    lineDesigns.clear();
+  }
+
+  /**
+   * Get an immutable view of route-specific line designs.
+   *
+   * @return line designs keyed by canonical field edge ID
+   */
+  public Map<String, LineDesign> getLineDesigns() {
+    return Collections.unmodifiableMap(lineDesigns);
   }
 
   /**
@@ -1204,12 +1247,19 @@ public class SubseaProductionSystem implements Serializable {
    */
   public CostEstimateResult estimateSurfCosts(FieldNetworkTopology topology) {
     FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    validateLineDesigns(basis);
     SURFCostEstimator estimator = createSurfCostEstimator(basis);
     estimator.calculate();
     CostEstimateResult estimate = estimator.getDetailedEstimateResult();
-    estimate.addQualityFlag("Canonical physical line edges are priced separately using exact topology length and "
-        + "hydraulic diameter as the nominal Class 4 cost diameter. Parallel manifold/template units still share one "
-        + "representative slot/weight basis; detailed OD/wall-thickness design remains required.");
+    if (lineDesigns.isEmpty()) {
+      estimate.addQualityFlag("Canonical physical line edges are priced separately using exact topology length and "
+          + "hydraulic diameter as the nominal Class 4 cost diameter. Parallel manifold/template units still share "
+          + "one representative slot/weight basis; detailed OD/wall-thickness design remains required.");
+    } else {
+      estimate.addQualityFlag("Configured canonical line edges use route-specific OD, wall, material, installation and "
+          + "insulation inputs with existing pipeline mechanical screening. Unconfigured edges retain the nominal "
+          + "hydraulic-diameter Class 4 basis. This is not current-edition DNV qualification or AFC design.");
+    }
     return estimate;
   }
 
@@ -1294,9 +1344,45 @@ public class SubseaProductionSystem implements Serializable {
       } else {
         continue;
       }
-      surf.addLineSegment(segment.getEquipmentTag(), category, segment.getLengthM(), segment.getDiameterInches());
+      LineDesign design = lineDesigns.get(segment.getId());
+      if (design == null) {
+        surf.addLineSegment(segment.getEquipmentTag(), category, segment.getLengthM(), segment.getDiameterInches());
+      } else {
+        surf.addLineSegment(segment.getEquipmentTag(), category, segment.getLengthM(), design);
+      }
     }
     return surf;
+  }
+
+  /**
+   * Validate route-design identity and rigid-pipe geometry against the canonical hydraulic edge.
+   *
+   * @param basis topology-derived physical line basis
+   */
+  private void validateLineDesigns(FieldNetworkSurfDesignBasis basis) {
+    Map<String, FieldNetworkSurfDesignBasis.LineSegment> segments = new LinkedHashMap<String, FieldNetworkSurfDesignBasis.LineSegment>();
+    for (FieldNetworkSurfDesignBasis.LineSegment segment : basis.getLineSegments()) {
+      segments.put(segment.getId(), segment);
+    }
+    for (Map.Entry<String, LineDesign> entry : lineDesigns.entrySet()) {
+      FieldNetworkSurfDesignBasis.LineSegment segment = segments.get(entry.getKey());
+      if (segment == null) {
+        throw new IllegalArgumentException(
+            "Line design references missing or non-SURF canonical edge '" + entry.getKey() + "'");
+      }
+      LineDesign design = entry.getValue();
+      if (design.isFlexible()) {
+        continue;
+      }
+      double hydraulicDiameterM = segment.getDiameterM();
+      double designInnerDiameterM = design.getResolvedInnerDiameterM();
+      double toleranceM = Math.max(0.002, 0.02 * hydraulicDiameterM);
+      if (Math.abs(designInnerDiameterM - hydraulicDiameterM) > toleranceM) {
+        throw new IllegalArgumentException("Rigid line design for edge '" + entry.getKey() + "' implies ID "
+            + designInnerDiameterM + " m but canonical hydraulic diameter is " + hydraulicDiameterM
+            + " m; update OD/wall or the hydraulic edge before costing");
+      }
+    }
   }
 
   /**

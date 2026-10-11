@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
 
 /**
  * Tests for {@link SURFCostEstimator}.
@@ -310,5 +311,67 @@ class SURFCostEstimatorTest {
     assertTrue(hasSixInchRoute);
     assertTrue(hasTwelveInchRoute);
     assertTrue(hasRiser);
+  }
+
+  /** Route-specific OD, wall, material, installation and insulation must survive Class 4 costing. */
+  @Test
+  void testRouteSpecificMechanicalAndInstallationBasis() {
+    SURFCostEstimator.LineDesign design = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(9.5)
+        .materialGrade("X52").installationMethod("J-lay").designPressureBar(120.0)
+        .designCode(PipeMechanicalDesignCalculator.ASME_B31_8).insulation("PUF", 30.0).build();
+    SURFCostEstimator est = new SURFCostEstimator(1, 600.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfManifolds(0);
+    est.setNumberOfPLETs(0);
+    est.setIncludeRisers(false);
+    est.addLineSegment("FL-DESIGN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 2500.0, design);
+    est.calculate();
+    double jLayInsulatedCost = est.getTotalSURFCostUSD();
+
+    Map<String, Object> route = null;
+    for (Map<String, Object> item : est.getLineItems()) {
+      if (item.get("description").toString().contains("FL-DESIGN")) {
+        route = item;
+      }
+    }
+    assertNotNull(route);
+    assertEquals(8.625, ((Number) route.get("outerDiameter_inches")).doubleValue(), 1.0e-12);
+    assertEquals(9.5, ((Number) route.get("wallThickness_mm")).doubleValue(), 1.0e-12);
+    assertEquals("X52", route.get("materialGrade"));
+    assertEquals("J-lay", route.get("installationMethod"));
+    assertEquals("PUF", route.get("insulationType"));
+    assertEquals(30.0, ((Number) route.get("insulationThickness_mm")).doubleValue(), 1.0e-12);
+    assertTrue(((Number) route.get("insulationVolume_m3")).doubleValue() > 0.0);
+    assertTrue(((Number) route.get("insulationCostUSD")).doubleValue() > 0.0);
+
+    boolean hasInsulationMto = false;
+    for (MaterialTakeOffItem item : est.getDetailedEstimateResult().getMaterialTakeOff()) {
+      hasInsulationMto |= item.getItem().contains("FL-DESIGN") && item.getItem().contains("insulation")
+          && "PUF".equals(item.getMaterial()) && item.getQuantity() > 0.0;
+    }
+    assertTrue(hasInsulationMto);
+
+    SURFCostEstimator reelLay = new SURFCostEstimator(1, 600.0, SubseaCostEstimator.Region.NORWAY);
+    reelLay.setNumberOfManifolds(0);
+    reelLay.setNumberOfPLETs(0);
+    reelLay.setIncludeRisers(false);
+    reelLay.addLineSegment("FL-DESIGN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 2500.0,
+        SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(9.5).materialGrade("X52")
+            .installationMethod("Reel-lay").designPressureBar(120.0).build());
+    reelLay.calculate();
+    assertTrue(jLayInsulatedCost > reelLay.getTotalSURFCostUSD(),
+        "J-lay plus insulation must cost more than the otherwise identical reel-lay basis");
+
+    SURFCostEstimator.LineDesign calculated = SURFCostEstimator.LineDesign.builder(12.75).materialGrade("X65")
+        .designPressureBar(165.0).build();
+    SURFCostEstimator.LineDesign lowerStrength = SURFCostEstimator.LineDesign.builder(12.75).materialGrade("X52")
+        .designPressureBar(165.0).build();
+    assertTrue(calculated.resolveWallThicknessMm() > 0.0);
+    assertTrue(calculated.getResolvedInnerDiameterM() > 0.0);
+    assertTrue(lowerStrength.resolveWallThicknessMm() >= calculated.resolveWallThicknessMm(),
+        "Lower-strength X52 must not screen to a thinner wall than X65 at the same OD and pressure");
+    assertThrows(IllegalArgumentException.class,
+        () -> SURFCostEstimator.LineDesign.builder(8.625).installationMethod("unknown"));
+    assertThrows(IllegalArgumentException.class,
+        () -> SURFCostEstimator.LineDesign.builder(8.625).materialGrade("unknown"));
   }
 }

@@ -234,6 +234,12 @@
 	</profiles>
 	<build>
 		<plugins>
+			<!-- Pin the Java 8 resource lifecycle instead of inheriting runner Maven defaults. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.1</version>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
