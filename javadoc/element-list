@@ -74,6 +74,7 @@ neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.t
 neqsim.fluidmechanics.util.timeseries
 neqsim.integration
 neqsim.mathlib.generalmath
+neqsim.mathlib.linearalgebra
 neqsim.mathlib.nonlinearsolver
 neqsim.mcp.catalog
 neqsim.mcp.model
