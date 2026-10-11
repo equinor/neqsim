@@ -762,6 +762,16 @@ action evidence, complete state restoration, accepted-point replay, evaluation c
 runtime. A `true` evidence block qualifies only the configured steady-state model and limits. It is
 not a global-optimality claim, a dynamic/safety study, or permission to write to a control system.
 
+Pass the completed search to the overloads on `ProcessModelOperatingEnvelopeStudy` to use the
+terminal replay as the exact one- or two-dimensional slice anchor. The study verifies the complete
+replay, exact runtime evaluator identity, action/objective/constraint/hydraulic definition identity,
+unchanged installed-limit metadata, current model convergence, and
+unchanged baseline action values before running another point. `getAcceptedPointBottleneck(search)`
+returns the already-recorded unit-safe leading constraint without rerunning the model. Definition or
+baseline drift fails before mutation; callers must rerun the search instead of treating an old
+candidate as current. The reported row and the envelope remain sampled evidence, not causal
+attribution, a shadow price, a continuous feasible boundary, or operating approval.
+
 ### Trace-qualified bottleneck-relief evidence
 
 `ProcessModelAllocationBottleneckAnalyzer` reads a completed

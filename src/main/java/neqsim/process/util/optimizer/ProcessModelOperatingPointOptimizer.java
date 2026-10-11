@@ -335,8 +335,8 @@ public final class ProcessModelOperatingPointOptimizer {
       List<CandidateRecord> records, CandidateRecord acceptedReplay, double finalStepFraction, boolean converged,
       long startedNanos, List<String> diagnostics) {
     double runtimeSeconds = Math.max(0.0, (System.nanoTime() - startedNanos) / 1.0e9);
-    return new OperatingPointSearchResult(id, name, provenance, candidateEvaluator.getId(), objective, seed,
-        maximumEvaluations, initialStepFraction, relativeStepTolerance, objectiveImprovementTolerance,
+    return new OperatingPointSearchResult(id, name, provenance, candidateEvaluator, candidateEvaluator.getId(),
+        objective, seed, maximumEvaluations, initialStepFraction, relativeStepTolerance, objectiveImprovementTolerance,
         objectiveToleranceProvenance, replayRelativeTolerance, replayToleranceProvenance, outcome, records,
         acceptedReplay, finalStepFraction, converged, runtimeSeconds, diagnostics);
   }
@@ -563,6 +563,8 @@ public final class ProcessModelOperatingPointOptimizer {
     private static final long serialVersionUID = 1L;
     /** Stable optimizer identifier. */
     private final String id;
+    /** Exact runtime evaluator identity; unavailable after serialization. */
+    private final transient ProcessModelOperatingActionSetEvaluator sourceEvaluator;
     /** Human-readable optimizer name. */
     private final String name;
     /** Engineering basis for the search. */
@@ -603,13 +605,15 @@ public final class ProcessModelOperatingPointOptimizer {
     private final List<String> diagnostics;
 
     /** Creates an immutable terminal result. */
-    private OperatingPointSearchResult(String id, String name, String provenance, String actionSetId,
-        ObjectiveSnapshot objective, double[] initialCandidate, int maximumEvaluations, double initialStepFraction,
-        double relativeStepTolerance, double objectiveImprovementTolerance, String objectiveToleranceProvenance,
-        double replayRelativeTolerance, String replayToleranceProvenance, SearchOutcome outcome,
-        List<CandidateRecord> candidates, CandidateRecord acceptedPointReplay, double finalStepFraction,
-        boolean converged, double runtimeSeconds, List<String> diagnostics) {
+    private OperatingPointSearchResult(String id, String name, String provenance,
+        ProcessModelOperatingActionSetEvaluator sourceEvaluator, String actionSetId, ObjectiveSnapshot objective,
+        double[] initialCandidate, int maximumEvaluations, double initialStepFraction, double relativeStepTolerance,
+        double objectiveImprovementTolerance, String objectiveToleranceProvenance, double replayRelativeTolerance,
+        String replayToleranceProvenance, SearchOutcome outcome, List<CandidateRecord> candidates,
+        CandidateRecord acceptedPointReplay, double finalStepFraction, boolean converged, double runtimeSeconds,
+        List<String> diagnostics) {
       this.id = id;
+      this.sourceEvaluator = sourceEvaluator;
       this.name = name;
       this.provenance = provenance;
       this.actionSetId = actionSetId;
@@ -649,6 +653,21 @@ public final class ProcessModelOperatingPointOptimizer {
     /** @return atomic action-set identifier */
     public String getActionSetId() {
       return actionSetId;
+    }
+
+    /**
+     * Checks runtime identity for a mutable-model handoff.
+     *
+     * <p>
+     * The exact evaluator reference is deliberately transient. A deserialized result remains valid immutable evidence,
+     * but cannot authorize a new mutable envelope study without a fresh optimization and replay.
+     * </p>
+     *
+     * @param evaluator candidate evaluator requesting the handoff
+     * @return true only for the exact evaluator instance that produced this result
+     */
+    boolean isFromEvaluator(ProcessModelOperatingActionSetEvaluator evaluator) {
+      return sourceEvaluator != null && sourceEvaluator == evaluator;
     }
 
     /** @return selected objective metadata */

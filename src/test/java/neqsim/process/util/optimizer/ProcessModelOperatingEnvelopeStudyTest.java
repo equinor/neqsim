@@ -22,9 +22,11 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Outcome;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Transition;
+import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.OperatingPointSearchResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -231,6 +233,72 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/producer A rate", second.getToConstraint());
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
+  }
+
+  /**
+   * Verifies an accepted mixed-search replay supplies the bottleneck report and exact envelope anchor, while changed
+   * baseline state or evaluator definitions fail before another simulation is run.
+   */
+  @Test
+  void acceptedPointReplayAnchorsBottleneckAndEnvelopeFailClosed() throws Exception {
+    Fixture fixture = createFixture();
+    ProcessModelOperatingActionSetEvaluator evaluator = createEvaluator(fixture);
+    ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer("field-search",
+        "Field search", "synthetic accepted-point handoff", evaluator).setInitialCandidate(new double[] {600.0, 400.0})
+        .setMaximumEvaluations(24).setInitialStepFraction(0.25).setRelativeStepTolerance(0.1)
+        .setObjectiveImprovementTolerance(500.0, "synthetic interior-anchor stability threshold");
+    OperatingPointSearchResult search = optimizer.optimize();
+    assertTrue(search.isAcceptedPointReplayed(),
+        search.getOutcome() + ": " + search.getDiagnostics() + "; trace="
+            + search
+                .getCandidates().stream().map(candidate -> candidate.getSequenceIndex() + ":"
+                    + candidate.getRawObjective() + ":" + Arrays.toString(candidate.getCandidateValues()))
+                .collect(java.util.stream.Collectors.toList()));
+
+    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("accepted-envelope",
+        "Accepted operating-point envelope", "synthetic accepted-point handoff", evaluator);
+    int evaluationsBeforeReport = evaluator.getSimulationEvaluator().getEvaluationCount();
+    LeadingConstraintEvidence bottleneck = study.getAcceptedPointBottleneck(search);
+    assertEquals(evaluationsBeforeReport, evaluator.getSimulationEvaluator().getEvaluationCount());
+    assertEquals(LeadingConstraintEvidence.Source.INSTALLED_EQUIPMENT, bottleneck.getSource());
+    assertTrue(bottleneck.isFeasible());
+
+    double[] accepted = search.getAcceptedCandidateValues();
+    SliceResult slice = study.evaluateOneDimensional("producer-a-rate",
+        new double[] {accepted[0], Math.min(1000.0, accepted[0] + 100.0)}, search);
+    assertTrue(slice.isComplete());
+    assertArrayEquals(accepted, slice.getAnchorValues(), 0.0);
+    assertEquals(accepted[1], slice.getPoints().get(0).getCandidateValues()[1], 0.0);
+    assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
+
+    fixture.producerA.setFlowRate(650.0, "kg/hr");
+    fixture.model.run();
+    int evaluationsBeforeStaleBaseline = evaluator.getSimulationEvaluator().getEvaluationCount();
+    assertThrows(IllegalStateException.class, () -> study.getAcceptedPointBottleneck(search));
+    assertEquals(evaluationsBeforeStaleBaseline, evaluator.getSimulationEvaluator().getEvaluationCount());
+    fixture.producerA.setFlowRate(600.0, "kg/hr");
+    fixture.model.run();
+    assertTrue(study.getAcceptedPointBottleneck(search).isFeasible());
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    ObjectOutputStream output = new ObjectOutputStream(bytes);
+    output.writeObject(search);
+    output.close();
+    ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    OperatingPointSearchResult deserialized = (OperatingPointSearchResult) input.readObject();
+    input.close();
+    assertThrows(IllegalStateException.class, () -> study.getAcceptedPointBottleneck(deserialized));
+
+    CapacityConstraint changedLimit = evaluator.getSimulationEvaluator().getConstraints().stream()
+        .filter(constraint -> constraint.isCapacityConstraint()
+            && "producer A rate".equals(constraint.getEquipmentConstraintName()))
+        .findFirst().get().getCapturedCapacityConstraint();
+    changedLimit.setOperatingLimit(790.0, ConstraintSource.USER_RULE, "post-search facility choke rule");
+    int evaluationsBeforeDefinitionChange = evaluator.getSimulationEvaluator().getEvaluationCount();
+    assertThrows(IllegalStateException.class,
+        () -> study.evaluateOneDimensional("producer-a-rate", new double[] {accepted[0]}, search));
+    assertEquals(evaluationsBeforeDefinitionChange, evaluator.getSimulationEvaluator().getEvaluationCount());
   }
 
   /**
