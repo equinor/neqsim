@@ -460,6 +460,22 @@ therefore feeds back through the same live well/network coupling instead of acti
 downstream flow split. Copies preserve selector definitions but keep independent edge
 state.
 
+For a line-up that changes several edges together, construct named
+`FieldWellNetworkProcessUnit.RouteConfiguration` objects and register them with
+`registerRouteConfigurationSelector(...)`. Automation exposes
+`configuration.<selector>.selection`. Each option lists the controlled edges that are
+fully available; every other edge appearing in any option is exactly closed. This
+supports direct versus brownfield routes and an option with both paths open as one
+redundant loop without rebuilding the topology. Registration rejects missing edges,
+duplicate line-ups, selector overlap and a current state that does not match exactly one
+declared option. A selection snapshots every controlled availability, applies and reads
+back the complete line-up, and restores the snapshot after any failure. Edge geometry,
+equipment identity and Darcy-Weisbach/Beggs-Brill/two-fluid selection are never changed.
+The focused live-well acceptance case checks direct, higher-resistance brownfield and
+dual-path configurations, exact restoration, positive flow in both redundant paths and
+network mass conservation. This is synthetic integration evidence, not an outage or
+brownfield field qualification.
+
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
 well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
 fixed-pressure sinks. Those stable sink streams feed separators, compressor-suction
@@ -481,7 +497,9 @@ physical limits to obtain a feasible optimizer result.
 1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
-   Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
+   The canonical multi-edge line-up contract now supports branch/loop outage and brownfield
+   actions through #4188/#3154 optimization; next exercise it in the larger production and
+   injection field cases with qualified facility maps and lifecycle evidence.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic
