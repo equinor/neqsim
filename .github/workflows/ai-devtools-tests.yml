@@ -8,7 +8,7 @@ on:
     paths:
       - "devtools/**"
       - "examples/mechanical_design_json_to_mesh.py"
-      - ".github/workflows/devtools_tests.yml"
+      - ".github/workflows/ai-devtools-tests.yml"
   push:
     branches: [master]
     paths:

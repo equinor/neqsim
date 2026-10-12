@@ -35,7 +35,7 @@ reimplemented by the orchestration layer.
 - `tests/protocol/test_compose_workflow_protocol.py` repeats those visible contracts through
   the packaged server's JSON-RPC/STDIO transport and standard response
   evidence.
-- `mcp_protocol_qualification.yml` runs the focused Java and packaged suites
+- `ai-mcp-protocol-tests.yml` runs the focused Java and packaged suites
   before the comprehensive MCP regression.
 
 The calculation case is a routing and data-shape fixture. It is not

@@ -7,7 +7,7 @@ on:
       - "devtools/test_complete_offshore_engineering_study.py"
       - "src/main/java/neqsim/process/engineering/**"
       - "src/test/java/neqsim/process/engineering/**"
-      - ".github/workflows/execute-offshore-engineering-notebook.yml"
+      - ".github/workflows/examples-offshore-engineering.yml"
   workflow_dispatch:
 
 permissions:

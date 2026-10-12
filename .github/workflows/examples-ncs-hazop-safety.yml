@@ -6,7 +6,7 @@ on:
       - "examples/notebooks/complete_offshore_process_engineering_study.ipynb"
       - "src/main/java/neqsim/process/engineering/pid/**"
       - "src/main/java/neqsim/process/engineering/safety/**"
-      - ".github/workflows/execute-ncs-hazop-safety-notebook.yml"
+      - ".github/workflows/examples-ncs-hazop-safety.yml"
   workflow_dispatch:
 
 permissions:

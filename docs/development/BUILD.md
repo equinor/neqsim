@@ -364,7 +364,7 @@ On every PR, CI runs:
 
 ### CI Configuration Files
 - **Azure Pipelines**: `azure-pipelines.yml`
-- **GitHub Actions**: `.github/workflows/verify_build.yml`
+- **GitHub Actions**: `.github/workflows/core-java-tests.yml`
 
 ---
 

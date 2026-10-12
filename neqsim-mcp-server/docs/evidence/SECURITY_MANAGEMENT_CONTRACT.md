@@ -56,7 +56,7 @@ integration outside this runner.
 - `tests/protocol/test_security_protocol.py` repeats the public boundary through the real packaged STDIO server using synthetic
   credentials and proves inventory 1.42 retains the promotion, evidence sources, and security/advisory boundary.
 - `tests/protocol/test_mcp_server.py` retains the broad real-protocol call and 71-tool registration/accounting checks.
-- `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP security contracts before the comprehensive
+- `ai-mcp-protocol-tests.yml` runs the focused Java and packaged-MCP security contracts before the comprehensive
   protocol regression.
 
 Java and JSON/MCP views are applicable. Python is used only as a dependency-free protocol driver. Notebook, rendered

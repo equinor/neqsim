@@ -8,7 +8,7 @@ on:
       - "src/main/java/neqsim/process/processmodel/dexpi/**"
       - "src/test/java/neqsim/process/engineering/**"
       - "src/test/java/neqsim/process/processmodel/dexpi/**"
-      - ".github/workflows/execute-process-to-engineering-simulator.yml"
+      - ".github/workflows/examples-process-to-engineering.yml"
   workflow_dispatch:
 
 permissions:

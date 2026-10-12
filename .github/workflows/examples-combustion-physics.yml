@@ -10,7 +10,7 @@ on:
       - "src/main/java/neqsim/process/equipment/reactor/FiniteRateCombustionReactor.java"
       - "src/main/java/neqsim/process/equipment/reactor/MultiBurnerFiredHeater.java"
       - "src/main/java/neqsim/process/util/combustion/**"
-      - ".github/workflows/combustion_physics.yml"
+      - ".github/workflows/examples-combustion-physics.yml"
   workflow_dispatch:
 
 jobs:

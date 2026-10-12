@@ -5,7 +5,7 @@ on:
     branches: [master]
     paths:
       - 'examples/notebooks/energy_networks/**'
-      - '.github/workflows/energy-notebook-execution.yml'
+      - '.github/workflows/examples-energy-networks.yml'
   workflow_dispatch:
 
 permissions:

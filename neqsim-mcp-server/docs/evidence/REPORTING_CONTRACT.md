@@ -55,7 +55,7 @@ not an exact value. JSON object insertion order controls table row order.
 - `tests/protocol/test_reporting_protocol.py` repeats those boundaries through the real packaged STDIO server and proves inventory 1.42
   retains both promoted tools with complete evidence records and zero pending candidates.
 - `tests/protocol/test_mcp_server.py` retains the broad real-protocol calls and the 71-tool registration/accounting checks.
-- `mcp_protocol_qualification.yml` runs the focused Java and packaged-MCP reporting contracts before the comprehensive
+- `ai-mcp-protocol-tests.yml` runs the focused Java and packaged-MCP reporting contracts before the comprehensive
   protocol regression.
 
 Java and JSON/MCP views are applicable. A separate Python calculation, notebook, rendered document and whole-sheet

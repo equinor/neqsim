@@ -31,7 +31,7 @@ on:
       - "devtools/test_agent_search.py"
       - "devtools/test_skill_search.py"
       - "src/main/java/neqsim/mcp/runners/IndustrialProfile.java"
-      - ".github/workflows/skills_agents_lint.yml"
+      - ".github/workflows/ai-skills-agents-lint.yml"
   push:
     branches: [master]
     paths:

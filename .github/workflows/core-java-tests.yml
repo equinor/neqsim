@@ -36,7 +36,7 @@ jobs:
               - '**/*.xml'
               - 'src/main/resources/data/**'
               - 'src/test/resources/**'
-              - '.github/workflows/verify_build.yml'
+              - '.github/workflows/core-java-tests.yml'
 
   test_javadoc:
     name: Assert javadoc with Java 21 on Ubuntu

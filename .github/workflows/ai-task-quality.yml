@@ -9,7 +9,7 @@ on:
       - "task_solve/**"
       - "devtools/validate_task_results.py"
       - "devtools/consistency_checker.py"
-      - ".github/workflows/task_quality_gate.yml"
+      - ".github/workflows/ai-task-quality.yml"
 
 jobs:
   validate:

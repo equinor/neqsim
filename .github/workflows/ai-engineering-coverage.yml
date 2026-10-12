@@ -10,7 +10,7 @@ on:
       - '.github/agents/**'
       - 'devtools/*engineering*coverage*'
       - 'devtools/engineering_capabilities.json'
-      - '.github/workflows/engineering-coverage.yml'
+      - '.github/workflows/ai-engineering-coverage.yml'
   push:
     branches: [master]
     paths:
@@ -21,7 +21,7 @@ on:
       - '.github/agents/**'
       - 'devtools/*engineering*coverage*'
       - 'devtools/engineering_capabilities.json'
-      - '.github/workflows/engineering-coverage.yml'
+      - '.github/workflows/ai-engineering-coverage.yml'
 
 permissions:
   contents: read

@@ -16,7 +16,7 @@ on:
       - 'src/main/java/neqsim/mcp/**'
       - 'src/test/java/neqsim/mcp/**'
       - 'neqsim-mcp-server/**'
-      - '.github/workflows/mcp_protocol_qualification.yml'
+      - '.github/workflows/ai-mcp-protocol-tests.yml'
   push:
     branches:
       - master
@@ -25,7 +25,7 @@ on:
       - 'src/main/java/neqsim/mcp/**'
       - 'src/test/java/neqsim/mcp/**'
       - 'neqsim-mcp-server/**'
-      - '.github/workflows/mcp_protocol_qualification.yml'
+      - '.github/workflows/ai-mcp-protocol-tests.yml'
 
 jobs:
   phase0_contracts:

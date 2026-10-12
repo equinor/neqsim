@@ -10,7 +10,7 @@ name: Publish NeqSim Image
 #   # Java:   ./mvnw -o test -Dtest=SystemSrkEosTest
 #   # Python: python3  (then: from neqsim_dev_setup import neqsim_init, ...)
 #
-# This is distinct from devcontainer_prebuild.yml, which publishes the
+# This is distinct from publish-devcontainer.yml, which publishes the
 # *toolchain-only* dev container (ghcr.io/equinor/neqsim-devcontainer) used as
 # the base image here.
 

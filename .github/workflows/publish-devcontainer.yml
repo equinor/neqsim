@@ -19,7 +19,7 @@ on:
       - main
     paths:
       - '.devcontainer/**'
-      - '.github/workflows/devcontainer_prebuild.yml'
+      - '.github/workflows/publish-devcontainer.yml'
   schedule:
     # Weekly rebuild so the base image picks up OS / security updates.
     - cron: '0 3 * * 1'

@@ -58,7 +58,7 @@ Two complementary mechanisms exist:
    skills do not need exhaustive keyword entries — rely on `skill_search.py`
    to surface them.
 
-CI (`.github/workflows/skills_agents_lint.yml`) verifies that every skill has
+CI (`.github/workflows/ai-skills-agents-lint.yml`) verifies that every skill has
 valid YAML front-matter and that every entry in `skill-index.json` points to
 a skill that exists.
 

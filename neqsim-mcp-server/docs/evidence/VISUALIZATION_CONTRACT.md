@@ -46,7 +46,7 @@ Direct evidence:
 
 - `src/test/java/neqsim/mcp/runners/VisualizationRunnerTest.java`;
 - `neqsim-mcp-server/tests/protocol/test_visualization_protocol.py`;
-- `.github/workflows/mcp_protocol_qualification.yml`;
+- `.github/workflows/ai-mcp-protocol-tests.yml`;
 - `neqsim-mcp-server/tests/protocol/test_mcp_server.py` as the comprehensive regression.
 
 The implementation remains `VisualizationRunner`, exposed through

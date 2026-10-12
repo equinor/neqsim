@@ -22,7 +22,7 @@ inventory promotion. It is not a general claim about every NeqSim calculation.
 - `tests/protocol/test_capability_protocol.py` repeats the user-visible discovery,
   invocation, and rejection paths through the packaged server's real
   JSON-RPC/STDIO transport and standard response envelope.
-- `mcp_protocol_qualification.yml` runs both focused suites before the
+- `ai-mcp-protocol-tests.yml` runs both focused suites before the
   comprehensive packaged-MCP regression.
 
 The sulfur invocation is a stable routing and serialization fixture. Its

@@ -25,7 +25,7 @@ on:
       - "devtools/neqsim_doctor.py"
       - "install.sh"
       - "install.cmd"
-      - ".github/workflows/install_smoke_test.yml"
+      - ".github/workflows/ai-install-smoke-test.yml"
   push:
     branches: [master]
     paths:
