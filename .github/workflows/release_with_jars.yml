@@ -182,6 +182,9 @@ jobs:
           draft: ${{ steps.publication.outputs.draft }}
           generateReleaseNotes: true
           allowUpdates: true
+          # Ordinary merges may refresh a draft, but must leave published assets alone.
+          # Explicit publication/repair runs keep updates enabled.
+          skipIfReleaseExists: ${{ steps.publication.outputs.draft == 'true' }}
           updateOnlyUnreleased: ${{ steps.publication.outputs.draft == 'true' }}
           artifacts: "*.jar,*.sha256"
           artifactContentType: application/java-archive
