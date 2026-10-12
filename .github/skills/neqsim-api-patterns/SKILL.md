@@ -129,10 +129,20 @@ fluid.setMultiPhaseCheck(true);
 fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);   // name, moleFrac, MW_kg/mol, density
 fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 fluid.addPlusFraction("C20", 0.02, 350.0 / 1000, 0.88); // no "+" in the name -- breaks parsing
-fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
+fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
 fluid.getCharacterization().characterisePlusFraction();
 fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
 ```
+
+**Do not call `fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(n)`
+directly on the default ("standard") lumping model** -- confirmed
+(2026-10-12, PR review) that `StandardLumpingModel.generateLumpedComposition()`
+overwrites `numberOfLumpedComponents` with `numberOfPseudocomponents` (both
+default to 7) at generation time, so `setNumberOfLumpedComponents(6)` alone
+silently produces 7 pseudo-components, not 6. Use
+`configureLumping().model("standard").totalPseudoComponents(n).build()`,
+which sets `numberOfPseudocomponents` directly and is the value the
+generator actually reads.
 
 ## Loading Fluids from E300 Files
 
@@ -1464,3 +1474,11 @@ When writing code examples for documentation (markdown guides, cookbook recipes,
    - `getUnit("name")` not `getUnitOperation("name")`
    - `setDepreciationYears` takes `double`, not `int`
    - Risk thresholds: always read source for actual comparison logic (subcooling direction, enum ordering)
+   - Lumping component count: `getLumpingModel().setNumberOfLumpedComponents(n)`
+     does NOT reliably control the pseudo-component count on the default
+     ("standard") model -- `StandardLumpingModel.generateLumpedComposition()`
+     overwrites it with `numberOfPseudocomponents` (also defaulting to 7) at
+     generation time. Use
+     `configureLumping().model("standard").totalPseudoComponents(n).build()`
+     instead, confirmed by a failing-then-passing JUnit assertion
+     (2026-10-12, PR review on `#4303`).

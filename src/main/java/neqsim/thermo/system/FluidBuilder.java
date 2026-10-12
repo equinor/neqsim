@@ -249,16 +249,26 @@ public class FluidBuilder implements Serializable {
           plusFraction.density);
     }
 
-    // Mixing rule must be set before characterization
+    if (numberOfLumpedComponents > 0) {
+      // configureLumping()...totalPseudoComponents() sets numberOfPseudocomponents, the field
+      // StandardLumpingModel.generateLumpedComposition() actually reads. The legacy
+      // getLumpingModel().setNumberOfLumpedComponents() call looked equivalent but is
+      // overwritten by numberOfPseudocomponents (default 7) during generation, so
+      // withLumpedComponents(n) silently produced 7 pseudo-components regardless of n.
+      system.getCharacterization().configureLumping().model("standard").totalPseudoComponents(numberOfLumpedComponents)
+          .build();
+      system.getCharacterization().characterisePlusFraction();
+    }
+
+    // Mixing rule must be set AFTER characterization, not before: characterisePlusFraction() can
+    // split a plus/TBP fraction into several lumped pseudo-components, changing the total
+    // component count. A mixing rule set beforehand leaves the EOS's kij matrix sized for the
+    // pre-split count, and the first flash that needs the matrix throws
+    // ArrayIndexOutOfBoundsException inside EosMixingRuleHandler$ClassicSRK.getkij.
     if (mixingRuleNumber >= 0) {
       system.setMixingRule(mixingRuleNumber);
     } else if (mixingRuleName != null) {
       system.setMixingRule(mixingRuleName);
-    }
-
-    if (numberOfLumpedComponents > 0) {
-      system.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(numberOfLumpedComponents);
-      system.getCharacterization().characterisePlusFraction();
     }
 
     if (multiPhaseCheck) {
