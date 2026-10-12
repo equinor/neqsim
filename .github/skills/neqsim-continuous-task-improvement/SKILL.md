@@ -198,6 +198,11 @@ writes to a control system and every proposal carries `requires_approval`.
   candidates. It keeps only proposals that also satisfy every hard constraint with margin; every rejection is
   listed in `guard.json`. Also record a positive integer `evaluation_count` and finite non-negative
   `runtime_seconds`; the ledger retains the evidence block for persistent incumbent and performance provenance.
+  Field studies can set `production.require_envelope_evidence: true` and attach the Java
+  `getAcceptedPointEnvelopeEvidence(...)` map as `accepted_point_envelope_evidence`. The guard requires exact
+  cycle/optimizer identity, action-id/setpoint binding, complete uniquely addressed slices, safe recovery of every
+  sampled point, and reconciled point/evaluation/runtime totals before the existing ledger persists it. A supplied
+  block is always validated even when the setting is false; never copy envelope evidence into a later cycle.
 - **Outcome**: ledger items set to `implemented` with `objective_kpi` and `baseline_value` are compared with
   the realised gain each cycle (`outcome_confirmed` / `outcome_miss`); the engineer decides on `verified`.
 - **Boundary conditions**: read the measured process boundary (here gas export and injection pressure and

@@ -1094,6 +1094,14 @@ study plus complete, uniquely addressed slices anchored at the accepted candidat
 foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
 rather than combining it into a current cycle.
 
+The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
+the proposal as `accepted_point_envelope_evidence` and set
+`production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard
+then verifies exact action/setpoint binding, optimizer/cycle identity, slice identity and anchors, complete
+baseline recovery, unique axes, and reconciled point/evaluation/runtime totals before the existing ledger stores
+the proposal. A later route, limit or evidence revision must run a new cycle and produce a fresh block; a stale
+cycle id, mismatched action vector, or copied partial slice is withheld rather than resumed as a current candidate.
+
 ### Search a fixed-total continuous allocation
 
 `ProcessModelAllocationOptimizer` composes the atomic evaluator when all allocation actions are

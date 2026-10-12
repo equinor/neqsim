@@ -282,6 +282,9 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(evaluationsBeforeEvidence, evaluator.getSimulationEvaluator().getEvaluationCount());
     assertEquals(Integer.valueOf(1), envelopeEvidence.get("schema_version"));
     assertEquals("cycle-43", envelopeEvidence.get("cycle_id"));
+    assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), envelopeEvidence.get("accepted_action_ids"));
+    assertEquals(Arrays.asList(Double.valueOf(accepted[0]), Double.valueOf(accepted[1])),
+        envelopeEvidence.get("accepted_candidate_values"));
     assertEquals(Integer.valueOf(2), envelopeEvidence.get("slice_count"));
     assertEquals(Long.valueOf(4L), envelopeEvidence.get("envelope_evaluation_count"));
     assertEquals(Long.valueOf(search.getEvaluationCount() + 4L), envelopeEvidence.get("total_evaluation_count"));

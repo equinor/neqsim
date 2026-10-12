@@ -303,6 +303,9 @@ class FieldToFacilityOptimizationAcceptanceTest {
     Map<String, Object> envelopeEvidence = acceptedPointStudy.getAcceptedPointEnvelopeEvidence("synthetic-cycle-1",
         result, acceptedSlice, routingSlice);
     assertEquals(evaluationsBeforeExport, simulation.getEvaluationCount());
+    assertEquals(actions.stream().map(ProcessModelOperatingAction::getId).collect(java.util.stream.Collectors.toList()),
+        envelopeEvidence.get("accepted_action_ids"));
+    assertEquals(actions.size(), ((List<?>) envelopeEvidence.get("accepted_candidate_values")).size());
     assertEquals(Integer.valueOf(2), envelopeEvidence.get("slice_count"));
     assertEquals(Integer.valueOf(4), envelopeEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(4), envelopeEvidence.get("completed_point_count"));

@@ -1,4 +1,5 @@
 """Tests for the production-optimisation stages (gates, constraints, guard, outcome)."""
+import copy
 import json
 import math
 import os
@@ -50,21 +51,57 @@ def run(ctx):
 
 STAGE_OPTIMIZE = '''
 def run(ctx):
+    optimizer_evidence = {
+        "cycle_id": ctx.cycle_id,
+        "simulation_converged": True,
+        "candidate_feasible": True,
+        "candidate_finite": True,
+        "constraint_evidence_complete": True,
+        "state_restore_complete": True,
+        "accepted_point_replayed": True,
+        "actions_complete": True,
+        "evaluation_count": 12,
+        "runtime_seconds": 1.25,
+    }
+    point = {
+        "candidate_values": [0.5],
+        "baseline_restored": True,
+        "baseline_simulation_converged": True,
+    }
+    envelope_evidence = {
+        "schema_version": 1,
+        "cycle_id": ctx.cycle_id,
+        "study_id": "field-envelope",
+        "candidate_evaluator_id": "field-actions",
+        "optimizer_evidence": optimizer_evidence,
+        "accepted_action_ids": ["p3_barg"],
+        "accepted_candidate_values": [0.5],
+        "slice_count": 1,
+        "requested_point_count": 1,
+        "completed_point_count": 1,
+        "envelope_evaluation_count": 1,
+        "envelope_runtime_seconds": 0.1,
+        "total_evaluation_count": 13,
+        "slices": [{
+            "study_id": "field-envelope",
+            "candidate_evaluator_id": "field-actions",
+            "axis_action_ids": ["p3_barg"],
+            "anchor_values": [0.5],
+            "requested_point_count": 1,
+            "completed_point_count": 1,
+            "evaluation_count": 1,
+            "runtime_seconds": 0.1,
+            "outcome": "COMPLETE",
+            "complete": True,
+            "points": [point],
+        }],
+        "advisory": True,
+    }
     base = {"title": "%s", "category": "operational", "setpoints": {"p3_barg": 0.5},
             "expected_gain": {"value": 300.0, "kpi": "oil_Sm3d"},
             "objective_kpi": "oil_Sm3d", "baseline_value": 12700.0,
-            "optimizer_evidence": {
-                "cycle_id": ctx.cycle_id,
-                "simulation_converged": True,
-                "candidate_feasible": True,
-                "candidate_finite": True,
-                "constraint_evidence_complete": True,
-                "state_restore_complete": True,
-                "accepted_point_replayed": True,
-                "actions_complete": True,
-                "evaluation_count": 12,
-                "runtime_seconds": 1.25,
-            }}
+            "optimizer_evidence": optimizer_evidence,
+            "accepted_point_envelope_evidence": envelope_evidence}
     return {"proposals": [
         dict(base, title="safe", predicted={"rvp_bara": 0.63}),
         dict(base, title="off spec", predicted={"rvp_bara": 0.68}),
@@ -83,6 +120,7 @@ def _task(tmp_path, resid=1.0, limit=0.70):
     (cont / "stages" / "optimize.py").write_text(STAGE_OPTIMIZE)
     plan = yaml.safe_load((cont / "cycle_plan.yaml").read_text())
     plan["gates"] = [{"name": "resid", "kpi": "resid_K", "abs_max": 3.0}]
+    plan["production"]["require_envelope_evidence"] = True
     plan["stages"] = [s for s in plan["stages"] if s not in ("sense", "refresh", "agent")]
     (cont / "cycle_plan.yaml").write_text(yaml.safe_dump(plan))
     goal = yaml.safe_load((cont / "goal.yaml").read_text())
@@ -111,7 +149,7 @@ def _guard_context(tmp_path, proposal):
 
 
 def _valid_proposal():
-    return {
+    proposal = {
         "title": "candidate",
         "setpoints": {"p3_barg": 0.5},
         "expected_gain": {"value": 300.0, "kpi": "oil_Sm3d"},
@@ -131,6 +169,46 @@ def _valid_proposal():
             "runtime_seconds": 1.25,
         },
     }
+    proposal["accepted_point_envelope_evidence"] = _valid_envelope_evidence(
+        proposal["optimizer_evidence"])
+    return proposal
+
+
+def _valid_envelope_evidence(optimizer_evidence):
+    point = {
+        "candidate_values": [0.5],
+        "baseline_restored": True,
+        "baseline_simulation_converged": True,
+    }
+    return {
+        "schema_version": 1,
+        "cycle_id": "C-1",
+        "study_id": "field-envelope",
+        "candidate_evaluator_id": "field-actions",
+        "optimizer_evidence": optimizer_evidence,
+        "accepted_action_ids": ["p3_barg"],
+        "accepted_candidate_values": [0.5],
+        "slice_count": 1,
+        "requested_point_count": 1,
+        "completed_point_count": 1,
+        "envelope_evaluation_count": 1,
+        "envelope_runtime_seconds": 0.1,
+        "total_evaluation_count": 13,
+        "slices": [{
+            "study_id": "field-envelope",
+            "candidate_evaluator_id": "field-actions",
+            "axis_action_ids": ["p3_barg"],
+            "anchor_values": [0.5],
+            "requested_point_count": 1,
+            "completed_point_count": 1,
+            "evaluation_count": 1,
+            "runtime_seconds": 0.1,
+            "outcome": "COMPLETE",
+            "complete": True,
+            "points": [point],
+        }],
+        "advisory": True,
+    }
 
 
 def test_cycle_keeps_only_safe_proposals(tmp_path):
@@ -149,6 +227,11 @@ def test_cycle_keeps_only_safe_proposals(tmp_path):
     safe = next(item for item in items if item["title"] == "safe")
     assert safe["optimizer_evidence"]["cycle_id"] == manifest["cycle_id"]
     assert safe["optimizer_evidence"]["accepted_point_replayed"] is True
+    envelope = safe["accepted_point_envelope_evidence"]
+    assert envelope["cycle_id"] == manifest["cycle_id"]
+    assert envelope["accepted_action_ids"] == ["p3_barg"]
+    assert envelope["accepted_candidate_values"] == [0.5]
+    assert envelope["total_evaluation_count"] == 13
 
 
 @pytest.mark.parametrize("field, reason", [
@@ -172,6 +255,7 @@ def test_guard_rejects_incomplete_optimizer_evidence(tmp_path, field, reason):
 def test_guard_rejects_missing_and_stale_optimizer_evidence(tmp_path):
     missing = _valid_proposal()
     missing.pop("optimizer_evidence")
+    missing.pop("accepted_point_envelope_evidence")
     stale = _valid_proposal()
     stale["title"] = "stale"
     stale["optimizer_evidence"]["cycle_id"] = "C-0"
@@ -181,6 +265,114 @@ def test_guard_rejects_missing_and_stale_optimizer_evidence(tmp_path):
     reasons = {row["title"]: row["reasons"]
                for row in json.loads((tmp_path / "guard.json").read_text())["withheld"]}
     assert reasons == {"candidate": ["missing_optimizer_evidence"], "stale": ["stale_candidate"]}
+
+
+def test_guard_keeps_optimizer_only_proposal_when_envelope_is_optional(tmp_path):
+    proposal = _valid_proposal()
+    proposal.pop("accepted_point_envelope_evidence")
+    ctx = _guard_context(tmp_path, proposal)
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+
+
+def test_guard_requires_envelope_when_configured(tmp_path):
+    proposal = _valid_proposal()
+    proposal.pop("accepted_point_envelope_evidence")
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"] == [
+        "missing_accepted_point_envelope_evidence"
+    ]
+
+
+def test_guard_rejects_stale_or_internally_inconsistent_envelope(tmp_path):
+    variants = []
+
+    stale = _valid_proposal()
+    stale["title"] = "stale envelope"
+    stale["accepted_point_envelope_evidence"]["cycle_id"] = "C-0"
+    variants.append(stale)
+
+    optimizer_mismatch = _valid_proposal()
+    optimizer_mismatch["title"] = "optimizer mismatch"
+    optimizer_mismatch["accepted_point_envelope_evidence"]["optimizer_evidence"] = dict(
+        optimizer_mismatch["optimizer_evidence"], evaluation_count=11)
+    variants.append(optimizer_mismatch)
+
+    setpoint_mismatch = _valid_proposal()
+    setpoint_mismatch["title"] = "setpoint mismatch"
+    setpoint_mismatch["accepted_point_envelope_evidence"]["accepted_candidate_values"] = [0.6]
+    variants.append(setpoint_mismatch)
+
+    partial_slice = _valid_proposal()
+    partial_slice["title"] = "partial slice"
+    partial_slice["accepted_point_envelope_evidence"]["slices"][0]["complete"] = False
+    variants.append(partial_slice)
+
+    partial_recovery = _valid_proposal()
+    partial_recovery["title"] = "partial recovery"
+    partial_recovery["accepted_point_envelope_evidence"]["slices"][0]["points"][0][
+        "baseline_restored"] = False
+    variants.append(partial_recovery)
+
+    count_mismatch = _valid_proposal()
+    count_mismatch["title"] = "count mismatch"
+    count_mismatch["accepted_point_envelope_evidence"]["completed_point_count"] = 2
+    variants.append(count_mismatch)
+
+    duplicate_axes = _valid_proposal()
+    duplicate_axes["title"] = "duplicate axes"
+    duplicate_slice = copy.deepcopy(duplicate_axes["accepted_point_envelope_evidence"]["slices"][0])
+    duplicate_axes["accepted_point_envelope_evidence"].update({
+        "slice_count": 2,
+        "requested_point_count": 2,
+        "completed_point_count": 2,
+        "envelope_evaluation_count": 2,
+        "envelope_runtime_seconds": 0.2,
+        "total_evaluation_count": 14,
+    })
+    duplicate_axes["accepted_point_envelope_evidence"]["slices"].append(duplicate_slice)
+    variants.append(duplicate_axes)
+
+    ctx = _guard_context(tmp_path, variants[0])
+    ctx.plan["production"]["require_envelope_evidence"] = True
+    ctx.proposals.extend(variants[1:])
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    reasons = {row["title"]: row["reasons"]
+               for row in json.loads((tmp_path / "guard.json").read_text())["withheld"]}
+    assert "stale_envelope_evidence" in reasons["stale envelope"]
+    assert "envelope_optimizer_evidence_mismatch" in reasons["optimizer mismatch"]
+    assert "envelope_setpoints_mismatch" in reasons["setpoint mismatch"]
+    assert "envelope_slice_0_incomplete" in reasons["partial slice"]
+    assert "envelope_slice_0_point_recovery_incomplete" in reasons["partial recovery"]
+    assert "envelope_aggregate_count_mismatch" in reasons["count mismatch"]
+    assert "duplicate_envelope_axes" in reasons["duplicate axes"]
+
+
+def test_guard_fails_closed_for_malformed_envelope_types(tmp_path):
+    malformed = _valid_proposal()
+    malformed["title"] = "malformed envelope"
+    malformed["accepted_point_envelope_evidence"] = []
+    malformed_actions = _valid_proposal()
+    malformed_actions["title"] = "malformed actions"
+    malformed_actions["accepted_point_envelope_evidence"]["accepted_action_ids"] = 7
+    malformed_optimizer = _valid_proposal()
+    malformed_optimizer["title"] = "malformed optimizer"
+    malformed_optimizer["optimizer_evidence"] = "not a mapping"
+
+    ctx = _guard_context(tmp_path, malformed)
+    ctx.plan["production"]["require_envelope_evidence"] = True
+    ctx.proposals.extend([malformed_actions, malformed_optimizer])
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    reasons = {row["title"]: row["reasons"]
+               for row in json.loads((tmp_path / "guard.json").read_text())["withheld"]}
+    assert reasons["malformed envelope"] == ["invalid_accepted_point_envelope_evidence"]
+    assert "invalid_accepted_action_vector" in reasons["malformed actions"]
+    assert "missing_optimizer_evidence" in reasons["malformed optimizer"]
 
 
 @pytest.mark.parametrize("field, value, reason", [
