@@ -772,6 +772,16 @@ baseline drift fails before mutation; callers must rerun the search instead of t
 candidate as current. The reported row and the envelope remain sampled evidence, not causal
 attribution, a shadow price, a continuous feasible boundary, or operating approval.
 
+For a persistent engineering cycle, call
+`getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` after all requested slices complete.
+The compact immutable map combines the existing optimizer guard block, the accepted-point
+bottleneck, every sampled point and bottleneck transition, and per-slice plus aggregate evaluation
+counts and wall-clock runtimes. Every slice must come from the exact runtime study, share the
+accepted candidate anchor, and have complete restoration/reconvergence. A foreign, deserialized,
+duplicate-axis, partial-recovery, or stale slice is rejected before export. Non-finite optional
+numerical fields are emitted as JSON `null`; they are never promoted to accepted evidence. Runtime
+is provenance for #2939 coordination, not a generic performance claim.
+
 ### Trace-qualified bottleneck-relief evidence
 
 `ProcessModelAllocationBottleneckAnalyzer` reads a completed

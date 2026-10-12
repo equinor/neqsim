@@ -11,6 +11,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
@@ -267,8 +269,33 @@ class ProcessModelOperatingEnvelopeStudyTest {
     SliceResult slice = study.evaluateOneDimensional("producer-a-rate",
         new double[] {accepted[0], Math.min(1000.0, accepted[0] + 100.0)}, search);
     assertTrue(slice.isComplete());
+    assertEquals(2, slice.getEvaluationCount());
+    assertTrue(Double.isFinite(slice.getRuntimeSeconds()) && slice.getRuntimeSeconds() >= 0.0);
     assertArrayEquals(accepted, slice.getAnchorValues(), 0.0);
     assertEquals(accepted[1], slice.getPoints().get(0).getCandidateValues()[1], 0.0);
+    SliceResult secondSlice = study.evaluateOneDimensional("producer-b-rate",
+        new double[] {Math.max(200.0, accepted[1] - 100.0), accepted[1]}, search);
+    assertEquals(2, secondSlice.getEvaluationCount());
+    int evaluationsBeforeEvidence = evaluator.getSimulationEvaluator().getEvaluationCount();
+    Map<String, Object> envelopeEvidence = study.getAcceptedPointEnvelopeEvidence("cycle-43", search, slice,
+        secondSlice);
+    assertEquals(evaluationsBeforeEvidence, evaluator.getSimulationEvaluator().getEvaluationCount());
+    assertEquals(Integer.valueOf(1), envelopeEvidence.get("schema_version"));
+    assertEquals("cycle-43", envelopeEvidence.get("cycle_id"));
+    assertEquals(Integer.valueOf(2), envelopeEvidence.get("slice_count"));
+    assertEquals(Long.valueOf(4L), envelopeEvidence.get("envelope_evaluation_count"));
+    assertEquals(Long.valueOf(search.getEvaluationCount() + 4L), envelopeEvidence.get("total_evaluation_count"));
+    assertTrue(((Double) envelopeEvidence.get("envelope_runtime_seconds")).doubleValue() >= 0.0);
+    assertEquals(2, ((List<?>) envelopeEvidence.get("slices")).size());
+    assertEquals(bottleneck.getQualifiedConstraintName(),
+        ((Map<?, ?>) envelopeEvidence.get("accepted_point_bottleneck")).get("qualified_constraint_name"));
+    assertThrows(UnsupportedOperationException.class, () -> envelopeEvidence.put("study_id", "changed"));
+    assertThrows(IllegalArgumentException.class,
+        () -> study.getAcceptedPointEnvelopeEvidence("cycle-43", search, slice, slice));
+    ProcessModelOperatingEnvelopeStudy foreignStudy = new ProcessModelOperatingEnvelopeStudy("accepted-envelope",
+        "Accepted operating-point envelope", "synthetic accepted-point handoff", evaluator);
+    assertThrows(IllegalStateException.class,
+        () -> foreignStudy.getAcceptedPointEnvelopeEvidence("cycle-43", search, slice, secondSlice));
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
 
@@ -289,6 +316,15 @@ class ProcessModelOperatingEnvelopeStudyTest {
     OperatingPointSearchResult deserialized = (OperatingPointSearchResult) input.readObject();
     input.close();
     assertThrows(IllegalStateException.class, () -> study.getAcceptedPointBottleneck(deserialized));
+    bytes = new ByteArrayOutputStream();
+    output = new ObjectOutputStream(bytes);
+    output.writeObject(slice);
+    output.close();
+    input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()));
+    SliceResult deserializedSlice = (SliceResult) input.readObject();
+    input.close();
+    assertThrows(IllegalStateException.class,
+        () -> study.getAcceptedPointEnvelopeEvidence("cycle-43", search, deserializedSlice, secondSlice));
 
     CapacityConstraint changedLimit = evaluator.getSimulationEvaluator().getConstraints().stream()
         .filter(constraint -> constraint.isCapacityConstraint()

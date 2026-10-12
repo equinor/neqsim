@@ -4,7 +4,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicConstraintBinding;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicConstraintSnapshot;
@@ -164,6 +166,110 @@ public final class ProcessModelOperatingEnvelopeStudy {
     validateAcceptedSearch(search);
     CandidateSetEvaluationResult replay = search.getAcceptedPointReplay().getEvaluation();
     return leading(replay, leadingInstalled(replay));
+  }
+
+  /**
+   * Builds one compact machine-readable evidence block for an accepted point and its completed envelope slices.
+   *
+   * <p>
+   * Every slice must have been produced by this exact runtime study, be anchored at the accepted candidate, and have
+   * completed with safe baseline recovery. Deserialized or foreign slices cannot be combined into new current-cycle
+   * evidence. The returned map contains the existing optimizer guard block, accepted-point bottleneck, per-slice points
+   * and transitions, and measured evaluation-count/runtime provenance. Building the map does not rerun or mutate the
+   * process model.
+   * </p>
+   *
+   * @param cycleId current living-task or engineering-cycle identifier
+   * @param search completed mixed operating-point search
+   * @param slices one or more completed slices anchored at the accepted point
+   * @return deeply immutable JSON-friendly evidence map
+   */
+  public Map<String, Object> getAcceptedPointEnvelopeEvidence(String cycleId, OperatingPointSearchResult search,
+      SliceResult... slices) {
+    String currentCycleId = requireText(cycleId, "Cycle identifier");
+    double[] accepted = validateAcceptedSearch(search);
+    if (slices == null || slices.length == 0) {
+      throw new IllegalArgumentException("Accepted-point envelope evidence requires at least one slice");
+    }
+
+    List<Map<String, Object>> sliceEvidence = new ArrayList<Map<String, Object>>();
+    List<String[]> axisSignatures = new ArrayList<String[]>();
+    long envelopeEvaluationCount = 0L;
+    double envelopeRuntimeSeconds = 0.0;
+    int requestedPointCount = 0;
+    int completedPointCount = 0;
+    for (SliceResult slice : slices) {
+      if (slice == null || !slice.isFromStudy(this)) {
+        throw new IllegalStateException("Envelope evidence requires slices from this exact runtime study");
+      }
+      if (!slice.isComplete()) {
+        throw new IllegalStateException("Envelope evidence requires complete slices with safe baseline recovery");
+      }
+      if (!sameVector(accepted, slice.getAnchorValues())) {
+        throw new IllegalStateException("Envelope slice is not anchored at the accepted candidate");
+      }
+      String[] axisSignature = slice.getAxisActionIds();
+      if (containsAxisSignature(axisSignatures, axisSignature)) {
+        throw new IllegalArgumentException(
+            "Envelope evidence contains duplicate slice axes: " + Arrays.toString(axisSignature));
+      }
+      axisSignatures.add(axisSignature);
+      envelopeEvaluationCount += slice.getEvaluationCount();
+      envelopeRuntimeSeconds += slice.getRuntimeSeconds();
+      requestedPointCount = Math.addExact(requestedPointCount, slice.getRequestedPointCount());
+      completedPointCount = Math.addExact(completedPointCount, slice.getCompletedPointCount());
+      sliceEvidence.add(slice.toEvidenceMap());
+    }
+    if (!Double.isFinite(envelopeRuntimeSeconds)) {
+      throw new IllegalStateException("Envelope runtime evidence is not finite");
+    }
+
+    CandidateSetEvaluationResult replay = search.getAcceptedPointReplay().getEvaluation();
+    LeadingConstraintEvidence acceptedBottleneck = leading(replay, leadingInstalled(replay));
+    Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+    evidence.put("schema_version", Integer.valueOf(1));
+    evidence.put("cycle_id", currentCycleId);
+    evidence.put("study_id", id);
+    evidence.put("study_name", name);
+    evidence.put("study_provenance", provenance);
+    evidence.put("candidate_evaluator_id", evaluator.getId());
+    evidence.put("optimizer_evidence", search.getOptimizerEvidence(currentCycleId));
+    evidence.put("accepted_candidate_values", toFiniteDoubleList(accepted));
+    evidence.put("accepted_point_bottleneck", acceptedBottleneck == null ? null : acceptedBottleneck.toEvidenceMap());
+    evidence.put("slice_count", Integer.valueOf(slices.length));
+    evidence.put("requested_point_count", Integer.valueOf(requestedPointCount));
+    evidence.put("completed_point_count", Integer.valueOf(completedPointCount));
+    evidence.put("envelope_evaluation_count", Long.valueOf(envelopeEvaluationCount));
+    evidence.put("envelope_runtime_seconds", Double.valueOf(envelopeRuntimeSeconds));
+    evidence.put("total_evaluation_count", Long.valueOf(search.getEvaluationCount() + envelopeEvaluationCount));
+    evidence.put("slices", Collections.unmodifiableList(sliceEvidence));
+    evidence.put("advisory", Boolean.TRUE);
+    evidence.put("interpretation",
+        "Sampled operating evidence; not a continuous boundary, global optimum, shadow price, or operating approval");
+    return Collections.unmodifiableMap(evidence);
+  }
+
+  /** Returns true when the ordered axis identifier vector already exists. */
+  private static boolean containsAxisSignature(List<String[]> signatures, String[] candidate) {
+    for (String[] signature : signatures) {
+      if (Arrays.equals(signature, candidate)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Returns true when two finite vectors are bitwise identical. */
+  private static boolean sameVector(double[] first, double[] second) {
+    if (first.length != second.length) {
+      return false;
+    }
+    for (int index = 0; index < first.length; index++) {
+      if (!sameDouble(first[index], second[index])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -401,6 +507,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
     List<ProcessModelOperatingAction> actions = evaluator.getActions();
     double[] anchor = validateAnchor(actions, anchorValues);
     int[] actionIndexes = validateAxes(actions, axisIds, axes);
+    int evaluationCountBefore = evaluator.getSimulationEvaluator().getEvaluationCount();
+    long startedNanos = System.nanoTime();
     List<Point> points = new ArrayList<Point>();
     List<Transition> transitions = new ArrayList<Transition>();
     List<String> diagnostics = new ArrayList<String>();
@@ -449,8 +557,10 @@ public final class ProcessModelOperatingEnvelopeStudy {
     }
     diagnostics.add(
         "Transitions use unit-safe installed evidence at feasible points and exact fail-closed rejection identity at infeasible points");
+    int evaluationCount = evaluator.getSimulationEvaluator().getEvaluationCount() - evaluationCountBefore;
+    double runtimeSeconds = Math.max(0.0, (System.nanoTime() - startedNanos) / 1.0e9);
     return new SliceResult(id, name, provenance, evaluator.getId(), axisIds, axes, anchor, pointCount(axes), outcome,
-        points, transitions, diagnostics);
+        points, transitions, diagnostics, evaluationCount, runtimeSeconds, this);
   }
 
   /**
@@ -669,6 +779,43 @@ public final class ProcessModelOperatingEnvelopeStudy {
     return values == null ? null : Arrays.copyOf(values, values.length);
   }
 
+  /** Converts finite doubles to an immutable JSON-friendly list. */
+  private static List<Object> toFiniteDoubleList(double[] values) {
+    List<Object> result = new ArrayList<Object>();
+    for (double value : values) {
+      result.add(finiteOrNull(value));
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  /** Converts a two-dimensional double array to nested immutable JSON-friendly lists. */
+  private static List<List<Object>> toFiniteDoubleLists(double[][] values) {
+    List<List<Object>> result = new ArrayList<List<Object>>();
+    for (double[] row : values) {
+      result.add(toFiniteDoubleList(row));
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  /** Converts integers to an immutable JSON-friendly list. */
+  private static List<Integer> toIntegerList(int[] values) {
+    List<Integer> result = new ArrayList<Integer>();
+    for (int value : values) {
+      result.add(Integer.valueOf(value));
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  /** Copies text values to an immutable JSON-friendly list. */
+  private static List<String> toStringList(String[] values) {
+    return Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(values)));
+  }
+
+  /** Returns a JSON-safe finite number or null for unavailable numerical evidence. */
+  private static Double finiteOrNull(double value) {
+    return Double.isFinite(value) ? Double.valueOf(value) : null;
+  }
+
   /**
    * Requires non-blank text.
    *
@@ -860,6 +1007,28 @@ public final class ProcessModelOperatingEnvelopeStudy {
     public String getApplicableLimitProvenance() {
       return applicableLimitProvenance;
     }
+
+    /**
+     * Converts this constraint row to a compact JSON-friendly map.
+     *
+     * @return immutable evidence map with null for unavailable numerical fields
+     */
+    public Map<String, Object> toEvidenceMap() {
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("source", source.name());
+      evidence.put("qualified_constraint_name", qualifiedConstraintName);
+      evidence.put("normalized_utilization", finiteOrNull(normalizedUtilization));
+      evidence.put("normalized_margin", finiteOrNull(normalizedMargin));
+      evidence.put("current_value", finiteOrNull(currentValue));
+      evidence.put("applicable_limit", finiteOrNull(applicableLimit));
+      evidence.put("physical_margin", finiteOrNull(physicalMargin));
+      evidence.put("physical_unit", physicalUnit);
+      evidence.put("feasible", Boolean.valueOf(feasible));
+      evidence.put("diagnostic", diagnostic);
+      evidence.put("applicable_limit_role", applicableLimitRole);
+      evidence.put("applicable_limit_provenance", applicableLimitProvenance);
+      return Collections.unmodifiableMap(evidence);
+    }
   }
 
   /**
@@ -940,6 +1109,29 @@ public final class ProcessModelOperatingEnvelopeStudy {
     public boolean isFeasible() {
       return evaluation.isFeasible();
     }
+
+    /**
+     * Converts this sampled point to a compact JSON-friendly map.
+     *
+     * @return immutable evidence map
+     */
+    public Map<String, Object> toEvidenceMap() {
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("sequence_index", Integer.valueOf(sequenceIndex));
+      evidence.put("grid_indexes", toIntegerList(gridIndexes));
+      evidence.put("axis_values", toFiniteDoubleList(axisValues));
+      evidence.put("candidate_values", toFiniteDoubleList(candidateValues));
+      evidence.put("outcome", evaluation.getOutcome().name());
+      evidence.put("feasible", Boolean.valueOf(evaluation.isFeasible()));
+      evidence.put("candidate_simulation_converged", Boolean.valueOf(evaluation.isCandidateSimulationConverged()));
+      evidence.put("candidate_evaluator_feasible", Boolean.valueOf(evaluation.isCandidateEvaluatorFeasible()));
+      evidence.put("baseline_restored", Boolean.valueOf(evaluation.isBaselineRestored()));
+      evidence.put("baseline_simulation_converged", Boolean.valueOf(evaluation.isBaselineSimulationConverged()));
+      evidence.put("raw_objectives", toFiniteDoubleList(evaluation.getRawObjectives()));
+      evidence.put("leading_constraint", leadingConstraint == null ? null : leadingConstraint.toEvidenceMap());
+      evidence.put("diagnostics", Collections.unmodifiableList(new ArrayList<String>(evaluation.getDiagnostics())));
+      return Collections.unmodifiableMap(evidence);
+    }
   }
 
   /**
@@ -1014,6 +1206,23 @@ public final class ProcessModelOperatingEnvelopeStudy {
     public String getToConstraint() {
       return toConstraint;
     }
+
+    /**
+     * Converts this sampled bottleneck change to a compact JSON-friendly map.
+     *
+     * @return immutable evidence map
+     */
+    public Map<String, Object> toEvidenceMap() {
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("axis_action_id", axisActionId);
+      evidence.put("from_sequence_index", Integer.valueOf(fromSequenceIndex));
+      evidence.put("to_sequence_index", Integer.valueOf(toSequenceIndex));
+      evidence.put("from_axis_value", finiteOrNull(fromAxisValue));
+      evidence.put("to_axis_value", finiteOrNull(toAxisValue));
+      evidence.put("from_constraint", fromConstraint);
+      evidence.put("to_constraint", toConstraint);
+      return Collections.unmodifiableMap(evidence);
+    }
   }
 
   /**
@@ -1036,6 +1245,9 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final List<Point> points;
     private final List<Transition> transitions;
     private final List<String> diagnostics;
+    private final int evaluationCount;
+    private final double runtimeSeconds;
+    private final transient ProcessModelOperatingEnvelopeStudy sourceStudy;
 
     /**
      * Creates an immutable result.
@@ -1052,10 +1264,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param points completed points
      * @param transitions sampled transitions
      * @param diagnostics study diagnostics
+     * @param evaluationCount simulator evaluations used by this slice
+     * @param runtimeSeconds measured wall-clock runtime
+     * @param sourceStudy exact runtime study that produced this result
      */
     private SliceResult(String id, String name, String provenance, String candidateEvaluatorId, String[] axisActionIds,
         double[][] axisValues, double[] anchorValues, int requestedPointCount, Outcome outcome, List<Point> points,
-        List<Transition> transitions, List<String> diagnostics) {
+        List<Transition> transitions, List<String> diagnostics, int evaluationCount, double runtimeSeconds,
+        ProcessModelOperatingEnvelopeStudy sourceStudy) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -1068,6 +1284,9 @@ public final class ProcessModelOperatingEnvelopeStudy {
       this.points = Collections.unmodifiableList(new ArrayList<Point>(points));
       this.transitions = Collections.unmodifiableList(new ArrayList<Transition>(transitions));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
+      this.evaluationCount = evaluationCount;
+      this.runtimeSeconds = runtimeSeconds;
+      this.sourceStudy = sourceStudy;
     }
 
     /** @return study identifier */
@@ -1149,6 +1368,61 @@ public final class ProcessModelOperatingEnvelopeStudy {
     /** @return fresh immutable study diagnostics */
     public List<String> getDiagnostics() {
       return Collections.unmodifiableList(new ArrayList<String>(diagnostics));
+    }
+
+    /** @return simulator evaluations used by this slice */
+    public int getEvaluationCount() {
+      return evaluationCount;
+    }
+
+    /** @return measured wall-clock runtime in seconds */
+    public double getRuntimeSeconds() {
+      return runtimeSeconds;
+    }
+
+    /** Returns true only for the exact runtime study that produced this result. */
+    private boolean isFromStudy(ProcessModelOperatingEnvelopeStudy study) {
+      return sourceStudy == study;
+    }
+
+    /**
+     * Converts this slice to a compact machine-readable evidence map.
+     *
+     * <p>
+     * Non-finite numerical evidence is represented as null so the returned structure can be encoded as strict JSON. The
+     * complete immutable Java result remains available through the typed getters.
+     * </p>
+     *
+     * @return deeply immutable JSON-friendly evidence map
+     */
+    public Map<String, Object> toEvidenceMap() {
+      List<Map<String, Object>> pointEvidence = new ArrayList<Map<String, Object>>();
+      for (Point point : points) {
+        pointEvidence.add(point.toEvidenceMap());
+      }
+      List<Map<String, Object>> transitionEvidence = new ArrayList<Map<String, Object>>();
+      for (Transition transition : transitions) {
+        transitionEvidence.add(transition.toEvidenceMap());
+      }
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("study_id", id);
+      evidence.put("study_name", name);
+      evidence.put("study_provenance", provenance);
+      evidence.put("candidate_evaluator_id", candidateEvaluatorId);
+      evidence.put("axis_action_ids", toStringList(axisActionIds));
+      evidence.put("axis_values", toFiniteDoubleLists(axisValues));
+      evidence.put("anchor_values", toFiniteDoubleList(anchorValues));
+      evidence.put("requested_point_count", Integer.valueOf(requestedPointCount));
+      evidence.put("completed_point_count", Integer.valueOf(points.size()));
+      evidence.put("feasible_point_count", Integer.valueOf(getFeasiblePoints().size()));
+      evidence.put("evaluation_count", Integer.valueOf(evaluationCount));
+      evidence.put("runtime_seconds", Double.valueOf(runtimeSeconds));
+      evidence.put("outcome", outcome.name());
+      evidence.put("complete", Boolean.valueOf(isComplete()));
+      evidence.put("points", Collections.unmodifiableList(pointEvidence));
+      evidence.put("bottleneck_transitions", Collections.unmodifiableList(transitionEvidence));
+      evidence.put("diagnostics", Collections.unmodifiableList(new ArrayList<String>(diagnostics)));
+      return Collections.unmodifiableMap(evidence);
     }
 
     /**
