@@ -2632,23 +2632,19 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getEmptySystemClone() {
-    int phaseNumber = 0;
-
     SystemInterface newSystem = this.clone();
-
-    double totalMolesInSystem = 0.0;
     double scaleFactor = 1.0e30;
+    double totalMolesInSystem = getTotalNumberOfMoles() / scaleFactor;
 
-    for (int j = 0; j < getMaxNumberOfPhases(); j++) {
-      phaseNumber = j;
-      double phaseMoles = 0.0;
-      for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-        double scaledMoles = getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / scaleFactor;
-        newSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledMoles);
-        newSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(scaledMoles);
-        phaseMoles += scaledMoles;
+    for (PhaseInterface phase : newSystem.getPhases()) {
+      if (phase == null) {
+        continue;
       }
-      totalMolesInSystem += phaseMoles;
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        ComponentInterface component = phase.getComponent(componentIndex);
+        component.setNumberOfmoles(component.getNumberOfmoles() / scaleFactor);
+        component.setNumberOfMolesInPhase(component.getNumberOfMolesInPhase() / scaleFactor);
+      }
     }
 
     if (totalMolesInSystem <= 0.0) {

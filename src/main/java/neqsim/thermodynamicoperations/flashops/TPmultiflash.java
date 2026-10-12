@@ -3694,7 +3694,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Tests a water-rich OIL or GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
+   * Tests a water-bearing OIL or GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
    *
    * <p>
    * Stability trials or phase cleanup can lose the water-rich minimum after the hydrocarbon split has converged,
@@ -3711,7 +3711,7 @@ public class TPmultiflash extends TPflash {
     if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
         || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
-        || system.getComponent("water").getz() < 0.05) {
+        || system.getComponent("water").getz() <= 0.0) {
       return;
     }
     boolean validReference = isFeasiblePhaseEquilibrium(system);

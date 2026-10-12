@@ -159,8 +159,95 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 0.0);
   }
 
-  private SystemInterface homogeneousOil() {
+  /**
+   * Checks that the aqueous recovery is governed by equilibrium rather than a five-percent water cutoff.
+   */
+  @Test
+  void singleOilRecoveryRetainsDiluteWaterPhase() {
+    SystemInterface fluid = homogeneousOil(diluteWaterInlet(0.007));
+    double referenceGibbs = fluid.getGibbsEnergy();
+    new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
+    assertAqueousEquilibrium(fluid);
+    assertTrue(fluid.getGibbsEnergy() < referenceGibbs - 1.0);
+    double equilibriumGibbs = fluid.getGibbsEnergy();
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    assertEquals(equilibriumGibbs, fluid.getGibbsEnergy(), 1.0e-5);
+  }
+
+  /** Checks dilute-water equilibrium through the public flash and pump APIs. */
+  @Test
+  void diluteWaterPumpHasPositiveWorkAndSmallTemperatureRise() {
+    SystemInterface fluid = diluteWaterInlet(0.007);
+    neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("feed", fluid);
+    feed.setFlowRate(9000.0, "kg/hr");
+    feed.run();
+    assertAqueousEquilibrium(feed.getFluid());
+    feed.getFluid().init(3);
+    double inletEnthalpy = feed.getFluid().getEnthalpy();
+    double inletEntropy = feed.getFluid().getEntropy();
+    Pump pump = new Pump("pump", feed);
+    pump.setOutletPressure(5.2);
+    pump.run();
+    SystemInterface outlet = pump.getOutletStream().getFluid();
+    outlet.init(3);
+    assertTrue(pump.getPower("W") > 0.0);
+    assertTrue(outlet.getTemperature() > feed.getTemperature());
+    assertTrue(outlet.getTemperature() - feed.getTemperature() < 1.0);
+    assertEquals(9000.0, outlet.getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(5.2, outlet.getPressure(), 1.0e-10);
+    assertEquals(pump.getPower("W"), outlet.getEnthalpy() - inletEnthalpy, 1.0e-6);
+    assertEquals(inletEntropy, outlet.getEntropy(), PSFlash.entropyTolerance(outlet, inletEntropy));
+    assertAqueousEquilibrium(outlet);
+  }
+
+  /** Checks that extending the screen does not force an undersaturated aqueous phase. */
+  @Test
+  void diluteWaterRecoveryRejectsUndersaturatedAqueousSeed() {
+    SystemInterface fluid = homogeneousOil(diluteWaterInlet(1.0e-12));
+    double referenceGibbs = fluid.getGibbsEnergy();
+    new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
+    assertEquals(1, fluid.getNumberOfPhases());
+    assertEquals(PhaseType.OIL, fluid.getPhase(0).getType());
+    assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 1.0e-8);
+  }
+
+  /**
+   * Reduces water while preserving the relative hydrocarbon composition of the public regression feed.
+   *
+   * @param waterFraction overall water mole fraction
+   * @return the dilute-water feed before equilibrium calculation
+   */
+  private SystemInterface diluteWaterInlet(double waterFraction) {
     SystemInterface fluid = inlet();
+    double[] composition = fluid.getMolarComposition();
+    double previousWater = composition[0];
+    for (int component = 1; component < composition.length; component++) {
+      composition[component] *= (1.0 - waterFraction) / (1.0 - previousWater);
+    }
+    composition[0] = waterFraction;
+    fluid.setMolarComposition(composition);
+    fluid.setTemperature(308.2);
+    fluid.setPressure(4.7);
+    return fluid;
+  }
+
+  /**
+   * Creates the oil-only regression state.
+   *
+   * @return a homogeneous oil with aliased inactive slots
+   */
+  private SystemInterface homogeneousOil() {
+    return homogeneousOil(inlet());
+  }
+
+  /**
+   * Initializes an oil-only endpoint after setting its composition.
+   *
+   * @param fluid fluid with the intended overall composition
+   * @return the initialized homogeneous oil with aliased inactive slots
+   */
+  private SystemInterface homogeneousOil(SystemInterface fluid) {
     fluid.setNumberOfPhases(1);
     fluid.setPhaseIndex(0, 1);
     fluid.setPhaseType(0, PhaseType.OIL);

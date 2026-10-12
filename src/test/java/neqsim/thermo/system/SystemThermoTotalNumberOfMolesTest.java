@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -131,6 +132,48 @@ public class SystemThermoTotalNumberOfMolesTest {
 
     assertEquals(0.0, fluid.getTotalNumberOfMoles(), 1e-30);
     assertEquals(0.0, sumComponentMoles(fluid), 1e-30);
+  }
+
+  /** Empty clones must remain normalized when initialization resets reordered phase indices. */
+  @Test
+  public void testEmptySystemClonePreservesReorderedPhaseComposition() {
+    for (int phaseIndex : new int[] {0, 1}) {
+      SystemInterface fluid = buildRichGasInMolePercent();
+      fluid.init(0);
+      fluid.setNumberOfPhases(1);
+      fluid.setPhaseIndex(0, phaseIndex);
+      double originalMoles = fluid.getTotalNumberOfMoles();
+      double originalFlow = fluid.getFlowRate("kg/hr");
+      double[] originalComposition = fluid.getMolarComposition();
+
+      SystemInterface empty = fluid.getEmptySystemClone();
+
+      assertEquals(originalMoles / 1e30, empty.getTotalNumberOfMoles(), 1e-40);
+      assertEquals(empty.getTotalNumberOfMoles(), sumComponentMoles(empty), 1e-40);
+      assertArrayEquals(originalComposition, empty.getMolarComposition(), 1e-12);
+      for (neqsim.thermo.phase.PhaseInterface phase : empty.getPhases()) {
+        if (phase == null) {
+          continue;
+        }
+        for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+          assertEquals(originalMoles * originalComposition[componentIndex] / 1e30,
+              phase.getComponent(componentIndex).getNumberOfmoles(), 1e-40);
+        }
+      }
+
+      empty.setTotalFlowRate(1e-20, "kg/hr");
+      empty.init(0);
+      empty.init(3);
+
+      double emptyFlow = empty.getFlowRate("kg/hr");
+      assertTrue(Double.isFinite(emptyFlow) && emptyFlow >= 0.0 && emptyFlow < 1e-12);
+      assertEquals(1.0, sumOverallMoleFractions(empty), 1e-12);
+      assertEquals(originalMoles, fluid.getTotalNumberOfMoles(), 0.0);
+      assertEquals(originalFlow, fluid.getFlowRate("kg/hr"), 0.0);
+      assertArrayEquals(originalComposition, fluid.getMolarComposition(), 0.0);
+      assertEquals(1, fluid.getNumberOfPhases());
+      assertEquals(phaseIndex, fluid.getPhaseIndex(0));
+    }
   }
 
   /** Adding components must not be disturbed by the rescaling setter. */
