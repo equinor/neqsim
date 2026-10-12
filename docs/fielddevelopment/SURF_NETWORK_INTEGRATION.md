@@ -340,11 +340,22 @@ cannot be promoted into DNV input. The typed calculations are option-screening i
 clause-complete conformity, installation analysis, flexible-pipe qualification, independent
 verification or AFC design.
 
-The current discrete network variable changes hydraulic inside diameter only. If an edge
-also has a `LineDesign`, each staged candidate must provide a compatible OD/wall basis;
-otherwise the consistency check fails closed. Categorical material/installation selection
-and simultaneous OD/ID/wall enumeration remain a later design-variable extension rather
-than being encoded as relaxed continuous operating controls.
+`SubseaProductionSystem.createLineDesignDecisionVariable(...)` exposes a deterministic list of
+complete rigid `LineDesign` alternatives as zero-based categorical indices to the existing
+all-discrete optimizer. One transactional selection updates the same canonical edge's hydraulic ID,
+explicit wall, optional uniform thermal basis, material/installation/cost basis and attached
+DNV-ST-F101/F109 inputs. It does not alter the edge's Darcy-Weisbach, Beggs-Brill or two-fluid model.
+Every candidate must carry an explicit wall and the same presence of thermal and screening
+contracts; minimum outlet temperature is a design requirement and cannot vary between alternatives.
+Flexible-pipe alternatives remain supplier-specific and are rejected by this contract.
+
+Add the returned `createLineDesignScreeningConstraints(...)` constraints to fail closed when a
+selected ST-F101 or F109 calculation is blocked, non-finite or above utilization one. The normal
+minimum outlet-temperature, hydraulic, conservation and cost constraints/objectives remain
+composable. A passing screening candidate still requires engineering review and does not establish
+DNV conformity, vendor qualification or AFC approval. Candidate lists are validated before the
+initial design is applied, and the selector restores the complete initial route state after
+individual candidate evaluation or an all-infeasible enumeration.
 
 ### Discrete hydraulic and SURF design
 
@@ -365,6 +376,25 @@ the resulting geometry without rebuilding the field. The synthetic two-route acc
 case enumerates four designs and selects the least-cost combination that meets delivery:
 the long segment is upsized while the short segment remains small. This is deterministic
 hydraulic and Class 4 screening evidence, not independent cost or hydraulic qualification.
+
+For a coupled route-design enumeration, register complete candidates instead of an independent
+diameter variable:
+
+```java
+NetworkDecisionVariable routeDesign = subsea.createLineDesignDecisionVariable(
+    topology, "production-flowline", Arrays.asList(smallDesign, largeDesign), 0);
+optimizer.addDecisionVariable(routeDesign);
+optimizer.addObjective(subsea.createSurfCapitalCostObjective(topology, 1.0e-6));
+for (NetworkConstraint constraint :
+    subsea.createLineDesignScreeningConstraints(topology, true)) {
+  optimizer.addConstraint(constraint);
+}
+```
+
+`NetworkDecisionVariable.customDiscrete(...)` is the generic adapter used underneath. It preserves
+the existing optimizer's complete Cartesian enumeration, evaluation budget and restoration rules;
+domain state remains owned by the transaction supplied by the caller. Do not register both a
+complete line-design selector and a separate diameter variable for the same edge.
 
 ## Live well pressure-rate coupling
 
@@ -453,9 +483,11 @@ physical limits to obtain a feasible optimizer result.
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    Add branch/loop outage and brownfield impact studies through #4188/#3154 optimization.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
-   field, laboratory or commercial-simulator evidence. Then expose staged OD/ID/wall/material/
-   insulation/stability alternatives to the existing exhaustive design optimizer and couple the
-   qualified cases to multi-period lifecycle economics and reduced-order surrogates.
+   field, laboratory or commercial-simulator evidence. The software contract for staged
+   OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic
+   fail-closed acceptance evidence; independent qualification is still required before design use.
+   Then couple qualified alternatives to multi-period lifecycle economics and reduced-order
+   surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
