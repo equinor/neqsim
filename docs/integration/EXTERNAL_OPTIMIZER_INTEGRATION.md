@@ -1085,6 +1085,15 @@ unconverged, or any baseline action value drifted. The runtime evaluator referen
 transient, so a deserialized search remains immutable evidence but cannot authorize new model
 mutation. Rerun optimization after such a change; never reuse a stale accepted point.
 
+After one or more accepted-point slices complete, use
+`getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` to obtain a compact JSON-friendly
+multi-slice block. It includes the optimizer guard evidence, accepted-point bottleneck, axes,
+sampled points, exact rejection identities, bottleneck transitions, diagnostics, and measured
+search/envelope evaluation counts and runtimes. The call is read-only and requires the exact runtime
+study plus complete, uniquely addressed slices anchored at the accepted candidate. It rejects
+foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
+rather than combining it into a current cycle.
+
 ### Search a fixed-total continuous allocation
 
 `ProcessModelAllocationOptimizer` composes the atomic evaluator when all allocation actions are
@@ -1622,6 +1631,8 @@ on `ProcessSimulationEvaluator`.
 | `evaluateOneDimensional(actionId, values, search)` | Validate the accepted replay and sample one axis around its exact action vector |
 | `evaluateTwoDimensional(firstId, firstValues, secondId, secondValues, search)` | Validate the accepted replay and sample two axes around its exact action vector |
 | `getAcceptedPointBottleneck(search)` | Return the replayed point's unit-safe leading constraint without another model evaluation |
+| `SliceResult.toEvidenceMap()` | Return strict-JSON-friendly sampled points, exact leading/rejecting constraints, transitions, evaluation count, runtime, and recovery diagnostics |
+| `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` | Combine the current accepted point and one or more exact-runtime complete slices into one immutable live-task evidence block without rerunning the model |
 
 ### ProcessModelDebottleneckStudy
 

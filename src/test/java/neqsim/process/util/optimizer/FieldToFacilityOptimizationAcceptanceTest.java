@@ -291,6 +291,26 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertArrayEquals(accepted, acceptedSlice.getPoints().get(1).getCandidateValues(), 0.0);
     assertTrue(acceptedSlice.getPoints().stream().allMatch(
         point -> point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()));
+    int firstRouteIndex = fixture.wellSuffixes.size();
+    double acceptedRouteA = accepted[firstRouteIndex];
+    double alternativeRouteA = acceptedRouteA == 0.0 ? 1.0 : 0.0;
+    SliceResult routingSlice = acceptedPointStudy.evaluateOneDimensional(actions.get(firstRouteIndex).getId(),
+        new double[] {acceptedRouteA, alternativeRouteA}, result);
+    assertTrue(routingSlice.isComplete(), routingSlice.getDiagnostics().toString());
+    assertTrue(routingSlice.getPoints().stream().allMatch(
+        point -> point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()));
+    int evaluationsBeforeExport = simulation.getEvaluationCount();
+    Map<String, Object> envelopeEvidence = acceptedPointStudy.getAcceptedPointEnvelopeEvidence("synthetic-cycle-1",
+        result, acceptedSlice, routingSlice);
+    assertEquals(evaluationsBeforeExport, simulation.getEvaluationCount());
+    assertEquals(Integer.valueOf(2), envelopeEvidence.get("slice_count"));
+    assertEquals(Integer.valueOf(4), envelopeEvidence.get("requested_point_count"));
+    assertEquals(Integer.valueOf(4), envelopeEvidence.get("completed_point_count"));
+    assertEquals(Long.valueOf(4L), envelopeEvidence.get("envelope_evaluation_count"));
+    assertEquals(Long.valueOf(result.getEvaluationCount() + 4L), envelopeEvidence.get("total_evaluation_count"));
+    assertTrue(Double.isFinite(((Double) envelopeEvidence.get("envelope_runtime_seconds")).doubleValue()));
+    assertEquals(acceptedBottleneck.getQualifiedConstraintName(),
+        ((Map<?, ?>) envelopeEvidence.get("accepted_point_bottleneck")).get("qualified_constraint_name"));
 
     assertEquals(100.0, fixture.exportValve.getOutletStream().getPressure("bara"), 1.0e-6);
     assertBaselineRestored(fixture);
