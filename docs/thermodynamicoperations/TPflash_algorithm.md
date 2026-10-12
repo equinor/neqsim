@@ -2893,3 +2893,29 @@ These public synthetic fluids qualify translated-PR TP-flash closure and lifecyc
 do not validate the volume-translation correlation or parameters, phase-envelope accuracy,
 experimental PVT predictions, PS/PH flashes, or acoustic-speed calculations. No production solver,
 public API, model parameter, unit, default, or wall-clock performance claim is introduced.
+
+
+### Endpoint recovery performance and phase-storage lifecycle
+
+Empty-clone scaling covers every stored physical slot, avoiding the inventory corruption
+caused by scaling reordered logical slots. The aqueous recovery removes the former 5 mol%
+exclusion and repairs aliased inactive trial slots on the candidate clone. It remains a
+bounded active-set recovery, not proof that the general stability search finds every global
+minimum. General phase-removal lifecycle aliasing is tracked in [#4310](https://github.com/equinor/neqsim/issues/4310); changing that shared
+lifecycle also changes the established methane/heptane cold-start phase-map behavior.
+
+Intermediate three-phase recovery runs only when the beta solve stalls. Final cleanup still
+checks neutral water-bearing three-phase endpoints, but a feasible split is checked without
+allocating another solver. Locked, reactive, ionic, wax and ineligible solid-recovery paths
+return before that allocation. Numerically unresolvable water remains excluded before cloning.
+
+`DiluteWaterRecoveryBenchmark` measures complete cold and warm TP flashes for dry gas,
+numerical trace water, resolvable undersaturated water, dilute aqueous appearance and three-phase
+fluids. It retains seven batches of elapsed time, thread CPU time, allocated bytes and numerical
+snapshots. Run identical JVM settings on both comparison heads; compare repeated runs and
+reject any speedup accompanied by failed normalization, material balance or fugacity checks.
+Timing thresholds are deliberately not asserted in CI. Resolvable undersaturated water can
+still require a rejected candidate flash; a positive pure-water trial alone is not a general
+stability certificate for a mixed aqueous phase. Eliminating rejected undersaturated recovery
+flashes is tracked in [#4311](https://github.com/equinor/neqsim/issues/4311); broad performance
+parity with the pre-recovery implementation has not been established.

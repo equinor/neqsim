@@ -3442,7 +3442,9 @@ public class TPmultiflash extends TPflash {
         }
       }
 
-      rescueStalledThreePhaseEndpoint();
+      if (betaSolveStalled) {
+        rescueStalledThreePhaseEndpoint();
+      }
 
       // For electrolyte systems: ensure only one aqueous phase - the one with most aqueous content
       // Other phases classified as AQUEOUS should be reclassified as OIL with ions removed
@@ -3890,7 +3892,13 @@ public class TPmultiflash extends TPflash {
     return true;
   }
 
-  private boolean isFeasiblePhaseEquilibrium(SystemInterface candidate) {
+  /**
+   * Checks normalized phase fractions, material balance and log-fugacity equality without allocation.
+   *
+   * @param candidate phase split to check
+   * @return true when the active phase split meets the endpoint acceptance tolerances
+   */
+  static boolean isFeasiblePhaseEquilibrium(SystemInterface candidate) {
     double betaTotal = 0.0;
     int numberOfPhases = candidate.getNumberOfPhases();
     for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {

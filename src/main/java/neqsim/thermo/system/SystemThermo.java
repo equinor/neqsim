@@ -4937,16 +4937,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (specPhase != i) {
-        phaseList.add(phaseArray[phaseIndex[i]]);
-      }
-    }
-
-    // phaseArray = new PhaseInterface[numberOfPhases - 1];
     for (int i = 0; i < numberOfPhases - 1; i++) {
-      // phaseArray[i] = (PhaseInterface) phaseList.get(i);
       if (i >= specPhase) {
         phaseIndex[i] = phaseIndex[i + 1];
         phaseType[i] = phaseType[i + 1];
@@ -4958,16 +4949,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void removePhaseKeepTotalComposition(int specPhase) {
-    ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (specPhase != i) {
-        phaseList.add(phaseArray[phaseIndex[i]]);
-      }
-    }
-
-    // phaseArray = new PhaseInterface[numberOfPhases - 1];
     for (int i = 0; i < numberOfPhases - 1; i++) {
-      // phaseArray[i] = (PhaseInterface) phaseList.get(i);
       if (i >= specPhase) {
         phaseIndex[i] = phaseIndex[i + 1];
         phaseType[i] = phaseType[i + 1];
