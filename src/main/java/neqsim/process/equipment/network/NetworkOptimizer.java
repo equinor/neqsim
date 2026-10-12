@@ -248,6 +248,9 @@ public class NetworkOptimizer {
     if (variable == null) {
       throw new IllegalArgumentException("Decision variable cannot be null");
     }
+    if (variable.isDiscrete()) {
+      variable.setValue(network, variable.getValue(network));
+    }
     decisionVariables.add(variable);
   }
 
@@ -551,6 +554,20 @@ public class NetworkOptimizer {
    * @return optimization result
    */
   private OptimizationResult optimizeRegisteredProblem() {
+    boolean hasDiscrete = false;
+    boolean hasContinuous = false;
+    for (NetworkDecisionVariable variable : decisionVariables) {
+      hasDiscrete |= variable.isDiscrete();
+      hasContinuous |= !variable.isDiscrete();
+    }
+    if (hasDiscrete && hasContinuous) {
+      throw new IllegalStateException(
+          "Mixed discrete and continuous registered optimization is not supported; solve staged design and operation problems");
+    }
+    if (hasDiscrete) {
+      return optimizeDiscreteRegisteredProblem();
+    }
+
     long startTime = System.currentTimeMillis();
     trajectory.clear();
     final int variableCount = decisionVariables.size();
@@ -613,6 +630,94 @@ public class NetworkOptimizer {
     lastResult.candidateEvaluation = finalEvaluation;
     lastResult.decisionValues = new LinkedHashMap<String, Double>(finalEvaluation.getDecisions());
     lastResult.activeConstraints = new ArrayList<String>(finalEvaluation.getActiveConstraints());
+    return lastResult;
+  }
+
+  /**
+   * Exhaustively evaluate a bounded all-discrete registered design problem.
+   *
+   * <p>
+   * Enumeration is deterministic in variable and candidate insertion order. It refuses to start when the complete
+   * Cartesian product exceeds {@link #maxEvaluations}; a partial search must not be reported as an optimum.
+   * </p>
+   *
+   * @return best feasible exact discrete design, or an infeasible result with the baseline restored
+   */
+  private OptimizationResult optimizeDiscreteRegisteredProblem() {
+    long startTime = System.currentTimeMillis();
+    trajectory.clear();
+    double[] initialValues = readDecisionValues();
+    double[][] candidates = new double[decisionVariables.size()][];
+    long combinationCount = 1L;
+    for (int index = 0; index < decisionVariables.size(); index++) {
+      candidates[index] = decisionVariables.get(index).getDiscreteValues();
+      if (combinationCount > Integer.MAX_VALUE / candidates[index].length) {
+        throw new IllegalStateException("Discrete design space exceeds supported enumeration size");
+      }
+      combinationCount *= candidates[index].length;
+    }
+    if (combinationCount > maxEvaluations) {
+      throw new IllegalStateException("Discrete design requires " + combinationCount + " evaluations but the limit is "
+          + maxEvaluations + "; increase maxEvaluations or reduce candidates");
+    }
+
+    NetworkCandidateEvaluation bestFeasible = null;
+    NetworkCandidateEvaluation bestRejected = null;
+    double bestRejectedScore = Double.POSITIVE_INFINITY;
+    for (long combination = 0L; combination < combinationCount; combination++) {
+      long remaining = combination;
+      double[] values = new double[candidates.length];
+      for (int index = candidates.length - 1; index >= 0; index--) {
+        int candidateIndex = (int) (remaining % candidates[index].length);
+        remaining /= candidates[index].length;
+        values[index] = candidates[index][candidateIndex];
+      }
+      NetworkCandidateEvaluation evaluation = evaluateCandidate(values);
+      trajectory.add(evaluation);
+      if (evaluation.isFeasible() && Double.isFinite(evaluation.getObjectiveValue())) {
+        if (bestFeasible == null || evaluation.getObjectiveValue() > bestFeasible.getObjectiveValue()) {
+          bestFeasible = evaluation;
+        }
+      } else {
+        double score = evaluation.getPenalty() - evaluation.getObjectiveValue();
+        if (Double.isFinite(score) && score < bestRejectedScore) {
+          bestRejected = evaluation;
+          bestRejectedScore = score;
+        }
+      }
+    }
+
+    NetworkCandidateEvaluation selected = bestFeasible == null ? bestRejected : bestFeasible;
+    if (bestFeasible == null) {
+      restoreDecisionValues(initialValues);
+    } else {
+      double[] selectedValues = new double[decisionVariables.size()];
+      for (int index = 0; index < decisionVariables.size(); index++) {
+        selectedValues[index] = bestFeasible.getDecisions().get(decisionVariables.get(index).getName());
+      }
+      applyDecisionValues(selectedValues);
+    }
+    try {
+      network.run();
+    } catch (Exception ex) {
+      logger.warn("Final discrete network state failed: {}", ex.getMessage());
+    }
+
+    lastResult = new OptimizationResult();
+    lastResult.converged = bestFeasible != null && network.isConverged();
+    lastResult.objectiveValue = selected == null ? Double.NaN : selected.getObjectiveValue();
+    lastResult.totalProductionKgHr = network.getTotalSinkFlow() * 3600.0;
+    lastResult.totalCompressorPowerKW = getTotalCompressorPower();
+    lastResult.algorithm = "DISCRETE_ENUMERATION";
+    lastResult.objectiveTypeName = objectives.isEmpty() ? objectiveType.name() : "COMPOSITE";
+    lastResult.elapsedMs = System.currentTimeMillis() - startTime;
+    lastResult.functionEvaluations = trajectory.size();
+    lastResult.message = bestFeasible == null ? "No feasible discrete candidate" : "Discrete design optimum found";
+    lastResult.candidateEvaluation = selected;
+    lastResult.decisionValues = selected == null ? new LinkedHashMap<String, Double>()
+        : new LinkedHashMap<String, Double>(selected.getDecisions());
+    lastResult.activeConstraints = selected == null ? new ArrayList<String>()
+        : new ArrayList<String>(selected.getActiveConstraints());
     return lastResult;
   }
 

@@ -4618,7 +4618,7 @@ public class TPflash extends Flash {
   private void rescueWaterRichMissingAqueousPhase() {
     if (system.doMultiPhaseCheck() && system.hasPhaseType(PhaseType.OIL)
         && (system.getNumberOfPhases() == 1 || (system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)))
-        && system.hasComponent("water") && system.getComponent("water").getz() > 0.0) {
+        && system.hasComponent("water") && system.getComponent("water").getz() > 20.0 * phaseFractionMinimumLimit) {
       new TPmultiflash(system, false).rescueMetastableOilMissingAqueous();
     }
   }

@@ -129,6 +129,6 @@ Identify cross-pinch transfer with stream-level diagnostics (each violation cost
 
 ## Related Skills
 
-- [`neqsim-power-generation`](../neqsim-power-generation/SKILL.md) — utility-side: HRSG, steam levels
+- [`neqsim-power-generation`](../neqsim-power-generation/SKILL.md) — utility-side: HRSG, steam levels; also the "added exhaust heat recovery for a heating-medium circuit" retrofit pattern (hot-end versus stack-end coil: the temperature driving force, not the heat quantity, sets area and cost)
 - [`neqsim-equipment-cost-estimation`](../neqsim-equipment-cost-estimation/SKILL.md) — HX area→cost for supertargeting
 - [`neqsim-platform-modeling`](../neqsim-platform-modeling/SKILL.md) — apply pinch across multiple process areas

@@ -11,7 +11,7 @@
     neqsim task-ledger <task> [list | show ID | set ID STATUS --by NAME [--note TEXT] | merge OTHER]
     neqsim task-note <task> [TEXT] [--by NAME] [--expires DATE] [effect options] | --list | --resolve ID
     neqsim task-status [task-or-task-root]
-    neqsim task-report <task> [--formal]
+    neqsim task-report <task> [--formal | --final --reviewer NAME [--note TEXT] [--pdf]]
     neqsim task-reference-case [parent-folder]
 
 A <task> that is not an existing folder is looked up in the task root used for new tasks
@@ -138,9 +138,16 @@ def main(argv=None):
     p = sub.add_parser("status", help="status of one living task or every living task in a folder")
     p.add_argument("path", nargs="?", help="task or folder (default: the task root)")
 
-    p = sub.add_parser("report", help="rebuild continuous/LIVING_REPORT.md now")
+    p = sub.add_parser("report", help="rebuild Living Report or generate a reviewed final report")
     p.add_argument("task")
-    p.add_argument("--formal", action="store_true", help="also regenerate the Word/HTML report")
+    report_mode = p.add_mutually_exclusive_group()
+    report_mode.add_argument("--formal", action="store_true",
+                             help="also regenerate the ordinary current-best Word/HTML report")
+    report_mode.add_argument("--final", action="store_true",
+                             help="generate an immutable reviewed Final Report revision")
+    p.add_argument("--reviewer", help="named reviewer approving the Final Report source baseline")
+    p.add_argument("--note", default="", help="finalization note stored in the report manifest")
+    p.add_argument("--pdf", action="store_true", help="also request PDF for --final")
 
     p = sub.add_parser("note", help="add, list or resolve engineer comments and restrictions (user_input.yaml)")
     p.add_argument("task")
@@ -272,11 +279,19 @@ def main(argv=None):
                     if os.path.isdir(os.path.join(path, n)) and is_living(os.path.join(path, n))]
             _print(rows)
     elif args.command == "report":
-        from .living_report import regenerate_formal, update
-        path = update(_task(args.task), event="manual")
-        print(path or "ERROR: living report not written (is the task living?)")
-        if args.formal:
-            regenerate_formal(args.task)
+        if args.final:
+            if not args.reviewer:
+                raise SystemExit("usage: task-report <task> --final --reviewer NAME [--note TEXT] [--pdf]")
+            from .final_report import finalize
+            _print(finalize(args.task, reviewer=args.reviewer, note=args.note, pdf=args.pdf))
+        else:
+            if args.reviewer or args.note or args.pdf:
+                raise SystemExit("--reviewer, --note and --pdf require --final")
+            from .living_report import regenerate_formal, update
+            path = update(_task(args.task), event="manual")
+            print(path or "ERROR: living report not written (is the task living?)")
+            if args.formal:
+                regenerate_formal(args.task)
     elif args.command == "note":
         from . import user_input
         from .living_report import update

@@ -176,6 +176,20 @@ public class SystemThermoTotalNumberOfMolesTest {
     }
   }
 
+  /** Empty cloning must not scale inactive phase objects shared by the regular clone. */
+  @Test
+  public void testEmptyCloneDoesNotMutateStoredPhaseBeyondSearchLimit() {
+    SystemInterface fluid = buildRichGasInMolePercent();
+    fluid.setMultiPhaseCheck(true);
+    fluid.init(0);
+    fluid.setMaxNumberOfPhases(2);
+    double originalStoredMoles = fluid.getPhases()[2].getComponent(0).getNumberOfmoles();
+    SystemInterface empty = fluid.getEmptySystemClone();
+    assertEquals(originalStoredMoles, fluid.getPhases()[2].getComponent(0).getNumberOfmoles(), 0.0);
+    assertEquals(originalStoredMoles / 1e30, empty.getPhases()[2].getComponent(0).getNumberOfmoles(), 1e-40);
+    assertTrue(fluid.getPhases()[2] != empty.getPhases()[2]);
+  }
+
   /** Adding components must not be disturbed by the rescaling setter. */
   @Test
   public void testAddComponentStillAccumulatesTotal() {

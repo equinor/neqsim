@@ -160,6 +160,7 @@ referenced documents (P&IDs and data sheets first), downloads the best ones to
 neqsim fetch-docs <task_dir>                          # infer installation + default keywords
 neqsim fetch-docs <task_dir> --inst MYINST --max-docs 80
 neqsim fetch-docs <task_dir> --keywords compressor "export gas" --no-download --json
+neqsim fetch-docs <task_dir> --inst OSB --doc-nos 11-1B-PC-CD0-11-EC-00235 11-1B-HM-M78-01364-0041   # named documents, skips the keyword ranking
 ```
 
 It runs automatically in `neqsim new-task` and in the Standard-first gate of
@@ -668,3 +669,8 @@ STID (tag search) → Tagreader (historian read) → CSV (snapshot) → NeqSim (
 See the "STID → Tagreader → CSV → NeqSim Pipeline" section in that skill
 for the complete end-to-end example with CSV persistence, data quality
 filtering, and digital twin comparison — all saved to the task folder.
+
+## STID downloads can return no content (2026-10)
+
+For Heidrun (inst code `HD`) the document list and search worked (HEP is the Heidrun Extension Project: report titles such as EQ-A-RE-007, TF-M-RS-001, TF-A-AD-006, X-XX-LTE-001) while file downloads of drawings and datasheets returned 0 bytes; 10 of 16 report PDFs downloaded and their text could be extracted with pymupdf (search them for the project keywords before concluding a fact is unavailable). Save the search records under `references/stid/`, record empty downloads as `empty_download` in the document evidence manifest, state in `data_gaps` that those drawings were not read, and do not present facts that only a drawing could confirm. HEP/LTE project documents are found by title search on `HEP`, `LTE`, `Nordflanken` and `template`.
+

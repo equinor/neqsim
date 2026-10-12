@@ -82,6 +82,44 @@ class PlantCommonShaftEvidenceTest {
   }
 
   @Test
+  void configuredPowerToleranceControlsCasingAllocationConsistency() {
+    TrainFixture fixture = trainFixture(800.0, 900.0);
+
+    PlantCommonShaftEvidence withinTolerance = fixture.evidence(400.0000005, 350.0, 10000.0, 0.12, 0.18, 0.08, 0.21,
+        true);
+    PlantCommonShaftEvidence outsideTolerance = fixture.evidence(400.000002, 350.0, 10000.0, 0.12, 0.18, 0.08, 0.21,
+        true);
+
+    assertTrue(withinTolerance.isComplete(), withinTolerance.getDiagnostics().toString());
+    assertFalse(outsideTolerance.isComplete());
+    assertTrue(outsideTolerance.getDiagnostics().stream().anyMatch(value -> value.contains("METADATA_MISMATCH")));
+  }
+
+  /** Verify the train total honors the same absolute power tolerance as each casing. */
+  @Test
+  void configuredPowerToleranceControlsSmallTrainTotalConsistency() {
+    TrainFixture fixture = trainFixture(800.0, 900.0);
+    fixture.casingAPort.setRequestedPower(4.0, "kW");
+    fixture.casingBPort.setRequestedPower(3.5, "kW");
+    fixture.shaft.solveBalance();
+
+    PlantCommonShaftEvidence withinTolerance = fixture.evidence(4.0000004, 3.5000004, 10000.0, 0.12, 0.18, 0.08, 0.21,
+        true);
+    PlantCommonShaftEvidence outsideTolerance = fixture.evidence(4.0000006, 3.5000006, 10000.0, 0.12, 0.18, 0.08, 0.21,
+        true);
+
+    assertTrue(withinTolerance.isComplete(), withinTolerance.getDiagnostics().toString());
+    assertTrue(withinTolerance.isFeasible());
+    assertEquals(7.5000008, withinTolerance.getTotalCasingPowerKw(), 1.0e-12);
+    assertEquals(17.5, withinTolerance.getTotalShaftLoadKw(), 1.0e-12);
+    assertFalse(outsideTolerance.isComplete());
+    assertTrue(outsideTolerance.getDiagnostics().stream().anyMatch(value -> value.contains("CASING_TOTAL_MISMATCH")));
+    assertTrue(outsideTolerance.getCasings().stream().allMatch(PlantCommonShaftEvidence.CasingEvidence::isUsable));
+    assertTrue(outsideTolerance.getSamples().stream()
+        .anyMatch(sample -> sample.getDiagnostic().contains("CASING_TOTAL_MISMATCH")));
+  }
+
+  @Test
   void explicitlyUnavailableCasingRequiresAndPreservesVerifiedZeroLoad() {
     TrainFixture fixture = trainFixture(500.0, 900.0);
     fixture.casingBPort.setRequestedPower(0.0, "kW");

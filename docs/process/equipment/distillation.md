@@ -212,6 +212,63 @@ condenser or reboiler are validation errors and fail during preflight.
 condenser ratio control is active. This makes retained/restarted models auditable before nearby-point
 warm solves.
 
+Direct terminal specification residuals are evaluated from the published streams: condenser
+liquid reflux divided by distillate flow (L/D), or reboiler vapor return divided by bottoms
+flow (V/B), minus the target. Duty residuals are the published duty minus the target in W.
+An unavailable ratio reports `NaN` and prevents acceptance. Direct controls participate in
+specification acceptance even though they do not need the outer temperature-specification loop.
+Product reconciliation can change a terminal ratio; the MESH solver first attempts an isolated
+simultaneous correction. If Newton is rejected and the ratio remains unsatisfied, a fresh isolated
+candidate uses sequential tray sweeps from the retained state. These sweeps update terminal ratio
+flashes and connected material flows together. Copied candidates preserve the current phase outlet
+inventories and initialization identity. Recovery checks connected tray component balances before
+publication, tries an isolated simultaneous correction from that state, and can further refine the
+component closure if product reconciliation still changes the ratio. An initial checkpoint after
+at most twenty sequential sweeps allows an earlier simultaneous correction; this intermediate
+state is only a seed and cannot be adopted without passing the same physical gates. If that
+correction fails, recovery continues with the full sequential convergence target. A provisional refinement
+checks physical qualification before attempting the tightest component target. Pumparound returns
+and draws are included on the inner control-volume basis while the outer tear is open; their
+inventories cancel when the tear converges. Ratio-constrained Newton
+recovery permits up to twenty fugacity sweeps per tray, stopping at the existing inner tolerance.
+For pumparound-only MESH tears, subsequent iterations retain the tray state and connect newly created
+returns to the receiving tray while preserving both its mixed fluid and cached phase outlets.
+Newton recovery reconstructs phase flows before withdrawals rather
+than rescaling the post-withdrawal outlets as a new feed. After the accepted return update, public
+products, terminal duties and residuals are reconciled on the closed external-feed basis.
+Sequential recovery must satisfy all physical convergence gates. A candidate that restores every
+active gate can be accepted even if its trace-component MESH infinity norm increases within its
+configured limit; otherwise the existing residual-improvement guard applies. Rejected candidates
+leave the original column unchanged. Recovery retains the user's convergence settings and each
+candidate's iteration limit. It does not guarantee
+convergence of every crude-fractionation or sensitivity case; an unsolved column remains invalid
+for product evaluation.
+
+The simultaneous solver enforces partial-condenser `L - R D = 0` and reboiler
+`V - B L = 0` instead of a fixed terminal duty equation. A terminal temperature supplied with an
+active ratio is an initialization seed; the solved duty follows from the material-stream enthalpy
+balance. Both full residual evaluation and finite-difference Jacobian evaluation use the same
+boundary equations.
+Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
+sequential ratio correction preserves the current tray state instead of replacing it with a
+bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.
+
+Water-bearing tray flashes use the shared TP-flash stability, reciprocal-candidate and
+phase-initialization paths. Distillation does not bypass those thermodynamic checks.
+Inactive phase-search templates defer transport-property initialization until first access, so
+water-rich recovery does not calculate unused viscosity and conductivity on every tray PH trial.
+The finalized column still initializes physical properties for its active outlet phases.
+
+Product normal-boiling-point distributions retain strictly increasing, representable cumulative
+mole fractions. A positive trace too small to advance the cumulative fraction does not create a
+duplicate support point; it still contributes to the mole-weighted mean. This handles highly
+separated products without inventing a probability increment or rejecting a valid column result.
+
+Terminal ratio flashes use the bracketed vapor-fraction temperature search. A vapor-only
+condenser inlet can therefore cool into the two-phase region, and a liquid-only reboiler
+inlet can heat into it. Terminal outlet caches are invalidated on every run so changes in
+feed inventory are reflected in both returned phase streams.
+
 `setReboilerVaporBoilupRatio(ratio)` configures the direct reboiler mode.
 `setReboilerBoilupRatio(ratio)` also records the target as the bottom `REFLUX_RATIO`
 specification. Terminal ratios supplied through either the column API or the condenser/reboiler
@@ -274,7 +331,12 @@ The `NEWTON` finite-difference sweeps and final `WEGSTEIN` synchronization alway
 relaxation. They therefore install one owned clone of each already-flashed internal outlet directly
 as the target tray inlet, without previous-stream arrays or a second cache clone. The owned
 snapshot still follows the established relaxation and reflash path, preserving downstream
-tear-state thermodynamic semantics. Audit the work with
+tear-state thermodynamic semantics. For a ratio-controlled total condenser, reconciled distillate and reflux use the same liquid
+composition, and reflux flow remains the specified ratio times distillate flow. Tray material and
+energy residuals are evaluated after this split is synchronized. In MESH material diagnostics, inactive side draws and
+pumparound draws contribute zero without constructing phase streams. This also permits diagnostic
+tray implementations that expose outlet streams without a mixed stream. Active draws remain part
+of the component balance. Audit the work with
 `getLastAcceleratedFullTraySweepCount()` and
 `getLastAcceleratedInternalStreamTransferCount()`. The counters describe attempted accelerator
 work, survive accepted `AUTO` candidate adoption, and can remain nonzero if a coordinated fallback
@@ -299,6 +361,8 @@ zero-iteration cache hit. Tolerances for disabled energy and MESH gates, and out
 when no tear variable is configured, do not participate in the cache key. The next invocation
 executes the solver path after an active-gate change and either meets the new contract or reports
 non-convergence explicitly.
+For MESH recovery, the reuse fingerprint is recorded after the final qualified correction so
+the next unchanged call retains the adopted products and tray network.
 
 ## Side Draws
 
@@ -330,7 +394,12 @@ substitution is not a robust choice for this fully coupled configuration. The me
 `isLastColumnTearConverged()` and
 `getLastColumnTearResidual()` report that convergence, and exact sequential-state reuse stays
 disabled while the nonlocal return is active. A changed external feed therefore re-solves both the
-terminal products and pumparound state on the same component basis.
+terminal products and pumparound state on the same component basis. Simultaneous MESH polishing
+maps heterogeneous and reordered feed components by name and combines phase enthalpy rates before
+forming the mean feed enthalpy. Each inner solve freezes the current pumparound return and includes
+its withdrawal separately from external side products; the outer tear still converges the recycle.
+Candidate copying preserves the frozen return and does not count copied recycle streams as new
+external feeds.
 
 ```java
 column.setGasSideDrawFraction(6, 0.05);

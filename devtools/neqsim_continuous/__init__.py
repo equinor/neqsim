@@ -23,6 +23,8 @@ from .solve import solve
 from .backtest import run_backtest
 from .state import STATE_SCHEMA_VERSION, StateSchemaError
 from .evidence import EvidenceSchemaError, analyze as analyze_evidence, inventory as evidence_inventory
+from .final_report import (FINAL_REPORT_SCHEMA_VERSION, FinalReportError,
+                           finalize as finalize_report, status as final_report_status)
 
 SCHEMA_VERSION = "1.0"
 
@@ -33,4 +35,5 @@ __all__ = [
     "solve", "run_backtest", "STATE_SCHEMA_VERSION", "StateSchemaError",
     "demonstrated_limit", "evaluate_constraints", "lever_limits",
     "analyze_evidence", "evidence_inventory", "EvidenceSchemaError",
+    "FINAL_REPORT_SCHEMA_VERSION", "FinalReportError", "finalize_report", "final_report_status",
 ]

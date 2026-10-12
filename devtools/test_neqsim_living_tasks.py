@@ -173,6 +173,103 @@ def test_living_report_regenerates_formal_report_when_configured(reference, tmp_
     promote(task, manifest["cycle_id"], "Reviewer")
     assert len(calls) == 1
 
+
+def test_multi_day_final_report_uses_canonical_pipeline_and_is_immutable(reference, tmp_path):
+    docx = pytest.importorskip("docx")
+    task = _copy(reference, tmp_path, "multi_day_final")
+
+    # Day 1: collect a validated operating snapshot.  Day 2: solve and promote the
+    # reviewed current-best result.  Day 3: issue the standalone Final Report.
+    run_cycle(task, now=datetime(2026, 3, 10, tzinfo=timezone.utc), no_agent=True)
+    solved = nc.solve(task, until="goal", no_agent=True)
+    source_cycle = solved["history"][-1]["cycle"]
+    promote(task, source_cycle, "Engineering reviewer", note="accepted for final delivery")
+    final = nc.finalize_report(
+        task, reviewer="Engineering reviewer", note="issued for delivery",
+        now=datetime(2026, 3, 12, tzinfo=timezone.utc))
+
+    assert final["revision"] == "FR-001" and final["status"] == "complete"
+    assert not final["reused"]
+    formats = {item["format"] for item in final["outputs"]}
+    assert formats == {"docx", "html"}
+    paths = {item["format"]: os.path.join(task, item["path"]) for item in final["outputs"]}
+    with open(paths["docx"], "rb") as report_file:
+        assert report_file.read(2) == b"PK"
+    with open(paths["html"], encoding="utf-8") as report_file:
+        html = report_file.read()
+    assert "Final Report Record" in html
+    assert "continuous/LIVING_REPORT.md" in html
+    assert "Transient cycle history is deliberately not reproduced here" in html
+    word = docx.Document(paths["docx"])
+    word_text = "\n".join(paragraph.text for paragraph in word.paragraphs)
+    assert "Final Report Record" in word_text
+    assert "step3_report/WORK_RECORD.md" in word_text
+
+    # Final generation has a dedicated output directory and does not replace the
+    # ordinary current-best report output manifest.
+    assert not os.path.exists(os.path.join(task, "step3_report", ".report_outputs.json"))
+    five_second = nc.status(task)
+    assert five_second["final_report"]["revision"] == "FR-001"
+    assert not five_second["final_report"]["stale"]
+    assert "FR-001" in five_second["next_action"]
+
+    repeated = nc.finalize_report(
+        task, reviewer="Engineering reviewer", note="issued for delivery",
+        now=datetime(2026, 3, 13, tzinfo=timezone.utc))
+    assert repeated["revision"] == "FR-001" and repeated["reused"]
+
+    # Report-build environment provenance is not an engineering result change.
+    results_path = os.path.join(task, "results.json")
+    with open(results_path, encoding="utf-8") as results_file:
+        results = json.load(results_file)
+    results["environment"] = {"python": "different-report-host"}
+    with open(results_path, "w", encoding="utf-8") as handle:
+        json.dump(results, handle, indent=2)
+    assert not nc.final_report_status(task)["stale"]
+
+    # A changed engineering result invalidates the issued report and cannot be
+    # finalized until the new result has been validated and promoted.
+    results["key_results"]["power_reduction_pct"] += 0.1
+    with open(results_path, "w", encoding="utf-8") as handle:
+        json.dump(results, handle, indent=2)
+    assert nc.final_report_status(task)["stale"]
+    with pytest.raises(nc.FinalReportError, match="differs from the promoted baseline"):
+        nc.finalize_report(task, reviewer="Engineering reviewer")
+
+
+def test_final_report_future_schema_fails_closed(reference, tmp_path):
+    task = _copy(reference, tmp_path, "future_final_schema")
+    path = os.path.join(task, "continuous", "final_report.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump({"schema_version": "2.0", "revision": "FR-001"}, handle)
+    with pytest.raises(nc.FinalReportError, match="supports up to"):
+        nc.final_report_status(task)
+
+
+def test_final_report_rejects_output_outside_task(reference, tmp_path):
+    from neqsim_continuous.plan import file_sha256
+
+    task = _copy(reference, tmp_path, "escaped_final_output")
+    outside = tmp_path / "outside.html"
+    outside.write_text("not a task report", encoding="utf-8")
+    path = os.path.join(task, "continuous", "final_report.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump({
+            "schema_version": "1.0",
+            "revision": "FR-001",
+            "input_fingerprint": "invalid",
+            "outputs": [{
+                "path": "../outside.html",
+                "format": "html",
+                "sha256": file_sha256(str(outside)),
+            }],
+        }, handle)
+    report = nc.final_report_status(task)
+    assert not report["available"]
+    assert not report["outputs_valid"]
+    assert not report["outputs"][0]["exists"]
+
+
 def test_solve_refuses_unconfirmed_goal(reference, tmp_path):
     task = _copy(reference, tmp_path, "unconfirmed")
     goal_path = os.path.join(task, "continuous", "goal.yaml")
@@ -261,6 +358,23 @@ def test_cli_status_and_ledger(reference, tmp_path, capsys):
     assert cli.main(["ledger", task, "set", "OPP-0001", "accepted", "--by", "engineer"]) == 0
     items = nc.Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl")).current()
     assert items["OPP-0001"]["status"] == "accepted"
+
+
+def test_cli_final_report_dispatches_review_metadata(reference, tmp_path, monkeypatch, capsys):
+    from neqsim_continuous import final_report
+
+    task = _copy(reference, tmp_path, "cli_final")
+    calls = []
+
+    def fake_finalize(task_dir, reviewer, note="", pdf=False):
+        calls.append((task_dir, reviewer, note, pdf))
+        return {"revision": "FR-001", "status": "complete"}
+
+    monkeypatch.setattr(final_report, "finalize", fake_finalize)
+    assert cli.main(["report", task, "--final", "--reviewer", "Reviewer",
+                     "--note", "issued", "--pdf"]) == 0
+    assert calls == [(task, "Reviewer", "issued", True)]
+    assert '"revision": "FR-001"' in capsys.readouterr().out
 
 
 def test_cli_defaults_to_the_task_root(tmp_path, monkeypatch, capsys):

@@ -8,6 +8,7 @@ Run with --check in CI; regenerate after changing sources, skills or registratio
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 
@@ -19,11 +20,18 @@ OPERATION_CLASSIFICATIONS = ("supported", "internal", "experimental", "deprecate
 TEST_SOURCE_PREFIXES = ("src/test/java/", "neqsim-mcp-server/tests/")
 
 
+def read_source(path):
+    """Read a source file; the extended-length prefix lets Windows open paths over 260 characters."""
+    if os.name == "nt" and not str(path).startswith("\\\\?\\"):
+        path = Path("\\\\?\\" + str(path))
+    return path.read_text(encoding="utf-8")
+
+
 def java_types(root):
     """Inventory public primary types; ignore comments, literals and nested types."""
     result = {}
     for path in sorted((root / "src/main/java/neqsim").rglob("*.java")):
-        source = path.read_text(encoding="utf-8")
+        source = read_source(path)
         text = LEXICAL.sub(" ", source)
         package = re.search(r"\bpackage\s+([\w.]+)\s*;", text)
         pattern = r"\bpublic\s+(?:(?:abstract|final|strictfp)\s+)*(class|interface|enum)\s+" + re.escape(path.stem) + r"\b"

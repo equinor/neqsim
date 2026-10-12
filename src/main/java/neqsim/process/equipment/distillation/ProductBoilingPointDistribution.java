@@ -11,12 +11,25 @@ import neqsim.process.equipment.stream.StreamInterface;
  * The distribution uses positive pseudo-component mole fractions from a NeqSim stream. It is a model diagnostic, not an
  * ASTM D86, ASTM D1160, TBP, or continuous simulated-distillation curve.
  * </p>
+ *
+ * @author NeqSim
+ * @version 1.0
  */
 public final class ProductBoilingPointDistribution {
+  /** Ordered temperatures with representable cumulative probability steps. */
   private final double[] boilingPointTemperaturesKelvin;
+  /** Strictly increasing cumulative mole fractions ending at one. */
   private final double[] cumulativeMoleFractions;
+  /** Mole-weighted mean, including components below cumulative-fraction resolution. */
   private final double meanNormalBoilingPointKelvin;
 
+  /**
+   * Create an immutable distribution from normalized support points.
+   *
+   * @param boilingPointTemperaturesKelvin ordered support temperatures in kelvin
+   * @param cumulativeMoleFractions cumulative mole fractions
+   * @param meanNormalBoilingPointKelvin mean normal boiling point in kelvin
+   */
   private ProductBoilingPointDistribution(double[] boilingPointTemperaturesKelvin, double[] cumulativeMoleFractions,
       double meanNormalBoilingPointKelvin) {
     this.boilingPointTemperaturesKelvin = boilingPointTemperaturesKelvin.clone();
@@ -28,7 +41,8 @@ public final class ProductBoilingPointDistribution {
    * Build a discrete product distribution from stream pseudo-components.
    *
    * @param stream material product stream
-   * @return immutable distribution on cumulative product mole basis
+   * @return immutable distribution on cumulative product mole basis; traces that cannot advance a representable
+   * cumulative fraction contribute to the mean but do not create duplicate support points
    * @throws NullPointerException if {@code stream} is {@code null}
    * @throws IllegalStateException if composition and boiling-point data are missing, unaligned, or non-physical
    */
@@ -74,9 +88,11 @@ public final class ProductBoilingPointDistribution {
     int resultIndex = 0;
     for (double[] point : points) {
       if (point[1] > 0.0) {
-        double nextCumulativeFraction = cumulativeFraction + point[1] / compositionSum;
-        if (!Double.isFinite(nextCumulativeFraction) || !(nextCumulativeFraction > cumulativeFraction)) {
-          throw new IllegalStateException("Positive product components must increase cumulative mole fraction");
+        double nextCumulativeFraction = Math.min(1.0, cumulativeFraction + point[1] / compositionSum);
+        if (!(nextCumulativeFraction > cumulativeFraction)) {
+          // A positive trace may be smaller than one representable cumulative-fraction step.
+          // It contributes to the mean but cannot define a distinct CDF support point.
+          continue;
         }
         cumulativeFraction = nextCumulativeFraction;
         temperatures[resultIndex] = point[0];
@@ -84,7 +100,9 @@ public final class ProductBoilingPointDistribution {
         resultIndex++;
       }
     }
-    cumulativeFractions[cumulativeFractions.length - 1] = 1.0;
+    temperatures = Arrays.copyOf(temperatures, resultIndex);
+    cumulativeFractions = Arrays.copyOf(cumulativeFractions, resultIndex);
+    cumulativeFractions[resultIndex - 1] = 1.0;
     return new ProductBoilingPointDistribution(temperatures, cumulativeFractions, meanBoilingPoint);
   }
 

@@ -166,6 +166,8 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
             warnings.append("key_results: empty — add numerical outputs")
         else:
             for k, v in kr.items():
+                if isinstance(v, dict) and isinstance(v.get("value"), (int, float, str, bool)):
+                    continue  # headline-marked entry: {"value": ..., "headline": true}
                 if not isinstance(v, (int, float, str, bool)):
                     warnings.append(
                         f"key_results.{k}: value should be a primitive (number or string)"
@@ -342,6 +344,172 @@ def check_capability_assessment(task_folder: Path) -> List[str]:
                 f"--json --out step1_scope_and_research/agent_plan.json` and record "
                 f"the selected agents/workflow"
             )
+    return warnings
+
+
+AGENT_INVOCATION_KINDS = ("subagent", "pattern", "skill-only")
+
+# High-precision cues (task text -> governed evidence agent). Kept narrow on purpose:
+# a false warning costs more trust than a missed one. See neqsim-task-workflow s5.
+# Cues for plugin-supplied data agents are not listed here: an installed agent publishes
+# its own in an ``evidence-source-cues`` fenced block (see ``load_evidence_source_cues``).
+EVIDENCE_SOURCE_CUES: tuple = ()
+EVIDENCE_STATUS = ("used", "not_applicable", "no_access", "not_registered")
+EVIDENCE_AGENT_ALIASES: dict = {}
+_EVIDENCE_CUE_BLOCK = re.compile(r"```evidence-source-cues[ \t]*\n(.*?)```", re.S)
+
+
+def parse_evidence_cue_block(text: str) -> Tuple[List[Tuple[str, str]], dict]:
+    """Parse ``agent :: regex`` and ``alias A = B`` lines from evidence-source-cues blocks."""
+    cues: List[Tuple[str, str]] = []
+    aliases: dict = {}
+    for block in _EVIDENCE_CUE_BLOCK.findall(text):
+        for line in block.splitlines():
+            line = line.strip()
+            if line.startswith("alias ") and " = " in line:
+                name, target = line[6:].split(" = ", 1)
+                aliases[name.strip()] = target.strip()
+            elif " :: " in line:
+                agent, cue = line.split(" :: ", 1)
+                try:
+                    re.compile(cue.strip())
+                except re.error:
+                    continue
+                cues.append((agent.strip(), cue.strip()))
+    return cues, aliases
+
+
+def load_evidence_source_cues() -> Tuple[List[Tuple[str, str]], dict]:
+    """Collect cues published by agents found in a checkout, ``~/.neqsim/agents`` or a plugin.
+
+    Best-effort: without an agent catalog the check simply has no cues to apply.
+    """
+    cues: List[Tuple[str, str]] = list(EVIDENCE_SOURCE_CUES)
+    aliases: dict = dict(EVIDENCE_AGENT_ALIASES)
+    try:
+        import agent_search
+        roots = agent_search._discover_roots(Path(__file__).resolve().parents[1], None)
+    except Exception:  # noqa: BLE001 - discovery must never break validation
+        return cues, aliases
+    for agents_dir, _label, pattern, _fallback in roots:
+        try:
+            files = sorted(agents_dir.glob(pattern))
+        except OSError:
+            continue
+        for f in files:
+            try:
+                text = f.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            if "```evidence-source-cues" not in text:
+                continue
+            found, found_aliases = parse_evidence_cue_block(text)
+            cues.extend(c for c in found if c not in cues)
+            aliases.update(found_aliases)
+    return cues, aliases
+
+
+def check_evidence_sources(task_folder: Path, results: dict) -> List[str]:
+    """Warn when the task text cues a governed evidence agent that the plan does not account for.
+
+    The 2026-10 audit of 156 tasks found Thelma applicable in 22 tasks and used in 2,
+    Synergi 33/3, alarm events 17/1, PEPO 73/0, Emisoft 94/0, GeoX 83/0. Data-source
+    agents describe a system rather than a discipline, so similarity ranking never
+    surfaces them; this check reads the task text directly. An agent counts as
+    accounted for when it appears in ``agents_used`` or in
+    ``evidence_sources`` with any status (``not_applicable`` / ``no_access`` with a
+    reason is a valid answer). Warning only.
+    """
+    warnings: List[str] = []
+    if not _is_standard_or_comprehensive(results, task_folder):
+        return warnings
+    text = ""
+    for rel in ("user_input.md", os.path.join("step1_scope_and_research", "task_spec.md")):
+        f = task_folder / rel
+        if f.exists():
+            try:
+                text += f.read_text(encoding="utf-8", errors="ignore").lower()
+            except OSError:
+                # Evidence discovery is best-effort; inspect the remaining task files.
+                continue
+    if not text:
+        return warnings
+    plan = results.get("agent_workflow_plan") or {}
+    accounted = set()
+    for entry in (plan.get("agents_used") or []) + (plan.get("evidence_sources") or []):
+        if isinstance(entry, dict):
+            accounted.add(str(entry.get("name") or entry.get("agent") or "").split(" ")[0])
+        elif isinstance(entry, str):
+            accounted.add(entry.split(" ")[0])
+    cues, aliases = load_evidence_source_cues()
+    accounted |= {aliases[a] for a in list(accounted) if a in aliases}
+    bad_status = [
+        str(e.get("agent")) for e in (plan.get("evidence_sources") or [])
+        if isinstance(e, dict) and e.get("status") not in EVIDENCE_STATUS
+    ]
+    if bad_status:
+        warnings.append(
+            f"{task_folder.name}: evidence_sources entries with an unknown status "
+            f"(use {' | '.join(EVIDENCE_STATUS)}): {', '.join(bad_status)}"
+        )
+    missing = []
+    for agent, cue in cues:
+        if re.search(cue, text) and agent not in accounted and agent not in missing:
+            missing.append(agent)
+    if missing:
+        warnings.append(
+            f"{task_folder.name}: task text cues governed evidence agents that the plan does not "
+            f"account for - invoke them or record not_applicable/no_access with a reason in "
+            f"agent_workflow_plan.evidence_sources: {', '.join(missing)}"
+        )
+    return warnings
+
+
+def check_agent_workflow_plan(task_folder: Path, results: dict) -> List[str]:
+    """Return warnings when a Standard/Comprehensive task did not record how agents were used.
+
+    A 2026-10 audit of 269 solved tasks found an ``agent_workflow_plan`` in only
+    57, and most of those listed specialist agents as "(pattern)" - the
+    orchestrator re-did their work by hand instead of invoking them. Each
+    ``agents_used`` entry therefore needs an ``invocation`` value
+    (``subagent`` = invoked through the agent runtime, ``pattern`` = its
+    workflow was followed by hand, ``skill-only`` = only its skills were loaded)
+    and, for anything but ``subagent``, a ``reason``. Warning, not error, so
+    Quick tasks are not blocked.
+    """
+    warnings: List[str] = []
+    if not _is_standard_or_comprehensive(results, task_folder):
+        return warnings
+    plan = results.get("agent_workflow_plan")
+    if not isinstance(plan, dict) or not plan.get("agents_used"):
+        warnings.append(
+            f"{task_folder.name}: results.json has no agent_workflow_plan.agents_used — "
+            f"record the agents invoked (invocation: subagent | pattern | skill-only) "
+            f"so the report states how the task was solved"
+        )
+        return warnings
+    pattern_without_reason = []
+    missing_invocation = []
+    for entry in plan.get("agents_used") or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name", "?"))
+        kind = entry.get("invocation")
+        if kind not in AGENT_INVOCATION_KINDS:
+            missing_invocation.append(name)
+        elif kind != "subagent" and not str(entry.get("reason", "")).strip():
+            pattern_without_reason.append(name)
+    if missing_invocation:
+        warnings.append(
+            f"{task_folder.name}: agent_workflow_plan entries without an `invocation` "
+            f"(subagent | pattern | skill-only): {', '.join(missing_invocation)}"
+        )
+    if pattern_without_reason:
+        warnings.append(
+            f"{task_folder.name}: agents followed as a pattern instead of invoked, with no "
+            f"`reason` (e.g. agent not registered, no data access): "
+            f"{', '.join(pattern_without_reason)}"
+        )
     return warnings
 
 
@@ -840,6 +1008,12 @@ def main() -> int:
             warnings.extend(check_continuous(task_folder))
             warnings.extend(
                 check_tooling_improvements(task_folder, parsed if isinstance(parsed, dict) else {})
+            )
+            warnings.extend(
+                check_agent_workflow_plan(task_folder, parsed if isinstance(parsed, dict) else {})
+            )
+            warnings.extend(
+                check_evidence_sources(task_folder, parsed if isinstance(parsed, dict) else {})
             )
         if isinstance(parsed, dict) and _is_standard_or_comprehensive(parsed, task_folder):
             if not _has_engineering_validation(parsed):

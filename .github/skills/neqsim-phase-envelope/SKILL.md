@@ -202,6 +202,14 @@ def dew_point_temperature(fluid, pressure_bara, t_high=90.0, t_low=-60.0):
 If the scan and the envelope disagree by more than a few kelvin, trust the scan and
 report the envelope as unreliable for that fluid.
 
+### Dew Pressure of a Lean Gas Condensate: Do Not Trust dewPointPressureFlash Alone
+
+Observed (Sprø/Drø task, SRK, 86.3 % methane, 6.5 % ethane, 1.0 mol % C7+ TBP, GOR 13 700 Sm3/Sm3):
+`dewPointPressureFlash()` started at 200 bara returned **0.46 bara at 40 °C** and 225 / 215 bara at 60 / 90 °C,
+while a TP-flash phase-count scan from 600 bara down (bisection on the phase count) gave 210 / 200 / 164 bara and
+`RobustPhaseEnvelope` gave a cricondenbar of 211 bara. Use the scan (step down 10 bara until two phases appear,
+then bisect) and keep `RobustPhaseEnvelope` as the cricondenbar bound; require `p_dew(T) <= cricondenbar`.
+
 ### Point Dew-Point Flashes on Wet Gas
 
 `ThermodynamicOperations.dewPointTemperatureFlash()` seeds an aqueous incipient

@@ -23,6 +23,8 @@ on:
       - "devtools/agent_search.py"
       - "devtools/skill_search.py"
       - "devtools/bm25.py"
+      - "devtools/discovery_registry.py"
+      - "devtools/test_discovery_registry.py"
       - "devtools/agent_eval.py"
       - "devtools/agent_eval_cases.json"
       - "devtools/test_agent_eval.py"
@@ -68,7 +70,7 @@ jobs:
       - name: Test agent/skill discovery tools
         run: |
           python -m pip install --quiet pytest
-          python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py devtools/test_verify_skill_api_refs.py devtools/test_agent_frontmatter.py devtools/test_build_agent_plugin.py -q
+          python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py devtools/test_discovery_registry.py devtools/test_verify_skill_api_refs.py devtools/test_agent_frontmatter.py devtools/test_build_agent_plugin.py -q
 
       - name: Agent evaluation (routing golden cases + results.json contracts)
         run: python -m pytest devtools/test_agent_eval.py -q

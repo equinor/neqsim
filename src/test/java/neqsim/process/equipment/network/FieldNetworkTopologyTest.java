@@ -274,4 +274,62 @@ class FieldNetworkTopologyTest {
     assertEquals(3600.0, injection.getHydraulicNetwork().getPipeFlowRate("injection-line"), 1.0e-6);
     assertEquals(0.0, injection.getHydraulicNetwork().getMassBalanceError(), 1.0e-8);
   }
+
+  /** Build and replay typed choke, pump and compressor elements without bypassing field identity. */
+  @Test
+  void buildsPoweredAndControlledEdgesOnCanonicalGraph() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("powered injection builders");
+    topology.getHydraulicNetwork().setFluidTemplate(gas());
+    topology.getHydraulicNetwork().setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    topology.addPressureSource("source", "HOST-601", NodeRole.INJECTION_SOURCE, Service.INJECTION, 60.0, 3600.0, 0.0);
+    topology.addJunction("pump-discharge", "P-601-D", NodeRole.JUNCTION, Service.INJECTION, 0.0);
+    topology.addJunction("compressor-discharge", "K-601-D", NodeRole.JUNCTION, Service.INJECTION, 0.0);
+    topology.addFixedPressureSink("injector", "XT-603", NodeRole.INJECTION_WELL, Service.INJECTION, 120.0, -200.0);
+
+    topology.addPumpDifferentialPressure("water-pump", "P-601", Service.INJECTION, FlowDirection.FROM_TO, "source",
+        "suction", "pump-discharge", "discharge", 40.0, 0.80);
+    topology.addCompressor("gas-compressor", "K-601", Service.INJECTION, FlowDirection.FROM_TO, "pump-discharge",
+        "suction", "compressor-discharge", "discharge", 0.76);
+    topology.addChoke("injection-choke", "XV-601", Service.INJECTION, FlowDirection.FROM_TO, "compressor-discharge",
+        "upstream", "injector", "injection", 25.0, 85.0);
+
+    FieldNetworkTopology replay = topology.copyDefinition();
+    replay.getHydraulicNetwork().setFluidTemplate(gas());
+
+    assertFalse(hasError(replay.validate()), replay.validate().toString());
+    assertEquals(EdgeRole.PUMP, replay.getEdge("water-pump").getRole());
+    assertEquals(EdgeRole.COMPRESSOR, replay.getEdge("gas-compressor").getRole());
+    assertEquals(EdgeRole.CHOKE, replay.getEdge("injection-choke").getRole());
+    assertEquals(LoopedPipeNetwork.NetworkElementType.PUMP,
+        replay.getHydraulicNetwork().getPipe("water-pump").getElementType());
+    assertEquals(LoopedPipeNetwork.NetworkElementType.COMPRESSOR,
+        replay.getHydraulicNetwork().getPipe("gas-compressor").getElementType());
+    assertEquals(LoopedPipeNetwork.NetworkElementType.CHOKE,
+        replay.getHydraulicNetwork().getPipe("injection-choke").getElementType());
+    assertEquals(40.0e5, replay.getHydraulicNetwork().getPipe("water-pump").getPumpDifferentialPressurePa(), 1.0e-8);
+    assertEquals(0.76, replay.getHydraulicNetwork().getPipe("gas-compressor").getCompressorEfficiency(), 0.0);
+    assertEquals(85.0, replay.getHydraulicNetwork().getPipe("injection-choke").getChokeOpening(), 0.0);
+  }
+
+  /** Reject invalid powered-edge inputs before they partially mutate either topology view. */
+  @Test
+  void rejectsInvalidPoweredEdgeDefinitionsAtomically() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("invalid powered edges");
+    topology.addJunction("from", "N-1", NodeRole.JUNCTION, Service.SHARED, 0.0);
+    topology.addJunction("to", "N-2", NodeRole.JUNCTION, Service.SHARED, 0.0);
+
+    assertThrows(IllegalArgumentException.class, () -> topology.addPump("bad-pump", "P-1", Service.INJECTION,
+        FlowDirection.FROM_TO, "from", "out", "to", "in", -1.0, 0.8));
+    assertThrows(IllegalArgumentException.class, () -> topology.addPumpDifferentialPressure("bad-dp-pump", "P-2",
+        Service.INJECTION, FlowDirection.FROM_TO, "from", "out", "to", "in", 50.0, 1.1));
+    assertThrows(IllegalArgumentException.class, () -> topology.addCompressor("bad-compressor", "K-1",
+        Service.INJECTION, FlowDirection.FROM_TO, "from", "out", "to", "in", Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> topology.addChoke("bad-choke", "XV-1", Service.PRODUCTION,
+        FlowDirection.FROM_TO, "from", "out", "to", "in", 10.0, 101.0));
+    assertThrows(NullPointerException.class, () -> topology.addPump("missing-service", "P-3", null,
+        FlowDirection.FROM_TO, "from", "out", "to", "in", 100.0, 0.8));
+
+    assertTrue(topology.getEdges().isEmpty());
+    assertTrue(topology.getHydraulicNetwork().getPipeNames().isEmpty());
+  }
 }

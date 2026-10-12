@@ -18,6 +18,7 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.network.FieldWellNetworkProcessUnit;
 import neqsim.process.equipment.network.LoopedPipeNetwork;
 import neqsim.process.equipment.pipeline.Pipeline;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
@@ -591,8 +592,12 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
-    if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      return getNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], unitOfMeasure);
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
+      return getFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], unitOfMeasure);
+    }
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null && parts.length == 3) {
+      return getNetworkProperty(addressableNetwork, parts[1], parts[2], unitOfMeasure);
     }
 
     if (parts.length == 2) {
@@ -646,8 +651,14 @@ public class ProcessAutomation {
 
     ProcessEquipmentInterface unit = findUnit(areaName, unitName);
 
-    if (unit instanceof LoopedPipeNetwork && parts.length == 3) {
-      setNetworkProperty((LoopedPipeNetwork) unit, parts[1], parts[2], value, unitOfMeasure);
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
+      setFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], value, unitOfMeasure);
+      this.dirty = true;
+      return;
+    }
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null && parts.length == 3) {
+      setNetworkProperty(addressableNetwork, parts[1], parts[2], value, unitOfMeasure);
       this.dirty = true;
       return;
     }
@@ -870,8 +881,19 @@ public class ProcessAutomation {
     List<SimulationVariable> vars = new ArrayList<SimulationVariable>();
     boolean handledOutlets = false;
 
-    if (unit instanceof LoopedPipeNetwork) {
-      return enrichVariableMetadata(buildNetworkVariableList(unitName, (LoopedPipeNetwork) unit));
+    LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
+    if (addressableNetwork != null) {
+      List<SimulationVariable> networkVariables = buildNetworkVariableList(unitName, addressableNetwork);
+      if (unit instanceof FieldWellNetworkProcessUnit) {
+        FieldWellNetworkProcessUnit fieldUnit = (FieldWellNetworkProcessUnit) unit;
+        for (String selectorName : fieldUnit.getExclusiveRouteSelectorNames()) {
+          networkVariables.add(new SimulationVariable(unitName + ".route." + selectorName + ".selection",
+              "route." + selectorName + ".selection", VariableType.INPUT, "-",
+              "Exclusive route index; provenance: " + fieldUnit.getExclusiveRouteProvenance(selectorName)).withBounds(
+                  Double.valueOf(0.0), Double.valueOf(fieldUnit.getExclusiveRouteEdges(selectorName).size() - 1.0)));
+        }
+      }
+      return enrichVariableMetadata(networkVariables);
     }
 
     // Universal equipment-level outputs
@@ -1175,6 +1197,69 @@ public class ProcessAutomation {
       }
     }
     return vars;
+  }
+
+  /**
+   * Resolve an equipment item whose public automation surface is a looped network.
+   *
+   * @param unit process equipment candidate
+   * @return directly owned or field-coupler-wrapped network, otherwise {@code null}
+   */
+  private LoopedPipeNetwork getAddressableNetwork(ProcessEquipmentInterface unit) {
+    if (unit instanceof LoopedPipeNetwork) {
+      return (LoopedPipeNetwork) unit;
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit) {
+      return ((FieldWellNetworkProcessUnit) unit).getHydraulicNetwork();
+    }
+    return null;
+  }
+
+  /**
+   * Read one field-unit exclusive route selection.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param unitOfMeasure requested dimensionless unit
+   * @return zero-based selected route index
+   */
+  private double getFieldRouteProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route property: " + targetProperty[1]);
+    }
+    return unit.getExclusiveRouteSelection(targetProperty[0]);
+  }
+
+  /**
+   * Write one field-unit exclusive route selection.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param value zero-based selected route index
+   * @param unitOfMeasure requested dimensionless unit
+   */
+  private void setFieldRouteProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty, double value,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route property: " + targetProperty[1]);
+    }
+    unit.setExclusiveRouteSelection(targetProperty[0], value);
+  }
+
+  /**
+   * Require a dimensionless route-selector unit.
+   *
+   * @param unitOfMeasure requested unit
+   */
+  private void requireDimensionlessUnit(String unitOfMeasure) {
+    if (unitOfMeasure != null && !unitOfMeasure.trim().isEmpty() && !"-".equals(unitOfMeasure)) {
+      throw new IllegalArgumentException("Exclusive route selection uses the dimensionless '-' unit");
+    }
   }
 
   /**
@@ -1787,9 +1872,29 @@ public class ProcessAutomation {
       if (idx < 0 || idx >= sf.length) {
         throw new IllegalArgumentException("Split factor index out of range for " + unit.getName() + ": " + property);
       }
+      if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+        throw new IllegalArgumentException("Split factor must be finite and between 0 and 1");
+      }
       double[] updated = sf.clone();
-      updated[idx] = value;
-      // Splitter renormalises the factors so they sum to 1.
+      if (updated.length == 1) {
+        updated[0] = 1.0;
+      } else {
+        double otherSum = 0.0;
+        for (int i = 0; i < updated.length; i++) {
+          if (i != idx) {
+            otherSum += updated[i];
+          }
+        }
+        double remaining = 1.0 - value;
+        updated[idx] = value;
+        for (int i = 0; i < updated.length; i++) {
+          if (i != idx) {
+            updated[i] = otherSum > 0.0 ? updated[i] * remaining / otherSum : remaining / (updated.length - 1);
+          }
+        }
+      }
+      // Preserve the requested factor exactly while proportionally rescaling the other
+      // outlets before Splitter performs its defensive normalisation.
       sp.setSplitFactors(updated);
       return;
     }

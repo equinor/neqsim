@@ -2668,6 +2668,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   /**
    * method to specify if calculations should check for more than two fluid phases.
    *
+   * <p>
+   * Additional trial phases defer transport-property initialization until their properties are requested. Run the
+   * equilibrium calculation before initializing physical properties of the active phases.
+   * </p>
+   *
    * @param doMultiPhaseCheck Specify if the calculations should check for more than two fluid phases. Default is two
    * fluid phases (gas and liquid). If set to true the program will check for gas and multiple liquid phases (eg.
    * gas-oil-aqueous).

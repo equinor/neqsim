@@ -23,6 +23,8 @@ def build(task_dir):
     state = read_state(task_dir)
     from .evidence import analyze
     evidence_impact = analyze(task_dir, load_plan(task_dir))
+    from .final_report import status as final_report_status
+    final_report = final_report_status(task_dir)
     goal = load_goal(task_dir) or {}
     objective = goal.get("objective") or {}
     baseline = load_baseline(task_dir)
@@ -63,6 +65,10 @@ def build(task_dir):
     elif evidence_impact.get("changes"):
         next_action = "run task-update for {} changed evidence file(s)".format(
             evidence_impact.get("changed_files", 0))
+    elif final_report.get("available") and not final_report.get("stale"):
+        next_action = "final report {} is available".format(final_report.get("revision"))
+    elif baseline_meta.get("source_cycle"):
+        next_action = "generate Final Report with task-report --final --reviewer NAME"
     elif not goal.get("confirmed_by") and objective.get("metric"):
         next_action = "confirm goal in continuous/goal.yaml"
     elif state.get("details", {}).get("next_action"):
@@ -141,6 +147,7 @@ def build(task_dir):
                    "incomplete_cycle": incomplete.get("cycle_id") if incomplete else None,
                    "solve_session": session.get("id"),
                    "last_writer": state.get("last_writer")},
+        "final_report": final_report,
     }
 
 

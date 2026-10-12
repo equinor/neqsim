@@ -25,6 +25,96 @@ The `EngineeringDesignCase.Type` taxonomy includes steady and accidental names s
 The name does not make the calculation method credible: a case called `FIRE` that only changes a steady feed rate is
 not a fire analysis.
 
+## Complete executable example
+
+This Java 8 example creates a controlled methane feed, evaluates normal and maximum absolute-pressure cases, and
+retains the governing value without mutating the source process. Temperature is in K, pressure is absolute bara, and
+mass flow is in kg/h.
+
+```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
+import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
+import neqsim.process.engineering.designcase.EngineeringCaseRunner;
+import neqsim.process.engineering.designcase.EngineeringCaseSet;
+import neqsim.process.engineering.designcase.EngineeringDesignCase;
+import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
+import neqsim.process.engineering.designcase.EngineeringMetric;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemSrkEos;
+
+public final class DesignCaseEnvelopeExample {
+  private static final Logger logger = LogManager.getLogger(DesignCaseEnvelopeExample.class);
+
+  private DesignCaseEnvelopeExample() {}
+
+  public static void main(String[] args) {
+    SystemSrkEos fluid = new SystemSrkEos(300.0, 50.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("20-FEED-001", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    ProcessSystem sourceProcess = new ProcessSystem();
+    sourceProcess.add(feed);
+    sourceProcess.run();
+    double sourcePressureBara = feed.getPressure("bara");
+
+    EngineeringDesignCase normal = pressureCase(
+        "CASE-NORMAL", "Normal production", EngineeringDesignCase.Type.NORMAL, 50.0, 10);
+    EngineeringDesignCase maximum = pressureCase(
+        "CASE-MAX", "Maximum production", EngineeringDesignCase.Type.MAXIMUM_PRODUCTION, 80.0, 20);
+
+    EngineeringMetric pressure = EngineeringMetric.equipmentPressure("20-FEED-001")
+        .setAcceptanceRange(null, Double.valueOf(90.0));
+    EngineeringCaseSet caseSet = new EngineeringCaseSet("feed-pressure-envelope")
+        .addCase(normal)
+        .addCase(maximum)
+        .addMetric(pressure);
+
+    EngineeringCaseRunReport report = EngineeringCaseRunner.run(
+        sourceProcess, caseSet, EngineeringCaseRunOptions.sequential());
+    EngineeringDesignEnvelope.GoverningValue governing = report.getEnvelope()
+        .getGoverningValues()
+        .get("20-FEED-001.pressure");
+
+    assert report.isComplete();
+    assert report.isAccepted();
+    assert governing != null;
+    assert "CASE-MAX".equals(governing.getDesignCaseId());
+    assert Math.abs(governing.getValue() - 80.0) < 1.0e-10;
+    assert Math.abs(feed.getPressure("bara") - sourcePressureBara) < 1.0e-10;
+
+    logger.info("governingCase={} governingPressure={} bara accepted={}",
+        governing.getDesignCaseId(), governing.getValue(), report.isAccepted());
+  }
+
+  private static EngineeringDesignCase pressureCase(String id, String name,
+      EngineeringDesignCase.Type type, final double pressureBara, int priority) {
+    return new EngineeringDesignCase(id, name, type,
+        new EngineeringDesignCase.Configurator() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public void configure(ProcessSystem process) {
+            ((Stream) process.getUnit("20-FEED-001")).setPressure(pressureBara, "bara");
+          }
+        })
+        .setCaseGroup("PRODUCTION")
+        .setPriority(priority)
+        .setApprovalStatus("REVIEW_REQUIRED")
+        .addInput(new EngineeringDesignCase.Input(
+            "feed pressure", pressureBara, "bara", "PROCESS-DESIGN-BASIS-REV-A"));
+  }
+}
+```
+
+The documentation regression compiles this exact fence with `-source 8 -target 8` and executes it with assertions
+enabled. The example uses pressure only to make isolation and governing-case selection explicit; a real design basis
+normally includes flow, composition, ambient, utilities, equipment limits, and credible accidental scenarios.
+
 ## Minimum controlled case definition
 
 Every case should retain:
@@ -36,24 +126,6 @@ Every case should retain:
 - approval or review status;
 - priority and intended engineering use; and
 - convergence and acceptance requirements.
-
-Example:
-
-```java
-EngineeringDesignCase maximum = new EngineeringDesignCase(
-    "CASE-MAX",
-    "Maximum production",
-    EngineeringDesignCase.Type.MAXIMUM_PRODUCTION,
-    scenario -> ((Stream) scenario.getUnit("20-FEED-001"))
-        .setFlowRate(1.15e6, "kg/hr"))
-    .setCaseGroup("PRODUCTION")
-    .setPriority(20)
-    .setApprovalStatus("REVIEW_REQUIRED")
-    .addInput(new EngineeringDesignCase.Input(
-        "feed rate", 1.15e6, "kg/hr", "PROCESS-DESIGN-BASIS-REV-A"));
-
-project.addDesignCase(maximum);
-```
 
 Use the configurator only for the declared case change. The runner applies it to an isolated `ProcessSystem.copy()`;
 it should not access or mutate the controlled source process through another reference.
@@ -76,14 +148,6 @@ Built-in factories cover common process and rotating-equipment quantities, inclu
 - required recycle fraction and recycle-cooler duty; and
 - pump power/NPSH and heater duty metrics where applicable.
 
-```java
-project.addEngineeringMetric(EngineeringMetric.equipmentPressure("20-VG-001"));
-project.addEngineeringMetric(EngineeringMetric.equipmentTemperature("20-VG-001"));
-project.addEngineeringMetric(EngineeringMetric.equipmentInletMassFlow("20-VG-001"));
-project.addEngineeringMetric(EngineeringMetric.compressorPower("20-KA-001"));
-project.addEngineeringMetric(EngineeringMetric.compressorSurgeMargin("20-KA-001"));
-```
-
 Choose the direction from the engineering question. Maximum pressure can govern a pressure rating, minimum density can
 govern a gas-velocity check, and minimum surge margin can govern compressor operability. A single generic maximum does
 not describe all design limits.
@@ -91,11 +155,10 @@ not describe all design limits.
 ## Execute isolated cases
 
 `EngineeringCaseRunner` executes enabled cases on independent process copies. `EngineeringCaseRunOptions` controls
-parallelism, whether convergence is required, and incomplete-result propagation. The default
-`RETURN_PARTIAL` policy retains all available evidence. `THROW_WITH_PARTIAL_RESULT` raises an
-`EngineeringCaseExecutionException`; its `getPartialReport()` preserves the same auditable case and
-metric findings. The report retains definition and result fingerprints so a case-set change can be
-distinguished from a result change.
+parallelism, whether convergence is required, and incomplete-result propagation. The default `RETURN_PARTIAL` policy
+retains all available evidence. `THROW_WITH_PARTIAL_RESULT` raises an `EngineeringCaseExecutionException`; its
+`getPartialReport()` preserves the same auditable case and metric findings. The report retains definition and result
+fingerprints so a case-set change can be distinguished from a result change.
 
 Case status remains explicit:
 
@@ -107,9 +170,9 @@ Case status remains explicit:
 | `FAILED` | Case configuration or simulation failed |
 | `SKIPPED` | Case was disabled or intentionally excluded |
 
-Successful metrics from a partial case may still identify a candidate governing value, but the
-envelope remains explicitly incomplete. Failed/non-converged cases and metrics with no governing
-value remain visible and must be resolved before a complete report can be required.
+Successful metrics from a partial case may still identify a candidate governing value, but the envelope remains
+explicitly incomplete. Failed/non-converged cases and metrics with no governing value remain visible and must be
+resolved before a complete report can be required.
 
 ## Interpret the governing envelope
 
@@ -125,11 +188,10 @@ direction and retains:
 The envelope is a selection result, not an approval. Review it for physical discontinuities, phase changes,
 extrapolation, unexpected governing cases, and missing coverage.
 
-`isComplete()` means every configured metric has a governing value and no case is failed or partial.
-It does not mean limits pass. `isAccepted()` is deliberately stricter: the envelope must be complete,
-every governing metric must have at least one configured acceptance limit, and no evaluated case may
-violate a limit. Therefore an otherwise successful envelope with unconfigured limits remains
-review-required rather than reporting a false acceptance.
+`isComplete()` means every configured metric has a governing value and no case is failed or partial. It does not mean
+limits pass. `isAccepted()` is deliberately stricter: the envelope must be complete, every governing metric must have
+at least one configured acceptance limit, and no evaluated case may violate a limit. Therefore an otherwise successful
+envelope with unconfigured limits remains review-required rather than reporting a false acceptance.
 
 ## Connect cases to the closed design loop
 
@@ -145,10 +207,10 @@ The process-to-engineering simulator repeatedly:
 If a selected pipe diameter, separator geometry, valve Cv, or exchanger area changes the process hydraulics, the old
 envelope is stale. The rerun is what closes the engineering loop.
 
-Within each iteration, declared module dependencies are evaluated as topological levels. A downstream
-module sees upstream selections from that same iteration. Conflicting proposals for one state key are
-rejected unless every proposer declares the same governing maximum or minimum rule; the loop never
-uses module list order as an implicit engineering-selection rule.
+Within each iteration, declared module dependencies are evaluated as topological levels. A downstream module sees
+upstream selections from that same iteration. Conflicting proposals for one state key are rejected unless every
+proposer declares the same governing maximum or minimum rule; the loop never uses module list order as an implicit
+engineering-selection rule.
 
 ## Case-coverage review
 

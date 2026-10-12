@@ -162,6 +162,20 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
   }
 
   /**
+   * Open flow-area fraction at an opening, following the valve characteristic so that the choke models and the Kv-based
+   * sizing methods respond to the same opening curve. The default linear characteristic gives
+   * {@code percentOpening / 100}.
+   *
+   * @param percentOpening valve opening [percent]
+   * @return open fraction of the nominal choke area [-], not below zero
+   */
+  private double openingFraction(double percentOpening) {
+    ValveCharacteristic characteristic = valveMechanicalDesign.getValveCharacterizationMethod();
+    double fraction = characteristic == null ? percentOpening / 100.0 : characteristic.getOpeningFactor(percentOpening);
+    return Math.max(0.0, fraction);
+  }
+
+  /**
    * Converts diameter to meters from various units.
    *
    * @param value the value to convert
@@ -209,7 +223,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     double P2 = valve.getOutletPressure() * 1e5; // bara to Pa
 
     // Apply opening adjustment to effective choke diameter
-    double effectiveDiameter = chokeDiameter * Math.sqrt(percentOpening / 100.0);
+    double effectiveDiameter = chokeDiameter * Math.sqrt(openingFraction(percentOpening));
     chokeModel.setChokeDiameter(effectiveDiameter);
 
     // Get comprehensive sizing results
@@ -258,7 +272,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     double percentOpening = valve.getPercentValveOpening();
 
     // Calculate effective diameter based on valve opening
-    double effectiveDiameter = chokeDiameter * Math.sqrt(percentOpening / 100.0);
+    double effectiveDiameter = chokeDiameter * Math.sqrt(openingFraction(percentOpening));
     chokeModel.setChokeDiameter(effectiveDiameter);
 
     double massFlow = chokeModel.calculateMassFlowRate(fluid, P1, P2);
@@ -284,7 +298,7 @@ public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInt
     for (int i = 0; i < maxIterations; i++) {
       double openingMid = (openingLow + openingHigh) / 2.0;
 
-      double effectiveDiameter = chokeDiameter * Math.sqrt(openingMid / 100.0);
+      double effectiveDiameter = chokeDiameter * Math.sqrt(openingFraction(openingMid));
       chokeModel.setChokeDiameter(effectiveDiameter);
 
       SystemInterface fluid = inletStream.getThermoSystem();

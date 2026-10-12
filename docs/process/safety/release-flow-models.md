@@ -48,6 +48,8 @@ identity, version and diagnostics with every frame:
 | `DriftFluxHomogeneousEquilibriumReleaseModel` | Vertical-upward, short-opening gas/liquid screening with equilibrium thermodynamics and predictive slip. | Solves Zuber-Findlay/Harmathy drift flux together with phase-area and kinetic-energy closure. Exactly one gas and one liquid phase, caller-declared positive interfacial tension and gas area fraction at most 0.80 are required. |
 | `FiniteRateDriftFluxReleaseModel` | Sensitivity screening for delayed gas/liquid phase-split response at a vertical short opening. | Applies an exact first-order relaxation between upstream and equilibrium phase mass fractions, then solves the bounded drift-flux closure. Relaxation time, residence time, surface tension and parameter provenance are mandatory. |
 | `ComponentSelectiveFiniteRateReleaseModel` | Sensitivity screening for component-dependent gas/liquid phase-partition response at a vertical short opening. | Applies an exact first-order relaxation to each component's gas-held mass, reconstructs phase compositions with exact component conservation, then solves the bounded drift-flux closure. A relaxation time for every component, residence time, surface tension and parameter provenance are mandatory. |
+| `RanzMarshallFiniteRateReleaseModel` | Component-selective external-film sensitivity for explicit spherical gas bubbles. | Predicts component relaxation times from caller-declared diameter, liquid properties, relative speed and diffusivities, then uses the bounded drift-flux closure. Residence time remains explicit. |
+| `PredictiveBubbleTransferZoneReleaseModel` | Bounded vertical spherical-bubble transfer-zone screening. | Predicts a conservative bubble diameter, phase-relative speed and residence time from explicit SI geometry and resolved drift-flux velocities, then iterates Ranz-Marshall transfer and component/energy-conservative release to a checked fixed point. |
 | `IdealGasReleaseModel` | Analytical gas checks and dilute-gas screening with constant $\gamma$. | Requires one gas phase plus finite NeqSim molar mass and $\gamma$; no property default or model fallback. |
 | `IdealGasFannoPipeReleaseModel` | Quasi-steady one-sided full-bore gas release through a constant-area pipe. | Requires explicit pipe length and Darcy friction, one gas phase, and finite ideal-gas properties; no friction or phase fallback. |
 | `RealGasFannoPipeReleaseModel` | Quasi-steady one-sided single-gas flow through a constant-area pipe using the selected EOS. | Requires explicit pipe length and Darcy friction and one equilibrium gas phase throughout; phase appearance, sonic-step failure and unresolved solid risk fail closed. |
@@ -263,6 +265,49 @@ coalescence, entrainment, annular/high-Weber flow and solids. Ranz and Marshall,
 *Chemical Engineering Progress* 48 (1952), 141–146 and 173–180, is independent correlation
 provenance, not release-rate or facility qualification. Results remain `UNQUALIFIED` pending
 experimental multiphase evidence and accountable domain review.
+
+## Predictive vertical bubble transfer zone
+
+`PredictiveBubbleTransferZoneReleaseModel` removes the remaining caller-declared bubble diameter,
+relative speed and residence time for the bounded gas-bubble path. The caller still supplies the
+gas/liquid surface tension $\sigma$ [N/m], transfer-zone hydraulic diameter $D_h$ [m], vertical
+contact length $L$ [m], continuous-liquid viscosity $\mu_l$ [Pa s], one liquid-phase diffusivity
+$D_i$ [m²/s] per component, and provenance. Liquid density and both phase velocities come from the
+resolved one-gas/one-liquid Zuber-Findlay/Harmathy opening state.
+
+The model uses the conservative largest spherical-bubble proxy satisfying $Eo\le4$, $We\le3$,
+$d_{32}\le0.25D_h$, and $d_{32}\le D_o$:
+
+$$d_{Eo}=\sqrt{\frac{4\sigma}{g(\rho_l-\rho_g)}},\qquad d_{We}=\frac{3\sigma}{\rho_lu_r^2},$$
+
+$$d_{32}=\min(d_{Eo},d_{We},0.25D_h,D_o),\qquad u_r=|u_g-u_l|,\qquad t_r=\frac{L}{u_g}.$$
+
+The selected $d_{32}$ is a maximum-stable spherical-bubble screening proxy rather than a measured
+population mean. The adapter uses it with the existing Ranz-Marshall correlation, recalculates the
+component-selective phase split and drift-flux velocities, and repeats until diameter, both phase
+velocities, relative speed, residence time and mass rate change by at most $10^{-8}$ relatively.
+Failure to converge within 24 iterations returns `INVALID`; Ranz-Marshall range violations return
+`UNSUPPORTED`. Inputs are never silently defaulted or clamped.
+
+```java
+Map<String, Double> liquidDiffusivitiesM2S = new TreeMap<String, Double>();
+liquidDiffusivitiesM2S.put("methane", 1.0e-8);
+liquidDiffusivitiesM2S.put("n-heptane", 2.0e-8);
+ReleaseFlowModel predictiveTransferZone = new PredictiveBubbleTransferZoneReleaseModel(
+    0.020,  // gas/liquid interfacial tension, N/m
+    0.10,   // transfer-zone hydraulic diameter, m
+    0.50,   // vertical contact length, m
+    1.0e-3, // continuous-liquid dynamic viscosity, Pa s
+    liquidDiffusivitiesM2S,
+    "project-property-and-geometry-basis:v1");
+```
+
+The model supports exactly one gas and one `OIL`, `LIQUID` or `AQUEOUS` phase and remains
+`UNQUALIFIED`. It excludes measured or predicted bubble-size distributions, population balance,
+breakup/coalescence kinetics, entrainment, liquid-droplet or annular/high-Weber transport,
+interfacial heat/latent kinetics, internal bubble resistance, Stefan flow, solids and experimental
+qualification. Clift, Grace and Weber (1978) and Ranz-Marshall (1952) provide independent model
+bases, not validation of the coupled release rate.
 
 ## Ideal-gas equations
 

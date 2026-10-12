@@ -76,7 +76,8 @@ class OptimizationEntryDocumentationTest extends NeqSimTest {
       Matcher blocks = Pattern.compile("```java\\n(.*?)```", Pattern.DOTALL).matcher(markdown);
       int index = 0;
       while (blocks.find()) {
-        if (document.equals("OPTIMIZATION_OVERVIEW.md") && !Arrays.asList(0, 1, 4, 9, 10, 11, 12, 13).contains(index)) {
+        if (document.equals("OPTIMIZATION_OVERVIEW.md")
+            && !Arrays.asList(0, 1, 4, 10, 11, 12, 13, 14).contains(index)) {
           index++;
           continue;
         }

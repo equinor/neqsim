@@ -57,6 +57,8 @@ public class DoeBigHillAtmosphericFractionationTest {
 
     String firstRunDiagnostics = column.getConvergenceDiagnostics();
     assertTrue(column.solved(), firstRunDiagnostics);
+    assertEquals(0.20, column.getTemperatureTolerance(), 0.0, firstRunDiagnostics);
+    assertEquals(300, column.getMaxNumberOfIterations(), firstRunDiagnostics);
     assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), firstRunDiagnostics);
     assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(), firstRunDiagnostics);
     assertTrue(column.getLastMeshResidualNorm() <= column.getMeshResidualTolerance(), firstRunDiagnostics);
@@ -78,6 +80,8 @@ public class DoeBigHillAtmosphericFractionationTest {
 
     String repeatedRunDiagnostics = column.getConvergenceDiagnostics();
     assertTrue(column.solved(), repeatedRunDiagnostics);
+    assertTrue(column.wasSequentialWarmStateReused(), repeatedRunDiagnostics);
+    assertEquals(0, column.getLastIterationCount(), repeatedRunDiagnostics);
     assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), repeatedRunDiagnostics);
     assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(),
         repeatedRunDiagnostics);

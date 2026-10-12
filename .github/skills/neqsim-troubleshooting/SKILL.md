@@ -83,6 +83,10 @@ compressor power or a non-finite separator duty downstream.
 | 5 | For viscosity at very low pressures (<1 bara), check if the correlation is valid | Some viscosity models have limited pressure range |
 | 6 | For mixtures with unusual components (mercury, H2S at trace levels), check if physical property parameters exist in the database | Missing Lennard-Jones or critical parameters give zero |
 
+### Feed rebuilt from `getz()` / `getMolarMass()` is silently wrong
+
+`getPhase(0).getComponent(i).getz()` and `getMolarMass()` return 0 on a freshly built system until `init(0)` (or a flash) has run. Rebuilding a wellstream from them (mass flow / molar mass, `z * n`, `setMolarComposition`) then gives a divide-by-zero or, worse, a feed whose only non-zero entry is the water you added by hand: the pipe runs, converges and shows a plausible hydrostatic head, but velocities are 3-5x too low and friction is an order of magnitude small. Call `fluid.init(0)` before reading `z` or `M`, assert `sum(z) == 1`, and add a feed check: stream mass flow equals the target and `v = m/(rho A)` matches the pipe-model velocity. A Colebrook-White check on a single-phase liquid line against `PipeBeggsAndBrills` catches it in one run.
+
 ## Wrong JT / Isenthalpic Expansion Temperature
 
 **Symptom:** Manual `PHflash()` on a cloned fluid gives wrong temperature after pressure reduction (Joule-Thomson expansion). Tested: 14.9°C error vs 1.7°C with correct method.

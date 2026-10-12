@@ -57,6 +57,12 @@ def task(tmp_path):
     return tmp_path
 
 
+def test_key_results_in_report_form_are_unwrapped():
+    row = gwr._key_result_row("eur", {"value": 134, "label": "Well EUR", "unit": "kSm3", "group": "Wells"})
+    assert row == ["Well EUR", "134 kSm3"]
+    assert gwr._key_result_row("rate", 3.2) == ["rate", 3.2]
+
+
 def test_config_parser_reads_nested_lists_and_scalars(task):
     config = gwr.load_study_config(task)
     assert config["study"]["title"] == "Demo study"

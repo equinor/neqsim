@@ -83,7 +83,9 @@ def read_java_types() -> Dict[str, JavaType]:
 
     types: Dict[str, JavaType] = {}
     for path in sorted(SOURCE_ROOT.rglob("*.java")):
-        text = path.read_text(encoding="utf-8-sig")
+        # The \\?\ prefix lets Windows open paths longer than MAX_PATH.
+        long_path = Path("\\\\?\\" + str(path)) if sys.platform == "win32" else path
+        text = long_path.read_text(encoding="utf-8-sig")
         package_match = PACKAGE.search(text)
         declaration = DECLARATION.search(text)
         if package_match is None or declaration is None:

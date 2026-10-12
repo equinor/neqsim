@@ -17,6 +17,8 @@
  * phase-partition relaxation with bounded vertical drift flux</li>
  * <li>{@link neqsim.process.safety.release.RanzMarshallFiniteRateReleaseModel} - Explicit Ranz-Marshall external-film
  * component transfer coupled to bounded vertical gas-bubble drift flux</li>
+ * <li>{@link neqsim.process.safety.release.PredictiveBubbleTransferZoneReleaseModel} - Bounded spherical-bubble
+ * diameter, phase-velocity and residence-time prediction coupled to Ranz-Marshall transfer</li>
  * <li>{@link neqsim.process.safety.release.IdealGasFannoPipeReleaseModel} - Assessed quasi-steady ideal-gas pipe
  * release with specified Darcy friction</li>
  * <li>{@link neqsim.process.safety.release.RealGasFannoPipeReleaseModel} - EOS-backed quasi-steady single-gas pipe
@@ -48,9 +50,11 @@
  * the same drift-flux closure. A fourth resolves component-specific phase-partition relaxation and emits phase
  * compositions while retaining exact component conservation. A fifth predicts external-film component relaxation times
  * from explicit Ranz-Marshall inputs for spherical gas bubbles, while failing closed for out-of-range dimensionless
- * groups and liquid-droplet hydrodynamics. These models retain explicit phase-area and kinetic-energy closure; none
- * predicts residence time, interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas
- * pipe models fail closed if an equilibrium phase appears.
+ * groups and liquid-droplet hydrodynamics. A sixth predicts a conservative spherical-bubble diameter, resolved phase
+ * velocities and gas residence time from explicit transfer-zone geometry before iterating the Ranz-Marshall and
+ * component-transfer calculations to a checked fixed point. These models retain explicit phase-area and kinetic-energy
+ * closure; none predicts interfacial heat transfer, entrainment, annular jets or solid-bearing flow. Both real-gas pipe
+ * models fail closed if an equilibrium phase appears.
  *
  * <p>
  * Example usage:

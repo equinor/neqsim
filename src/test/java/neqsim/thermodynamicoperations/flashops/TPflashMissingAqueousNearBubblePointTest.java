@@ -99,7 +99,7 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     feed.setFlowRate(3781.0149, "kg/hr");
     feed.run();
     assertAqueousEquilibrium(feed.getFluid());
-    feed.getFluid().init(3);
+    feed.getFluid().init(2);
     double inletEntropy = feed.getFluid().getEntropy();
     // Enthalpy/entropy use the EOS volume; the volume-corrected transport density is a different reference.
     double hydraulicPower = feed.getFluid().getVolume("m3") * (19.0 - 2.67) * 1.0e5 / 1000.0;
@@ -183,14 +183,14 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     feed.setFlowRate(9000.0, "kg/hr");
     feed.run();
     assertAqueousEquilibrium(feed.getFluid());
-    feed.getFluid().init(3);
+    feed.getFluid().init(2);
     double inletEnthalpy = feed.getFluid().getEnthalpy();
     double inletEntropy = feed.getFluid().getEntropy();
     Pump pump = new Pump("pump", feed);
     pump.setOutletPressure(5.2);
     pump.run();
     SystemInterface outlet = pump.getOutletStream().getFluid();
-    outlet.init(3);
+    outlet.init(2);
     assertTrue(pump.getPower("W") > 0.0);
     assertTrue(outlet.getTemperature() > feed.getTemperature());
     assertTrue(outlet.getTemperature() - feed.getTemperature() < 1.0);
@@ -201,10 +201,31 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     assertAqueousEquilibrium(outlet);
   }
 
+  /** Checks that numerically unresolvable water never allocates a candidate fluid. */
+  @Test
+  void unresolvableWaterRecoveryDoesNotClone() {
+    for (double waterFraction : new double[] {0.0, 1.0e-12,
+        10.0 * neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit}) {
+      SystemInterface fluid = homogeneousOil(diluteWaterInlet(waterFraction));
+      double referenceGibbs = fluid.getGibbsEnergy();
+      SystemInterface guarded = (SystemInterface) java.lang.reflect.Proxy.newProxyInstance(
+          SystemInterface.class.getClassLoader(), new Class<?>[] {SystemInterface.class},
+          (proxy, method, arguments) -> {
+            if ("clone".equals(method.getName())) {
+              throw new AssertionError("Unresolvable water must not trigger a nested flash");
+            }
+            return method.invoke(fluid, arguments);
+          });
+      new TPmultiflash(guarded, false).rescueMetastableOilMissingAqueous();
+      assertEquals(1, fluid.getNumberOfPhases());
+      assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 0.0);
+    }
+  }
+
   /** Checks that extending the screen does not force an undersaturated aqueous phase. */
   @Test
   void diluteWaterRecoveryRejectsUndersaturatedAqueousSeed() {
-    SystemInterface fluid = homogeneousOil(diluteWaterInlet(1.0e-12));
+    SystemInterface fluid = homogeneousOil(diluteWaterInlet(1.0e-8));
     double referenceGibbs = fluid.getGibbsEnergy();
     new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
     assertEquals(1, fluid.getNumberOfPhases());

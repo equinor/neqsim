@@ -18,6 +18,7 @@ import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionRe
 import neqsim.thermo.characterization.SarirAtmosphericReference.SteamInjectionService;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Qualification tests for {@link SarirAtmosphericSideStripperContactScreen}. */
 public class SarirAtmosphericSideStripperContactScreenTest {
@@ -73,7 +74,27 @@ public class SarirAtmosphericSideStripperContactScreenTest {
     DistillationColumn column = model.getColumn();
     assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, column.getLastSolveStatus(),
         column.getConvergenceDiagnostics());
+    SarirAtmosphericProductQualityScreen.evaluate(model);
     OperatingInputs inputs = model.getOperatingInputs();
+    StreamInterface keroseneDraw = column.getSideDrawStream(inputs.getKeroseneSideDrawTray(),
+        DistillationColumn.SideDrawPhase.LIQUID);
+    StreamInterface dieselDraw = column.getSideDrawStream(inputs.getDieselSideDrawTray(),
+        DistillationColumn.SideDrawPhase.LIQUID);
+    SystemInterface keroseneFluid = keroseneDraw.getFluid().clone();
+    SystemInterface dieselFluid = dieselDraw.getFluid().clone();
+    double keroseneFlow = keroseneDraw.getFlowRate("kg/hr");
+    double dieselFlow = dieselDraw.getFlowRate("kg/hr");
+    double keroseneEnthalpy = keroseneDraw.getFluid().getEnthalpy();
+    double dieselEnthalpy = dieselDraw.getFluid().getEnthalpy();
+    // Deliberately invert published compositions while retaining each draw's mass and enthalpy rates.
+    dieselFluid.setTemperature(keroseneDraw.getTemperature());
+    keroseneFluid.setTemperature(dieselDraw.getTemperature());
+    keroseneDraw.setThermoSystem(dieselFluid);
+    keroseneDraw.setFlowRate(keroseneFlow, "kg/hr");
+    dieselDraw.setThermoSystem(keroseneFluid);
+    dieselDraw.setFlowRate(dieselFlow, "kg/hr");
+    new ThermodynamicOperations(keroseneDraw.getFluid()).PHflash(keroseneEnthalpy);
+    new ThermodynamicOperations(dieselDraw.getFluid()).PHflash(dieselEnthalpy);
     double keroseneBoilingPoint = ProductBoilingPointDistribution
         .from(column.getSideDrawStream(inputs.getKeroseneSideDrawTray(), DistillationColumn.SideDrawPhase.LIQUID))
         .getMeanNormalBoilingPointKelvin();
@@ -115,7 +136,7 @@ public class SarirAtmosphericSideStripperContactScreenTest {
     assertTrue(result.getMassClosureRelativeError() <= 1.0e-6);
   }
 
-  /** A converged column with dry side-draw trays must remain inadmissible. */
+  /** A qualified column with explicitly invalid zero-flow side draws must remain inadmissible. */
   @Test
   @Timeout(value = 240, unit = TimeUnit.SECONDS)
   public void rigorouslyConvergedDrySideDrawsFailClosed() {
@@ -125,6 +146,12 @@ public class SarirAtmosphericSideStripperContactScreenTest {
         SPECIFIC_GRAVITY, MOLAR_MASS_KG_PER_MOL, inputs);
     model.run(UUID.randomUUID());
     assertEquals(DistillationColumn.SolveStatus.RIGOROUS_CONVERGED, model.getColumn().getLastSolveStatus());
+    SarirAtmosphericProductQualityScreen.evaluate(model);
+    for (int tray : new int[] {inputs.getKeroseneSideDrawTray(), inputs.getDieselSideDrawTray()}) {
+      StreamInterface sideDraw = model.getColumn().getSideDrawStream(tray, DistillationColumn.SideDrawPhase.LIQUID);
+      assertTrue(sideDraw.getFlowRate("kg/hr") > 0.0);
+      sideDraw.setFlowRate(0.0, "kg/hr");
+    }
     assertThrows(IllegalStateException.class, () -> SarirAtmosphericProductQualityScreen.evaluate(model));
     for (SteamInjectionService service : new SteamInjectionService[] {SteamInjectionService.KEROSENE_SIDE_STRIPPER,
         SteamInjectionService.DIESEL_SIDE_STRIPPER}) {
@@ -155,11 +182,11 @@ public class SarirAtmosphericSideStripperContactScreenTest {
     return new Stream("prepared " + rowName + " steam", fluid);
   }
 
+  /** @return a qualified synthetic column with explicitly selected material side draws */
   private static SarirAtmosphericFractionationCase createModel() {
-    // Explicit synthetic locations below the feed retain liquid at these controls.
-    // They are not tray locations inferred from the published steam-service rows.
+    // These explicit synthetic locations are not inferred from the published steam-service rows.
     OperatingInputs inputs = new OperatingInputs(1.20, SarirAtmosphericReference.getColumnFeedPressureKPa() / 100.0,
-        700.0, 1.0, 3, 0.08, 2, 0.15);
+        700.0, 1.0, 24, 0.08, 15, 0.15);
     return SarirAtmosphericFractionationCase.create("Sarir side-stripper contact", SPECIFIC_GRAVITY,
         MOLAR_MASS_KG_PER_MOL, inputs);
   }

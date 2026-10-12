@@ -22,6 +22,13 @@ Documentation for fluid system implementations in NeqSim.
 
 The system package contains 58+ implementations of thermodynamic models, from simple ideal gas to complex associating equations of state.
 
+`getEmptySystemClone()` retains the original overall composition while scaling the total
+inventory and every stored phase component inventory by `1e30`. Physical phase slots are
+scaled directly, including inactive slots, so reordered logical phase indices cannot leave
+unscaled component amounts that reappear during initialization. Retained phase templates beyond the current search limit are detached before scaling,
+so the source fluid is unchanged.
+The clone represents a numerically near-empty stream, rather than an exactly zero inventory.
+
 ---
 
 ## System Hierarchy

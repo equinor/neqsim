@@ -1677,13 +1677,16 @@ class ProcessAutomationTest {
     // Read the current routing fraction.
     assertEquals(0.5, auto.getVariableValue("Router.splitFactor_0", null), 1e-6);
 
-    // Write a new routing fraction; the splitter renormalises so the factors sum to 1.
+    // Write a new routing fraction exactly; the remaining outlets are rescaled.
     auto.setVariableValue("Router.splitFactor_0", 0.9, null);
     p.run();
     double f0 = auto.getVariableValue("Router.splitFactor_0", null);
     double f1 = auto.getVariableValue("Router.splitFactor_1", null);
+    assertEquals(0.9, f0, 1e-12, "requested routing action must survive splitter normalisation");
+    assertEquals(0.1, f1, 1e-12, "the complementary outlet must preserve total allocation");
     assertEquals(1.0, f0 + f1, 1e-6, "split factors must sum to 1");
-    assertTrue(f0 > 0.5, "branch 0 weight should have increased, got " + f0);
+    assertThrows(IllegalArgumentException.class, () -> auto.setVariableValue("Router.splitFactor_0", Double.NaN, null));
+    assertThrows(IllegalArgumentException.class, () -> auto.setVariableValue("Router.splitFactor_0", 1.01, null));
   }
 
   @Test

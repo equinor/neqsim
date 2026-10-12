@@ -3701,7 +3701,8 @@ public class TPmultiflash extends TPflash {
    * including collapse to a single oil phase near the bubble point. The incumbent may satisfy gas/oil fugacity equality
    * yet have a much higher Gibbs energy than OIL/AQUEOUS. Start a material-balanced oil/aqueous active set on a clone
    * and replace the incumbent only after solving equilibrium and checking component conservation and fugacities. Never
-   * accept the raw aqueous seed itself.
+   * accept the raw aqueous seed itself. Skip feeds whose half-water seed cannot exceed the ten-times-minimum
+   * phase-fraction acceptance floor, before cloning or running the nested flash.
    * </p>
    */
   void rescueMetastableOilMissingAqueous() {
@@ -3711,7 +3712,7 @@ public class TPmultiflash extends TPflash {
     if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
         || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
-        || system.getComponent("water").getz() <= 0.0) {
+        || !(system.getComponent("water").getz() > 20.0 * phaseFractionMinimumLimit)) {
       return;
     }
     boolean validReference = isFeasiblePhaseEquilibrium(system);

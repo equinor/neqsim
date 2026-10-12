@@ -47,7 +47,8 @@ def _find_report(task_dir, suffix):
 
 
 def main():
-    tmpdir = sys.argv[1] if len(sys.argv) > 1 else None    if tmpdir is None:
+    tmpdir = sys.argv[1] if len(sys.argv) > 1 else None
+    if tmpdir is None:
         # Try to find the latest report_test_* directory in temp
         import glob
         import tempfile

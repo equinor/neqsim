@@ -1,6 +1,6 @@
 ---
 name: solve-process
-description: "Builds and validates executable NeqSim oil and gas process models and notebooks: separator trains, compression with intercooling and recycle, gas treatment, and export pipelines. Preserves reusable ProcessSystem/ProcessModel objects, stream topology, model basis, convergence evidence and balances. Fast path for a simulation deliverable; use solve-task for a full engineering study."
+description: "Builds and validates executable NeqSim oil and gas process models and notebooks: separator trains, multi-stage compression with intercooling (compressor power, discharge temperature) and recycle, gas treatment, and export pipelines. Preserves reusable ProcessSystem/ProcessModel objects, stream topology, model basis, convergence evidence and balances. Fast path for a simulation deliverable; use solve-task for a full engineering study."
 required_skills:
 - neqsim-process-modeling
 - neqsim-notebook-patterns
