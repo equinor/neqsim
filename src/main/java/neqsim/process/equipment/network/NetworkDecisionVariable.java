@@ -140,6 +140,42 @@ public class NetworkDecisionVariable implements Serializable {
   }
 
   /**
+   * Create a custom variable with explicit discrete candidates.
+   *
+   * <p>
+   * This keeps domain-specific discrete state changes outside the generic optimizer while preserving its complete,
+   * deterministic Cartesian enumeration and candidate restoration semantics.
+   * </p>
+   *
+   * @param name stable variable name
+   * @param unit unit or categorical-index label
+   * @param candidates finite, strictly increasing candidates
+   * @param getter getter for the currently applied candidate value
+   * @param setter transactional candidate setter
+   * @return custom discrete variable
+   */
+  public static NetworkDecisionVariable customDiscrete(String name, String unit, double[] candidates, Getter getter,
+      Setter setter) {
+    if (getter == null || setter == null) {
+      throw new IllegalArgumentException("Custom getter and setter are required");
+    }
+    if (candidates == null || candidates.length < 2) {
+      throw new IllegalArgumentException("At least two custom discrete candidates are required");
+    }
+    double[] values = candidates.clone();
+    for (int index = 0; index < values.length; index++) {
+      if (!Double.isFinite(values[index])) {
+        throw new IllegalArgumentException("Custom discrete candidates must be finite");
+      }
+      if (index > 0 && values[index] <= values[index - 1]) {
+        throw new IllegalArgumentException("Custom discrete candidates must be strictly increasing");
+      }
+    }
+    return new NetworkDecisionVariable(name, Type.CUSTOM, null, unit, RateBasis.NONE, values[0],
+        values[values.length - 1], getter, setter, values);
+  }
+
+  /**
    * Create a discrete pipe-diameter design variable over existing canonical edge geometry.
    *
    * @param name stable decision name

@@ -18,6 +18,7 @@ import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.LoopedPipeNetwork;
 import neqsim.process.equipment.network.NetworkConstraint;
 import neqsim.process.equipment.network.NetworkConstraints;
+import neqsim.process.equipment.network.NetworkDecisionVariable;
 import neqsim.process.equipment.network.NetworkObjective;
 import neqsim.process.equipment.network.NetworkObjectives;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
@@ -1336,6 +1337,137 @@ public class SubseaProductionSystem implements Serializable {
   }
 
   /**
+   * Create one exact discrete design selector for a canonical rigid SURF line.
+   *
+   * <p>
+   * Each candidate is a complete {@link LineDesign}. Selecting it transactionally updates the existing canonical
+   * hydraulic edge inside diameter, explicit wall thickness, optional uniform thermal inputs, and this system's
+   * route-design map. Material, installation, insulation, DNV-ST-F101, and DNV-RP-F109 data therefore remain attached
+   * to the same edge identity used by hydraulics and cost estimation. Hydraulic model selection is not changed.
+   * </p>
+   *
+   * <p>
+   * Candidate values exposed to {@link neqsim.process.equipment.network.NetworkOptimizer} are zero-based integer
+   * indices in list order. All candidates must use explicit rigid-pipe walls and provide a consistent set of thermal
+   * and screening contracts. Flexible-pipe alternatives remain vendor-specific and are deliberately excluded.
+   * </p>
+   *
+   * @param topology canonical topology owning the mutable hydraulic edge
+   * @param edgeId canonical physical line edge ID
+   * @param candidates complete line designs in deterministic enumeration order
+   * @param initialIndex candidate applied before the variable is returned
+   * @return custom discrete decision variable for the existing network optimizer
+   */
+  public NetworkDecisionVariable createLineDesignDecisionVariable(final FieldNetworkTopology topology,
+      final String edgeId, List<LineDesign> candidates, int initialIndex) {
+    if (topology == null) {
+      throw new IllegalArgumentException("Field network topology cannot be null");
+    }
+    if (edgeId == null || edgeId.trim().isEmpty() || !edgeId.equals(edgeId.trim())) {
+      throw new IllegalArgumentException("Line-design edge ID must be non-empty and trimmed");
+    }
+    if (candidates == null || candidates.size() < 2) {
+      throw new IllegalArgumentException("At least two line-design candidates are required");
+    }
+    if (initialIndex < 0 || initialIndex >= candidates.size()) {
+      throw new IllegalArgumentException("Initial line-design candidate index is outside the candidate list");
+    }
+
+    FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    boolean physicalLine = false;
+    for (FieldNetworkSurfDesignBasis.LineSegment segment : basis.getLineSegments()) {
+      if (edgeId.equals(segment.getId())) {
+        physicalLine = true;
+        break;
+      }
+    }
+    if (!physicalLine) {
+      throw new IllegalArgumentException("Line-design alternatives require a canonical physical SURF edge");
+    }
+
+    final List<LineDesign> options = Collections.unmodifiableList(new ArrayList<LineDesign>(candidates));
+    validateLineDesignCandidates(topology, edgeId, options);
+    final int[] selectedIndex = new int[] {initialIndex};
+    applyLineDesignCandidate(topology, edgeId, options.get(initialIndex));
+
+    double[] indices = new double[options.size()];
+    for (int index = 0; index < indices.length; index++) {
+      indices[index] = index;
+    }
+    return NetworkDecisionVariable.customDiscrete("edge." + edgeId + ".lineDesign", "candidate-index", indices,
+        new NetworkDecisionVariable.Getter() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double get(LoopedPipeNetwork network) {
+            requireCanonicalNetwork(topology, network);
+            return selectedIndex[0];
+          }
+        }, new NetworkDecisionVariable.Setter() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public void set(LoopedPipeNetwork network, double value) {
+            requireCanonicalNetwork(topology, network);
+            int candidateIndex = (int) Math.rint(value);
+            if (candidateIndex < 0 || candidateIndex >= options.size() || Math.abs(value - candidateIndex) > 1.0e-12) {
+              throw new IllegalArgumentException("Line-design selection must be a declared integer candidate index");
+            }
+            applyLineDesignCandidate(topology, edgeId, options.get(candidateIndex));
+            selectedIndex[0] = candidateIndex;
+          }
+        });
+  }
+
+  /**
+   * Create fail-closed structural and stability constraints for currently selected line designs.
+   *
+   * <p>
+   * The callbacks read the line design selected immediately before each optimizer solve. A blocked/failed calculation,
+   * missing value, non-finite governing utilization, or utilization above one is a constraint violation. Passing a
+   * screening constraint does not convert the result into engineering approval or code conformity.
+   * </p>
+   *
+   * @param topology canonical topology optimized by the owning network optimizer
+   * @param hard true to reject a candidate when a screening calculation is blocked or fails
+   * @return immutable constraints in line-design insertion order, ST-F101 before F109 for each edge
+   */
+  public List<NetworkConstraint> createLineDesignScreeningConstraints(final FieldNetworkTopology topology,
+      boolean hard) {
+    FieldNetworkSurfDesignBasis basis = createSurfDesignBasis(topology);
+    validateLineDesigns(basis);
+    List<NetworkConstraint> constraints = new ArrayList<NetworkConstraint>();
+    for (Map.Entry<String, LineDesign> entry : lineDesigns.entrySet()) {
+      final String edgeId = entry.getKey();
+      if (entry.getValue().hasDnvStF101Input()) {
+        constraints.add(NetworkConstraints.custom("edge." + edgeId + ".dnvStF101Utilization", hard, 1.0, "utilization",
+            new NetworkConstraints.ResidualEvaluator() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public double evaluate(LoopedPipeNetwork network) {
+                requireCanonicalNetwork(topology, network);
+                return dnvStF101Violation(edgeId);
+              }
+            }));
+      }
+      if (entry.getValue().hasOnBottomStabilityInput()) {
+        constraints.add(NetworkConstraints.custom("edge." + edgeId + ".dnvRpF109Utilization", hard, 1.0, "utilization",
+            new NetworkConstraints.ResidualEvaluator() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public double evaluate(LoopedPipeNetwork network) {
+                requireCanonicalNetwork(topology, network);
+                return dnvRpF109Violation(edgeId);
+              }
+            }));
+      }
+    }
+    return Collections.unmodifiableList(constraints);
+  }
+
+  /**
    * Evaluate configured DNV-ST-F101 limit-state inputs by canonical route identity.
    *
    * <p>
@@ -1400,6 +1532,143 @@ public class SubseaProductionSystem implements Serializable {
   private EngineeringCalculationContext screeningContext(String edgeId, String standardBasis) {
     return EngineeringCalculationContext.builder().designCaseId(edgeId).addStandardReference(standardBasis)
         .attribute("canonicalEdgeId", edgeId).build();
+  }
+
+  /** Validate a deterministic set of rigid line-design alternatives before any state change. */
+  private void validateLineDesignCandidates(FieldNetworkTopology topology, String edgeId, List<LineDesign> candidates) {
+    LineDesign reference = candidates.get(0);
+    if (reference == null) {
+      throw new IllegalArgumentException("Line-design candidates cannot contain null");
+    }
+    boolean thermalConfigured = reference.hasThermalHydraulicConfiguration();
+    boolean minimumTemperatureConfigured = reference.hasMinimumOutletTemperature();
+    boolean dnvStF101Configured = reference.hasDnvStF101Input();
+    boolean stabilityConfigured = reference.hasOnBottomStabilityInput();
+    double minimumTemperatureC = reference.getMinimumOutletTemperatureC();
+    for (LineDesign candidate : candidates) {
+      if (candidate == null) {
+        throw new IllegalArgumentException("Line-design candidates cannot contain null");
+      }
+      if (candidate.isFlexible()) {
+        throw new IllegalArgumentException(
+            "Discrete canonical line-design selection currently requires rigid-pipe alternatives");
+      }
+      if (!(candidate.getWallThicknessMm() > 0.0)) {
+        throw new IllegalArgumentException(
+            "Discrete line-design alternatives require explicit wall thickness; screening wall defaults cannot define hydraulic ID");
+      }
+      double insideDiameterM = candidate.getResolvedInnerDiameterM();
+      if (!(insideDiameterM > 0.0) || !Double.isFinite(insideDiameterM)) {
+        throw new IllegalArgumentException("Line-design candidate must resolve to a finite positive inside diameter");
+      }
+      if (candidate.hasThermalHydraulicConfiguration() != thermalConfigured
+          || candidate.hasDnvStF101Input() != dnvStF101Configured
+          || candidate.hasOnBottomStabilityInput() != stabilityConfigured) {
+        throw new IllegalArgumentException(
+            "All line-design candidates must provide the same thermal, DNV-ST-F101, and DNV-RP-F109 contracts");
+      }
+      if (candidate.hasMinimumOutletTemperature() != minimumTemperatureConfigured || (minimumTemperatureConfigured
+          && Math.abs(candidate.getMinimumOutletTemperatureC() - minimumTemperatureC) > 1.0e-12)) {
+        throw new IllegalArgumentException(
+            "Minimum outlet temperature is a design requirement and must be identical for every candidate");
+      }
+    }
+    LoopedPipeNetwork.NetworkPipe pipe = topology.getHydraulicNetwork().getPipe(edgeId);
+    if (thermalConfigured
+        && (pipe.getHeatTransferProfileWm2K() != null || pipe.getAmbientTemperatureProfileK() != null)) {
+      throw new IllegalArgumentException(
+          "Uniform line-design alternatives cannot replace route-dependent thermal profiles on edge '" + edgeId + "'");
+    }
+  }
+
+  /** Apply one candidate atomically to the design map and its existing hydraulic edge. */
+  private void applyLineDesignCandidate(FieldNetworkTopology topology, String edgeId, LineDesign design) {
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    LoopedPipeNetwork.NetworkPipe pipe = network.getPipe(edgeId);
+    double insideDiameterM = design.getResolvedInnerDiameterM();
+    double wallThicknessM = design.getWallThicknessMm() / 1000.0;
+    double uValue = design.hasThermalHydraulicConfiguration() ? design.resolveOverallHeatTransferCoefficientWm2K()
+        : Double.NaN;
+
+    boolean hadDesign = lineDesigns.containsKey(edgeId);
+    LineDesign previousDesign = lineDesigns.get(edgeId);
+    double previousDiameterM = pipe.getDiameter();
+    double previousWallThicknessM = pipe.getWallThickness();
+    double previousUValue = pipe.getOverallHeatTransferCoeff();
+    double previousAmbientK = pipe.getAmbientTemperature();
+    boolean previousThermalEnabled = network.isThermalHydraulicsEnabled();
+    try {
+      pipe.setDiameter(insideDiameterM);
+      pipe.setWallThickness(wallThicknessM);
+      if (design.hasThermalHydraulicConfiguration()) {
+        if (pipe.getHeatTransferProfileWm2K() != null || pipe.getAmbientTemperatureProfileK() != null) {
+          throw new IllegalStateException(
+              "Uniform line-design candidate cannot replace an existing route-dependent thermal profile");
+        }
+        pipe.setOverallHeatTransferCoeff(uValue);
+        pipe.setAmbientTemperature(design.getAmbientTemperatureC() + 273.15);
+        network.setThermalHydraulicsEnabled(true);
+      }
+      lineDesigns.put(edgeId, design);
+      validateLineDesigns(createSurfDesignBasis(topology));
+    } catch (RuntimeException ex) {
+      pipe.setDiameter(previousDiameterM);
+      pipe.setWallThickness(previousWallThicknessM);
+      pipe.setOverallHeatTransferCoeff(previousUValue);
+      pipe.setAmbientTemperature(previousAmbientK);
+      network.setThermalHydraulicsEnabled(previousThermalEnabled);
+      if (hadDesign) {
+        lineDesigns.put(edgeId, previousDesign);
+      } else {
+        lineDesigns.remove(edgeId);
+      }
+      throw ex;
+    }
+  }
+
+  /** Return the selected ST-F101 governing utilization violation, failing closed on missing evidence. */
+  private double dnvStF101Violation(String edgeId) {
+    LineDesign design = lineDesigns.get(edgeId);
+    if (design == null || !design.hasDnvStF101Input()) {
+      return 1.0e6;
+    }
+    String standardBasis = design.getDnvStF101Input().getEdition() == null ? ""
+        : design.getDnvStF101Input().getEdition().getDisplayName();
+    EngineeringCalculationResult<DnvStF101PipelineAssessment> result = design
+        .screenDnvStF101(screeningContext(edgeId, standardBasis));
+    if ((result.getStatus() != EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED
+        && result.getStatus() != EngineeringCalculationResult.Status.CALCULATED) || result.getValue() == null
+        || result.getValue().getGoverningCheck() == null
+        || !Double.isFinite(result.getValue().getGoverningCheck().getUtilization())) {
+      return 1.0e6;
+    }
+    return Math.max(0.0, result.getValue().getGoverningCheck().getUtilization() - 1.0);
+  }
+
+  /** Return the selected F109 governing utilization violation, failing closed on missing evidence. */
+  private double dnvRpF109Violation(String edgeId) {
+    LineDesign design = lineDesigns.get(edgeId);
+    if (design == null || !design.hasOnBottomStabilityInput()) {
+      return 1.0e6;
+    }
+    String standardBasis = design.getOnBottomStabilityInput().getEdition() == null ? ""
+        : design.getOnBottomStabilityInput().getEdition().getDisplayName();
+    EngineeringCalculationResult<DnvRpF109OnBottomStabilityAssessment> result = design
+        .screenOnBottomStability(screeningContext(edgeId, standardBasis));
+    if ((result.getStatus() != EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED
+        && result.getStatus() != EngineeringCalculationResult.Status.CALCULATED) || result.getValue() == null
+        || result.getValue().getGoverningCheck() == null
+        || !Double.isFinite(result.getValue().getGoverningCheck().getUtilization())) {
+      return 1.0e6;
+    }
+    return Math.max(0.0, result.getValue().getGoverningCheck().getUtilization() - 1.0);
+  }
+
+  /** Require a callback to operate on the topology's exact canonical network instance. */
+  private static void requireCanonicalNetwork(FieldNetworkTopology topology, LoopedPipeNetwork network) {
+    if (network != topology.getHydraulicNetwork()) {
+      throw new IllegalArgumentException("Line-design selection must use its canonical topology network");
+    }
   }
 
   /**
