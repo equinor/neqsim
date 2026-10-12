@@ -1,7 +1,7 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
-last_verified: "2026-09-20"
+last_verified: "2026-10-12"
 ---
 
 # NeqSim API Patterns
@@ -128,9 +128,10 @@ fluid.setMultiPhaseCheck(true);
 ```java
 fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);   // name, moleFrac, MW_kg/mol, density
 fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
-fluid.addPlusFraction("C20+", 0.02, 350.0 / 1000, 0.88);
+fluid.addPlusFraction("C20", 0.02, 350.0 / 1000, 0.88); // no "+" in the name -- breaks parsing
 fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
 fluid.getCharacterization().characterisePlusFraction();
+fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
 ```
 
 ## Loading Fluids from E300 Files
@@ -1449,7 +1450,17 @@ When writing code examples for documentation (markdown guides, cookbook recipes,
 3. **Run the test** and confirm it passes before publishing the doc
 4. **Common pitfalls**:
    - Plus fraction names: use `"C20"` not `"C20+"` (the `+` character breaks parsing)
-   - Set mixing rule BEFORE calling `characterisePlusFraction()`
+   - Set mixing rule AFTER calling `characterisePlusFraction()`, not before.
+     `characterisePlusFraction()` can SPLIT a plus/TBP fraction into several
+     lumped pseudo-components (confirmed: 9 components in, 15 out on a real
+     test fluid), and a mixing rule set beforehand leaves the EOS's kij
+     matrix sized for the PRE-split component count. The first flash that
+     actually needs the matrix then throws
+     `ArrayIndexOutOfBoundsException: Index N out of bounds for length N`
+     inside `EosMixingRuleHandler$ClassicSRK.getkij` -- confirmed against a
+     real NeqSim 3.24.0 build (2026-10-12). This reverses the ordering
+     previously stated here; `neqsim-flow-assurance` and
+     `neqsim-wax-calculations` already documented the correct order.
    - `getUnit("name")` not `getUnitOperation("name")`
    - `setDepreciationYears` takes `double`, not `int`
    - Risk thresholds: always read source for actual comparison logic (subcooling direction, enum ordering)
