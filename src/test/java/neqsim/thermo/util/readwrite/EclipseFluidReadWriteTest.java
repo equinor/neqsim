@@ -378,10 +378,23 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // default
     // (0.45724333333)
     // IC4/IC5 now map to the database components (database ideal-gas Cp), which shifts the enthalpy
-    Assertions.assertEquals(-4636.675630757057, ent, 1e-3);
+    // The entrained water now resolves into its own equilibrium phase in the oil product.
+    Assertions.assertEquals(-4678.00848112924, ent, 1e-3);
+    SystemInterface oilProduct = separator.getOilOutStream().getFluid();
+    oilProduct.init(2);
+    Assertions.assertEquals(ent, oilProduct.getEnthalpy(), 1e-6);
+    Assertions.assertTrue(oilProduct.hasPhaseType("oil"));
+    Assertions.assertTrue(oilProduct.hasPhaseType("aqueous"));
+    for (int component = 0; component < oilProduct.getNumberOfComponents(); component++) {
+      double recovered = 0.0;
+      for (int phase = 0; phase < oilProduct.getNumberOfPhases(); phase++) {
+        recovered += oilProduct.getBeta(phase) * oilProduct.getPhase(phase).getComponent(component).getx();
+      }
+      Assertions.assertEquals(oilProduct.getComponent(component).getz(), recovered, 1e-8);
+    }
 
-    // Oil outlet stream is single-phase oil after separation
-    Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());
+    // Entrained aqueous liquid is retained after the oil product is flashed.
+    Assertions.assertEquals(2, oilProduct.getNumberOfPhases());
 
     ThrottlingValve throttlingValve = new ThrottlingValve("throttlingValve", separator.getOilOutStream());
     throttlingValve.setOutletPressure(3.0, "bara");
@@ -391,7 +404,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // After throttling, may flash to 2 or 3 phases depending on conditions
     Assertions.assertTrue(throttlingValve.getOutletStream().getFluid().getNumberOfPhases() >= 2);
     // Updated expected temperature due to thermodynamic model changes
-    Assertions.assertEquals(55.35277831578685, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
+    Assertions.assertEquals(54.53889097192456, throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
   }
 
   @Test

@@ -233,6 +233,37 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 1.0e-8);
   }
 
+  /** Checks entropy continuity after final cleanup leaves a non-equilibrium three-phase condensate. */
+  @Test
+  void condensateEntropyIsContinuousAcrossCleanupBoundary() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(289.17057592049406, 3.0);
+    String[] components = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-heptane", "n-octane", "water"};
+    double[] composition = {0.03333751952167422, 0.054160101428384885, 0.16166835683018532, 0.2519356897139214,
+        0.19282738794737694, 0.17687766832017773, 0.05152264899091814, 0.07767062724736153};
+    for (int component = 0; component < components.length; component++) {
+      fluid.addComponent(components[component], composition[component]);
+    }
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    fluid.init(2);
+    SystemInterface inletState = fluid.clone();
+    fluid.setPressure(15.0);
+    fluid.setTemperature(297.83);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(2);
+    double lowerEntropy = fluid.getEntropy();
+    fluid = inletState.clone();
+    fluid.setPressure(15.0);
+    fluid.setTemperature(297.84);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    fluid.init(2);
+    assertTrue(fluid.getEntropy() > lowerEntropy);
+    assertTrue(fluid.getEntropy() - lowerEntropy < 0.1, "Entropy must not jump to a metastable phase set");
+  }
+
   /**
    * Reduces water while preserving the relative hydrocarbon composition of the public regression feed.
    *

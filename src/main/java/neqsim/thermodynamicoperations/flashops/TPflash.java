@@ -4616,6 +4616,10 @@ public class TPflash extends Flash {
 
   /** Rechecks water-bearing oil endpoints after the other TP refinements have finished. */
   private void rescueWaterRichMissingAqueousPhase() {
+    if (system.doMultiPhaseCheck() && system.getNumberOfPhases() == 3 && system.allowPhaseShift()
+        && system.hasComponent("water")) {
+      new TPmultiflash(system, false).rescueStalledThreePhaseEndpoint();
+    }
     if (system.doMultiPhaseCheck() && system.hasPhaseType(PhaseType.OIL)
         && (system.getNumberOfPhases() == 1 || (system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)))
         && system.hasComponent("water") && system.getComponent("water").getz() > 20.0 * phaseFractionMinimumLimit) {

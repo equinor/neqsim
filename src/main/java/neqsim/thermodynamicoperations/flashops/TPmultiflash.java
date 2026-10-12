@@ -3715,7 +3715,7 @@ public class TPmultiflash extends TPflash {
         || !(system.getComponent("water").getz() > 20.0 * phaseFractionMinimumLimit)) {
       return;
     }
-    boolean validReference = isFeasiblePhaseEquilibrium(system);
+    boolean validReference = hasBalancedPhaseInventory(system);
     double referenceGibbs = system.getGibbsEnergy();
     double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceGibbs) * 1.0e-8);
     try {
@@ -3787,12 +3787,13 @@ public class TPmultiflash extends TPflash {
    * The bounded active-set fallback tests each possible phase removal on a clone, accepts only a normalized,
    * material-balanced, fugacity-equal candidate, and selects the lowest-Gibbs candidate. The live system changes only
    * when that candidate also lowers Gibbs energy relative to the stalled three-phase state. Chemical, electrolyte,
-   * active solid, wax, and already-converged three-phase systems retain their existing paths. A pending solid check
-   * does not disable fluid-phase recovery: the enclosing TPflash checks the selected solids after the fluid solve.
+   * active solid, wax, and already-converged three-phase systems retain their existing paths. Final TP-flash cleanup
+   * also applies this check when it leaves an invalid three-phase split. A pending solid check does not disable
+   * fluid-phase recovery: the enclosing TPflash checks the selected solids after the fluid solve.
    * </p>
    */
-  private void rescueStalledThreePhaseEndpoint() {
-    if (!betaSolveStalled || system.getNumberOfPhases() != 3 || system.isChemicalSystem() || system.hasIons()
+  void rescueStalledThreePhaseEndpoint() {
+    if (system.getNumberOfPhases() != 3 || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons()
         || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
       return;
     }
@@ -3845,6 +3846,48 @@ public class TPmultiflash extends TPflash {
     for (int refinement = 0; refinement < 3 && !isFeasiblePhaseEquilibrium(system); refinement++) {
       solveBeta();
     }
+  }
+
+  /**
+   * Checks whether Gibbs energies refer to the same normalized component inventory.
+   *
+   * @param candidate phase split to check
+   * @return true for a finite, normalized, material-balanced split, even before fugacity convergence
+   */
+  private boolean hasBalancedPhaseInventory(SystemInterface candidate) {
+    double betaSum = 0.0;
+    for (int phase = 0; phase < candidate.getNumberOfPhases(); phase++) {
+      double beta = candidate.getBeta(phase);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        return false;
+      }
+      betaSum += beta;
+      double compositionSum = 0.0;
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        double composition = candidate.getPhase(phase).getComponent(component).getx();
+        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
+          return false;
+        }
+        compositionSum += composition;
+      }
+      if (Math.abs(compositionSum - 1.0) > 1.0e-8) {
+        return false;
+      }
+    }
+    if (Math.abs(betaSum - 1.0) > 1.0e-8) {
+      return false;
+    }
+    for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+      double recovered = 0.0;
+      for (int phase = 0; phase < candidate.getNumberOfPhases(); phase++) {
+        recovered += candidate.getBeta(phase) * candidate.getPhase(phase).getComponent(component).getx();
+      }
+      double feed = candidate.getComponent(component).getz();
+      if (!Double.isFinite(feed) || !Double.isFinite(recovered) || Math.abs(recovered - feed) > 1.0e-8) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private boolean isFeasiblePhaseEquilibrium(SystemInterface candidate) {
