@@ -155,19 +155,25 @@ fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 fluid.addTBPfraction("C9", 0.03, 119.0 / 1000, 0.768);
 fluid.addPlusFraction("C10", 0.10, 200.0 / 1000, 0.830); // no "+" in the name -- breaks parsing
 
-fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
+// Six pseudo-components in total from the TBP and plus fractions.
+fluid.getCharacterization().configureLumping()
+    .model("standard").totalPseudoComponents(6).build();
 fluid.getCharacterization().characterisePlusFraction();
-fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
+fluid.setMixingRule("classic"); // Rebuild for the final component list, even if set earlier.
 ```
 
-**Ordering note (confirmed 2026-10-12 against a real NeqSim 3.24.0 build):**
-`characterisePlusFraction()` can SPLIT a plus/TBP fraction into several
-lumped pseudo-components, changing the total component count. Setting the
-mixing rule BEFORE that split leaves the EOS's kij matrix sized for the
-pre-split count; the first flash that actually needs the matrix then throws
-`ArrayIndexOutOfBoundsException: Index N out of bounds for length N` inside
-`EosMixingRuleHandler$ClassicSRK.getkij`. Always characterize first, then
-set the mixing rule.
+**Initialization order:** Call `setMixingRule(...)` after
+`characterisePlusFraction()`, even if a mixing rule was selected earlier.
+Characterization replaces the heavy fractions and can change the component
+count; an earlier kij matrix can then refer to the wrong components or cause
+an `ArrayIndexOutOfBoundsException` in `EosMixingRuleHandler$ClassicSRK.getkij`.
+Apply fitted kij values only after rebuilding the mixing rule, using the
+final component indices.
+
+This example creates six total heavy pseudo-components, giving eleven
+components including the five light hydrocarbons. To retain C7, C8 and C9
+separately and split only C10 into six groups, configure
+`.model("PVTlumpingModel").plusFractionGroups(6).build()` instead.
 
 ### Tuning Parameters
 

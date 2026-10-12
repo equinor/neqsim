@@ -129,9 +129,11 @@ fluid.setMultiPhaseCheck(true);
 fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);   // name, moleFrac, MW_kg/mol, density
 fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 fluid.addPlusFraction("C20", 0.02, 350.0 / 1000, 0.88); // no "+" in the name -- breaks parsing
-fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
+// Six pseudo-components in total from the TBP and plus fractions.
+fluid.getCharacterization().configureLumping()
+    .model("standard").totalPseudoComponents(6).build();
 fluid.getCharacterization().characterisePlusFraction();
-fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
+fluid.setMixingRule("classic"); // Rebuild for the final component list, even if set earlier.
 ```
 
 ## Loading Fluids from E300 Files
@@ -1450,17 +1452,17 @@ When writing code examples for documentation (markdown guides, cookbook recipes,
 3. **Run the test** and confirm it passes before publishing the doc
 4. **Common pitfalls**:
    - Plus fraction names: use `"C20"` not `"C20+"` (the `+` character breaks parsing)
-   - Set mixing rule AFTER calling `characterisePlusFraction()`, not before.
-     `characterisePlusFraction()` can SPLIT a plus/TBP fraction into several
-     lumped pseudo-components (confirmed: 9 components in, 15 out on a real
-     test fluid), and a mixing rule set beforehand leaves the EOS's kij
-     matrix sized for the PRE-split component count. The first flash that
-     actually needs the matrix then throws
-     `ArrayIndexOutOfBoundsException: Index N out of bounds for length N`
-     inside `EosMixingRuleHandler$ClassicSRK.getkij` -- confirmed against a
-     real NeqSim 3.24.0 build (2026-10-12). This reverses the ordering
-     previously stated here; `neqsim-flow-assurance` and
-     `neqsim-wax-calculations` already documented the correct order.
+   - Call `setMixingRule(...)` AFTER `characterisePlusFraction()`, even if a
+     mixing rule was selected earlier. Characterization replaces the heavy
+     fractions and can change the component count; an earlier kij matrix
+     can then refer to the wrong components or cause an
+     `ArrayIndexOutOfBoundsException` in `EosMixingRuleHandler$ClassicSRK.getkij`.
+     Apply fitted kij values only after rebuilding the mixing rule, using
+     the final component indices.
+   - Use `configureLumping().model("standard").totalPseudoComponents(6).build()`
+     for six total heavy pseudo-components. To retain the defined TBP cuts
+     and split only the plus fraction into six groups, use
+     `.model("PVTlumpingModel").plusFractionGroups(6).build()` instead.
    - `getUnit("name")` not `getUnitOperation("name")`
    - `setDepreciationYears` takes `double`, not `int`
    - Risk thresholds: always read source for actual comparison logic (subcooling direction, enum ordering)
