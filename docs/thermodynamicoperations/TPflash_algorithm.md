@@ -343,7 +343,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Dry cubic-root screen and acceptance | Screen normally ordered GAS+OIL endpoints when `max abs(Delta ln(f_i)) >= 1e-8`; accept below `1e-8` | Evaluate both roots for one phase at a time and retain a lower-Gibbs root seed only when the resulting unchanged composition split restores fugacity equality. Inverted mean-molar-mass order retains the paired-root comparison. |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Ordinary flashes accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality. A multiphase GAS+AQUEOUS endpoint may replay a lower-Gibbs ordinary candidate containing exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, so a valid gas-to-oil root transition is not rejected by its new label. The candidate must additionally retain normalized positive phases, distinct compositions, and component balance below `1e-8`. |
-| Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
+| Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; also reject a normalized trial when its component balance fails and its Gibbs energy exceeds the stable single-phase reference. Other normalized endpoints retain model-specific refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the same two-phase topology infeasible; a valid GAS↔OIL root transition, genuine three-phase result, or already feasible endpoint is retained |
 | Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with `max abs(Delta z_i) > 1e-8`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
 | Missing aqueous phase after oil-endpoint cleanup | Explicit multiphase, neutral OIL or GAS+OIL endpoint, water feed `> 20 * phaseFractionMinimumLimit` (currently `2e-11`), phase shifting allowed, no solid/wax check | On both the normal and stable-single-phase return paths, solve a balanced OIL+AQUEOUS trial on a clone. The former 5 mol% cutoff no longer excludes dilute aqueous equilibria. Skip numerically unresolvable feeds before allocation: the half-water seed must exceed the ten-times-minimum phase-fraction acceptance floor. Use the shared phase lifecycle to add a distinct aqueous trial without aliasing the oil object. Adopt only an aqueous equilibrium with positive normalized phases, component balance and log-fugacity residuals within `1e-8`, and a Gibbs decrease exceeding `max(1e-6 J, 1e-8 abs(G))` relative to any normalized, material-balanced incumbent, even if its fugacities have not fully converged; otherwise retain the original state. This is bounded active-set recovery, not a global stability certificate. |
@@ -2945,3 +2945,19 @@ and `OmegaB = 0.077803333`. This is an EOS consistency benchmark, not experiment
 `TPFlashTest` now checks these independent values over cold and repeated warm starts, component
 balance, log-fugacity equality, Gibbs decrease and negative TPD for the former single-oil state.
 The remaining phase-map closure, duplicate-removal and density-hole tests are retained.
+
+
+
+### Root selectors and Newton inventory mapping
+
+A phase's reported GAS/OIL/AQUEOUS classification is not necessarily its configured cubic
+root selector. Bounded two-phase rollback preserves both the physical-slot mapping and
+`getPhaseType(logicalPhase)` selector, avoiding a different cubic root when a trial is rejected.
+The two-phase Newton solver uses indexed beta access consistently with its logical phase
+compositions, including after removal/reuse produces mappings such as `[2, 0]`. These changes
+add no phase search or equilibrium iterations. The tiny aqueous-seed rejection also checks
+material infeasibility together with higher Gibbs energy, since normalizing an unsolved seed
+is insufficient to qualify it against the preceding stable single phase.
+
+`TPflashPhaseLifecycleTest` covers rollback and reordered Newton inventories;
+`TPflashTinyAqueousSeedRejectionTest` retains the stable vapor and nearby genuine aqueous split.

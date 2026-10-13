@@ -190,6 +190,8 @@ public class TPflash extends Flash {
   /** Compact two-phase rollback snapshot used by bounded neutral endpoint refinements. */
   private static final class BalancedTwoPhaseState {
     private final PhaseType[] phaseTypes = new PhaseType[2];
+    private final PhaseType[] rootTypes = new PhaseType[2];
+    private final int[] phaseIndices = new int[2];
     private final double[] betas = new double[2];
     private final double[][] compositions;
     private final double[] kValues;
@@ -202,6 +204,8 @@ public class TPflash extends Flash {
       gibbsEnergy = source.getGibbsEnergy();
       for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
         phaseTypes[phaseIndex] = source.getPhase(phaseIndex).getType();
+        rootTypes[phaseIndex] = source.getPhaseType(phaseIndex);
+        phaseIndices[phaseIndex] = source.getPhaseIndex(phaseIndex);
         betas[phaseIndex] = source.getBeta(phaseIndex);
         for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
           compositions[phaseIndex][componentIndex] = source.getPhase(phaseIndex).getComponent(componentIndex).getx();
@@ -2776,13 +2780,14 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Restores beta, compositions, and K-values changed by a rejected two-phase endpoint refinement.
+   * Restores physical phase mapping, configured roots, beta, compositions, and K-values after a rejected refinement.
    *
    * @param referenceState pre-refinement state
    */
   private void restoreTwoPhaseIterationState(BalancedTwoPhaseState referenceState) {
     for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-      system.setPhaseType(phaseIndex, referenceState.phaseTypes[phaseIndex]);
+      system.setPhaseIndex(phaseIndex, referenceState.phaseIndices[phaseIndex]);
+      system.setPhaseType(phaseIndex, referenceState.rootTypes[phaseIndex]);
       system.setBeta(phaseIndex, referenceState.betas[phaseIndex]);
       for (int componentIndex = 0; componentIndex < referenceState.compositions[phaseIndex].length; componentIndex++) {
         system.getPhase(phaseIndex).getComponent(componentIndex)
@@ -4466,13 +4471,22 @@ public class TPflash extends Flash {
    * <p>
    * This guard deliberately does not impose a universal material-balance or fugacity-residual threshold. Some
    * specialized fluid and solid-phase models use model-specific convergence and refinement paths, so normalized
-   * endpoints remain available to those paths. Chemical, ionic, solid, wax, and non-aqueous endpoints are excluded.
+   * endpoints remain available to those paths unless they violate component balance and also exceed the Gibbs energy of
+   * the stable reference. Normalization alone cannot qualify an unsolved aqueous seed after physical slot reuse.
+   * Chemical, ionic, solid, wax, and non-aqueous endpoints are excluded.
    * </p>
    */
   private void rejectUnnormalizedAqueousEndpointAfterStableSinglePhase() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
         || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null
         || !system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return;
+    }
+    double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceSinglePhaseGibbs) * 1.0e-8);
+    if (maximumComponentMaterialBalanceResidual(system) > WATER_RICH_MATERIAL_BALANCE_TOLERANCE
+        && Double.isFinite(referenceSinglePhaseGibbs)
+        && system.getGibbsEnergy() > referenceSinglePhaseGibbs + gibbsTolerance) {
+      collapseToReferenceSinglePhase();
       return;
     }
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {

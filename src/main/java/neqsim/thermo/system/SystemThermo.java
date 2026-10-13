@@ -5887,6 +5887,12 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public PhaseType getPhaseType(int phase) {
+    return phaseType[phaseIndex[phase]];
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setPhaseType(int phaseToChange, PhaseType pt) {
     // System.out.println("new phase type: cha " + pt);
     if (allowPhaseShift) {

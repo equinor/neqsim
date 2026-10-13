@@ -138,8 +138,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   public void setJac() {
     double dij;
     double tempJ;
-    double invBeta = 1.0 / system.getBeta();
-    double invOneMinusBeta = 1.0 / (1.0 - system.getBeta());
+    double invBeta = 1.0 / system.getBeta(0);
+    double invOneMinusBeta = 1.0 / (1.0 - system.getBeta(0));
     for (int i = 0; i < numberOfComponents; i++) {
       double invYi = 1.0 / system.getPhase(0).getComponent(i).getx();
       double invXi = 1.0 / system.getPhase(1).getComponent(i).getx();
@@ -157,7 +157,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
-      uVector[i] = system.getBeta() * system.getPhase(0).getComponent(i).getx();
+      uVector[i] = system.getBeta(0) * system.getPhase(0).getComponent(i).getx();
     }
   }
 
@@ -169,7 +169,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       betaSum += uVector[i];
     }
-    system.setBeta(betaSum);
+    system.setBeta(0, betaSum);
+    system.setBeta(1, 1.0 - betaSum);
 
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhase(0).getComponent(i).setx(uVector[i] / betaSum);
@@ -229,7 +230,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       betaTrial += uTrial[i];
     }
-    system.setBeta(betaTrial);
+    system.setBeta(0, betaTrial);
+    system.setBeta(1, 1.0 - betaTrial);
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhase(0).getComponent(i).setx(uTrial[i] / betaTrial);
       system.getPhase(1).getComponent(i).setx((z[i] - uTrial[i]) / (1.0 - betaTrial));

@@ -2834,6 +2834,17 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setPhaseType(int phaseToChange, PhaseType pt);
 
   /**
+   * Returns the configured EOS root selection for a logical phase. This can differ from the composition-dependent
+   * classification returned by {@code getPhase(phase).getType()}.
+   *
+   * @param phase logical phase index
+   * @return configured root selection, or the phase classification for legacy implementations
+   */
+  public default PhaseType getPhaseType(int phase) {
+    return getPhase(phase).getType();
+  }
+
+  /**
    * Change the phase type of a given phase.
    *
    * @param phaseToChange the phase number of the phase to set phase type

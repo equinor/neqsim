@@ -35,6 +35,15 @@ an already active physical slot by selecting an available stored template. This 
 independent phase objects through removal, reordering and subsequent stability trials.
 `SystemThermoTotalNumberOfMolesTest` covers both removal APIs and stale inactive mappings.
 
+`getPhaseType(logicalPhase)` returns the configured EOS root selector paired with
+`setPhaseType`. It is distinct from `getPhase(logicalPhase).getType()`, which is the
+classification after evaluating the phase. A low-density liquid-root solution may be
+classified GAS. Rollback code must preserve the configured selector and logical-to-physical
+mapping, rather than reconstructing root selection from that classification. The default
+interface implementation retains compatibility with external system implementations; built-in
+`SystemThermo` implementations return the stored selector. `TPflashPhaseLifecycleTest`
+verifies clone/rollback preservation and Newton refinement on recycled physical slots.
+
 ---
 
 ## System Hierarchy
