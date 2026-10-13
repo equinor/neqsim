@@ -17,7 +17,7 @@ on:
 
 jobs:
   changes:
-    name: Detect source and numerical-data changes
+    name: Detect Java source changes, Maven POM changes or numerical-data changes
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'pull_request'
     outputs:
@@ -33,7 +33,7 @@ jobs:
           filters: |
             run_tests:
               - '**/*.java'
-              - '**/*.xml'
+              - '**/pom*.xml'
               - 'src/main/resources/data/**'
               - 'src/test/resources/**'
               - '.github/workflows/core-java-tests.yml'
