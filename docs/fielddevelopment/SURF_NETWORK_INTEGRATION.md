@@ -476,6 +476,17 @@ dual-path configurations, exact restoration, positive flow in both redundant pat
 network mass conservation. This is synthetic integration evidence, not an outage or
 brownfield field qualification.
 
+The same line-up contract is exercised for a live two-zone water injector. Primary,
+brownfield and dual-path injection configurations feed one canonical live injection-well
+node and preserve the existing `WellFlow` zone allocation contract.
+`WellFlow.ReservoirLayer.setReservoirPressure(...)` updates the layer boundary and its
+owning reservoir stream together for controlled repeated lifecycle solves. It does not
+change injectivity, fracture pressure, composition, topology or hydraulic fidelity. The
+synthetic acceptance checks selected-path flow, dual-path flow, zone allocation, fracture
+limits, exact route restoration, mass conservation and the expected lower injectivity at
+higher reservoir pressure; it is not injectivity, fracture, outage or brownfield
+qualification.
+
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
 well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
 fixed-pressure sinks. Those stable sink streams feed separators, compressor-suction
@@ -498,8 +509,10 @@ physical limits to obtain a feasible optimizer result.
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    The canonical multi-edge line-up contract now supports branch/loop outage and brownfield
-   actions through #4188/#3154 optimization; next exercise it in the larger production and
-   injection field cases with qualified facility maps and lifecycle evidence.
+   actions through #4188/#3154 optimization and is exercised on live production and
+   multi-zone injection wells with controlled reservoir-pressure updates. Next scale the
+   same contract to qualified pump/compressor maps, shared host constraints and multi-period
+   lifecycle evidence.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic

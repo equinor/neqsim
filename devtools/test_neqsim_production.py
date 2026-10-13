@@ -57,12 +57,16 @@ def run(ctx):
     config_path = os.path.join(ctx.task_dir, "study_config.yaml")
     with open(config_path, encoding="utf-8") as config_file:
         config = yaml.safe_load(config_file) or {}
-    route_configuration = float(config.get("route_configuration", 0.0))
-    accepted_values = [0.5, route_configuration]
+    production_route = float(config.get("production_route_configuration", 0.0))
+    injection_route = float(config.get("injection_route_configuration", 0.0))
+    reservoir_pressure_bara = float(config.get("reservoir_pressure_bara", 150.0))
+    accepted_values = [0.5, production_route, injection_route]
     optimizer_evidence = {
         "cycle_id": ctx.cycle_id,
         "simulation_converged": True,
-        "candidate_feasible": route_configuration in (0.0, 1.0),
+        "candidate_feasible": (production_route in (0.0, 1.0)
+                               and injection_route in (0.0, 1.0, 2.0)
+                               and reservoir_pressure_bara > 0.0),
         "candidate_finite": True,
         "constraint_evidence_complete": True,
         "state_restore_complete": True,
@@ -70,6 +74,11 @@ def run(ctx):
         "actions_complete": True,
         "evaluation_count": 12,
         "runtime_seconds": 1.25,
+        "operating_definition": {
+            "production_route_configuration": production_route,
+            "injection_route_configuration": injection_route,
+            "reservoir_pressure_bara": reservoir_pressure_bara,
+        },
     }
     point = {
         "candidate_values": accepted_values,
@@ -82,31 +91,49 @@ def run(ctx):
         "study_id": "field-envelope",
         "candidate_evaluator_id": "field-actions",
         "optimizer_evidence": optimizer_evidence,
-        "accepted_action_ids": ["p3_barg", "configuration.field.selection"],
+        "accepted_action_ids": ["p3_barg", "configuration.field.selection",
+                                "configuration.injector route.selection"],
         "accepted_candidate_values": accepted_values,
-        "slice_count": 1,
-        "requested_point_count": 1,
-        "completed_point_count": 1,
-        "envelope_evaluation_count": 1,
-        "envelope_runtime_seconds": 0.1,
-        "total_evaluation_count": 13,
-        "slices": [{
-            "study_id": "field-envelope",
-            "candidate_evaluator_id": "field-actions",
-            "axis_action_ids": ["p3_barg"],
-            "anchor_values": accepted_values,
-            "requested_point_count": 1,
-            "completed_point_count": 1,
-            "evaluation_count": 1,
-            "runtime_seconds": 0.1,
-            "outcome": "COMPLETE",
-            "complete": True,
-            "points": [point],
-        }],
+        "slice_count": 2,
+        "requested_point_count": 2,
+        "completed_point_count": 2,
+        "envelope_evaluation_count": 2,
+        "envelope_runtime_seconds": 0.2,
+        "total_evaluation_count": 14,
+        "slices": [
+            {
+                "study_id": "field-envelope",
+                "candidate_evaluator_id": "field-actions",
+                "axis_action_ids": ["p3_barg", "configuration.field.selection"],
+                "anchor_values": accepted_values,
+                "requested_point_count": 1,
+                "completed_point_count": 1,
+                "evaluation_count": 1,
+                "runtime_seconds": 0.1,
+                "outcome": "COMPLETE",
+                "complete": True,
+                "points": [point],
+            },
+            {
+                "study_id": "field-envelope",
+                "candidate_evaluator_id": "field-actions",
+                "axis_action_ids": ["configuration.injector route.selection"],
+                "anchor_values": accepted_values,
+                "requested_point_count": 1,
+                "completed_point_count": 1,
+                "evaluation_count": 1,
+                "runtime_seconds": 0.1,
+                "outcome": "COMPLETE",
+                "complete": True,
+                "points": [point],
+            },
+        ],
         "advisory": True,
     }
     base = {"title": "%s", "category": "operational",
-            "setpoints": {"p3_barg": 0.5, "configuration.field.selection": route_configuration},
+            "setpoints": {"p3_barg": 0.5,
+                          "configuration.field.selection": production_route,
+                          "configuration.injector route.selection": injection_route},
             "expected_gain": {"value": 300.0, "kpi": "oil_Sm3d"},
             "objective_kpi": "oil_Sm3d", "baseline_value": 12700.0,
             "optimizer_evidence": optimizer_evidence,
@@ -123,7 +150,10 @@ def run(ctx):
 def _task(tmp_path, resid=1.0, limit=0.70):
     task = tmp_path / "t"
     (task / "continuous" / "stages").mkdir(parents=True)
-    (task / "study_config.yaml").write_text("route_configuration: 0.0\n", encoding="utf-8")
+    (task / "study_config.yaml").write_text(
+        "production_route_configuration: 0.0\n"
+        "injection_route_configuration: 0.0\n"
+        "reservoir_pressure_bara: 150.0\n", encoding="utf-8")
     make_living(str(task), template="production")
     cont = task / "continuous"
     (cont / "stages" / "model_update.py").write_text(STAGE_UPDATE.replace('ctx.plan["_resid"]', str(resid)))
@@ -253,13 +283,14 @@ def test_cycle_keeps_only_safe_proposals(tmp_path):
     assert safe["optimizer_evidence"]["accepted_point_replayed"] is True
     envelope = safe["accepted_point_envelope_evidence"]
     assert envelope["cycle_id"] == manifest["cycle_id"]
-    assert envelope["accepted_action_ids"] == ["p3_barg", "configuration.field.selection"]
-    assert envelope["accepted_candidate_values"] == [0.5, 0.0]
-    assert envelope["total_evaluation_count"] == 13
+    assert envelope["accepted_action_ids"] == [
+        "p3_barg", "configuration.field.selection", "configuration.injector route.selection"]
+    assert envelope["accepted_candidate_values"] == [0.5, 0.0, 0.0]
+    assert envelope["total_evaluation_count"] == 14
     assert safe["evidence_current"] is True
 
 
-def test_selective_route_and_limit_revisions_supersede_stale_advice(tmp_path):
+def test_selective_production_injection_and_limit_revisions_supersede_stale_advice(tmp_path):
     from neqsim_continuous import cli
 
     task = _task(tmp_path)
@@ -267,12 +298,12 @@ def test_selective_route_and_limit_revisions_supersede_stale_advice(tmp_path):
     ledger_path = os.path.join(task, "continuous", "ledger", "events.jsonl")
     first_items = Ledger(ledger_path).current()
     first_id, first_item = next(iter(first_items.items()))
-    assert first_item["accepted_point_envelope_evidence"]["accepted_candidate_values"] == [0.5, 0.0]
+    assert first_item["accepted_point_envelope_evidence"]["accepted_candidate_values"] == [0.5, 0.0, 0.0]
 
     config_path = os.path.join(task, "study_config.yaml")
     with open(config_path, encoding="utf-8") as config_file:
         config = yaml.safe_load(config_file)
-    config["route_configuration"] = 1.0
+    config["production_route_configuration"] = 1.0
     with open(config_path, "w", encoding="utf-8") as config_file:
         yaml.safe_dump(config, config_file, sort_keys=False)
 
@@ -285,9 +316,37 @@ def test_selective_route_and_limit_revisions_supersede_stale_advice(tmp_path):
     assert second_item["evidence_current"] is True
     assert second_item["cycle"] != first["cycle_id"]
     assert second_item["accepted_point_envelope_evidence"]["cycle_id"] == second_item["cycle"]
-    assert second_item["accepted_point_envelope_evidence"]["accepted_candidate_values"] == [0.5, 1.0]
+    assert second_item["accepted_point_envelope_evidence"]["accepted_candidate_values"] == [0.5, 1.0, 0.0]
     assert items[first_id]["status"] == "superseded"
     assert items[first_id]["evidence_current"] is False
+
+    with open(config_path, encoding="utf-8") as config_file:
+        config = yaml.safe_load(config_file)
+    config["injection_route_configuration"] = 1.5
+    config["reservoir_pressure_bara"] = 175.0
+    with open(config_path, "w", encoding="utf-8") as config_file:
+        yaml.safe_dump(config, config_file, sort_keys=False)
+
+    assert cli.main(["update", task, "--no-agent"]) == 0
+    items = Ledger(ledger_path).current()
+    assert items[second_id]["status"] == "superseded"
+    assert items[second_id]["evidence_current"] is False
+    assert not [item for item in items.values()
+                if item["status"] == "proposed" and item.get("evidence_current")]
+
+    config["injection_route_configuration"] = 2.0
+    with open(config_path, "w", encoding="utf-8") as config_file:
+        yaml.safe_dump(config, config_file, sort_keys=False)
+
+    assert cli.main(["update", task, "--no-agent"]) == 0
+    items = Ledger(ledger_path).current()
+    current = [(key, item) for key, item in items.items() if item["status"] == "proposed"]
+    assert len(current) == 1
+    third_id, third_item = current[0]
+    assert third_item["revalidation_of"] == second_id
+    assert third_item["accepted_point_envelope_evidence"]["accepted_candidate_values"] == [0.5, 1.0, 2.0]
+    operating_definition = third_item["optimizer_evidence"]["operating_definition"]
+    assert operating_definition["reservoir_pressure_bara"] == 175.0
 
     goal_path = os.path.join(task, "continuous", "goal.yaml")
     with open(goal_path, encoding="utf-8") as goal_file:
@@ -298,8 +357,8 @@ def test_selective_route_and_limit_revisions_supersede_stale_advice(tmp_path):
 
     assert cli.main(["update", task, "--no-agent"]) == 0
     items = Ledger(ledger_path).current()
-    assert items[second_id]["status"] == "superseded"
-    assert items[second_id]["evidence_current"] is False
+    assert items[third_id]["status"] == "superseded"
+    assert items[third_id]["evidence_current"] is False
     assert not [item for item in items.values()
                 if item["status"] == "proposed" and item.get("evidence_current")]
     with open(os.path.join(task, "continuous", "LIVING_REPORT.md"), encoding="utf-8") as report_file:
@@ -326,7 +385,7 @@ def test_malformed_evidence_sensitivity_configuration_invalidates_fail_closed(tm
     config_path = os.path.join(task, "study_config.yaml")
     with open(config_path, encoding="utf-8") as config_file:
         config = yaml.safe_load(config_file)
-    config["route_configuration"] = 1.0
+    config["production_route_configuration"] = 1.0
     with open(config_path, "w", encoding="utf-8") as config_file:
         yaml.safe_dump(config, config_file, sort_keys=False)
 

@@ -314,6 +314,9 @@ def ledger(ctx, spec):
     open_items = {key: value for key, value in items.items()
                   if value.get("status") not in ("rejected", "superseded", "verified")}
     open_by_title = {value.get("title"): (key, value) for key, value in open_items.items()}
+    latest_by_title = {}
+    for key, value in items.items():
+        latest_by_title[value.get("title")] = (key, value)
     impact = ctx.evidence_analysis or {}
     production = ctx.plan.get("production", {}) or {}
     default_sensitive = ["script:model_update", "script:optimize", "gates", "constraints", "guard"]
@@ -341,16 +344,23 @@ def ledger(ctx, spec):
 
     created, updated = [], []
     for proposal in ctx.proposals:
-        previous = open_by_title.get(proposal.get("title"))
+        title = proposal.get("title")
+        previous = open_by_title.get(title)
         if previous and not invalidates:
             continue
+        lineage = previous
+        if lineage is None and invalidates:
+            candidate = latest_by_title.get(title)
+            if (candidate and candidate[1].get("status") == "superseded"
+                    and candidate[1].get("evidence_current") is False):
+                lineage = candidate
         created.append(proposal.get("title"))
         if not ctx.dry_run:
             fields = {k: v for k, v in proposal.items() if k not in ("title", "category")}
             if proposal.get("optimizer_evidence") or proposal.get("accepted_point_envelope_evidence"):
                 fields["evidence_current"] = True
-            if previous:
-                fields["revalidation_of"] = previous[0]
+            if lineage:
+                fields["revalidation_of"] = lineage[0]
                 fields["revalidation_changes"] = [
                     {name: row.get(name) for name in ("path", "change", "impact_rules")
                      if row.get(name) is not None} for row in impact.get("changes") or []]

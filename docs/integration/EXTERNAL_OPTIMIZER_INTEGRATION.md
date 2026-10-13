@@ -1101,13 +1101,17 @@ then verifies exact action/setpoint binding, optimizer/cycle identity, slice ide
 baseline recovery, unique axes, and reconciled point/evaluation/runtime totals before the existing ledger stores
 the proposal. A later route, limit or evidence revision must run a new cycle and produce a fresh block; a stale
 cycle id, mismatched action vector, or copied partial slice is withheld rather than resumed as a current candidate.
-For a persistent field study, map the route/line-up definition and `continuous/goal.yaml` limits to the living-task
-`guard`, with dependencies on the model update, optimizer, gates, and constraints. A detected revision first appends
+For a persistent field study, map production/injection route line-ups, controlled reservoir-lifecycle boundaries,
+and `continuous/goal.yaml` limits to the living-task `guard`, with dependencies on the model update, optimizer,
+gates, and constraints. Canonical route selectors remain discrete process actions; reservoir pressure remains a model
+input synchronized by its owning `WellFlow.ReservoirLayer`. A detected revision first appends
 an evidence-invalidation event for the old ledger item. Unfinished advice is superseded; a new item is proposed only
 after the revised full-model point and envelope pass the same guard. The replacement carries `revalidation_of` and
 the changed paths, so an earlier approval is never silently transferred to new setpoints or a new physical limit.
 If re-optimization finds no safe point, the old evidence remains explicitly non-current and no replacement advice
-is exposed. This reuses the standard evidence inventory and append-only ledger rather than adding optimizer state.
+is exposed. A later safe operating definition resumes the append-only lineage from that superseded item instead of
+creating an untraceable incumbent. This reuses the standard evidence inventory and append-only ledger rather than
+adding optimizer state.
 
 ### Search a fixed-total continuous allocation
 
