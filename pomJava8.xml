@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.24.0</revision>
+		<revision>3.25.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -167,6 +167,7 @@
 						<configuration>
 							<publishingServerId>central</publishingServerId>
 							<autoPublish>true</autoPublish>
+							<waitUntil>published</waitUntil>
 						</configuration>
 						<executions>
 							<execution>

@@ -1650,3 +1650,18 @@ changed. Agent descriptions remain within the 500-character limit.
 **Solution:** One ProcessSystem per area in a ProcessModel (wells, separation, LP/MP compression, gas treatment with parallel HP1-HP2-GIC trains, oil, recycle); Barra Velha fluids tuned on the common P/A EOS to Fluid Symphony PVT with one global C1-heavy kij offset; PI multiphase-meter rates because PDM holds no allocation; oil factor and compressor efficiencies calibrated on one window and held out on two.
 **Result:** Fiscal oil and injection gas within 3 %, hold-out compressor discharge temperatures within 2.6 K, HP1 driver power is the first limit (about 19 % rate headroom with one HP train); stage-wise flash-gas split not validated because the separator gas meters do not close on the compressed gas.
 **Notes:** Tuning quality reported per sample in pvt_tuning_quality. Tooling: Bacalhau lessons added to enterprise-process-notebook-workspace. No NeqSim Java change; GasScrubber classifies dense supercritical gas as liquid (handled in the model).
+
+
+### 2026-10-13 — Prepare 3.25.0 and repair Maven Central publication
+
+User requested a new 3.25.0 release from current master, preserving published 3.24.0.
+Baseline: `d27433c40ba52cd6d647462f3ba388f1a7fc8dce`, eight commits after v3.24.0.
+Updated the core, Java 8 and MCP revisions and maintained installation/citation references.
+Pinned the wrapper to Maven 3.9.16: a clean minimal Sonatype 0.11.0 bundle comparison
+reproduced local metadata/bookkeeping files with 3.10.0 and their absence with 3.9.16.
+The comparison used dummy credentials and a loopback-only failed upload; no artifact was
+published during local validation. Both release profiles now wait for `PUBLISHED`.
+Validation: Java getting-started documentation tests (2 passed), direct Spotless check,
+documentation-search audit (788 Markdown pages and one HTML page), and diff whitespace check.
+Package qualification and hosted release publication are tracked in the release PR.
+Documentation impact: installation examples, citation and release build provenance updated.
