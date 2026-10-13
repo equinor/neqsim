@@ -2203,6 +2203,10 @@ public class TPflash extends Flash {
    * phase fraction and water enrichment justify an aqueous stability trial
    */
   private boolean shouldRefineTraceWaterAqueousEndpoint(double waterFeedFraction) {
+    if (system.hasPhaseType(PhaseType.AQUEOUS)) {
+      double materialResidual = maximumComponentMaterialBalanceResidual(system);
+      return !Double.isFinite(materialResidual) || materialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
+    }
     if (isInvalidTraceWaterGasOilEndpoint()) {
       return true;
     }
@@ -2278,6 +2282,21 @@ public class TPflash extends Flash {
   private boolean refineTraceWaterAqueousCandidateActiveSet(SystemInterface candidate) {
     int initialPhaseCount = candidate.getNumberOfPhases();
     TPmultiflash operation = new TPmultiflash(candidate, false);
+    if (initialPhaseCount == 2 && candidate.hasPhaseType(PhaseType.AQUEOUS)
+        && maximumComponentMaterialBalanceResidual(candidate) > WATER_RICH_MATERIAL_BALANCE_TOLERANCE) {
+      candidate.setBeta(0, 0.5);
+      candidate.setBeta(1, 0.5);
+      candidate.init(1);
+      operation.setDoubleArrays();
+      for (int iteration = 0; iteration < 20; iteration++) {
+        operation.solveBeta();
+        candidate.init(1);
+        if (isBalancedEquilibriumCandidate(candidate)) {
+          return true;
+        }
+      }
+      return false;
+    }
     operation.stabilityAnalysis();
     if (candidate.getNumberOfPhases() <= initialPhaseCount) {
       return false;
