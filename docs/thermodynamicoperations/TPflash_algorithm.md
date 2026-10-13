@@ -346,7 +346,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the same two-phase topology infeasible; a valid GAS↔OIL root transition, genuine three-phase result, or already feasible endpoint is retained |
 | Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with `max abs(Delta z_i) > 1e-8`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
-| Missing aqueous phase after oil-endpoint cleanup | Explicit multiphase, neutral OIL or GAS+OIL endpoint, water feed `> 20 * phaseFractionMinimumLimit` (currently `2e-11`), phase shifting allowed, no solid/wax check | On both the normal and stable-single-phase return paths, solve a balanced OIL+AQUEOUS trial on a clone. The former 5 mol% cutoff no longer excludes dilute aqueous equilibria. Skip numerically unresolvable feeds before allocation: the half-water seed must exceed the ten-times-minimum phase-fraction acceptance floor. Rebuild inactive phase indices before adding a phase to a single-oil endpoint so the aqueous trial cannot alias the oil object. Adopt only an aqueous equilibrium with positive normalized phases, component balance and log-fugacity residuals within `1e-8`, and a Gibbs decrease exceeding `max(1e-6 J, 1e-8 abs(G))` relative to any normalized, material-balanced incumbent, even if its fugacities have not fully converged; otherwise retain the original state. This is bounded active-set recovery, not a global stability certificate. |
+| Missing aqueous phase after oil-endpoint cleanup | Explicit multiphase, neutral OIL or GAS+OIL endpoint, water feed `> 20 * phaseFractionMinimumLimit` (currently `2e-11`), phase shifting allowed, no solid/wax check | On both the normal and stable-single-phase return paths, solve a balanced OIL+AQUEOUS trial on a clone. The former 5 mol% cutoff no longer excludes dilute aqueous equilibria. Skip numerically unresolvable feeds before allocation: the half-water seed must exceed the ten-times-minimum phase-fraction acceptance floor. Use the shared phase lifecycle to add a distinct aqueous trial without aliasing the oil object. Adopt only an aqueous equilibrium with positive normalized phases, component balance and log-fugacity residuals within `1e-8`, and a Gibbs decrease exceeding `max(1e-6 J, 1e-8 abs(G))` relative to any normalized, material-balanced incumbent, even if its fugacities have not fully converged; otherwise retain the original state. This is bounded active-set recovery, not a global stability certificate. |
 | Final neutral gas/oil equilibrium refinement | `1e-8 <= max abs(Delta ln(f_i)) <= 1e-5`; at most 8 SSI updates | Repair only balanced, near-converged vapor-liquid endpoints after post-convergence root handling. Preserve both phase types and roll back unless phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the strict acceptance checks. |
 | Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive fluid phases only, evaluate each two-phase active set after a non-converged three-phase endpoint, including an invalid three-phase split left by final TP-flash cleanup and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state. A pending solid check is preserved and runs after fluid recovery; active solid phases and locked phase roles are excluded. The condensate entropy-continuity regression and the oil-stabilization pump integration test cover final-cleanup recovery. |
 | Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
@@ -2899,10 +2899,13 @@ public API, model parameter, unit, default, or wall-clock performance claim is i
 
 Empty-clone scaling covers every stored physical slot, avoiding the inventory corruption
 caused by scaling reordered logical slots. The aqueous recovery removes the former 5 mol%
-exclusion and repairs aliased inactive trial slots on the candidate clone. It remains a
+exclusion and uses the shared phase lifecycle to allocate a distinct trial slot. It remains a
 bounded active-set recovery, not proof that the general stability search finds every global
-minimum. General phase-removal lifecycle aliasing is tracked in [#4310](https://github.com/equinor/neqsim/issues/4310); changing that shared
-lifecycle also changes the established methane/heptane cold-start phase-map behavior.
+minimum. The lifecycle correction for [#4310](https://github.com/equinor/neqsim/issues/4310) returns the
+released physical slot to the inactive tail, retains root roles by physical slot, and normalizes
+stability candidates through their logical phase mapping. `addPhase()` also avoids stale inactive
+mappings that point at a surviving object. Remove/add, reordered-slot, root-role and beta tests
+cover both removal APIs. These corrections do not constitute a global stability certificate.
 
 Intermediate three-phase recovery runs only when the beta solve stalls. Final cleanup still
 checks neutral water-bearing three-phase endpoints, but a feasible split is checked without
@@ -2914,8 +2917,31 @@ numerical trace water, resolvable undersaturated water, dilute aqueous appearanc
 fluids. It retains seven batches of elapsed time, thread CPU time, allocated bytes and numerical
 snapshots. Run identical JVM settings on both comparison heads; compare repeated runs and
 reject any speedup accompanied by failed normalization, material balance or fugacity checks.
-Timing thresholds are deliberately not asserted in CI. Resolvable undersaturated water can
-still require a rejected candidate flash; a positive pure-water trial alone is not a general
-stability certificate for a mixed aqueous phase. Eliminating rejected undersaturated recovery
-flashes is tracked in [#4311](https://github.com/equinor/neqsim/issues/4311); broad performance
-parity with the pre-recovery implementation has not been established.
+Timing thresholds are deliberately not asserted in CI. For unmodified SRK/PR phases with the
+classic mixing rule and hydrocarbon/water feeds, a detached phase runs two water-rich
+successive-substitution trials before full-system recovery allocation. Both mixed trials must
+converge to the same water-rich stationary composition with `sum(W_i) < 1 - 1e-6`;
+this corresponds to positive stationary tangent-plane distance. Composition convergence is
+`1e-10`, agreement between trials is `1e-8`, and the bound is 30 iterations per trial.
+A pure-water fugacity comparison alone never bypasses recovery. Invalid references, failed or
+trivial trials, near-saturation states, other model/mixing-rule families and non-hydrocarbon
+co-solvents retain the full recovery path. This is a model-qualified screen for the aqueous
+minimum seeded by recovery, not proof that every possible mixed liquid minimum is absent.
+Performance follow-up is tracked in [#4311](https://github.com/equinor/neqsim/issues/4311).
+
+#### Independently qualified methane/heptane phase-map change
+
+Correcting storage aliasing exposes gas/oil splits at 194 K that the previous regression
+incorrectly required to be single oil. Independent PR cubic-root and log-fugacity equations
+confirm the split, using `z = (0.7, 0.3)`, `kij = 0.05`, `Tc = (190.56, 540.2) K`,
+`Pc = (45.99, 27.4) bara`, `omega = (0.0115, 0.3495)`, `OmegaA = 0.45724333333`
+and `OmegaB = 0.077803333`. This is an EOS consistency benchmark, not experimental validation.
+
+| Pressure (bara) | Gas fraction | Methane in oil | Methane in gas | Split minus homogeneous-oil Gibbs / (nRT) | Vapor-trial TPD against homogeneous oil |
+| --- | --- | --- | --- | --- | --- |
+| 78.5 | 0.1581255471 | 0.6454055390 | 0.9906657579 | -0.0022325446 | -0.0246866032 |
+| 81.0 | 0.1485707931 | 0.6494133213 | 0.9899020380 | -0.0018972961 | -0.0225099606 |
+
+`TPFlashTest` now checks these independent values over cold and repeated warm starts, component
+balance, log-fugacity equality, Gibbs decrease and negative TPD for the former single-oil state.
+The remaining phase-map closure, duplicate-removal and density-hole tests are retained.

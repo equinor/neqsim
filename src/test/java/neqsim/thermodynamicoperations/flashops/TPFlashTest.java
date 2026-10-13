@@ -581,29 +581,58 @@ class TPFlashTest {
 
   /**
    * Verifies known isolated cells from the 200 by 200 methane/n-heptane PR phase map converge to a stable phase state
-   * from a cold start. Low-temperature cells should collapse to the lower-Gibbs single OIL root, while high-temperature
-   * cells remain true GAS/OIL splits.
+   * from cold and warm starts. Low-temperature cells retain independently qualified lower-Gibbs GAS/OIL splits after
+   * repairing phase-storage aliasing; high-temperature cells also remain true GAS/OIL splits.
    */
   @Test
   void testMethaneHeptaneKnownPhaseMapSpotsResolveToStablePhaseState() {
-    double[][] singleOilConditions = new double[][] {{78.5, 194.0}, {81.0, 194.0}};
+    // Independent PR cubic-root / log-fugacity equations with SciPy least_squares, not NeqSim flash results.
+    // Tc=(190.56,540.2) K, Pc=(45.99,27.4) bara, omega=(0.0115,0.3495), kij=0.05,
+    // OmegaA=0.45724333333, OmegaB=0.077803333. Both low-T splits lower G than homogeneous oil.
+    double[][] lowTemperatureReference = {{78.5, 0.1581255471, 0.6454055390, 0.9906657579},
+        {81.0, 0.1485707931, 0.6494133213, 0.9899020380}};
     double[][] gasOilConditions = new double[][] {{186.0, 424.0}, {191.0, 418.0}};
-
-    for (int spotIndex = 0; spotIndex < singleOilConditions.length; spotIndex++) {
+    for (double[] reference : lowTemperatureReference) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
-      ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-      fluid.setPressure(singleOilConditions[spotIndex][0], "bara");
-      fluid.setTemperature(singleOilConditions[spotIndex][1], "K");
-
-      operations.TPflash();
-
-      assertEquals(1, fluid.getNumberOfPhases(),
-          "Known methane/nC7 low-temperature spot should collapse to one phase at P="
-              + singleOilConditions[spotIndex][0] + " bara, T=" + singleOilConditions[spotIndex][1] + " K");
-      assertTrue(fluid.hasPhaseType(PhaseType.OIL),
-          "Known methane/nC7 low-temperature spot should be the lower-Gibbs oil root");
-      assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
-          "Collapsed methane/nC7 low-temperature spot should have closed phase fractions");
+      fluid.setPressure(reference[0]);
+      fluid.setTemperature(194.0);
+      for (int repetition = 0; repetition < 3; repetition++) {
+        new ThermodynamicOperations(fluid).TPflash();
+        assertEquals(2, fluid.getNumberOfPhases());
+        int gas = fluid.getPhaseNumberOfPhase("gas");
+        int oil = fluid.getPhaseNumberOfPhase("oil");
+        assertEquals(reference[1], fluid.getBeta(gas), 1e-6);
+        assertEquals(reference[2], fluid.getPhase(oil).getComponent(0).getx(), 1e-6);
+        assertEquals(reference[3], fluid.getPhase(gas).getComponent(0).getx(), 1e-6);
+        for (int component = 0; component < 2; component++) {
+          double recovered = fluid.getBeta(gas) * fluid.getPhase(gas).getComponent(component).getx()
+              + fluid.getBeta(oil) * fluid.getPhase(oil).getComponent(component).getx();
+          assertEquals(fluid.getComponent(component).getz(), recovered, 1e-10);
+          double gasFugacity = fluid.getPhase(gas).getComponent(component).getx()
+              * fluid.getPhase(gas).getComponent(component).getFugacityCoefficient();
+          double oilFugacity = fluid.getPhase(oil).getComponent(component).getx()
+              * fluid.getPhase(oil).getComponent(component).getFugacityCoefficient();
+          assertEquals(0.0, Math.log(gasFugacity / oilFugacity), 1e-8);
+        }
+        SystemInterface single = fluid.clone();
+        single.setNumberOfPhases(1);
+        single.setPhaseType(0, PhaseType.OIL);
+        single.setBeta(0, 1.0);
+        for (int component = 0; component < 2; component++) {
+          single.getPhase(0).getComponent(component).setx(single.getComponent(component).getz());
+        }
+        single.init(1);
+        assertTrue(fluid.getGibbsEnergy() < single.getGibbsEnergy() - 1.0,
+            "Independent PR equilibrium must improve the homogeneous oil Gibbs energy");
+        double tangentPlaneDistance = 0.0;
+        for (int component = 0; component < 2; component++) {
+          double y = fluid.getPhase(gas).getComponent(component).getx();
+          tangentPlaneDistance += y * Math.log(y * fluid.getPhase(gas).getComponent(component).getFugacityCoefficient()
+              / (single.getComponent(component).getz()
+                  * single.getPhase(0).getComponent(component).getFugacityCoefficient()));
+        }
+        assertTrue(tangentPlaneDistance < -0.01, "The former single-oil expectation is unstable to a vapor trial");
+      }
     }
 
     for (int spotIndex = 0; spotIndex < gasOilConditions.length; spotIndex++) {

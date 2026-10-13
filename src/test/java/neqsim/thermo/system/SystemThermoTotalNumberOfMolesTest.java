@@ -190,6 +190,82 @@ public class SystemThermoTotalNumberOfMolesTest {
     assertTrue(fluid.getPhases()[2] != empty.getPhases()[2]);
   }
 
+  /**
+   * Removal must preserve a permutation of physical slots and their root roles through reuse.
+   *
+   * @throws ReflectiveOperationException if the stored root-role array cannot be inspected
+   */
+  @Test
+  public void phaseRemovalAndReusePreserveSlotsAndRoles() throws ReflectiveOperationException {
+    java.lang.reflect.Field rootRoles = SystemThermo.class.getDeclaredField("phaseType");
+    rootRoles.setAccessible(true);
+    for (boolean keepInventory : new boolean[] {false, true}) {
+      for (int removed : new int[] {0, 1, 2}) {
+        SystemInterface fluid = buildRichGasInMolePercent();
+        fluid.setMultiPhaseCheck(true);
+        fluid.init(0);
+        fluid.setNumberOfPhases(3);
+        fluid.setPhaseIndex(0, 2);
+        fluid.setPhaseIndex(1, 0);
+        fluid.setPhaseIndex(2, 1);
+        neqsim.thermo.phase.PhaseType[] roles = {neqsim.thermo.phase.PhaseType.AQUEOUS,
+            neqsim.thermo.phase.PhaseType.GAS, neqsim.thermo.phase.PhaseType.OIL};
+        for (int i = 0; i < 3; i++) {
+          fluid.setPhaseType(i, roles[i]);
+          fluid.setBeta(i, 1.0 / 3.0);
+        }
+        fluid.init(1);
+        neqsim.thermo.phase.PhaseInterface[] original = {fluid.getPhase(0), fluid.getPhase(1), fluid.getPhase(2)};
+        double inventory = fluid.getTotalNumberOfMoles();
+        double removedMoles = fluid.getPhase(removed).getNumberOfMolesInPhase();
+        if (keepInventory) {
+          fluid.removePhaseKeepTotalComposition(removed);
+        } else {
+          fluid.removePhase(removed);
+        }
+        assertEquals(keepInventory ? inventory : inventory - removedMoles, fluid.getTotalNumberOfMoles(), 1e-10);
+        fluid.normalizeBeta();
+        fluid.init(1);
+        int survivor = 0;
+        for (int i = 0; i < 3; i++) {
+          if (i != removed) {
+            org.junit.jupiter.api.Assertions.assertSame(original[i], fluid.getPhase(survivor));
+            assertEquals(roles[i],
+                ((neqsim.thermo.phase.PhaseType[]) rootRoles.get(fluid))[fluid.getPhaseIndex(survivor)]);
+            survivor++;
+          }
+        }
+        fluid.addPhase();
+        org.junit.jupiter.api.Assertions.assertSame(original[removed], fluid.getPhase(2));
+        for (int i = 0; i < 3; i++) {
+          for (int j = i + 1; j < 3; j++) {
+            org.junit.jupiter.api.Assertions.assertNotSame(fluid.getPhase(i), fluid.getPhase(j));
+          }
+        }
+        fluid.setBeta(2, 0.1);
+        fluid.normalizeBeta();
+        assertEquals(1.0, fluid.getBeta(0) + fluid.getBeta(1) + fluid.getBeta(2), 1e-12);
+        // Repeated removal/addition must keep all three objects distinct.
+        fluid.removePhaseKeepTotalComposition(0);
+        fluid.addPhase();
+        org.junit.jupiter.api.Assertions.assertNotSame(fluid.getPhase(1), fluid.getPhase(2));
+      }
+    }
+  }
+
+  /** Explicitly stale inactive mappings must not reactivate a surviving physical phase. */
+  @Test
+  public void addPhaseAvoidsStaleInactiveAlias() {
+    SystemInterface fluid = buildRichGasInMolePercent();
+    fluid.setMultiPhaseCheck(true);
+    fluid.init(0);
+    fluid.setNumberOfPhases(1);
+    fluid.setPhaseIndex(0, 1);
+    fluid.setPhaseIndex(1, 1);
+    fluid.addPhase();
+    org.junit.jupiter.api.Assertions.assertNotSame(fluid.getPhase(0), fluid.getPhase(1));
+  }
+
   /** Adding components must not be disturbed by the rescaling setter. */
   @Test
   public void testAddComponentStillAccumulatesTotal() {

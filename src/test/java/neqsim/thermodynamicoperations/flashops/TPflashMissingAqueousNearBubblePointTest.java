@@ -233,6 +233,39 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 1.0e-8);
   }
 
+  /** A converged mixed aqueous stability trial must bypass the rejected full-system recovery. */
+  @Test
+  void undersaturatedCubicWaterRecoveryDoesNotCloneSystem() {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
+      for (double water : new double[] {1e-8, 1e-6}) {
+        SystemInterface fluid = pengRobinson ? new neqsim.thermo.system.SystemPrEos(308.2, 4.7)
+            : new neqsim.thermo.system.SystemSrkEos(308.2, 4.7);
+        fluid.addComponent("methane", 0.03);
+        fluid.addComponent("propane", 0.2);
+        fluid.addComponent("n-butane", 0.3);
+        fluid.addComponent("n-heptane", 0.47 - water);
+        fluid.addComponent("water", water);
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
+        new ThermodynamicOperations(fluid).TPflash();
+        assertTrue(!fluid.hasPhaseType("aqueous"));
+        double gibbs = fluid.getGibbsEnergy();
+        double[] composition = fluid.getMolarComposition();
+        SystemInterface guarded = (SystemInterface) java.lang.reflect.Proxy.newProxyInstance(
+            SystemInterface.class.getClassLoader(), new Class<?>[] {SystemInterface.class},
+            (proxy, method, arguments) -> {
+              if ("clone".equals(method.getName())) {
+                throw new AssertionError("Stable mixed aqueous trial must avoid a candidate system clone");
+              }
+              return method.invoke(fluid, arguments);
+            });
+        new TPmultiflash(guarded, false).rescueMetastableOilMissingAqueous();
+        assertEquals(gibbs, fluid.getGibbsEnergy(), 0.0);
+        org.junit.jupiter.api.Assertions.assertArrayEquals(composition, fluid.getMolarComposition(), 0.0);
+      }
+    }
+  }
+
   /** Checks entropy continuity after final cleanup leaves a non-equilibrium three-phase condensate. */
   @Test
   void condensateEntropyIsContinuousAcrossCleanupBoundary() {

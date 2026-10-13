@@ -722,20 +722,30 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addPhase() {
-    /*
-     * if (maxNumberOfPhases < 6 && !hydrateCheck) { ArrayList phaseList = new ArrayList(0); for (int i = 0; i <
-     * numberOfPhases; i++) { phaseList.add(phaseArray[i]); } // add the new phase phaseList.add(phaseArray[0].clone());
-     * beta[phaseList.size() - 1] = 1.0e-8; // beta[1] -= beta[1]/1.0e5;
-     *
-     * PhaseInterface[] phaseArray2 = new PhaseInterface[numberOfPhases + 1];
-     *
-     * for (int i = 0; i < numberOfPhases + 1; i++) { phaseArray2[i] = (PhaseInterface) phaseList.get(i); }
-     *
-     * phaseArray = phaseArray2;
-     *
-     * System.out.println("number of phases " + numberOfPhases); if (maxNumberOfPhases < numberOfPhases) {
-     * maxNumberOfPhases = numberOfPhases; } }
-     */
+    int candidateSlot = phaseIndex[numberOfPhases];
+    boolean occupied = false;
+    for (int active = 0; active < numberOfPhases; active++) {
+      occupied |= phaseIndex[active] == candidateSlot;
+    }
+    if (occupied) {
+      // Explicit index changes and retained snapshots may leave stale inactive mappings.
+      // Never activate a physical object that is already part of the live phase split.
+      for (int slot = 0; slot < phaseArray.length; slot++) {
+        boolean available = phaseArray[slot] != null;
+        for (int active = 0; active < numberOfPhases; active++) {
+          available &= phaseIndex[active] != slot;
+        }
+        if (available) {
+          candidateSlot = slot;
+          occupied = false;
+          break;
+        }
+      }
+      if (occupied) {
+        throw new IllegalStateException("No distinct physical phase slot is available");
+      }
+      phaseIndex[numberOfPhases] = candidateSlot;
+    }
     numberOfPhases++;
   }
 
@@ -4928,6 +4938,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void removePhase(int specPhase) {
+    int releasedSlot = phaseIndex[specPhase];
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() - getPhase(specPhase).getNumberOfMolesInPhase());
 
     for (int j = 0; j < numberOfPhases; j++) {
@@ -4940,22 +4951,25 @@ public abstract class SystemThermo implements SystemInterface {
     for (int i = 0; i < numberOfPhases - 1; i++) {
       if (i >= specPhase) {
         phaseIndex[i] = phaseIndex[i + 1];
-        phaseType[i] = phaseType[i + 1];
       }
     }
     numberOfPhases--;
+    // Phase roles stay with physical slots; keep the released slot available for reuse.
+    phaseIndex[numberOfPhases] = releasedSlot;
   }
 
   /** {@inheritDoc} */
   @Override
   public void removePhaseKeepTotalComposition(int specPhase) {
+    int releasedSlot = phaseIndex[specPhase];
     for (int i = 0; i < numberOfPhases - 1; i++) {
       if (i >= specPhase) {
         phaseIndex[i] = phaseIndex[i + 1];
-        phaseType[i] = phaseType[i + 1];
       }
     }
     numberOfPhases--;
+    // Phase roles stay with physical slots; keep the released slot available for reuse.
+    phaseIndex[numberOfPhases] = releasedSlot;
   }
 
   /** {@inheritDoc} */

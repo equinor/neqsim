@@ -29,6 +29,12 @@ unscaled component amounts that reappear during initialization. Retained phase t
 so the source fluid is unchanged.
 The clone represents a numerically near-empty stream, rather than an exactly zero inventory.
 
+Phase removal returns the released physical slot to the inactive phase-index tail. Root roles
+remain attached to physical slots while logical indices shift. Adding a phase rejects reuse of
+an already active physical slot by selecting an available stored template. This preserves
+independent phase objects through removal, reordering and subsequent stability trials.
+`SystemThermoTotalNumberOfMolesTest` covers both removal APIs and stale inactive mappings.
+
 ---
 
 ## System Hierarchy
