@@ -82,6 +82,10 @@ input: one write atomically assigns exact zero/one availability to the complete
 controlled edge set and preserves all per-edge hydraulic models. Do not emulate a
 multi-edge line-up with independent availability actions; that permits partial
 configurations during candidate application and restoration.
+The same selector works for live `WellFlow` injection networks. Update a zone's
+lifecycle boundary through `WellFlow.ReservoirLayer.setReservoirPressure(...)` so
+the layer pressure and its reservoir stream remain synchronized; do not change the
+public pressure field alone in a repeated coupled calculation.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
