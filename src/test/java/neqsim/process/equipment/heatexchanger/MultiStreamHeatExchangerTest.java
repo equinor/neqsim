@@ -241,6 +241,16 @@ public class MultiStreamHeatExchangerTest {
     for (int coldStreamIndex = 1; coldStreamIndex <= 2; coldStreamIndex++) {
       double coldInletTemperature = heatEx.getInStream(coldStreamIndex).getTemperature("C");
       double coldOutletTemperature = heatEx.getOutStream(coldStreamIndex).getTemperature("C");
+      double coldFlowRate = heatEx.getInStream(coldStreamIndex).getFlowRate("kg/hr");
+      double activeFlowThreshold = Math.max(heatEx.getMinimumFlow(),
+          neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW);
+      if (coldFlowRate <= activeFlowThreshold) {
+        assertEquals(coldInletTemperature, coldOutletTemperature, 0.0,
+            "numerically inactive cold side must preserve its inlet temperature");
+        assertEquals(0.0, heatEx.getDuty(coldStreamIndex), 1e-20,
+            "numerically inactive cold side must not absorb heat");
+        continue;
+      }
       double actualTemperatureApproach = hotInletTemperature - coldOutletTemperature;
       assertTrue(coldOutletTemperature > coldInletTemperature, "cold stream " + coldStreamIndex
           + " should be heated: inlet=" + coldInletTemperature + " C, outlet=" + coldOutletTemperature + " C");
