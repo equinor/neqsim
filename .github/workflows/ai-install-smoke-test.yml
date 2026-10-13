@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install the neqsim CLI from this checkout
         run: python -m pip install --upgrade pip && python -m pip install -e devtools

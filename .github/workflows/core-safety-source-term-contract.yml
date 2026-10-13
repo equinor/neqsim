@@ -36,7 +36,7 @@ jobs:
           cache: maven
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Check formatting and process/source regressions
         run: |
           ./mvnw -B -ntp spotless:check

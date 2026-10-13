@@ -48,7 +48,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Verify front-matter and skill-index references
         run: python devtools/verify_skills_agents.py
