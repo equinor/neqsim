@@ -979,6 +979,33 @@ compatibility; a supplied envelope is always validated strictly. Accepted propos
 the existing append-only ledger, so resume and evidence-change cycles do not depend on chat history or a second
 state store.
 
+Map every file that defines routing, constraints, limits, or model inputs to the production `guard`, and declare
+the production-stage dependencies that must rebuild its evidence:
+
+```yaml
+evidence:
+  rules:
+    - name: field-operating-definition
+      matches: [study_config.yaml, continuous/goal.yaml]
+      stages: [guard]
+      conclusions: [validated field operating point and envelope]
+  dependencies:
+    guard: ["script:optimize", gates, constraints]
+    "script:optimize": ["script:model_update"]
+    gates: ["script:model_update"]
+    constraints: ["script:model_update"]
+```
+
+`neqsim task-update <task>` then reruns the model, optimizer, constraints, and guard while retaining unrelated
+cycle results. Before any replacement advice is persisted, the append-only ledger marks prior optimizer/envelope evidence
+`evidence_current: false`. Unfinished advice is superseded and cannot remain the current incumbent. A replacement
+is a new `proposed` ledger item with `revalidation_of`, the changed evidence paths, the new cycle identity, and a
+fresh envelope; this deliberately requires a new engineering review. If the revised limit or route leaves no safe
+candidate, no replacement is created. Historical `implemented` records are retained for outcome traceability but
+their validation evidence is still marked non-current. Changes mapped only to reporting stages do not invalidate
+optimizer evidence. The Living Report exposes the evidence state for every ledger item. Unmapped changes and malformed
+`evidence_sensitive_stages` configuration retain fail-closed invalidation behavior.
+
 ### 17.2 Levers: every operator-adjustable parameter
 
 Levers are listed under `production.levers` in the plan. A lever is any setting the operators can change:

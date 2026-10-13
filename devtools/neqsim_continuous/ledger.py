@@ -62,6 +62,10 @@ class Ledger(object):
                     item["status"] = event["to"]
                 elif kind == "value_updated":
                     item["value"] = event["value"]
+                elif kind == "evidence_invalidated":
+                    item["evidence_current"] = False
+                    item["evidence_invalidated_cycle"] = event.get("cycle")
+                    item["evidence_invalidated_by"] = list(event.get("changes") or [])
                 item["history"].append({k: v for k, v in event.items() if k != "id"})
         return items
 
@@ -101,6 +105,16 @@ class Ledger(object):
         if key not in self.current():
             raise LedgerError("Unknown opportunity '{}'".format(key))
         return self._append({"event": "value_updated", "id": key, "value": value, "cycle": cycle})
+
+    def invalidate_evidence(self, key, changes, cycle=""):
+        """Mark persisted validation evidence stale without rewriting its history."""
+        if key not in self.current():
+            raise LedgerError("Unknown opportunity '{}'".format(key))
+        compact = [{name: row.get(name) for name in
+                    ("path", "change", "before_sha256", "after_sha256", "impact_rules")
+                    if row.get(name) is not None} for row in changes or []]
+        return self._append({"event": "evidence_invalidated", "id": key,
+                             "cycle": cycle, "changes": compact})
 
     def merge(self, other_path):
         """Union this ledger with another copy; returns the number of new events."""

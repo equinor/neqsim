@@ -595,6 +595,9 @@ public class ProcessAutomation {
     if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
       return getFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], unitOfMeasure);
     }
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "configuration".equals(parts[1])) {
+      return getFieldConfigurationProperty((FieldWellNetworkProcessUnit) unit, parts[2], unitOfMeasure);
+    }
     LoopedPipeNetwork addressableNetwork = getAddressableNetwork(unit);
     if (addressableNetwork != null && parts.length == 3) {
       return getNetworkProperty(addressableNetwork, parts[1], parts[2], unitOfMeasure);
@@ -653,6 +656,11 @@ public class ProcessAutomation {
 
     if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "route".equals(parts[1])) {
       setFieldRouteProperty((FieldWellNetworkProcessUnit) unit, parts[2], value, unitOfMeasure);
+      this.dirty = true;
+      return;
+    }
+    if (unit instanceof FieldWellNetworkProcessUnit && parts.length == 3 && "configuration".equals(parts[1])) {
+      setFieldConfigurationProperty((FieldWellNetworkProcessUnit) unit, parts[2], value, unitOfMeasure);
       this.dirty = true;
       return;
     }
@@ -891,6 +899,14 @@ public class ProcessAutomation {
               "route." + selectorName + ".selection", VariableType.INPUT, "-",
               "Exclusive route index; provenance: " + fieldUnit.getExclusiveRouteProvenance(selectorName)).withBounds(
                   Double.valueOf(0.0), Double.valueOf(fieldUnit.getExclusiveRouteEdges(selectorName).size() - 1.0)));
+        }
+        for (String selectorName : fieldUnit.getRouteConfigurationSelectorNames()) {
+          networkVariables.add(new SimulationVariable(unitName + ".configuration." + selectorName + ".selection",
+              "configuration." + selectorName + ".selection", VariableType.INPUT, "-",
+              "Route configuration index; options: " + fieldUnit.getRouteConfigurationNames(selectorName)
+                  + "; provenance: " + fieldUnit.getRouteConfigurationProvenance(selectorName))
+              .withBounds(Double.valueOf(0.0),
+                  Double.valueOf(fieldUnit.getRouteConfigurationNames(selectorName).size() - 1.0)));
         }
       }
       return enrichVariableMetadata(networkVariables);
@@ -1249,6 +1265,42 @@ public class ProcessAutomation {
       throw new IllegalArgumentException("Unknown field route property: " + targetProperty[1]);
     }
     unit.setExclusiveRouteSelection(targetProperty[0], value);
+  }
+
+  /**
+   * Read one field-unit multi-edge route configuration.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param unitOfMeasure requested dimensionless unit
+   * @return zero-based selected configuration index
+   */
+  private double getFieldConfigurationProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route-configuration property: " + targetProperty[1]);
+    }
+    return unit.getRouteConfigurationSelection(targetProperty[0]);
+  }
+
+  /**
+   * Write one field-unit multi-edge route configuration.
+   *
+   * @param unit field well/network process unit
+   * @param targetAndProperty selector name and selection property
+   * @param value zero-based selected configuration index
+   * @param unitOfMeasure requested dimensionless unit
+   */
+  private void setFieldConfigurationProperty(FieldWellNetworkProcessUnit unit, String targetAndProperty, double value,
+      String unitOfMeasure) {
+    String[] targetProperty = splitNetworkTargetProperty(targetAndProperty);
+    requireDimensionlessUnit(unitOfMeasure);
+    if (!"selection".equals(targetProperty[1])) {
+      throw new IllegalArgumentException("Unknown field route-configuration property: " + targetProperty[1]);
+    }
+    unit.setRouteConfigurationSelection(targetProperty[0], value);
   }
 
   /**

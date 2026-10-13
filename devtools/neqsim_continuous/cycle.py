@@ -24,7 +24,8 @@ from .plan import continuous_dir, load_baseline, load_goal, load_plan, read_json
 
 SCHEMA_VERSION = "1.0"
 NEEDS = {"drift": ["kpis"], "diff": ["kpis"], "goal": ["kpis"], "notify": ["digest"],
-         "gates": ["kpis"], "constraints": ["kpis"], "guard": ["gates", "constraints"], "outcome": ["kpis"]}
+         "gates": ["kpis"], "constraints": ["kpis"], "guard": ["gates", "constraints"],
+         "ledger": ["guard"], "outcome": ["kpis"]}
 LOCK_HOURS = 6.0
 
 

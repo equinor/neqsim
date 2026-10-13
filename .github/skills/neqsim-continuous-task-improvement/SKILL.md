@@ -203,6 +203,10 @@ writes to a control system and every proposal carries `requires_approval`.
   cycle/optimizer identity, action-id/setpoint binding, complete uniquely addressed slices, safe recovery of every
   sampled point, and reconciled point/evaluation/runtime totals before the existing ledger persists it. A supplied
   block is always validated even when the setting is false; never copy envelope evidence into a later cycle.
+  Map route/line-up and operating-limit files to `guard` with dependencies on the model update, optimizer, gates,
+  and constraints. On a detected relevant revision the append-only ledger marks old validation evidence non-current
+  and supersedes unfinished advice before persisting a replacement. Only a newly guarded point becomes a separate
+  `proposed` item with `revalidation_of`; if no safe replacement exists, expose none and never retain stale advice.
 - **Outcome**: ledger items set to `implemented` with `objective_kpi` and `baseline_value` are compared with
   the realised gain each cycle (`outcome_confirmed` / `outcome_miss`); the engineer decides on `verified`.
 - **Boundary conditions**: read the measured process boundary (here gas export and injection pressure and
