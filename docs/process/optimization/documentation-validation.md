@@ -7,7 +7,7 @@ description: Executable coverage, test commands, notebook source setup and physi
 
 The production optimization examples are executable regression inputs. Their tests read
 the code directly from Markdown and run notebooks from a fresh kernel in cell order.
-The [production optimization documentation workflow](https://github.com/equinor/neqsim/actions/workflows/examples-production-optimization.yml)
+The [production optimization documentation workflow](https://github.com/equinor/neqsim/actions/workflows/examples-production-optimization-documentation.yml)
 checks changes to the guides, notebooks, supporting equipment and optimizer code.
 
 ## What is checked

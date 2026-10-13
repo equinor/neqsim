@@ -1,4 +1,4 @@
-name: Run build, test and javadoc
+name: "[Core] Build, Test, and Javadoc"
 permissions:
   contents: read
 
@@ -36,7 +36,7 @@ jobs:
               - '**/pom*.xml'
               - 'src/main/resources/data/**'
               - 'src/test/resources/**'
-              - '.github/workflows/core-java-tests.yml'
+              - '.github/workflows/core-run-build-test-and-javadoc.yml'
 
   test_javadoc:
     name: Assert javadoc with Java 21 on Ubuntu

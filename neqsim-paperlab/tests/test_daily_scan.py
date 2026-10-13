@@ -33,7 +33,7 @@ class DailyScanPublicationTest(unittest.TestCase):
         self.output.mkdir(parents=True)
         self.github_output = self.workspace / "github-output"
         self.workflow = yaml.safe_load(
-            (REPO_ROOT / ".github" / "workflows" / "ai-research-scan.yml").read_text()
+            (REPO_ROOT / ".github" / "workflows" / "ai-daily-research-scan.yml").read_text()
         )
         self.pick = {
             "title": "Synthetic CO2 transport study",

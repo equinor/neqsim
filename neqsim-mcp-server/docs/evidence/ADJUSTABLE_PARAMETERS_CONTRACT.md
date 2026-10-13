@@ -36,7 +36,7 @@ fixture. It verifies:
 - the promoted Phase 0 trust classification and its bounded evidence sources.
 
 The focused Java and packaged-MCP checks run in
-`.github/workflows/ai-mcp-protocol-tests.yml` before the comprehensive MCP
+`.github/workflows/ai-mcp-protocol-qualification.yml` before the comprehensive MCP
 regression.
 
 ## Scope and limitations

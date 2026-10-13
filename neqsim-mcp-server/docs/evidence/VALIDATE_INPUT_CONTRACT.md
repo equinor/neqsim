@@ -38,7 +38,7 @@ and verifies six cross-layer scenarios:
   as `CONTRACT_TESTED` from the merged prerequisite evidence.
 
 The focused Java and packaged-MCP checks run in
-`.github/workflows/ai-mcp-protocol-tests.yml` before the comprehensive MCP
+`.github/workflows/ai-mcp-protocol-qualification.yml` before the comprehensive MCP
 regression.
 
 ## Scope and limitations

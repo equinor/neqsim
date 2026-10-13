@@ -1,4 +1,4 @@
-name: PaperLab Replication Gate
+name: "[AI] PaperLab Replication Gate"
 
 # Replication gate for PaperLab papers and books.
 #
@@ -19,7 +19,7 @@ on:
       - "neqsim-paperlab/papers/**"
       - "neqsim-paperlab/books/**"
       - "src/main/java/neqsim/**"
-      - ".github/workflows/ai-paperlab-replication.yml"
+      - ".github/workflows/ai-paperlab-replication-gate.yml"
 
   workflow_dispatch:
     inputs:

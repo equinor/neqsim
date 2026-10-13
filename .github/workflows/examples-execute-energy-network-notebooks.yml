@@ -1,11 +1,11 @@
-name: Execute Energy Network Notebooks
+name: "[Examples] Execute Energy Network Notebooks"
 
 on:
   pull_request:
     branches: [master]
     paths:
       - 'examples/notebooks/energy_networks/**'
-      - '.github/workflows/examples-energy-networks.yml'
+      - '.github/workflows/examples-execute-energy-network-notebooks.yml'
   workflow_dispatch:
 
 permissions:

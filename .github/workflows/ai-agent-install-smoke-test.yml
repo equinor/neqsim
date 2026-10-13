@@ -1,4 +1,4 @@
-name: Install smoke test
+name: "[AI] Agent Install Smoke Test"
 
 # Exercises the exact command the installation guides tell users to run:
 #     neqsim agent install --all --source community --vscode --force
@@ -25,7 +25,7 @@ on:
       - "devtools/neqsim_doctor.py"
       - "install.sh"
       - "install.cmd"
-      - ".github/workflows/ai-install-smoke-test.yml"
+      - ".github/workflows/ai-agent-install-smoke-test.yml"
   push:
     branches: [master]
     paths:

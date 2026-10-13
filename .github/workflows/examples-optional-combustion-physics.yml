@@ -1,4 +1,4 @@
-name: Optional combustion physics
+name: "[Examples] Optional Combustion Physics"
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ on:
       - "src/main/java/neqsim/process/equipment/reactor/FiniteRateCombustionReactor.java"
       - "src/main/java/neqsim/process/equipment/reactor/MultiBurnerFiredHeater.java"
       - "src/main/java/neqsim/process/util/combustion/**"
-      - ".github/workflows/examples-combustion-physics.yml"
+      - ".github/workflows/examples-optional-combustion-physics.yml"
   workflow_dispatch:
 
 jobs:

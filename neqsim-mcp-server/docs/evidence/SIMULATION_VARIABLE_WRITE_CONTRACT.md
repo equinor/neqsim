@@ -49,7 +49,7 @@ snapshot-diff semantics are not qualified here.
   and `manageModel`-handle routes, repeats rejection cases, and proves the Phase 0 promotion, evidence sources, and accounting remain atomic.
 - `McpRunnerContractTest` retains the broad standard-response check for the public mutation surface.
 - `tests/protocol/test_mcp_server.py` remains the authoritative packaged-protocol registration and accounting regression.
-- `ai-mcp-protocol-tests.yml` runs the focused Java and packaged-MCP mutation contracts before the comprehensive
+- `ai-mcp-protocol-qualification.yml` runs the focused Java and packaged-MCP mutation contracts before the comprehensive
   protocol suite.
 
 Java and JSON/MCP views are applicable. Python is only a dependency-free protocol driver. Notebook, rendered-document,

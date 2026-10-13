@@ -1,4 +1,4 @@
-name: Safety source-term contract
+name: "[Core] Safety Source-Term Contract"
 
 on:
   pull_request:

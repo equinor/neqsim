@@ -1,4 +1,4 @@
-name: Execute complete P&ID synthesis notebook
+name: "[Examples] Execute Complete P&ID Synthesis Notebook"
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - "examples/notebooks/complete_pid_design_synthesis.ipynb"
       - "src/main/java/neqsim/process/engineering/pid/**"
       - "src/test/java/neqsim/process/engineering/pid/**"
-      - ".github/workflows/examples-pid-synthesis.yml"
+      - ".github/workflows/examples-execute-complete-pid-synthesis-notebook.yml"
   workflow_dispatch:
 
 permissions:

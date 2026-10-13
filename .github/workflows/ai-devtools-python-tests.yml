@@ -1,4 +1,4 @@
-name: Devtools tests
+name: "[AI] Devtools Python Tests"
 
 permissions:
   contents: read
@@ -8,7 +8,7 @@ on:
     paths:
       - "devtools/**"
       - "examples/mechanical_design_json_to_mesh.py"
-      - ".github/workflows/ai-devtools-tests.yml"
+      - ".github/workflows/ai-devtools-python-tests.yml"
   push:
     branches: [master]
     paths:

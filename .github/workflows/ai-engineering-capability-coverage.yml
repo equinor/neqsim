@@ -1,4 +1,4 @@
-name: Engineering capability coverage
+name: "[AI] Engineering Capability Coverage"
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ on:
       - '.github/agents/**'
       - 'devtools/*engineering*coverage*'
       - 'devtools/engineering_capabilities.json'
-      - '.github/workflows/ai-engineering-coverage.yml'
+      - '.github/workflows/ai-engineering-capability-coverage.yml'
   push:
     branches: [master]
     paths:
@@ -21,7 +21,7 @@ on:
       - '.github/agents/**'
       - 'devtools/*engineering*coverage*'
       - 'devtools/engineering_capabilities.json'
-      - '.github/workflows/ai-engineering-coverage.yml'
+      - '.github/workflows/ai-engineering-capability-coverage.yml'
 
 permissions:
   contents: read

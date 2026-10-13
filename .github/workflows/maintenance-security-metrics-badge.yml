@@ -1,4 +1,4 @@
-name: Security Metrics Badge
+name: "[Maintenance] Security Metrics Badge"
 
 on:
   schedule:
@@ -7,7 +7,7 @@ on:
   push:
     branches: [ "master" ]
     paths:
-      - '.github/workflows/maintenance-security-metrics.yml'
+      - '.github/workflows/maintenance-security-metrics-badge.yml'
 
 permissions:
   contents: write  # need write to commit updated JSON

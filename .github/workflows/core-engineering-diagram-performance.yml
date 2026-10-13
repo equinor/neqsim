@@ -1,4 +1,4 @@
-name: Engineering diagram performance
+name: "[Core] Engineering Diagram Performance"
 
 on:
   workflow_dispatch:

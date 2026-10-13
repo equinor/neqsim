@@ -1,4 +1,4 @@
-name: Pre-commit checks
+name: "[Core] Pre-commit Checks"
 
 # Check-only gate: CI verifies formatting but never writes to the repository.
 # Auto-formatting is the contributor's responsibility via local pre-commit hooks

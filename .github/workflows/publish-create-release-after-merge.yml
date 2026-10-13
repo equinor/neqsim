@@ -1,4 +1,4 @@
-name: Create release after merge
+name: "[Publish] Create Release After Merge"
 permissions:
   contents: read
 
@@ -262,8 +262,8 @@ jobs:
           RELEASE_VERSION: ${{ needs.get_versions.outputs.version }}
         run: |
           # workflow_dispatch is allowed to start workflows created with GITHUB_TOKEN.
-          gh workflow run publish-maven-central.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
-          gh workflow run publish-mcp-server.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
+          gh workflow run publish-package-to-maven-central.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
+          gh workflow run publish-build-mcp-server-release.yml --repo "$GITHUB_REPOSITORY" --ref "v${RELEASE_VERSION}"
 
       - name: Notify the plugin marketplace (offline bundle rebuild)
         # Cross-repo dispatch needs a PAT with `repo` scope on equinor/neqsim-copilot-plugin

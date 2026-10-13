@@ -1,4 +1,4 @@
-name: MCP protocol qualification
+name: "[AI] MCP Protocol Qualification"
 
 permissions:
   contents: read
@@ -16,7 +16,7 @@ on:
       - 'src/main/java/neqsim/mcp/**'
       - 'src/test/java/neqsim/mcp/**'
       - 'neqsim-mcp-server/**'
-      - '.github/workflows/ai-mcp-protocol-tests.yml'
+      - '.github/workflows/ai-mcp-protocol-qualification.yml'
   push:
     branches:
       - master
@@ -25,7 +25,7 @@ on:
       - 'src/main/java/neqsim/mcp/**'
       - 'src/test/java/neqsim/mcp/**'
       - 'neqsim-mcp-server/**'
-      - '.github/workflows/ai-mcp-protocol-tests.yml'
+      - '.github/workflows/ai-mcp-protocol-qualification.yml'
 
 jobs:
   phase0_contracts:

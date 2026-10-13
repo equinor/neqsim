@@ -1,4 +1,4 @@
-name: Execute NCS HAZOP and safety engineering notebook
+name: "[Examples] Execute NCS HAZOP and Safety Engineering Notebook"
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - "examples/notebooks/complete_offshore_process_engineering_study.ipynb"
       - "src/main/java/neqsim/process/engineering/pid/**"
       - "src/main/java/neqsim/process/engineering/safety/**"
-      - ".github/workflows/examples-ncs-hazop-safety.yml"
+      - ".github/workflows/examples-execute-ncs-hazop-and-safety-engineering-notebook.yml"
   workflow_dispatch:
 
 permissions:

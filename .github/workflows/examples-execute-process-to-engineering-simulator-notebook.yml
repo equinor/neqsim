@@ -1,4 +1,4 @@
-name: Execute process-to-engineering simulator notebook
+name: "[Examples] Execute Process-to-Engineering Simulator Notebook"
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
       - "src/main/java/neqsim/process/processmodel/dexpi/**"
       - "src/test/java/neqsim/process/engineering/**"
       - "src/test/java/neqsim/process/processmodel/dexpi/**"
-      - ".github/workflows/examples-process-to-engineering.yml"
+      - ".github/workflows/examples-execute-process-to-engineering-simulator-notebook.yml"
   workflow_dispatch:
 
 permissions:

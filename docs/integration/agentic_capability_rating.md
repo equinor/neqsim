@@ -24,7 +24,7 @@ Production-ready for read/write and steady-state agents; dynamics and synthesis 
 | 5 | Steady-state run loop | 8/10 | `runIfDirty()`, `setVariableValueAndRun()`, dirty flag, cached facade across turns. Recycle/adjuster orchestration solid. |
 | 6 | Dynamic simulation | 6/10 | **v1**: pluggable `IntegratorStrategy` (Explicit Euler + BDF-1 with FD Jacobian + fallback flag) wired into `ProcessSystem.runTransient` and `ProcessModel.runTransient`. `EventScheduler` for ESD/setpoint events. 3 new measurement devices. |
 | 7 | Flowsheet synthesis | 5/10 | **v1**: `SeparationDuty` + `FlowsheetSynthesisEngine` + `FlowsheetProposal` rank topologies on TAC / recovery / energy. MVP — separation duty only. |
-| 8 | Quality gates & validation | 8/10 | `TaskResultValidator` (Java + Python mirror), `SimulationQualityGate`, `AgentBenchmarkSuite`, `AgentFeedbackCollector`, `AgentSession`. CI gate in `ai-task-quality.yml`. |
+| 8 | Quality gates & validation | 8/10 | `TaskResultValidator` (Java + Python mirror), `SimulationQualityGate`, `AgentBenchmarkSuite`, `AgentFeedbackCollector`, `AgentSession`. CI gate in `ai-task-quality-gate.yml`. |
 | 9 | State lifecycle & reproducibility | 8/10 | `ProcessSystemState` / `ProcessModelState` — JSON snapshot, save/load, `validate()`, `compare()` with `ModelDiff`, gzip transfer. Git-diffable. |
 | 10 | Skill / agent ecosystem | 9/10 | 45+ skills, 30+ agents, semantic skill search, CI-enforced agent↔skill mapping. |
 | 11 | Multi-area orchestration | 7/10 | `ProcessModel` with area-qualified addresses (`Area::Unit.property`), scheduler/integrator propagation, plant-wide `getAutomation()`. |
