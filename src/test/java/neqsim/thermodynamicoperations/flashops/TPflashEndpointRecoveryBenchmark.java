@@ -33,7 +33,8 @@ import neqsim.thermo.system.SystemSrkEos;
 public final class TPflashEndpointRecoveryBenchmark {
   /** Representative ordinary, excluded and recovery workload families. */
   private static final String[] FAMILIES = {"dry-gas", "hot-gas", "two-phase", "cpa-water", "condensate",
-      "condensate-cold", "condensate-multiphase"};
+      "condensate-cold", "condensate-multiphase", "trace-aqueous-srk", "trace-aqueous-pr", "trace-aqueous-cpa",
+      "trace-undersaturated", "trace-three-phase"};
   /** Dry condensate component names. */
   private static final String[] CONDENSATE_NAMES = {"methane", "ethane", "propane", "n-butane", "n-hexane", "n-decane",
       "n-hexadecane"};
@@ -52,7 +53,18 @@ public final class TPflashEndpointRecoveryBenchmark {
    */
   private static SystemInterface create(String family) {
     SystemInterface fluid;
-    if ("dry-gas".equals(family)) {
+    if (family.startsWith("trace-")) {
+      fluid = "trace-aqueous-cpa".equals(family) ? new SystemSrkCPAstatoil(307.0, 10.5)
+          : "trace-aqueous-pr".equals(family) ? new SystemPrEos(307.0, 10.5) : new SystemSrkEos(307.0, 10.5);
+      double water = "trace-undersaturated".equals(family) ? 1.0e-8 : 0.003;
+      double methane = "trace-three-phase".equals(family) ? 0.5 : 0.0;
+      fluid.addComponent("methane", methane);
+      fluid.addComponent("n-heptane", 1.0 - water - methane);
+      fluid.addComponent("water", water);
+      fluid.setMixingRule("trace-aqueous-cpa".equals(family) ? 10 : 2);
+      fluid.setMultiPhaseCheck(true);
+      return fluid;
+    } else if ("dry-gas".equals(family)) {
       fluid = new SystemSrkEos(323.15, 20.0);
       fluid.addComponent("methane", 0.95);
       fluid.addComponent("ethane", 0.04);
@@ -98,7 +110,8 @@ public final class TPflashEndpointRecoveryBenchmark {
   /**
    * Writes batch timings alongside complete numerical snapshots.
    *
-   * @param args output path, optional flashes per batch, optional batch count, optional warmup count
+   * @param args output path, optional flashes per batch, optional batch count, optional warmup count, optional family
+   * name prefix
    * @throws Exception if arguments are invalid, a flash fails or the output cannot be written
    */
   public static void main(String[] args) throws Exception {
@@ -114,8 +127,19 @@ public final class TPflashEndpointRecoveryBenchmark {
     if (cpuTiming && !threadTiming.isThreadCpuTimeEnabled()) {
       threadTiming.setThreadCpuTimeEnabled(true);
     }
+    com.sun.management.ThreadMXBean allocationTiming = threadTiming instanceof com.sun.management.ThreadMXBean
+        ? (com.sun.management.ThreadMXBean) threadTiming
+        : null;
+    boolean allocationSupported = allocationTiming != null && allocationTiming.isThreadAllocatedMemorySupported();
+    if (allocationSupported && !allocationTiming.isThreadAllocatedMemoryEnabled()) {
+      allocationTiming.setThreadAllocatedMemoryEnabled(true);
+    }
+    long threadId = Thread.currentThread().getId();
     JsonArray records = new JsonArray();
     for (String family : FAMILIES) {
+      if (args.length > 4 && !family.startsWith(args[4])) {
+        continue;
+      }
       for (boolean changed : new boolean[] {false, true}) {
         SystemInterface fluid = create(family);
         int caseWarmup = "dry-gas".equals(family) || "hot-gas".equals(family) || "two-phase".equals(family)
@@ -135,6 +159,8 @@ public final class TPflashEndpointRecoveryBenchmark {
         for (int batch = 0; batch < batches; batch++) {
           long elapsedNanos = 0;
           long cpuNanos = 0;
+          long allocatedBytes = 0;
+          long[] elapsedSamples = new long[iterations];
           int recoveryCount = 0;
           for (int iteration = 0; iteration < iterations; iteration++) {
             if ("condensate-cold".equals(family)) {
@@ -142,12 +168,17 @@ public final class TPflashEndpointRecoveryBenchmark {
             }
             setState(fluid, temperature, pressure, changed, iteration);
             TPflash flash = new TPflash(fluid);
+            long allocationStart = allocationSupported ? allocationTiming.getThreadAllocatedBytes(threadId) : 0;
             long cpuStart = cpuTiming ? threadTiming.getCurrentThreadCpuTime() : 0;
             long start = System.nanoTime();
             flash.run();
-            elapsedNanos += System.nanoTime() - start;
+            elapsedSamples[iteration] = System.nanoTime() - start;
+            elapsedNanos += elapsedSamples[iteration];
             if (cpuTiming) {
               cpuNanos += threadTiming.getCurrentThreadCpuTime() - cpuStart;
+            }
+            if (allocationSupported) {
+              allocatedBytes += allocationTiming.getThreadAllocatedBytes(threadId) - allocationStart;
             }
             if (flash.getLastStabilityOutcome().startsWith("recovered nonconservative hydrocarbon endpoint")) {
               recoveryCount++;
@@ -162,6 +193,10 @@ public final class TPflashEndpointRecoveryBenchmark {
           record.addProperty("elapsedNanos", elapsedNanos);
           record.addProperty("nanosPerFlash", (double) elapsedNanos / iterations);
           record.addProperty("cpuNanosPerFlash", cpuTiming ? (double) cpuNanos / iterations : -1.0);
+          record.addProperty("allocatedBytesPerFlash",
+              allocationSupported ? (double) allocatedBytes / iterations : -1.0);
+          java.util.Arrays.sort(elapsedSamples);
+          record.addProperty("p95NanosPerFlash", elapsedSamples[(int) Math.ceil(0.95 * iterations) - 1]);
           record.addProperty("recoveryFlashes", recoveryCount);
           record.add("state", StabilityOptimizationBenchmark.snapshot(fluid, originalMoles, originalMass));
           records.add(record);

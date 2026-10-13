@@ -1665,3 +1665,15 @@ Validation: Java getting-started documentation tests (2 passed), direct Spotless
 documentation-search audit (788 Markdown pages and one HTML page), and diff whitespace check.
 Package qualification and hosted release publication are tracked in the release PR.
 Documentation impact: installation examples, citation and release build provenance updated.
+
+
+### 2026-10-13 — Trace-water flash repair acceptance and cost qualification
+**Type:** E (Feature)
+**Keywords:** TPflash, trace water, aqueous, PSflash, pump, PR 4320, conservation, performance
+**Solution:** `TPflash` bounds the existing aqueous repair, avoids duplicate EOS initialization,
+and validates repaired endpoints before public return. `TPflashTraceWaterRepairTest` adds public
+SRK/PR/CPA lifecycle and pump closure checks plus explicit failure/guard contracts.
+**Notes:** Local acceptance targets are material balance `1e-10`, normalization `1e-12`, and
+log-fugacity residual `1e-8`; ordinary TP/PS tolerances are unchanged. Expanded endpoint benchmark
+records allocation and p95 alongside numerical validity. Synthetic public cases qualify lifecycle
+behavior, not the unavailable original process snapshot or experimental phase behavior.
