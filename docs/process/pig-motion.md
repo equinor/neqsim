@@ -44,7 +44,7 @@ remaining interval with the appropriate resting or reverse-motion branch.
 There is no velocity clipping or artificial near-zero velocity threshold.
 Divide the schedule at every imposed input change. Inclination in `simulate`
 is a prescribed time history; spatial terrain/diameter crossings and receiver
-contact are not detected.
+contact are not applied automatically by `simulate`.
 
 ## Executable start, stop and restart example
 
@@ -100,6 +100,32 @@ A fixed 200-case force/velocity/inclination matrix compares one 7 s interval
 with 70 intervals of 0.1 s and checks sign symmetry and the work balance.
 This is analytical and numerical verification, not validation against pigging
 experiments or a commercial simulator.
+
+## Public sensor-timing evidence
+
+`PigMotionPositionEventTest.limaPublicSensorTimingBenchmark` reproduces the
+published event arithmetic from Lima et al., *Sensors* 17 (2017) 2119,
+[doi:10.3390/s17092119](https://doi.org/10.3390/s17092119). The article and its
+figures are available under CC BY 4.0. The reported pressure-sensor spacing is
+5.90 m and the pressure-event separation is 272 samples at 50 ms, or 13.6 s.
+The executable test advances 272 prescribed 50 ms intervals, verifies that the
+sensor position is first reached at sample 272, and compares the endpoint with
+one 13.6 s interval to retain the existing partition-invariance contract. Its
+sample detector permits only `1e-12` m of accumulated floating-point roundoff,
+more than ten orders of magnitude below one sample's travel.
+
+The derived supervisory speed is 5.90 m / 13.6 s = 0.4338 m/s, reported as
+0.43 m/s. The paper's odometer values are 5.70 m in 12.53 s, or 0.4549 m/s,
+reported as 0.45 m/s. The test retains the publication's two-decimal reporting
+and its stated 4.44% difference between 0.43 and 0.45 m/s. The 50 ms sample
+period is the timing resolution; it is not a fitted mechanics parameter.
+
+This evidence validates sampled-trajectory arithmetic and timing interpretation
+only. A frictionless prescribed-velocity case is used deliberately because the
+publication does not provide a redistributable pressure-force/bypass time
+series suitable for fitting this model. The test therefore does **not** qualify
+pressure-force closure, seal friction, gas or liquid bypass, swept-liquid slug,
+receiver surge, or coupled two-fluid pigging.
 
 ## Integration and remaining qualification
 
