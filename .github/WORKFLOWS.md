@@ -15,7 +15,7 @@ that a workflow invokes an LLM.
 
 | Workflow | Actions Display Name | Events | Responsibility |
 |---|---|---|---|
-| [core-run-build-test-and-javadoc.yml](workflows/core-run-build-test-and-javadoc.yml) | [Core] Build, Test, and Javadoc | Push, PR, manual | Java 8/21 tests on Ubuntu/Windows, Javadoc, numerical contracts, slow-test shards, and coverage. Also retains agent benchmark and agent-skill checks. |
+| [core-run-build-test-and-javadoc.yml](workflows/core-run-build-test-and-javadoc.yml) | [Core] Build, Test, and Javadoc | Push, PR, manual | Java 8/21 tests on Ubuntu/Windows, Javadoc, numerical contracts, eight slow-test shards, coverage, and retained Surefire reports. Preserves four legacy slow-test check contexts; fast matrix failures do not cancel other platforms. Also retains agent benchmark and agent-skill checks. |
 | [core-codeql-security-analysis.yml](workflows/core-codeql-security-analysis.yml) | [Core] CodeQL Security Analysis | Push, PR, schedule | Java security and quality analysis. |
 | [core-pre-commit-checks.yml](workflows/core-pre-commit-checks.yml) | [Core] Pre-commit Checks | PR, manual | Check-only contributor quality gate; never formats or pushes changes. |
 | [core-spotless-format-patch.yml](workflows/core-spotless-format-patch.yml) | [Core] Spotless Format Patch | PR | Produces a formatting patch artifact without committing changes. |
@@ -41,7 +41,7 @@ files; do not rewrite tags or use a publishing dispatch as a migration smoke tes
 
 | Workflow | Actions Display Name | Events | Responsibility and Side Effects |
 |---|---|---|---|
-| [ai-devtools-python-tests.yml](workflows/ai-devtools-python-tests.yml) | [AI] Devtools Python Tests | PR, push | Python toolkit and agent installation/discovery tests. |
+| [ai-devtools-python-tests.yml](workflows/ai-devtools-python-tests.yml) | [AI] Devtools Python Tests | PR, push | Python toolkit, hermetic agent installation/discovery, production guard, and ledger tests. |
 | [ai-skills-and-agents-lint.yml](workflows/ai-skills-and-agents-lint.yml) | [AI] Skills and Agents Lint | PR, push | Agent/skill structure, API references, and mapping consistency. |
 | [ai-engineering-capability-coverage.yml](workflows/ai-engineering-capability-coverage.yml) | [AI] Engineering Capability Coverage | PR, push | Engineering capability inventory and routing evidence checks. |
 | [ai-mcp-protocol-qualification.yml](workflows/ai-mcp-protocol-qualification.yml) | [AI] MCP Protocol Qualification | PR, push | Packaged MCP protocol and capability contracts. |

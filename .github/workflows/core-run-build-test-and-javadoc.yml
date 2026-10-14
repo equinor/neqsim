@@ -68,7 +68,7 @@ jobs:
     # The full fast suite with JaCoCo exceeds one hour on hosted Ubuntu runners.
     timeout-minutes: 90
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - platform: Ubuntu
@@ -95,6 +95,13 @@ jobs:
       - name: Run fast tests, do not generate JaCoCo report
         if: ${{ !matrix.verify_jacoco }}
         run: mvn -B test -ntp -DskipITs "-Djacoco.skip=true"
+      - name: Retain fast-test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fast-test-reports-${{ matrix.platform }}
+          path: target/surefire-reports/
+          if-no-files-found: warn
       - name: Verify JaCoCo report exists
         if: matrix.verify_jacoco && github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
@@ -196,19 +203,29 @@ jobs:
     name: Assert slow tests (${{ matrix.label }}) with Java 21 on Ubuntu
     runs-on: ubuntu-latest
     needs: test_javadoc
+    # Four equal-count shards left one at the 60-minute limit while others
+    # finished in 14-30 minutes. Split each former shard in two without dropping tests.
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         include:
           - shard: 0
-            label: 1/4
+            label: 1/8
           - shard: 1
-            label: 2/4
+            label: 2/8
           - shard: 2
-            label: 3/4
+            label: 3/8
           - shard: 3
-            label: 4/4
+            label: 4/8
+          - shard: 4
+            label: 5/8
+          - shard: 5
+            label: 6/8
+          - shard: 6
+            label: 7/8
+          - shard: 7
+            label: 8/8
     steps:
       - uses: actions/checkout@v7
         with:
@@ -223,25 +240,54 @@ jobs:
           cache: 'maven'
       - name: Run slow-test shard without JaCoCo
         shell: bash
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: ${{ strategy.job-total }}
         run: |
           mapfile -t slow_files < <(
             grep -rl --include='*.java' '@Tag("slow")' src/test/java | sort
           )
           selected=()
           for index in "${!slow_files[@]}"; do
-            if ((index % 4 == ${{ matrix.shard }})); then
+            if ((index % SHARD_COUNT == SHARD_INDEX)); then
               class_name="${slow_files[$index]#src/test/java/}"
               class_name="${class_name%.java}"
               selected+=("${class_name//\//.}")
             fi
           done
           if ((${#selected[@]} == 0)); then
-            echo "No slow tests discovered for shard ${{ matrix.shard }}"
+            echo "No slow tests discovered for shard $SHARD_INDEX"
             exit 1
           fi
+          printf 'Slow-test shard %s/%s: %s classes\n' "$((SHARD_INDEX + 1))" "$SHARD_COUNT" "${#selected[@]}"
+          printf '  %s\n' "${selected[@]}"
           test_pattern=$(IFS=,; echo "${selected[*]}")
           mvn -B test -ntp -Dtest="$test_pattern" -Dgroups=slow \
             "-DexcludedTestGroups=" "-Djacoco.skip=true"
+      - name: Retain slow-test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: slow-test-reports-${{ matrix.shard }}
+          path: target/surefire-reports/
+          if-no-files-found: warn
+
+  # Preserve the four historical required-check contexts while eight jobs run
+  # the numerical tests. Every compatibility context requires ALL shards.
+  test_java_slow_compatibility:
+    name: Assert slow tests (${{ matrix.label }}) with Java 21 on Ubuntu
+    runs-on: ubuntu-latest
+    needs: [changes, test_java_slow]
+    if: always() && (needs.changes.result != 'success' || needs.changes.outputs.run_tests == 'true')
+    strategy:
+      fail-fast: false
+      matrix:
+        label: [1/4, 2/4, 3/4, 4/4]
+    steps:
+      - name: Require every slow-test shard to pass
+        env:
+          SLOW_TEST_RESULT: ${{ needs.test_java_slow.result }}
+        run: test "$SLOW_TEST_RESULT" = success
 
   test_java_8:
     name: Assert tests with Java 8 on Ubuntu
