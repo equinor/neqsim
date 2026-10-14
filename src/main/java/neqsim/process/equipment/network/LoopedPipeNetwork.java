@@ -35,6 +35,7 @@ import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.unit.PowerUnit;
 
 /**
  * Pipeline network supporting looped topologies with Hardy Cross solver.
@@ -3023,6 +3024,41 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     element.setPumpModel(pump);
     element.setPumpSpeed(pump.getSpeed());
     return element;
+  }
+
+  /**
+   * Get the solved shaft-power demand of all canonical compressor and pump edges.
+   *
+   * <p>
+   * Values are read from the same edge-local compressor and pump models used by the pressure-flow solve. Other edge
+   * types contribute zero. A non-finite edge result is retained as {@link Double#NaN} so shared-resource constraints
+   * fail closed rather than under-reporting demand.
+   * </p>
+   *
+   * @param unit requested power unit accepted by {@link PowerUnit}
+   * @return total solved compressor and pump shaft-power demand
+   */
+  public double getPower(String unit) {
+    double totalPowerKw = 0.0;
+    boolean hasRotatingEquipment = false;
+    for (NetworkPipe pipe : pipes.values()) {
+      double edgePowerKw = 0.0;
+      if (pipe.getElementType() == NetworkElementType.COMPRESSOR) {
+        hasRotatingEquipment = true;
+        edgePowerKw = pipe.getCompressorPower();
+      } else if (pipe.getElementType() == NetworkElementType.PUMP) {
+        hasRotatingEquipment = true;
+        edgePowerKw = pipe.getPumpPowerKW();
+      }
+      if (!Double.isFinite(edgePowerKw)) {
+        return Double.NaN;
+      }
+      totalPowerKw += Math.max(0.0, edgePowerKw);
+    }
+    if (hasRotatingEquipment && !isConverged()) {
+      return Double.NaN;
+    }
+    return new PowerUnit(totalPowerKw, "kW").getValue(unit);
   }
 
   /**

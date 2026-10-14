@@ -13,6 +13,7 @@ import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.FlowDirection;
 import neqsim.process.equipment.network.FieldNetworkTopology.NodeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.Service;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -202,6 +203,82 @@ class FieldWellNetworkProcessUnitTest {
     unit.getHydraulicNetwork().getPipe("primary flowline").setAvailability(1.0);
   }
 
+  /** Live injection must switch complete line-ups and respond to controlled reservoir-pressure updates. */
+  @Test
+  void switchesLiveInjectionRouteConfigurationsAndReservoirState() {
+    WellFlow injectionWell = createConfiguredInjectionWell();
+    FieldWellNetworkProcessUnit unit = createConfiguredInjectionUnit(injectionWell);
+    assertTrue(Double.isNaN(unit.getPower("kW")), "Unsolved mapped network power must fail closed");
+    ProcessSystem injection = new ProcessSystem("injection field");
+    injection.add(unit);
+    ProcessModel model = new ProcessModel();
+    model.add("Injection", injection);
+    model.run();
+
+    assertTrue(model.isModelConverged());
+    assertTrue(unit.solved(), unit.getLastCouplingResult().getMessage());
+    String address = "Injection::configured injection network.configuration.injector route.selection";
+    ProcessAutomation automation = model.getAutomation();
+    assertTrue(automation.isWritableAddress(address));
+    double primaryRate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+    assertTrue(primaryRate > 0.0);
+    LoopedPipeNetwork.NetworkPipe injectionPump = unit.getHydraulicNetwork().getPipe("injection pump");
+    assertTrue(injectionPump.getPumpModel().getPumpChart().isUsePumpChart());
+    assertTrue(injectionPump.getPumpPowerKW() > 0.0);
+    assertTrue(Double.isFinite(injectionPump.getPumpNpshaM()));
+    assertEquals(injectionPump.getPumpPowerKW(), unit.getPower("kW"), 1.0e-9);
+    assertEquals(unit.getPower("kW"), model.getPower("kW"), 1.0e-9);
+    assertFalse(injectionWell.getZoneFractureRisk()[0]);
+    assertFalse(injectionWell.getZoneFractureRisk()[1]);
+
+    automation.setVariableValue(address, 1.0, "-");
+    model.run();
+    assertTrue(unit.solved(), couplingDiagnostic(unit));
+    assertTrue(model.isModelConverged(), couplingDiagnostic(unit));
+    double brownfieldRate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+    assertTrue(brownfieldRate > 0.0);
+    assertEquals(0.0, unit.getHydraulicNetwork().getPipe("primary injection flowline").getFlowRate(), 1.0e-12);
+    assertTrue(unit.getHydraulicNetwork().getPipe("brownfield injection flowline").getFlowRate() > 0.0);
+
+    automation.setVariableValue(address, 2.0, "-");
+    model.run();
+    assertTrue(unit.solved(), couplingDiagnostic(unit));
+    assertTrue(model.isModelConverged(), couplingDiagnostic(unit));
+    double dualPathRate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+    assertTrue(dualPathRate > 0.0);
+    assertTrue(unit.getHydraulicNetwork().getPipe("primary injection flowline").getFlowRate() > 0.0);
+    assertTrue(unit.getHydraulicNetwork().getPipe("brownfield injection flowline").getFlowRate() > 0.0);
+    assertEquals(0.0, unit.getLastCouplingResult().getMassBalanceResidualKgS(), 1.0e-8);
+    assertEquals(1.0, injectionWell.getZoneAllocationFractions()[0] + injectionWell.getZoneAllocationFractions()[1],
+        1.0e-12);
+
+    automation.setVariableValue(address, 0.0, "-");
+    model.run();
+    assertEquals(primaryRate, unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS(),
+        primaryRate * 1.0e-4);
+    injectionWell.getLayer(0).setReservoirPressure(115.0, "bara");
+    injectionWell.getLayer(1).setReservoirPressure(125.0, "bara");
+    assertEquals(115.0, injectionWell.getLayer(0).getReservoirPressure("bara"), 0.0);
+    assertEquals(115.0, injectionWell.getLayer(0).stream.getPressure("bara"), 0.0);
+    model.run();
+    double higherReservoirPressureRate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+    assertTrue(higherReservoirPressureRate < primaryRate,
+        "Higher reservoir pressure must reduce injectivity at unchanged source pressure and route");
+    assertTrue(Double.isFinite(unit.getPower("kW")));
+    assertTrue(unit.getPower("kW") > 0.0);
+    assertTrue(unit.solved(), unit.getLastCouplingResult().getMessage());
+    assertFalse(injectionWell.getZoneFractureRisk()[0]);
+    assertFalse(injectionWell.getZoneFractureRisk()[1]);
+  }
+
+  /** Build a compact failure diagnostic for coupled acceptance assertions. */
+  private String couplingDiagnostic(FieldWellNetworkProcessUnit unit) {
+    return unit.getLastCouplingResult().getMessage() + "; iterations=" + unit.getLastCouplingResult().getIterations()
+        + "; rate residual=" + unit.getLastCouplingResult().getMaximumRateResidualKgS() + "; pressure residual="
+        + unit.getLastCouplingResult().getMaximumPressureResidualBar() + "; network residual="
+        + unit.getLastCouplingResult().getNetworkResidualPa();
+  }
+
   /** The process unit must remain unsolved when the complete coupled convergence contract is not met. */
   @Test
   void incompleteCouplingFailsClosed() {
@@ -335,6 +412,73 @@ class FieldWellNetworkProcessUnitTest {
         "synthetic direct, brownfield and redundant host line-ups");
   }
 
+  /** Create a live two-zone injector for route and lifecycle acceptance. */
+  private WellFlow createConfiguredInjectionWell() {
+    WellFlow well = new WellFlow("configured injection well");
+    well.setInletStream(new Stream("injection water", water(180.0)));
+    well.addInjectionZone("target", new Stream("target reservoir zone", water(100.0)), 100.0, 7.0e-8, 205.0);
+    well.addInjectionZone("secondary", new Stream("secondary reservoir zone", water(110.0)), 110.0, 3.0e-8, 200.0);
+    well.setTargetZone("target");
+    return well;
+  }
+
+  /** Create primary, brownfield and dual-path injection line-ups on one canonical graph. */
+  private FieldWellNetworkProcessUnit createConfiguredInjectionUnit(WellFlow well) {
+    FieldNetworkTopology topology = new FieldNetworkTopology("configured injection network hydraulics");
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    network.setFluidTemplate(water(180.0));
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(3000.0);
+    topology.addPressureSource("injection source", "HOST-I401", NodeRole.INJECTION_SOURCE, Service.INJECTION, 10.0, 0.0,
+        0.0);
+    topology.addJunction("injection pump discharge", "P-401-D", NodeRole.JUNCTION, Service.INJECTION, 0.0);
+    topology.addJunction("primary injection PLEM", "PLEM-I401", NodeRole.PLEM, Service.INJECTION, 0.0);
+    topology.addJunction("brownfield injection tie-in", "TI-I401", NodeRole.BROWNFIELD_TIE_IN, Service.INJECTION, 0.0);
+    topology.addLiveWellNode("injector", "XT-I401", NodeRole.INJECTION_WELL, Service.INJECTION, 145.0, 0.0);
+    Pump pump = new Pump("injection pump model", new Stream("injection pump reference fluid", water(10.0)));
+    pump.setSpeed(3600.0);
+    pump.getPumpChart().setCurves(new double[] {288.15, 1.0, 1.0, 1.0}, new double[] {3600.0},
+        new double[][] {{0.5, 2.0, 5.0}}, new double[][] {{1900.0, 1800.0, 1550.0}},
+        new double[][] {{68.0, 82.0, 72.0}});
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.getPumpChart().setUsePumpChart(true);
+    LoopedPipeNetwork.NetworkPipe pumpEdge = topology.addPumpWithCurve("injection pump", "P-401", Service.INJECTION,
+        FlowDirection.FROM_TO, "injection source", "suction", "injection pump discharge", "discharge", pump);
+    pumpEdge.setPumpRatedPowerKW(150.0);
+    pumpEdge.setPumpMinimumFlowKgS(0.1);
+    topology.addPipe("primary injection flowline", "WI-401", EdgeRole.FLOWLINE, Service.INJECTION,
+        FlowDirection.FROM_TO, "injection pump discharge", "primary discharge", "primary injection PLEM", "inlet",
+        900.0, 0.22, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("primary injection jumper", "JU-I401", EdgeRole.JUMPER, Service.INJECTION, FlowDirection.FROM_TO,
+        "primary injection PLEM", "outlet", "injector", "primary injection", 700.0, 0.22,
+        LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("brownfield injection flowline", "WI-402", EdgeRole.TIE_IN, Service.INJECTION,
+        FlowDirection.FROM_TO, "injection pump discharge", "brownfield discharge", "brownfield injection tie-in",
+        "inlet", 2800.0, 0.16, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+    topology.addPipe("brownfield injection jumper", "JU-I402", EdgeRole.JUMPER, Service.INJECTION,
+        FlowDirection.FROM_TO, "brownfield injection tie-in", "outlet", "injector", "brownfield injection", 900.0, 0.16,
+        LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+    network.getPipe("brownfield injection flowline").setAvailability(0.0);
+    network.getPipe("brownfield injection jumper").setAvailability(0.0);
+
+    FieldWellNetworkCoupler coupler = new FieldWellNetworkCoupler(topology);
+    coupler.setMaximumIterations(200);
+    coupler.setTolerances(2.0e-7, 3.0e-5);
+    coupler.setRelaxationFactor(0.6);
+    coupler.bindInjectionWell("injector", well);
+    return new FieldWellNetworkProcessUnit("configured injection network", coupler)
+        .registerRouteConfigurationSelector("injector route",
+            Arrays.asList(
+                new FieldWellNetworkProcessUnit.RouteConfiguration("primary",
+                    Arrays.asList("primary injection flowline", "primary injection jumper")),
+                new FieldWellNetworkProcessUnit.RouteConfiguration("brownfield",
+                    Arrays.asList("brownfield injection flowline", "brownfield injection jumper")),
+                new FieldWellNetworkProcessUnit.RouteConfiguration("dual path",
+                    Arrays.asList("primary injection flowline", "primary injection jumper",
+                        "brownfield injection flowline", "brownfield injection jumper"))),
+            "synthetic primary, brownfield and redundant injection line-ups");
+  }
+
   /** Assert exact availability on the four controlled configuration edges. */
   private void assertConfiguration(FieldWellNetworkProcessUnit unit, double primaryFlowline, double primaryRiser,
       double brownfieldFlowline, double brownfieldRiser) {
@@ -355,6 +499,20 @@ class FieldWellNetworkProcessUnitTest {
     fluid.addComponent("methane", 0.90);
     fluid.addComponent("ethane", 0.07);
     fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+    return fluid;
+  }
+
+  /**
+   * Create a single-component water fluid.
+   *
+   * @param pressureBara pressure in bara
+   * @return initialized water fluid
+   */
+  private SystemInterface water(double pressureBara) {
+    SystemInterface fluid = new SystemSrkEos(298.15, pressureBara);
+    fluid.addComponent("water", 1.0);
     fluid.setMixingRule("classic");
     fluid.init(0);
     return fluid;

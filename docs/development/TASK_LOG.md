@@ -1695,3 +1695,7 @@ component inventory, normalization, equilibrium, repeated state changes and pump
 **Documentation impact:** Flow-setter guide and TP-flash algorithm document the corrected
 inventory scaling, bounded failure handling and candidate transfer. Exact-head CI and paired
 full-flash/process timings are recorded in PR 4320; this is not a global stability certificate.
+
+Current-master integration (`b0de5165`) also passes the expanded regression set, including
+network topology, well-flow and named-component wax fraction coverage. Both numerical fixes
+and strict recovery qualification are retained; generated engineering coverage is rebuilt.
