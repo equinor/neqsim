@@ -350,6 +350,8 @@ Given a reference fluid with $N$ pseudo-components having boiling points $T_{b,1
 **Step 1**: Calculate boundary boiling points:
 $$T_{boundary,k} = \frac{T_{b,k} + T_{b,k+1}}{2}, \quad k = 1, ..., N-1$$
 
+The optional `sharedImaginaryBoundaries` setting instead uses discrete mass-quantile candidates from a delumped reference, projected strictly inside each adjacent reference gap when possible. Projection preserves reference ordering but does not guarantee equal final cut masses. See [constrained mass-quantile reference boundaries](../../pvtsimulation/fluid_characterization_mathematics.md#equal-mass-reference-boundaries-sharedimaginaryboundaries) for the fallback cases and conservation limits.
+
 **Step 2**: Assign source pseudo-components to bins:
 - Bin 1: all components with $T_b \leq T_{boundary,1}$
 - Bin $k$: all components with $T_{boundary,k-1} < T_b \leq T_{boundary,k}$

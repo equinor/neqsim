@@ -157,20 +157,18 @@ public class CharacterizationOptions {
   }
 
   /**
-   * Whether the reference cut boundaries should be placed as carbon-number-based equal-mass cuts on the reference
-   * fluid's imaginary (fine-resolution) composition, instead of the simple boiling-point midpoints between adjacent
-   * reference pseudo-components.
+   * Whether the reference cut boundaries should use constrained mass quantiles of the reference fluid's imaginary
+   * composition instead of boiling-point midpoints.
    *
    * <p>
-   * Disabled by default (boiling-point midpoints are used). When {@code true}, the reference is the single
-   * representative composition (NFLUID = 1) of the Pedersen et al. (Chapter 5.6) common-slate scheme: each reference
-   * pseudo-component is delumped into {@link #getDelumpResolution()} single-carbon-number sub-fractions to rebuild the
-   * imaginary molar composition (Eqs. 5.58-5.59), and the cut points are then placed so each cut carries an equal mass
-   * fraction (Section 5.3). Each boundary is clamped to lie strictly between the two adjacent reference
-   * pseudo-component sorting keys, so the strict one-to-one property-inheritance mapping is preserved even when the
-   * reference lumps are not equal in mass.
+   * Disabled by default. When enabled, each reference pseudo-component is delumped into {@link #getDelumpResolution()}
+   * synthetic sub-fractions. Discrete mass quantiles provide the candidate cut points. A finite candidate outside its
+   * reference gap is projected to the nearest representable value strictly inside that gap, preserving the one-to-one
+   * property-inheritance mapping for distinct keys with a representable interior. These constraints and the discrete
+   * sub-fractions mean the final cuts need not contain equal masses. Missing/non-finite candidates, degenerate gaps and
+   * resolutions of 1 or less retain the boiling-point midpoint fallback.
    *
-   * @return true if equal-mass cut points on the reference imaginary composition should be used
+   * @return true if constrained mass-quantile reference boundaries should be used
    */
   public boolean isSharedImaginaryBoundaries() {
     return sharedImaginaryBoundaries;
@@ -336,18 +334,15 @@ public class CharacterizationOptions {
     }
 
     /**
-     * Set whether the reference cut boundaries should be placed as carbon-number-based equal-mass cuts on the reference
-     * fluid's imaginary (fine-resolution) composition, instead of the simple boiling-point midpoints between adjacent
-     * reference pseudo-components.
+     * Set whether reference cut boundaries use constrained mass quantiles instead of boiling-point midpoints.
      *
      * <p>
-     * Disabled by default. Enable to follow the Pedersen et al. (Chapter 5.6) common-slate cut-point rule (Eqs.
-     * 5.58-5.59 with NFLUID = 1, Section 5.3 equal-mass lumping) for the reference-only path. The
-     * {@link #delumpResolution(int) delump resolution} controls how finely each reference lump is split when rebuilding
-     * the imaginary composition. Boundaries are clamped between adjacent reference pseudo-component sorting keys so the
-     * property-inheritance mapping stays one-to-one.
+     * Disabled by default. The {@link #delumpResolution(int) delump resolution} controls the reference grid used to
+     * rebuild the imaginary composition. Finite candidates are projected into the representable interior of each
+     * reference gap; clamping may prevent equal final cut masses. See
+     * {@link CharacterizationOptions#isSharedImaginaryBoundaries()} for the ordering constraint and fallback cases.
      *
-     * @param shared true to use equal-mass cut points on the reference imaginary composition
+     * @param shared true to use constrained mass-quantile reference boundaries
      * @return this builder
      */
     public Builder sharedImaginaryBoundaries(boolean shared) {
