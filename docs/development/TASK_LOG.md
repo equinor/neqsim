@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Isolate evidence routing tests from optional agent installations
+**Type:** G (Workflow)
+**Keywords:** evidence-source-cues, hermetic tests, plugin discovery, production guard, CI, PR 4312
+**Solution:** `devtools/test_evidence_sources.py` and `.github/workflows/devtools_tests.yml`.
+**Notes:** The validator loads cue declarations from discovered agents; public CI has no optional provider catalog. Tests now supply a temporary synthetic catalog and isolate checkout, installed-agent and plugin roots while exercising real discovery and parsing. Cover missing catalogs, plugin-only aliases, duplicate/invalid cues and invalid statuses. Keep provider routing policy out of the validator. Include the production-envelope guard and persistent-ledger regression suite in Devtools CI.
+
 ### 2026-10-11 — Review source routing and reusable tie-back guidance
 **Type:** E (Feature)
 **Keywords:** source attribution, evidence routing, duplicate manifest, VFP, host model, regression
