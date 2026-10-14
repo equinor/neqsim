@@ -1681,8 +1681,8 @@ The shielding solve now checks a relative residual and starts from the
 Debye–Hückel upper bound; zero ionic inventory has exactly zero shielding.
 The model checker evaluates every phase and derivative entry, rejects non-finite
 values and compares independent numerical trials without changing the source fluid.
-Validation: 189 tests passed across 17 targeted model, mixed-brine inventory,
-parameter-selection, extensivity and diagnostic classes, including 30 new
+Validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
+parameter-selection, extensivity and diagnostic classes, including 34 new
 regressions and the 28 slow electrolyte CPA tests enabled explicitly.
 A follow-up initialized-derivative check exposed stale electrolyte/CPA caches after
 the final volume solve. Derivative initialization now refreshes those caches at the
@@ -1690,6 +1690,14 @@ returned volume, without changing the volume root or solver tolerances. The lega
 CPA test fixture explicitly initializes composition derivatives; its previous zero
 caches could falsely pass the Gibbs–Duhem check. Two regressions fail before this
 repair and pass afterward, including detached repeated initialization.
+Three-phase qualification then exposed shared association-derivative rows in
+electrolyte CPA clones and shared fugacity composition-derivative caches in base
+component clones. Both now preserve cached values in independently owned arrays.
+Four added regressions cover full-cache preservation, mutation isolation and
+fugacity-derivative invariance under either liquid-phase initialization order;
+each fails before its repair. Independent fixed-state finite differences confirm
+the repaired Jacobian. This qualifies component derivative ownership, not general
+concurrent safety of cloned phase workspaces.
 Independent agent review checked the analytical derivation and cache lifecycle;
 this is not domain-maintainer approval.
 Documentation impact: updated the electrolyte CPA guide and Born-derivative guide

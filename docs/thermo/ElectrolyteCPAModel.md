@@ -187,6 +187,11 @@ consistency checks. A flash followed only by `initProperties()` may leave those
 arrays uninitialized. Derivative initialization refreshes electrolyte and CPA
 association caches at the final returned volume; repeated initialization and
 detached copies are covered by the final-volume regression tests.
+Component clones preserve fugacity composition-derivative caches in independently
+owned arrays. Electrolyte CPA component clones also own their association-composition
+derivative rows, so initializing one liquid phase cannot overwrite another phase's
+component derivatives. This does not qualify concurrent access to all cloned phase
+workspaces.
 
 ## Short-Range Interaction Parameters (Wij)
 
