@@ -203,9 +203,11 @@ writes to a control system and every proposal carries `requires_approval`.
   cycle/optimizer identity, action-id/setpoint binding, complete uniquely addressed slices, safe recovery of every
   sampled point, and reconciled point/evaluation/runtime totals before the existing ledger persists it. A supplied
   block is always validated even when the setting is false; never copy envelope evidence into a later cycle.
-  Map production/injection route line-ups, controlled reservoir-lifecycle boundaries, and operating-limit files to
+  Map production/injection route line-ups, controlled reservoir-lifecycle boundaries, mapped rotating-equipment
+  power, common-shaft speed/power, driver limits, shared host-power limits, and other operating-limit files to
   `guard` with dependencies on the model update, optimizer, gates, and constraints. Keep route selectors as process
-  actions and reservoir pressure as a model input owned by `WellFlow.ReservoirLayer`. On a detected relevant revision
+  actions, reservoir pressure as a model input owned by `WellFlow.ReservoirLayer`, and mapped equipment power as
+  solved evidence read from the canonical `ProcessModel.getPower(...)` path. On a detected relevant revision
   the append-only ledger marks old validation evidence non-current
   and supersedes unfinished advice before persisting a replacement. Only a newly guarded point becomes a separate
   `proposed` item with `revalidation_of`; if no safe replacement exists, expose none and never retain stale advice.

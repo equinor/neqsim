@@ -479,13 +479,31 @@ brownfield field qualification.
 The same line-up contract is exercised for a live two-zone water injector. Primary,
 brownfield and dual-path injection configurations feed one canonical live injection-well
 node and preserve the existing `WellFlow` zone allocation contract.
+The injection source now includes a typed `FieldNetworkTopology.addPumpWithCurve(...)`
+edge backed by the existing `Pump` and `PumpChart` model. The corresponding
+`addCompressorWithChart(...)` builder registers an existing mapped `Compressor` on the
+same canonical topology. Both builders require an enabled chart before mutating the graph,
+preserve the configured model object, stable equipment tag and edge identity, and leave
+route-local hydraulic selection unchanged. Fixed-pressure and fixed-differential-pressure
+pump builders remain available for screening cases.
+
+`LoopedPipeNetwork.getPower(...)` aggregates the solved shaft power of its compressor and
+pump edges. `FieldWellNetworkProcessUnit` exposes that same demand, and normal
+`ProcessSystem` / `ProcessModel` power aggregation includes both standalone canonical
+networks and wrapped live well networks. Shared host-power evidence can therefore include
+mapped injection pumps and mapped production compressors without copying them into a
+parallel facility model. Non-finite rotating-equipment power propagates as non-finite total
+demand, and an unsolved network containing rotating equipment likewise reports non-finite
+power, so a shared-resource constraint fails closed.
+
 `WellFlow.ReservoirLayer.setReservoirPressure(...)` updates the layer boundary and its
 owning reservoir stream together for controlled repeated lifecycle solves. It does not
 change injectivity, fracture pressure, composition, topology or hydraulic fidelity. The
-synthetic acceptance checks selected-path flow, dual-path flow, zone allocation, fracture
-limits, exact route restoration, mass conservation and the expected lower injectivity at
-higher reservoir pressure; it is not injectivity, fracture, outage or brownfield
-qualification.
+synthetic acceptance checks the live pump curve and finite pump power, `ProcessModel`
+shared-power visibility, selected-path flow, dual-path flow, zone allocation, fracture limits,
+exact route restoration, mass conservation and the expected lower injectivity at higher
+reservoir pressure. The curve is synthetic integration input; this is not vendor-map,
+injectivity, fracture, outage or brownfield qualification.
 
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
 well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
@@ -510,9 +528,10 @@ physical limits to obtain a feasible optimizer result.
    controlled reservoir-pressure updates without duplicating reservoir ownership.
    The canonical multi-edge line-up contract now supports branch/loop outage and brownfield
    actions through #4188/#3154 optimization and is exercised on live production and
-   multi-zone injection wells with controlled reservoir-pressure updates. Next scale the
-   same contract to qualified pump/compressor maps, shared host constraints and multi-period
-   lifecycle evidence.
+   multi-zone injection wells with controlled reservoir-pressure updates. Typed configured
+   pump/compressor maps and shared `ProcessModel` power accounting are now supported; next
+   qualify those maps and scale the same contract to shared host capacity constraints and
+   multi-period lifecycle evidence.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic

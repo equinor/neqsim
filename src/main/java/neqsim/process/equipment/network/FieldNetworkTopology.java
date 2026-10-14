@@ -18,6 +18,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pump.Pump;
 
 /**
  * Typed field and SURF identity view over a {@link LoopedPipeNetwork}.
@@ -647,6 +649,40 @@ public final class FieldNetworkTopology implements Serializable {
   }
 
   /**
+   * Add a typed liquid pump backed by a configured NeqSim pump curve.
+   *
+   * <p>
+   * The supplied {@link Pump} remains the owner of head, efficiency and NPSH behavior. This method only registers its
+   * existing canonical network edge with stable field identity; it does not copy the curve or introduce another pump
+   * model.
+   * </p>
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing suction node identifier
+   * @param fromPort named suction-node port
+   * @param toNode existing discharge node identifier
+   * @param toPort named discharge-node port
+   * @param pump configured pump with an enabled performance curve
+   * @return created canonical curve-backed pump element
+   */
+  public LoopedPipeNetwork.NetworkPipe addPumpWithCurve(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort, Pump pump) {
+    if (pump == null || pump.getPumpChart() == null || !pump.getPumpChart().isUsePumpChart()) {
+      throw new IllegalArgumentException("Curve-backed pump requires an enabled pump chart");
+    }
+    validateEdgeMetadata(equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe networkPump = hydraulicNetwork.addPumpWithCurve(fromNode, toNode, id, pump);
+    putEdge(id, equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    return networkPump;
+  }
+
+  /**
    * Add a typed gas compressor or booster using the canonical network compressor equations.
    *
    * @param id stable edge identifier
@@ -672,6 +708,43 @@ public final class FieldNetworkTopology implements Serializable {
         polytropicEfficiency);
     putEdge(id, equipmentTag, EdgeRole.COMPRESSOR, service, flowDirection, fromPort, toPort);
     return compressor;
+  }
+
+  /**
+   * Add a typed gas compressor backed by a configured NeqSim compressor chart.
+   *
+   * <p>
+   * The supplied {@link Compressor} remains the owner of chart interpolation, surge, stonewall, speed and efficiency
+   * behavior. This method registers that same model on the canonical field edge without copying or simplifying its
+   * chart.
+   * </p>
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service production, injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing suction node identifier
+   * @param fromPort named suction-node port
+   * @param toNode existing discharge node identifier
+   * @param toPort named discharge-node port
+   * @param compressor configured compressor with an enabled performance chart
+   * @return created canonical chart-backed compressor element
+   */
+  public LoopedPipeNetwork.NetworkPipe addCompressorWithChart(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort,
+      Compressor compressor) {
+    if (compressor == null || compressor.getCompressorChart() == null
+        || !compressor.getCompressorChart().isUseCompressorChart()) {
+      throw new IllegalArgumentException("Chart-backed compressor requires an enabled compressor chart");
+    }
+    validateEdgeMetadata(equipmentTag, EdgeRole.COMPRESSOR, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe networkCompressor = hydraulicNetwork.addCompressorWithChart(fromNode, toNode, id,
+        compressor);
+    putEdge(id, equipmentTag, EdgeRole.COMPRESSOR, service, flowDirection, fromPort, toPort);
+    return networkCompressor;
   }
 
   /**

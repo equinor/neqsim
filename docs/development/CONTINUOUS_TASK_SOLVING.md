@@ -979,8 +979,9 @@ compatibility; a supplied envelope is always validated strictly. Accepted propos
 the existing append-only ledger, so resume and evidence-change cycles do not depend on chat history or a second
 state store.
 
-Map every file that defines routing, constraints, limits, or model inputs to the production `guard`, and declare
-the production-stage dependencies that must rebuild its evidence:
+Map every file that defines routing, constraints, limits, or model inputs to the production `guard`, including
+mapped network pump/compressor power, common-shaft speed and power, driver limits, and shared host-power limits.
+Declare the production-stage dependencies that must rebuild its evidence:
 
 ```yaml
 evidence:
@@ -997,9 +998,12 @@ evidence:
 ```
 
 `neqsim task-update <task>` then reruns the model, optimizer, constraints, and guard while retaining unrelated
-cycle results. Map production and injection line-ups plus controlled reservoir-lifecycle boundaries through the same
-rule. The route selectors remain discrete process actions, while reservoir pressure remains a model input synchronized
-through its owning `WellFlow.ReservoirLayer`; the task layer does not duplicate well or network physics. Before any
+cycle results. Map production and injection line-ups plus controlled reservoir-lifecycle boundaries and host-power
+definitions through the same rule. The route selectors remain discrete process actions, while reservoir pressure
+remains a model input synchronized through its owning `WellFlow.ReservoirLayer`. Read mapped network and standalone
+rotating-equipment demand from the canonical `ProcessModel.getPower(...)` result and preserve the common-shaft,
+driver, and shared-resource evidence; the task layer does not duplicate well, network, or rotating-equipment physics.
+Non-finite mapped demand or a driver/shared-power breach produces no replacement proposal. Before any
 replacement advice is persisted, the append-only ledger marks prior optimizer/envelope evidence
 `evidence_current: false`. Unfinished advice is superseded and cannot remain the current incumbent. A replacement
 is a new `proposed` ledger item with `revalidation_of`, the changed evidence paths, the new cycle identity, and a

@@ -51,6 +51,7 @@ def run(ctx):
 
 STAGE_OPTIMIZE = '''
 def run(ctx):
+    import math
     import os
     import yaml
 
@@ -60,14 +61,28 @@ def run(ctx):
     production_route = float(config.get("production_route_configuration", 0.0))
     injection_route = float(config.get("injection_route_configuration", 0.0))
     reservoir_pressure_bara = float(config.get("reservoir_pressure_bara", 150.0))
+    mapped_network_power_kw = float(config.get("mapped_network_power_kw", 120.0))
+    common_shaft_power_kw = float(config.get("common_shaft_power_kw", 900.0))
+    common_shaft_speed_rpm = float(config.get("common_shaft_speed_rpm", 9000.0))
+    driver_power_limit_kw = float(config.get("driver_power_limit_kw", 1100.0))
+    shared_plant_power_limit_kw = float(config.get("shared_plant_power_limit_kw", 1200.0))
+    shared_plant_power_kw = mapped_network_power_kw + common_shaft_power_kw
+    host_power_values = [mapped_network_power_kw, common_shaft_power_kw,
+                         common_shaft_speed_rpm, driver_power_limit_kw,
+                         shared_plant_power_limit_kw, shared_plant_power_kw]
+    host_power_finite = all(math.isfinite(value) for value in host_power_values)
     accepted_values = [0.5, production_route, injection_route]
     optimizer_evidence = {
         "cycle_id": ctx.cycle_id,
         "simulation_converged": True,
-        "candidate_feasible": (production_route in (0.0, 1.0)
+        "candidate_feasible": (host_power_finite
+                               and production_route in (0.0, 1.0)
                                and injection_route in (0.0, 1.0, 2.0)
-                               and reservoir_pressure_bara > 0.0),
-        "candidate_finite": True,
+                               and reservoir_pressure_bara > 0.0
+                               and common_shaft_speed_rpm > 0.0
+                               and common_shaft_power_kw <= driver_power_limit_kw
+                               and shared_plant_power_kw <= shared_plant_power_limit_kw),
+        "candidate_finite": host_power_finite,
         "constraint_evidence_complete": True,
         "state_restore_complete": True,
         "accepted_point_replayed": True,
@@ -78,6 +93,12 @@ def run(ctx):
             "production_route_configuration": production_route,
             "injection_route_configuration": injection_route,
             "reservoir_pressure_bara": reservoir_pressure_bara,
+            "mapped_network_power_kw": mapped_network_power_kw,
+            "common_shaft_power_kw": common_shaft_power_kw,
+            "common_shaft_speed_rpm": common_shaft_speed_rpm,
+            "driver_power_limit_kw": driver_power_limit_kw,
+            "shared_plant_power_kw": shared_plant_power_kw,
+            "shared_plant_power_limit_kw": shared_plant_power_limit_kw,
         },
     }
     point = {
@@ -94,17 +115,30 @@ def run(ctx):
         "accepted_action_ids": ["p3_barg", "configuration.field.selection",
                                 "configuration.injector route.selection"],
         "accepted_candidate_values": accepted_values,
-        "slice_count": 2,
-        "requested_point_count": 2,
-        "completed_point_count": 2,
-        "envelope_evaluation_count": 2,
-        "envelope_runtime_seconds": 0.2,
-        "total_evaluation_count": 14,
+        "slice_count": 3,
+        "requested_point_count": 3,
+        "completed_point_count": 3,
+        "envelope_evaluation_count": 3,
+        "envelope_runtime_seconds": 0.3,
+        "total_evaluation_count": 15,
         "slices": [
             {
                 "study_id": "field-envelope",
                 "candidate_evaluator_id": "field-actions",
                 "axis_action_ids": ["p3_barg", "configuration.field.selection"],
+                "anchor_values": accepted_values,
+                "requested_point_count": 1,
+                "completed_point_count": 1,
+                "evaluation_count": 1,
+                "runtime_seconds": 0.1,
+                "outcome": "COMPLETE",
+                "complete": True,
+                "points": [point],
+            },
+            {
+                "study_id": "field-envelope",
+                "candidate_evaluator_id": "field-actions",
+                "axis_action_ids": ["p3_barg"],
                 "anchor_values": accepted_values,
                 "requested_point_count": 1,
                 "completed_point_count": 1,
@@ -153,7 +187,12 @@ def _task(tmp_path, resid=1.0, limit=0.70):
     (task / "study_config.yaml").write_text(
         "production_route_configuration: 0.0\n"
         "injection_route_configuration: 0.0\n"
-        "reservoir_pressure_bara: 150.0\n", encoding="utf-8")
+        "reservoir_pressure_bara: 150.0\n"
+        "mapped_network_power_kw: 120.0\n"
+        "common_shaft_power_kw: 900.0\n"
+        "common_shaft_speed_rpm: 9000.0\n"
+        "driver_power_limit_kw: 1100.0\n"
+        "shared_plant_power_limit_kw: 1200.0\n", encoding="utf-8")
     make_living(str(task), template="production")
     cont = task / "continuous"
     (cont / "stages" / "model_update.py").write_text(STAGE_UPDATE.replace('ctx.plan["_resid"]', str(resid)))
@@ -286,11 +325,12 @@ def test_cycle_keeps_only_safe_proposals(tmp_path):
     assert envelope["accepted_action_ids"] == [
         "p3_barg", "configuration.field.selection", "configuration.injector route.selection"]
     assert envelope["accepted_candidate_values"] == [0.5, 0.0, 0.0]
-    assert envelope["total_evaluation_count"] == 14
+    assert envelope["slice_count"] == 3
+    assert envelope["total_evaluation_count"] == 15
     assert safe["evidence_current"] is True
 
 
-def test_selective_production_injection_and_limit_revisions_supersede_stale_advice(tmp_path):
+def test_selective_field_route_power_and_limit_revisions_supersede_stale_advice(tmp_path):
     from neqsim_continuous import cli
 
     task = _task(tmp_path)
@@ -347,6 +387,35 @@ def test_selective_production_injection_and_limit_revisions_supersede_stale_advi
     assert third_item["accepted_point_envelope_evidence"]["accepted_candidate_values"] == [0.5, 1.0, 2.0]
     operating_definition = third_item["optimizer_evidence"]["operating_definition"]
     assert operating_definition["reservoir_pressure_bara"] == 175.0
+    assert operating_definition["mapped_network_power_kw"] == 120.0
+    assert operating_definition["common_shaft_power_kw"] == 900.0
+    assert operating_definition["shared_plant_power_kw"] == 1020.0
+
+    config["mapped_network_power_kw"] = 400.0
+    with open(config_path, "w", encoding="utf-8") as config_file:
+        yaml.safe_dump(config, config_file, sort_keys=False)
+
+    assert cli.main(["update", task, "--no-agent"]) == 0
+    items = Ledger(ledger_path).current()
+    assert items[third_id]["status"] == "superseded"
+    assert items[third_id]["evidence_current"] is False
+    assert not [item for item in items.values()
+                if item["status"] == "proposed" and item.get("evidence_current")]
+
+    config["shared_plant_power_limit_kw"] = 1400.0
+    with open(config_path, "w", encoding="utf-8") as config_file:
+        yaml.safe_dump(config, config_file, sort_keys=False)
+
+    assert cli.main(["update", task, "--no-agent"]) == 0
+    items = Ledger(ledger_path).current()
+    current = [(key, item) for key, item in items.items() if item["status"] == "proposed"]
+    assert len(current) == 1
+    fourth_id, fourth_item = current[0]
+    assert fourth_item["revalidation_of"] == third_id
+    power_definition = fourth_item["optimizer_evidence"]["operating_definition"]
+    assert power_definition["mapped_network_power_kw"] == 400.0
+    assert power_definition["shared_plant_power_kw"] == 1300.0
+    assert power_definition["shared_plant_power_limit_kw"] == 1400.0
 
     goal_path = os.path.join(task, "continuous", "goal.yaml")
     with open(goal_path, encoding="utf-8") as goal_file:
@@ -357,14 +426,36 @@ def test_selective_production_injection_and_limit_revisions_supersede_stale_advi
 
     assert cli.main(["update", task, "--no-agent"]) == 0
     items = Ledger(ledger_path).current()
-    assert items[third_id]["status"] == "superseded"
-    assert items[third_id]["evidence_current"] is False
+    assert items[fourth_id]["status"] == "superseded"
+    assert items[fourth_id]["evidence_current"] is False
     assert not [item for item in items.values()
                 if item["status"] == "proposed" and item.get("evidence_current")]
     with open(os.path.join(task, "continuous", "LIVING_REPORT.md"), encoding="utf-8") as report_file:
         report = report_file.read()
     assert "| Evidence |" in report
     assert "stale since" in report
+
+
+def test_non_finite_mapped_network_power_invalidates_without_replacement(tmp_path):
+    from neqsim_continuous import cli
+
+    task = _task(tmp_path)
+    run_cycle(task, no_agent=True)
+    ledger_path = os.path.join(task, "continuous", "ledger", "events.jsonl")
+    first_id = next(iter(Ledger(ledger_path).current()))
+    config_path = os.path.join(task, "study_config.yaml")
+    with open(config_path, encoding="utf-8") as config_file:
+        config = yaml.safe_load(config_file)
+    config["mapped_network_power_kw"] = float("nan")
+    with open(config_path, "w", encoding="utf-8") as config_file:
+        yaml.safe_dump(config, config_file, sort_keys=False)
+
+    assert cli.main(["update", task, "--no-agent"]) == 0
+    items = Ledger(ledger_path).current()
+    assert items[first_id]["status"] == "superseded"
+    assert items[first_id]["evidence_current"] is False
+    assert not [item for item in items.values()
+                if item["status"] == "proposed" and item.get("evidence_current")]
 
 
 def test_malformed_evidence_sensitivity_configuration_invalidates_fail_closed(tmp_path):

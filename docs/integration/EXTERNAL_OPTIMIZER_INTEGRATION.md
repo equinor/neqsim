@@ -1102,9 +1102,13 @@ baseline recovery, unique axes, and reconciled point/evaluation/runtime totals b
 the proposal. A later route, limit or evidence revision must run a new cycle and produce a fresh block; a stale
 cycle id, mismatched action vector, or copied partial slice is withheld rather than resumed as a current candidate.
 For a persistent field study, map production/injection route line-ups, controlled reservoir-lifecycle boundaries,
-and `continuous/goal.yaml` limits to the living-task `guard`, with dependencies on the model update, optimizer,
+mapped network pump/compressor power, common-shaft speed/power, driver limits, shared host-power limits, and
+`continuous/goal.yaml` limits to the living-task `guard`, with dependencies on the model update, optimizer,
 gates, and constraints. Canonical route selectors remain discrete process actions; reservoir pressure remains a model
-input synchronized by its owning `WellFlow.ReservoirLayer`. A detected revision first appends
+input synchronized by its owning `WellFlow.ReservoirLayer`. Mapped field-network and standalone rotating-equipment
+power remains solved evidence from `ProcessModel.getPower(...)`, with the existing common-shaft and shared-resource
+constraint evidence retained. Do not copy map or driver physics into the task layer. Non-finite power evidence or an
+exceeded driver/shared-power limit fails closed without replacement advice. A detected revision first appends
 an evidence-invalidation event for the old ledger item. Unfinished advice is superseded; a new item is proposed only
 after the revised full-model point and envelope pass the same guard. The replacement carries `revalidation_of` and
 the changed paths, so an earlier approval is never silently transferred to new setpoints or a new physical limit.

@@ -86,6 +86,12 @@ The same selector works for live `WellFlow` injection networks. Update a zone's
 lifecycle boundary through `WellFlow.ReservoirLayer.setReservoirPressure(...)` so
 the layer pressure and its reservoir stream remain synchronized; do not change the
 public pressure field alone in a repeated coupled calculation.
+Register configured rotating-equipment maps with
+`FieldNetworkTopology.addPumpWithCurve(...)` and `addCompressorWithChart(...)` so the
+existing `Pump`/`Compressor` remains the chart owner under the canonical edge identity.
+`ProcessModel.getPower(...)` includes solved pump/compressor demand inside standalone
+`LoopedPipeNetwork` and wrapped `FieldWellNetworkProcessUnit` equipment; use that total
+for shared host-power evidence and fail closed on non-finite map results.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
