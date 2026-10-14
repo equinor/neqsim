@@ -3,8 +3,6 @@ title: "NeqSim Requests for Comments"
 description: "Architecture proposals and recorded decisions, with explicit status and qualification boundaries."
 ---
 
-# NeqSim Requests for Comments
-
 Follow the [NRC process](../development/rfc-process.md) and
 [repository governance](../../GOVERNANCE.md). Proposal presence or merge does not
 establish acceptance; read each decision record. Acceptance is architectural agreement,

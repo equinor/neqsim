@@ -30,7 +30,7 @@ A numerically smaller residual does not justify adopting an inadmissible or unco
 Two current PRs cross the thermodynamics/process ownership boundary:
 
 - #4306 changes clone ownership, phase reuse, numerical trials and flash recovery. Its actual
-  patch against the baseline master also changes `MultiStreamHeatExchanger.run(UUID)):
+  patch against the baseline master also changes `MultiStreamHeatExchanger.run(UUID)`:
   inactive streams are excluded from heat balances, bypass their inlet state, and contribute
   zero duty; fewer than two active streams give zero duty; recursive calculation preserves
   the caller's calculation identity.
