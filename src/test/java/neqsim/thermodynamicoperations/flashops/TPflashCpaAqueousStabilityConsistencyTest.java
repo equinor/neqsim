@@ -21,13 +21,22 @@ class TPflashCpaAqueousStabilityConsistencyTest {
       SystemInterface poorGuess = createAndFlash(state[0], state[1], state[2], state[3], false, true);
 
       assertBalancedGasAqueousEquilibrium(ordinary);
+      assertBalancedGasAqueousEquilibrium(multiphase);
+      assertBalancedGasAqueousEquilibrium(poorGuess);
       assertEquivalentEquilibrium(multiphase, ordinary);
       assertEquivalentEquilibrium(ordinary, poorGuess);
 
       SystemInterface repeated = ordinary.clone();
       new ThermodynamicOperations(repeated).TPflash();
       repeated.init(3);
+      assertBalancedGasAqueousEquilibrium(repeated);
       assertEquivalentEquilibrium(ordinary, repeated);
+
+      SystemInterface repeatedMultiphase = multiphase.clone();
+      new ThermodynamicOperations(repeatedMultiphase).TPflash();
+      repeatedMultiphase.init(3);
+      assertBalancedGasAqueousEquilibrium(repeatedMultiphase);
+      assertEquivalentEquilibrium(multiphase, repeatedMultiphase);
     }
   }
 

@@ -309,7 +309,8 @@ public final class PlantCommonShaftEvidence implements Serializable {
     if (report != null && !approximatelyEqual(participantSupplyW, report.getOfferedSupply())) {
       findings.add("UNREGISTERED_EXTERNAL_SHAFT_SUPPLY");
     }
-    if (casingTotalAvailable && !approximatelyEqual(casingTotal, reportDemandKw)) {
+    if (casingTotalAvailable && !approximatelyEqual(casingTotal, reportDemandKw)
+        && !(Math.abs(casingTotal - reportDemandKw) <= builder.powerBalanceToleranceKw)) {
       findings.add("CASING_TOTAL_MISMATCH expected=" + reportDemandKw + " captured=" + casingTotal);
     }
     totalShaftLoadKw = Double.isFinite(reportDemandKw) ? reportDemandKw + builder.shaft.getFrictionLoss() / 1000.0
@@ -351,12 +352,12 @@ public final class PlantCommonShaftEvidence implements Serializable {
       findings.add("INVALID_DRIVER_SPEED_ENVELOPE");
     }
 
+    diagnostics = Collections.unmodifiableList(new ArrayList<String>(findings));
     List<PlantConstraintDefinition> capturedDefinitions = buildDefinitions(builder);
     List<PlantConstraintSample> capturedSamples = buildSamples(builder, capturedDefinitions, maximumSpeedDeviation,
         findings.isEmpty());
     definitions = Collections.unmodifiableList(capturedDefinitions);
     samples = Collections.unmodifiableList(capturedSamples);
-    diagnostics = Collections.unmodifiableList(new ArrayList<String>(findings));
     status = findings.isEmpty() ? Status.AVAILABLE : Status.INCOMPLETE;
   }
 
@@ -606,8 +607,8 @@ public final class PlantCommonShaftEvidence implements Serializable {
   private PlantConstraintSample unavailableSample(PlantConstraintDefinition definition, String sampleProvenance) {
     return PlantConstraintSample.builder(definition.getQualifiedId(), calculationId)
         .status(PlantConstraintSample.SampleStatus.NOT_CALCULABLE).unit(definition.getUnit())
-        .basis(definition.getBasis()).provenance(sampleProvenance).diagnostic("Common-shaft evidence is incomplete")
-        .build();
+        .basis(definition.getBasis()).provenance(sampleProvenance)
+        .diagnostic("Common-shaft evidence is incomplete: " + diagnostics).build();
   }
 
   private static double torque(double powerKw, double speedRpm) {
@@ -970,7 +971,9 @@ public final class PlantCommonShaftEvidence implements Serializable {
     }
 
     /**
-     * Sets the maximum accepted unmet shaft load.
+     * Sets the maximum accepted unmet shaft load and absolute tolerance for casing-to-allocation and total-power
+     * consistency. The total-power check uses this tolerance once for the whole train, not once per casing. The
+     * existing relative floating-point matching tolerance also applies to power consistency checks.
      *
      * @param value positive tolerance in kW
      * @return this builder

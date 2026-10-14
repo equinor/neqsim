@@ -99,7 +99,7 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     feed.setFlowRate(3781.0149, "kg/hr");
     feed.run();
     assertAqueousEquilibrium(feed.getFluid());
-    feed.getFluid().init(3);
+    feed.getFluid().init(2);
     double inletEntropy = feed.getFluid().getEntropy();
     // Enthalpy/entropy use the EOS volume; the volume-corrected transport density is a different reference.
     double hydraulicPower = feed.getFluid().getVolume("m3") * (19.0 - 2.67) * 1.0e5 / 1000.0;
@@ -159,8 +159,180 @@ class TPflashMissingAqueousNearBubblePointTest extends neqsim.NeqSimTest {
     assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 0.0);
   }
 
-  private SystemInterface homogeneousOil() {
+  /**
+   * Checks that the aqueous recovery is governed by equilibrium rather than a five-percent water cutoff.
+   */
+  @Test
+  void singleOilRecoveryRetainsDiluteWaterPhase() {
+    SystemInterface fluid = homogeneousOil(diluteWaterInlet(0.007));
+    double referenceGibbs = fluid.getGibbsEnergy();
+    new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
+    assertAqueousEquilibrium(fluid);
+    assertTrue(fluid.getGibbsEnergy() < referenceGibbs - 1.0);
+    double equilibriumGibbs = fluid.getGibbsEnergy();
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    assertEquals(equilibriumGibbs, fluid.getGibbsEnergy(), 1.0e-5);
+  }
+
+  /** Checks dilute-water equilibrium through the public flash and pump APIs. */
+  @Test
+  void diluteWaterPumpHasPositiveWorkAndSmallTemperatureRise() {
+    SystemInterface fluid = diluteWaterInlet(0.007);
+    neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("feed", fluid);
+    feed.setFlowRate(9000.0, "kg/hr");
+    feed.run();
+    assertAqueousEquilibrium(feed.getFluid());
+    feed.getFluid().init(2);
+    double inletEnthalpy = feed.getFluid().getEnthalpy();
+    double inletEntropy = feed.getFluid().getEntropy();
+    Pump pump = new Pump("pump", feed);
+    pump.setOutletPressure(5.2);
+    pump.run();
+    SystemInterface outlet = pump.getOutletStream().getFluid();
+    outlet.init(2);
+    assertTrue(pump.getPower("W") > 0.0);
+    assertTrue(outlet.getTemperature() > feed.getTemperature());
+    assertTrue(outlet.getTemperature() - feed.getTemperature() < 1.0);
+    assertEquals(9000.0, outlet.getFlowRate("kg/hr"), 1.0e-6);
+    assertEquals(5.2, outlet.getPressure(), 1.0e-10);
+    assertEquals(pump.getPower("W"), outlet.getEnthalpy() - inletEnthalpy, 1.0e-6);
+    assertEquals(inletEntropy, outlet.getEntropy(), PSFlash.entropyTolerance(outlet, inletEntropy));
+    assertAqueousEquilibrium(outlet);
+  }
+
+  /** Checks that numerically unresolvable water never allocates a candidate fluid. */
+  @Test
+  void unresolvableWaterRecoveryDoesNotClone() {
+    for (double waterFraction : new double[] {0.0, 1.0e-12,
+        10.0 * neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit}) {
+      SystemInterface fluid = homogeneousOil(diluteWaterInlet(waterFraction));
+      double referenceGibbs = fluid.getGibbsEnergy();
+      SystemInterface guarded = (SystemInterface) java.lang.reflect.Proxy.newProxyInstance(
+          SystemInterface.class.getClassLoader(), new Class<?>[] {SystemInterface.class},
+          (proxy, method, arguments) -> {
+            if ("clone".equals(method.getName())) {
+              throw new AssertionError("Unresolvable water must not trigger a nested flash");
+            }
+            return method.invoke(fluid, arguments);
+          });
+      new TPmultiflash(guarded, false).rescueMetastableOilMissingAqueous();
+      assertEquals(1, fluid.getNumberOfPhases());
+      assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 0.0);
+    }
+  }
+
+  /** Checks that extending the screen does not force an undersaturated aqueous phase. */
+  @Test
+  void diluteWaterRecoveryRejectsUndersaturatedAqueousSeed() {
+    SystemInterface fluid = homogeneousOil(diluteWaterInlet(1.0e-8));
+    double referenceGibbs = fluid.getGibbsEnergy();
+    new TPmultiflash(fluid, false).rescueMetastableOilMissingAqueous();
+    assertEquals(1, fluid.getNumberOfPhases());
+    assertEquals(PhaseType.OIL, fluid.getPhase(0).getType());
+    assertEquals(referenceGibbs, fluid.getGibbsEnergy(), 1.0e-8);
+  }
+
+  /** A converged mixed aqueous stability trial must bypass the rejected full-system recovery. */
+  @Test
+  void undersaturatedCubicWaterRecoveryDoesNotCloneSystem() {
+    for (boolean pengRobinson : new boolean[] {false, true}) {
+      for (double water : new double[] {1e-8, 1e-6}) {
+        SystemInterface fluid = pengRobinson ? new neqsim.thermo.system.SystemPrEos(308.2, 4.7)
+            : new neqsim.thermo.system.SystemSrkEos(308.2, 4.7);
+        fluid.addComponent("methane", 0.03);
+        fluid.addComponent("propane", 0.2);
+        fluid.addComponent("n-butane", 0.3);
+        fluid.addComponent("n-heptane", 0.47 - water);
+        fluid.addComponent("water", water);
+        fluid.setMixingRule("classic");
+        fluid.setMultiPhaseCheck(true);
+        new ThermodynamicOperations(fluid).TPflash();
+        assertTrue(!fluid.hasPhaseType("aqueous"));
+        double gibbs = fluid.getGibbsEnergy();
+        double[] composition = fluid.getMolarComposition();
+        SystemInterface guarded = (SystemInterface) java.lang.reflect.Proxy.newProxyInstance(
+            SystemInterface.class.getClassLoader(), new Class<?>[] {SystemInterface.class},
+            (proxy, method, arguments) -> {
+              if ("clone".equals(method.getName())) {
+                throw new AssertionError("Stable mixed aqueous trial must avoid a candidate system clone");
+              }
+              return method.invoke(fluid, arguments);
+            });
+        new TPmultiflash(guarded, false).rescueMetastableOilMissingAqueous();
+        assertEquals(gibbs, fluid.getGibbsEnergy(), 0.0);
+        org.junit.jupiter.api.Assertions.assertArrayEquals(composition, fluid.getMolarComposition(), 0.0);
+      }
+    }
+  }
+
+  /** Checks entropy continuity after final cleanup leaves a non-equilibrium three-phase condensate. */
+  @Test
+  void condensateEntropyIsContinuousAcrossCleanupBoundary() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(289.17057592049406, 3.0);
+    String[] components = {"methane", "ethane", "propane", "n-butane", "n-pentane", "n-heptane", "n-octane", "water"};
+    double[] composition = {0.03333751952167422, 0.054160101428384885, 0.16166835683018532, 0.2519356897139214,
+        0.19282738794737694, 0.17687766832017773, 0.05152264899091814, 0.07767062724736153};
+    for (int component = 0; component < components.length; component++) {
+      fluid.addComponent(components[component], composition[component]);
+    }
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    fluid.init(2);
+    SystemInterface inletState = fluid.clone();
+    fluid.setPressure(15.0);
+    fluid.setTemperature(297.83);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(2);
+    double lowerEntropy = fluid.getEntropy();
+    fluid = inletState.clone();
+    fluid.setPressure(15.0);
+    fluid.setTemperature(297.84);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertAqueousEquilibrium(fluid);
+    fluid.init(2);
+    assertTrue(fluid.getEntropy() > lowerEntropy);
+    assertTrue(fluid.getEntropy() - lowerEntropy < 0.1, "Entropy must not jump to a metastable phase set");
+  }
+
+  /**
+   * Reduces water while preserving the relative hydrocarbon composition of the public regression feed.
+   *
+   * @param waterFraction overall water mole fraction
+   * @return the dilute-water feed before equilibrium calculation
+   */
+  private SystemInterface diluteWaterInlet(double waterFraction) {
     SystemInterface fluid = inlet();
+    double[] composition = fluid.getMolarComposition();
+    double previousWater = composition[0];
+    for (int component = 1; component < composition.length; component++) {
+      composition[component] *= (1.0 - waterFraction) / (1.0 - previousWater);
+    }
+    composition[0] = waterFraction;
+    fluid.setMolarComposition(composition);
+    fluid.setTemperature(308.2);
+    fluid.setPressure(4.7);
+    return fluid;
+  }
+
+  /**
+   * Creates the oil-only regression state.
+   *
+   * @return a homogeneous oil with aliased inactive slots
+   */
+  private SystemInterface homogeneousOil() {
+    return homogeneousOil(inlet());
+  }
+
+  /**
+   * Initializes an oil-only endpoint after setting its composition.
+   *
+   * @param fluid fluid with the intended overall composition
+   * @return the initialized homogeneous oil with aliased inactive slots
+   */
+  private SystemInterface homogeneousOil(SystemInterface fluid) {
     fluid.setNumberOfPhases(1);
     fluid.setPhaseIndex(0, 1);
     fluid.setPhaseType(0, PhaseType.OIL);

@@ -526,11 +526,22 @@ results = {
     "agent_workflow_plan": {
         # How the task was solved — record the discovered/used agents & workflow
         # (from devtools/skill_search.py + devtools/agent_search.py). Feeds the report.
-        # "agents_used": [{"name": "process.model", "repo": "neqsim", "role": "build flowsheet",
-        #                  "loads_skills": ["neqsim-process-modeling"]}],
+        # `invocation`: "subagent" (invoked through the agent runtime), "pattern"
+        # (its workflow followed by hand - give a `reason`), "skill-only".
+        # The validator warns when a Standard/Comprehensive task lacks this block.
+        # "agents_used": [{"name": "process-model", "repo": "neqsim", "role": "build flowsheet",
+        #                  "invocation": "subagent", "loads_skills": ["neqsim-process-modeling"]},
+        #                 {"name": "enterprise-host-ullage-agent", "repo": "neqsim-enterprise-agents",
+        #                  "role": "host ullage", "invocation": "pattern",
+        #                  "reason": "agent not registered in this VS Code session"}],
         # "workflow_type": "composition_pattern",
-        # "workflow": "process.model -> mechanical.design",
-        # "rationale": "..."
+        # "workflow": "process-model -> mechanical-design",
+        # "rationale": "...",
+        # Governed evidence agents the task text cues (neqsim-task-workflow s5 table); the
+        # validator warns when a cue is present and the agent is neither used nor listed here.
+        # "evidence_sources": [{"agent": "enterprise-thelma-agent", "status": "used"},
+        #                      {"agent": "enterprise-pepo-agent", "status": "no_access",
+        #                       "reason": "PEPO bearer consent not granted"}]
     },
     "figure_captions": {
         # "plot.png": "Description of the figure"
@@ -1394,17 +1405,17 @@ ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 | `devtools/pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`. |
 | `devtools/skill_search.py` | Semantic skill retrieval — TF-IDF + cosine over every SKILL.md `description`. Run `python devtools/skill_search.py "<task title>" --top 5` at the start of a task to load the right skills. Falls back to Jaccard tokens if scikit-learn is missing. |
 | `devtools/validate_task_results.py` | CI gate that mirrors `TaskResultValidator` rules in pure Python. Modes: positional, `--all`, `--changed` (reads `CHANGED_FILES`), `--enterprise-gate`. Warns when `step1_scope_and_research/capability_assessment.md` is missing or unfilled. With `--enterprise-gate` a Standard/Comprehensive task carrying neither a `benchmark_validation` nor a model-vs-plant comparison **fails** instead of warning. Task folders outside the repo are supported (`neqsim --set-task-root`). |
-| `devtools/verify_skill_api_refs.py` | API-drift linter: resolves every fully-qualified `neqsim.*` class reference in `.github/skills/` and `.github/agents/` against the Java source tree and fails on unresolved ones; warns on missing or stale `last_verified`. Bare class names are ignored on purpose (false positives). Runs in `skills_agents_lint.yml`. |
+| `devtools/verify_skill_api_refs.py` | API-drift linter: resolves every fully-qualified `neqsim.*` class reference in `.github/skills/` and `.github/agents/` against the Java source tree and fails on unresolved ones; warns on missing or stale `last_verified`. Bare class names are ignored on purpose (false positives). Runs in `ai-skills-and-agents-lint.yml`. |
 | `neqsim report [TASK_DIR]` | Runs the canonical `devtools/task_template/step3_report/generate_report.py` against **any** task folder (old or new), forwarding `--paper` / `--template PATH` / `--no-template`. Use it instead of copying the generator into a task; equivalent to `--task-dir PATH` / `NEQSIM_TASK_DIR`. |
 | `neqsim work-record [TASK_DIR]` (`devtools/generate_work_record.py`) | Writes `step3_report/WORK_RECORD.md` — the method-and-provenance companion to the report, **generated automatically by every report run** (opt out with `report.work_record: skip`): every script/notebook with purpose, outputs and re-run command; declared source systems and whether their captured evidence exists; collected reference documents; cached data files; key results and figures; an annotated folder map; and the reproduction sequence. Built from the folder so it cannot drift. Hand-written NARRATIVE blocks are preserved on regeneration; `--check` fails while one still holds template text or an artifact is missing. |
-| `.github/workflows/task_quality_gate.yml` | PR gate: runs `validate_task_results.py --changed --enterprise-gate` + `consistency_checker.py` on changed task folders only. |
-| `.github/workflows/task_nip_issues.yml` | On push to master, opens one labelled GitHub issue per newly added `neqsim_improvements.md` (deduped by title). |
+| `.github/workflows/ai-task-quality-gate.yml` | PR gate: runs `validate_task_results.py --changed --enterprise-gate` + `consistency_checker.py` on changed task folders only. |
+| `.github/workflows/ai-auto-open-nip-issues.yml` | On push to master, opens one labelled GitHub issue per newly added `neqsim_improvements.md` (deduped by title). |
 | `step1_scope_and_research/capability_assessment.md` (per task) | Mandatory artifact for Standard/Comprehensive tasks: capability requirements matrix, NeqSim coverage check, gap implementation plan, skills to load. Auto-scaffolded into every new task by `new_task.py`. |
 | `.github/agents/literature-scout.agent.md` | Literature & internal-database scout — pulls papers, standards, and STID/vendor docs into `step1_scope_and_research/references/`, writes `references/manifest.json`, summarises into `notes.md`. |
 | `.github/agents/review.agent.md` | Review agent — grades a task folder before PR (schema, consistency, capability_assessment, notebook execution, figure traceability, repo-memory hits). Read-only. |
 | `devtools/verify_skills_agents.py` | CI lint for `.github/skills/` and `.github/agents/` — enforces YAML front-matter, validates `skill-index.json` references, flags orphan skills. |
 | `devtools/generate_agent_skill_map.py` | Auto-generates `docs/development/AGENT_SKILL_MAP.md` from `Loaded skills:` lines in agent files. CI fails if the map is stale. |
-| `.github/workflows/skills_agents_lint.yml` | PR/push gate that runs the verifier and the map generator; ensures skill↔agent linkage stays accurate. |
+| `.github/workflows/ai-skills-and-agents-lint.yml` | PR/push gate that runs the verifier and the map generator; ensures skill↔agent linkage stays accurate. |
 | `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Past solved tasks (search before starting) |
@@ -1420,7 +1431,7 @@ ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 | `CHANGELOG_AGENT_NOTES.md` | API changes agents need to know about |
 | `src/main/java/neqsim/process/equipment/heatexchanger/heatintegration/` | Pinch analysis (PinchAnalysis, HeatStream) for heat integration |
 | `src/main/java/neqsim/process/equipment/powergeneration/` | Power generation (GasTurbine, SteamTurbine, HRSG, CombinedCycleSystem) |
-| `src/main/java/neqsim/util/agentic/` | Agentic infrastructure (TaskResultValidator, SimulationQualityGate, AgentSession). `AgentBenchmarkSuite` declares reference problems and `AgentBenchmarkRunner` executes them against NeqSim; `AgentBenchmarkRunnerTest` is the CI accuracy gate (`agent_benchmark` job in `verify_build.yml`) and writes `target/agent_benchmark_summary.txt` for the job summary. Reference values are sourced from CoolProp HEOS via `devtools/source_benchmark_references.py` — regenerate them there rather than editing numbers by hand. Only problems whose reference source is **not** prefixed `UNVERIFIED` are asserted on; the two still unverified are underdetermined (no declared flow rate / vessel volume) and stay visible in the summary. |
+| `src/main/java/neqsim/util/agentic/` | Agentic infrastructure (TaskResultValidator, SimulationQualityGate, AgentSession). `AgentBenchmarkSuite` declares reference problems and `AgentBenchmarkRunner` executes them against NeqSim; `AgentBenchmarkRunnerTest` is the CI accuracy gate (`agent_benchmark` job in `core-run-build-test-and-javadoc.yml`) and writes `target/agent_benchmark_summary.txt` for the job summary. Reference values are sourced from CoolProp HEOS via `devtools/source_benchmark_references.py` — regenerate them there rather than editing numbers by hand. Only problems whose reference source is **not** prefixed `UNVERIFIED` are asserted on; the two still unverified are underdetermined (no declared flow rate / vessel volume) and stay visible in the summary. |
 | `.github/agents/reaction-engineering.agent.md` | Reaction engineering systems design |
 | `.github/agents/control-system.agent.md` | Control system and instrumentation design |
 | `.github/agents/emissions-environmental.agent.md` | Emissions calculation and environmental compliance |
@@ -1647,7 +1658,7 @@ git add <the reformatted files>
 - **Package and Update Python**: When the user says "package and update python" or similar, run these commands:
   ```powershell
   .\mvnw.cmd package -DskipTests
-   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.23.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\" -Force
+   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.25.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\" -Force
   ```
   This builds the NeqSim JAR and copies it to the Python neqsim package for immediate use. Note: the runtime loads `lib/*` (flat), so copy the JAR directly into `neqsim\lib\`, not a `java11`/`java8` subfolder.
 
@@ -1894,7 +1905,7 @@ Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early. A
 - **Agent Discovery**: Run `python devtools/agent_search.py "<task title>" --top 8 --json --out step1_scope_and_research/agent_plan.json` to rank the best specialist agents across all repos (neqsim + community + enterprise) — the search output lists the skills each agent loads. Record the chosen agents and the composition/workflow in `capability_assessment.md` §4b/§4c and mirror it into `results.json` `agent_workflow_plan`. Prefer delegating to a specialist agent (so its governance and internal workflow are reused) over re-loading its skills manually. For tasks spanning ≥3 disciplines, compose a declarative workflow via MCP `composeWorkflow`/`composeMultiServerWorkflow` or an `engineering-harness` study instead of a single agent.
 - **Literature & Document Pull**: Use `@literature-scout` to fetch papers, standards, and internal STID/vendor docs into `step1_scope_and_research/references/`. The agent writes `references/manifest.json` and summarises sources into `notes.md`.
 - **Pre-PR Quality Gate**: Before opening a PR for a task, invoke `@review <task folder>` (read-only). It wraps `validate_task_results.py`, `consistency_checker.py`, capability-assessment presence, figure→discussion traceability, and repo-memory hits, returning a PASS/WARN/FAIL grade.
-- **Skills/Agents CI Lint**: `.github/workflows/skills_agents_lint.yml` runs `devtools/verify_skills_agents.py` (front-matter + skill-index reference check) and `devtools/generate_agent_skill_map.py` (auto-generates `docs/development/AGENT_SKILL_MAP.md`) on every PR touching `.github/skills/` or `.github/agents/`. The map is rebuilt from `Loaded skills:` lines in agent files; CI fails if the committed map is stale.
+- **Skills/Agents CI Lint**: `.github/workflows/ai-skills-and-agents-lint.yml` runs `devtools/verify_skills_agents.py` (front-matter + skill-index reference check) and `devtools/generate_agent_skill_map.py` (auto-generates `docs/development/AGENT_SKILL_MAP.md`) on every PR touching `.github/skills/` or `.github/agents/`. The map is rebuilt from `Loaded skills:` lines in agent files; CI fails if the committed map is stale.
 - **Flow Assurance**: For hydrate, wax, asphaltene, corrosion, or pipeline hydraulics analyses, use the `neqsim-flow-assurance` skill for comprehensive patterns covering all flow assurance threats with NeqSim code patterns. Rigorous CO2 corrosion from a brine uses `NorsokM506ElectrolyteBridge` (electrolyte pH + FeCO3 film); per-segment corrosion+scale profiles use `PipeSegmentIntegrity`; mineral scale uses `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator`. See also the `@flow-assurance` agent.
 - **Production Chemistry**: For chemical selection and dosing (scale/corrosion/hydrate/wax/asphaltene inhibitors, H2S and oxygen scavengers, demulsifier, biocide, pH adjuster), cocktail compatibility, minimum effective dose, scavenger breakthrough, oil-in-water dose optimisation, or chemical root-cause of a deposit, use the `neqsim-production-chemistry` skill (`neqsim.process.chemistry`, `neqsim.process.equipment.watertreatment`). Flow assurance sizes the threat; production chemistry sizes the chemical. See also the `@production-chemistry` agent.
 - **Water/Liquid Hammer**: For fast valve closure, ESD, pump trip, check-valve slam, hydraulic surge, or STID/tagreader-based surge screening, use the `neqsim-water-hammer` skill. Prefer `WaterHammerStudy` and MCP `runWaterHammer` for complete workflows that combine route geometry, field-data overrides, event schedules, pressure envelopes, and design-pressure validation.

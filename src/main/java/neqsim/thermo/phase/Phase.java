@@ -106,6 +106,19 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public Phase clone() {
+    Phase clonedPhase = cloneWithoutComponents();
+    for (int i = 0; i < numberOfComponents; i++) {
+      clonedPhase.componentArray[i] = this.componentArray[i].clone();
+    }
+    return clonedPhase;
+  }
+
+  /**
+   * Copies phase-owned state, leaving component copies to the caller's explicit ownership policy.
+   *
+   * @return shallow phase with independent component-array storage and physical-property handler
+   */
+  protected Phase cloneWithoutComponents() {
     Phase clonedPhase = null;
 
     try {
@@ -115,9 +128,6 @@ public abstract class Phase implements PhaseInterface {
     }
 
     clonedPhase.componentArray = this.componentArray.clone();
-    for (int i = 0; i < numberOfComponents; i++) {
-      clonedPhase.componentArray[i] = this.componentArray[i].clone();
-    }
     // System.out.println("cloned length: " + componentArray.length);
     if (physicalPropertyHandler != null) {
       clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();

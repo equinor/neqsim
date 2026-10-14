@@ -2291,6 +2291,36 @@
  "maturation pipeline": [
   "neqsim-capacity-increase-screening"
  ],
+ "exploration strategy": [
+  "neqsim-exploration-strategy-selection"
+ ],
+ "plx sidetrack": [
+  "neqsim-exploration-strategy-selection"
+ ],
+ "apbo": [
+  "neqsim-exploration-strategy-selection",
+  "neqsim-field-economics"
+ ],
+ "value of information": [
+  "neqsim-exploration-strategy-selection",
+  "neqsim-tight-reservoir-test-design"
+ ],
+ "break-even chance of success": [
+  "neqsim-exploration-strategy-selection"
+ ],
+ "tight reservoir": [
+  "neqsim-tight-reservoir-test-design"
+ ],
+ "production test design": [
+  "neqsim-tight-reservoir-test-design"
+ ],
+ "chalk": [
+  "neqsim-tight-reservoir-test-design"
+ ],
+ "flowback chemistry": [
+  "neqsim-tight-reservoir-test-design",
+  "neqsim-production-chemistry"
+ ],
  "mpfm fitter": [
   "neqsim-capacity-and-utilization-analysis"
  ],

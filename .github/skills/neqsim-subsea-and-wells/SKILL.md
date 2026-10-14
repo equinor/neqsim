@@ -9,6 +9,9 @@ last_verified: "2026-08-02"
 Reference for subsea production system design, well mechanical design, SURF cost
 estimation, and tieback analysis using NeqSim.
 
+For platform-drilled extended-reach wells (reach, torque and drag, slot and riser census) see the
+community skill `neqsim-erd-reach-screening`; NeqSim has no torque-and-drag class yet (NIP-1).
+
 ---
 
 ## General well/SURF network integration
@@ -639,6 +642,31 @@ The curve is monotone (no overshoot, flat dead band kept), so `openingForFlowFra
 
 IOC choke data (`enterprise-ioc-bottleneck-utilisation`, `choke.py`): the curve is on the choke surveillance model; its measured-looking `Choke Cv` series equals the curve at the measured opening (ratio 1.000 on 12 wells), so it carries no fouling information. Use the daily PDM choke performance models (Cv from measured flow and dP, ELF/Sachdeva/FlowCurve) for calibration.
 
+## Calibrating a daisy-chained tie-back flowline from historian data
+
+Pattern used for Breidablikk to Grane (two flowlines, templates in series, `PipeBeggsAndBrills` per segment):
+
+- Choke margin of a well = wellhead pressure minus the downstream (template) pressure; a well with less than about 3 bar margin is already back-pressure limited, so rate added elsewhere on the line is lost there first. PDM `WH_DSC_PRESS_BARG` is the wellhead downstream-choke pressure.
+- Fit the effective inner diameter of each segment from the measured template-to-template pressure gradient at the measured rates (fit, do not assume the nominal ID), then check line against line (the two parallel flowlines must reproduce each other's pressures) and common-arrival closure (both lines end at the same arrival pressure).
+- Report the unexplained pressure at the receiving end separately instead of hiding it in the roughness (Breidablikk: 6-14 bar unexplained at the Grane end) and use the calibrated chain only for sensitivity per added rate (+0.9 to +1.8 bar per +1000 Sm3/d).
+- Pair with a topside LP-gas model: LP gas per unit oil often binds before the flowline does.
+- **A second fluid on the same calibrated line is a multiplier, not a new calibration.** Run the added wells as BB-type and as the other field's fluid at the same added rate and report the ratio of mean back-pressure rise (Grane Nord heavy oil, GOR 76, lift 150: 1.8 times Breidablikk oil on the same lines; GOR 250 and lift 180: 3 times). Carry the ratio as an oil-equivalent factor into the profile model and keep it in the Monte Carlo (1.3-2.6).
+- **Third-flowline value flips with the trunk diameter.** With the chain-gradient fit (trunk 0.35 m) the back-pressure relief of a third line is worth +30 to +50 MNOK; with the common-arrival fit (0.40 m) the same line is -260 to -310 MNOK. Report both, do not mix them in a median, and name the Grane-end pressure measurement as the discriminating test.
+
+## Siting a new template next to a second field (Sodir polygons)
+
+Pull `fldName` polygons from the Sodir DataService layer 7100 (`returnGeometry=true`, `outSR=4326`; field `rings`) and compute, with haversine, distance from each existing template to (a) the other field's outline vertices and (b) its extreme vertex (the northern tip). Breidablikk J is 2.8 km from the Grane outline and 3.5 km from its north tip, so Grane Nord targets are inside normal reach of a template at or next to J; a template at the far end of the chain (M) is 8 km away. Use the result to decide placement (daisy chain to the nearest template, `J` curves of the back-pressure table) and to test whether spare slots or the host platform can reach the same targets before a new template is bought. Reach is a screening number: the drilling and well team confirms it.
+
+## Shut-in pressure and pressure-rating gate for HPHT gas/condensate tie-backs
+
+For a deep HPHT gas/condensate discovery the pressure rating, not the hydraulics, usually decides concept and cost. Check it before any line sizing:
+
+- **Shut-in tubing head pressure (SITHP)** = reservoir pressure minus the static fluid column, with density from a TP flash at each step and a linear temperature profile. Use `neqsim.process.mechanicaldesign.subsea.ShutInPressureEstimator.estimateShutInTubingHeadPressure(fluid, pRes, tRes, tSeabed, columnHeight, steps)` (about 40 steps) and `classifyPressureRating(sithp, margin)` for the 5/10/15/20 ksi class. Never use a constant gradient: the dense rich gas (about 500 kg/m3 average, 0.05 bar/m) removes about a quarter of the pressure over 4.6 km.
+- Compare SITHP (not the reservoir pressure) with the tree/flowline rating (10 ksi = 689.5 bar, 15 ksi = 1,034 bar) with a 5 % margin; for Kristin-type fluid the 10 ksi margin is lost near 880 bara and the rating is exceeded near 920 bara reservoir pressure.
+- If the virgin pressure is not known, treat the pressure class (A depleted/communicating, B virgin low, C virgin high) as a discrete uncertainty with a prior, cost class C as HIPPS (API STD 17O) or a 15 ksi system plus qualification, and let the value-of-information analysis decide if a data well is justified. Extrapolating the analogue gradient to the deeper reservoir (Kristin 910 bara at 4,605 m, 0.19 bar/m) gave about 977 bara for Ragnfrid.
+- Flowing wellhead pressure is much lower than SITHP (440-640 bara at 1-3 MSm3/d for 700-850 bara bottom-hole pressure); the choke absorbs the difference, so the tie-back line is sized by erosional velocity and arrival pressure, not by the reservoir pressure.
+- `PipeBeggsAndBrills` throws a hydraulic-domain exception (NaN row) when a small line (8 in) is pushed to a rate that makes the outlet pressure negative; record those rows as infeasible instead of retrying.
+
 ## Design Standards Reference
 
 | Domain | Standard | Used For |
@@ -674,3 +702,14 @@ IOC choke data (`enterprise-ioc-bottleneck-utilisation`, `choke.py`): the curve 
 | Sizing the flowline on inlet density | Under-sized line — velocity peaks where the mixture is least dense | Evaluate API RP 14E at the arrival condition |
 | Designing wall and insulation independently | Thin HIPPS wall silently fails the no-touch target | `TiebackThermalDesign` sweeps both together |
 | Assuming the shut-in wellhead pressure | Wrong flowline design pressure, wrong wall | `SubseaWell.calculateShutInWellheadPressure(fluid)` |
+
+## Gotchas from the HEP Nordflanken line study (2026-10)
+
+| Pitfall | Impact | Prevention |
+|---------|--------|------------|
+| Tuning GOR by scaling a light-end multiplier on a normalised composition | GOR cannot move (the light-end total is fixed by the C7+ fraction), brentq fails with equal signs | Tune the C7+ multiplier (more C7+ = lower GOR) and scan first for a bracket |
+| `getMolarMass()` on a fresh TBP fluid before init | Returns 0 and a ZeroDivisionError in mole bookkeeping | Call `fluid.init(0)` first; take mass per Sm3 oil from a standard flash |
+| Water-cut applied as `oil / (1 - wc)` on the reservoir fluid | Inflates oil and gas, 2x too high velocity, false infeasible line | Add water as a component (water moles from the WOR) and set the mass flow oil_sm3d x (kg/Sm3 oil + WOR x 1000) |
+| Capacity result taken from an uncalibrated line model | Wrong conclusion on which line limits | Reproduce the PDM median flowing wellhead pressure with the line known to carry the flow before using headroom |
+| `PipeBeggsAndBrills` throws `HydraulicDomainException` (non-positive pressure) | The iteration for required inlet pressure crashes | Catch it and treat as infeasible; raise the trial inlet pressure |
+| Cooldown with only fluid heat capacity | Hydrate time too short by a factor 3-6 | Include the pipe wall (steel m cp) and use the shut-in inventory (liquid-dominated at shut-in pressure, with water) |

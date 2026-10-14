@@ -41,22 +41,13 @@ fugacity equality, repeated/cloned runs, and nearby pressure/temperature cases.
 
 ## Water-and-ion electrolyte-CPA endpoint
 
-A reactive electrolyte-CPA feed whose only neutral component is water has a constrained vapor
-composition: ions stay in the aqueous phase. TP flash therefore tests an aqueous chemical-equilibrium
-candidate before the general phase search. It accepts this candidate only if aqueous water fugacity
-is no greater than pure-water vapor-root trial fugacity at the requested temperature and pressure.
-Both fugacities must be finite and positive. At higher pressure the pure-water cubic equation can
-have a single liquid-like root; relative compressibility alone does not determine solvent stability.
-The comparison uses the same electrolyte-CPA model and retains the input phase options.
-
-The candidate must pass the existing reaction, charge, and element closure gates. Feeds with any
-positive neutral solute, including trace methane or CO2, and water-and-ion feeds above their boiling
-boundary retain the general algorithm. Solid and hydrate calculations retain their existing route.
-This handles reactive precipitation trials that previously lost their aqueous root or returned
-invalid ion inventories. No equilibrium constant, salt solubility product, or physical acceptance
-tolerance is changed. `TPflashWaterIonBrineTest`, `SaltPrecipitationTest`, and `ChemistryRunnerTest`
-cover repeated salt removal, nearby states, vapor-unstable rejection, trace-solute rejection, and
-scale equilibrium through Java and MCP.
+Reactive water-and-ion feeds use the same constrained phase search and aqueous-reaction coupling
+as other ionic fluids. The former model- and water-name-specific endpoint shortcut has been removed.
+Ions retain the aqueous host, while neutral water participates in the ordinary molecular stability
+and fugacity equations. Phase, reaction, charge and original-element acceptance checks still apply.
+`TPflashWaterIonBrineTest` exercises public calculations at 1, 20 and 100 bar, repeated salt removal
+and cloned fluids without a separate composition dispatch. Numerical closure does not validate
+salt solubility or hydrate-model accuracy.
 
 ## Table of Contents
 
@@ -91,6 +82,8 @@ scale equilibrium through Java and MCP.
    - [5.2 EJML Matrix Operations](#52-ejml-matrix-operations)
    - [5.3 Wilson K Early Exit](#53-wilson-k-early-exit)
    - [5.4 Two-Stage Trial Strategy](#54-two-stage-trial-strategy)
+   - [5.5 Detached Stability Workspaces](#55-detached-stability-workspaces)
+   - [5.6 Matched Stability-Workspace Qualification](#56-matched-stability-workspace-qualification-2026-10-14)
 6. [State-of-the-Art Comparison and Recommendations](#6-state-of-the-art-comparison-and-recommendations)
     - [6.1 Current Position](#61-current-position)
     - [6.2 Strengths](#62-strengths)
@@ -325,7 +318,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
 | Unchanged one-phase closure | `abs(beta - 1) < 1e-12`; `abs(delta Z) <= 1e-11`; `max abs(delta x_i) <= 1e-11` | When multiphase checking finds no new stable phase and returns the same phase type, compressibility factor, and composition as the accepted one-phase reference, normalize a stale beta and reinitialize. Different roots, chemical-equilibrium states, and internal multiphase trial states retain their existing finalization paths. |
-| Ionic GAS+AQUEOUS closure | exactly two phases, ions present, and `isChemicalSystem() == false` | Set ionic gas-to-aqueous K-values to zero, retain molecular fugacity-coefficient K-values, and solve the constrained Rachford-Rice equation by safeguarded bisection. Successive substitution continues until beta and compositions change by less than `1e-12`. Accept only normalized phases with `1e-10` component balance, `1e-8` molecular log-fugacity equality, gas-phase ion exclusion, and no Gibbs increase; otherwise restore the original endpoint and emit a diagnostic. One-phase, OIL+AQUEOUS, reactive, and genuine three-phase paths are unchanged. |
+| Ionic fluid closure | full species inventory with a unique aqueous host | Shared RR/SSI/Newton and stability constraints; `1e-10` species/phase amount closure, `1e-12` beta normalization, aqueous ion confinement and `1e-8` molecular log-fugacity equality. Failure is explicit. |
 | Trace duplicate phase cleanup | `min(beta_i, beta_j) < 10 beta_min`, same `PhaseType`, and `max abs(x_i - x_j) < 1e-6` | Merge and remove an already-disappeared numerical duplicate for any EOS while conserving phase fraction. Material-fraction duplicate cleanup remains limited to CPA models to protect near-critical cubic-EOS splits. |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
 | `accelerateInterval` | 5 | Apply DEM every 5th iteration in the ordinary TPflash loop |
@@ -335,7 +328,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Convergence tolerance | 1e-10 | Deviation threshold for K-value convergence |
 | Gibbs increase tolerance | 1e-8 | Relative increase that triggers K-reset |
 | Supplementary stability TPD limit | -1e-6 | Accept a converged amplified-K or composition-perturbation trial only when its reduced TPD exceeds that SSI solve's residual/step resolution and the trial composition is non-trivial |
-| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when `max abs(Delta z_i)` is non-finite or above `1e-8`, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the guarded candidate must then pass the strict feasibility and lower-Gibbs gates. |
+| Ordinary water-rich refinement feed threshold | 0.01 mole fraction water | Avoid phase-search overhead for valid trace-water flashes. An already-active neutral aqueous split bypasses only this feed threshold when material-balance or log-fugacity residuals are non-finite or exceed their `1e-8` acceptance limits, allowing the bounded beta correction below without another stability calculation. An incipient trace-water GAS+OIL endpoint with `min(beta) <= 1e-4` also bypasses the threshold when its confirmed log-fugacity residual is non-finite or at least `1e-8`; the guarded candidate must then pass the strict feasibility and lower-Gibbs gates. |
 | Water-rich cross-algorithm fallback | water feed `>= 0.01` and current `max abs(Delta ln(f_i)) >= 1e-8`, material-balance failure, or multiphase collapse to one hydrocarbon phase | Evaluate the existing cold candidate through the alternate path first. If an invalid ordinary two-phase split remains after that candidate is rejected, preserve its compositions as the seed for one fully initialized `TPmultiflash` trial. A multiphase endpoint collapsed to one phase may try the ordinary path, including the same seeded refinement when the cold ordinary result is invalid, but accepts only a result that restores an AQUEOUS phase; ordinary gas appearance remains outside this aqueous-recovery fallback. Genuine OIL+AQUEOUS liquid-liquid endpoints remain on the multiphase path. Prevent reciprocal recursion and replace the endpoint only when the candidate has exactly two distinct bounded phases, normalized beta and compositions, material balance and fugacity residuals below `1e-8`, and a Gibbs reduction larger than `max(1e-6 J, 1e-8 abs(G))`. Already-feasible two-phase endpoints incur only the residual acceptance scan. |
 | CPA high-water hydrocarbon-liquid stability screen | ordinary one-phase AQUEOUS CPA endpoint, water feed `>= 0.01`, `f_water / p_water_sat >= 0.8`, and at least 0.01 hydrocarbon feed with `T_c > T + 80 K` | Use the water saturation, composition, and critical-temperature checks only as a performance gate for one cloned multiphase stability calculation. Accept only an exactly-two-phase, distinct, bounded, normalized result with material-balance and log-fugacity residuals below `1e-8` and a Gibbs reduction larger than `max(1e-8 J, 1e-12 abs(G))`. Chemical, ionic, solid, wax, non-CPA, explicit-multiphase, gas, and non-aqueous endpoints retain their existing paths. |
 | Trace-water aqueous-stability screen | water feed `< 0.01`, GAS+OIL, `min(beta) <= 0.01`, and `x_water,oil >= 10 z_water` | Use the structural conditions only as a performance gate for an aqueous TPD trial. The TPD result, reduced-active-set convergence below `1e-10`, phase normalization, `1e-8` material/fugacity checks, distinct compositions, and lower Gibbs energy determine acceptance. Full recursive TPmultiflash is not run. |
@@ -343,12 +336,12 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Water-rich material-balance tolerance | 1e-8 in `max abs(Delta z_i)` | Reject a non-conservative reference before comparing feasible Gibbs minima |
 | Dry cubic-root screen and acceptance | Screen normally ordered GAS+OIL endpoints when `max abs(Delta ln(f_i)) >= 1e-8`; accept below `1e-8` | Evaluate both roots for one phase at a time and retain a lower-Gibbs root seed only when the resulting unchanged composition split restores fugacity equality. Inverted mean-molar-mass order retains the paired-root comparison. |
 | Aqueous cubic-root equilibrium tolerance | 1e-8 in `max abs(Delta ln(f_i))` | Ordinary flashes accept an alternate root only when it lowers Gibbs energy and already satisfies component fugacity equality. A multiphase GAS+AQUEOUS endpoint may replay a lower-Gibbs ordinary candidate containing exactly one AQUEOUS and one cubic GAS/OIL/LIQUID phase, so a valid gas-to-oil root transition is not rejected by its new label. The candidate must additionally retain normalized positive phases, distinct compositions, and component balance below `1e-8`. |
-| Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject only a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; leave normalized endpoints to model-specific convergence and refinement paths |
+| Stable-single-phase aqueous-seed gate | `1e-8` in phase-composition normalization | Reject a structurally invalid aqueous trial whose composition is non-finite, out of `[0, 1]`, or unnormalized; also reject a normalized trial when its component balance fails and its Gibbs energy exceeds the stable single-phase reference. Other normalized endpoints retain model-specific refinement paths |
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the same two-phase topology infeasible; a valid GAS↔OIL root transition, genuine three-phase result, or already feasible endpoint is retained |
-| Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with `max abs(Delta z_i) > 1e-8`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
-| Missing aqueous phase after oil-endpoint cleanup | Explicit multiphase, neutral OIL or GAS+OIL endpoint, water feed `>= 0.05`, phase shifting allowed, no solid/wax check | On both the normal and stable-single-phase return paths, solve a balanced OIL+AQUEOUS trial on a clone. Rebuild inactive phase indices before adding a phase to a single-oil endpoint so the aqueous trial cannot alias the oil object. Adopt only an aqueous equilibrium with positive normalized phases, component balance and log-fugacity residuals within `1e-8`, and a Gibbs decrease exceeding `max(1e-6 J, 1e-8 abs(G))` relative to a valid incumbent; otherwise retain the original state. This is bounded active-set recovery, not a global stability certificate. |
+| Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with invalid material-balance or log-fugacity residual; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
+| Missing aqueous phase after oil-endpoint cleanup | Explicit multiphase, neutral OIL or GAS+OIL endpoint, water feed `> 20 * phaseFractionMinimumLimit` (currently `2e-11`), phase shifting allowed, no solid/wax check | On both the normal and stable-single-phase return paths, solve a balanced OIL+AQUEOUS trial on a clone. The former 5 mol% cutoff no longer excludes dilute aqueous equilibria. Skip numerically unresolvable feeds before allocation: the half-water seed must exceed the ten-times-minimum phase-fraction acceptance floor. Use the shared phase lifecycle to add a distinct aqueous trial without aliasing the oil object. Adopt only an aqueous equilibrium with positive normalized phases, component balance and log-fugacity residuals within `1e-8`, and a Gibbs decrease exceeding `max(1e-6 J, 1e-8 abs(G))` relative to any normalized, material-balanced incumbent, even if its fugacities have not fully converged; otherwise retain the original state. This is bounded active-set recovery, not a global stability certificate. |
 | Final neutral gas/oil equilibrium refinement | `1e-8 <= max abs(Delta ln(f_i)) <= 1e-5`; at most 8 SSI updates | Repair only balanced, near-converged vapor-liquid endpoints after post-convergence root handling. Preserve both phase types and roll back unless phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the strict acceptance checks. |
-| Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive fluid phases only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state. A pending solid check is preserved and runs after fluid recovery; active solid phases are excluded. |
+| Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive fluid phases only, evaluate each two-phase active set after a non-converged three-phase endpoint, including an invalid three-phase split left by final TP-flash cleanup and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state. A pending solid check is preserved and runs after fluid recovery; active solid phases and locked phase roles are excluded. The condensate entropy-continuity regression and the oil-stabilization pump integration test cover final-cleanup recovery. |
 | Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
 
 ### 1.1 Problem Formulation
@@ -516,6 +509,24 @@ $$J_{ij} = \frac{\partial f_i}{\partial u_j} = \frac{1}{\beta}\left(\frac{\delta
 
 See [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) for the full implementation.
 
+The line search evaluates the reduced Gibbs energy with the **trial phase component
+amounts**, together with fugacities evaluated at that same trial. A candidate must be
+finite, feasible and satisfy Armijo descent before the retained Newton inventory is
+updated. The eight-trial limit is a work bound, not permission to accept an untested
+smaller step. If no candidate qualifies, the solver restores the preceding split and
+reports rejection to the existing successive-substitution fallback. Non-finite,
+singular and non-descent Newton directions are rejected before changing the split.
+
+An already equilibrated state with log-fugacity mismatch at floating-point roundoff
+(32 ulp of one) returns a zero correction because its Gibbs decrease cannot be
+resolved. This does not relax the public flash tolerances or the separately guarded
+sour-endpoint polishing criterion. Accepted trials synchronize their K values, and
+rebinding a cached solver refreshes its component inventory from the live state after
+any caller-side fallback. These safeguards apply to the local two-phase step; global
+phase stability still requires the surrounding stability search and endpoint checks.
+
+
+
 ---
 
 ## 2. Stability Analysis
@@ -637,154 +648,24 @@ When `system.setMultiPhaseCheck(true)` is called, NeqSim uses the `TPmultiflash`
 
 ### 3.0 Complete TPmultiflash Algorithm Flow
 
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                       TPmultiflash.run() ALGORITHM FLOW                        ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+`TPmultiflash` retains the full input species inventory during phase search. Ionic participation is
+captured as an aqueous-phase constraint; neutral molecules remain free to partition through the
+existing EOS fugacity equations. No CO2, MEG, methanol or mixed-gas whitelist selects a different solver.
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 1: ELECTROLYTE PREPROCESSING                                               │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF system.hasIons() (any ionic components, not just chemical systems):         │
-│     • Store ionic component compositions: ionicZ[i] = z[i] for ions             │
-│     • Temporarily set ion z = 1e-100 (remove from stability analysis)           │
-│     • hasIons = true                                                            │
-│     • system.init(1) - Recalculate properties without ions                      │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 2: PRIMARY STABILITY ANALYSIS                                              │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF doStabilityAnalysis == true:                                                │
-│     → stabilityAnalysis()  [see detailed flow below]                            │
-│     → Sets multiPhaseTest = true if unstable phase found                        │
-│     → Adds new phase with composition from stationary point                     │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 3: HEURISTIC PHASE SEEDING                                                 │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF NOT multiPhaseTest AND seedAdditionalPhaseFromFeed():                       │
-│     → Add bounded vapor-like gas seed, xᵢ ∝ zᵢKᵢ(Wilson)                       │
-│     → multiPhaseTest = true                                                     │
-│                                                                                 │
-│  IF seedHydrocarbonLiquidFromFeed():                                           │
-│     → Add hydrocarbon liquid phase if conditions met                            │
-│     → multiPhaseTest = true                                                     │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 4: ION RESTORATION (Electrolyte Systems)                                   │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF hasIons:                                                                    │
-│     FOR each ionic component:                                                   │
-│        • Restore z[i] = ionicZ[i] in all phases                                │
-│        • IF phase is AQUEOUS: set x[i] = ionicZ[i]                             │
-│        • ELSE: set x[i] = 1e-50 (ions only in aqueous)                         │
-│     • Normalize all phases                                                      │
-│     • system.init(1)                                                            │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 5: INITIAL CHEMICAL EQUILIBRIUM                                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF chemical system AND has aqueous phase:                                      │
-│     → solveChemEq(aqueousPhaseNumber, 0)  [stoichiometric]                      │
-│     → solveChemEq(aqueousPhaseNumber, 1)  [full Newton]                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 6: MULTIPHASE SPLIT CALCULATION                                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF multiPhaseTest == true:                                                     │
-│     maxerr = 1e-12                                                              │
-│                                                                                 │
-│     DO (outer loop - chemical equilibrium):                                     │
-│     │   iterOut++                                                               │
-│     │                                                                           │
-│     │   IF chemical system with aqueous phase:                                  │
-│     │      → Solve chemical equilibrium                                         │
-│     │      → Calculate chemical deviation                                       │
-│     │                                                                           │
-│     │   setDoubleArrays()  [allocate Q-function arrays]                        │
-│     │   iterations = 0                                                          │
-│     │                                                                           │
-│     │   DO (inner loop - Q-function minimization):                              │
-│     │   │   iterations++                                                        │
-│     │   │   oldDiff = diff                                                      │
-│     │   │   diff = solveBeta()  [Newton step on Q-function]                    │
-│     │   │                                                                       │
-│     │   │   IF iterations % 50 == 0:                                           │
-│     │   │       maxerr *= 100  [relax tolerance]                               │
-│     │   │                                                                       │
-│     │   WHILE (diff > maxerr AND NOT removePhase                               │
-│     │          AND (diff < oldDiff OR iterations < 50)                         │
-│     │          AND iterations < 200)                                            │
-│     │                                                                           │
-│     WHILE (|chemdev| > 1e-10 AND iterOut < 100)                                │
-│            OR (iterOut < 3 AND chemical AND aqueous)                           │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 7: AQUEOUS PHASE SEEDING (if water present but no aqueous)                │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF has water component AND NOT aqueousPhaseSeedAttempted                       │
-│     AND multiPhaseCheck AND NOT hasAqueousPhase:                                │
-│                                                                                 │
-│     IF waterZ > 1e-6 AND numberOfPhases < 3:                                   │
-│        → Add new phase                                                          │
-│        → Set phase type = AQUEOUS                                               │
-│        → Initialize with water-rich composition                                 │
-│        → Set β = max(1e-5, 10 × βmin)                                          │
-│        → multiPhaseTest = true                                                  │
-│        → aqueousPhaseSeedAttempted = true                                       │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 8: SINGLE AQUEOUS PHASE ENFORCEMENT (Electrolytes)                         │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF chemical system:                                                            │
-│     → ensureSingleAqueousPhase()                                               │
-│     → Reclassify extra "aqueous" phases as OIL                                  │
-│     → Move ions to the true aqueous phase                                       │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 9: PHASE CLEANUP                                                           │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Remove negligible phases:                                                      │
-│     FOR each phase:                                                             │
-│        IF β < 1.1 × βmin:                                                      │
-│           → removePhaseKeepTotalComposition()                                   │
-│           → hasRemovedPhase = true                                              │
-│                                                                                 │
-│  Merge trace composition duplicates for any EOS:                                │
-│     IF same PhaseType, min(βi, βj) < 10 βmin, and max |xi - xj| < 1e-6:         │
-│        → Merge βi + βj, remove the duplicate, and re-check stability             │
-│                                                                                 │
-│  Detect trivial solutions (phases with same density):                           │
-│     FOR each pair of phases (i, j):                                             │
-│        IF |ρi - ρj| < 1.1e-5:                                                  │
-│           → Remove phase j                                                      │
-│           → hasRemovedPhase = true                                              │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 10: POST-FLASH STABILITY CHECK AND RECURSIVE RE-RUN                        │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  After flash converges with 2 phases, check for a third phase:                 │
-│  IF multiPhaseCheck AND 2 ≤ numPhases < 3 AND NOT postFlashStabilityChecked:   │
-│     → postFlashStabilityChecked = true                                          │
-│     → stabilityAnalysisEnhanced()  [Wilson K-based additional check]            │
-│     → IF new phase found: re-run()  [recursive call]                           │
-│                                                                                 │
-│  After phase removal (β < βmin or trivial solutions):                          │
-│  IF hasRemovedPhase AND NOT secondTime:                                         │
-│     → secondTime = true                                                         │
-│     → stabilityAnalysis3()  [re-check stability]                               │
-│     → run()  [RECURSIVE CALL - restart algorithm]                              │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+1. Capture permitted phase participation and the full feed before stability analysis.
+2. Evaluate normalized molecular trial phases against the ionic aqueous reference; ions remain in
+   that reference and are excluded from non-aqueous trials.
+3. Add a phase only through the existing stability/seed machinery, then solve the full phase amounts.
+4. Reconcile the aqueous host at an active-set change if the original host becomes non-aqueous and
+   the model identifies one actual aqueous phase. Re-equilibrate the complete inventory after transfer.
+5. Solve beta and composition together. The ionic beta Hessian uses dimensionless ratios before
+   products to avoid overflow/underflow at extreme fugacity ratios. Composition SSI uses available
+   derivatives to bound its logarithmic step; stopping includes molecular residuals, not only beta changes.
+6. Require finite, normalized phase and stored component amounts, original species conservation,
+   aqueous ion confinement and molecular fugacity equality before returning a non-reactive ionic state.
+
+The neutral stability algorithm below retains its established trial selection. Solids, wax and
+forced phase topologies keep their physical model boundaries.
 
 ### 3.0.1 Stability Analysis Detailed Flow
 
@@ -1474,74 +1355,11 @@ if (Math.abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) 
 
 ### 3.4 Complete Multiphase Flash Workflow
 
-The complete workflow in `TPmultiflash.run()` is:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  1. PREPROCESSING                                           │
-│     - For systems with ions (hasIons()): remove ions        │
-│     - Store ionic compositions for later restoration        │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  2. STABILITY ANALYSIS                                      │
-│     a. stabilityAnalysis() — K trials + pure-comp trials    │
-│     b. If enhanced enabled and no phase found:              │
-│        stabilityAnalysisEnhanced() — K + LLE trials         │
-│     - If tm < -1e-8: add phase, multiPhaseTest=true         │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  3. ADDITIONAL PHASE SEEDING (if stability didn't add)      │
-│     - seedAdditionalPhaseFromFeed(): gas phase seeding      │
-│     - seedHydrocarbonLiquidFromFeed(): oil phase seeding    │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  4. ION RESTORATION (systems with ions)                     │
-│     - Restore ions to aqueous phase(s) only                 │
-│     - Set ion x = 1e-50 in non-aqueous phases               │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  5. CHEMICAL EQUILIBRIUM (if applicable)                    │
-│     - Solve chemical equilibrium in aqueous phase           │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  6. PHASE SPLIT CALCULATION (if multiPhaseTest = true)      │
-│     - Q-function minimization with damped Newton (EJML)     │
-│     - fugCoeffCache avoids repeated virtual dispatch        │
-│     - Nested iteration with chemical equilibrium            │
-│     - Continue until convergence                            │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  6b. POST-FLASH STABILITY CHECK (three-phase detection)     │
-│     - IF multiPhaseCheck AND 2 ≤ phases < 3:                │
-│       run stabilityAnalysisEnhanced() for third phase       │
-│     - If new phase found: recursive run()                   │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  7. AQUEOUS PHASE SEEDING (if water present but no aq)      │
-│     - Add aqueous phase seeded with water                   │
-│     - Re-run phase split if phase added                     │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  8. PHASE CLEANUP                                           │
-│     - Remove phases with β < βmin                           │
-│     - Detect and merge trivial solutions (same density)     │
-│     - ensureSingleAqueousPhase() for systems with ions      │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  9. POST-REMOVAL STABILITY CHECK                            │
-│     - If phase removed: run stabilityAnalysis3()            │
-│     - Recursive call to run() if new phase found            │
-└─────────────────────────────────────────────────────────────┘
-```
+The active set is searched, seeded, equilibrated and pruned with the existing multiphase machinery.
+For ionic fluids, the feed is never normalized to an ion-free surrogate and restored afterward.
+`FlashPhaseConstraints` identifies allowed species/phase pairs, while `FluidEquilibriumChecks`
+qualifies the final material state. A converged beta update alone cannot certify the composition solve.
+See [the complete flow](#30-complete-tpmultiflash-algorithm-flow) for the current sequence.
 
 ### 3.5 Phase Seeding and Restart Strategies
 
@@ -1627,139 +1445,56 @@ if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
 
 ### 4.1 Chemical Equilibrium Coupling
 
-For systems with chemical reactions (electrolytes, acid-base equilibria), the flash calculation must be coupled with chemical equilibrium. NeqSim solves this as a nested iteration:
+Reactive ionic fluids with freely selected fluid phases use `AqueousReactionEquilibrium`, a bounded
+coupling of the ordinary TP flash and the existing chemical solver. Each phase solve freezes the
+species inventory. Chemistry runs on an isolated aqueous phase; only its reaction-induced species
+changes are transferred back to the full fluid. Element totals include spectator ions and charge.
 
-**Outer Loop:** Phase equilibrium (flash)
-**Inner Loop:** Chemical equilibrium within each phase
-
-**Chemical Equilibrium Condition:**
-
-For a reaction $\sum_i \nu_i A_i = 0$:
-
-$$\sum_i \nu_i \mu_i = 0$$
-
-Or equivalently:
-
-$$\prod_i a_i^{\nu_i} = K_{eq}(T)$$
-
-Where $a_i$ is the activity and $K_{eq}$ is the equilibrium constant.
-
-**NeqSim Implementation:**
-
-```java
-// From TPflash.java - chemical equilibrium integration
-if (system.isChemicalSystem()) {
-    for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-        if ("aqueous".equalsIgnoreCase(phaseType)) {
-            system.getChemicalReactionOperations().solveChemEq(phaseNum, 0);
-            system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
-        }
-    }
-}
-```
-
-The chemical equilibrium solver uses:
-- **Level 0:** Stoichiometric balance with linear programming initialization
-- **Level 1:** Full Newton-Raphson with activity coefficient derivatives
+A result needs molecular log-fugacity equality within `1e-8`, reaction log residual within `2e-6`,
+charge closure and the original elemental inventory. At most 30 coupling iterations are allowed.
+Failures and cancellation leave the caller uncommitted. This supports general molecular mixtures;
+the old `ReactiveCO2BrinePhaseEquilibrium` class is a deprecated compatibility adapter.
+A fixed-species phase flash conserves each species; reactions instead conserve elements and may
+change both species amounts and total moles.
 
 ### 4.2 Ion Handling in Stability Analysis
 
-Ionic species present special challenges for stability analysis because they cannot exist in non-aqueous phases. NeqSim handles this by:
+The aqueous reference retains its full ionic composition and electrolyte chemical potentials.
+Non-aqueous molecular trials exclude ions by phase participation, without removing ions from the feed.
+Trial compositions are normalized before invoking component setters. Both fluid roots are considered;
+a homogeneous ionic result is rejected if a normalized molecular trial is unstable.
 
-1. **Temporarily removing ions** before stability analysis. Note that `hasIons()` is used instead of `isChemicalSystem()` to catch ions even when no chemical reactions are defined:
-   ```java
-   boolean hasIons = system.hasIons();
-   if (hasIons) {
-       ionicZ = new double[system.getPhase(0).getNumberOfComponents()];
-       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-               || system.getPhase(0).getComponent(i).isIsIon()) {
-               ionicZ[i] = system.getPhase(0).getComponent(i).getz();
-               // Temporarily set to near-zero in all phases
-               for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-                   system.getPhase(phase).getComponent(i).setz(1e-100);
-               }
-           }
-       }
-       system.init(1);
-   }
-   ```
+Rachford-Rice does not infer ionic identity from a small K-value. Zero or tiny K values for positive-feed
+neutral species still contribute their inventory. Algebraically equivalent ratios avoid squaring
+extreme K values; both existing algorithms and their selector remain available.
 
-2. **Running stability analysis** on the neutral system
+The existing Newton solver uses positive-feed, unconstrained neutral amounts as its free variables.
+For more than two fixed fluid phases it solves amounts in every phase except a reference phase,
+whose amounts follow from complete species conservation. Its reduced Hessian combines the independent
+phase curvature with reference-phase curvature; fixed ions remain in all model properties and Gibbs
+energy. Phase creation/removal stays in the outer stability algorithm. The original two-phase path is
+retained. Ions and exact-zero feed components remain constrained. Representable positive trace amounts
+are allowed without an arbitrary `1e-15` floor; a complementary amount lost to floating-point subtraction
+is still rejected. Gibbs descent, feasibility, line-search limits and rollback remain mandatory.
 
-3. **Restoring ions** to aqueous phases after phase configuration is determined:
-   ```java
-   if (hasIons && ionicZ != null) {
-       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
-               // Restore z values, put ions only in aqueous phase
-               if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
-                   system.getPhase(phase).getComponent(i).setx(ionicZ[i]);
-               } else {
-                   system.getPhase(phase).getComponent(i).setx(1e-50);
-               }
-           }
-       }
-   }
-   ```
-
-4. **Refining a non-reactive two-phase GAS+AQUEOUS endpoint** after final phase selection. Ionic K-values are fixed to
-   zero because ions are excluded from the gas phase. Molecular K-values remain the ratio of aqueous and gas fugacity
-   coefficients. A safeguarded Rachford-Rice solve and successive-substitution update restore both component balance and
-   molecular fugacity equality. The candidate is rejected and the original endpoint restored unless beta and phase
-   compositions are bounded and normalized, component balance is below `1e-10`, molecular log-fugacity residuals are
-   below `1e-8`, and Gibbs energy does not increase. Reactive, one-phase, OIL+AQUEOUS, and genuine three-phase endpoints
-   retain their existing paths.
+EOS-GE models retain their existing phase-role and reaction strategy. Their EOS vapour and GE liquid
+use model-specific reference states, so comparing an alternate cubic liquid root of the vapour slot
+is not a valid same-model stability diagnostic. That diagnostic is unavailable (NaN) for this
+capability; the shared physical acceptance checks remain in place. Generic constrained Newton and
+reaction dispatch do not replace the model-owned hybrid equations.
 
 ### 4.3 Aqueous Phase Management
 
-For electrolyte systems, NeqSim ensures proper aqueous phase handling:
+For the qualified ionic fluid scope there must be a unique aqueous material host. Aqueous ions are
+allocated by conserved amount, not by copying the overall mole fraction into a phase and normalizing.
+A gas/oil/brine phase-set change may require transferring the host to the model-classified aqueous
+phase and re-equilibrating; changing a display label alone does not solve equilibrium.
 
-**Single Aqueous Phase Constraint:**
-
-The system ensures only one aqueous phase exists, containing all ionic species:
-
-```java
-private void ensureSingleAqueousPhase() {
-    if (!system.isChemicalSystem() || system.getNumberOfPhases() < 2) {
-        return;
-    }
-
-    // Find phase with highest aqueous component content
-    int bestAqueousPhase = -1;
-    double maxAqueousContent = 0.0;
-
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        double aqueousContent = 0.0;
-        for (int comp = 0; comp < ncomp; comp++) {
-            // Count water, glycols, alcohols, and ions
-            if (isAqueousComponent(component)) {
-                aqueousContent += component.getx();
-            }
-        }
-        if (aqueousContent > maxAqueousContent) {
-            maxAqueousContent = aqueousContent;
-            bestAqueousPhase = phase;
-        }
-    }
-
-    // Reclassify other phases as OIL
-}
-```
-
-**Aqueous Phase Seeding:**
-
-When water is present but no aqueous phase exists, a seed aqueous phase can be created:
-
-```java
-if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
-    system.addPhase();
-    system.setPhaseType(aquPhaseIndex, PhaseType.AQUEOUS);
-    // Initialize with water-rich composition
-}
-```
-
----
+Final non-reactive ionic acceptance checks original species balance and phase/amount normalization
+within `1e-10`, beta sum within `1e-12`, phase charge, ion confinement and molecular log-fugacity
+equality within `1e-8`. These checks establish feasibility and present-phase equilibrium, not a
+proof of the global Gibbs minimum or experimental model accuracy. Incorrect dielectric data cannot
+be corrected by tighter numerical convergence. See the [electrolyte derivative qualification](../thermo/ElectrolyteBornDerivatives).
 
 ## 5. Performance Optimizations
 
@@ -1801,7 +1536,112 @@ Before running any trial phase iterations, the stability analysis computes Wilso
 
 The Wilson K-based trials (Stage 1) run with only 50 iterations and catch the majority of VLE instabilities. The more expensive pure-component trials (Stage 2, up to 200 iterations with potential Newton fallback) only execute when the K-based trials fail to find instability.
 
+### 5.5 Detached Stability Workspaces
+
+The lowest-Gibbs reference calculation in `Flash.findLowestGibbsEnergyPhase()` uses a
+detached, fixed-component stability workspace. For exact `SystemSrkEos` and `SystemPrEos`
+instances with two ordinary cubic storage slots, the classic mixing rule and analytic
+composition derivatives, `copyForStabilityTrial()` copies the six mutable component
+derivative arrays at the active component count. Each copy owns its arrays; the attractive
+term is rebound to the copied component. The calculation retains its existing `init(0)`
+and `init(1)` sequence and root comparison.
+
+This compact representation is restricted to the lifetime of the stability calculation.
+Its component list must remain fixed, and its phases must never be installed in the live
+user fluid. General `clone()` continues to preserve the source arrays' capacity and
+independent ownership, including the full-capacity buffers of ordinary user fluids.
+There is no shared workspace cache between flash calls. Mixing parameters retain the
+same read-only sharing contract as normal phase cloning.
+
+The compact path requires exact ordinary SRK/PR phase and component classes in both
+storage slots, consistent component indices, and one or two active phases mapped to distinct
+valid slots. Unknown subclasses, specialized models such as CPA, other mixing rules,
+numeric derivatives, additional phase storage, locked or forced phase roles, chemical or
+ionic systems, and solid, hydrate or wax options use their normal virtual clone behavior.
+The flash operation's own solid-check option also bypasses compact copying even when the
+system's solid-check flag is false.
+This is a storage optimization at one detached call site; it does not broaden root-selection
+policy, change convergence tolerances or replace accepted-candidate transfer with compact
+phase objects. See [Root selectors and Newton inventory mapping](#root-selectors-and-newton-inventory-mapping)
+for the separate rollback and adoption contracts.
+
+`StabilityTrialCopyTest` checks compact buffer ownership and active values, ordinary clone
+capacity, attractive-term rebinding, initialization equivalence, invalid capacities and
+fallback for specialized or unqualified inputs. `TPflashConcurrentCloneIsolationTest`
+exercises concurrent flashes on independently cloned default SRK, PR and Statoil CPA fluids,
+including Cp, Cv and the second temperature derivative of the attraction term. Classic
+mixing-rule calculations retain local accumulators for the qualified derivative, general
+covolume and composition-dependent attraction evaluations. Legacy last-result fields remain
+for compatibility; consumers use each initialized phase's own properties. Configuration must
+be complete and unchanged during concurrent evaluation. This does not qualify arbitrary
+mixing-rule implementations or concurrent parameter tuning. Performance qualification
+must compare complete flashes at the same JVM settings and reject any change that fails
+phase, material-balance or fugacity checks; reduced workspace capacity alone is not a
+whole-flash speedup result.
+
+### 5.6 Matched Stability-Workspace Qualification (2026-10-14)
+
+This is the historical allocation qualification for commit `6d05316`, before the general electrolyte correction. It preserves the full public clone contract but does not establish allocation parity for every workload. Its then-unresolved electrolyte failures and measurements must not be read as validation of later solver changes.
+
+This matrix supersedes the previous **36,136 → 152,488 B/flash** headline. Those figures are not the matched fixture/profile measured here and must not be used as the current comparison. The matched three-component dry-gas result is **18,104 → 76,280 → 19,544 B per complete flash** for master, original PR and redesign. The earlier 75,680 B figure excluded the 600 B operation constructor; this harness includes it. Any comparison with `dcc5105` remains historical and separate from this matrix.
+
+| Warm changed workload | Master `d28b180` | Original PR `0239f31` | #4320 + #4329 baseline | Redesign | Redesign + #4320 + #4329 |
+|---|---:|---:|---:|---:|---:|
+| Dry gas, SRK | 18,104 | 76,280 | 18,112 | 19,544 | 19,552 |
+| Two-phase methane/decane, PR | 4,864 | 4,864 | 4,872 | 4,864 | 4,872 |
+| Condensate, SRK | 2,197,501 | 240,892 | 2,197,166 | 111,196 | 111,204 |
+| Methane/water, CPA | 1,873,344 | 1,989,696 | 1,873,352 | 2,024,112 | 2,024,120 |
+| Trace aqueous, SRK | 83,040 | 345,048 | 83,048 | 345,048 | 345,056 |
+| Trace aqueous, CPA | 493,978,368 | 494,327,696 | 493,978,376 | 494,394,616 | 494,394,624 |
+| Separator/compressor/cooler process | 553,592 | 2,415,224 | 553,632 | 1,110,296 | 1,110,336 |
+
+Values are median current-thread allocated **bytes per complete operation**, across two JVM forks. The process value covers a full `ProcessSystem.run()` with changed live-feed temperature/pressure. It includes inlet separation, compression, cooling and outlet separation. Unchanged process samples retain normal equipment caching and are reported separately in the evidence.
+
+Relative to the original PR, redesigned allocation falls **74.4% for dry gas, 53.8% for condensate and 54.0% for the changed process**. Dry gas remains 1,440 B above master. The process remains about 2.01 times master because general copies retain independently owned, full-capacity arrays. The three-storage-slot aqueous SRK case deliberately falls outside the compact two-slot path. Its public-copy cost remains. Fixing CPA association-cache ownership adds 34,416 B to the methane/water case and 66,920 B to the trace-CPA case; those are correctness costs, not hidden speed claims.
+
+The dry-gas accounting is exact: one stability system copy contains six component copies. Six independently owned 200-double arrays per component cost 58,176 B; the compact three-component workspace uses 1,440 B instead. Public clone capacity remains unchanged.
+
+| Warm changed workload | Master CPU µs/op | Original PR CPU µs/op | Redesign CPU µs/op | Combined CPU µs/op |
+|---|---:|---:|---:|---:|
+| Dry gas | 21.3 | 29.4 | 20.6 | 18.1 |
+| Condensate | 6,676.9 | 391.1 | 379.0 | 394.1 |
+| Process | 795.6 | 1,143.3 | 901.9 | 831.6 |
+
+These descriptive CPU medians use the second fork; optimized second forks ran after known numerical test workloads stopped. The first optimized fork overlapped integration tests and is retained without presenting its timing as an attributable regression. In particular, trace-CPA CPU medians were noisy: the original PR's second fork was 291.7 ms/op, redesign 313.6 ms/op and combined 271.1 ms/op. No universal speedup, statistical significance or timing threshold is asserted. Raw wall samples, p95 values and both CPU forks are retained.
+
+All **1,980 first/last numerical snapshots** pass their conservation, phase-normalization, fugacity and finite-property gates, with no benchmark exceptions. Each of the five revisions has 396 snapshots covering cold changed, warm unchanged and warm changed sequences. The dry process has zero recorded mass-flow and energy-balance residuals; inlet and outlet remain gas. Power, duty, compositions, phase fractions, density, enthalpy and Gibbs energy are retained.
+
+Against the original PR, the redesign preserves every phase count/type and every recorded total Gibbs energy. Only trace-CPA fractions differ at rounding scale: maximum beta difference **1.11e-16**, maximum phase-composition difference **4.34e-19**. The combined trial is **identical in all 396 matched endpoint snapshots** to the redesign. Against master, topology also matches; the largest differences are the already improved condensate solution: beta **1.65e-10**, composition **2.60e-11**, relative density **1.66e-12**, and relative Gibbs **2.76e-16**. The largest signed Gibbs increase is **3.64e-12 J**, indistinguishable from rounding here. There is no unexplained worse Gibbs endpoint in this matrix.
+
+The method uses OpenJDK **17.0.20**, the standard `pom.xml` with `release 17`, identical 55 dependency artifacts, and `-Xms512m -Xmx512m -XX:+UseSerialGC`. The original head is `0239f31c2933751df29946bd78533d7d9d9acf78`; master is `d28b180969e248837e68b5e982374db69e11a376`; related heads are #4320 `0915f16e49e992d6c103618ad706d67fce20012e` and #4329 `515e21acbb776099836b06fb7318208726e28918`. Frozen redesign and combined production-source SHA256 deltas identify the measured candidates precisely. Java 8 source/API compatibility-profile tests are separate; these timings do not represent a Java 8 runtime.
+
+Per fork and sequence, operations per batch / batches / warmup are: dry gas **128/5/4096**; two-phase **64/5/2048**; condensate **32/5/128**; CPA water, SRK trace and process **16/5/64**; expensive CPA trace **4/3/8**. Cold means a newly constructed fluid/process, not a cold JVM. Construction, boundary changes and snapshots are outside measurement. Flash construction and `run()` are inside it. Changed sequences alternate base conditions with T + 0.25 K and P × 0.995.
+
+Snapshots run on public clones outside measurement. Historical implementations may refresh shared derivative caches at the same thermodynamic state, so their timing deserves caution; final clone isolation is covered by separate regressions. These are synthetic numerical checks, not experimental validation of an EOS. Named-wax correctness belongs to the separate combined integration suite, not this performance matrix.
+
+Reproducibility evidence: [compressed qualification bundle](benchmarks/tpflash-allocation-qualification.json.gz) (SHA256 `685193c3424be39c28e4f3de4cec73bc97db9cc1b17b9714c0cdd2cd38c31f74`) retains all 70 raw JSON reports, complete endpoint snapshots, raw timing samples, fixture definitions, dependency coordinates/checksums, source hashes and a machine-readable summary. Its embedded manifest identifies all five builds. Absolute workspace paths, process identifiers and runtime access diagnostics are excluded.
+
 ---
+
+### 5.7 General electrolyte checkpoint allocation qualification
+
+A separate [reproducibility bundle](benchmarks/general-equilibrium-matched-java8.json.gz) records
+matched Java 8 POM/dependency measurements against `6d05316`. It identifies the exact source and
+class hashes of the 14-case checkpoint, including multiphase Newton, component cache ownership
+and removal of the water-only shortcut (source aggregate `c14819bfb0df5f1bf77b10d09b6e93b58f20e769baf3a5cd7c548a8fd3629da0`).
+The later EOS-GE capability guards are separately qualified and outside this benchmark snapshot.
+Each measured operation includes physical checks.
+
+| Warm complete flash | Base `6d05316`, bytes | General checkpoint, bytes | Qualification |
+| --- | ---: | ---: | --- |
+| Dry gas | 19,544 | 19,544 | Both endpoints valid and identical |
+| Methane/brine | 5,991,776 | 26,710,048 | Both valid; allocation increases 4.46 times |
+| Mixed gas/brine | 62,452,544 | 39,948,192 | Baseline fails physical closure; no qualified speedup claim |
+
+The methane/brine topology is unchanged; maximum beta/composition differences are `3.8e-13` and
+`3.1e-12`, with relative Gibbs difference `2.23e-11`. All 36 candidate snapshots pass; only 24 of
+36 baseline snapshots pass. Shared-host timing is descriptive. The additional cost of constrained
+ionic correctness is visible and needs separate performance work before claiming broad parity.
 
 ## 6. State-of-the-Art Comparison and Recommendations
 
@@ -1840,7 +1680,8 @@ Commercial process simulators do not publish all implementation details, but pub
   original only when phase fractions, normalization, material balance, fugacity equality, distinct compositions, and
   lower Gibbs energy all pass. Thus the enrichment and beta values gate cost; they do not decide stability. An
   already-active neutral aqueous split with a
-  non-finite material residual or one above `1e-8` may use the existing three-step beta correction below that threshold;
+  non-finite or unacceptable material-balance or log-fugacity residual may use the existing three-step beta correction
+  below that threshold;
   this does not search for or create a phase. A trace-water GAS+OIL endpoint with a confirmed non-finite or at-least
   `1e-8` log-fugacity residual may run the existing guarded multiphase candidate and is replaced only by a strictly
   feasible lower-Gibbs result. That invalid-endpoint retry is restricted to an incipient secondary phase with
@@ -1952,8 +1793,20 @@ Recommended regression coverage should include both numerical convergence and ph
 | Polar/VLLE systems | Water, CO2, H2S, methanol, glycols, and CPA/electrolyte examples | Correct aqueous/oil/gas phase count and stable final split |
 | CPA aqueous appearance | Ordinary and explicit-multiphase flashes above and below the water-fugacity screen, including aqueous fractions near `1e-6` | Same stable phase set, beta, phase compositions, properties, material balance, fugacity equality, and deterministic repeatability |
 | Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
-| Missing aqueous phase near a bubble point (#3955) | Public-API 23-component SRK/classic pump inlet; all 81 temperature/pressure cells from 11–31 °C and 1.8–5.0 bara; warm starts, repeats, aliased inactive phase slots, and phase-role lock | Retain AQUEOUS with normalized phases, `1e-8` component/fugacity closure, lower Gibbs energy on recovery, and positive pump work with less than 1 K temperature rise; preserve locked states |
+| Missing aqueous phase near a bubble point (#3955) | Public-API 23-component SRK/classic pump inlet; all 81 temperature/pressure cells from 11–31 °C and 1.8–5.0 bara; warm starts, repeats, aliased inactive phase slots, and phase-role lock | Retain AQUEOUS with normalized phases, `1e-8` component/fugacity closure, lower Gibbs energy on recovery, and positive pump work with less than 1 K temperature rise; preserve locked states. Additional regressions cover 0.7 mol% water, an undersaturated `1e-8` water feed, and zero candidate clones at or below the numerical seed floor |
 | Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
+
+The aqueous consistency regression additionally checks fugacity and material closure for every
+ordinary, explicit-multiphase, poor-guess and repeated endpoint. At 230 K and 120 bara, its
+normalized water fraction is `0.01 / 1.001`, just below the `0.01` refinement threshold.
+Previously a material-balanced multiphase result bypassed final refinement despite a
+`7.93e-5` log-fugacity residual, leaving enthalpy at `-7316.423487690394` J instead of the
+ordinary result `-7316.421704183054` J. The cheap cached-residual gate now requires both
+material balance and fugacity equality before skipping refinement. The existing bounded
+beta update reduces the multiphase residual to `8.09e-10` and enthalpy to
+`-7316.421704183606` J, with the same active phases and roots. Valid low-water endpoints
+perform no additional initialization, stability search or beta solve; numerical tolerances
+and the three-update bound are unchanged.
 
 #### 6.4.1 Hydrogen-Rich Cubic-EOS Qualification
 
@@ -2089,6 +1942,118 @@ qualification, while adding enforceable thermodynamic acceptance gates. Producti
 APIs, model parameters, and runtime behavior are unchanged, so no production speedup
 is claimed. The scope is limited to PR; SRK and experimental sour-gas tie-line
 validation remain separate model-qualification work.
+
+The phase-reuse follow-up additionally covers ordinary and enhanced PR/classic flashes near
+the two-liquid boundary. Cloned components must own their fugacity-derivative and EOS work
+arrays: shared arrays corrupted the analytical Hessian when a second liquid was initialized.
+`ComponentCloneDerivativeIsolationTest` checks both independent storage and all nine entries
+of a three-component Hessian against central differences at fixed configured roots. Enhanced
+stability trials copy their configured root into the recycled phase slot only when enhanced
+checking is explicitly requested. Rollback always preserves the configured selector independently
+from the resulting GAS/OIL classification. Reading the stored selector also removes two cloned
+root-inference evaluations per copied phase.
+
+Implicit supplementary stability trials retain the established local-root policy for every model.
+A trial selector is an initial search choice, not a guarantee that the subsequent coupled
+phase-fraction iteration converges on that branch. Propagating the selector unconditionally
+produced a non-equilibrated, higher-Gibbs split in the PR methane/heptane case at 194 K and
+78.5 bara, which final cleanup then collapsed to one oil phase. It similarly lost the SRK
+CO2/methane/ethane/water oil/aqueous state at 220 K and 200 bara. Retaining the implicit policy
+restores the independently qualified PR gas fraction `0.1581255471` and the SRK oil fraction
+`0.907774808238`, without changing their numerical tolerances. The ordinary, multiphase,
+repeat-state, nearby-state, sour-gas and explicit-enhanced scrubber regressions cover this
+compatibility boundary.
+
+This is a bounded correction of the new trial-root propagation, not a general root-selection
+solution. UMR-PRU-MC also exposes an incipient phase with reduced TPD `-5.38e-7`, below the
+ordinary supplementary solve's `1e-6` resolution floor, and a Gibbs change of only `4.2e-15` J.
+Unifying root selection and convergence policy across implicit and explicit enhanced modes
+remains part of [#4310](https://github.com/equinor/neqsim/issues/4310). The UMR-PRU incipient-phase
+expectations and nearby-state tests remain unchanged. No default TPD threshold is altered.
+
+Accepted dry sour two-phase states with at least 0.05 CO2, 0.20 H2S, 0.30 combined acid gas,
+and some hydrocarbon receive at most three local Newton corrections when their log-fugacity
+residual remains above `1e-12`. The existing balance and equilibrium screen must pass first.
+Nonfinite, infeasible, root-changing, nonconvergent or Gibbs-increasing corrections restore
+the original mappings, configured roots, phase fractions, compositions and K values. This
+does not add a new stability search. The general Newton line-search safeguards are described
+in Section 1.5; the sour-endpoint polishing remains a separate, bounded correction.
+
+Independent PR cubic-root and log-fugacity equations give the following methane-rich phase
+fractions for the same normalized feed and classic interaction parameters (methane/CO2 0.0973,
+methane/H2S 0.08, CO2/H2S 0.12). Both retained roots are the liquid roots. The corrected
+references retain the original `1e-10` beta tolerance; the tests also require log-fugacity
+closure within `1e-12`.
+
+| Temperature (K) | Pressure (bara) | Previous underconverged beta | Independent converged beta |
+| --- | ---: | ---: | ---: |
+| 245 | 100.80 | 0.330402477242444 | 0.3304026330996995 |
+| 225 | 95.81 | 0.572813112145268 | 0.5728114916364095 |
+
+The independent equation residuals are below `4e-15`; component closure is below `6e-17`.
+This is EOS consistency evidence, not experimental validation. Original sulfur-filter,
+scrubber saturation and exchanger regression expectations remain unchanged.
+
+The following historical diagnostics use different fixtures from the matched master/original-PR/redesign matrix in [Section 5.6](#56-matched-stability-workspace-qualification-2026-10-14). They are retained for provenance and are superseded for current allocation comparisons.
+
+The correctness fix adds allocations. A diagnostic on Java 17 with a fixed 512 MiB heap,
+seven batches of 128 full flashes and 256 warmups (4096 for dry and seed-floor controls)
+compared the previous `518867a` flash/component classes with the repaired classes. All
+70 cold/warm numerical snapshots match exactly. Median warm CPU and allocation changed as
+follows; shared-host timing is diagnostic and does not establish performance parity.
+
+| Workload | CPU before/after (microseconds/flash) | Allocation before/after (bytes/flash) |
+| --- | ---: | ---: |
+| Dry gas | 71 / 95 | 36,136 / 152,488 |
+| Seed-floor water | 200 / 266 | 68,000 / 300,704 |
+| Undersaturated water | 298 / 325 | 90,680 / 400,952 |
+| Dilute aqueous | 258 / 460 | 101,680 / 334,384 |
+| Three phase | 255 / 446 | 102,176 / 334,880 |
+
+A separate three-component clone diagnostic measured 11.9/18.0 microseconds and
+14,544/72,720 bytes per clone. Complete cold sour flashes, including the clone, measured
+9.07/8.57 ms at 245 K and 14.17/9.67 ms at 225 K (seven batches of 64, 256 warmups).
+The 240 K control increased from 148 to 183 microseconds. Root-copy simplification removes
+redundant work, but deep ownership of public mutable derivative buffers has a measurable
+cost. No universal speedup or representative-process throughput parity is claimed.
+
+A subsequent diagnostic compared PR head `dcc5105` with the repaired Newton
+line-search and explicit-enhanced-root candidate. Both variants used Java 17, a
+fixed 512 MiB heap, five batches of 64 complete flashes, and 128 warmups per case
+(4096 for dry gas, hot gas and ordinary two-phase controls). Construction, state
+changes and numerical snapshots remained outside the measurement interval.
+Each variant passed all 70 numerical snapshots. The 40 dry-gas, hot-gas,
+ordinary two-phase and CPA-water snapshots were identical. The 30 condensate
+snapshots retained phase topology and passed the same material-balance,
+normalization and fugacity gates; maximum differences were `1.64e-10` in beta,
+`2.56e-11` in component mole fraction and `3.64e-12 J` in Gibbs energy. This is
+numerical consistency evidence, not experimental validation.
+
+| Condensate workload | Median CPU before/after (ms/flash) | Allocation before/after (bytes/flash) |
+| --- | ---: | ---: |
+| Ordinary, unchanged state | 7.426 / 1.230 | 1,826,735 / 244,396 |
+| Ordinary, changed state | 15.192 / 0.884 | 3,590,504 / 240,068 |
+| Cold, unchanged state | 8.767 / 0.803 | 1,823,688 / 244,440 |
+| Cold, changed state | 10.440 / 0.848 | 3,580,979 / 240,116 |
+| Multiphase, unchanged state | 12.734 / 2.960 | 2,930,784 / 684,256 |
+| Multiphase, changed state | 13.090 / 2.985 | 2,827,956 / 679,388 |
+
+The corrected trial objective reduced allocation in these condensate workloads
+by 76–93%, while preserving independent derivative-array ownership. Dry-gas,
+hot-gas and ordinary two-phase control allocations were identical; CPA-water
+allocation differed by at most 28 bytes on approximately 1.99 MB per flash.
+Timing varied substantially between identical baseline JVM runs and remains
+diagnostic. These measurements do not establish universal speed improvement or
+performance parity against master, and do not replace the preceding evidence
+of clone-allocation overhead. Avoiding rejected recovery work for undersaturated
+trace water remains tracked separately in
+[issue #4311](https://github.com/equinor/neqsim/issues/4311).
+
+`TPflashEndpointRecoveryBenchmark` now records optional per-thread allocation
+alongside elapsed time, thread CPU time and numerical snapshots. Its
+`threadAllocationCountingEnabled` field identifies whether allocation accounting
+is available; `bytesPerFlash` is `-1` when the JVM lacks or denies that feature.
+Allocation-counter reads remain outside the elapsed and CPU timing intervals.
 
 #### 6.4.4 PR Methane/Heptane Boundary Qualification
 
@@ -2371,7 +2336,7 @@ Huldra are outside this tranche.
 The phase-boundary qualification covers two synthetic numerical cases. A classic-mixing
 `SystemSrkEos` feed of methane, ethane, propane, and n-butane at
 253.46685189059752 K and 77.53775411226596 bara must retain an incipient vapour
-fraction of `3.50882832337307e-5` through the supplementary stability trial. A
+fraction of `3.508682096277057e-5` through the supplementary stability trial. A
 classic-mixing `SystemUMRPRUMCEos` feed of methane, ethane, n-pentane, and nC16
 at 293.15 K must retain a stable single phase at 90.03461693 and 90.5 bara.
 The ordinary and multiphase paths must agree while the sub-residual TPD guard
@@ -2380,6 +2345,41 @@ envelope because its Windows endpoint does not satisfy the closure gates. Both
 feeds are synthetic and provide numerical
 regression evidence rather than experimental validation of phase boundaries or
 model parameters.
+
+The SRK reference was independently recomputed with 70-digit decimal arithmetic,
+using the configured pure-component attraction/covolume parameters and classic
+binary interactions. A separate solver evaluates the SRK cubic and log-fugacity
+equations, brackets the physical volume roots, and solves equilibrium with a
+numerical Jacobian. It obtains beta `3.508682096277057e-5`, maximum log-fugacity
+residual below `8e-67`, and material/normalization residuals below `1e-69`.
+The previous reference `3.50882832337307e-5` was underconverged by `1.46e-9`
+in beta. The corrected Newton result differs from the independent value by
+`1.57e-11`, within the unchanged `1e-10` beta tolerance. The exact-state regression
+also requires log-fugacity closure within `1e-10` for both public flash paths.
+The extra arithmetic digits describe equation-solving precision; the exported
+EOS parameters retain double precision and this is not experimental validation.
+
+The reference uses `R = 8.3144621 J/(mol K)` and the following parameters at
+the stated temperature. The SI values are the exported `getaT()` and `getb()`
+values multiplied by `1e-5`; pressure is converted from bara to Pa before forming
+`A = a P/(R T)^2` and `B = b P/(R T)`.
+
+| Component | Normalized feed fraction | a(T), Pa m6/mol2 | b, m3/mol |
+| --- | ---: | ---: | ---: |
+| Methane | 0.5833884211682983 | 0.19906334237169536 | 2.984851232640916e-5 |
+| Ethane | 0.1647535915704123 | 0.63104267304609966 | 4.514423831995930e-5 |
+| Propane | 0.19866217294783828 | 1.2003495539713910 | 6.271508067756126e-5 |
+| n-Butane | 0.05319581431345125 | 1.9575721924885706 | 8.067513283649740e-5 |
+
+Symmetric classic binary interactions, with zero diagonal, are methane/ethane
+`0.00295295`, methane/propane `0.00747722`, methane/n-butane `0.01289789`,
+ethane/propane `0.00185286`, ethane/n-butane `0.00464288`, and
+propane/n-butane `0.00132268`. The mixing rules are
+$a=\sum_i\sum_j x_i x_j\sqrt{a_i a_j}(1-k_{ij})$ and
+$b=\sum_i x_i b_i$. The independent cubic is
+$Z^3-Z^2+(A-B-B^2)Z-AB=0$; its physical roots are
+`0.28907489265639535` for liquid and `0.59614803621601418` for vapour.
+
 
 Every active phase and beta must be finite, bounded, and normalized within
 `3e-12`; maximum component material-balance residual must be below `1e-10`;
@@ -2628,6 +2628,7 @@ equipment and makes no wall-clock performance claim.
 |------|-------------|
 | [TPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/TPflash.java) | Two-phase flash with SSI and Newton |
 | [TPmultiflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java) | Multi-phase flash with stability analysis |
+| [FlashPhaseState.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/FlashPhaseState.java) | Package-private retained-split restoration and accepted-phase transfer |
 | [RachfordRice.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/RachfordRice.java) | Rachford-Rice equation solvers |
 | [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) | Second-order Newton solver |
 | [ChemicalReactionOperations.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/chemicalreactions/ChemicalReactionOperations.java) | Chemical equilibrium solver |
@@ -2893,3 +2894,140 @@ These public synthetic fluids qualify translated-PR TP-flash closure and lifecyc
 do not validate the volume-translation correlation or parameters, phase-envelope accuracy,
 experimental PVT predictions, PS/PH flashes, or acoustic-speed calculations. No production solver,
 public API, model parameter, unit, default, or wall-clock performance claim is introduced.
+
+
+### Endpoint recovery performance and phase-storage lifecycle
+
+Empty-clone scaling covers every stored physical slot, avoiding the inventory corruption
+caused by scaling reordered logical slots. The aqueous recovery removes the former 5 mol%
+exclusion and uses the shared phase lifecycle to allocate a distinct trial slot. It remains a
+bounded active-set recovery, not proof that the general stability search finds every global
+minimum. The lifecycle correction for [#4310](https://github.com/equinor/neqsim/issues/4310) returns the
+released physical slot to the inactive tail, retains root roles by physical slot, and normalizes
+stability candidates through their logical phase mapping. `addPhase()` also avoids stale inactive
+mappings that point at a surviving object. Remove/add, reordered-slot, root-role and beta tests
+cover both removal APIs. These corrections do not constitute a global stability certificate.
+
+Intermediate three-phase recovery runs only when the beta solve stalls. Final cleanup still
+checks neutral water-bearing three-phase endpoints, but a feasible split is checked without
+allocating another solver. Locked, reactive, ionic, wax and ineligible solid-recovery paths
+return before that allocation. Numerically unresolvable water remains excluded before cloning.
+
+`DiluteWaterRecoveryBenchmark` measures complete cold and warm TP flashes for dry gas,
+numerical trace water, resolvable undersaturated water, dilute aqueous appearance and three-phase
+fluids. It retains seven batches of elapsed time, thread CPU time, allocated bytes and numerical
+snapshots. Run identical JVM settings on both comparison heads; compare repeated runs and
+reject any speedup accompanied by failed normalization, material balance or fugacity checks.
+Timing thresholds are deliberately not asserted in CI. For unmodified SRK/PR phases with the
+classic mixing rule and hydrocarbon/water feeds, a detached phase runs two water-rich
+successive-substitution trials before full-system recovery allocation. Both mixed trials must
+converge to the same water-rich stationary composition with `sum(W_i) < 1 - 1e-6`;
+this corresponds to positive stationary tangent-plane distance. Composition convergence is
+`1e-10`, agreement between trials is `1e-8`, and the bound is 30 iterations per trial.
+A pure-water fugacity comparison alone never bypasses recovery. Invalid references, failed or
+trivial trials, near-saturation states, other model/mixing-rule families and non-hydrocarbon
+co-solvents retain the full recovery path. This is a model-qualified screen for the aqueous
+minimum seeded by recovery, not proof that every possible mixed liquid minimum is absent.
+Performance follow-up is tracked in [#4311](https://github.com/equinor/neqsim/issues/4311).
+
+#### Independently qualified methane/heptane phase-map change
+
+Correcting storage aliasing exposes gas/oil splits at 194 K that the previous regression
+incorrectly required to be single oil. Independent PR cubic-root and log-fugacity equations
+confirm the split, using `z = (0.7, 0.3)`, `kij = 0.05`, `Tc = (190.56, 540.2) K`,
+`Pc = (45.99, 27.4) bara`, `omega = (0.0115, 0.3495)`, `OmegaA = 0.45724333333`
+and `OmegaB = 0.077803333`. This is an EOS consistency benchmark, not experimental validation.
+
+| Pressure (bara) | Gas fraction | Methane in oil | Methane in gas | Split minus homogeneous-oil Gibbs / (nRT) | Vapor-trial TPD against homogeneous oil |
+| --- | --- | --- | --- | --- | --- |
+| 78.5 | 0.1581255471 | 0.6454055390 | 0.9906657579 | -0.0022325446 | -0.0246866032 |
+| 81.0 | 0.1485707931 | 0.6494133213 | 0.9899020380 | -0.0018972961 | -0.0225099606 |
+
+`TPFlashTest` now checks these independent values over cold and repeated warm starts, component
+balance, log-fugacity equality, Gibbs decrease and negative TPD for the former single-oil state.
+The remaining phase-map closure, duplicate-removal and density-hole tests are retained.
+
+
+
+### Root selectors and Newton inventory mapping
+
+**Open qualification blocker for PR #4306:** the complete `SystemElectrolyteCPATest`
+class reproduces two salting-out failures and a hydrate-temperature error on both the
+starting `0239f31` revision and the focused state/copy redesign. Master `d28b180` passes
+those assertions, but separate composition checks show that its salted reference states
+can contain clamped molecular fractions and fail normalization. Passing the old direction-only
+assertions is therefore insufficient evidence for an ionic repair.
+
+The nitrogen/water fixture at 298.15 K and 50 bara uses component amounts
+`(nitrogen, water, Na+, Cl-) = (0.1, 1.0, 0.018, 0.018)` mol and mixing rule 10.
+The unqualified PR result places about 0.154 mole fraction chloride in the gas phase.
+The generic two-phase Newton formulation enforces positive amounts and molecular fugacity
+equality for every component; it does not represent the aqueous-only ion constraint.
+An isolated return to the old Newton implementation reproduces the old clamped states,
+not a qualified physical solution. Ionic Newton/acceleration exclusions, constrained K-value
+history, feasibility-aware Gibbs comparison and independently copied electrolyte association
+buffers were investigated separately; none alone produced qualified endpoints for all failing
+fixtures. These experimental changes are not included in the redesign.
+
+Before merging, the constrained ionic path must pass normalization, original component
+balance, gas-phase ion exclusion and molecular fugacity closure, as well as the existing
+salting-out and 150-bara hydrate tests. The passing neutral-fluid benchmark and default-CPA
+clone tests do not cover this blocker. Keep the phase/solver qualification work in
+[#4310](https://github.com/equinor/neqsim/issues/4310) open and require independent numerical
+review of the repaired endpoints.
+
+A phase's reported GAS/OIL/AQUEOUS classification is not necessarily its configured cubic
+root selector. Bounded flash rollback preserves both the physical-slot mapping and
+`getPhaseType(logicalPhase)` selector, rather than reconstructing the selector from the
+resulting phase label after a rejected trial.
+
+`TPflash` and `TPmultiflash` share the package-private `FlashPhaseState` contract for retained
+splits and accepted detached candidates. A compact snapshot owns its captured values:
+the active phase count, logical-to-physical mapping, configured root selectors, resulting
+classifications, phase fractions, compositions and a separate K-value vector for each phase.
+The two-phase refinement snapshot also retains the reference Gibbs energy. Restoring every
+phase from the first phase's K-values would discard part of the pre-trial iteration state.
+
+| Transfer | State retained | Initialization boundary |
+| --- | --- | --- |
+| Compact rollback | Existing physical slots, configured selectors, beta, composition and per-phase K-values | Restore mapping before phase access, normalize beta, then call `init(1)` once. Restore the active count where the caller permits phase removal. |
+| Accepted initialized phases | Complete, independently cloned phase objects in canonical destination slots | Preserve accepted caches without normalization or initialization, including the selected near-critical root. |
+| Accepted phases requiring reevaluation | The same cloned phase transfer | Normalize beta and call `init(1)` once at the existing adoption boundary. |
+
+Compact rollback assumes unchanged temperature, pressure, feed, component order and retained
+physical slots. It rebuilds fugacity caches; it does not restore previously calculated
+composition derivatives. If phase shifts are disabled, the configured selectors must still
+be present in their retained physical slots. Cached adoption requires matching feed and
+thermodynamic model, and matching temperature and pressure in **each destination physical
+slot**: `SystemThermo.setPhase()` preserves the destination slot's temperature and pressure.
+Consumers of higher derivatives must still perform their required initialization after
+adoption or rollback.
+
+Normal default CPA clones also detach the association arrays and matrices owned by
+`PhaseSrkCPA`/`PhaseSrkCPAs`, including each component's site-composition derivative rows.
+The copied Hessian supports rebuilding a private LU factorization when a derivative is
+requested before another association solve; the clone does not reuse its parent's mutable
+factorization. `PhaseSrkCPACloneIsolationTest` checks retained values and derivative access
+without an intervening `init(0)` that could conceal shared buffers. This ownership repair
+supports the qualified ordinary default Statoil CPA path. Optional fully implicit, Anderson
+and Broyden CPA variants retain separate qualification scope; it is not a blanket thread-safety
+claim for specialized CPA models.
+
+These helpers transfer state after a caller's acceptance decision; they do not decide
+stability or select a root policy. Implicit supplementary and explicitly enhanced stability
+retain their established policies. The guarded ordinary water-rich fallback still replays
+the accepted calculation on the live system, and existing Newton and CPA acceptance checks
+remain in place. Consolidating the transfer code does not justify removing those calculations.
+
+The two-phase Newton solver uses indexed beta access consistently with its logical phase
+compositions, including after removal/reuse produces mappings such as `[2, 0]`. These changes
+add no phase search or equilibrium iterations. The tiny aqueous-seed rejection also checks
+material infeasibility together with higher Gibbs energy, since normalizing an unsolved seed
+is insufficient to qualify it against the preceding stable single phase.
+
+`FlashPhaseStateTest` covers repeated rollback, two- and three-phase mappings, configured
+roots distinct from phase classifications, per-phase K-values, locked phase roles, independent
+derivative buffers, initialization boundaries, repeated or changed-state flashes, and the
+operation-local solid-check workspace exclusion.
+`TPflashPhaseLifecycleTest` covers the TPflash rollback caller and reordered Newton inventories;
+`TPflashTinyAqueousSeedRejectionTest` retains the stable vapor and nearby genuine aqueous split.

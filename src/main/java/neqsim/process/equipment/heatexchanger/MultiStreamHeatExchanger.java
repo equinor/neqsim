@@ -483,6 +483,25 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     if (applyLowFlowBypass(id)) {
       return;
     }
+    int activeStreams = 0;
+    for (int i = 0; i < inStreams.size(); i++) {
+      if (hasThermalFlow(i)) {
+        activeStreams++;
+      } else {
+        outStreams.get(i).setThermoSystem(inStreams.get(i).getThermoSystem().clone());
+        outStreams.get(i).setCalculationIdentifier(id);
+      }
+    }
+    if (activeStreams < 2) {
+      for (int i = 0; i < inStreams.size(); i++) {
+        outStreams.get(i).setThermoSystem(inStreams.get(i).getThermoSystem().clone());
+        outStreams.get(i).setCalculationIdentifier(id);
+      }
+      duty = 0.0;
+      publishHeatDuty();
+      setCalculationIdentifier(id);
+      return;
+    }
     if (firstTime) {
       firstTime = false;
 
@@ -493,6 +512,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       int coldestIndex = -1;
 
       for (int i = 0; i < inStreams.size(); i++) {
+        if (!hasThermalFlow(i)) {
+          continue;
+        }
         StreamInterface inStream = inStreams.get(i);
         // Ensure the inlet stream is run to get the latest temperature
         inStream.run();
@@ -516,6 +538,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
 
       // 2. Set the outlet temperatures accordingly
       for (int i = 0; i < outStreams.size(); i++) {
+        if (!hasThermalFlow(i)) {
+          continue;
+        }
         StreamInterface outStream = outStreams.get(i);
         SystemInterface systemOut = inStreams.get(i).getThermoSystem().clone();
         outStream.setThermoSystem(systemOut);
@@ -537,16 +562,18 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
         outStream.run(id);
       }
 
-      // Finalize the setup
-      run();
+      // Preserve the caller calculation identity through the initialization pass.
+      run(id);
       return;
     } else {
       // Run all input and output streams to ensure they are up-to-date
       for (StreamInterface inStream : inStreams) {
         inStream.run(id);
       }
-      for (StreamInterface outStream : outStreams) {
-        outStream.run(id);
+      for (int i = 0; i < outStreams.size(); i++) {
+        if (hasThermalFlow(i)) {
+          outStreams.get(i).run(id);
+        }
       }
 
       // Identify heated and cooled streams
@@ -556,6 +583,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       double totalHeatLost = 0.0; // Total Q for cooled streams
 
       for (int i = 0; i < inStreams.size(); i++) {
+        if (!hasThermalFlow(i)) {
+          continue;
+        }
         double enthalpyIn = inStreams.get(i).getThermoSystem().getEnthalpy();
         double enthalpyOut = outStreams.get(i).getThermoSystem().getEnthalpy();
         double deltaH = enthalpyOut - enthalpyIn;
@@ -663,6 +693,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       int adjustedColdestIndex = -1;
 
       for (int i = 0; i < inStreams.size(); i++) {
+        if (!hasThermalFlow(i)) {
+          continue;
+        }
         StreamInterface inStream = inStreams.get(i);
         double currentTemp = inStream.getThermoSystem().getTemperature("K");
 
@@ -735,6 +768,17 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     publishHeatDuty();
     setCalculationIdentifier(id);
     firstTime = true;
+  }
+
+  /**
+   * Identifies streams that can participate in the heat balance and terminal temperatures.
+   *
+   * @param streamIndex inlet and corresponding outlet index
+   * @return true when the stream is above the configured mass-flow floor
+   */
+  private boolean hasThermalFlow(int streamIndex) {
+    return inStreams.get(streamIndex).getFlowRate("kg/hr") > Math.max(getMinimumFlow(),
+        neqsim.process.equipment.ProcessEquipmentBaseClass.DEFAULT_MINIMUM_FLOW);
   }
 
   /**

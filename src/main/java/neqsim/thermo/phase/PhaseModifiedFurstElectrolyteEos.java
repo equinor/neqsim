@@ -548,43 +548,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return dγ/dT
    */
   public double calcShieldingParameterdT() {
-    if (shieldingParameter < 1e-10) {
-      return 0.0; // No ions in system
-    }
-
-    double volumeFactor = getMolarVolume() * numberOfMolesInPhase * 1e-5;
-
-    // Calculate ∂f/∂γ (same as df in calcShieldingParameter)
-    double dfdgamma = 8.0 * shieldingParameter / avagadroNumber;
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getIonicCharge() != 0) {
-        double zi2 = Math.pow(componentArray[i].getIonicCharge(), 2.0);
-        double ni = componentArray[i].getNumberOfMolesInPhase();
-        double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10;
-        dfdgamma += 2.0 * getAlphaLR2() * ni / volumeFactor * zi2 * sigma
-            / Math.pow(1.0 + shieldingParameter * sigma, 3.0);
-      }
-    }
-
-    // Calculate ∂f/∂T: only αLR2 depends on T in the implicit equation
-    // f = 4γ²/NA - αLR2 * sum(...)
-    // ∂f/∂T = -dαLR2/dT * sum(ni/V * zi²/(1+γσi)²)
-    double sum = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getIonicCharge() != 0) {
-        double zi2 = Math.pow(componentArray[i].getIonicCharge(), 2.0);
-        double ni = componentArray[i].getNumberOfMolesInPhase();
-        double sigma = componentArray[i].getLennardJonesMolecularDiameter() * 1e-10;
-        sum += ni / volumeFactor * zi2 / Math.pow(1.0 + shieldingParameter * sigma, 2.0);
-      }
-    }
-    double dfdT = -alphaLRdT * sum;
-
-    // dγ/dT = -∂f/∂T / (∂f/∂γ)
-    if (Math.abs(dfdgamma) < 1e-50) {
-      return 0.0;
-    }
-    return -dfdT / dfdgamma;
+    return shieldingParameter == 0.0 ? 0.0 : alphaLRdT * XLRdGammaLR() / (4.0 * pi * dFLRdGammaLRdGammaLR());
   }
 
   /**
@@ -593,17 +557,34 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double calcGammaLRdV() {
-    if (pt == PhaseType.GAS) {
+    if (shieldingParameter == 0.0) {
       return 0.0;
     }
-    // return 0.0; // problem ved ren komponent
-    return 1.0 / (8.0 * getShieldingParameter())
-        * (4.0 * Math.pow(getShieldingParameter(), 2.0) / getAlphaLR2() * alphaLRdV
-            + 4.0 * Math.pow(getShieldingParameter(), 2.0) / (numberOfMolesInPhase * getMolarVolume() * 1e-5));
-    // // Math.pow(getIonicCharge()/(1.0+((PhaseModifiedFurstElectrolyteEos)
-    // phase).getShieldingParameter()*getLennardJonesMolecularDiameter()*1e-10),2.0)
-    // + alphai*temp) /(8.0*((PhaseModifiedFurstElectrolyteEos)
-    // phase).getShieldingParameter());
+    double mixedDerivative = -alphaLRdV * XLRdGammaLR() / (4.0 * pi)
+        + shieldingParameter * shieldingParameter / (pi * avagadroNumber);
+    return -mixedDerivative / dFLRdGammaLRdGammaLR();
+  }
+
+  /**
+   * Curvature of the long-range Helmholtz contribution with respect to its stationary shielding parameter.
+   *
+   * <p>
+   * The remaining derivatives hold temperature, total volume and component amounts fixed. Eliminating the shielding
+   * parameter contributes the corresponding Schur-complement term to each thermodynamic Hessian.
+   * </p>
+   *
+   * @return positive shielding curvature for an ionic state, or zero without ions
+   */
+  public double dFLRdGammaLRdGammaLR() {
+    double sum = 0.0;
+    for (int component = 0; component < numberOfComponents; component++) {
+      double sigma = componentArray[component].getLennardJonesMolecularDiameter() * 1e-10;
+      double charge = componentArray[component].getIonicCharge();
+      sum += componentArray[component].getNumberOfMolesInPhase() * charge * charge * sigma
+          / Math.pow(1.0 + shieldingParameter * sigma, 3.0);
+    }
+    return alphaLR2 * sum / (2.0 * pi)
+        + 2.0 * getMolarVolume() * numberOfMolesInPhase * 1e-5 * shieldingParameter / (pi * avagadroNumber);
   }
 
   /**
@@ -612,35 +593,50 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double calcShieldingParameter() {
-    // if(pt==1) return 0.0;
-    double df = 0;
-    double f = 0;
-    int ions = 0;
-    int iterations = 0;
-    gamma = 1e10;
-    do {
-      iterations++;
-      gammaold = gamma;
-      ions = 0;
-      f = 4.0 * Math.pow(gamma, 2) / avagadroNumber;
-      df = 8.0 * gamma / avagadroNumber;
-      for (int i = 0; i < numberOfComponents; i++) {
-        if (componentArray[i].getIonicCharge() != 0) {
-          ions++;
-          f += -getAlphaLR2() * componentArray[i].getNumberOfMolesInPhase()
-              / (getMolarVolume() * numberOfMolesInPhase * 1e-5) * Math.pow(componentArray[i].getIonicCharge()
-                  / (1.0 + gamma * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10), 2.0);
-          df += 2.0 * getAlphaLR2() * componentArray[i].getNumberOfMolesInPhase()
-              / (getMolarVolume() * numberOfMolesInPhase * 1e-5) * Math.pow(componentArray[i].getIonicCharge(), 2.0)
-              * (componentArray[i].getLennardJonesMolecularDiameter() * 1e-10)
-              / (Math.pow(1.0 + gamma * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10, 3.0));
+    boolean containsIons = false;
+    for (int component = 0; component < numberOfComponents; component++) {
+      containsIons |= componentArray[component].getIonicCharge() != 0
+          && componentArray[component].getNumberOfMolesInPhase() > 0.0;
+    }
+    if (!containsIons) {
+      gamma = 0.0;
+      return 0.0;
+    }
+    double volume = getMolarVolume() * numberOfMolesInPhase * 1e-5;
+    double ionicSquareCharge = 0.0;
+    for (int component = 0; component < numberOfComponents; component++) {
+      double charge = componentArray[component].getIonicCharge();
+      ionicSquareCharge += componentArray[component].getNumberOfMolesInPhase() * charge * charge;
+    }
+    // Omitting the finite ion-diameter denominators gives an upper bound on the positive shielding root.
+    double upperBound = Math.sqrt(avagadroNumber * alphaLR2 * ionicSquareCharge / (4.0 * volume));
+    gamma = upperBound > 0.0 && Double.isFinite(upperBound) ? upperBound : 1e10;
+    for (int iteration = 0; iteration < 1000; iteration++) {
+      double repulsive = 4.0 * gamma * gamma / avagadroNumber;
+      double attractive = 0.0;
+      double derivative = 8.0 * gamma / avagadroNumber;
+      for (int component = 0; component < numberOfComponents; component++) {
+        double charge = componentArray[component].getIonicCharge();
+        if (charge != 0) {
+          double sigma = componentArray[component].getLennardJonesMolecularDiameter() * 1e-10;
+          double coefficient = alphaLR2 * componentArray[component].getNumberOfMolesInPhase() / volume * charge
+              * charge;
+          double denominator = 1.0 + gamma * sigma;
+          attractive += coefficient / (denominator * denominator);
+          derivative += 2.0 * coefficient * sigma / Math.pow(denominator, 3.0);
         }
       }
-      gamma = ions > 0 ? gammaold - 0.8 * f / df : 0;
-    } while ((Math.abs(f) > 1e-10 && iterations < 1000) || iterations < 3);
-    // gamma = 1e9;
-    // System.out.println("gamma " +gamma + " iterations " + iterations);
-    return gamma;
+      double residual = repulsive - attractive;
+      // A relative residual is required: the dimensional equation can be far smaller than 1e-10.
+      if (Double.isFinite(residual) && Math.abs(residual) <= 1e-12 * Math.max(repulsive, attractive)) {
+        return gamma;
+      }
+      gamma -= 0.8 * residual / derivative;
+      if (!(gamma > 0.0) || !Double.isFinite(gamma)) {
+        break;
+      }
+    }
+    throw new IllegalStateException("Electrolyte shielding parameter did not converge");
   }
 
   // public double calcShieldingParameter2(){
@@ -911,56 +907,30 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   }
 
   /**
-   * dFLRdT. Temperature derivative of the long-range MSA contribution at constant V. FLR = -αLR*XLR/(4π) +
-   * n*V*γ³/(3π*NA) * 1e-5
+   * Temperature derivative of the stationary long-range Helmholtz contribution at constant total volume.
    *
-   * <p>
-   * dFLR/dT|V = -1/(4π) * (dαLR/dT * XLR + αLR * dXLR/dT) + n*V*1e-5/(3π*NA) * 3γ² * dγ/dT
-   * </p>
-   * <p>
-   * Note: This derivative is computed at constant V, which is correct for the Helmholtz free energy formulation. The
-   * relationship between constant-P and constant-V derivatives is handled through the pressure equation of state:
-   * dF/dT|P = dF/dT|V + (dF/dV)*dV/dT|P. Numerical tests at constant P will show ~15% difference which is expected
-   * behavior.
-   * </p>
-   *
-   * @return a double
+   * @return the envelope derivative, with the shielding equation satisfied
    */
   public double dFLRdT() {
-    // Term 1: d/dT of [-αLR*XLR/(4π)] = -1/(4π) * (dαLR/dT * XLR + αLR * dXLR/dT)
-    double term1 = -1.0 / (4.0 * pi) * (alphaLRdT * getXLR() + getAlphaLR2() * XLRdT);
-
-    // Term 2: d/dT of [n*V*γ³*1e-5/(3π*NA)] at constant V
-    // The dependence through γ: d/dT|V = n*V*1e-5/(3π*NA) * 3γ² * dγ/dT
-    double term2 = numberOfMolesInPhase * getMolarVolume() * 1e-5 / (3.0 * pi * avagadroNumber) * 3.0
-        * Math.pow(getShieldingParameter(), 2.0) * shieldingParameterdT;
-
-    return (term1 + term2);
+    return dFdAlphaLR() * alphaLRdT;
   }
 
   /**
-   * dFLRdTdV.
+   * Mixed temperature-volume derivative including the implicit shielding response.
    *
-   * @return a double
+   * @return derivative in the phase's internal volume units
    */
   public double dFLRdTdV() {
-    return (dFdAlphaLR() * alphaLRdTdV) * 1e-5;
+    return (dFdAlphaLR() * alphaLRdTdV - alphaLRdT * XLRdGammaLR() / (4.0 * pi) * calcGammaLRdV()) * 1e-5;
   }
 
   /**
-   * dFLRdTdT. Second temperature derivative of the long-range MSA contribution. Note: This is a simplified
-   * implementation that includes the main terms. The full second derivative would require d²γ/dT² and d²XLR/dT² which
-   * are not yet implemented.
+   * Second temperature derivative including the implicit shielding response at constant total volume.
    *
-   * @return a double
+   * @return the stationary long-range temperature curvature
    */
   public double dFLRdTdT() {
-    // Simplified: only includes d²αLR/dT² * XLR term
-    // Full implementation would need d²γ/dT², d²XLR/dT², and cross terms
-    double term1 = -1.0 / (4.0 * pi) * alphaLRdTdT * getXLR();
-    // Add the cross term: -2/(4π) * dαLR/dT * dXLR/dT
-    double crossTerm = -2.0 / (4.0 * pi) * alphaLRdT * XLRdT;
-    return (term1 + crossTerm);
+    return dFdAlphaLR() * alphaLRdTdT - alphaLRdT * XLRdGammaLR() / (4.0 * pi) * shieldingParameterdT;
   }
 
   /**
@@ -978,7 +948,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFLRdVdV() {
-    return (dFdAlphaLR() * alphaLRdVdV) * 1e-10;
+    double mixedDerivative = -alphaLRdV * XLRdGammaLR() / (4.0 * pi)
+        + shieldingParameter * shieldingParameter / (pi * avagadroNumber);
+    return (dFdAlphaLR() * alphaLRdVdV + mixedDerivative * calcGammaLRdV()) * 1e-10;
   }
 
   /**
@@ -1438,7 +1410,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFBorndTdT() {
-    return (FBornTT() + FBornTD() * solventDiElectricConstantdT);
+    return FBornTT() + 2.0 * FBornTD() * solventDiElectricConstantdT
+        + FBornDD() * solventDiElectricConstantdT * solventDiElectricConstantdT
+        + FBornD() * solventDiElectricConstantdTdT;
   }
 
   // first order derivatives

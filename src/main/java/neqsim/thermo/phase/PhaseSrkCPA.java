@@ -97,21 +97,136 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   /** {@inheritDoc} */
   @Override
   public PhaseSrkCPA clone() {
-    PhaseSrkCPA clonedPhase = null;
-    try {
-      clonedPhase = (PhaseSrkCPA) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    PhaseSrkCPA clonedPhase = (PhaseSrkCPA) super.clone();
+    if (clonedPhase == null) {
+      throw new IllegalStateException("Cannot clone CPA phase: base phase clone failed");
     }
-    if (activeAccosComp != null) {
-      clonedPhase.activeAccosComp = activeAccosComp.clone();
-      System.arraycopy(this.activeAccosComp, 0, clonedPhase.activeAccosComp, 0, activeAccosComp.length);
-    }
-    // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
-    // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
-    // clonedPhase.cpamix = cpaSelect.getMixingRule(1, this);
+    clonedPhase.dFdNtemp = dFdNtemp == null ? null : dFdNtemp.clone();
+    clonedPhase.activeAccosComp = activeAccosComp == null ? null : activeAccosComp.clone();
+    clonedPhase.lngi = lngi == null ? null : lngi.clone();
+    clonedPhase.moleculeNumber = moleculeNumber == null ? null : moleculeNumber.clone();
+    clonedPhase.assSiteNumber = assSiteNumber == null ? null : assSiteNumber.clone();
+    clonedPhase.selfAccociationScheme = copyArray(selfAccociationScheme);
+    clonedPhase.crossAccociationScheme = copyArray(crossAccociationScheme);
+    clonedPhase.gvector = copyArray(gvector);
+    clonedPhase.delta = copyArray(delta);
+    clonedPhase.deltaNog = copyArray(deltaNog);
+    clonedPhase.deltadT = copyArray(deltadT);
+    clonedPhase.deltadTdT = copyArray(deltadTdT);
+    clonedPhase.Klkni = copyArray(Klkni);
+    clonedPhase.KlkTVMatrix = KlkTVMatrix == null ? null : KlkTVMatrix.copy();
+    clonedPhase.KlkTTMatrix = KlkTTMatrix == null ? null : KlkTTMatrix.copy();
+    clonedPhase.KlkTMatrix = KlkTMatrix == null ? null : KlkTMatrix.copy();
+    clonedPhase.udotTimesmMatrix = udotTimesmMatrix == null ? null : udotTimesmMatrix.copy();
+    clonedPhase.mVector = mVector == null ? null : mVector.copy();
+    clonedPhase.udotMatrix = udotMatrix == null ? null : udotMatrix.copy();
+    clonedPhase.uMatrix = uMatrix == null ? null : uMatrix.copy();
+    clonedPhase.QMatksiksiksi = QMatksiksiksi == null ? null : QMatksiksiksi.copy();
+    clonedPhase.KlkVVVMatrix = KlkVVVMatrix == null ? null : KlkVVVMatrix.copy();
+    clonedPhase.KlkVVMatrix = KlkVVMatrix == null ? null : KlkVVMatrix.copy();
+    clonedPhase.udotTimesmiMatrix = udotTimesmiMatrix == null ? null : udotTimesmiMatrix.copy();
+    clonedPhase.ksiMatrix = ksiMatrix == null ? null : ksiMatrix.copy();
+    clonedPhase.KlkMatrix = KlkMatrix == null ? null : KlkMatrix.copy();
+    clonedPhase.hessianMatrix = hessianMatrix == null ? null : hessianMatrix.copy();
+    clonedPhase.hessianInvers = hessianInvers == null ? null : hessianInvers.copy();
+    clonedPhase.KlkVMatrix = KlkVMatrix == null ? null : KlkVMatrix.copy();
+    clonedPhase.corr2Matrix = corr2Matrix == null ? null : corr2Matrix.copy();
+    clonedPhase.corr3Matrix = corr3Matrix == null ? null : corr3Matrix.copy();
+    clonedPhase.corr4Matrix = corr4Matrix == null ? null : corr4Matrix.copy();
+    // Factorizations own mutable scratch and cannot be shared. Rebuild lazily from the copied
+    // Hessian if a derivative is requested before the clone next solves its association sites.
+    clonedPhase.hessianLU = null;
+    clonedPhase.hessianLUinput = null;
+    clonedPhase.hessianLUSize = -1;
+    // Keep the configured CPA mixing-rule parameters shared, as in the EOS clone contract.
+    // Concurrent mixing-rule reconfiguration is not supported.
 
     return clonedPhase;
+  }
+
+  /**
+   * Copy an owned association array without sharing nested rows.
+   *
+   * @param source source array, possibly null
+   * @return independent array with the same values and shape, or null
+   */
+  private static double[][] copyArray(double[][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = source[i] == null ? null : source[i].clone();
+    }
+    return result;
+  }
+
+  /**
+   * Copy an owned association array without sharing nested rows.
+   *
+   * @param source source array, possibly null
+   * @return independent array with the same values and shape, or null
+   */
+  private static double[][][] copyArray(double[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    double[][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
+  }
+
+  /**
+   * Copy an owned association array without sharing nested rows.
+   *
+   * @param source source array, possibly null
+   * @return independent array with the same values and shape, or null
+   */
+  private static int[][] copyArray(int[][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = source[i] == null ? null : source[i].clone();
+    }
+    return result;
+  }
+
+  /**
+   * Copy an owned association array without sharing nested rows.
+   *
+   * @param source source array, possibly null
+   * @return independent array with the same values and shape, or null
+   */
+  private static int[][][] copyArray(int[][][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
+  }
+
+  /**
+   * Copy an owned association array without sharing nested rows.
+   *
+   * @param source source array, possibly null
+   * @return independent array with the same values and shape, or null
+   */
+  private static int[][][][] copyArray(int[][][][] source) {
+    if (source == null) {
+      return null;
+    }
+    int[][][][] result = source.clone();
+    for (int i = 0; i < source.length; i++) {
+      result[i] = copyArray(source[i]);
+    }
+    return result;
   }
 
   /** {@inheritDoc} */
@@ -682,13 +797,25 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
   /**
    * Apply the inverse of the current Hessian to a right-hand side. If an LU factorization is available (cached by
-   * {@link #solveX}), it is used to back-solve; otherwise, the explicit {@code hessianInvers} matrix is used (e.g. when
-   * called from legacy code paths).
+   * {@link #solveX}), it is used to back-solve; otherwise, the explicit {@code hessianInvers} matrix is used when
+   * present. A clone retains the Hessian values but owns no factorization, so its first derivative request rebuilds a
+   * private LU factorization without changing the cached Hessian or association state.
    *
    * @param rhs right-hand side
    * @return {@code H^{-1} * rhs} as a SimpleMatrix
    */
   private SimpleMatrix applyHessianInv(SimpleMatrix rhs) {
+    if ((hessianLU == null || hessianLUSize != totalNumberOfAccociationSites) && hessianInvers == null) {
+      int n = totalNumberOfAccociationSites;
+      LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(n);
+      DMatrixRMaj input = hessianMatrix.getDDRM().copy();
+      if (!solver.setA(input)) {
+        throw new IllegalStateException("Unable to factor copied CPA association Hessian");
+      }
+      hessianLU = solver;
+      hessianLUinput = input;
+      hessianLUSize = n;
+    }
     if (hessianLU != null && hessianLUSize == totalNumberOfAccociationSites) {
       DMatrixRMaj rhsMat = rhs.getDDRM();
       DMatrixRMaj out = new DMatrixRMaj(rhsMat.numRows, rhsMat.numCols);

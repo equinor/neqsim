@@ -278,6 +278,50 @@ It is not an ASTM mean-average or volumetric-average boiling point, and it does 
 integrate enthalpy or heat capacity, temperature-correct density, infer an
 intrainterval measured shape, or establish pseudo-component or phase equivalence.
 
+### Ideal-additive-volume mass-basis recovery
+
+The exported table also converts its liquid-volume curve to an auditable implied mass
+basis using only the caller-supplied interval SG60/60 values. The complete-table
+denominator is
+
+$$M_{total}=\sum_i \Delta V_i SG_i$$
+
+and a bounded range reports
+
+$$w_{range}=100\frac{\sum_i \Delta V_i SG_i}{M_{total}}$$
+
+through `getMassPercentBetweenBoilingPointsKelvin(...)`, its Celsius counterpart, and
+`TbpBoilingRangeProperties.getMassPercent()`. The unnormalized numerator remains
+available from `getSpecificGravityWeightedLiquidVolumePercent()`, while
+`getTotalSpecificGravityWeightedLiquidVolumePercent()` exposes the denominator.
+
+`getCumulativeMassPercentAtBoilingPointKelvin(...)` and its Celsius counterpart apply
+the same expression from the first table boundary to a requested cut point. The inverse
+`getBoilingPointKelvinAtCumulativeMassPercent(...)` and Celsius method interpolate
+inside the responsible source interval. Because interval SG is constant and
+liquid-volume recovery is piecewise linear, the forward and inverse calculations use
+one algebraically consistent model:
+
+```java
+double massRecoveredAt400K =
+    table.getCumulativeMassPercentAtBoilingPointKelvin(400.0);
+double cutPointAtHalfMass =
+    table.getBoilingPointCelsiusAtCumulativeMassPercent(50.0);
+double dieselMassPercent =
+    table.getMassPercentBetweenBoilingPointsCelsius(180.0, 360.0);
+```
+
+Exact source nodes and near-node temperatures retain the existing boundary snapping.
+Partitioned bounded mass yields sum to 100%, Kelvin/Celsius queries are equivalent, and
+the immutable source arrays are not changed. Non-finite, exterior, reversed, and
+zero-width boiling ranges and mass recoveries outside 0 to 100% fail closed.
+
+This is a transparent ideal-additive-volume basis conversion, not a measured
+weight-percent distillation curve. It introduces no dataset, fitted coefficient,
+density-temperature correction, excess-volume or contraction model, pseudo-component
+generation, molecular-weight or critical-property estimate, or phase-equivalence
+claim.
+
 ### Conservative target-grid resampling
 
 `TbpCutTable.resampleAtBoilingPointsKelvin(...)` and

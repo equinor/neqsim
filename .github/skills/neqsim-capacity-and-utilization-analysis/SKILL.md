@@ -170,6 +170,20 @@ When a satellite field is tied to a host that has a Python-driven process model 
 - Units outside the model (produced water, water injection, flare) get a separate screen against demonstrated peaks and any STID design case, labelled as such.
 - Budget the run time: low-flow years can take 15-60 minutes per case or not converge when swing compressors idle; run jobs as resumable parallel processes and write one result line per point.
 
+## Capacity-step value curve (what is a capacity step worth?)
+
+Use when the question is "what is +x MSm3/d of handling capacity worth, and where do I stop?" (worked case: Grane LP gas 2.48 to 4.0 MSm3/d).
+
+1. **Unit ladder from the plant model.** Add the new load in the shared currency (LP gas) at the capacity targets and record the utilisation of every unit; interpolate per unit and find the load where each reaches 100 %. Name the binding unit at each step.
+2. **Hard against soft units.** Units already above 100 % at the demonstrated load (here a cooler at 120 %) have an unknown real rating: bind them at about 1.1 x today's utilisation, not at 100 %, and say so. Run the ladder with 100, 105 and 110 % allowed overload; the optimum capacity moves with this single number.
+3. **Cost ladder.** Price each unit above its limit as a fixed part (ramped in over the first 5 % of overload, so a 1 % overload is a trim, not a new machine) plus a part per 20 % scale-up, capped at a replacement cost; add contingency and a lever-package route (lift-gas optimisation, suction pressure drop) and take the cheaper route per capacity.
+4. **Demand in the same currency.** Express every user as oil times (GOR + lift GLR) so one capacity is shared; check intensities against the allocated measurements. A demand model that lets lift gas follow only water cut underestimates late-life load: test the alternative where lift gas per well stays at the planned rate (the company forecast) and put the choice in the Monte Carlo.
+5. **Sharing rule is a first-order lever.** Hard allocation caps (BB 1.2, Svalin 0.7, rest to the host) throttle the user with the most oil per gas even with idle capacity; compare caps, revised caps and a pooled rule that fills by oil per unit of gas (order recomputed each year, never hard-coded). The pooled rule needs no CAPEX and was worth more than the first hardware steps; report equity effects separately.
+6. **Value = incremental after-tax oil of the capacity case against an explicit reference**, with curtailed oil recovered later at a stated share, less CAPEX, fixed opex, extra shutdown days and the fuel/CO2 of the extra compression. Report the reference (demonstrated, design, target) and show the same step against each.
+7. **Report** the value curve (mean, P10/P50/P90, P(NPV<0)), the marginal value per MSm3/d, the optimum, the value of flexibility (staging) and the extra enabled volume each step must win; a step whose break-even volume exceeds what the portfolio can supply is a no.
+
+Traps seen: a TP/third-party owner reusing another owner's blown-up intensity; division of served gas by an intensity that is zero after the economic limit (guard with a floor); capacity labelled "after lever" while demand counts lift gas before the lever (add the lever credit explicitly and keep one convention); Centuries oil can be 14 % below allocated PDM rates and its RC1 tail 50 % above Sodir remaining reserves, so tie profiles to one stated source.
+
 ## Related skills
 
 - `neqsim-capacity-increase-screening` — turns the constraint map into ranked lever ideas (wells, subsea, topside), an idea register and a maturation pipeline.

@@ -683,6 +683,16 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public Component clone() {
+    return cloneWithDerivativeCapacity(-1);
+  }
+
+  /**
+   * Copies component state with owned composition-derivative storage.
+   *
+   * @param capacity trial capacity, or a negative value to preserve each original array length
+   * @return independent component copy with the requested derivative capacity
+   */
+  protected Component cloneWithDerivativeCapacity(int capacity) {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();
@@ -690,6 +700,9 @@ public abstract class Component implements ComponentInterface {
       throw new AssertionError("Clone failed for Component", ex);
     }
 
+    // Phase clones are evaluated independently; their composition derivatives must not alias.
+    clonedComponent.dfugdn = capacity < 0 ? dfugdn.clone() : java.util.Arrays.copyOf(dfugdn, capacity);
+    clonedComponent.dfugdx = capacity < 0 ? dfugdx.clone() : java.util.Arrays.copyOf(dfugdx, capacity);
     return clonedComponent;
   }
 

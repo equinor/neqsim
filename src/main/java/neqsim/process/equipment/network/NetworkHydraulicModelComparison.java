@@ -1,5 +1,6 @@
 package neqsim.process.equipment.network;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -9,9 +10,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.apache.commons.lang3.SerializationUtils;
+import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe.HydraulicProfile;
 import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe;
 import neqsim.process.equipment.network.LoopedPipeNetwork.PipeModelType;
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.thermo.system.SystemInterface;
 
@@ -37,6 +38,8 @@ import neqsim.thermo.system.SystemInterface;
 public final class NetworkHydraulicModelComparison {
   /** Immutable normalized profile evidence for one hydraulic model. */
   public static final class ModelProfiles {
+    private final double[] positionM;
+    private final double[] cellLengthM;
     private final double[] pressurePa;
     private final double[] temperatureK;
     private final double[] liquidHoldup;
@@ -46,19 +49,41 @@ public final class NetworkHydraulicModelComparison {
     /**
      * Create immutable profile evidence.
      *
+     * @param positionM cell-centre distance from the physical inlet in m
+     * @param cellLengthM represented cell length in m
      * @param pressurePa pressure profile in Pa
      * @param temperatureK temperature profile in K
      * @param liquidHoldup liquid holdup profile
      * @param gasSuperficialVelocityMs superficial gas velocity profile in m/s
      * @param liquidSuperficialVelocityMs superficial liquid velocity profile in m/s
      */
-    private ModelProfiles(double[] pressurePa, double[] temperatureK, double[] liquidHoldup,
-        double[] gasSuperficialVelocityMs, double[] liquidSuperficialVelocityMs) {
+    private ModelProfiles(double[] positionM, double[] cellLengthM, double[] pressurePa, double[] temperatureK,
+        double[] liquidHoldup, double[] gasSuperficialVelocityMs, double[] liquidSuperficialVelocityMs) {
+      this.positionM = positionM.clone();
+      this.cellLengthM = cellLengthM.clone();
       this.pressurePa = pressurePa.clone();
       this.temperatureK = temperatureK.clone();
       this.liquidHoldup = liquidHoldup.clone();
       this.gasSuperficialVelocityMs = gasSuperficialVelocityMs.clone();
       this.liquidSuperficialVelocityMs = liquidSuperficialVelocityMs.clone();
+    }
+
+    /**
+     * Get distance from the physical inlet.
+     *
+     * @return position in m
+     */
+    public double[] getPositionM() {
+      return positionM.clone();
+    }
+
+    /**
+     * Get route length represented by each cell-centre sample.
+     *
+     * @return cell lengths in m
+     */
+    public double[] getCellLengthM() {
+      return cellLengthM.clone();
     }
 
     /**
@@ -109,28 +134,71 @@ public final class NetworkHydraulicModelComparison {
     /**
      * Get mean liquid holdup.
      *
-     * @return arithmetic profile mean
+     * @return distance-weighted profile mean
      */
     public double getAverageLiquidHoldup() {
-      return average(liquidHoldup);
+      return distanceWeightedAverage(cellLengthM, liquidHoldup);
     }
 
     /**
      * Get mean superficial gas velocity.
      *
-     * @return arithmetic profile mean in m/s
+     * @return distance-weighted profile mean in m/s
      */
     public double getAverageGasSuperficialVelocityMs() {
-      return average(gasSuperficialVelocityMs);
+      return distanceWeightedAverage(cellLengthM, gasSuperficialVelocityMs);
     }
 
     /**
      * Get mean superficial liquid velocity.
      *
-     * @return arithmetic profile mean in m/s
+     * @return distance-weighted profile mean in m/s
      */
     public double getAverageLiquidSuperficialVelocityMs() {
-      return average(liquidSuperficialVelocityMs);
+      return distanceWeightedAverage(cellLengthM, liquidSuperficialVelocityMs);
+    }
+  }
+
+  /**
+   * Immutable collection of same-topology comparisons evaluated at several edge meshes.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static final class MeshSensitivityResult {
+    private final Map<Integer, Result> resultsBySegmentCount;
+
+    /**
+     * Create mesh-sensitivity evidence.
+     *
+     * @param results comparisons keyed by requested segment count
+     */
+    private MeshSensitivityResult(Map<Integer, Result> results) {
+      resultsBySegmentCount = Collections.unmodifiableMap(new LinkedHashMap<Integer, Result>(results));
+    }
+
+    /**
+     * Get evaluated segment counts in deterministic order.
+     *
+     * @return immutable segment-count set
+     */
+    public Set<Integer> getSegmentCounts() {
+      return Collections.unmodifiableSet(new LinkedHashSet<Integer>(resultsBySegmentCount.keySet()));
+    }
+
+    /**
+     * Get the comparison at one requested mesh.
+     *
+     * @param segmentCount requested number of segments per selected edge
+     * @return comparison result
+     * @throws IllegalArgumentException when the mesh was not evaluated
+     */
+    public Result getResult(int segmentCount) {
+      Result result = resultsBySegmentCount.get(segmentCount);
+      if (result == null) {
+        throw new IllegalArgumentException("Segment count " + segmentCount + " was not evaluated");
+      }
+      return result;
     }
   }
 
@@ -157,8 +225,8 @@ public final class NetworkHydraulicModelComparison {
       twoFluidFlowRateKgS = twoFluidEdge.getFlowRate();
       beggsBrillPressureDropPa = Math.abs(beggsBrillEdge.getHeadLoss());
       twoFluidPressureDropPa = Math.abs(twoFluidEdge.getHeadLoss());
-      beggsBrillProfiles = fromBeggsBrill(beggsBrillEdge.getBBModel());
-      twoFluidProfiles = fromTwoFluid(twoFluidEdge.getTwoFluidModel());
+      beggsBrillProfiles = fromHydraulicProfile(beggsBrillEdge.getHydraulicProfile());
+      twoFluidProfiles = fromHydraulicProfile(twoFluidEdge.getHydraulicProfile());
     }
 
     /**
@@ -417,11 +485,12 @@ public final class NetworkHydraulicModelComparison {
     for (String edgeId : selectedEdges) {
       NetworkPipe beggsBrillEdge = beggsBrillNetwork.getPipe(edgeId);
       NetworkPipe twoFluidEdge = twoFluidNetwork.getPipe(edgeId);
-      if (!"BEGGS_BRILL".equals(beggsBrillEdge.getHydraulicModelStatus()) || beggsBrillEdge.getBBModel() == null) {
+      if (!"BEGGS_BRILL".equals(beggsBrillEdge.getHydraulicModelStatus())
+          || beggsBrillEdge.getHydraulicProfile() == null) {
         throw new IllegalStateException("Edge '" + edgeId + "' did not produce accepted Beggs-Brill evidence");
       }
       if (!"TWO_FLUID_CONVERGED".equals(twoFluidEdge.getHydraulicModelStatus())
-          || twoFluidEdge.getTwoFluidModel() == null) {
+          || twoFluidEdge.getTwoFluidModel() == null || twoFluidEdge.getHydraulicProfile() == null) {
         throw new IllegalStateException("Edge '" + edgeId + "' did not produce accepted two-fluid evidence");
       }
       comparisons.put(edgeId, new EdgeComparison(edgeId, beggsBrillEdge, twoFluidEdge));
@@ -429,6 +498,51 @@ public final class NetworkHydraulicModelComparison {
     }
     return new Result(comparisons, initializedPipes, beggsBrillNetwork.getMassBalanceError(),
         twoFluidNetwork.getMassBalanceError());
+  }
+
+  /**
+   * Compare selected edges at several discretizations without mutating the caller topology.
+   *
+   * <p>
+   * Every requested count is applied to every selected edge on a detached topology before the normal fail-closed
+   * Beggs-Brill/two-fluid comparison is executed. Unselected edge meshes and hydraulic models remain unchanged.
+   * </p>
+   *
+   * @param edgeIds canonical pipe edge identifiers
+   * @param segmentCounts distinct segment counts, each at least two
+   * @param id calculation identifier applied to the detached solves
+   * @return immutable comparison results keyed by segment count
+   */
+  public MeshSensitivityResult compareMeshSensitivity(List<String> edgeIds, List<Integer> segmentCounts, UUID id) {
+    Objects.requireNonNull(edgeIds, "edgeIds cannot be null");
+    Objects.requireNonNull(segmentCounts, "segmentCounts cannot be null");
+    Objects.requireNonNull(id, "calculation id cannot be null");
+    LinkedHashSet<String> selectedEdges = new LinkedHashSet<String>(edgeIds);
+    if (selectedEdges.isEmpty() || selectedEdges.contains(null)) {
+      throw new IllegalArgumentException("At least one non-null edge identifier is required");
+    }
+    topology.validateForExecution();
+    for (String edgeId : selectedEdges) {
+      topology.getEdge(edgeId);
+    }
+    LinkedHashSet<Integer> uniqueCounts = new LinkedHashSet<Integer>(segmentCounts);
+    if (uniqueCounts.size() < 2 || uniqueCounts.contains(null)) {
+      throw new IllegalArgumentException("At least two distinct non-null segment counts are required");
+    }
+    Map<Integer, Result> results = new LinkedHashMap<Integer, Result>();
+    for (Integer segmentCount : uniqueCounts) {
+      if (segmentCount < 2) {
+        throw new IllegalArgumentException("Hydraulic mesh segment counts must be at least two");
+      }
+      FieldNetworkTopology meshTopology = copyWithBoundaryFluids();
+      for (String edgeId : selectedEdges) {
+        meshTopology.getHydraulicNetwork().getPipe(edgeId).setMultiphaseSegments(segmentCount);
+      }
+      Result result = new NetworkHydraulicModelComparison(meshTopology).compare(new ArrayList<String>(selectedEdges),
+          id);
+      results.put(segmentCount, result);
+    }
+    return new MeshSensitivityResult(results);
   }
 
   /**
@@ -454,73 +568,38 @@ public final class NetworkHydraulicModelComparison {
   }
 
   /**
-   * Normalize Beggs-Brill output to the common comparison units.
+   * Copy canonical normalized edge evidence into the comparison result.
    *
-   * @param pipe converged Beggs-Brill pipe
-   * @return normalized profiles
+   * @param profile accepted edge profile
+   * @return comparison profile
    */
-  private static ModelProfiles fromBeggsBrill(PipeBeggsAndBrills pipe) {
-    double[] pressureBar = pipe.getPressureProfile();
-    double[] pressurePa = new double[pressureBar.length];
-    for (int i = 0; i < pressureBar.length; i++) {
-      pressurePa[i] = pressureBar[i] * 1.0e5;
+  private static ModelProfiles fromHydraulicProfile(HydraulicProfile profile) {
+    if (profile == null) {
+      throw new IllegalStateException("Accepted hydraulic comparison profile is missing");
     }
-    double[] holdup = pipe.getLiquidHoldupProfile();
-    double[] gasSuperficial = toArray(pipe.getGasSuperficialVelocityProfile());
-    double[] liquidSuperficial = toArray(pipe.getLiquidSuperficialVelocityProfile());
-    return new ModelProfiles(pressurePa, pipe.getTemperatureProfile(), holdup, gasSuperficial, liquidSuperficial);
+    return new ModelProfiles(profile.getPositionM(), profile.getCellLengthM(), profile.getPressurePa(),
+        profile.getTemperatureK(), profile.getLiquidHoldup(), profile.getGasSuperficialVelocityMs(),
+        profile.getLiquidSuperficialVelocityMs());
   }
 
   /**
-   * Normalize two-fluid output to the common comparison structure.
+   * Calculate a cell-length-weighted mean.
    *
-   * @param pipe converged two-fluid pipe
-   * @return normalized profiles
-   */
-  private static ModelProfiles fromTwoFluid(TwoFluidPipe pipe) {
-    double[] holdup = pipe.getLiquidHoldupProfile();
-    double[] gasVelocity = pipe.getGasVelocityProfile();
-    double[] liquidVelocity = pipe.getLiquidVelocityProfile();
-    int phaseCount = Math.min(holdup.length, Math.min(gasVelocity.length, liquidVelocity.length));
-    double[] gasSuperficial = new double[phaseCount];
-    double[] liquidSuperficial = new double[phaseCount];
-    for (int i = 0; i < phaseCount; i++) {
-      gasSuperficial[i] = gasVelocity[i] * (1.0 - holdup[i]);
-      liquidSuperficial[i] = liquidVelocity[i] * holdup[i];
-    }
-    return new ModelProfiles(pipe.getPressureProfile(), pipe.getTemperatureProfile(), holdup, gasSuperficial,
-        liquidSuperficial);
-  }
-
-  /**
-   * Convert a list of boxed doubles to an array.
-   *
-   * @param values source values
-   * @return primitive array
-   */
-  private static double[] toArray(List<Double> values) {
-    double[] result = new double[values.size()];
-    for (int i = 0; i < values.size(); i++) {
-      result[i] = values.get(i);
-    }
-    return result;
-  }
-
-  /**
-   * Calculate an arithmetic mean.
-   *
+   * @param cellLengthM represented cell lengths in m
    * @param values values to average
-   * @return mean, or NaN for an empty profile
+   * @return distance-weighted mean, or NaN for an empty profile
    */
-  private static double average(double[] values) {
+  private static double distanceWeightedAverage(double[] cellLengthM, double[] values) {
     if (values.length == 0) {
       return Double.NaN;
     }
-    double total = 0.0;
-    for (double value : values) {
-      total += value;
+    double weightedTotal = 0.0;
+    double totalLength = 0.0;
+    for (int index = 0; index < values.length; index++) {
+      weightedTotal += cellLengthM[index] * values[index];
+      totalLength += cellLengthM[index];
     }
-    return total / values.length;
+    return totalLength > 0.0 ? weightedTotal / totalLength : Double.NaN;
   }
 
   /**

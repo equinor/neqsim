@@ -127,6 +127,9 @@ power_kw = train.getPower("kW")
 - NPSH margin is a screening result only when suction pressure, vapor pressure, static head, duty and NPSHr provenance are correct and use compatible units.
 - A turboexpander anchor-point map is only as good as its reference fluid and anchor provenance. Confirm power balance, shaft mode/speed limits, cold-end temperature and hydrate margin.
 - Compressor thermal/startup/shutdown models do not by themselves establish a stable controller or machine protection function; pair with dynamic process and anti-surge workflows as needed.
+- Bypassing or removing one stage of a fixed-speed multi-stage centrifugal train (for example a GI 2nd stage whose gas is let down again): the machine delivers head from its curve, so the saving equals that stage's curve power per tonne (derive kW per t/h from live data and a benchmarked stage model), not a power recomputed from a changed system-pressure path. A model that recomputes head from a falling downstream pressure shows the remaining stage consuming less power as the system pressure falls, which a fixed-speed machine does not do (the excess pressure is throttled). Bound the two views and run the weight between them as an uncertainty. Clamp flow at the minimum stable flow per running train (recycle) in decline years.
+
+- Chart-driven (head, efficiency) trains modelled outside `Compressor`: shaft power is `m_dot * Hp * g / eta_p / eta_mech`, not `m_dot * Hp * g`; the Schultz exponent is `n/(n-1) = kappa * eta_p / (kappa - 1)`. A sibling DX revamp model that dropped the `/eta_p` under-stated power about 25 % and reached only 71 % of the measured gas-turbine load; the corrected form reached 91-93 % (Oseberg DX, Oct 2026). Always check modelled train power against the driver load (rated shaft power x load %) and a measured interstage pressure before trusting savings. Stages that appear idle ("deep recycle", anti-surge flow close to the full train flow) still absorb power: derive it from measured suction/discharge pressures and the equivalent-flow tags (they were within 5 % of the model's actual flows) and run it through `Compressor` with a polytropic efficiency range.
 
 ## Validation / benchmarks
 
@@ -140,3 +143,4 @@ Use `CompressorTrainTest`, `CompressorChartGeneratorTest`, `CompressorChartSpeed
 - `neqsim-troubleshooting` — operating-point and process convergence diagnostics
 - `neqsim-power-generation` — gas-turbine/driver coupling
 - `neqsim-dynamic-simulation` — transient controllers and process response
+

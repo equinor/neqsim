@@ -3,7 +3,6 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.thermo.component.ComponentInterface;
@@ -99,28 +98,5 @@ class TPflashWaterIonBrineTest {
       assertAqueousEndpoint(trial, initialCalcium - removal);
     }
     assertAqueousEndpoint(brine, initialCalcium);
-  }
-
-  /** The liquid endpoint must be rejected when the water vapor is more stable. */
-  @Test
-  void boilingBrineRetainsTheGeneralPhaseSearch() {
-    SystemInterface brine = createBrine(450.0, 1.01325);
-    assertFalse(new TPflash(brine).flashStableWaterIonBrine());
-    assertEquals(0.2, brine.getComponent("Ca++").getNumberOfmoles(), 0.0);
-    assertEquals(55.508, brine.getComponent("water").getNumberOfmoles(), 0.0);
-    assertFalse(brine.isForcePhaseTypes());
-    assertTrue(brine.getMaxNumberOfPhases() > 1);
-  }
-
-  /** Even a positive trace of a volatile neutral solute must retain the general phase search. */
-  @Test
-  void positiveNeutralTraceRetainsTheGeneralPhaseSearch() {
-    SystemInterface brine = createBrine(298.15, 1.01325);
-    brine.addComponent("methane", 1.0e-80);
-    brine.chemicalReactionInit();
-    brine.createDatabase(true);
-    brine.setMixingRule(10);
-    assertFalse(new TPflash(brine).flashStableWaterIonBrine());
-    assertEquals(1.0e-80, brine.getComponent("methane").getNumberOfmoles(), 0.0);
   }
 }

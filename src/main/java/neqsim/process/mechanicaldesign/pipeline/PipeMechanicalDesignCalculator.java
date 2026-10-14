@@ -1610,6 +1610,16 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   }
 
   /**
+   * Check whether the built-in API 5L screening table contains a material grade.
+   *
+   * @param materialGrade candidate API 5L grade
+   * @return true when the grade has explicit built-in SMYS and SMTS values
+   */
+  public static boolean isSupportedMaterialGrade(String materialGrade) {
+    return materialGrade != null && API_5L_GRADES.containsKey(materialGrade);
+  }
+
+  /**
    * Set material grade per API 5L.
    *
    * @param materialGrade material grade (e.g., "X42", "X52", "X65", "X70", "X80")

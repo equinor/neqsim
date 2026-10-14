@@ -16,6 +16,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.mechanicaldesign.well.WellFlowMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.unit.PressureUnit;
 
 /**
  * WellFlow class - Inflow Performance Relationship (IPR) model for reservoir-to-wellbore flow.
@@ -234,6 +235,39 @@ public class WellFlow extends TwoPortEquipment {
       this.stream = stream;
       this.reservoirPressure = reservoirPressure;
       this.productivityIndex = pi;
+    }
+
+    /**
+     * Update the reservoir pressure owned by this layer.
+     *
+     * <p>
+     * The layer pressure and its reservoir stream are updated together so repeated coupled field-network calculations
+     * do not carry contradictory lifecycle state. This method changes only the reservoir boundary; it does not alter
+     * injectivity/productivity, fracture pressure, fluid composition, or network topology.
+     * </p>
+     *
+     * @param pressure new absolute reservoir pressure
+     * @param unit pressure unit accepted by {@link PressureUnit}
+     */
+    public void setReservoirPressure(double pressure, String unit) {
+      double pressureBara = new PressureUnit(pressure, unit).getValue("bara");
+      if (!Double.isFinite(pressureBara) || pressureBara <= 0.0) {
+        throw new IllegalArgumentException("Reservoir pressure must be finite and positive");
+      }
+      this.reservoirPressure = pressureBara;
+      if (stream != null) {
+        stream.setPressure(pressureBara, "bara");
+      }
+    }
+
+    /**
+     * Get the reservoir pressure owned by this layer.
+     *
+     * @param unit requested pressure unit accepted by {@link PressureUnit}
+     * @return reservoir pressure in the requested unit
+     */
+    public double getReservoirPressure(String unit) {
+      return new PressureUnit(reservoirPressure, "bara").getValue(unit);
     }
 
     /**

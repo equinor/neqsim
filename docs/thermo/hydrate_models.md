@@ -154,19 +154,17 @@ calculations support these material phase configurations:
 - gas + aqueous water + thermodynamic inhibitor (for example MEG or methanol) + salt ions
 - the same material phase configurations with aqueous reactions, including CO₂-water speciation
 
-The multiphase flash solves the molecular gas-oil-aqueous split on a normalized ion-free basis and then restores the
-conserved ion inventory to the aqueous phase. This keeps ions out of gas and oil while satisfying the component balance
+The ordinary multiphase flash retains the full feed and constrains ions to the aqueous material phase throughout
+the stability and phase-amount calculation. Neutral molecules use the shared fugacity equations without a component
+whitelist. This keeps ions out of gas and oil while satisfying the component balance
 $z_i = \sum_p \beta_p x_{i,p}$. Salt and organic inhibitor effects enter the hydrate calculation through the water
 fugacity of the converged aqueous phase.
 
-For non-reactive, water-rich CO2/water mixtures with optional salt ions and MEG,
-the temperature operation uses a constrained CO2-rich/aqueous fluid solver. It
-compares vapour and liquid CO2 trials, conserves the original species inventory
-and equilibrates CO2, water and MEG fugacities. MEG remains a partitioning molecular
-component, while ions are confined to the aqueous phase. Other gas mixtures, organic inhibitors
-and reactive fluids containing MEG retain the general solver. See
-[CO2/brine phase-state diagnostics](../thermodynamicoperations/hydrate_flash_operations.md#co2brine-phase-state-diagnostics)
-for the supported scope, concentration bases and the 44 bara NaCl/MEG regression.
+The concentrated CO2/brine/MEG consumer regression uses the shared fluid-equilibrium
+solver, with MEG partitioning as a molecular component and salt ions confined to
+the aqueous phase. See [CO2/brine phase-state diagnostics](../thermodynamicoperations/hydrate_flash_operations.md#co2brine-phase-state-diagnostics)
+for the 44 bara recipe, the two concentration bases, and the distinction between
+numerical regression values and experimental validation.
 
 CPA initialization excludes association sites only for components whose overall mole fraction
 is at or below the numerical trace cutoff of $10^{-20}$. It uses the current component and total

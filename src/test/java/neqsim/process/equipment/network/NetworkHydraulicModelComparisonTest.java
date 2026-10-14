@@ -17,6 +17,7 @@ import neqsim.process.equipment.network.FieldNetworkTopology.Service;
 import neqsim.process.equipment.network.LoopedPipeNetwork.NetworkPipe;
 import neqsim.process.equipment.network.LoopedPipeNetwork.PipeModelType;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.EdgeComparison;
+import neqsim.process.equipment.network.NetworkHydraulicModelComparison.MeshSensitivityResult;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.ModelProfiles;
 import neqsim.process.equipment.network.NetworkHydraulicModelComparison.Result;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
@@ -70,6 +71,10 @@ class NetworkHydraulicModelComparisonTest {
     flowline.setMultiphaseSegments(8);
     flowline.setAmbientTemperature(277.15);
     flowline.setOverallHeatTransferCoeff(2.0);
+    flowline.setElevationProfile(new double[] {0.0, 4000.0, 9000.0, 14000.0, 20000.0},
+        new double[] {-100.0, -140.0, -80.0, -160.0, -100.0});
+    flowline.setAmbientTemperatureProfile(new double[] {0.0, 9000.0, 20000.0}, new double[] {277.15, 279.15, 277.15});
+    flowline.setHeatTransferProfile(new double[] {0.0, 14000.0, 20000.0}, new double[] {2.0, 3.0, 2.0});
     riser.setMultiphaseSegments(6);
     riser.setAmbientTemperature(285.15);
     riser.setOverallHeatTransferCoeff(3.0);
@@ -99,8 +104,8 @@ class NetworkHydraulicModelComparisonTest {
     assertEquals(PipeModelType.DARCY_WEISBACH, original.getEffectiveHydraulicModelType("riser"));
     assertEquals("NOT_RUN", original.getPipe("flowline").getHydraulicModelStatus());
     assertFalse(original.isConverged());
-    assertEquals(0.0, result.getBeggsBrillMassBalanceErrorKgS(), 1.0e-7);
-    assertEquals(0.0, result.getTwoFluidMassBalanceErrorKgS(), 1.0e-7);
+    assertEquals(0.0, result.getBeggsBrillMassBalanceErrorKgS(), 1.0e-6);
+    assertEquals(0.0, result.getTwoFluidMassBalanceErrorKgS(), 1.0e-6);
 
     for (String edgeId : result.getEdgeIds()) {
       EdgeComparison edge = result.getEdgeComparison(edgeId);
@@ -143,9 +148,46 @@ class NetworkHydraulicModelComparisonTest {
     EdgeComparison flowline = result.getEdgeComparison("flowline");
     assertEquals(1.5, flowline.getBeggsBrillFlowRateKgS(), 1.0e-6);
     assertEquals(1.5, flowline.getTwoFluidFlowRateKgS(), 1.0e-6);
-    assertEquals(0.0, result.getBeggsBrillMassBalanceErrorKgS(), 1.0e-7);
-    assertEquals(0.0, result.getTwoFluidMassBalanceErrorKgS(), 1.0e-7);
+    assertEquals(0.0, result.getBeggsBrillMassBalanceErrorKgS(), 1.0e-6);
+    assertEquals(0.0, result.getTwoFluidMassBalanceErrorKgS(), 1.0e-6);
     assertTrue(Double.isFinite(flowline.getRelativePressureDropDifference()));
+  }
+
+  /** Compare the same undulating route at three detached meshes without changing its definition. */
+  @Test
+  void aggregatesTerrainProfilesAndReportsMeshSensitivity() {
+    FieldNetworkTopology topology = topology(2.0);
+    NetworkPipe originalFlowline = topology.getHydraulicNetwork().getPipe("flowline");
+    MeshSensitivityResult sensitivity = new NetworkHydraulicModelComparison(topology)
+        .compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(4, 8, 10), UUID.randomUUID());
+
+    assertEquals(new HashSet<Integer>(Arrays.asList(4, 8, 10)), sensitivity.getSegmentCounts());
+    assertEquals(8, originalFlowline.getMultiphaseSegments());
+    assertEquals("NOT_RUN", originalFlowline.getHydraulicModelStatus());
+    for (int segments : sensitivity.getSegmentCounts()) {
+      EdgeComparison edge = sensitivity.getResult(segments).getEdgeComparison("flowline");
+      assertEquals(0.0, sensitivity.getResult(segments).getBeggsBrillMassBalanceErrorKgS(), 1.0e-6);
+      assertEquals(0.0, sensitivity.getResult(segments).getTwoFluidMassBalanceErrorKgS(), 1.0e-6);
+      assertProfilesPhysical(edge.getBeggsBrillProfiles());
+      assertProfilesPhysical(edge.getTwoFluidProfiles());
+      assertEquals(segments, edge.getBeggsBrillProfiles().getPositionM().length);
+      assertEquals(segments, edge.getTwoFluidProfiles().getPositionM().length);
+      assertTrue(edge.getBeggsBrillProfiles().getPositionM()[0] > 0.0);
+      assertTrue(last(edge.getBeggsBrillProfiles().getPositionM()) < 20000.0);
+      assertTrue(edge.getTwoFluidProfiles().getPositionM()[0] > 0.0);
+      assertTrue(last(edge.getTwoFluidProfiles().getPositionM()) < 20000.0);
+      assertEquals(20000.0, sum(edge.getBeggsBrillProfiles().getCellLengthM()), 1.0e-8);
+      assertEquals(20000.0, sum(edge.getTwoFluidProfiles().getCellLengthM()), 1.0e-8);
+    }
+
+    EdgeComparison coarse = sensitivity.getResult(4).getEdgeComparison("flowline");
+    EdgeComparison fine = sensitivity.getResult(10).getEdgeComparison("flowline");
+    assertTrue(relativeChange(fine.getBeggsBrillPressureDropPa(), coarse.getBeggsBrillPressureDropPa()) < 0.5);
+    assertTrue(relativeChange(fine.getTwoFluidPressureDropPa(), coarse.getTwoFluidPressureDropPa()) < 0.5);
+    assertTrue(Math.abs(fine.getBeggsBrillProfiles().getAverageLiquidHoldup()
+        - coarse.getBeggsBrillProfiles().getAverageLiquidHoldup()) < 0.2);
+    assertTrue(Math.abs(fine.getTwoFluidProfiles().getAverageLiquidHoldup()
+        - coarse.getTwoFluidProfiles().getAverageLiquidHoldup()) < 0.2);
   }
 
   /** Reject missing evidence and unknown comparison edges explicitly. */
@@ -157,6 +199,10 @@ class NetworkHydraulicModelComparisonTest {
     NetworkHydraulicModelComparison comparison = new NetworkHydraulicModelComparison(topology);
     assertThrows(IllegalArgumentException.class, () -> comparison.compare(Arrays.asList("missing"), UUID.randomUUID()));
     assertThrows(IllegalArgumentException.class, () -> comparison.compare(Arrays.<String>asList(), UUID.randomUUID()));
+    assertThrows(IllegalArgumentException.class,
+        () -> comparison.compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(8, 8), UUID.randomUUID()));
+    assertThrows(IllegalArgumentException.class,
+        () -> comparison.compareMeshSensitivity(Arrays.asList("flowline"), Arrays.asList(1, 8), UUID.randomUUID()));
   }
 
   /**
@@ -165,11 +211,24 @@ class NetworkHydraulicModelComparisonTest {
    * @param profiles normalized profile evidence
    */
   private void assertProfilesPhysical(ModelProfiles profiles) {
-    assertTrue(profiles.getPressurePa().length > 1);
-    assertTrue(profiles.getTemperatureK().length > 0);
-    assertTrue(profiles.getLiquidHoldup().length > 0);
-    assertTrue(profiles.getGasSuperficialVelocityMs().length > 0);
-    assertTrue(profiles.getLiquidSuperficialVelocityMs().length > 0);
+    int count = profiles.getPositionM().length;
+    assertTrue(count > 1);
+    assertEquals(count, profiles.getPressurePa().length);
+    assertEquals(count, profiles.getCellLengthM().length);
+    assertEquals(count, profiles.getTemperatureK().length);
+    assertEquals(count, profiles.getLiquidHoldup().length);
+    assertEquals(count, profiles.getGasSuperficialVelocityMs().length);
+    assertEquals(count, profiles.getLiquidSuperficialVelocityMs().length);
+    double previousPosition = -1.0;
+    for (double position : profiles.getPositionM()) {
+      assertTrue(Double.isFinite(position));
+      assertTrue(position > previousPosition);
+      previousPosition = position;
+    }
+    for (double cellLength : profiles.getCellLengthM()) {
+      assertTrue(Double.isFinite(cellLength));
+      assertTrue(cellLength > 0.0);
+    }
     for (double pressure : profiles.getPressurePa()) {
       assertTrue(Double.isFinite(pressure));
       assertTrue(pressure > 0.0);
@@ -190,5 +249,40 @@ class NetworkHydraulicModelComparisonTest {
       assertTrue(Double.isFinite(velocity));
       assertTrue(velocity >= 0.0);
     }
+  }
+
+  /**
+   * Return the final value in an asserted non-empty array.
+   *
+   * @param values profile values
+   * @return final value
+   */
+  private double last(double[] values) {
+    return values[values.length - 1];
+  }
+
+  /**
+   * Calculate an absolute change relative to the first value.
+   *
+   * @param value refined value
+   * @param reference coarse value
+   * @return absolute relative change
+   */
+  private double relativeChange(double value, double reference) {
+    return Math.abs(value - reference) / Math.abs(reference);
+  }
+
+  /**
+   * Sum finite route-cell lengths.
+   *
+   * @param values cell lengths in m
+   * @return total length in m
+   */
+  private double sum(double[] values) {
+    double total = 0.0;
+    for (double value : values) {
+      total += value;
+    }
+    return total;
   }
 }

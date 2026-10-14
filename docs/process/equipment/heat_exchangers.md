@@ -24,6 +24,18 @@ guides under [water cooler and reboiler](water_cooler_reboiler),
 [air cooler](../../wiki/air_cooler), [steam heater](../../wiki/steam_heater), and
 [thermal-hydraulic design](../mechanical_design/thermal_hydraulic_design).
 
+## Empty sides in the legacy multi-stream exchanger
+
+`MultiStreamHeatExchanger` carries sides at or below its mass-flow floor through unchanged.
+Such sides contribute no heat duty and do not define the hottest/coldest terminal temperatures
+or LMTD. The floor is `max(getMinimumFlow(), DEFAULT_MINIMUM_FLOW)` in kg/hr;
+`DEFAULT_MINIMUM_FLOW` is `1e-20` kg/hr. With fewer than two flowing sides, all outlets
+retain their inlet states and the exchanger duty is zero. This matters when a separator liquid
+return disappears inside a recycle loop: an empty fluid template must not act as a cold utility.
+`MultiStreamHeatExchangerTest` verifies unchanged active-side results, inactive-side states,
+calculation identifiers, and the original coupled gas/liquid recycle equilibrium. Its expander
+temperature remains approximately -29.927 degrees Celsius; the liquid return remains active.
+
 ## Runnable two-stream quick start
 
 The following complete Java program creates independent hot and cold inlet streams, sets a UA in

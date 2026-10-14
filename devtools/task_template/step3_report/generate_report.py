@@ -1256,7 +1256,7 @@ PAPER_SECTIONS = {
 # ── Task-local overrides ─────────────────────────────────
 # Hand-written report content lives in step3_report/report_sections.json, not
 # in a forked copy of this script. Keys: title, author, classification,
-# doc_number, revision, manual_sections, paper_sections, paper_* metadata.
+# doc_number, revision, manual_sections, appendix_sections, paper_sections, paper_* metadata.
 REPORT_SECTIONS_FILE = os.path.join(TASK_REPORT_DIR, "report_sections.json")
 
 
@@ -6102,6 +6102,9 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     reproducibility_text = format_reproducibility_text(results)
     final_report_record = format_final_report_record(_load_final_report_metadata())
     appendices = []
+    for _authored in (REPORT_SECTIONS.get("appendix_sections") or []):
+        if isinstance(_authored, dict) and str(_authored.get("title", "")).strip() and str(_authored.get("content", "")).strip():
+            appendices.append((str(_authored["title"]).strip(), {"content": str(_authored["content"]), "has_markdown": True}))
     if final_report_record:
         appendices.append(("Final Report Record", {
             "content": final_report_record, "has_markdown": True}))

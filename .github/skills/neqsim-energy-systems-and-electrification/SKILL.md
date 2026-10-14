@@ -107,6 +107,7 @@ For process feedback, create `CoupledProcessEnergySolver(process)`, call `addEne
 - Ambient turbine temperature is K and ambient pressure is bara. Keep GT load demand in W; label vendor and fuel data separately from catalog defaults.
 - Wash optimization is only as credible as the measured degradation trend, wash recovery, outage/deferment, fuel value, and carbon-price inputs. A wash interval at a search bound is not proof of a global optimum.
 - These classes do not perform AC load-flow, grid stability/protection studies, power-quality certification, or project sanction economics. Hybrid dispatch and CO2 savings are screening evidence, not a grid connection design.
+- Electrode-boiler displacement: avoided electricity is heat / efficiency (about 0.99), and CO2 saved is that electricity times the grid factor. On a Power-from-Shore platform the average factor (20-25 g/kWh) makes platform CO2 small while the marginal factor (about 300 g/kWh) makes it large; report both and the NOK per tonne on each basis. The measured waste-heat-unit duty is not the electric-boiler duty - get the boiler power history before valuing displaced electricity. Worked pattern (hot-end exhaust coil on a gas turbine, steam-turbine loss while the OTSG is in service): `neqsim-power-generation`, section "Added exhaust heat recovery for a heating-medium (HM) circuit".
 
 ## Validation / benchmarks
 

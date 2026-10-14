@@ -204,6 +204,23 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       // super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     }
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    if (initType > 1) {
+      // The final superclass initialization solves the volume again. Rebuild derivatives
+      // at that returned volume rather than retaining the previous volume iteration.
+      volInit();
+      gcpa = calc_g();
+      setGcpav(calc_lngV());
+      gcpavv = calc_lngVV();
+      gcpavvv = calc_lngVVV();
+      // Refresh delta at the final contact value before solving the association sites.
+      initCPAMatrix(1);
+      solveX();
+      hcpatot = calc_hCPA();
+      initCPAMatrix(initType);
+      for (int i = 0; i < numberOfComponents; i++) {
+        componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta, numberOfComponents, initType);
+      }
+    }
   }
 
   /**

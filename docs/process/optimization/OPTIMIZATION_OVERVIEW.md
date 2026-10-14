@@ -724,6 +724,64 @@ declared step tolerance; it does not prove global optimality. Validate nearby al
 conservation, product specifications, rotating-equipment maps, utilities, safety and market limits,
 and use independent model/evaluator/optimizer instances for parallel searches.
 
+### Mixed continuous/discrete operating-point search
+
+Use `ProcessModelOperatingPointOptimizer` when the same atomic action set contains independent
+continuous controls and exact discrete choices—for example well-choke openings together with HP/LP
+separator routing. The optimizer reuses `ProcessModelOperatingActionSetEvaluator` for every trial.
+It never interpolates a route selection, bypasses a hard constraint, or continues after incomplete
+baseline recovery.
+
+The deterministic coordinate search explores both directions of each continuous action using a
+shrinking fraction of its declared range and every alternative declared value of each discrete
+action. It accepts the best feasible finite-objective move from each complete neighborhood. The hard
+evaluation budget includes a reserved final evaluation: the selected point must replay from the
+restored baseline with the same objective before it is exposed as accepted.
+
+```java
+ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer(
+    "field-operating-point", "Field operating point",
+    "approved choke envelopes and qualified separator line-ups", actionSet)
+        .setInitialCandidate(initialChokesAndRoutes)
+        .setObjectiveIndex(0)
+        .setInitialStepFraction(0.25)
+        .setRelativeStepTolerance(1.0e-3)
+        .setMaximumEvaluations(100);
+
+ProcessModelOperatingPointOptimizer.OperatingPointSearchResult search = optimizer.optimize();
+if (!search.isAcceptedPointReplayed()) {
+  throw new IllegalStateException(search.getDiagnostics().toString());
+}
+Map<String, Object> optimizerEvidence = search.getOptimizerEvidence(currentCycleId);
+double[] acceptedChokesAndRoutes = search.getAcceptedCandidateValues();
+```
+
+`getOptimizerEvidence(cycleId)` emits the exact fail-closed fields used by the living-task production
+guard: current cycle identity, candidate convergence/feasibility/finiteness, complete constraint and
+action evidence, complete state restoration, accepted-point replay, evaluation count, and measured
+runtime. A `true` evidence block qualifies only the configured steady-state model and limits. It is
+not a global-optimality claim, a dynamic/safety study, or permission to write to a control system.
+
+Pass the completed search to the overloads on `ProcessModelOperatingEnvelopeStudy` to use the
+terminal replay as the exact one- or two-dimensional slice anchor. The study verifies the complete
+replay, exact runtime evaluator identity, action/objective/constraint/hydraulic definition identity,
+unchanged installed-limit metadata, current model convergence, and
+unchanged baseline action values before running another point. `getAcceptedPointBottleneck(search)`
+returns the already-recorded unit-safe leading constraint without rerunning the model. Definition or
+baseline drift fails before mutation; callers must rerun the search instead of treating an old
+candidate as current. The reported row and the envelope remain sampled evidence, not causal
+attribution, a shadow price, a continuous feasible boundary, or operating approval.
+
+For a persistent engineering cycle, call
+`getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` after all requested slices complete.
+The compact immutable map combines the existing optimizer guard block, the accepted-point
+bottleneck, every sampled point and bottleneck transition, and per-slice plus aggregate evaluation
+counts and wall-clock runtimes. Every slice must come from the exact runtime study, share the
+accepted candidate anchor, and have complete restoration/reconvergence. A foreign, deserialized,
+duplicate-axis, partial-recovery, or stale slice is rejected before export. Non-finite optional
+numerical fields are emitted as JSON `null`; they are never promoted to accepted evidence. Runtime
+is provenance for #2939 coordination, not a generic performance claim.
+
 ### Trace-qualified bottleneck-relief evidence
 
 `ProcessModelAllocationBottleneckAnalyzer` reads a completed
@@ -1016,6 +1074,7 @@ for (ScenarioResult scenario : optimizer.optimizeScenarios(scenarios)) {
 | `ProcessModelSimulationEvaluator` | External optimizer interface for multi-area `ProcessModel` studies | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelOperatingActionSetEvaluator` | Atomic coupled-action candidate evaluation | `evaluate(double[])` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelAllocationOptimizer` | Fixed-total continuous allocation search with complete candidate evidence | `optimize()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
+| `ProcessModelOperatingPointOptimizer` | Bounded mixed continuous/discrete search with accepted-point replay | `optimize()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `ProcessModelThroughputOptimizer` | Full-model throughput-to-bottleneck study helper | `findMaximumThroughput()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | `InstalledCapacityTableLoader` | Attach fixed equipment limits from CSV | `load()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) |
 | `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipse-vfp-export) |
@@ -1034,4 +1093,5 @@ Choose based on your use case:
 - **Full `ProcessModel` custom external optimization** → `ProcessModelSimulationEvaluator`
 - **Coupled well-rate candidate with mandatory rollback** → `ProcessModelOperatingActionSetEvaluator`
 - **Fixed-total continuous allocation across coupled actions** → `ProcessModelAllocationOptimizer`
+- **Mixed choke/setpoint and discrete line-up search** → `ProcessModelOperatingPointOptimizer`
 - **Model calibration** → `BatchParameterEstimator`

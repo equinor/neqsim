@@ -373,6 +373,45 @@ analyzer.setFluid(reservoirFluid);
 TiebackReport report = analyzer.analyze();
 ```
 
+### Host impact of a tie-in on a benchmarked host model
+
+When the host already has a benchmarked NeqSim `ProcessModel`, assess the tie-in on a
+reproducible copy of that model:
+
+1. Record the baseline model version, operating window and constraint basis. If the host package
+   and workspace require incompatible NeqSim JARs, use separate Python processes with explicit
+   classpaths and exchange inputs/results; do not mix those JARs in one JVM.
+2. Use the tie-in fluid's own composition and PVT evidence with compatible EOS, mixing rules and
+   component definitions. If only host-fluid data are available, label that fluid as a surrogate
+   and quantify the sensitivity. Recombine oil, gas, water and lift gas on a molar basis; document
+   standard-volume reference conditions, GOR and water-cut definitions, and verify them by flashing
+   the reconstructed fluid. Initialize compositions before reading mole fractions.
+3. Connect the additional `Stream` to the intended inlet `Mixer` using the host model's supported
+   extension point. Include each external feed exactly once in total and component balances and
+   check the energy balance. An unaccounted feed requires a boundary-accounting correction, not a
+   change that hides a residual. Preserve the baseline for comparison.
+4. Run plateau, mid-life and late-life points over the relevant benchmark windows. Report both
+   absolute and incremental compressor power, separator utilisation, export oil and produced water
+   against documented limits. Identify constraints already exceeded in the baseline separately
+   from those introduced by the tie-in; do not assume a universal utilisation threshold.
+
+### Evaluate tubing and line back-pressure during depletion
+
+Use the coupled reservoir inflow and tubing/flowline outflow response to determine feasible rates
+as reservoir pressure, water cut, GOR, gas lift and host pressure change. Bubble point alone does
+not define a minimum flowing bottom-hole pressure or a recovery ceiling. Establish flow/no-flow
+conditions from the available reservoir pressure and the required pressure at the same datum.
+
+Reuse the current VFP generation and import/export APIs (see `MultiScenarioVFPGenerator` and
+`neqsim-subsea-and-wells`), checking units, datum depth, axis definitions, feasible points and the
+reservoir simulator's table format. Compare gas-lift and injection scenarios on the same basis.
+If a VFP table causes convergence trouble, inspect interpolation, operating branches and control
+switching. Do not force BHP versus rate to be monotonic just to obtain convergence. The
+[OPM VFP consistency guidance](https://opm.github.io/opm-flow-editor-support/keywords/VFPCHK.html)
+discusses crossing curves at adjacent tubing-head pressures, a different check from monotonicity
+with rate. Preserve the original table and validate any justified conditioning against the
+hydraulic model before using it for recovery or economic conclusions.
+
 ### Subsea System Configuration
 
 ```java
@@ -445,3 +484,12 @@ class, search the source to confirm:
 - UK UKCS: 30% ring-fence CT + 10% supplementary charge = 40% marginal rate
 - Generic: Configurable via `GenericTaxModel`
 - Always use `CashFlowEngine` with the correct country code
+
+### Staged-option VPbo / DG1 screening for an unappraised HPHT discovery (lessons from Afrodite PL293)
+
+- Value the decision as a staged option (stop / commit now / mature to DG2 then develop only if positive); an at-break-even project (NPV about 0 at P50) still has positive EMV when maturation is cheap, so state EMV of maturing, not just P50 NPV.
+- Host life is a cost, not a constraint: price the years the profile outlives the host plan (host-alive cost, PV) and report a COP-shift curve; ullage rarely discriminates, host life and cost do.
+- Reservoir-model need is a value-of-information question: EVPI on volume vs EVSI of a sidetrack vs its net cost, with the well-count rule (about 45 % of volume over a 4-year plateau).
+- Cluster upside: report the share of nearby discovered gas that must be tied in for NPV > 0, not a single NPV.
+- Report break-even gas price from the model by bisection, never a rounded literal; keep literals out of narrative strings (derive them from the results dict).
+- HPHT dew point: do not trust `dewPointPressureFlash` (wrong root at 168 C); use a TP-flash bisection and CCE dropout. `TiebackAnalyzer` rejects shallow hosts through its water-depth gate; screen those hosts with the explicit pipe model.

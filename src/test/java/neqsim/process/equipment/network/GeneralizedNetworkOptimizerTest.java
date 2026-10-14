@@ -3,6 +3,7 @@ package neqsim.process.equipment.network;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -112,6 +113,63 @@ class GeneralizedNetworkOptimizerTest {
 
     assertFalse(evaluation.isFeasible());
     assertTrue(evaluation.getPenalty() >= 1.0e9);
+  }
+
+  /** Discrete design must enumerate every candidate and select the smallest hydraulically feasible diameter. */
+  @Test
+  void testDiscretePipeDiameterEnumeration() {
+    LoopedPipeNetwork network = createPressureDrivenNetwork();
+    LoopedPipeNetwork.NetworkPipe edge = network.getPipe("export");
+    edge.setDiameter(0.2);
+    network.run();
+    double smallFlowKgHr = Math.abs(edge.getFlowRate()) * 3600.0;
+    edge.setDiameter(0.3);
+    network.run();
+    double mediumFlowKgHr = Math.abs(edge.getFlowRate()) * 3600.0;
+    double requiredFlowKgHr = 0.5 * (smallFlowKgHr + mediumFlowKgHr);
+
+    NetworkOptimizer optimizer = new NetworkOptimizer(network);
+    optimizer.setMaxEvaluations(3);
+    optimizer.addDecisionVariable(
+        NetworkDecisionVariable.pipeDiameter("edge.export.diameter", "export", new double[] {0.2, 0.3, 0.4}));
+    optimizer.addObjective(NetworkObjectives.custom("negativeDiameter", 1.0, new NetworkObjectives.Evaluator() {
+      private static final long serialVersionUID = 1000L;
+
+      @Override
+      public double evaluate(LoopedPipeNetwork solved) {
+        return -solved.getPipe("export").getDiameter();
+      }
+    }));
+    optimizer.addConstraint(NetworkConstraints.edgeFlow("export", requiredFlowKgHr, 1.0e9, true));
+
+    NetworkOptimizer.OptimizationResult result = optimizer.optimize();
+
+    assertTrue(result.converged);
+    assertEquals("DISCRETE_ENUMERATION", result.algorithm);
+    assertEquals(3, result.functionEvaluations);
+    assertEquals(0.3, edge.getDiameter(), 1.0e-12);
+    assertEquals(0.3, result.decisionValues.get("edge.export.diameter"), 1.0e-12);
+    assertFalse(optimizer.getTrajectory().get(0).isFeasible());
+    assertTrue(optimizer.getTrajectory().get(1).isFeasible());
+  }
+
+  /** Discrete design refuses partial enumeration and mixed continuous-operation variables. */
+  @Test
+  void testDiscreteDesignFailsClosed() {
+    LoopedPipeNetwork network = createPressureDrivenNetwork();
+    NetworkOptimizer limited = new NetworkOptimizer(network);
+    limited.setMaxEvaluations(2);
+    limited.addDecisionVariable(
+        NetworkDecisionVariable.pipeDiameter("edge.export.diameter", "export", new double[] {0.2, 0.3, 0.4}));
+    assertThrows(IllegalStateException.class, limited::optimize);
+
+    NetworkOptimizer mixed = new NetworkOptimizer(network);
+    mixed.addDecisionVariable(
+        NetworkDecisionVariable.pipeDiameter("edge.export.diameter", "export", new double[] {0.2, 0.3, 0.4}));
+    mixed.addDecisionVariable(
+        new NetworkDecisionVariable("edge.export.availability", NetworkDecisionVariable.Type.EDGE_AVAILABILITY,
+            "export", "-", NetworkDecisionVariable.RateBasis.NONE, 0.1, 1.0));
+    assertThrows(IllegalStateException.class, mixed::optimize);
   }
 
   private boolean containsAddress(List<SimulationVariable> variables, String address) {

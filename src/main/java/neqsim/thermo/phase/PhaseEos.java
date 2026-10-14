@@ -9,7 +9,10 @@ package neqsim.thermo.phase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelSettings;
+import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentEosInterface;
+import neqsim.thermo.component.ComponentPR;
+import neqsim.thermo.component.ComponentSrk;
 import neqsim.thermo.mixingrule.EosMixingRuleHandler;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
@@ -52,18 +55,48 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    // Thread-safety contract: mixSelect and mixRule are shared (shallow) with the
-    // parent. This is safe for concurrent flashing on parent and clone because the
-    // interaction-parameter matrices (intparam, intparamT, HVDij, NRTLDij,
-    // WSintparam,
-    // NRTLalpha, ...) are written exclusively by setMixingRule() during fluid setup
-    // and are treated as read-only during flash calculations. Callers MUST NOT
-    // invoke setMixingRule() on a fluid (or any of its clones) while another thread
-    // is performing a flash on a sibling clone. EosMixingRuleHandler.clone() is
-    // available for callers that need fully-independent matrix copies (e.g., when
-    // tuning kij in parallel); it is intentionally not invoked here to keep clone()
-    // cheap on the hot path.
+    // Configured interaction parameters and their rule objects remain shared with the parent.
+    // Complete setup before evaluating sibling clones; do not change mixing rules or parameters
+    // while another clone is running. The qualified classic paths return locally accumulated
+    // values, but legacy last-result fields and specialized rule state are not per-phase caches.
+    // Sharing configuration therefore does not establish thread safety for every mixing rule
+    // or for concurrent reconfiguration. Consume the initialized phase's own property values.
     return clonedPhase;
+  }
+
+  /**
+   * Creates a detached, fixed-component stability workspace for an ordinary cubic phase.
+   *
+   * <p>
+   * Exact SRK/PR phase and component classes receive compact owned derivative buffers. Other implementations use their
+   * normal virtual clone, preserving specialized copy behavior. The compact workspace is internal to a bounded
+   * stability calculation and must never be adopted into a user fluid or have components added. Mixing parameters
+   * retain the same read-only sharing contract as {@link #clone()}.
+   * </p>
+   *
+   * @return detached fixed-component trial phase
+   */
+  public PhaseEos copyForStabilityTrial() {
+    if ((getClass() != PhaseSrkEos.class && getClass() != PhasePrEos.class) || numberOfComponents <= 0
+        || numberOfComponents > ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS
+        || !"classic".equals(getMixingRuleName())) {
+      return clone();
+    }
+    for (int component = 0; component < numberOfComponents; component++) {
+      if (componentArray[component] == null || componentArray[component].getComponentNumber() != component) {
+        return clone();
+      }
+      Class<?> type = componentArray[component].getClass();
+      if (type != ComponentSrk.class && type != ComponentPR.class) {
+        return clone();
+      }
+    }
+    PhaseEos copiedPhase = (PhaseEos) super.cloneWithoutComponents();
+    for (int component = 0; component < numberOfComponents; component++) {
+      copiedPhase.componentArray[component] = ((ComponentEos) componentArray[component])
+          .copyForStabilityTrial(numberOfComponents);
+    }
+    return copiedPhase;
   }
 
   /**

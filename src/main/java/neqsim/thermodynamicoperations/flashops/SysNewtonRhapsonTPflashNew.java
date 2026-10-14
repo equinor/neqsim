@@ -5,11 +5,21 @@ import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * sysNewtonRhapsonTPflashNew class.
+ * Legacy JAMA-based Newton-Raphson TP-flash solver retained for compatibility.
+ *
+ * <p>
+ * The production TP-flash path uses {@link SysNewtonRhapsonTPflash}. New callers should use
+ * {@link neqsim.thermodynamicoperations.ThermodynamicOperations#TPflash()} for phase stability and equilibrium
+ * orchestration. The two low-level Newton solvers use different variables and are not interchangeable iteration states.
+ * Existing direct users must validate their fluid cases when migrating.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
+ * @deprecated Use the public thermodynamic-operations TP-flash entry point. Retained through the repository's required
+ * deprecation period; see issue #4212.
  */
+@Deprecated
 public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;

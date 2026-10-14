@@ -210,38 +210,37 @@ for the mixed-brine regression scope.
 
 #### CO2/brine phase-state diagnostics
 
-For water-rich, non-reactive `SystemElectrolyteCPAstatoil` fluids containing only
-CO2, water, optional explicit ions and optional MEG, the temperature operation uses
-`CO2BrinePhaseEquilibrium` for each fluid evaluation, including the independent
-verification on a copy of the starting feed. Water moles must exceed the combined
-CO2 and MEG moles. It initializes independent
-vapour and liquid CO2 trials, confines ions to the aqueous phase, and solves the
-constrained component balances and molecular fugacity equations. Conserved
-candidate states are ranked by Gibbs energy. A single aqueous result is accepted
-only when both normalized CO2 stability trials are non-negative within numerical
-tolerance. MEG is a molecular component: its fugacity equality and material balance
-are solved alongside those of CO2 and water; it is not assigned a zero partition
-coefficient like an ion. This path uses the existing EOS and hydrate parameters. Other gases,
-methanol, additional molecular components, prescribed phase types and solid-phase
-calculations retain their existing fluid solver.
+Every fluid evaluation now uses the ordinary `TPflash` entry point, including independent
+verification on a copy of the starting feed. Ionic constraints, stability and molecular
+partitioning are handled by that shared solver for CO2, other gases, MEG, methanol and
+mixed salts. The EOS and hydrate parameters are unchanged. Prescribed phase types,
+solid/wax models and the Pitzer water-activity model retain their physical scope boundaries.
+`CO2BrinePhaseEquilibrium` and `ReactiveCO2BrinePhaseEquilibrium` remain deprecated
+compatibility adapters; new code should use the ordinary operation API.
 
-The 44 bara regression uses 10 mol CO2 and 1 kg water, with 10 wt% NaCl on
-water-plus-salt and 5 wt% MEG on water-plus-MEG. It gives approximately
-1.903 °C with a conserved CO2-rich/aqueous split. If the same percentages instead
-mean kilograms per 100 kg water, the smaller salt and MEG inventories give
-approximately 2.708 °C. These are numerical regression results, not experimental
-validation. Independent temperature guesses and adjacent pressure cases are
-tested in `CO2BrineMegHydrateTest`. Ice and salt precipitation are not included.
-The reactive coupling described below retains its CO2/water-only molecular scope;
-adding MEG to a reactive fluid uses the existing general solver.
+The 44 bara CO2/brine/MEG regression uses 10 mol CO2 and 1 kg water, with
+10 wt% NaCl on water-plus-salt and 5 wt% MEG on water-plus-MEG. Its numerical
+reference is approximately 1.903 °C with a conserved CO2-rich/aqueous split.
+If the percentages instead mean kilograms per 100 kg water, the smaller salt
+and MEG inventories give a numerical reference of approximately 2.708 °C.
+The 5 wt% NaCl plus 5 wt% MEG control gives approximately 5.433 °C.
+These are numerical regression results, not experimental validation.
 
-Water-rich reactive `SystemElectrolyteCPAstatoil` fluids with CO2 and water as
-their only molecular components use `ReactiveCO2BrinePhaseEquilibrium` during
-both temperature iteration and independent verification. Add the input species,
-call `chemicalReactionInit()`, and then set the mixing rule and hydrate check.
+`CO2BrineMegHydrateTest` checks both concentration bases, independent temperature
+guesses, adjacent and dense-fluid pressures, finite CO2 inventory, repeated and
+cloned calculations, and the MEG inhibition trend. The shared fluid solver must
+conserve every supplied species and equilibrate CO2, water and MEG fugacities.
+MEG remains a partitioning molecular component; only ions are confined to the
+aqueous phase. These consumer cases introduce no component whitelist, solvent
+ratio dispatch flag, fitted EOS/hydrate parameter or empirical temperature offset.
+Ice and salt precipitation are not included in these regressions.
+
+Shared-EOS reactive ionic fluids use the common aqueous reaction coupling; EOS-GE models retain
+their model-owned phase-role and reaction strategy. Add the input species,
+call `chemicalReactionInit()`, then select the mixing rule and hydrate check.
 Component insertion order is preserved and must not change the equilibrium.
 
-The coupling alternates the existing constrained phase solver at fixed species
+The coupling alternates the ordinary TP flash at fixed species
 amounts with chemical equilibrium on an isolated aqueous phase. Only the
 reaction-induced changes in aqueous species amounts are transferred to the full
 fluid inventory. Acceptance requires molecular log-fugacity residuals below
@@ -263,8 +262,7 @@ The regression for issue #3758 uses 10 mol CO2, 1 kg water, 3 wt% NaCl and
 approximately 280.6501 K (7.5001 °C) with reactions enabled. Without reactions,
 the same feed retains its previous value of 280.6780 K. These are numerical
 regression values, not experimental validation of a drilling-fluid formulation.
-Other molecular components, unsupported models and solid-phase calculations
-retain their existing solvers.
+These numerical regression values do not qualify every molecular mixture or model.
 
 ```java
 SystemInterface brine = new SystemElectrolyteCPAstatoil(283.15, 200.0);
@@ -296,9 +294,10 @@ numerical regression values, not experimental measurements.
 `getDiagnostics()` returns an immutable snapshot. It reports the dimensionless
 hydrate-water residual, molecular log-fugacity residual, component and charge
 balance residuals, material phase labels and CO2-rich-phase presence. The
-minimum CO2 trial distance refers to the **homogeneous aqueous feed**: a negative
-value calls for a CO2-rich split. It is not the tangent-plane distance of the
-final two-phase equilibrium. A snapshot is null before the first run. Its
+`getMinimumFluidTrialDistance()` reports the normalized molecular trial distance against the
+ionic aqueous reference when evaluated; the historical CO2-named getter delegates to it. A negative
+value indicates instability of that reference, not the final multiphase state. Neutral-fluid legacy
+stability metrics are not relabeled as normalized aqueous-reference distances; they report `NaN`. A snapshot is null before the first run. Its
 convergence flag includes the independent verification and agrees with
 `isConverged()`; the hydrate residual agrees with `getLastResidual()`. A failed
 search captures diagnostic evidence before restoring the input inventory and
@@ -308,7 +307,7 @@ A converged single-aqueous result is a finite-inventory hydrate calculation;
 `isSaturatedCO2Boundary()` is false. Do not append it to a saturated CO2/brine
 curve. For example, at 100 bara and 5 wt% NaCl, 0.5 and 1 mol CO2 per kg water
 remain single aqueous, whereas 2 mol CO2 produces a CO2-rich/aqueous split.
-Nonconvergence in the constrained CO2/brine path raises `IllegalStateException`.
+Nonconvergence in the shared ionic fluid solve raises `IllegalStateException`.
 Neither a failed search nor an undersaturated label means hydrate-free operation.
 
 **Experimental assessment:**

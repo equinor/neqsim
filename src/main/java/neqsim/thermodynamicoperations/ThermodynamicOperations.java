@@ -185,10 +185,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       return;
     }
     double flowRate = system.getTotalNumberOfMoles();
-    if (flowRate < 1e-5) {
-      system.setTotalNumberOfMoles(1.0);
-      system.init(1);
-    }
     if (system instanceof neqsim.thermo.system.SystemSAFTVRMie) {
       // SAFT-VR Mie uses a specialized TPflash with separate volume solvers per phase
       // for improved robustness with the non-cubic EOS.
@@ -198,20 +194,62 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     } else {
       operation = new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
     }
-    if (!isRunAsThread()) {
+    if (flowRate < 1e-5) {
+      final SystemInterface fluid = system;
+      final OperationInterface flashOperation = operation;
+      final double originalFlowRate = flowRate;
+      final double[] originalMoles = new double[fluid.getNumberOfComponents()];
+      for (int component = 0; component < originalMoles.length; component++) {
+        originalMoles[component] = fluid.getComponent(component).getNumberOfmoles();
+      }
+      Runnable calculation = () -> runLowFlowTPflash(fluid, flashOperation, originalFlowRate, originalMoles);
+      if (isRunAsThread()) {
+        // Keep normalization and restoration in the same worker as the flash.
+        setThermoOperationThread(new Thread(calculation));
+        getThermoOperationThread().start();
+      } else {
+        calculation.run();
+      }
+    } else if (!isRunAsThread()) {
       getOperation().run();
     } else {
       run();
     }
+  }
 
-    if (flowRate < 1e-5) {
-      final double minimumFlowRate = 1e-50;
-      if (flowRate < minimumFlowRate) {
-        system.setTotalNumberOfMoles(minimumFlowRate);
-      } else {
-        system.setTotalNumberOfMoles(flowRate);
+  /**
+   * Runs a normalized low-flow calculation and restores its original extensive basis.
+   *
+   * <p>
+   * Reactions may change the total number of species moles while conserving elements. Consequently restoration must
+   * invert the original scaling factor, rather than replace the reacted total by the pre-reaction total. A rejected
+   * calculation restores the original species inventory before propagating its exception. Inputs below the existing
+   * artificial minimum-flow floor retain the historical policy of returning that fixed minimum total.
+   * </p>
+   *
+   * @param fluid fluid owned by this calculation
+   * @param flashOperation selected TP-flash implementation
+   * @param originalFlowRate input total moles before normalization
+   * @param originalMoles input species amounts in component order
+   */
+  private static void runLowFlowTPflash(SystemInterface fluid, OperationInterface flashOperation,
+      double originalFlowRate, double[] originalMoles) {
+    try {
+      fluid.setTotalNumberOfMoles(1.0);
+      fluid.init(1);
+      flashOperation.run();
+      final double minimumFlowRate = 1.0e-50;
+      fluid.setTotalNumberOfMoles(
+          originalFlowRate < minimumFlowRate ? minimumFlowRate : fluid.getTotalNumberOfMoles() * originalFlowRate);
+      fluid.init(1);
+    } catch (RuntimeException | Error failure) {
+      try {
+        fluid.setMolarFlowRates(originalMoles);
+        fluid.setTotalNumberOfMolesRaw(originalFlowRate);
+      } catch (RuntimeException | Error restorationFailure) {
+        failure.addSuppressed(restorationFailure);
       }
-      system.init(1);
+      throw failure;
     }
   }
 
@@ -1827,7 +1865,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       throw ex;
     } catch (IllegalStateException ex) {
       if (ex.getMessage() == null || (!ex.getMessage().startsWith("Hydrate fluid inventory")
-          && !ex.getMessage().startsWith("Reactive CO2/brine"))) {
+          && !ex.getMessage().startsWith("Reactive CO2/brine") && !ex.getMessage().startsWith("Aqueous reaction"))) {
         throw ex;
       }
       // The operation restores the original feed and reports NaN before rejecting an

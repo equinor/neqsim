@@ -1007,6 +1007,121 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Return the complete table's SG60/60-weighted liquid-volume percentage.
+     *
+     * <p>
+     * This is the ideal-additive-volume mass denominator {@code sum(Delta V_i * SG_i)}, with {@code Delta V_i} in
+     * liquid-volume percent. It is an auditable relative-mass term rather than a physical mass unit.
+     * </p>
+     *
+     * @return complete-table SG-weighted liquid-volume percentage
+     */
+    public double getTotalSpecificGravityWeightedLiquidVolumePercent() {
+      return integrateSpecificGravityWeightedLiquidVolumePercent(boilingPointKelvin[0],
+          boilingPointKelvin[boilingPointKelvin.length - 1]);
+    }
+
+    /**
+     * Return cumulative ideal-additive-volume mass recovery at a TBP boiling point in K.
+     *
+     * @param boilingPointKelvinValue boiling point in K
+     * @return cumulative mass recovery in percent
+     * @throws IllegalArgumentException if the boiling point is non-finite or outside the table
+     */
+    public double getCumulativeMassPercentAtBoilingPointKelvin(double boilingPointKelvinValue) {
+      double normalizedBoilingPoint = normalizeBoilingPointQuery(boilingPointKelvinValue);
+      double cumulativeImpliedMass = integrateSpecificGravityWeightedLiquidVolumePercent(boilingPointKelvin[0],
+          normalizedBoilingPoint);
+      return 100.0 * cumulativeImpliedMass / getTotalSpecificGravityWeightedLiquidVolumePercent();
+    }
+
+    /**
+     * Return cumulative ideal-additive-volume mass recovery at a TBP boiling point in degC.
+     *
+     * @param boilingPointCelsiusValue boiling point in degC
+     * @return cumulative mass recovery in percent
+     * @throws IllegalArgumentException if the boiling point is non-finite or outside the table
+     */
+    public double getCumulativeMassPercentAtBoilingPointCelsius(double boilingPointCelsiusValue) {
+      return getCumulativeMassPercentAtBoilingPointKelvin(boilingPointCelsiusValue + KELVIN_OFFSET);
+    }
+
+    /**
+     * Return the TBP boiling point in K at a cumulative ideal-additive-volume mass recovery.
+     *
+     * @param cumulativeMassPercent cumulative mass recovery in percent
+     * @return TBP boiling point in K
+     * @throws IllegalArgumentException if the recovery is non-finite or outside 0 to 100 percent
+     */
+    public double getBoilingPointKelvinAtCumulativeMassPercent(double cumulativeMassPercent) {
+      double normalizedMassPercent = normalizeCumulativeMassQuery(cumulativeMassPercent);
+      if (normalizedMassPercent == 0.0) {
+        return boilingPointKelvin[0];
+      }
+      if (normalizedMassPercent == 100.0) {
+        return boilingPointKelvin[boilingPointKelvin.length - 1];
+      }
+
+      double totalImpliedMass = getTotalSpecificGravityWeightedLiquidVolumePercent();
+      double targetImpliedMass = normalizedMassPercent * totalImpliedMass / 100.0;
+      double cumulativeImpliedMass = 0.0;
+      for (int cutIndex = 0; cutIndex < getCutCount(); cutIndex++) {
+        double intervalVolumePercent = cumulativeVolumePercent[cutIndex + 1] - cumulativeVolumePercent[cutIndex];
+        double intervalImpliedMass = intervalVolumePercent * specificGravity[cutIndex];
+        double nextCumulativeImpliedMass = cumulativeImpliedMass + intervalImpliedMass;
+        double nextCumulativeMassPercent = 100.0 * nextCumulativeImpliedMass / totalImpliedMass;
+        if (Math.abs(normalizedMassPercent - nextCumulativeMassPercent) <= PERCENT_TOLERANCE) {
+          return boilingPointKelvin[cutIndex + 1];
+        }
+        if (targetImpliedMass < nextCumulativeImpliedMass) {
+          double intervalMassFraction = (targetImpliedMass - cumulativeImpliedMass) / intervalImpliedMass;
+          return boilingPointKelvin[cutIndex]
+              + intervalMassFraction * (boilingPointKelvin[cutIndex + 1] - boilingPointKelvin[cutIndex]);
+        }
+        cumulativeImpliedMass = nextCumulativeImpliedMass;
+      }
+      return boilingPointKelvin[boilingPointKelvin.length - 1];
+    }
+
+    /**
+     * Return the TBP boiling point in degC at a cumulative ideal-additive-volume mass recovery.
+     *
+     * @param cumulativeMassPercent cumulative mass recovery in percent
+     * @return TBP boiling point in degC
+     * @throws IllegalArgumentException if the recovery is non-finite or outside 0 to 100 percent
+     */
+    public double getBoilingPointCelsiusAtCumulativeMassPercent(double cumulativeMassPercent) {
+      return getBoilingPointKelvinAtCumulativeMassPercent(cumulativeMassPercent) - KELVIN_OFFSET;
+    }
+
+    /**
+     * Return ideal-additive-volume mass yield between two TBP boiling points in K.
+     *
+     * @param lowerBoilingPointKelvin lower boiling point in K
+     * @param upperBoilingPointKelvin upper boiling point in K
+     * @return normalized mass yield in percent
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     */
+    public double getMassPercentBetweenBoilingPointsKelvin(double lowerBoilingPointKelvin,
+        double upperBoilingPointKelvin) {
+      return getBoilingRangePropertiesKelvin(lowerBoilingPointKelvin, upperBoilingPointKelvin).getMassPercent();
+    }
+
+    /**
+     * Return ideal-additive-volume mass yield between two TBP boiling points in degC.
+     *
+     * @param lowerBoilingPointCelsius lower boiling point in degC
+     * @param upperBoilingPointCelsius upper boiling point in degC
+     * @return normalized mass yield in percent
+     * @throws IllegalArgumentException if either boundary is invalid or the normalized interval is not positive
+     */
+    public double getMassPercentBetweenBoilingPointsCelsius(double lowerBoilingPointCelsius,
+        double upperBoilingPointCelsius) {
+      return getMassPercentBetweenBoilingPointsKelvin(lowerBoilingPointCelsius + KELVIN_OFFSET,
+          upperBoilingPointCelsius + KELVIN_OFFSET);
+    }
+
+    /**
      * Return the density and yield properties implied for a bounded TBP boiling range in K.
      *
      * <p>
@@ -1052,7 +1167,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
 
       return new TbpBoilingRangeProperties(normalizedLowerBoundary, normalizedUpperBoundary, liquidVolumePercent,
           specificGravityWeightedLiquidVolumePercent, liquidVolumeWeightedBoilingPointKelvinPercent,
-          liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent);
+          liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent,
+          getTotalSpecificGravityWeightedLiquidVolumePercent());
     }
 
     /**
@@ -1321,6 +1437,48 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
      * @param targetBoundaryKelvin validated boiling point in K
      * @return cumulative liquid-volume recovery in percent
      */
+    /**
+     * Integrate SG60/60-weighted liquid-volume percentage across one normalized range.
+     *
+     * @param lowerBoilingPointKelvin normalized lower boundary in K
+     * @param upperBoilingPointKelvin normalized upper boundary in K
+     * @return SG-weighted liquid-volume percentage
+     */
+    private double integrateSpecificGravityWeightedLiquidVolumePercent(double lowerBoilingPointKelvin,
+        double upperBoilingPointKelvin) {
+      double impliedMass = 0.0;
+      for (int cutIndex = 0; cutIndex < getCutCount(); cutIndex++) {
+        double overlapLowerBoundary = Math.max(lowerBoilingPointKelvin, boilingPointKelvin[cutIndex]);
+        double overlapUpperBoundary = Math.min(upperBoilingPointKelvin, boilingPointKelvin[cutIndex + 1]);
+        if (overlapUpperBoundary > overlapLowerBoundary) {
+          double overlapVolumePercent = interpolateCumulativeVolumePercent(overlapUpperBoundary)
+              - interpolateCumulativeVolumePercent(overlapLowerBoundary);
+          impliedMass += overlapVolumePercent * specificGravity[cutIndex];
+        }
+      }
+      return impliedMass;
+    }
+
+    /**
+     * Validate and snap a cumulative mass-recovery query.
+     *
+     * @param cumulativeMassPercent cumulative mass recovery in percent
+     * @return normalized cumulative mass recovery in percent
+     */
+    private double normalizeCumulativeMassQuery(double cumulativeMassPercent) {
+      if (!Double.isFinite(cumulativeMassPercent) || cumulativeMassPercent < -PERCENT_TOLERANCE
+          || cumulativeMassPercent > 100.0 + PERCENT_TOLERANCE) {
+        throw new IllegalArgumentException("Cumulative TBP mass recovery must be finite and between 0 and 100 percent");
+      }
+      if (Math.abs(cumulativeMassPercent) <= PERCENT_TOLERANCE) {
+        return 0.0;
+      }
+      if (Math.abs(cumulativeMassPercent - 100.0) <= PERCENT_TOLERANCE) {
+        return 100.0;
+      }
+      return cumulativeMassPercent;
+    }
+
     private double interpolateCumulativeVolumePercent(double targetBoundaryKelvin) {
       for (int sourceCutIndex = 0; sourceCutIndex < getCutCount(); sourceCutIndex++) {
         double lowerBoundary = boilingPointKelvin[sourceCutIndex];
@@ -1428,11 +1586,13 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     private final double averageSpecificGravity;
     private final double averageBoilingPointKelvin;
     private final double boilingPointVarianceKelvinSquared;
+    private final double massPercent;
 
     private TbpBoilingRangeProperties(double lowerBoilingPointKelvin, double upperBoilingPointKelvin,
         double liquidVolumePercent, double specificGravityWeightedLiquidVolumePercent,
         double liquidVolumeWeightedBoilingPointKelvinPercent,
-        double liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent) {
+        double liquidVolumeWeightedSquaredBoilingPointKelvinSquaredPercent,
+        double totalSpecificGravityWeightedLiquidVolumePercent) {
       this.lowerBoilingPointKelvin = lowerBoilingPointKelvin;
       this.upperBoilingPointKelvin = upperBoilingPointKelvin;
       this.liquidVolumePercent = liquidVolumePercent;
@@ -1445,6 +1605,8 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
           / liquidVolumePercent;
       this.boilingPointVarianceKelvinSquared = Math.max(0.0,
           averageSquaredBoilingPointKelvinSquared - averageBoilingPointKelvin * averageBoilingPointKelvin);
+      this.massPercent = 100.0 * specificGravityWeightedLiquidVolumePercent
+          / totalSpecificGravityWeightedLiquidVolumePercent;
     }
 
     /** @return normalized lower boiling boundary in K */
@@ -1470,6 +1632,20 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     /** @return liquid-volume yield in percent */
     public double getLiquidVolumePercent() {
       return liquidVolumePercent;
+    }
+
+    /**
+     * Return the normalized ideal-additive-volume mass yield for this range.
+     *
+     * <p>
+     * This is {@code 100 * M_range / M_total}, where each implied mass term is {@code Delta V_i * SG_i}. It is a basis
+     * conversion over the caller-supplied TBP and SG60/60 table, not a density-temperature or volume-contraction model.
+     * </p>
+     *
+     * @return normalized mass yield in percent
+     */
+    public double getMassPercent() {
+      return massPercent;
     }
 
     /**

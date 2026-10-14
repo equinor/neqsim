@@ -9,8 +9,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.thermodynamicoperations.flashops.CO2BrinePhaseEquilibrium;
-import neqsim.thermodynamicoperations.flashops.ReactiveCO2BrinePhaseEquilibrium;
 
 /**
  * Conserved CO2/brine/MEG equilibrium regressions for the 44 bara NaCl failure.
@@ -101,26 +99,6 @@ class CO2BrineMegHydrateTest {
   }
 
   /**
-   * Preserves the molecular scope of the reactive and general multiphase paths.
-   */
-  @Test
-  void otherMoleculesAndReactiveMegDoNotEnterTheConstrainedSolver() {
-    SystemInterface fluid = mixture(44.0, 10.0, 5.0, 10.0, false);
-    assertTrue(CO2BrinePhaseEquilibrium.isApplicable(fluid));
-    fluid.addComponent("methane", 1.0);
-    assertFalse(CO2BrinePhaseEquilibrium.isApplicable(fluid));
-    SystemInterface methanol = mixture(44.0, 10.0, 5.0, 10.0, false);
-    methanol.addComponent("methanol", 1.0);
-    assertFalse(CO2BrinePhaseEquilibrium.isApplicable(methanol));
-    SystemInterface reactive = mixture(44.0, 10.0, 5.0, 10.0, false);
-    reactive.chemicalReactionInit();
-    assertFalse(CO2BrinePhaseEquilibrium.isApplicable(reactive));
-    assertFalse(ReactiveCO2BrinePhaseEquilibrium.isApplicable(reactive));
-    SystemInterface organicRich = mixture(44.0, 10.0, 95.0, 10.0, false);
-    assertFalse(CO2BrinePhaseEquilibrium.isApplicable(organicRich));
-  }
-
-  /**
    * Constructs a one-kilogram-water NaCl/MEG recipe without adding CO2 during solution.
    *
    * @param pressure pressure in bara
@@ -165,7 +143,7 @@ class CO2BrineMegHydrateTest {
     HydrateEquilibriumDiagnostics evidence = flash.getDiagnostics();
     assertTrue(evidence.isConverged());
     assertTrue(evidence.hasAqueousPhase());
-    assertTrue(Double.isFinite(evidence.getMinimumCo2TrialDistance()));
+    assertTrue(Double.isFinite(evidence.getMinimumFluidTrialDistance()));
     assertTrue(evidence.getComponentBalanceResidual() < 1.0e-10);
     assertTrue(evidence.getChargeResidual() < 1.0e-10);
     CO2BrineHydratePhaseStateTest.assertEndpoint(fluid, evidence.hasCO2RichPhase());

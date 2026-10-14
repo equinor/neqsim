@@ -722,20 +722,30 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void addPhase() {
-    /*
-     * if (maxNumberOfPhases < 6 && !hydrateCheck) { ArrayList phaseList = new ArrayList(0); for (int i = 0; i <
-     * numberOfPhases; i++) { phaseList.add(phaseArray[i]); } // add the new phase phaseList.add(phaseArray[0].clone());
-     * beta[phaseList.size() - 1] = 1.0e-8; // beta[1] -= beta[1]/1.0e5;
-     *
-     * PhaseInterface[] phaseArray2 = new PhaseInterface[numberOfPhases + 1];
-     *
-     * for (int i = 0; i < numberOfPhases + 1; i++) { phaseArray2[i] = (PhaseInterface) phaseList.get(i); }
-     *
-     * phaseArray = phaseArray2;
-     *
-     * System.out.println("number of phases " + numberOfPhases); if (maxNumberOfPhases < numberOfPhases) {
-     * maxNumberOfPhases = numberOfPhases; } }
-     */
+    int candidateSlot = phaseIndex[numberOfPhases];
+    boolean occupied = false;
+    for (int active = 0; active < numberOfPhases; active++) {
+      occupied |= phaseIndex[active] == candidateSlot;
+    }
+    if (occupied) {
+      // Explicit index changes and retained snapshots may leave stale inactive mappings.
+      // Never activate a physical object that is already part of the live phase split.
+      for (int slot = 0; slot < phaseArray.length; slot++) {
+        boolean available = phaseArray[slot] != null;
+        for (int active = 0; active < numberOfPhases; active++) {
+          available &= phaseIndex[active] != slot;
+        }
+        if (available) {
+          candidateSlot = slot;
+          occupied = false;
+          break;
+        }
+      }
+      if (occupied) {
+        throw new IllegalStateException("No distinct physical phase slot is available");
+      }
+      phaseIndex[numberOfPhases] = candidateSlot;
+    }
     numberOfPhases++;
   }
 
@@ -1535,6 +1545,62 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemThermo clone() {
+    return cloneSystemState(false);
+  }
+
+  /**
+   * Creates an operation-local workspace for two-phase stability analysis without changing general cloning.
+   *
+   * <p>
+   * Exact ordinary SRK/PR fluids with analytic derivatives and two ordinary cubic storage slots use compact owned
+   * composition-derivative arrays. The component list is fixed for the lifetime of this workspace, and its phases must
+   * never be adopted into a user fluid. Specialized models, topology options and unknown subclasses retain their normal
+   * virtual clone behavior. No cache is shared across flash calls. Use {@link #clone()} for general fluid copies.
+   * </p>
+   *
+   * @return detached stability workspace, or a normal clone when compact storage is not qualified
+   */
+  public SystemThermo copyForStabilityTrial() {
+    if ((getClass() != SystemSrkEos.class && getClass() != SystemPrEos.class) || getMaxNumberOfPhases() != 2
+        || getNumberOfComponents() <= 0 || getNumberOfComponents() > ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS
+        || getNumberOfPhases() < 1 || getNumberOfPhases() > 2 || isNumericDerivatives()
+        || !isImplementedCompositionDeriativesofFugacity() || isChemicalSystem() || hasIons() || isForcePhaseTypes()
+        || !allowPhaseShift() || doSolidPhaseCheck() || getHydrateCheck() || isMultiphaseWaxCheck()) {
+      return clone();
+    }
+    for (int phase = 0; phase < getNumberOfPhases(); phase++) {
+      if (phaseIndex[phase] < 0 || phaseIndex[phase] > 1 || (phase == 1 && phaseIndex[phase] == phaseIndex[0])) {
+        return clone();
+      }
+    }
+    for (int slot = 0; slot < 2; slot++) {
+      PhaseInterface phase = phaseArray[slot];
+      if (phase == null || phase.getNumberOfComponents() != getNumberOfComponents()
+          || (phase.getClass() != neqsim.thermo.phase.PhaseSrkEos.class
+              && phase.getClass() != neqsim.thermo.phase.PhasePrEos.class)
+          || !"classic".equals(((neqsim.thermo.phase.PhaseEos) phase).getMixingRuleName())) {
+        return clone();
+      }
+      for (int component = 0; component < getNumberOfComponents(); component++) {
+        if (phase.getComponent(component) == null || phase.getComponent(component).getComponentNumber() != component) {
+          return clone();
+        }
+        Class<?> type = phase.getComponent(component).getClass();
+        if (type != neqsim.thermo.component.ComponentSrk.class && type != neqsim.thermo.component.ComponentPR.class) {
+          return clone();
+        }
+      }
+    }
+    return cloneSystemState(true);
+  }
+
+  /**
+   * Copies system-owned state and delegates phase copying to the selected explicit workspace policy.
+   *
+   * @param compactStabilityTrial whether the caller has qualified fixed-component cubic trial storage
+   * @return detached system copy with independent active phase state
+   */
+  private SystemThermo cloneSystemState(boolean compactStabilityTrial) {
     SystemThermo clonedSystem = null;
     try {
       clonedSystem = (SystemThermo) super.clone();
@@ -1569,7 +1635,9 @@ public abstract class SystemThermo implements SystemInterface {
 
     clonedSystem.phaseArray = phaseArray.clone();
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      clonedSystem.phaseArray[i] = phaseArray[i].clone();
+      clonedSystem.phaseArray[i] = compactStabilityTrial
+          ? ((neqsim.thermo.phase.PhaseEos) phaseArray[i]).copyForStabilityTrial()
+          : phaseArray[i].clone();
     }
 
     if (chemicalReactionOperations != null) {
@@ -2632,23 +2700,26 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getEmptySystemClone() {
-    int phaseNumber = 0;
-
     SystemInterface newSystem = this.clone();
-
-    double totalMolesInSystem = 0.0;
     double scaleFactor = 1.0e30;
+    double totalMolesInSystem = getTotalNumberOfMoles() / scaleFactor;
 
-    for (int j = 0; j < getMaxNumberOfPhases(); j++) {
-      phaseNumber = j;
-      double phaseMoles = 0.0;
-      for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-        double scaledMoles = getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / scaleFactor;
-        newSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledMoles);
-        newSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(scaledMoles);
-        phaseMoles += scaledMoles;
+    for (int phaseSlot = 0; phaseSlot < newSystem.getPhases().length; phaseSlot++) {
+      PhaseInterface phase = newSystem.getPhases()[phaseSlot];
+      if (phase == null) {
+        continue;
       }
-      totalMolesInSystem += phaseMoles;
+      // clone() deep-copies only the current search slots. Detach any retained
+      // inactive template before scaling so the source fluid remains unchanged.
+      if (phase == getPhases()[phaseSlot]) {
+        phase = phase.clone();
+        newSystem.getPhases()[phaseSlot] = phase;
+      }
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        ComponentInterface component = phase.getComponent(componentIndex);
+        component.setNumberOfmoles(component.getNumberOfmoles() / scaleFactor);
+        component.setNumberOfMolesInPhase(component.getNumberOfMolesInPhase() / scaleFactor);
+      }
     }
 
     if (totalMolesInSystem <= 0.0) {
@@ -3564,8 +3635,7 @@ public abstract class SystemThermo implements SystemInterface {
     case "volume":
       return getVolumeFraction(phaseNumber);
     case "mass":
-      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3") / getDensity("kg/m3");
+      return getWtFraction(phaseNumber);
     default:
       throw new RuntimeException("unit not supported " + unit);
     }
@@ -4925,6 +4995,7 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public void removePhase(int specPhase) {
+    int releasedSlot = phaseIndex[specPhase];
     setTotalNumberOfMolesRaw(getTotalNumberOfMoles() - getPhase(specPhase).getNumberOfMolesInPhase());
 
     for (int j = 0; j < numberOfPhases; j++) {
@@ -4934,43 +5005,28 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (specPhase != i) {
-        phaseList.add(phaseArray[phaseIndex[i]]);
-      }
-    }
-
-    // phaseArray = new PhaseInterface[numberOfPhases - 1];
     for (int i = 0; i < numberOfPhases - 1; i++) {
-      // phaseArray[i] = (PhaseInterface) phaseList.get(i);
       if (i >= specPhase) {
         phaseIndex[i] = phaseIndex[i + 1];
-        phaseType[i] = phaseType[i + 1];
       }
     }
     numberOfPhases--;
+    // Phase roles stay with physical slots; keep the released slot available for reuse.
+    phaseIndex[numberOfPhases] = releasedSlot;
   }
 
   /** {@inheritDoc} */
   @Override
   public void removePhaseKeepTotalComposition(int specPhase) {
-    ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
-    for (int i = 0; i < numberOfPhases; i++) {
-      if (specPhase != i) {
-        phaseList.add(phaseArray[phaseIndex[i]]);
-      }
-    }
-
-    // phaseArray = new PhaseInterface[numberOfPhases - 1];
+    int releasedSlot = phaseIndex[specPhase];
     for (int i = 0; i < numberOfPhases - 1; i++) {
-      // phaseArray[i] = (PhaseInterface) phaseList.get(i);
       if (i >= specPhase) {
         phaseIndex[i] = phaseIndex[i + 1];
-        phaseType[i] = phaseType[i + 1];
       }
     }
     numberOfPhases--;
+    // Phase roles stay with physical slots; keep the released slot available for reuse.
+    phaseIndex[numberOfPhases] = releasedSlot;
   }
 
   /** {@inheritDoc} */
@@ -5884,6 +5940,12 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public final void setPhaseIndex(int index, int phaseIndex) {
     this.phaseIndex[index] = phaseIndex;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PhaseType getPhaseType(int phase) {
+    return phaseType[phaseIndex[phase]];
   }
 
   /** {@inheritDoc} */
