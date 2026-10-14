@@ -10,8 +10,9 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <p>
  * Variables: u[i] = beta * y[i] (Michelsen 1982b). Residual: g[i] = ln(f_gas_i) - ln(f_liq_i). Jacobian: Hessian of the
- * reduced Gibbs energy Q(u). Uses Armijo backtracking line search on Q for global convergence (Michelsen &amp; Mollerup
- * 2007, Ch. 12).
+ * reduced Gibbs energy Q(u). Uses a bounded Armijo backtracking line search on Q (Michelsen &amp; Mollerup 2007, Ch.
+ * 12). Rejected steps leave the last accepted split available for the caller's fallback; this local solver does not
+ * certify global phase stability.
  * </p>
  *
  * <p>
@@ -118,6 +119,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       z[i] = system.getPhase(0).getComponent(i).getz();
     }
+    setu();
   }
 
   /**
@@ -188,16 +190,17 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * Compute Michelsen's reduced Gibbs energy Q(u). Q = sum[u_i * ln(y_i * phi_gas_i) + (z_i - u_i) * ln(x_i *
    * phi_liq_i)]. Gradient of Q equals fvec; Hessian of Q equals Jac.
    *
+   * @param amounts first-phase component amounts at the evaluated state
    * @return Q value
    */
-  private double computeQ() {
+  private double computeQ(double[] amounts) {
     double q = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       double yi = system.getPhase(0).getComponent(i).getx();
       double xi = system.getPhase(1).getComponent(i).getx();
       double lnFugGas = Math.log(yi * system.getPhase(0).getComponent(i).getFugacityCoefficient());
       double lnFugLiq = Math.log(xi * system.getPhase(1).getComponent(i).getFugacityCoefficient());
-      q += uVector[i] * lnFugGas + (z[i] - uVector[i]) * lnFugLiq;
+      q += amounts[i] * lnFugGas + (z[i] - amounts[i]) * lnFugLiq;
     }
     return q;
   }
@@ -211,7 +214,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   private boolean isFeasible(double[] uTrial) {
     double betaTrial = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      if (uTrial[i] < 1e-15 || uTrial[i] > z[i] - 1e-15) {
+      if (!Double.isFinite(uTrial[i]) || uTrial[i] < 1e-15 || uTrial[i] > z[i] - 1e-15) {
         return false;
       }
       betaTrial += uTrial[i];
@@ -235,6 +238,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhase(0).getComponent(i).setx(uTrial[i] / betaTrial);
       system.getPhase(1).getComponent(i).setx((z[i] - uTrial[i]) / (1.0 - betaTrial));
+      double ratio = system.getPhase(0).getComponent(i).getx() / system.getPhase(1).getComponent(i).getx();
+      system.getPhase(0).getComponent(i).setK(ratio);
+      system.getPhase(1).getComponent(i).setK(ratio);
     }
     system.init(1, 0);
     system.init(1, 1);
@@ -287,17 +293,33 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
-   * solve.
+   * Takes one finite, feasible, descent-qualified Newton step.
    *
-   * @return a double
+   * @return relative norm of the accepted correction
+   * @throws IllegalStateException if the direction or every bounded trial is rejected
    */
   public double solve() {
     ensureSolverInitialized();
     iter++;
     init();
 
-    double qCurrent = computeQ();
+    double qCurrent = computeQ(uVector);
+    if (!Double.isFinite(qCurrent)) {
+      throw new IllegalStateException("Non-finite current Newton Gibbs objective");
+    }
     setfvec();
+    double maximumResidual = 0.0;
+    for (int component = 0; component < numberOfComponents; component++) {
+      double residual = fvecVector.get(component, 0);
+      if (!Double.isFinite(residual)) {
+        throw new IllegalStateException("Non-finite Newton flash residual");
+      }
+      maximumResidual = Math.max(maximumResidual, Math.abs(residual));
+    }
+    // At roundoff-level equilibrium the Gibbs decrease is not numerically resolvable.
+    if (maximumResidual <= 32.0 * Math.ulp(1.0)) {
+      return 0.0;
+    }
     setJac();
 
     // Levenberg-Marquardt regularization for stability
@@ -312,7 +334,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
 
     // Solve J * dx = fvec using EJML (pre-allocated work buffer)
     jacWork.setTo(jacMatrix);
-    linearSolver.setA(jacWork);
+    if (!linearSolver.setA(jacWork)) {
+      throw new IllegalStateException("Singular Newton flash Jacobian");
+    }
     linearSolver.solve(fvecVector, dxVector);
 
     // Directional derivative: slope = fvec^T * dx = grad(Q)^T * (Jac^-1 * grad(Q)) > 0
@@ -321,10 +345,15 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       slope += fvecVector.get(i, 0) * dxVector.get(i, 0);
     }
 
+    if (!Double.isFinite(slope) || slope <= 0.0) {
+      throw new IllegalStateException("Newton flash direction is not finite descent");
+    }
+
     // Armijo backtracking line search on Michelsen Q function
     double alpha = 1.0;
     double c1 = 1e-4;
     int maxBacktrack = 8;
+    boolean accepted = false;
     for (int bt = 0; bt < maxBacktrack; bt++) {
       for (int i = 0; i < numberOfComponents; i++) {
         uTrialVector[i] = uVector[i] - alpha * dxVector.get(i, 0);
@@ -333,9 +362,10 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       if (isFeasible(uTrialVector)) {
         try {
           setTrialAndComputeFugacities(uTrialVector);
-          double qTrial = computeQ();
+          double qTrial = computeQ(uTrialVector);
           // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
-          if (qTrial <= qCurrent - c1 * alpha * slope) {
+          if (Double.isFinite(qTrial) && qTrial <= qCurrent - c1 * alpha * slope) {
+            accepted = true;
             break;
           }
         } catch (Exception ex) {
@@ -346,7 +376,13 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       alpha *= 0.5;
     }
 
-    // Update u with accepted step
+    if (!accepted) {
+      // Trials may have changed phase compositions and K values; restore before SSI fallback.
+      init();
+      throw new IllegalStateException("No acceptable Newton flash step after bounded backtracking");
+    }
+
+    // Update u only with the exact evaluated and accepted step
     double stepNormSq = 0.0;
     double uNormSq = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {

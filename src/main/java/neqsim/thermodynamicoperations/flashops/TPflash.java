@@ -2383,10 +2383,10 @@ public class TPflash extends Flash {
    * stale phase fractions or compositions. The phase set is retained, but component material balance or fugacity
    * equality can then remain outside the ordinary flash tolerance. A {@link TPmultiflash} beta update is phase-order
    * independent and restores the constrained phase split without rerunning stability analysis. The refinement is
-   * attempted for substantial-water endpoints and for trace-water endpoints whose already-active aqueous split is
-   * non-conservative. The latter bypasses only the water-feed threshold, not phase stability or phase appearance. The
-   * pre-refinement state is retained as a compact snapshot and restored unless the active-set update passes the
-   * existing strict equilibrium and Gibbs checks.
+   * attempted for substantial-water endpoints and for lower-water endpoints whose already-active aqueous split violates
+   * material balance or fugacity equality. A closed material balance alone does not establish equilibrium, even below
+   * the water-feed threshold. The pre-refinement state is retained as a compact snapshot and restored unless the
+   * active-set update passes the existing strict equilibrium and Gibbs checks.
    * </p>
    */
   private void refineInvalidAqueousTwoPhaseEndpoint() {
@@ -2404,9 +2404,13 @@ public class TPflash extends Flash {
       }
     }
     if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      // Check cached residuals before adding any property initialization or phase-fraction solve.
       double preRefinementMaterialResidual = maximumComponentMaterialBalanceResidual(system);
+      double preRefinementFugacityResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
       if (Double.isFinite(preRefinementMaterialResidual)
-          && preRefinementMaterialResidual <= WATER_RICH_MATERIAL_BALANCE_TOLERANCE) {
+          && preRefinementMaterialResidual <= WATER_RICH_MATERIAL_BALANCE_TOLERANCE
+          && Double.isFinite(preRefinementFugacityResidual)
+          && preRefinementFugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
         return;
       }
     }

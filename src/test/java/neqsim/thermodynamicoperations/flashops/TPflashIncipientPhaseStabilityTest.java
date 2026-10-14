@@ -26,6 +26,12 @@ class TPflashIncipientPhaseStabilityTest {
       0.053195814313451245};
   private static final double SRK_REFERENCE_TEMPERATURE_K = 253.46685189059752;
   private static final double SRK_REFERENCE_PRESSURE_BARA = 77.53775411226596;
+  /**
+   * Independent 70-digit SRK cubic/log-fugacity and Rachford-Rice solution using this model's pure a(T), b and classic
+   * binary-interaction parameters. Equation residuals are below 8e-67. The previous 3.50882832337307e-5 reference was
+   * underconverged by 1.46e-9 in beta; retain the existing 1e-10 comparison tolerance.
+   */
+  private static final double SRK_REFERENCE_GAS_BETA = 3.508682096277057e-5;
 
   private static final String[] UMR_PRU_COMPONENTS = {"methane", "ethane", "n-pentane", "nC16"};
   private static final double[] UMR_PRU_FEED = {0.416683, 0.17522, 0.358009, 0.0500888};
@@ -52,7 +58,11 @@ class TPflashIncipientPhaseStabilityTest {
     assertEquals(2, ordinary.getNumberOfPhases());
     assertTrue(ordinary.hasPhaseType(PhaseType.GAS));
     assertTrue(ordinary.hasPhaseType(PhaseType.OIL));
-    assertEquals(3.50882832337307e-5, ordinary.getBeta(findPhase(ordinary, PhaseType.GAS)), 1.0e-10);
+    assertEquals(SRK_REFERENCE_GAS_BETA, ordinary.getBeta(findPhase(ordinary, PhaseType.GAS)), 1.0e-10);
+    assertTrue(maximumComparableLogFugacityResidual(ordinary) < 1.0e-10,
+        "ordinary incipient endpoint must retain the independently verified precision");
+    assertTrue(maximumComparableLogFugacityResidual(multiphase) < 1.0e-10,
+        "multiphase incipient endpoint must retain the independently verified precision");
     assertClosedState(ordinary, "ordinary incipient vapour");
     assertClosedState(multiphase, "multiphase incipient vapour");
     assertEquivalentState(ordinary, multiphase, 1.0e-10, "incipient-vapour algorithm agreement");

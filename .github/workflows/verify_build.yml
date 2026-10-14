@@ -140,10 +140,28 @@ jobs:
           java-version: ${{ matrix.java }}
           cache: 'maven'
       - name: Run numerical and absence contracts
-        run: >-
-          mvn -B test -ntp -f ${{ matrix.pom }} -DskipITs -Djacoco.skip=true
-          "-Dtest=ModelSpec*Test,ComponentCorrelationSpecTest"
-          -DfailIfNoTests=true -Dsurefire.failIfNoSpecifiedTests=true
+        shell: bash
+        run: |
+          set -o pipefail
+          for attempt in 1 2; do
+            # -U also rechecks missing releases cached by a failed download.
+            if mvn -B -U test -ntp -f ${{ matrix.pom }} -DskipITs -Djacoco.skip=true \
+              "-Dtest=ModelSpec*Test,ComponentCorrelationSpecTest" \
+              -DfailIfNoTests=true -Dsurefire.failIfNoSpecifiedTests=true \
+              2>&1 | tee "$RUNNER_TEMP/model-spec-maven-$attempt.log"; then
+              exit 0
+            else
+              status=$?
+            fi
+            # Retry only Maven resolution failures, never compilation or test failures.
+            if [ "$attempt" -eq 2 ] || ! grep -Eq \
+              '^\[ERROR\] \[Help [0-9]+\] https?://[^ ]+/(PluginResolutionException|DependencyResolutionException)$' \
+              "$RUNNER_TEMP/model-spec-maven-$attempt.log"; then
+              exit "$status"
+            fi
+            echo "Maven dependency resolution failed; retrying once in 10 seconds."
+            sleep 10
+          done
       - name: Retain per-case evidence
         if: always()
         uses: actions/upload-artifact@v7

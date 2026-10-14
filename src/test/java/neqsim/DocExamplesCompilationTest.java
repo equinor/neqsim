@@ -97,6 +97,7 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemNRTL;
 import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -421,6 +422,89 @@ public class DocExamplesCompilationTest {
         .addTBPFraction("C8", 0.05, 0.104, 0.749).addPlusFraction("C20", 0.23, 0.350, 0.88).withLumpedComponents(6)
         .withMixingRule("classic").build();
     assertNotNull(oil);
+    // 2 real components (methane, ethane) + 6 lumped pseudo-components from the TBP/plus
+    // fractions = 8. Confirms withLumpedComponents(n) actually produces n pseudo-components
+    // rather than silently falling back to the StandardLumpingModel's own default of 7 (the real
+    // FluidBuilder bug found and fixed alongside the neqsim-api-patterns/neqsim-eos-regression
+    // skill doc fix, PR review on #4303).
+    assertEquals(8, oil.getPhase(0).getNumberOfComponents());
+    new ThermodynamicOperations(oil).TPflash();
+    oil.initProperties();
+    assertTrue(oil.getNumberOfPhases() >= 1);
+  }
+
+  /**
+   * FluidBuilder's black-oil preset exercises withLumpedComponents(6) plus a full characterization + mixing-rule +
+   * flash sequence in production code (not just documentation) -- confirms the fix to FluidBuilder.build()'s internal
+   * ordering (characterize before setting the mixing rule) and its lumping call
+   * (configureLumping()...totalPseudoComponents() instead of the overwritten
+   * getLumpingModel().setNumberOfLumpedComponents()).
+   */
+  @Test
+  public void testFluidBuilderTypicalBlackOilCharacterizesAndFlashes() {
+    SystemInterface oil = FluidBuilder.typicalBlackOil(353.15, 250.0);
+    assertNotNull(oil);
+    // 8 real components (methane..n-hexane) + 6 lumped pseudo-components from the C7-C10 TBP
+    // fractions and the C20 plus fraction = 14.
+    assertEquals(14, oil.getPhase(0).getNumberOfComponents());
+    new ThermodynamicOperations(oil).TPflash();
+    oil.initProperties();
+    assertTrue(oil.getNumberOfPhases() >= 1);
+  }
+
+  /**
+   * neqsim-api-patterns SKILL.md "Oil Characterization (C7+ Fractions)" recipe, verifying the corrected lumping call
+   * (configureLumping()...totalPseudoComponents()) actually produces the requested pseudo-component count, and that
+   * characterizing before setting the mixing rule lets a flash run without the ArrayIndexOutOfBoundsException the
+   * reversed order throws.
+   */
+  @Test
+  public void testApiPatternsOilCharacterizationLumpingDoc() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
+    fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);
+    fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
+    fluid.addPlusFraction("C20", 0.02, 350.0 / 1000, 0.88);
+    fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
+    fluid.getCharacterization().characterisePlusFraction();
+    fluid.setMixingRule("classic");
+    // 3 real components (methane, ethane, propane) + 6 lumped pseudo-components = 9.
+    assertEquals(9, fluid.getPhase(0).getNumberOfComponents());
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    assertTrue(fluid.getNumberOfPhases() >= 1);
+  }
+
+  /**
+   * neqsim-eos-regression SKILL.md "TBP Fraction Setup" recipe, reproducing the exact counts the PR review on #4303
+   * reported from a failing JUnit assertion against the pre-fix recipe (7 pseudo-components / 12 total instead of 6 /
+   * 11), now passing against the corrected recipe.
+   */
+  @Test
+  public void testEosRegressionLumpingAndMixingRuleOrderingDoc() {
+    SystemInterface fluid = new SystemPrEos(273.15 + 100.0, 200.0);
+    fluid.addComponent("methane", 0.60);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("propane", 0.05);
+    fluid.addComponent("n-butane", 0.03);
+    fluid.addComponent("n-pentane", 0.02);
+    fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);
+    fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
+    fluid.addTBPfraction("C9", 0.03, 119.0 / 1000, 0.768);
+    fluid.addPlusFraction("C10", 0.10, 200.0 / 1000, 0.830);
+    fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
+    fluid.getCharacterization().characterisePlusFraction();
+    fluid.setMixingRule("classic");
+    // 5 real components + 6 lumped pseudo-components = 11, matching the PR review's own
+    // reproduction (not 12, which is what the broken setNumberOfLumpedComponents(6) call left in
+    // place: 5 real + the StandardLumpingModel's unconfigured default of 7).
+    assertEquals(11, fluid.getPhase(0).getNumberOfComponents());
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    assertTrue(fluid.getNumberOfPhases() >= 1);
   }
 
   /**

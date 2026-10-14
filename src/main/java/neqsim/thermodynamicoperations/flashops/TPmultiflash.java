@@ -1327,11 +1327,10 @@ public class TPmultiflash extends TPflash {
         if (!isTrivial && tmVal < -1e-8) {
           system.addPhase();
           int newPhaseIdx = system.getNumberOfPhases() - 1;
-          // UMR-PRU-MC and Furst retain their established implicit local-root policy, matching
-          // the ordinary stability path. Explicit enhanced checks and other models retain the trial root.
-          boolean preserveLocalRootPolicy = !system.doEnhancedMultiPhaseCheck()
-              && (system instanceof SystemFurstElectrolyteEos || system instanceof SystemUMRPRUMCEos);
-          if (!preserveLocalRootPolicy) {
+          // A stability-trial root is an initial search choice, not a universally qualified
+          // selector for the subsequent coupled beta solve. Preserve explicit enhanced behavior;
+          // implicit supplementary trials retain their established local-root policy.
+          if (system.doEnhancedMultiPhaseCheck()) {
             system.setPhaseType(newPhaseIdx, clonedSystem.getPhaseType(1));
           }
           for (int i = 0; i < numComponents; i++) {

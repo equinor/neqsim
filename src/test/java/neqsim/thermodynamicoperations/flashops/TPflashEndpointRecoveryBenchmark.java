@@ -22,9 +22,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * Run identical JVMs against master, the initial fix and the optimized fix. Construction, state changes and numerical
  * snapshots are outside the timer. Every case receives its own warmup; individual batch timings and failed numerical
  * states are retained. Thread CPU time accompanies elapsed time to expose scheduling noise; its clock reads are outside
- * the elapsed timer. Timing differences must be assessed across batches and JVM runs, never asserted in CI. The
- * uncorrected condensate result is deliberately retained as a failed numerical baseline, not accepted as a faster
- * alternative.
+ * the elapsed timer. Supported JVMs also report thread-allocated bytes outside the elapsed and CPU timers; unsupported
+ * or denied allocation measurements are reported as -1. Timing differences must be assessed across batches and JVM
+ * runs, never asserted in CI. The uncorrected condensate result is deliberately retained as a failed numerical
+ * baseline, not accepted as a faster alternative.
  * </p>
  *
  * @author Even Solbraa
@@ -42,6 +43,30 @@ public final class TPflashEndpointRecoveryBenchmark {
 
   /** Prevents construction of this standalone benchmark. */
   private TPflashEndpointRecoveryBenchmark() {
+  }
+
+  /**
+   * Obtains optional JVM allocation accounting.
+   *
+   * @param threadTiming JVM thread-management interface
+   * @return enabled allocation counter, or null when unsupported or unavailable
+   */
+  private static com.sun.management.ThreadMXBean allocationCounter(ThreadMXBean threadTiming) {
+    if (!(threadTiming instanceof com.sun.management.ThreadMXBean)) {
+      return null;
+    }
+    com.sun.management.ThreadMXBean allocations = (com.sun.management.ThreadMXBean) threadTiming;
+    try {
+      if (!allocations.isThreadAllocatedMemorySupported()) {
+        return null;
+      }
+      if (!allocations.isThreadAllocatedMemoryEnabled()) {
+        allocations.setThreadAllocatedMemoryEnabled(true);
+      }
+      return allocations;
+    } catch (SecurityException | UnsupportedOperationException ex) {
+      return null;
+    }
   }
 
   /**
@@ -114,6 +139,8 @@ public final class TPflashEndpointRecoveryBenchmark {
     if (cpuTiming && !threadTiming.isThreadCpuTimeEnabled()) {
       threadTiming.setThreadCpuTimeEnabled(true);
     }
+    com.sun.management.ThreadMXBean allocations = allocationCounter(threadTiming);
+    long threadId = Thread.currentThread().getId();
     JsonArray records = new JsonArray();
     for (String family : FAMILIES) {
       for (boolean changed : new boolean[] {false, true}) {
@@ -135,6 +162,7 @@ public final class TPflashEndpointRecoveryBenchmark {
         for (int batch = 0; batch < batches; batch++) {
           long elapsedNanos = 0;
           long cpuNanos = 0;
+          long allocatedBytes = 0;
           int recoveryCount = 0;
           for (int iteration = 0; iteration < iterations; iteration++) {
             if ("condensate-cold".equals(family)) {
@@ -142,12 +170,16 @@ public final class TPflashEndpointRecoveryBenchmark {
             }
             setState(fluid, temperature, pressure, changed, iteration);
             TPflash flash = new TPflash(fluid);
+            long allocationStart = allocations == null ? 0 : allocations.getThreadAllocatedBytes(threadId);
             long cpuStart = cpuTiming ? threadTiming.getCurrentThreadCpuTime() : 0;
             long start = System.nanoTime();
             flash.run();
             elapsedNanos += System.nanoTime() - start;
             if (cpuTiming) {
               cpuNanos += threadTiming.getCurrentThreadCpuTime() - cpuStart;
+            }
+            if (allocations != null) {
+              allocatedBytes += allocations.getThreadAllocatedBytes(threadId) - allocationStart;
             }
             if (flash.getLastStabilityOutcome().startsWith("recovered nonconservative hydrocarbon endpoint")) {
               recoveryCount++;
@@ -159,6 +191,7 @@ public final class TPflashEndpointRecoveryBenchmark {
           record.addProperty("batch", batch);
           record.addProperty("warmupFlashes", caseWarmup);
           record.addProperty("flashes", iterations);
+          record.addProperty("bytesPerFlash", allocations == null ? -1.0 : (double) allocatedBytes / iterations);
           record.addProperty("elapsedNanos", elapsedNanos);
           record.addProperty("nanosPerFlash", (double) elapsedNanos / iterations);
           record.addProperty("cpuNanosPerFlash", cpuTiming ? (double) cpuNanos / iterations : -1.0);
@@ -171,6 +204,7 @@ public final class TPflashEndpointRecoveryBenchmark {
     JsonObject report = new JsonObject();
     report.addProperty("javaVersion", System.getProperty("java.version"));
     report.addProperty("threadCpuTimingEnabled", cpuTiming);
+    report.addProperty("threadAllocationCountingEnabled", allocations != null);
     report.addProperty("minimumWarmupFlashesPerCase", warmup);
     report.addProperty("warmStartKValues", neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues());
     report.addProperty("scope", "complete flash timings; numerical consistency, not experimental validation");

@@ -1,7 +1,7 @@
 ---
 name: neqsim-eos-regression
 description: "EOS parameter regression workflow for fitting equation-of-state models to experimental data. USE WHEN: tuning binary interaction parameters (kij), matching saturation pressures, fitting PVT data (CME, CVD, DL), characterizing C7+ fractions, or validating EOS predictions against lab measurements. Covers SRK, PR, CPA parameter fitting strategies."
-last_verified: "2026-07-04"
+last_verified: "2026-10-12"
 ---
 
 # EOS Parameter Regression Workflow
@@ -153,12 +153,34 @@ fluid.addComponent("n-pentane", 0.02);
 fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);
 fluid.addTBPfraction("C8", 0.04, 104.0 / 1000, 0.749);
 fluid.addTBPfraction("C9", 0.03, 119.0 / 1000, 0.768);
-fluid.addPlusFraction("C10+", 0.10, 200.0 / 1000, 0.830);
+fluid.addPlusFraction("C10", 0.10, 200.0 / 1000, 0.830); // no "+" in the name -- breaks parsing
 
-fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6);
-fluid.setMixingRule("classic");
+fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
 fluid.getCharacterization().characterisePlusFraction();
+fluid.setMixingRule("classic"); // MUST come AFTER characterisePlusFraction() -- see below
 ```
+
+**Ordering note (confirmed 2026-10-12 against a real NeqSim 3.24.0 build):**
+`characterisePlusFraction()` can SPLIT a plus/TBP fraction into several
+lumped pseudo-components, changing the total component count. Setting the
+mixing rule BEFORE that split leaves the EOS's kij matrix sized for the
+pre-split count; the first flash that actually needs the matrix then throws
+`ArrayIndexOutOfBoundsException: Index N out of bounds for length N` inside
+`EosMixingRuleHandler$ClassicSRK.getkij`. Always characterize first, then
+set the mixing rule.
+
+**Lumping count note (confirmed 2026-10-12, PR review on `#4303`, reproduced
+with a failing JUnit assertion):** do NOT call
+`fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(n)`
+directly on the default ("standard") lumping model to control the total
+pseudo-component count -- `StandardLumpingModel.generateLumpedComposition()`
+overwrites `numberOfLumpedComponents` with `numberOfPseudocomponents` (both
+default to 7) at generation time, so `setNumberOfLumpedComponents(6)` alone
+still produces 7 pseudo-components (12 total components here: 5 real + 4
+TBP/plus heavy fractions lumped into 7), not 6 (11 total). Use
+`configureLumping().model("standard").totalPseudoComponents(n).build()`,
+which sets `numberOfPseudocomponents` directly -- the field the generator
+actually reads.
 
 ### Tuning Parameters
 

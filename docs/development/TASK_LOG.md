@@ -34,6 +34,25 @@ requirement`, or `confidential compressor route`.
 
 ## Log
 
+### 2026-10-14 — Repair Java 8 dependency recovery and preserve master changes in PR 4306
+**Type:** Maintenance
+**Keywords:** Java 8, Maven, phase roots, Newton line search, TP flash, master integration
+**Solution:** Reuse the bounded model-specification dependency-resolution retry from PR 4320;
+restore twenty unrelated files exactly from master `b0de5165`, including fluid characterization,
+network automation, their regression tests, release version 3.25.0, and the qualified Maven wrapper.
+Restrict trial-root transfer to explicitly enhanced checks and correct the Newton trial Gibbs
+objective, bounded-step acceptance, rejected-trial rollback and cached-solver inventory refresh.
+Eight focused safeguard regressions fail in seven cases on the original implementation and all
+pass after the correction; the unchanged exchanger test requires the coupled numerical repair.
+Require fugacity closure as well as material balance before skipping refinement of an active
+low-water aqueous split. Independent high-precision SRK equations qualify the incipient-vapor
+reference without relaxing its beta tolerance. Add optional allocated-byte measurements to
+the complete-flash benchmark; the condensate improvement does not establish parity with master.
+**Notes:** The original Java 8 Surefire descriptor failure disappeared when the same CI job was
+rerun without a source change. Eleven controlled workflow checks verify that only dependency
+resolution is retried once; assertions, compilation and fork failures remain fatal. Keep the
+phase-root qualification under issue 4310 and performance qualification under issue 4311 open.
+
 ### 2026-10-14 — Repair phase-reuse integration and derivative clone isolation
 **Type:** E (Feature)
 **Keywords:** phase reuse, clone, derivative isolation, sour gas, sulfur filter, scrubber, exchanger
