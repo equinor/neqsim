@@ -2955,8 +2955,13 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param elementName element name
    * @param compressor pre-configured NeqSim {@link Compressor} with chart
    * @return the created element
+   * @throws IllegalArgumentException if the compressor or enabled chart is missing
    */
   public NetworkPipe addCompressorWithChart(String fromNode, String toNode, String elementName, Compressor compressor) {
+    if (compressor == null || compressor.getCompressorChart() == null
+        || !compressor.getCompressorChart().isUseCompressorChart()) {
+      throw new IllegalArgumentException("Chart-backed compressor requires an enabled compressor chart");
+    }
     NetworkPipe element = addPipe(fromNode, toNode, elementName, 1.0, 0.5);
     element.setElementType(NetworkElementType.COMPRESSOR);
     element.setCompressorModel(compressor);
@@ -3013,10 +3018,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * @param elementName element name
    * @param pump configured pump with head/efficiency/NPSH curves
    * @return created pump edge
+   * @throws IllegalArgumentException if the pump or enabled chart is missing
    */
   public NetworkPipe addPumpWithCurve(String fromNode, String toNode, String elementName, Pump pump) {
-    if (pump == null) {
-      throw new IllegalArgumentException("Configured pump model cannot be null");
+    if (pump == null || pump.getPumpChart() == null || !pump.getPumpChart().isUsePumpChart()) {
+      throw new IllegalArgumentException("Curve-backed pump requires an enabled pump chart");
     }
     NetworkPipe element = addPipe(fromNode, toNode, elementName, 1.0, 0.3);
     element.setElementType(NetworkElementType.PUMP);
@@ -5597,6 +5603,11 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         return -Math.signum(pipe.getFlowRate()) * Math.abs(pRise);
       } catch (Exception ex) {
         logger.warn("Compressor chart calculation failed for {}: {}", pipe.getName(), ex.getMessage());
+        pipe.setCompressorPower(Double.NaN);
+        pipe.setFlowRegime("Compressor-Chart-Infeasible");
+        pipe.setThermodynamicState(null, null, true);
+        pipe.setOutletTemperature(Double.NaN);
+        return 1.0e12;
       }
     }
 

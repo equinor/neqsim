@@ -8,12 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.Stream;
@@ -1529,6 +1532,57 @@ class LoopedPipeNetworkTest {
     LoopedPipeNetwork.NetworkPipe comp = network.getPipe("comp1");
     assertNotNull(comp, "Compressor element should exist");
     assertEquals(LoopedPipeNetwork.NetworkElementType.COMPRESSOR, comp.getElementType());
+  }
+
+  /** Chart-backed rotating equipment rejects incomplete maps before mutating the graph. */
+  @Test
+  void testMappedRotatingEquipmentRegistrationIsAtomic() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("mapped registration");
+    network.addJunctionNode("suction");
+    network.addJunctionNode("discharge");
+
+    Pump chartlessPump = new Pump("chartless pump", new Stream("pump feed", testGas.clone()));
+    Compressor chartlessCompressor = new Compressor("chartless compressor",
+        new Stream("compressor feed", testGas.clone()));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> network.addPumpWithCurve("suction", "discharge", "pump", chartlessPump));
+    assertThrows(IllegalArgumentException.class,
+        () -> network.addCompressorWithChart("suction", "discharge", "compressor", chartlessCompressor));
+    assertTrue(network.getPipeNames().isEmpty());
+  }
+
+  /** A configured compressor-chart failure must not fall through to simplified polytropic physics. */
+  @Test
+  void testMappedCompressorFailureFailsClosed() {
+    LoopedPipeNetwork network = new LoopedPipeNetwork("failed mapped compressor");
+    network.setFluidTemplate(testGas);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(10);
+    network.addSourceNode("supply", 30.0, 0.0);
+    network.addFixedPressureSinkNode("delivery", 60.0);
+
+    Compressor failingCompressor = new Compressor("failing compressor",
+        new Stream("compressor feed", testGas.clone())) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public void run(UUID id) {
+        throw new IllegalStateException("synthetic chart failure");
+      }
+    };
+    failingCompressor.getCompressorChart().setCurves(new double[] {298.15, 1.0, 1.0, 1.0}, new double[] {9000.0},
+        new double[][] {{1000.0, 1500.0, 2000.0}}, new double[][] {{80.0, 70.0, 55.0}},
+        new double[][] {{72.0, 78.0, 74.0}});
+    failingCompressor.getCompressorChart().setUseCompressorChart(true);
+    network.addCompressorWithChart("supply", "delivery", "compressor", failingCompressor);
+
+    network.run();
+
+    LoopedPipeNetwork.NetworkPipe edge = network.getPipe("compressor");
+    assertEquals("Compressor-Chart-Infeasible", edge.getFlowRegime());
+    assertTrue(Double.isNaN(edge.getCompressorPower()));
+    assertTrue(Double.isNaN(network.getPower("kW")));
   }
 
   /**
