@@ -1,4 +1,4 @@
-name: Spotless format patch
+name: "[Core] Spotless Format Patch"
 
 on:
   pull_request:

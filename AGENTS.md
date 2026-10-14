@@ -30,6 +30,11 @@
 - **Agent/MCP coverage:** after Java formatting or agent/skill mapping changes, run
   `python devtools/build_engineering_coverage.py` and commit the generated inventory.
   Register new engineering operations with routes and evidence; source presence is not validation.
+- **AI workflow names:** GitHub Actions workflows for agent, skill, MCP, task, or research
+  tooling MUST use `ai-<purpose>.yml` in lowercase kebab-case, directly in `.github/workflows/`.
+  Categorize by primary responsibility: publishing MCP artifacts still uses `publish-`.
+  Follow [.github/WORKFLOWS.md](.github/WORKFLOWS.md); update filename references when renaming
+  and preserve required-check names unless their consumers have been reviewed.
 - **Documentation code must be test-verified:** every Java/Python snippet in docs gets a JUnit
   test (e.g. `DocExamplesCompilationTest`) that is run and passes before the doc is done.
 - **Notebooks must be executed** end to end (NeqSim Runner by default); unexecuted = incomplete.

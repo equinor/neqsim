@@ -1,4 +1,4 @@
-name: Optional combustion physics
+name: "[Examples] Optional Combustion Physics"
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ on:
       - "src/main/java/neqsim/process/equipment/reactor/FiniteRateCombustionReactor.java"
       - "src/main/java/neqsim/process/equipment/reactor/MultiBurnerFiredHeater.java"
       - "src/main/java/neqsim/process/util/combustion/**"
-      - ".github/workflows/combustion_physics.yml"
+      - ".github/workflows/examples-optional-combustion-physics.yml"
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Validate benchmark and mechanism provenance gates
         run: |
           python -m unittest discover -s examples/combustion -p 'test_benchmark_qualification.py' -v
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Install optional mechanism solver
         run: python -m pip install cantera==3.2.0
       - name: Run analytical and detailed chemistry regressions
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

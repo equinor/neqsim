@@ -29,6 +29,13 @@ See [VISION_AGENTS.md](VISION_AGENTS.md) for what belongs in the core repo vs. c
 [Where Does This Go? placement guide](https://github.com/equinor/neqsim-community-skills/blob/main/docs/where-does-this-go.md)
 — one decision tree for core vs. community vs. enterprise, and skill vs. agent.
 
+## GitHub Actions Workflows
+
+See the [workflow catalog and naming rules](.github/WORKFLOWS.md) before adding or
+renaming a workflow. Keep executable YAML directly in `.github/workflows/`; use
+category filename prefixes rather than subdirectories. Rename-dependent path
+filters, dispatch commands, badges, and contract tests must be updated together.
+
 ## Code Formatting (Spotless)
 
 Java code formatting is enforced by [Spotless](https://github.com/diffplug/spotless). **CI runs a

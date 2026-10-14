@@ -1,4 +1,4 @@
-name: Daily Research Scan
+name: "[AI] Daily Research Scan"
 permissions:
   contents: read
 
@@ -10,7 +10,7 @@ on:
   pull_request:
     branches: [master]
     paths:
-      - '.github/workflows/research-scan.yml'
+      - '.github/workflows/ai-daily-research-scan.yml'
       - 'neqsim-paperlab/tools/daily_scan.py'
       - 'neqsim-paperlab/tools/research_scanner.py'
       - 'neqsim-paperlab/tools/trending_topics.py'

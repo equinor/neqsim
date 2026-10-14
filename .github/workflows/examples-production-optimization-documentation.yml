@@ -1,11 +1,11 @@
-name: Production optimization documentation
+name: "[Examples] Production Optimization Documentation"
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - '.github/workflows/practical-optimization-examples.yml'
-      - '.github/workflows/convert_notebooks.yml'
+      - '.github/workflows/examples-production-optimization-documentation.yml'
+      - '.github/workflows/docs-convert-notebooks-to-markdown.yml'
       - 'docs/process/optimization/**'
       - 'docs/process/*optimization*'
       - 'docs/process/*FRAMEWORK.md'

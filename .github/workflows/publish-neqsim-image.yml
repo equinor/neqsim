@@ -1,4 +1,4 @@
-name: Publish NeqSim Image
+name: "[Publish] Publish NeqSim Image"
 
 # Builds the self-contained NeqSim image (root Dockerfile) — Java 21 + Maven +
 # Python with the NeqSim source already compiled and usable from both Java and
@@ -10,7 +10,7 @@ name: Publish NeqSim Image
 #   # Java:   ./mvnw -o test -Dtest=SystemSrkEosTest
 #   # Python: python3  (then: from neqsim_dev_setup import neqsim_init, ...)
 #
-# This is distinct from devcontainer_prebuild.yml, which publishes the
+# This is distinct from publish-prebuild-dev-container.yml, which publishes the
 # *toolchain-only* dev container (ghcr.io/equinor/neqsim-devcontainer) used as
 # the base image here.
 

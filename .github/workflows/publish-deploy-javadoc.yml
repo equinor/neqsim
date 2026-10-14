@@ -1,4 +1,4 @@
-name: Deploy Javadoc
+name: "[Publish] Deploy Javadoc"
 
 on:
   workflow_dispatch:
