@@ -182,6 +182,12 @@ qualification and the remaining nitrogen dielectric-data limitation. A converged
 flash or consistent Jacobian does not by itself qualify the model's salting-out
 or mixed-inhibitor accuracy.
 
+Call `system.init(3)` before inspecting composition derivatives or running their
+consistency checks. A flash followed only by `initProperties()` may leave those
+arrays uninitialized. Derivative initialization refreshes electrolyte and CPA
+association caches at the final returned volume; repeated initialization and
+detached copies are covered by the final-volume regression tests.
+
 ## Short-Range Interaction Parameters (Wij)
 
 ### Overview
@@ -313,7 +319,7 @@ The model supports three dielectric constant mixing rules:
 
 $$\varepsilon_{mix} = \sum_i x_i \varepsilon_i$$
 
-- Thermodynamically consistent (passes all derivative checks)
+- Validated by the targeted derivative checks described above
 - Recommended for general use
 
 ### 2. VOLUME_AVERAGE
