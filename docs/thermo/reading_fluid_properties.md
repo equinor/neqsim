@@ -548,9 +548,14 @@ fluid.setPressure(725.0, "psia");     // 725 psi absolute
 #### Flow Rate Setters
 
 For a nonempty fluid, changing the total flow preserves the component ratios, including
-trace components. The setter rebuilds positive component inventories instead of subtracting
-nearly equal amounts. This avoids loss of precision when a reservoir inventory is converted
-to a much smaller producer flow. Unit conversion and the existing initialization behavior
+trace components when scaling reservoir inventories down to stream rates. For a downward
+change, the setter checks whether its established difference update retains
+each component and the total inventory to `1e-12` relative accuracy. If this check fails,
+it rebuilds positive component inventories from normalized overall fractions. This avoids
+loss of precision when a reservoir inventory is converted to a much smaller producer flow,
+while preserving accurate ordinary process endpoints. Upward and same-rate updates retain
+their established arithmetic and empty-stream initialization. The check adds no EOS
+initialization or system clone. Unit conversion and the existing initialization behavior
 are unchanged; reflash after changing temperature, pressure or composition.
 
 | Method | Description | Supported Units |

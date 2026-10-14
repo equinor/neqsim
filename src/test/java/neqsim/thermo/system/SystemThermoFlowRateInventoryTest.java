@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -12,6 +13,48 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class SystemThermoFlowRateInventoryTest {
+  /** Accurate same-rate and ordinary updates must not unnecessarily clear and rebuild the inventory. */
+  @Test
+  void positiveRebuildIsReservedForInaccurateDifferenceUpdates() {
+    CountingFlowSystem fluid = new CountingFlowSystem();
+    fluid.addComponent("methane", 9.0e17);
+    fluid.addComponent("nitrogen", 1.0e17);
+    fluid.setMixingRule(2);
+    fluid.setTotalFlowRate(1.0, "mole/sec");
+    assertEquals(1, fluid.rebuilds);
+    assertEquals(1.0, fluid.getTotalNumberOfMoles(), 1.0e-12);
+    assertEquals(0.9, fluid.getPhase(0).getComponent("methane").getNumberOfmoles(), 1.0e-12);
+    fluid.setTotalFlowRate(1.0, "mole/sec");
+    fluid.setTotalFlowRate(2.0, "mole/sec");
+    assertEquals(1, fluid.rebuilds);
+    assertEquals(2.0, fluid.getTotalNumberOfMoles(), 1.0e-12);
+    new ThermodynamicOperations(fluid).TPflash();
+    assertEquals(0.9, fluid.getPhase(0).getComponent("methane").getz(), 1.0e-12);
+  }
+
+  /**
+   * Counts full inventory rebuilds without introducing a thermodynamic-model override.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class CountingFlowSystem extends SystemSrkEos {
+    private static final long serialVersionUID = 1000L;
+    private int rebuilds;
+
+    /** Creates the synthetic reservoir fluid at 250 bara and 363.15 K. */
+    private CountingFlowSystem() {
+      super(363.15, 250.0);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setEmptyFluid() {
+      rebuilds++;
+      super.setEmptyFluid();
+    }
+  }
+
   /**
    * Repeated scaling must not subtract nearly equal large inventories or discard trace components.
    *

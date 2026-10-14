@@ -1699,3 +1699,25 @@ full-flash/process timings are recorded in PR 4320; this is not a global stabili
 Current-master integration (`b0de5165`) also passes the expanded regression set, including
 network topology, well-flow and named-component wax fraction coverage. Both numerical fixes
 and strict recovery qualification are retained; generated engineering coverage is rebuilt.
+
+### 2026-10-14 — PR 4320 broad-process regression repair
+**Type:** B (Bug fix)
+**Keywords:** flow inventory, cancellation, distillation, VLP, reservoir, performance
+**Solution:** Restrict positive inventory rebuilding to downward flow changes whose prospective
+component or total difference update loses more than `1e-12` relative accuracy. Accurate ordinary
+updates, upward changes and same-rate updates keep their established arithmetic. The check uses
+no additional EOS initialization, clone or temporary array. Two-fluid VLP now retains its cloned
+reference inventory for intensive properties and applies the trial rate only in its existing
+velocity calculation, avoiding unnecessary initialization at positive near-zero rates.
+**Engineering evidence:** The previous reservoir setter produced 1,260,096.07887 kg/hr oil for a
+requested 1,259,689.92248 kg/hr (0.0322% excess). Correct inventory gives the requested rate and
+355.175066 bara after ten annual depletion/injection steps. The regression retains its 0.1 bar
+pressure tolerance and now checks all four requested rates, each component inventory against
+integrated production/injection, and constant reservoir volume at every step. Independent audit
+found maximum relative component imbalance of `1.50e-16` and relative volume error below `1.5e-12`.
+The VLP regression covers positive near-zero rate continuity, reference-flow magnitude invariance
+and preservation of the source stream. The existing explicit zero-flow boundary is unchanged.
+**Validation:** Reproduced ten failures at `2b67ee0`; the same 76 affected tests pass on master
+`b0de5165`. Final expanded test results, formatting/documentation gates and paired performance
+measurements are recorded in the PR validation update. No physical acceptance threshold is relaxed.
+**Documentation impact:** Updated flow-setting and well-simulation guides and the setter JavaDoc.

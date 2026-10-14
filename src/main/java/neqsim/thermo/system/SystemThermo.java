@@ -6049,8 +6049,10 @@ public abstract class SystemThermo implements SystemInterface {
    * {@inheritDoc}
    *
    * <p>
-   * Nonempty feeds are scaled by rebuilding positive component amounts from their normalized overall fractions. This
-   * preserves trace components and avoids cancellation when reservoir inventories become small stream rates.
+   * Downward flow changes retain the established difference update when its component and total inventories are
+   * accurate to 1e-12 relative. Otherwise, positive component amounts are rebuilt from normalized overall fractions.
+   * Upward and same-rate changes retain the established update. This limits cancellation repair to subtractive rate
+   * changes while avoiding unnecessary changes to ordinary process endpoints and empty-stream initialization.
    * </p>
    */
   @Override
@@ -6080,8 +6082,21 @@ public abstract class SystemThermo implements SystemInterface {
       return;
     }
     if (totalNumberOfMoles > 1e-100) {
-      // Rebuild with positive inventories. Subtracting a reservoir-sized inventory to obtain
-      // a stream-sized rate loses significant digits and can make the next TP flash non-conservative.
+      // Preserve the established update when its component and total inventories remain accurate.
+      // Rebuilding every ordinary flow perturbs floating-point endpoints throughout process recycles.
+      if (SIval >= totalNumberOfMoles || canScaleFlowInventoryByDifference(SIval)) {
+        double previousTotal = totalNumberOfMoles;
+        for (int i = 0; i < numberOfComponents; i++) {
+          double moles = getPhase(0).getComponent(i).getNumberOfmoles();
+          double change = SIval / previousTotal * moles - moles;
+          if (Math.abs(change) > 1e-12) {
+            addComponent(i, change);
+          }
+        }
+        return;
+      }
+      // Large downward changes can lose significant digits through cancellation. Rebuild only
+      // when the prospective difference update fails the component or total inventory check.
       double sumz = 0.0;
       for (int i = 0; i < numberOfComponents; i++) {
         sumz += getPhase(0).getComponent(i).getz();
@@ -6095,6 +6110,38 @@ public abstract class SystemThermo implements SystemInterface {
         addComponent(i, SIval);
       }
     }
+  }
+
+  /**
+   * Checks the rounding error of the established difference update without modifying the fluid.
+   *
+   * @param target requested total molar flow
+   * @return true when every component and the total retain relative inventory accuracy of 1e-12
+   */
+  private boolean canScaleFlowInventoryByDifference(double target) {
+    if (!Double.isFinite(target) || target <= 0.0) {
+      return false;
+    }
+    double inventory = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      inventory += getPhase(0).getComponent(i).getNumberOfmoles();
+    }
+    if (!(inventory > 0.0) || !Double.isFinite(inventory)) {
+      return false;
+    }
+    double updatedTotal = totalNumberOfMoles;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double moles = getPhase(0).getComponent(i).getNumberOfmoles();
+      double change = target / totalNumberOfMoles * moles - moles;
+      double appliedChange = Math.abs(change) > 1e-12 ? change : 0.0;
+      double expectedMoles = target * (moles / inventory);
+      double updatedMoles = moles + appliedChange;
+      if (!Double.isFinite(updatedMoles) || Math.abs(updatedMoles - expectedMoles) > 1e-12 * Math.abs(expectedMoles)) {
+        return false;
+      }
+      updatedTotal += appliedChange;
+    }
+    return Double.isFinite(updatedTotal) && Math.abs(updatedTotal - target) <= 1e-12 * Math.abs(target);
   }
 
   /** {@inheritDoc} */
