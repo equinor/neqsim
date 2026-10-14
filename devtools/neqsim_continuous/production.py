@@ -16,6 +16,7 @@ Stages registered here (all optional, all driven by ``goal.yaml`` and ``cycle_pl
 The optimiser itself stays a task-local ``script:`` stage that returns ``proposals``.
 """
 
+import json
 import math
 import os
 
@@ -329,8 +330,14 @@ def _non_finite_fields(values):
     return sorted(str(key) for key, value in values.items() if not _number(value))
 
 
+def _proposal_snapshot(proposal):
+    """Bind publication to exact JSON content, including evidence boolean types."""
+    return json.dumps(proposal, sort_keys=True, separators=(",", ":"))
+
+
 def guard(ctx, spec):
     """Keep only proposals that are safe to show; record why the others were withheld."""
+    ctx.guarded_proposals = set()
     settings = ctx.plan.get("production", {}) or {}
     configured_min_gain = settings.get("min_gain", 0.0)
     invalid_min_gain = not _number(configured_min_gain)
@@ -377,6 +384,7 @@ def guard(ctx, spec):
         else:
             accepted.append(dict(proposal, requires_approval=True, guard="passed"))
     ctx.proposals = accepted
+    ctx.guarded_proposals = {_proposal_snapshot(proposal) for proposal in accepted}
     write_json(os.path.join(ctx.cycle_dir, "guard.json"), {"accepted": [p.get("title") for p in accepted],
                                                             "withheld": withheld, "blocks": list(ctx.guard_blocks)})
     _section(ctx, "Proposals withheld", ["{} ({})".format(w["title"], ", ".join(w["reasons"])) for w in withheld])

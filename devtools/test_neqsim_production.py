@@ -577,6 +577,143 @@ def test_dry_run_does_not_invalidate_persisted_evidence(tmp_path):
     assert book.events() == before
 
 
+def _interrupt_after_stage(task, stage):
+    """Freeze a cycle at a completed stage before later publication side effects."""
+    plan = yaml.safe_load((pathlib.Path(task) / "continuous" / "cycle_plan.yaml").read_text())
+    selected = plan["stages"][:plan["stages"].index(stage) + 1]
+    completed = run_cycle(task, stages=selected, no_agent=True)
+    cycle_path = pathlib.Path(task) / "continuous" / "cycles" / completed["cycle_id"] / "cycle.json"
+    interrupted = json.loads(cycle_path.read_text(encoding="utf-8"))
+    interrupted["status"] = "running"
+    interrupted.pop("finished_at", None)
+    cycle_path.write_text(json.dumps(interrupted), encoding="utf-8")
+    return completed, cycle_path.parent
+
+
+def test_resume_after_guard_revalidates_filtered_proposals_before_ledger(tmp_path):
+    task = _task(tmp_path)
+    first, cycle = _interrupt_after_stage(task, "guard")
+    initial = json.loads((cycle / "guard.json").read_text())
+    assert initial["accepted"] == ["safe"]
+    assert {row["title"] for row in initial["withheld"]} == {"off spec", "no prediction", "no gain"}
+    # The expensive model/optimizer stages must remain checkpointed.
+    (pathlib.Path(task) / "continuous" / "stages" / "optimize.py").write_text(
+        "def run(ctx):\n    raise AssertionError('completed optimizer was rerun')\n")
+
+    resumed = run_cycle(task, no_agent=True)
+
+    assert resumed["cycle_id"] == first["cycle_id"]
+    assert resumed["degraded"] is False
+    assert json.loads((cycle / "guard.json").read_text()) == initial
+    items = list(Ledger(pathlib.Path(task) / "continuous" / "ledger" / "events.jsonl").current().values())
+    assert [item["title"] for item in items] == ["safe"]
+    assert items[0]["guard"] == "passed"
+    assert items[0]["requires_approval"] is True
+    assert items[0]["evidence_current"] is True
+
+
+@pytest.mark.parametrize("stage,resid,limit,block", [
+    ("gates", 4.0, 0.70, "model_gate:resid"),
+    ("constraints", 4.0, 0.70, "model_gate:resid"),
+    ("constraints", 1.0, None, "constraint_unconfirmed:rvp"),
+    ("guard", 1.0, None, "constraint_unconfirmed:rvp"),
+])
+def test_resume_retains_upstream_production_blocks(tmp_path, stage, resid, limit, block):
+    task = _task(tmp_path, resid=resid, limit=limit)
+    first, cycle = _interrupt_after_stage(task, stage)
+
+    resumed = run_cycle(task, no_agent=True)
+
+    assert resumed["cycle_id"] == first["cycle_id"]
+    guard = json.loads((cycle / "guard.json").read_text())
+    assert guard["accepted"] == []
+    assert block in guard["blocks"]
+    assert Ledger(pathlib.Path(task) / "continuous" / "ledger" / "events.jsonl").events() == []
+
+
+def test_resume_restores_frozen_user_restrictions_before_revalidation(tmp_path):
+    from neqsim_continuous import user_input
+
+    task = _task(tmp_path)
+    entry = user_input.add(task, "Tighter current RVP limit", by="engineer",
+                           effects=[{"kind": "constraint", "name": "rvp", "limit": 0.5}])
+    first, cycle = _interrupt_after_stage(task, "inputs")
+    # A later edit belongs to the next cycle, not the already frozen input stage.
+    user_input.resolve(task, entry["id"], by="engineer")
+
+    resumed = run_cycle(task, no_agent=True)
+
+    assert resumed["cycle_id"] == first["cycle_id"]
+    assert resumed["degraded"] is False
+    guard = json.loads((cycle / "guard.json").read_text())
+    assert guard["accepted"] == []
+    assert Ledger(pathlib.Path(task) / "continuous" / "ledger" / "events.jsonl").events() == []
+    assert entry["id"] in (cycle / "digest.md").read_text()
+
+
+def test_resume_missing_user_input_checkpoint_blocks_advice(tmp_path):
+    task = _task(tmp_path)
+    first, cycle = _interrupt_after_stage(task, "inputs")
+    (cycle / "user_input.json").unlink()
+
+    resumed = run_cycle(task, no_agent=True)
+
+    assert resumed["cycle_id"] == first["cycle_id"]
+    assert resumed["degraded"] is True
+    guard = json.loads((cycle / "guard.json").read_text())
+    assert guard["accepted"] == []
+    assert "user_input_resume_state_invalid" in guard["blocks"]
+    assert Ledger(pathlib.Path(task) / "continuous" / "ledger" / "events.jsonl").events() == []
+
+
+def test_optimizer_evidence_cannot_reach_ledger_without_guard(tmp_path):
+    task = _task(tmp_path)
+    plan_path = pathlib.Path(task) / "continuous" / "cycle_plan.yaml"
+    plan = yaml.safe_load(plan_path.read_text())
+    plan["stages"].remove("guard")
+    plan_path.write_text(yaml.safe_dump(plan))
+
+    manifest = run_cycle(task, no_agent=True)
+
+    statuses = {row["name"]: row["status"] for row in manifest["stages"]}
+    assert statuses["ledger"] == "fail"
+    assert manifest["degraded"] is True
+    assert Ledger(pathlib.Path(task) / "continuous" / "ledger" / "events.jsonl").events() == []
+
+
+@pytest.mark.parametrize("change", ["old_cycle", "setpoint", "evidence_boolean", "new_proposal", "removed_evidence"])
+def test_ledger_rejects_proposals_added_or_changed_after_guard(tmp_path, change):
+    from neqsim_continuous import stages
+
+    ctx = _guard_context(tmp_path, _valid_proposal())
+    ctx.state_dir, ctx.dry_run, ctx.evidence_analysis = str(tmp_path), False, None
+    ctx.kpis = {}
+    ctx.stage_results = {"guard": production.guard(ctx, {})}
+    accepted = copy.deepcopy(ctx.proposals[0])
+    if change == "old_cycle":
+        ctx.cycle_id = "C-2"
+        ctx.proposals = []
+        ctx.stage_results["guard"] = production.guard(ctx, {})
+        ctx.proposals.append(accepted)
+    elif change == "setpoint":
+        ctx.proposals[0]["setpoints"]["p3_barg"] = 99.0
+    elif change == "evidence_boolean":
+        # Python equality treats True and 1 as equal, but the evidence contract does not.
+        ctx.proposals[0]["optimizer_evidence"]["simulation_converged"] = 1
+    elif change == "removed_evidence":
+        del ctx.proposals[0]["optimizer_evidence"]
+        del ctx.proposals[0]["accepted_point_envelope_evidence"]
+    else:
+        accepted["title"] = "unchecked extra proposal"
+        ctx.proposals.append(accepted)
+
+    result = stages.ledger(ctx, {})
+
+    assert result.status == "fail"
+    assert "unguarded_optimizer_proposal" in result.triggers
+    assert Ledger(tmp_path / "ledger" / "events.jsonl").events() == []
+
+
 def test_resume_after_ledger_keeps_current_cycle_revalidation_current(tmp_path):
     task = _task(tmp_path)
     run_cycle(task, no_agent=True)

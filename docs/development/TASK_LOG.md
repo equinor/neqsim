@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Preserve production proposal guards across interrupted cycles
+**Type:** G (Workflow)
+**Keywords:** PR 4312, resume, proposal guard, evidence ledger, frozen user input, fail closed
+**Solution:** `devtools/neqsim_continuous/cycle.py`, `user_input.py`, `stages.py`, and `devtools/test_neqsim_production.py`.
+**Notes:** A completed guard status did not preserve its filtered proposals or upstream blocks: resuming before ledger publication could mark previously withheld advice as current evidence. Resume now revalidates the inexpensive gates, constraints and guard against restored calculation outputs, reapplies frozen user restrictions, and blocks advice if the input checkpoint is unavailable. Completed model/optimizer work and persisted ledger events remain checkpointed. The ledger binds publication to the exact current-cycle guarded proposal content, rejecting post-guard mutations, added proposals and reused old-cycle evidence. Thirteen deterministic regressions failed on the previous head and pass with the repair; the full production suite passes 57 cases. Continuous/living coverage passes 42 cases, with one existing optional DOCX-report test skipped because its dependency is unavailable. Hosted CI remains a publication gate.
+
 ### 2026-10-14 — Isolate evidence routing tests from optional agent installations
 **Type:** G (Workflow)
 **Keywords:** evidence-source-cues, hermetic tests, plugin discovery, production guard, CI, PR 4312

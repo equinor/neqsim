@@ -3,7 +3,8 @@
 A cycle runs the planned stages in order, writes an immutable folder
 ``continuous/cycles/<cycle_id>/`` and a ``cycle.json`` manifest, and never raises for a
 stage failure: the failure is recorded, dependants are skipped and the cycle is marked
-``degraded``. An interrupted cycle resumes at its first incomplete stage.
+``degraded``. An interrupted cycle reuses completed work and revalidates production
+gates, constraints and proposals before publishing advice.
 """
 
 import csv
@@ -27,6 +28,9 @@ NEEDS = {"drift": ["kpis"], "diff": ["kpis"], "goal": ["kpis"], "notify": ["dige
          "gates": ["kpis"], "constraints": ["kpis"], "guard": ["gates", "constraints"],
          "ledger": ["guard"], "outcome": ["kpis"]}
 LOCK_HOURS = 6.0
+# These cheap checks mutate in-memory blocks/proposals, not model or optimizer state.
+# Restoring their status alone would lose the filtering performed before interruption.
+REVALIDATE_ON_RESUME = ("gates", "constraints", "guard")
 
 
 def _utc(value=None):
@@ -59,6 +63,7 @@ class CycleContext(object):
         self.solve, self.stop_state, self.digest_text = {}, None, ""
         self.notifications, self.agent_run, self.previous_kpis = [], {}, {}
         self.guard_blocks, self.sections = [], []
+        self.guarded_proposals = set()
         self.user_levers = {}
         self.evidence_analysis = evidence_analysis
 
@@ -230,7 +235,7 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
             spec = dict(spec, name=name)
             started = time.time()
             proposal_start = len(ctx.proposals)
-            if name in done:
+            if name in done and name not in REVALIDATE_ON_RESUME:
                 saved = done[name]
                 result = StageResult(**{k: v for k, v in saved.items() if k in (
                     "name", "status", "outputs", "kpis", "triggers", "message")})
@@ -238,6 +243,13 @@ def run_cycle(task_dir, mode="monitor", now=None, stages=None, dry_run=False, no
                     _builtin_stages.restore_refresh(ctx, result)
                 elif name == "evidence":
                     _builtin_stages.restore_evidence(ctx)
+                elif name == "inputs":
+                    try:
+                        _user_input_stage.restore_inputs(ctx)
+                    except Exception as error:
+                        ctx.guard_blocks.append("user_input_resume_state_invalid")
+                        result = StageResult(name, "fail", message="{}: {}".format(
+                            type(error).__name__, error))
                 if name.startswith("script:") or name == "kpis":
                     ctx.kpis.update(result.kpis)
                 if saved.get("solve"):

@@ -477,7 +477,11 @@ rewritten. The persisted identity is task-relative and records writer provenance
 than checkout-absolute paths, so moving a task between machines does not invalidate it.
 
 If a process stops after a cycle begins, `task-resume` reuses the same cycle id and skips
-already completed stages even when the wall clock or host changes. Completed digest,
+already completed calculation stages even when the wall clock or host changes. Production
+gates, constraints and proposal validation run again against the restored values before
+advice can be published; a saved successful stage status does not restore its filtering.
+The input stage reapplies its frozen restrictions without repeating input side effects.
+An unavailable input checkpoint blocks advice. Completed digest,
 notification and agent-review metadata are restored when such stages are skipped, so a
 resumed cycle cannot erase already recorded side effects. If a solve cycle completed but
 the process died before `state.json` was checkpointed, the solve loop adopts that completed
@@ -557,7 +561,7 @@ neqsim task-solve <task> --reset             # forget earlier solve rounds
 
 Each cycle prints its digest. The cycle id is the UTC time and host
 (`2026-09-30T0500Z@myhost`); a rerun in the same minute gets `-r2`. A crashed
-cycle is resumed by running it again: completed stages are skipped.
+cycle is resumed by running it again: completed calculations are reused and production validation is rerun.
 
 ---
 
@@ -1017,7 +1021,12 @@ optimizer evidence. The Living Report exposes the evidence state for every ledge
 
 A malformed optimizer result or failed guard still leaves the old advice visibly stale, even when the guarded
 ledger-publication stage is skipped. Retrying or resuming the same invalidation does not duplicate its events;
-resuming after a replacement was already persisted preserves that cycle's fresh evidence. A dry run reports the
+resuming after a replacement was already persisted preserves that cycle's fresh evidence. Resume restores the
+original optimizer proposals and reruns the inexpensive gates, constraints and guard; withheld proposals remain
+withheld, and accepted proposals retain their approval requirement. It does not rerun the completed model or
+optimizer. The ledger also requires optimizer/envelope proposals to match the exact content accepted by the
+current cycle's guard. This rejects custom plans that omit the guard, proposals inserted after the guard,
+and changes to already guarded proposals. A dry run reports the
 opportunities it would invalidate without changing the persisted ledger. The guard remains required before any
 new proposal can be written.
 Custom production plans must keep `evidence` before model update, optimization, and `guard`, as the production

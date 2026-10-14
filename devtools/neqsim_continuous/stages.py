@@ -358,6 +358,20 @@ def ledger(ctx, spec):
     # Keep a fallback for custom plans that supply evidence analysis without an
     # evidence stage. The normal path invalidates before optimization starts.
     invalidates, invalidated = _invalidate_changed_evidence(ctx)
+    optimizer_proposals = [proposal for proposal in ctx.proposals
+                           if isinstance(proposal, dict) and (
+                               "optimizer_evidence" in proposal or "accepted_point_envelope_evidence" in proposal)]
+    guard_result = ctx.stage_results.get("guard")
+    if optimizer_proposals or (ctx.proposals and guard_result is not None):
+        from .production import _proposal_snapshot
+
+        guarded = getattr(ctx, "guarded_proposals", set())
+        if (guard_result is None or guard_result.status not in ("ok", "warn")
+                or any(proposal.get("guard") != "passed" or proposal.get("requires_approval") is not True
+                       or _proposal_snapshot(proposal) not in guarded
+                       for proposal in ctx.proposals)):
+            return StageResult("ledger", "fail", triggers=["unguarded_optimizer_proposal"],
+                               message="Optimizer evidence must match a proposal accepted by the current-cycle guard")
     book = Ledger(os.path.join(ctx.state_dir, "ledger", "events.jsonl"))
     items = book.current()
     open_items = {key: value for key, value in items.items()
