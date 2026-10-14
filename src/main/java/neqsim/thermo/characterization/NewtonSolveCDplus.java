@@ -1,8 +1,10 @@
 package neqsim.thermo.characterization;
 
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -17,11 +19,13 @@ public class NewtonSolveCDplus implements java.io.Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+
   int iter = 0;
-  Matrix Jac;
-  Matrix fvec;
-  Matrix sol;
-  Matrix dx;
+  double[][] Jac;
+  double[] fvec;
+  double[] sol;
+  double[] dx;
   int numberOfComponents = 0;
   PlusCharacterize characterizeClass;
   // SystemInterface system = null;
@@ -42,15 +46,9 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     // this.system = system;
     this.characterizeClass = characterizeClass;
     numberOfComponents = system.getPhase(0).getNumberOfComponents();
-    Jac = new Matrix(3, 3);
-    fvec = new Matrix(3, 1);
-    sol = new Matrix(3, 1);
-    sol.set(0, 0, characterizeClass.getCoef(0));
-    sol.set(1, 0, characterizeClass.getCoef(1));
-    sol.set(2, 0, characterizeClass.getCoef(2));
-    // sol.set(3,0,characterizeClass.getCoef(3));
-    // sol.set(2,0,characterizeClass.getCoef(2));
-    // sol.set(3,0,characterizeClass.getCoef(3));
+    Jac = new double[3][3];
+    fvec = new double[3];
+    sol = new double[] {characterizeClass.getCoef(0), characterizeClass.getCoef(1), characterizeClass.getCoef(2)};
   }
 
   /**
@@ -71,24 +69,22 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     }
     densSum = mSum / densSum;
     double lengthPlus = characterizeClass.getLastPlusFractionNumber() - characterizeClass.getFirstPlusFractionNumber();
-    logger.info("diff " + lengthPlus);
+    logger.debug("Plus-fraction range: {}", lengthPlus);
     // Dtot /= lengthPlus;
     // System.out.println("Dtot "+ Dtot);
-    logger.info("zsum " + zSum);
+    logger.debug("Plus-fraction sum: {}", zSum);
     // System.out.println("zplus " + characterizeClass.getZPlus());
-    fvec.set(0, 0, zSum - characterizeClass.getZPlus());
+    fvec[0] = zSum - characterizeClass.getZPlus();
 
-    fvec.set(1, 0, mSum / zSum - characterizeClass.getMPlus());
+    fvec[1] = mSum / zSum - characterizeClass.getMPlus();
 
-    fvec.set(2, 0, densSum - characterizeClass.getDensPlus());
+    fvec[2] = densSum - characterizeClass.getDensPlus();
   }
 
   /**
    * setJac.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
-
     double tempJ = 0.0;
 
     for (int j = 0; j < 3; j++) {
@@ -106,7 +102,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
       } else {
         tempJ = 0.0;
       }
-      Jac.set(0, j, tempJ);
+      Jac[0][j] = tempJ;
     }
 
     for (int j = 0; j < 3; j++) {
@@ -132,7 +128,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
       } else {
         tempJ = 0.0;
       }
-      Jac.set(1, j, tempJ);
+      Jac[1][j] = tempJ;
     }
 
     for (int j = 0; j < 3; j++) {
@@ -171,7 +167,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
       } else if (j == 3) {
         tempJ = (-Bder4 * A) / Bpow2;
       }
-      Jac.set(2, j, tempJ);
+      Jac[2][j] = tempJ;
     }
   }
 
@@ -183,24 +179,18 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     do {
       iter++;
       setfvec();
-      logger.info("fvec: ");
-      fvec.print(10, 17);
+      logger.debug("Residual: {}", Arrays.toString(fvec));
       setJac();
-      Jac.print(10, 6);
-      // System.out.println("rank " + Jac.rank());
-      dx = Jac.solve(fvec);
-      logger.info("dx: ");
-      dx.print(10, 3);
+      logger.debug("Jacobian: {}", Arrays.deepToString(Jac));
+      dx = ALGEBRA.solve(Jac, fvec);
+      logger.debug("Newton step: {}", Arrays.toString(dx));
       if (iter < 10) {
-        sol.minusEquals(dx.times((iter) / (iter + 5000.0)));
+        sol = ALGEBRA.subtract(sol, ALGEBRA.scale(dx, (iter) / (iter + 5000.0)));
       } else {
-        sol.minusEquals(dx.times((iter) / (iter + 50.0)));
+        sol = ALGEBRA.subtract(sol, ALGEBRA.scale(dx, (iter) / (iter + 50.0)));
       }
-      // System.out.println("sol ");
-      // sol.print(10,10);
-      characterizeClass.setCoefs(sol.transpose().copy().getArray()[0]);
-    } while (((fvec.norm2() > 1e-6 || iter < 15) && iter < 3000));
-    logger.info("ok char: ");
-    sol.print(10, 10);
+      characterizeClass.setCoefs(sol.clone());
+    } while (((ALGEBRA.euclideanNorm(fvec) > 1e-6 || iter < 15) && iter < 3000));
+    logger.info("Characterization coefficients: {}", Arrays.toString(sol));
   }
 }
