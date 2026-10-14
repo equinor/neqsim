@@ -3,7 +3,8 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
@@ -18,6 +19,7 @@ public class SolidFlash extends TPflash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SolidFlash.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -187,7 +189,7 @@ public class SolidFlash extends TPflash {
     double[] oldBeta = new double[system.getNumberOfPhases() - 1];
     // double newBeta[] = new double[system.getNumberOfPhases() - 1];
     int iter = 0;
-    Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
+    double[] ans = new double[system.getNumberOfPhases() - 1];
     do {
       if (!ideal) {
         system.init(1);
@@ -202,20 +204,15 @@ public class SolidFlash extends TPflash {
         oldBeta[k] = system.getBeta(k);
       }
 
-      Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
-      Matrix dQM = new Matrix(dQdbeta, 1);
-      Matrix dQdBM = new Matrix(Qmatrix);
-      // dQM.print(10,2);
-      // dQdBM.print(10,2);
       try {
-        ans = dQdBM.solve(dQM.transpose());
+        ans = ALGEBRA.solve(Qmatrix, dQdbeta);
       } catch (Exception ex) {
-        // ans = dQdBM.solve(dQM.transpose());
+        logger.debug("Solid-fraction solve failed; retaining the previous step", ex);
       }
 
-      betaMatrix.minusEquals(ans.times((iter + 1.0) / (10.0 + iter)));
+      double[] betaMatrix = ALGEBRA.subtract(oldBeta, ALGEBRA.scale(ans, (iter + 1.0) / (10.0 + iter)));
       for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
-        double currBeta = betaMatrix.get(k, 0);
+        double currBeta = betaMatrix[k];
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
         } else if (currBeta > 1) {
@@ -253,7 +250,7 @@ public class SolidFlash extends TPflash {
       // //checkGibbs();
       // calcE();
       // setXY();
-    } while ((ans.norm2() > 1e-8 && iter < 100) || iter < 2);
+    } while ((ALGEBRA.euclideanNorm(ans) > 1e-8 && iter < 100) || iter < 2);
     // checkX();
     // calcE();
     // setXY();

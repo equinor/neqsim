@@ -3,6 +3,7 @@ package neqsim.process.equipment.reservoir;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.StreamInterface;
 
@@ -10,6 +11,7 @@ public class SimpleReservoirTest {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SimpleReservoirTest.class);
 
+  @Tag("slow")
   @Test
   void testRun2() {
     neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(373.15, 900.0);

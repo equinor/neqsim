@@ -6,9 +6,11 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -24,6 +26,7 @@ public class SolidFlash12 extends TPflash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SolidFlash12.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -172,7 +175,7 @@ public class SolidFlash12 extends TPflash {
     double[] oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
     // double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
     int iter = 0;
-    Matrix ans = new Matrix(system.getNumberOfPhases() - solidsNumber, 1);
+    double[] ans = new double[system.getNumberOfPhases() - solidsNumber];
     do {
       system.init(1);
       calcE();
@@ -186,19 +189,14 @@ public class SolidFlash12 extends TPflash {
         oldBeta[k] = system.getBeta(k);
       }
 
-      Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
-      // Matrix betaMatrixTemp = new Matrix(oldBeta, 1).transpose();
-      Matrix dQM = new Matrix(dQdbeta, 1);
-      Matrix dQdBM = new Matrix(Qmatrix);
-
       try {
-        ans = dQdBM.solve(dQM.transpose());
+        ans = ALGEBRA.solve(Qmatrix, dQdbeta);
       } catch (Exception ex) {
-        // ans = dQdBM.solve(dQM.transpose());
+        logger.debug("Solid-fraction solve failed; retaining the previous step", ex);
       }
-      dQM.print(10, 10);
-      dQdBM.print(10, 10);
-      ans.print(30, 30);
+      logger.debug("Solid-fraction gradient: {}", Arrays.toString(dQdbeta));
+      logger.debug("Solid-fraction Hessian: {}", Arrays.deepToString(Qmatrix));
+      logger.debug("Solid-fraction step: {}", Arrays.toString(ans));
       // double betaReductionFactor = 1.0;
       // betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
       // betaMatrixTemp.print(10, 2);
@@ -216,22 +214,22 @@ public class SolidFlash12 extends TPflash {
        * betaReductionFactor = 1 - betaMatrixTemp.get(minBetaIndex, 0) / ans.get(minBetaIndex, 0); } }
        */
 
-      betaMatrix.minusEquals(ans.times((iter + 1.0) / (100.0 + iter)));
+      double[] betaMatrix = ALGEBRA.subtract(oldBeta, ALGEBRA.scale(ans, (iter + 1.0) / (100.0 + iter)));
       // betaMatrix.print(10, 2);
 
       for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
-        system.setBeta(k, betaMatrix.get(k, 0));
-        if (betaMatrix.get(k, 0) < 0) {
+        system.setBeta(k, betaMatrix[k]);
+        if (betaMatrix[k] < 0) {
           system.setBeta(k, 1e-9);
         }
-        if (betaMatrix.get(k, 0) > 1) {
+        if (betaMatrix[k] > 1) {
           system.setBeta(k, 1 - 1e-9);
         }
       }
       calcE();
       setXY();
       calcSolidBeta();
-    } while ((ans.norm2() > 1e-8 && iter < 100) || iter < 2);
+    } while ((ALGEBRA.euclideanNorm(ans) > 1e-8 && iter < 100) || iter < 2);
 
     system.init(1);
     setXY();
