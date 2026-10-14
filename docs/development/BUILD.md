@@ -362,6 +362,22 @@ On every PR, CI runs:
 4. Test coverage measurement
 5. Security vulnerability scanning
 
+### Slow-test shards
+
+The Java 21 slow suite runs in eight parallel jobs, each with a 60-minute limit and
+JaCoCo disabled. CI sorts the Java source files containing `@Tag("slow")` and assigns
+them round-robin using the matrix job count. Every discovered class belongs to one
+shard; Maven's `slow` group filter selects its slow tests. Adding a slow test can
+change the assignments, so use the selected-class list printed in each job's log
+when investigating a failure.
+
+The eight jobs split the previous four shards in half. This gives the expensive
+separator, distillation and transient tests more time to finish without increasing
+the job timeout or removing numerical checks. Each job uploads its Surefire reports
+as `slow-test-reports-<zero-based shard>` even after a test failure, when reports are
+available. A runner terminated by the job timeout may not reach artifact upload;
+the selected-class list and test progress remain in its log.
+
 ### CI Configuration Files
 - **Azure Pipelines**: `azure-pipelines.yml`
 - **GitHub Actions**: `.github/workflows/verify_build.yml`
