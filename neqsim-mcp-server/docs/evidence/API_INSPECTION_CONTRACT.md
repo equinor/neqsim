@@ -9,7 +9,7 @@ This note records bounded Phase 0 evidence for the existing `inspectApi` MCP too
 - `neqsim-mcp-server/src/main/java/neqsim/mcp/server/NeqSimTools.java` exposes the existing MCP `inspectApi(className, memberFilter)` facade through normal tool-access enforcement and the standard response envelope.
 - `neqsim-mcp-server/tests/protocol/test_inspect_api_protocol.py` starts the packaged server over STDIO and directly calls `inspectApi` through `tools/call`. It requires `ProcessModel` to resolve to the exact runtime class with a filtered public `run` method and source pointer, requires `java.lang.Runtime` to fail closed with the accepted `neqsim.*` namespace boundary, and freezes the promoted 20/10/41 Phase 0 accounting.
 - `neqsim-mcp-server/tests/protocol/test_mcp_server.py` independently freezes the complete 71-tool publication surface and now includes `inspectApi` in the ten bounded non-numerical `CONTRACT_TESTED` tools while requiring 41 remaining confirmed gaps.
-- `.github/workflows/mcp_protocol_qualification.yml` builds the exact NeqSim core and MCP uber-jar on pull requests and `master`, then runs the focused dependency-free protocol harness. It has read-only repository permissions.
+- `.github/workflows/ai-mcp-protocol-qualification.yml` builds the exact NeqSim core and MCP uber-jar on pull requests and `master`, then runs the focused dependency-free protocol harness. It has read-only repository permissions.
 
 ## Qualification boundary
 

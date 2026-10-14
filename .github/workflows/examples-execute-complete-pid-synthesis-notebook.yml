@@ -1,4 +1,4 @@
-name: Execute complete P&ID synthesis notebook
+name: "[Examples] Execute Complete P&ID Synthesis Notebook"
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - "examples/notebooks/complete_pid_design_synthesis.ipynb"
       - "src/main/java/neqsim/process/engineering/pid/**"
       - "src/test/java/neqsim/process/engineering/pid/**"
-      - ".github/workflows/execute-complete-pid-notebook.yml"
+      - ".github/workflows/examples-execute-complete-pid-synthesis-notebook.yml"
   workflow_dispatch:
 
 permissions:
@@ -27,7 +27,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
 
       - name: Build workspace classes

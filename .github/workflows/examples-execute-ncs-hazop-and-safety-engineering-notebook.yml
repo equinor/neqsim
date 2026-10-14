@@ -1,4 +1,4 @@
-name: Execute NCS HAZOP and safety engineering notebook
+name: "[Examples] Execute NCS HAZOP and Safety Engineering Notebook"
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - "examples/notebooks/complete_offshore_process_engineering_study.ipynb"
       - "src/main/java/neqsim/process/engineering/pid/**"
       - "src/main/java/neqsim/process/engineering/safety/**"
-      - ".github/workflows/execute-ncs-hazop-safety-notebook.yml"
+      - ".github/workflows/examples-execute-ncs-hazop-and-safety-engineering-notebook.yml"
   workflow_dispatch:
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
           cache: maven
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
       - name: Verify committed engineering outputs
         run: |

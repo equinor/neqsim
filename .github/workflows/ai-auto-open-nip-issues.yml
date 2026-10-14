@@ -1,4 +1,4 @@
-name: Auto-open NIP issues
+name: "[AI] Auto-open Neqsim Improvement Proposal Issues"
 
 permissions:
   contents: read
