@@ -36,6 +36,13 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Propose shared flash and process state contracts
+**Type:** G (Workflow)
+**Keywords:** NRC-2937, TPflash, phase inventory, hydrate, inactive streams, coordinated PR review
+**Solution:** `docs/rfcs/2937-tpflash-state-contracts.md` and the RFC index.
+**Notes:** Record the proposed state ownership, physical acceptance, compatibility and process-consumer contracts shared by PRs #4306, #4320 and #4277. Preserve explicit physical model boundaries and separate model corrections from solver qualification. Status remains PROPOSED; this document supplies no architecture acceptance, independent approval or merge qualification.
+
+
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
 **Type:** G (Workflow)
 **Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI
