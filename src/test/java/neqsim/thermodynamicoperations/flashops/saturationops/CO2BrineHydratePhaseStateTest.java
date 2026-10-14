@@ -146,10 +146,13 @@ class CO2BrineHydratePhaseStateTest {
 
   @Tag("slow")
   @Test
-  void mixedInhibitorsAndReactiveFluidsRetainTheirOwnSolver() {
+  void compatibilityAdapterAcceptsMixedInhibitorsAndLeavesReactionDispatchToTpFlash() {
     SystemInterface mixed = brine(50.0, 5.0, 10.0);
     mixed.addComponent("MEG", 1.0);
-    assertFalse(CO2BrinePhaseEquilibrium.isApplicable(mixed));
+    assertTrue(CO2BrinePhaseEquilibrium.isApplicable(mixed));
+    mixed.addComponent("methanol", 0.1);
+    mixed.addComponent("methane", 0.01);
+    assertTrue(CO2BrinePhaseEquilibrium.isApplicable(mixed));
     SystemInterface reactive = brine(50.0, 5.0, 10.0);
     reactive.chemicalReactionInit();
     assertFalse(CO2BrinePhaseEquilibrium.isApplicable(reactive));

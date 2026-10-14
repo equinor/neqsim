@@ -154,8 +154,9 @@ calculations support these material phase configurations:
 - gas + aqueous water + thermodynamic inhibitor (for example MEG or methanol) + salt ions
 - the same material phase configurations with aqueous reactions, including CO₂-water speciation
 
-The multiphase flash solves the molecular gas-oil-aqueous split on a normalized ion-free basis and then restores the
-conserved ion inventory to the aqueous phase. This keeps ions out of gas and oil while satisfying the component balance
+The ordinary multiphase flash retains the full feed and constrains ions to the aqueous material phase throughout
+the stability and phase-amount calculation. Neutral molecules use the shared fugacity equations without a component
+whitelist. This keeps ions out of gas and oil while satisfying the component balance
 $z_i = \sum_p \beta_p x_{i,p}$. Salt and organic inhibitor effects enter the hydrate calculation through the water
 fugacity of the converged aqueous phase.
 

@@ -230,7 +230,8 @@ class ProcessModelOperatingActionEvaluatorTest {
     producer.setFlowRate(1.0, "MSm3/day");
     WellFlow well = new WellFlow("well");
     well.setInletStream(producer);
-    well.setWellProductionIndex(5.0e-4);
+    double productionIndex = 5.0e-4;
+    well.setWellProductionIndex(productionIndex);
     ProcessSystem subsurface = new ProcessSystem("subsurface");
     subsurface.add(reservoir);
     subsurface.add(producer);
@@ -244,6 +245,8 @@ class ProcessModelOperatingActionEvaluatorTest {
     model.add("Subsurface", subsurface);
     model.run();
     double baselineRate = producer.getFlowRate("kg/hr");
+    double baselineStandardRate = producer.getFlowRate("MSm3/day");
+    double baselinePressure = producer.getPressure("bara");
     ProcessModelSimulationEvaluator simulationEvaluator = new ProcessModelSimulationEvaluator(model);
     simulationEvaluator.setIncludeStrategyCapacityConstraints(false);
     double readBackTolerance = baselineRate * 1.0e-6;
@@ -271,7 +274,20 @@ class ProcessModelOperatingActionEvaluatorTest {
     assertTrue(lowerRate.getHydraulicConstraints().get(0).getUtilization() < higherRate.getHydraulicConstraints().get(0)
         .getUtilization());
     assertEquals(baselineRate, producer.getFlowRate("kg/hr"), readBackTolerance);
-    assertEquals(baselineDrawdown, well.getDrawdown(), 1.0e-6);
+    assertEquals(baselinePressure, producer.getPressure("bara"), 0.0);
+    double restoredStandardRate = producer.getFlowRate("MSm3/day");
+    double expectedDrawdown = baselinePressure
+        - Math.sqrt(baselinePressure * baselinePressure - restoredStandardRate / productionIndex);
+    assertEquals(expectedDrawdown, well.getDrawdown(), 1.0e-10);
+    // Propagate the declared mass-flow read-back tolerance through q = PI * (Pr^2 - Pwf^2).
+    // A fixed pressure tolerance would impose an unrelated, stricter restoration contract.
+    double allowedStandardRateChange = baselineStandardRate * readBackTolerance / baselineRate;
+    double minimumDrawdown = baselinePressure - Math.sqrt(
+        baselinePressure * baselinePressure - (baselineStandardRate - allowedStandardRateChange) / productionIndex);
+    double maximumDrawdown = baselinePressure - Math.sqrt(
+        baselinePressure * baselinePressure - (baselineStandardRate + allowedStandardRateChange) / productionIndex);
+    assertTrue(well.getDrawdown() >= minimumDrawdown && well.getDrawdown() <= maximumDrawdown,
+        "Restored drawdown must satisfy the declared rate tolerance propagated through the well inflow relation");
     assertTrue(higherRate.isBaselineRestored());
     assertTrue(higherRate.isBaselineSimulationConverged());
   }

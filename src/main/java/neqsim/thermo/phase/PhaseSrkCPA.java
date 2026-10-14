@@ -97,11 +97,9 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
   /** {@inheritDoc} */
   @Override
   public PhaseSrkCPA clone() {
-    PhaseSrkCPA clonedPhase = null;
-    try {
-      clonedPhase = (PhaseSrkCPA) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    PhaseSrkCPA clonedPhase = (PhaseSrkCPA) super.clone();
+    if (clonedPhase == null) {
+      throw new IllegalStateException("Cannot clone CPA phase: base phase clone failed");
     }
     clonedPhase.dFdNtemp = dFdNtemp == null ? null : dFdNtemp.clone();
     clonedPhase.activeAccosComp = activeAccosComp == null ? null : activeAccosComp.clone();

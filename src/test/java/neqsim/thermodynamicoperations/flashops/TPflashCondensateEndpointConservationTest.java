@@ -179,19 +179,25 @@ class TPflashCondensateEndpointConservationTest extends neqsim.NeqSimTest {
 
   /** Checks that reusing the operation clears phase-removal history when the fluid becomes stable hot gas. */
   @Test
-  void reusedOperationClearsPhaseRemovalHistory() {
+  void reusedOperationClearsPhaseRemovalHistory() throws ReflectiveOperationException {
     SystemInterface fluid = createFluid(353.15, 350.0, false);
     TPflash flash = new TPflash(fluid);
     flash.run();
     assertEquals(2, fluid.getNumberOfPhases());
     assertQualified(fluid);
-    assertTrue(flash.getLastStabilityOutcome().startsWith("recovered nonconservative hydrocarbon endpoint"));
+    // A qualified split need not take the recovery path. Seed prior-operation history explicitly
+    // so this lifecycle regression does not require an otherwise successful solve to fail first.
+    java.lang.reflect.Field history = TPflash.class.getDeclaredField("phaseRemovedDuringFlash");
+    history.setAccessible(true);
+    history.setBoolean(flash, true);
+    flash.recordStabilityOutcome("recovered nonconservative hydrocarbon endpoint in a previous run");
 
     fluid.setTemperature(800.0);
     fluid.setPressure(10.0);
     flash.run();
     assertEquals(1, fluid.getNumberOfPhases());
     assertQualified(fluid);
+    assertFalse(history.getBoolean(flash), "A reused operation must clear previous phase-removal history");
     assertFalse(flash.getLastStabilityOutcome().startsWith("recovered nonconservative hydrocarbon endpoint"));
 
     fluid.setTemperature(353.15);

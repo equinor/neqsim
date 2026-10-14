@@ -34,6 +34,38 @@ requirement`, or `confidential compressor route`.
 
 ## Log
 
+### 2026-10-14 — Share ionic phase constraints across TP and hydrate equilibrium
+**Type:** E (Feature)
+**Keywords:** PR 4306, PR 4277, PR 4332, electrolyte, Rachford-Rice, Newton, phase participation, hydrate, conservation
+**Solution:** `FlashPhaseConstraints` keeps aqueous-only ions in the full species balance through the
+existing RR/SSI/Newton/stability algorithms. Neutral molecules have no CO2/MEG whitelist.
+Extreme K and fugacity ratios use bounded algebra; positive representable traces remain Newton
+variables; multiphase SSI uses composition sensitivities and molecular residual stopping.
+The same Newton class now handles a fixed multiphase active set with conserved reference amounts;
+finite-difference Hessian, phase-order and rejected-step tests preserve the existing safeguards.
+The obsolete water-and-ion-only endpoint dispatch has been removed after public-path validation.
+`FluidEquilibriumChecks` validates original species, stored phase amounts, charge and molecular
+fugacity. `AqueousReactionEquilibrium` couples the shared frozen-species flash to isolated aqueous
+chemistry with original element checks. Legacy CO2 helpers are deprecated adapters; hydrate fluid
+evaluations and fresh-feed verification use ordinary TPflash. Low-flow reactive normalization
+restores the inverse scale rather than erasing the reaction-induced total-mole change.
+**Notes:** Fourteen independent mixed-gas/inhibitor/salt and gas/oil/brine endpoint fixtures pass
+on the recorded immutable checkpoint. Broader legacy lifecycle, model-data and derivative
+qualification remains explicit in the PR; numerical closure alone does not validate nitrogen
+salting behavior. Original #4277 hydrate regressions are retained as a small consumer increment.
+Two old CI assertions were corrected using phase labels/fugacity/Gibbs and the declared flow
+restoration tolerance propagated through the well inflow equation; no production physics or
+acceptance tolerance was loosened. Phase-removal history is injected explicitly in its lifecycle
+test rather than requiring a successful flash to take a failed-endpoint recovery branch.
+The separate #4332 model correction is a prerequisite; the proposed architecture record is #4331.
+Agent technical review supports, but does not replace, accountable domain/maintainer review.
+
+### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
+**Type:** G (Workflow)
+**Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI
+**Solution:** Reuse the evidence-routing test fixture from PR #4312 commit `d469208aa227449d40c3f441e8f5a345795aa29a` and the eight-shard slow-suite partition from PR #4328 commit `9bcca37f1ac0b717c18a499b3a1a74bcdeec1126` in the renamed workflows.
+**Notes:** Reproduced 27 routing assertions that required absent optional enterprise agents, then isolated agent discovery with synthetic installed/plugin catalogs. Add production guard regressions to Devtools CI, retain fast/slow Surefire reports, and let both fast-suite platforms finish after a failure. Four compatibility gates preserve historical required-check names and require all eight slow shards to succeed. Correct the duplicated `.yml` suffix in the documentation pre-push filter. Document test isolation, report artifacts, shard membership, and compatibility behavior in BUILD and the workflow catalog. Numerical methods and acceptance thresholds are unchanged.
+
 ### 2026-10-14 — Consolidate flash state transfers and qualify compact stability copies
 **Type:** E (Feature)
 **Keywords:** PR 4306, clone ownership, stability workspace, CPA concurrency, phase rollback, allocations
@@ -1725,3 +1757,37 @@ Validation: Java getting-started documentation tests (2 passed), direct Spotless
 documentation-search audit (788 Markdown pages and one HTML page), and diff whitespace check.
 Package qualification and hosted release publication are tracked in the release PR.
 Documentation impact: installation examples, citation and release build provenance updated.
+
+### 2026-10-14 — Electrolyte derivative consistency and model diagnostics
+
+Baseline: master `d28b180969e248837e68b5e982374db69e11a376`.
+Corrected the base Furst/electrolyte CPA dielectric and Born second derivatives
+and included the stationary shielding response in the long-range Hessian.
+The shielding solve now checks a relative residual and starts from the
+Debye–Hückel upper bound; zero ionic inventory has exactly zero shielding.
+The model checker evaluates every phase and derivative entry, rejects non-finite
+values and compares independent numerical trials without changing the source fluid.
+Validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
+parameter-selection, extensivity and diagnostic classes, including 34 new
+regressions and the 28 slow electrolyte CPA tests enabled explicitly.
+A follow-up initialized-derivative check exposed stale electrolyte/CPA caches after
+the final volume solve. Derivative initialization now refreshes those caches at the
+returned volume, without changing the volume root or solver tolerances. The legacy
+CPA test fixture explicitly initializes composition derivatives; its previous zero
+caches could falsely pass the Gibbs–Duhem check. Two regressions fail before this
+repair and pass afterward, including detached repeated initialization.
+Three-phase qualification then exposed shared association-derivative rows in
+electrolyte CPA clones and shared fugacity composition-derivative caches in base
+component clones. Both now preserve cached values in independently owned arrays.
+Four added regressions cover full-cache preservation, mutation isolation and
+fugacity-derivative invariance under either liquid-phase initialization order;
+each fails before its repair. Independent fixed-state finite differences confirm
+the repaired Jacobian. This qualifies component derivative ownership, not general
+concurrent safety of cloned phase workspaces.
+Independent agent review checked the analytical derivation and cache lifecycle;
+this is not domain-maintainer approval.
+Documentation impact: updated the electrolyte CPA guide and Born-derivative guide
+with the corrected equations, numerical behavior and qualification limits.
+No fitted parameters or nitrogen dielectric data changed. Nitrogen salting-out
+accuracy, third-order volume derivatives, the singular zero-concentration
+composition curvature and the separate legacy Mod2004 implementation remain unqualified.

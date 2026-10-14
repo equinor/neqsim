@@ -86,20 +86,17 @@ public class RachfordRice implements Serializable {
     double g0 = -1.0;
     double g1 = 1.0;
 
-    // Skip ionic components (K < 1e-30) as they don't participate in VLE.
-    // Ions stay entirely in the liquid phase and should not affect the
-    // Rachford-Rice phase fraction calculation.
+    // Every component with a nonzero feed contributes to the phase inventory, including K = 0.
     for (i = 0; i < K.length; i++) {
-      if (K[i] < 1e-30) {
-        continue; // Skip ions
+      if (z[i] == 0.0) {
+        continue;
       }
-      midler = (K[i] * z[i] - 1.0) / (K[i] - 1.0);
-      if ((midler > minBeta) && (K[i] > 1.0)) {
-        minBeta = midler;
-      }
-      midler = (1.0 - z[i]) / (1.0 - K[i]);
-      if ((midler < maxBeta) && (K[i] < 1.0)) {
-        maxBeta = midler;
+      if (K[i] > 1.0) {
+        midler = (z[i] - 1.0 / K[i]) / (1.0 - 1.0 / K[i]);
+        minBeta = Math.max(minBeta, midler);
+      } else if (K[i] < 1.0) {
+        midler = (1.0 - z[i]) / (1.0 - K[i]);
+        maxBeta = Math.min(maxBeta, midler);
       }
       g0 += z[i] * K[i];
       g1 += -z[i] / K[i];
@@ -117,10 +114,10 @@ public class RachfordRice implements Serializable {
     double nybeta = (minBeta + maxBeta) / 2.0;
     double gtest = 0.0;
     for (i = 0; i < K.length; i++) {
-      if (K[i] < 1e-30) {
-        continue; // Skip ions
+      if (z[i] == 0.0) {
+        continue;
       }
-      gtest += z[i] * (K[i] - 1.0) / (1.0 - nybeta + nybeta * K[i]);
+      gtest += z[i] * equilibriumRatioTerm(K[i], nybeta, 1.0 - nybeta);
     }
 
     if (gtest >= 0) {
@@ -148,13 +145,12 @@ public class RachfordRice implements Serializable {
         gbeta = 0.0;
 
         for (i = 0; i < K.length; i++) {
-          if (K[i] < 1e-30) {
-            continue; // Skip ions
+          if (z[i] == 0.0) {
+            continue;
           }
-          double temp1 = (K[i] - 1.0);
-          double temp2 = 1.0 + temp1 * nybeta;
-          deriv += -(z[i] * temp1 * temp1) / (temp2 * temp2);
-          gbeta += z[i] * (K[i] - 1.0) / (1.0 + (K[i] - 1.0) * nybeta);
+          double ratio = equilibriumRatioTerm(K[i], nybeta, 1.0 - nybeta);
+          deriv -= z[i] * ratio * ratio;
+          gbeta += z[i] * ratio;
         }
 
         if (gbeta >= 0) {
@@ -175,11 +171,12 @@ public class RachfordRice implements Serializable {
         gbeta = 0.0;
 
         for (i = 0; i < K.length; i++) {
-          if (K[i] < 1e-30) {
-            continue; // Skip ions
+          if (z[i] == 0.0) {
+            continue;
           }
-          deriv -= (z[i] * (K[i] - 1.0) * (1.0 - K[i])) / Math.pow((betal + (1 - betal) * K[i]), 2);
-          gbeta += z[i] * (K[i] - 1.0) / (betal + (-betal + 1.0) * K[i]);
+          double ratio = equilibriumRatioTerm(K[i], 1.0 - betal, betal);
+          deriv += z[i] * ratio * ratio;
+          gbeta += z[i] * ratio;
         }
 
         if (gbeta < 0) {
@@ -237,12 +234,10 @@ public class RachfordRice implements Serializable {
     double g0 = -1.0;
     double g1 = 1.0;
 
-    // Skip ionic components (K < 1e-30) as they don't participate in VLE.
-    // Ions stay entirely in the liquid phase and should not affect the
-    // Rachford-Rice phase fraction calculation.
+    // Every component with a nonzero feed contributes to the phase inventory, including K = 0.
     for (int i = 0; i < K.length; i++) {
-      if (K[i] < 1e-30) {
-        continue; // Skip ions
+      if (z[i] == 0.0) {
+        continue;
       }
       g0 += z[i] * K[i];
       g1 += -z[i] / K[i];
@@ -259,17 +254,17 @@ public class RachfordRice implements Serializable {
     double h = 0.0;
 
     for (int i = 0; i < K.length; i++) {
-      if (K[i] < 1e-30) {
-        continue; // Skip ions
+      if (z[i] == 0.0) {
+        continue;
       }
-      h += z[i] * (K[i] - 1.0) / (1.0 + V * (K[i] - 1.0));
+      h += z[i] * equilibriumRatioTerm(K[i], V, 1.0 - V);
     }
     double[] workK = K;
     if (h > 0) {
       workK = K.clone();
       for (int i = 0; i < workK.length; i++) {
-        if (workK[i] < 1e-30) {
-          continue; // Skip ions
+        if (z[i] == 0.0) {
+          continue;
         }
         workK[i] = 1.0 / workK[i];
       }
@@ -277,16 +272,16 @@ public class RachfordRice implements Serializable {
 
     double Kmax = 0.0;
     double Kmin = Double.MAX_VALUE;
-    boolean foundNonIon = false;
+    boolean foundFeed = false;
 
     for (int i = 0; i < workK.length; i++) {
-      if (workK[i] < 1e-30) {
-        continue; // Skip ions
+      if (z[i] == 0.0) {
+        continue;
       }
-      if (!foundNonIon) {
+      if (!foundFeed) {
         Kmax = workK[i];
         Kmin = workK[i];
-        foundNonIon = true;
+        foundFeed = true;
       } else {
         if (workK[i] < Kmin) {
           Kmin = workK[i];
@@ -296,8 +291,8 @@ public class RachfordRice implements Serializable {
       }
     }
 
-    // If no non-ion components, return single phase
-    if (!foundNonIon) {
+    // If the feed is empty, return single phase
+    if (!foundFeed) {
       return phaseFractionMinimumLimit;
     }
 
@@ -314,22 +309,12 @@ public class RachfordRice implements Serializable {
       d = new double[workK.length];
     }
     for (int i = 0; i < workK.length; i++) {
-      if (workK[i] < 1e-30) {
+      if (z[i] == 0.0) {
         c[i] = 0.0;
         d[i] = 0.0;
-        continue; // Skip ions
+        continue;
       }
-      double Ki = workK[i];
-      if (Ki < 1e-25) {
-        Ki = 1e-25;
-      } else if (Ki > 1e25) {
-        Ki = 1e25;
-      }
-      double denom = 1.0 - Ki;
-      if (Math.abs(denom) < 1e-25) {
-        denom = denom < 0 ? -1e-25 : 1e-25;
-      }
-      c[i] = 1.0 / denom;
+      c[i] = 1.0 / (1.0 - workK[i]);
       d[i] = (alphaMin - c[i]) / (alphaMax - alphaMin);
     }
 
@@ -349,13 +334,27 @@ public class RachfordRice implements Serializable {
       hb = 0.0;
       double hbder = 0.0;
       for (int i = 0; i < workK.length; i++) {
-        if (workK[i] < 1e-30) {
-          continue; // Skip ions
+        if (z[i] == 0.0) {
+          continue;
         }
-        funk -= z[i] * a * (1.0 + a) / (d[i] + a * (1.0 + d[i]));
-        funkder -= z[i] * (a * a + (1.0 + a) * (1.0 + a) * d[i]) / Math.pow(d[i] + a * (1.0 + d[i]), 2.0);
-        hb += z[i] * b / (1.0 + b * (alphaMin - c[i]));
-        hbder += z[i] / Math.pow(1.0 + b * (alphaMin - c[i]), 2.0);
+        // Divide the transformed terms before squaring; K = 1 then contributes exactly zero.
+        if (d[i] == 0.0) {
+          funk -= z[i] * (1.0 + a);
+          funkder -= z[i];
+        } else if (d[i] == -1.0) {
+          funk += z[i] * a * (1.0 + a);
+          funkder += z[i] * (1.0 + 2.0 * a);
+        } else {
+          double inverseDenominator = 1.0 / (d[i] + a / (1.0 + a));
+          funk -= z[i] * a * inverseDenominator;
+          double derivativeRatio = inverseDenominator / (1.0 + a);
+          funkder -= z[i] * (inverseDenominator - a * derivativeRatio * derivativeRatio);
+        }
+        double inverseB = 1.0 / b;
+        double inverseDenominator = 1.0 / (inverseB + (alphaMin - c[i]));
+        hb += z[i] * inverseDenominator;
+        double derivativeRatio = inverseB * inverseDenominator;
+        hbder += z[i] * derivativeRatio * derivativeRatio;
       }
       if (Math.abs(funk) < tol && Math.abs(hb) < tol) {
         break;
@@ -411,6 +410,22 @@ public class RachfordRice implements Serializable {
   }
 
   /**
+   * Evaluates (K - 1) / (liquid + vapor K) without overflowing for large K.
+   *
+   * @param equilibriumRatio component equilibrium ratio
+   * @param vapor vapor fraction
+   * @param liquid liquid fraction, supplied separately to preserve endpoint precision
+   * @return the component's unweighted Rachford-Rice contribution
+   */
+  private static double equilibriumRatioTerm(double equilibriumRatio, double vapor, double liquid) {
+    if (equilibriumRatio >= 1.0) {
+      double inverseRatio = 1.0 / equilibriumRatio;
+      return (1.0 - inverseRatio) / (vapor + liquid * inverseRatio);
+    }
+    return (equilibriumRatio - 1.0) / (liquid + vapor * equilibriumRatio);
+  }
+
+  /**
    * Getter for the field <code>beta</code>.
    *
    * @return an array of type double
@@ -439,13 +454,15 @@ public class RachfordRice implements Serializable {
     double g1 = 1.0;
 
     for (i = 0; i < system.getNumberOfComponents(); i++) {
-      midler = (compArray[i].getK() * compArray[i].getz() - 1.0) / (compArray[i].getK() - 1.0);
-      if ((midler > minBeta) && (compArray[i].getK() > 1.0)) {
-        minBeta = midler;
+      if (compArray[i].getz() == 0.0) {
+        continue;
       }
-      midler = (1.0 - compArray[i].getz()) / (1.0 - compArray[i].getK());
-      if ((midler < maxBeta) && (compArray[i].getK() < 1.0)) {
-        maxBeta = midler;
+      if (compArray[i].getK() > 1.0) {
+        midler = (compArray[i].getz() - 1.0 / compArray[i].getK()) / (1.0 - 1.0 / compArray[i].getK());
+        minBeta = Math.max(minBeta, midler);
+      } else if (compArray[i].getK() < 1.0) {
+        midler = (1.0 - compArray[i].getz()) / (1.0 - compArray[i].getK());
+        maxBeta = Math.min(maxBeta, midler);
       }
       g0 += compArray[i].getz() * compArray[i].getK();
       g1 += -compArray[i].getz() / compArray[i].getK();
@@ -466,7 +483,10 @@ public class RachfordRice implements Serializable {
 
     double gtest = 0.0;
     for (i = 0; i < system.getNumberOfComponents(); i++) {
-      gtest += compArray[i].getz() * (compArray[i].getK() - 1.0) / (1.0 - nybeta + nybeta * compArray[i].getK());
+      if (compArray[i].getz() == 0.0) {
+        continue;
+      }
+      gtest += compArray[i].getz() * equilibriumRatioTerm(compArray[i].getK(), nybeta, 1.0 - nybeta);
     }
 
     if (gtest >= 0) {
@@ -495,10 +515,12 @@ public class RachfordRice implements Serializable {
         gbeta = 0.0;
 
         for (i = 0; i < system.getNumberOfComponents(); i++) {
-          double temp1 = (compArray[i].getK() - 1.0);
-          double temp2 = 1.0 + temp1 * nybeta;
-          deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
-          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
+          if (compArray[i].getz() == 0.0) {
+            continue;
+          }
+          double ratio = equilibriumRatioTerm(compArray[i].getK(), nybeta, 1.0 - nybeta);
+          deriv -= compArray[i].getz() * ratio * ratio;
+          gbeta += compArray[i].getz() * ratio;
         }
 
         if (gbeta >= 0) {
@@ -519,9 +541,12 @@ public class RachfordRice implements Serializable {
         gbeta = 0.0;
 
         for (i = 0; i < system.getNumberOfComponents(); i++) {
-          deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
-              / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
-          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (betal + (-betal + 1.0) * compArray[i].getK());
+          if (compArray[i].getz() == 0.0) {
+            continue;
+          }
+          double ratio = equilibriumRatioTerm(compArray[i].getK(), 1.0 - betal, betal);
+          deriv += compArray[i].getz() * ratio * ratio;
+          gbeta += compArray[i].getz() * ratio;
         }
 
         if (gbeta < 0) {

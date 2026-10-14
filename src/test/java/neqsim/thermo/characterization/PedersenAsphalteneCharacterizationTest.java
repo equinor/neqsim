@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -491,16 +492,68 @@ public class PedersenAsphalteneCharacterizationTest {
     volatileOil.setMixingRule("classic");
     volatileOil.init(0);
 
-    // Perform flash at high pressure
+    double[] originalMoles = new double[volatileOil.getNumberOfComponents()];
+    for (int component = 0; component < originalMoles.length; component++) {
+      originalMoles[component] = volatileOil.getPhase(0).getComponent(component).getNumberOfmoles();
+    }
+    double originalTotal = volatileOil.getTotalNumberOfMoles();
+    double homogeneousGibbs = Double.POSITIVE_INFINITY;
+    for (PhaseType root : new PhaseType[] {PhaseType.GAS, PhaseType.OIL}) {
+      SystemInterface homogeneous = volatileOil.clone();
+      homogeneous.init(0);
+      homogeneous.setNumberOfPhases(1);
+      homogeneous.setPhaseIndex(0, 0);
+      homogeneous.setPhaseType(0, root);
+      homogeneous.setBeta(1.0);
+      homogeneous.init(3);
+      assertEquals(1, homogeneous.getNumberOfPhases());
+      assertEquals(originalTotal, homogeneous.getPhase(0).getNumberOfMolesInPhase(), 1.0e-12);
+      assertTrue(Double.isFinite(homogeneous.getGibbsEnergy()));
+      homogeneousGibbs = Math.min(homogeneousGibbs, homogeneous.getGibbsEnergy());
+    }
+
+    // High feed methane content does not imply a free gas phase at reservoir pressure.
     ThermodynamicOperations ops = new ThermodynamicOperations(volatileOil);
     ops.TPflash();
+    volatileOil.init(3);
 
     logger.info("\n=== Volatile Oil with Light Asphaltene ===");
     logger.info("Pressure: 350 bar, Temperature: 120°C");
     logger.info("Number of phases: " + volatileOil.getNumberOfPhases());
-    logger.info("Gas fraction: " + volatileOil.getBeta());
+    logger.info("First material phase fraction: " + volatileOil.getBeta(0));
 
-    assertTrue(volatileOil.getBeta() > 0.3, "Volatile oil should have significant gas fraction");
+    assertEquals(2, volatileOil.getNumberOfPhases(), "The characterized mixture has a nontrivial fluid split");
+    assertEquals(originalTotal, volatileOil.getTotalNumberOfMoles(), 1.0e-12);
+    assertTrue(volatileOil.getGibbsEnergy() < homogeneousGibbs,
+        "The equilibrium split must reduce Gibbs energy from either homogeneous root");
+    double betaSum = 0.0;
+    for (int phase = 0; phase < volatileOil.getNumberOfPhases(); phase++) {
+      double beta = volatileOil.getBeta(phase);
+      assertTrue(Double.isFinite(beta) && beta > 0.0 && beta < 1.0);
+      betaSum += beta;
+      double compositionSum = 0.0;
+      for (int component = 0; component < originalMoles.length; component++) {
+        double composition = volatileOil.getPhase(phase).getComponent(component).getx();
+        assertTrue(Double.isFinite(composition) && composition >= 0.0 && composition <= 1.0);
+        compositionSum += composition;
+      }
+      assertEquals(1.0, compositionSum, 1.0e-10);
+    }
+    assertEquals(1.0, betaSum, 1.0e-12);
+    for (int component = 0; component < originalMoles.length; component++) {
+      String name = volatileOil.getPhase(0).getComponent(component).getComponentName();
+      double recovered = 0.0;
+      for (int phase = 0; phase < volatileOil.getNumberOfPhases(); phase++) {
+        recovered += originalTotal * volatileOil.getBeta(phase)
+            * volatileOil.getPhase(phase).getComponent(component).getx();
+      }
+      assertEquals(originalMoles[component], recovered, 1.0e-10, name + " inventory");
+      double firstFugacity = volatileOil.getPhase(0).getFugacity(component);
+      double secondFugacity = volatileOil.getPhase(1).getFugacity(component);
+      assertTrue(Double.isFinite(firstFugacity) && firstFugacity > 0.0, name + " first-phase fugacity");
+      assertTrue(Double.isFinite(secondFugacity) && secondFugacity > 0.0, name + " second-phase fugacity");
+      assertEquals(0.0, Math.log(firstFugacity / secondFugacity), 1.0e-8, name + " fugacity equality");
+    }
   }
 
   // === Tuning Parameter Tests ===

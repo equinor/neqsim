@@ -32,7 +32,7 @@ public final class HydrateEquilibriumDiagnostics implements Serializable {
    * @param system calculated system
    * @param converged whether the hydrate water-fugacity equation converged
    * @param hydrateResidual dimensionless 1 - hydrate-water fugacity / fluid-water fugacity
-   * @param trialDistance minimum vapour/liquid CO2 trial distance for the aqueous feed, or NaN if not assessed
+   * @param trialDistance minimum normalized molecular trial distance for the aqueous feed, or NaN if not assessed
    */
   HydrateEquilibriumDiagnostics(SystemInterface system, boolean converged, double hydrateResidual,
       double trialDistance) {
@@ -116,8 +116,24 @@ public final class HydrateEquilibriumDiagnostics implements Serializable {
     return chargeResidual;
   }
 
-  /** @return minimum dimensionless CO2 trial distance of the aqueous feed, or NaN if not assessed */
+  /**
+   * Returns the general molecular trial distance using the historical diagnostic name.
+   *
+   * @return minimum normalized molecular trial distance of the aqueous feed, or NaN if not assessed
+   * @deprecated use {@link #getMinimumFluidTrialDistance()}
+   */
+  @Deprecated
   public double getMinimumCo2TrialDistance() {
+    return getMinimumFluidTrialDistance();
+  }
+
+  /**
+   * Returns normalized aqueous-reference stability evidence for ionic fluids, including all eligible neutral molecules.
+   * Neutral-fluid legacy stability metrics are not exposed through this accessor.
+   *
+   * @return minimum normalized molecular trial distance of the aqueous feed, or NaN if not assessed
+   */
+  public double getMinimumFluidTrialDistance() {
     return minimumCo2TrialDistance;
   }
 

@@ -41,22 +41,13 @@ fugacity equality, repeated/cloned runs, and nearby pressure/temperature cases.
 
 ## Water-and-ion electrolyte-CPA endpoint
 
-A reactive electrolyte-CPA feed whose only neutral component is water has a constrained vapor
-composition: ions stay in the aqueous phase. TP flash therefore tests an aqueous chemical-equilibrium
-candidate before the general phase search. It accepts this candidate only if aqueous water fugacity
-is no greater than pure-water vapor-root trial fugacity at the requested temperature and pressure.
-Both fugacities must be finite and positive. At higher pressure the pure-water cubic equation can
-have a single liquid-like root; relative compressibility alone does not determine solvent stability.
-The comparison uses the same electrolyte-CPA model and retains the input phase options.
-
-The candidate must pass the existing reaction, charge, and element closure gates. Feeds with any
-positive neutral solute, including trace methane or CO2, and water-and-ion feeds above their boiling
-boundary retain the general algorithm. Solid and hydrate calculations retain their existing route.
-This handles reactive precipitation trials that previously lost their aqueous root or returned
-invalid ion inventories. No equilibrium constant, salt solubility product, or physical acceptance
-tolerance is changed. `TPflashWaterIonBrineTest`, `SaltPrecipitationTest`, and `ChemistryRunnerTest`
-cover repeated salt removal, nearby states, vapor-unstable rejection, trace-solute rejection, and
-scale equilibrium through Java and MCP.
+Reactive water-and-ion feeds use the same constrained phase search and aqueous-reaction coupling
+as other ionic fluids. The former model- and water-name-specific endpoint shortcut has been removed.
+Ions retain the aqueous host, while neutral water participates in the ordinary molecular stability
+and fugacity equations. Phase, reaction, charge and original-element acceptance checks still apply.
+`TPflashWaterIonBrineTest` exercises public calculations at 1, 20 and 100 bar, repeated salt removal
+and cloned fluids without a separate composition dispatch. Numerical closure does not validate
+salt solubility or hydrate-model accuracy.
 
 ## Table of Contents
 
@@ -327,7 +318,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
 | Unchanged one-phase closure | `abs(beta - 1) < 1e-12`; `abs(delta Z) <= 1e-11`; `max abs(delta x_i) <= 1e-11` | When multiphase checking finds no new stable phase and returns the same phase type, compressibility factor, and composition as the accepted one-phase reference, normalize a stale beta and reinitialize. Different roots, chemical-equilibrium states, and internal multiphase trial states retain their existing finalization paths. |
-| Ionic GAS+AQUEOUS closure | exactly two phases, ions present, and `isChemicalSystem() == false` | Set ionic gas-to-aqueous K-values to zero, retain molecular fugacity-coefficient K-values, and solve the constrained Rachford-Rice equation by safeguarded bisection. Successive substitution continues until beta and compositions change by less than `1e-12`. Accept only normalized phases with `1e-10` component balance, `1e-8` molecular log-fugacity equality, gas-phase ion exclusion, and no Gibbs increase; otherwise restore the original endpoint and emit a diagnostic. One-phase, OIL+AQUEOUS, reactive, and genuine three-phase paths are unchanged. |
+| Ionic fluid closure | full species inventory with a unique aqueous host | Shared RR/SSI/Newton and stability constraints; `1e-10` species/phase amount closure, `1e-12` beta normalization, aqueous ion confinement and `1e-8` molecular log-fugacity equality. Failure is explicit. |
 | Trace duplicate phase cleanup | `min(beta_i, beta_j) < 10 beta_min`, same `PhaseType`, and `max abs(x_i - x_j) < 1e-6` | Merge and remove an already-disappeared numerical duplicate for any EOS while conserving phase fraction. Material-fraction duplicate cleanup remains limited to CPA models to protect near-critical cubic-EOS splits. |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
 | `accelerateInterval` | 5 | Apply DEM every 5th iteration in the ordinary TPflash loop |
@@ -657,154 +648,24 @@ When `system.setMultiPhaseCheck(true)` is called, NeqSim uses the `TPmultiflash`
 
 ### 3.0 Complete TPmultiflash Algorithm Flow
 
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                       TPmultiflash.run() ALGORITHM FLOW                        ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+`TPmultiflash` retains the full input species inventory during phase search. Ionic participation is
+captured as an aqueous-phase constraint; neutral molecules remain free to partition through the
+existing EOS fugacity equations. No CO2, MEG, methanol or mixed-gas whitelist selects a different solver.
 
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 1: ELECTROLYTE PREPROCESSING                                               │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF system.hasIons() (any ionic components, not just chemical systems):         │
-│     • Store ionic component compositions: ionicZ[i] = z[i] for ions             │
-│     • Temporarily set ion z = 1e-100 (remove from stability analysis)           │
-│     • hasIons = true                                                            │
-│     • system.init(1) - Recalculate properties without ions                      │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 2: PRIMARY STABILITY ANALYSIS                                              │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF doStabilityAnalysis == true:                                                │
-│     → stabilityAnalysis()  [see detailed flow below]                            │
-│     → Sets multiPhaseTest = true if unstable phase found                        │
-│     → Adds new phase with composition from stationary point                     │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 3: HEURISTIC PHASE SEEDING                                                 │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF NOT multiPhaseTest AND seedAdditionalPhaseFromFeed():                       │
-│     → Add bounded vapor-like gas seed, xᵢ ∝ zᵢKᵢ(Wilson)                       │
-│     → multiPhaseTest = true                                                     │
-│                                                                                 │
-│  IF seedHydrocarbonLiquidFromFeed():                                           │
-│     → Add hydrocarbon liquid phase if conditions met                            │
-│     → multiPhaseTest = true                                                     │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 4: ION RESTORATION (Electrolyte Systems)                                   │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF hasIons:                                                                    │
-│     FOR each ionic component:                                                   │
-│        • Restore z[i] = ionicZ[i] in all phases                                │
-│        • IF phase is AQUEOUS: set x[i] = ionicZ[i]                             │
-│        • ELSE: set x[i] = 1e-50 (ions only in aqueous)                         │
-│     • Normalize all phases                                                      │
-│     • system.init(1)                                                            │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 5: INITIAL CHEMICAL EQUILIBRIUM                                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF chemical system AND has aqueous phase:                                      │
-│     → solveChemEq(aqueousPhaseNumber, 0)  [stoichiometric]                      │
-│     → solveChemEq(aqueousPhaseNumber, 1)  [full Newton]                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 6: MULTIPHASE SPLIT CALCULATION                                            │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF multiPhaseTest == true:                                                     │
-│     maxerr = 1e-12                                                              │
-│                                                                                 │
-│     DO (outer loop - chemical equilibrium):                                     │
-│     │   iterOut++                                                               │
-│     │                                                                           │
-│     │   IF chemical system with aqueous phase:                                  │
-│     │      → Solve chemical equilibrium                                         │
-│     │      → Calculate chemical deviation                                       │
-│     │                                                                           │
-│     │   setDoubleArrays()  [allocate Q-function arrays]                        │
-│     │   iterations = 0                                                          │
-│     │                                                                           │
-│     │   DO (inner loop - Q-function minimization):                              │
-│     │   │   iterations++                                                        │
-│     │   │   oldDiff = diff                                                      │
-│     │   │   diff = solveBeta()  [Newton step on Q-function]                    │
-│     │   │                                                                       │
-│     │   │   IF iterations % 50 == 0:                                           │
-│     │   │       maxerr *= 100  [relax tolerance]                               │
-│     │   │                                                                       │
-│     │   WHILE (diff > maxerr AND NOT removePhase                               │
-│     │          AND (diff < oldDiff OR iterations < 50)                         │
-│     │          AND iterations < 200)                                            │
-│     │                                                                           │
-│     WHILE (|chemdev| > 1e-10 AND iterOut < 100)                                │
-│            OR (iterOut < 3 AND chemical AND aqueous)                           │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 7: AQUEOUS PHASE SEEDING (if water present but no aqueous)                │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF has water component AND NOT aqueousPhaseSeedAttempted                       │
-│     AND multiPhaseCheck AND NOT hasAqueousPhase:                                │
-│                                                                                 │
-│     IF waterZ > 1e-6 AND numberOfPhases < 3:                                   │
-│        → Add new phase                                                          │
-│        → Set phase type = AQUEOUS                                               │
-│        → Initialize with water-rich composition                                 │
-│        → Set β = max(1e-5, 10 × βmin)                                          │
-│        → multiPhaseTest = true                                                  │
-│        → aqueousPhaseSeedAttempted = true                                       │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 8: SINGLE AQUEOUS PHASE ENFORCEMENT (Electrolytes)                         │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF chemical system:                                                            │
-│     → ensureSingleAqueousPhase()                                               │
-│     → Reclassify extra "aqueous" phases as OIL                                  │
-│     → Move ions to the true aqueous phase                                       │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 9: PHASE CLEANUP                                                           │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  Remove negligible phases:                                                      │
-│     FOR each phase:                                                             │
-│        IF β < 1.1 × βmin:                                                      │
-│           → removePhaseKeepTotalComposition()                                   │
-│           → hasRemovedPhase = true                                              │
-│                                                                                 │
-│  Merge trace composition duplicates for any EOS:                                │
-│     IF same PhaseType, min(βi, βj) < 10 βmin, and max |xi - xj| < 1e-6:         │
-│        → Merge βi + βj, remove the duplicate, and re-check stability             │
-│                                                                                 │
-│  Detect trivial solutions (phases with same density):                           │
-│     FOR each pair of phases (i, j):                                             │
-│        IF |ρi - ρj| < 1.1e-5:                                                  │
-│           → Remove phase j                                                      │
-│           → hasRemovedPhase = true                                              │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                        ↓
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 10: POST-FLASH STABILITY CHECK AND RECURSIVE RE-RUN                        │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│  After flash converges with 2 phases, check for a third phase:                 │
-│  IF multiPhaseCheck AND 2 ≤ numPhases < 3 AND NOT postFlashStabilityChecked:   │
-│     → postFlashStabilityChecked = true                                          │
-│     → stabilityAnalysisEnhanced()  [Wilson K-based additional check]            │
-│     → IF new phase found: re-run()  [recursive call]                           │
-│                                                                                 │
-│  After phase removal (β < βmin or trivial solutions):                          │
-│  IF hasRemovedPhase AND NOT secondTime:                                         │
-│     → secondTime = true                                                         │
-│     → stabilityAnalysis3()  [re-check stability]                               │
-│     → run()  [RECURSIVE CALL - restart algorithm]                              │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+1. Capture permitted phase participation and the full feed before stability analysis.
+2. Evaluate normalized molecular trial phases against the ionic aqueous reference; ions remain in
+   that reference and are excluded from non-aqueous trials.
+3. Add a phase only through the existing stability/seed machinery, then solve the full phase amounts.
+4. Reconcile the aqueous host at an active-set change if the original host becomes non-aqueous and
+   the model identifies one actual aqueous phase. Re-equilibrate the complete inventory after transfer.
+5. Solve beta and composition together. The ionic beta Hessian uses dimensionless ratios before
+   products to avoid overflow/underflow at extreme fugacity ratios. Composition SSI uses available
+   derivatives to bound its logarithmic step; stopping includes molecular residuals, not only beta changes.
+6. Require finite, normalized phase and stored component amounts, original species conservation,
+   aqueous ion confinement and molecular fugacity equality before returning a non-reactive ionic state.
+
+The neutral stability algorithm below retains its established trial selection. Solids, wax and
+forced phase topologies keep their physical model boundaries.
 
 ### 3.0.1 Stability Analysis Detailed Flow
 
@@ -1494,74 +1355,11 @@ if (Math.abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) 
 
 ### 3.4 Complete Multiphase Flash Workflow
 
-The complete workflow in `TPmultiflash.run()` is:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  1. PREPROCESSING                                           │
-│     - For systems with ions (hasIons()): remove ions        │
-│     - Store ionic compositions for later restoration        │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  2. STABILITY ANALYSIS                                      │
-│     a. stabilityAnalysis() — K trials + pure-comp trials    │
-│     b. If enhanced enabled and no phase found:              │
-│        stabilityAnalysisEnhanced() — K + LLE trials         │
-│     - If tm < -1e-8: add phase, multiPhaseTest=true         │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  3. ADDITIONAL PHASE SEEDING (if stability didn't add)      │
-│     - seedAdditionalPhaseFromFeed(): gas phase seeding      │
-│     - seedHydrocarbonLiquidFromFeed(): oil phase seeding    │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  4. ION RESTORATION (systems with ions)                     │
-│     - Restore ions to aqueous phase(s) only                 │
-│     - Set ion x = 1e-50 in non-aqueous phases               │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  5. CHEMICAL EQUILIBRIUM (if applicable)                    │
-│     - Solve chemical equilibrium in aqueous phase           │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  6. PHASE SPLIT CALCULATION (if multiPhaseTest = true)      │
-│     - Q-function minimization with damped Newton (EJML)     │
-│     - fugCoeffCache avoids repeated virtual dispatch        │
-│     - Nested iteration with chemical equilibrium            │
-│     - Continue until convergence                            │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  6b. POST-FLASH STABILITY CHECK (three-phase detection)     │
-│     - IF multiPhaseCheck AND 2 ≤ phases < 3:                │
-│       run stabilityAnalysisEnhanced() for third phase       │
-│     - If new phase found: recursive run()                   │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  7. AQUEOUS PHASE SEEDING (if water present but no aq)      │
-│     - Add aqueous phase seeded with water                   │
-│     - Re-run phase split if phase added                     │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  8. PHASE CLEANUP                                           │
-│     - Remove phases with β < βmin                           │
-│     - Detect and merge trivial solutions (same density)     │
-│     - ensureSingleAqueousPhase() for systems with ions      │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  9. POST-REMOVAL STABILITY CHECK                            │
-│     - If phase removed: run stabilityAnalysis3()            │
-│     - Recursive call to run() if new phase found            │
-└─────────────────────────────────────────────────────────────┘
-```
+The active set is searched, seeded, equilibrated and pruned with the existing multiphase machinery.
+For ionic fluids, the feed is never normalized to an ion-free surrogate and restored afterward.
+`FlashPhaseConstraints` identifies allowed species/phase pairs, while `FluidEquilibriumChecks`
+qualifies the final material state. A converged beta update alone cannot certify the composition solve.
+See [the complete flow](#30-complete-tpmultiflash-algorithm-flow) for the current sequence.
 
 ### 3.5 Phase Seeding and Restart Strategies
 
@@ -1647,139 +1445,56 @@ if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
 
 ### 4.1 Chemical Equilibrium Coupling
 
-For systems with chemical reactions (electrolytes, acid-base equilibria), the flash calculation must be coupled with chemical equilibrium. NeqSim solves this as a nested iteration:
+Reactive ionic fluids with freely selected fluid phases use `AqueousReactionEquilibrium`, a bounded
+coupling of the ordinary TP flash and the existing chemical solver. Each phase solve freezes the
+species inventory. Chemistry runs on an isolated aqueous phase; only its reaction-induced species
+changes are transferred back to the full fluid. Element totals include spectator ions and charge.
 
-**Outer Loop:** Phase equilibrium (flash)
-**Inner Loop:** Chemical equilibrium within each phase
-
-**Chemical Equilibrium Condition:**
-
-For a reaction $\sum_i \nu_i A_i = 0$:
-
-$$\sum_i \nu_i \mu_i = 0$$
-
-Or equivalently:
-
-$$\prod_i a_i^{\nu_i} = K_{eq}(T)$$
-
-Where $a_i$ is the activity and $K_{eq}$ is the equilibrium constant.
-
-**NeqSim Implementation:**
-
-```java
-// From TPflash.java - chemical equilibrium integration
-if (system.isChemicalSystem()) {
-    for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
-        if ("aqueous".equalsIgnoreCase(phaseType)) {
-            system.getChemicalReactionOperations().solveChemEq(phaseNum, 0);
-            system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
-        }
-    }
-}
-```
-
-The chemical equilibrium solver uses:
-- **Level 0:** Stoichiometric balance with linear programming initialization
-- **Level 1:** Full Newton-Raphson with activity coefficient derivatives
+A result needs molecular log-fugacity equality within `1e-8`, reaction log residual within `2e-6`,
+charge closure and the original elemental inventory. At most 30 coupling iterations are allowed.
+Failures and cancellation leave the caller uncommitted. This supports general molecular mixtures;
+the old `ReactiveCO2BrinePhaseEquilibrium` class is a deprecated compatibility adapter.
+A fixed-species phase flash conserves each species; reactions instead conserve elements and may
+change both species amounts and total moles.
 
 ### 4.2 Ion Handling in Stability Analysis
 
-Ionic species present special challenges for stability analysis because they cannot exist in non-aqueous phases. NeqSim handles this by:
+The aqueous reference retains its full ionic composition and electrolyte chemical potentials.
+Non-aqueous molecular trials exclude ions by phase participation, without removing ions from the feed.
+Trial compositions are normalized before invoking component setters. Both fluid roots are considered;
+a homogeneous ionic result is rejected if a normalized molecular trial is unstable.
 
-1. **Temporarily removing ions** before stability analysis. Note that `hasIons()` is used instead of `isChemicalSystem()` to catch ions even when no chemical reactions are defined:
-   ```java
-   boolean hasIons = system.hasIons();
-   if (hasIons) {
-       ionicZ = new double[system.getPhase(0).getNumberOfComponents()];
-       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-               || system.getPhase(0).getComponent(i).isIsIon()) {
-               ionicZ[i] = system.getPhase(0).getComponent(i).getz();
-               // Temporarily set to near-zero in all phases
-               for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-                   system.getPhase(phase).getComponent(i).setz(1e-100);
-               }
-           }
-       }
-       system.init(1);
-   }
-   ```
+Rachford-Rice does not infer ionic identity from a small K-value. Zero or tiny K values for positive-feed
+neutral species still contribute their inventory. Algebraically equivalent ratios avoid squaring
+extreme K values; both existing algorithms and their selector remain available.
 
-2. **Running stability analysis** on the neutral system
+The existing Newton solver uses positive-feed, unconstrained neutral amounts as its free variables.
+For more than two fixed fluid phases it solves amounts in every phase except a reference phase,
+whose amounts follow from complete species conservation. Its reduced Hessian combines the independent
+phase curvature with reference-phase curvature; fixed ions remain in all model properties and Gibbs
+energy. Phase creation/removal stays in the outer stability algorithm. The original two-phase path is
+retained. Ions and exact-zero feed components remain constrained. Representable positive trace amounts
+are allowed without an arbitrary `1e-15` floor; a complementary amount lost to floating-point subtraction
+is still rejected. Gibbs descent, feasibility, line-search limits and rollback remain mandatory.
 
-3. **Restoring ions** to aqueous phases after phase configuration is determined:
-   ```java
-   if (hasIons && ionicZ != null) {
-       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
-               // Restore z values, put ions only in aqueous phase
-               if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
-                   system.getPhase(phase).getComponent(i).setx(ionicZ[i]);
-               } else {
-                   system.getPhase(phase).getComponent(i).setx(1e-50);
-               }
-           }
-       }
-   }
-   ```
-
-4. **Refining a non-reactive two-phase GAS+AQUEOUS endpoint** after final phase selection. Ionic K-values are fixed to
-   zero because ions are excluded from the gas phase. Molecular K-values remain the ratio of aqueous and gas fugacity
-   coefficients. A safeguarded Rachford-Rice solve and successive-substitution update restore both component balance and
-   molecular fugacity equality. The candidate is rejected and the original endpoint restored unless beta and phase
-   compositions are bounded and normalized, component balance is below `1e-10`, molecular log-fugacity residuals are
-   below `1e-8`, and Gibbs energy does not increase. Reactive, one-phase, OIL+AQUEOUS, and genuine three-phase endpoints
-   retain their existing paths.
+EOS-GE models retain their existing phase-role and reaction strategy. Their EOS vapour and GE liquid
+use model-specific reference states, so comparing an alternate cubic liquid root of the vapour slot
+is not a valid same-model stability diagnostic. That diagnostic is unavailable (NaN) for this
+capability; the shared physical acceptance checks remain in place. Generic constrained Newton and
+reaction dispatch do not replace the model-owned hybrid equations.
 
 ### 4.3 Aqueous Phase Management
 
-For electrolyte systems, NeqSim ensures proper aqueous phase handling:
+For the qualified ionic fluid scope there must be a unique aqueous material host. Aqueous ions are
+allocated by conserved amount, not by copying the overall mole fraction into a phase and normalizing.
+A gas/oil/brine phase-set change may require transferring the host to the model-classified aqueous
+phase and re-equilibrating; changing a display label alone does not solve equilibrium.
 
-**Single Aqueous Phase Constraint:**
-
-The system ensures only one aqueous phase exists, containing all ionic species:
-
-```java
-private void ensureSingleAqueousPhase() {
-    if (!system.isChemicalSystem() || system.getNumberOfPhases() < 2) {
-        return;
-    }
-
-    // Find phase with highest aqueous component content
-    int bestAqueousPhase = -1;
-    double maxAqueousContent = 0.0;
-
-    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
-        double aqueousContent = 0.0;
-        for (int comp = 0; comp < ncomp; comp++) {
-            // Count water, glycols, alcohols, and ions
-            if (isAqueousComponent(component)) {
-                aqueousContent += component.getx();
-            }
-        }
-        if (aqueousContent > maxAqueousContent) {
-            maxAqueousContent = aqueousContent;
-            bestAqueousPhase = phase;
-        }
-    }
-
-    // Reclassify other phases as OIL
-}
-```
-
-**Aqueous Phase Seeding:**
-
-When water is present but no aqueous phase exists, a seed aqueous phase can be created:
-
-```java
-if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
-    system.addPhase();
-    system.setPhaseType(aquPhaseIndex, PhaseType.AQUEOUS);
-    // Initialize with water-rich composition
-}
-```
-
----
+Final non-reactive ionic acceptance checks original species balance and phase/amount normalization
+within `1e-10`, beta sum within `1e-12`, phase charge, ion confinement and molecular log-fugacity
+equality within `1e-8`. These checks establish feasibility and present-phase equilibrium, not a
+proof of the global Gibbs minimum or experimental model accuracy. Incorrect dielectric data cannot
+be corrected by tighter numerical convergence. See the [electrolyte derivative qualification](../thermo/ElectrolyteBornDerivatives).
 
 ## 5. Performance Optimizations
 
@@ -1866,7 +1581,7 @@ whole-flash speedup result.
 
 ### 5.6 Matched Stability-Workspace Qualification (2026-10-14)
 
-The redesign reduces ordinary SRK/PR trial-copy allocations while preserving the full public clone contract. It does **not** restore allocation parity for every workload, and it does **not** clear PR #4306 for merge: the existing ionic regression remains a separate blocker (two failures and one error in `SystemElectrolyteCPATest`; master passes that class's 28 tests).
+This is the historical allocation qualification for commit `6d05316`, before the general electrolyte correction. It preserves the full public clone contract but does not establish allocation parity for every workload. Its then-unresolved electrolyte failures and measurements must not be read as validation of later solver changes.
 
 This matrix supersedes the previous **36,136 → 152,488 B/flash** headline. Those figures are not the matched fixture/profile measured here and must not be used as the current comparison. The matched three-component dry-gas result is **18,104 → 76,280 → 19,544 B per complete flash** for master, original PR and redesign. The earlier 75,680 B figure excluded the 600 B operation constructor; this harness includes it. Any comparison with `dcc5105` remains historical and separate from this matrix.
 
@@ -1907,6 +1622,26 @@ Snapshots run on public clones outside measurement. Historical implementations m
 Reproducibility evidence: [compressed qualification bundle](benchmarks/tpflash-allocation-qualification.json.gz) (SHA256 `685193c3424be39c28e4f3de4cec73bc97db9cc1b17b9714c0cdd2cd38c31f74`) retains all 70 raw JSON reports, complete endpoint snapshots, raw timing samples, fixture definitions, dependency coordinates/checksums, source hashes and a machine-readable summary. Its embedded manifest identifies all five builds. Absolute workspace paths, process identifiers and runtime access diagnostics are excluded.
 
 ---
+
+### 5.7 General electrolyte checkpoint allocation qualification
+
+A separate [reproducibility bundle](benchmarks/general-equilibrium-matched-java8.json.gz) records
+matched Java 8 POM/dependency measurements against `6d05316`. It identifies the exact source and
+class hashes of the 14-case checkpoint, including multiphase Newton, component cache ownership
+and removal of the water-only shortcut (source aggregate `c14819bfb0df5f1bf77b10d09b6e93b58f20e769baf3a5cd7c548a8fd3629da0`).
+The later EOS-GE capability guards are separately qualified and outside this benchmark snapshot.
+Each measured operation includes physical checks.
+
+| Warm complete flash | Base `6d05316`, bytes | General checkpoint, bytes | Qualification |
+| --- | ---: | ---: | --- |
+| Dry gas | 19,544 | 19,544 | Both endpoints valid and identical |
+| Methane/brine | 5,991,776 | 26,710,048 | Both valid; allocation increases 4.46 times |
+| Mixed gas/brine | 62,452,544 | 39,948,192 | Baseline fails physical closure; no qualified speedup claim |
+
+The methane/brine topology is unchanged; maximum beta/composition differences are `3.8e-13` and
+`3.1e-12`, with relative Gibbs difference `2.23e-11`. All 36 candidate snapshots pass; only 24 of
+36 baseline snapshots pass. Shared-host timing is descriptive. The additional cost of constrained
+ionic correctness is visible and needs separate performance work before claiming broad parity.
 
 ## 6. State-of-the-Art Comparison and Recommendations
 

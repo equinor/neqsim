@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.EosGeFlashModel;
@@ -287,14 +288,16 @@ public class TPflash extends Flash {
       neqsim.thermo.component.ComponentInterface comp1 = phase1.getComponent(i);
       if (comp0.getIonicCharge() != 0 || comp0.isIsIon()) {
         Kold = comp0.getK();
-        comp0.setK(1.0e-40);
+        comp0.setK(constrainedIonicK());
         comp1.setK(comp0.getK());
       } else {
         Kold = comp0.getK();
-        // Use the same numerical range as the ionic endpoint refinement. A zero or
-        // infinite ratio destroys the next composition iterate when setx preserves zero.
-        double Knew = Math.max(1.0e-50,
-            Math.min(1.0e50, comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff));
+        double Knew = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        if (!Double.isFinite(Knew) || Knew <= 0.0) {
+          // A finite log ratio can remain representable even when its separate coefficients underflow.
+          double logRatio = comp1.getLogFugacityCoefficient() - comp0.getLogFugacityCoefficient() + Math.log(presdiff);
+          Knew = Math.exp(Math.max(Math.log(Double.MIN_VALUE), Math.min(Math.log(Double.MAX_VALUE), logRatio)));
+        }
         comp0.setK(Knew);
         if (!Double.isFinite(Knew) || Knew <= 0.0) {
           comp0.setK(Kold);
@@ -302,7 +305,9 @@ public class TPflash extends Flash {
           Knew = comp0.getK();
         }
         comp1.setK(Knew);
-        deviation += Math.abs(Math.log(Knew / Kold));
+        double ratio = Knew / Kold;
+        deviation += Math
+            .abs(Double.isFinite(ratio) && ratio > 0.0 ? Math.log(ratio) : Math.log(Knew) - Math.log(Kold));
       }
     }
 
@@ -375,7 +380,7 @@ public class TPflash extends Flash {
       neqsim.thermo.component.ComponentInterface comp1 = phase1.getComponent(i);
       if (comp0.getIonicCharge() != 0 || comp0.isIsIon()) {
         Kold = comp0.getK();
-        comp0.setK(1.0e-40);
+        comp0.setK(constrainedIonicK());
         comp1.setK(comp0.getK());
       } else {
         Kold = comp0.getK();
@@ -488,6 +493,9 @@ public class TPflash extends Flash {
           safeAcceleration = false;
           break;
         }
+        if (FlashPhaseConstraints.isIon(system.getPhase(0).getComponent(i))) {
+          accelerationLnK[i] = Math.log(constrainedIonicK());
+        }
         accelerationK[i] = Math.exp(accelerationLnK[i]);
         if (!Double.isFinite(accelerationK[i]) || accelerationK[i] <= 0.0) {
           safeAcceleration = false;
@@ -565,13 +573,129 @@ public class TPflash extends Flash {
       lnOldOldOldK[i] = lnOldOldK[i];
       lnOldOldK[i] = lnOldK[i];
       lnOldK[i] = lnK[i];
-      lnK[i] = Math
-          .log(phase1.getComponent(i).getFugacityCoefficient() / phase0.getComponent(i).getFugacityCoefficient());
+      lnK[i] = FlashPhaseConstraints.isIon(phase0.getComponent(i)) ? Math.log(constrainedIonicK())
+          : Math.log(phase1.getComponent(i).getFugacityCoefficient() / phase0.getComponent(i).getFugacityCoefficient());
+      if (FlashPhaseConstraints.isIon(phase0.getComponent(i))) {
+        lnOldK[i] = lnK[i];
+        lnOldOldK[i] = lnK[i];
+        lnOldOldOldK[i] = lnK[i];
+      }
 
       oldoldDeltalnK[i] = lnOldOldK[i] - lnOldOldOldK[i];
       oldDeltalnK[i] = lnOldK[i] - lnOldOldK[i];
       deltalnK[i] = lnK[i] - lnOldK[i];
     }
+  }
+
+  /**
+   * Records normalized molecular stability trials against the full homogeneous aqueous feed.
+   *
+   * <p>
+   * The reference retains its ionic inventory and electrolyte chemical potentials. The trial phase excludes ions and
+   * uses the same molecular equations on both requested cubic roots. These distances diagnose the homogeneous
+   * reference; they are not a complete global stability certificate.
+   * </p>
+   *
+   * @param aqueousPhase initialized homogeneous aqueous reference phase
+   */
+  private void recordConstrainedAqueousReferenceStability(int aqueousPhase) {
+    if (system instanceof EosGeFlashModel) {
+      // EOS-GE phases use model-owned roles and reference states. An alternate cubic root of the gas
+      // slot is not a competing GE liquid phase, so this same-model diagnostic is not applicable.
+      tm = new double[] {Double.NaN, Double.NaN};
+      recordTangentPlaneDistances();
+      return;
+    }
+    double[] reference = new double[system.getNumberOfComponents()];
+    for (int component = 0; component < reference.length; component++) {
+      ComponentInterface species = system.getPhase(aqueousPhase).getComponent(component);
+      if (!FlashPhaseConstraints.isIon(species) && species.getz() > 0.0) {
+        reference[component] = Math.log(species.getz()) + species.getLogFugacityCoefficient();
+      }
+    }
+    tm = new double[2];
+    PhaseType[] roots = {PhaseType.GAS, PhaseType.OIL};
+    for (int root = 0; root < roots.length; root++) {
+      tm[root] = constrainedMolecularTrialDistance(reference, roots[root]);
+    }
+    recordTangentPlaneDistances();
+  }
+
+  /**
+   * Evaluates one normalized ion-free trial without changing the conserved aqueous reference.
+   *
+   * @param reference full-feed aqueous molecular log fugacities without the common pressure factor
+   * @param root requested molecular EOS root
+   * @return converged dimensionless distance, or NaN when the bounded trial could not be qualified
+   */
+  private double constrainedMolecularTrialDistance(double[] reference, PhaseType root) {
+    SystemInterface trial = system.clone();
+    // Independent model initialization precedes phase mapping/root selection, as for a fresh feed.
+    trial.init(0);
+    trial.setNumberOfPhases(1);
+    trial.setPhaseType(0, root);
+    trial.setBeta(0, 1.0);
+    double[] weights = new double[reference.length];
+    double sum = 0.0;
+    for (int component = 0; component < reference.length; component++) {
+      ComponentInterface species = trial.getPhase(0).getComponent(component);
+      if (FlashPhaseConstraints.isIon(species) || species.getz() <= 0.0) {
+        weights[component] = 0.0;
+      } else {
+        double k = species.getPC() / trial.getPressure()
+            * Math.exp(5.373 * (1.0 + species.getAcentricFactor()) * (1.0 - species.getTC() / trial.getTemperature()));
+        weights[component] = species.getz() * (root == PhaseType.GAS ? k : 1.0 / k);
+      }
+      sum += weights[component];
+    }
+    if (!(sum > 0.0) || !Double.isFinite(sum)) {
+      return Double.NaN;
+    }
+    for (int component = 0; component < reference.length; component++) {
+      trial.getPhase(0).getComponent(component).setx(weights[component] / sum);
+    }
+    for (int iteration = 0; iteration < 200; iteration++) {
+      try {
+        trial.init(1, 0);
+      } catch (RuntimeException ex) {
+        return Double.NaN;
+      }
+      sum = 0.0;
+      for (int component = 0; component < reference.length; component++) {
+        ComponentInterface species = trial.getPhase(0).getComponent(component);
+        weights[component] = FlashPhaseConstraints.isIon(species) || species.getz() <= 0.0 ? 0.0
+            : Math.exp(reference[component] - species.getLogFugacityCoefficient());
+        sum += weights[component];
+      }
+      if (!(sum > 0.0) || !Double.isFinite(sum)) {
+        return Double.NaN;
+      }
+      double change = 0.0;
+      for (int component = 0; component < reference.length; component++) {
+        ComponentInterface species = trial.getPhase(0).getComponent(component);
+        double composition = weights[component] / sum;
+        change = Math.max(change, Math.abs(composition - species.getx()));
+        species.setx(composition);
+      }
+      if (change < 1.0e-12) {
+        return -Math.log(sum);
+      }
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Returns the finite logarithmic representation of an ion's fixed two-phase participation.
+   *
+   * @return gas-to-liquid ratio implied by the captured aqueous role
+   * @throws IllegalStateException if an ionic topology has no unique aqueous material phase
+   */
+  private double constrainedIonicK() {
+    FlashPhaseConstraints constraints = FlashPhaseConstraints.capture(system);
+    if (!constraints.supportsTwoPhaseSplit()) {
+      throw new IllegalStateException("Ionic two-phase equilibrium requires one aqueous material phase");
+    }
+    return constraints.getAqueousPhase() == 0 ? 1.0e40 : 1.0e-40;
   }
 
   /**
@@ -582,7 +706,7 @@ public class TPflash extends Flash {
     neqsim.thermo.phase.PhaseInterface phase1 = system.getPhase(1);
     int nc = phase0.getNumberOfComponents();
     for (i = 0; i < nc; i++) {
-      lnK[i] = lnOldK[i];
+      lnK[i] = FlashPhaseConstraints.isIon(phase0.getComponent(i)) ? Math.log(constrainedIonicK()) : lnOldK[i];
       double expK = Math.exp(lnK[i]);
       phase0.getComponent(i).setK(expK);
       phase1.getComponent(i).setK(expK);
@@ -616,6 +740,8 @@ public class TPflash extends Flash {
   @Override
   public void run() {
     validateCharacterizedFluidParameters();
+    double[] ionicInputMoles = system.hasIons() && !system.isChemicalSystem() ? FluidEquilibriumChecks.inventory(system)
+        : null;
     if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
       system.setNumberOfPhases(1);
       return;
@@ -635,13 +761,23 @@ public class TPflash extends Flash {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
     }
     try {
-      if (!flashStableWaterIonBrine()) {
-        runInternal();
-        if (phaseRemovedDuringFlash) {
-          recoverNonconservativeHydrocarbonCollapse();
-        }
+      runInternal();
+      if (phaseRemovedDuringFlash) {
+        recoverNonconservativeHydrocarbonCollapse();
       }
       validateCharacterizedFluidPhaseInventories();
+      if (ionicInputMoles != null) {
+        FluidEquilibriumChecks.validate(system, ionicInputMoles);
+        if (system.getNumberOfPhases() == 1) {
+          recordConstrainedAqueousReferenceStability(0);
+          for (double trialDistance : tm) {
+            if (Double.isFinite(trialDistance) && trialDistance < -1.0e-8) {
+              throw new IllegalStateException(
+                  "Ionic flash retained a homogeneous phase with an unstable molecular trial");
+            }
+          }
+        }
+      }
     } finally {
       multiphaseEndpointRescueSeed = null;
       if (disableWarmStart) {
@@ -666,68 +802,6 @@ public class TPflash extends Flash {
               + ": acentric factor must be finite and greater than -1, got " + acentricFactor);
         }
       }
-    }
-  }
-
-  /**
-   * Solves a water-and-ion brine on its aqueous root when solvent vapor stability is satisfied.
-   *
-   * <p>
-   * Ions cannot enter a vapor phase. For a feed whose only neutral component is water, a gas phase is therefore
-   * excluded when aqueous water fugacity is below that of the pure-water vapor root. This avoids singular gas trials
-   * during reactive salt searches without accepting a metastable liquid above its boiling boundary. Any positive
-   * neutral solute, including a trace amount, retains the general multiphase algorithm. Caller phase options are
-   * preserved; reaction helpers are rebound after accepting the cloned aqueous state.
-   * </p>
-   *
-   * @return true when a stable aqueous endpoint was accepted
-   */
-  boolean flashStableWaterIonBrine() {
-    if (!(system instanceof neqsim.thermo.system.SystemElectrolyteCPAstatoil) || !system.hasIons()
-        || !system.isChemicalSystem() || system.isForcePhaseTypes() || solidCheck || system.doSolidPhaseCheck()
-        || system.getHydrateCheck() || system.isMultiphaseWaxCheck()) {
-      return false;
-    }
-    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
-      neqsim.thermo.component.ComponentInterface component = system.getComponent(componentIndex);
-      if (!"water".equals(component.getComponentName()) && !component.isIsIon() && component.getIonicCharge() == 0.0
-          && component.getNumberOfmoles() > 0.0) {
-        return false;
-      }
-    }
-    try {
-      SystemInterface aqueousCandidate = system.clone();
-      aqueousCandidate.setForceSinglePhase(PhaseType.AQUEOUS);
-      aqueousCandidate.setBeta(0, 1.0);
-      aqueousCandidate.init(1);
-      aqueousCandidate.chemicalReactionInit();
-      if (!aqueousCandidate.getChemicalReactionOperations().solveChemEq(0, 0)
-          || !aqueousCandidate.getChemicalReactionOperations().solveChemEq(0, 1)) {
-        return false;
-      }
-      aqueousCandidate.init(1);
-      PhaseInterface aqueous = aqueousCandidate.getPhase(0);
-      int waterIndex = aqueous.getComponent("water").getComponentNumber();
-      SystemInterface vaporCandidate = aqueousCandidate.clone();
-      vaporCandidate.isChemicalSystem(false);
-      vaporCandidate.setEmptyFluid();
-      vaporCandidate.addComponent(waterIndex, aqueousCandidate.getTotalNumberOfMoles());
-      vaporCandidate.setForceSinglePhase(PhaseType.GAS);
-      vaporCandidate.init(1);
-      PhaseInterface vapor = vaporCandidate.getPhase(0);
-      double aqueousWaterFugacity = aqueous.getFugacity(waterIndex);
-      double vaporWaterFugacity = vapor.getFugacity(waterIndex);
-      if (!(aqueousWaterFugacity > 0.0) || !Double.isFinite(aqueousWaterFugacity) || !(vaporWaterFugacity > 0.0)
-          || !Double.isFinite(vaporWaterFugacity) || aqueousWaterFugacity > vaporWaterFugacity) {
-        return false;
-      }
-      system.setTotalNumberOfMoles(aqueousCandidate.getTotalNumberOfMoles());
-      copyFlashStateFrom(aqueousCandidate);
-      system.chemicalReactionInit();
-      return true;
-    } catch (RuntimeException ex) {
-      logger.debug("Aqueous brine endpoint trial failed: {}", ex.getMessage());
-      return false;
     }
   }
 
@@ -977,6 +1051,13 @@ public class TPflash extends Flash {
       throw new UnsupportedOperationException(
           "Direct EOS-GE TPflash does not support solid or wax phase calculations; disable solid and wax checks.");
     }
+    if (!solidCheck && AqueousReactionEquilibrium.isApplicable(system)) {
+      AqueousReactionEquilibrium reactionEquilibrium = new AqueousReactionEquilibrium(system);
+      reactionEquilibrium.run();
+      tm = new double[] {reactionEquilibrium.getMinimumTrialDistance()};
+      recordTangentPlaneDistances();
+      return;
+    }
     findLowestGibbsPhaseIsChecked = false;
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
@@ -988,12 +1069,35 @@ public class TPflash extends Flash {
       gammaPhiModel.prepareGammaPhiFlash();
     }
     system.init(1);
+    if (system.hasIons()) {
+      FlashPhaseConstraints constraints = FlashPhaseConstraints.capture(system);
+      if (!constraints.supportsTwoPhaseSplit()) {
+        throw new IllegalStateException("Ionic flash requires an initialized aqueous material phase");
+      }
+      system.setPhaseType(constraints.getAqueousPhase(), PhaseType.AQUEOUS);
+      for (int component = 0; component < system.getNumberOfComponents(); component++) {
+        if (FlashPhaseConstraints.isIon(system.getPhase(0).getComponent(component))) {
+          system.getPhase(0).getComponent(component).setK(constrainedIonicK());
+          system.getPhase(1).getComponent(component).setK(constrainedIonicK());
+        }
+      }
+    }
+
+    int aqueousReference = system.hasPhaseType(PhaseType.AQUEOUS)
+        ? FlashPhaseConstraints.capture(system).getAqueousPhase()
+        : -1;
+    if (aqueousReference >= 0) {
+      recordConstrainedAqueousReferenceStability(aqueousReference);
+    }
 
     if ((system.getPhase(0).getGibbsEnergy() * (1.0 - Math.signum(system.getPhase(0).getGibbsEnergy()) * 1e-8)) < system
         .getPhase(1).getGibbsEnergy()) {
       minGibbsPhase = 0;
     } else {
       minGibbsPhase = 1;
+    }
+    if (system.hasIons()) {
+      minGibbsPhase = FlashPhaseConstraints.capture(system).getAqueousPhase();
     }
     // logger.debug("minimum gibbs phase " + minGibbsPhase);
     minimumGibbsEnergy = system.getPhase(minGibbsPhase).getGibbsEnergy();
@@ -1095,7 +1199,7 @@ public class TPflash extends Flash {
     } else {
       for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
         // Skip ions in TPD calculation - they don't participate in VLE
-        if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+        if (FlashPhaseConstraints.isIon(system.getPhase(0).getComponent(i))) {
           continue;
         }
         if (system.getComponent(i).getz() > 1e-50) {
@@ -1113,7 +1217,7 @@ public class TPflash extends Flash {
         if (tpdx < 0) {
           for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             // Preserve ion K-values - they don't participate in VLE
-            if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+            if (FlashPhaseConstraints.isIon(system.getPhase(0).getComponent(i))) {
               continue;
             }
             system.getPhase(0).getComponent(i).setK(
@@ -1124,7 +1228,7 @@ public class TPflash extends Flash {
         } else if (tpdy < 0) {
           for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             // Preserve ion K-values - they don't participate in VLE
-            if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+            if (FlashPhaseConstraints.isIon(system.getPhase(0).getComponent(i))) {
               continue;
             }
             system.getPhase(0).getComponent(i).setK(
@@ -1138,7 +1242,7 @@ public class TPflash extends Flash {
       }
     }
 
-    if (gammaPhiModel == null
+    if (gammaPhiModel == null && !system.hasIons()
         && (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta()))) {
       boolean isStable;
       try {
@@ -1235,10 +1339,11 @@ public class TPflash extends Flash {
     gibbsEnergy = system.getGibbsEnergy();
     gibbsEnergyOld = gibbsEnergy;
 
-    PhaseType originalPhaseType0 = system.getPhase(0).getType();
+    PhaseType originalPhaseType0 = system instanceof EosGeFlashModel ? system.getPhaseType(0)
+        : system.getPhase(0).getType();
     double gasgib = 0.0;
     double liqgib = 0.0;
-    if (gammaPhiModel == null) {
+    if (gammaPhiModel == null && !(system instanceof EosGeFlashModel)) {
       // Checks if gas or oil is the most stable phase for the ordinary EOS flash.
       gasgib = system.getPhase(0).getGibbsEnergy();
       system.setPhaseType(0, PhaseType.LIQUID);
@@ -1255,7 +1360,7 @@ public class TPflash extends Flash {
         system.setPhaseType(0, PhaseType.OIL);
       }
     } else {
-      // Direct gamma-phi iteration owns a fixed EOS-vapour/GE-liquid topology. Trying a liquid
+      // EOS-GE models own a fixed EOS-vapour/GE-liquid topology. Trying a liquid
       // cubic root here changes the vapour reference used to form K = phi_liquid / phi_vapour.
       system.setPhaseType(0, originalPhaseType0);
     }
@@ -1295,7 +1400,8 @@ public class TPflash extends Flash {
         // A direct gamma-phi model owns its K-value update, damping and vapour reference. The
         // generic cubic-EOS Newton solver does not implement that contract and must not replace it.
         if (iterations < activeNewtonLimit || gammaPhiModel != null || system.isChemicalSystem()
-            || !system.isImplementedCompositionDeriativesofFugacity()) {
+            || !system.isImplementedCompositionDeriativesofFugacity()
+            || (system.hasIons() && !FlashPhaseConstraints.capture(system).supportsTwoPhaseSplit())) {
           if (timeFromLastGibbsFail > 6 && (iterations % activeAccelerateInterval) == 0
               && !(system.isChemicalSystem() || system.doSolidPhaseCheck()) && gammaPhiModel == null) {
             accselerateSucsSubs();
@@ -1371,7 +1477,7 @@ public class TPflash extends Flash {
       throw new IllegalStateException("Direct EOS-GE TPflash did not produce an acceptable state: "
           + gammaPhiModel.getGammaPhiFlashDiagnostics(deviation, phaseFractionMinimumLimit));
     }
-    if (system.doMultiPhaseCheck()) {
+    if (system.doMultiPhaseCheck() || (system.hasIons() && !(system instanceof EosGeFlashModel))) {
       FlashPhaseState balancedReference = balancedReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
@@ -1382,7 +1488,7 @@ public class TPflash extends Flash {
       rescueSinglePhaseMultiphaseEndpoint();
       // rescueSpuriousMultiphaseEndpoint() is called once at the end of runInternal()
       // after orderByDensity(), so it is intentionally not repeated here.
-    } else {
+    } else if (!(system instanceof EosGeFlashModel)) {
       try {
         // Checks if gas or oil is the most stable phase
         if (system.getPhase(0).getType() == PhaseType.GAS) {
@@ -1462,7 +1568,6 @@ public class TPflash extends Flash {
     restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterRichInput);
     normalizeQualifiedNeutralSinglePhaseEndpoint();
     polishNearCriticalNeutralTwoPhaseEndpoint();
-    refineIonicGasAqueousEndpoint();
     rescueWaterRichMissingAqueousPhase();
 
     // TPmultiflash already finalized coupled chemistry on a multiphase configuration. For an
@@ -1481,240 +1586,6 @@ public class TPflash extends Flash {
         logger.warn("Final chemical eq init failed: " + ex.getMessage());
       }
     }
-  }
-
-  /**
-   * Restores constrained material balance and fugacity equilibrium for a non-reactive ionic GAS+AQUEOUS endpoint.
-   *
-   * <p>
-   * Ionic components are physically restricted to the aqueous phase. Treating their phase compositions as ordinary
-   * normalized mole fractions after the two-phase solve changes the non-ionic compositions without updating the phase
-   * fraction, so the returned endpoint can be normalized yet fail component balance. This refinement solves the
-   * two-phase Rachford-Rice equation with {@code K_ion = 0}; molecular K-values continue to come from the two phases'
-   * fugacity coefficients. A safeguarded bisection keeps beta inside its physical interval, while successive
-   * substitution updates the molecular K-values.
-   * </p>
-   */
-  private void refineIonicGasAqueousEndpoint() {
-    if (system.isChemicalSystem() || !system.hasIons() || system.getNumberOfPhases() != 2
-        || !system.hasPhaseType(PhaseType.GAS) || !system.hasPhaseType(PhaseType.AQUEOUS)) {
-      return;
-    }
-
-    int gasPhase = system.getPhaseNumberOfPhase("gas");
-    int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
-    int componentCount = system.getPhase(0).getNumberOfComponents();
-    double[] equilibriumRatios = new double[componentCount];
-    double[] originalBeta = {system.getBeta(0), system.getBeta(1)};
-    double[][] originalComposition = new double[2][componentCount];
-    for (int phase = 0; phase < 2; phase++) {
-      for (int component = 0; component < componentCount; component++) {
-        originalComposition[phase][component] = system.getPhase(phase).getComponent(component).getx();
-      }
-    }
-    double originalGibbsEnergy = system.getGibbsEnergy();
-    // Gibbs energies can only rank states with the same conserved inventory. A
-    // non-conservative reference must not veto a converged, balanced refinement.
-    double originalMaterialResidual = maximumComponentMaterialBalanceResidual(system);
-    boolean originalInventoryValid = Double.isFinite(originalMaterialResidual) && originalMaterialResidual <= 1.0e-10;
-    boolean converged = false;
-    boolean failed = false;
-
-    for (int iteration = 0; iteration < 100; iteration++) {
-      try {
-        system.init(1);
-      } catch (Exception ex) {
-        logger.warn("Ionic endpoint refinement init failed: " + ex.getMessage());
-        failed = true;
-        break;
-      }
-
-      for (int component = 0; component < componentCount; component++) {
-        boolean ion = system.getPhase(0).getComponent(component).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(component).isIsIon();
-        if (ion) {
-          equilibriumRatios[component] = 0.0;
-          continue;
-        }
-        double gasFugacityCoefficient = system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
-        double aqueousFugacityCoefficient = system.getPhase(aqueousPhase).getComponent(component)
-            .getFugacityCoefficient();
-        if (!(gasFugacityCoefficient > 0.0) || !(aqueousFugacityCoefficient > 0.0)
-            || !Double.isFinite(gasFugacityCoefficient) || !Double.isFinite(aqueousFugacityCoefficient)) {
-          failed = true;
-          break;
-        }
-        equilibriumRatios[component] = Math.max(1.0e-50,
-            Math.min(1.0e50, aqueousFugacityCoefficient / gasFugacityCoefficient));
-      }
-      if (failed) {
-        break;
-      }
-
-      double gasBeta = solveIonicGasBeta(equilibriumRatios);
-      if (!Double.isFinite(gasBeta)) {
-        failed = true;
-        break;
-      }
-      double maxChange = Math.abs(gasBeta - system.getBeta(gasPhase));
-      system.setBeta(gasPhase, gasBeta);
-      system.setBeta(aqueousPhase, 1.0 - gasBeta);
-
-      for (int component = 0; component < componentCount; component++) {
-        double z = system.getPhase(0).getComponent(component).getz();
-        double denominator = 1.0 + gasBeta * (equilibriumRatios[component] - 1.0);
-        if (!(denominator > 0.0) || !Double.isFinite(denominator)) {
-          failed = true;
-          break;
-        }
-        double aqueousComposition = z / denominator;
-        double gasComposition = equilibriumRatios[component] * aqueousComposition;
-        maxChange = Math.max(maxChange,
-            Math.abs(aqueousComposition - system.getPhase(aqueousPhase).getComponent(component).getx()));
-        maxChange = Math.max(maxChange,
-            Math.abs(gasComposition - system.getPhase(gasPhase).getComponent(component).getx()));
-        system.getPhase(aqueousPhase).getComponent(component).setx(aqueousComposition);
-        system.getPhase(gasPhase).getComponent(component).setx(gasComposition);
-      }
-      if (failed) {
-        break;
-      }
-
-      if (maxChange < 1.0e-12) {
-        converged = true;
-        break;
-      }
-    }
-
-    if (!failed) {
-      try {
-        system.init(1);
-      } catch (Exception ex) {
-        logger.warn("Final ionic endpoint refinement init failed: " + ex.getMessage());
-        failed = true;
-      }
-    }
-    double refinedGibbsEnergy = system.getGibbsEnergy();
-    double gibbsTolerance = Math.max(1.0e-8, Math.abs(originalGibbsEnergy) * 1.0e-12);
-    if (failed || !converged || !isValidIonicGasAqueousEndpoint(gasPhase, aqueousPhase)
-        || !Double.isFinite(refinedGibbsEnergy)
-        || (originalInventoryValid && refinedGibbsEnergy > originalGibbsEnergy + gibbsTolerance)) {
-      for (int phase = 0; phase < 2; phase++) {
-        system.setBeta(phase, originalBeta[phase]);
-        for (int component = 0; component < componentCount; component++) {
-          system.getPhase(phase).getComponent(component).setx(originalComposition[phase][component]);
-        }
-      }
-      try {
-        system.init(1);
-      } catch (Exception ex) {
-        logger.warn("Ionic endpoint rollback init failed: " + ex.getMessage());
-      }
-      logger.warn("Rejected non-converged or invalid ionic GAS+AQUEOUS endpoint refinement");
-    }
-  }
-
-  /**
-   * Checks closure of a refined non-reactive ionic GAS+AQUEOUS endpoint.
-   *
-   * @param gasPhase gas phase index
-   * @param aqueousPhase aqueous phase index
-   * @return true when phase normalization, material balance, ion confinement, and molecular fugacity equality pass
-   */
-  private boolean isValidIonicGasAqueousEndpoint(int gasPhase, int aqueousPhase) {
-    double betaSum = system.getBeta(gasPhase) + system.getBeta(aqueousPhase);
-    if (!Double.isFinite(betaSum) || Math.abs(betaSum - 1.0) > 1.0e-12) {
-      return false;
-    }
-    for (int phase : new int[] {gasPhase, aqueousPhase}) {
-      double compositionSum = 0.0;
-      for (int component = 0; component < system.getPhase(phase).getNumberOfComponents(); component++) {
-        double composition = system.getPhase(phase).getComponent(component).getx();
-        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
-          return false;
-        }
-        compositionSum += composition;
-      }
-      if (Math.abs(compositionSum - 1.0) > 1.0e-12) {
-        return false;
-      }
-    }
-    for (int component = 0; component < system.getPhase(0).getNumberOfComponents(); component++) {
-      double gasComposition = system.getPhase(gasPhase).getComponent(component).getx();
-      double aqueousComposition = system.getPhase(aqueousPhase).getComponent(component).getx();
-      double reconstructed = system.getBeta(gasPhase) * gasComposition
-          + system.getBeta(aqueousPhase) * aqueousComposition;
-      double z = system.getPhase(0).getComponent(component).getz();
-      if (Math.abs(reconstructed - z) > 1.0e-10) {
-        return false;
-      }
-      boolean ion = system.getPhase(0).getComponent(component).getIonicCharge() != 0
-          || system.getPhase(0).getComponent(component).isIsIon();
-      if (ion) {
-        if (gasComposition > 1.0e-40) {
-          return false;
-        }
-        continue;
-      }
-      if (gasComposition > 1.0e-30 && aqueousComposition > 1.0e-30) {
-        double gasFugacity = gasComposition
-            * system.getPhase(gasPhase).getComponent(component).getFugacityCoefficient();
-        double aqueousFugacity = aqueousComposition
-            * system.getPhase(aqueousPhase).getComponent(component).getFugacityCoefficient();
-        if (!(gasFugacity > 0.0) || !(aqueousFugacity > 0.0) || !Double.isFinite(gasFugacity)
-            || !Double.isFinite(aqueousFugacity) || Math.abs(Math.log(gasFugacity / aqueousFugacity)) > 1.0e-8) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  /**
-   * Solves the two-phase Rachford-Rice equation with ionic K-values fixed to zero.
-   *
-   * @param equilibriumRatios gas-to-aqueous equilibrium ratios
-   * @return gas phase fraction, or NaN when no interior two-phase root exists
-   */
-  private double solveIonicGasBeta(double[] equilibriumRatios) {
-    double lowerBeta = phaseFractionMinimumLimit;
-    double upperBeta = 1.0 - phaseFractionMinimumLimit;
-    double lowerResidual = ionicRachfordRiceResidual(lowerBeta, equilibriumRatios);
-    double upperResidual = ionicRachfordRiceResidual(upperBeta, equilibriumRatios);
-    if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual) || lowerResidual <= 0.0
-        || upperResidual >= 0.0) {
-      return Double.NaN;
-    }
-    for (int iteration = 0; iteration < 100; iteration++) {
-      double beta = 0.5 * (lowerBeta + upperBeta);
-      double residual = ionicRachfordRiceResidual(beta, equilibriumRatios);
-      if (!Double.isFinite(residual)) {
-        return Double.NaN;
-      }
-      if (residual > 0.0) {
-        lowerBeta = beta;
-      } else {
-        upperBeta = beta;
-      }
-    }
-    return 0.5 * (lowerBeta + upperBeta);
-  }
-
-  /**
-   * Evaluates the Rachford-Rice residual for an ionic gas/aqueous split.
-   *
-   * @param gasBeta trial gas phase fraction
-   * @param equilibriumRatios gas-to-aqueous equilibrium ratios
-   * @return Rachford-Rice residual
-   */
-  private double ionicRachfordRiceResidual(double gasBeta, double[] equilibriumRatios) {
-    double residual = 0.0;
-    for (int component = 0; component < equilibriumRatios.length; component++) {
-      double z = system.getPhase(0).getComponent(component).getz();
-      double kMinusOne = equilibriumRatios[component] - 1.0;
-      residual += z * kMinusOne / (1.0 + gasBeta * kMinusOne);
-    }
-    return residual;
   }
 
   /**
