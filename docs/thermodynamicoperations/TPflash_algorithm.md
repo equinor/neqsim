@@ -2913,6 +2913,22 @@ balance within `1e-10`, and interphase log-fugacity residual below `1e-8`, toget
 existing distinct-phase and candidate-selection checks. These stricter tolerances apply to
 this repair only; ordinary solver tolerances are unchanged.
 
+Two consecutive solves that fail to reduce the larger material/fugacity residual by at
+least one part per million stop the repair early. Non-finite residuals also stop it. The
+same strict acceptance and final failure checks apply. A qualified trace-water gas/aqueous
+candidate is copied directly, just like an oil/aqueous candidate; it is not discarded by
+replaying the ordinary flash used for water-rich cross-algorithm recovery.
+
+The public reservoir regression exposed an upstream inventory problem in
+`SystemThermo.setTotalFlowRate`: subtracting a reservoir-sized component amount to obtain
+a stream-sized flow loses significant digits. Repeated beta solves cannot close a feed
+whose overall fractions do not sum to one. Flow scaling now rebuilds positive component
+amounts from normalized ratios, with no extra EOS initialization or system clone. The
+250 bara, 363.15 K gas-producer regression exercises extraction, both rate changes and
+repeated public TP flashes. Separate inventory tests cover initial amounts from `1e-12`
+to `1e18` mol and retain a `1e-10` mole-fraction nitrogen component. They check component
+ratios, total flow and normalization without loosening the flash contract.
+
 If repair was attempted, the public `TPflash.run()` return also checks the final endpoint after
 subsequent phase selection and cleanup. This final check permits one, two or three phases;
 it does not force the repaired two-phase topology. An unqualified endpoint raises

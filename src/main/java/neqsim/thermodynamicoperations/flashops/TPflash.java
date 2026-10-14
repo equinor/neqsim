@@ -2124,7 +2124,7 @@ public class TPflash extends Flash {
       if (candidateConverged && restoresCollapsedAqueousPhase && candidate.getNumberOfPhases() == 2
           && isBalancedEquilibriumCandidate(candidate) && shouldAcceptWaterRichCandidate(candidate,
               referenceGibbsEnergy, materialBalanceInvalid, incipientCpaAqueousTrial)) {
-        if (gasAqueousMultiphaseEndpoint) {
+        if (ordinaryFallback) {
           runAcceptedOrdinaryWaterRichFallback(candidate);
         } else {
           copyFlashStateFrom(candidate);
@@ -2375,6 +2375,8 @@ public class TPflash extends Flash {
     candidate.setBeta(1, 0.5);
     candidate.init(1);
     operation.setDoubleArrays();
+    double previousResidual = Double.POSITIVE_INFINITY;
+    int stalledSolves = 0;
     for (int iteration = 0; iteration < MAX_TRACE_WATER_REPAIR_SOLVES; iteration++) {
       double correction = operation.solveBeta();
       if (!Double.isFinite(correction)) {
@@ -2384,6 +2386,16 @@ public class TPflash extends Flash {
         logger.debug("Repaired trace-water aqueous split after {} beta solves", iteration + 1);
         return true;
       }
+      double residual = Math.max(maximumComponentMaterialBalanceResidual(candidate),
+          maximumLogFugacityResidual(candidate.getPhase(0), candidate.getPhase(1)));
+      if (!Double.isFinite(residual)) {
+        break;
+      }
+      stalledSolves = residual >= previousResidual * (1.0 - 1.0e-6) ? stalledSolves + 1 : 0;
+      if (stalledSolves >= 2) {
+        break;
+      }
+      previousResidual = residual;
     }
     logger.debug("Trace-water aqueous repair exhausted; component residual={}",
         maximumComponentMaterialBalanceResidual(candidate));

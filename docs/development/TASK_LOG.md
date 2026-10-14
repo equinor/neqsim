@@ -1677,3 +1677,21 @@ SRK/PR/CPA lifecycle and pump closure checks plus explicit failure/guard contrac
 log-fugacity residual `1e-8`; ordinary TP/PS tolerances are unchanged. Expanded endpoint benchmark
 records allocation and p95 alongside numerical validity. Synthetic public cases qualify lifecycle
 behavior, not the unavailable original process snapshot or experimental phase behavior.
+
+
+### 2026-10-14 — PR 4320 reservoir compatibility and bounded repair cost
+**Type:** B (Bug fix)
+**Keywords:** trace water, TPflash, flow scaling, reservoir, conservation, performance
+**Solution:** Corrected cancellation in `SystemThermo.setTotalFlowRate` by rebuilding positive
+component inventories. Trace-water gas/aqueous recovery now retains its qualified candidate
+instead of replaying the ordinary flash; stalled/non-finite repairs stop early. Acceptance
+tolerances and final failure reporting remain unchanged.
+**Validation:** The public reservoir reproducer fails at exact prior head `645e5e6`; the two
+updated/new test classes expose seven failures there. The candidate passes 397 focused and
+integration tests with no failures/errors (one pre-existing disabled display test), including
+all previously failing reservoir/well/field classes. Changed Java compiles with `--release 8`;
+the complete Maven build and test execution use Java 17. Numerical qualification includes
+component inventory, normalization, equilibrium, repeated state changes and pump closure.
+**Documentation impact:** Flow-setter guide and TP-flash algorithm document the corrected
+inventory scaling, bounded failure handling and candidate transfer. Exact-head CI and paired
+full-flash/process timings are recorded in PR 4320; this is not a global stability certificate.

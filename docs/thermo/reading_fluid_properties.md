@@ -547,6 +547,12 @@ fluid.setPressure(725.0, "psia");     // 725 psi absolute
 
 #### Flow Rate Setters
 
+For a nonempty fluid, changing the total flow preserves the component ratios, including
+trace components. The setter rebuilds positive component inventories instead of subtracting
+nearly equal amounts. This avoids loss of precision when a reservoir inventory is converted
+to a much smaller producer flow. Unit conversion and the existing initialization behavior
+are unchanged; reflash after changing temperature, pressure or composition.
+
 | Method | Description | Supported Units |
 |--------|-------------|-----------------|
 | `setTotalFlowRate(value, unit)` | Set total flow | `"kg/sec"`, `"kg/min"`, `"kg/hr"`, `"kg/day"`, `"m3/sec"`, `"m3/min"`, `"m3/hr"`, `"Sm3/sec"`, `"Sm3/hr"`, `"Sm3/day"`, `"MSm3/day"`, `"MSm3/hr"`, `"mole/sec"`, `"mol/sec"`, `"mole/min"`, `"mol/min"`, `"mole/hr"`, `"mol/hr"`, `"kmole/sec"`, `"kmol/sec"`, `"kmole/min"`, `"kmol/min"`, `"kmole/hr"`, `"kmol/hr"`, `"kmole/day"`, `"kmol/day"`, `"idSm3/hr"`, `"gallons/min"` |

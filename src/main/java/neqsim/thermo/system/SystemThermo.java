@@ -6046,7 +6046,14 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Nonempty feeds are scaled by rebuilding positive component amounts from their normalized overall fractions. This
+   * preserves trace components and avoids cancellation when reservoir inventories become small stream rates.
+   * </p>
+   */
   @Override
   public void setTotalFlowRate(double flowRate, String flowunit) {
     init(0);
@@ -6069,18 +6076,23 @@ public abstract class SystemThermo implements SystemInterface {
     }
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), density, 0);
     double SIval = unit.getSIvalue();
-    double totalNumberOfMolesLocal = totalNumberOfMoles;
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (flowRate < 1e-100) {
-        setEmptyFluid();
-      } else if (totalNumberOfMolesLocal > 1e-100) {
-        // (SIval / totalNumberOfMolesLocal - 1) * ...
-        double change = SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-            - getPhase(0).getComponent(i).getNumberOfmoles();
-        if (Math.abs(change) > 1e-12) {
-          addComponent(i, change);
-        }
-      } else {
+    if (flowRate < 1e-100) {
+      setEmptyFluid();
+      return;
+    }
+    if (totalNumberOfMoles > 1e-100) {
+      // Rebuild with positive inventories. Subtracting a reservoir-sized inventory to obtain
+      // a stream-sized rate loses significant digits and can make the next TP flash non-conservative.
+      double sumz = 0.0;
+      for (int i = 0; i < numberOfComponents; i++) {
+        sumz += getPhase(0).getComponent(i).getz();
+      }
+      setEmptyFluid();
+      for (int i = 0; i < numberOfComponents; i++) {
+        addComponent(i, SIval * (getPhase(0).getComponent(i).getz() / sumz));
+      }
+    } else {
+      for (int i = 0; i < numberOfComponents; i++) {
         addComponent(i, SIval);
       }
     }

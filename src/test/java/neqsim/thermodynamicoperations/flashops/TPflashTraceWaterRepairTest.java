@@ -8,7 +8,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -28,6 +30,33 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 class TPflashTraceWaterRepairTest {
+  /** Reservoir-to-producer scaling must leave a normalized feed for the public TP flash. */
+  @Test
+  void publicReservoirGasProducerPreservesFeedAndEquilibrium() {
+    SystemInterface fluid = new SystemSrkEos(363.15, 250.0);
+    fluid.addComponent("methane", 90.0);
+    fluid.addComponent("ethane", 6.0);
+    fluid.addComponent("propane", 3.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+    SimpleReservoir reservoir = new SimpleReservoir("public trace-water reservoir");
+    reservoir.setReservoirFluid(fluid, 3.0e8, 0.0, 1.0e7);
+    double[] expected = fluid.getPhase("gas").getMolarComposition();
+    StreamInterface producer = reservoir.addGasProducer("gas");
+    producer.setFlowRate(4.0, "MSm3/day");
+    SystemInterface gas = producer.getFluid();
+    TPflash flash = new TPflash(gas);
+    for (double temperature : new double[] {363.15, 363.151, 363.15}) {
+      gas.setTemperature(temperature);
+      flash.run();
+      assertQualifiedEndpoint(gas);
+      for (int i = 0; i < expected.length; i++) {
+        assertEquals(expected[i], gas.getPhase(0).getComponent(i).getz(), 1.0e-12);
+      }
+    }
+  }
+
   /**
    * Builds and flashes a synthetic trace-water oil using the requested EOS.
    *
@@ -169,6 +198,34 @@ class TPflashTraceWaterRepairTest {
   }
 
   /**
+   * A repaired gas/aqueous active set must be copied without replaying an ordinary flash.
+   *
+   * @throws Exception if the recovery contract cannot be invoked
+   */
+  @Test
+  void gasAqueousRepairDoesNotDiscardQualifiedCandidate() throws Exception {
+    CountingSystem candidate = new CountingSystem();
+    candidate.setTemperature(363.15);
+    candidate.setPressure(250.0);
+    candidate.addComponent("methane", 0.993);
+    candidate.addComponent("water", 0.007);
+    candidate.setMixingRule(2);
+    candidate.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(candidate).TPflash();
+    assertQualified(candidate);
+    double referenceBeta = candidate.getBeta(0);
+    candidate.setBeta(0, 0.5);
+    candidate.setBeta(1, 0.5);
+    candidate.clones = 0;
+    candidate.initializations = 0;
+    invoke(new TPflash(candidate), "rescueWaterRichEndpoint", new Class<?>[0]);
+    assertQualified(candidate);
+    assertEquals(referenceBeta, candidate.getBeta(0), 1.0e-10);
+    assertEquals(1, candidate.clones, "Only the detached repair candidate is needed");
+    assertEquals(1, candidate.initializations, "Copying the accepted endpoint needs one live initialization");
+  }
+
+  /**
    * Inspects a private guard only for explicit numerical contract tests.
    *
    * @param flash operation owning the guard
@@ -192,6 +249,16 @@ class TPflashTraceWaterRepairTest {
   private void assertQualified(SystemInterface fluid) {
     assertEquals(2, fluid.getNumberOfPhases());
     assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+    assertQualifiedEndpoint(fluid);
+  }
+
+  /**
+   * Checks closure while allowing a saturated producer to retain a single gas phase.
+   *
+   * @param fluid returned equilibrium to inspect
+   */
+  private void assertQualifiedEndpoint(SystemInterface fluid) {
+    assertTrue(fluid.getNumberOfPhases() >= 1 && fluid.getNumberOfPhases() <= 3);
     double betaSum = 0.0;
     for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
       double beta = fluid.getBeta(phase);
