@@ -1,12 +1,14 @@
 package neqsim.thermo.phase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
@@ -141,6 +143,54 @@ class ElectrolyteLongRangeDerivativeTest {
     assertEquals(0.0, phase.FLR(), 0.0);
     assertEquals(0.0, phase.dFLRdVdV(), 0.0);
     assertEquals(0.0, phase.dFLRdTdT(), 0.0);
+  }
+
+  /**
+   * Rejects extrapolated solvent permittivity that cannot admit a physical positive shielding root.
+   *
+   * @param cpa whether to include CPA association
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void ionicShieldingRejectsNegativeDielectricExtrapolation(boolean cpa) {
+    SystemInterface fluid = cpa ? new SystemElectrolyteCPAstatoil(298.15, 50.0)
+        : new SystemFurstElectrolyteEos(298.15, 50.0);
+    fluid.addComponent("water", 1.0);
+    fluid.addComponent("Na+", 0.018);
+    fluid.addComponent("Cl-", 0.018);
+    fluid.setMixingRule(cpa ? 10 : 2);
+    fluid.setForceSinglePhase(PhaseType.AQUEOUS);
+    fluid.init(1);
+    PhaseModifiedFurstElectrolyteEos phase = phase(fluid);
+    phase.setTemperature(1000.0);
+    IllegalStateException error = assertThrows(IllegalStateException.class, phase::volInit);
+    assertTrue(error.getMessage().contains("finite positive dielectric constant"));
+    assertTrue(error.getMessage().contains("1000.0 K"));
+    assertTrue(phase.getDielectricConstant() < 0.0);
+  }
+
+  /**
+   * Ion-free states retain their exact zero shielding even outside the solvent dielectric fit's range.
+   *
+   * @param cpa whether to include CPA association
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void zeroIonicInventoryDoesNotRequireDielectricShielding(boolean cpa) {
+    SystemInterface fluid = cpa ? new SystemElectrolyteCPAstatoil(298.15, 50.0)
+        : new SystemFurstElectrolyteEos(298.15, 50.0);
+    fluid.addComponent("water", 1.0);
+    fluid.addComponent("Na+", 0.0);
+    fluid.addComponent("Cl-", 0.0);
+    fluid.setMixingRule(cpa ? 10 : 2);
+    fluid.setForceSinglePhase(PhaseType.AQUEOUS);
+    fluid.init(1);
+    PhaseModifiedFurstElectrolyteEos phase = phase(fluid);
+    phase.setTemperature(1000.0);
+    phase.volInit();
+    assertTrue(phase.getDielectricConstant() < 0.0);
+    assertEquals(0.0, phase.getShieldingParameter(), 0.0);
+    assertEquals(0.0, phase.FLR(), 0.0);
   }
 
   /**
