@@ -943,7 +943,7 @@
               "double"
             ],
             "expected": 305976.87659290305,
-            "absoluteTolerance": 1e-06
+            "absoluteTolerance": 1e-6
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
@@ -1282,7 +1282,7 @@
               "double"
             ],
             "expected": 2865418.4358585374,
-            "absoluteTolerance": 1e-06
+            "absoluteTolerance": 1e-6
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
@@ -1325,7 +1325,7 @@
               "double"
             ],
             "expected": 2520842.0799756097,
-            "absoluteTolerance": 1e-06
+            "absoluteTolerance": 1e-6
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
@@ -1353,6 +1353,25 @@
         "src/test/java/neqsim/process/equipment/compressor/MinimumFlowSpillTest.java"
       ],
       "limitations": "Java/Python object API discovered through inspectApi; not a runProcess JSON equipment type. Fixed minimum, same-composition return at suction state; no dynamic anti-surge qualification."
+    },
+    {
+      "id": "pipeline-pig-mechanics-discovery",
+      "title": "Experimental prescribed-pressure pig mechanics (API discovery only)",
+      "domain": "flow-assurance",
+      "tool": "inspectApi",
+      "apis": [
+        "neqsim.process.equipment.pipeline.PigMotion"
+      ],
+      "skills": [
+        "neqsim-flow-assurance"
+      ],
+      "agents": [
+        "flow-assurance"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/process/equipment/pipeline/PigMotionTest.java"
+      ],
+      "limitations": "Experimental Java/JPype mechanical submodel only. inspectApi discovers constructors and methods; no curated execution operation, TwoFluidPipe coupling, bypass, receiver, experimental pigging qualification or physical flowline-restart claim. See docs/process/pig-motion.md."
     },
     {
       "id": "pipeline-film-transfer",

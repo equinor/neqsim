@@ -1032,6 +1032,68 @@ The evaluator does not optimize the vector, interpolate discrete line-ups, chang
 hydraulic correlations, or establish operating approval. Validate conservation, constraint
 residuals, product specifications and nearby operating points with the underlying NeqSim model.
 
+### Search mixed continuous and discrete operating actions
+
+`ProcessModelOperatingPointOptimizer` composes the same atomic evaluator for a bounded local search
+that may include both continuous setpoints and exact discrete line-ups. Continuous coordinates use
+a shrinking fraction of their own declared ranges; discrete coordinates use only
+`ProcessModelOperatingAction.getAllowedValues()`. The optimizer stops immediately after incomplete
+restoration and reserves its final budgeted evaluation for replay of the selected feasible point.
+
+```python
+OperatingPointOptimizer = (
+    jneqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer
+)
+
+optimizer = OperatingPointOptimizer(
+    "field-operating-point",
+    "Field operating point",
+    "approved well envelopes and qualified line-ups",
+    allocation,
+)
+optimizer.setInitialCandidate([well_a_rate, well_b_rate])
+optimizer.setObjectiveIndex(0)
+optimizer.setInitialStepFraction(0.25)
+optimizer.setRelativeStepTolerance(1.0e-3)
+optimizer.setMaximumEvaluations(100)
+
+search = optimizer.optimize()
+if not search.isAcceptedPointReplayed():
+    raise RuntimeError(list(search.getDiagnostics()))
+
+accepted = list(search.getAcceptedCandidateValues())
+optimizer_evidence = dict(search.getOptimizerEvidence("documentation-cycle"))
+proposal = {
+    "setpoints": dict(zip(["well-a-rate", "well-b-rate"], accepted)),
+    "optimizer_evidence": optimizer_evidence,
+}
+```
+
+The evidence map uses the exact keys required by the continuous production guard. Its booleans are
+derived from the terminal replay and cannot become true for an unconverged, infeasible, non-finite,
+partially applied, partially restored, or unreplayed point. `evaluation_count` includes the replay;
+`runtime_seconds` is measured wall-clock provenance for coordination with performance work, not a
+claim that the generic optimizer or simulator became faster.
+
+For post-search interpretation, construct `ProcessModelOperatingEnvelopeStudy` with the same action
+set evaluator. Its search-result overloads anchor one- or two-dimensional slices at
+`search.getAcceptedCandidateValues()`, while `getAcceptedPointBottleneck(search)` reads the leading
+unit-safe constraint directly from the terminal replay without another simulation. The handoff
+fails closed before mutation if the replay is incomplete, evaluator actions/objectives/constraints
+or required hydraulic bindings changed, installed-limit metadata changed, the current baseline is
+unconverged, or any baseline action value drifted. The runtime evaluator reference is deliberately
+transient, so a deserialized search remains immutable evidence but cannot authorize new model
+mutation. Rerun optimization after such a change; never reuse a stale accepted point.
+
+After one or more accepted-point slices complete, use
+`getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` to obtain a compact JSON-friendly
+multi-slice block. It includes the optimizer guard evidence, accepted-point bottleneck, axes,
+sampled points, exact rejection identities, bottleneck transitions, diagnostics, and measured
+search/envelope evaluation counts and runtimes. The call is read-only and requires the exact runtime
+study plus complete, uniquely addressed slices anchored at the accepted candidate. It rejects
+foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
+rather than combining it into a current cycle.
+
 ### Search a fixed-total continuous allocation
 
 `ProcessModelAllocationOptimizer` composes the atomic evaluator when all allocation actions are
@@ -1551,6 +1613,26 @@ on `ProcessSimulationEvaluator`.
 | `getRankedHydraulicConstraintsAtBestSampledObjective()` | Stable descending-utilization evidence at the best sampled objective |
 | `getInstalledCapacityEvidenceAtBestFeasible()` | Complete immutable installed-capacity evidence at the feasible incumbent |
 | `getInstalledCapacityEvidenceAtBestSampledObjective()` | Complete immutable installed-capacity evidence at the best sampled objective |
+
+### ProcessModelOperatingPointOptimizer
+
+| Method | Description |
+|--------|-------------|
+| `optimize()` | Run bounded deterministic mixed-action coordinate search through the atomic evaluator and replay the selected point |
+| `OperatingPointSearchResult.getCandidates()` | Complete immutable candidate, restoration, incumbent, and replay trace |
+| `getAcceptedPointReplay()` / `getAcceptedCandidateValues()` | Terminal replay evidence and defensive selected action vector; empty/null after failed acceptance |
+| `isConstraintEvidenceComplete()` / `isActionsComplete()` | Fail-closed terminal completeness checks used by live optimization |
+| `getOptimizerEvidence(cycleId)` | Exact current-cycle guard block with convergence, feasibility, finiteness, constraint/action completeness, recovery, replay, count, and runtime |
+
+### ProcessModelOperatingEnvelopeStudy accepted-point handoff
+
+| Method | Description |
+|--------|-------------|
+| `evaluateOneDimensional(actionId, values, search)` | Validate the accepted replay and sample one axis around its exact action vector |
+| `evaluateTwoDimensional(firstId, firstValues, secondId, secondValues, search)` | Validate the accepted replay and sample two axes around its exact action vector |
+| `getAcceptedPointBottleneck(search)` | Return the replayed point's unit-safe leading constraint without another model evaluation |
+| `SliceResult.toEvidenceMap()` | Return strict-JSON-friendly sampled points, exact leading/rejecting constraints, transitions, evaluation count, runtime, and recovery diagnostics |
+| `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` | Combine the current accepted point and one or more exact-runtime complete slices into one immutable live-task evidence block without rerunning the model |
 
 ### ProcessModelDebottleneckStudy
 

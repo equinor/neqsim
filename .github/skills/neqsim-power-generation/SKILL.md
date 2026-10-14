@@ -572,6 +572,22 @@ Use when the question is *"will power capacity bind?"* for a field profile (veri
 
 Note: jneqsim 3.5 has no `gasturbine` sub-package; run the catalog cross-check in an environment with a recent jar (3.18 in the shared venv), not in the model environment.
 
+## Added exhaust heat recovery for a heating-medium (HM) circuit (retrofit pattern)
+
+Use when the question is *"can we take more heat from a gas-turbine exhaust to cut electric-boiler or fired-heater duty?"* (verified on an NCS field centre with two LM2500+ class drivers, an OTSG feeding a steam turbine and an electrode boiler on a 136/152 C water HM loop).
+
+1. **Source term from the historian, not the catalog.** Fit exhaust mass flow and turbine exit temperature against load from GT-on hours (flow 77 kg/s and 505 C at 94 % load). `GasTurbineCatalog` LM2500PLUS_G4 gave -10 % flow / -2 % temperature versus the aged measured units; keep the measured fit and use the catalog only for the slope.
+2. **Heat above a minimum gas outlet temperature:** `Q = m * (h(T_exh) - h(T_out_min))` with T_out_min = HM return + 14 K pinch (about 150 C for a 136 C return). Use SRK or CoolProp on the combusted fuel gas; per turbine this is about 30 MW at 94 % load, five to seven times a typical 4-6 MW HM load.
+3. **Coil location sets the size.** A coil after an existing OTSG (stack end, gas about 173 C) has LMTD about 17 K and needs about 6x the area and 12x the weight of a hot-end coil upstream of the OTSG (LMTD about 325 K). Size with `A = Q / (U * LMTD)`, U about 28 W/m2K external area for a finned water coil, and compare both before costing.
+4. **Hot-end coil trades against steam power.** If an OTSG/steam turbine is in service, heat to the coil removes `yield` MWe per MW (measured 0.254 MWe/MW from ST output over heat to steam); with the OTSG out of service it costs nothing. Net electricity displaced = Q_HM / eta_EB - yield x Q_HM x (share of time OTSG in service). Check the OTSG state first - a long outage can be worth more than the project.
+5. **Validate the exhaust model on the steam side:** heat to steam (feedwater to steam enthalpy) divided by exhaust enthalpy drop to the OTSG outlet should close within 1-2 %; it did (0.996).
+6. **Back-pressure penalty:** about 0.2-0.6 % heat rate per 10 mbar added exhaust dp; extra fuel gas and CO2 are small (about 1.5 GWh/yr per 6.6 mbar) but need OEM acceptance. Add the dp only for the new coil, not the existing path.
+7. **Value depends on the share of the HM load that the electric boiler actually supplies:** the measured WHRU duty is not the EB duty. Get the EB electric power history before giving a final value; break-even was about 3.1 MW EB-served load post-tax.
+8. **CO2 depends on the grid factor:** on a Power-from-Shore platform the avoided CO2 is small at the Norwegian average factor (20-25 g/kWh, about 0.5 kt/yr for 30 GWh/yr) and large at a marginal factor (300 g/kWh, about 9 kt/yr); report both and the abatement cost on each basis.
+9. Tag naming pattern on the NCS field centre historian: `OSF-27-NRB -0831A` (GT load %), `OSF-27-NRA -0831A` (exhaust flow), `OSF-27-TI -275` (exhaust T), `OSF-55-FIC -0671` (OTSG feedwater), `OSF-55-TY -0685` (OTSG outlet T), `OSF-55-XI -0626` (steam turbine MW), `OSF-41-*` (HM system). Narrow prefix searches (`OSF-27-*`) work; broad `OSF-*` searches time out.
+
+Related: [`neqsim-heat-integration`](../neqsim-heat-integration/SKILL.md) for utility targeting and [`neqsim-energy-systems-and-electrification`](../neqsim-energy-systems-and-electrification/SKILL.md) for the electricity/CO2 side.
+
 ## Common Pitfalls
 
 | Pitfall | Solution |

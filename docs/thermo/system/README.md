@@ -343,6 +343,15 @@ double gasZ = fluid.getGasPhase().getZ();
 double liqRho = fluid.getLiquidPhase().getDensity("kg/m3");
 ```
 
+For an active phase, `getPhaseFraction(phaseName, "mass")` uses its mole fraction
+and molar mass relative to the overall molar mass, consistently with
+`getWtFraction(logicalPhaseNumber)`. It needs no density or transport-property
+initialization. Use `"mole"` for the mole fraction and `"volume"` for the fraction
+of EOS volume; mass fractions must not be reconstructed by mixing EOS volumes
+with volume-corrected densities. The same mass basis applies to fluid and solid
+phases, including wax. Check `hasPhaseType(phaseName)` before requesting a phase
+that may be absent. This behavior is covered by `NamedComponentWaxFractionTest`.
+
 ### Cloning
 
 ```java

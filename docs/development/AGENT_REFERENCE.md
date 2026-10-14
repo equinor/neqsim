@@ -526,11 +526,22 @@ results = {
     "agent_workflow_plan": {
         # How the task was solved — record the discovered/used agents & workflow
         # (from devtools/skill_search.py + devtools/agent_search.py). Feeds the report.
-        # "agents_used": [{"name": "process.model", "repo": "neqsim", "role": "build flowsheet",
-        #                  "loads_skills": ["neqsim-process-modeling"]}],
+        # `invocation`: "subagent" (invoked through the agent runtime), "pattern"
+        # (its workflow followed by hand - give a `reason`), "skill-only".
+        # The validator warns when a Standard/Comprehensive task lacks this block.
+        # "agents_used": [{"name": "process-model", "repo": "neqsim", "role": "build flowsheet",
+        #                  "invocation": "subagent", "loads_skills": ["neqsim-process-modeling"]},
+        #                 {"name": "enterprise-host-ullage-agent", "repo": "neqsim-enterprise-agents",
+        #                  "role": "host ullage", "invocation": "pattern",
+        #                  "reason": "agent not registered in this VS Code session"}],
         # "workflow_type": "composition_pattern",
-        # "workflow": "process.model -> mechanical.design",
-        # "rationale": "..."
+        # "workflow": "process-model -> mechanical-design",
+        # "rationale": "...",
+        # Governed evidence agents the task text cues (neqsim-task-workflow s5 table); the
+        # validator warns when a cue is present and the agent is neither used nor listed here.
+        # "evidence_sources": [{"agent": "enterprise-thelma-agent", "status": "used"},
+        #                      {"agent": "enterprise-pepo-agent", "status": "no_access",
+        #                       "reason": "PEPO bearer consent not granted"}]
     },
     "figure_captions": {
         # "plot.png": "Description of the figure"
@@ -1647,7 +1658,7 @@ git add <the reformatted files>
 - **Package and Update Python**: When the user says "package and update python" or similar, run these commands:
   ```powershell
   .\mvnw.cmd package -DskipTests
-   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.23.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\" -Force
+   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.25.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\" -Force
   ```
   This builds the NeqSim JAR and copies it to the Python neqsim package for immediate use. Note: the runtime loads `lib/*` (flat), so copy the JAR directly into `neqsim\lib\`, not a `java11`/`java8` subfolder.
 

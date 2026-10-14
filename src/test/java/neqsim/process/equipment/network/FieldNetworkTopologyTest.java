@@ -8,12 +8,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.FlowDirection;
 import neqsim.process.equipment.network.FieldNetworkTopology.NodeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.Service;
 import neqsim.process.equipment.network.FieldNetworkTopology.Severity;
 import neqsim.process.equipment.network.FieldNetworkTopology.ValidationIssue;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.subsea.PLEM;
 import neqsim.process.equipment.subsea.PLET;
 import neqsim.process.equipment.subsea.SubseaManifold;
@@ -273,5 +276,106 @@ class FieldNetworkTopologyTest {
     assertTrue(injection.getHydraulicNetwork().isConverged());
     assertEquals(3600.0, injection.getHydraulicNetwork().getPipeFlowRate("injection-line"), 1.0e-6);
     assertEquals(0.0, injection.getHydraulicNetwork().getMassBalanceError(), 1.0e-8);
+  }
+
+  /** Build and replay typed choke, pump and compressor elements without bypassing field identity. */
+  @Test
+  void buildsPoweredAndControlledEdgesOnCanonicalGraph() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("powered injection builders");
+    topology.getHydraulicNetwork().setFluidTemplate(gas());
+    topology.getHydraulicNetwork().setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    topology.addPressureSource("source", "HOST-601", NodeRole.INJECTION_SOURCE, Service.INJECTION, 60.0, 3600.0, 0.0);
+    topology.addJunction("pump-discharge", "P-601-D", NodeRole.JUNCTION, Service.INJECTION, 0.0);
+    topology.addJunction("compressor-discharge", "K-601-D", NodeRole.JUNCTION, Service.INJECTION, 0.0);
+    topology.addFixedPressureSink("injector", "XT-603", NodeRole.INJECTION_WELL, Service.INJECTION, 120.0, -200.0);
+
+    topology.addPumpDifferentialPressure("water-pump", "P-601", Service.INJECTION, FlowDirection.FROM_TO, "source",
+        "suction", "pump-discharge", "discharge", 40.0, 0.80);
+    topology.addCompressor("gas-compressor", "K-601", Service.INJECTION, FlowDirection.FROM_TO, "pump-discharge",
+        "suction", "compressor-discharge", "discharge", 0.76);
+    topology.addChoke("injection-choke", "XV-601", Service.INJECTION, FlowDirection.FROM_TO, "compressor-discharge",
+        "upstream", "injector", "injection", 25.0, 85.0);
+
+    FieldNetworkTopology replay = topology.copyDefinition();
+    replay.getHydraulicNetwork().setFluidTemplate(gas());
+
+    assertFalse(hasError(replay.validate()), replay.validate().toString());
+    assertEquals(EdgeRole.PUMP, replay.getEdge("water-pump").getRole());
+    assertEquals(EdgeRole.COMPRESSOR, replay.getEdge("gas-compressor").getRole());
+    assertEquals(EdgeRole.CHOKE, replay.getEdge("injection-choke").getRole());
+    assertEquals(LoopedPipeNetwork.NetworkElementType.PUMP,
+        replay.getHydraulicNetwork().getPipe("water-pump").getElementType());
+    assertEquals(LoopedPipeNetwork.NetworkElementType.COMPRESSOR,
+        replay.getHydraulicNetwork().getPipe("gas-compressor").getElementType());
+    assertEquals(LoopedPipeNetwork.NetworkElementType.CHOKE,
+        replay.getHydraulicNetwork().getPipe("injection-choke").getElementType());
+    assertEquals(40.0e5, replay.getHydraulicNetwork().getPipe("water-pump").getPumpDifferentialPressurePa(), 1.0e-8);
+    assertEquals(0.76, replay.getHydraulicNetwork().getPipe("gas-compressor").getCompressorEfficiency(), 0.0);
+    assertEquals(85.0, replay.getHydraulicNetwork().getPipe("injection-choke").getChokeOpening(), 0.0);
+  }
+
+  /** Register configured pump and compressor maps on typed canonical field edges. */
+  @Test
+  void registersCurveBackedRotatingEquipmentOnCanonicalGraph() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("mapped rotating equipment");
+    topology.addJunction("pump-suction", "N-P1", NodeRole.INJECTION_SOURCE, Service.INJECTION, 0.0);
+    topology.addJunction("pump-discharge", "N-P2", NodeRole.JUNCTION, Service.INJECTION, 0.0);
+    topology.addJunction("compressor-suction", "N-K1", NodeRole.JUNCTION, Service.PRODUCTION, 0.0);
+    topology.addJunction("compressor-discharge", "N-K2", NodeRole.HOST, Service.PRODUCTION, 0.0);
+
+    Pump pump = new Pump("qualified injection pump", new Stream("pump feed", gas()));
+    pump.setSpeed(3600.0);
+    pump.getPumpChart().setCurves(new double[] {298.15, 1.0, 1.0, 1.0}, new double[] {3600.0},
+        new double[][] {{1.0, 3.0, 5.0}}, new double[][] {{1900.0, 1800.0, 1600.0}},
+        new double[][] {{70.0, 80.0, 72.0}});
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.getPumpChart().setUsePumpChart(true);
+    LoopedPipeNetwork.NetworkPipe pumpEdge = topology.addPumpWithCurve("injection-pump", "P-701", Service.INJECTION,
+        FlowDirection.FROM_TO, "pump-suction", "suction", "pump-discharge", "discharge", pump);
+
+    Compressor compressor = new Compressor("qualified export compressor", new Stream("compressor feed", gas()));
+    compressor.setSpeed(9000.0);
+    compressor.getCompressorChart().setCurves(new double[] {298.15, 1.0, 1.0, 1.0}, new double[] {9000.0},
+        new double[][] {{1000.0, 1500.0, 2000.0}}, new double[][] {{80.0, 70.0, 55.0}},
+        new double[][] {{72.0, 78.0, 74.0}});
+    compressor.getCompressorChart().setUseCompressorChart(true);
+    LoopedPipeNetwork.NetworkPipe compressorEdge = topology.addCompressorWithChart("export-compressor", "K-701",
+        Service.PRODUCTION, FlowDirection.FROM_TO, "compressor-suction", "suction", "compressor-discharge", "discharge",
+        compressor);
+
+    assertSame(pump, pumpEdge.getPumpModel());
+    assertSame(compressor, compressorEdge.getCompressorModel());
+    assertEquals(EdgeRole.PUMP, topology.getEdge("injection-pump").getRole());
+    assertEquals(EdgeRole.COMPRESSOR, topology.getEdge("export-compressor").getRole());
+    assertEquals(LoopedPipeNetwork.PumpOperatingMode.CURVE, pumpEdge.getPumpOperatingMode());
+    assertTrue(compressorEdge.isCompressorHasChart());
+  }
+
+  /** Reject invalid powered-edge inputs before they partially mutate either topology view. */
+  @Test
+  void rejectsInvalidPoweredEdgeDefinitionsAtomically() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("invalid powered edges");
+    topology.addJunction("from", "N-1", NodeRole.JUNCTION, Service.SHARED, 0.0);
+    topology.addJunction("to", "N-2", NodeRole.JUNCTION, Service.SHARED, 0.0);
+
+    assertThrows(IllegalArgumentException.class, () -> topology.addPump("bad-pump", "P-1", Service.INJECTION,
+        FlowDirection.FROM_TO, "from", "out", "to", "in", -1.0, 0.8));
+    assertThrows(IllegalArgumentException.class, () -> topology.addPumpDifferentialPressure("bad-dp-pump", "P-2",
+        Service.INJECTION, FlowDirection.FROM_TO, "from", "out", "to", "in", 50.0, 1.1));
+    assertThrows(IllegalArgumentException.class, () -> topology.addCompressor("bad-compressor", "K-1",
+        Service.INJECTION, FlowDirection.FROM_TO, "from", "out", "to", "in", Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> topology.addChoke("bad-choke", "XV-1", Service.PRODUCTION,
+        FlowDirection.FROM_TO, "from", "out", "to", "in", 10.0, 101.0));
+    assertThrows(NullPointerException.class, () -> topology.addPump("missing-service", "P-3", null,
+        FlowDirection.FROM_TO, "from", "out", "to", "in", 100.0, 0.8));
+    Pump chartlessPump = new Pump("chartless pump", new Stream("pump feed", gas()));
+    Compressor chartlessCompressor = new Compressor("chartless compressor", new Stream("compressor feed", gas()));
+    assertThrows(IllegalArgumentException.class, () -> topology.addPumpWithCurve("chartless-pump", "P-4",
+        Service.INJECTION, FlowDirection.FROM_TO, "from", "out", "to", "in", chartlessPump));
+    assertThrows(IllegalArgumentException.class, () -> topology.addCompressorWithChart("chartless-compressor", "K-2",
+        Service.PRODUCTION, FlowDirection.FROM_TO, "from", "out", "to", "in", chartlessCompressor));
+
+    assertTrue(topology.getEdges().isEmpty());
+    assertTrue(topology.getHydraulicNetwork().getPipeNames().isEmpty());
   }
 }

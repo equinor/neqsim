@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign.subsea;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.CostEstimateResult;
 import neqsim.process.costestimation.EstimateClass;
 import neqsim.process.costestimation.MaterialTakeOffItem;
+import neqsim.process.equipment.pipeline.RadialThermalLayer;
+import neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator;
 
 /**
  * Tests for {@link SURFCostEstimator}.
@@ -251,5 +254,177 @@ class SURFCostEstimatorTest {
 
     // More wells = more trees + jumpers = higher cost
     assertTrue(second > first, "8 wells should cost more than 4 wells");
+  }
+
+  /** Manifold cost must follow the actual canonical topology count, including direct tiebacks. */
+  @Test
+  void testZeroAndMultipleManifoldCounts() {
+    SURFCostEstimator est = new SURFCostEstimator(4, 300.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfPLETs(0);
+    est.setNumberOfJumpers(0);
+    est.setIncludeRisers(false);
+    est.setInfieldFlowlineLengthKm(0.0);
+    est.setExportPipelineLengthKm(0.0);
+
+    est.setNumberOfManifolds(0);
+    est.calculate();
+    double directTiebackCost = est.getSubseaCostUSD();
+
+    est.setNumberOfManifolds(2);
+    assertEquals(2, est.getNumberOfManifolds());
+    est.setManifoldSlots(2);
+    est.calculate();
+    double twoManifoldCost = est.getSubseaCostUSD();
+
+    assertTrue(twoManifoldCost > directTiebackCost);
+    int manifoldLineCount = 0;
+    for (Map<String, Object> item : est.getLineItems()) {
+      if (item.get("description").toString().contains("Manifold/Template")) {
+        manifoldLineCount++;
+        assertEquals(2, ((Number) item.get("quantity")).intValue());
+      }
+    }
+    assertEquals(1, manifoldLineCount);
+    assertThrows(IllegalArgumentException.class, () -> est.setNumberOfManifolds(-1));
+  }
+
+  /** Exact route segments must retain their separate geometry instead of a weighted-average diameter. */
+  @Test
+  void testDisaggregatedRouteSegments() {
+    SURFCostEstimator est = new SURFCostEstimator(1, 300.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfManifolds(0);
+    est.setNumberOfPLETs(0);
+    est.addLineSegment("FL-6IN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 1000.0, 6.0);
+    est.addLineSegment("FL-12IN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 2000.0, 12.0);
+    est.addLineSegment("RI-10IN", SURFCostEstimator.LineCategory.RISER, 600.0, 10.0);
+    est.calculate();
+
+    assertEquals(3, est.getLineSegmentCount());
+    boolean hasSixInchRoute = false;
+    boolean hasTwelveInchRoute = false;
+    boolean hasRiser = false;
+    for (Map<String, Object> item : est.getLineItems()) {
+      String description = item.get("description").toString();
+      hasSixInchRoute |= description.contains("FL-6IN 6\"");
+      hasTwelveInchRoute |= description.contains("FL-12IN 12\"");
+      hasRiser |= description.contains("RI-10IN 10\"");
+    }
+    assertTrue(hasSixInchRoute);
+    assertTrue(hasTwelveInchRoute);
+    assertTrue(hasRiser);
+  }
+
+  /** Route-specific OD, wall, material, installation and insulation must survive Class 4 costing. */
+  @Test
+  void testRouteSpecificMechanicalAndInstallationBasis() {
+    SURFCostEstimator.LineDesign design = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(9.5)
+        .materialGrade("X52").installationMethod("J-lay").designPressureBar(120.0)
+        .designCode(PipeMechanicalDesignCalculator.ASME_B31_8).insulation("PUF", 30.0).build();
+    SURFCostEstimator est = new SURFCostEstimator(1, 600.0, SubseaCostEstimator.Region.NORWAY);
+    est.setNumberOfManifolds(0);
+    est.setNumberOfPLETs(0);
+    est.setIncludeRisers(false);
+    est.addLineSegment("FL-DESIGN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 2500.0, design);
+    est.calculate();
+    double jLayInsulatedCost = est.getTotalSURFCostUSD();
+
+    Map<String, Object> route = null;
+    for (Map<String, Object> item : est.getLineItems()) {
+      if (item.get("description").toString().contains("FL-DESIGN")) {
+        route = item;
+      }
+    }
+    assertNotNull(route);
+    assertEquals(8.625, ((Number) route.get("outerDiameter_inches")).doubleValue(), 1.0e-12);
+    assertEquals(9.5, ((Number) route.get("wallThickness_mm")).doubleValue(), 1.0e-12);
+    assertEquals("X52", route.get("materialGrade"));
+    assertEquals("J-lay", route.get("installationMethod"));
+    assertEquals("PUF", route.get("insulationType"));
+    assertEquals(30.0, ((Number) route.get("insulationThickness_mm")).doubleValue(), 1.0e-12);
+    assertTrue(((Number) route.get("insulationVolume_m3")).doubleValue() > 0.0);
+    assertTrue(((Number) route.get("insulationCostUSD")).doubleValue() > 0.0);
+
+    boolean hasInsulationMto = false;
+    for (MaterialTakeOffItem item : est.getDetailedEstimateResult().getMaterialTakeOff()) {
+      hasInsulationMto |= item.getItem().contains("FL-DESIGN") && item.getItem().contains("insulation")
+          && "PUF".equals(item.getMaterial()) && item.getQuantity() > 0.0;
+    }
+    assertTrue(hasInsulationMto);
+
+    SURFCostEstimator reelLay = new SURFCostEstimator(1, 600.0, SubseaCostEstimator.Region.NORWAY);
+    reelLay.setNumberOfManifolds(0);
+    reelLay.setNumberOfPLETs(0);
+    reelLay.setIncludeRisers(false);
+    reelLay.addLineSegment("FL-DESIGN", SURFCostEstimator.LineCategory.INFIELD_FLOWLINE, 2500.0,
+        SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(9.5).materialGrade("X52")
+            .installationMethod("Reel-lay").designPressureBar(120.0).build());
+    reelLay.calculate();
+    assertTrue(jLayInsulatedCost > reelLay.getTotalSURFCostUSD(),
+        "J-lay plus insulation must cost more than the otherwise identical reel-lay basis");
+
+    SURFCostEstimator.LineDesign calculated = SURFCostEstimator.LineDesign.builder(12.75).materialGrade("X65")
+        .designPressureBar(165.0).build();
+    SURFCostEstimator.LineDesign lowerStrength = SURFCostEstimator.LineDesign.builder(12.75).materialGrade("X52")
+        .designPressureBar(165.0).build();
+    assertTrue(calculated.resolveWallThicknessMm() > 0.0);
+    assertTrue(calculated.getResolvedInnerDiameterM() > 0.0);
+    assertTrue(lowerStrength.resolveWallThicknessMm() >= calculated.resolveWallThicknessMm(),
+        "Lower-strength X52 must not screen to a thinner wall than X65 at the same OD and pressure");
+    assertThrows(IllegalArgumentException.class,
+        () -> SURFCostEstimator.LineDesign.builder(8.625).installationMethod("unknown"));
+    assertThrows(IllegalArgumentException.class,
+        () -> SURFCostEstimator.LineDesign.builder(8.625).materialGrade("unknown"));
+  }
+
+  /** Typed insulation must resolve physical U-values without guessing from cost labels. */
+  @Test
+  void testTypedThermalLineDesign() {
+    SURFCostEstimator.LineDesign thin = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(8.0)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 20.0).thermalBoundary(4.0, 300.0, 100.0)
+        .minimumOutletTemperatureC(20.0).build();
+    SURFCostEstimator.LineDesign thick = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(8.0)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 60.0).thermalBoundary(4.0, 300.0, 100.0).build();
+
+    assertTrue(thin.hasThermalHydraulicConfiguration());
+    assertTrue(thin.hasMinimumOutletTemperature());
+    assertEquals(20.0, thin.getMinimumOutletTemperatureC(), 1.0e-12);
+    assertTrue(thin.resolveOverallHeatTransferCoefficientWm2K() > 0.0);
+    assertTrue(thick.resolveOverallHeatTransferCoefficientWm2K() < thin.resolveOverallHeatTransferCoefficientWm2K());
+
+    SURFCostEstimator.LineDesign flexible = SURFCostEstimator.LineDesign.builder(8.0).flexible(true)
+        .overallHeatTransferCoefficientWm2K(1.5).thermalBoundary(4.0, 300.0, 100.0).build();
+    assertEquals(1.5, flexible.resolveOverallHeatTransferCoefficientWm2K(), 1.0e-12);
+    assertThrows(IllegalStateException.class, () -> SURFCostEstimator.LineDesign.builder(8.0).flexible(true)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 30.0).build().resolveOverallHeatTransferCoefficientWm2K());
+    assertThrows(IllegalStateException.class,
+        () -> SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(8.0).insulation("PUF", 30.0)
+            .thermalBoundary(4.0, 300.0, 100.0).build().resolveOverallHeatTransferCoefficientWm2K());
+    assertThrows(IllegalArgumentException.class, () -> SURFCostEstimator.LineDesign.builder(8.625)
+        .insulation(RadialThermalLayer.MaterialType.CARBON_STEEL, 30.0));
+  }
+
+  /** Typed line-design U-value must match an independent cylindrical resistance calculation. */
+  @Test
+  void testTypedThermalLineDesignMatchesAnalyticalResistance() {
+    double wallM = 0.008;
+    double insulationM = 0.040;
+    double innerHtc = 300.0;
+    double outerHtc = 100.0;
+    SURFCostEstimator.LineDesign design = SURFCostEstimator.LineDesign.builder(8.625).wallThicknessMm(wallM * 1000.0)
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, insulationM * 1000.0)
+        .thermalBoundary(4.0, innerHtc, outerHtc).build();
+
+    double innerRadius = design.getResolvedInnerDiameterM() / 2.0;
+    double steelOuterRadius = innerRadius + wallM;
+    double fbeOuterRadius = steelOuterRadius + 0.0004;
+    double insulationOuterRadius = fbeOuterRadius + insulationM;
+    double resistance = 1.0 / (innerHtc * 2.0 * Math.PI * innerRadius)
+        + Math.log(steelOuterRadius / innerRadius) / (2.0 * Math.PI * 50.0)
+        + Math.log(fbeOuterRadius / steelOuterRadius) / (2.0 * Math.PI * 0.3)
+        + Math.log(insulationOuterRadius / fbeOuterRadius) / (2.0 * Math.PI * 0.035)
+        + 1.0 / (outerHtc * 2.0 * Math.PI * insulationOuterRadius);
+    double expectedUValue = 1.0 / (2.0 * Math.PI * innerRadius * resistance);
+
+    assertEquals(expectedUValue, design.resolveOverallHeatTransferCoefficientWm2K(), 1.0e-12);
   }
 }

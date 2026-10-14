@@ -41,11 +41,14 @@ jobs:
             devtools/test_check_documentation_search.py \
             devtools/test_industrial_sm_benchmark.py \
             devtools/test_skill_search.py \
+            devtools/test_discovery_registry.py \
             devtools/test_verify_agent_skill_refs.py \
             devtools/test_report_workflow.py \
             devtools/test_report_template.py \
             devtools/test_report_heading_numbering.py \
             devtools/test_generate_work_record.py \
+            devtools/test_generate_sources_md.py \
+            devtools/test_evidence_sources.py \
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
             devtools/test_file_neqsim_issue.py \

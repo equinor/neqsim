@@ -19,7 +19,7 @@
 	</scm>
 
 	<properties>
-		<revision>3.23.0</revision>
+		<revision>3.25.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -167,6 +167,7 @@
 						<configuration>
 							<publishingServerId>central</publishingServerId>
 							<autoPublish>true</autoPublish>
+							<waitUntil>published</waitUntil>
 						</configuration>
 						<executions>
 							<execution>
@@ -234,6 +235,12 @@
 	</profiles>
 	<build>
 		<plugins>
+			<!-- Pin the Java 8 resource lifecycle instead of inheriting runner Maven defaults. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>3.3.1</version>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>

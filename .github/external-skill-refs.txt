@@ -15,3 +15,5 @@ neqsim-ncs-infrastructure-network equinor/neqsim-community-skills
 neqsim-ncs-value-chain-optimization equinor/neqsim-community-skills
 neqsim-uncertainty-quantification equinor/neqsim-community-skills
 neqsim-weather-data              equinor/neqsim-community-skills
+neqsim-ncs-ownership-equity       equinor/neqsim-community-skills
+neqsim-norwegian-continental-shelf-data equinor/neqsim-community-skills

@@ -18,6 +18,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pump.Pump;
 
 /**
  * Typed field and SURF identity view over a {@link LoopedPipeNetwork}.
@@ -540,6 +542,7 @@ public final class FieldNetworkTopology implements Serializable {
   public LoopedPipeNetwork.NetworkPipe addPipe(String id, String equipmentTag, EdgeRole role, Service service,
       FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort, double lengthM,
       double diameterM, LoopedPipeNetwork.PipeModelType hydraulicModel) {
+    validateEdgeMetadata(equipmentTag, role, service, flowDirection, fromPort, toPort);
     checkNewIdentity(id);
     requireRegisteredNode(fromNode);
     requireRegisteredNode(toNode);
@@ -547,6 +550,201 @@ public final class FieldNetworkTopology implements Serializable {
     pipe.setHydraulicModelType(Objects.requireNonNull(hydraulicModel, "hydraulicModel cannot be null"));
     putEdge(id, equipmentTag, role, service, flowDirection, fromPort, toPort);
     return pipe;
+  }
+
+  /**
+   * Add a typed choke using the canonical network choke equations.
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service production, injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing upstream node identifier
+   * @param fromPort named upstream-node port
+   * @param toNode existing downstream node identifier
+   * @param toPort named downstream-node port
+   * @param kv valve coefficient in m3/h per square root bar
+   * @param openingPercent valve opening in percent
+   * @return created canonical choke element
+   */
+  public LoopedPipeNetwork.NetworkPipe addChoke(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort, double kv,
+      double openingPercent) {
+    if (!(kv > 0.0) || !Double.isFinite(kv)) {
+      throw new IllegalArgumentException("Choke Kv must be finite and positive");
+    }
+    if (!Double.isFinite(openingPercent) || openingPercent < 0.0 || openingPercent > 100.0) {
+      throw new IllegalArgumentException("Choke opening must be finite and in [0, 100] percent");
+    }
+    validateEdgeMetadata(equipmentTag, EdgeRole.CHOKE, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe choke = hydraulicNetwork.addChoke(fromNode, toNode, id, kv, openingPercent);
+    putEdge(id, equipmentTag, EdgeRole.CHOKE, service, flowDirection, fromPort, toPort);
+    return choke;
+  }
+
+  /**
+   * Add a typed fixed-outlet-pressure liquid pump using the canonical network pump equations.
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing suction node identifier
+   * @param fromPort named suction-node port
+   * @param toNode existing discharge node identifier
+   * @param toPort named discharge-node port
+   * @param outletPressureBara absolute discharge pressure in bara
+   * @param efficiency pump efficiency as a fraction in (0, 1]
+   * @return created canonical pump element
+   */
+  public LoopedPipeNetwork.NetworkPipe addPump(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort,
+      double outletPressureBara, double efficiency) {
+    if (!(outletPressureBara > 0.0) || !Double.isFinite(outletPressureBara)) {
+      throw new IllegalArgumentException("Pump outlet pressure must be finite and positive in bara");
+    }
+    validateEfficiency(efficiency, "Pump");
+    validateEdgeMetadata(equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe pump = hydraulicNetwork.addPump(fromNode, toNode, id, outletPressureBara, efficiency);
+    putEdge(id, equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    return pump;
+  }
+
+  /**
+   * Add a typed fixed-differential-pressure liquid pump using the canonical network pump equations.
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing suction node identifier
+   * @param fromPort named suction-node port
+   * @param toNode existing discharge node identifier
+   * @param toPort named discharge-node port
+   * @param differentialPressureBar pressure rise in bar
+   * @param efficiency pump efficiency as a fraction in (0, 1]
+   * @return created canonical pump element
+   */
+  public LoopedPipeNetwork.NetworkPipe addPumpDifferentialPressure(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort,
+      double differentialPressureBar, double efficiency) {
+    if (!(differentialPressureBar > 0.0) || !Double.isFinite(differentialPressureBar)) {
+      throw new IllegalArgumentException("Pump differential pressure must be finite and positive in bar");
+    }
+    validateEfficiency(efficiency, "Pump");
+    validateEdgeMetadata(equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe pump = hydraulicNetwork.addPumpDifferentialPressure(fromNode, toNode, id,
+        differentialPressureBar, efficiency);
+    putEdge(id, equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    return pump;
+  }
+
+  /**
+   * Add a typed liquid pump backed by a configured NeqSim pump curve.
+   *
+   * <p>
+   * The supplied {@link Pump} remains the owner of head, efficiency and NPSH behavior. This method only registers its
+   * existing canonical network edge with stable field identity; it does not copy the curve or introduce another pump
+   * model.
+   * </p>
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing suction node identifier
+   * @param fromPort named suction-node port
+   * @param toNode existing discharge node identifier
+   * @param toPort named discharge-node port
+   * @param pump configured pump with an enabled performance curve
+   * @return created canonical curve-backed pump element
+   */
+  public LoopedPipeNetwork.NetworkPipe addPumpWithCurve(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort, Pump pump) {
+    if (pump == null || pump.getPumpChart() == null || !pump.getPumpChart().isUsePumpChart()) {
+      throw new IllegalArgumentException("Curve-backed pump requires an enabled pump chart");
+    }
+    validateEdgeMetadata(equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe networkPump = hydraulicNetwork.addPumpWithCurve(fromNode, toNode, id, pump);
+    putEdge(id, equipmentTag, EdgeRole.PUMP, service, flowDirection, fromPort, toPort);
+    return networkPump;
+  }
+
+  /**
+   * Add a typed gas compressor or booster using the canonical network compressor equations.
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service production, injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing suction node identifier
+   * @param fromPort named suction-node port
+   * @param toNode existing discharge node identifier
+   * @param toPort named discharge-node port
+   * @param polytropicEfficiency compressor efficiency as a fraction in (0, 1]
+   * @return created canonical compressor element
+   */
+  public LoopedPipeNetwork.NetworkPipe addCompressor(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort,
+      double polytropicEfficiency) {
+    validateEfficiency(polytropicEfficiency, "Compressor");
+    validateEdgeMetadata(equipmentTag, EdgeRole.COMPRESSOR, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe compressor = hydraulicNetwork.addCompressor(fromNode, toNode, id,
+        polytropicEfficiency);
+    putEdge(id, equipmentTag, EdgeRole.COMPRESSOR, service, flowDirection, fromPort, toPort);
+    return compressor;
+  }
+
+  /**
+   * Add a typed gas compressor backed by a configured NeqSim compressor chart.
+   *
+   * <p>
+   * The supplied {@link Compressor} remains the owner of chart interpolation, surge, stonewall, speed and efficiency
+   * behavior. This method registers that same model on the canonical field edge without copying or simplifying its
+   * chart.
+   * </p>
+   *
+   * @param id stable edge identifier
+   * @param equipmentTag stable engineering tag
+   * @param service production, injection or shared service
+   * @param flowDirection declared direction contract
+   * @param fromNode existing suction node identifier
+   * @param fromPort named suction-node port
+   * @param toNode existing discharge node identifier
+   * @param toPort named discharge-node port
+   * @param compressor configured compressor with an enabled performance chart
+   * @return created canonical chart-backed compressor element
+   */
+  public LoopedPipeNetwork.NetworkPipe addCompressorWithChart(String id, String equipmentTag, Service service,
+      FlowDirection flowDirection, String fromNode, String fromPort, String toNode, String toPort,
+      Compressor compressor) {
+    if (compressor == null || compressor.getCompressorChart() == null
+        || !compressor.getCompressorChart().isUseCompressorChart()) {
+      throw new IllegalArgumentException("Chart-backed compressor requires an enabled compressor chart");
+    }
+    validateEdgeMetadata(equipmentTag, EdgeRole.COMPRESSOR, service, flowDirection, fromPort, toPort);
+    checkNewIdentity(id);
+    requireRegisteredNode(fromNode);
+    requireRegisteredNode(toNode);
+    LoopedPipeNetwork.NetworkPipe networkCompressor = hydraulicNetwork.addCompressorWithChart(fromNode, toNode, id,
+        compressor);
+    putEdge(id, equipmentTag, EdgeRole.COMPRESSOR, service, flowDirection, fromPort, toPort);
+    return networkCompressor;
   }
 
   /**
@@ -817,6 +1015,38 @@ public final class FieldNetworkTopology implements Serializable {
     if (nodes.containsKey(checked) || edges.containsKey(checked)) {
       throw new IllegalArgumentException("Field identity '" + checked + "' already exists");
     }
+  }
+
+  /**
+   * Validate a pump or compressor efficiency before mutating the canonical topology.
+   *
+   * @param efficiency efficiency fraction
+   * @param equipmentName equipment type for diagnostics
+   */
+  private static void validateEfficiency(double efficiency, String equipmentName) {
+    if (!(efficiency > 0.0) || efficiency > 1.0 || !Double.isFinite(efficiency)) {
+      throw new IllegalArgumentException(equipmentName + " efficiency must be finite and in (0, 1]");
+    }
+  }
+
+  /**
+   * Validate all semantic edge metadata before mutating the canonical hydraulic graph.
+   *
+   * @param equipmentTag stable engineering tag
+   * @param role semantic edge role
+   * @param service field service
+   * @param flowDirection declared direction contract
+   * @param fromPort source-node port
+   * @param toPort target-node port
+   */
+  private static void validateEdgeMetadata(String equipmentTag, EdgeRole role, Service service,
+      FlowDirection flowDirection, String fromPort, String toPort) {
+    requireText(equipmentTag, "equipmentTag");
+    Objects.requireNonNull(role, "role cannot be null");
+    Objects.requireNonNull(service, "service cannot be null");
+    Objects.requireNonNull(flowDirection, "flowDirection cannot be null");
+    requireText(fromPort, "fromPort");
+    requireText(toPort, "toPort");
   }
 
   /**

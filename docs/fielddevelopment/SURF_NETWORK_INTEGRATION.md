@@ -4,12 +4,14 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `1db2650325cf7860f686fb4d8fa7de986b5a915a`.
+The current baseline is `b37a84f17ae669ddcc8d6c149b0b6813b1b22d35`.
 Source implementation, regression evidence and field qualification are different maturity levels.
 Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
 pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
-The current increment adds terrain-profile aggregation and detached mesh-sensitivity evidence;
-none of these completes independent field qualification.
+The current increment binds explicit DNV-ST-F101 limit-state and DNV-RP-F109 on-bottom-stability
+inputs to those same route identities and independently checks the steady thermal resistance and
+arrival-temperature equations. The specialist screening kernels remain the calculation owners;
+none of this completes field, vendor, independent-verification or AFC qualification.
 
 ## Current functionality and reuse decisions
 
@@ -201,6 +203,199 @@ conservative mass flow, identity/port/service errors, loop diagnostics and repla
 These tests qualify the identity/integration contract; they do not independently
 qualify B&B or two-fluid correlations or field design.
 
+### Powered injection and field-scale acceptance
+
+`FieldNetworkTopology` now creates typed choke, fixed-outlet-pressure pump,
+fixed-differential-pressure pump and compressor edges directly through the existing
+`LoopedPipeNetwork` equations. The stable field edge and canonical hydraulic element
+are created atomically, with validated opening/efficiency/pressure inputs and explicit
+service, direction and endpoint ports. Callers no longer need to create an untyped raw
+edge and then register it. JSON replay preserves the element type and its serializable
+operating definition; externally configured pump/compressor maps and runtime equipment
+still follow the documented rebind contract.
+
+`FieldNetworkScaleAcceptanceTest` adds three synthetic integration cases:
+
+- twelve wells on three daisy-chained templates plus a brownfield satellite tie-in,
+  PLEM, PLET and host riser. Differing but component-compatible source fluids mix at
+  conservative junctions; selected routes use Darcy-Weisbach, Beggs-Brill and two-fluid
+  hydraulics on the same topology. The solve and replay close field mass balance and
+  reproduce the host operating point;
+- a 6 kg/s water-injection pump feeding three 2 kg/s injectors through a 160 bara shared
+  header, plus a CO2-rich 3 kg/s compressor-discharge boundary feeding two 1.5 kg/s gas
+  injectors. The water case checks pump power and the expected hydrostatic pressure gain
+  to deeper wells; the gas case checks conservative shared-header allocation;
+- fifty wells on five templates, retaining a deliberately broad 60 s CI guard. The
+  reference local run completed the solve in about 3.0 s.
+
+These cases qualify canonical composition, conservation, replay and a synthetic runtime
+envelope. They do not qualify the simplified compressor equation or pump/compressor
+maps, CO2 phase behavior across a compression train, injection-well injectivity, field
+data, or independent B&B/two-fluid accuracy. The CO2 case therefore starts at an
+explicit compressor-discharge boundary rather than presenting an unqualified compressor
+train as validated.
+
+### Canonical topology to SURF design and cost
+
+`SubseaProductionSystem.createSurfDesignBasis(topology)` derives an immutable
+`FieldNetworkSurfDesignBasis` from the same typed nodes and exact `LoopedPipeNetwork`
+edge geometry used by hydraulics. It counts production and injection wells, trees,
+templates/manifolds, PLETs, PLEMs, jumpers and production/injection risers, and aggregates
+the physical jumper, infield-flowline, tie-in, trunkline, pipeline and riser lengths and
+diameters. It is a read-only design view, not another graph or solver.
+
+`SubseaProductionSystem.estimateSurfCosts(topology)` routes that basis into the existing
+`SURFCostEstimator`. Direct tiebacks now carry zero manifold cost, while multi-template
+and multi-manifold layouts price the actual number of distribution units instead of an
+implicit single manifold. The detailed `CostEstimateResult` retains the Class 4 estimate
+basis, material take-off and a quality flag explaining aggregation. Every canonical
+physical edge is now priced separately under its stable equipment tag, exact route length
+and hydraulic diameter; the length-weighted getters remain available only as summary
+metrics. The hydraulic diameter is a nominal Class 4 cost diameter, not a completed
+outside-diameter or wall-thickness design. Different manifold designs, route-specific
+installation methods, umbilical routing, material selection, supplier quotations and AFC
+cost therefore still require detailed design.
+
+### Route-specific mechanical and installation basis
+
+`SURFCostEstimator.LineDesign` supplements one canonical physical line edge with an
+immutable cost/design basis: outer diameter, explicit or screening-calculated wall
+thickness, API 5L material grade, design pressure and legacy screening code, installation
+method, rigid/flexible construction and insulation type/thickness. Register it by canonical
+edge ID with `SubseaProductionSystem.setLineDesign(...)`. The system rejects missing or
+non-SURF identities and checks that a rigid OD/wall combination agrees with the hydraulic
+inside diameter before costing. Flexible-pipe layer geometry remains supplier-specific and
+is therefore not subjected to the rigid steel consistency check.
+
+Rigid routes reuse `PipeMechanicalDesignCalculator` for screening wall thickness and steel
+weight instead of duplicating the material-strength table. The resulting existing
+`CostEstimateResult`/material-take-off contract records route-specific steel grade, coating,
+insulation volume, field welds and installation. Unconfigured routes retain the previous
+nominal hydraulic-diameter Class 4 basis, so adoption can be incremental.
+
+```java
+SURFCostEstimator.LineDesign flowlineDesign =
+    SURFCostEstimator.LineDesign.builder(8.625)
+        .wallThicknessMm(8.0)
+        .materialGrade("X52")
+        .designPressureBar(140.0)
+        .installationMethod("J-lay")
+        .insulation(RadialThermalLayer.MaterialType.PU_FOAM, 30.0)
+        .thermalBoundary(4.0, 300.0, 100.0)
+        .minimumOutletTemperatureC(20.0)
+        .build();
+
+subsea.setLineDesign("production-flowline", flowlineDesign);
+subsea.applyLineThermalDesigns(topology);
+for (NetworkConstraint constraint :
+    subsea.createMinimumOutletTemperatureConstraints(topology, true)) {
+  optimizer.addConstraint(constraint);
+}
+CostEstimateResult estimate = subsea.estimateSurfCosts(topology);
+```
+
+The typed insulation overload is the physical thermal input. The legacy string overload remains
+cost metadata and is never mapped to conductivity by name. For a rigid line,
+`resolveOverallHeatTransferCoefficientWm2K()` reuses `MultilayerThermalCalculator` with the resolved
+inside diameter, wall, typed insulation and configured inner/outer film coefficients. Its result is
+on the pipe-bore area basis used by `LoopedPipeNetwork`. A flexible line must provide an explicit
+qualified U-value with `overallHeatTransferCoefficientWm2K(...)`; the rigid steel radial stack is not
+applied to flexible construction.
+
+`applyLineThermalDesigns(topology)` validates stable edge identity and rigid ID consistency, writes
+wall, U-value and ambient temperature to the exact existing `NetworkPipe`, enables the existing
+thermal-hydraulic coupling, and leaves per-edge hydraulic fidelity unchanged. It fails rather than
+replace an existing route-dependent U-value or ambient-temperature profile. Use those existing
+profiles directly where seabed conditions or insulation vary along the route.
+
+`NetworkConstraints.edgeMinimumOutletTemperature(...)` and the `SubseaProductionSystem` constraint
+list evaluate the solved physical outlet in kelvin. They fail closed for an unconverged network,
+disabled thermal coupling, stagnant edge or non-finite temperature. `SubseaLineThermalDesignTest`
+checks canonical identity, unchanged Darcy fidelity, heat loss to a 4 degrees Celsius ambient and
+controlled pass/fail thresholds and an independent plug-flow energy equation at the solved pressure
+and mass rate. `SURFCostEstimatorTest` checks both the insulation-thickness trend and the U-value
+against an independently assembled cylindrical resistance network. These analytical checks raise
+the implementation evidence level; they are not qualification against measured field arrival
+temperatures or a commercial simulator.
+
+For a rigid line, `LineDesign.dnvStF101Input(...)` attaches a complete
+`DnvStF101PipelineDesignInput`; `LineDesign.onBottomStabilityInput(...)` attaches a complete
+`DnvRpF109OnBottomStabilityInput`. `SubseaProductionSystem.assessDnvStF101LineDesigns(...)` and
+`assessOnBottomStabilityLineDesigns(...)` validate the canonical edge and OD/wall/ID consistency,
+then invoke the existing fail-closed engineering kernels and return immutable typed calculation
+results keyed by edge ID. Each result retains readiness findings, standard/input provenance,
+review-required status and the assessment when calculation is permitted.
+Environmental loads and soil data remain outside the hydraulic topology.
+
+No structural value is inferred from hydraulic pressure, depth, material labels or route geometry.
+The DNV-ST-F101 route requires an explicit wall thickness and an exact matching OD/wall input;
+flexible lines cannot use that steel limit-state contract. DNV-RP-F109 input must carry the exact
+hydrodynamic OD plus explicit environmental, hydrodynamic, soil, safety-factor and response-model
+evidence. Incomplete input throws before calculation; a valid but overloaded case returns a failed
+screening assessment rather than being clipped or approved. Every assessment retains its explicit
+engineering-approval-required boundary.
+
+A zero wall thickness still asks the legacy calculator only for a rounded-up Class 4 cost basis. It
+cannot be promoted into DNV input. The typed calculations are option-screening implementations, not
+clause-complete conformity, installation analysis, flexible-pipe qualification, independent
+verification or AFC design.
+
+`SubseaProductionSystem.createLineDesignDecisionVariable(...)` exposes a deterministic list of
+complete rigid `LineDesign` alternatives as zero-based categorical indices to the existing
+all-discrete optimizer. One transactional selection updates the same canonical edge's hydraulic ID,
+explicit wall, optional uniform thermal basis, material/installation/cost basis and attached
+DNV-ST-F101/F109 inputs. It does not alter the edge's Darcy-Weisbach, Beggs-Brill or two-fluid model.
+Every candidate must carry an explicit wall and the same presence of thermal and screening
+contracts; minimum outlet temperature is a design requirement and cannot vary between alternatives.
+Flexible-pipe alternatives remain supplier-specific and are rejected by this contract.
+
+Add the returned `createLineDesignScreeningConstraints(...)` constraints to fail closed when a
+selected ST-F101 or F109 calculation is blocked, non-finite or above utilization one. The normal
+minimum outlet-temperature, hydraulic, conservation and cost constraints/objectives remain
+composable. A passing screening candidate still requires engineering review and does not establish
+DNV conformity, vendor qualification or AFC approval. Candidate lists are validated before the
+initial design is applied, and the selector restores the complete initial route state after
+individual candidate evaluation or an all-infeasible enumeration.
+
+### Discrete hydraulic and SURF design
+
+`NetworkDecisionVariable.pipeDiameter(...)` registers increasing physical diameter
+candidates on an existing canonical edge. When every registered design variable is
+discrete, the existing `NetworkOptimizer` evaluates the complete Cartesian product in
+deterministic order, runs the configured edge-local hydraulics, checks normal network
+constraints and retains the best feasible candidate. It refuses to start if the complete
+design space exceeds `maxEvaluations`, and it rejects mixed continuous-operation and
+discrete-design variables so a partial or relaxed search cannot be reported as a discrete
+optimum. Use staged design and operating optimization when both are required.
+
+`SubseaProductionSystem.createSurfCapitalCostObjective(topology, weight)` contributes
+negative route-specific SURF CAPEX to the same composable objective contract used by
+`NetworkOptimizer`. The optimizer therefore changes the diameter on the hydraulic edge,
+solves that exact topology, verifies pressure/flow/conservation constraints, and prices
+the resulting geometry without rebuilding the field. The synthetic two-route acceptance
+case enumerates four designs and selects the least-cost combination that meets delivery:
+the long segment is upsized while the short segment remains small. This is deterministic
+hydraulic and Class 4 screening evidence, not independent cost or hydraulic qualification.
+
+For a coupled route-design enumeration, register complete candidates instead of an independent
+diameter variable:
+
+```java
+NetworkDecisionVariable routeDesign = subsea.createLineDesignDecisionVariable(
+    topology, "production-flowline", Arrays.asList(smallDesign, largeDesign), 0);
+optimizer.addDecisionVariable(routeDesign);
+optimizer.addObjective(subsea.createSurfCapitalCostObjective(topology, 1.0e-6));
+for (NetworkConstraint constraint :
+    subsea.createLineDesignScreeningConstraints(topology, true)) {
+  optimizer.addConstraint(constraint);
+}
+```
+
+`NetworkDecisionVariable.customDiscrete(...)` is the generic adapter used underneath. It preserves
+the existing optimizer's complete Cartesian enumeration, evaluation budget and restoration rules;
+domain state remains owned by the transaction supplied by the caller. Do not register both a
+complete line-design selector and a separate diameter variable for the same edge.
+
 ## Live well pressure-rate coupling
 
 `FieldWellNetworkCoupler` binds normal `WellSystem` and `WellFlow` equipment to
@@ -265,6 +460,51 @@ therefore feeds back through the same live well/network coupling instead of acti
 downstream flow split. Copies preserve selector definitions but keep independent edge
 state.
 
+For a line-up that changes several edges together, construct named
+`FieldWellNetworkProcessUnit.RouteConfiguration` objects and register them with
+`registerRouteConfigurationSelector(...)`. Automation exposes
+`configuration.<selector>.selection`. Each option lists the controlled edges that are
+fully available; every other edge appearing in any option is exactly closed. This
+supports direct versus brownfield routes and an option with both paths open as one
+redundant loop without rebuilding the topology. Registration rejects missing edges,
+duplicate line-ups, selector overlap and a current state that does not match exactly one
+declared option. A selection snapshots every controlled availability, applies and reads
+back the complete line-up, and restores the snapshot after any failure. Edge geometry,
+equipment identity and Darcy-Weisbach/Beggs-Brill/two-fluid selection are never changed.
+The focused live-well acceptance case checks direct, higher-resistance brownfield and
+dual-path configurations, exact restoration, positive flow in both redundant paths and
+network mass conservation. This is synthetic integration evidence, not an outage or
+brownfield field qualification.
+
+The same line-up contract is exercised for a live two-zone water injector. Primary,
+brownfield and dual-path injection configurations feed one canonical live injection-well
+node and preserve the existing `WellFlow` zone allocation contract.
+The injection source now includes a typed `FieldNetworkTopology.addPumpWithCurve(...)`
+edge backed by the existing `Pump` and `PumpChart` model. The corresponding
+`addCompressorWithChart(...)` builder registers an existing mapped `Compressor` on the
+same canonical topology. Both builders require an enabled chart before mutating the graph,
+preserve the configured model object, stable equipment tag and edge identity, and leave
+route-local hydraulic selection unchanged. Fixed-pressure and fixed-differential-pressure
+pump builders remain available for screening cases.
+
+`LoopedPipeNetwork.getPower(...)` aggregates the solved shaft power of its compressor and
+pump edges. `FieldWellNetworkProcessUnit` exposes that same demand, and normal
+`ProcessSystem` / `ProcessModel` power aggregation includes both standalone canonical
+networks and wrapped live well networks. Shared host-power evidence can therefore include
+mapped injection pumps and mapped production compressors without copying them into a
+parallel facility model. Non-finite rotating-equipment power propagates as non-finite total
+demand, and an unsolved network containing rotating equipment likewise reports non-finite
+power, so a shared-resource constraint fails closed.
+
+`WellFlow.ReservoirLayer.setReservoirPressure(...)` updates the layer boundary and its
+owning reservoir stream together for controlled repeated lifecycle solves. It does not
+change injectivity, fracture pressure, composition, topology or hydraulic fidelity. The
+synthetic acceptance checks the live pump curve and finite pump power, `ProcessModel`
+shared-power visibility, selected-path flow, dual-path flow, zone allocation, fracture limits,
+exact route restoration, mass conservation and the expected lower injectivity at higher
+reservoir pressure. The curve is synthetic integration input; this is not vendor-map,
+injectivity, fracture, outage or brownfield qualification.
+
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
 well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
 fixed-pressure sinks. Those stable sink streams feed separators, compressor-suction
@@ -283,12 +523,21 @@ physical limits to obtain a feasible optimizer result.
 
 ## Dependency-ordered continuation
 
-1. Extend qualification to multi-template, daisy-chain, branches/loops and brownfield
-   networks, including representative large-field runtime. Include water, gas and CO2
-   injection with pump/compressor and shared host constraints.
-   Add controlled reservoir-pressure updates without duplicating reservoir ownership.
-2. Map the same geometry/equipment to existing SURF design/cost and `NetworkOptimizer`
-   / process optimization, then detailed lifecycle models and reduced-order surrogates.
+1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
+   boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
+   controlled reservoir-pressure updates without duplicating reservoir ownership.
+   The canonical multi-edge line-up contract now supports branch/loop outage and brownfield
+   actions through #4188/#3154 optimization and is exercised on live production and
+   multi-zone injection wells with controlled reservoir-pressure updates. Typed configured
+   pump/compressor maps and shared `ProcessModel` power accounting are now supported; next
+   qualify those maps and scale the same contract to shared host capacity constraints and
+   multi-period lifecycle evidence.
+2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
+   field, laboratory or commercial-simulator evidence. The software contract for staged
+   OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic
+   fail-closed acceptance evidence; independent qualification is still required before design use.
+   Then couple qualified alternatives to multi-period lifecycle economics and reduced-order
+   surrogates.
 3. Coordinate conservative transient junction/component/energy integration and steady
    initialization with #2911. Enable dynamics only within a quantitatively tested scope.
 4. Add reviewed Java/Python builders, agent/MCP routes (#3153) and DEXPI identity export
