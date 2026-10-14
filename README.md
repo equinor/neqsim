@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml?query=branch%3Amaster"><img src="https://img.shields.io/github/actions/workflow/status/equinor/neqsim/verify_build.yml?branch=master&label=CI%20Build&logo=github" alt="CI Build"></a>
+  <a href="https://github.com/equinor/neqsim/actions/workflows/core-run-build-test-and-javadoc.yml?query=branch%3Amaster"><img src="https://img.shields.io/github/actions/workflow/status/equinor/neqsim/core-run-build-test-and-javadoc.yml?branch=master&label=CI%20Build&logo=github" alt="CI Build"></a>
   <a href="https://search.maven.org/search?q=g:%22com.equinor.neqsim%22%20AND%20a:%22neqsim%22"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
   <a href="https://codecov.io/gh/equinor/neqsim"><img src="https://codecov.io/gh/equinor/neqsim/branch/master/graph/badge.svg" alt="Coverage"></a>
-  <a href="https://github.com/equinor/neqsim/security/code-scanning"><img src="https://img.shields.io/github/actions/workflow/status/equinor/neqsim/codeql.yml?branch=master&label=CodeQL&logo=github" alt="CodeQL"></a>
+  <a href="https://github.com/equinor/neqsim/security/code-scanning"><img src="https://img.shields.io/github/actions/workflow/status/equinor/neqsim/core-codeql-security-analysis.yml?branch=master&label=CodeQL&logo=github" alt="CodeQL"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
 </p>
 

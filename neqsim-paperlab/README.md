@@ -447,7 +447,7 @@ a GitHub Issue suggesting new paper opportunities when changes are detected.
 
 **How it works:**
 
-1. `.github/workflows/research-scan.yml` triggers daily at 06:00 UTC
+1. `.github/workflows/ai-daily-research-scan.yml` triggers daily at 06:00 UTC
 2. `neqsim-paperlab/tools/daily_scan.py` selects one opportunity from trending
    research, falling back to the codebase scanner when no trending suggestion
    is available
@@ -470,7 +470,7 @@ not run the live scanner or create research issues.
 ```bash
 # From GitHub: Actions → Daily Research Scan → Run workflow
 # Or use the gh CLI:
-gh workflow run research-scan.yml -f force=true -f since_days=90
+gh workflow run ai-daily-research-scan.yml -f force=true -f since_days=90
 ```
 
 **What the issue contains:**
