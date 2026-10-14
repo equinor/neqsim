@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Recover model-specification CI from Maven resolution failures
+**Type:** G (Workflow)
+**Keywords:** Java 8, Maven Central, dependency resolution, model specifications, PR 4320
+**Solution:** `.github/workflows/verify_build.yml` retries the model-specification command once after a Maven plugin/dependency resolution failure and forces missing-release rechecks with `-U`.
+**Notes:** The Java 8 job on `15d1b8d` failed before compilation while resolving `maven-resources-plugin:3.3.1`; absent test artifacts were secondary failures. Match Maven's terminal resolution-error help line, preserve the failing command's exit status, and fail immediately on compilation/test errors. The retry is bounded to two attempts with a ten-second delay. Numerical code, test selection, tolerances, and required evidence checks are unchanged. Documentation impact: CI recovery behavior is documented here and beside the workflow command; no simulation/API documentation changes are needed.
+
 ### 2026-10-11 — Review source routing and reusable tie-back guidance
 **Type:** E (Feature)
 **Keywords:** source attribution, evidence routing, duplicate manifest, VFP, host model, regression
