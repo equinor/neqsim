@@ -36,6 +36,24 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
+**Type:** A (Property)
+**Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
+**Solution:** Stack PR #4330 on the shared classic mixing-rule accumulator foundation while preserving its characterization implementation, regression tests and mathematical documentation byte-for-byte. Regenerate engineering coverage for the combined source tree.
+**Notes:** The unchanged field-to-facility acceptance class passed three fresh-JVM runs on both the original head and the foundation overlay (six tests per variant, none failed or skipped). A read-only fixture probe confirmed the parallel HP/LP branches share phase-specific mixing handlers. Java 8 dependencies and release-8 bytecode were tested on Linux Java 17. This validates the shared dependency; it does not establish the cause of the earlier Windows Java 8 accepted-point replay failure, which remains a hosted CI gate. No solver tolerance or execution setting changed.
+
+### 2026-10-14 — Isolate shared classic mixing-rule accumulators
+**Type:** A (Property)
+**Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306
+**Solution:** Extract the existing `EosMixingRuleHandler` correction and six deterministic `ClassicMixingRuleAccumulatorTest` cases from PR #4306 as a shared foundation. Use calculation-local accumulation in general covolume, classic attraction temperature second derivative, and composition-dependent attraction calculations; retain legacy serial result fields.
+**Notes:** All six interleaving regressions fail on the unchanged implementation and pass with the correction. The three-train compressor guide counterfactual removes 39 observed search/replay discrepancies by changing this mixing-rule class alone; single, multi-variable, staged and helper examples remain feasible with unchanged physical limits. Validation used Java 17 with Java 8 source/target; Windows Java 8 remains a CI gate. No compressor solver, tolerance, equation or public API changes. Coverage does not claim every mixing family or concurrent configuration mutation. The mixing-rules guide documents the scope.
+
+### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
+**Type:** G (Workflow)
+**Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI
+**Solution:** Reuse the evidence-routing test fixture from PR #4312 commit `d469208aa227449d40c3f441e8f5a345795aa29a` and the eight-shard slow-suite partition from PR #4328 commit `9bcca37f1ac0b717c18a499b3a1a74bcdeec1126` in the renamed workflows.
+**Notes:** Reproduced 27 routing assertions that required absent optional enterprise agents, then isolated agent discovery with synthetic installed/plugin catalogs. Add production guard regressions to Devtools CI, retain fast/slow Surefire reports, and let both fast-suite platforms finish after a failure. Four compatibility gates preserve historical required-check names and require all eight slow shards to succeed. Correct the duplicated `.yml` suffix in the documentation pre-push filter. Document test isolation, report artifacts, shard membership, and compatibility behavior in BUILD and the workflow catalog. Numerical methods and acceptance thresholds are unchanged.
+
 ### 2026-10-11 — Review source routing and reusable tie-back guidance
 **Type:** E (Feature)
 **Keywords:** source attribution, evidence routing, duplicate manifest, VFP, host model, regression

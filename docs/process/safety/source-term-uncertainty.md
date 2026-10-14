@@ -124,7 +124,7 @@ The reference follows constant-gamma ideal-gas isentropic relations and the stea
 It shares upstream NeqSim heat-capacity ratio and molar mass: this is an independent discharge
 equation, not independent property data. The tolerance allows EOS and heat-capacity differences.
 
-Run the six release test classes in `.github/workflows/safety-source-term-contract.yml`,
+Run the six release test classes in `.github/workflows/core-safety-source-term-contract.yml`,
 then `devtools/validate_source_term_contract.py`. CSVs under `target/source-term-benchmarks/`
 are generated from calculations, not pre-filled. Conservation and software checks do not
 establish experimental accuracy or facility qualification. See the

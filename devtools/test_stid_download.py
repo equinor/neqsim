@@ -22,7 +22,11 @@ try:
     import stidapi.utils as stid_utils  # noqa: E402
     from stidapi.doc import File  # noqa: E402
 
-    _STIDAPI_AVAILABLE = True
+    _STIDAPI_AVAILABLE = all((
+        hasattr(stid_utils, "get_api_client"),
+        hasattr(stid_utils, "get_api_url"),
+        hasattr(File, "download_file"),
+    ))
 except ImportError:
     _STIDAPI_AVAILABLE = False
 
@@ -70,7 +74,10 @@ class FakeStidClient:
         return file_name
 
 
-@unittest.skipUnless(_STIDAPI_AVAILABLE, "stidapi is not installed (internal Equinor package)")
+@unittest.skipUnless(
+    _STIDAPI_AVAILABLE,
+    "stidapi is unavailable or lacks the required API hooks (internal Equinor package)",
+)
 class StidDownloadIntegrationTest(unittest.TestCase):
     """Exercises stid_download.py against the real stidapi object model."""
 

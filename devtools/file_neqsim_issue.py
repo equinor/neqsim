@@ -12,7 +12,7 @@ checkout, offers to push the Java change as a pull request.
 Nothing is ever created without explicit consent: every issue and every PR is
 confirmed interactively (or requires ``--yes``), and ``--dry-run`` never calls
 ``gh``/``git`` at all. This mirrors the existing CI workflow
-(``.github/workflows/task_nip_issues.yml``) that auto-opens issues for NIPs
+(``.github/workflows/ai-auto-open-nip-issues.yml``) that auto-opens issues for NIPs
 pushed to ``task_solve/`` inside this repo, but works for ANY task folder
 (including ones outside this git checkout, e.g. under a configured task root)
 and adds the PR half of the loop.

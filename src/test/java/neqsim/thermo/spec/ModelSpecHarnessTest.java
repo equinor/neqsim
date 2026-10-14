@@ -854,11 +854,15 @@ class ModelSpecHarnessTest {
 
   @Test
   void dataAndCatalogOnlyChangesSelectTheCiGate() throws IOException {
-    String workflow = new String(Files.readAllBytes(Paths.get(".github/workflows/verify_build.yml")),
+    String workflow = new String(Files.readAllBytes(Paths.get(".github/workflows/core-run-build-test-and-javadoc.yml")),
         StandardCharsets.UTF_8);
     String filter = workflow.substring(workflow.indexOf("run_tests:"), workflow.indexOf("  test_javadoc:"));
+    assertTrue(filter.contains("- '**/*.java'"));
+    assertTrue(filter.contains("- '**/pom*.xml'"));
+    assertTrue(!filter.contains("- '**/*.xml'"));
     assertTrue(filter.contains("- 'src/main/resources/data/**'"));
     assertTrue(filter.contains("- 'src/test/resources/**'"));
+    assertTrue(filter.contains("- '.github/workflows/core-run-build-test-and-javadoc.yml'"));
     String job = workflow.substring(workflow.indexOf("  model_spec:"), workflow.indexOf("  agent_benchmark:"));
     assertTrue(job.contains("needs: changes"));
     assertTrue(job.contains("needs.changes.outputs.run_tests == 'true'"));
