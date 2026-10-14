@@ -34,6 +34,12 @@ requirement`, or `confidential compressor route`.
 
 ## Log
 
+### 2026-10-14 — Remove unreachable multiphase composition branch
+**Type:** A (Property)
+**Keywords:** multiphase flash, ionic inventory, control flow, review cleanup, PR 4306
+**Solution:** `TPmultiflash.setXY()` keeps the constrained composition calculation directly after the nonionic path's unconditional return, removing its redundant aqueous-phase guard and unreachable normalization alternative.
+**Notes:** The local aqueous-phase index is assigned once; the early return proves it is nonnegative in the retained path. Composition damping, ionic inventory checks, molecular scaling, equations and tolerances are unchanged. The existing general-electrolyte and constrained multiphase tests cover both path families.
+
 ### 2026-10-14 — Preserve charge during reaction species discovery
 **Type:** A (Property)
 **Keywords:** reaction initialization, electroneutrality, zero inventory, LP initializer, CPA, Pitzer, hydrate, PR 4306

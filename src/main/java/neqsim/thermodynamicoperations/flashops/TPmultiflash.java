@@ -160,30 +160,26 @@ public class TPmultiflash extends TPflash {
         }
         phaseComposition[component] = composition;
       }
-      if (aqueousPhase >= 0) {
-        if (compositionStep < 1.0) {
-          molecularFraction = 0.0;
-          for (int component = 0; component < system.getNumberOfComponents(); component++) {
-            if (!isIon(component) && phaseComposition[component] > 0.0) {
-              double oldFraction = Math.max(Double.MIN_VALUE, system.getPhase(phase).getComponent(component).getx());
-              phaseComposition[component] = Math.exp((1.0 - compositionStep) * Math.log(oldFraction)
-                  + compositionStep * Math.log(phaseComposition[component]));
-              molecularFraction += phaseComposition[component];
-            }
+      if (compositionStep < 1.0) {
+        molecularFraction = 0.0;
+        for (int component = 0; component < system.getNumberOfComponents(); component++) {
+          if (!isIon(component) && phaseComposition[component] > 0.0) {
+            double oldFraction = Math.max(Double.MIN_VALUE, system.getPhase(phase).getComponent(component).getx());
+            phaseComposition[component] = Math.exp((1.0 - compositionStep) * Math.log(oldFraction)
+                + compositionStep * Math.log(phaseComposition[component]));
+            molecularFraction += phaseComposition[component];
           }
         }
-        if (!(ionFraction < 1.0) || !(molecularFraction > 0.0)) {
-          throw new IllegalStateException("A fluid phase cannot accommodate its conserved ionic inventory");
-        }
-        // Keep the ionic amount exact while the beta equations drive the molecular normalization scale to one.
-        double molecularScale = (1.0 - ionFraction) / molecularFraction;
-        for (int component = 0; component < system.getNumberOfComponents(); component++) {
-          double composition = phaseComposition[component];
-          system.getPhase(phase).getComponent(component)
-              .setx(isIon(component) ? composition : composition * molecularScale);
-        }
-      } else {
-        system.getPhase(phase).normalize();
+      }
+      if (!(ionFraction < 1.0) || !(molecularFraction > 0.0)) {
+        throw new IllegalStateException("A fluid phase cannot accommodate its conserved ionic inventory");
+      }
+      // Keep the ionic amount exact while the beta equations drive the molecular normalization scale to one.
+      double molecularScale = (1.0 - ionFraction) / molecularFraction;
+      for (int component = 0; component < system.getNumberOfComponents(); component++) {
+        double composition = phaseComposition[component];
+        system.getPhase(phase).getComponent(component)
+            .setx(isIon(component) ? composition : composition * molecularScale);
       }
     }
   }
