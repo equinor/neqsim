@@ -1,4 +1,4 @@
-name: Task quality gate
+name: "[AI] Task Quality Gate"
 
 permissions:
   contents: read
@@ -9,7 +9,7 @@ on:
       - "task_solve/**"
       - "devtools/validate_task_results.py"
       - "devtools/consistency_checker.py"
-      - ".github/workflows/task_quality_gate.yml"
+      - ".github/workflows/ai-task-quality-gate.yml"
 
 jobs:
   validate:
@@ -24,7 +24,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Determine changed task folders
         id: changed

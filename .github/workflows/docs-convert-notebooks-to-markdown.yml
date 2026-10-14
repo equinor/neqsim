@@ -1,4 +1,4 @@
-name: Convert Notebooks to Markdown
+name: "[Docs] Convert Notebooks to Markdown"
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Build MCP Server Release
+name: "[Publish] Build MCP Server Release"
 permissions:
   contents: write
   packages: write

@@ -36,10 +36,16 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
+**Type:** G (Workflow)
+**Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI
+**Solution:** Reuse the evidence-routing test fixture from PR #4312 commit `d469208aa227449d40c3f441e8f5a345795aa29a` and the eight-shard slow-suite partition from PR #4328 commit `9bcca37f1ac0b717c18a499b3a1a74bcdeec1126` in the renamed workflows.
+**Notes:** Reproduced 27 routing assertions that required absent optional enterprise agents, then isolated agent discovery with synthetic installed/plugin catalogs. Add production guard regressions to Devtools CI, retain fast/slow Surefire reports, and let both fast-suite platforms finish after a failure. Four compatibility gates preserve historical required-check names and require all eight slow shards to succeed. Correct the duplicated `.yml` suffix in the documentation pre-push filter. Document test isolation, report artifacts, shard membership, and compatibility behavior in BUILD and the workflow catalog. Numerical methods and acceptance thresholds are unchanged.
+
 ### 2026-10-14 — Recover model-specification CI from Maven resolution failures
 **Type:** G (Workflow)
 **Keywords:** Java 8, Maven Central, dependency resolution, model specifications, PR 4320
-**Solution:** `.github/workflows/verify_build.yml` retries the model-specification command once after a Maven plugin/dependency resolution failure and forces missing-release rechecks with `-U`.
+**Solution:** `.github/workflows/core-run-build-test-and-javadoc.yml` retries the model-specification command once after a Maven plugin/dependency resolution failure and forces missing-release rechecks with `-U`.
 **Notes:** The Java 8 job on `15d1b8d` failed before compilation while resolving `maven-resources-plugin:3.3.1`; absent test artifacts were secondary failures. Match Maven's terminal resolution-error help line, preserve the failing command's exit status, and fail immediately on compilation/test errors. The retry is bounded to two attempts with a ten-second delay. Numerical code, test selection, tolerances, and required evidence checks are unchanged. Documentation impact: CI recovery behavior is documented here and beside the workflow command; no simulation/API documentation changes are needed.
 
 ### 2026-10-11 — Review source routing and reusable tie-back guidance

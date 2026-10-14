@@ -1,10 +1,10 @@
-name: Engineering diagram performance
+name: "[Core] Engineering Diagram Performance"
 
 on:
   workflow_dispatch:
   pull_request:
     paths:
-      - ".github/workflows/engineering-diagram-performance.yml"
+      - ".github/workflows/core-engineering-diagram-performance.yml"
       - "devtools/baselines/engineering_diagram_performance.json"
       - "devtools/validate_engineering_diagram_performance.py"
       - "devtools/test_validate_engineering_diagram_performance.py"

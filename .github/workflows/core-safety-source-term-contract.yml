@@ -1,4 +1,4 @@
-name: Safety source-term contract
+name: "[Core] Safety Source-Term Contract"
 
 on:
   pull_request:
@@ -13,7 +13,7 @@ on:
       - "src/test/java/neqsim/process/dynamics/DynamicCapabilityBuiltInInventoryTest.java"
       - "docs/process/safety/**"
       - "devtools/validate_source_term_contract.py"
-      - ".github/workflows/safety-source-term-contract.yml"
+      - ".github/workflows/core-safety-source-term-contract.yml"
   workflow_dispatch:
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
           cache: maven
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Check formatting and process/source regressions
         run: |
           ./mvnw -B -ntp spotless:check

@@ -1,4 +1,4 @@
-name: Prebuild Dev Container
+name: "[Publish] Prebuild Dev Container"
 
 # Builds the NeqSim development container (.devcontainer/) — Java 21 + Maven +
 # Python/Jupyter + Node + Copilot extensions — and pushes it to GitHub Container
@@ -19,7 +19,7 @@ on:
       - main
     paths:
       - '.devcontainer/**'
-      - '.github/workflows/devcontainer_prebuild.yml'
+      - '.github/workflows/publish-prebuild-dev-container.yml'
   schedule:
     # Weekly rebuild so the base image picks up OS / security updates.
     - cron: '0 3 * * 1'

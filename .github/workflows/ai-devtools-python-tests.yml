@@ -1,4 +1,4 @@
-name: Devtools tests
+name: "[AI] Devtools Python Tests"
 
 permissions:
   contents: read
@@ -8,7 +8,7 @@ on:
     paths:
       - "devtools/**"
       - "examples/mechanical_design_json_to_mesh.py"
-      - ".github/workflows/devtools_tests.yml"
+      - ".github/workflows/ai-devtools-python-tests.yml"
   push:
     branches: [master]
     paths:
@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install test dependencies
         run: |
@@ -54,6 +54,7 @@ jobs:
             devtools/test_file_neqsim_issue.py \
             devtools/test_task_publication_schedule.py \
             devtools/test_neqsim_continuous.py \
+            devtools/test_neqsim_production.py \
             devtools/test_neqsim_living_tasks.py \
             devtools/test_neqsim_doctor.py \
             devtools/test_unisim_outputs.py \

@@ -8,6 +8,8 @@ Requires-Dist: pyyaml>=5.1
 Requires-Dist: neqsim>=3.18
 Requires-Dist: python-docx>=1.1
 Requires-Dist: matplotlib>=3.7
+Provides-Extra: combustion
+Requires-Dist: cantera==3.2.0; extra == "combustion"
 Provides-Extra: pdf
 Requires-Dist: pymupdf>=1.22.0; extra == "pdf"
 Provides-Extra: ocr
