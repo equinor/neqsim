@@ -1681,7 +1681,7 @@ The shielding solve now checks a relative residual and starts from the
 Debye–Hückel upper bound; zero ionic inventory has exactly zero shielding.
 The model checker evaluates every phase and derivative entry, rejects non-finite
 values and compares independent numerical trials without changing the source fluid.
-Validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
+Prior validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
 parameter-selection, extensivity and diagnostic classes, including 34 new
 regressions and the 28 slow electrolyte CPA tests enabled explicitly.
 A follow-up initialized-derivative check exposed stale electrolyte/CPA caches after
@@ -1698,10 +1698,20 @@ fugacity-derivative invariance under either liquid-phase initialization order;
 each fails before its repair. Independent fixed-state finite differences confirm
 the repaired Jacobian. This qualifies component derivative ownership, not general
 concurrent safety of cloned phase workspaces.
+A later boundary-CI check exposed an invalid 1000 K fixture: the mixture dielectric
+constant was -166.7429 (and -15.6928 at a 656.575 K continuation state). Ionic
+shielding now diagnoses nonpositive or nonfinite permittivity explicitly, while
+zero-ion states keep zero shielding. The public boundary regression checks the
+rejection and unchanged feed; four model cases cover both Furst and CPA domain
+handling and the zero-ion exception. Positive brine-boiling and gas/oil/brine
+pressure-boundary contracts are qualified with the general solver in #4306;
+the legacy boundary solver is not qualified by this model repair. Follow-up
+validation passed 40 focused model and boundary tests, with slow cases enabled,
+and 28 documentation/coverage tests; formatting and pre-push checks passed.
 Independent agent review checked the analytical derivation and cache lifecycle;
 this is not domain-maintainer approval.
 Documentation impact: updated the electrolyte CPA guide and Born-derivative guide
 with the corrected equations, numerical behavior and qualification limits.
-No fitted parameters or nitrogen dielectric data changed. Nitrogen salting-out
-accuracy, third-order volume derivatives, the singular zero-concentration
+No fitted parameters or dielectric data changed. Nitrogen, n-butane and n-hexane
+dielectric inputs and salting-out accuracy, third-order volume derivatives, the singular zero-concentration
 composition curvature and the separate legacy Mod2004 implementation remain unqualified.

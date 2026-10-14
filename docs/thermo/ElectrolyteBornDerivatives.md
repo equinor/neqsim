@@ -126,13 +126,18 @@ must preserve the caller's state and must not change the caller's tolerance.
 Analytical identities, finite differences and experimental validation answer
 different questions; none replaces the other two.
 
-### Nitrogen dielectric data remains unqualified
+### Neutral-component dielectric data remains unqualified
 
 At the audited master snapshot `d28b180969e248837e68b5e982374db69e11a376`,
-the nitrogen rows in `COMP.csv` and `COMP_EXT.csv` give relative permittivity
-about $826674.56$ at 298.15 K under `Component.getDielectricConstant(T)`.
-The coefficients resemble incorrectly scaled water coefficients. Correcting
-the derivatives does not validate this data or nitrogen salting-out predictions.
+the nitrogen, n-butane and n-hexane rows in `COMP.csv` and `COMP_EXT.csv` give
+relative permittivity about $826674.56$ at 298.15 K under
+`Component.getDielectricConstant(T)`. The same malformed polynomial occurs in
+14 rows of each table. These inputs affect all four currently failing salting-out
+fixtures, although identifying the defect does not prove that a data correction
+alone will resolve every prediction. The coefficients resemble incorrectly scaled
+water coefficients; simply repairing their exponents would supply a water curve,
+not species-valid gas or alkane data. Correcting derivatives does not qualify
+these inputs or the resulting salting-out predictions.
 
 Harvey and Lemmon's primary correlation calculates gas-component permittivity
 from temperature and density and supplies a mixture-polarization treatment
@@ -141,7 +146,11 @@ The existing temperature-only component API cannot directly represent that
 correlation. No arbitrary constant, water correlation or fitted offset is
 substituted here. A phase-aware dielectric model needs its own consistent
 derivatives, reference-state decision and independent property/phase-equilibrium
-validation before this prediction can be qualified.
+validation before these predictions can be qualified. A separate dataset repair
+must establish species-specific property sources, applicability ranges and phase
+or reference-state conventions, then rerun matched-fugacity molality-based
+salting benchmarks. Gas-ion interaction parameters require their own validation
+after the dielectric inputs are corrected.
 
 ## What modern electrolyte-model development requires
 
