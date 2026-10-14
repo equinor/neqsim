@@ -11,7 +11,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <p>
  * The onset is the transition through a wax mass fraction of {@value #WAX_MASS_TOLERANCE}. The returned temperature is
  * the warm endpoint of a bracket narrower than {@value #TEMPERATURE_TOLERANCE} K. This is a numerical onset for the
- * configured TP wax model, not an experimental WAT or a deposition model. Trials always start from the feed, so an
+ * configured TP wax model, not an experimental WAT or a deposition model. The wax mass fraction is calculated from
+ * phase mole inventory and molar mass, without a solid-density conversion. Trials always start from the feed, so an
  * existing wax phase or reordered fluid phases cannot seed a spurious saturation solution.
  * </p>
  *
@@ -206,7 +207,8 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
     if (!trial.hasPhaseType("wax")) {
       return false;
     }
-    double fraction = trial.getPhaseFraction("wax", "mass");
+    // The onset is an inventory threshold, independent of solid density correlations.
+    double fraction = trial.getWtFraction(trial.getPhaseNumberOfPhase("wax"));
     if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
       throw failure("Invalid wax mass fraction");
     }
