@@ -5579,6 +5579,9 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     if (pipe.getCompressorModel() != null) {
       try {
         Compressor comp = pipe.getCompressorModel();
+        if (comp.getCompressorChart() == null || !comp.getCompressorChart().isUseCompressorChart()) {
+          throw new IllegalStateException("Registered compressor chart is no longer enabled");
+        }
         SystemInterface compFluid = fluid.clone();
         compFluid.setPressure(upstreamNode.getPressure() / 1e5, "bara");
 
@@ -5591,14 +5594,20 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         comp.run();
 
         double power = comp.getPower("kW");
+        SystemInterface outletFluid = comp.getOutletStream().getFluid().clone();
+        double outletPressure = comp.getOutletStream().getPressure("Pa");
+        double outletTemperature = outletFluid.getTemperature();
+        if (!comp.solved() || !Double.isFinite(power) || power < 0.0 || !Double.isFinite(outletPressure)
+            || outletPressure <= 0.0 || !Double.isFinite(outletTemperature) || outletTemperature <= 0.0) {
+          throw new IllegalStateException("Compressor chart returned an unsolved or non-finite operating point");
+        }
         pipe.setCompressorPower(power);
         pipe.setCompressorEfficiency(comp.getPolytropicEfficiency());
-        SystemInterface outletFluid = comp.getOutletStream().getFluid().clone();
         pipe.setThermodynamicState(compFluid, outletFluid, forward);
-        pipe.setOutletTemperature(outletFluid.getTemperature());
+        pipe.setOutletTemperature(outletTemperature);
 
         // Pressure rise from suction to discharge
-        double pRise = comp.getOutletStream().getPressure("Pa") - upstreamNode.getPressure();
+        double pRise = outletPressure - upstreamNode.getPressure();
         pipe.setFlowRegime("Compressor-Chart");
         return -Math.signum(pipe.getFlowRate()) * Math.abs(pRise);
       } catch (Exception ex) {

@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Coordinate mapped-network and compressor speed-solve acceptance
+**Type:** E (Feature)
+**Keywords:** PR 4328, PR 4326, mapped compressor, pressure target, convergence, stale thermal state, shared power
+**Solution:** `LoopedPipeNetwork.calculateHeadLossCompressor`, `MappedCompressorAcceptanceTest`, and the SURF integration guide.
+**Notes:** A bounded chart speed search requested 100 bara and returned an internally consistent 11.647013866 bara forward state with `solved() == false`, while the network labelled it a valid chart result and retained 53.131953657 kW. Require the existing equipment convergence contract, an enabled chart, finite non-negative power, and positive finite outlet pressure/temperature before accepting mapped evidence. Reuse the existing infeasible-edge path to invalidate power and clear previous thermal state. Four regressions first establish a valid state, then exercise an unsolved result, chart disablement, non-finite power, and non-finite temperature. Keep the common network boundary in PR #4328 and the compressor's speed-search implementation in PR #4326; no system-specific solver or new constraint framework is introduced.
+
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
 **Type:** G (Workflow)
 **Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI
