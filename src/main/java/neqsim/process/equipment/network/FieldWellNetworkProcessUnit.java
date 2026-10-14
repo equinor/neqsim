@@ -171,6 +171,17 @@ public final class FieldWellNetworkProcessUnit extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Get the solved shaft-power demand of canonical pumps and compressors inside the field network.
+   *
+   * @param unit requested power unit
+   * @return total network pump and compressor shaft power
+   */
+  public double getPower(String unit) {
+    double power = getHydraulicNetwork().getPower(unit);
+    return power == 0.0 || solved() ? power : Double.NaN;
+  }
+
+  /**
    * Get the most recent coupled solve evidence.
    *
    * @return immutable result, or {@code null} before the first run

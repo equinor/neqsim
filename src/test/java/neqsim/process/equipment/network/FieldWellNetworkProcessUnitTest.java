@@ -13,6 +13,7 @@ import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.FlowDirection;
 import neqsim.process.equipment.network.FieldNetworkTopology.NodeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.Service;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -207,6 +208,7 @@ class FieldWellNetworkProcessUnitTest {
   void switchesLiveInjectionRouteConfigurationsAndReservoirState() {
     WellFlow injectionWell = createConfiguredInjectionWell();
     FieldWellNetworkProcessUnit unit = createConfiguredInjectionUnit(injectionWell);
+    assertTrue(Double.isNaN(unit.getPower("kW")), "Unsolved mapped network power must fail closed");
     ProcessSystem injection = new ProcessSystem("injection field");
     injection.add(unit);
     ProcessModel model = new ProcessModel();
@@ -220,6 +222,12 @@ class FieldWellNetworkProcessUnitTest {
     assertTrue(automation.isWritableAddress(address));
     double primaryRate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
     assertTrue(primaryRate > 0.0);
+    LoopedPipeNetwork.NetworkPipe injectionPump = unit.getHydraulicNetwork().getPipe("injection pump");
+    assertTrue(injectionPump.getPumpModel().getPumpChart().isUsePumpChart());
+    assertTrue(injectionPump.getPumpPowerKW() > 0.0);
+    assertTrue(Double.isFinite(injectionPump.getPumpNpshaM()));
+    assertEquals(injectionPump.getPumpPowerKW(), unit.getPower("kW"), 1.0e-9);
+    assertEquals(unit.getPower("kW"), model.getPower("kW"), 1.0e-9);
     assertFalse(injectionWell.getZoneFractureRisk()[0]);
     assertFalse(injectionWell.getZoneFractureRisk()[1]);
 
@@ -256,6 +264,8 @@ class FieldWellNetworkProcessUnitTest {
     double higherReservoirPressureRate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
     assertTrue(higherReservoirPressureRate < primaryRate,
         "Higher reservoir pressure must reduce injectivity at unchanged source pressure and route");
+    assertTrue(Double.isFinite(unit.getPower("kW")));
+    assertTrue(unit.getPower("kW") > 0.0);
     assertTrue(unit.solved(), unit.getLastCouplingResult().getMessage());
     assertFalse(injectionWell.getZoneFractureRisk()[0]);
     assertFalse(injectionWell.getZoneFractureRisk()[1]);
@@ -419,20 +429,32 @@ class FieldWellNetworkProcessUnitTest {
     network.setFluidTemplate(water(180.0));
     network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
     network.setTolerance(3000.0);
-    topology.addPressureSource("injection source", "P-401-D", NodeRole.INJECTION_SOURCE, Service.INJECTION, 180.0, 0.0,
+    topology.addPressureSource("injection source", "HOST-I401", NodeRole.INJECTION_SOURCE, Service.INJECTION, 10.0, 0.0,
         0.0);
+    topology.addJunction("injection pump discharge", "P-401-D", NodeRole.JUNCTION, Service.INJECTION, 0.0);
     topology.addJunction("primary injection PLEM", "PLEM-I401", NodeRole.PLEM, Service.INJECTION, 0.0);
     topology.addJunction("brownfield injection tie-in", "TI-I401", NodeRole.BROWNFIELD_TIE_IN, Service.INJECTION, 0.0);
     topology.addLiveWellNode("injector", "XT-I401", NodeRole.INJECTION_WELL, Service.INJECTION, 145.0, 0.0);
+    Pump pump = new Pump("injection pump model", new Stream("injection pump reference fluid", water(10.0)));
+    pump.setSpeed(3600.0);
+    pump.getPumpChart().setCurves(new double[] {288.15, 1.0, 1.0, 1.0}, new double[] {3600.0},
+        new double[][] {{0.5, 2.0, 5.0}}, new double[][] {{1900.0, 1800.0, 1550.0}},
+        new double[][] {{68.0, 82.0, 72.0}});
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.getPumpChart().setUsePumpChart(true);
+    LoopedPipeNetwork.NetworkPipe pumpEdge = topology.addPumpWithCurve("injection pump", "P-401", Service.INJECTION,
+        FlowDirection.FROM_TO, "injection source", "suction", "injection pump discharge", "discharge", pump);
+    pumpEdge.setPumpRatedPowerKW(150.0);
+    pumpEdge.setPumpMinimumFlowKgS(0.1);
     topology.addPipe("primary injection flowline", "WI-401", EdgeRole.FLOWLINE, Service.INJECTION,
-        FlowDirection.FROM_TO, "injection source", "primary discharge", "primary injection PLEM", "inlet", 900.0, 0.22,
-        LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+        FlowDirection.FROM_TO, "injection pump discharge", "primary discharge", "primary injection PLEM", "inlet",
+        900.0, 0.22, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
     topology.addPipe("primary injection jumper", "JU-I401", EdgeRole.JUMPER, Service.INJECTION, FlowDirection.FROM_TO,
         "primary injection PLEM", "outlet", "injector", "primary injection", 700.0, 0.22,
         LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
     topology.addPipe("brownfield injection flowline", "WI-402", EdgeRole.TIE_IN, Service.INJECTION,
-        FlowDirection.FROM_TO, "injection source", "brownfield discharge", "brownfield injection tie-in", "inlet",
-        2800.0, 0.16, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+        FlowDirection.FROM_TO, "injection pump discharge", "brownfield discharge", "brownfield injection tie-in",
+        "inlet", 2800.0, 0.16, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
     topology.addPipe("brownfield injection jumper", "JU-I402", EdgeRole.JUMPER, Service.INJECTION,
         FlowDirection.FROM_TO, "brownfield injection tie-in", "outlet", "injector", "brownfield injection", 900.0, 0.16,
         LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
