@@ -1099,7 +1099,35 @@ accepted speed is retained once the pressure residual is within 0.001 bar.
 The reported speed, chart head, efficiency and power therefore describe the same
 iterate. Re-running an unchanged inlet and target does not take an additional
 Newton step after convergence, which could otherwise move a capacity-limited
-operating point across its limit. Configured speed limits still apply.
+operating point across its limit.
+
+The outlet stream is always calculated from the returned speed using the same
+chart-forward calculation as fixed-speed operation, including guide-vane and
+anti-surge effects. An unreachable pressure target must not be interpreted as a
+successful operating point just because `run()` returns:
+
+- `isSpeedSolveConverged()` reports whether the final outlet pressure is within
+  0.001 bar of the requested target.
+- `getSpeedSolvePressureResidual()` returns achieved minus requested pressure in
+  bar, or `NaN` when no speed-solve result is available for the latest run.
+- `solved()` and `isSimulationValid()` are false when an enabled chart speed solve
+  misses its target; `getSimulationValidationErrors()` explains the failure.
+- Read achieved pressure from `getOutletStream().getPressure("bara")`.
+  `getOutletPressure()` retains the requested setpoint in its configured unit,
+  so repeated runs continue to solve the same target, including after failure.
+
+With `setLimitSpeed(true)`, the search is limited to the configured minimum and
+maximum speeds. A result at a speed limit is still marked non-converged if it
+does not deliver the target. With `setLimitSpeed(false)` (the default), speed
+extrapolation remains allowed for compatibility. Pressure convergence alone
+does not establish that speed, surge, stonewall or power constraints are met;
+check those constraints separately before accepting an operating point.
+
+If the search does not converge, the solver uses its best finite evaluated speed
+and reports the actual forward result with a warning. This is not proof that
+the target is globally unreachable on a non-monotonic map. A search with no valid
+chart operating point raises an exception instead of publishing a target-pressure
+result. Diagnostics reset at the start of every run, including fixed-speed runs.
 
 When you need to determine the compressor speed required to achieve a specific operating point (flow and head), NeqSim provides a robust algorithm that works both within the defined curve range and with extrapolation beyond it.
 

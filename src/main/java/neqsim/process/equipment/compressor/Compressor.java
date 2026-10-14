@@ -102,6 +102,12 @@ public class Compressor extends TwoPortEquipment
   public double dH = 0.0;
   public double inletEnthalpy = 0;
   private boolean solveSpeed = false;
+  /** Whether the latest speed solve delivered its requested pressure. */
+  private boolean speedSolveConverged = false;
+  /** Achieved minus requested pressure in bar for the latest speed solve. */
+  private double speedSolvePressureResidual = Double.NaN;
+  /** Absolute pressure tolerance for the speed solver, in bar. */
+  private static final double SPEED_SOLVE_PRESSURE_TOLERANCE = 1.0e-3;
   public double pressure = 0.0;
   private double speed = 3000;
   private double maxspeed = 30000;
@@ -140,6 +146,14 @@ public class Compressor extends TwoPortEquipment
   private double lastInletFlowRate = Double.NaN;
   private double[] lastInletComposition = null;
   private double lastOutletPressure = Double.NaN;
+  /** Unit of the cached pressure setpoint. */
+  private String lastPressureUnit = null;
+  /** Minimum speed used by the cached speed solve. */
+  private double lastMinimumSpeed = Double.NaN;
+  /** Maximum speed used by the cached speed solve. */
+  private double lastMaximumSpeed = Double.NaN;
+  /** Whether speed bounds were enforced by the cached speed solve. */
+  private boolean lastLimitSpeed = false;
   private double lastSpeed = Double.NaN;
   private double lastCompressionRatio = Double.NaN;
   private double lastOutTemperature = Double.NaN;
@@ -720,12 +734,14 @@ public class Compressor extends TwoPortEquipment
     }
     SystemInterface inletSystem = inStream.getThermoSystem();
     if (inletSystem.getTemperature() != lastInletTemperature || inletSystem.getPressure() != lastInletPressure
-        || pressure != lastOutletPressure || speed != lastSpeed || compressionRatio != lastCompressionRatio
-        || outTemperature != lastOutTemperature || isentropicEfficiency != lastIsentropicEfficiency
-        || polytropicEfficiency != lastPolytropicEfficiency || dH != lastPower
-        || numberOfCompressorCalcSteps != lastNumberOfCompressorCalcSteps || useOutTemperature != lastUseOutTemperature
-        || useCompressionRatio != lastUseCompressionRatio || usePolytropicCalc != lastUsePolytropicCalc
-        || powerSet != lastPowerSet || calcPressureOut != lastCalcPressureOut || solveSpeed != lastSolveSpeed
+        || pressure != lastOutletPressure || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
+        || minspeed != lastMinimumSpeed || maxspeed != lastMaximumSpeed || limitSpeed != lastLimitSpeed
+        || speed != lastSpeed || compressionRatio != lastCompressionRatio || outTemperature != lastOutTemperature
+        || isentropicEfficiency != lastIsentropicEfficiency || polytropicEfficiency != lastPolytropicEfficiency
+        || dH != lastPower || numberOfCompressorCalcSteps != lastNumberOfCompressorCalcSteps
+        || useOutTemperature != lastUseOutTemperature || useCompressionRatio != lastUseCompressionRatio
+        || usePolytropicCalc != lastUsePolytropicCalc || powerSet != lastPowerSet
+        || calcPressureOut != lastCalcPressureOut || solveSpeed != lastSolveSpeed
         || compressorChart.isUseCompressorChart() != lastUseCompressorChart
         || useEnergyEfficiencyChart != lastUseEnergyEfficiencyChart
         || useRigorousPolytropicMethod != lastUseRigorousPolytropicMethod || useGERG2008 != lastUseGERG2008
@@ -760,6 +776,10 @@ public class Compressor extends TwoPortEquipment
     lastInletFlowRate = inletSystem.getFlowRate("kg/hr");
     lastInletComposition = inletSystem.getMolarComposition();
     lastOutletPressure = pressure;
+    lastPressureUnit = pressureUnit;
+    lastMinimumSpeed = minspeed;
+    lastMaximumSpeed = maxspeed;
+    lastLimitSpeed = limitSpeed;
     lastSpeed = speed;
     lastCompressionRatio = compressionRatio;
     lastOutTemperature = outTemperature;
@@ -1022,6 +1042,8 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    speedSolveConverged = false;
+    speedSolvePressureResidual = Double.NaN;
     thermoSystem = inStream.getThermoSystem().clone();
     sanitizeEfficiencyStateForRun();
 
@@ -1259,8 +1281,11 @@ public class Compressor extends TwoPortEquipment
     }
     if (compressorChart.isUseCompressorChart()) {
       if (solveSpeed) {
-        double targetPressure = getOutletPressure(); // Desired outlet pressure
-        double tolerance = 1e-3; // Tolerance for pressure difference (0.001 bar)
+        double targetPressure = new neqsim.util.unit.PressureUnit(pressure, pressureUnit).getValue("bara");
+        if (!Double.isFinite(targetPressure) || targetPressure <= 0.0) {
+          throw new IllegalArgumentException("Speed-solve target pressure must be finite and positive");
+        }
+        double tolerance = SPEED_SOLVE_PRESSURE_TOLERANCE;
         double minSpeed = getMinimumSpeed(); // Minimum speed for the compressor
         double maxSpeed = getMaximumSpeed(); // Maximum speed for the compressor
         double currentSpeed = getSpeed(); // Initial guess for speed
@@ -1274,6 +1299,11 @@ public class Compressor extends TwoPortEquipment
         if (currentSpeed < chartMinSpeed * 0.5 || currentSpeed > chartMaxSpeed * 2.0) {
           currentSpeed = chartRefSpeed;
         }
+        if (limitSpeed) {
+          currentSpeed = Math.max(minSpeed, Math.min(maxSpeed, currentSpeed));
+        }
+        double bestSpeed = Double.NaN;
+        double bestPressureError = Double.POSITIVE_INFINITY;
 
         double maxIterations = 200; // Maximum number of iterations
         double deltaSpeed = 100.0; // Small increment for numerical derivative
@@ -1311,24 +1341,21 @@ public class Compressor extends TwoPortEquipment
             z_inlet = VegaProps[1];
           }
 
-          double polytropEff = getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed);
+          double polytropEff = applyInletGuideVaneEfficiency(
+              getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed));
+          if (!Double.isFinite(polytropEff) || polytropEff <= 0.0 || polytropEff > 100.0) {
+            break;
+          }
           setPolytropicEfficiency(polytropEff / 100.0);
-          if (polytropEff <= 0.0) {
-            polytropEff = 0.01;
-            setPolytropicEfficiency(0.01);
-          }
-          if (polytropEff > 100.0) {
-            polytropEff = 100;
-            setPolytropicEfficiency(100.0);
-          }
 
-          polytropicHead = getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed);
+          polytropicHead = applyInletGuideVaneHead(
+              getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed));
           double temperature_inlet = thermoSystem.getTemperature();
           double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
           polytropicFluidHead = (getCompressorChart().getHeadUnit().equals("meter")) ? polytropicHead / 1000.0 * 9.81
               : polytropicHead;
-          if (polytropicFluidHead <= 0.0) {
-            polytropicFluidHead = 0.0001;
+          if (!Double.isFinite(polytropicFluidHead) || polytropicFluidHead < 0.0) {
+            break;
           }
           double pressureRatio = Math.pow(
               (polytropicFluidHead * 1000.0
@@ -1336,12 +1363,25 @@ public class Compressor extends TwoPortEquipment
                   / (n / (n - 1.0) * z_inlet * ThermodynamicConstantsInterface.R * (temperature_inlet) / MW),
               n / (n - 1.0));
           double currentPressure = thermoSystem.getPressure() * pressureRatio;
+          if (!Double.isFinite(currentPressure) || currentPressure <= 0.0) {
+            break;
+          }
+          double pressureError = Math.abs(currentPressure - targetPressure);
+          if (pressureError < bestPressureError) {
+            bestPressureError = pressureError;
+            bestSpeed = currentSpeed;
+          }
+
+          // Retain an accepted root before attempting another derivative or speed update.
+          if (pressureError <= tolerance) {
+            break;
+          }
 
           // Calculate the derivative of pressure with respect to speed
-          double polytropEffDelta = getCompressorChart().getPolytropicEfficiency(actualFlowRate,
-              currentSpeed + deltaSpeed);
-          double polytropicHeadDelta = getCompressorChart().getPolytropicHead(actualFlowRate,
-              currentSpeed + deltaSpeed);
+          double polytropEffDelta = applyInletGuideVaneEfficiency(
+              getCompressorChart().getPolytropicEfficiency(actualFlowRate, currentSpeed + deltaSpeed));
+          double polytropicHeadDelta = applyInletGuideVaneHead(
+              getCompressorChart().getPolytropicHead(actualFlowRate, currentSpeed + deltaSpeed));
           double nDelta = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEffDelta / 100.0));
           double polytropicFluidHeadDelta = (getCompressorChart().getHeadUnit().equals("meter"))
               ? polytropicHeadDelta / 1000.0 * 9.81
@@ -1354,6 +1394,9 @@ public class Compressor extends TwoPortEquipment
           double pressureNew = thermoSystem.getPressure() * pressureRatioDelta;
 
           double dPressure_dSpeed = (pressureNew - currentPressure) / deltaSpeed;
+          if (!Double.isFinite(dPressure_dSpeed)) {
+            break;
+          }
 
           // Handle case where derivative is too small or wrong sign
           if (Math.abs(dPressure_dSpeed) < 1e-6) {
@@ -1376,11 +1419,7 @@ public class Compressor extends TwoPortEquipment
             speedUpdate = Math.signum(speedUpdate) * maxSpeedUpdate;
           }
 
-          // Head, efficiency and power below describe currentSpeed. Do not move an already accepted root: doing so
-          // reports a different speed and lets repeated runs drift across an equipment capacity boundary.
-          if (Math.abs(currentPressure - targetPressure) > tolerance) {
-            currentSpeed += relaxationFactor * speedUpdate;
-          }
+          currentSpeed += relaxationFactor * speedUpdate;
           if (currentSpeed < 0) {
             if (minSpeed > 1) {
               currentSpeed = minSpeed;
@@ -1392,79 +1431,24 @@ public class Compressor extends TwoPortEquipment
             deltaSpeed = deltaSpeed / 2;
           }
 
-          powerSet = true;
-          dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
-              * thermoSystem.getTotalNumberOfMoles();
           // Check if speed is within bounds
           if (currentSpeed < minSpeed || currentSpeed > maxSpeed) {
             if (limitSpeed) {
-              setSolveSpeed(false);
-              setCalcPressureOut(true);
-              if (currentSpeed > maxSpeed) {
-                setSpeed(maxSpeed);
-              } else if (currentSpeed < minSpeed) {
-                setSpeed(minSpeed);
-              }
-              run();
-              setSolveSpeed(true);
-              setCalcPressureOut(false);
-              getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
+              setSpeed(Math.max(minSpeed, Math.min(maxSpeed, currentSpeed)));
+              runAtSolvedSpeed(id, targetPressure);
               return;
-            } else {
-              // throw new IllegalArgumentException(
-              // "Speed out of bounds during Newton-Raphson iteration.");
             }
-            // throw new IllegalArgumentException(
-            // "Speed out of bounds during Newton-Raphson iteration.");
-          }
-
-          // Check for convergence
-          if (Math.abs(currentPressure - targetPressure) <= tolerance) {
-            setSpeed(currentSpeed); // Update the final speed
-            break;
           }
 
           iteration++;
         }
 
-        if (iteration == maxIterations) {
-          // Did not converge, but use the best estimate and log a warning
-          logger.warn("Newton-Raphson speed solver did not fully converge after " + maxIterations
-              + " iterations. Using best estimate speed: " + currentSpeed);
-          setSpeed(currentSpeed);
+        if (!Double.isFinite(bestSpeed)) {
+          throw new IllegalStateException("Speed solver found no finite chart operating point");
         }
-
-        // Anti-surge check after speed solver convergence
-        if (getAntiSurge().isActive()) {
-          double actualFlowRate = thermoSystem.getFlowRate("m3/hr");
-          double z_inlet = thermoSystem.getZ();
-          if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            double[] gergProps = getThermoSystem().getPhase(0).getProperties_GERG2008();
-            actualFlowRate *= gergProps[1] / z_inlet;
-          }
-          if (useLeachman && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            double[] leachmanProps = getThermoSystem().getPhase(0).getProperties_Leachman();
-            actualFlowRate *= leachmanProps[1] / z_inlet;
-          }
-          if (useVega && inStream.getThermoSystem().getNumberOfPhases() == 1) {
-            double[] vegaProps = getThermoSystem().getPhase(0).getProperties_Vega();
-            actualFlowRate *= vegaProps[1] / z_inlet;
-          }
-          surgeCheck = isSurge(polytropicHead, actualFlowRate);
-          if (surgeCheck) {
-            logger.info("Anti-surge activated in speed-solve mode. Surge flow: "
-                + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead) + " Am3/hr, actual flow: "
-                + actualFlowRate + " m3/hr");
-            thermoSystem.setTotalFlowRate(getAntiSurge().getSurgeControlFactor()
-                * getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicFluidHead), "Am3/hr");
-            thermoSystem.init(3);
-            fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
-            getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
-            // Recompute dH with the updated flow
-            dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
-                * thermoSystem.getTotalNumberOfMoles();
-          }
-        }
+        setSpeed(bestSpeed);
+        runAtSolvedSpeed(id, targetPressure);
+        return;
       } else {
         do {
           double actualFlowRate = thermoSystem.getFlowRate("m3/hr");
@@ -1805,6 +1789,41 @@ public class Compressor extends TwoPortEquipment
 
     // Evaluate capacity constraints after run and log warnings for violated constraints
     evaluateCapacityConstraints();
+  }
+
+  /**
+   * Evaluate the selected speed through the normal fixed-speed path, preserving the requested setpoint and modes. This
+   * keeps pressure, temperature, head and power consistent even when the search misses its target.
+   *
+   * @param id calculation identifier shared with the calling run
+   * @param targetPressure requested absolute pressure in bara
+   */
+  private void runAtSolvedSpeed(UUID id, double targetPressure) {
+    double requestedPressure = pressure;
+    String requestedPressureUnit = pressureUnit;
+    boolean requestedCalcPressureOut = calcPressureOut;
+    try {
+      solveSpeed = false;
+      calcPressureOut = false;
+      // The chart-forward pressure calculation uses bara internally.
+      pressureUnit = "bara";
+      pressure = targetPressure;
+      run(id);
+      speedSolvePressureResidual = outStream.getPressure("bara") - targetPressure;
+      speedSolveConverged = Double.isFinite(speedSolvePressureResidual)
+          && Math.abs(speedSolvePressureResidual) <= SPEED_SOLVE_PRESSURE_TOLERANCE && Double.isFinite(dH)
+          && Double.isFinite(outStream.getTemperature());
+      if (!speedSolveConverged) {
+        logger.warn("Compressor {} speed solve missed target {} bara: achieved {} bara at {} rpm (residual {} bar)",
+            getName(), targetPressure, outStream.getPressure("bara"), speed, speedSolvePressureResidual);
+      }
+    } finally {
+      solveSpeed = true;
+      calcPressureOut = requestedCalcPressureOut;
+      pressure = requestedPressure;
+      pressureUnit = requestedPressureUnit;
+    }
+    updateRecalculationState();
   }
 
   private boolean useEnergyEfficiencyChart() {
@@ -4135,6 +4154,32 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Check whether the latest speed solve delivered the requested pressure within 0.001 bar. This does not assert
+   * mechanical or operating-envelope feasibility. Returns false before a speed solve or after any other run mode. When
+   * speed limiting is disabled, pressure convergence can occur outside the speed limits.
+   *
+   * @return true only for a finite final speed-solve result within pressure tolerance
+   */
+  public boolean isSpeedSolveConverged() {
+    return speedSolveConverged;
+  }
+
+  /**
+   * Get achieved minus requested outlet pressure for the latest speed solve.
+   *
+   * @return signed pressure residual in bar, or NaN when the latest run produced no speed-solve result
+   */
+  public double getSpeedSolvePressureResidual() {
+    return speedSolvePressureResidual;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean solved() {
+    return super.solved() && (!solveSpeed || !compressorChart.isUseCompressorChart() || speedSolveConverged);
+  }
+
+  /**
    * isCalcPressureOut.
    *
    * @return a boolean
@@ -4162,7 +4207,9 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Sets whether the compressor speed should be limited.
+   * Sets whether the pressure-target speed search should enforce the configured speed bounds. When false, extrapolation
+   * beyond the bounds is allowed for compatibility. Pressure convergence does not imply that the resulting speed is
+   * mechanically feasible.
    *
    * @param limitSpeed {@code true} to limit the compressor speed, {@code false} otherwise.
    */
@@ -5670,6 +5717,7 @@ public class Compressor extends TwoPortEquipment
    * <li>Outlet temperature greater than inlet (compression heats gas)</li>
    * <li>Pressure ratio greater than 1.0</li>
    * <li>Non-NaN values for key properties</li>
+   * <li>Pressure-target convergence when chart speed solving is enabled</li>
    * <li>Speed within compressor chart limits (if chart is active)</li>
    * <li>Operating point not in surge region (if surge curve is defined)</li>
    * <li>Operating point not beyond stonewall/choke (if stonewall curve is defined)</li>
@@ -5677,6 +5725,9 @@ public class Compressor extends TwoPortEquipment
    */
   @Override
   public boolean isSimulationValid() {
+    if (solveSpeed && compressorChart.isUseCompressorChart() && !speedSolveConverged) {
+      return false;
+    }
     // Check basic thermodynamic system
     if (thermoSystem == null) {
       return false;
@@ -5779,6 +5830,10 @@ public class Compressor extends TwoPortEquipment
   @Override
   public List<String> getSimulationValidationErrors() {
     List<String> errors = new ArrayList<String>();
+    if (solveSpeed && compressorChart.isUseCompressorChart() && !speedSolveConverged) {
+      errors.add(getName() + ": Speed solve did not converge to the requested outlet pressure (residual "
+          + speedSolvePressureResidual + " bar)");
+    }
 
     if (thermoSystem == null) {
       errors.add(getName() + ": No thermodynamic system - simulation not run");
