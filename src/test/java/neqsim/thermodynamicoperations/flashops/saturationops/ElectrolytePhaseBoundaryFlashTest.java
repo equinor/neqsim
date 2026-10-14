@@ -21,8 +21,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /** Scientific and compatibility tests for bracketed electrolyte VLE/VLLE boundaries. */
 class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   private static final double LOWER_TEMPERATURE_K = 313.15;
-  // Keep the endpoint phase-stable across the Java 8 and current-JDK numerical stacks.
-  private static final double ELECTROLYTE_CPA_UPPER_TEMPERATURE_K = 1000.0;
+  // This extrapolated endpoint gives negative solvent permittivity and cannot support ionic shielding.
+  private static final double UNSUPPORTED_ELECTROLYTE_CPA_TEMPERATURE_K = 1000.0;
   // An unbracketed topology test still needs valid liquid-water reference data at both endpoints.
   private static final double UNBRACKETED_PITZER_UPPER_TEMPERATURE_K = 323.15;
   private static final double BOUNDARY_TOLERANCE_K = 0.5;
@@ -68,14 +68,72 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
 
   @Tag("slow")
   @Test
-  void electrolyteCpaUsesSameVleBoundaryContract() throws Exception {
+  void electrolyteCpaRejectsNegativeDielectricBoundaryWithoutChangingFeed() {
     SystemInterface system = createElectrolyteCpaSystem();
-    ElectrolytePhaseBoundaryResult result = solveTemperatureBoundary(system, PhaseType.AQUEOUS);
+    double initialTemperature = system.getTemperature();
+    double initialPressure = system.getPressure();
+    double initialMoles = system.getTotalNumberOfMoles();
+    int initialPhases = system.getNumberOfPhases();
+    double[] componentMoles = new double[system.getNumberOfComponents()];
+    for (int component = 0; component < componentMoles.length; component++) {
+      componentMoles[component] = system.getComponent(component).getNumberOfmoles();
+    }
+    RuntimeException error = assertThrows(RuntimeException.class,
+        () -> new ThermodynamicOperations(system).electrolytePhaseBoundaryTemperatureFlash(PhaseType.AQUEOUS,
+            UNSUPPORTED_ELECTROLYTE_CPA_TEMPERATURE_K, 1100.0, BOUNDARY_TOLERANCE_K, 20));
+    Throwable cause = error;
+    while (cause.getCause() != null) {
+      cause = cause.getCause();
+    }
+    assertTrue(cause.getMessage().contains("finite positive dielectric constant"));
+    assertEquals(initialTemperature, system.getTemperature(), 0.0);
+    assertEquals(initialPressure, system.getPressure(), 0.0);
+    assertEquals(initialMoles, system.getTotalNumberOfMoles(), 0.0);
+    assertEquals(initialPhases, system.getNumberOfPhases());
+    for (int component = 0; component < componentMoles.length; component++) {
+      assertEquals(componentMoles[component], system.getComponent(component).getNumberOfmoles(), 0.0);
+    }
+  }
 
-    assertBoundaryContract(result, system, PhaseType.AQUEOUS, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
-        LOWER_TEMPERATURE_K, ELECTROLYTE_CPA_UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K);
-    double scalePotential = new ThermodynamicOperations(system).getRelativeScalePotential("NaCl");
-    assertTrue(Double.isFinite(scalePotential) && scalePotential > 0.0);
+  @Tag("slow")
+  @Test
+  void electrolyteCpaGasPressureBoundaryPreservesThreePhaseContract() throws Exception {
+    SystemInterface system = createElectrolyteCpaSystem();
+    ElectrolytePhaseBoundaryResult result = new ThermodynamicOperations(system).electrolytePhaseBoundaryPressureFlash(
+        PhaseType.GAS, LOWER_PRESSURE_BARA, UPPER_PRESSURE_BARA, BOUNDARY_TOLERANCE_BARA, 20);
+    assertBoundaryContract(result, system, PhaseType.GAS, ElectrolytePhaseBoundaryResult.Specification.PRESSURE,
+        LOWER_PRESSURE_BARA, UPPER_PRESSURE_BARA, BOUNDARY_TOLERANCE_BARA);
+    assertTrue(result.getLowerTopology().contains(PhaseType.OIL.toString()));
+    assertTrue(result.getUpperTopology().contains(PhaseType.OIL.toString()));
+    assertTrue(new ThermodynamicOperations(system).getRelativeScalePotential("NaCl") > 0.0);
+  }
+
+  @Tag("slow")
+  @Test
+  void electrolyteCpaBrineBoilingBoundaryRetainsAqueousIonHost() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(LOWER_TEMPERATURE_K, 1.0);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+    SystemInterface repeated = system.clone();
+    double upperTemperature = 423.15;
+    ElectrolytePhaseBoundaryResult result = new ThermodynamicOperations(system)
+        .electrolytePhaseBoundaryTemperatureFlash(PhaseType.GAS, LOWER_TEMPERATURE_K, upperTemperature,
+            BOUNDARY_TOLERANCE_K, 20);
+    assertBoundaryContract(result, system, PhaseType.GAS, ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE,
+        LOWER_TEMPERATURE_K, upperTemperature, BOUNDARY_TOLERANCE_K);
+    assertTrue(result.getLowerTopology().contains(PhaseType.AQUEOUS.toString()));
+    assertTrue(result.getUpperTopology().contains(PhaseType.AQUEOUS.toString()));
+    ElectrolytePhaseBoundaryResult repeatedResult = new ThermodynamicOperations(repeated)
+        .electrolytePhaseBoundaryTemperatureFlash(PhaseType.GAS, LOWER_TEMPERATURE_K, upperTemperature,
+            BOUNDARY_TOLERANCE_K, 20);
+    assertBoundaryContract(repeatedResult, repeated, PhaseType.GAS,
+        ElectrolytePhaseBoundaryResult.Specification.TEMPERATURE, LOWER_TEMPERATURE_K, upperTemperature,
+        BOUNDARY_TOLERANCE_K);
+    assertEquals(result.getLowerBound(), repeatedResult.getLowerBound(), 0.0);
+    assertEquals(result.getUpperBound(), repeatedResult.getUpperBound(), 0.0);
   }
 
   @Test
@@ -142,7 +200,7 @@ class ElectrolytePhaseBoundaryFlashTest extends neqsim.NeqSimTest {
   private static ElectrolytePhaseBoundaryResult solveTemperatureBoundary(SystemInterface system,
       PhaseType targetPhase) {
     return new ThermodynamicOperations(system).electrolytePhaseBoundaryTemperatureFlash(targetPhase,
-        LOWER_TEMPERATURE_K, ELECTROLYTE_CPA_UPPER_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20);
+        LOWER_TEMPERATURE_K, UNSUPPORTED_ELECTROLYTE_CPA_TEMPERATURE_K, BOUNDARY_TOLERANCE_K, 20);
   }
 
   private static void assertBoundaryContract(ElectrolytePhaseBoundaryResult result, SystemInterface system,

@@ -588,9 +588,10 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   }
 
   /**
-   * calcShieldingParameter.
+   * Calculates the nonnegative shielding parameter for the current ionic inventory.
    *
-   * @return a double
+   * @return the converged shielding parameter, or zero when no ions are present
+   * @throws IllegalStateException if an ionic state has nonpositive or nonfinite permittivity, or the solve fails
    */
   public double calcShieldingParameter() {
     boolean containsIons = false;
@@ -601,6 +602,11 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     if (!containsIons) {
       gamma = 0.0;
       return 0.0;
+    }
+    if (!(diElectricConstant > 0.0) || !Double.isFinite(diElectricConstant)) {
+      throw new IllegalStateException(
+          "Electrolyte shielding requires a finite positive dielectric constant; calculated " + diElectricConstant
+              + " at " + temperature + " K");
     }
     double volume = getMolarVolume() * numberOfMolesInPhase * 1e-5;
     double ionicSquareCharge = 0.0;

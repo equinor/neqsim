@@ -163,6 +163,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   public ChemicalReactionOperations(SystemInterface system) {
     boolean newcomps = true;
     int old = system.getPhase(0).getNumberOfComponents();
+    int firstNewComponent = old;
     this.system = system;
 
     // During initialization, use the reactive phase if available, else default to phase 0.
@@ -181,12 +182,13 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       reactionList.removeDependentReactions();
       reactionList.requireValidatedEvidenceForActiveReactions();
       allComponentNames = reactionList.getAllComponents();
-      this.addNewComponents();
+      addNewComponentSeeds();
       if (system.getPhase(0).getNumberOfComponents() == old) {
         newcomps = false;
       }
       old = system.getPhase(0).getNumberOfComponents();
     } while (newcomps);
+    balanceNewComponentSeedCharge(firstNewComponent);
 
     components = new ComponentInterface[allComponentNames.length];
     if (components.length > 0) {
@@ -336,12 +338,20 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
    *
    * <p>
    * Adds new reactive components (typically ionic species from chemical reactions) to the system. Components are
-   * initialized with a small but numerically reasonable amount to enable the chemical equilibrium solver to converge.
-   * Ionic species are initialized with a higher minimum to provide a reasonable starting point for acid-base equilibria
-   * and help the Newton solver find physically meaningful solutions.
+   * initialized with a small numerical amount to enable the chemical equilibrium solver to converge. Newly added ionic
+   * species are seeded as a charge-neutral set; existing feed amounts and charge are unchanged. If only one charge sign
+   * is missing, those new ions start with zero inventory and the chemical solver builds a feasible initial estimate
+   * before Newton refinement.
    * </p>
    */
   public void addNewComponents() {
+    int firstNewComponent = system.getNumberOfComponents();
+    addNewComponentSeeds();
+    balanceNewComponentSeedCharge(firstNewComponent);
+  }
+
+  /** Adds the current discovery step before balancing all newly discovered species together. */
+  private void addNewComponentSeeds() {
     boolean newComp;
 
     for (int i = 0; i < allComponentNames.length; i++) {
@@ -361,6 +371,43 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
         // but large enough for the LP/Newton solvers to work numerically.
         double initialMoles = 1.0e-10;
         system.addComponent(name, initialMoles);
+      }
+    }
+  }
+
+  /**
+   * Prevents numerical reaction seeds from adding net charge to the physical feed.
+   *
+   * <p>
+   * Scale the larger signed charge total down to the smaller one, retaining positive seed amounts when both signs are
+   * newly introduced. No pre-existing component is adjusted to compensate the seeds, including a charged input. With
+   * only one new charge sign, zero is the only charge-neutral nonnegative seed. Neutral species retain their seed.
+   * </p>
+   *
+   * @param firstNewComponent first component introduced during this discovery step
+   */
+  private void balanceNewComponentSeedCharge(int firstNewComponent) {
+    double positiveCharge = 0.0;
+    double negativeCharge = 0.0;
+    for (int component = firstNewComponent; component < system.getNumberOfComponents(); component++) {
+      ComponentInterface species = system.getPhase(0).getComponent(component);
+      double charge = species.getIonicCharge() * species.getNumberOfmoles();
+      positiveCharge += Math.max(0.0, charge);
+      negativeCharge += Math.max(0.0, -charge);
+    }
+    double balancedCharge = Math.min(positiveCharge, negativeCharge);
+    for (int component = firstNewComponent; component < system.getNumberOfComponents(); component++) {
+      ComponentInterface species = system.getPhase(0).getComponent(component);
+      double charge = species.getIonicCharge();
+      if (charge == 0.0) {
+        continue;
+      }
+      double amount = species.getNumberOfmoles();
+      double target = positiveCharge > 0.0 && negativeCharge > 0.0
+          ? amount * balancedCharge / (charge > 0.0 ? positiveCharge : negativeCharge)
+          : 0.0;
+      if (target != amount) {
+        system.addComponent(component, target - amount);
       }
     }
   }
@@ -620,7 +667,13 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     nVector = calcNVector();
     bVector = calcBVector();
 
-    if (firsttime || type == 0) {
+    // A zero inventory is a valid boundary state, but activity floors alone do not provide an interior Newton start.
+    // Use the existing element- and charge-constrained initializer before refining such a state.
+    boolean zeroReactiveAmount = false;
+    for (double amount : nVector) {
+      zeroReactiveAmount |= amount == 0.0;
+    }
+    if (firsttime || type == 0 || zeroReactiveAmount) {
       try {
         calcInertMoles(phaseNum);
         if (initCalc != null) {

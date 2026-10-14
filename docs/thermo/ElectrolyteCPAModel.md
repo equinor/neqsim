@@ -178,7 +178,9 @@ literature-based development recommendations.
 The base Furst/electrolyte CPA derivative implementation includes the implicit
 response of the stationary shielding parameter and the complete dielectric/Born
 second-derivative chain rules. See the same guide for finite-difference
-qualification and the remaining nitrogen dielectric-data limitation. A converged
+qualification and the remaining nitrogen, n-butane and n-hexane dielectric-data
+limitations. Those components share malformed default coefficients; replacing them
+requires species-valid property data and separate salting-out validation. A converged
 flash or consistent Jacobian does not by itself qualify the model's salting-out
 or mixed-inhibitor accuracy.
 
@@ -192,6 +194,15 @@ owned arrays. Electrolyte CPA component clones also own their association-compos
 derivative rows, so initializing one liquid phase cannot overwrite another phase's
 component derivatives. This does not qualify concurrent access to all cloned phase
 workspaces.
+
+Ionic shielding requires finite positive phase permittivity. If an extrapolated
+dielectric correlation violates that domain, the calculation raises an explicit
+error; ion-free states retain exactly zero shielding. In particular, a 1000 K
+endpoint for aqueous-phase disappearance in gas/oil/brine is invalid with the
+current solvent correlation. These model corrections do not qualify the legacy
+TP-flash boundary solver: brine boiling and gas/oil/brine pressure boundaries
+require the [general equilibrium solver work](https://github.com/equinor/neqsim/pull/4306)
+for strict conservation, ion-confinement and fugacity-closure checks.
 
 ## Short-Range Interaction Parameters (Wij)
 

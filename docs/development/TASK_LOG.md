@@ -34,6 +34,24 @@ requirement`, or `confidential compressor route`.
 
 ## Log
 
+### 2026-10-14 — Remove unreachable multiphase composition branch
+**Type:** A (Property)
+**Keywords:** multiphase flash, ionic inventory, control flow, review cleanup, PR 4306
+**Solution:** `TPmultiflash.setXY()` keeps the constrained composition calculation directly after the nonionic path's unconditional return, removing its redundant aqueous-phase guard and unreachable normalization alternative.
+**Notes:** The local aqueous-phase index is assigned once; the early return proves it is nonnegative in the retained path. Composition damping, ionic inventory checks, molecular scaling, equations and tolerances are unchanged. The existing general-electrolyte and constrained multiphase tests cover both path families.
+
+### 2026-10-14 — Preserve charge during reaction species discovery
+**Type:** A (Property)
+**Keywords:** reaction initialization, electroneutrality, zero inventory, LP initializer, CPA, Pitzer, hydrate, PR 4306
+**Solution:** `ChemicalReactionOperations` balances the complete newly discovered ionic seed set without changing existing feed components. The larger signed seed-charge total is scaled down; a one-sign new set starts at zero. Exact-zero reactive amounts use the existing element/charge-constrained initial estimate before Newton refinement.
+**Notes:** Unbalanced numerical carbonate seeds introduced -3e-10 mol charge in the reactive 100 bara hydrate case; the unchanged phase check correctly rejected it. Sixteen focused regressions pass after the correction, with fourteen failing on the prior head. Existing four-case electrolyte hydrate and ten reaction cases pass in isolated qualification. No hydrate equation, phase/reaction residual tolerance or component data changes. The inherited absolute numerical seed remains bounded by 1e-10 mol per species; this is not exact elemental/total-mole preservation for arbitrarily small feeds or a claim of full absent-element equilibrium support. The chemistry guide records these limits.
+
+### 2026-10-14 — Isolate shared classic mixing-rule accumulators
+**Type:** A (Property)
+**Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306
+**Solution:** Extract the existing `EosMixingRuleHandler` correction and six deterministic `ClassicMixingRuleAccumulatorTest` cases from PR #4306 as a shared foundation. Use calculation-local accumulation in general covolume, classic attraction temperature second derivative, and composition-dependent attraction calculations; retain legacy serial result fields.
+**Notes:** All six interleaving regressions fail on the unchanged implementation and pass with the correction. The three-train compressor guide counterfactual removes 39 observed search/replay discrepancies by changing this mixing-rule class alone; single, multi-variable, staged and helper examples remain feasible with unchanged physical limits. Validation used Java 17 with Java 8 source/target; Windows Java 8 remains a CI gate. No compressor solver, tolerance, equation or public API changes. Coverage does not claim every mixing family or concurrent configuration mutation. The mixing-rules guide documents the scope.
+
 ### 2026-10-14 — Share ionic phase constraints across TP and hydrate equilibrium
 **Type:** E (Feature)
 **Keywords:** PR 4306, PR 4277, PR 4332, electrolyte, Rachford-Rice, Newton, phase participation, hydrate, conservation
@@ -51,13 +69,15 @@ evaluations and fresh-feed verification use ordinary TPflash. Low-flow reactive 
 restores the inverse scale rather than erasing the reaction-induced total-mole change.
 **Notes:** Fourteen independent mixed-gas/inhibitor/salt and gas/oil/brine endpoint fixtures pass
 on the recorded immutable checkpoint. Broader legacy lifecycle, model-data and derivative
-qualification remains explicit in the PR; numerical closure alone does not validate nitrogen
-salting behavior. Original #4277 hydrate regressions are retained as a small consumer increment.
+qualification remains explicit in the PR; numerical closure alone does not validate salting
+behavior with malformed nitrogen, n-butane or n-hexane dielectric inputs. Original #4277 hydrate regressions are retained as a small consumer increment.
 Two old CI assertions were corrected using phase labels/fugacity/Gibbs and the declared flow
 restoration tolerance propagated through the well inflow equation; no production physics or
 acceptance tolerance was loosened. Phase-removal history is injected explicitly in its lifecycle
 test rather than requiring a successful flash to take a failed-endpoint recovery branch.
-The separate #4332 model correction is a prerequisite; the proposed architecture record is #4331.
+The separate #4332 model correction and #4333 shared-mixing foundation are prerequisites;
+the proposed architecture record is #4331. Valid brine boiling and gas/oil/brine pressure
+boundaries retain strict phase, inventory, charge and fugacity checks in this solver layer.
 Agent technical review supports, but does not replace, accountable domain/maintainer review.
 
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
@@ -1767,7 +1787,7 @@ The shielding solve now checks a relative residual and starts from the
 Debye–Hückel upper bound; zero ionic inventory has exactly zero shielding.
 The model checker evaluates every phase and derivative entry, rejects non-finite
 values and compares independent numerical trials without changing the source fluid.
-Validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
+Prior validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
 parameter-selection, extensivity and diagnostic classes, including 34 new
 regressions and the 28 slow electrolyte CPA tests enabled explicitly.
 A follow-up initialized-derivative check exposed stale electrolyte/CPA caches after
@@ -1784,10 +1804,20 @@ fugacity-derivative invariance under either liquid-phase initialization order;
 each fails before its repair. Independent fixed-state finite differences confirm
 the repaired Jacobian. This qualifies component derivative ownership, not general
 concurrent safety of cloned phase workspaces.
+A later boundary-CI check exposed an invalid 1000 K fixture: the mixture dielectric
+constant was -166.7429 (and -15.6928 at a 656.575 K continuation state). Ionic
+shielding now diagnoses nonpositive or nonfinite permittivity explicitly, while
+zero-ion states keep zero shielding. The public boundary regression checks the
+rejection and unchanged feed; four model cases cover both Furst and CPA domain
+handling and the zero-ion exception. Positive brine-boiling and gas/oil/brine
+pressure-boundary contracts are qualified with the general solver in #4306;
+the legacy boundary solver is not qualified by this model repair. Follow-up
+validation passed 40 focused model and boundary tests, with slow cases enabled,
+and 28 documentation/coverage tests; formatting and pre-push checks passed.
 Independent agent review checked the analytical derivation and cache lifecycle;
 this is not domain-maintainer approval.
 Documentation impact: updated the electrolyte CPA guide and Born-derivative guide
 with the corrected equations, numerical behavior and qualification limits.
-No fitted parameters or nitrogen dielectric data changed. Nitrogen salting-out
-accuracy, third-order volume derivatives, the singular zero-concentration
+No fitted parameters or dielectric data changed. Nitrogen, n-butane and n-hexane
+dielectric inputs and salting-out accuracy, third-order volume derivatives, the singular zero-concentration
 composition curvature and the separate legacy Mod2004 implementation remain unqualified.

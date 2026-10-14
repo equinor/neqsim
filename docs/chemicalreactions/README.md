@@ -123,6 +123,21 @@ where $z_i$ is ionic charge. Do not seed an arbitrary unbalanced ion inventory m
 solver initialization. Use a supported electrolyte model, a charge-balanced feed, and the
 diagnostic limits documented in the [reactive-flash guide](../thermo/reactive_flash).
 
+Reaction discovery adds numerical starting amounts for previously absent species. It balances
+the positive and negative charge of the complete newly discovered ionic set by reducing the
+larger signed total; it never changes an existing component amount to compensate these seeds.
+If the new ionic set contains only one charge sign, those species start at zero inventory.
+Before refining a state with a zero reactive amount, the chemical solver uses its existing
+element- and charge-constrained initial estimate rather than relying on activity floors alone.
+Existing nonzero feed charge is preserved, not silently repaired. Repeating
+`chemicalReactionInit()` does not add another seed to an existing species.
+
+Each new numerical amount is bounded by the existing absolute seed of $10^{-10}$ mol.
+Neutral species retain that seed, and charge balancing does not make these additions exactly
+element- or total-mole-conserving. For arbitrarily small feeds the seeds can be a material
+relative perturbation; initialization does not promise scale-independent trace inventories.
+The phase, reaction, charge and hydrate acceptance checks remain unchanged.
+
 ## Reaction data and provenance
 
 `ChemicalReactionList` selects applicable database reactions from the system's components and
