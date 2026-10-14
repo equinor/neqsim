@@ -2,7 +2,6 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
@@ -29,10 +28,7 @@ class TPflashPhaseLifecycleTest {
     SystemInterface reference = fluid.clone();
     // The low-density root can be classified GAS even though LIQUID selected the cubic root.
     assertNotEquals(fluid.getPhase(0).getType(), fluid.getPhaseType(0));
-    Class<?> snapshotClass = Class.forName(TPflash.class.getName() + "$BalancedTwoPhaseState");
-    Constructor<?> constructor = snapshotClass.getDeclaredConstructor(SystemInterface.class);
-    constructor.setAccessible(true);
-    Object snapshot = constructor.newInstance(fluid);
+    FlashPhaseState snapshot = FlashPhaseState.captureWithGibbsEnergy(fluid);
     int firstSlot = fluid.getPhaseIndex(0);
     fluid.setPhaseIndex(0, fluid.getPhaseIndex(1));
     fluid.setPhaseIndex(1, firstSlot);
@@ -46,7 +42,7 @@ class TPflashPhaseLifecycleTest {
         fluid.getPhase(phase).getComponent(component).setK(9.0);
       }
     }
-    Method restore = TPflash.class.getDeclaredMethod("restoreTwoPhaseIterationState", snapshotClass);
+    Method restore = TPflash.class.getDeclaredMethod("restoreTwoPhaseIterationState", FlashPhaseState.class);
     restore.setAccessible(true);
     restore.invoke(new TPflash(fluid), snapshot);
     for (int phase = 0; phase < 2; phase++) {

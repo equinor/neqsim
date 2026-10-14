@@ -228,7 +228,10 @@ public abstract class Flash extends BaseOperation {
    */
   public int findLowestGibbsEnergyPhase() {
     if (!findLowestGibbsPhaseIsChecked) {
-      minimumGibbsEnergySystem = system.clone();
+      // This detached, fixed-component workspace is only used by stability trials; its phases are never adopted.
+      minimumGibbsEnergySystem = !solidCheck && system instanceof neqsim.thermo.system.SystemThermo
+          ? ((neqsim.thermo.system.SystemThermo) system).copyForStabilityTrial()
+          : system.clone();
       minimumGibbsEnergySystem.init(0);
       if (minimumGibbsEnergySystem.getTotalNumberOfMoles() < 1e-20) {
         minimumGibbsEnergySystem.setTotalNumberOfMoles(1.0);

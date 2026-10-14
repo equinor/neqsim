@@ -91,6 +91,8 @@ scale equilibrium through Java and MCP.
    - [5.2 EJML Matrix Operations](#52-ejml-matrix-operations)
    - [5.3 Wilson K Early Exit](#53-wilson-k-early-exit)
    - [5.4 Two-Stage Trial Strategy](#54-two-stage-trial-strategy)
+   - [5.5 Detached Stability Workspaces](#55-detached-stability-workspaces)
+   - [5.6 Matched Stability-Workspace Qualification](#56-matched-stability-workspace-qualification-2026-10-14)
 6. [State-of-the-Art Comparison and Recommendations](#6-state-of-the-art-comparison-and-recommendations)
     - [6.1 Current Position](#61-current-position)
     - [6.2 Strengths](#62-strengths)
@@ -1819,6 +1821,91 @@ Before running any trial phase iterations, the stability analysis computes Wilso
 
 The Wilson K-based trials (Stage 1) run with only 50 iterations and catch the majority of VLE instabilities. The more expensive pure-component trials (Stage 2, up to 200 iterations with potential Newton fallback) only execute when the K-based trials fail to find instability.
 
+### 5.5 Detached Stability Workspaces
+
+The lowest-Gibbs reference calculation in `Flash.findLowestGibbsEnergyPhase()` uses a
+detached, fixed-component stability workspace. For exact `SystemSrkEos` and `SystemPrEos`
+instances with two ordinary cubic storage slots, the classic mixing rule and analytic
+composition derivatives, `copyForStabilityTrial()` copies the six mutable component
+derivative arrays at the active component count. Each copy owns its arrays; the attractive
+term is rebound to the copied component. The calculation retains its existing `init(0)`
+and `init(1)` sequence and root comparison.
+
+This compact representation is restricted to the lifetime of the stability calculation.
+Its component list must remain fixed, and its phases must never be installed in the live
+user fluid. General `clone()` continues to preserve the source arrays' capacity and
+independent ownership, including the full-capacity buffers of ordinary user fluids.
+There is no shared workspace cache between flash calls. Mixing parameters retain the
+same read-only sharing contract as normal phase cloning.
+
+The compact path requires exact ordinary SRK/PR phase and component classes in both
+storage slots, consistent component indices, and one or two active phases mapped to distinct
+valid slots. Unknown subclasses, specialized models such as CPA, other mixing rules,
+numeric derivatives, additional phase storage, locked or forced phase roles, chemical or
+ionic systems, and solid, hydrate or wax options use their normal virtual clone behavior.
+The flash operation's own solid-check option also bypasses compact copying even when the
+system's solid-check flag is false.
+This is a storage optimization at one detached call site; it does not broaden root-selection
+policy, change convergence tolerances or replace accepted-candidate transfer with compact
+phase objects. See [Root selectors and Newton inventory mapping](#root-selectors-and-newton-inventory-mapping)
+for the separate rollback and adoption contracts.
+
+`StabilityTrialCopyTest` checks compact buffer ownership and active values, ordinary clone
+capacity, attractive-term rebinding, initialization equivalence, invalid capacities and
+fallback for specialized or unqualified inputs. `TPflashConcurrentCloneIsolationTest`
+exercises concurrent flashes on independently cloned default SRK, PR and Statoil CPA fluids,
+including Cp, Cv and the second temperature derivative of the attraction term. Classic
+mixing-rule calculations retain local accumulators for the qualified derivative, general
+covolume and composition-dependent attraction evaluations. Legacy last-result fields remain
+for compatibility; consumers use each initialized phase's own properties. Configuration must
+be complete and unchanged during concurrent evaluation. This does not qualify arbitrary
+mixing-rule implementations or concurrent parameter tuning. Performance qualification
+must compare complete flashes at the same JVM settings and reject any change that fails
+phase, material-balance or fugacity checks; reduced workspace capacity alone is not a
+whole-flash speedup result.
+
+### 5.6 Matched Stability-Workspace Qualification (2026-10-14)
+
+The redesign reduces ordinary SRK/PR trial-copy allocations while preserving the full public clone contract. It does **not** restore allocation parity for every workload, and it does **not** clear PR #4306 for merge: the existing ionic regression remains a separate blocker (two failures and one error in `SystemElectrolyteCPATest`; master passes that class's 28 tests).
+
+This matrix supersedes the previous **36,136 → 152,488 B/flash** headline. Those figures are not the matched fixture/profile measured here and must not be used as the current comparison. The matched three-component dry-gas result is **18,104 → 76,280 → 19,544 B per complete flash** for master, original PR and redesign. The earlier 75,680 B figure excluded the 600 B operation constructor; this harness includes it. Any comparison with `dcc5105` remains historical and separate from this matrix.
+
+| Warm changed workload | Master `d28b180` | Original PR `0239f31` | #4320 + #4329 baseline | Redesign | Redesign + #4320 + #4329 |
+|---|---:|---:|---:|---:|---:|
+| Dry gas, SRK | 18,104 | 76,280 | 18,112 | 19,544 | 19,552 |
+| Two-phase methane/decane, PR | 4,864 | 4,864 | 4,872 | 4,864 | 4,872 |
+| Condensate, SRK | 2,197,501 | 240,892 | 2,197,166 | 111,196 | 111,204 |
+| Methane/water, CPA | 1,873,344 | 1,989,696 | 1,873,352 | 2,024,112 | 2,024,120 |
+| Trace aqueous, SRK | 83,040 | 345,048 | 83,048 | 345,048 | 345,056 |
+| Trace aqueous, CPA | 493,978,368 | 494,327,696 | 493,978,376 | 494,394,616 | 494,394,624 |
+| Separator/compressor/cooler process | 553,592 | 2,415,224 | 553,632 | 1,110,296 | 1,110,336 |
+
+Values are median current-thread allocated **bytes per complete operation**, across two JVM forks. The process value covers a full `ProcessSystem.run()` with changed live-feed temperature/pressure. It includes inlet separation, compression, cooling and outlet separation. Unchanged process samples retain normal equipment caching and are reported separately in the evidence.
+
+Relative to the original PR, redesigned allocation falls **74.4% for dry gas, 53.8% for condensate and 54.0% for the changed process**. Dry gas remains 1,440 B above master. The process remains about 2.01 times master because general copies retain independently owned, full-capacity arrays. The three-storage-slot aqueous SRK case deliberately falls outside the compact two-slot path. Its public-copy cost remains. Fixing CPA association-cache ownership adds 34,416 B to the methane/water case and 66,920 B to the trace-CPA case; those are correctness costs, not hidden speed claims.
+
+The dry-gas accounting is exact: one stability system copy contains six component copies. Six independently owned 200-double arrays per component cost 58,176 B; the compact three-component workspace uses 1,440 B instead. Public clone capacity remains unchanged.
+
+| Warm changed workload | Master CPU µs/op | Original PR CPU µs/op | Redesign CPU µs/op | Combined CPU µs/op |
+|---|---:|---:|---:|---:|
+| Dry gas | 21.3 | 29.4 | 20.6 | 18.1 |
+| Condensate | 6,676.9 | 391.1 | 379.0 | 394.1 |
+| Process | 795.6 | 1,143.3 | 901.9 | 831.6 |
+
+These descriptive CPU medians use the second fork; optimized second forks ran after known numerical test workloads stopped. The first optimized fork overlapped integration tests and is retained without presenting its timing as an attributable regression. In particular, trace-CPA CPU medians were noisy: the original PR's second fork was 291.7 ms/op, redesign 313.6 ms/op and combined 271.1 ms/op. No universal speedup, statistical significance or timing threshold is asserted. Raw wall samples, p95 values and both CPU forks are retained.
+
+All **1,980 first/last numerical snapshots** pass their conservation, phase-normalization, fugacity and finite-property gates, with no benchmark exceptions. Each of the five revisions has 396 snapshots covering cold changed, warm unchanged and warm changed sequences. The dry process has zero recorded mass-flow and energy-balance residuals; inlet and outlet remain gas. Power, duty, compositions, phase fractions, density, enthalpy and Gibbs energy are retained.
+
+Against the original PR, the redesign preserves every phase count/type and every recorded total Gibbs energy. Only trace-CPA fractions differ at rounding scale: maximum beta difference **1.11e-16**, maximum phase-composition difference **4.34e-19**. The combined trial is **identical in all 396 matched endpoint snapshots** to the redesign. Against master, topology also matches; the largest differences are the already improved condensate solution: beta **1.65e-10**, composition **2.60e-11**, relative density **1.66e-12**, and relative Gibbs **2.76e-16**. The largest signed Gibbs increase is **3.64e-12 J**, indistinguishable from rounding here. There is no unexplained worse Gibbs endpoint in this matrix.
+
+The method uses OpenJDK **17.0.20**, the standard `pom.xml` with `release 17`, identical 55 dependency artifacts, and `-Xms512m -Xmx512m -XX:+UseSerialGC`. The original head is `0239f31c2933751df29946bd78533d7d9d9acf78`; master is `d28b180969e248837e68b5e982374db69e11a376`; related heads are #4320 `0915f16e49e992d6c103618ad706d67fce20012e` and #4329 `515e21acbb776099836b06fb7318208726e28918`. Frozen redesign and combined production-source SHA256 deltas identify the measured candidates precisely. Java 8 source/API compatibility-profile tests are separate; these timings do not represent a Java 8 runtime.
+
+Per fork and sequence, operations per batch / batches / warmup are: dry gas **128/5/4096**; two-phase **64/5/2048**; condensate **32/5/128**; CPA water, SRK trace and process **16/5/64**; expensive CPA trace **4/3/8**. Cold means a newly constructed fluid/process, not a cold JVM. Construction, boundary changes and snapshots are outside measurement. Flash construction and `run()` are inside it. Changed sequences alternate base conditions with T + 0.25 K and P × 0.995.
+
+Snapshots run on public clones outside measurement. Historical implementations may refresh shared derivative caches at the same thermodynamic state, so their timing deserves caution; final clone isolation is covered by separate regressions. These are synthetic numerical checks, not experimental validation of an EOS. Named-wax correctness belongs to the separate combined integration suite, not this performance matrix.
+
+Reproducibility evidence: [compressed qualification bundle](benchmarks/tpflash-allocation-qualification.json.gz) (SHA256 `685193c3424be39c28e4f3de4cec73bc97db9cc1b17b9714c0cdd2cd38c31f74`) retains all 70 raw JSON reports, complete endpoint snapshots, raw timing samples, fixture definitions, dependency coordinates/checksums, source hashes and a machine-readable summary. Its embedded manifest identifies all five builds. Absolute workspace paths, process identifiers and runtime access diagnostics are excluded.
+
 ---
 
 ## 6. State-of-the-Art Comparison and Recommendations
@@ -2171,6 +2258,8 @@ closure within `1e-12`.
 The independent equation residuals are below `4e-15`; component closure is below `6e-17`.
 This is EOS consistency evidence, not experimental validation. Original sulfur-filter,
 scrubber saturation and exchanger regression expectations remain unchanged.
+
+The following historical diagnostics use different fixtures from the matched master/original-PR/redesign matrix in [Section 5.6](#56-matched-stability-workspace-qualification-2026-10-14). They are retained for provenance and are superseded for current allocation comparisons.
 
 The correctness fix adds allocations. A diagnostic on Java 17 with a fixed 512 MiB heap,
 seven batches of 128 full flashes and 256 warmups (4096 for dry and seed-floor controls)
@@ -2804,6 +2893,7 @@ equipment and makes no wall-clock performance claim.
 |------|-------------|
 | [TPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/TPflash.java) | Two-phase flash with SSI and Newton |
 | [TPmultiflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/TPmultiflash.java) | Multi-phase flash with stability analysis |
+| [FlashPhaseState.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/FlashPhaseState.java) | Package-private retained-split restoration and accepted-phase transfer |
 | [RachfordRice.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/RachfordRice.java) | Rachford-Rice equation solvers |
 | [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) | Second-order Newton solver |
 | [ChemicalReactionOperations.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/chemicalreactions/ChemicalReactionOperations.java) | Chemical equilibrium solver |
@@ -3126,14 +3216,83 @@ The remaining phase-map closure, duplicate-removal and density-hole tests are re
 
 ### Root selectors and Newton inventory mapping
 
+**Open qualification blocker for PR #4306:** the complete `SystemElectrolyteCPATest`
+class reproduces two salting-out failures and a hydrate-temperature error on both the
+starting `0239f31` revision and the focused state/copy redesign. Master `d28b180` passes
+those assertions, but separate composition checks show that its salted reference states
+can contain clamped molecular fractions and fail normalization. Passing the old direction-only
+assertions is therefore insufficient evidence for an ionic repair.
+
+The nitrogen/water fixture at 298.15 K and 50 bara uses component amounts
+`(nitrogen, water, Na+, Cl-) = (0.1, 1.0, 0.018, 0.018)` mol and mixing rule 10.
+The unqualified PR result places about 0.154 mole fraction chloride in the gas phase.
+The generic two-phase Newton formulation enforces positive amounts and molecular fugacity
+equality for every component; it does not represent the aqueous-only ion constraint.
+An isolated return to the old Newton implementation reproduces the old clamped states,
+not a qualified physical solution. Ionic Newton/acceleration exclusions, constrained K-value
+history, feasibility-aware Gibbs comparison and independently copied electrolyte association
+buffers were investigated separately; none alone produced qualified endpoints for all failing
+fixtures. These experimental changes are not included in the redesign.
+
+Before merging, the constrained ionic path must pass normalization, original component
+balance, gas-phase ion exclusion and molecular fugacity closure, as well as the existing
+salting-out and 150-bara hydrate tests. The passing neutral-fluid benchmark and default-CPA
+clone tests do not cover this blocker. Keep the phase/solver qualification work in
+[#4310](https://github.com/equinor/neqsim/issues/4310) open and require independent numerical
+review of the repaired endpoints.
+
 A phase's reported GAS/OIL/AQUEOUS classification is not necessarily its configured cubic
-root selector. Bounded two-phase rollback preserves both the physical-slot mapping and
-`getPhaseType(logicalPhase)` selector, avoiding a different cubic root when a trial is rejected.
+root selector. Bounded flash rollback preserves both the physical-slot mapping and
+`getPhaseType(logicalPhase)` selector, rather than reconstructing the selector from the
+resulting phase label after a rejected trial.
+
+`TPflash` and `TPmultiflash` share the package-private `FlashPhaseState` contract for retained
+splits and accepted detached candidates. A compact snapshot owns its captured values:
+the active phase count, logical-to-physical mapping, configured root selectors, resulting
+classifications, phase fractions, compositions and a separate K-value vector for each phase.
+The two-phase refinement snapshot also retains the reference Gibbs energy. Restoring every
+phase from the first phase's K-values would discard part of the pre-trial iteration state.
+
+| Transfer | State retained | Initialization boundary |
+| --- | --- | --- |
+| Compact rollback | Existing physical slots, configured selectors, beta, composition and per-phase K-values | Restore mapping before phase access, normalize beta, then call `init(1)` once. Restore the active count where the caller permits phase removal. |
+| Accepted initialized phases | Complete, independently cloned phase objects in canonical destination slots | Preserve accepted caches without normalization or initialization, including the selected near-critical root. |
+| Accepted phases requiring reevaluation | The same cloned phase transfer | Normalize beta and call `init(1)` once at the existing adoption boundary. |
+
+Compact rollback assumes unchanged temperature, pressure, feed, component order and retained
+physical slots. It rebuilds fugacity caches; it does not restore previously calculated
+composition derivatives. If phase shifts are disabled, the configured selectors must still
+be present in their retained physical slots. Cached adoption requires matching feed and
+thermodynamic model, and matching temperature and pressure in **each destination physical
+slot**: `SystemThermo.setPhase()` preserves the destination slot's temperature and pressure.
+Consumers of higher derivatives must still perform their required initialization after
+adoption or rollback.
+
+Normal default CPA clones also detach the association arrays and matrices owned by
+`PhaseSrkCPA`/`PhaseSrkCPAs`, including each component's site-composition derivative rows.
+The copied Hessian supports rebuilding a private LU factorization when a derivative is
+requested before another association solve; the clone does not reuse its parent's mutable
+factorization. `PhaseSrkCPACloneIsolationTest` checks retained values and derivative access
+without an intervening `init(0)` that could conceal shared buffers. This ownership repair
+supports the qualified ordinary default Statoil CPA path. Optional fully implicit, Anderson
+and Broyden CPA variants retain separate qualification scope; it is not a blanket thread-safety
+claim for specialized CPA models.
+
+These helpers transfer state after a caller's acceptance decision; they do not decide
+stability or select a root policy. Implicit supplementary and explicitly enhanced stability
+retain their established policies. The guarded ordinary water-rich fallback still replays
+the accepted calculation on the live system, and existing Newton and CPA acceptance checks
+remain in place. Consolidating the transfer code does not justify removing those calculations.
+
 The two-phase Newton solver uses indexed beta access consistently with its logical phase
 compositions, including after removal/reuse produces mappings such as `[2, 0]`. These changes
 add no phase search or equilibrium iterations. The tiny aqueous-seed rejection also checks
 material infeasibility together with higher Gibbs energy, since normalizing an unsolved seed
 is insufficient to qualify it against the preceding stable single phase.
 
-`TPflashPhaseLifecycleTest` covers rollback and reordered Newton inventories;
+`FlashPhaseStateTest` covers repeated rollback, two- and three-phase mappings, configured
+roots distinct from phase classifications, per-phase K-values, locked phase roles, independent
+derivative buffers, initialization boundaries, repeated or changed-state flashes, and the
+operation-local solid-check workspace exclusion.
+`TPflashPhaseLifecycleTest` covers the TPflash rollback caller and reordered Newton inventories;
 `TPflashTinyAqueousSeedRejectionTest` retains the stable vapor and nearby genuine aqueous split.

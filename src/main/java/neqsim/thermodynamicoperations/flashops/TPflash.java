@@ -187,36 +187,6 @@ public class TPflash extends Flash {
   /** Opt-in hybrid multiphase strategy, resolved once because a flash operation keeps one system. */
   private final HybridEosGeFlashModel hybridEosGeFlashModel;
 
-  /** Compact two-phase rollback snapshot used by bounded neutral endpoint refinements. */
-  private static final class BalancedTwoPhaseState {
-    private final PhaseType[] phaseTypes = new PhaseType[2];
-    private final PhaseType[] rootTypes = new PhaseType[2];
-    private final int[] phaseIndices = new int[2];
-    private final double[] betas = new double[2];
-    private final double[][] compositions;
-    private final double[] kValues;
-    private final double gibbsEnergy;
-
-    private BalancedTwoPhaseState(SystemInterface source) {
-      int numberOfComponents = source.getPhase(0).getNumberOfComponents();
-      compositions = new double[2][numberOfComponents];
-      kValues = new double[numberOfComponents];
-      gibbsEnergy = source.getGibbsEnergy();
-      for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-        phaseTypes[phaseIndex] = source.getPhase(phaseIndex).getType();
-        rootTypes[phaseIndex] = source.getPhaseType(phaseIndex);
-        phaseIndices[phaseIndex] = source.getPhaseIndex(phaseIndex);
-        betas[phaseIndex] = source.getBeta(phaseIndex);
-        for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-          compositions[phaseIndex][componentIndex] = source.getPhase(phaseIndex).getComponent(componentIndex).getx();
-        }
-      }
-      for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-        kValues[componentIndex] = source.getPhase(0).getComponent(componentIndex).getK();
-      }
-    }
-  }
-
   /**
    * Constructor for TPflash.
    */
@@ -1011,7 +981,7 @@ public class TPflash extends Flash {
     int minGibbsPhase = 0;
     double minimumGibbsEnergy = 0;
 
-    BalancedTwoPhaseState balancedWaterRichInput = balancedWaterRichInputBeforeOrdinaryIteration();
+    FlashPhaseState balancedWaterRichInput = balancedWaterRichInputBeforeOrdinaryIteration();
     system.init(0);
     prepareMultiphaseEndpointRescueSeed();
     if (gammaPhiModel != null) {
@@ -1402,7 +1372,7 @@ public class TPflash extends Flash {
           + gammaPhiModel.getGammaPhiFlashDiagnostics(deviation, phaseFractionMinimumLimit));
     }
     if (system.doMultiPhaseCheck()) {
-      BalancedTwoPhaseState balancedReference = balancedReferenceBeforeMultiphaseCheck();
+      FlashPhaseState balancedReference = balancedReferenceBeforeMultiphaseCheck();
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
       operation.run();
       restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedReference);
@@ -2424,15 +2394,15 @@ public class TPflash extends Flash {
       return;
     }
 
-    BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
-    double referenceGibbsEnergy = referenceState.gibbsEnergy;
+    FlashPhaseState referenceState = FlashPhaseState.captureWithGibbsEnergy(system);
+    double referenceGibbsEnergy = referenceState.getGibbsEnergy();
     try {
       TPmultiflash endpointSolver = new TPmultiflash(system, false);
       endpointSolver.setDoubleArrays();
       for (int refinement = 0; refinement < 3 && !isBalancedEquilibriumCandidate(system); refinement++) {
         endpointSolver.solveBeta();
       }
-      if (!isBalancedEquilibriumCandidate(system) || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)) {
+      if (!isBalancedEquilibriumCandidate(system) || !referenceState.hasSamePhaseTypes(system)) {
         restoreTwoPhaseIterationState(referenceState);
         return;
       }
@@ -2489,15 +2459,15 @@ public class TPflash extends Flash {
       return;
     }
 
-    BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    FlashPhaseState referenceState = FlashPhaseState.captureWithGibbsEnergy(system);
     try {
       for (int refinement = 0; refinement < MAX_FINAL_EQUILIBRIUM_REFINEMENT_ITERATIONS
           && !isBalancedEquilibriumCandidate(system); refinement++) {
         sucsSubs();
       }
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
-      if (!isBalancedEquilibriumCandidate(system) || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
-          || system.getGibbsEnergy() > referenceState.gibbsEnergy + gibbsTolerance) {
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.getGibbsEnergy()) * 1.0e-8);
+      if (!isBalancedEquilibriumCandidate(system) || !referenceState.hasSamePhaseTypes(system)
+          || system.getGibbsEnergy() > referenceState.getGibbsEnergy() + gibbsTolerance) {
         restoreTwoPhaseIterationState(referenceState);
       }
     } catch (Exception ex) {
@@ -2545,7 +2515,7 @@ public class TPflash extends Flash {
       return;
     }
 
-    BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    FlashPhaseState referenceState = FlashPhaseState.captureWithGibbsEnergy(system);
     boolean referenceMaterialBalanceInvalid = !Double.isFinite(referenceMaterialResidual)
         || referenceMaterialResidual > WATER_RICH_MATERIAL_BALANCE_TOLERANCE;
     boolean referenceWasInvalid = !Double.isFinite(referenceMaterialResidual)
@@ -2559,9 +2529,9 @@ public class TPflash extends Flash {
             && !isBalancedEquilibriumCandidate(system); refinement++) {
           endpointSolver.solveBeta();
         }
-        double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
-        if (isBalancedEquilibriumCandidate(system) && preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
-            && (referenceWasInvalid || system.getGibbsEnergy() <= referenceState.gibbsEnergy + gibbsTolerance)) {
+        double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.getGibbsEnergy()) * 1.0e-8);
+        if (isBalancedEquilibriumCandidate(system) && referenceState.hasSamePhaseTypes(system)
+            && (referenceWasInvalid || system.getGibbsEnergy() <= referenceState.getGibbsEnergy() + gibbsTolerance)) {
           rescueLowerGibbsHydrocarbonPhaseRoots();
           system.orderByDensity();
           system.init(1);
@@ -2590,15 +2560,15 @@ public class TPflash extends Flash {
       if (largeVolatilityHydrocarbonCase && !isBalancedEquilibriumCandidate(candidate)) {
         refineLargeVolatilityHydrocarbonCandidate(candidate);
       }
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.getGibbsEnergy()) * 1.0e-8);
       boolean replacesInvalidIncipientPhase = !Double.isFinite(referenceFugacityResidual)
           || referenceFugacityResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE;
       replacesInvalidIncipientPhase &= candidate.getNumberOfPhases() == 1
-          && Math.min(referenceState.betas[0], referenceState.betas[1]) < INVALID_INCIPIENT_PHASE_FRACTION_LIMIT
-          && candidate.getGibbsEnergy() <= referenceState.gibbsEnergy + gibbsTolerance;
+          && Math.min(referenceState.getBeta(0), referenceState.getBeta(1)) < INVALID_INCIPIENT_PHASE_FRACTION_LIMIT
+          && candidate.getGibbsEnergy() <= referenceState.getGibbsEnergy() + gibbsTolerance;
       if (isNeutralFluidCandidate(candidate) && isBalancedEquilibriumCandidate(candidate)
           && (referenceMaterialBalanceInvalid
-              || candidate.getGibbsEnergy() < referenceState.gibbsEnergy - gibbsTolerance
+              || candidate.getGibbsEnergy() < referenceState.getGibbsEnergy() - gibbsTolerance
               || replacesInvalidIncipientPhase)) {
         if (isNearCriticalRichGasRefinementCase()) {
           copyConvergedNeutralFlashState(candidate);
@@ -2697,13 +2667,7 @@ public class TPflash extends Flash {
    * @param source accepted near-critical candidate
    */
   private void copyConvergedNeutralFlashState(SystemInterface source) {
-    system.setNumberOfPhases(source.getNumberOfPhases());
-    for (int phaseIndex = 0; phaseIndex < source.getNumberOfPhases(); phaseIndex++) {
-      system.setPhaseIndex(phaseIndex, phaseIndex);
-      system.setPhase(source.getPhase(phaseIndex).clone(), phaseIndex);
-      system.setPhaseType(phaseIndex, source.getPhaseType(phaseIndex));
-      system.setBeta(phaseIndex, source.getBeta(phaseIndex));
-    }
+    FlashPhaseState.copyInitializedPhases(source, system);
   }
 
   /**
@@ -2724,19 +2688,8 @@ public class TPflash extends Flash {
    *
    * @param referenceState pre-refinement state
    */
-  private void restoreTwoPhaseIterationState(BalancedTwoPhaseState referenceState) {
-    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-      system.setPhaseIndex(phaseIndex, referenceState.phaseIndices[phaseIndex]);
-      system.setPhaseType(phaseIndex, referenceState.rootTypes[phaseIndex]);
-      system.setBeta(phaseIndex, referenceState.betas[phaseIndex]);
-      for (int componentIndex = 0; componentIndex < referenceState.compositions[phaseIndex].length; componentIndex++) {
-        system.getPhase(phaseIndex).getComponent(componentIndex)
-            .setx(referenceState.compositions[phaseIndex][componentIndex]);
-        system.getPhase(phaseIndex).getComponent(componentIndex).setK(referenceState.kValues[componentIndex]);
-      }
-    }
-    system.normalizeBeta();
-    system.init(1);
+  private void restoreTwoPhaseIterationState(FlashPhaseState referenceState) {
+    referenceState.restorePhaseValues(system);
   }
 
   /**
@@ -2964,7 +2917,7 @@ public class TPflash extends Flash {
         || initialResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
       return;
     }
-    BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
+    FlashPhaseState referenceState = FlashPhaseState.captureWithGibbsEnergy(system);
     try {
       TPmultiflash endpointSolver = new TPmultiflash(system, false);
       endpointSolver.setDoubleArrays();
@@ -2975,11 +2928,11 @@ public class TPflash extends Flash {
       }
       system.orderByDensity();
       system.init(1);
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.getGibbsEnergy()) * 1.0e-8);
       if (!isBalancedEquilibriumCandidate(system)
           || maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE
-          || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
-          || system.getGibbsEnergy() > referenceState.gibbsEnergy + gibbsTolerance) {
+          || !referenceState.hasSamePhaseTypes(system)
+          || system.getGibbsEnergy() > referenceState.getGibbsEnergy() + gibbsTolerance) {
         restoreTwoPhaseIterationState(referenceState);
       }
     } catch (Exception ex) {
@@ -3006,20 +2959,19 @@ public class TPflash extends Flash {
     if (!Double.isFinite(residual) || residual < 1.0e-12) {
       return;
     }
-    BalancedTwoPhaseState reference = new BalancedTwoPhaseState(system);
+    FlashPhaseState reference = FlashPhaseState.captureWithGibbsEnergy(system);
     try {
       SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(system, 2, system.getNumberOfComponents());
       for (int iteration = 0; iteration < 3 && residual >= 1.0e-12; iteration++) {
         solver.polishConvergedEquilibrium();
         residual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
       }
-      double gibbsTolerance = Math.max(1.0e-6, Math.abs(reference.gibbsEnergy) * 1.0e-8);
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(reference.getGibbsEnergy()) * 1.0e-8);
       if (!Double.isFinite(residual) || residual >= 1.0e-12 || !isBalancedEquilibriumCandidate(system)
-          || !preservesTwoPhaseActiveSet(system, reference.phaseTypes)
-          || system.getPhaseIndex(0) != reference.phaseIndices[0]
-          || system.getPhaseIndex(1) != reference.phaseIndices[1] || system.getPhaseType(0) != reference.rootTypes[0]
-          || system.getPhaseType(1) != reference.rootTypes[1]
-          || system.getGibbsEnergy() > reference.gibbsEnergy + gibbsTolerance) {
+          || !reference.hasSamePhaseTypes(system) || system.getPhaseIndex(0) != reference.getPhaseIndex(0)
+          || system.getPhaseIndex(1) != reference.getPhaseIndex(1) || system.getPhaseType(0) != reference.getRootType(0)
+          || system.getPhaseType(1) != reference.getRootType(1)
+          || system.getGibbsEnergy() > reference.getGibbsEnergy() + gibbsTolerance) {
         restoreTwoPhaseIterationState(reference);
       }
     } catch (Exception ex) {
@@ -3619,7 +3571,7 @@ public class TPflash extends Flash {
    *
    * @return balanced state, or {@code null} when recovery is not applicable
    */
-  private BalancedTwoPhaseState balancedReferenceBeforeMultiphaseCheck() {
+  private FlashPhaseState balancedReferenceBeforeMultiphaseCheck() {
     if (system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons() || solidCheck
         || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !isBalancedEquilibriumCandidate(system)) {
       return null;
@@ -3628,7 +3580,7 @@ public class TPflash extends Flash {
         && !hasPotentialAsymmetricNeutralInstability(MULTIPHASE_ENDPOINT_CRITICAL_TEMPERATURE_MARGIN)) {
       return null;
     }
-    return new BalancedTwoPhaseState(system);
+    return FlashPhaseState.captureWithGibbsEnergy(system);
   }
 
   /**
@@ -3643,7 +3595,7 @@ public class TPflash extends Flash {
    *
    * @return balanced current-state snapshot, or {@code null} when repeat protection is not applicable
    */
-  private BalancedTwoPhaseState balancedWaterRichInputBeforeOrdinaryIteration() {
+  private FlashPhaseState balancedWaterRichInputBeforeOrdinaryIteration() {
     if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
         || system.isChemicalSystem() || system.hasIons() || solidCheck || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck()) {
@@ -3653,7 +3605,7 @@ public class TPflash extends Flash {
     try {
       candidate.init(1);
       if (isBalancedEquilibriumCandidate(candidate)) {
-        return new BalancedTwoPhaseState(candidate);
+        return FlashPhaseState.captureWithGibbsEnergy(candidate);
       }
     } catch (Exception ex) {
       logger.debug("Water-rich input repeat snapshot failed: {}", ex.getMessage());
@@ -3677,7 +3629,7 @@ public class TPflash extends Flash {
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
    */
-  private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(BalancedTwoPhaseState balancedReference) {
+  private void restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(FlashPhaseState balancedReference) {
     if (balancedReference == null || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS)
         || !hasSameTwoPhaseTopology(balancedReference) || isBalancedEquilibriumCandidate(system)) {
       return;
@@ -3691,10 +3643,10 @@ public class TPflash extends Flash {
    * @param reference saved two-phase state
    * @return {@code true} when both states contain the same phase types
    */
-  private boolean hasSameTwoPhaseTopology(BalancedTwoPhaseState reference) {
+  private boolean hasSameTwoPhaseTopology(FlashPhaseState reference) {
     PhaseType firstType = system.getPhase(0).getType();
     PhaseType secondType = system.getPhase(1).getType();
-    return hasSameTwoPhaseTopology(firstType, secondType, reference.phaseTypes[0], reference.phaseTypes[1]);
+    return hasSameTwoPhaseTopology(firstType, secondType, reference.getPhaseType(0), reference.getPhaseType(1));
   }
 
   /**
@@ -3725,12 +3677,12 @@ public class TPflash extends Flash {
    *
    * @param balancedReference feasible pre-trial state, or {@code null} when recovery is not applicable
    */
-  private void restoreLowerGibbsReferenceAfterSinglePhaseCollapse(BalancedTwoPhaseState balancedReference) {
+  private void restoreLowerGibbsReferenceAfterSinglePhaseCollapse(FlashPhaseState balancedReference) {
     if (balancedReference == null || system.getNumberOfPhases() != 1) {
       return;
     }
     system.init(1);
-    double referenceGibbsEnergy = balancedReference.gibbsEnergy;
+    double referenceGibbsEnergy = balancedReference.getGibbsEnergy();
     double collapsedGibbsEnergy = system.getGibbsEnergy();
     if (!Double.isFinite(referenceGibbsEnergy) || !Double.isFinite(collapsedGibbsEnergy)) {
       return;
@@ -3747,20 +3699,8 @@ public class TPflash extends Flash {
    *
    * @param balancedReference feasible pre-trial state to restore
    */
-  private void restoreBalancedTwoPhaseState(BalancedTwoPhaseState balancedReference) {
-    system.setNumberOfPhases(2);
-    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-      system.setPhaseIndex(phaseIndex, balancedReference.phaseIndices[phaseIndex]);
-      system.setPhaseType(phaseIndex, balancedReference.rootTypes[phaseIndex]);
-      system.setBeta(phaseIndex, balancedReference.betas[phaseIndex]);
-      for (int componentIndex = 0; componentIndex < balancedReference.compositions[phaseIndex].length; componentIndex++) {
-        system.getPhase(phaseIndex).getComponent(componentIndex)
-            .setx(balancedReference.compositions[phaseIndex][componentIndex]);
-        system.getPhase(phaseIndex).getComponent(componentIndex).setK(balancedReference.kValues[componentIndex]);
-      }
-    }
-    system.normalizeBeta();
-    system.init(1);
+  private void restoreBalancedTwoPhaseState(FlashPhaseState balancedReference) {
+    balancedReference.restore(system);
   }
 
   /**
@@ -3900,15 +3840,7 @@ public class TPflash extends Flash {
    * @param source source system whose converged flash state should replace the current state
    */
   private void copyFlashStateFrom(SystemInterface source) {
-    system.setNumberOfPhases(source.getNumberOfPhases());
-    for (int phaseIndex = 0; phaseIndex < source.getNumberOfPhases(); phaseIndex++) {
-      system.setPhaseIndex(phaseIndex, phaseIndex);
-      system.setPhase(source.getPhase(phaseIndex).clone(), phaseIndex);
-      system.setPhaseType(phaseIndex, source.getPhaseType(phaseIndex));
-      system.setBeta(phaseIndex, source.getBeta(phaseIndex));
-    }
-    system.normalizeBeta();
-    system.init(1);
+    FlashPhaseState.copyAndReinitializePhases(source, system);
   }
 
   /**

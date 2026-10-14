@@ -118,7 +118,9 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     clonedComponent.xsitedTdT = xsitedTdT.clone();
     System.arraycopy(this.xsitedTdT, 0, clonedComponent.xsitedTdT, 0, xsitedTdT.length);
     clonedComponent.xsitedni = xsitedni.clone();
-    System.arraycopy(this.xsitedni, 0, clonedComponent.xsitedni, 0, xsitedni.length);
+    for (int i = 0; i < xsitedni.length; i++) {
+      clonedComponent.xsitedni[i] = xsitedni[i] == null ? null : xsitedni[i].clone();
+    }
     return clonedComponent;
   }
 

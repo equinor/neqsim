@@ -34,6 +34,28 @@ requirement`, or `confidential compressor route`.
 
 ## Log
 
+### 2026-10-14 — Consolidate flash state transfers and qualify compact stability copies
+**Type:** E (Feature)
+**Keywords:** PR 4306, clone ownership, stability workspace, CPA concurrency, phase rollback, allocations
+**Solution:** `FlashPhaseState` centralizes retained-split restoration and accepted-phase transfer
+without changing initialization or acceptance boundaries. `copyForStabilityTrial()` gives exact
+plain SRK/PR, classic-mixing, analytic, two-slot stability calculations independently owned
+derivative buffers sized to the fixed component count; ordinary clones retain source capacity.
+Specialized models and unsupported layouts retain normal virtual copying. New ownership,
+mapping, solid-option and concurrent-clone regressions accompany complete-flash allocation
+qualification against matching master and original-PR builds.
+**Notes:** Concurrent CPA validation reproduced a finite-fugacity failure on the original
+`0239f31` head. CPA association arrays/matrices and component association-derivative rows need
+independent ownership, with a private LU rebuilt from the retained Hessian when required.
+Preserve cached state rather than forcing initialization as a cloning side effect. Performance
+comparisons must use identical Maven profiles and dependencies; Java 8 compatibility tests and
+standard-profile performance builds use intentionally different dependency sets.
+Classic mixing-rule sums now use local accumulators, with six deterministic nested-evaluation
+regressions that fail on the starting head. The broader run exposes three existing PR electrolyte
+failures; master passes their assertions but gives invalid clamped saline reference states.
+Do not revert Newton safeguards or weaken assertions to obtain a green build. The constrained
+ionic solve remains a merge blocker, separate from the verified neutral/default-CPA redesign.
+
 ### 2026-10-14 — Repair Java 8 dependency recovery and preserve master changes in PR 4306
 **Type:** Maintenance
 **Keywords:** Java 8, Maven, phase roots, Newton line search, TP flash, master integration

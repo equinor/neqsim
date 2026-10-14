@@ -1,7 +1,7 @@
 ---
 name: neqsim-thermodynamic-initialization
 description: "Select and audit NeqSim thermodynamic initialization levels for correctness and performance. USE WHEN: implementing or reviewing flashes, phase stability, EOS root selection, process-equipment thermodynamics, property access, or performance changes involving init(...) or initProperties()."
-last_verified: "2026-09-12"
+last_verified: "2026-10-14"
 ---
 
 # NeqSim thermodynamic initialization
@@ -46,6 +46,49 @@ when copying or restoring a stability candidate. After phase removal, locate an 
 `PhaseType.SOLID`; logical index 3 need not still identify it.
 
 For pure phases backed by independent fundamental EOS models, compare molar chemical potentials or Gibbs energies directly at the same temperature and pressure. Do not force the comparison through exponentiated fugacity coefficients when a native Gibbs value is available; large reference offsets can overflow `exp(ln phi)` even though the Gibbs residual is finite. Mixture solid-equilibrium paths may still require logarithmic fugacity or activity expressions.
+
+## Flash state transfer and trial ownership
+
+Use the package-private `FlashPhaseState` contract when changing TPflash or TPmultiflash
+rollback/adoption. Keep these boundaries distinct:
+
+- For compact rollback, retain logical-to-physical mapping, configured root selectors,
+  beta, compositions and **each phase's own K-values**. Restore mapping before accessing
+  phases, normalize beta and run `init(1)` once at the existing rollback boundary. Require
+  unchanged T/P/feed/component order and retained physical slots; when phase shifts are
+  disabled, verify the original selectors remain in those slots. Do not treat rebuilt
+  fugacity caches as restored composition-derivative caches.
+- For accepted cached phases, transfer complete independent phase clones. Verify matching
+  feed/model and T/P in every destination physical slot: `setPhase()` retains destination
+  T/P. Do not add normalization or initialization to a cache-preserving near-critical
+  adoption merely to be safe. For an adoption that already rebuilds state, retain its
+  normalization and single `init(1)` call. Keep the caller's acceptance checks and any
+  required ordinary-fallback replay.
+- Preserve the normal `clone()` capacity and ownership contract. Use compact
+  `copyForStabilityTrial()` storage only in the detached, fixed-component lowest-Gibbs
+  stability workspace. The qualified system path requires exact plain SRK/PR classes,
+  classic mixing, analytic derivatives, two ordinary cubic storage slots, consistent
+  component indices and valid distinct active mappings. Honor the flash operation's
+  solid-check option as well as the system flag. Keep
+  specialized models, subclasses and unsupported phase options on their normal virtual
+  clone path. Never add components to a compact workspace or adopt its phases into a
+  user fluid; do not introduce a shared cache across flash calls.
+
+Run `FlashPhaseStateTest`, `TPflashPhaseLifecycleTest`, `StabilityTrialCopyTest` and
+`TPflashConcurrentCloneIsolationTest` for changes to these contracts, together with
+regressions for the affected fluid/model. Inspect
+[the TPflash transfer and workspace contracts](../../../docs/thermodynamicoperations/TPflash_algorithm.md#root-selectors-and-newton-inventory-mapping)
+before removing a replay or changing an initialization boundary. Extend model qualification
+explicitly rather than inferring it from a shared base class.
+
+For default CPA clone changes, verify independent phase association matrices and component
+site-derivative rows with `PhaseSrkCPACloneIsolationTest`. Preserve cached values immediately
+after cloning, and support derivative access before another association solve: clearing a
+shared LU factorization requires rebuilding a private factorization from the copied Hessian
+when no cached inverse is available. Do not insert `init(0)` into the regression merely to
+rebuild aliased storage. Include Cp/Cv and attraction-temperature derivatives in concurrent
+SRK/PR/default Statoil CPA checks. Keep model configuration unchanged; do not generalize those
+results to arbitrary mixing rules or optional fully implicit, Anderson and Broyden CPA solvers.
 
 ## Review checklist
 

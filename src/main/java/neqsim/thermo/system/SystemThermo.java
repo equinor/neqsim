@@ -1545,6 +1545,62 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemThermo clone() {
+    return cloneSystemState(false);
+  }
+
+  /**
+   * Creates an operation-local workspace for two-phase stability analysis without changing general cloning.
+   *
+   * <p>
+   * Exact ordinary SRK/PR fluids with analytic derivatives and two ordinary cubic storage slots use compact owned
+   * composition-derivative arrays. The component list is fixed for the lifetime of this workspace, and its phases must
+   * never be adopted into a user fluid. Specialized models, topology options and unknown subclasses retain their normal
+   * virtual clone behavior. No cache is shared across flash calls. Use {@link #clone()} for general fluid copies.
+   * </p>
+   *
+   * @return detached stability workspace, or a normal clone when compact storage is not qualified
+   */
+  public SystemThermo copyForStabilityTrial() {
+    if ((getClass() != SystemSrkEos.class && getClass() != SystemPrEos.class) || getMaxNumberOfPhases() != 2
+        || getNumberOfComponents() <= 0 || getNumberOfComponents() > ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS
+        || getNumberOfPhases() < 1 || getNumberOfPhases() > 2 || isNumericDerivatives()
+        || !isImplementedCompositionDeriativesofFugacity() || isChemicalSystem() || hasIons() || isForcePhaseTypes()
+        || !allowPhaseShift() || doSolidPhaseCheck() || getHydrateCheck() || isMultiphaseWaxCheck()) {
+      return clone();
+    }
+    for (int phase = 0; phase < getNumberOfPhases(); phase++) {
+      if (phaseIndex[phase] < 0 || phaseIndex[phase] > 1 || (phase == 1 && phaseIndex[phase] == phaseIndex[0])) {
+        return clone();
+      }
+    }
+    for (int slot = 0; slot < 2; slot++) {
+      PhaseInterface phase = phaseArray[slot];
+      if (phase == null || phase.getNumberOfComponents() != getNumberOfComponents()
+          || (phase.getClass() != neqsim.thermo.phase.PhaseSrkEos.class
+              && phase.getClass() != neqsim.thermo.phase.PhasePrEos.class)
+          || !"classic".equals(((neqsim.thermo.phase.PhaseEos) phase).getMixingRuleName())) {
+        return clone();
+      }
+      for (int component = 0; component < getNumberOfComponents(); component++) {
+        if (phase.getComponent(component) == null || phase.getComponent(component).getComponentNumber() != component) {
+          return clone();
+        }
+        Class<?> type = phase.getComponent(component).getClass();
+        if (type != neqsim.thermo.component.ComponentSrk.class && type != neqsim.thermo.component.ComponentPR.class) {
+          return clone();
+        }
+      }
+    }
+    return cloneSystemState(true);
+  }
+
+  /**
+   * Copies system-owned state and delegates phase copying to the selected explicit workspace policy.
+   *
+   * @param compactStabilityTrial whether the caller has qualified fixed-component cubic trial storage
+   * @return detached system copy with independent active phase state
+   */
+  private SystemThermo cloneSystemState(boolean compactStabilityTrial) {
     SystemThermo clonedSystem = null;
     try {
       clonedSystem = (SystemThermo) super.clone();
@@ -1579,7 +1635,9 @@ public abstract class SystemThermo implements SystemInterface {
 
     clonedSystem.phaseArray = phaseArray.clone();
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-      clonedSystem.phaseArray[i] = phaseArray[i].clone();
+      clonedSystem.phaseArray[i] = compactStabilityTrial
+          ? ((neqsim.thermo.phase.PhaseEos) phaseArray[i]).copyForStabilityTrial()
+          : phaseArray[i].clone();
     }
 
     if (chemicalReactionOperations != null) {

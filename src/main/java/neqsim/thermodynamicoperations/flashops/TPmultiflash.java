@@ -2517,42 +2517,6 @@ public class TPmultiflash extends TPflash {
     return vapourSum > 1.0 + WILSON_TWO_PHASE_SCREEN_TOLERANCE && liquidSum > 1.0 + WILSON_TWO_PHASE_SCREEN_TOLERANCE;
   }
 
-  /** Converged phase split retained so an unsuccessful multiphase restart can be undone. */
-  private static final class PhaseSplitSnapshot {
-    private final int numberOfPhases;
-    private final PhaseType[] phaseTypes;
-    /** Configured cubic roots, distinct from the resulting phase classifications. */
-    private final PhaseType[] rootTypes;
-    /** Physical phase-array slot backing each logical phase, so a restore cannot re-map the phases. */
-    private final int[] phaseIndices;
-    private final double[] betas;
-    private final double[][] compositions;
-    private final double[] kValues;
-
-    private PhaseSplitSnapshot(SystemInterface source) {
-      numberOfPhases = source.getNumberOfPhases();
-      int numberOfComponents = source.getPhase(0).getNumberOfComponents();
-      phaseTypes = new PhaseType[numberOfPhases];
-      rootTypes = new PhaseType[numberOfPhases];
-      phaseIndices = new int[numberOfPhases];
-      betas = new double[numberOfPhases];
-      compositions = new double[numberOfPhases][numberOfComponents];
-      kValues = new double[numberOfComponents];
-      for (int phase = 0; phase < numberOfPhases; phase++) {
-        phaseTypes[phase] = source.getPhase(phase).getType();
-        rootTypes[phase] = source.getPhaseType(phase);
-        phaseIndices[phase] = source.getPhaseIndex(phase);
-        betas[phase] = source.getBeta(phase);
-        for (int comp = 0; comp < numberOfComponents; comp++) {
-          compositions[phase][comp] = source.getPhase(phase).getComponent(comp).getx();
-        }
-      }
-      for (int comp = 0; comp < numberOfComponents; comp++) {
-        kValues[comp] = source.getPhase(0).getComponent(comp).getK();
-      }
-    }
-  }
-
   /**
    * Reinstates a retained phase split after a rejected multiphase restart.
    *
@@ -2565,19 +2529,8 @@ public class TPmultiflash extends TPflash {
    *
    * @param snapshot converged split captured before the restart
    */
-  private void restorePhaseSplit(PhaseSplitSnapshot snapshot) {
-    system.setNumberOfPhases(snapshot.numberOfPhases);
-    for (int phase = 0; phase < snapshot.numberOfPhases; phase++) {
-      system.setPhaseIndex(phase, snapshot.phaseIndices[phase]);
-      system.setPhaseType(phase, snapshot.rootTypes[phase]);
-      system.setBeta(phase, snapshot.betas[phase]);
-      for (int comp = 0; comp < snapshot.compositions[phase].length; comp++) {
-        system.getPhase(phase).getComponent(comp).setx(snapshot.compositions[phase][comp]);
-        system.getPhase(phase).getComponent(comp).setK(snapshot.kValues[comp]);
-      }
-    }
-    system.normalizeBeta();
-    system.init(1);
+  private void restorePhaseSplit(FlashPhaseState snapshot) {
+    snapshot.restore(system);
   }
 
   /**
@@ -2628,10 +2581,10 @@ public class TPmultiflash extends TPflash {
       return;
     }
     double referenceGibbs;
-    PhaseSplitSnapshot snapshot;
+    FlashPhaseState snapshot;
     try {
       referenceGibbs = system.getGibbsEnergy();
-      snapshot = new PhaseSplitSnapshot(system);
+      snapshot = FlashPhaseState.capture(system);
     } catch (Exception ex) {
       logger.debug("Vapour-appearance restart snapshot failed: {}", ex.getMessage());
       return;
@@ -2643,7 +2596,7 @@ public class TPmultiflash extends TPflash {
       trial.setPhaseIndex(0, 0);
       trial.setPhaseIndex(1, 1);
       trial.setPhaseType(0, PhaseType.GAS);
-      trial.setPhaseType(1, snapshot.phaseTypes[snapshot.numberOfPhases - 1]);
+      trial.setPhaseType(1, snapshot.getPhaseType(snapshot.getNumberOfPhases() - 1));
       trial.init(0);
       trial.init(1);
       VAPOUR_RESTART_ACTIVE.set(Boolean.TRUE);
@@ -2654,8 +2607,8 @@ public class TPmultiflash extends TPflash {
       }
       trial.init(1);
       boolean retainsOriginalPhases = true;
-      for (int phase = 0; phase < snapshot.numberOfPhases; phase++) {
-        if (!trial.hasPhaseType(snapshot.phaseTypes[phase])) {
+      for (int phase = 0; phase < snapshot.getNumberOfPhases(); phase++) {
+        if (!trial.hasPhaseType(snapshot.getPhaseType(phase))) {
           retainsOriginalPhases = false;
           break;
         }
@@ -2667,7 +2620,7 @@ public class TPmultiflash extends TPflash {
               trial.getGibbsEnergy());
         }
         convergedSplitReplaced = true;
-        restorePhaseSplit(new PhaseSplitSnapshot(trial));
+        restorePhaseSplit(FlashPhaseState.capture(trial));
         if (!adoptedSplitIsUsable(referenceGibbs)) {
           logger.debug("Vapour-appearance restart did not survive adoption; keeping the converged endpoint");
           restorePhaseSplit(snapshot);
@@ -3770,9 +3723,9 @@ public class TPmultiflash extends TPflash {
         return;
       }
 
-      PhaseSplitSnapshot original = new PhaseSplitSnapshot(system);
+      FlashPhaseState original = FlashPhaseState.capture(system);
       try {
-        restorePhaseSplit(new PhaseSplitSnapshot(candidate));
+        restorePhaseSplit(FlashPhaseState.capture(candidate));
         if (!isFeasiblePhaseEquilibrium(system)
             || (validReference && system.getGibbsEnergy() >= referenceGibbs - gibbsTolerance)) {
           restorePhaseSplit(original);

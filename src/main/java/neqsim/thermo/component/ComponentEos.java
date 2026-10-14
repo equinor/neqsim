@@ -135,20 +135,56 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       throw new IllegalStateException("Failed to clone EOS component", ex);
     }
 
+    copyEosState(clonedComponent, -1);
+    return clonedComponent;
+  }
+
+  /**
+   * Creates a bounded internal stability-trial component for an unchanged component list.
+   *
+   * <p>
+   * Only the exact ordinary SRK and PR component implementations use compact, independently owned derivative arrays.
+   * All other implementations retain their normal virtual clone behavior. This workspace must not be installed in a
+   * user fluid or used to add components; use {@link #clone()} for a general-purpose copy.
+   * </p>
+   *
+   * @param numberOfComponents fixed component count of the containing trial phase
+   * @return detached trial component, or a normal clone for an unsupported implementation
+   * @throws IllegalArgumentException if the fixed count cannot contain this component
+   */
+  public ComponentEos copyForStabilityTrial(int numberOfComponents) {
+    if (numberOfComponents <= componentNumber
+        || numberOfComponents > ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS || numberOfComponents <= 0) {
+      throw new IllegalArgumentException("Invalid stability-trial component count");
+    }
+    if (getClass() != ComponentSrk.class && getClass() != ComponentPR.class) {
+      return clone();
+    }
+    ComponentEos copiedComponent = (ComponentEos) super.cloneWithDerivativeCapacity(numberOfComponents);
+    copyEosState(copiedComponent, numberOfComponents);
+    return copiedComponent;
+  }
+
+  /**
+   * Copies the EOS-owned state and rebinds the attractive term to its new component.
+   *
+   * @param copiedComponent shallow component copy with owned base derivative buffers
+   * @param capacity trial capacity, or a negative value to retain each original array length
+   */
+  private void copyEosState(ComponentEos copiedComponent, int capacity) {
     if (this.getAttractiveParameter() != null) {
       AttractiveTermInterface clonedAttractiveTerm = this.getAttractiveParameter().clone();
       // The alpha function reads Tc, Pc and the acentric factor from its component on every
       // evaluation, so the clone must point at the cloned component. Leaving the original reference
       // in place silently discards any critical-property tuning applied after the clone.
-      clonedAttractiveTerm.setComponent(clonedComponent);
-      clonedComponent.setAttractiveParameter(clonedAttractiveTerm);
+      clonedAttractiveTerm.setComponent(copiedComponent);
+      copiedComponent.setAttractiveParameter(clonedAttractiveTerm);
     }
 
-    clonedComponent.Aij = Aij.clone();
-    clonedComponent.Bij = Bij.clone();
-    clonedComponent.dAdndn = dAdndn.clone();
-    clonedComponent.dBdndn = dBdndn.clone();
-    return clonedComponent;
+    copiedComponent.Aij = capacity < 0 ? Aij.clone() : java.util.Arrays.copyOf(Aij, capacity);
+    copiedComponent.Bij = capacity < 0 ? Bij.clone() : java.util.Arrays.copyOf(Bij, capacity);
+    copiedComponent.dAdndn = capacity < 0 ? dAdndn.clone() : java.util.Arrays.copyOf(dAdndn, capacity);
+    copiedComponent.dBdndn = capacity < 0 ? dBdndn.clone() : java.util.Arrays.copyOf(dBdndn, capacity);
   }
 
   /** {@inheritDoc} */
