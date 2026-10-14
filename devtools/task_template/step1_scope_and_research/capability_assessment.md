@@ -112,7 +112,7 @@ For each ❌ Gap in section 3, decide one of:
 - **Workaround in notebook** — implement in Python, document the limitation.
 - **NeqSim Improvement Proposal (NIP)** — specify the new Java class and tests
   in `neqsim_improvements.md`. Triggered automatically into a GitHub issue
-  when the PR merges (see `.github/workflows/task_nip_issues.yml`).
+  when the PR merges (see `.github/workflows/ai-auto-open-nip-issues.yml`).
 
 | # | Gap | Decision | Owner | Effort |
 |---|---|---|---|---|
