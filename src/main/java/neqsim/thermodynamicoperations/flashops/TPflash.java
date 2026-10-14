@@ -1934,7 +1934,7 @@ public class TPflash extends Flash {
         if (isNearCriticalRichGasRefinementCase()) {
           copyConvergedNeutralFlashState(candidate);
         } else {
-          copyNeutralFlashStatePreservingRoots(candidate);
+          copyFlashStateFrom(candidate);
         }
       }
     } catch (Exception ex) {
@@ -2599,7 +2599,7 @@ public class TPflash extends Flash {
         if (isNearCriticalRichGasRefinementCase()) {
           copyConvergedNeutralFlashState(candidate);
         } else {
-          copyNeutralFlashStatePreservingRoots(candidate);
+          copyFlashStateFrom(candidate);
         }
       }
     } catch (Exception ex) {
@@ -2682,33 +2682,6 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Copies a neutral two-phase candidate while retaining its selected cubic roots.
-   *
-   * <p>
-   * A converged phase may expose a gas/oil label while its lower-Gibbs cubic root is stored separately by the system.
-   * {@link #copyFlashStateFrom(SystemInterface)} copies the public label and can therefore reinitialize the phase on a
-   * different root. The reciprocal fallback infers each selected root from the candidate compressibility factor and
-   * then lets the final EOS initialization assign the public gas/oil label deterministically from V/B. Retaining a
-   * stale candidate label here can otherwise make ordinary and multiphase flashes report different phase types for
-   * numerically identical states.
-   * </p>
-   *
-   * @param source accepted neutral two-phase candidate
-   */
-  private void copyNeutralFlashStatePreservingRoots(SystemInterface source) {
-    int numberOfPhases = source.getNumberOfPhases();
-    PhaseType[] rootTypes = new PhaseType[numberOfPhases];
-    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
-      rootTypes[phaseIndex] = inferSelectedCubicRoot(source, phaseIndex);
-    }
-    copyFlashStateFrom(source);
-    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
-      system.setPhaseType(phaseIndex, rootTypes[phaseIndex]);
-    }
-    system.init(1);
-  }
-
-  /**
    * Copies the active phase objects and fractions of an accepted near-critical neutral endpoint.
    *
    * <p>
@@ -2724,46 +2697,9 @@ public class TPflash extends Flash {
     for (int phaseIndex = 0; phaseIndex < source.getNumberOfPhases(); phaseIndex++) {
       system.setPhaseIndex(phaseIndex, phaseIndex);
       system.setPhase(source.getPhase(phaseIndex).clone(), phaseIndex);
-      system.setPhaseType(phaseIndex, source.getPhase(phaseIndex).getType());
+      system.setPhaseType(phaseIndex, source.getPhaseType(phaseIndex));
       system.setBeta(phaseIndex, source.getBeta(phaseIndex));
     }
-  }
-
-  /**
-   * Infers the cubic root that reproduces a converged phase's compressibility factor.
-   *
-   * <p>
-   * If retained cubic-root history makes both trial types reproduce the same compressibility factor, the candidate's
-   * declared gas/liquid class breaks the numerical tie. Otherwise iteration order could replace an accepted liquid root
-   * with a gas root during state transfer.
-   * </p>
-   *
-   * @param source converged candidate system
-   * @param phaseIndex active phase index
-   * @return gas-like or liquid-like cubic root closest to the converged phase
-   */
-  private PhaseType inferSelectedCubicRoot(SystemInterface source, int phaseIndex) {
-    PhaseType selectedRoot = source.getPhase(phaseIndex).getType();
-    PhaseType declaredRoot = selectedRoot == PhaseType.GAS ? PhaseType.GAS : PhaseType.LIQUID;
-    double selectedDifference = Double.POSITIVE_INFINITY;
-    for (PhaseType trialRoot : CUBIC_ROOT_PHASE_TYPES) {
-      try {
-        PhaseInterface trialPhase = source.getPhase(phaseIndex).clone();
-        trialPhase.init(source.getTotalNumberOfMoles(), trialPhase.getNumberOfComponents(), 1, trialRoot,
-            source.getBeta(phaseIndex));
-        double difference = Math.abs(trialPhase.getZ() - source.getPhase(phaseIndex).getZ());
-        boolean tiedDeclaredRoot = Double.isFinite(difference) && Double.isFinite(selectedDifference)
-            && Math.abs(difference - selectedDifference) <= UNCHANGED_SINGLE_PHASE_STATE_TOLERANCE
-            && trialRoot == declaredRoot;
-        if (Double.isFinite(difference) && (difference < selectedDifference || tiedDeclaredRoot)) {
-          selectedDifference = difference;
-          selectedRoot = trialRoot;
-        }
-      } catch (Exception ex) {
-        logger.debug("Cubic-root inference failed for phase {} root {}: {}", phaseIndex, trialRoot, ex.getMessage());
-      }
-    }
-    return selectedRoot;
   }
 
   /**
@@ -3014,6 +2950,7 @@ public class TPflash extends Flash {
    * </p>
    */
   private void polishNearCriticalNeutralTwoPhaseEndpoint() {
+    polishSourGasTwoPhaseEndpoint();
     if (system.doMultiPhaseCheck() || !isNearCriticalRichGasRefinementCase() || system.getNumberOfPhases() != 2) {
       return;
     }
@@ -3044,6 +2981,46 @@ public class TPflash extends Flash {
     } catch (Exception ex) {
       restoreTwoPhaseIterationState(referenceState);
       logger.debug("Final near-critical neutral endpoint polishing failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Polishes an accepted sour-fluid split without repeating stability analysis or phase-fraction solves.
+   *
+   * <p>
+   * Near the liquid-liquid boundary, a small fugacity residual can correspond to a much larger error in beta. At most
+   * three full Newton steps on the retained roots enforce a {@code 1e-12} log-fugacity target. A failed step, root
+   * change, or unacceptable Gibbs increase restores the complete original split.
+   * </p>
+   */
+  private void polishSourGasTwoPhaseEndpoint() {
+    if (system.getNumberOfPhases() != 2 || !isSourGasConsistencyRefinementCase()
+        || !system.isImplementedCompositionDeriativesofFugacity() || !isBalancedEquilibriumCandidate(system)) {
+      return;
+    }
+    double residual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
+    if (!Double.isFinite(residual) || residual < 1.0e-12) {
+      return;
+    }
+    BalancedTwoPhaseState reference = new BalancedTwoPhaseState(system);
+    try {
+      SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(system, 2, system.getNumberOfComponents());
+      for (int iteration = 0; iteration < 3 && residual >= 1.0e-12; iteration++) {
+        solver.polishConvergedEquilibrium();
+        residual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
+      }
+      double gibbsTolerance = Math.max(1.0e-6, Math.abs(reference.gibbsEnergy) * 1.0e-8);
+      if (!Double.isFinite(residual) || residual >= 1.0e-12 || !isBalancedEquilibriumCandidate(system)
+          || !preservesTwoPhaseActiveSet(system, reference.phaseTypes)
+          || system.getPhaseIndex(0) != reference.phaseIndices[0]
+          || system.getPhaseIndex(1) != reference.phaseIndices[1] || system.getPhaseType(0) != reference.rootTypes[0]
+          || system.getPhaseType(1) != reference.rootTypes[1]
+          || system.getGibbsEnergy() > reference.gibbsEnergy + gibbsTolerance) {
+        restoreTwoPhaseIterationState(reference);
+      }
+    } catch (Exception ex) {
+      restoreTwoPhaseIterationState(reference);
+      logger.debug("Sour-fluid endpoint polish failed: {}", ex.getMessage());
     }
   }
 
@@ -3769,8 +3746,8 @@ public class TPflash extends Flash {
   private void restoreBalancedTwoPhaseState(BalancedTwoPhaseState balancedReference) {
     system.setNumberOfPhases(2);
     for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
-      system.setPhaseIndex(phaseIndex, phaseIndex);
-      system.setPhaseType(phaseIndex, balancedReference.phaseTypes[phaseIndex]);
+      system.setPhaseIndex(phaseIndex, balancedReference.phaseIndices[phaseIndex]);
+      system.setPhaseType(phaseIndex, balancedReference.rootTypes[phaseIndex]);
       system.setBeta(phaseIndex, balancedReference.betas[phaseIndex]);
       for (int componentIndex = 0; componentIndex < balancedReference.compositions[phaseIndex].length; componentIndex++) {
         system.getPhase(phaseIndex).getComponent(componentIndex)
@@ -3923,7 +3900,7 @@ public class TPflash extends Flash {
     for (int phaseIndex = 0; phaseIndex < source.getNumberOfPhases(); phaseIndex++) {
       system.setPhaseIndex(phaseIndex, phaseIndex);
       system.setPhase(source.getPhase(phaseIndex).clone(), phaseIndex);
-      system.setPhaseType(phaseIndex, source.getPhase(phaseIndex).getType());
+      system.setPhaseType(phaseIndex, source.getPhaseType(phaseIndex));
       system.setBeta(phaseIndex, source.getBeta(phaseIndex));
     }
     system.normalizeBeta();

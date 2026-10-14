@@ -75,6 +75,23 @@ input while preserving the edge hydraulic model. Candidate indices are categoric
 minimum-temperature requirements must be invariant, and flexible/vendor designs are
 outside this contract. Never combine this selector with a second diameter variable
 on the same edge or treat a passing screen as qualified design.
+For coherent direct, brownfield and redundant-loop line-ups, register named
+`FieldWellNetworkProcessUnit.RouteConfiguration` options on the existing process-unit
+adapter. `configuration.<selector>.selection` is a categorical `ProcessAutomation`
+input: one write atomically assigns exact zero/one availability to the complete
+controlled edge set and preserves all per-edge hydraulic models. Do not emulate a
+multi-edge line-up with independent availability actions; that permits partial
+configurations during candidate application and restoration.
+The same selector works for live `WellFlow` injection networks. Update a zone's
+lifecycle boundary through `WellFlow.ReservoirLayer.setReservoirPressure(...)` so
+the layer pressure and its reservoir stream remain synchronized; do not change the
+public pressure field alone in a repeated coupled calculation.
+Register configured rotating-equipment maps with
+`FieldNetworkTopology.addPumpWithCurve(...)` and `addCompressorWithChart(...)` so the
+existing `Pump`/`Compressor` remains the chart owner under the canonical edge identity.
+`ProcessModel.getPower(...)` includes solved pump/compressor demand inside standalone
+`LoopedPipeNetwork` and wrapped `FieldWellNetworkProcessUnit` equipment; use that total
+for shared host-power evidence and fail closed on non-finite map results.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
@@ -86,6 +103,7 @@ replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 | Hydraulic details: `NetworkLinearSolver`, `NetworkPipe`, pipe-model bindings | `neqsim.process.equipment.network` | Linear solve helpers and per-edge hydraulic state; edges may use Darcy-Weisbach or a configured `PipeBeggsAndBrills` model. | `NetworkLinearSolver.solve`, `NetworkLinearSolver.solveGaussian`, `NetworkPipe.getFlowRate`, `NetworkPipe.getBBModel` |
 | Well and facility elements | `neqsim.process.equipment.network` | IPR, tubing, choke, compressor, pump, regulator, artificial-lift, and related source/edge elements within the network. | `addWellIPR`, `addChoke`; configure through `NetworkPipe` element-specific setters |
 | Typed field/SURF identity: `FieldNetworkTopology` | `neqsim.process.equipment.network` | Stable production/injection roles, equipment tags and ports over the canonical network, including typed choke, pump and compressor construction. | `addPipe`, `addChoke`, `addPump`, `addPumpDifferentialPressure`, `addCompressor`, `validateForExecution`, `copyDefinition` |
+| Live field route line-ups: `FieldWellNetworkProcessUnit`, `RouteConfiguration` | `neqsim.process.equipment.network` | Runs the live well/network coupler in a process model and atomically switches named multi-edge direct, brownfield or redundant configurations on the same canonical graph. | `registerExclusiveRouteSelector`, `registerRouteConfigurationSelector`, `getRouteConfigurationNames`, `setRouteConfigurationSelection` |
 | Canonical SURF design basis: `FieldNetworkSurfDesignBasis`, `SubseaProductionSystem` | `neqsim.process.fielddevelopment.subsea` | Read-only typed equipment and exact route geometry plus edge-keyed mechanical/cost/thermal selections into existing Class 4 and steady network contracts. | `createSurfDesignBasis`, `setLineDesign`, `createLineDesignDecisionVariable`, `createLineDesignScreeningConstraints`, `applyLineThermalDesigns`, `assessDnvStF101LineDesigns`, `assessOnBottomStabilityLineDesigns`, `estimateSurfCosts`, `createSurfCapitalCostObjective` |
 | SURF route cost/design: `SURFCostEstimator.LineDesign`, `PipeMechanicalDesignCalculator`, `MultilayerThermalCalculator`, DNV screening kernels | `neqsim.process.mechanicaldesign.subsea`, `neqsim.process.mechanicaldesign.pipeline`, `neqsim.process.equipment.pipeline` | Route-specific OD, wall, material, installation, typed insulation and explicit structural/environmental input with existing mechanical/thermal screening and MTO output. | `LineDesign.builder`, `dnvStF101Input`, `onBottomStabilityInput`, `resolveOverallHeatTransferCoefficientWm2K`, `getDetailedEstimateResult` |
 | Constrained optimization: `NetworkOptimizer`, `NetworkConstraints`, `NetworkObjectives`, `NetworkDecisionVariable` | `neqsim.process.equipment.network` | Bounded operating search plus complete fail-closed enumeration of all-discrete physical designs. | `NetworkDecisionVariable.pipeDiameter`, `NetworkDecisionVariable.customDiscrete`, `NetworkOptimizer.optimize`, `optimizeMultiObjective` |

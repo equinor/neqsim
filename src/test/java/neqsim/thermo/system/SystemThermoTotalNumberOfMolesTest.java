@@ -190,6 +190,33 @@ public class SystemThermoTotalNumberOfMolesTest {
     assertTrue(fluid.getPhases()[2] != empty.getPhases()[2]);
   }
 
+  /** Pure-liquid aliases must not leave a full-mole inactive slot in an empty clone. */
+  @Test
+  public void testPureLiquidEmptyCloneScalesEveryPhysicalSlotOnce() {
+    SystemInterface source = new SystemSrkEos(298.15, 10.0);
+    source.addComponent("n-heptane", 1.0);
+    source.setMixingRule("classic");
+    new ThermodynamicOperations(source).TPflash();
+    source.setPhaseIndex(1, source.getPhaseIndex(0));
+    double[] originalInventory = new double[source.getPhases().length];
+    for (int slot = 0; slot < originalInventory.length; slot++) {
+      if (source.getPhases()[slot] != null) {
+        originalInventory[slot] = source.getPhases()[slot].getComponent(0).getNumberOfmoles();
+      }
+    }
+    SystemInterface empty = source.getEmptySystemClone();
+    empty.init(0);
+    assertEquals(1.0e-30, empty.getTotalNumberOfMoles(), 1.0e-42);
+    assertEquals(1.0, empty.getComponent(0).getz(), 1.0e-12);
+    for (int slot = 0; slot < originalInventory.length; slot++) {
+      if (source.getPhases()[slot] != null) {
+        assertEquals(originalInventory[slot], source.getPhases()[slot].getComponent(0).getNumberOfmoles(), 0.0);
+        assertEquals(originalInventory[slot] / 1.0e30, empty.getPhases()[slot].getComponent(0).getNumberOfmoles(),
+            1.0e-42);
+      }
+    }
+  }
+
   /**
    * Removal must preserve a permutation of physical slots and their root roles through reuse.
    *

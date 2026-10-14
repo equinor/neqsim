@@ -253,6 +253,40 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   }
 
   /**
+   * Takes one full Newton correction on an already converged, fixed two-phase active set.
+   *
+   * <p>
+   * This local polishing step avoids a Gibbs line search when the predicted decrease is below floating-point
+   * resolution. The caller must verify feasibility, fugacity convergence, active roots and Gibbs energy and restore its
+   * snapshot if the correction fails. It must not be used as an unconstrained global flash iteration.
+   * </p>
+   *
+   * @throws IllegalStateException if the Newton correction is not finite or feasible
+   */
+  void polishConvergedEquilibrium() {
+    ensureSolverInitialized();
+    init();
+    setfvec();
+    setJac();
+    jacWork.setTo(jacMatrix);
+    if (!linearSolver.setA(jacWork)) {
+      throw new IllegalStateException("Singular equilibrium-polishing Jacobian");
+    }
+    linearSolver.solve(fvecVector, dxVector);
+    for (int component = 0; component < numberOfComponents; component++) {
+      uTrialVector[component] = uVector[component] - dxVector.get(component, 0);
+      if (!Double.isFinite(uTrialVector[component])) {
+        throw new IllegalStateException("Non-finite equilibrium-polishing correction");
+      }
+    }
+    if (!isFeasible(uTrialVector)) {
+      throw new IllegalStateException("Infeasible equilibrium-polishing correction");
+    }
+    System.arraycopy(uTrialVector, 0, uVector, 0, numberOfComponents);
+    init();
+  }
+
+  /**
    * solve.
    *
    * @return a double

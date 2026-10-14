@@ -144,6 +144,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       clonedComponent.setAttractiveParameter(clonedAttractiveTerm);
     }
 
+    clonedComponent.Aij = Aij.clone();
+    clonedComponent.Bij = Bij.clone();
+    clonedComponent.dAdndn = dAdndn.clone();
+    clonedComponent.dBdndn = dBdndn.clone();
     return clonedComponent;
   }
 

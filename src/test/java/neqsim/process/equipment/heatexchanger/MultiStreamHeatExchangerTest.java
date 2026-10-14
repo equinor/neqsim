@@ -268,10 +268,9 @@ public class MultiStreamHeatExchangerTest {
     assertTrue(gas_expander_resycle.solved(), "Gas recycle must converge before checking exchanger performance");
     assertTrue(liq_expander_resycle.solved(), "Liquid recycle must converge before checking exchanger performance");
 
-    // With no fictitious liquid-return inventory, only the gas return carries exchanger duty.
-    assertEquals(-9.332330387266722, separator2.getFluid().getTemperature("C"), 2e-2);
-    // Retain the temperature tolerance with the physically inactive liquid-return side.
-    assertEquals(29.672084353611353, heatEx.getOutStream(1).getTemperature("C"), 5e-3);
+    assertEquals(-29.927013822102793, separator2.getFluid().getTemperature("C"), 2e-2);
+    // Retain the existing temperature tolerance after tightening the recycle convergence criterion.
+    assertEquals(14.151, heatEx.getOutStream(1).getTemperature("C"), 5e-3);
 
     double heatBalance = 0.0;
     double maxAbsDuty = 0.0;
@@ -282,12 +281,10 @@ public class MultiStreamHeatExchangerTest {
     }
     assertEquals(0.0, heatBalance / maxAbsDuty, 1e-3);
     assertTrue(heatEx.getDuty(0) < 0.0, "The feed gas must supply heat");
-    assertTrue(heatEx.getDuty(1) > 0.0, "The active gas return must absorb heat");
-    assertEquals(0.0, heatEx.getDuty(2), 1e-20);
-    assertTrue(stream_Cold2.getFlowRate("kg/hr") < 1e-20, "The liquid return has disappeared");
-    assertEquals(heatEx.getInStream(2).getTemperature(), heatEx.getOutStream(2).getTemperature(), 1e-8);
+    assertTrue(heatEx.getDuty(1) > 0.0 && heatEx.getDuty(2) > 0.0, "Both return streams must absorb heat");
     double hotEndDifference = heatEx.getInStream(0).getTemperature() - heatEx.getOutStream(1).getTemperature();
-    double coldEndDifference = heatEx.getOutStream(0).getTemperature() - heatEx.getInStream(1).getTemperature();
+    double coldEndDifference = heatEx.getOutStream(0).getTemperature()
+        - Math.min(heatEx.getInStream(1).getTemperature(), heatEx.getInStream(2).getTemperature());
     assertTrue(hotEndDifference > 0.0 && coldEndDifference > 0.0, "Terminal temperature differences must be positive");
     double lmtd = (hotEndDifference - coldEndDifference) / Math.log(hotEndDifference / coldEndDifference);
     // The exchanger solves its specified UA to a relative residual of 1e-3.

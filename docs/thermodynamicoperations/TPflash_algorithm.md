@@ -2090,6 +2090,65 @@ APIs, model parameters, and runtime behavior are unchanged, so no production spe
 is claimed. The scope is limited to PR; SRK and experimental sour-gas tie-line
 validation remain separate model-qualification work.
 
+The phase-reuse follow-up additionally covers ordinary and enhanced PR/classic flashes near
+the two-liquid boundary. Cloned components must own their fugacity-derivative and EOS work
+arrays: shared arrays corrupted the analytical Hessian when a second liquid was initialized.
+`ComponentCloneDerivativeIsolationTest` checks both independent storage and all nine entries
+of a three-component Hessian against central differences at fixed configured roots. Enhanced
+stability trials copy their configured root into the recycled phase slot, and rollback preserves
+that selector independently from the resulting GAS/OIL classification. Reading the stored
+selector also removes two cloned root-inference evaluations per copied phase.
+UMR-PRU-MC and Furst-electrolyte trial-root transfer requires explicitly requested enhanced
+checks. These models' implicit post-flash path retains its established local-root policy,
+consistent with their ordinary stability path. Changing it exposed a UMR-PRU incipient
+phase with reduced TPD `-5.38e-7`, below the ordinary supplementary solve's `1e-6` resolution
+floor, and a Gibbs change of only `4.2e-15` J. Unifying these default numerical policies needs
+separate qualification; the original single-phase expectation and nearby-state tests remain
+unchanged. No default TPD threshold is altered.
+
+Accepted dry sour two-phase states with at least 0.05 CO2, 0.20 H2S, 0.30 combined acid gas,
+and some hydrocarbon receive at most three local Newton corrections when their log-fugacity
+residual remains above `1e-12`. The existing balance and equilibrium screen must pass first.
+Nonfinite, infeasible, root-changing, nonconvergent or Gibbs-increasing corrections restore
+the original mappings, configured roots, phase fractions, compositions and K values. This
+does not change the general Newton line-search objective or add a new stability search.
+
+Independent PR cubic-root and log-fugacity equations give the following methane-rich phase
+fractions for the same normalized feed and classic interaction parameters (methane/CO2 0.0973,
+methane/H2S 0.08, CO2/H2S 0.12). Both retained roots are the liquid roots. The corrected
+references retain the original `1e-10` beta tolerance; the tests also require log-fugacity
+closure within `1e-12`.
+
+| Temperature (K) | Pressure (bara) | Previous underconverged beta | Independent converged beta |
+| --- | ---: | ---: | ---: |
+| 245 | 100.80 | 0.330402477242444 | 0.3304026330996995 |
+| 225 | 95.81 | 0.572813112145268 | 0.5728114916364095 |
+
+The independent equation residuals are below `4e-15`; component closure is below `6e-17`.
+This is EOS consistency evidence, not experimental validation. Original sulfur-filter,
+scrubber saturation and exchanger regression expectations remain unchanged.
+
+The correctness fix adds allocations. A diagnostic on Java 17 with a fixed 512 MiB heap,
+seven batches of 128 full flashes and 256 warmups (4096 for dry and seed-floor controls)
+compared the previous `518867a` flash/component classes with the repaired classes. All
+70 cold/warm numerical snapshots match exactly. Median warm CPU and allocation changed as
+follows; shared-host timing is diagnostic and does not establish performance parity.
+
+| Workload | CPU before/after (microseconds/flash) | Allocation before/after (bytes/flash) |
+| --- | ---: | ---: |
+| Dry gas | 71 / 95 | 36,136 / 152,488 |
+| Seed-floor water | 200 / 266 | 68,000 / 300,704 |
+| Undersaturated water | 298 / 325 | 90,680 / 400,952 |
+| Dilute aqueous | 258 / 460 | 101,680 / 334,384 |
+| Three phase | 255 / 446 | 102,176 / 334,880 |
+
+A separate three-component clone diagnostic measured 11.9/18.0 microseconds and
+14,544/72,720 bytes per clone. Complete cold sour flashes, including the clone, measured
+9.07/8.57 ms at 245 K and 14.17/9.67 ms at 225 K (seven batches of 64, 256 warmups).
+The 240 K control increased from 148 to 183 microseconds. Root-copy simplification removes
+redundant work, but deep ownership of public mutable derivative buffers has a measurable
+cost. No universal speedup or representative-process throughput parity is claimed.
+
 #### 6.4.4 PR Methane/Heptane Boundary Qualification
 
 The low-temperature binary regression uses 70 mol methane and 30 mol n-heptane with

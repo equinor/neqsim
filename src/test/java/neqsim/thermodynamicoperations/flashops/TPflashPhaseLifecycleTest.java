@@ -40,6 +40,12 @@ class TPflashPhaseLifecycleTest {
     fluid.setPhaseType(1, PhaseType.GAS);
     fluid.setBeta(0, 0.1);
     fluid.setBeta(1, 0.9);
+    for (int phase = 0; phase < 2; phase++) {
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        fluid.getPhase(phase).getComponent(component).setx(1.0 / fluid.getNumberOfComponents());
+        fluid.getPhase(phase).getComponent(component).setK(9.0);
+      }
+    }
     Method restore = TPflash.class.getDeclaredMethod("restoreTwoPhaseIterationState", snapshotClass);
     restore.setAccessible(true);
     restore.invoke(new TPflash(fluid), snapshot);
@@ -48,6 +54,12 @@ class TPflashPhaseLifecycleTest {
       assertEquals(reference.getPhaseType(phase), fluid.getPhaseType(phase));
       assertEquals(reference.getBeta(phase), fluid.getBeta(phase), 1.0e-14);
       assertEquals(reference.getPhase(phase).getZ(), fluid.getPhase(phase).getZ(), 1.0e-12);
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        assertEquals(reference.getPhase(phase).getComponent(component).getx(),
+            fluid.getPhase(phase).getComponent(component).getx(), 1.0e-14);
+        assertEquals(reference.getPhase(phase).getComponent(component).getK(),
+            fluid.getPhase(phase).getComponent(component).getK(), 1.0e-14);
+      }
     }
     assertEquals(reference.getGibbsEnergy(), fluid.getGibbsEnergy(), 1.0e-8);
   }

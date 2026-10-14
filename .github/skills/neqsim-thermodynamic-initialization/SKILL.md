@@ -38,6 +38,13 @@ SRK/PR condensate regression for issue #4202 is
 
 For a retained phase outside the active phase count, do not assume a fluid-only flash has synchronized its temperature, pressure, composition, or EOS state. Set the retained phase state explicitly and initialize it at the minimum level required before reading it. This is especially important for inactive solid phases used by freezing or precipitation searches.
 
+When cloning components for separate phases, deep-copy mutable derivative work arrays before
+`init(3)`: otherwise one phase overwrites another's Jacobian. Check analytical derivatives against
+fixed-root composition differences when diagnosing Newton failures. Preserve `getPhaseType(i)`
+(the configured EOS root), not merely `getPhase(i).getType()` (the resulting classification),
+when copying or restoring a stability candidate. After phase removal, locate an active solid by
+`PhaseType.SOLID`; logical index 3 need not still identify it.
+
 For pure phases backed by independent fundamental EOS models, compare molar chemical potentials or Gibbs energies directly at the same temperature and pressure. Do not force the comparison through exponentiated fugacity coefficients when a native Gibbs value is available; large reference offsets can overflow `exp(ln phi)` even though the Gibbs residual is finite. Mixture solid-equilibrium paths may still require logarithmic fugacity or activity expressions.
 
 ## Review checklist

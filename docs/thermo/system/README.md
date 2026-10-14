@@ -33,6 +33,13 @@ Phase removal returns the released physical slot to the inactive phase-index tai
 remain attached to physical slots while logical indices shift. Adding a phase rejects reuse of
 an already active physical slot by selecting an available stored template. This preserves
 independent phase objects through removal, reordering and subsequent stability trials.
+
+Cloned component objects own their mutable fugacity-derivative and EOS work arrays. Sharing
+these arrays between liquid-phase clones let a later `init(3)` overwrite an earlier phase's
+Jacobian entries, even while the compositions and fugacities looked correct. The clone-isolation
+regression also compares the two-liquid Hessian with central composition differences at fixed
+configured roots. Stability candidates copy their configured root to a recycled physical slot;
+solid calculations locate the active `SOLID` phase by type rather than assuming logical index 3.
 `SystemThermoTotalNumberOfMolesTest` covers both removal APIs and stale inactive mappings.
 
 `getPhaseType(logicalPhase)` returns the configured EOS root selector paired with
@@ -364,6 +371,15 @@ double k = fluid.getThermalConductivity("W/mK");
 double gasZ = fluid.getGasPhase().getZ();
 double liqRho = fluid.getLiquidPhase().getDensity("kg/m3");
 ```
+
+For an active phase, `getPhaseFraction(phaseName, "mass")` uses its mole fraction
+and molar mass relative to the overall molar mass, consistently with
+`getWtFraction(logicalPhaseNumber)`. It needs no density or transport-property
+initialization. Use `"mole"` for the mole fraction and `"volume"` for the fraction
+of EOS volume; mass fractions must not be reconstructed by mixing EOS volumes
+with volume-corrected densities. The same mass basis applies to fluid and solid
+phases, including wax. Check `hasPhaseType(phaseName)` before requesting a phase
+that may be absent. This behavior is covered by `NamedComponentWaxFractionTest`.
 
 ### Cloning
 

@@ -47,7 +47,8 @@ class TPflashSourGasConsistencyTest {
     assertEquals(2, ordinary.getNumberOfPhases());
     assertEquivalent(multiphase, ordinary, 1.0e-10, "cold boundary flash");
     assertEquals(5204.65719950532, ordinary.getGibbsEnergy(), 1.0e-6);
-    assertEquals(0.330402477242444, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+    assertEquals(0.330402633099595, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+    assertEquilibriumAtReferencePrecision(ordinary);
 
     SystemInterface repeatedReference = ordinary.clone();
     new ThermodynamicOperations(ordinary).TPflash();
@@ -63,7 +64,8 @@ class TPflashSourGasConsistencyTest {
     assertEquals(2, ordinary.getNumberOfPhases());
     assertEquivalent(multiphase, ordinary, 1.0e-10, "liquid-liquid root boundary");
     assertEquals(3877.865927361861, ordinary.getGibbsEnergy(), 1.0e-6);
-    assertEquals(0.572813112145268, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+    assertEquals(0.572811491636379, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+    assertEquilibriumAtReferencePrecision(ordinary);
 
     double[][] nearbyConditions = {{220.0, 95.81}, {225.0, 100.80}, {230.0, 95.81}};
     for (double[] condition : nearbyConditions) {
@@ -205,6 +207,21 @@ class TPflashSourGasConsistencyTest {
         assertEquals(reference.getPhase(referencePhase).getComponent(componentIndex).getx(),
             candidate.getPhase(candidatePhase).getComponent(componentIndex).getx(), tolerance, condition);
       }
+    }
+  }
+
+  /**
+   * Verifies the precision needed by the independent cubic-EOS phase-fraction references.
+   *
+   * @param system converged two-phase boundary state
+   */
+  private void assertEquilibriumAtReferencePrecision(SystemInterface system) {
+    for (int component = 0; component < COMPONENTS.length; component++) {
+      double first = Math.log(system.getPhase(0).getComponent(component).getx())
+          + system.getPhase(0).getComponent(component).getLogFugacityCoefficient();
+      double second = Math.log(system.getPhase(1).getComponent(component).getx())
+          + system.getPhase(1).getComponent(component).getLogFugacityCoefficient();
+      assertEquals(first, second, 1.0e-12, "independent-reference fugacity closure");
     }
   }
 

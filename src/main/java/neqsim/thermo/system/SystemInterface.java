@@ -1587,11 +1587,18 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public PhaseInterface getPhase(String phaseTypeName);
 
   /**
-   * method to return phase fraction of selected phase.
+   * Returns the fraction of a selected active phase on the requested basis.
    *
-   * @param phaseTypeName gas/oil/aqueous
-   * @param unit mole/volume/weight
-   * @return phase: fraction in specified unit
+   * <p>
+   * The mass fraction is the phase mole fraction multiplied by the phase molar mass and divided by the overall molar
+   * mass, consistent with {@link #getWtFraction(int)}. It does not depend on density correlations or initialize
+   * physical properties. The volume fraction uses the phase volumes. Check {@link #hasPhaseType(String)} before
+   * requesting a fraction for a phase that may be absent.
+   * </p>
+   *
+   * @param phaseTypeName active phase name, for example gas, oil, aqueous or wax
+   * @param unit fraction basis: "mole", "volume" or "mass"
+   * @return dimensionless phase fraction on the specified basis
    */
   public double getPhaseFraction(String phaseTypeName, String unit);
 

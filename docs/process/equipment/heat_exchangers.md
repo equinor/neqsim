@@ -33,7 +33,8 @@ or LMTD. The floor is `max(getMinimumFlow(), DEFAULT_MINIMUM_FLOW)` in kg/hr;
 retain their inlet states and the exchanger duty is zero. This matters when a separator liquid
 return disappears inside a recycle loop: an empty fluid template must not act as a cold utility.
 `MultiStreamHeatExchangerTest` verifies unchanged active-side results, inactive-side states,
-calculation identifiers, and a converged gas recycle after the liquid return disappears.
+calculation identifiers, and the original coupled gas/liquid recycle equilibrium. Its expander
+temperature remains approximately -29.927 degrees Celsius; the liquid return remains active.
 
 ## Runnable two-stream quick start
 

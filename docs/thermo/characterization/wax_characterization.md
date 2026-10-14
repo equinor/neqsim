@@ -318,7 +318,25 @@ wax appearance transition in the bracket. These bounds are solver guards, not a
 statement of physical model validity. Wax checks are enabled on the internal
 trials; the caller's wax-check and fluid multiphase-check settings are preserved.
 Enable `setMultiPhaseCheck(true)` before calculation when an aqueous phase must be
-considered. Characterization and `addSolidComplexPhase("wax")` remain prerequisites.
+considered. A nonzero wax-forming component and `addSolidComplexPhase("wax")`
+are prerequisites. For TBP/plus fractions, first perform wax characterization as
+above. Named components already marked as wax formers in the component database
+(for example `nc14`, `nc20` and `nc24`) can be used directly without `addTBPWax()`.
+
+For a present wax phase, `getPhaseFraction("wax", "mass")` returns the wax mass
+divided by the **total feed mass**, using phase mole fraction and molar masses:
+
+$$w_{\mathrm{wax}}=\beta_{\mathrm{wax}}\frac{M_{\mathrm{wax}}}{M_{\mathrm{feed}}}$$
+
+Here $\beta_{\mathrm{wax}}$ is the wax mole fraction and both molar masses have
+the same units (kg/mol). This is the same inventory-based definition used by
+`getWtFraction(...)`; it does not require a solid-density correlation or physical
+property initialization. Gas, oil and aqueous mass fractions use the same
+definition and sum to one with the wax fraction for a balanced flash. The volume
+fraction is a separate property and depends on the volume model. Check
+`hasPhaseType("wax")` before requesting its fraction, and use
+`getPhaseNumberOfPhase("wax")` for APIs that take a logical phase number;
+`getPhaseIndex("wax")` identifies a physical storage slot.
 
 Invalid inputs or missing wax formers/configuration raise `IllegalArgumentException`.
 Failure to find or reproduce a bracket, or a nonfinite/unbalanced TP trial, raises
@@ -332,6 +350,17 @@ the characterized synthetic oil previously returned 54.4595 °C at 60 bara altho
 fresh TP flashes already predicted wax at 64 °C. Regression tests compare direct
 WAT against a refined independent TP appearance bracket at 40, 60 and 80 bara,
 including different initial guesses, reordered/existing wax phases and added water.
+The named-component regressions for [issue #4309](https://github.com/equinor/neqsim/issues/4309)
+also check phase mass fractions against component inventories and bracket WAT
+with independent TP flashes for methane/n-heptane/nc14/nc20 feeds at 1 and 5 bara
+and a heavier nc24-containing feed at 5 bara.
+These named-component WAT checks start at 320 K. A separate unresolved stability
+limitation is tracked in [issue #4324](https://github.com/equinor/neqsim/issues/4324):
+the heavier feed can lose both gas and wax at 265 K, even though it has both at
+270 K. Starting WAT in that incorrectly wax-free state can select a spurious
+colder transition. Correct mass fractions alone do not qualify that phase state
+or its onset; inspect independent TP results across the relevant temperature
+range before using a WAT as an engineering margin.
 This checks consistency within the selected EOS, wax model and characterization;
 it is not experimental validation. Laboratory WAT and wax-fraction data are still
 needed for fluid-specific prediction, and equilibrium wax appearance does not

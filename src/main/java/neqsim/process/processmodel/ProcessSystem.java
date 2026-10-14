@@ -62,6 +62,8 @@ import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchangerInterface;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
+import neqsim.process.equipment.network.FieldWellNetworkProcessUnit;
+import neqsim.process.equipment.network.LoopedPipeNetwork;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reactor.FurnaceBurner;
 import neqsim.process.equipment.stream.Stream;
@@ -6903,6 +6905,10 @@ public class ProcessSystem extends SimulationBaseClass {
         power += ((neqsim.process.equipment.compressor.MinimumFlowSpill) unitOp).getPower("W");
       } else if (unitOp instanceof Pump) {
         power += ((Pump) unitOp).getPower();
+      } else if (unitOp instanceof FieldWellNetworkProcessUnit) {
+        power += ((FieldWellNetworkProcessUnit) unitOp).getPower("W");
+      } else if (unitOp instanceof LoopedPipeNetwork) {
+        power += ((LoopedPipeNetwork) unitOp).getPower("W");
       }
     }
     if (unit.equals("MW")) {

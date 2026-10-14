@@ -1327,6 +1327,13 @@ public class TPmultiflash extends TPflash {
         if (!isTrivial && tmVal < -1e-8) {
           system.addPhase();
           int newPhaseIdx = system.getNumberOfPhases() - 1;
+          // UMR-PRU-MC and Furst retain their established implicit local-root policy, matching
+          // the ordinary stability path. Explicit enhanced checks and other models retain the trial root.
+          boolean preserveLocalRootPolicy = !system.doEnhancedMultiPhaseCheck()
+              && (system instanceof SystemFurstElectrolyteEos || system instanceof SystemUMRPRUMCEos);
+          if (!preserveLocalRootPolicy) {
+            system.setPhaseType(newPhaseIdx, clonedSystem.getPhaseType(1));
+          }
           for (int i = 0; i < numComponents; i++) {
             system.getPhase(newPhaseIdx).getComponent(i).setx(x[i]);
           }
@@ -2515,6 +2522,8 @@ public class TPmultiflash extends TPflash {
   private static final class PhaseSplitSnapshot {
     private final int numberOfPhases;
     private final PhaseType[] phaseTypes;
+    /** Configured cubic roots, distinct from the resulting phase classifications. */
+    private final PhaseType[] rootTypes;
     /** Physical phase-array slot backing each logical phase, so a restore cannot re-map the phases. */
     private final int[] phaseIndices;
     private final double[] betas;
@@ -2525,12 +2534,14 @@ public class TPmultiflash extends TPflash {
       numberOfPhases = source.getNumberOfPhases();
       int numberOfComponents = source.getPhase(0).getNumberOfComponents();
       phaseTypes = new PhaseType[numberOfPhases];
+      rootTypes = new PhaseType[numberOfPhases];
       phaseIndices = new int[numberOfPhases];
       betas = new double[numberOfPhases];
       compositions = new double[numberOfPhases][numberOfComponents];
       kValues = new double[numberOfComponents];
       for (int phase = 0; phase < numberOfPhases; phase++) {
         phaseTypes[phase] = source.getPhase(phase).getType();
+        rootTypes[phase] = source.getPhaseType(phase);
         phaseIndices[phase] = source.getPhaseIndex(phase);
         betas[phase] = source.getBeta(phase);
         for (int comp = 0; comp < numberOfComponents; comp++) {
@@ -2559,7 +2570,7 @@ public class TPmultiflash extends TPflash {
     system.setNumberOfPhases(snapshot.numberOfPhases);
     for (int phase = 0; phase < snapshot.numberOfPhases; phase++) {
       system.setPhaseIndex(phase, snapshot.phaseIndices[phase]);
-      system.setPhaseType(phase, snapshot.phaseTypes[phase]);
+      system.setPhaseType(phase, snapshot.rootTypes[phase]);
       system.setBeta(phase, snapshot.betas[phase]);
       for (int comp = 0; comp < snapshot.compositions[phase].length; comp++) {
         system.getPhase(phase).getComponent(comp).setx(snapshot.compositions[phase][comp]);
