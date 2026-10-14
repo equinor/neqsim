@@ -31,6 +31,11 @@ The returned state uses the fixed-speed forward calculation, including anti-surg
 flow changes; these can leave the requested pressure unmet. `setLimitSpeed(false)`
 allows extrapolation, so pressure convergence does not establish mechanical
 feasibility. Check speed and operating-envelope constraints separately.
+`ProductionOptimizer` treats `Compressor.SpeedSolveException` as an infeasible
+trial and continues searching without evaluating stale outputs; unrelated
+exceptions propagate. Its hard `compressorSpeedSolve` constraint also rejects
+returned unconverged results even with capacity analysis enabled. Keep this gate
+when integrating chart-based compressor models into optimizers.
 See [compressor curves](../../../docs/process/equipment/compressor_curves.md#speed-calculation-from-operating-point)
 and `CompressorSpeedSolveConsistencyTest` for the tested contract.
 

@@ -1126,8 +1126,14 @@ check those constraints separately before accepting an operating point.
 If the search does not converge, the solver uses its best finite evaluated speed
 and reports the actual forward result with a warning. This is not proof that
 the target is globally unreachable on a non-monotonic map. A search with no valid
-chart operating point raises an exception instead of publishing a target-pressure
-result. Diagnostics reset at the start of every run, including fixed-speed runs.
+chart operating point raises `Compressor.SpeedSolveException` (an
+`IllegalStateException`) instead of publishing a target-pressure result.
+`ProductionOptimizer` rejects this specific failed trial and continues searching;
+unrelated calculation exceptions still propagate. Its `compressorSpeedSolve`
+hard constraint also rejects an unmet target when capacity analysis is enabled or
+optional output validation is disabled. It does not evaluate objectives or
+downstream constraints on a failed trial's stale outlet state. Diagnostics reset
+at the start of every run, including fixed-speed runs.
 
 When you need to determine the compressor speed required to achieve a specific operating point (flow and head), NeqSim provides a robust algorithm that works both within the defined curve range and with extrapolation beyond it.
 

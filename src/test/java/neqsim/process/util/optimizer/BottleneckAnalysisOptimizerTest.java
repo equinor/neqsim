@@ -469,8 +469,8 @@ public class BottleneckAnalysisOptimizerTest {
         continue;
       }
       Throwable cause = failure.getCause();
-      if (cause instanceof IllegalStateException
-          && "Speed solver found no finite chart operating point".equals(cause.getMessage())) {
+      if (cause instanceof Compressor.SpeedSolveException && cause.getMessage()
+          .equals("Speed solver found no finite chart operating point for " + compressor.getName())) {
         return !compressor.isSpeedSolveConverged() && !compressor.solved() && !compressor.isSimulationValid();
       }
     }

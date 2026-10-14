@@ -57,6 +57,29 @@ public class Compressor extends TwoPortEquipment
   static Logger logger = LogManager.getLogger(Compressor.class);
 
   /**
+   * Signals that a pressure-target search found no valid chart state for the current inlet.
+   *
+   * <p>
+   * Optimizers may reject this operating point without hiding unrelated calculation errors.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static class SpeedSolveException extends IllegalStateException {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Creates a failed chart-search diagnostic.
+     *
+     * @param compressorName name of the compressor whose search failed
+     */
+    public SpeedSolveException(String compressorName) {
+      super("Speed solver found no finite chart operating point for " + compressorName);
+    }
+  }
+
+  /**
    * Calculation strategy used when the compressor participates in a dynamic process.
    */
   public enum TransientCalculationMode {
@@ -1444,7 +1467,7 @@ public class Compressor extends TwoPortEquipment
         }
 
         if (!Double.isFinite(bestSpeed)) {
-          throw new IllegalStateException("Speed solver found no finite chart operating point");
+          throw new SpeedSolveException(getName());
         }
         setSpeed(bestSpeed);
         runAtSolvedSpeed(id, targetPressure);

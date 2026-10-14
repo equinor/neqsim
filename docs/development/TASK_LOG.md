@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Preserve compressor convergence requirements during optimization
+**Type:** E (Feature)
+**Keywords:** compressor, speed solve, invalid chart, optimizer, infeasible trials, lift curves, CI, 4326
+**Solution:** `Compressor.SpeedSolveException`, `ProductionOptimizer` candidate rejection and hard convergence gate, and conditional chart-setup process runs in `FlowRateOptimizer`.
+**Notes:** Reproduced all three failing optimizer cases on PR #4326 before repair. A no-valid-map trial is rejected without reading stale objectives or downstream constraints; unrelated exceptions still propagate. Capacity analysis and optional output validation cannot bypass the pressure-target convergence requirement. Repeated table setup reuses existing charts without rerunning an invalid preceding probe. Updated compressor/optimization guides, the compressor skill and the generated coverage inventory; regression tests cover stale outputs, hard convergence, recovery and chart reuse.
+
 ### 2026-10-11 — Review source routing and reusable tie-back guidance
 **Type:** E (Feature)
 **Keywords:** source attribution, evidence routing, duplicate manifest, VFP, host model, regression
