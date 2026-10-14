@@ -186,7 +186,11 @@ public class CharacterizationOptions {
   }
 
   /**
-   * Creates default options with BIP transfer enabled.
+   * Creates default options with BIP transfer disabled.
+   *
+   * <p>
+   * Equivalent to {@code builder().build()}. Use {@link #withBipTransfer()} to enable transfer of binary interaction
+   * parameters from the reference fluid.
    *
    * @return default options instance
    */

@@ -39,8 +39,20 @@ requirement`, or `confidential compressor route`.
 ### 2026-10-14 — Isolate evidence routing tests from optional agent installations
 **Type:** G (Workflow)
 **Keywords:** evidence-source-cues, hermetic tests, plugin discovery, production guard, CI, PR 4312
-**Solution:** `devtools/test_evidence_sources.py` and `.github/workflows/devtools_tests.yml`.
-**Notes:** The validator loads cue declarations from discovered agents; public CI has no optional provider catalog. Tests now supply a temporary synthetic catalog and isolate checkout, installed-agent and plugin roots while exercising real discovery and parsing. Cover missing catalogs, plugin-only aliases, duplicate/invalid cues and invalid statuses. Keep provider routing policy out of the validator. Include the production-envelope guard and persistent-ledger regression suite in Devtools CI.
+**Solution:** `devtools/test_evidence_sources.py` and `.github/workflows/ai-devtools-python-tests.yml`.
+**Notes:** The validator loads cue declarations from discovered agents; public CI has no optional provider catalog. Tests now supply a temporary synthetic catalog and isolate checkout, installed-agent and plugin roots while exercising real discovery and parsing. Cover missing catalogs, plugin-only aliases, duplicate/invalid cues and invalid statuses. Keep provider routing policy out of the validator. Include the production-envelope guard and persistent-ledger regression suite in Devtools CI. The coordinated master workflow now retains this shared repair.
+
+### 2026-10-14 — Invalidate field evidence before optimizer or guard failure
+**Type:** B (Bug fix)
+**Keywords:** PR 4312, persistent envelope, evidence invalidation, failed guard, power limit, resume
+**Solution:** `devtools/neqsim_continuous/stages.py` and `devtools/test_neqsim_production.py`.
+**Notes:** An existing proposal remained current after a changed shared-power limit and malformed optimizer output skipped the guarded ledger stage. Move invalidation to evidence assessment and restore, preserving the guard for new proposals. Repeated failures remain idempotent, implemented history remains stale and traceable, and resumed publication retains its fresh cycle evidence. Add failure/recovery, report, dry-run and resume regressions. Integrate current master workflow naming and shared CI repairs; use `ai-devtools-python-tests.yml` rather than restoring the removed workflow filename.
+
+### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
+**Type:** G (Workflow)
+**Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI
+**Solution:** Reuse the evidence-routing test fixture from PR #4312 commit `d469208aa227449d40c3f441e8f5a345795aa29a` and the eight-shard slow-suite partition from PR #4328 commit `9bcca37f1ac0b717c18a499b3a1a74bcdeec1126` in the renamed workflows.
+**Notes:** Reproduced 27 routing assertions that required absent optional enterprise agents, then isolated agent discovery with synthetic installed/plugin catalogs. Add production guard regressions to Devtools CI, retain fast/slow Surefire reports, and let both fast-suite platforms finish after a failure. Four compatibility gates preserve historical required-check names and require all eight slow shards to succeed. Correct the duplicated `.yml` suffix in the documentation pre-push filter. Document test isolation, report artifacts, shard membership, and compatibility behavior in BUILD and the workflow catalog. Numerical methods and acceptance thresholds are unchanged.
 
 ### 2026-10-11 — Review source routing and reusable tie-back guidance
 **Type:** E (Feature)

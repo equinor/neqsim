@@ -1108,14 +1108,18 @@ gates, and constraints. Canonical route selectors remain discrete process action
 input synchronized by its owning `WellFlow.ReservoirLayer`. Mapped field-network and standalone rotating-equipment
 power remains solved evidence from `ProcessModel.getPower(...)`, with the existing common-shaft and shared-resource
 constraint evidence retained. Do not copy map or driver physics into the task layer. Non-finite power evidence or an
-exceeded driver/shared-power limit fails closed without replacement advice. A detected revision first appends
-an evidence-invalidation event for the old ledger item. Unfinished advice is superseded; a new item is proposed only
+exceeded driver/shared-power limit fails closed without replacement advice. The evidence stage appends
+an invalidation event for the old ledger item before model, optimizer, or guard execution. This remains effective
+if optimizer output is malformed or the guard fails and the proposal-publication stage is skipped. Retried and
+resumed invalidation is idempotent; dry runs do not change the ledger. Unfinished advice is superseded; a new item is proposed only
 after the revised full-model point and envelope pass the same guard. The replacement carries `revalidation_of` and
 the changed paths, so an earlier approval is never silently transferred to new setpoints or a new physical limit.
 If re-optimization finds no safe point, the old evidence remains explicitly non-current and no replacement advice
 is exposed. A later safe operating definition resumes the append-only lineage from that superseded item instead of
 creating an untraceable incumbent. This reuses the standard evidence inventory and append-only ledger rather than
 adding optimizer state.
+In custom production plans, retain the template's ordering with `evidence` before model update, optimization, and
+`guard` so invalidation happens even when later stages fail.
 
 ### Search a fixed-total continuous allocation
 

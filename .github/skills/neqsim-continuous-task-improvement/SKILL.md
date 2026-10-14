@@ -209,7 +209,11 @@ writes to a control system and every proposal carries `requires_approval`.
   actions, reservoir pressure as a model input owned by `WellFlow.ReservoirLayer`, and mapped equipment power as
   solved evidence read from the canonical `ProcessModel.getPower(...)` path. On a detected relevant revision
   the append-only ledger marks old validation evidence non-current
-  and supersedes unfinished advice before persisting a replacement. Only a newly guarded point becomes a separate
+  and supersedes unfinished advice during the evidence stage, before model/optimizer/guard work can fail. A failed
+  guard still blocks publication of new advice, but cannot leave the old item marked current. Retry and resume
+  preserve idempotent invalidation and the current cycle's already-persisted replacement; dry runs do not mutate the
+  ledger. Custom production plans must keep `evidence` before model update, optimization, and `guard` to retain this
+  failure-path guarantee. Only a newly guarded point becomes a separate
   `proposed` item with `revalidation_of`; if no safe replacement exists, expose none and never retain stale advice.
   When a later revision is safe, resume lineage from the most recent superseded item rather than silently starting
   a disconnected incumbent.

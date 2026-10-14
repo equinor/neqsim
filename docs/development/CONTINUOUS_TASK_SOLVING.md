@@ -1004,7 +1004,7 @@ remains a model input synchronized through its owning `WellFlow.ReservoirLayer`.
 rotating-equipment demand from the canonical `ProcessModel.getPower(...)` result and preserve the common-shaft,
 driver, and shared-resource evidence; the task layer does not duplicate well, network, or rotating-equipment physics.
 Non-finite mapped demand or a driver/shared-power breach produces no replacement proposal. Before any
-replacement advice is persisted, the append-only ledger marks prior optimizer/envelope evidence
+model update, optimization, or guard runs, the evidence stage marks prior optimizer/envelope evidence in the ledger
 `evidence_current: false`. Unfinished advice is superseded and cannot remain the current incumbent. A replacement
 is a new `proposed` ledger item with `revalidation_of`, the changed evidence paths, the new cycle identity, and a
 fresh envelope; this deliberately requires a new engineering review. If the revised limit or route leaves no safe
@@ -1014,6 +1014,14 @@ item links to the most recent superseded item even when an intermediate cycle pr
 only to reporting stages do not invalidate
 optimizer evidence. The Living Report exposes the evidence state for every ledger item. Unmapped changes and malformed
 `evidence_sensitive_stages` configuration retain fail-closed invalidation behavior.
+
+A malformed optimizer result or failed guard still leaves the old advice visibly stale, even when the guarded
+ledger-publication stage is skipped. Retrying or resuming the same invalidation does not duplicate its events;
+resuming after a replacement was already persisted preserves that cycle's fresh evidence. A dry run reports the
+opportunities it would invalidate without changing the persisted ledger. The guard remains required before any
+new proposal can be written.
+Custom production plans must keep `evidence` before model update, optimization, and `guard`, as the production
+template does. The ledger fallback alone cannot provide early invalidation when a failed guard skips publication.
 
 ### 17.2 Levers: every operator-adjustable parameter
 

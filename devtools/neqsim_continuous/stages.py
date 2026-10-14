@@ -93,6 +93,7 @@ def restore_evidence(ctx):
     report = read_json(os.path.join(ctx.cycle_dir, "evidence_changes.json"), {}) or {}
     report["inventory"] = read_json(os.path.join(ctx.cycle_dir, "evidence_inventory.json"), {}) or {}
     ctx.evidence_analysis = report
+    _invalidate_changed_evidence(ctx)
     _describe_evidence(ctx, report)
 
 
@@ -102,6 +103,8 @@ def evidence(ctx, spec):
 
     report = ctx.evidence_analysis or analyze(ctx.task_dir, ctx.plan)
     ctx.evidence_analysis = report
+    # Retire the incumbent before model/optimizer/guard execution can fail.
+    _invalidate_changed_evidence(ctx)
     relative = "evidence_changes.json"
     inventory_file = "evidence_inventory.json"
     write_json(os.path.join(ctx.cycle_dir, relative), {
@@ -308,15 +311,13 @@ def diff(ctx, spec):
     return StageResult("diff", "ok", outputs=["diff_vs_baseline.json"], triggers=triggers)
 
 
-def ledger(ctx, spec):
+def _invalidate_changed_evidence(ctx):
+    """Invalidate old advice independently of proposal validation, including on resume.
+
+    Repeated calls are idempotent. If interruption followed the invalidation event
+    but preceded supersession, finish that transition before running new work.
+    """
     book = Ledger(os.path.join(ctx.state_dir, "ledger", "events.jsonl"))
-    items = book.current()
-    open_items = {key: value for key, value in items.items()
-                  if value.get("status") not in ("rejected", "superseded", "verified")}
-    open_by_title = {value.get("title"): (key, value) for key, value in open_items.items()}
-    latest_by_title = {}
-    for key, value in items.items():
-        latest_by_title[value.get("title")] = (key, value)
     impact = ctx.evidence_analysis or {}
     production = ctx.plan.get("production", {}) or {}
     default_sensitive = ["script:model_update", "script:optimize", "gates", "constraints", "guard"]
@@ -329,18 +330,43 @@ def ledger(ctx, spec):
     invalidates = bool(impact.get("changes")) and (
         not valid_sensitive or impact.get("full_rerun")
         or sensitive.intersection(impact.get("affected_stages") or []))
-    invalidated = []
+    invalidated = list(impact.get("invalidated_opportunities") or [])
     if invalidates:
         changes = impact.get("changes") or []
-        for key, item in open_items.items():
+        for key, item in book.current().items():
+            if item.get("status") in ("rejected", "superseded", "verified"):
+                continue
+            if item.get("cycle") == ctx.cycle_id:
+                # Resuming after ledger publication must retain this cycle's fresh evidence.
+                continue
             if not item.get("optimizer_evidence") and not item.get("accepted_point_envelope_evidence"):
                 continue
-            invalidated.append(key)
+            if key not in invalidated:
+                invalidated.append(key)
             if not ctx.dry_run:
-                book.invalidate_evidence(key, changes, cycle=ctx.cycle_id)
+                if item.get("evidence_current") is not False:
+                    book.invalidate_evidence(key, changes, cycle=ctx.cycle_id)
                 if "superseded" in TRANSITIONS.get(item.get("status"), ()):
                     book.set_status(key, "superseded", by="task-living",
                                     note="validation evidence changed; fresh review required")
+    if ctx.evidence_analysis is not None:
+        ctx.evidence_analysis["invalidated_opportunities"] = invalidated
+    return invalidates, invalidated
+
+
+def ledger(ctx, spec):
+    # Keep a fallback for custom plans that supply evidence analysis without an
+    # evidence stage. The normal path invalidates before optimization starts.
+    invalidates, invalidated = _invalidate_changed_evidence(ctx)
+    book = Ledger(os.path.join(ctx.state_dir, "ledger", "events.jsonl"))
+    items = book.current()
+    open_items = {key: value for key, value in items.items()
+                  if value.get("status") not in ("rejected", "superseded", "verified")}
+    open_by_title = {value.get("title"): (key, value) for key, value in open_items.items()}
+    latest_by_title = {}
+    for key, value in items.items():
+        latest_by_title[value.get("title")] = (key, value)
+    impact = ctx.evidence_analysis or {}
 
     created, updated = [], []
     for proposal in ctx.proposals:

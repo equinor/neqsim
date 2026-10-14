@@ -3564,8 +3564,7 @@ public abstract class SystemThermo implements SystemInterface {
     case "volume":
       return getVolumeFraction(phaseNumber);
     case "mass":
-      initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3") / getDensity("kg/m3");
+      return getWtFraction(phaseNumber);
     default:
       throw new RuntimeException("unit not supported " + unit);
     }

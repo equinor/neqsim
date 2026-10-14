@@ -500,6 +500,114 @@ def test_failed_guard_prevents_unchecked_proposal_from_reaching_ledger(tmp_path)
     assert Ledger(ledger_path).events() == []
 
 
+@pytest.mark.parametrize("prior_status", ["proposed", "accepted", "implemented"])
+@pytest.mark.parametrize("failure", ["malformed_proposal", "optimizer_exception"])
+def test_changed_power_limit_invalidates_existing_advice_before_failed_guard(
+        tmp_path, prior_status, failure):
+    task = _task(tmp_path)
+    run_cycle(task, no_agent=True)
+    book = Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl"))
+    incumbent_id = next(iter(book.current()))
+    if prior_status in ("accepted", "implemented"):
+        book.set_status(incumbent_id, "accepted", by="test-reviewer")
+    if prior_status == "implemented":
+        book.set_status(incumbent_id, "implemented", by="test-reviewer")
+
+    config_path = pathlib.Path(task) / "study_config.yaml"
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config["shared_plant_power_limit_kw"] = 1.0
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+    optimize_path = pathlib.Path(task) / "continuous" / "stages" / "optimize.py"
+    optimize_path.write_text(
+        "def run(ctx):\n    return {'proposals': [5]}\n" if failure == "malformed_proposal"
+        else "def run(ctx):\n    raise RuntimeError('synthetic optimizer failure')\n",
+        encoding="utf-8")
+
+    failed_cycle = run_cycle(task, no_agent=True)
+    statuses = {row["name"]: row["status"] for row in failed_cycle["stages"]}
+    assert failed_cycle["degraded"] is True
+    assert statuses["evidence"] == "ok"
+    if failure == "malformed_proposal":
+        assert statuses["guard"] == "fail"
+        assert statuses["ledger"] == "skipped"
+    else:
+        assert statuses["script:optimize"] == "fail"
+    incumbent = book.current()[incumbent_id]
+    assert incumbent["evidence_current"] is False
+    assert incumbent["evidence_invalidated_cycle"] == failed_cycle["cycle_id"]
+    assert incumbent["status"] == ("implemented" if prior_status == "implemented" else "superseded")
+    assert len(book.current()) == 1
+    report = (pathlib.Path(task) / "continuous" / "LIVING_REPORT.md").read_text(encoding="utf-8")
+    row = next(line for line in report.splitlines() if line.startswith("| " + incumbent_id + " |"))
+    assert "stale since " + failed_cycle["cycle_id"] in row
+    assert "| current |" not in row
+    assert "Waiting for a decision: " + incumbent_id not in report
+
+    # Repeating a degraded cycle must not append duplicate invalidation events.
+    run_cycle(task, no_agent=True)
+    invalidations = [event for event in book.events() if event["event"] == "evidence_invalidated"]
+    assert len(invalidations) == 1
+
+    # A later safe definition creates fresh advice and preserves prior lineage.
+    config["shared_plant_power_limit_kw"] = 1200.0
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+    optimize_path.write_text(STAGE_OPTIMIZE, encoding="utf-8")
+    recovered_cycle = run_cycle(task, no_agent=True)
+    assert recovered_cycle["degraded"] is False
+    replacements = [item for item in book.current().values() if item.get("evidence_current")]
+    assert len(replacements) == 1
+    assert replacements[0]["revalidation_of"] == incumbent_id
+    assert replacements[0]["cycle"] == recovered_cycle["cycle_id"]
+
+
+def test_dry_run_does_not_invalidate_persisted_evidence(tmp_path):
+    task = _task(tmp_path)
+    run_cycle(task, no_agent=True)
+    book = Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl"))
+    before = book.events()
+    config_path = pathlib.Path(task) / "study_config.yaml"
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config["shared_plant_power_limit_kw"] = 1.0
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    preview = run_cycle(task, dry_run=True, no_agent=True)
+
+    assert preview["dry_run"] is True
+    assert preview["evidence"]["invalidated_opportunities"] == [next(iter(book.current()))]
+    assert book.events() == before
+
+
+def test_resume_after_ledger_keeps_current_cycle_revalidation_current(tmp_path):
+    task = _task(tmp_path)
+    run_cycle(task, no_agent=True)
+    book = Ledger(os.path.join(task, "continuous", "ledger", "events.jsonl"))
+    incumbent_id = next(iter(book.current()))
+    config_path = pathlib.Path(task) / "study_config.yaml"
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config["production_route_configuration"] = 1.0
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+    completed = run_cycle(task, no_agent=True)
+    events_before_resume = book.events()
+    replacement_id = next(key for key, item in book.current().items() if item.get("evidence_current"))
+
+    # Recreate interruption after the ledger's persisted side effects, before digest.
+    cycle_path = pathlib.Path(task) / "continuous" / "cycles" / completed["cycle_id"] / "cycle.json"
+    interrupted = json.loads(cycle_path.read_text(encoding="utf-8"))
+    interrupted["status"] = "running"
+    interrupted.pop("finished_at", None)
+    ledger_index = next(index for index, row in enumerate(interrupted["stages"]) if row["name"] == "ledger")
+    interrupted["stages"] = interrupted["stages"][:ledger_index + 1]
+    cycle_path.write_text(json.dumps(interrupted), encoding="utf-8")
+
+    resumed = run_cycle(task, no_agent=True)
+
+    assert resumed["cycle_id"] == completed["cycle_id"]
+    assert resumed["degraded"] is False
+    assert book.events() == events_before_resume
+    assert book.current()[replacement_id]["evidence_current"] is True
+    assert book.current()[replacement_id]["revalidation_of"] == incumbent_id
+
+
 @pytest.mark.parametrize("field, reason", [
     ("simulation_converged", "simulation_not_converged"),
     ("candidate_feasible", "infeasible_candidate"),
