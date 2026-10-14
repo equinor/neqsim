@@ -1671,3 +1671,21 @@ Validation: Java getting-started documentation tests (2 passed), direct Spotless
 documentation-search audit (788 Markdown pages and one HTML page), and diff whitespace check.
 Package qualification and hosted release publication are tracked in the release PR.
 Documentation impact: installation examples, citation and release build provenance updated.
+
+### 2026-10-14 — Electrolyte derivative consistency and model diagnostics
+
+Baseline: master `d28b180969e248837e68b5e982374db69e11a376`.
+Corrected the base Furst/electrolyte CPA dielectric and Born second derivatives
+and included the stationary shielding response in the long-range Hessian.
+The shielding solve now checks a relative residual and starts from the
+Debye–Hückel upper bound; zero ionic inventory has exactly zero shielding.
+The model checker evaluates every phase and derivative entry, rejects non-finite
+values and compares independent numerical trials without changing the source fluid.
+Validation: 159 tests passed across the targeted model, mixed-brine inventory,
+parameter-selection, extensivity and diagnostic suites, including 28 new regressions.
+Independent agent review checked the analytical derivation; this is not domain-maintainer approval.
+Documentation impact: updated the electrolyte CPA guide and Born-derivative guide
+with the corrected equations, numerical behavior and qualification limits.
+No fitted parameters or nitrogen dielectric data changed. Nitrogen salting-out
+accuracy, third-order volume derivatives, the singular zero-concentration
+composition curvature and the separate legacy Mod2004 implementation remain unqualified.

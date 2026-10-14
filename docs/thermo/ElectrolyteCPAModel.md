@@ -175,6 +175,13 @@ the chemical potential stays intensive. See
 the chain rule, the legacy Mod2004 correction, the related EOS audit, and the
 literature-based development recommendations.
 
+The base Furst/electrolyte CPA derivative implementation includes the implicit
+response of the stationary shielding parameter and the complete dielectric/Born
+second-derivative chain rules. See the same guide for finite-difference
+qualification and the remaining nitrogen dielectric-data limitation. A converged
+flash or consistent Jacobian does not by itself qualify the model's salting-out
+or mixed-inhibitor accuracy.
+
 ## Short-Range Interaction Parameters (Wij)
 
 ### Overview
