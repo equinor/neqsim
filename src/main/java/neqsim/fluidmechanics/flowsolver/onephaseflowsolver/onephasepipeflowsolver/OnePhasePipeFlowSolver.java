@@ -8,11 +8,16 @@ package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolv
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
 
 /**
  * OnePhasePipeFlowSolver class.
+ *
+ * <p>
+ * Protected solution columns use EJML. Serialized solver state from versions using Jama matrix fields is not compatible
+ * with this representation.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,10 +29,10 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
   static Logger logger = LogManager.getLogger(OnePhasePipeFlowSolver.class);
 
   protected double[] PbArray; // = new double[100];
-  protected Matrix solMatrix;
-  protected Matrix sol2Matrix;
-  protected Matrix sol3Matrix;
-  protected Matrix[] sol4Matrix;
+  protected DMatrixRMaj solMatrix;
+  protected DMatrixRMaj sol2Matrix;
+  protected DMatrixRMaj sol3Matrix;
+  protected DMatrixRMaj[] sol4Matrix;
   protected double[] a;
   protected double[] b;
   protected double[] c;
@@ -53,12 +58,12 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
     this.length = length;
     this.numberOfNodes = nodes;
     PbArray = new double[nodes];
-    solMatrix = new Matrix(PbArray, 1).transpose();
-    sol2Matrix = new Matrix(PbArray, 1).transpose();
-    sol3Matrix = new Matrix(PbArray, 1).transpose();
-    sol4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    solMatrix = new DMatrixRMaj(nodes, 1);
+    sol2Matrix = new DMatrixRMaj(nodes, 1);
+    sol3Matrix = new DMatrixRMaj(nodes, 1);
+    sol4Matrix = new DMatrixRMaj[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
     for (int k = 0; k < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); k++) {
-      sol4Matrix[k] = new Matrix(PbArray, 1).transpose();
+      sol4Matrix[k] = new DMatrixRMaj(nodes, 1);
     }
     a = new double[nodes];
     b = new double[nodes];
