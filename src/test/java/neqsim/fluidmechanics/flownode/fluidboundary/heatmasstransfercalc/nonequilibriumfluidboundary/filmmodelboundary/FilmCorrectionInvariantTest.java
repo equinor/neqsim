@@ -3,20 +3,178 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.junit.jupiter.api.Test;
 import Jama.Matrix;
+import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarynonreactive.FluidBoundarySystemNonReactive;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveKrishnaStandartFilmModel;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
+import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class FilmCorrectionInvariantTest {
+  /**
+   * Compares Newton steps and damping on the existing fluid fixture without replacing the production solver.
+   *
+   * @throws IOException if working-state serialization fails
+   * @throws ClassNotFoundException if a serialized working-matrix class cannot be resolved
+   */
+  @Test
+  void filmNewtonStepsMatchJamaAndPreserveWorkingStateOwnership() throws IOException, ClassNotFoundException {
+    StratifiedFlowNode node = new StratifiedFlowNode(fluid(), new PipeData(0.1, 0.00025));
+    node.initFlowCalc();
+    NewtonFilmProbe film = new NewtonFilmProbe(node);
+    film.setHeatTransferCalc(false);
+    film.setMassTransferCalc(true);
+    film.checkWorkingStateOwnership();
+    film.checkWorkingStateSerialization();
+
+    film.massTransSolve();
+
+    assertTrue(film.successfulUpdates > 0, "The fixture must exercise successful Newton updates");
+    assertEquals(film.finiteReferenceSteps, film.successfulUpdates);
+  }
+
+  /**
+   * Observes actual film equations and updates for comparison with direct Jama algebra.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  private static final class NewtonFilmProbe extends KrishnaStandartFilmModel {
+    private static final long serialVersionUID = 1L;
+    private int assembledSystems;
+    private int finiteReferenceSteps;
+    private int successfulUpdates;
+    private Matrix expectedJacobian;
+    private Matrix expectedResidual;
+    private Matrix expectedStep;
+    private Matrix expectedState;
+
+    /**
+     * Creates a film using the real flow-node transport correlations.
+     *
+     * @param node initialized stratified flow node
+     */
+    private NewtonFilmProbe(FlowNodeInterface node) {
+      super(node);
+    }
+
+    /**
+     * Checks state shape, independent initial copies and the live public coefficient-array contract.
+     */
+    private void checkWorkingStateOwnership() {
+      assertEquals(neq, uMassTrans.getNumRows());
+      assertEquals(1, uMassTrans.getNumCols());
+      assertEquals(neq, Xgij.getNumRows());
+      assertEquals(4, Xgij.getNumCols());
+      assertNotSame(uMassTrans.getData(), uMassTransold.getData());
+      assertArrayEquals(uMassTrans.getData(), uMassTransold.getData(), 0.0);
+      NewtonFilmProbe cloned = (NewtonFilmProbe) clone();
+      assertSame(Jac, cloned.Jac);
+      assertSame(fvec, cloned.fvec);
+      assertSame(uMassTrans, cloned.uMassTrans);
+      assertSame(uMassTransold, cloned.uMassTransold);
+      assertSame(Xgij, cloned.Xgij);
+      Matrix[] exported = getMassTransferCoefficientMatrix();
+      assertSame(massTransferCoefficientMatrix, exported);
+      Matrix replacement = exported[0].copy();
+      exported[0] = replacement;
+      assertSame(replacement, massTransferCoefficientMatrix[0]);
+    }
+
+    /**
+     * Round-trips the new working matrices without serializing the surrounding flow-node graph.
+     *
+     * @throws IOException if writing or reading matrix state fails
+     * @throws ClassNotFoundException if a serialized working-matrix class cannot be resolved
+     */
+    private void checkWorkingStateSerialization() throws IOException, ClassNotFoundException {
+      DMatrixRMaj[] matrices = {Jac, fvec, uMassTrans, uMassTransold, Xgij};
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+      try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+        output.writeObject(matrices);
+      }
+      DMatrixRMaj[] restored;
+      try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+        restored = (DMatrixRMaj[]) input.readObject();
+      }
+      for (int index = 0; index < matrices.length; index++) {
+        assertEquals(matrices[index].getNumRows(), restored[index].getNumRows());
+        assertEquals(matrices[index].getNumCols(), restored[index].getNumCols());
+        assertArrayEquals(matrices[index].getData(), restored[index].getData(), 0.0);
+        assertNotSame(matrices[index].getData(), restored[index].getData());
+      }
+      assertNotSame(restored[2].getData(), restored[3].getData());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setJacMassTrans2() {
+      super.setJacMassTrans2();
+      assembledSystems++;
+      expectedJacobian = asJama(Jac);
+      expectedResidual = asJama(fvec);
+      try {
+        expectedStep = expectedJacobian.solve(expectedResidual);
+      } catch (RuntimeException exception) {
+        expectedStep = null;
+        return;
+      }
+      for (double value : expectedStep.getColumnPackedCopy()) {
+        if (!Double.isFinite(value)) {
+          return;
+        }
+      }
+      finiteReferenceSteps++;
+      expectedState = asJama(uMassTrans)
+          .minus(expectedStep.times((assembledSystems + 1.0) / (assembledSystems + 11.0)));
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void updateMassTrans() {
+      assertEquals(0.0, expectedJacobian.minus(asJama(Jac)).normF(), 0.0);
+      assertEquals(0.0, expectedResidual.minus(asJama(fvec)).normF(), 0.0);
+      assertArrayEquals(expectedStep.getColumnPackedCopy(), dx.getData(), 1.0e-10, "Newton system " + assembledSystems);
+      assertArrayEquals(expectedState.getColumnPackedCopy(), uMassTrans.getData(), 1.0e-10);
+      double expectedNorm = expectedStep.norm2();
+      assertEquals(expectedNorm, NormOps_DDRM.normP2(dx), 1.0e-12 * Math.max(1.0, expectedNorm));
+      successfulUpdates++;
+      super.updateMassTrans();
+    }
+
+    /**
+     * Copies a dense matrix without changing row and column orientation.
+     *
+     * @param matrix EJML matrix to copy
+     * @return independent Jama matrix for the reference calculation
+     */
+    private static Matrix asJama(DMatrixRMaj matrix) {
+      double[][] values = new double[matrix.getNumRows()][matrix.getNumCols()];
+      for (int row = 0; row < matrix.getNumRows(); row++) {
+        for (int column = 0; column < matrix.getNumCols(); column++) {
+          values[row][column] = matrix.get(row, column);
+        }
+      }
+      return new Matrix(values);
+    }
+  }
+
   /**
    * Compares real finite-volume boundary profiles with dense Jama solves of the same tridiagonal equations.
    */
