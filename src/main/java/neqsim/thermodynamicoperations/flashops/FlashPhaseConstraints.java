@@ -35,7 +35,7 @@ final class FlashPhaseConstraints implements java.io.Serializable {
     boolean ionic = false;
     for (int component = 0; component < ions.length; component++) {
       ions[component] = isIon(system.getPhase(0).getComponent(component));
-      ionic |= ions[component];
+      ionic |= ions[component] && system.getPhase(0).getComponent(component).getNumberOfmoles() > 0.0;
     }
     hasIons = ionic;
     int requestedAqueous = -1;
@@ -94,6 +94,28 @@ final class FlashPhaseConstraints implements java.io.Serializable {
    */
   static boolean isIon(ComponentInterface component) {
     return component.getIonicCharge() != 0.0 || component.isIsIon();
+  }
+
+  /**
+   * Checks whether the current feed contains any strictly positive ionic inventory.
+   *
+   * <p>
+   * Phase extraction retains registered components even when their amount is exactly zero. Those absent species do not
+   * require an aqueous material host. Every positive amount, however small, retains its phase constraint; there is no
+   * concentration cutoff. This does not change the public species-presence meaning of {@code hasIons()}.
+   * </p>
+   *
+   * @param system feed whose overall species amounts are inspected
+   * @return whether an ionic species has a strictly positive overall amount
+   */
+  static boolean hasIonicInventory(SystemInterface system) {
+    for (int component = 0; component < system.getNumberOfComponents(); component++) {
+      ComponentInterface species = system.getPhase(0).getComponent(component);
+      if (isIon(species) && species.getNumberOfmoles() > 0.0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

@@ -410,6 +410,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Piping Route Builder**              | [docs/process/piping_route_builder.md](process/piping_route_builder.md)                               | **STID/E3D line-list route hydraulics: build serial Beggs-and-Brill pipe models from route tables, fittings, valves, elevations, and equipment nodes**    |
 | **TwoFluidPipe Model**                | [docs/process/TWOFLUIDPIPE_MODEL.md](process/TWOFLUIDPIPE_MODEL.md)                                   | **Two-fluid multiphase flow model**                                                                                                                      |
 | **Experimental pig mechanics** | [Pig motion](process/pig-motion.md) | Prescribed-pressure breakaway, stop/restart, reversal and mechanical work; hydraulic coupling pending |
+| **Post-pigging MEG/water transfer** | [TwoFluidPipeFilmDrying](process/TwoFluidPipeFilmDrying.md) | Experimental non-equilibrium gas/aqueous component transfer and residual liquid inventories. |
 | **TwoFluidPipe Detailed Review**      | [docs/wiki/two_fluid_model_review.md](wiki/two_fluid_model_review.md)               | **Mathematical equations, slug flow physics, Lagrangian tracking**                                                                                       |
 | **TwoFluidPipe Tutorial (Jupyter)**   | [docs/examples/TwoFluidPipe_Tutorial.ipynb](https://github.com/equinor/neqsim/blob/master/docs/examples/TwoFluidPipe_Tutorial.ipynb)                  | **Interactive notebook: multiphase flow, slug tracking, terrain effects, heat transfer**                                                                 |
 | **TwoFluidPipe Comprehensive Tutorial** | [examples/notebooks/TwoFluidPipeMultiphaseFlowTutorial.ipynb](https://github.com/equinor/neqsim/blob/master/examples/notebooks/TwoFluidPipeMultiphaseFlowTutorial.ipynb) | **Complete guide: steady-state, transient, three-phase (gas-oil-water), terrain effects, heat transfer, Beggs-Brill validation, slug tracking** |
@@ -604,6 +605,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 | --- | --- | --- |
+| NeqSim Requests for Comments | [docs/rfcs/index.md](rfcs/index.md) | Architecture proposals, recorded decisions and qualification boundaries |
+| NRC-2937: TP-flash state contracts | [docs/rfcs/2937-tpflash-state-contracts.md](rfcs/2937-tpflash-state-contracts.md) | Proposed shared fluid, hydrate and process-consumer contracts; not accepted |
 | **Engineering Hub** | [docs/engineering/index.md](engineering/index.md) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
 | **Engineering Guide** | [docs/engineering/guide.md](engineering/guide.md) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
 | **Current Engineering Capabilities** | [docs/engineering/current-capabilities.md](engineering/current-capabilities.md) | **Implemented entry points, discipline coverage, qualification layers, readiness levels, and accountable-review boundaries** |

@@ -184,6 +184,23 @@ def _apply(ctx, entry, warnings):
     return applied
 
 
+def restore_inputs(ctx):
+    """Reapply this cycle's frozen restrictions without repeating input side effects."""
+    report = read_json(os.path.join(ctx.cycle_dir, "user_input.json"))
+    if not isinstance(report, dict) or not isinstance(report.get("active"), list):
+        raise ValueError("Completed input stage is missing its frozen active-input snapshot")
+    active = report["active"]
+    if any(not isinstance(entry, dict) for entry in active):
+        raise ValueError("Completed input stage contains malformed active inputs")
+    ctx.user_levers = {}
+    warnings = []
+    for entry in active:
+        _apply(ctx, entry, warnings)
+    ctx.sections.append("User input in force: " + ("; ".join(describe(e) for e in active) if active else "none"))
+    if warnings:
+        ctx.sections.append("User input warnings: " + "; ".join(warnings))
+
+
 def inputs(ctx, spec):
     """Apply the engineers' comments and restrictions for this cycle."""
     ctx.user_levers = {}

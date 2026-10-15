@@ -290,5 +290,29 @@ class WellSystemTest {
     well.run();
     // Verify some reasonable output exists
     assertNotNull(well.getOutletStream());
+
+    double sourceFlow = oilStream.getFlowRate("Sm3/day");
+    double sourceTemperature = oilStream.getTemperature();
+    double sourcePressure = oilStream.getPressure();
+    // The fluid-property basis must remain independent of an arbitrarily small VLP trial rate.
+    double[][] nearShutIn = well.generateVLPCurve(new double[] {0.0, 1.0e-13, 1.0e-8});
+    assertTrue(Double.isFinite(nearShutIn[1][0]));
+    assertEquals(50.0, nearShutIn[1][0], 0.0); // Existing explicit zero-flow boundary.
+    assertEquals(nearShutIn[1][1], nearShutIn[1][2], 1.0e-7);
+    assertEquals(sourceFlow, oilStream.getFlowRate("Sm3/day"), 0.0);
+    assertEquals(sourceTemperature, oilStream.getTemperature(), 0.0);
+    assertEquals(sourcePressure, oilStream.getPressure(), 0.0);
+    for (double referenceFlow : new double[] {100.0, 1.0e6}) {
+      SystemInterface referenceFluid = oilStream.getFluid().clone();
+      referenceFluid.setTotalFlowRate(referenceFlow, "Sm3/day");
+      Stream referenceStream = new Stream("reference inventory", referenceFluid);
+      referenceStream.run();
+      well.setReservoirStream(referenceStream);
+      double[][] rescaled = well.generateVLPCurve(new double[] {0.0, 1.0e-13, 1.0e-8});
+      for (int point = 0; point < nearShutIn[1].length; point++) {
+        assertEquals(nearShutIn[1][point], rescaled[1][point], 1.0e-7);
+      }
+      assertEquals(referenceFlow, referenceStream.getFlowRate("Sm3/day"), referenceFlow * 1.0e-12);
+    }
   }
 }

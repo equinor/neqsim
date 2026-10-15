@@ -1,6 +1,7 @@
 package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -835,6 +836,19 @@ public class FlowRateOptimizerTest {
   }
 
   // ============ Professional Lift Curve Generation Tests ============
+
+  /** Existing maps can be reused after a sweep has left the process at an invalid trial. */
+  @Test
+  public void chartSetupDoesNotRerunRejectedTrialWhenMapsAlreadyExist() {
+    ProcessSystem process = createTwoStageCompressionProcess();
+    FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed Stream", "2nd Stage Compressor");
+    optimizer.configureProcessCompressorCharts();
+    Stream feed = (Stream) process.getUnit("Feed Stream");
+    feed.setFlowRate(1.0e9, "kg/hr");
+    RuntimeException failure = assertThrows(RuntimeException.class, () -> process.run());
+    assertTrue(failure.getCause() instanceof Compressor.SpeedSolveException);
+    assertDoesNotThrow(() -> optimizer.configureProcessCompressorCharts());
+  }
 
   @Test
   public void testProfessionalLiftCurveGeneration() {

@@ -17,6 +17,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -40,7 +41,7 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public final class TPflashAllocationQualificationBenchmark {
   private static final String[] FAMILIES = {"dry-gas", "two-phase", "condensate", "cpa-water", "trace-aqueous-srk",
-      "trace-aqueous-cpa", "process-gas"};
+      "trace-aqueous-cpa", "process-gas", "methane-brine", "mixed-brine", "water-rich-cpa"};
   private static final String[] SEQUENCES = {"cold-changed", "warm-unchanged", "warm-changed"};
 
   /** Prevents construction of the standalone runner. */
@@ -55,7 +56,21 @@ public final class TPflashAllocationQualificationBenchmark {
    */
   private static SystemInterface fluid(String family) {
     SystemInterface result;
-    if (family.startsWith("trace-")) {
+    if (family.endsWith("brine")) {
+      boolean mixed = "mixed-brine".equals(family);
+      result = new SystemElectrolyteCPAstatoil(298.15, mixed ? 50.0 : 10.01325);
+      if (mixed) {
+        result.addComponent("CO2", 0.12);
+        result.addComponent("nitrogen", 0.03);
+      }
+      result.addComponent("methane", mixed ? 0.20 : 0.1);
+      result.addComponent("water", 1.0);
+      result.addComponent("Na+", mixed ? 0.018 : 0.001);
+      result.addComponent("Cl-", mixed ? 0.018 : 0.001);
+      result.setMixingRule(10);
+      result.setMultiPhaseCheck(true);
+      return result;
+    } else if (family.startsWith("trace-")) {
       result = family.endsWith("cpa") ? new SystemSrkCPAstatoil(307.0, 10.5) : new SystemSrkEos(307.0, 10.5);
       result.addComponent("methane", 0.0);
       result.addComponent("n-heptane", 0.997);
@@ -63,10 +78,10 @@ public final class TPflashAllocationQualificationBenchmark {
       result.setMixingRule(family.endsWith("cpa") ? 10 : 2);
       result.setMultiPhaseCheck(true);
       return result;
-    } else if ("cpa-water".equals(family)) {
+    } else if ("cpa-water".equals(family) || "water-rich-cpa".equals(family)) {
       result = new SystemSrkCPAstatoil(298.15, 60.0);
-      result.addComponent("methane", 0.9);
-      result.addComponent("water", 0.1);
+      result.addComponent("methane", "water-rich-cpa".equals(family) ? 0.1 : 0.9);
+      result.addComponent("water", "water-rich-cpa".equals(family) ? 0.9 : 0.1);
       result.setMixingRule(10);
       return result;
     } else if ("two-phase".equals(family)) {

@@ -221,3 +221,18 @@ flash from issue #3862 at several feed amounts.
 The single-solvent finite difference intentionally holds the solvent dielectric
 constant unchanged at the selected temperature; it does not qualify the omitted
 mixed-solvent or thermal chain rules described above.
+
+### KCl numerical reference after the shielding correction
+
+At 273.15 K and 1.01325 bara, the 2.36154 mol/kg KCl fixture changes its
+numerical water-activity reference from 0.9223375797090876 to
+0.9223375640965604. The difference is about 1.56e-8. Restoring only the former
+absolute-residual shielding solver makes the original reference test pass;
+removing only the final-volume cache refresh does not. This isolates the
+reference shift to shielding convergence, rather than a new fitted parameter.
+
+The regression retains its 1e-8 water-activity tolerance and the Archer reference
+observation of 0.92701. It additionally evaluates the shielding equation at each
+final aqueous state and requires a finite relative residual below 1e-10. This
+numerical baseline update does not improve or qualify experimental salting
+accuracy and does not resolve the property-data questions in issue #4334.

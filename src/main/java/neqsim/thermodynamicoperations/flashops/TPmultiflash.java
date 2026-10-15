@@ -233,7 +233,7 @@ public class TPmultiflash extends TPflash {
    */
   private int ionicAqueousPhase() {
     // Hybrid EOS-GE subclasses own their phase-role and reactive-inventory constraints.
-    if (!system.hasIons() || system instanceof EosGeFlashModel) {
+    if (!FlashPhaseConstraints.hasIonicInventory(system) || system instanceof EosGeFlashModel) {
       return -1;
     }
     if (ionicAqueousSlot >= 0) {
@@ -283,7 +283,7 @@ public class TPmultiflash extends TPflash {
      * system.getPhase(k).getBeta(); } Q = betaTotal;
      */
     calcEAndCacheFugacityCoefficients();
-    boolean constrained = system.hasIons();
+    boolean constrained = FlashPhaseConstraints.hasIonicInventory(system);
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { Q -= Math.log(E[i]) *
      * system.getPhase(0).getComponent(i).getz(); }
@@ -415,7 +415,7 @@ public class TPmultiflash extends TPflash {
    * @param logWeights unnormalized logarithmic weights retained for the tangent-plane distance
    */
   private void normalizeConstrainedTrial(SystemInterface trial, double[] logWeights) {
-    if (!system.hasIons()) {
+    if (!FlashPhaseConstraints.hasIonicInventory(system)) {
       return;
     }
     double maximum = Double.NEGATIVE_INFINITY;
@@ -519,7 +519,7 @@ public class TPmultiflash extends TPflash {
       err = NormOps_DDRM.normF(betaCorrection);
     } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
-    return system.hasIons() && !(system instanceof EosGeFlashModel)
+    return FlashPhaseConstraints.hasIonicInventory(system) && !(system instanceof EosGeFlashModel)
         ? Math.max(err, maximumMolecularLogFugacityResidual())
         : err;
   }
@@ -531,8 +531,8 @@ public class TPmultiflash extends TPflash {
    */
   private boolean solveConstrainedPhaseNewton() {
     int phases = system.getNumberOfPhases();
-    if (!system.hasIons() || system instanceof EosGeFlashModel || system.isChemicalSystem() || phases < 2
-        || !system.isImplementedCompositionDeriativesofFugacity()
+    if (!FlashPhaseConstraints.hasIonicInventory(system) || system instanceof EosGeFlashModel
+        || system.isChemicalSystem() || phases < 2 || !system.isImplementedCompositionDeriativesofFugacity()
         || FlashPhaseConstraints.capture(system).getAqueousPhase() < 0) {
       return false;
     }
@@ -808,7 +808,10 @@ public class TPmultiflash extends TPflash {
     // minimumGibbsEnergySystem = system.clone();
     // }
     minimumGibbsEnergySystem = system;
-    clonedSystem.add(system.clone());
+    // This detached trial supplies only composition seeds; its phase objects are never adopted.
+    clonedSystem.add(!solidCheck && system instanceof neqsim.thermo.system.SystemThermo
+        ? ((neqsim.thermo.system.SystemThermo) system).copyForStabilityTrial()
+        : system.clone());
     SystemInterface trialSystem = clonedSystem.get(0);
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
@@ -841,7 +844,7 @@ public class TPmultiflash extends TPflash {
      */
 
     // Molecular trials use the full electrolyte reference; removing ions would change its chemical potentials.
-    int referencePhase = system.hasIons() ? ionicAqueousPhase() : 0;
+    int referencePhase = FlashPhaseConstraints.hasIonicInventory(system) ? ionicAqueousPhase() : 0;
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       if (system.getPhase(referencePhase).getComponent(k).getx() > 1e-100) {
         d[k] = Math.log(system.getPhase(referencePhase).getComponent(k).getx())
@@ -905,7 +908,7 @@ public class TPmultiflash extends TPflash {
     // Skip when all Wilson K ≈ 1 (near-critical) — these trials produce trivial initial
     // guesses. The pure-component trials below still run and provide independent checks.
     for (int trial = 0; !skipWilsonKTrials && trial < 2; trial++) {
-      if (system.hasIons()) {
+      if (FlashPhaseConstraints.hasIonicInventory(system)) {
         trialSystem.setPhaseType(1, trial == 0 ? PhaseType.OIL : PhaseType.GAS);
       }
       // Initialize trial composition from Wilson K
@@ -1020,7 +1023,7 @@ public class TPmultiflash extends TPflash {
         // Unstable — add new phase and return
         system.addPhase();
         int newPhaseIdx = system.getNumberOfPhases() - 1;
-        if (system.hasIons()) {
+        if (FlashPhaseConstraints.hasIonicInventory(system)) {
           system.setPhaseType(newPhaseIdx, trial == 0 ? PhaseType.OIL : PhaseType.GAS);
         }
         for (int i = 0; i < numComp; i++) {
@@ -1096,7 +1099,7 @@ public class TPmultiflash extends TPflash {
               && j != lightTestCompNumb)) {
         continue;
       }
-      if (system.hasIons()) {
+      if (FlashPhaseConstraints.hasIonicInventory(system)) {
         trialSystem.setPhaseType(1, PhaseType.OIL);
       }
       double nomb = 0.0;
@@ -1354,7 +1357,7 @@ public class TPmultiflash extends TPflash {
       if (tm[k] < -1e-8 && !(Double.isNaN(tm[k]))) {
         system.addPhase();
         unstabcomp = k;
-        if (system.hasIons()) {
+        if (FlashPhaseConstraints.hasIonicInventory(system)) {
           system.setPhaseType(system.getNumberOfPhases() - 1, PhaseType.OIL);
         }
         for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
@@ -1472,7 +1475,7 @@ public class TPmultiflash extends TPflash {
 
     // Test stability for EACH existing phase as reference phase
     for (int refPhase = 0; refPhase < numPhases; refPhase++) {
-      if (system.hasIons() && refPhase != ionicAqueousPhase()) {
+      if (FlashPhaseConstraints.hasIonicInventory(system) && refPhase != ionicAqueousPhase()) {
         continue;
       }
       double[] d = dRef[refPhase];
@@ -1698,7 +1701,7 @@ public class TPmultiflash extends TPflash {
    * stabilityAnalysis3.
    */
   public void stabilityAnalysis3() {
-    if (system.hasIons()) {
+    if (FlashPhaseConstraints.hasIonicInventory(system)) {
       stabilityAnalysis();
       return;
     }
@@ -2079,7 +2082,7 @@ public class TPmultiflash extends TPflash {
    * stabilityAnalysis2.
    */
   public void stabilityAnalysis2() {
-    if (system.hasIons()) {
+    if (FlashPhaseConstraints.hasIonicInventory(system)) {
       stabilityAnalysis();
       return;
     }
@@ -2533,13 +2536,14 @@ public class TPmultiflash extends TPflash {
    * systems.
    */
   private void ensureSingleAqueousPhase() {
-    if (system.hasIons()) {
+    if (FlashPhaseConstraints.hasIonicInventory(system)) {
       // Ionic roles are rebound only between active-set solves, followed by full re-equilibration.
       // Never hide a displaced aqueous phase by changing its model-derived classification.
       return;
     }
     // Only needed for systems with ions or chemical systems - skip for simple molecular systems
-    if ((!system.isChemicalSystem() && !system.hasIons()) || system.getNumberOfPhases() < 2) {
+    if ((!system.isChemicalSystem() && !FlashPhaseConstraints.hasIonicInventory(system))
+        || system.getNumberOfPhases() < 2) {
       return;
     }
 
@@ -2643,7 +2647,7 @@ public class TPmultiflash extends TPflash {
    * @return true when the admitted active set requires another constrained equilibrium solve
    */
   private boolean rebindDisplacedIonicAqueousRole() {
-    if (!system.hasIons() || system.getNumberOfPhases() < 2) {
+    if (!FlashPhaseConstraints.hasIonicInventory(system) || system.getNumberOfPhases() < 2) {
       return false;
     }
     int previous = ionicAqueousPhase();
@@ -3078,7 +3082,7 @@ public class TPmultiflash extends TPflash {
    * @return active aqueous phase index, or {@code -1} when none exists
    */
   private int findPreferredAqueousPhase() {
-    if (system.hasIons()) {
+    if (FlashPhaseConstraints.hasIonicInventory(system)) {
       return ionicAqueousPhase();
     }
     int aqueousPhase = -1;
@@ -3113,7 +3117,7 @@ public class TPmultiflash extends TPflash {
    * @return {@code true} when a numerical phase was removed
    */
   private boolean removeNumericalTracePhasesForIonicFlash() {
-    if (!system.hasIons() || system.getNumberOfPhases() <= 1) {
+    if (!FlashPhaseConstraints.hasIonicInventory(system) || system.getNumberOfPhases() <= 1) {
       return false;
     }
 
@@ -3367,7 +3371,8 @@ public class TPmultiflash extends TPflash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    double[] inputMoles = system.hasIons() && !system.isChemicalSystem() ? FluidEquilibriumChecks.inventory(system)
+    double[] inputMoles = FlashPhaseConstraints.hasIonicInventory(system) && !system.isChemicalSystem()
+        ? FluidEquilibriumChecks.inventory(system)
         : null;
     int aqueousPhaseNumber = 0;
     enhancedStabilityChecked = false;
@@ -3377,7 +3382,7 @@ public class TPmultiflash extends TPflash {
     }
     // logger.info("Starting multiphase-flash....");
 
-    boolean hasIons = system.hasIons();
+    boolean hasIons = FlashPhaseConstraints.hasIonicInventory(system);
     if (hasIons) {
       if (system.getMaxNumberOfPhases() < 3) {
         // Ionic equilibrium owns its constrained stability search even when the optional neutral search is off.
@@ -3844,8 +3849,8 @@ public class TPmultiflash extends TPflash {
     boolean gasOil = system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)
         && system.hasPhaseType(PhaseType.OIL);
     if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
-        || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
-        || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
+        || !system.allowPhaseShift() || system.isChemicalSystem() || FlashPhaseConstraints.hasIonicInventory(system)
+        || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
         || !(system.getComponent("water").getz() > 20.0 * phaseFractionMinimumLimit)) {
       return;
     }
@@ -4009,8 +4014,9 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   void rescueStalledThreePhaseEndpoint() {
-    if (system.getNumberOfPhases() != 3 || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons()
-        || system.isMultiphaseWaxCheck() || isFeasiblePhaseEquilibrium(system)) {
+    if (system.getNumberOfPhases() != 3 || !system.allowPhaseShift() || system.isChemicalSystem()
+        || FlashPhaseConstraints.hasIonicInventory(system) || system.isMultiphaseWaxCheck()
+        || isFeasiblePhaseEquilibrium(system)) {
       return;
     }
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {

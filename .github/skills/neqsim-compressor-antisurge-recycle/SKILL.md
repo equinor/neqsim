@@ -21,6 +21,24 @@ This skill provides patterns for anti-surge protection, minimum-speed recycle co
 
 Standards: **API 617 / API 619**, **IEC 60534 / ISA-75**, **ISO 50001 / ISO 14064** (energy & carbon emissions).
 
+## Compressor pressure-target solves
+
+For `Compressor.setSolveSpeed(true)`, check `isSpeedSolveConverged()` after `run()`
+before accepting an optimization point. Read actual pressure from the outlet
+stream and the signed pressure error in bar from `getSpeedSolvePressureResidual()`.
+`getOutletPressure()` retains the requested setpoint, including after failure.
+The returned state uses the fixed-speed forward calculation, including anti-surge
+flow changes; these can leave the requested pressure unmet. `setLimitSpeed(false)`
+allows extrapolation, so pressure convergence does not establish mechanical
+feasibility. Check speed and operating-envelope constraints separately.
+`ProductionOptimizer` treats `Compressor.SpeedSolveException` as an infeasible
+trial and continues searching without evaluating stale outputs; unrelated
+exceptions propagate. Its hard `compressorSpeedSolve` constraint also rejects
+returned unconverged results even with capacity analysis enabled. Keep this gate
+when integrating chart-based compressor models into optimizers.
+See [compressor curves](../../../docs/process/equipment/compressor_curves.md#speed-calculation-from-operating-point)
+and `CompressorSpeedSolveConsistencyTest` for the tested contract.
+
 ## Key Java Class: `MinimumSpeedRecycleControllerStructure`
 
 `neqsim.process.controllerdevice.structure.MinimumSpeedRecycleControllerStructure` coordinates pressure control between compressor speed and recycle-valve opening when the compressor reaches its minimum speed.

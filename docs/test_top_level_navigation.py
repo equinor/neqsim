@@ -94,7 +94,8 @@ def _target_candidates(source: Path, target: str) -> tuple[Path, ...]:
 
 def test_top_level_landing_metadata_and_rendered_titles() -> None:
     pages = _landing_pages()
-    assert len(pages) == 50
+    assert len(pages) == 51
+    assert DOCS / "rfcs" / "index.md" in pages
     for page in pages:
         text, _title, description = _front_matter(page)
         words = re.findall(r"[A-Za-z0-9][A-Za-z0-9_-]*", description)

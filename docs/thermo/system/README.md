@@ -51,6 +51,12 @@ interface implementation retains compatibility with external system implementati
 `SystemThermo` implementations return the stored selector. `TPflashPhaseLifecycleTest`
 verifies clone/rollback preservation and Newton refinement on recycled physical slots.
 
+Phase extraction preserves component registration even when an extracted stream contains exactly
+zero moles of some components. Consequently `hasIons()` may remain true for a separated gas whose
+ionic amounts are zero. The ordinary flash and aqueous-reaction dispatch inspect actual ionic
+inventory before requiring an aqueous material host. Zero ionic amounts remain zero during repeated
+flashes; strictly positive trace amounts retain their conservation and phase-participation constraints.
+
 ---
 
 ## System Hierarchy

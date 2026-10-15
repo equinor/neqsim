@@ -1555,3 +1555,16 @@ impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet su
 | 5.5-inch tubing shows no feasible rate for a 1-3 MSm3/d gas-condensate well | Use 7-inch (ID 0.159 m) as the screening tubing and check the liquid-loading minimum before blaming the flowline |
 | A new tie-back looks feasible on its own line but is routed through a shared trunk | Compute the back-pressure the added rate puts on the trunk inlet and compare it with the choke dP of the existing wells (Trestakk: +23/+51/+93 bar for +1.5/+3/+5 kSm3/d on a 12-in trunk against 14-95 bar of headroom); beyond the headroom the existing wells are throttled out or a dedicated line is needed |
 | Trunk ID and host arrival pressure are unknown | Calibrate the arrival pressure to measured wellhead/choke data for each plausible ID (10 and 12 in), show both, and bracket the arrival pressure with the host PSD window instead of reporting one number |
+
+## Residual MEG/water liquid after pigging
+
+For the bounded experimental Java/Python route, use `TwoFluidPipe` with
+`NonEquilibriumFilmTransfer`, `setInitialAqueousFilm`, and named-component transport.
+Inspect `docs/process/TwoFluidPipeFilmDrying.md` and `TwoFluidPipeFilmDryingTest` before setup.
+The inlet gas and initial liquid compositions are independent; water can absorb while MEG
+evaporates. Select isothermal Euler, CFL <= 0.5, and disable tracked slugs/heating. Coefficients
+are user inputs, not calibrated defaults. This is a gas/aqueous two-fluid route; the axial
+`PipelineEvaporationStudy` wall-film option does not calculate elapsed post-pigging drying time.
+Use `getFilmDryingStatus` with a positive residual threshold and horizon, preserve boundary
+and component ledgers, and distinguish seeded pool motion from validated terrain trapping.
+Short-time conservation, refinement and CPA equilibrium tests do not qualify 10 km drying duration.

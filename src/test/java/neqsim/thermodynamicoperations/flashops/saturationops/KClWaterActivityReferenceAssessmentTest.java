@@ -13,7 +13,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -28,8 +30,9 @@ class KClWaterActivityReferenceAssessmentTest {
   @Tag("slow")
   @Test
   void saltOnlyReferenceAndControlledPressureCo2SequenceRemainSeparate() throws Exception {
+    // Numerical regression after the relative shielding-root repair; Archer observations are unchanged.
     Reference[] references = {new Reference("K10", 1.49371, 0.95369, 0.9515361468935398),
-        new Reference("K15", 2.36154, 0.92701, 0.9223375797090876)};
+        new Reference("K15", 2.36154, 0.92701, 0.9223375640965604)};
     double[] controlledPressuresBara = {14.15, 35.75};
     List<String> report = new ArrayList<String>();
     report.add("recipe,stage,molality_mol_per_kg,temperature_K,pressure_bara,co2_moles,"
@@ -75,6 +78,7 @@ class KClWaterActivityReferenceAssessmentTest {
     new ThermodynamicOperations(fluid).TPflash();
     fluid.init(3);
     PhaseInterface aqueous = findIonRichPhase(fluid);
+    assertStationaryShielding((PhaseModifiedFurstElectrolyteEos) aqueous);
     int waterIndex = aqueous.getComponent("water").getComponentNumber();
     double waterActivity = aqueous.getComponent("water").getx() * aqueous.getActivityCoefficient(waterIndex);
     double aqueousCo2MoleFraction = aqueous.hasComponent("CO2") ? aqueous.getComponent("CO2").getx() : 0.0;
@@ -89,6 +93,29 @@ class KClWaterActivityReferenceAssessmentTest {
       phaseTypes.add(fluid.getPhase(phaseIndex).getType().toString());
     }
     return new Result(pressureBara, co2Moles, waterActivity, aqueousCo2MoleFraction, String.join("+", phaseTypes));
+  }
+
+  /**
+   * Independently evaluates the defining shielding equation at the published phase state.
+   *
+   * @param phase ion-rich aqueous phase at its final solved volume
+   */
+  private static void assertStationaryShielding(PhaseModifiedFurstElectrolyteEos phase) {
+    double gamma = phase.getShieldingParameter();
+    double repulsive = 4.0 * gamma * gamma / ThermodynamicConstantsInterface.avagadroNumber;
+    double volume = phase.getMolarVolume() * phase.getNumberOfMolesInPhase() * 1e-5;
+    double attractive = 0.0;
+    for (int i = 0; i < phase.getNumberOfComponents(); i++) {
+      double charge = phase.getComponent(i).getIonicCharge();
+      double diameter = phase.getComponent(i).getLennardJonesMolecularDiameter() * 1e-10;
+      double denominator = 1.0 + gamma * diameter;
+      attractive += phase.getAlphaLR2() * phase.getComponent(i).getNumberOfMolesInPhase() / volume * charge * charge
+          / (denominator * denominator);
+    }
+    double scale = Math.max(repulsive, attractive);
+    assertTrue(Double.isFinite(scale) && scale > 0.0);
+    assertEquals(0.0, (repulsive - attractive) / scale, 1e-10,
+        "Shielding must satisfy its defining equation before comparing water activity");
   }
 
   private static PhaseInterface findIonRichPhase(SystemInterface fluid) {

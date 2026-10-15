@@ -15,8 +15,10 @@ import neqsim.thermodynamicoperations.flashops.reactiveflash.FormulaMatrix;
  * aqueous phase, where the chemical solver can synchronize reaction-adjusted species totals. Only its conservative
  * species changes are transferred back to the full fluid. This avoids feeding stale overall species amounts and
  * ion-stripped phase trials into the generic coupled multiphase iteration. A result requires simultaneous molecular
- * fugacity equality, reaction equilibrium, elemental conservation and electroneutrality. The caller is updated only
- * after all checks succeed; no EOS, hydrate or reaction parameters are changed.
+ * fugacity equality, reaction equilibrium where an aqueous material phase exists, elemental conservation and
+ * electroneutrality. An ion-free separated stream can retain registered reactive species without requiring an aqueous
+ * phase; reaction coupling resumes if an aqueous phase appears at a later state. The caller is updated only after all
+ * checks succeed; no EOS, hydrate or reaction parameters are changed.
  * </p>
  *
  * @author NeqSim contributors
@@ -84,7 +86,6 @@ final class AqueousReactionEquilibrium {
       }
       FluidEquilibriumChecks.validate(work, phaseInventory);
       work.isChemicalSystem(true);
-      reactionResidual = work.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual();
       verifyElements(formula, elements, overallMoles(work));
       int aqueousCount = 0;
       for (int phase = 0; phase < work.getNumberOfPhases(); phase++) {
@@ -92,9 +93,18 @@ final class AqueousReactionEquilibrium {
           aqueousCount++;
         }
       }
+      if (aqueousCount == 0 && !FlashPhaseConstraints.hasIonicInventory(work)) {
+        // Separated gas/oil streams retain the registered reaction species but can have no aqueous inventory.
+        // The frozen-species phase solve is already qualified; no aqueous reaction residual is defined here.
+        checkInterrupted();
+        copyResult(work);
+        minimumTrialDistance = minimumTrialDistance(phaseFlash);
+        return;
+      }
       if (aqueousCount != 1) {
         throw new IllegalStateException("Aqueous reaction coupling requires exactly one aqueous material phase");
       }
+      reactionResidual = work.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual();
       if (Double.isFinite(reactionResidual) && reactionResidual <= REACTION_TOLERANCE) {
         double charge = work.getChemicalReactionOperations().getReactivePhaseChargeMoles();
         if (!Double.isFinite(charge) || Math.abs(charge) > 1.0e-8) {

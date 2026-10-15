@@ -1457,12 +1457,29 @@ the old `ReactiveCO2BrinePhaseEquilibrium` class is a deprecated compatibility a
 A fixed-species phase flash conserves each species; reactions instead conserve elements and may
 change both species amounts and total moles.
 
+The disappearance of the last reactive aqueous phase remains a limitation of this sequential
+coupling. An extracted gas with exactly zero ionic inventory can be reflashed and can resume aqueous
+chemistry upon cooling. If that chemistry generates ions, subsequent heating can make the
+frozen-species solve lose its aqueous host before reactions can recombine the ions; the operation
+then rejects the state. A conservative coupled treatment of reaction and phase disappearance is
+needed for this transition (tracked in [issue #4341](https://github.com/equinor/neqsim/issues/4341)).
+Positive ionic amounts are not discarded, and a gas phase is not
+relabelled as aqueous to accept an otherwise invalid result.
+
 ### 4.2 Ion Handling in Stability Analysis
 
 The aqueous reference retains its full ionic composition and electrolyte chemical potentials.
 Non-aqueous molecular trials exclude ions by phase participation, without removing ions from the feed.
 Trial compositions are normalized before invoking component setters. Both fluid roots are considered;
 a homogeneous ionic result is rejected if a normalized molecular trial is unstable.
+
+The supplementary homogeneous-reference trials run at final homogeneous ionic acceptance. Fluids
+configured with `setHydrateCheck(true)` also evaluate the initial homogeneous aqueous reference:
+hydrate diagnostics use its sign to distinguish an undersaturated feed from a saturated boundary,
+even when the accepted fluid has multiple phases. Ordinary ionic multiphase flashes omit this
+additional diagnostic. Ordinary neutral stability analysis and all final homogeneous rejection
+thresholds remain unchanged. Recorded tangent-plane distances describe trials actually performed;
+the initial hydrate-reference diagnostic does not change the accepted fluid equilibrium.
 
 Rachford-Rice does not infer ionic identity from a small K-value. Zero or tiny K values for positive-feed
 neutral species still contribute their inventory. Algebraically equivalent ratios avoid squaring
@@ -1489,6 +1506,16 @@ For the qualified ionic fluid scope there must be a unique aqueous material host
 allocated by conserved amount, not by copying the overall mole fraction into a phase and normalizing.
 A gas/oil/brine phase-set change may require transferring the host to the model-classified aqueous
 phase and re-equilibrating; changing a display label alone does not solve equilibrium.
+
+The constrained route requires a strictly positive ionic inventory, rather than only registered
+ionic component names. `phaseToSystem("gas")` retains the original component basis, including
+zero-amount ions; reflashing that molecular stream must not invent an aqueous host or new ions.
+The public `hasIons()` still reports registered ionic species. There is no concentration cutoff:
+every positive ionic amount retains the aqueous constraint. Reactive streams retain their chemical
+strategy: the coupling first qualifies frozen-species phase equilibrium, then accepts a state with
+zero ionic inventory and no aqueous phase without evaluating undefined aqueous reaction residuals.
+If an aqueous phase appears, the normal reaction coupling continues. `TPflashZeroIonicInventoryTest` covers separated streams, repeated
+and changed-temperature flashes, neutral-reference agreement and positive trace-ion conservation.
 
 Final non-reactive ionic acceptance checks original species balance and phase/amount normalization
 within `1e-10`, beta sum within `1e-12`, phase charge, ion confinement and molecular log-fugacity
@@ -1540,7 +1567,7 @@ The Wilson K-based trials (Stage 1) run with only 50 iterations and catch the ma
 
 The lowest-Gibbs reference calculation in `Flash.findLowestGibbsEnergyPhase()` uses a
 detached, fixed-component stability workspace. For exact `SystemSrkEos` and `SystemPrEos`
-instances with two ordinary cubic storage slots, the classic mixing rule and analytic
+instances with two or three ordinary cubic storage slots, the classic mixing rule and analytic
 composition derivatives, `copyForStabilityTrial()` copies the six mutable component
 derivative arrays at the active component count. Each copy owns its arrays; the attractive
 term is rebound to the copied component. The calculation retains its existing `init(0)`
@@ -1553,21 +1580,24 @@ independent ownership, including the full-capacity buffers of ordinary user flui
 There is no shared workspace cache between flash calls. Mixing parameters retain the
 same read-only sharing contract as normal phase cloning.
 
-The compact path requires exact ordinary SRK/PR phase and component classes in both
+The compact path requires exact ordinary SRK/PR phase and component classes in every
 storage slots, consistent component indices, and one or two active phases mapped to distinct
 valid slots. Unknown subclasses, specialized models such as CPA, other mixing rules,
-numeric derivatives, additional phase storage, locked or forced phase roles, chemical or
+numeric derivatives, more than three stored or more than two active phases, locked or forced phase roles, chemical or
 ionic systems, and solid, hydrate or wax options use their normal virtual clone behavior.
 The flash operation's own solid-check option also bypasses compact copying even when the
 system's solid-check flag is false.
-This is a storage optimization at one detached call site; it does not broaden root-selection
+`TPmultiflash.stabilityAnalysis()` also uses this qualified workspace for detached composition
+seeds; it copies only seed values into live phases and never adopts compact phase objects.
+This storage optimization does not broaden root-selection
 policy, change convergence tolerances or replace accepted-candidate transfer with compact
 phase objects. See [Root selectors and Newton inventory mapping](#root-selectors-and-newton-inventory-mapping)
 for the separate rollback and adoption contracts.
 
 `StabilityTrialCopyTest` checks compact buffer ownership and active values, ordinary clone
 capacity, attractive-term rebinding, initialization equivalence, invalid capacities and
-fallback for specialized or unqualified inputs. `TPflashConcurrentCloneIsolationTest`
+fallback for specialized or unqualified inputs, including independent buffers in a dormant third
+slot and active mappings that use that slot. `TPflashConcurrentCloneIsolationTest`
 exercises concurrent flashes on independently cloned default SRK, PR and Statoil CPA fluids,
 including Cp, Cv and the second temperature derivative of the attraction term. Classic
 mixing-rule calculations retain local accumulators for the qualified derivative, general
@@ -1597,7 +1627,7 @@ This matrix supersedes the previous **36,136 → 152,488 B/flash** headline. Tho
 
 Values are median current-thread allocated **bytes per complete operation**, across two JVM forks. The process value covers a full `ProcessSystem.run()` with changed live-feed temperature/pressure. It includes inlet separation, compression, cooling and outlet separation. Unchanged process samples retain normal equipment caching and are reported separately in the evidence.
 
-Relative to the original PR, redesigned allocation falls **74.4% for dry gas, 53.8% for condensate and 54.0% for the changed process**. Dry gas remains 1,440 B above master. The process remains about 2.01 times master because general copies retain independently owned, full-capacity arrays. The three-storage-slot aqueous SRK case deliberately falls outside the compact two-slot path. Its public-copy cost remains. Fixing CPA association-cache ownership adds 34,416 B to the methane/water case and 66,920 B to the trace-CPA case; those are correctness costs, not hidden speed claims.
+Relative to the original PR, redesigned allocation falls **74.4% for dry gas, 53.8% for condensate and 54.0% for the changed process**. Dry gas remains 1,440 B above master. The process remains about 2.01 times master because general copies retain independently owned, full-capacity arrays. In that historical checkpoint the three-storage-slot aqueous SRK case fell outside the compact two-slot path. The current implementation qualifies a dormant third ordinary cubic slot and uses compact composition trials in `TPmultiflash`; updated comparison evidence is recorded in the PR. General public-copy ownership costs remain. Fixing CPA association-cache ownership adds 34,416 B to the methane/water case and 66,920 B to the trace-CPA case; those are correctness costs, not hidden speed claims.
 
 The dry-gas accounting is exact: one stability system copy contains six component copies. Six independently owned 200-double arrays per component cost 58,176 B; the compact three-component workspace uses 1,440 B instead. Public clone capacity remains unchanged.
 
@@ -1643,6 +1673,49 @@ The methane/brine topology is unchanged; maximum beta/composition differences ar
 36 baseline snapshots pass. Shared-host timing is descriptive. The additional cost of constrained
 ionic correctness is visible and needs separate performance work before claiming broad parity.
 
+### 5.8 Integrated master qualification (2026-10-15)
+
+The [integration evidence bundle](benchmarks/pr4306-integration-qualification.json.gz)
+(SHA256 `65ba5857c815f4e017d8dfb222a83952c4e5c0a374073961f1a4d4f56439f7af`)
+compares the integrated PR source with master `c93c8153fc66aa3a49b4d8fd4b51613c978341ae`.
+It includes 67 raw reports, exact source/class/dependency hashes, fixture definitions and
+commands. Compilation uses the Java 8 POM on Java 17; this is not an actual Java 8 runtime
+measurement. The subsequent master `bc579afa` changes documentation only.
+
+All 504 primary candidate snapshots and 120 additional settled candidate snapshots pass
+their numerical checks. The baseline passes 468 of 504 primary snapshots: its 36 mixed-brine
+snapshots fail molecular fugacity closure (maximum log residual about 208, versus about
+`1.6e-14` for the candidate). Invalid baseline endpoints do not establish a speedup. Other
+valid baseline endpoints retain their topology and Gibbs energy within numerical rounding.
+These checks establish numerical closure, not experimental salting-out accuracy; the four
+physical salting-direction failures tracked in issue #4334 remain merge blockers.
+
+| Warm changed-state workload | Master allocated bytes | Candidate allocated bytes |
+| --- | ---: | ---: |
+| Dry gas | 18,112 | 19,552 |
+| Ordinary two-phase | 4,872 | 4,872 |
+| Condensate | 2,230,998 | 108,192 |
+| Methane/brine | 11,554,616 | 12,690,536 |
+| Trace aqueous SRK | 83,048 | 175,144 |
+| Gas process | 553,630 | 1,110,337 |
+
+The initial aqueous diagnostic is omitted from ordinary flashes because phase selection does not
+use it; the acceptance-time ionic diagnostic remains. A subsequent diagnostic gate retains the
+initial trials for positive ionic inventories configured with `setHydrateCheck(true)`, preserving
+the homogeneous-reference evidence required by hydrate consumers. That gate is tested separately
+from the frozen benchmark bundle; its fixtures use `hydrateCheck=false`, so their measured path is
+unchanged. Matched isolation trials reduce methane/brine allocation by 55.7%
+and water-rich CPA allocation by 81.6% against the unoptimized candidate, with identical
+endpoints. Qualifying the dormant third cubic slot and the multiphase composition-trial call
+reduces trace-SRK candidate allocation from 345,064 to 175,144 bytes. Public clones retain
+independently owned full-capacity arrays, including their remaining process allocation cost.
+
+Timing is descriptive on a shared host. The primary condensate median thread CPU falls from
+7.784 to 0.529 ms; dry gas rises from 22.8 to 28.4 microseconds. Longer warmup checks resolve
+water-rich CPA at 1.420 versus 1.419 ms (9.0% more bytes), and the gas process at 1.149 versus
+1.237 ms (7.7% more CPU, with substantial between-fork variability). This is a demonstrated
+improvement in selected correctness and allocation contracts, not universal performance parity.
+
 ## 6. State-of-the-Art Comparison and Recommendations
 
 ### 6.1 Current Position
@@ -1680,8 +1753,7 @@ Commercial process simulators do not publish all implementation details, but pub
   original only when phase fractions, normalization, material balance, fugacity equality, distinct compositions, and
   lower Gibbs energy all pass. Thus the enrichment and beta values gate cost; they do not decide stability. An
   already-active neutral aqueous split with a
-  non-finite or unacceptable material-balance or log-fugacity residual may use the existing three-step beta correction
-  below that threshold;
+  non-finite material residual or one above `1e-8` may use the bounded existing-phase beta repair below that threshold;
   this does not search for or create a phase. A trace-water GAS+OIL endpoint with a confirmed non-finite or at-least
   `1e-8` log-fugacity residual may run the existing guarded multiphase candidate and is replaced only by a strictly
   feasible lower-Gibbs result. That invalid-endpoint retry is restricted to an incipient secondary phase with
@@ -3031,3 +3103,60 @@ derivative buffers, initialization boundaries, repeated or changed-state flashes
 operation-local solid-check workspace exclusion.
 `TPflashPhaseLifecycleTest` covers the TPflash rollback caller and reordered Newton inventories;
 `TPflashTinyAqueousSeedRejectionTest` retains the stable vapor and nearby genuine aqueous split.
+
+### Existing trace-water aqueous split repair (PR #4320)
+
+An aqueous label alone does not establish a valid equilibrium. For neutral, unconstrained
+fluid flashes with a positive water feed fraction below 0.01, an already-present two-phase
+aqueous split enters the existing endpoint recovery only when its component material-balance
+residual is non-finite or exceeds `1e-8`. Balanced endpoints require no candidate clone or
+additional EOS initialization. Chemical, ionic, solid, wax, forced-phase and phase-locked
+states are excluded from this new existing-aqueous repair path.
+
+The detached candidate retains its active phases and starts from an interior 50/50 beta seed.
+That seed is purely numerical. Up to 20 complete `TPmultiflash.solveBeta()` calls update beta,
+compositions and fugacities; each call also has its own bounded inner iteration loop. No
+redundant `init(1)` is performed after these calls. Acceptance requires finite bounded beta
+and compositions, beta and composition normalization within `1e-12`, component material
+balance within `1e-10`, and interphase log-fugacity residual below `1e-8`, together with the
+existing distinct-phase and candidate-selection checks. These stricter tolerances apply to
+this repair only; ordinary solver tolerances are unchanged.
+
+Two consecutive solves that fail to reduce the larger material/fugacity residual by at
+least one part per million stop the repair early. Non-finite residuals also stop it. The
+same strict acceptance and final failure checks apply. A qualified trace-water gas/aqueous
+candidate is copied directly, just like an oil/aqueous candidate; it is not discarded by
+replaying the ordinary flash used for water-rich cross-algorithm recovery.
+
+The public reservoir regression exposed an upstream inventory problem in
+`SystemThermo.setTotalFlowRate`: subtracting a reservoir-sized component amount to obtain
+a stream-sized flow loses significant digits. Repeated beta solves cannot close a feed
+whose overall fractions do not sum to one. Flow scaling now rebuilds positive component
+amounts from normalized ratios, with no extra EOS initialization or system clone. The
+250 bara, 363.15 K gas-producer regression exercises extraction, both rate changes and
+repeated public TP flashes. Separate inventory tests cover initial amounts from `1e-12`
+to `1e18` mol and retain a `1e-10` mole-fraction nitrogen component. They check component
+ratios, total flow and normalization without loosening the flash contract.
+
+If repair was attempted, the public `TPflash.run()` return also checks the final endpoint after
+subsequent phase selection and cleanup. This final check permits one, two or three phases;
+it does not force the repaired two-phase topology. An unqualified endpoint raises
+`IllegalStateException` with temperature, pressure and material residual instead of returning
+silently. Iterative PH/PS callers can therefore observe an unrecovered numerical failure.
+The check certifies local conservation, normalization and equilibrium closure, not global
+thermodynamic stability or experimental accuracy.
+
+`TPflashTraceWaterRepairTest` qualifies public temperature sweeps, pressure changes and return,
+operation reuse, cold-reference agreement, and actual pump entropy/mass/energy closure with
+SRK, PR and CPA. Separate injected-state tests exercise strict acceptance, failure reporting
+and the no-clone/no-initialization guard. The original deliberately corrupted endpoint test
+remains. The synthetic public cases are lifecycle qualification; they do not reproduce the
+unavailable original process snapshot.
+
+`TPflashEndpointRecoveryBenchmark` includes dry gas, ordinary two-phase, CPA, condensate,
+trace-water oil/aqueous, undersaturated water and three-phase workloads. Arguments are output
+path, flashes per batch, batch count, warmup count, and optional family-name prefix. It records
+elapsed and thread CPU time, p95 latency, allocated bytes where supported, and numerical
+snapshots for both unchanged and changed states. Compare identical harnesses and JVM settings
+against an exact baseline in alternating fresh JVMs. Timing is diagnostic, never a CI assertion;
+failed numerical states must remain visible and cannot count as successful faster flashes.

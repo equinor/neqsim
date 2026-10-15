@@ -142,11 +142,67 @@ applicability limits are recorded in the TP-flash algorithm guide.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
+**Type:** A (Property)
+**Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
+**Solution:** Stack PR #4330 on the shared classic mixing-rule accumulator foundation while preserving its characterization implementation, regression tests and mathematical documentation byte-for-byte. Regenerate engineering coverage for the combined source tree.
+**Notes:** The unchanged field-to-facility acceptance class passed three fresh-JVM runs on both the original head and the foundation overlay (six tests per variant, none failed or skipped). A read-only fixture probe confirmed the parallel HP/LP branches share phase-specific mixing handlers. Java 8 dependencies and release-8 bytecode were tested on Linux Java 17. This validates the shared dependency; it does not establish the cause of the earlier Windows Java 8 accepted-point replay failure, which remains a hosted CI gate. No solver tolerance or execution setting changed.
+
+### 2026-10-14 — Isolate shared classic mixing-rule accumulators
+**Type:** A (Property)
+**Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306
+**Solution:** Extract the existing `EosMixingRuleHandler` correction and six deterministic `ClassicMixingRuleAccumulatorTest` cases from PR #4306 as a shared foundation. Use calculation-local accumulation in general covolume, classic attraction temperature second derivative, and composition-dependent attraction calculations; retain legacy serial result fields.
+**Notes:** All six interleaving regressions fail on the unchanged implementation and pass with the correction. The three-train compressor guide counterfactual removes 39 observed search/replay discrepancies by changing this mixing-rule class alone; single, multi-variable, staged and helper examples remain feasible with unchanged physical limits. Validation used Java 17 with Java 8 source/target; Windows Java 8 remains a CI gate. No compressor solver, tolerance, equation or public API changes. Coverage does not claim every mixing family or concurrent configuration mutation. The mixing-rules guide documents the scope.
+
+### 2026-10-14 — Coordinate mapped-network and compressor speed-solve acceptance
+**Type:** E (Feature)
+**Keywords:** PR 4328, PR 4326, mapped compressor, pressure target, convergence, stale thermal state, shared power
+**Solution:** `LoopedPipeNetwork.calculateHeadLossCompressor`, `MappedCompressorAcceptanceTest`, and the SURF integration guide.
+**Notes:** A bounded chart speed search requested 100 bara and returned an internally consistent 11.647013866 bara forward state with `solved() == false`, while the network labelled it a valid chart result and retained 53.131953657 kW. Require the existing equipment convergence contract, an enabled chart, finite non-negative power, and positive finite outlet pressure/temperature before accepting mapped evidence. Reuse the existing infeasible-edge path to invalidate power and clear previous thermal state. Four regressions first establish a valid state, then exercise an unsolved result, chart disablement, non-finite power, and non-finite temperature. Keep the common network boundary in PR #4328 and the compressor's speed-search implementation in PR #4326; no system-specific solver or new constraint framework is introduced.
+
+### 2026-10-14 — Preserve compressor convergence requirements during optimization
+**Type:** E (Feature)
+**Keywords:** compressor, speed solve, invalid chart, optimizer, infeasible trials, lift curves, CI, 4326
+**Solution:** `Compressor.SpeedSolveException`, `ProductionOptimizer` candidate rejection and hard convergence gate, and conditional chart-setup process runs in `FlowRateOptimizer`.
+**Notes:** Reproduced all three failing optimizer cases on PR #4326 before repair. A no-valid-map trial is rejected without reading stale objectives or downstream constraints; unrelated exceptions still propagate. Capacity analysis and optional output validation cannot bypass the pressure-target convergence requirement. Repeated table setup reuses existing charts without rerunning an invalid preceding probe. Updated compressor/optimization guides, the compressor skill and the generated coverage inventory; regression tests cover stale outputs, hard convergence, recovery and chart reuse.
+### 2026-10-14 — Propose shared flash and process state contracts
+**Type:** G (Workflow)
+**Keywords:** NRC-2937, TPflash, phase inventory, hydrate, inactive streams, coordinated PR review
+**Solution:** `docs/rfcs/2937-tpflash-state-contracts.md` and the RFC index.
+**Notes:** Record the proposed state ownership, physical acceptance, compatibility and process-consumer contracts shared by PRs #4306, #4320 and #4277. Preserve explicit physical model boundaries and separate model corrections from solver qualification. Status remains PROPOSED; this document supplies no architecture acceptance, independent approval or merge qualification.
+
+The RFC index is the 51st first-level landing page and participates in the navigation contracts. Its title is rendered from front matter rather than duplicated as an H1; the inventory assertion and explicit RFC-index membership check cover the new page. Correct the exchanger method's inline code span in the proposal.
+
+
+### 2026-10-14 — Preserve production proposal guards across interrupted cycles
+**Type:** G (Workflow)
+**Keywords:** PR 4312, resume, proposal guard, evidence ledger, frozen user input, fail closed
+**Solution:** `devtools/neqsim_continuous/cycle.py`, `user_input.py`, `stages.py`, and `devtools/test_neqsim_production.py`.
+**Notes:** A completed guard status did not preserve its filtered proposals or upstream blocks: resuming before ledger publication could mark previously withheld advice as current evidence. Resume now revalidates the inexpensive gates, constraints and guard against restored calculation outputs, reapplies frozen user restrictions, and blocks advice if the input checkpoint is unavailable. Completed model/optimizer work and persisted ledger events remain checkpointed. The ledger binds publication to the exact current-cycle guarded proposal content, rejecting post-guard mutations, added proposals and reused old-cycle evidence. Thirteen deterministic regressions failed on the previous head and pass with the repair; the full production suite passes 57 cases. Continuous/living coverage passes 42 cases, with one existing optional DOCX-report test skipped because its dependency is unavailable. Hosted CI remains a publication gate.
+
+### 2026-10-14 — Isolate evidence routing tests from optional agent installations
+**Type:** G (Workflow)
+**Keywords:** evidence-source-cues, hermetic tests, plugin discovery, production guard, CI, PR 4312
+**Solution:** `devtools/test_evidence_sources.py` and `.github/workflows/ai-devtools-python-tests.yml`.
+**Notes:** The validator loads cue declarations from discovered agents; public CI has no optional provider catalog. Tests now supply a temporary synthetic catalog and isolate checkout, installed-agent and plugin roots while exercising real discovery and parsing. Cover missing catalogs, plugin-only aliases, duplicate/invalid cues and invalid statuses. Keep provider routing policy out of the validator. Include the production-envelope guard and persistent-ledger regression suite in Devtools CI. The coordinated master workflow now retains this shared repair.
+
+### 2026-10-14 — Invalidate field evidence before optimizer or guard failure
+**Type:** B (Bug fix)
+**Keywords:** PR 4312, persistent envelope, evidence invalidation, failed guard, power limit, resume
+**Solution:** `devtools/neqsim_continuous/stages.py` and `devtools/test_neqsim_production.py`.
+**Notes:** An existing proposal remained current after a changed shared-power limit and malformed optimizer output skipped the guarded ledger stage. Move invalidation to evidence assessment and restore, preserving the guard for new proposals. Repeated failures remain idempotent, implemented history remains stale and traceable, and resumed publication retains its fresh cycle evidence. Add failure/recovery, report, dry-run and resume regressions. Integrate current master workflow naming and shared CI repairs; use `ai-devtools-python-tests.yml` rather than restoring the removed workflow filename.
+
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
 **Type:** G (Workflow)
 **Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI
 **Solution:** Reuse the evidence-routing test fixture from PR #4312 commit `d469208aa227449d40c3f441e8f5a345795aa29a` and the eight-shard slow-suite partition from PR #4328 commit `9bcca37f1ac0b717c18a499b3a1a74bcdeec1126` in the renamed workflows.
 **Notes:** Reproduced 27 routing assertions that required absent optional enterprise agents, then isolated agent discovery with synthetic installed/plugin catalogs. Add production guard regressions to Devtools CI, retain fast/slow Surefire reports, and let both fast-suite platforms finish after a failure. Four compatibility gates preserve historical required-check names and require all eight slow shards to succeed. Correct the duplicated `.yml` suffix in the documentation pre-push filter. Document test isolation, report artifacts, shard membership, and compatibility behavior in BUILD and the workflow catalog. Numerical methods and acceptance thresholds are unchanged.
+
+### 2026-10-14 — Recover model-specification CI from Maven resolution failures
+**Type:** G (Workflow)
+**Keywords:** Java 8, Maven Central, dependency resolution, model specifications, PR 4320
+**Solution:** `.github/workflows/core-run-build-test-and-javadoc.yml` retries the model-specification command once after a Maven plugin/dependency resolution failure and forces missing-release rechecks with `-U`.
+**Notes:** The Java 8 job on `15d1b8d` failed before compilation while resolving `maven-resources-plugin:3.3.1`; absent test artifacts were secondary failures. Match Maven's terminal resolution-error help line, preserve the failing command's exit status, and fail immediately on compilation/test errors. The retry is bounded to two attempts with a ten-second delay. Numerical code, test selection, tolerances, and required evidence checks are unchanged. Documentation impact: CI recovery behavior is documented here and beside the workflow command; no simulation/API documentation changes are needed.
 
 ### 2026-10-11 — Review source routing and reusable tie-back guidance
 **Type:** E (Feature)
@@ -1821,3 +1877,109 @@ with the corrected equations, numerical behavior and qualification limits.
 No fitted parameters or dielectric data changed. Nitrogen, n-butane and n-hexane
 dielectric inputs and salting-out accuracy, third-order volume derivatives, the singular zero-concentration
 composition curvature and the separate legacy Mod2004 implementation remain unqualified.
+
+
+### 2026-10-13 — Trace-water flash repair acceptance and cost qualification
+**Type:** E (Feature)
+**Keywords:** TPflash, trace water, aqueous, PSflash, pump, PR 4320, conservation, performance
+**Solution:** `TPflash` bounds the existing aqueous repair, avoids duplicate EOS initialization,
+and validates repaired endpoints before public return. `TPflashTraceWaterRepairTest` adds public
+SRK/PR/CPA lifecycle and pump closure checks plus explicit failure/guard contracts.
+**Notes:** Local acceptance targets are material balance `1e-10`, normalization `1e-12`, and
+log-fugacity residual `1e-8`; ordinary TP/PS tolerances are unchanged. Expanded endpoint benchmark
+records allocation and p95 alongside numerical validity. Synthetic public cases qualify lifecycle
+behavior, not the unavailable original process snapshot or experimental phase behavior.
+
+
+### 2026-10-14 — PR 4320 reservoir compatibility and bounded repair cost
+**Type:** B (Bug fix)
+**Keywords:** trace water, TPflash, flow scaling, reservoir, conservation, performance
+**Solution:** Corrected cancellation in `SystemThermo.setTotalFlowRate` by rebuilding positive
+component inventories. Trace-water gas/aqueous recovery now retains its qualified candidate
+instead of replaying the ordinary flash; stalled/non-finite repairs stop early. Acceptance
+tolerances and final failure reporting remain unchanged.
+**Validation:** The public reservoir reproducer fails at exact prior head `645e5e6`; the two
+updated/new test classes expose seven failures there. The candidate passes 397 focused and
+integration tests with no failures/errors (one pre-existing disabled display test), including
+all previously failing reservoir/well/field classes. Changed Java compiles with `--release 8`;
+the complete Maven build and test execution use Java 17. Numerical qualification includes
+component inventory, normalization, equilibrium, repeated state changes and pump closure.
+**Documentation impact:** Flow-setter guide and TP-flash algorithm document the corrected
+inventory scaling, bounded failure handling and candidate transfer. Exact-head CI and paired
+full-flash/process timings are recorded in PR 4320; this is not a global stability certificate.
+
+Current-master integration (`b0de5165`) also passes the expanded regression set, including
+network topology, well-flow and named-component wax fraction coverage. Both numerical fixes
+and strict recovery qualification are retained; generated engineering coverage is rebuilt.
+
+### 2026-10-14 — PR 4320 broad-process regression repair
+**Type:** B (Bug fix)
+**Keywords:** flow inventory, cancellation, distillation, VLP, reservoir, performance
+**Solution:** Restrict positive inventory rebuilding to downward flow changes whose prospective
+component or total difference update loses more than `1e-12` relative accuracy. Accurate ordinary
+updates, upward changes and same-rate updates keep their established arithmetic. The check uses
+no additional EOS initialization, clone or temporary array. Two-fluid VLP now retains its cloned
+reference inventory for intensive properties and applies the trial rate only in its existing
+velocity calculation, avoiding unnecessary initialization at positive near-zero rates.
+**Engineering evidence:** The previous reservoir setter produced 1,260,096.07887 kg/hr oil for a
+requested 1,259,689.92248 kg/hr (0.0322% excess). Correct inventory gives the requested rate and
+355.175066 bara after ten annual depletion/injection steps. The regression retains its 0.1 bar
+pressure tolerance and now checks all four requested rates, each component inventory against
+integrated production/injection, and constant reservoir volume at every step. Independent audit
+found maximum relative component imbalance of `1.50e-16` and relative volume error below `1.5e-12`.
+The VLP regression covers positive near-zero rate continuity, reference-flow magnitude invariance
+and preservation of the source stream. The existing explicit zero-flow boundary is unchanged.
+**Validation:** Reproduced ten failures at `2b67ee0`; the same 76 affected tests pass on master
+`b0de5165`. Final expanded test results, formatting/documentation gates and paired performance
+measurements are recorded in the PR validation update. No physical acceptance threshold is relaxed.
+**Documentation impact:** Updated flow-setting and well-simulation guides and the setter JavaDoc.
+
+
+### 2026-10-15 — PR 4306 master integration and qualification review
+**Type:** B (Bug fix)
+**Keywords:** TPflash, phase extraction, ionic inventory, clone ownership, hydrate diagnostics, performance
+**Solution:** Integrated master `bc579afa`, model foundation #4332 `1fb4277c`, and the
+concurrent #4277 consumer-test merge at `24553180`, preserving the trace-water, flow-inventory,
+wax/solid and shared-mixing repairs. Resolved all four merge conflicts and regenerated engineering
+coverage. Local reconstruction commits are not upstream ancestry; publication uses the actual
+GitHub parent commits and preserves existing binary benchmark evidence.
+
+Separated gas/oil streams can retain registered ionic species with exactly zero amounts without
+requiring an aqueous host. Every strictly positive ionic amount retains its constraint, including
+`1e-16` mol regressions; no ionic cutoff is introduced. Reactive extracted gas retains its reaction
+configuration, and cooling resumes aqueous chemistry with original elemental inventory checks.
+Reaction-driven disappearance of the last aqueous phase after ions have formed remains unsupported
+and is tracked with a reproducible temperature cycle in #4341. Invalid ionic gas states are rejected.
+
+Ordinary flashes omit the supplementary initial homogeneous aqueous diagnostic that does not affect
+phase selection. Hydrate-configured ionic fluids retain that diagnostic, and final homogeneous ionic
+acceptance retains its stability rejection. A dedicated comparison checks diagnostic sign and unchanged
+fluid endpoints. Compact, detached SRK/PR stability workspaces now qualify two or three ordinary stored
+slots with at most two active phases, including the multiphase composition-trial call. General public
+clones retain independently owned full-capacity arrays; unsupported models/topologies retain normal
+cloning. New tests cover third-slot buffer ownership and initialized equivalence.
+
+**Performance evidence:** The checked-in `pr4306-integration-qualification.json.gz` bundle retains
+67 raw reports and reproducible source/class/dependency hashes. All 504 primary and 120 additional
+settled candidate snapshots pass; master passes 468/504 primary snapshots, with 36 invalid mixed-brine
+endpoints. Warm changed-state condensate allocation falls 95.2%. Eliminating the unused ordinary
+initial diagnostic saves 55.7% for methane/brine and 81.6% for water-rich CPA against the unoptimized
+candidate. Full-copy process allocation remains about twice master; settled process CPU increases
+7.7% with substantial fork variability. No universal speed-parity claim is made. The final hydrate-only
+diagnostic gate is qualified separately from the frozen ordinary-flash benchmark path.
+
+**Qualification limits:** The four unchanged physical salting-direction assertions remain failures;
+#4334 documents malformed dielectric inputs and required source/model qualification. Tests and physical
+thresholds are not weakened. Independent endpoint audits establish inventory, charge, normalization
+and fugacity closure, not experimental accuracy or a global stability certificate. Required hosted CI,
+subsystem/domain reviews and the proposed architecture decision remain separate merge gates.
+**Documentation impact:** Updated TP-flash algorithm, chemical-reaction routing and phase-extraction
+guides, preserved both sides of merged documentation, and recorded measured benefits and costs.
+**Validation:** All ten review-modified production/test Java files compile independently with
+`--release 8`; the runtime is Java 17. Full Javadoc, stable formatting, generated coverage checking,
+documentation search (791 Markdown pages and one HTML page), 13 focused documentation tests, and
+whitespace checks pass. The 323-case broad review exposed the four physical assertions plus 15
+missing-hydrate-diagnostic assertions; the latter prompted the hydrate-only gate and dedicated
+unchanged-endpoint regression. The complete slow-inclusive follow-up and exact-head hosted results
+are recorded in PR #4306. The optional pre-commit executable is absent locally; its direct formatting
+and documentation-search gates are run explicitly.

@@ -17,8 +17,20 @@ phase and chemical equilibrium is exposed through the reactive-flash operations.
 | Inspect the initialized aqueous reaction set and closure diagnostics | `system.getChemicalReactionOperations()` | [Reaction-model audit guide](../thermo/reaction_model_audit) |
 | Screen experimental CO₂ impurity kinetics | Dedicated, evidence-gated reactor and transport classes | [Qualified execution guide](co2_impurity_qualified_execution) |
 
-A normal `TPflash()` solves phase equilibrium only. It does not become reactive through a
-boolean switch. Use a reactive-flash operation explicitly so the calculation intent is visible.
+For systems without initialized chemistry, `TPflash()` solves fixed-species phase equilibrium.
+Systems configured with `chemicalReactionInit()` retain their chemical workflow: freely selected
+ionic fluid phases use the bounded `AqueousReactionEquilibrium` coupling described in the
+[TP-flash algorithm](../thermodynamicoperations/TPflash_algorithm#41-chemical-equilibrium-coupling).
+The coupling first qualifies fixed-species phase equilibrium. A separated molecular stream with
+zero ionic inventory and no aqueous material phase needs no aqueous reaction equations; it retains
+its chemical configuration so coupling can resume when an aqueous phase appears. Once aqueous
+reactions generate ions, subsequent evaporation of the last aqueous phase can still be rejected:
+the frozen-species step cannot remove those ions through reaction while its aqueous host disappears.
+This limitation ([issue #4341](https://github.com/equinor/neqsim/issues/4341)) requires coupled
+reaction and phase-disappearance handling; deleting trace ions or
+relabeling a gas phase would not provide a valid equilibrium result. EOS-GE models retain their own
+reaction strategy. Use `reactiveTPflash()` when selecting the separate simultaneous modified-RAND
+solver explicitly; these are distinct operations with different applicability and qualification.
 
 ## Equilibrium basis
 
