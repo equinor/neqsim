@@ -24,7 +24,8 @@ import java.util.Random;
  * <ol>
  * <li>Royalty is a fraction of gross revenue.</li>
  * <li>Cost oil is the lower of the cost-oil cap times net revenue (after royalty) and the unrecovered cost pool (CAPEX,
- * OPEX and the recoverable exploration programme).</li>
+ * OPEX and the recoverable exploration programme). The cap applies after royalty, so a cap of 0.80 of gross revenue
+ * with 15 percent royalty is entered as 0.80 / 0.85 of net revenue.</li>
  * <li>Profit oil is net revenue minus cost oil, split between the State and the contractor. The State share is the
  * offered share plus an optional price-linked step above a reference price.</li>
  * <li>Contractor income tax is applied to contractor revenue minus OPEX minus straight-line depreciation of CAPEX, with
@@ -80,6 +81,43 @@ public class PscBidEconomics implements Serializable {
   private double[] opex = new double[0];
   private double[] volumeScales = new double[] {1.0};
   private double[] volumeWeights = new double[] {1.0};
+  private ProfitOilShareTable profitOilShareTable = null;
+  private double[] tableRatePerProducer = new double[0];
+
+  /**
+   * Sets a price and rate dependent profit-oil share table, for example the ANP Annex XX grid.
+   *
+   * <p>
+   * When set, the State share in each production year is {@code table.effectiveShare(offeredShare, oilPrice, rate)},
+   * with the model oil price used as Dated Brent. It replaces the flat share, the price-linked share and the price step
+   * table. The offered share stays the bid variable of the break-even solver.
+   * </p>
+   *
+   * @param table adjustment table, or null to return to the flat share
+   * @param oilRatePerProducerBblPerDay average oil rate per producing well in barrels per day, used in every year
+   * @return this object
+   */
+  public PscBidEconomics setProfitOilShareTable(ProfitOilShareTable table, double oilRatePerProducerBblPerDay) {
+    return setProfitOilShareTable(table, new double[] {oilRatePerProducerBblPerDay});
+  }
+
+  /**
+   * Sets a price and rate dependent profit-oil share table with an oil rate per producing well for each year.
+   *
+   * @param table adjustment table, or null to return to the flat share
+   * @param oilRatePerProducerBblPerDay average oil rate per producing well in barrels per day for each production year;
+   * years beyond the array length use the last value
+   * @return this object
+   * @throws IllegalArgumentException if a table is given with an empty rate array
+   */
+  public PscBidEconomics setProfitOilShareTable(ProfitOilShareTable table, double[] oilRatePerProducerBblPerDay) {
+    if (table != null && oilRatePerProducerBblPerDay.length == 0) {
+      throw new IllegalArgumentException("at least one oil rate per producer is required");
+    }
+    this.profitOilShareTable = table;
+    this.tableRatePerProducer = Arrays.copyOf(oilRatePerProducerBblPerDay, oilRatePerProducerBblPerDay.length);
+    return this;
+  }
 
   /**
    * Sets the oil price.
@@ -395,7 +433,12 @@ public class PscBidEconomics implements Serializable {
       double costOil = Math.min(costOilCap * net, pool);
       pool -= costOil;
       double profitOil = net - costOil;
-      double stateProfitOil = stateShare * profitOil;
+      double yearShare = stateShare;
+      if (profitOilShareTable != null) {
+        double rate = tableRatePerProducer[Math.min(t, tableRatePerProducer.length - 1)];
+        yearShare = profitOilShareTable.effectiveShare(share, oilPrice, rate);
+      }
+      double stateProfitOil = yearShare * profitOil;
       double contractorRevenue = costOil + (profitOil - stateProfitOil);
       double depreciation = 0.0;
       for (int k = 0; k <= t; k++) {
@@ -468,6 +511,8 @@ public class PscBidEconomics implements Serializable {
     c.explorationProgramCost = explorationProgramCost;
     c.discoveryDelayYears = discoveryDelayYears;
     c.chanceOfDiscovery = chanceOfDiscovery;
+    c.profitOilShareTable = profitOilShareTable;
+    c.tableRatePerProducer = Arrays.copyOf(tableRatePerProducer, tableRatePerProducer.length);
     c.production = Arrays.copyOf(production, production.length);
     c.capex = Arrays.copyOf(capex, capex.length);
     c.opex = Arrays.copyOf(opex, opex.length);

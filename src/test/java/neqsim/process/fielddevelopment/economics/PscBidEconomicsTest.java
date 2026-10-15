@@ -152,6 +152,42 @@ class PscBidEconomicsTest {
   }
 
   @Test
+  void annexXxTableRaisesStateShareAndLowersContractorValue() {
+    ProfitOilShareTable table = ProfitOilShareTable.brazilAnnexXx();
+    double flat = baseBid().evaluate().getEmv();
+    PscBidEconomics withTable = baseBid().setProfitOilShareTable(table, 28000.0);
+    double tabled = withTable.evaluate().getEmv();
+    assertTrue(tabled < flat);
+    double expectedShare = 0.25 + 0.133884;
+    assertEquals(baseBid().emvAtShare(expectedShare), tabled, 1e-3);
+    assertTrue(flat - tabled > 50.0 && flat - tabled < 400.0, "difference " + (flat - tabled));
+  }
+
+  @Test
+  void zeroAdjustmentTableReproducesFlatShareAndCopyKeepsTable() {
+    ProfitOilShareTable zero = new ProfitOilShareTable(new double[] {Double.POSITIVE_INFINITY}, new double[][] {{0.0}});
+    PscBidEconomics flat = baseBid();
+    PscBidEconomics withTable = baseBid().setProfitOilShareTable(zero, 10000.0);
+    assertEquals(flat.evaluate().getEmv(), withTable.evaluate().getEmv(), 0.0);
+    assertEquals(flat.evaluate().getBreakEvenProfitOilShare(), withTable.evaluate().getBreakEvenProfitOilShare(),
+        1e-12);
+    PscBidEconomics annex = baseBid().setProfitOilShareTable(ProfitOilShareTable.brazilAnnexXx(), 28000.0);
+    assertEquals(annex.evaluate().getEmv(), annex.copy().evaluate().getEmv(), 0.0);
+  }
+
+  @Test
+  void perYearRatesUseLastValueBeyondArrayAndRejectEmpty() {
+    ProfitOilShareTable table = ProfitOilShareTable.brazilAnnexXx();
+    PscBidEconomics constant = baseBid().setProfitOilShareTable(table, 28000.0);
+    PscBidEconomics perYear = baseBid().setProfitOilShareTable(table, new double[] {28000.0, 28000.0});
+    assertEquals(constant.evaluate().getEmv(), perYear.evaluate().getEmv(), 1e-12);
+    PscBidEconomics decline = baseBid().setProfitOilShareTable(table,
+        new double[] {28000.0, 28000.0, 28000.0, 20000.0, 15000.0, 10000.0, 8000.0, 6000.0, 5000.0, 4000.0});
+    assertTrue(decline.evaluate().getEmv() > constant.evaluate().getEmv());
+    assertThrows(IllegalArgumentException.class, () -> baseBid().setProfitOilShareTable(table, new double[0]));
+  }
+
+  @Test
   void mismatchedProfileLengthsAreRejected() {
     assertThrows(IllegalArgumentException.class, () -> new PscBidEconomics()
         .setDevelopmentProfile(new double[] {1.0, 2.0}, new double[] {1.0}, new double[] {1.0, 2.0}));
