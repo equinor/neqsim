@@ -214,20 +214,25 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       }
     }
 
-    double[][] rates;
+    TransactionalEvaluation transport;
     synchronized (equations) {
       double savedOutletPressure = equations.getOutletBoundaryPressure();
       double savedInterpolationTimeScale = equations.getPressureInterpolationTimeScale();
       try {
         equations.setOutletBoundaryPressure(outletPressureFixed ? outletPressure : Double.NaN);
         equations.setPressureInterpolationTimeScale(pressureInterpolationTimeScale);
-        rates = equations.calcRHSTransactional(trialSections, spatialStep);
+        transport = equations.evaluateTransactional(trialSections, spatialStep);
       } finally {
         equations.setOutletBoundaryPressure(savedOutletPressure);
         equations.setPressureInterpolationTimeScale(savedInterpolationTimeScale);
       }
     }
-    return new UnsplitTransientSolver.Evaluation(rates, closureDensities);
+    double[] cellLengthsM = new double[trialSections.length];
+    for (int cell = 0; cell < trialSections.length; cell++) {
+      cellLengthsM[cell] = trialSections[cell].getLength();
+    }
+    return new UnsplitTransientSolver.Evaluation(transport.getRates(), closureDensities,
+        transport.getDirectionalPhaseFaceFluxes(), cellLengthsM, transport.getPhaseMassSourcesPerLength());
   }
 
   /**

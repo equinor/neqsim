@@ -1425,6 +1425,17 @@ diagnostic getters after a transactional probe still returns the preceding publi
 not the probe's ledger. Caller-supplied sections are trial objects and may be updated by closures;
 accepted sections must be cloned first. Concurrent configuration must use the same equations lock.
 
+The transactional evaluation also carries an immutable directional ledger for every internal face
+and gas/oil/water phase. Each entry separates nonnegative forward and reverse mass transport,
+advective momentum, and pressure traction, while retaining the left and right donor mass and
+momentum used by the accepted free-flux evaluation. Present donors satisfy a normalized
+momentum-to-mass relation; an exactly absent donor uses the exact zero-momentum row instead of an
+inventory floor. `TwoFluidUnsplitModelAdapter` preserves this ledger, each physical cell length,
+and each phase mass source in `UnsplitTransientSolver.Evaluation`. These are passive, defensive
+diagnostics at present: the nonlinear unknown vector and residual have not yet been augmented with
+directional face variables or complementarity multipliers, so this contract does not itself repair
+phase disappearance/reappearance or qualify any unsplit riser case.
+
 `TwoFluidUnsplitModelAdapter.prepareStep` independently re-evaluates a converged, active-set-stable
 candidate against its accepted templates, requested time step, boundary, and current operator. It
 checks all six selected-time conservation equations and the endpoint occupied volume. A `PreparedStep`

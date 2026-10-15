@@ -123,6 +123,9 @@ public final class UnsplitTransientSolver implements Serializable {
   public static final class Evaluation {
     private final double[][] conservativeRates;
     private final double[][] phaseDensities;
+    private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
+    private final double[] cellLengthsM;
+    private final double[][] phaseMassSourcesPerLength;
 
     /**
      * Create an evaluation.
@@ -131,11 +134,44 @@ public final class UnsplitTransientSolver implements Serializable {
      * @param phaseDensities gas, oil and water densities with shape {@code [3][cellCount]}
      */
     public Evaluation(double[][] conservativeRates, double[][] phaseDensities) {
+      this(conservativeRates, phaseDensities, null, null, null);
+    }
+
+    /**
+     * Create an evaluation carrying the exact free directional face ledger used by the conservative rates.
+     *
+     * @param conservativeRates six or more rates per cell in conservative-variable order
+     * @param phaseDensities gas, oil and water densities with shape {@code [3][cellCount]}
+     * @param directionalPhaseFaceFluxes internal-face ledgers with shape {@code [cellCount - 1][3]}, or null for a
+     * model without face diagnostics
+     */
+    public Evaluation(double[][] conservativeRates, double[][] phaseDensities,
+        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes) {
+      this(conservativeRates, phaseDensities, directionalPhaseFaceFluxes, null, null);
+    }
+
+    /**
+     * Create an evaluation carrying the complete geometry and source ledger needed by a mixed face solve.
+     *
+     * @param conservativeRates six or more rates per cell in conservative-variable order
+     * @param phaseDensities gas, oil and water densities with shape {@code [3][cellCount]}
+     * @param directionalPhaseFaceFluxes internal-face ledgers with shape {@code [cellCount - 1][3]}, or null for a
+     * model without face diagnostics
+     * @param cellLengthsM physical cell lengths in m, or null for a model without geometry diagnostics
+     * @param phaseMassSourcesPerLength phase mass sources in kg/(m s), shape {@code [cellCount][3]}, or null for a
+     * model without source diagnostics
+     */
+    public Evaluation(double[][] conservativeRates, double[][] phaseDensities,
+        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes, double[] cellLengthsM,
+        double[][] phaseMassSourcesPerLength) {
       if (conservativeRates == null || phaseDensities == null) {
         throw new IllegalArgumentException("Model evaluation arrays cannot be null");
       }
       this.conservativeRates = copy(conservativeRates);
       this.phaseDensities = copy(phaseDensities);
+      this.directionalPhaseFaceFluxes = copyDirectionalFluxes(directionalPhaseFaceFluxes);
+      this.cellLengthsM = cellLengthsM == null ? null : cellLengthsM.clone();
+      this.phaseMassSourcesPerLength = phaseMassSourcesPerLength == null ? null : copy(phaseMassSourcesPerLength);
     }
 
     private void validate(int cellCount) {
@@ -162,6 +198,67 @@ public final class UnsplitTransientSolver implements Serializable {
           }
         }
       }
+      if (directionalPhaseFaceFluxes != null) {
+        if (directionalPhaseFaceFluxes.length != Math.max(0, cellCount - 1)) {
+          throw new IllegalArgumentException("Directional face count must be one less than the cell count");
+        }
+        for (DirectionalPhaseFaceFlux[] face : directionalPhaseFaceFluxes) {
+          if (face == null || face.length != PHASE_COUNT) {
+            throw new IllegalArgumentException("Every directional face requires gas, oil and water ledgers");
+          }
+          for (DirectionalPhaseFaceFlux phase : face) {
+            if (phase == null) {
+              throw new IllegalArgumentException("Directional phase face ledgers cannot be null");
+            }
+          }
+        }
+      }
+      if (cellLengthsM != null) {
+        if (cellLengthsM.length != cellCount) {
+          throw new IllegalArgumentException("Cell-length count must match the cell count");
+        }
+        for (double cellLength : cellLengthsM) {
+          if (!(cellLength > 0.0) || !Double.isFinite(cellLength)) {
+            throw new IllegalArgumentException("Cell lengths must be positive and finite");
+          }
+        }
+      }
+      if (phaseMassSourcesPerLength != null) {
+        if (phaseMassSourcesPerLength.length != cellCount) {
+          throw new IllegalArgumentException("Phase-source count must match the cell count");
+        }
+        for (double[] cellSources : phaseMassSourcesPerLength) {
+          if (cellSources == null || cellSources.length != PHASE_COUNT) {
+            throw new IllegalArgumentException("Every cell requires gas, oil and water source rates");
+          }
+          for (double source : cellSources) {
+            if (!Double.isFinite(source)) {
+              throw new IllegalArgumentException("Phase mass sources must be finite");
+            }
+          }
+        }
+      }
+    }
+
+    /**
+     * Return the exact free face transport associated with this rate evaluation.
+     *
+     * @return defensive outer copy, or null when the model did not provide a face ledger
+     */
+    public DirectionalPhaseFaceFlux[][] getDirectionalPhaseFaceFluxes() {
+      return copyDirectionalFluxes(directionalPhaseFaceFluxes);
+    }
+
+    /** @return defensive cell lengths in m, or null when the model did not provide geometry diagnostics */
+    public double[] getCellLengthsM() {
+      return cellLengthsM == null ? null : cellLengthsM.clone();
+    }
+
+    /**
+     * @return defensive phase mass sources in kg/(m s), or null when the model did not provide source diagnostics
+     */
+    public double[][] getPhaseMassSourcesPerLength() {
+      return phaseMassSourcesPerLength == null ? null : copy(phaseMassSourcesPerLength);
     }
   }
 
@@ -911,6 +1008,18 @@ public final class UnsplitTransientSolver implements Serializable {
     double[][] result = new double[values.length][];
     for (int row = 0; row < values.length; row++) {
       result[row] = values[row] == null ? null : values[row].clone();
+    }
+    return result;
+  }
+
+  /** Copy array ownership while retaining immutable face-ledger entries. */
+  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] values) {
+    if (values == null) {
+      return null;
+    }
+    DirectionalPhaseFaceFlux[][] result = new DirectionalPhaseFaceFlux[values.length][];
+    for (int face = 0; face < values.length; face++) {
+      result[face] = values[face] == null ? null : values[face].clone();
     }
     return result;
   }

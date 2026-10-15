@@ -526,6 +526,13 @@ evidence. Never tune a public closure to the commercial trace; validate the next
 increment against the public Tengesdal experiment, conservation, nearby points, and mesh/time-step
 refinement.
 
+The unsplit transactional callback may expose directional gas/oil/water face diagnostics: separate
+forward/reverse mass transport, donor advective momentum, pressure traction, physical cell lengths,
+and phase mass sources. Treat these as inputs for conservative complementarity development, not as
+evidence that complementarity is already enforced. The current nonlinear vector does not yet solve
+for directional face variables or bound multipliers; five-second, 180 s, and 600 s qualification
+must therefore retain their existing gates.
+
 Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
 completed intervals needs `N + 1` events, so the settled window must span at least `N` times the
 largest admissible cycle period, plus phase and boundary margin. Keep shorter runs as numerical

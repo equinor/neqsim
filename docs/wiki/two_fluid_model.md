@@ -896,6 +896,15 @@ mechanical-force diagnostic retains its documented six gas/liquid columns. Its b
 only to the current trial. Callers must supply trial section clones and synchronize configuration on
 the equations instance.
 
+Every internal gas/oil/water face now also has an immutable directional transport entry. It keeps
+forward and reverse mass transport nonnegative, separates advective momentum from pressure traction,
+and records the two donor masses and momenta used by the free flux. Exactly absent donor inventory
+therefore has an exact zero-momentum row rather than a numerical mass floor. The unsplit adapter
+carries these entries with nonuniform cell lengths and phase mass sources into each solver
+evaluation. This is a passive residual-input contract only: directional face unknowns and bound
+multipliers are not yet part of the nonlinear system, so no five-second riser or physical pigging
+qualification follows from it.
+
 `TwoFluidUnsplitModelAdapter.prepareStep` checks a converged candidate independently against the
 current selected-time operator and endpoint volume closure, then returns defensive endpoint clones and
 the exact phase transport ledger with inventories integrated over each cell length. It rejects
