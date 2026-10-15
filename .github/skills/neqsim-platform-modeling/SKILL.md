@@ -566,8 +566,15 @@ minimum-flow line; take the minimum flow from a calibration window and test it o
 
 Per-well std flash of the rebuilt well stream gave 0-12 % more stock-tank oil than the allocated
 oil, and wells with near-zero allocated oil received 5-13 Sm3/d from the gas-cap condensate yield.
-Check each well stream with a std flash (15 C, 1.01325 bara) before running the plant, report the
-residual, and if one global factor on the allocated oil closes the export oil, fit it on one
+The main cause is the basis: allocated oil and gas are stabilised oil and released gas of the
+plant's own separation train (multi-stage), while a single flash to 15 C / 1.01325 bara puts more
+intermediates in the gas and less oil in the tank (about 10 % lower GOR on the train for a volatile
+oil). Recombine on the same path: flash the characterised fluid stage by stage (oil of each stage
+feeds the next, gas of all stages summed, stock tank last) to get the oil and gas compositions,
+recombine the allocated volumes with them, and check closure on the same path. Take the stages from
+the allocation reference process when available, otherwise from measured separator pressures and
+temperatures, and record which. Fit the EOS to the laboratory test on its own separator conditions,
+never to the plant GOR. If a residual remains, fit one global factor on the allocated oil on one
 window only, keep other windows hold-out and state it as an assumption, not a physical constant.
 
 ---
