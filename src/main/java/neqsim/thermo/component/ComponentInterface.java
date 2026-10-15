@@ -670,10 +670,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setPC(double val, String unit);
 
   /**
-   * getDielectricConstantdTdT.
+   * Get the second temperature derivative of the pure reference relative permittivity.
    *
-   * @param temperature a double
-   * @return a double
+   * @param temperature absolute temperature in kelvin
+   * @return second temperature derivative in inverse kelvin squared
+   * @throws IllegalArgumentException if qualified data are unavailable or outside their source range
    */
   public double getDielectricConstantdTdT(double temperature);
 
@@ -685,10 +686,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getIdealGasAbsoluteEntropy();
 
   /**
-   * getDielectricConstantdT.
+   * Get the first temperature derivative of the pure reference relative permittivity.
    *
-   * @param temperature a double
-   * @return a double
+   * @param temperature absolute temperature in kelvin
+   * @return first temperature derivative in inverse kelvin
+   * @throws IllegalArgumentException if qualified data are unavailable or outside their source range
    */
   public double getDielectricConstantdT(double temperature);
 
@@ -991,10 +993,16 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setK(double newK);
 
   /**
-   * getDielectricConstant.
+   * Get the temperature-only pure reference relative permittivity.
    *
-   * @param temperature a double
-   * @return a double
+   * <p>
+   * Source-qualified records enforce their reference-liquid temperature range. This method does not evaluate an actual
+   * mixture-density-dependent permittivity. Records outside the source audit retain legacy behavior; absence of a
+   * domain error is not a qualification certificate.
+   *
+   * @param temperature absolute temperature in kelvin
+   * @return dimensionless relative static permittivity
+   * @throws IllegalArgumentException if qualified data are unavailable or outside their source range
    */
   public double getDielectricConstant(double temperature);
 

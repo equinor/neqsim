@@ -123,6 +123,8 @@ public abstract class Component implements ComponentInterface {
   protected double[] liquidConductivityParameter = new double[3];
   protected double[] henryCoefParameter = new double[4];
   protected double[] dielectricParameter = new double[5];
+  /** Original dielectric database identity, retained when a component is renamed or cloned. */
+  private String dielectricReferenceName;
   protected double[] schwartzentruberParams = new double[3];
   protected double[] matiascopemanParams = new double[3];
   protected double[] matiascopemanParamsPR = new double[3];
@@ -261,6 +263,7 @@ public abstract class Component implements ComponentInterface {
     }
     name = ComponentInterface.getComponentNameFromAlias(name);
     componentName = name;
+    dielectricReferenceName = name;
     numberOfMoles = moles;
     numberOfMolesInPhase = molesInPhase;
     java.sql.ResultSet dataSet = null;
@@ -959,6 +962,8 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getDielectricConstant(double temperature) {
+    DielectricReferenceData.validate(dielectricReferenceName == null ? componentName : dielectricReferenceName,
+        temperature, dielectricParameter);
     return dielectricParameter[0] + dielectricParameter[1] / temperature + dielectricParameter[2] * temperature
         + dielectricParameter[3] * temperature * temperature + dielectricParameter[4] * Math.pow(temperature, 3.0);
   }
@@ -966,6 +971,8 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getDielectricConstantdT(double temperature) {
+    DielectricReferenceData.validate(dielectricReferenceName == null ? componentName : dielectricReferenceName,
+        temperature, dielectricParameter);
     return -dielectricParameter[1] / Math.pow(temperature, 2.0) + dielectricParameter[2]
         + 2.0 * dielectricParameter[3] * temperature + 3.0 * dielectricParameter[4] * Math.pow(temperature, 2.0);
   }
@@ -973,6 +980,8 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getDielectricConstantdTdT(double temperature) {
+    DielectricReferenceData.validate(dielectricReferenceName == null ? componentName : dielectricReferenceName,
+        temperature, dielectricParameter);
     return 2.0 * dielectricParameter[1] / Math.pow(temperature, 3.0) + 2.0 * dielectricParameter[3]
         + 6.0 * dielectricParameter[4] * Math.pow(temperature, 1.0);
   }
@@ -2100,6 +2109,9 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void setComponentName(java.lang.String componentName) {
+    if (dielectricReferenceName == null) {
+      dielectricReferenceName = this.componentName;
+    }
     this.componentName = componentName;
   }
 

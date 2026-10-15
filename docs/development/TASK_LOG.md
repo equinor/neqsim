@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-15 — Qualify and contain malformed dielectric records (#4334)
+**Type:** A (Property)
+**Keywords:** dielectric constant, NBS, NPL, component database, aliases, salting, 4332, 4306, 4277
+**Solution:** Repair 11 bounded pure-reference records and quarantine 11 unavailable or inconsistent records in canonical `COMP.csv`; the existing standard-to-extended loader applies the same 22 corrections to the loaded extended database while raw `COMP_EXT.csv` retains its legacy fields. Synchronize 21 historical dielectric records. Add coefficient-identity and temperature-domain checks to all three dielectric getters, preserving identity through clone, rename and legacy deserialization. Document exact sources and validation in `docs/thermo/DielectricPropertyData.md`.
+**Notes:** Eleven property regressions pass with Java 8 source/target on OpenJDK 17. The isolated #4306/#4332/#4277 integration check has 6 passes, 1 unchanged salting assertion failure and 20 explicit data-domain errors; do not merge or close #4334. Strict inventory, charge and fugacity checks pass for the mixed-salt diagnostic, but fugacity-normalized propane molality still rises 12.16%. No recipe solver, interaction fit, peer-branch rewrite or tolerance relaxation. Low-temperature MEG and process-temperature nonpolar references remain unqualified; glycerol has TEG identity. Shared mixing foundation #4333 is merged.
+
 ### 2026-10-14 — Isolate shared classic mixing-rule accumulators
 **Type:** A (Property)
 **Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306

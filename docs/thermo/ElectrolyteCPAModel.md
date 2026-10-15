@@ -300,6 +300,14 @@ The model has been validated against Robinson & Stokes experimental data for mea
 
 ## Dielectric Constant Mixing Rules
 
+Component inputs are temperature-only pure reference properties. The audited records now
+enforce their published temperature ranges and reject unavailable data; this can expose
+previously silent extrapolation or malformed inputs. See [Dielectric property data](DielectricPropertyData.md)
+for sources, aliases and limitations. Nitrogen and oxygen cryogenic liquid data do not
+qualify room-temperature brines. Density-dependent replacements require complete volume
+and composition derivatives, including the Born contribution, before use in these mixing rules.
+The corrected records also affect predictive ion-neutral interactions evaluated at 298.15 K.
+
 The model supports three dielectric constant mixing rules:
 
 ### 1. MOLAR_AVERAGE (Default, Recommended)

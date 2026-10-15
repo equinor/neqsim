@@ -1,0 +1,510 @@
+{
+  "solverHead": "e7ddb9e7dc14a62f93179ec61b350c9bd12fba1b",
+  "targetTree": "7f482154f2d663200e59680df5fdad5da8b902dd",
+  "treeQualification": {
+    "exactHead": "e7ddb9e7dc14a62f93179ec61b350c9bd12fba1b",
+    "targetTree": "7f482154f2d663200e59680df5fdad5da8b902dd",
+    "verified": 8773,
+    "mismatches": [
+      [
+        "docs/thermodynamicoperations/benchmarks/general-equilibrium-matched-java8.json.gz",
+        "MISSING",
+        "1ba792bb05dc56ad414fe6f37ed5714b0315b360"
+      ],
+      [
+        "docs/thermodynamicoperations/benchmarks/tpflash-allocation-qualification.json.gz",
+        "MISSING",
+        "c4e79c54e728c70569e86551f0f621ee0474c3dc"
+      ]
+    ]
+  },
+  "propertyOverlayInputSha256": {
+    "src/main/java/neqsim/thermo/component/Component.java": "c687c81fbef24160f4b0c46d3766a9a630014c8e87d569ebf768450a3e77a677",
+    "src/main/java/neqsim/thermo/component/ComponentInterface.java": "a8b54db3fe3156bce28dd356201b751b2e1689f80fe4d18c7398d20d78870b37",
+    "src/main/resources/data/COMP.csv": "1eb0cc3722875c4636d5b1525cf846a1f01631898fce422bd138ae456c6575b0",
+    "src/main/resources/data/COMP_EXT.csv": "ad44c34b49c59f3ef200f3a70e530f00327bbc5e445f7df5e760737968f97ebe",
+    "src/test/resources/neqsim/thermodynamicoperations/COMP.csv": "61b8087672386a5770af139a2d0741c0a1706c9ea7dda89f179ec46c19defd38",
+    "src/main/java/neqsim/thermo/component/DielectricReferenceData.java": "0734c343158f42022393d02a3067b4ce5d53375baa66063fba31b532e4de9be7",
+    "src/main/resources/data/DielectricReferenceData.csv": "cd3c405c2bb42d0324d36372798ee3a7d0cd2f280f8a5b511f852e01c83aa548",
+    "src/test/java/neqsim/thermo/component/DielectricPropertyDataTest.java": "5b3062a81cba4a69a282cfd9261963c4d2054f605cd514905a695857221e4aa8"
+  },
+  "effectiveOverlaySha256": {
+    "src/main/java/neqsim/thermo/component/Component.java": "af1df5d181ada54f3ce1455eee4beaf9dfd095aca31ae4f3bfd4ebc4c0646779",
+    "src/main/java/neqsim/thermo/component/ComponentInterface.java": "a8b54db3fe3156bce28dd356201b751b2e1689f80fe4d18c7398d20d78870b37",
+    "src/main/resources/data/COMP.csv": "1eb0cc3722875c4636d5b1525cf846a1f01631898fce422bd138ae456c6575b0",
+    "src/main/resources/data/COMP_EXT.csv": "ad44c34b49c59f3ef200f3a70e530f00327bbc5e445f7df5e760737968f97ebe",
+    "src/test/resources/neqsim/thermodynamicoperations/COMP.csv": "61b8087672386a5770af139a2d0741c0a1706c9ea7dda89f179ec46c19defd38",
+    "src/main/java/neqsim/thermo/component/DielectricReferenceData.java": "0734c343158f42022393d02a3067b4ce5d53375baa66063fba31b532e4de9be7",
+    "src/main/resources/data/DielectricReferenceData.csv": "cd3c405c2bb42d0324d36372798ee3a7d0cd2f280f8a5b511f852e01c83aa548",
+    "src/test/java/neqsim/thermo/component/DielectricPropertyDataTest.java": "5b3062a81cba4a69a282cfd9261963c4d2054f605cd514905a695857221e4aa8"
+  },
+  "hydrateTestHead": "40df2730f0e6d38142dc82e7607cc8971906810c",
+  "hydrateTestBlob": "ca64e9ba4108a6403c569c946398ab2c240da0cf",
+  "testInvocation": "./mvnw -f pomJava8.xml test -DforkCount=0 -DexcludedTestGroups= -Dtest=SystemElectrolyteCPATest#testSaltingOutWithHeavierHydrocarbons+testSaltingOutVariousHydrocarbons+testThreePhaseEquilibriumWithIons+testThreePhaseWithMultipleIons+testSaltingOutNitrogen+testSaltingOutNaturalGasMixture,GeneralElectrolyteEquilibriumTest,CO2BrineMegHydrateTest",
+  "runtime": "OpenJDK17.0.20; Java8 source/target POM; Maven3.9.16; heap1GiB; forkCount0",
+  "exitCode": 1,
+  "totalTests": 27,
+  "passed": 6,
+  "failures": 1,
+  "errors": 20,
+  "skipped": 0,
+  "suites": [
+    {
+      "name": "neqsim.thermo.system.SystemElectrolyteCPATest",
+      "tests": "6",
+      "failures": "1",
+      "errors": "4",
+      "skipped": "0",
+      "time": "3.985",
+      "cases": [
+        {
+          "name": "testThreePhaseWithMultipleIons",
+          "status": "failure",
+          "message": "Higher ionic strength (NaCl+CaCl2) should give equal or stronger salting-out than NaCl alone. With NaCl: 1.1560651467753307E-5, With NaCl+CaCl2: 1.2637113755490097E-5 ==> expected: <true> but was: <false>"
+        },
+        {
+          "name": "testThreePhaseEquilibriumWithIons",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: No qualified temperature-only dielectric data for n-butane (NO_QUALIFIED_T_ONLY_REFERENCE). See docs/thermo/DielectricPropertyData.md"
+        },
+        {
+          "name": "testSaltingOutNaturalGasMixture",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for nitrogen are valid from 63.15 to 78.15 K; requested 298.15 K (NBS_CIRC514_NITROGEN). Extrapolation is not qualified."
+        },
+        {
+          "name": "testSaltingOutVariousHydrocarbons",
+          "status": "passed",
+          "message": ""
+        },
+        {
+          "name": "testSaltingOutWithHeavierHydrocarbons",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: No qualified temperature-only dielectric data for n-butane (NO_QUALIFIED_T_ONLY_REFERENCE). See docs/thermo/DielectricPropertyData.md"
+        },
+        {
+          "name": "testSaltingOutNitrogen",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for nitrogen are valid from 63.15 to 78.15 K; requested 298.15 K (NBS_CIRC514_NITROGEN). Extrapolation is not qualified."
+        }
+      ]
+    },
+    {
+      "name": "neqsim.thermodynamicoperations.flashops.GeneralElectrolyteEquilibriumTest",
+      "tests": "10",
+      "failures": "0",
+      "errors": "5",
+      "skipped": "0",
+      "time": "3.99",
+      "cases": [
+        {
+          "name": "traceMoleculesDoNotChangeTheFiniteComponentEndpoint(String)[1]",
+          "status": "passed",
+          "message": ""
+        },
+        {
+          "name": "traceMoleculesDoNotChangeTheFiniteComponentEndpoint(String)[2]",
+          "status": "passed",
+          "message": ""
+        },
+        {
+          "name": "mixedSpeciesRetainOriginalInventoryAndEquilibrate(String, String[], double[], double, double)[1]",
+          "status": "error",
+          "message": "Dielectric data for nitrogen are valid from 63.15 to 78.15 K; requested 298.15 K (NBS_CIRC514_NITROGEN). Extrapolation is not qualified."
+        },
+        {
+          "name": "mixedSpeciesRetainOriginalInventoryAndEquilibrate(String, String[], double[], double, double)[2]",
+          "status": "error",
+          "message": "Dielectric data for nitrogen are valid from 63.15 to 78.15 K; requested 298.15 K (NBS_CIRC514_NITROGEN). Extrapolation is not qualified."
+        },
+        {
+          "name": "mixedSpeciesRetainOriginalInventoryAndEquilibrate(String, String[], double[], double, double)[3]",
+          "status": "error",
+          "message": "Dielectric data for nitrogen are valid from 63.15 to 78.15 K; requested 298.15 K (NBS_CIRC514_NITROGEN). Extrapolation is not qualified."
+        },
+        {
+          "name": "mixedSpeciesRetainOriginalInventoryAndEquilibrate(String, String[], double[], double, double)[4]",
+          "status": "error",
+          "message": "Dielectric data for nitrogen are valid from 63.15 to 78.15 K; requested 298.15 K (NBS_CIRC514_NITROGEN). Extrapolation is not qualified."
+        },
+        {
+          "name": "mixedSpeciesRetainOriginalInventoryAndEquilibrate(String, String[], double[], double, double)[5]",
+          "status": "passed",
+          "message": ""
+        },
+        {
+          "name": "mixedSpeciesRetainOriginalInventoryAndEquilibrate(String, String[], double[], double, double)[6]",
+          "status": "passed",
+          "message": ""
+        },
+        {
+          "name": "initialGuessesRepeatsAndNearbyStatesGiveTheSameEndpoint",
+          "status": "passed",
+          "message": ""
+        },
+        {
+          "name": "establishedThreePhaseFixtureConservesAllSpeciesAndEquilibrates",
+          "status": "error",
+          "message": "No qualified temperature-only dielectric data for n-butane (NO_QUALIFIED_T_ONLY_REFERENCE). See docs/thermo/DielectricPropertyData.md"
+        }
+      ]
+    },
+    {
+      "name": "neqsim.thermodynamicoperations.flashops.saturationops.CO2BrineMegHydrateTest",
+      "tests": "11",
+      "failures": "0",
+      "errors": "11",
+      "skipped": "0",
+      "time": "0.881",
+      "cases": [
+        {
+          "name": "reportedNaClMegCaseConservesTheOriginalFeed(boolean, double)[1]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 261.8 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "reportedNaClMegCaseConservesTheOriginalFeed(boolean, double)[2]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 261.8 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "independentSeedsAndNearbyStatesCloseAllMolecularFugacities(double, double)[1]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 268.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "independentSeedsAndNearbyStatesCloseAllMolecularFugacities(double, double)[2]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 268.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "independentSeedsAndNearbyStatesCloseAllMolecularFugacities(double, double)[3]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 268.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "independentSeedsAndNearbyStatesCloseAllMolecularFugacities(double, double)[4]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 268.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "independentSeedsAndNearbyStatesCloseAllMolecularFugacities(double, double)[5]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 268.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "independentSeedsAndNearbyStatesCloseAllMolecularFugacities(double, double)[6]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 268.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "independentSeedsAndNearbyStatesCloseAllMolecularFugacities(double, double)[7]",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 268.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "megLowersTheTemperatureWithoutChangingTheFivePercentControl",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 261.8 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        },
+        {
+          "name": "finiteInventoryAndRepeatedRunsRetainTheSuppliedSpecies",
+          "status": "error",
+          "message": "java.lang.IllegalArgumentException: Dielectric data for MEG are valid from 278.15 to 323.15 K; requested 273.15 K (NPL_MAT23_ETHANEDIOL_FIT). Extrapolation is not qualified."
+        }
+      ]
+    }
+  ],
+  "mixedSaltDiagnostic": {
+    "solverHead": "e7ddb9e7dc14a62f93179ec61b350c9bd12fba1b",
+    "propertyOverlay": "issue4334-source-qualified-dielectric-records",
+    "fixture": "unchanged SystemElectrolyteCPATest.testThreePhaseWithMultipleIons",
+    "temperatureK": 298.15,
+    "pressureBara": 30.0,
+    "NaCl": {
+      "phaseCount": 3,
+      "totalMoles": 1.6360000000000001,
+      "originalFeedMoles": [
+        0.3,
+        0.1,
+        0.2,
+        1.0,
+        0.018,
+        0.018
+      ],
+      "phases": [
+        {
+          "type": "gas",
+          "beta": 0.17742013768369003,
+          "phaseMoles": 0.2902593452505169,
+          "composition": {
+            "methane": 0.8939359996093333,
+            "propane": 0.09519907288130548,
+            "n-hexane": 0.009728101342079009,
+            "water": 0.0011368261672822697,
+            "Na+": 0.0,
+            "Cl-": 0.0
+          },
+          "speciesMoles": {
+            "methane": 0.25947327794247144,
+            "propane": 0.027632420562983966,
+            "n-hexane": 0.002823672326082528,
+            "water": 0.0003299744189790062,
+            "Na+": 0.0,
+            "Cl-": 0.0
+          },
+          "chargeMoleFraction": 0.0,
+          "compositionSum": 1.0,
+          "Z": 0.9226548508869582,
+          "solventDielectricConstant": 2.0856308988329992,
+          "bornReducedHelmholtz": -0.0
+        },
+        {
+          "type": "oil",
+          "beta": 0.18921683991500293,
+          "phaseMoles": 0.3095587501009448,
+          "composition": {
+            "methane": 0.12895682707359898,
+            "propane": 0.2337378622816011,
+            "n-hexane": 0.6369576198382914,
+            "water": 0.00034769080650836915,
+            "Na+": 0.0,
+            "Cl-": 0.0
+          },
+          "speciesMoles": {
+            "methane": 0.03991971420588698,
+            "propane": 0.0723556004991592,
+            "n-hexane": 0.19717580466441426,
+            "water": 0.00010763073148432022,
+            "Na+": 0.0,
+            "Cl-": 0.0
+          },
+          "chargeMoleFraction": 0.0,
+          "compositionSum": 0.9999999999999998,
+          "Z": 0.13376194807244565,
+          "solventDielectricConstant": 1.9515382262162717,
+          "bornReducedHelmholtz": -0.0
+        },
+        {
+          "type": "aqueous",
+          "beta": 0.633363022401307,
+          "phaseMoles": 1.0361819046485383,
+          "composition": {
+            "methane": 0.0005858120557003047,
+            "propane": 1.1560651467753307e-05,
+            "n-hexane": 5.047468025707351e-07,
+            "water": 0.9646591880878074,
+            "Na+": 0.017371467229111096,
+            "Cl-": 0.017371467229111096
+          },
+          "speciesMoles": {
+            "methane": 0.0006070078516416174,
+            "propane": 1.1978937856834542e-05,
+            "n-hexane": 5.23009503253004e-07,
+            "water": 0.9995623948495369,
+            "Na+": 0.018000000000000002,
+            "Cl-": 0.018000000000000002
+          },
+          "chargeMoleFraction": 0.0,
+          "compositionSum": 1.0000000000000002,
+          "Z": 0.02188948097099464,
+          "solventDielectricConstant": 78.2848675986304,
+          "bornReducedHelmholtz": -5.056347915026153
+        }
+      ],
+      "recoveredSpeciesMoles": [
+        0.30000000000000004,
+        0.1,
+        0.2,
+        1.0000000000000002,
+        0.018000000000000002,
+        0.018000000000000002
+      ],
+      "maximumComponentFractionResidual": 1.3572408613999467e-16,
+      "maximumMolecularLogFugacityResidual": 5.093703236980218e-12,
+      "propaneAqueousMoleFraction": 1.1560651467753307e-05,
+      "propaneMolalityMolPerKgWater": 0.0006652335385338831,
+      "ionicStrengthMolPerKgWater": 0.9996047927386196,
+      "propaneGasFugacityBara": 2.1010395546625658,
+      "propaneMolalityPerGasFugacity": 0.0003166211397865481
+    },
+    "NaClAndCaCl2": {
+      "phaseCount": 3,
+      "totalMoles": 1.663,
+      "originalFeedMoles": [
+        0.3,
+        0.1,
+        0.2,
+        1.0,
+        0.018,
+        0.036,
+        0.009
+      ],
+      "phases": [
+        {
+          "type": "gas",
+          "beta": 0.17442311175749173,
+          "phaseMoles": 0.29006563485270875,
+          "composition": {
+            "methane": 0.8939614720508987,
+            "propane": 0.09521226621977519,
+            "n-hexane": 0.009727870060628651,
+            "water": 0.001098391668697395,
+            "Na+": 0.0,
+            "Cl-": 0.0,
+            "Ca++": 0.0
+          },
+          "speciesMoles": {
+            "methane": 0.259307501924306,
+            "propane": 0.027617806446804206,
+            "n-hexane": 0.002821720804900908,
+            "water": 0.00031860567669763604,
+            "Na+": 0.0,
+            "Cl-": 0.0,
+            "Ca++": 0.0
+          },
+          "chargeMoleFraction": 0.0,
+          "compositionSum": 1.0,
+          "Z": 0.9226530909056914,
+          "solventDielectricConstant": 2.082697138248509,
+          "bornReducedHelmholtz": -0.0
+        },
+        {
+          "type": "oil",
+          "beta": 0.1861533618710753,
+          "phaseMoles": 0.30957304079159825,
+          "composition": {
+            "methane": 0.12896133487947237,
+            "propane": 0.2337695671112871,
+            "n-hexane": 0.636933425437905,
+            "water": 0.0003356725713355521,
+            "Na+": 0.0,
+            "Cl-": 0.0,
+            "Ca++": 0.0
+          },
+          "speciesMoles": {
+            "methane": 0.03992295258318186,
+            "propane": 0.07236875573517675,
+            "n-hexane": 0.197177417294621,
+            "water": 0.00010391517861868153,
+            "Na+": 0.0,
+            "Cl-": 0.0,
+            "Ca++": 0.0
+          },
+          "chargeMoleFraction": 0.0,
+          "compositionSum": 1.0,
+          "Z": 0.13376118771236814,
+          "solventDielectricConstant": 1.9506236974061373,
+          "bornReducedHelmholtz": -0.0
+        },
+        {
+          "type": "aqueous",
+          "beta": 0.639423526371433,
+          "phaseMoles": 1.063361324355693,
+          "composition": {
+            "methane": 0.0007236914441837995,
+            "propane": 1.2637113755490097e-05,
+            "n-hexane": 8.105433763933133e-07,
+            "water": 0.9400167715807636,
+            "Na+": 0.016927454090834532,
+            "Cl-": 0.033854908181669065,
+            "Ca++": 0.008463727045417266
+          },
+          "speciesMoles": {
+            "methane": 0.0007695454925121691,
+            "propane": 1.3437818019071495e-05,
+            "n-hexane": 8.619004781693287e-07,
+            "water": 0.9995774791446838,
+            "Na+": 0.018000000000000002,
+            "Cl-": 0.036000000000000004,
+            "Ca++": 0.009000000000000001
+          },
+          "chargeMoleFraction": 0.0,
+          "compositionSum": 1.0,
+          "Z": 0.022149028087089618,
+          "solventDielectricConstant": 78.27233649455741,
+          "bornReducedHelmholtz": -11.791487353652638
+        }
+      ],
+      "recoveredSpeciesMoles": [
+        0.3,
+        0.10000000000000003,
+        0.20000000000000004,
+        1.0,
+        0.018000000000000002,
+        0.036000000000000004,
+        0.009000000000000001
+      ],
+      "maximumComponentFractionResidual": 1.6690063509097362e-17,
+      "maximumMolecularLogFugacityResidual": 1.9473311851925246e-12,
+      "propaneAqueousMoleFraction": 1.2637113755490097e-05,
+      "propaneMolalityMolPerKgWater": 0.0007462391439034061,
+      "ionicStrengthMolPerKgWater": 2.4989742700782305,
+      "propaneGasFugacityBara": 2.1013170119772338,
+      "propaneMolalityPerGasFugacity": 0.0003551292544865625
+    },
+    "mixedToNaClPropaneMolalityRatio": 1.121770176452697,
+    "mixedToNaClFugacityNormalizedMolalityRatio": 1.1216220582301448
+  },
+  "mixedSaltDiagnosticTest": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "exitCode": 0,
+    "assertions": "Calls unchanged GeneralElectrolyteEquilibriumTest.assertEndpoint, 1e-10 composition/inventory/charge and1e-8 logfugacity gates."
+  },
+  "limitations": [
+    "Two gzip benchmark blobs unavailable through GitHub connector binary fetch; all8773 remaining blobs exact verified before issue4334 overlay.",
+    "No benchmark timing claim from shared memory-constrained JVM.",
+    "Property overlay precedes subsequent historical methanol fixture synchronization, which does not affect these runtime test cases.",
+    "Unchanged salting/hydrate tolerances and conditions; no solver edits.",
+    "The recorded solver overlay included directly repaired raw COMP_EXT.csv. Final publication leaves raw COMP_EXT unchanged and uses existing canonical neutral-property synchronization. Selected solver cases use standard COMP.csv; final property tests separately exercise both loaded database modes and raw bypass rejection."
+  ],
+  "propertyBranchBase": "a346faa1f13adfc95c99dff18e90a348d8725d28",
+  "propertyTests": {
+    "class": "DielectricPropertyDataTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "runtime": "OpenJDK17.0.20 with pomJava8.xml",
+    "coverage": "Source values, held-out observations, derivatives, bounds, aliases, stale serialization, rename/clone, both loaded database modes with temporary tables disabled, explicit raw extended bypass rejection, and ordinary SRK conservation."
+  },
+  "status": "PARTIAL REMEDIATION; DO NOT MERGE; issue4334 remains open",
+  "originalInputControl": {
+    "originalMaster": "1798b61092aa356297402af02fff9d9e98749e5a",
+    "method": "Recompile original Component.java and supply original COMP.csv ahead of the validated classpath; execute the unchanged two source-reference tests with JUnit launcher.",
+    "tests": 2,
+    "failures": 2,
+    "nitrogenAt70_15K": {
+      "expected": 1.4511,
+      "actual": 11220.454925939126
+    },
+    "acetoneAt283_15K": {
+      "expected": 22.21,
+      "actual": 708145.4575963455
+    }
+  },
+  "publicationChecks": {
+    "spotlessApplyTwice": 0,
+    "spotlessCheck": 0,
+    "documentationSearch": 0,
+    "engineeringCoverageGenerate": 0,
+    "engineeringCoverageCheck": 0,
+    "preCommitAllFiles": 0,
+    "prePushAllFiles": 0,
+    "gitDiffCheck": 0,
+    "fullJavadoc": "not run locally; hosted gate",
+    "actualJava8": "not run locally; hosted gate"
+  },
+  "finalPropertySourcesSha256": {
+    "src/main/java/neqsim/thermo/component/Component.java": "c687c81fbef24160f4b0c46d3766a9a630014c8e87d569ebf768450a3e77a677",
+    "src/main/java/neqsim/thermo/component/ComponentInterface.java": "a8b54db3fe3156bce28dd356201b751b2e1689f80fe4d18c7398d20d78870b37",
+    "src/main/resources/data/COMP.csv": "1eb0cc3722875c4636d5b1525cf846a1f01631898fce422bd138ae456c6575b0",
+    "src/main/resources/data/COMP_EXT.csv": "e652f735e9691e093fab0310c4561c627dbf6dd43e69c54c67dde99da4739635",
+    "src/test/resources/neqsim/thermodynamicoperations/COMP.csv": "320b1d245ff71f3f9b849e951cdf3eff095288b4d6101d1d6f548036f498b9e7",
+    "src/main/java/neqsim/thermo/component/DielectricReferenceData.java": "0734c343158f42022393d02a3067b4ce5d53375baa66063fba31b532e4de9be7",
+    "src/main/resources/data/DielectricReferenceData.csv": "cd3c405c2bb42d0324d36372798ee3a7d0cd2f280f8a5b511f852e01c83aa548",
+    "src/test/java/neqsim/thermo/component/DielectricPropertyDataTest.java": "44eb78dc185075f31327d74da42b2ff501fe58f9d6712432bb68bbd2ce6d8f66"
+  }
+}

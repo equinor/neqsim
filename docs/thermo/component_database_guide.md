@@ -107,7 +107,7 @@ For names shared with the standard table, neutral components use `COMP.csv` as
 the source of their common pure-component parameters. The extended table keeps
 its own unique `ID` and `COMPINDEX`, and ion rows retain their electrolyte model
 parameters. Newly imported standard names receive unique IDs. The stored
-`COMP_EXT.csv` is synchronized with the neutral rows by
+`COMP_EXT.csv` can be synchronized with the neutral rows by
 `python3 devtools/repair_water_cp_placeholders.py --write`; the database loader
 also reapplies the standard values on switching modes so future additions to
 `COMP.csv` cannot silently revive stale extended values.
@@ -431,6 +431,15 @@ legacy numeric values but have no reviewed provenance. Supply appropriate
 formation data explicitly before using those fractions in this reference mode.
 
 ### Ionic and Electrolyte Parameters
+
+For the source-audited dielectric records, the five coefficients are accompanied by
+`DielectricReferenceData.csv` with the exact coefficient identity and an enforced
+temperature interval. The 22 corrected records reside in canonical `COMP.csv`;
+the existing extended-mode loader applies them to matching neutral rows in the
+loaded database. Raw `COMP_EXT.csv` retains its legacy dielectric fields and
+must not be interpreted as a separately corrected source. Unavailable records and stale serialized coefficients are rejected
+when dielectric properties are requested. See [dielectric sources and validity](DielectricPropertyData.md)
+for the pure-liquid reference convention, alias audit and remaining model limitations.
 
 | Column | Description | Unit | Model Usage |
 |--------|-------------|------|-------------|
