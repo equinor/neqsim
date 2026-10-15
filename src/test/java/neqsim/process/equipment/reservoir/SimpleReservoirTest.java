@@ -54,11 +54,32 @@ public class SimpleReservoirTest {
 
     reservoirOps.run();
 
+    // The old reservoir-to-producer subtraction inflated oil production by 0.0322%.
+    // Verify the requested physical rates before comparing the depletion-pressure reference.
+    Assertions.assertEquals(6500.0 / 0.86 * 1000.0 * 4, producedOilStream.getFlowRate("kg/day"), 1.0e-4);
+    Assertions.assertEquals(10000.0, producedWaterStream.getFlowRate("kg/day"), 1.0e-5);
+    Assertions.assertEquals(5.0, injectorGasStream.getFlowRate("MSm3/day"), 1.0e-10);
+    Assertions.assertEquals(8000.0 * 1000 / 3.0 * 2, injectorWaterStream.getFlowRate("kg/day"), 1.0e-4);
+
     double deltaTime = 24 * 60 * 60.0 * 365;
     for (int i = 0; i < 10; i++) {
+      double[] expectedMoles = new double[reservoirOps.getReservoirFluid().getNumberOfComponents()];
+      for (int component = 0; component < expectedMoles.length; component++) {
+        expectedMoles[component] = reservoirOps.getReservoirFluid().getComponent(component).getNumberOfmoles()
+            + deltaTime * injectorGasStream.getFluid().getComponent(component).getNumberOfmoles()
+            + deltaTime * injectorWaterStream.getFluid().getComponent(component).getNumberOfmoles()
+            - deltaTime * producedOilStream.getFluid().getComponent(component).getNumberOfmoles()
+            - deltaTime * producedWaterStream.getFluid().getComponent(component).getNumberOfmoles();
+      }
       reservoirOps.runTransient(deltaTime);
+      for (int component = 0; component < expectedMoles.length; component++) {
+        Assertions.assertEquals(expectedMoles[component],
+            reservoirOps.getReservoirFluid().getComponent(component).getNumberOfmoles(),
+            Math.abs(expectedMoles[component]) * 1.0e-12);
+      }
+      Assertions.assertEquals(635949179.71 + 1.0e8, reservoirOps.getReservoirFluid().getVolume("m3"), 0.01);
     }
-    Assertions.assertEquals(355.048269201702, reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
+    Assertions.assertEquals(355.1750659997, reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
     Assertions.assertEquals(11.698, reservoirOps.getWaterProdution("Sm3/day"), 0.1);
 
     reservoirOps.setLowPressureLimit(52.0e5, "Pa");

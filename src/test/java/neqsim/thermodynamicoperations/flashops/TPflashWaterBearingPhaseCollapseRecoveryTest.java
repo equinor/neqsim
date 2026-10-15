@@ -11,6 +11,44 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 class TPflashWaterBearingPhaseCollapseRecoveryTest {
   private static final double MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
 
+  /**
+   * Recovers a trace-water liquid split whose phase fractions no longer conserve the feed.
+   *
+   * @throws ReflectiveOperationException if the endpoint recovery cannot be invoked
+   */
+  @Test
+  void nonconservativeTraceWaterAqueousSplitIsRequalified() throws ReflectiveOperationException {
+    SystemInterface system = new SystemSrkEos(307.0, 10.5);
+    system.addComponent("n-heptane", 0.997);
+    system.addComponent("water", 0.003);
+    system.setMixingRule(2);
+    system.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(system).TPflash();
+    system.init(2);
+    assertEquals(2, system.getNumberOfPhases());
+    assertTrue(system.hasPhaseType("aqueous"));
+    SystemInterface expected = system.clone();
+
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      system.setBeta(phaseIndex,
+          system.getPhase(phaseIndex).getType() == neqsim.thermo.phase.PhaseType.AQUEOUS ? 0.9999996 : 0.0000004);
+    }
+    system.init(1);
+    assertTrue(maximumComponentMaterialBalanceResidual(system) > 0.9);
+
+    TPflash flash = new TPflash(system);
+    java.lang.reflect.Method recovery = TPflash.class.getDeclaredMethod("rescueWaterRichEndpoint");
+    recovery.setAccessible(true);
+    recovery.invoke(flash);
+    system.init(2);
+
+    assertEquals(2, system.getNumberOfPhases());
+    assertTrue(maximumComponentMaterialBalanceResidual(system) < MATERIAL_BALANCE_TOLERANCE);
+    assertTrue(maximumLogFugacityResidual(system) < 1.0e-8);
+    assertEquals(expected.getEntropy(), system.getEntropy(), 1.0e-8);
+    assertEquals(expected.getGibbsEnergy(), system.getGibbsEnergy(), 1.0e-7);
+  }
+
   @Test
   void co2WaterSplitSurvivesMultiphaseCleanup() {
     assertEquivalentCo2WaterSplit(false, 160.0);
