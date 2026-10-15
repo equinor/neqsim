@@ -993,19 +993,30 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return calcBiFull(i, phase, T, P, n);
     }
 
+    /**
+     * Calculates the general covolume sum with calculation-local accumulation.
+     *
+     * @param phase phase supplying independent component state
+     * @param temperature temperature in K
+     * @param pressure pressure in bara
+     * @param numbcomp number of components
+     * @return phase covolume from the general mixing rule
+     */
     public double calcBFull(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-      B = 0.0;
+      double calculatedB = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
       for (int i = 0; i < numbcomp; i++) {
         for (int j = 0; j < numbcomp; j++) {
-          B += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
+          calculatedB += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase()
               * getbij(compArray[i], compArray[j]); // (compArray[i].getb()+compArray[j].getb())/2;
         }
       }
-      B /= phase.getNumberOfMolesInPhase();
-      Btot = B;
-      return B;
+      calculatedB /= phase.getNumberOfMolesInPhase();
+      // Retain the legacy result fields without using shared state as an accumulator.
+      B = calculatedB;
+      Btot = calculatedB;
+      return calculatedB;
     }
 
     /** {@inheritDoc} */
@@ -1336,7 +1347,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         sqrtai[i] = Math.sqrt(compArray[i].getaT());
       }
 
-      A = 0.0;
+      double calculatedATT = 0.0;
       for (int i = 0; i < numbcomp; i++) {
         if (compArray[i].getNumberOfmoles() < 1e-100) {
           continue;
@@ -1352,10 +1363,12 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   + compArray[j].getaT() * compArray[i].getaDiffDiffT()) / sqrtai[i] / sqrtai[j]
                   - temp1 * temp1 / (2.0 * sqrtai[i] * sqrtai[j] * compArray[i].getaT() * compArray[j].getaT()))
               * (1.0 - getkij(temperature, i, j));
-          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
+          calculatedATT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
         }
       }
-      return A;
+      // Publish the legacy result only after the independent calculation is complete.
+      A = calculatedATT;
+      return calculatedATT;
     }
 
     /** {@inheritDoc} */
@@ -1626,7 +1639,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           sqrtai[j] = Math.sqrt(compArray[j].getaT());
         }
       }
-      A = 0.0;
+      double calculatedA = 0.0;
       for (int i = 0; i < numbcomp; i++) {
         if (compArray[i].getNumberOfMolesInPhase() < 1e-100) {
           continue;
@@ -1634,12 +1647,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         for (int j = 0; j < numbcomp; j++) {
           if (compArray[j].getNumberOfMolesInPhase() > 1e-100) {
             aij = sqrtai[i] * sqrtai[j] * (1.0 - getkij(phase, temperature, i, j));
-            A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
+            calculatedA += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
           }
         }
       }
-      Atot = A;
-      return A;
+      A = calculatedA;
+      Atot = calculatedA;
+      return calculatedA;
     }
 
     /** {@inheritDoc} */

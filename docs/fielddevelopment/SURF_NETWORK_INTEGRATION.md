@@ -486,6 +486,15 @@ same canonical topology. Both builders require an enabled chart before mutating 
 preserve the configured model object, stable equipment tag and edge identity, and leave
 route-local hydraulic selection unchanged. Fixed-pressure and fixed-differential-pressure
 pump builders remain available for screening cases.
+The direct `LoopedPipeNetwork` mapped-equipment builders apply the same enabled-chart
+precondition before graph mutation. If a configured compressor chart fails during the
+network solve, the edge reports non-finite power and an infeasible chart status; it does
+not silently continue with the simplified polytropic compressor equations.
+Each subsequent evaluation also requires the chart to remain enabled, the compressor's
+existing `solved()` contract to pass, and finite non-negative power with positive finite
+outlet pressure and temperature. A pressure-target speed search that returns a finite
+forward state but misses its target therefore remains infeasible. Rejected results clear
+the edge's previous thermal state so later network and shared-power checks cannot reuse it.
 
 `LoopedPipeNetwork.getPower(...)` aggregates the solved shaft power of its compressor and
 pump edges. `FieldWellNetworkProcessUnit` exposes that same demand, and normal

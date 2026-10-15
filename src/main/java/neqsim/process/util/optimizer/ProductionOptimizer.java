@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -1092,7 +1093,8 @@ public class ProductionOptimizer {
      *
      * <p>
      * When enabled (default), the optimizer will mark operating points as infeasible if any equipment reports invalid
-     * simulation results (e.g., negative power in compressors, NaN values, etc.).
+     * simulation results (e.g., negative power in compressors, NaN values, etc.). Failed compressor pressure-target
+     * solves are always rejected, independently of this optional validation.
      * </p>
      *
      * @param reject true to reject invalid simulations
@@ -3370,6 +3372,16 @@ public class ProductionOptimizer {
     boolean simulationValid = true;
     List<String> validationErrors = new ArrayList<>();
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (unit instanceof Compressor) {
+        Compressor compressor = (Compressor) unit;
+        if (compressor.isSolveSpeed() && compressor.getCompressorChart().isUseCompressorChart()
+            && !compressor.isSpeedSolveConverged()) {
+          // A missed pressure target is a failed solve, even when capacity analysis is enabled or optional
+          // output validation is disabled. Envelope constraints cannot certify an unconverged calculation.
+          return failedSpeedSolveEvaluation(decisionVariables,
+              "Speed solve did not converge for " + compressor.getName());
+        }
+      }
       if (!unit.isSimulationValid()) {
         // If equipment has capacity constraints enabled, let the constraint system
         // handle envelope violations through high utilization rather than rejecting
@@ -4085,8 +4097,36 @@ public class ProductionOptimizer {
       variable.apply(process, bounded);
       decisions.put(variable.getName(), bounded);
     }
-    process.run();
+    try {
+      process.run();
+    } catch (RuntimeException exception) {
+      Throwable cause = exception;
+      while (cause != null) {
+        if (cause instanceof Compressor.SpeedSolveException) {
+          return failedSpeedSolveEvaluation(decisions, cause.getMessage());
+        }
+        if (cause == cause.getCause()) {
+          break;
+        }
+        cause = cause.getCause();
+      }
+      throw exception;
+    }
     return evaluateProcess(process, config, objectives, constraints, decisions);
+  }
+
+  /**
+   * Rejects a failed compressor calculation without evaluating stale downstream results or user callbacks.
+   *
+   * @param decisions exact attempted decision vector
+   * @param diagnostic compressor failure diagnostic
+   * @return infeasible evaluation with an explicit hard convergence constraint
+   */
+  private Evaluation failedSpeedSolveEvaluation(Map<String, Double> decisions, String diagnostic) {
+    ConstraintStatus status = new ConstraintStatus("compressorSpeedSolve", ConstraintSeverity.HARD, -1.0, 0.0,
+        diagnostic);
+    return new Evaluation(9.99, null, Collections.emptyList(), Collections.singletonList(status),
+        Collections.emptyMap(), decisions, false, false, Double.NEGATIVE_INFINITY);
   }
 
   private String buildVectorCacheKey(double[] candidate) {

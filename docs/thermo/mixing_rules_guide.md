@@ -168,6 +168,25 @@ $k_{ij,T}$ has units of kelvin in this inverse-temperature formulation.
 fluid.setMixingRule(12);
 ```
 
+### 3.5 Independent calculations using a shared handler
+
+Configured fluid clones can share a classic mixing-rule handler. The general
+covolume sum (`ClassicVdW.calcBFull`), classic attraction temperature second
+derivative (`ClassicSRK.calcATT`), and composition-dependent attraction sum
+(`ClassicSRKT2x.calcA`) accumulate their results locally. Interleaved evaluations
+of different phases therefore cannot overwrite these calculations' partial sums.
+This matters when independent compressor trains run in parallel: a corrupted
+attraction derivative can change heat capacity and invalidate pressure-target
+replay even when the chart flow, head, efficiency and speed agree.
+
+The equations, summation order and public APIs are unchanged. Legacy last-result
+fields remain available after serial evaluation; they are not a snapshot for
+concurrent callers. Configure interaction parameters before evaluation and keep
+each phase's component state independent. This guarantee concerns these three
+sums with read-only configuration, not every mixing-rule family or concurrent
+configuration changes. `ClassicMixingRuleAccumulatorTest` checks deterministic
+interleaving against isolated SRK and PR calculations for all three sums.
+
 ---
 
 ## 4. Huron-Vidal Mixing Rules

@@ -245,6 +245,18 @@
       "expect_skills_top5": ["neqsim-anp-open-data"]
     },
     {
+      "id": "brazil-gas-export-host-capacity",
+      "prompt": "Brazilian pre-salt block tie-back: gas export route and tariff status, CO2 removal for the ANP gas spec, wellhead net-back and host FPSO ullage with a compression limit",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-brazil-offshore-infrastructure-market"]
+    },
+    {
+      "id": "annex-xx-profit-oil-table",
+      "prompt": "ANP edital Annex XX Union profit oil share adjustment by Brent price band and rate per producer, effective share, break-even chance of discovery and P50 volume for EMV zero",
+      "expect_agent_top3": ["frontier-block-bid-agent"],
+      "expect_skills_top5": ["neqsim-psc-bid-economics-screening"]
+    },
+    {
       "id": "apbo-firm-well",
       "prompt": "APbo for an exploration prospect: firm well in APA 2027, chance of success, P90 P50 P10 volumes, EMV, tie-in to Asgard B or Heidrun with host ullage, development solution and valuation",
       "expect_agent_top3": ["enterprise-exploration-opportunity-agent", "enterprise-area-development-agent", "enterprise-tie-in-solution-agent", "field-development"],

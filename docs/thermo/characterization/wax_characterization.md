@@ -366,6 +366,31 @@ it is not experimental validation. Laboratory WAT and wax-fraction data are stil
 needed for fluid-specific prediction, and equilibrium wax appearance does not
 by itself predict deposition rate or location.
 
+The named-component cold-start regression in
+[issue #4324](https://github.com/equinor/neqsim/issues/4324) uses SRK/classic with
+methane / n-heptane / nc14 / nc20 / nc24 = 40 / 10 / 10 / 20 / 20 mol, the default
+Pedersen wax model and fluid multiphase checking. Fresh, warm and cold starts,
+with and without explicit initialization at the trial temperature, retain gas,
+oil and wax at 260, 265 and 270 K at both 1 and 5 bara; 275 K is wax-free.
+At 265 K and 5 bara the wax mass fraction is **0.331530523**. Initial guesses of
+265, 270 and 320 K give the same numerical WAT: **270.421295 K at 5 bara** and
+**271.307144 K at 1 bara**, within the search tolerance.
+
+The repair restricts fluid-only endpoint cleanup to fluid calculations. The
+homogeneous fluid Gibbs-energy reference must not overwrite a wax equilibrium:
+the solid phase's caloric properties do not implement the wax fugacity reference
+used by the equilibrium model. Equal fluid and solid compositions likewise do
+not make the phases duplicates. WAT reads wax mass from phase mole inventory
+and molar mass, independently of solid-density correlations.
+
+`NamedWaxColdStartTest` checks normalized phases, component and total mass
+conservation, equal component fugacities, and independent vapor, liquid and wax
+tangent-plane trials seeded from the feed and each component. These are
+model-consistency checks for this synthetic feed, not experimental qualification,
+a validation of solid density/caloric properties, or a guarantee of global
+stability for arbitrary compositions. Preserve unsmoothed results when diagnosing
+a disappearing phase; material closure alone does not establish phase stability.
+
 ### Step 4: Wax Fraction vs Temperature
 
 ```java
