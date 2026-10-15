@@ -17,6 +17,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.SlugFilmCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidComponentTransport;
+import neqsim.process.equipment.pipeline.twophasepipe.NonEquilibriumFilmTransfer;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidSection;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.BubbleSizeClosure;
@@ -956,6 +957,15 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Enable opt-in component inventories and transport in every hydrodynamic phase and cell. */
   private boolean componentTransportEnabled = false;
+
+  /** Opt-in isothermal component-specific gas/aqueous transfer closure. */
+  private NonEquilibriumFilmTransfer nonEquilibriumFilmTransfer;
+
+  /** Independently specified residual liquid, cloned on configuration. */
+  private SystemInterface initialAqueousFluid;
+
+  /** Initial aqueous volume fractions in physical cells. */
+  private double[] initialAqueousHoldup;
 
   /** Fail-loud relative tolerance for component balance, boundedness, and phase-mass synchronization. */
   private double componentConservationTolerance = 1.0e-8;
@@ -4938,6 +4948,11 @@ public class TwoFluidPipe extends Pipeline {
     steadyConsistencyCalibrated = false;
     equations.clearSteadyMomentumCorrection();
 
+    if (initialAqueousFluid != null && !componentTransportEnabled) {
+      throw new IllegalStateException("Initial film requires component transport before run()");
+    }
+    componentTransport = null;
+    equations.setFiniteRateComponentSources(null);
     // Initialize sections
     initializeSections();
 
@@ -4945,7 +4960,13 @@ public class TwoFluidPipe extends Pipeline {
     runSteadyState();
 
     if (componentTransportEnabled) {
-      componentTransport = new TwoFluidComponentTransport(referenceFluid, sections);
+      if (initialAqueousFluid != null) {
+        initializeAqueousInventory();
+      }
+      componentTransport = new TwoFluidComponentTransport(referenceFluid, sections, initialAqueousFluid);
+      if (initialAqueousFluid != null) {
+        lastComponentConservationReport = componentTransport.createReport(0.0, 0, componentConservationTolerance);
+      }
     } else {
       componentTransport = null;
     }
@@ -5491,6 +5512,9 @@ public class TwoFluidPipe extends Pipeline {
     inletMassFlowSet = candidate.inletMassFlowSet;
     includeEnergyEquation = candidate.includeEnergyEquation;
     includeMassTransfer = candidate.includeMassTransfer;
+    nonEquilibriumFilmTransfer = candidate.nonEquilibriumFilmTransfer;
+    initialAqueousFluid = candidate.initialAqueousFluid;
+    initialAqueousHoldup = candidate.initialAqueousHoldup;
     enableHeatTransfer = candidate.enableHeatTransfer;
     surfaceTemperature = candidate.surfaceTemperature;
     heatTransferCoefficient = candidate.heatTransferCoefficient;
@@ -5591,6 +5615,12 @@ public class TwoFluidPipe extends Pipeline {
     }
     if (!Double.isFinite(dt) || dt <= 0.0) {
       throw new IllegalArgumentException("Transient time step must be positive and finite");
+    }
+    if (nonEquilibriumFilmTransfer != null && (!componentTransportEnabled || !includeMassTransfer
+        || timeIntegrator.getMethod() != TimeIntegrator.Method.EULER || cflNumber > 0.5 || includeEnergyEquation
+        || enableHeatTransfer || directElectricalHeatingPowerPerMeter != 0.0 || enableSlugTracking)) {
+      throw new IllegalStateException("Finite-rate film transfer requires component transport, mass transfer, "
+          + "isothermal Euler, CFL <= 0.5, and disabled slug tracking and heating");
     }
     if (componentTransportEnabled && includeMassTransfer && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
         && getTimeIntegrationStageWeights().length > 1) {
@@ -5775,7 +5805,10 @@ public class TwoFluidPipe extends Pipeline {
         // stage momenta can otherwise create a spurious boundary flux.
         applyBoundaryConditions();
         SystemInterface[] localEquilibriumStates = null;
-        if (componentTransportEnabled && includeMassTransfer) {
+        double[][][] finiteRateSources = nonEquilibriumFilmTransfer == null ? null
+            : nonEquilibriumFilmTransfer.calculate(componentTransport, sections, referenceFluid, dtFinal);
+        equations.setFiniteRateComponentSources(finiteRateSources);
+        if (componentTransportEnabled && includeMassTransfer && finiteRateSources == null) {
           localEquilibriumStates = new SystemInterface[numberOfSections];
           for (int cell = 0; cell < numberOfSections; cell++) {
             // Component inventory changes only after an accepted transport step. Trial flashes
@@ -5799,10 +5832,11 @@ public class TwoFluidPipe extends Pipeline {
             if (includeMassTransfer) {
               double[][] phaseSources = new double[numberOfSections][3];
               equations.accumulateLastPhaseMassSourcesPerLength(phaseSources, 1.0);
-              double[][][] componentSources = componentTransport.createComponentSourceRates(phaseSources,
-                  localEquilibriumStates, componentConservationTolerance);
-              double[] latentHeatSources = componentTransport.createLatentHeatSourceRates(componentSources,
-                  localEquilibriumStates);
+              double[][][] componentSources = finiteRateSources != null ? finiteRateSources
+                  : componentTransport.createComponentSourceRates(phaseSources, localEquilibriumStates,
+                      componentConservationTolerance);
+              double[] latentHeatSources = finiteRateSources != null ? new double[numberOfSections]
+                  : componentTransport.createLatentHeatSourceRates(componentSources, localEquilibriumStates);
               for (int cell = 0; cell < numberOfSections; cell++) {
                 weightedLatentHeatSources[cell] += phaseStageWeights[stage] * latentHeatSources[cell];
                 for (int phase = 0; phase < 3; phase++) {
@@ -6121,7 +6155,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // 9. Update temperature profile when thermal or component transport is enabled
-      if (captureThermalStageFluxes) {
+      if (captureThermalStageFluxes && nonEquilibriumFilmTransfer == null) {
         ThermalEnergyStep energyStep = updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes,
             latentHeatEnergyByCellJ);
         fluidEnergyChangeJ += energyStep.fluidEnergyChangeJ;
@@ -6534,6 +6568,10 @@ public class TwoFluidPipe extends Pipeline {
     for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
       TwoFluidSection sec = sections[sectionIndex];
       try {
+        if (nonEquilibriumFilmTransfer != null && componentTransport != null) {
+          updateNonEquilibriumPhaseProperties(sectionIndex);
+          continue;
+        }
         SystemInterface flash;
         if (componentTransportEnabled && componentTransport != null) {
           // The flash is reconstructed from the conservative cell inventory. It may
@@ -7533,6 +7571,159 @@ public class TwoFluidPipe extends Pipeline {
    */
   public TwoFluidThermalEnergyBalanceReport getLastThermalEnergyBalanceReport() {
     return lastThermalEnergyBalanceReport;
+  }
+
+  /**
+   * Select finite-rate, independently directed component transfer in isothermal Euler transients.
+   *
+   * @param closure immutable closure, or null to retain the default equilibrium-relaxation path
+   */
+  public void setNonEquilibriumFilmTransfer(NonEquilibriumFilmTransfer closure) {
+    nonEquilibriumFilmTransfer = closure;
+  }
+
+  /**
+   * Configure residual aqueous liquid independently from the flowing inlet before run(). The inlet must contain the
+   * same named-component slate, including zero-flow MEG if needed. The specified liquid starts at rest. Gas velocity is
+   * retained from steady gas initialization; the resulting state is a transient initial condition, not a converged
+   * two-phase steady state.
+   *
+   * @param liquid homogeneous liquid composition at the initial temperature and pressure
+   * @param holdup aqueous volume fraction [0, 1) in each physical cell
+   */
+  public void setInitialAqueousFilm(SystemInterface liquid, double[] holdup) {
+    if (liquid == null || liquid.getNumberOfPhases() != 1 || !liquid.hasPhaseType("aqueous") || holdup == null
+        || holdup.length == 0) {
+      throw new IllegalArgumentException("Initial film requires a liquid and a nonempty holdup profile");
+    }
+    for (double value : holdup) {
+      if (!Double.isFinite(value) || value < 0.0 || value >= 1.0) {
+        throw new IllegalArgumentException("Initial aqueous holdup must be finite in [0, 1)");
+      }
+    }
+    initialAqueousFluid = liquid.clone();
+    initialAqueousHoldup = holdup.clone();
+  }
+
+  /** Install the configured independent aqueous inventory after steady gas initialization. */
+  private void initializeAqueousInventory() {
+    if (nonEquilibriumFilmTransfer == null || initialAqueousHoldup.length != sections.length
+        || !referenceFluid.hasPhaseType("gas") || referenceFluid.getNumberOfPhases() != 1) {
+      throw new IllegalStateException(
+          "Initial film requires a gas-only inlet, a matching cell profile " + "and the non-equilibrium film closure");
+    }
+    for (int cell = 0; cell < sections.length; cell++) {
+      TwoFluidSection section = sections[cell];
+      SystemInterface liquid = initialAqueousFluid.clone();
+      liquid.setTemperature(section.getTemperature());
+      liquid.setPressure(section.getPressure() / 1.0e5);
+      liquid.setNumberOfPhases(1);
+      liquid.setMaxNumberOfPhases(1);
+      liquid.setForcePhaseTypes(true);
+      liquid.init(0);
+      liquid.setNumberOfPhases(1);
+      liquid.setBeta(0, 1.0);
+      liquid.setPhaseType(0, neqsim.thermo.phase.PhaseType.AQUEOUS);
+      liquid.initProperties();
+      double density = liquid.getPhase(0).getDensity("kg/m3");
+      double viscosity = liquid.getPhase(0).getViscosity("kg/msec");
+      section.setWaterDensity(density);
+      section.setLiquidDensity(density);
+      section.setWaterViscosity(viscosity);
+      section.setLiquidViscosity(viscosity);
+      section.setLiquidSoundSpeed(liquid.getPhase(0).getSoundSpeed());
+      section.setLiquidEnthalpy(liquid.getPhase(0).getEnthalpy("J/kg"));
+      section.setGasHoldup(1.0 - initialAqueousHoldup[cell]);
+      section.setLiquidHoldup(initialAqueousHoldup[cell]);
+      section.setOilHoldup(0.0);
+      section.setWaterHoldup(initialAqueousHoldup[cell]);
+      section.setWaterCut(1.0);
+      section.setOilFractionInLiquid(0.0);
+      section.setLiquidVelocity(0.0);
+      section.setOilVelocity(0.0);
+      section.setWaterVelocity(0.0);
+      section.updateConservativeVariables();
+    }
+    // A seeded inventory must not be cancelled by the steady momentum-defect correction.
+    steadyConsistencyCalibrated = true;
+    equations.clearSteadyMomentumCorrection();
+    updateResultArrays();
+  }
+
+  /**
+   * Update properties at actual phase compositions without a bulk equilibrium flash.
+   *
+   * @param cell physical cell index
+   */
+  private void updateNonEquilibriumPhaseProperties(int cell) {
+    TwoFluidSection section = sections[cell];
+    if (section.getGasMassPerLength() > 0.0) {
+      SystemInterface gas = componentTransport.createPhaseState(cell, 0, referenceFluid, section.getPressure(),
+          section.getTemperature());
+      section.setGasDensity(gas.getPhase(0).getDensity("kg/m3"));
+      section.setGasViscosity(gas.getPhase(0).getViscosity("kg/msec"));
+      section.setGasSoundSpeed(gas.getPhase(0).getSoundSpeed());
+      section.setGasEnthalpy(gas.getPhase(0).getEnthalpy("J/kg"));
+    }
+    if (section.getWaterMassPerLength() > 0.0) {
+      SystemInterface liquid = componentTransport.createPhaseState(cell, 2, referenceFluid, section.getPressure(),
+          section.getTemperature());
+      double density = liquid.getPhase(0).getDensity("kg/m3");
+      double viscosity = liquid.getPhase(0).getViscosity("kg/msec");
+      section.setWaterDensity(density);
+      section.setLiquidDensity(density);
+      section.setWaterViscosity(viscosity);
+      section.setLiquidViscosity(viscosity);
+      section.setLiquidSoundSpeed(liquid.getPhase(0).getSoundSpeed());
+      section.setLiquidEnthalpy(liquid.getPhase(0).getEnthalpy("J/kg"));
+    }
+  }
+
+  /** Operational residual criterion; neither success nor horizon expiry means exact zero inventory. */
+  public enum FilmDryingStatus {
+    /** Residual mass is above the threshold and the horizon has not been reached. */
+    RUNNING,
+    /** Remaining aqueous mass is at or below the declared positive operational threshold. */
+    RESIDUAL_THRESHOLD_REACHED,
+    /** The horizon was reached while liquid remains above the threshold. */
+    HORIZON_REACHED
+  }
+
+  /**
+   * Classify the accepted state against a declared residual mass and simulation horizon. This observation neither
+   * advances time nor removes any inventory. Solver exceptions must be handled separately and must never be interpreted
+   * as successful drying.
+   *
+   * @param residualMassKg positive operational threshold for total aqueous mass in kg
+   * @param horizonSeconds positive horizon measured from the latest run() initialization, in seconds
+   * @return operational status of the accepted state
+   */
+  public FilmDryingStatus getFilmDryingStatus(double residualMassKg, double horizonSeconds) {
+    if (!Double.isFinite(residualMassKg) || residualMassKg <= 0.0 || !Double.isFinite(horizonSeconds)
+        || horizonSeconds <= 0.0) {
+      throw new IllegalArgumentException("Residual mass threshold and horizon must be positive and finite");
+    }
+    if (sections == null || componentTransport == null || nonEquilibriumFilmTransfer == null) {
+      throw new IllegalStateException("Initialize a non-equilibrium film calculation before reading its status");
+    }
+    if (getPhaseMassInventoriesKg()[2] <= residualMassKg) {
+      return FilmDryingStatus.RESIDUAL_THRESHOLD_REACHED;
+    }
+    return simulationTime >= horizonSeconds ? FilmDryingStatus.HORIZON_REACHED : FilmDryingStatus.RUNNING;
+  }
+
+  /**
+   * Return full-circumference equivalent aqueous-film thickness, including pooled inventory.
+   *
+   * @return thickness in metres; this is not a local pool depth or a wetting prediction
+   */
+  public double[] getEquivalentAqueousFilmThicknessProfile() {
+    double[] holdup = getWaterHoldupProfile();
+    double[] thickness = new double[holdup.length];
+    for (int i = 0; i < holdup.length; i++) {
+      thickness[i] = sections[i].getDiameter() * 0.5 * (1.0 - Math.sqrt(1.0 - holdup[i]));
+    }
+    return thickness;
   }
 
   /**

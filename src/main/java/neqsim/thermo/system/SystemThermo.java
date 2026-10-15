@@ -6045,7 +6045,16 @@ public abstract class SystemThermo implements SystemInterface {
     }
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Downward flow changes retain the established difference update when its component and total inventories are
+   * accurate to 1e-12 relative. Otherwise, positive component amounts are rebuilt from normalized overall fractions.
+   * Upward and same-rate changes retain the established update. This limits cancellation repair to subtractive rate
+   * changes while avoiding unnecessary changes to ordinary process endpoints and empty-stream initialization.
+   * </p>
+   */
   @Override
   public void setTotalFlowRate(double flowRate, String flowunit) {
     init(0);
@@ -6068,21 +6077,71 @@ public abstract class SystemThermo implements SystemInterface {
     }
     neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), density, 0);
     double SIval = unit.getSIvalue();
-    double totalNumberOfMolesLocal = totalNumberOfMoles;
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (flowRate < 1e-100) {
-        setEmptyFluid();
-      } else if (totalNumberOfMolesLocal > 1e-100) {
-        // (SIval / totalNumberOfMolesLocal - 1) * ...
-        double change = SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-            - getPhase(0).getComponent(i).getNumberOfmoles();
-        if (Math.abs(change) > 1e-12) {
-          addComponent(i, change);
+    if (flowRate < 1e-100) {
+      setEmptyFluid();
+      return;
+    }
+    if (totalNumberOfMoles > 1e-100) {
+      // Preserve the established update when its component and total inventories remain accurate.
+      // Rebuilding every ordinary flow perturbs floating-point endpoints throughout process recycles.
+      if (SIval >= totalNumberOfMoles || canScaleFlowInventoryByDifference(SIval)) {
+        double previousTotal = totalNumberOfMoles;
+        for (int i = 0; i < numberOfComponents; i++) {
+          double moles = getPhase(0).getComponent(i).getNumberOfmoles();
+          double change = SIval / previousTotal * moles - moles;
+          if (Math.abs(change) > 1e-12) {
+            addComponent(i, change);
+          }
         }
-      } else {
+        return;
+      }
+      // Large downward changes can lose significant digits through cancellation. Rebuild only
+      // when the prospective difference update fails the component or total inventory check.
+      double sumz = 0.0;
+      for (int i = 0; i < numberOfComponents; i++) {
+        sumz += getPhase(0).getComponent(i).getz();
+      }
+      setEmptyFluid();
+      for (int i = 0; i < numberOfComponents; i++) {
+        addComponent(i, SIval * (getPhase(0).getComponent(i).getz() / sumz));
+      }
+    } else {
+      for (int i = 0; i < numberOfComponents; i++) {
         addComponent(i, SIval);
       }
     }
+  }
+
+  /**
+   * Checks the rounding error of the established difference update without modifying the fluid.
+   *
+   * @param target requested total molar flow
+   * @return true when every component and the total retain relative inventory accuracy of 1e-12
+   */
+  private boolean canScaleFlowInventoryByDifference(double target) {
+    if (!Double.isFinite(target) || target <= 0.0) {
+      return false;
+    }
+    double inventory = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      inventory += getPhase(0).getComponent(i).getNumberOfmoles();
+    }
+    if (!(inventory > 0.0) || !Double.isFinite(inventory)) {
+      return false;
+    }
+    double updatedTotal = totalNumberOfMoles;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double moles = getPhase(0).getComponent(i).getNumberOfmoles();
+      double change = target / totalNumberOfMoles * moles - moles;
+      double appliedChange = Math.abs(change) > 1e-12 ? change : 0.0;
+      double expectedMoles = target * (moles / inventory);
+      double updatedMoles = moles + appliedChange;
+      if (!Double.isFinite(updatedMoles) || Math.abs(updatedMoles - expectedMoles) > 1e-12 * Math.abs(expectedMoles)) {
+        return false;
+      }
+      updatedTotal += appliedChange;
+    }
+    return Double.isFinite(updatedTotal) && Math.abs(updatedTotal - target) <= 1e-12 * Math.abs(target);
   }
 
   /** {@inheritDoc} */
