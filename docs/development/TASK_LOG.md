@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Isolate shared classic mixing-rule accumulators
+**Type:** A (Property)
+**Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306
+**Solution:** Extract the existing `EosMixingRuleHandler` correction and six deterministic `ClassicMixingRuleAccumulatorTest` cases from PR #4306 as a shared foundation. Use calculation-local accumulation in general covolume, classic attraction temperature second derivative, and composition-dependent attraction calculations; retain legacy serial result fields.
+**Notes:** All six interleaving regressions fail on the unchanged implementation and pass with the correction. The three-train compressor guide counterfactual removes 39 observed search/replay discrepancies by changing this mixing-rule class alone; single, multi-variable, staged and helper examples remain feasible with unchanged physical limits. Validation used Java 17 with Java 8 source/target; Windows Java 8 remains a CI gate. No compressor solver, tolerance, equation or public API changes. Coverage does not claim every mixing family or concurrent configuration mutation. The mixing-rules guide documents the scope.
+
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
 **Type:** G (Workflow)
 **Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI

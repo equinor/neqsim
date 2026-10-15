@@ -4480,7 +4480,8 @@ public class TPflash extends Flash {
    * only a single subtraction beyond the {@code getGibbsEnergy()} call (no extra {@code init} is performed —
    * {@code init(1)} from the preceding {@code orderByDensity} is sufficient). A threshold of
    * {@link #SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J} joules avoids triggering on numerical noise. Skipped for
-   * chemical / electrolyte systems.
+   * chemical / electrolyte systems and solid/wax calculations: their phase-specific fugacity reference models are not
+   * represented by this homogeneous fluid Gibbs comparison.
    * </p>
    *
    * <p>
@@ -4495,8 +4496,9 @@ public class TPflash extends Flash {
     // results (the dominant case after the removePhase cleanup just above the call site) bail
     // on the first term without touching any property method.
     final int numPhases = system.getNumberOfPhases();
-    if (numPhases < 2 || !system.doMultiPhaseCheck() || referenceSinglePhaseType == null
-        || Double.isNaN(referenceSinglePhaseGibbs) || system.getPhase(0).getNumberOfComponents() <= 1) {
+    if (numPhases < 2 || !system.doMultiPhaseCheck() || solidCheck || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null || Double.isNaN(referenceSinglePhaseGibbs)
+        || system.getPhase(0).getNumberOfComponents() <= 1) {
       return;
     }
     // Smallest beta — fast path for the 2-phase case (overwhelmingly common); generic loop
@@ -4550,12 +4552,14 @@ public class TPflash extends Flash {
    * fluid into two identical copies is physically meaningless (it is a single phase), so this guard removes the
    * artifact and keeps the reported phase boundary consistent with the phase-envelope saturation solver. Only the
    * two-phase case is handled; genuine two-phase splits have compositionally distinct phases (even when the incipient
-   * phase fraction is tiny) and are left untouched. Skipped for chemical / electrolyte systems.
+   * phase fraction is tiny) and are left untouched. Skipped for chemical / electrolyte systems and solid/wax
+   * calculations, where matching compositions do not make a solid and a fluid the same phase.
    * </p>
    */
   private void collapseTrivialMultiphaseSplit() {
-    if (system.getNumberOfPhases() != 2 || !system.doMultiPhaseCheck() || referenceSinglePhaseType == null
-        || system.isChemicalSystem() || system.hasIons()) {
+    if (system.getNumberOfPhases() != 2 || !system.doMultiPhaseCheck() || solidCheck || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || referenceSinglePhaseType == null || system.isChemicalSystem()
+        || system.hasIons()) {
       return;
     }
     neqsim.thermo.phase.PhaseInterface phaseA = system.getPhase(0);
