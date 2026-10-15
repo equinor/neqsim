@@ -234,6 +234,11 @@ public final class ProcessModelOperatingEnvelopeStudy {
     evidence.put("study_provenance", provenance);
     evidence.put("candidate_evaluator_id", evaluator.getId());
     evidence.put("optimizer_evidence", search.getOptimizerEvidence(currentCycleId));
+    List<String> acceptedActionIds = new ArrayList<String>();
+    for (ProcessModelOperatingAction action : evaluator.getActions()) {
+      acceptedActionIds.add(action.getId());
+    }
+    evidence.put("accepted_action_ids", Collections.unmodifiableList(acceptedActionIds));
     evidence.put("accepted_candidate_values", toFiniteDoubleList(accepted));
     evidence.put("accepted_point_bottleneck", acceptedBottleneck == null ? null : acceptedBottleneck.toEvidenceMap());
     evidence.put("slice_count", Integer.valueOf(slices.length));

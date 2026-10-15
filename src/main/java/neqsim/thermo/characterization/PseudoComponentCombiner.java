@@ -182,8 +182,8 @@ public final class PseudoComponentCombiner {
    * reference cuts
    * @param delumpResolution number of sub-fractions per source lump when {@code delump} is {@code true}; values of 1 or
    * less disable splitting
-   * @param sharedImaginaryBoundaries whether the reference cut boundaries are placed as equal-mass cuts on the
-   * reference's imaginary (delumped) composition instead of boiling-point midpoints
+   * @param sharedImaginaryBoundaries whether the reference cut boundaries use mass quantiles from the reference's
+   * imaginary (delumped) composition projected into reference gaps instead of boiling-point midpoints
    * @return characterized fluid containing pseudo components compatible with the reference fluid
    */
   private static SystemInterface characterizeToReferenceCore(SystemInterface source, SystemInterface reference,
@@ -1056,29 +1056,23 @@ public final class PseudoComponentCombiner {
   }
 
   /**
-   * Place the reference cut boundaries as carbon-number-based equal-mass cut points on the reference fluid's imaginary
-   * (fine-resolution) composition.
+   * Place reference cut boundaries using constrained mass quantiles of the reference's imaginary composition.
    *
    * <p>
-   * This is the reference-only (NFLUID = 1) form of the Pedersen et al. (Chapter 5.6) common-slate cut-point rule.
-   * Because the reference is supplied already lumped into pseudo-components, its fine carbon-number distribution is
-   * first rebuilt by delumping each lump into {@code resolution} single-carbon-number sub-fractions (the imaginary
-   * composition of Eqs. 5.58-5.59 with the reference as the sole weighted fluid). Equal-mass cut points are then placed
-   * on that fine composition (Section 5.3 lumping criterion), so each cut carries an equal mass fraction instead of
-   * being split at the arithmetic boiling-point midpoint, which ignores how much mass each lump represents.
+   * Delumping each reference lump into {@code resolution} synthetic sub-fractions supplies the fine distribution.
+   * Discrete cumulative-mass quantiles on the sorting-key axis (normal boiling point, falling back to molar mass)
+   * provide candidate cut points.
    *
    * <p>
-   * Each equal-mass cut is finally clamped to lie strictly between the sorting keys of the two adjacent reference
-   * pseudo-components. This guarantees that every reference pseudo-component remains inside its own cut, preserving the
-   * strict one-to-one ordering on which the property inheritance in {@link #characterizeToReferenceCore} relies, even
-   * when the reference lumps are not equal in mass (in which case an unclamped equal-mass cut could fall across a lump
-   * and mis-bin the source). When clamping cannot recover a valid in-gap value the boiling-point midpoint is used as a
-   * fallback.
+   * Each finite candidate is projected to the nearest representable value strictly between its adjacent reference keys.
+   * This preserves one-to-one ordering for distinct reference keys with a representable interior. Projection and the
+   * discrete grid mean that final cuts need not contain equal masses. Missing/non-finite candidates and gaps with no
+   * representable interior retain the legacy midpoint fallback; equal keys cannot define separate ordered cuts.
    *
    * @param referenceContributions the reference pseudo-components, sorted ascending by sorting key
-   * @param resolution number of single-carbon-number sub-fractions per reference lump used to rebuild the imaginary
-   * composition; values of 1 or less fall back to boiling-point midpoints
-   * @return the clamped equal-mass cut boundaries (size {@code referenceContributions.size() - 1})
+   * @param resolution number of synthetic sub-fractions per reference lump used to rebuild the imaginary composition;
+   * values of 1 or less fall back to boiling-point midpoints
+   * @return the projected mass-quantile cut boundaries (size {@code referenceContributions.size() - 1})
    */
   private static List<Double> determineReferenceEqualMassBoundaries(
       List<PseudoComponentContribution> referenceContributions, int resolution) {
@@ -1103,8 +1097,10 @@ public final class PseudoComponentCombiner {
       double boundary = midpoint;
       if (Double.isFinite(lower) && Double.isFinite(upper) && upper > lower) {
         double candidate = i < equalMass.size() ? equalMass.get(i) : Double.NaN;
-        if (Double.isFinite(candidate) && candidate > lower && candidate < upper) {
-          boundary = candidate;
+        double firstInterior = Math.nextUp(lower);
+        double lastInterior = Math.nextDown(upper);
+        if (Double.isFinite(candidate) && firstInterior <= lastInterior) {
+          boundary = Math.max(firstInterior, Math.min(candidate, lastInterior));
         }
       }
       boundaries.add(boundary);
