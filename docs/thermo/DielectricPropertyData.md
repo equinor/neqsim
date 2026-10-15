@@ -3,8 +3,6 @@ title: "Dielectric property data and validity"
 description: "Source-qualified pure-liquid dielectric coefficients, temperature bounds, unavailable records, and limitations of the component reference property."
 ---
 
-# Dielectric property data and validity
-
 The component dielectric property is a **dimensionless static relative permittivity**.
 Its five database coefficients evaluate
 
