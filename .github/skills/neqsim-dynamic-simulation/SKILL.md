@@ -526,12 +526,15 @@ evidence. Never tune a public closure to the commercial trace; validate the next
 increment against the public Tengesdal experiment, conservation, nearby points, and mesh/time-step
 refinement.
 
-The unsplit transactional callback may expose directional gas/oil/water face diagnostics: separate
+The unsplit transactional callback exposes directional gas/oil/water face diagnostics: separate
 forward/reverse mass transport, donor advective momentum, pressure traction, physical cell lengths,
-and phase mass sources. Treat these as inputs for conservative complementarity development, not as
-evidence that complementarity is already enforced. The current nonlinear vector does not yet solve
-for directional face variables or bound multipliers; five-second, 180 s, and 600 s qualification
-must therefore retain their existing gates.
+and phase mass sources. The experimental directional-complementarity option augments the nonlinear
+vector with signed mass magnitude, advective momentum and a donor multiplier per internal phase
+face, conservatively replaces the free flux, and carries solved faces into prepared-step
+verification. Exactly absent donors use exact donor-presence and zero-momentum rows; do not add an
+inventory floor. This is not yet a qualified phase-transition path: the six unchanged 0.1 s lanes
+pass, but every unchanged five-second Tengesdal case still fails. Retain all five-second, 180 s and
+600 s gates.
 
 Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
 completed intervals needs `N + 1` events, so the settled window must span at least `N` times the

@@ -1097,10 +1097,12 @@ commercial-simulator comparison.
   on requested elapsed time, conservation, positivity, refinement, and all
   applicable sticky solver/boundary diagnostics. Exclude a failed or unsupported
   row instead of quoting it.
-- A directional face ledger in an unsplit evaluation is prerequisite diagnostics,
-  not a qualified disappearance/reappearance, restart, or pigging model. Require
-  the nonlinear complementarity equations and the unchanged five-second riser
-  matrix to pass before progressing to longer physical claims.
+- The experimental unsplit directional-complementarity path now solves signed
+  mass, advective momentum and donor multipliers and verifies its solved ledger
+  independently. Treat its exact-absent donor and short-step conservation tests
+  as numerical evidence only: all fifteen unchanged five-second riser cases
+  still fail. Require that entire matrix before progressing to 180/600 s,
+  physical restart, swept-liquid, receiver-surge or hydraulic-pigging claims.
 - Do not over-constrain `setOutletPressure` with a measured pressure drop the
   modelled geometry cannot produce. Investigate valves, fittings, elevations, and
   boundary consistency separately.

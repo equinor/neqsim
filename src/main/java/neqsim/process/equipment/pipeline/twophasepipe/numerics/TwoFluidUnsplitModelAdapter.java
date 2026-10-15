@@ -320,6 +320,15 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       }
     }
     double[][] rates = evaluation.getRates();
+    DirectionalPhaseFaceFlux[][] solvedFaces = candidate.getDirectionalPhaseFaceFluxes();
+    if (solvedFaces != null) {
+      double[] cellLengths = new double[midpoint.length];
+      for (int cell = 0; cell < midpoint.length; cell++) {
+        cellLengths[cell] = midpoint[cell].getLength();
+      }
+      rates = SignedFaceComplementarity.replaceInternalFluxes(rates, cellLengths,
+          evaluation.getDirectionalPhaseFaceFluxes(), solvedFaces);
+    }
     double maximumResidual = 0.0;
     for (int cell = 0; cell < endpoint.length; cell++) {
       for (int variable = 0; variable < UnsplitTransientSolver.CONSERVATIVE_VARIABLE_COUNT; variable++) {
@@ -335,8 +344,8 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       throw new IllegalStateException("Candidate does not satisfy the selected time-level operator: scaled residual="
           + maximumResidual + ", tolerance=" + relativeTolerance);
     }
-    return new PreparedStep(endpoint, acceptedTemplates, evaluation, timeStep, startTime, maximumResidual, timeWeight,
-        pressureInterpolationTimeScale);
+    return new PreparedStep(endpoint, acceptedTemplates, evaluation, solvedFaces, timeStep, startTime, maximumResidual,
+        timeWeight, pressureInterpolationTimeScale);
   }
 
   /** Fail unsupported configurations before an interval controller starts nonlinear attempts. */
@@ -356,6 +365,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     private static final long serialVersionUID = 1L;
     private final TwoFluidSection[] endpointSections;
     private final TransactionalEvaluation midpointEvaluation;
+    private final DirectionalPhaseFaceFlux[][] solvedDirectionalPhaseFaceFluxes;
     private final double timeStep;
     private final double startTime;
     private final double maximumScaledResidual;
@@ -365,10 +375,11 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     private final double[] finalMassKg = new double[PHASE_COUNT];
 
     private PreparedStep(TwoFluidSection[] endpoint, TwoFluidSection[] previous, TransactionalEvaluation evaluation,
-        double timeStep, double startTime, double maximumScaledResidual, double timeIntegrationWeight,
-        double pressureInterpolationTimeScale) {
+        DirectionalPhaseFaceFlux[][] solvedDirectionalPhaseFaceFluxes, double timeStep, double startTime,
+        double maximumScaledResidual, double timeIntegrationWeight, double pressureInterpolationTimeScale) {
       endpointSections = cloneSections(endpoint);
       midpointEvaluation = evaluation;
+      this.solvedDirectionalPhaseFaceFluxes = copyDirectionalFluxes(solvedDirectionalPhaseFaceFluxes);
       this.timeStep = timeStep;
       this.startTime = startTime;
       this.maximumScaledResidual = maximumScaledResidual;
@@ -410,6 +421,15 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     /** @return immutable exact derivatives and transport ledger at the candidate's selected time level */
     public TransactionalEvaluation getEvaluation() {
       return midpointEvaluation;
+    }
+
+    /**
+     * Return the internal transport used by the verified conservation equations.
+     *
+     * @return defensive solved gas/oil/water face ledgers, or null for a cell-only candidate
+     */
+    public DirectionalPhaseFaceFlux[][] getSolvedDirectionalPhaseFaceFluxes() {
+      return copyDirectionalFluxes(solvedDirectionalPhaseFaceFluxes);
     }
 
     /** @return immutable end-state weight: 0.5 for midpoint or 1.0 for backward Euler */
@@ -531,6 +551,18 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     double[][] result = new double[values.length][];
     for (int row = 0; row < values.length; row++) {
       result[row] = values[row].clone();
+    }
+    return result;
+  }
+
+  /** Copy array ownership while retaining immutable face-ledger values. */
+  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] values) {
+    if (values == null) {
+      return null;
+    }
+    DirectionalPhaseFaceFlux[][] result = new DirectionalPhaseFaceFlux[values.length][];
+    for (int face = 0; face < values.length; face++) {
+      result[face] = values[face] == null ? null : values[face].clone();
     }
     return result;
   }
