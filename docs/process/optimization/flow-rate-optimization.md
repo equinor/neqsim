@@ -31,6 +31,18 @@ This is essential for:
 
 ## Key Features
 
+Compressor pressure-target failures are infeasible operating points. The shared
+`ProductionOptimizer` handles `Compressor.SpeedSolveException` without aborting
+the search and records a hard `compressorSpeedSolve` constraint. It also rejects
+a returned compressor result whose pressure target did not converge, even when
+capacity analysis is enabled. Objectives and downstream constraints are not read
+from a failed calculation; unrelated exceptions remain visible to callers.
+
+Automatic chart setup reruns the process only when it generates a chart. This
+avoids redundant process solves between capacity, lift-curve and performance
+tables, including when a preceding sweep ended on an invalid chart trial. The
+next table evaluates its own requested operating points.
+
 | Feature | Description |
 |---------|-------------|
 | **Pressure boundary search** | Find max flow at given inlet/outlet pressures |

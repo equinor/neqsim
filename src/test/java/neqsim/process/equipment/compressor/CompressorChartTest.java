@@ -465,8 +465,10 @@ public class CompressorChartTest {
     comp1.setSpeed(15000);
     comp1.setLimitSpeed(false);
     comp1.run();
-    Assertions.assertEquals(106.16307446, comp1.getOutletStream().getPressure("bara"), 0.1);
-    Assertions.assertEquals(7000, comp1.getSpeed(), 0.1);
+    // The limited run must retain the requested 100 bara target for the next solve.
+    Assertions.assertEquals(100.0, comp1.getOutletStream().getPressure("bara"), 0.001);
+    Assertions.assertTrue(comp1.getSpeed() < comp1.getMinimumSpeed());
+    Assertions.assertTrue(comp1.isSpeedSolveConverged());
 
     comp1.setOutletPressure(90);
     comp1.setMinimumSpeed(0);
