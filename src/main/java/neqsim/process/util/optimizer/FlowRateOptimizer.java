@@ -739,15 +739,18 @@ public class FlowRateOptimizer implements Serializable {
     }
 
     List<Compressor> compressors = getProcessCompressors();
+    boolean chartsChanged = false;
     for (Compressor comp : compressors) {
-      configureCompressorChart(comp);
+      chartsChanged |= configureCompressorChart(comp);
     }
-
-    // Re-run the process after chart setup
-    if (mode == Mode.PROCESS_SYSTEM) {
-      processSystem.run();
-    } else {
-      processModel.run();
+    // Existing charts remain valid after a sweep. Its last rejected probe need not be runnable,
+    // and rerunning it here would prevent the next table from evaluating its own operating points.
+    if (chartsChanged) {
+      if (mode == Mode.PROCESS_SYSTEM) {
+        processSystem.run();
+      } else {
+        processModel.run();
+      }
     }
 
     // Reinitialize constraints after chart setup
@@ -760,8 +763,9 @@ public class FlowRateOptimizer implements Serializable {
    * Configures a single compressor with a performance chart.
    *
    * @param comp the compressor to configure
+   * @return true when a chart was generated
    */
-  private void configureCompressorChart(Compressor comp) {
+  private boolean configureCompressorChart(Compressor comp) {
     CompressorChartInterface chart = comp.getCompressorChart();
 
     // Check if chart needs to be generated
@@ -787,7 +791,9 @@ public class FlowRateOptimizer implements Serializable {
 
       logger.info("Chart generated for {} with {} speed lines, max speed set to {} RPM", comp.getName(),
           numberOfChartSpeeds, maxSpeed);
+      return true;
     }
+    return false;
   }
 
   /**
