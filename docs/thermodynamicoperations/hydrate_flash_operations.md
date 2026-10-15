@@ -218,6 +218,23 @@ solid/wax models and the Pitzer water-activity model retain their physical scope
 `CO2BrinePhaseEquilibrium` and `ReactiveCO2BrinePhaseEquilibrium` remain deprecated
 compatibility adapters; new code should use the ordinary operation API.
 
+The 44 bara CO2/brine/MEG regression uses 10 mol CO2 and 1 kg water, with
+10 wt% NaCl on water-plus-salt and 5 wt% MEG on water-plus-MEG. Its numerical
+reference is approximately 1.903 °C with a conserved CO2-rich/aqueous split.
+If the percentages instead mean kilograms per 100 kg water, the smaller salt
+and MEG inventories give a numerical reference of approximately 2.708 °C.
+The 5 wt% NaCl plus 5 wt% MEG control gives approximately 5.433 °C.
+These are numerical regression results, not experimental validation.
+
+`CO2BrineMegHydrateTest` checks both concentration bases, independent temperature
+guesses, adjacent and dense-fluid pressures, finite CO2 inventory, repeated and
+cloned calculations, and the MEG inhibition trend. The shared fluid solver must
+conserve every supplied species and equilibrate CO2, water and MEG fugacities.
+MEG remains a partitioning molecular component; only ions are confined to the
+aqueous phase. These consumer cases introduce no component whitelist, solvent
+ratio dispatch flag, fitted EOS/hydrate parameter or empirical temperature offset.
+Ice and salt precipitation are not included in these regressions.
+
 Shared-EOS reactive ionic fluids use the common aqueous reaction coupling; EOS-GE models retain
 their model-owned phase-role and reaction strategy. Add the input species,
 call `chemicalReactionInit()`, then select the mixing rule and hydrate check.

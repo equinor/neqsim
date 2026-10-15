@@ -160,6 +160,12 @@ whitelist. This keeps ions out of gas and oil while satisfying the component bal
 $z_i = \sum_p \beta_p x_{i,p}$. Salt and organic inhibitor effects enter the hydrate calculation through the water
 fugacity of the converged aqueous phase.
 
+The concentrated CO2/brine/MEG consumer regression uses the shared fluid-equilibrium
+solver, with MEG partitioning as a molecular component and salt ions confined to
+the aqueous phase. See [CO2/brine phase-state diagnostics](../thermodynamicoperations/hydrate_flash_operations.md#co2brine-phase-state-diagnostics)
+for the 44 bara recipe, the two concentration bases, and the distinction between
+numerical regression values and experimental validation.
+
 CPA initialization excludes association sites only for components whose overall mole fraction
 is at or below the numerical trace cutoff of $10^{-20}$. It uses the current component and total
 mole counts before resetting phase compositions. A component depleted in a previous phase split
