@@ -15,7 +15,7 @@ from datetime import timedelta
 from . import agent_launch, notify
 from .contracts import StageResult, register, resolve
 from .drift import DriftMonitor
-from .ledger import Ledger
+from .ledger import TRANSITIONS, Ledger
 from .plan import file_sha256, read_json, write_json
 from .stop_rules import should_reopen
 from .watermarks import Watermarks, parse_time
@@ -93,6 +93,7 @@ def restore_evidence(ctx):
     report = read_json(os.path.join(ctx.cycle_dir, "evidence_changes.json"), {}) or {}
     report["inventory"] = read_json(os.path.join(ctx.cycle_dir, "evidence_inventory.json"), {}) or {}
     ctx.evidence_analysis = report
+    _invalidate_changed_evidence(ctx)
     _describe_evidence(ctx, report)
 
 
@@ -102,6 +103,8 @@ def evidence(ctx, spec):
 
     report = ctx.evidence_analysis or analyze(ctx.task_dir, ctx.plan)
     ctx.evidence_analysis = report
+    # Retire the incumbent before model/optimizer/guard execution can fail.
+    _invalidate_changed_evidence(ctx)
     relative = "evidence_changes.json"
     inventory_file = "evidence_inventory.json"
     write_json(os.path.join(ctx.cycle_dir, relative), {
@@ -308,21 +311,104 @@ def diff(ctx, spec):
     return StageResult("diff", "ok", outputs=["diff_vs_baseline.json"], triggers=triggers)
 
 
+def _invalidate_changed_evidence(ctx):
+    """Invalidate old advice independently of proposal validation, including on resume.
+
+    Repeated calls are idempotent. If interruption followed the invalidation event
+    but preceded supersession, finish that transition before running new work.
+    """
+    book = Ledger(os.path.join(ctx.state_dir, "ledger", "events.jsonl"))
+    impact = ctx.evidence_analysis or {}
+    production = ctx.plan.get("production", {}) or {}
+    default_sensitive = ["script:model_update", "script:optimize", "gates", "constraints", "guard"]
+    configured_sensitive = production.get("evidence_sensitive_stages")
+    valid_sensitive = configured_sensitive is None or (
+        isinstance(configured_sensitive, list) and configured_sensitive
+        and all(isinstance(name, str) and name for name in configured_sensitive))
+    sensitive = set(default_sensitive if configured_sensitive is None else configured_sensitive) \
+        if valid_sensitive else set()
+    invalidates = bool(impact.get("changes")) and (
+        not valid_sensitive or impact.get("full_rerun")
+        or sensitive.intersection(impact.get("affected_stages") or []))
+    invalidated = list(impact.get("invalidated_opportunities") or [])
+    if invalidates:
+        changes = impact.get("changes") or []
+        for key, item in book.current().items():
+            if item.get("status") in ("rejected", "superseded", "verified"):
+                continue
+            if item.get("cycle") == ctx.cycle_id:
+                # Resuming after ledger publication must retain this cycle's fresh evidence.
+                continue
+            if not item.get("optimizer_evidence") and not item.get("accepted_point_envelope_evidence"):
+                continue
+            if key not in invalidated:
+                invalidated.append(key)
+            if not ctx.dry_run:
+                if item.get("evidence_current") is not False:
+                    book.invalidate_evidence(key, changes, cycle=ctx.cycle_id)
+                if "superseded" in TRANSITIONS.get(item.get("status"), ()):
+                    book.set_status(key, "superseded", by="task-living",
+                                    note="validation evidence changed; fresh review required")
+    if ctx.evidence_analysis is not None:
+        ctx.evidence_analysis["invalidated_opportunities"] = invalidated
+    return invalidates, invalidated
+
+
 def ledger(ctx, spec):
+    # Keep a fallback for custom plans that supply evidence analysis without an
+    # evidence stage. The normal path invalidates before optimization starts.
+    invalidates, invalidated = _invalidate_changed_evidence(ctx)
+    optimizer_proposals = [proposal for proposal in ctx.proposals
+                           if isinstance(proposal, dict) and (
+                               "optimizer_evidence" in proposal or "accepted_point_envelope_evidence" in proposal)]
+    guard_result = ctx.stage_results.get("guard")
+    if optimizer_proposals or (ctx.proposals and guard_result is not None):
+        from .production import _proposal_snapshot
+
+        guarded = getattr(ctx, "guarded_proposals", set())
+        if (guard_result is None or guard_result.status not in ("ok", "warn")
+                or any(proposal.get("guard") != "passed" or proposal.get("requires_approval") is not True
+                       or _proposal_snapshot(proposal) not in guarded
+                       for proposal in ctx.proposals)):
+            return StageResult("ledger", "fail", triggers=["unguarded_optimizer_proposal"],
+                               message="Optimizer evidence must match a proposal accepted by the current-cycle guard")
     book = Ledger(os.path.join(ctx.state_dir, "ledger", "events.jsonl"))
     items = book.current()
-    open_titles = {v.get("title") for v in items.values()
-                   if v.get("status") not in ("rejected", "superseded", "verified")}
+    open_items = {key: value for key, value in items.items()
+                  if value.get("status") not in ("rejected", "superseded", "verified")}
+    open_by_title = {value.get("title"): (key, value) for key, value in open_items.items()}
+    latest_by_title = {}
+    for key, value in items.items():
+        latest_by_title[value.get("title")] = (key, value)
+    impact = ctx.evidence_analysis or {}
+
     created, updated = [], []
     for proposal in ctx.proposals:
-        if proposal.get("title") in open_titles:
+        title = proposal.get("title")
+        previous = open_by_title.get(title)
+        if previous and not invalidates:
             continue
+        lineage = previous
+        if lineage is None and invalidates:
+            candidate = latest_by_title.get(title)
+            if (candidate and candidate[1].get("status") == "superseded"
+                    and candidate[1].get("evidence_current") is False):
+                lineage = candidate
         created.append(proposal.get("title"))
         if not ctx.dry_run:
             fields = {k: v for k, v in proposal.items() if k not in ("title", "category")}
+            if proposal.get("optimizer_evidence") or proposal.get("accepted_point_envelope_evidence"):
+                fields["evidence_current"] = True
+            if lineage:
+                fields["revalidation_of"] = lineage[0]
+                fields["revalidation_changes"] = [
+                    {name: row.get(name) for name in ("path", "change", "impact_rules")
+                     if row.get(name) is not None} for row in impact.get("changes") or []]
             book.create(proposal["title"], proposal.get("category", "operational"),
                         cycle=ctx.cycle_id, **fields)
     for key, item in items.items():
+        if key in invalidated:
+            continue
         kpi = item.get("kpi")
         if kpi and kpi in ctx.kpis and item.get("status") not in ("rejected", "superseded"):
             value = {"metric": kpi, "value": ctx.kpis[kpi], "cycle": ctx.cycle_id}
@@ -330,7 +416,8 @@ def ledger(ctx, spec):
                 book.update_value(key, value, cycle=ctx.cycle_id)
             updated.append(key)
     ctx.new_proposals = created
-    return StageResult("ledger", "ok", message="{} new, {} updated".format(len(created), len(updated)))
+    return StageResult("ledger", "ok", message="{} new, {} updated, {} evidence-invalidated".format(
+        len(created), len(updated), len(invalidated)))
 
 
 def _fmt(value):

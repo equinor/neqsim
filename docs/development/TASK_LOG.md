@@ -54,6 +54,24 @@ requirement`, or `confidential compressor route`.
 **Solution:** `Compressor.SpeedSolveException`, `ProductionOptimizer` candidate rejection and hard convergence gate, and conditional chart-setup process runs in `FlowRateOptimizer`.
 **Notes:** Reproduced all three failing optimizer cases on PR #4326 before repair. A no-valid-map trial is rejected without reading stale objectives or downstream constraints; unrelated exceptions still propagate. Capacity analysis and optional output validation cannot bypass the pressure-target convergence requirement. Repeated table setup reuses existing charts without rerunning an invalid preceding probe. Updated compressor/optimization guides, the compressor skill and the generated coverage inventory; regression tests cover stale outputs, hard convergence, recovery and chart reuse.
 
+### 2026-10-14 — Preserve production proposal guards across interrupted cycles
+**Type:** G (Workflow)
+**Keywords:** PR 4312, resume, proposal guard, evidence ledger, frozen user input, fail closed
+**Solution:** `devtools/neqsim_continuous/cycle.py`, `user_input.py`, `stages.py`, and `devtools/test_neqsim_production.py`.
+**Notes:** A completed guard status did not preserve its filtered proposals or upstream blocks: resuming before ledger publication could mark previously withheld advice as current evidence. Resume now revalidates the inexpensive gates, constraints and guard against restored calculation outputs, reapplies frozen user restrictions, and blocks advice if the input checkpoint is unavailable. Completed model/optimizer work and persisted ledger events remain checkpointed. The ledger binds publication to the exact current-cycle guarded proposal content, rejecting post-guard mutations, added proposals and reused old-cycle evidence. Thirteen deterministic regressions failed on the previous head and pass with the repair; the full production suite passes 57 cases. Continuous/living coverage passes 42 cases, with one existing optional DOCX-report test skipped because its dependency is unavailable. Hosted CI remains a publication gate.
+
+### 2026-10-14 — Isolate evidence routing tests from optional agent installations
+**Type:** G (Workflow)
+**Keywords:** evidence-source-cues, hermetic tests, plugin discovery, production guard, CI, PR 4312
+**Solution:** `devtools/test_evidence_sources.py` and `.github/workflows/ai-devtools-python-tests.yml`.
+**Notes:** The validator loads cue declarations from discovered agents; public CI has no optional provider catalog. Tests now supply a temporary synthetic catalog and isolate checkout, installed-agent and plugin roots while exercising real discovery and parsing. Cover missing catalogs, plugin-only aliases, duplicate/invalid cues and invalid statuses. Keep provider routing policy out of the validator. Include the production-envelope guard and persistent-ledger regression suite in Devtools CI. The coordinated master workflow now retains this shared repair.
+
+### 2026-10-14 — Invalidate field evidence before optimizer or guard failure
+**Type:** B (Bug fix)
+**Keywords:** PR 4312, persistent envelope, evidence invalidation, failed guard, power limit, resume
+**Solution:** `devtools/neqsim_continuous/stages.py` and `devtools/test_neqsim_production.py`.
+**Notes:** An existing proposal remained current after a changed shared-power limit and malformed optimizer output skipped the guarded ledger stage. Move invalidation to evidence assessment and restore, preserving the guard for new proposals. Repeated failures remain idempotent, implemented history remains stale and traceable, and resumed publication retains its fresh cycle evidence. Add failure/recovery, report, dry-run and resume regressions. Integrate current master workflow naming and shared CI repairs; use `ai-devtools-python-tests.yml` rather than restoring the removed workflow filename.
+
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
 **Type:** G (Workflow)
 **Keywords:** PR 4315, hermetic tests, evidence-source-cues, slow shards, required checks, Surefire, CI

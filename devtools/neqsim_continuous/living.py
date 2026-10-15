@@ -72,16 +72,32 @@ scripts:
 gates: []
 #  - {name: sep_T_residual, kpi: max_sep_T_residual_K, abs_max: 3.0}      # no advice if the model is off
 #  - {name: mass_balance, kpi: mass_balance_pct, abs_max: 0.05}
-production: {min_gain: 0.0, outcome_tolerance: 0.5}
+production:
+  min_gain: 0.0
+  outcome_tolerance: 0.5
+  require_envelope_evidence: false
+  evidence_sensitive_stages: ["script:model_update", "script:optimize", gates, constraints, guard]
 # Each proposal must include optimizer_evidence for this cycle: converged and finite candidate,
 # complete constraint evidence, complete state restoration, accepted-point replay, and all actions applied.
+# Set require_envelope_evidence true for field studies that must persist accepted-point
+# multi-slice/bottleneck evidence bound exactly to the proposed action identifiers and values.
 drift:
   signals: []
   settings: {lambda: 0.2, L: 3.5, k: 0.5, h: 6.0, warmup: 30}
 triggers:
   kpi_step: {}
   criteria: {}
-evidence: {rules: [], dependencies: {}}
+evidence:
+  rules: []
+# - name: field-operating-definition
+#   matches: [study_config.yaml, continuous/goal.yaml]
+#   stages: [guard]
+#   conclusions: [validated field operating point and envelope]
+  dependencies:
+    guard: ["script:optimize", gates, constraints]
+    "script:optimize": ["script:model_update"]
+    gates: ["script:model_update"]
+    constraints: ["script:model_update"]
 stages: [sense, evidence, inputs, refresh, "script:model_update", "script:optimize", kpis, gates, constraints, guard,
          drift, goal, diff, outcome, ledger, digest, notify, agent]
 notify:
