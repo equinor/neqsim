@@ -1154,9 +1154,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * @return calculated bottom-hole pressure in bara
    */
   private double calculateVLP_BHP_TwoFluid(double flowRate) {
-    // Get fluid properties
+    // VLP uses intensive properties; apply the requested rate only to the velocities below.
+    // Retain the reference inventory to avoid roundoff at shut-in and near-zero trial rates.
     SystemInterface tempFluid = reservoirStream.getThermoSystem().clone();
-    tempFluid.setTotalFlowRate(flowRate / 86400.0, "Sm3/sec");
 
     // March up the tubing from wellhead to bottomhole
     int numSegments = 20;

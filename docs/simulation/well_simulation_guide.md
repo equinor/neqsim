@@ -822,6 +822,12 @@ configured tolerance.
 | DRIFT_FLUX | Accounts for phase slip velocity | Medium | Better for high GOR |
 | TWO_FLUID | Separate gas/liquid momentum | Slowest | Highest accuracy |
 
+The `TWO_FLUID` VLP calculation retains the reservoir fluid's reference inventory while
+evaluating density and transport properties. The requested production rate enters the
+velocity calculation separately. This keeps the property basis independent of the trial
+rate for positive near-zero trials and leaves the source stream unchanged. The existing
+explicit zero-flow boundary returns the target wellhead pressure without a property march.
+
 ---
 
 ## See Also
