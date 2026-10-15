@@ -179,11 +179,17 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     do {
       iter++;
       setfvec();
-      logger.debug("Residual: {}", Arrays.toString(fvec));
+      if (logger.isDebugEnabled()) {
+        logger.debug("Residual: {}", Arrays.toString(fvec));
+      }
       setJac();
-      logger.debug("Jacobian: {}", Arrays.deepToString(Jac));
+      if (logger.isDebugEnabled()) {
+        logger.debug("Jacobian: {}", Arrays.deepToString(Jac));
+      }
       dx = ALGEBRA.solve(Jac, fvec);
-      logger.debug("Newton step: {}", Arrays.toString(dx));
+      if (logger.isDebugEnabled()) {
+        logger.debug("Newton step: {}", Arrays.toString(dx));
+      }
       if (iter < 10) {
         sol = ALGEBRA.subtract(sol, ALGEBRA.scale(dx, (iter) / (iter + 5000.0)));
       } else {

@@ -194,9 +194,15 @@ public class SolidFlash12 extends TPflash {
       } catch (Exception ex) {
         logger.debug("Solid-fraction solve failed; retaining the previous step", ex);
       }
-      logger.debug("Solid-fraction gradient: {}", Arrays.toString(dQdbeta));
-      logger.debug("Solid-fraction Hessian: {}", Arrays.deepToString(Qmatrix));
-      logger.debug("Solid-fraction step: {}", Arrays.toString(ans));
+      if (logger.isDebugEnabled()) {
+        logger.debug("Solid-fraction gradient: {}", Arrays.toString(dQdbeta));
+      }
+      if (logger.isDebugEnabled()) {
+        logger.debug("Solid-fraction Hessian: {}", Arrays.deepToString(Qmatrix));
+      }
+      if (logger.isDebugEnabled()) {
+        logger.debug("Solid-fraction step: {}", Arrays.toString(ans));
+      }
       // double betaReductionFactor = 1.0;
       // betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
       // betaMatrixTemp.print(10, 2);

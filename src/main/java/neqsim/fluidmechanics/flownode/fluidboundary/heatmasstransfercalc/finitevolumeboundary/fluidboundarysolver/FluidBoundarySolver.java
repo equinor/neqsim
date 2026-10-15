@@ -237,10 +237,14 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         for (int p = 0; p < boundary.getNode(0).getBulkSystem().getPhases()[1].getNumberOfComponents(); p++) {
           setComponentConservationMatrix(p);
           DMatrixRMaj solOld = solMatrix[p].copy();
-          logger.debug("Previous component profile: {}", Arrays.toString(solOld.getData()));
+          if (logger.isDebugEnabled()) {
+            logger.debug("Previous component profile: {}", Arrays.toString(solOld.getData()));
+          }
           xNew[p] = TDMAsolve.solve(a, b, c, r);
           solMatrix[p] = new DMatrixRMaj(xNew[p].length, 1, true, xNew[p]);
-          logger.debug("Component profile: {}", Arrays.toString(solMatrix[p].getData()));
+          if (logger.isDebugEnabled()) {
+            logger.debug("Component profile: {}", Arrays.toString(solMatrix[p].getData()));
+          }
           diffMatrix[p] = new DMatrixRMaj(xNew[p].length, 1);
           CommonOps_DDRM.subtract(solMatrix[p], solOld, diffMatrix[p]);
           diff = Math.abs(NormOps_DDRM.normP1(diffMatrix[p]) / NormOps_DDRM.normP1(solMatrix[p]));

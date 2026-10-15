@@ -112,11 +112,17 @@ public class NewtonSolveAB implements java.io.Serializable {
     do {
       iter++;
       setfvec();
-      logger.debug("Residual: {}", Arrays.toString(fvec));
+      if (logger.isDebugEnabled()) {
+        logger.debug("Residual: {}", Arrays.toString(fvec));
+      }
       setJac();
-      logger.debug("Jacobian: {}", Arrays.deepToString(Jac));
+      if (logger.isDebugEnabled()) {
+        logger.debug("Jacobian: {}", Arrays.deepToString(Jac));
+      }
       dx = ALGEBRA.solve(Jac, fvec);
-      logger.debug("Newton step: {}", Arrays.toString(dx));
+      if (logger.isDebugEnabled()) {
+        logger.debug("Newton step: {}", Arrays.toString(dx));
+      }
       sol = ALGEBRA.subtract(sol, ALGEBRA.scale(dx, iter / (iter + 100.0)));
       characterizeClass.setPlusCoefs(sol.clone());
     } while (((ALGEBRA.euclideanNorm(dx) / ALGEBRA.euclideanNorm(sol) < 1e-6 || iter < 15000) && iter < 50000));

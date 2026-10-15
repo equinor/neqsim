@@ -157,7 +157,9 @@ public class CricondenBarTemp1 implements java.io.Serializable {
     setfvec();
     setJac();
     dx = ALGEBRA.solve(Jac, fvec);
-    logger.debug("Newton step: {}", Arrays.toString(dx));
+    if (logger.isDebugEnabled()) {
+      logger.debug("Newton step: {}", Arrays.toString(dx));
+    }
     u = ALGEBRA.subtract(u, dx);
     return ALGEBRA.euclideanNorm(dx) / ALGEBRA.euclideanNorm(u);
   }
