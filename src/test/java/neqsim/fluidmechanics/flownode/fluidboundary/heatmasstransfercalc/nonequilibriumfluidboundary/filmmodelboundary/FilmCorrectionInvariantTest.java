@@ -1,16 +1,110 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import java.util.Arrays;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.NormOps_DDRM;
 import org.junit.jupiter.api.Test;
 import Jama.Matrix;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarynonreactive.FluidBoundarySystemNonReactive;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveKrishnaStandartFilmModel;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class FilmCorrectionInvariantTest {
+  /**
+   * Compares real finite-volume boundary profiles with dense Jama solves of the same tridiagonal equations.
+   */
+  @Test
+  void finiteVolumeProfilesMatchJamaAndRetainIndependentColumns() {
+    KrishnaStandartFilmModel film = new KrishnaStandartFilmModel(fluid());
+    FluidBoundarySystemNonReactive boundary = new FluidBoundarySystemNonReactive(film);
+    boundary.createSystem();
+    BoundarySolverProbe solver = new BoundarySolverProbe(boundary);
+    solver.initMatrix();
+    DMatrixRMaj[] initialProfiles = solver.profiles();
+    double[][] expected = new double[initialProfiles.length][];
+    for (int component = 0; component < initialProfiles.length; component++) {
+      solver.setComponentConservationMatrix(component);
+      expected[component] = solver.referenceProfile();
+      assertEquals(boundary.getNumberOfNodes(), initialProfiles[component].getNumRows());
+      assertEquals(1, initialProfiles[component].getNumCols());
+      for (int previous = 0; previous < component; previous++) {
+        assertNotSame(initialProfiles[previous].getData(), initialProfiles[component].getData());
+      }
+    }
+
+    solver.solve();
+
+    DMatrixRMaj[] solvedProfiles = solver.profiles();
+    for (int component = 0; component < solvedProfiles.length; component++) {
+      assertArrayEquals(expected[component], solvedProfiles[component].getData(), 1.0e-12);
+      Matrix jama = new Matrix(solvedProfiles[component].getData(), boundary.getNumberOfNodes());
+      assertEquals(jama.norm1(), NormOps_DDRM.normP1(solvedProfiles[component]), 0.0);
+      assertNotSame(initialProfiles[component].getData(), solvedProfiles[component].getData());
+      DMatrixRMaj copiedProfile = solvedProfiles[component].copy();
+      copiedProfile.zero();
+      assertArrayEquals(expected[component], solvedProfiles[component].getData(), 1.0e-12);
+      assertNotSame(copiedProfile.getData(), solvedProfiles[component].getData());
+      double expectedFlux = boundary.getNode(0).getBulkSystem().getPhase(1).getPhysicalProperties()
+          .getEffectiveDiffusionCoefficient(component)
+          * (boundary.getNode(0).getBulkSystem().getPhase(1).getComponent(component).getx()
+              - boundary.getNode(1).getBulkSystem().getPhase(1).getComponent(component).getx())
+          / boundary.getNodeLength();
+      assertEquals(expectedFlux, solver.getMolarFlux(component), 0.0);
+    }
+  }
+
+  /**
+   * Exposes actual finite-volume coefficients and stored profiles for migration-contract checks.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  private static final class BoundarySolverProbe extends FluidBoundarySolver {
+    /**
+     * Creates a solver for the real nonreactive boundary fixture.
+     *
+     * @param boundary initialized finite-volume boundary
+     */
+    private BoundarySolverProbe(FluidBoundarySystemInterface boundary) {
+      super(boundary);
+    }
+
+    /**
+     * Returns the actual component-profile columns.
+     *
+     * @return stored component profiles
+     */
+    private DMatrixRMaj[] profiles() {
+      return solMatrix.clone();
+    }
+
+    /**
+     * Solves the currently assembled tridiagonal system using dense Jama as an independent algebra check.
+     *
+     * @return reference component profile
+     */
+    private double[] referenceProfile() {
+      double[][] coefficients = new double[b.length][b.length];
+      for (int node = 0; node < b.length; node++) {
+        coefficients[node][node] = b[node];
+        if (node > 0) {
+          coefficients[node][node - 1] = a[node];
+        }
+        if (node + 1 < b.length) {
+          coefficients[node][node + 1] = c[node];
+        }
+      }
+      return new Matrix(coefficients).solve(new Matrix(r, r.length)).getColumnPackedCopy();
+    }
+  }
+
   private static SystemInterface fluid() {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 1.0);
