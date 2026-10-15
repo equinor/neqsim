@@ -1840,7 +1840,7 @@ Commercial process simulators do not publish all implementation details, but pub
   original only when phase fractions, normalization, material balance, fugacity equality, distinct compositions, and
   lower Gibbs energy all pass. Thus the enrichment and beta values gate cost; they do not decide stability. An
   already-active neutral aqueous split with a
-  non-finite material residual or one above `1e-8` may use the existing three-step beta correction below that threshold;
+  non-finite material residual or one above `1e-8` may use the bounded existing-phase beta repair below that threshold;
   this does not search for or create a phase. A trace-water GAS+OIL endpoint with a confirmed non-finite or at-least
   `1e-8` log-fugacity residual may run the existing guarded multiphase candidate and is replaced only by a strictly
   feasible lower-Gibbs result. That invalid-endpoint retry is restricted to an incipient secondary phase with
@@ -2893,3 +2893,61 @@ These public synthetic fluids qualify translated-PR TP-flash closure and lifecyc
 do not validate the volume-translation correlation or parameters, phase-envelope accuracy,
 experimental PVT predictions, PS/PH flashes, or acoustic-speed calculations. No production solver,
 public API, model parameter, unit, default, or wall-clock performance claim is introduced.
+
+
+### Existing trace-water aqueous split repair (PR #4320)
+
+An aqueous label alone does not establish a valid equilibrium. For neutral, unconstrained
+fluid flashes with a positive water feed fraction below 0.01, an already-present two-phase
+aqueous split enters the existing endpoint recovery only when its component material-balance
+residual is non-finite or exceeds `1e-8`. Balanced endpoints require no candidate clone or
+additional EOS initialization. Chemical, ionic, solid, wax, forced-phase and phase-locked
+states are excluded from this new existing-aqueous repair path.
+
+The detached candidate retains its active phases and starts from an interior 50/50 beta seed.
+That seed is purely numerical. Up to 20 complete `TPmultiflash.solveBeta()` calls update beta,
+compositions and fugacities; each call also has its own bounded inner iteration loop. No
+redundant `init(1)` is performed after these calls. Acceptance requires finite bounded beta
+and compositions, beta and composition normalization within `1e-12`, component material
+balance within `1e-10`, and interphase log-fugacity residual below `1e-8`, together with the
+existing distinct-phase and candidate-selection checks. These stricter tolerances apply to
+this repair only; ordinary solver tolerances are unchanged.
+
+Two consecutive solves that fail to reduce the larger material/fugacity residual by at
+least one part per million stop the repair early. Non-finite residuals also stop it. The
+same strict acceptance and final failure checks apply. A qualified trace-water gas/aqueous
+candidate is copied directly, just like an oil/aqueous candidate; it is not discarded by
+replaying the ordinary flash used for water-rich cross-algorithm recovery.
+
+The public reservoir regression exposed an upstream inventory problem in
+`SystemThermo.setTotalFlowRate`: subtracting a reservoir-sized component amount to obtain
+a stream-sized flow loses significant digits. Repeated beta solves cannot close a feed
+whose overall fractions do not sum to one. Flow scaling now rebuilds positive component
+amounts from normalized ratios, with no extra EOS initialization or system clone. The
+250 bara, 363.15 K gas-producer regression exercises extraction, both rate changes and
+repeated public TP flashes. Separate inventory tests cover initial amounts from `1e-12`
+to `1e18` mol and retain a `1e-10` mole-fraction nitrogen component. They check component
+ratios, total flow and normalization without loosening the flash contract.
+
+If repair was attempted, the public `TPflash.run()` return also checks the final endpoint after
+subsequent phase selection and cleanup. This final check permits one, two or three phases;
+it does not force the repaired two-phase topology. An unqualified endpoint raises
+`IllegalStateException` with temperature, pressure and material residual instead of returning
+silently. Iterative PH/PS callers can therefore observe an unrecovered numerical failure.
+The check certifies local conservation, normalization and equilibrium closure, not global
+thermodynamic stability or experimental accuracy.
+
+`TPflashTraceWaterRepairTest` qualifies public temperature sweeps, pressure changes and return,
+operation reuse, cold-reference agreement, and actual pump entropy/mass/energy closure with
+SRK, PR and CPA. Separate injected-state tests exercise strict acceptance, failure reporting
+and the no-clone/no-initialization guard. The original deliberately corrupted endpoint test
+remains. The synthetic public cases are lifecycle qualification; they do not reproduce the
+unavailable original process snapshot.
+
+`TPflashEndpointRecoveryBenchmark` includes dry gas, ordinary two-phase, CPA, condensate,
+trace-water oil/aqueous, undersaturated water and three-phase workloads. Arguments are output
+path, flashes per batch, batch count, warmup count, and optional family-name prefix. It records
+elapsed and thread CPU time, p95 latency, allocated bytes where supported, and numerical
+snapshots for both unchanged and changed states. Compare identical harnesses and JVM settings
+against an exact baseline in alternating fresh JVMs. Timing is diagnostic, never a CI assertion;
+failed numerical states must remain visible and cannot count as successful faster flashes.
