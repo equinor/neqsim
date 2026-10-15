@@ -1,6 +1,11 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseGERG2004Eos;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -22,6 +27,38 @@ final class FluidEquilibriumChecks {
 
   /** Prevents instantiation of the stateless checks. */
   private FluidEquilibriumChecks() {
+  }
+
+  /**
+   * Rejects a volume that does not solve its phase's actual pressure equation.
+   *
+   * @param phase initialized phase whose pressure and volume must agree
+   * @throws IllegalStateException if an EOS root is non-finite, mechanically unstable, or inconsistent with pressure
+   */
+  static void validatePressureRoot(PhaseInterface phase) {
+    PhaseType type = phase.getType();
+    if (!(phase instanceof PhaseEosInterface)
+        || !(type == PhaseType.GAS || type == PhaseType.OIL || type == PhaseType.LIQUID || type == PhaseType.AQUEOUS)
+        || phase instanceof PhaseGERG2004Eos || phase instanceof PhaseSpanWagnerEos) {
+      // These legacy external-property adapters inherit a cubic pressure method unrelated to their own density EOS.
+      // Solids, hydrates and activity-coefficient phases likewise do not expose this fluid pressure equation.
+      return;
+    }
+    PhaseEosInterface eos = (PhaseEosInterface) phase;
+    double requested = phase.getPressure();
+    double actual = eos.calcPressure();
+    double derivative = eos.calcPressuredV();
+    // Pressure can be a cancellation of large attractive and repulsive terms in a stiff liquid.
+    // Retain the volume solvers' 1e-10 relative-volume accuracy as a backward-error bound.
+    // At a spinodal the slope vanishes, so the direct pressure residual still controls acceptance.
+    double volume = phase.getTotalVolume();
+    double tolerance = Math.max(1.0e-8 * Math.max(1.0, Math.abs(requested)), 1.0e-10 * Math.abs(volume * derivative));
+    if (!Double.isFinite(requested) || !(requested > 0.0) || !Double.isFinite(actual) || !Double.isFinite(volume)
+        || !(volume > 0.0) || !Double.isFinite(tolerance) || Math.abs(actual - requested) > tolerance
+        || !Double.isFinite(derivative) || derivative > 0.0) {
+      throw new IllegalStateException("Fluid equilibrium has an invalid EOS pressure root: requested=" + requested
+          + ", calculated=" + actual + ", dP/dV=" + derivative);
+    }
   }
 
   /**
@@ -60,8 +97,12 @@ final class FluidEquilibriumChecks {
       throw new IllegalStateException("Fluid equilibrium requires a finite positive feed");
     }
     FlashPhaseConstraints constraints = FlashPhaseConstraints.capture(system);
+    boolean distributedIons = ElectroneutralLiquidPartition.hasDistributedIons(system);
+    ElectroneutralPhaseCoordinates chargeCoordinates = distributedIons ? new ElectroneutralPhaseCoordinates(system)
+        : null;
     double betaSum = 0.0;
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      validatePressureRoot(system.getPhase(phase));
       double beta = system.getBeta(phase);
       if (!Double.isFinite(beta) || beta <= 0.0 || beta > 1.0) {
         throw new IllegalStateException("Fluid equilibrium has an invalid material phase fraction");
@@ -83,7 +124,10 @@ final class FluidEquilibriumChecks {
         if (!Double.isFinite(amount) || Math.abs(amount - beta * x) > BALANCE_TOLERANCE) {
           throw new IllegalStateException("Fluid equilibrium has inconsistent stored species amounts");
         }
-        if (!constraints.isAllowed(phase, component) && x > 1.0e-40) {
+        boolean allowed = distributedIons && FlashPhaseConstraints.isIon(species)
+            ? ElectroneutralLiquidPartition.isLiquidHost(system, phase)
+            : constraints.isAllowed(phase, component);
+        if (!allowed && x > 1.0e-40) {
           throw new IllegalStateException("Fluid equilibrium placed an aqueous-only ion in another material phase");
         }
         sum += x;
@@ -123,6 +167,17 @@ final class FluidEquilibriumChecks {
           throw new IllegalStateException(
               "Fluid equilibrium failed molecular fugacity equality for " + system.getComponent(component).getName()
                   + " in phase " + phase + ": log residual=" + (Math.log(fugacity) - Math.log(reference)));
+        }
+      }
+    }
+    if (chargeCoordinates != null) {
+      if (!chargeCoordinates.feasible(chargeCoordinates.amounts(system))) {
+        throw new IllegalStateException("Fluid equilibrium has invalid distributed ionic amounts");
+      }
+      for (int row = 0; row < chargeCoordinates.size(); row++) {
+        double affinity = chargeCoordinates.gradient(system, row);
+        if (!Double.isFinite(affinity) || Math.abs(affinity) > FUGACITY_TOLERANCE) {
+          throw new IllegalStateException("Fluid equilibrium failed charge-neutral transfer stationarity: " + affinity);
         }
       }
     }

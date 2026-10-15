@@ -13,6 +13,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -123,9 +124,76 @@ public final class StabilityOptimizationBenchmark {
     }
   }
 
+  /**
+   * Records pressure closure before property initialization can repair a returned volume.
+   *
+   * <p>
+   * This explicit scope covers the cubic and associating models in this benchmark. An external-property adapter may
+   * inherit an unrelated cubic pressure method; an unqualified model is reported as unavailable, never as a passed
+   * pressure check. The identical helper is compiled against every compared build.
+   * </p>
+   *
+   * @param system current fluid state
+   * @return raw phase pressures, backward-error bounds and aggregate validity
+   */
+  private static JsonObject pressureSnapshot(SystemInterface system) {
+    JsonObject result = new JsonObject();
+    JsonArray phases = new JsonArray();
+    boolean valid = system.getNumberOfPhases() > 0;
+    for (int index = 0; index < system.getNumberOfPhases(); index++) {
+      PhaseInterface phase = system.getPhase(index);
+      String implementation = phase.getClass().getSimpleName();
+      boolean supported = Arrays
+          .asList("PhaseSrkEos", "PhasePrEos", "PhaseSrkCPA", "PhaseSrkCPAs", "PhaseElectrolyteCPA",
+              "PhaseElectrolyteCPAstatoil", "PhaseElectrolyteCPAMM", "PhaseModifiedFurstElectrolyteEos")
+          .contains(implementation) && phase instanceof PhaseEosInterface;
+      JsonObject record = new JsonObject();
+      record.addProperty("implementation", implementation);
+      record.addProperty("available", supported);
+      record.addProperty("rootSelector", FlashBenchmarkStateCopy.requestedRoot(system, index));
+      if (supported) {
+        PhaseEosInterface eos = (PhaseEosInterface) phase;
+        double requested = phase.getPressure();
+        double calculated = eos.calcPressure();
+        double derivative = eos.calcPressuredV();
+        double volume = phase.getTotalVolume();
+        double tolerance = Math.max(1.0e-8 * Math.max(1.0, Math.abs(requested)),
+            1.0e-10 * Math.abs(volume * derivative));
+        boolean phaseValid = Double.isFinite(requested) && requested > 0.0 && Double.isFinite(calculated)
+            && Double.isFinite(volume) && volume > 0.0 && Double.isFinite(derivative) && derivative <= 0.0
+            && Double.isFinite(tolerance) && Math.abs(calculated - requested) <= tolerance;
+        number(record, "requestedPressureBara", requested);
+        number(record, "calculatedPressureBara", calculated);
+        number(record, "totalVolumeInternalUnits", volume);
+        number(record, "pressureDerivativePerInternalVolume", derivative);
+        number(record, "absoluteResidualBara", Math.abs(calculated - requested));
+        number(record, "acceptanceBoundBara", tolerance);
+        record.addProperty("passed", phaseValid);
+        valid &= phaseValid;
+      } else {
+        record.addProperty("passed", false);
+        valid = false;
+      }
+      phases.add(record);
+    }
+    result.addProperty("passed", valid);
+    result.add("phases", phases);
+    return result;
+  }
+
+  /**
+   * Captures returned-state pressure closure and the initialized thermodynamic endpoint.
+   *
+   * @param system flashed fluid
+   * @param originalMoles original total species amount
+   * @param originalMass original total mass in kg
+   * @return numerical evidence, including any invalid returned volume
+   */
   static JsonObject snapshot(SystemInterface system, double originalMoles, double originalMass) {
+    JsonObject returnedPressure = pressureSnapshot(system);
     system.init(3);
     system.initPhysicalProperties(neqsim.physicalproperties.PhysicalPropertyType.MASS_DENSITY);
+    JsonObject initializedPressure = pressureSnapshot(system);
     JsonObject state = new JsonObject();
     JsonArray components = new JsonArray();
     JsonArray phases = new JsonArray();
@@ -215,9 +283,12 @@ public final class StabilityOptimizationBenchmark {
     state.addProperty("fugacityComparisons", comparisons);
     state.addProperty("excludedFugacityComparisons", excluded);
     state.addProperty("finitePhysicalState", finite);
+    state.add("returnedPressureRoots", returnedPressure);
+    state.add("initializedPressureRoots", initializedPressure);
     state.addProperty("validationPassed",
         finite && materialError < 1.0e-10 && fugacityError < 1.0e-8 && normalizationError < 1.0e-12
             && Math.abs(betaSum - 1.0) < 1.0e-12 && massError < 1.0e-12 && moleError < 1.0e-12
+            && returnedPressure.get("passed").getAsBoolean() && initializedPressure.get("passed").getAsBoolean()
             && (system.getNumberOfPhases() == 1 || comparisons > 0));
     state.add("components", components);
     state.add("phases", phases);
@@ -233,7 +304,7 @@ public final class StabilityOptimizationBenchmark {
       long start = System.nanoTime();
       new ThermodynamicOperations(system).TPflash();
       long elapsed = System.nanoTime() - start;
-      state = snapshot(system, originalMoles, originalMass);
+      state = snapshot(FlashBenchmarkStateCopy.copy(system), originalMoles, originalMass);
       state.addProperty("elapsedNs", elapsed);
     } catch (RuntimeException exception) {
       state = new JsonObject();

@@ -169,6 +169,15 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
     return ((ComponentGEInterface) getComponent(k)).getGamma();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  protected double getMolalityActivityCoefficient(int component, int solvent) {
+    // GE models publish symmetric coefficients; normalize to the same water
+    // infinite-dilution reference before converting the concentration scale.
+    return getActivityCoefficient(component) / getActivityCoefficientInfDilWater(component, solvent)
+        * getComponent(solvent).getx();
+  }
+
   /**
    * getActivityCoefficientInfDilWater.
    *

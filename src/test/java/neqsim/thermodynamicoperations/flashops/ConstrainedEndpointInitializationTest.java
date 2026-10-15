@@ -3,7 +3,9 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemElectrolyteCPAMM;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -34,6 +36,39 @@ class ConstrainedEndpointInitializationTest {
     for (int iteration = 0; iteration < 5; iteration++) {
       fluid.init(iteration % 2 == 0 ? 1 : 3);
       FluidEquilibriumChecks.validate(fluid, inventory);
+    }
+  }
+
+  /** Keeps the same ionic boiling roots across neutral beta bounds, feed scales and caloric initialization. */
+  @Test
+  void boilingBrineRetainsConstrainedAqueousHostAtNeutralBetaBound() {
+    for (double temperature : new double[] {395.65, 409.4}) {
+      double referenceGasBeta = Double.NaN;
+      for (double scale : new double[] {0.01, 1.0, 100.0}) {
+        SystemInterface fluid = new SystemElectrolyteCPAstatoil(temperature, 1.0);
+        fluid.addComponent("water", 55.508 * scale);
+        fluid.addComponent("Na+", scale);
+        fluid.addComponent("Cl-", scale);
+        fluid.setMixingRule(10);
+        fluid.setMultiPhaseCheck(true);
+        double[] inventory = FluidEquilibriumChecks.inventory(fluid);
+        for (int repeat = 0; repeat < 2; repeat++) {
+          new ThermodynamicOperations(fluid).TPflash();
+          for (int level : new int[] {1, 3, 1}) {
+            fluid.init(level);
+            FluidEquilibriumChecks.validate(fluid, inventory);
+            assertEquals(2, fluid.getNumberOfPhases(), "Boiling retains gas and the material ionic host");
+            assertTrue(fluid.hasPhaseType(PhaseType.GAS));
+            assertTrue(fluid.hasPhaseType(PhaseType.AQUEOUS));
+          }
+          double gasBeta = fluid.getBeta(fluid.getPhaseNumberOfPhase("gas"));
+          if (Double.isFinite(referenceGasBeta)) {
+            assertEquals(referenceGasBeta, gasBeta, 1.0e-8, "Feed scale and repeated flashes retain the same roots");
+          } else {
+            referenceGasBeta = gasBeta;
+          }
+        }
+      }
     }
   }
 

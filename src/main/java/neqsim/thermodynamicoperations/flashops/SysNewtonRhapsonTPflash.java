@@ -80,6 +80,12 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** Phase admissibility captured before compositions are perturbed. */
   private FlashPhaseConstraints phaseConstraints;
 
+  /** Whether charge-neutral ion transfers between aqueous liquids are active. */
+  private boolean electroneutralLiquidPartition;
+
+  /** Fixed charge-eliminated transfer basis, when requested by the electrolyte polisher. */
+  private ElectroneutralPhaseCoordinates chargeCoordinates;
+
   // Reused EJML matrices for Newton corrections
   /** Jacobian matrix (Hessian of Q). */
   private DMatrixRMaj jacMatrix;
@@ -110,6 +116,19 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @param numberOfComponents a int
    */
   public SysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases, int numberOfComponents) {
+    this(system, numberOfPhases, numberOfComponents, false);
+  }
+
+  /**
+   * Constructs a local fixed-topology solver with optional electroneutral liquid partitioning.
+   *
+   * @param system initialized fluid with interior participating amounts
+   * @param numberOfPhases active fluid phase count
+   * @param numberOfComponents component count
+   * @param distributeIons whether to include charge-neutral ion-transfer directions
+   */
+  SysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases, int numberOfComponents, boolean distributeIons) {
+    electroneutralLiquidPartition = distributeIons;
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     z = new double[numberOfComponents];
@@ -153,6 +172,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   private void refreshActiveVariables() {
     activePhases = system.getNumberOfPhases();
     phaseConstraints = FlashPhaseConstraints.capture(system);
+    if (electroneutralLiquidPartition) {
+      refreshElectroneutralVariables();
+      return;
+    }
+    chargeCoordinates = null;
     if (activePhases > 2) {
       refreshMultiphaseVariables();
       return;
@@ -201,6 +225,12 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * Setter for the field <code>fvec</code>.
    */
   public void setfvec() {
+    if (chargeCoordinates != null) {
+      for (int row = 0; row < neq; row++) {
+        fvecVector.set(row, 0, chargeCoordinates.gradient(system, row));
+      }
+      return;
+    }
     if (activePhases > 2) {
       for (int row = 0; row < neq; row++) {
         int component = variableComponents[row];
@@ -222,6 +252,14 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * setJac.
    */
   public void setJac() {
+    if (chargeCoordinates != null) {
+      for (int row = 0; row < neq; row++) {
+        for (int column = 0; column < neq; column++) {
+          jacMatrix.set(row, column, chargeCoordinates.curvature(system, row, column));
+        }
+      }
+      return;
+    }
     if (activePhases > 2) {
       for (int row = 0; row < neq; row++) {
         for (int column = 0; column < neq; column++) {
@@ -258,8 +296,15 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * Setter for the field <code>u</code>.
    */
   public void setu() {
-    if (activePhases == 2 && secondPhaseCoordinate == null) {
+    if (activePhases <= 2 && secondPhaseCoordinate == null) {
       refreshActiveVariables();
+    }
+    if (chargeCoordinates != null) {
+      uVector = chargeCoordinates.amounts(system);
+      if (!chargeCoordinates.feasible(uVector)) {
+        throw new IllegalStateException("Electroneutral Newton requires positive participating phase amounts");
+      }
+      return;
     }
     if (activePhases > 2) {
       for (int phase = 0; phase < activePhases; phase++) {
@@ -275,6 +320,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       }
       return;
     }
+    if (secondPhaseCoordinate == null) {
+      throw new IllegalStateException("Two-phase Newton coordinates were not initialized");
+    }
     for (int i = 0; i < numberOfComponents; i++) {
       int phase = secondPhaseCoordinate[i] ? 1 : 0;
       uVector[i] = freeComponent[i] ? system.getBeta(phase) * system.getPhase(phase).getComponent(i).getx()
@@ -286,7 +334,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * init.
    */
   public void init() {
-    if (activePhases == 2 && secondPhaseCoordinate == null) {
+    if (activePhases <= 2 && secondPhaseCoordinate == null) {
       // Older serialized solvers stored first-phase coordinates without an orientation map.
       refreshActiveVariables();
       setu();
@@ -294,6 +342,14 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     setCompositions(uVector);
     // Full system init: computes fugacities, T/P/composition derivatives
     system.init(3);
+    validatePressureRoots();
+  }
+
+  /** Rejects a false stationary volume before its fugacities enter the Newton objective or derivatives. */
+  private void validatePressureRoots() {
+    for (int phase = 0; phase < activePhases; phase++) {
+      FluidEquilibriumChecks.validatePressureRoot(system.getPhase(phase));
+    }
   }
 
   /**
@@ -305,7 +361,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @return Q value
    */
   private double computeQ(double[] amounts) {
-    if (activePhases > 2) {
+    if (chargeCoordinates != null || activePhases > 2) {
       double objective = 0.0;
       for (int phase = 0; phase < activePhases; phase++) {
         for (int component = 0; component < numberOfComponents; component++) {
@@ -341,6 +397,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @return true if all compositions and beta are in valid range
    */
   private boolean isFeasible(double[] uTrial) {
+    if (chargeCoordinates != null) {
+      return chargeCoordinates.feasible(uTrial);
+    }
     if (activePhases > 2) {
       for (int phase = 0; phase < activePhases; phase++) {
         double beta = 0.0;
@@ -386,7 +445,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    */
   private void setTrialAndComputeFugacities(double[] uTrial) {
     setCompositions(uTrial);
-    if (activePhases > 2) {
+    if (chargeCoordinates != null || activePhases > 2) {
       for (int phase = 0; phase < activePhases; phase++) {
         system.init(1, phase);
       }
@@ -402,6 +461,10 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @param amounts component amount coordinates on the total-feed mole basis
    */
   private void setCompositions(double[] amounts) {
+    if (chargeCoordinates != null) {
+      chargeCoordinates.apply(system, amounts);
+      return;
+    }
     if (activePhases > 2) {
       for (int phase = 0; phase < activePhases; phase++) {
         double beta = 0.0;
@@ -448,6 +511,13 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    */
   private void formTrial(double scale) {
     System.arraycopy(uVector, 0, uTrialVector, 0, uVector.length);
+    if (chargeCoordinates != null) {
+      for (int row = 0; row < neq; row++) {
+        chargeCoordinates.increment(uTrialVector, row, -scale * dxVector.get(row, 0));
+      }
+      chargeCoordinates.reconstruct(uTrialVector);
+      return;
+    }
     if (activePhases > 2) {
       for (int row = 0; row < neq; row++) {
         int index = variablePhases[row] * numberOfComponents + variableComponents[row];
@@ -547,14 +617,15 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     }
     setJac();
 
-    // Levenberg-Marquardt regularization for stability
-    double jacTrace = 0.0;
+    // Relative diagonal regularization preserves each amount coordinate's curvature scale.
+    // A trace species has a large inverse-amount curvature; using the full trace to damp every
+    // coordinate can freeze abundant-species transfers and exhaust the outer flash iteration bound.
     for (int i = 0; i < neq; i++) {
-      jacTrace += Math.abs(jacMatrix.get(i, i));
-    }
-    double lambda = 1e-8 * jacTrace / neq;
-    for (int i = 0; i < neq; i++) {
-      jacMatrix.set(i, i, jacMatrix.get(i, i) + lambda);
+      double diagonal = jacMatrix.get(i, i);
+      if (!Double.isFinite(diagonal)) {
+        throw new IllegalStateException("Non-finite Newton flash curvature");
+      }
+      jacMatrix.set(i, i, diagonal + 1e-8 * Math.abs(diagonal));
     }
 
     // Solve J * dx = fvec using EJML (pre-allocated work buffer)
@@ -585,6 +656,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       if (isFeasible(uTrialVector)) {
         try {
           setTrialAndComputeFugacities(uTrialVector);
+          validatePressureRoots();
           double qTrial = computeQ(uTrialVector);
           // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
           if (Double.isFinite(qTrial) && qTrial <= qCurrent - c1 * alpha * slope) {
@@ -624,11 +696,17 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     double stepNormSq = 0.0;
     double uNormSq = 0.0;
     for (int row = 0; row < neq; row++) {
-      int component = variableComponents[row];
       double step = alpha * dxVector.get(row, 0);
       stepNormSq += step * step;
-      int index = activePhases > 2 ? variablePhases[row] * numberOfComponents + component : component;
-      uNormSq += uTrialVector[index] * uTrialVector[index];
+      double value;
+      if (chargeCoordinates != null) {
+        value = chargeCoordinates.coordinate(uTrialVector, row);
+      } else {
+        int component = variableComponents[row];
+        int index = activePhases > 2 ? variablePhases[row] * numberOfComponents + component : component;
+        value = uTrialVector[index];
+      }
+      uNormSq += value * value;
     }
     // A bound-limited correction can be tiny while the phase equilibrium equations remain unsolved.
     // Report the actual residual as well, so the caller continues to a feasible equilibrium or SSI boundary step.
@@ -644,6 +722,25 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     }
     System.arraycopy(uTrialVector, 0, uVector, 0, uVector.length);
     return Math.max(remainingResidual, Math.sqrt(stepNormSq) / Math.max(Math.sqrt(uNormSq), 1e-10));
+  }
+
+  /** Refreshes the fixed charge-neutral transfer basis and corresponding numerical storage. */
+  private void refreshElectroneutralVariables() {
+    chargeCoordinates = new ElectroneutralPhaseCoordinates(system);
+    for (int component = 0; component < numberOfComponents; component++) {
+      z[component] = system.getComponent(component).getz();
+    }
+    uVector = new double[activePhases * numberOfComponents];
+    uTrialVector = new double[uVector.length];
+    int activeCount = chargeCoordinates.size();
+    if (jacMatrix == null || activeCount != neq) {
+      neq = activeCount;
+      jacMatrix = new DMatrixRMaj(neq, neq);
+      fvecVector = new DMatrixRMaj(neq, 1);
+      dxVector = new DMatrixRMaj(neq, 1);
+      jacWork = new DMatrixRMaj(neq, neq);
+      linearSolver = neq == 0 ? null : LinearSolverFactory_DDRM.lu(neq);
+    }
   }
 
   /** Refreshes the variable map for more than two fixed fluid phases. */

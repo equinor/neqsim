@@ -1,0 +1,916 @@
+{
+  "status": "Bounded proposed defaults; quantitative divalent model and extrapolation remain unqualified",
+  "model": "SystemElectrolyteCPAstatoil, source-correct Born characteristic diameter and N2 dielectric epsilon=2",
+  "source_data": {
+    "SDS10_url": "https://iupac.github.io/SolubilityDataSeries/volumes/SDS-10.pdf",
+    "SDS10_local_sha256": "3114aee013dd01e891040c654061780c557bae87eab89d91a29da4a491c667ef",
+    "original_Morrison_Billett_1952_doi": "10.1039/JR9520003819",
+    "density_correlation_doi": "10.1021/je0498659",
+    "Onda_1970_doi": "10.1252/jcej.3.18",
+    "Solbraa_2002_url": "http://hdl.handle.net/11250/231326"
+  },
+  "nitrogen_nacl": {
+    "training_source": "Morrison and Billett 1952, reproduced SDS10 p69; dataset classified tentative p50",
+    "convention": "log10(HmSalt/HmWater) = ksmm*mSalt; Hm=fGas/mGas in bar kg/mol; mSalt mol/kg water; ksmm kg/mol",
+    "training_pressure_bar": 1.01325,
+    "training_molality_mol_per_kg_water": 1.0,
+    "reported_ksmm_uncertainty_kg_per_mol": 0.01,
+    "training_rows": [
+      {
+        "temperature_K": 285.75,
+        "reference_ksmm_kg_per_mol": 0.154,
+        "fitted_equal_ion_constant_W_m3_per_mol": 1.5812432250186e-06
+      },
+      {
+        "temperature_K": 322.55,
+        "reference_ksmm_kg_per_mol": 0.106,
+        "fitted_equal_ion_constant_W_m3_per_mol": 2.0089810528816e-05
+      },
+      {
+        "temperature_K": 344.85,
+        "reference_ksmm_kg_per_mol": 0.106,
+        "fitted_equal_ion_constant_W_m3_per_mol": 2.081527324367e-05
+      }
+    ],
+    "equation": "W(T)=W0+W1*(1/T-1/298.15)+W2*((298.15-T)/T+ln(T/298.15))",
+    "units": {
+      "W0": "m3/mol",
+      "W1": "m3 K/mol",
+      "W2": "m3/mol",
+      "T": "K"
+    },
+    "reproduction": "At each training T use public force-single-aqueous init(3) with N2=1e-8 mol, water=1 mol, Na+=Cl-=0.01801528 mol, mixing rule10. Set equal gas-Na and gas-Cl W0, W1=W2=0 on every phase. Bisect W0 over [-.001,.001] for42 iterations to match log10(HmSalt/HmWater). Solve the3x3 linear temperature-basis system for the three resulting W values. Hm=phi_N2*P*xwater*Mwater. No solvent/ion covolumes or other Furst coefficients changed.",
+    "equal_ion_coefficients": [
+      1.0718504029482e-05,
+      -0.053834813215369,
+      -0.0014224929630166
+    ],
+    "implementation_coefficients": {
+      "nitrogen_Na": [
+        -8.356299194103601e-05,
+        -0.107669626430738,
+        -0.0028449859260332
+      ],
+      "nitrogen_Cl": [
+        0.000105,
+        0,
+        0
+      ]
+    },
+    "identifiability": "Only the neutral NaCl pair sum is identified. Retaining legacy chloride and assigning the sum to sodium changes other sodium salts; this is not a globally invariant gauge transformation.",
+    "qualified_holdouts": [
+      {
+        "source": "Morrison and Billett1952 withheld temperature, SDS10p69",
+        "T_K": 303.15,
+        "P_bar": 1.01325,
+        "molality": 1,
+        "reference": 0.121,
+        "old": -0.09927340279632987,
+        "proposed": 0.1223400365,
+        "coefficient_unit": "kg/mol",
+        "acceptance_bound": 0.01,
+        "bound_type": "reported uncertainty"
+      },
+      {
+        "source": "Smith, Kelemen and Nagy1962, SDS10 critical evaluation p52 and raw data p348",
+        "T_K": 303.15,
+        "P_bar": 50,
+        "molarity": 1,
+        "reference": 0.124,
+        "old": -0.09395890151939038,
+        "proposed": 0.1334955484,
+        "coefficient_unit": "L/mol",
+        "acceptance_bound": 0.012,
+        "bound_type": "engineering envelope, not measurement uncertainty"
+      },
+      {
+        "source": "O'Sullivan and Smith1970, SDS10 critical evaluation p52 and raw data p350\u2013351",
+        "T_K": 324.65,
+        "P_bar": 100,
+        "molarity": 1,
+        "reference": 0.122,
+        "old": -0.08734517006694828,
+        "proposed": 0.1169578234,
+        "coefficient_unit": "L/mol",
+        "acceptance_bound": 0.012,
+        "bound_type": "engineering envelope, not measurement uncertainty"
+      }
+    ],
+    "qualified_holdout_AARD_percent": {
+      "old": 176.47061463785633,
+      "proposed": 4.299366714581032
+    },
+    "density_basis": {
+      "molarity_equation": "c=m*rho/(1+m*Ms)",
+      "Henry_basis_equation": "HcSalt/HcWater=(HmSalt/HmWater)*(1+m*Ms)*rhoWater/rhoSalt",
+      "rho_unit": "kg/L",
+      "Ms_NaCl_kg_per_mol": 0.05844277,
+      "reference": "Laliberte-Cooper2004 Eqs6,8,9 Table1",
+      "NaCl_density_coefficients": [
+        -0.00433,
+        0.06471,
+        1.0166,
+        0.014624,
+        3315.6
+      ],
+      "limitation": "Ambient density correlation represents the reported preparation concentration; compressed-liquid concentration uncertainty is not resolved."
+    },
+    "extended_holdout_evaluations": [
+      {
+        "T": 303.15,
+        "P": 20.0,
+        "c": 1.0,
+        "mEXP": 1.023690662,
+        "kscc": 0.1335846491,
+        "target": 0.124,
+        "residual": 0.009584649073
+      },
+      {
+        "T": 303.15,
+        "P": 50.0,
+        "c": 1.0,
+        "mEXP": 1.023690662,
+        "kscc": 0.1334955484,
+        "target": 0.124,
+        "residual": 0.009495548365
+      },
+      {
+        "T": 303.15,
+        "P": 100.0,
+        "c": 1.0,
+        "mEXP": 1.023690662,
+        "kscc": 0.1333557545,
+        "target": 0.124,
+        "residual": 0.009355754491
+      },
+      {
+        "T": 303.15,
+        "P": 300.0,
+        "c": 1.0,
+        "mEXP": 1.023690662,
+        "kscc": 0.1328929081,
+        "target": 0.124,
+        "residual": 0.008892908115
+      },
+      {
+        "T": 303.15,
+        "P": 600.0,
+        "c": 1.0,
+        "mEXP": 1.023690662,
+        "kscc": 0.1324291195,
+        "target": 0.124,
+        "residual": 0.008429119482
+      },
+      {
+        "T": 303.15,
+        "P": 20.0,
+        "c": 2.7,
+        "mEXP": 2.867223124,
+        "kscc": 0.1472775108,
+        "target": 0.113,
+        "residual": 0.03427751079
+      },
+      {
+        "T": 303.15,
+        "P": 50.0,
+        "c": 2.7,
+        "mEXP": 2.867223124,
+        "kscc": 0.1472052804,
+        "target": 0.113,
+        "residual": 0.03420528036
+      },
+      {
+        "T": 303.15,
+        "P": 100.0,
+        "c": 2.7,
+        "mEXP": 2.867223124,
+        "kscc": 0.1470931386,
+        "target": 0.113,
+        "residual": 0.03409313855
+      },
+      {
+        "T": 303.15,
+        "P": 300.0,
+        "c": 2.7,
+        "mEXP": 2.867223124,
+        "kscc": 0.1467358488,
+        "target": 0.113,
+        "residual": 0.03373584885
+      },
+      {
+        "T": 303.15,
+        "P": 600.0,
+        "c": 2.7,
+        "mEXP": 2.867223124,
+        "kscc": 0.1464185181,
+        "target": 0.113,
+        "residual": 0.03341851808
+      },
+      {
+        "T": 303.15,
+        "P": 20.0,
+        "c": 5.47,
+        "mEXP": 6.238165167,
+        "kscc": 0.1618593128,
+        "target": 0.098,
+        "residual": 0.06385931283
+      },
+      {
+        "T": 303.15,
+        "P": 50.0,
+        "c": 5.47,
+        "mEXP": 6.238165167,
+        "kscc": 0.161805984,
+        "target": 0.098,
+        "residual": 0.063805984
+      },
+      {
+        "T": 303.15,
+        "P": 100.0,
+        "c": 5.47,
+        "mEXP": 6.238165167,
+        "kscc": 0.1617244656,
+        "target": 0.098,
+        "residual": 0.06372446562
+      },
+      {
+        "T": 303.15,
+        "P": 300.0,
+        "c": 5.47,
+        "mEXP": 6.238165167,
+        "kscc": 0.1614802117,
+        "target": 0.098,
+        "residual": 0.06348021172
+      },
+      {
+        "T": 303.15,
+        "P": 600.0,
+        "c": 5.47,
+        "mEXP": 6.238165167,
+        "kscc": 0.1613108446,
+        "target": 0.098,
+        "residual": 0.06331084458
+      },
+      {
+        "T": 324.65,
+        "P": 20.0,
+        "c": 1.0,
+        "mEXP": 1.033205766,
+        "kscc": 0.1174087782,
+        "target": 0.122,
+        "residual": -0.004591221848
+      },
+      {
+        "T": 324.65,
+        "P": 50.0,
+        "c": 1.0,
+        "mEXP": 1.033205766,
+        "kscc": 0.1172347958,
+        "target": 0.122,
+        "residual": -0.004765204248
+      },
+      {
+        "T": 324.65,
+        "P": 100.0,
+        "c": 1.0,
+        "mEXP": 1.033205766,
+        "kscc": 0.1169578234,
+        "target": 0.122,
+        "residual": -0.005042176599
+      },
+      {
+        "T": 324.65,
+        "P": 300.0,
+        "c": 1.0,
+        "mEXP": 1.033205766,
+        "kscc": 0.1159937074,
+        "target": 0.122,
+        "residual": -0.006006292605
+      },
+      {
+        "T": 324.65,
+        "P": 600.0,
+        "c": 1.0,
+        "mEXP": 1.033205766,
+        "kscc": 0.114892066,
+        "target": 0.122,
+        "residual": -0.007107933985
+      },
+      {
+        "T": 324.65,
+        "P": 20.0,
+        "c": 4.0,
+        "mEXP": 4.433658101,
+        "kscc": 0.1349612516,
+        "target": 0.12,
+        "residual": 0.01496125155
+      },
+      {
+        "T": 324.65,
+        "P": 50.0,
+        "c": 4.0,
+        "mEXP": 4.433658101,
+        "kscc": 0.1348261541,
+        "target": 0.12,
+        "residual": 0.01482615408
+      },
+      {
+        "T": 324.65,
+        "P": 100.0,
+        "c": 4.0,
+        "mEXP": 4.433658101,
+        "kscc": 0.1346121743,
+        "target": 0.12,
+        "residual": 0.01461217428
+      },
+      {
+        "T": 324.65,
+        "P": 300.0,
+        "c": 4.0,
+        "mEXP": 4.433658101,
+        "kscc": 0.1338804597,
+        "target": 0.12,
+        "residual": 0.01388045969
+      },
+      {
+        "T": 324.65,
+        "P": 600.0,
+        "c": 4.0,
+        "mEXP": 4.433658101,
+        "kscc": 0.1330823974,
+        "target": 0.12,
+        "residual": 0.01308239739
+      },
+      {
+        "T": 375.65,
+        "P": 20.0,
+        "c": 1.0,
+        "mEXP": 1.066410766,
+        "kscc": 0.1469341071,
+        "target": 0.116,
+        "residual": 0.03093410713
+      },
+      {
+        "T": 375.65,
+        "P": 50.0,
+        "c": 1.0,
+        "mEXP": 1.066410766,
+        "kscc": 0.1466074694,
+        "target": 0.116,
+        "residual": 0.03060746943
+      },
+      {
+        "T": 375.65,
+        "P": 100.0,
+        "c": 1.0,
+        "mEXP": 1.066410766,
+        "kscc": 0.1460889681,
+        "target": 0.116,
+        "residual": 0.0300889681
+      },
+      {
+        "T": 375.65,
+        "P": 300.0,
+        "c": 1.0,
+        "mEXP": 1.066410766,
+        "kscc": 0.1442956746,
+        "target": 0.116,
+        "residual": 0.02829567455
+      },
+      {
+        "T": 375.65,
+        "P": 600.0,
+        "c": 1.0,
+        "mEXP": 1.066410766,
+        "kscc": 0.1422563304,
+        "target": 0.116,
+        "residual": 0.02625633042
+      },
+      {
+        "T": 375.65,
+        "P": 20.0,
+        "c": 4.0,
+        "mEXP": 4.566342275,
+        "kscc": 0.1599343903,
+        "target": 0.124,
+        "residual": 0.03593439035
+      },
+      {
+        "T": 375.65,
+        "P": 50.0,
+        "c": 4.0,
+        "mEXP": 4.566342275,
+        "kscc": 0.1596773021,
+        "target": 0.124,
+        "residual": 0.03567730212
+      },
+      {
+        "T": 375.65,
+        "P": 100.0,
+        "c": 4.0,
+        "mEXP": 4.566342275,
+        "kscc": 0.159269439,
+        "target": 0.124,
+        "residual": 0.03526943897
+      },
+      {
+        "T": 375.65,
+        "P": 300.0,
+        "c": 4.0,
+        "mEXP": 4.566342275,
+        "kscc": 0.1578635666,
+        "target": 0.124,
+        "residual": 0.03386356665
+      },
+      {
+        "T": 375.65,
+        "P": 600.0,
+        "c": 4.0,
+        "mEXP": 4.566342275,
+        "kscc": 0.1562854931,
+        "target": 0.124,
+        "residual": 0.03228549313
+      },
+      {
+        "T": 398.15,
+        "P": 20.0,
+        "c": 1.0,
+        "mEXP": 1.08564208,
+        "kscc": 0.181297029,
+        "target": 0.132,
+        "residual": 0.04929702901
+      },
+      {
+        "T": 398.15,
+        "P": 50.0,
+        "c": 1.0,
+        "mEXP": 1.08564208,
+        "kscc": 0.1809117338,
+        "target": 0.132,
+        "residual": 0.04891173377
+      },
+      {
+        "T": 398.15,
+        "P": 100.0,
+        "c": 1.0,
+        "mEXP": 1.08564208,
+        "kscc": 0.180303992,
+        "target": 0.132,
+        "residual": 0.04830399203
+      },
+      {
+        "T": 398.15,
+        "P": 300.0,
+        "c": 1.0,
+        "mEXP": 1.08564208,
+        "kscc": 0.1782405714,
+        "target": 0.132,
+        "residual": 0.04624057143
+      },
+      {
+        "T": 398.15,
+        "P": 600.0,
+        "c": 1.0,
+        "mEXP": 1.08564208,
+        "kscc": 0.175975953,
+        "target": 0.132,
+        "residual": 0.04397595295
+      },
+      {
+        "T": 398.15,
+        "P": 20.0,
+        "c": 4.0,
+        "mEXP": 4.635310481,
+        "kscc": 0.1944813412,
+        "target": 0.126,
+        "residual": 0.06848134118
+      },
+      {
+        "T": 398.15,
+        "P": 50.0,
+        "c": 4.0,
+        "mEXP": 4.635310481,
+        "kscc": 0.1941797623,
+        "target": 0.126,
+        "residual": 0.06817976229
+      },
+      {
+        "T": 398.15,
+        "P": 100.0,
+        "c": 4.0,
+        "mEXP": 4.635310481,
+        "kscc": 0.1937037012,
+        "target": 0.126,
+        "residual": 0.06770370119
+      },
+      {
+        "T": 398.15,
+        "P": 300.0,
+        "c": 4.0,
+        "mEXP": 4.635310481,
+        "kscc": 0.1920867824,
+        "target": 0.126,
+        "residual": 0.06608678241
+      },
+      {
+        "T": 398.15,
+        "P": 600.0,
+        "c": 4.0,
+        "mEXP": 4.635310481,
+        "kscc": 0.1903240612,
+        "target": 0.126,
+        "residual": 0.06432406122
+      }
+    ],
+    "limitations": [
+      "Approximate qualification285.75\u2013344.85K around1mol/kg; independent1mol/L checks50/100bar.",
+      "ConcentratedNaCl coefficient has wrong curvature:303.15K50bar2.7/5.47M predictions.1472/.1618 versus.113/.098.",
+      "High-temperature375.65\u2013398.15K extrapolation remains biased.",
+      "Pure-water nitrogen solubility unchanged, approximately2\u201310percent low on independentMorrison-Billett observations.",
+      "Other sodium salts and mixed-salt quantitative predictions are unqualified."
+    ]
+  },
+  "divalent_predictive_fallback": {
+    "provenance": "Prior source gas-ion block describes NaCl calibration but applied identical cation W to every positive ion, with no salt-specific data. Solbraa Eq8.14\u20138.15 gives ion-water/ion-ion predictive rules; Table8-14 illustrates separately fitted gas-salt residuals. Zero is an unfitted predictive assumption, not a published interaction parameter.",
+    "equation": "For charge+2 cations only, W(g,cation)=-2*legacyW(g,anion); W1=W2=0. In a neutral binary chloride, W(g,cation)+2W(g,Cl)=0.",
+    "scope": "StatoilCPA only; supported gas families from existing gas-ion dispatcher. Explicit fitted pair or any changed relevant global gas-ion entry suppresses this default.",
+    "unchanged": "No-gas binary electrolyte properties and all monovalent pairs, except separately fitted N2-Na, are unchanged. Chloride coefficients retained.",
+    "limitations": "No quantitative propane-CaCl2 validation. N2-CaCl2 magnitude72\u201376percent low at.5\u20131.75M, wrong sign at5.6M; diluteCO2-CaCl2 remains73percent high. Other anions and concentrated mixed salts unqualified.",
+    "independent_N2_CaCl2_source": "Smith,Kelemen,Nagy1962; SDS10 critical evaluation p49 and raw p346;303.15K,reported pressure range1.2\u20137.3MPa (one raw point76bar). Coefficients summarize multiple pressures, not individual measurements at each model pressure.",
+    "reference_rows": [
+      {
+        "molarity": 0.5,
+        "kscc_L_per_mol": 0.212,
+        "reported_uncertainty": 0.02
+      },
+      {
+        "molarity": 1.75,
+        "kscc_L_per_mol": 0.177,
+        "reported_uncertainty": 0.008
+      },
+      {
+        "molarity": 3.5,
+        "kscc_L_per_mol": 0.157,
+        "reported_uncertainty": 0.008
+      },
+      {
+        "molarity": 5.6,
+        "kscc_L_per_mol": 0.149,
+        "reported_uncertainty": 0.026
+      }
+    ],
+    "independent_N2_CaCl2_evaluations": [
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 12.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": -0.323731845,
+        "error": -0.535731845,
+        "zero_residual": false
+      },
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 30.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": -0.323965513,
+        "error": -0.535965513,
+        "zero_residual": false
+      },
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 50.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": -0.324223574,
+        "error": -0.536223574,
+        "zero_residual": false
+      },
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 73.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": -0.324518315,
+        "error": -0.536518315,
+        "zero_residual": false
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 12.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": -0.347655424,
+        "error": -0.524655424,
+        "zero_residual": false
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 30.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": -0.34787173,
+        "error": -0.52487173,
+        "zero_residual": false
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 50.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": -0.348110834,
+        "error": -0.525110834,
+        "zero_residual": false
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 73.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": -0.348384198,
+        "error": -0.525384198,
+        "zero_residual": false
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 12.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": -0.396657348,
+        "error": -0.553657348,
+        "zero_residual": false
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 30.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": -0.396883998,
+        "error": -0.553883998,
+        "zero_residual": false
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 50.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": -0.397134924,
+        "error": -0.554134924,
+        "zero_residual": false
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 73.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": -0.397422293,
+        "error": -0.554422293,
+        "zero_residual": false
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 12.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.473062227,
+        "error": -0.622062227,
+        "zero_residual": false
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 30.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.473512893,
+        "error": -0.622512893,
+        "zero_residual": false
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 50.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.474010183,
+        "error": -0.623010183,
+        "zero_residual": false
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 73.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.474577621,
+        "error": -0.623577621,
+        "zero_residual": false
+      },
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 12.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": 0.0595428897,
+        "error": -0.15245711,
+        "zero_residual": true
+      },
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 30.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": 0.0596863419,
+        "error": -0.152313658,
+        "zero_residual": true
+      },
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 50.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": 0.0598439191,
+        "error": -0.152156081,
+        "zero_residual": true
+      },
+      {
+        "c": 0.5,
+        "mEXP": 0.508177522,
+        "P": 73.0,
+        "ref": 0.212,
+        "uncertainty": 0.02,
+        "pred": 0.060022829,
+        "error": -0.151977171,
+        "zero_residual": true
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 12.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": 0.0423617423,
+        "error": -0.134638258,
+        "zero_residual": true
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 30.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": 0.0425605402,
+        "error": -0.13443946,
+        "zero_residual": true
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 50.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": 0.0427787654,
+        "error": -0.134221235,
+        "zero_residual": true
+      },
+      {
+        "c": 1.75,
+        "mEXP": 1.84204986,
+        "P": 73.0,
+        "ref": 0.177,
+        "uncertainty": 0.008,
+        "pred": 0.0430263469,
+        "error": -0.133973653,
+        "zero_residual": true
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 12.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": 0.000662489375,
+        "error": -0.156337511,
+        "zero_residual": true
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 30.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": 0.000967212375,
+        "error": -0.156032788,
+        "zero_residual": true
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 50.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": 0.00130096082,
+        "error": -0.155699039,
+        "zero_residual": true
+      },
+      {
+        "c": 3.5,
+        "mEXP": 3.92466993,
+        "P": 73.0,
+        "ref": 0.157,
+        "uncertainty": 0.008,
+        "pred": 0.00167865763,
+        "error": -0.155321342,
+        "zero_residual": true
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 12.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.0915355044,
+        "error": -0.240535504,
+        "zero_residual": true
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 30.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.0909768704,
+        "error": -0.23997687,
+        "zero_residual": true
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 50.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.0903694416,
+        "error": -0.239369442,
+        "zero_residual": true
+      },
+      {
+        "c": 5.6,
+        "mEXP": 6.96156815,
+        "P": 73.0,
+        "ref": 0.149,
+        "uncertainty": 0.026,
+        "pred": -0.0896874834,
+        "error": -0.238687483,
+        "zero_residual": true
+      }
+    ],
+    "independent_CO2_CaCl2_dilute_298K": {
+      "source": "Onda1970Table3,base10 coefficient per ionic strength. I=3c for CaCl2;3*(-.2277-.0547+.3416)=.1776L/mol.",
+      "reference_kscc_L_per_mol": 0.1776,
+      "evaluation_molarity": 0.01,
+      "old": -0.157279143,
+      "proposed": 0.307049242
+    }
+  },
+  "default_detection": {
+    "explicit_pair": "Only wijCalcOrFitted[g][ion]==0 permits a calculated default. Any of the3 setters marks both symmetric pair flags fitted and preserves remaining coefficients.",
+    "global": "private static final double[] defaultGasIonParameters=furstParamsGasIon.clone(); isDefaultGasIonParameter(i) returns furstParamsGasIon[i]==defaultGasIonParameters[i]; both gas cation and gas anion entries must match.",
+    "model": "phase instanceof PhaseElectrolyteCPAstatoil",
+    "N2_cation": "gas is nitrogen and cation component name is Na+",
+    "divalent_cation": "ionic charge equals2.0"
+  },
+  "validation": {
+    "new_regressions": {
+      "old_N2_holdouts": "0/3 pass",
+      "patched_all": "14/14 pass"
+    },
+    "original_physical_tests": "4/4 pass with actual production defaults, no diagnostic flags",
+    "salt_to_fresh_molality_per_fugacity_ratios": {
+      "nitrogen": 0.7411542624065238,
+      "natural": 0.741965943462321,
+      "butane": 0.9448862073016214,
+      "mixed": 0.6940112861931027
+    },
+    "endpoint_inventory_max_abs_mol": 7.868e-12,
+    "endpoint_max_abs_log_fugacity_residual": 8.703e-11,
+    "endpoint_max_FD_scaled_error": 6.4433e-06,
+    "derivative_note": "Worst difference is trace-hydrocarbon composition finite differencing, several1e-6 with similar step-size cancellation; fitted pair temperature derivative checks pass2e-13/2e-15 absolute bounds."
+  }
+}

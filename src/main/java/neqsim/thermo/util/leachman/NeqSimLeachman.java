@@ -100,6 +100,34 @@ public class NeqSimLeachman {
   }
 
   /**
+   * Evaluates the reference equation at a specified molar density without solving a new pressure root.
+   *
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/L
+   * @return pressure in kPa
+   */
+  public double pressureFromMolarDensity(double temperature, double molarDensity) {
+    doubleW calculatedPressure = new doubleW(0.0);
+    doubleW compressibility = new doubleW(0.0);
+    Leachman.PressureLeachman(temperature, molarDensity, calculatedPressure, compressibility);
+    return calculatedPressure.val;
+  }
+
+  /**
+   * Evaluates the isothermal reference pressure derivative at a specified molar density.
+   *
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/L
+   * @return pressure derivative in kPa per mol/L
+   */
+  public double pressureDerivativeMolarDensity(double temperature, double molarDensity) {
+    doubleW calculatedPressure = new doubleW(0.0);
+    doubleW compressibility = new doubleW(0.0);
+    Leachman.PressureLeachman(temperature, molarDensity, calculatedPressure, compressibility);
+    return Leachman.dPdDsave;
+  }
+
+  /**
    * Get the molar density.
    *
    * @return a double representing the molar density

@@ -99,7 +99,7 @@ public final class RobustAqueousPH {
     double temperatureC = fluid.getTemperature() - 273.15;
 
     if (fluid.hasPhaseType(PhaseType.AQUEOUS)) {
-      double rigorous = fluid.getPhase(PhaseType.AQUEOUS).getpH();
+      double rigorous = fluid.getPhase(PhaseType.AQUEOUS).getpH("molality");
       if (!Double.isNaN(rigorous) && !Double.isInfinite(rigorous) && rigorous >= MIN_PLAUSIBLE_PH
           && rigorous <= MAX_PLAUSIBLE_PH) {
         return new Result(rigorous, "electrolyte", false);

@@ -16,7 +16,14 @@ import neqsim.thermo.component.ComponentSrkCPAMM;
 import neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface;
 
 /**
- * Electrolyte CPA (e-CPA) phase class implementing the Maribo-Mogensen model.
+ * Electrolyte CPA phase with Debye-Huckel and Born contributions inspired by Maribo-Mogensen.
+ *
+ * <p>
+ * This implementation retains its existing empirical solvent-permittivity mixing rules and additive short-range energy.
+ * It is not a complete implementation of the published e-CPA model, which uses a different permittivity model and
+ * modified Huron-Vidal mixing rule. The electrolyte derivatives are evaluated consistently from the residual energy
+ * implemented here; correcting derivatives does not recalibrate these model approximations.
+ * </p>
  *
  * <p>
  * The residual Helmholtz free energy is computed as:
@@ -50,6 +57,15 @@ import neqsim.thermo.mixingrule.ElectrolyteMixingRulesInterface;
 public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
+
+  /** Exact-state electrolyte derivatives, never shared with cloned phases. */
+  private transient MMResidualDerivative.Cache mmDerivativeCache;
+
+  /**
+   * Reference identities created by this phase's factory. Kept in the serialized graph so automatically created
+   * references remain distinguishable from explicitly supplied references after a round trip.
+   */
+  private PhaseInterface[] automaticReferencePhases;
 
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(PhaseElectrolyteCPAMM.class);
@@ -158,10 +174,123 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
 
   /** {@inheritDoc} */
   @Override
+  public void initRefPhases(boolean onlyPure, String name) {
+    super.initRefPhases(onlyPure, name);
+    automaticReferencePhases = refPhase.clone();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setRefPhase(int index, PhaseInterface reference) {
+    super.setRefPhase(index, reference);
+    if (automaticReferencePhases != null && index < automaticReferencePhases.length) {
+      automaticReferencePhases[index] = null;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setRefPhase(PhaseInterface[] references) {
+    super.setRefPhase(references);
+    automaticReferencePhases = null;
+  }
+
+  /**
+   * Identifies an unchanged factory reference, including replacements made through the public reference array.
+   *
+   * @param component component whose reference is being evaluated
+   * @return true when this entry is still the automatically created reference
+   */
+  private boolean isAutomaticReference(int component) {
+    return automaticReferencePhases != null && component < automaticReferencePhases.length
+        && automaticReferencePhases[component] == refPhase[component];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLogInfiniteDiluteFugacity(int component, int solvent) {
+    if (refPhase == null || refPhase.length <= component || refPhase[component] == null
+        || refPhase[component].getNumberOfComponents() < 2) {
+      initRefPhases(false, getComponent(solvent).getName());
+    }
+    if (isAutomaticReference(component) && refPhase[component] instanceof PhaseElectrolyteCPAMM) {
+      configureReferencePhase((PhaseElectrolyteCPAMM) refPhase[component]);
+    }
+    return super.getLogInfiniteDiluteFugacity(component, solvent);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLogPureComponentFugacity(int component, boolean pure) {
+    if (refPhase == null) {
+      initRefPhases(pure);
+    }
+    if (isAutomaticReference(component) && refPhase[component] instanceof PhaseElectrolyteCPAMM) {
+      configureReferencePhase((PhaseElectrolyteCPAMM) refPhase[component]);
+    }
+    return super.getLogPureComponentFugacity(component, pure);
+  }
+
+  /**
+   * Applies the same electrolyte model to the mixture and its reference state.
+   *
+   * <p>
+   * The generic phase factory constructs reference components from database defaults. Copying the current MM settings
+   * before each evaluation also covers parameter changes made after the reference phase was created. Explicitly
+   * supplied references retain their own configuration and are never passed to this method.
+   * </p>
+   *
+   * @param reference reference phase used for activity normalization
+   */
+  private void configureReferencePhase(PhaseElectrolyteCPAMM reference) {
+    reference.debyeHuckelOn = debyeHuckelOn;
+    reference.bornOn = bornOn;
+    reference.shortRangeOn = shortRangeOn;
+    reference.dielectricMixingRule = dielectricMixingRule;
+    for (int i = 0; i < reference.getNumberOfComponents(); i++) {
+      ComponentSrkCPAMM target = (ComponentSrkCPAMM) reference.getComponent(i);
+      if (hasComponent(target.getComponentName())) {
+        ComponentSrkCPAMM source = (ComponentSrkCPAMM) getComponent(target.getComponentName());
+        if (source.hasMMParameters()) {
+          target.setU0_iw(source.getU0_iw());
+          target.setUT_iw(source.getUT_iw());
+        }
+        target.setBornRadius(source.getBornRadius());
+        target.setLennardJonesMolecularDiameter(source.getLennardJonesMolecularDiameter());
+        target.setCriticalVolume(source.getCriticalVolume());
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public PhaseElectrolyteCPAMM clone() {
     PhaseElectrolyteCPAMM clonedPhase = null;
     try {
       clonedPhase = (PhaseElectrolyteCPAMM) super.clone();
+      clonedPhase.mmDerivativeCache = null;
+      if (automaticReferencePhases != null) {
+        clonedPhase.automaticReferencePhases = new PhaseInterface[automaticReferencePhases.length];
+        if (refPhase != null) {
+          for (int i = 0; i < Math.min(automaticReferencePhases.length, refPhase.length); i++) {
+            if (isAutomaticReference(i)) {
+              clonedPhase.automaticReferencePhases[i] = clonedPhase.refPhase[i];
+            }
+          }
+        }
+      }
+      if (wij != null) {
+        clonedPhase.wij = new double[wij.length][];
+        for (int i = 0; i < wij.length; i++) {
+          clonedPhase.wij[i] = wij[i].clone();
+        }
+      }
+      if (wijT != null) {
+        clonedPhase.wijT = new double[wijT.length][];
+        for (int i = 0; i < wijT.length; i++) {
+          clonedPhase.wijT[i] = wijT[i].clone();
+        }
+      }
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -241,7 +370,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
         sumNZ2 += n * z * z;
       }
     }
-    if (sumNZ2 < 1e-30) {
+    if (sumNZ2 <= 0) {
       return 0.0;
     }
     return sumNZ2sigma / sumNZ2;
@@ -254,10 +383,16 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return ψ(u) [-]
    */
   static double psiDH(double u) {
-    if (u < 1e-8) {
-      return u * u * u / 3.0;
+    if (u < 0.1) {
+      double sum = 0.0;
+      double power = u * u * u;
+      for (int k = 3; k <= 16; k++) {
+        sum += power * (k % 2 == 1 ? 1.0 : -1.0) / k;
+        power *= u;
+      }
+      return sum;
     }
-    return Math.log(1.0 + u) - u + 0.5 * u * u;
+    return Math.log1p(u) - u + 0.5 * u * u;
   }
 
   /**
@@ -267,9 +402,6 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return ψ'(u) [-]
    */
   static double psiDHprime(double u) {
-    if (u < 1e-8) {
-      return u * u;
-    }
     return u * u / (1.0 + u);
   }
 
@@ -281,8 +413,14 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return τ [-]
    */
   static double calcTauDH(double chi) {
-    if (chi < 1e-6) {
-      return 1.0;
+    if (chi < 0.1) {
+      double sum = 0.0;
+      double power = 1.0;
+      for (int k = 3; k <= 16; k++) {
+        sum += 3.0 * power * (k % 2 == 1 ? 1.0 : -1.0) / k;
+        power *= chi;
+      }
+      return sum;
     }
     return 3.0 * psiDH(chi) / (chi * chi * chi);
   }
@@ -295,14 +433,16 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return dτ/dχ [-]
    */
   static double calcTauDHprime(double chi) {
-    if (chi < 1e-6) {
-      return 0.0;
+    if (chi < 0.1) {
+      double sum = 0.0;
+      double power = 1.0;
+      for (int k = 4; k <= 16; k++) {
+        sum += 3.0 * (k - 3) * power * (k % 2 == 1 ? 1.0 : -1.0) / k;
+        power *= chi;
+      }
+      return sum;
     }
-    // τ(χ) = 3ψ(χ)/χ³
-    // τ'(χ) = 3[ψ'(χ)χ³ - 3χ²ψ(χ)] / χ⁶ = 3[ψ'χ - 3ψ] / χ⁴
-    double psi = psiDH(chi);
-    double psip = psiDHprime(chi);
-    return 3.0 * (psip * chi - 3.0 * psi) / (chi * chi * chi * chi);
+    return 3.0 * (psiDHprime(chi) * chi - 3.0 * psiDH(chi)) / (chi * chi * chi * chi);
   }
 
   /**
@@ -1217,9 +1357,6 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double calcMixturePermittivity() {
     double etaIon = calcIonicPackingFraction();
-    if (etaIon < 1e-10) {
-      return solventPermittivity;
-    }
     return solventPermittivity * (1.0 - etaIon) / (1.0 + etaIon / 2.0);
   }
 
@@ -1264,7 +1401,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
         sumRhoZ2 += rhoI * zi * zi;
       }
     }
-    if (sumRhoZ2 < 1e-30) {
+    if (sumRhoZ2 <= 0) {
       return 0.0;
     }
     double factor = ELECTRON_CHARGE * ELECTRON_CHARGE
@@ -1498,7 +1635,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return F^DH contribution to Helmholtz energy [-]
    */
   public double FDebyeHuckel() {
-    if (kappa < 1e-30) {
+    if (kappa <= 0) {
       return 0.0;
     }
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
@@ -1507,41 +1644,23 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   }
 
   /**
-   * Temperature derivative of Debye-Hückel term at constant V. dF^DH/dT
-   *
-   * <p>
-   * Uses extended DH: dF/dT = -V/(12π N_A) × dκ³/dT × τ(κd). The dτ/dT correction is neglected since it is O(0.03%/K)
-   * relative to the main term.
-   * </p>
+   * Exact dFDebyeHuckeldT derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
    * @return dF^DH/dT [-/K]
    */
   public double dFDebyeHuckeldT() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
-    double dKappa3dT = 3.0 * kappa * kappa * kappadT;
-
-    return -V / (12.0 * Math.PI * AVOGADRO) * dKappa3dT * tauDH;
+    return MMResidualDerivative.derivative(this, 0, numberOfComponents + 1, -1, -1);
   }
 
   /**
-   * Volume derivative of Debye-Hückel term. dF^DH/dV = ∂F^DH/∂V at constant κ.
+   * Exact dFDebyeHuckeldV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
-   * <p>
-   * Uses extended DH: dF/dV = -κ³/(12π N_A) × τ(κd). Since τ is independent of V at constant κ, and F is linear in V,
-   * this is exact.
-   * </p>
-   *
-   * @return dF^DH/dV [1/m³]
+   * @return dF^DH/dV [1/(NeqSim volume unit)]
    */
   public double dFDebyeHuckeldV() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * 1e-5 / (12.0 * Math.PI * AVOGADRO) * tauDH;
+    return MMResidualDerivative.derivative(this, 0, numberOfComponents, -1, -1);
   }
 
   /**
@@ -1553,46 +1672,41 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * </pre>
    *
    * <p>
-   * where X_Born = Σ(n_i * z_i² / R_Born,i). This is extensive (scales with n).
+   * where X_Born = Σ(n_i * z_i² / R_Born,i). This is extensive (scales with n). The same phase permittivity, including
+   * the ion contribution, is used in the Born and Debye-Huckel energies. See Kontogeorgis, Maribo-Mogensen and Thomsen
+   * (2018), Fluid Phase Equilibria 462, 130-152, doi:10.1016/j.fluid.2018.01.004. The concentration dependence
+   * contributes to both the ion chemical potentials and solvent activity.
    *
    * @return F^Born contribution [-]
    */
   public double FBorn() {
-    if (bornX < 1e-30) {
+    if (bornX <= 0) {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
         / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
-    double solventTerm = 1.0 / solventPermittivity - 1.0;
+    double solventTerm = 1.0 / mixturePermittivity - 1.0;
     return prefactor * solventTerm * bornX;
   }
 
   /**
-   * Temperature derivative of Born term. dF^Born/dT
+   * Exact dFBorndT derivative at fixed remaining extensive variables. Includes the composition, volume and temperature
+   * dependence of all intermediate quantities.
    *
    * @return dF^Born/dT [-/K]
    */
   public double dFBorndT() {
-    if (bornX < 1e-30) {
-      return 0.0;
-    }
-    double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R);
-    double solventTerm = 1.0 / solventPermittivity - 1.0;
-    double dSolventTermdT = -solventPermittivitydT / (solventPermittivity * solventPermittivity);
-
-    // F = prefactor * solventTerm * bornX / T
-    // dF/dT = prefactor * bornX * [dSolventTerm/dT / T - solventTerm / T²]
-    return prefactor * bornX * (dSolventTermdT / temperature - solventTerm / (temperature * temperature));
+    return MMResidualDerivative.derivative(this, 1, numberOfComponents + 1, -1, -1);
   }
 
   /**
-   * Volume derivative of Born term. dF^Born/dV (Born term is almost independent of V)
+   * Exact dFBorndV derivative at fixed remaining extensive variables. Includes the composition, volume and temperature
+   * dependence of all intermediate quantities.
    *
-   * @return dF^Born/dV [1/m³]
+   * @return dF^Born/dV [1/(NeqSim volume unit)]
    */
   public double dFBorndV() {
-    // Born term has no direct volume dependence in the Maribo-Mogensen formulation
-    return 0.0;
+    return MMResidualDerivative.derivative(this, 1, numberOfComponents, -1, -1);
   }
 
   /**
@@ -1609,12 +1723,12 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return ∂F^Born/∂ε [-]
    */
   public double FBornD() {
-    if (bornX < 1e-30) {
+    if (bornX <= 0) {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
         / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
-    return -prefactor * bornX / (solventPermittivity * solventPermittivity);
+    return -prefactor * bornX / (mixturePermittivity * mixturePermittivity);
   }
 
   /**
@@ -1630,7 +1744,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   public double FBornX() {
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
         / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
-    double solventTerm = 1.0 / solventPermittivity - 1.0;
+    double solventTerm = 1.0 / mixturePermittivity - 1.0;
     return prefactor * solventTerm;
   }
 
@@ -1644,12 +1758,12 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return ∂²F^Born/∂ε² [-]
    */
   public double FBornDD() {
-    if (bornX < 1e-30) {
+    if (bornX <= 0) {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
         / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
-    return 2.0 * prefactor * bornX / (solventPermittivity * solventPermittivity * solventPermittivity);
+    return 2.0 * prefactor * bornX / (mixturePermittivity * mixturePermittivity * mixturePermittivity);
   }
 
   /**
@@ -1664,7 +1778,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   public double FBornDX() {
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
         / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
-    return -prefactor / (solventPermittivity * solventPermittivity);
+    return -prefactor / (mixturePermittivity * mixturePermittivity);
   }
 
   // ==================== Short-Range Ion-Solvent Term (MM Formula) ====================
@@ -1914,81 +2028,63 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   // -- Total FSR2 derivatives with respect to T and V --
 
   /**
-   * Temperature derivative of MM short-range term: dF_SR/dT.
-   *
-   * <p>
-   * F = W/(nT × T × (1-η)), so dF/dT = Wt/(nT × T × (1-η)) - W/(nT × T² × (1-η))
-   * </p>
+   * Exact dFShortRangedT derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
    * @return dFSR/dT [-/K]
    */
   public double dFShortRangedT() {
-    if (!shortRangeOn || numberOfMolesInPhase < 1e-30) {
-      return 0.0;
-    }
-    double nT = numberOfMolesInPhase;
-    double oneMinusEps = Math.max(1.0 - packingFraction, 0.01);
-    return (ionSolventWdT - ionSolventW / temperature) / (nT * temperature * oneMinusEps);
+    return MMResidualDerivative.derivative(this, 2, numberOfComponents + 1, -1, -1);
   }
 
   /**
-   * Second temperature derivative of MM short-range term.
+   * Exact dFShortRangedTdT derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
    * @return d²FSR/dT² [-/K²]
    */
   public double dFShortRangedTdT() {
-    if (!shortRangeOn) {
-      return 0.0;
-    }
-    // Approximate: d²F/dT² ≈ 2F/T²
-    return 2.0 * FShortRange() / (temperature * temperature);
+    return MMResidualDerivative.derivative(this, 2, numberOfComponents + 1, numberOfComponents + 1, -1);
   }
 
   /**
-   * Volume derivative of MM short-range term. The MM SR is F = W/(nT × T × (1-η)). Since η depends on V, dF/dV = F ×
-   * (dη/dV) / (1-η). For dilute solutions η is small and this is negligible.
+   * Exact dFShortRangedV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
-   * @return dFSR/dV [1/m³]
+   * @return dFSR/dV [1/(NeqSim volume unit)]
    */
   public double dFShortRangedV() {
-    if (!shortRangeOn) {
-      return 0.0;
-    }
-    double oneMinusEps = Math.max(1.0 - packingFraction, 0.01);
-    return FShortRange() * packingFractiondV / oneMinusEps * 1e-5;
+    return MMResidualDerivative.derivative(this, 2, numberOfComponents, -1, -1);
   }
 
   /**
-   * Second volume derivative of MM short-range term. Approximately zero for dilute solutions.
+   * Exact dFShortRangedVdV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
    * @return d²FSR/dV²
    */
   public double dFShortRangedVdV() {
-    if (!shortRangeOn) {
-    }
-    return 0.0;
+    return MMResidualDerivative.derivative(this, 2, numberOfComponents, numberOfComponents, -1);
   }
 
   /**
-   * Third volume derivative of MM short-range term.
+   * Exact dFShortRangedVdVdV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
    * @return d³FSR/dV³
    */
   public double dFShortRangedVdVdV() {
-    if (!shortRangeOn) {
-    }
-    return 0.0;
+    return MMResidualDerivative.derivative(this, 2, numberOfComponents, numberOfComponents, numberOfComponents);
   }
 
   /**
-   * Mixed temperature-volume derivative of MM short-range term.
+   * Exact dFShortRangedTdV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
-   * @return d²FSR/dTdV [1/(m³·K)]
+   * @return d²FSR/dTdV [1/(NeqSim volume unit·K)]
    */
   public double dFShortRangedTdV() {
-    if (!shortRangeOn) {
-    }
-    return 0.0;
+    return MMResidualDerivative.derivative(this, 2, numberOfComponents + 1, numberOfComponents, -1);
   }
 
   // -- Electrolyte mixing rule accessor methods --
@@ -2106,84 +2202,53 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   }
 
   /**
-   * Second volume derivative of Debye-Hückel term. d²F^DH/dV²
+   * Exact dFDebyeHuckeldVdV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
-   * @return d²F^DH/dV² [1/m⁶]
+   * @return d²F^DH/dV² [1/(NeqSim volume unit)²]
    */
   public double dFDebyeHuckeldVdV() {
-    // F^DH = -κ³Vm/(12πRT)
-    // dF/dV = -κ³/(12πRT * n) * 1e-5
-    // d²F/dV² = 0 (linear in V at constant κ)
-    return 0.0;
+    return MMResidualDerivative.derivative(this, 0, numberOfComponents, numberOfComponents, -1);
   }
 
   /**
-   * Third volume derivative of Debye-Hückel term. d³F^DH/dV³
+   * Exact dFDebyeHuckeldVdVdV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
-   * @return d³F^DH/dV³ [1/m⁹]
+   * @return d³F^DH/dV³ [1/(NeqSim volume unit)³]
    */
   public double dFDebyeHuckeldVdVdV() {
-    return 0.0;
+    return MMResidualDerivative.derivative(this, 0, numberOfComponents, numberOfComponents, numberOfComponents);
   }
 
   /**
-   * Second temperature derivative of Debye-Hückel term. d²F^DH/dT²
-   *
-   * <p>
-   * Uses extended DH screening factor τ.
-   * </p>
+   * Exact dFDebyeHuckeldTdT derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
    * @return d²F^DH/dT² [-/K²]
    */
   public double dFDebyeHuckeldTdT() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
-    double kappa3 = kappa * kappa * kappa;
-
-    // Simplified: main contribution from 1/T² dependence
-    return -2.0 * V / (12.0 * Math.PI * R * AVOGADRO) * kappa3 / (temperature * temperature * temperature) * tauDH;
+    return MMResidualDerivative.derivative(this, 0, numberOfComponents + 1, numberOfComponents + 1, -1);
   }
 
   /**
-   * Mixed temperature-volume derivative of Debye-Hückel term. d²F^DH/dTdV
+   * Exact dFDebyeHuckeldTdV derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
-   * <p>
-   * Uses extended DH screening factor τ.
-   * </p>
-   *
-   * @return d²F^DH/dTdV [1/(m³·K)]
+   * @return d²F^DH/dTdV [1/(NeqSim volume unit·K)]
    */
   public double dFDebyeHuckeldTdV() {
-    if (kappa < 1e-30) {
-      return 0.0;
-    }
-    double kappa3 = kappa * kappa * kappa;
-    return kappa3 * 1e-5 / (12.0 * Math.PI * R * AVOGADRO * temperature * temperature) * tauDH;
+    return MMResidualDerivative.derivative(this, 0, numberOfComponents + 1, numberOfComponents, -1);
   }
 
   /**
-   * Second temperature derivative of Born term. d²F^Born/dT²
+   * Exact dFBorndTdT derivative at fixed remaining extensive variables. Includes the composition, volume and
+   * temperature dependence of all intermediate quantities.
    *
    * @return d²F^Born/dT² [-/K²]
    */
   public double dFBorndTdT() {
-    if (bornX < 1e-30) {
-      return 0.0;
-    }
-    double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R);
-    double solventTerm = 1.0 / solventPermittivity - 1.0;
-    double dSolventTermdT = -solventPermittivitydT / (solventPermittivity * solventPermittivity);
-    double d2SolventTermdT2 = -solventPermittivitydTdT / (solventPermittivity * solventPermittivity)
-        + 2.0 * solventPermittivitydT * solventPermittivitydT
-            / (solventPermittivity * solventPermittivity * solventPermittivity);
-
-    // d²F/dT² from product rule on dF/dT
-    double term1 = d2SolventTermdT2 / temperature;
-    double term2 = -2.0 * dSolventTermdT / (temperature * temperature);
-    double term3 = 2.0 * solventTerm / (temperature * temperature * temperature);
-    return prefactor * bornX * (term1 + term2 + term3);
+    return MMResidualDerivative.derivative(this, 1, numberOfComponents + 1, numberOfComponents + 1, -1);
   }
 
   // ==================== Override methods for total Helmholtz energy ====================
@@ -2208,88 +2273,40 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   /** {@inheritDoc} */
   @Override
   public double dFdT() {
-    double dFdT = super.dFdT();
-    if (debyeHuckelOn) {
-      dFdT += dFDebyeHuckeldT();
-    }
-    if (bornOn) {
-      dFdT += dFBorndT();
-    }
-    if (shortRangeOn) {
-      dFdT += dFShortRangedT();
-    }
-    return dFdT;
+    return super.dFdT() + MMResidualDerivative.derivative(this, -1, numberOfComponents + 1, -1, -1);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdV() {
-    double dFdV = super.dFdV();
-    if (debyeHuckelOn) {
-      dFdV += dFDebyeHuckeldV();
-    }
-    if (bornOn) {
-      dFdV += dFBorndV();
-    }
-    if (shortRangeOn) {
-      dFdV += dFShortRangedV();
-    }
-    return dFdV;
+    initElectrolyteProperties();
+    return super.dFdV() + MMResidualDerivative.derivative(this, -1, numberOfComponents, -1, -1);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    double dFdVdV = super.dFdVdV();
-    if (debyeHuckelOn) {
-      dFdVdV += dFDebyeHuckeldVdV();
-    }
-    if (shortRangeOn) {
-      dFdVdV += dFShortRangedVdV();
-    }
-    return dFdVdV;
+    return super.dFdVdV() + MMResidualDerivative.derivative(this, -1, numberOfComponents, numberOfComponents, -1);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdVdVdV() {
-    double dFdVdVdV = super.dFdVdVdV();
-    if (debyeHuckelOn) {
-      dFdVdVdV += dFDebyeHuckeldVdVdV();
-    }
-    if (shortRangeOn) {
-      dFdVdVdV += dFShortRangedVdVdV();
-    }
-    return dFdVdVdV;
+    return super.dFdVdVdV()
+        + MMResidualDerivative.derivative(this, -1, numberOfComponents, numberOfComponents, numberOfComponents);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdTdT() {
-    double dFdTdT = super.dFdTdT();
-    if (debyeHuckelOn) {
-      dFdTdT += dFDebyeHuckeldTdT();
-    }
-    if (bornOn) {
-      dFdTdT += dFBorndTdT();
-    }
-    if (shortRangeOn) {
-      dFdTdT += dFShortRangedTdT();
-    }
-    return dFdTdT;
+    return super.dFdTdT()
+        + MMResidualDerivative.derivative(this, -1, numberOfComponents + 1, numberOfComponents + 1, -1);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdTdV() {
-    double dFdTdV = super.dFdTdV();
-    if (debyeHuckelOn) {
-      dFdTdV += dFDebyeHuckeldTdV();
-    }
-    if (shortRangeOn) {
-      dFdTdV += dFShortRangedTdV();
-    }
-    return dFdTdV;
+    return super.dFdTdV() + MMResidualDerivative.derivative(this, -1, numberOfComponents + 1, numberOfComponents, -1);
   }
 
   // ==================== Getters and Setters ====================
@@ -2423,12 +2440,12 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * @return ∂F^Born/∂n_T at constant X_Born
    */
   public double FBornN() {
-    if (bornX < 1e-30) {
+    if (bornX <= 0) {
       return 0.0;
     }
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
         / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
-    double solventTerm = 1.0 / solventPermittivity - 1.0;
+    double solventTerm = 1.0 / mixturePermittivity - 1.0;
     return -prefactor * solventTerm * bornX / (numberOfMolesInPhase * numberOfMolesInPhase);
   }
 
@@ -2439,12 +2456,10 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public double FBornXT() {
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R);
-    double solventTerm = 1.0 / solventPermittivity - 1.0;
-    double dSolventTermdT = -solventPermittivitydT / (solventPermittivity * solventPermittivity);
-    // ∂/∂T [prefactor * solventTerm / (T * n_T)]
-    // = prefactor/(n_T) * [dSolventTerm/dT / T - solventTerm / T²]
-    return prefactor / numberOfMolesInPhase
-        * (dSolventTermdT / temperature - solventTerm / (temperature * temperature));
+    double mixtureTerm = 1.0 / mixturePermittivity - 1.0;
+    double mixturePermittivitydT = mixturePermittivity / solventPermittivity * solventPermittivitydT;
+    double dMixtureTermdT = -mixturePermittivitydT / (mixturePermittivity * mixturePermittivity);
+    return prefactor * (dMixtureTermdT / temperature - mixtureTerm / (temperature * temperature));
   }
 
   /**
@@ -2499,5 +2514,23 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public boolean isBornOn() {
     return bornOn;
+  }
+
+  /**
+   * Returns the phase-owned exact-state derivative workspace.
+   *
+   * @return cached electrolyte derivatives, or null before evaluation
+   */
+  MMResidualDerivative.Cache getElectrolyteDerivativeCache() {
+    return mmDerivativeCache;
+  }
+
+  /**
+   * Replaces the phase-owned derivative workspace after its exact input state changes.
+   *
+   * @param cache derivative workspace for the current state
+   */
+  void setElectrolyteDerivativeCache(MMResidualDerivative.Cache cache) {
+    mmDerivativeCache = cache;
   }
 }

@@ -569,57 +569,62 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * The Setchenow equation gives: ln(S/S0) = -k_s * m where k_s is typically 0.1-0.12 L/mol for CO2 and 0.12-0.15 L/mol
-   * for CH4 in NaCl solutions.
+   * The base-10 Setschenow equation at fixed temperature and gas fugacity is log10(mGasFresh / mGasSalt) = kSalt *
+   * mSalt when both concentrations are molal. In that convention kSalt has units kg/mol. A concentration-based
+   * coefficient in L/mol and a natural-log coefficient are different quantities; conversion of logarithm base requires
+   * a factor ln(10).
    * </p>
    *
    * <p>
-   * Structure: [0] W_CO2-cation, [1] W_CO2-anion, [2] W_CH4-cation, [3] W_CH4-anion.
-   * </p>
-   *
-   * <p>
-   * Calibration 2024-12: These parameters compensate for excessive salting out from the SR2 term's packing fraction
-   * derivative (FSR2eps * epsi). The positive Wij values reduce the net dFSR2dN contribution for CO2/CH4. Validation
-   * results for CO2 in NaCl at 298 K: 0.5 mol/kg: ~5%, 1.0 mol/kg: ~10%, 2.0 mol/kg: ~18%, matching k_s ~ 0.1 L/mol.
-   * </p>
-   *
-   * <p>
-   * <b>Limitation:</b> These parameters are calibrated for Na+/Cl- solutions. Other ion pairs may show different
-   * salting-out behavior due to varying implicit contributions from the FSR2eps*epsi term. For accurate predictions
-   * with ions like K+, MDEA+, HCO3-, or Ca++, ion-specific parameters should be fitted.
+   * These legacy Wij values have units m3/mol and are not measured Setschenow coefficients. They were introduced as a
+   * NaCl-oriented calibration, but the original quantitative claims are not independently qualified by a reproducible
+   * source dataset. The charge-based default also transfers them to other ion pairs. Accurate use with K+, MDEA+,
+   * HCO3-, Ca++, or mixed salts requires salt-specific qualification and validated dielectric data.
    * </p>
    */
   public static double[] furstParamsGasIon = {
-      // CO2-ion interactions - fitted to give k_s ~ 0.1 L/mol for NaCl
+      // CO2-ion interactions
       1.27e-4, // [0] W_CO2-cation
       1.27e-4, // [1] W_CO2-anion
-      // CH4-ion interactions - k_s ~ 0.12 L/mol for CH4
+      // CH4-ion interactions
       1.05e-4, // [2] W_CH4-cation
       1.05e-4, // [3] W_CH4-anion
-      // C2H6 (ethane) - ion interactions - k_s ~ 0.13 L/mol
+      // C2H6 (ethane)-ion interactions
       1.10e-4, // [4] W_C2H6-cation
       1.10e-4, // [5] W_C2H6-anion
-      // C3H8 (propane) - ion interactions - k_s ~ 0.14 L/mol
+      // C3H8 (propane)-ion interactions
       1.15e-4, // [6] W_C3H8-cation
       1.15e-4, // [7] W_C3H8-anion
-      // C4 (butanes) - ion interactions - k_s ~ 0.15 L/mol
+      // C4 (butanes)-ion interactions
       1.20e-4, // [8] W_C4-cation
       1.20e-4, // [9] W_C4-anion
-      // C5+ (pentanes and heavier) - ion interactions - k_s ~ 0.16 L/mol
+      // C5+ (pentanes and heavier)-ion interactions
       1.25e-4, // [10] W_C5plus-cation
       1.25e-4, // [11] W_C5plus-anion
-      // N2 (nitrogen) - ion interactions - k_s ~ 0.10-0.12 L/mol (similar to CH4)
+      // N2 (nitrogen)-ion interactions
       1.05e-4, // [12] W_N2-cation
       1.05e-4, // [13] W_N2-anion
-      // H2S (hydrogen sulfide) - ion interactions - k_s ~ 0.06-0.08 L/mol
+      // H2S (hydrogen sulfide)-ion interactions
       // H2S is polar and acidic, interacts more strongly with water than hydrocarbons
       1.10e-4, // [14] W_H2S-cation
       1.10e-4, // [15] W_H2S-anion
-      // H2 (hydrogen) - ion interactions - k_s ~ 0.10 L/mol
-      // H2 is very small and may require larger parameters to overcome implicit effects
+      // H2 (hydrogen)-ion interactions
       1.30e-4, // [16] W_H2-cation
       1.30e-4 // [17] W_H2-anion
   };
+
+  /** Original defaults, retained separately so an explicit global override stays authoritative. */
+  private static final double[] defaultGasIonParameters = furstParamsGasIon.clone();
+
+  /**
+   * Checks whether a gas-ion parameter still has its original default value.
+   *
+   * @param index gas-ion coefficient index
+   * @return true when the mutable global value is unchanged from its shipped default
+   */
+  public static boolean isDefaultGasIonParameter(int index) {
+    return furstParamsGasIon[index] == defaultGasIonParameters[index];
+  }
 
   /**
    * Parameters for organic inhibitor-ion interactions to ensure additive hydrate inhibition.

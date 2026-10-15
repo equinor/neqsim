@@ -31,7 +31,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * includes operation construction and run. Both cold and warm changed operations alternate temperature and pressure.
  * The process case includes feed flashing, separation, compression, cooling and outlet separation. Its unchanged
  * sequence intentionally includes equipment cache behavior, and must not be interpreted as full recalculation.
- * Snapshots use public clones outside measurement; old revisions may refresh shared same-state derivative caches. Raw
+ * Snapshots use serialized detached copies outside measurement so validation cannot mutate a timed warm fluid. Raw
  * per-operation wall samples, CPU and allocation totals, failures and final numerical states are retained. No timing or
  * allocation threshold is asserted in CI; compare repeated JVM forks only after checking correctness.
  * </p>
@@ -169,7 +169,8 @@ public final class TPflashAllocationQualificationBenchmark {
 
     private JsonObject snapshot() {
       SystemInterface inletFluid = stream == null ? feed : stream.getFluid();
-      JsonObject result = StabilityOptimizationBenchmark.snapshot(inletFluid.clone(), moles, mass);
+      JsonObject result = StabilityOptimizationBenchmark.snapshot(FlashBenchmarkStateCopy.copy(inletFluid), moles,
+          mass);
       if (process != null) {
         double products = inlet.getLiquidOutStream().getFlowRate("kg/sec")
             + outlet.getGasOutStream().getFlowRate("kg/sec") + outlet.getLiquidOutStream().getFlowRate("kg/sec");
@@ -178,7 +179,7 @@ public final class TPflashAllocationQualificationBenchmark {
         result.addProperty("compressorPowerW", compressor.getPower());
         result.addProperty("coolerDutyW", cooler.getDuty());
         SystemInterface product = cooler.getOutletStream().getFluid();
-        JsonObject productState = StabilityOptimizationBenchmark.snapshot(product.clone(),
+        JsonObject productState = StabilityOptimizationBenchmark.snapshot(FlashBenchmarkStateCopy.copy(product),
             product.getTotalNumberOfMoles(), StabilityOptimizationBenchmark.inventoryMass(product));
         result.add("cooledProduct", productState);
         result.addProperty("validationPassed",

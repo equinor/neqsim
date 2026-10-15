@@ -94,7 +94,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass
         throw new IllegalStateException("pH calculation did not close chemical reactions and electroneutrality");
       }
 
-      lastMeasuredPH = reactiveThermoSystem.getPhase("aqueous").getpH();
+      lastMeasuredPH = reactiveThermoSystem.getPhase("aqueous").getpH("molality");
       lastMeasuredStream = stream;
       lastMeasuredAlkalinity = alkalinity;
       hasCachedPH = true;

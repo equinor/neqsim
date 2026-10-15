@@ -49,6 +49,16 @@ and fugacity equations. Phase, reaction, charge and original-element acceptance 
 and cloned fluids without a separate composition dispatch. Numerical closure does not validate
 salt solubility or hydrate-model accuracy.
 
+The ordinary two-root comparison evaluates `sum(x_i * ln(phi_i))` at fixed
+composition, temperature and pressure on the same phase object. Its common
+ideal-gas reference and mixing terms cancel between the GAS and LIQUID roots.
+This avoids subtracting extensive `H - T*S` values when a phase is near its
+amount bound after a different initialization level. Zero-fraction terms are
+omitted analytically; invalid compositions or non-finite occupied fugacity
+contributions are rejected. Direct and hybrid EOS-GE strategies retain their
+model-owned phase roles and do not enter this comparison. The final material,
+fugacity and phase-stability checks remain required.
+
 ## Table of Contents
 
 1. [Two-Phase Flash Algorithm](#1-two-phase-flash-algorithm)
@@ -318,7 +328,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
 | Unchanged one-phase closure | `abs(beta - 1) < 1e-12`; `abs(delta Z) <= 1e-11`; `max abs(delta x_i) <= 1e-11` | When multiphase checking finds no new stable phase and returns the same phase type, compressibility factor, and composition as the accepted one-phase reference, normalize a stale beta and reinitialize. Different roots, chemical-equilibrium states, and internal multiphase trial states retain their existing finalization paths. |
-| Ionic fluid closure | full species inventory with a unique aqueous host | Shared RR/SSI/Newton and stability constraints; `1e-10` species/phase amount closure, `1e-12` beta normalization, aqueous ion confinement and `1e-8` molecular log-fugacity equality. The constrained Newton iteration targets `1e-10` internally so subsequent association/property initialization does not invalidate an endpoint accepted at the outer tolerance boundary. Failure identifies the offending species and residual. Failure is explicit. |
+| Ionic fluid closure | full species inventory with a unique aqueous host | Shared RR/SSI/Newton and stability constraints; `1e-10` species/phase amount closure, `1e-12` beta normalization, aqueous ion confinement and `1e-8` molecular log-fugacity equality. The constrained Newton iteration validates the endpoint both before and after the final association/property initialization, using the same physical tolerances on the actual returned state. It does not repeatedly reject a qualified endpoint merely because its numerical residual floor exceeds a tighter surrogate target. Failure identifies the offending species and residual. Failure is explicit. |
 | Ionic host assignment | More than one material liquid has the model's aqueous classification | Move the complete ionic inventory to each alternate liquid on an isolated clone, conserving every species and charge; solve the same fixed-topology beta/Newton equations. Adopt only a result passing the unchanged physical checks, retaining its requested roots and material phases, and lowering Gibbs energy by more than `max(1e-8 J, 1e-10 abs(G))`. A gas/brine endpoint with one eligible liquid creates no trial. This compares single-host active sets; it does not model ion partitioning between multiple ionic aqueous phases. |
 | Trace duplicate phase cleanup | `min(beta_i, beta_j) < 10 beta_min`, same `PhaseType`, and `max abs(x_i - x_j) < 1e-6` | Merge and remove an already-disappeared numerical duplicate for any EOS while conserving phase fraction. Material-fraction duplicate cleanup remains limited to CPA models to protect near-critical cubic-EOS splits. |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
@@ -517,6 +527,12 @@ unchanged. Fixed ions retain their complete inventory in their admissible phase.
 **NeqSim Implementation:**
 
 See [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermodynamicoperations/flashops/SysNewtonRhapsonTPflash.java) for the full implementation.
+
+The amount-coordinate Hessian uses relative diagonal regularization,
+$J_{ii} \leftarrow J_{ii} + 10^{-8}|J_{ii}|$. Each coordinate keeps its own
+curvature scale, so the inverse-amount curvature of a trace species does not damp
+all abundant-species transfers. Finite-curvature, descent and feasibility checks
+remain mandatory.
 
 The line search evaluates the reduced Gibbs energy with the **trial phase component
 amounts**, together with fugacities evaluated at that same trial. A candidate must be
@@ -1495,19 +1511,65 @@ estimate is $\alpha_k=-s_{k-1}^{T}(r_k-r_{k-1})/\lVert r_k-r_{k-1}\rVert^2$. Thi
 bounds the factor to $[1,10]$ and limits an extrapolated decrement to 99% of each positive species
 inventory; the original chemical update remains the fallback. This accelerates an existing local
 coupling and makes no new claim of global reactive phase stability.
+After six slow coupling iterations, or a failed isolated chemical solve, a
+bounded Newton correction in the configured reaction-extent space accounts for
+the finite gas inventory. Its centered-difference Jacobian differentiates the
+actual reaction affinities after fixed-topology phase equilibration, so dissolved
+gas replenishment participates in the chemical response. An accepted trial must
+decrease the actual reaction-residual merit after a full phase flash, retain
+positive species amounts, and preserve all invariants of the registered
+stoichiometric network. The original 30-iteration coupling bound and final
+physical tolerances remain unchanged. The optional isolated-chemistry projection
+is adopted only when it further improves that merit. This is a local coupled
+correction, not a proof of global reactive stability.
+
+System clones and extracted reactive phases retain the caller's configured
+reaction list, equilibrium coefficients, kinetic parameters, and disabled-chemistry
+state. Rebinding numerical helpers must not reload the database, rediscover a
+removed reaction, or replace a user-supplied equilibrium constant. Rejected
+trial systems remain detached, including their activity reference phases.
+
 Failures and cancellation leave the caller uncommitted. This supports general molecular mixtures;
 the old `ReactiveCO2BrinePhaseEquilibrium` class is a deprecated compatibility adapter.
 A fixed-species phase flash conserves each species; reactions instead conserve elements and may
 change both species amounts and total moles.
 
-The disappearance of the last reactive aqueous phase remains a limitation of this sequential
-coupling. An extracted gas with exactly zero ionic inventory can be reflashed and can resume aqueous
-chemistry upon cooling. If that chemistry generates ions, subsequent heating can make the
-frozen-species solve lose its aqueous host before reactions can recombine the ions; the operation
-then rejects the state. A conservative coupled treatment of reaction and phase disappearance is
-needed for this transition (tracked in [issue #4341](https://github.com/equinor/neqsim/issues/4341)).
-Positive ionic amounts are not discarded, and a gas phase is not
-relabelled as aqueous to accept an otherwise invalid result.
+Last-aqueous disappearance has a conservative boundary recovery. Registered
+reaction extents must first recombine every occupied ion into nonnegative
+molecular inventory. Spectator ions cannot disappear. A complete frozen-species
+flash must qualify the resulting neutral phases, after which reaction-aware
+aqueous trials minimize the grand potential in the registered reaction and
+molecular-transfer span. Positive conserved atom normalization keeps the
+stationarity equations valid when reactions change total species moles.
+Every start must converge with a pressure-valid root, a small reduced gradient
+and positive reduced curvature; its distance is compared on the existing
+per-mole stability scale. A negative or unqualified trial rejects disappearance.
+
+This local multistart recovery preserves the configured reaction network and
+elemental and charge invariants. It is qualified for mole-fraction reaction
+activities with compatible fugacity references; forced phase types, solid/wax
+routes, GE models and unsupported reaction conventions retain rejection. Heating
+and cooling tests include repeated phase disappearance/reappearance, different
+feed scales, neighboring pressures and custom reaction constants. This addresses
+the tested transition in [issue #4341](https://github.com/equinor/neqsim/issues/4341)
+without discarding ionic inventory. Exact-zero ionic products also require
+reaction-aware aqueous absence checks when a registered reactive species is
+present. Feasible reaction extents create an interior trial without changing the
+caller inventory or imposing a permanent species floor. A negative or unqualified
+trial rejects the neutral endpoint transactionally. This guard prevents false
+stable-gas acceptance; it does not construct a new reaction-stabilized phase split
+or provide a global reactive stability certificate.
+
+The adaptive aqueous chemical solver retains ideal concentration curvature when adding EOS
+composition derivatives. `ComponentInterface.getdfugdn(j)` is
+$\partial\ln\phi_i/\partial n_j$ alone; it does not include
+$\delta_{ij}/n_i-1/n_t$. Subtracting that ideal term a second time removes the
+large positive curvature of dilute species and can produce a negative diagonal.
+For mole-fraction activities with fixed pure-solvent or binary infinite-dilution
+references at the specified temperature and pressure, the nonideal derivative is
+added only for species whose reaction convention uses an activity coefficient.
+Independent centered differences check the coefficient API and both supported
+M-matrix conventions against the actual logarithmic activities.
 
 ### 4.2 Ion Handling in Stability Analysis
 
@@ -1545,10 +1607,24 @@ reaction dispatch do not replace the model-owned hybrid equations.
 
 ### 4.3 Aqueous Phase Management
 
-For the qualified ionic fluid scope there must be a unique aqueous material host. Aqueous ions are
+The initial constrained split allocates ions to one aqueous material host. Aqueous ions are
 allocated by conserved amount, not by copying the overall mole fraction into a phase and normalizing.
 A gas/oil/brine phase-set change may require transferring the host to the model-classified aqueous
 phase and re-equilibrating; changing a display label alone does not solve equilibrium.
+
+When a nonreactive EOS endpoint contains multiple aqueous liquids, a subsequent
+fixed-topology calculation permits charge-neutral ionic transfers between them.
+Each host must have both an initialized AQUEOUS classification and a configured
+liquid-family root. One reference ion is eliminated using each phase's charge
+balance; the remaining independent amount directions preserve every species
+inventory. The existing Newton objective and line search use the projected
+gradient `B^T mu` and Hessian `B^T H B`. Individual ionic chemical potentials
+need not be equal across phases. Acceptance instead requires all independent
+charge-neutral affinities and molecular fugacity residuals below `1e-8`,
+pressure closure, phase charge and species balance, unchanged volume roots,
+and nonincreasing Gibbs energy within rounding error. This local refinement
+does not add or remove phases, prove global stability, or qualify reactive
+multiple-liquid states.
 
 The constrained route requires a strictly positive ionic inventory, rather than only registered
 ionic component names. `phaseToSystem("gas")` retains the original component basis, including
@@ -1566,9 +1642,50 @@ equality within `1e-8`. These checks establish feasibility and present-phase equ
 proof of the global Gibbs minimum or experimental model accuracy. Incorrect dielectric data cannot
 be corrected by tighter numerical convergence. See the [electrolyte derivative qualification](../thermo/ElectrolyteBornDerivatives).
 
+Fluid EOS roots are also checked against the phase's actual pressure equation. A small
+volume correction can occur at a spinodal without solving that equation. Acceptance
+requires finite positive total volume, finite nonpositive `dP/dV`, and pressure error
+no larger than `max(1e-8 * max(1, abs(P)), 1e-10 * abs(V_total * dP/dV))`.
+The second term preserves the volume solver's relative accuracy for stiff liquids;
+the direct pressure bound controls at a spinodal. The cubic analytical fallback is
+only a proposal: it must satisfy the virtual pressure equation, including any
+subclass contributions. Its single-real-root Cardano evaluation uses the larger
+radicand and recovers the partner cube root from `u*v = -p/3`, avoiding loss of
+precision when two nearly equal terms would otherwise be subtracted. Dense
+distillation-mixture regressions check actual pressure at three inventory scales. Legacy GERG2004 and Span–Wagner adapters are excluded from
+this particular check because their inherited cubic pressure method does not
+represent their external density model. Newton trials and returned material
+endpoints use the same gate. Benchmark snapshots record pressure closure both
+before and after derivative initialization, so reinitialization cannot hide an
+invalid returned state. Initialization also respects the configured maximum phase
+count: `init(0)` does not activate an uninitialized second phase when that maximum
+is one. Repeated initialization is qualified across feed-amount scales for SRK
+and PR.
+
+GERG-2008, EOS-CG, Leachman hydrogen and Vega helium adapters obtain volume from
+native molar density and evaluate the native pressure equation at that stored
+volume. Their pressure slopes use bar per total internal volume, including the
+phase amount. Independent native-EOS checks cover dense and gas roots, every
+hydrogen variant, EOS-CG-only species, material scaling and deliberately corrupted volumes. The
+IAPWS water adapter retains its SI volume convention and converts its numerical
+molar-volume slope to a total-volume derivative. The GERG and EOS-CG native
+working caches are thread-owned, as described in the [reference-EOS guide](../thermo/gerg2008_eoscg.md).
+
+For a nonreactive ionic split, alternate roots of the nonionic phases are screened
+at unchanged composition using `sum(x_i * ln(phi_i))`. A promising root is
+reequilibrated on a detached system with the same species inventory and fluid
+active set. Only a physically qualified lower-Gibbs result is adopted. This
+bounded root comparison does not certify global phase stability.
+
 ## 5. Performance Optimizations
 
 The TP flash implementation includes several performance optimizations to reduce computational cost, particularly for multi-component systems.
+
+The historical benchmark snapshots below retain their original source identities.
+They predate the expanded actual-EOS pressure checks and the subsequent derivative,
+reactive-boundary and model-input repairs. Their results do not qualify the final
+reviewed implementation; new comparisons must recheck both builds with the same
+complete physical gates before making a speed claim.
 
 ### 5.1 Fugacity Coefficient Cache
 
@@ -1600,7 +1717,13 @@ Matrices are pre-allocated outside iteration loops and reused to avoid GC pressu
 
 ### 5.3 Wilson K Early Exit
 
-Before running any trial phase iterations, the stability analysis computes Wilson K-values and checks if $\max|\ln K_i| < 0.01$. If all K-values are near unity, the system is near or above the critical point and the mixture is trivially stable — the expensive iterative analysis is skipped entirely.
+Before the Wilson trial stage, the stability analysis checks whether
+$\max|\ln K_i| < 0.01$. Near-unity Wilson values produce nearly trivial starting
+compositions, so those particular trials are skipped. The subsequent stability
+search remains available; this heuristic is not a proof of mixture stability.
+Every EOS evaluation uses normalized composition, including neutral enhanced
+trials. Unnormalized Wilson or exponential weights belong only to the stability
+objective.
 
 ### 5.4 Two-Stage Trial Strategy
 
@@ -1763,16 +1886,18 @@ improvement in selected correctness and allocation contracts, not universal perf
 
 ### 6.1 Current Position
 
-NeqSim uses the same core algorithm family as modern equation-of-state simulators: Michelsen tangent-plane-distance stability analysis, Rachford-Rice phase-fraction solution, successive substitution, accelerated substitution, and Newton refinement. The current implementation is therefore not an ad hoc flash calculation; it is a classical industrial thermodynamics workflow with several modern robustness upgrades.
+NeqSim combines Michelsen tangent-plane-distance stability analysis, Rachford-Rice
+phase-fraction solution, successive substitution, acceleration and Newton
+refinement. The primary-literature comparison below identifies both established
+foundations and newer research methods. It does not establish equivalence to
+undisclosed commercial implementations or a global convergence guarantee.
 
-Commercial process simulators do not publish all implementation details, but published state-of-the-art practice generally adds stronger global phase discovery, more formal fallback handling, continuation methods for phase-boundary tracing, and richer convergence diagnostics around the same theoretical foundation.
-
-| Area | Current NeqSim implementation | State-of-the-art expectation |
+| Area | Current NeqSim implementation | Research and implementation comparators |
 |------|-------------------------------|------------------------------|
 | Two-phase VLE | Wilson K, Rachford-Rice, SSI, DEM, Newton refinement | Same core sequence, typically with extensive fallback telemetry |
 | Rachford-Rice | Nielsen 2023 reformulation with Michelsen 2001 option | Robust transformed formulations with bracketing safeguards |
 | Stability analysis | Michelsen TPD, Wilson K trials, amplified K retry, pure-component trials | Systematic multi-start TPD minimization with traceable trial outcomes |
-| Multiphase flash | Phase addition plus Q-function minimization and cleanup | Global phase-set search, phase deletion, and final global stability certification |
+| Multiphase flash | Phase addition plus Q-function minimization and cleanup | Broader phase-set search and final stability retesting; local multistart searches alone cannot certify a global minimum |
 | Critical-region behavior | Amplified K trials and heuristic gates | Continuation, negative flash, and critical-region classifiers |
 | Diagnostics | Mainly logging and final phase result | Structured flash report with iteration counts, seeds, TPD minima, and fallback reasons |
 
@@ -2735,6 +2860,65 @@ equipment and makes no wall-clock performance claim.
     Hydrogen and Light Hydrocarbons." *Journal of Chemical Engineering of Japan*, 5(4), 339-348.
     [doi:10.1252/jcej.5.339](https://doi.org/10.1252/jcej.5.339)
 
+### Recent algorithm comparisons and scope
+
+The October 2026 review compares the implementation with the following primary
+literature. These references identify numerical requirements and useful methods;
+they do not establish that every method below is implemented or that the
+thermodynamic parameters are experimentally qualified.
+
+| Topic | Primary source | Consequence for implementation and qualification |
+| --- | --- | --- |
+| Newton globalization | *A Line-Search-Based Algorithm for Multiphase Flash Calculations with CO2–Hydrocarbon System* (2024), [doi:10.1021/acsomega.4c01394](https://doi.org/10.1021/acsomega.4c01394) | Modified Cholesky and line search provide a useful comparator. NeqSim's relative diagonal perturbation is not modified Cholesky and does not guarantee a positive-definite Hessian. A finite descent direction, feasible step and recomputed accepted-state residual are separate requirements. |
+| Charge-constrained phase splitting | Nikolaidis, Novak, Kontogeorgis and Economou (2022), *Rigorous Phase Equilibrium Calculation Methods for Strong Electrolyte Solutions: The Isothermal Flash*, [doi:10.1016/j.fluid.2022.113441](https://doi.org/10.1016/j.fluid.2022.113441) | Ion partitioning must respect each phase's electroneutrality. Electrochemical potentials, or an independent basis of charge-neutral transfers, define stationarity; equality of individual ionic chemical potentials is generally incorrect. |
+| Electrolyte stability and trace amounts | Perdomo, Jackson, Mitsos, Galindo and Adjiman (2025), *Phase stability criteria and fluid-phase equilibria in strong-electrolyte systems*, [doi:10.1016/j.compchemeng.2024.108977](https://doi.org/10.1016/j.compchemeng.2024.108977) | The stability problem must use the same electroneutral feasible set as phase equilibrium. This work concerns fully dissociated electrolytes; it does not qualify reactive phase disappearance. |
+| Stability information and initialization | Heringer, Wapperom, Secuianu, Voskov and Nichita (2026), *New initialization procedures from phase stability testing in three-phase flash calculations for CO2-hydrocarbon mixtures*, [doi:10.1016/j.fluid.2025.114653](https://doi.org/10.1016/j.fluid.2025.114653) | Stationary trial compositions, including positive and trivial TPD minima, can supply additional split seeds. A seed is not proof of a stable phase. Their reported speed improvements apply to their tested mixtures and algorithms, not automatically to NeqSim. |
+| Reactive multiphase equilibrium | Tsanas, de Hemptinne and Mougin (2022), *Calculation of phase and chemical equilibrium for multiple ion-containing phases including stability analysis*, [doi:10.1016/j.ces.2021.117174](https://doi.org/10.1016/j.ces.2021.117174) | Reaction invariants, phase charge and phase stability must be satisfied together. Accelerating alternating chemistry and phase flashes alone does not establish simultaneous reactive stability. |
+
+Numerical qualification checks the actual equation-of-state pressure at the
+returned volume, conservation, phase charge, molecular or electrochemical
+equilibrium as applicable, and stability evidence. Small volume steps or small
+changes in the objective alone are insufficient. Finite-difference derivative
+checks use independently perturbed states and the same thermodynamic constraints
+as the derivative being tested. Model accuracy additionally requires independent
+measurements with matching temperature, pressure, concentration basis and
+standard state. Calibration and held-out validation data must be identified
+separately.
+
+Performance comparisons require these correctness conditions for both builds,
+identical fixtures and dependencies, and repeated fresh JVMs. Invalid or failed
+baseline calculations remain failures and cannot count as faster successful
+solutions. Improvements in one hydrate or trace-composition case do not imply a
+universal speedup across thermodynamic models.
+
+---
+
+## Review qualification (2026-10-15)
+
+The [follow-up qualification bundle](benchmarks/pr4306-followup-qualification.json.gz)
+(SHA256 `607aaba23d61b88f878b7fdbe4342178e3c71f7fb3c8446cba49cd547149d5ab`) records **496 tests across 84 distinct classes** on one frozen
+source/class/resource/dependency state: 494 passed, zero failed or errored, and two
+pre-existing tests remained disabled. The primary execution contains 494 tests in
+83 classes. Its requested selector `MultiphaseInitializationTest` was a typo;
+the unchanged command and unmatched selector are preserved. The correctly named
+`SystemThermoMultiphaseInitializationTest` then passed its two tests separately
+against the same frozen bytecode. These are disjoint executions, not a claim that
+the original request executed all 84 classes.
+
+The two disabled tests are the existing GUI display test and
+`CO2WaterPHTest.testCO2WaterAcidicPH`; neither is counted as passing. The bundle
+retains raw XML and logs, the original command, the explicit selector correction,
+34 evidence-integrity checks, primary-literature/data audits, and earlier failed
+runs separately. Earlier or isolated-agent totals are not added to final coverage.
+The pretest manifest SHA256 is `9a2d7caaf89791ed20711a195b81573b84fcaf26dcb3a3b194b5750a008eb905`.
+
+All 45 follow-up production files and 52 follow-up test files compile with
+`--release 8`. Execution used Java 17 with the Java 8 POM. Full Javadoc, 18
+Python documentation tests, documentation search, direct formatter apply/check,
+engineering coverage and whitespace checks pass. Hosted Java 8/21 execution and
+final matched performance results are separate gates; these local results do
+not substitute for them or prove global phase stability or universal model accuracy.
+
 ---
 
 ## Implementation Files
@@ -3066,30 +3250,16 @@ The remaining phase-map closure, duplicate-removal and density-hole tests are re
 
 ### Root selectors and Newton inventory mapping
 
-**Open qualification blocker for PR #4306:** the complete `SystemElectrolyteCPATest`
-class reproduces two salting-out failures and a hydrate-temperature error on both the
-starting `0239f31` revision and the focused state/copy redesign. Master `d28b180` passes
-those assertions, but separate composition checks show that its salted reference states
-can contain clamped molecular fractions and fail normalization. Passing the old direction-only
-assertions is therefore insufficient evidence for an ionic repair.
-
-The nitrogen/water fixture at 298.15 K and 50 bara uses component amounts
-`(nitrogen, water, Na+, Cl-) = (0.1, 1.0, 0.018, 0.018)` mol and mixing rule 10.
-The unqualified PR result places about 0.154 mole fraction chloride in the gas phase.
-The generic two-phase Newton formulation enforces positive amounts and molecular fugacity
-equality for every component; it does not represent the aqueous-only ion constraint.
-An isolated return to the old Newton implementation reproduces the old clamped states,
-not a qualified physical solution. Ionic Newton/acceleration exclusions, constrained K-value
-history, feasibility-aware Gibbs comparison and independently copied electrolyte association
-buffers were investigated separately; none alone produced qualified endpoints for all failing
-fixtures. These experimental changes are not included in the redesign.
-
-Before merging, the constrained ionic path must pass normalization, original component
-balance, gas-phase ion exclusion and molecular fugacity closure, as well as the existing
-salting-out and 150-bara hydrate tests. The passing neutral-fluid benchmark and default-CPA
-clone tests do not cover this blocker. Keep the phase/solver qualification work in
-[#4310](https://github.com/equinor/neqsim/issues/4310) open and require independent numerical
-review of the repaired endpoints.
+The early PR review found ionic states that passed direction-only property
+assertions while failing normalization or allowing ions into gas. The revised
+constrained path therefore qualifies original species balance, normalized phase
+amounts, ion admissibility, molecular and electrochemical stationarity, and the
+actual pressure roots independently of the requested physical property.
+Salting tests compare aqueous molality at matched gas fugacity. Numerical closure
+still does not establish experimental salting or hydrate accuracy: those model
+checks remain separate merge requirements. See the derivative and model-data
+qualification in [ElectrolyteBornDerivatives](../thermo/ElectrolyteBornDerivatives)
+and [ElectrolyteCPAModel](../thermo/ElectrolyteCPAModel).
 
 A phase's reported GAS/OIL/AQUEOUS classification is not necessarily its configured cubic
 root selector. Bounded flash rollback preserves both the physical-slot mapping and
@@ -3127,6 +3297,13 @@ without an intervening `init(0)` that could conceal shared buffers. This ownersh
 supports the qualified ordinary default Statoil CPA path. Optional fully implicit, Anderson
 and Broyden CPA variants retain separate qualification scope; it is not a blanket thread-safety
 claim for specialized CPA models.
+
+`PhaseElectrolyteCPA` now follows the same ownership contract. Its initialized
+association workspaces previously remained shared when multiphase templates
+were cloned after hydrate setup. Evaluating one phase could then change another
+phase's pressure without modifying its temperature, volume or composition.
+`ElectrolyteCPACloneIsolationTest` checks interleaved phase evaluation and both
+configuration orders without reinitializing the source to hide that mutation.
 
 These helpers transfer state after a caller's acceptance decision; they do not decide
 stability or select a root policy. Implicit supplementary and explicitly enhanced stability

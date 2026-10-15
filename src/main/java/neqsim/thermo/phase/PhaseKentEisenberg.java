@@ -30,4 +30,18 @@ public class PhaseKentEisenberg extends PhaseGENRTL {
   public double getActivityCoefficient(int k, int p) {
     return 1.0;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getMoleFractionActivityCoefficient(int component) {
+    // Kent-Eisenberg uses ideal mole-fraction activities in reaction equilibrium.
+    return 1.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getMolalityActivityCoefficient(int component, int solvent) {
+    return getComponent(solvent).getx();
+  }
+
 }

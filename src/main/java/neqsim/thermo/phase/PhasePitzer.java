@@ -1176,6 +1176,24 @@ public class PhasePitzer extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  protected double getMoleFractionActivityCoefficient(int component) {
+    if (!hasComponent("water") || getComponent(component).getName().equals("water")) {
+      return getActivityCoefficient(component);
+    }
+    double waterMoleFraction = getComponent("water").getx();
+    return waterMoleFraction > 1e-12 ? getActivityCoefficient(component) / waterMoleFraction
+        : getActivityCoefficient(component);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getMolalityActivityCoefficient(int component, int solvent) {
+    // Pitzer's native solute coefficients already use the molality standard state.
+    return getActivityCoefficient(component);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getOsmoticCoefficientOfWater() {
     return getPitzerOsmoticCoefficient();
   }

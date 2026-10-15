@@ -56,6 +56,8 @@ class CO2KClHydrateAccuracyAssessmentTest {
       }
 
       DiagnosticResult kcl = calculate(point, "KCl", 0.0, 1.0, 0.0);
+      assertEquals(point.measuredTemperature, kcl.temperature, 0.5,
+          "Independent Dholabhai hydrate holdout; the gas-ion parameter was fitted only to Onda solubility");
       double pureTemperature = pure == null ? Double.NaN : pure.temperature;
       report.add(kcl.toCsv(point, point.measuredTemperature, pureTemperature));
       logger.info(

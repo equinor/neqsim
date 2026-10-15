@@ -190,9 +190,32 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     } while (newcomps);
     balanceNewComponentSeedCharge(firstNewComponent);
 
+    reinitialize();
+  }
+
+  /**
+   * Rebinds the configured reaction set to current phases and inventories without changing its parameters or species.
+   *
+   * <p>
+   * Use this after replacing phase objects or extracting a phase. Explicit system chemicalReactionInit() remains the
+   * operation that discovers reactions and components from the selected database.
+   * </p>
+   */
+  public void reinitialize() {
+    componentNames = system.getComponentNames();
+    allComponentNames = reactionList.getAllComponents();
+    for (String name : allComponentNames) {
+      if (!java.util.Arrays.asList(componentNames).contains(name)) {
+        throw new IllegalStateException("Configured chemical reaction refers to missing component " + name);
+      }
+    }
+    solver = null;
+    initCalc = null;
+    firsttime = false;
+    iter = 0;
     components = new ComponentInterface[allComponentNames.length];
     if (components.length > 0) {
-      reactivePhase = getReactivePhaseIndex();
+      int reactivePhase = getReactivePhaseIndex();
       this.phase = reactivePhase >= 0 ? reactivePhase : 0;
       setReactiveComponents();
       reactionList.checkReactions(system.getPhase(phase));
@@ -213,6 +236,28 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
       system.isChemicalSystem(false);
     }
     kineticsSolver = new Kinetics(this);
+  }
+
+  /**
+   * Constructs independent phase-bound helpers while retaining an existing configured reaction set.
+   *
+   * @param system destination fluid with the same registered reaction components
+   * @param source configured operations to copy
+   */
+  private ChemicalReactionOperations(SystemInterface system, ChemicalReactionOperations source) {
+    this.system = system;
+    reactionList = source.reactionList.copy();
+    reinitialize();
+  }
+
+  /**
+   * Copies the owned reaction configuration and rebuilds helpers for another fluid without database discovery.
+   *
+   * @param destination cloned or extracted fluid that will own the copy
+   * @return independently configured operations bound to the destination fluid
+   */
+  public ChemicalReactionOperations copyForSystem(SystemInterface destination) {
+    return new ChemicalReactionOperations(destination, this);
   }
 
   /**

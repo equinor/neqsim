@@ -176,19 +176,29 @@ public class PhaseWaterIAPWS extends PhaseEos {
     return pMPa * 10.0;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Calculates the pressure derivative with respect to total volume at fixed temperature and moles.
+   *
+   * <p>
+   * This legacy IF97 adapter stores molar and total volumes in SI units, unlike the ordinary cubic phases. Differencing
+   * its molar volume therefore gives bar/(m3/mol); dividing by the phase mole amount gives bar/m3, consistent with this
+   * adapter's total volume and independent of extensive amount scaling.
+   * </p>
+   *
+   * @return derivative of pressure in bar with respect to this adapter's total volume in m3
+   */
   @Override
   public double calcPressuredV() {
-    // Numerical derivative of pressure with respect to volume
     double oldVolume = molarVolume;
-    double dpdV;
     double dV = oldVolume * 1e-6;
-    molarVolume = oldVolume + dV;
-    double pPlus = calcPressure();
-    molarVolume = oldVolume - dV;
-    double pMinus = calcPressure();
-    molarVolume = oldVolume;
-    dpdV = (pPlus - pMinus) / (2 * dV);
-    return dpdV;
+    try {
+      molarVolume = oldVolume + dV;
+      double pPlus = calcPressure();
+      molarVolume = oldVolume - dV;
+      double pMinus = calcPressure();
+      return (pPlus - pMinus) / (2 * dV * numberOfMolesInPhase);
+    } finally {
+      molarVolume = oldVolume;
+    }
   }
 }

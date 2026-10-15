@@ -29,6 +29,24 @@ public class PhaseDuanSun extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  protected double getMoleFractionActivityCoefficient(int component) {
+    if (!hasComponent("water") || getComponent(component).getName().equals("water")) {
+      return getActivityCoefficient(component);
+    }
+    double waterMoleFraction = getComponent("water").getx();
+    return waterMoleFraction > 1e-12 ? getActivityCoefficient(component) / waterMoleFraction
+        : getActivityCoefficient(component);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected double getMolalityActivityCoefficient(int component, int solvent) {
+    // Duan and Sun (2003), Eq. 2, uses an ideal unit-molality solute standard.
+    return getActivityCoefficient(component);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGeDuanSun(name, moles, molesInPhase, compNumber);

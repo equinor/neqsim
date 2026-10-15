@@ -709,6 +709,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Get activity coefficient on a specified concentration scale.
    *
+   * <p>
+   * Solute molality coefficients use the aqueous infinite-dilution standard state and tend to unity as the solution
+   * becomes dilute. Symmetric GE coefficients are normalized before conversion; native Pitzer coefficients already use
+   * molality. Solvents retain their pure-component reference. The molarity overload uses the dilute-aqueous
+   * approximation gamma_c approximately gamma_m.
+   * </p>
+   *
    * @param k component index
    * @param scale concentration scale: "molefraction" (default), "molality" (mol/kg solvent), or "molarity" (mol/L
    * solution)
@@ -724,12 +731,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void setPressure(double pres);
 
   /**
-   * Calculate pH of the aqueous phase using the IUPAC standard definition.
+   * Calculate the legacy mole-fraction activity pH of the aqueous phase.
    *
    * <p>
-   * Uses activity-based pH calculation since NeqSim's chemical reaction equilibrium constants are defined on the mole
-   * fraction scale: pH = -log10(gamma_x * x_H3O+) where gamma_x is the activity coefficient and x_H3O+ is the mole
-   * fraction of H3O+.
+   * Retained for compatibility: -log10(gamma_x * x_H3O+). For aqueous unsymmetric mole-fraction coefficients this
+   * exceeds the standard molal pH by -log10(M_water), approximately 1.744 at M_water in kg/mol. Use
+   * {@code getpH("molality")} for IUPAC pH and physical measurements or corrosion calculations.
    * </p>
    *
    * @return pH value
@@ -743,10 +750,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * Available methods:
    * </p>
    * <ul>
-   * <li><b>activity</b> (default): pH = -log10(gamma_x * x_H3O+) - consistent with mole fraction-based equilibrium
-   * constants</li>
+   * <li><b>activity</b> (default): legacy -log10(gamma_x * x_H3O+), retained for compatibility; this is not the IUPAC
+   * molality standard state</li>
    * <li><b>molality</b> (IUPAC standard): pH = -log10(gamma_m * m_H3O+) - correct for all concentrations</li>
-   * <li><b>molarity</b>: pH = -log10([H3O+]) where [H3O+] is in mol/L - ignores activity coefficient</li>
+   * <li><b>molarity</b>: pH = -log10(gamma_c * [H3O+]), using the dilute-aqueous gamma_c approximately gamma_m
+   * conversion, with [H3O+] in mol/L</li>
    * <li><b>acidgas</b>: screening in-situ pH of an acid-gas-loaded aqueous phase from dissolved CO2/H2S via the
    * carbonic/hydrosulfuric acid first-dissociation equilibria (used automatically as a fallback when no explicit H3O+
    * species is present)</li>

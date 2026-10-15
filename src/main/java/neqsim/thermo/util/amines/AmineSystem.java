@@ -452,7 +452,7 @@ public class AmineSystem implements java.io.Serializable {
       runTPflash();
     }
     try {
-      return system.getPhase(1).getpH();
+      return system.getPhase(1).getpH("molality");
     } catch (Exception e) {
       logger.error("pH calculation failed", e);
       return Double.NaN;

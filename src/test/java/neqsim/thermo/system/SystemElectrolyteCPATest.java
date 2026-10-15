@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -161,7 +162,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsNosalt.TPflash();
     pureWater.initProperties();
 
-    double ch4InWaterNoSalt = pureWater.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
+    double ch4InWaterNoSalt = aqueousMolalityPerFugacity(pureWater, "methane");
 
     // System with salt (1 mol/kg NaCl)
     SystemInterface salineWater = new SystemElectrolyteCPAstatoil(298.15, 50.0);
@@ -175,7 +176,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsSalt.TPflash();
     salineWater.initProperties();
 
-    double ch4InWaterWithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
+    double ch4InWaterWithSalt = aqueousMolalityPerFugacity(salineWater, "methane");
 
     // CH4 solubility should DECREASE with salinity (salting-out effect)
     assertTrue(ch4InWaterWithSalt < ch4InWaterNoSalt,
@@ -297,7 +298,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsNaCl.TPflash();
     withNaCl.initProperties();
 
-    double propaneWithNaCl = withNaCl.getPhase(PhaseType.AQUEOUS).getComponent("propane").getx();
+    double propaneWithNaCl = aqueousMolalityPerFugacity(withNaCl, "propane");
 
     // Three-phase system with NaCl + CaCl2 (higher ionic strength)
     SystemInterface withMixedSalt = new SystemElectrolyteCPAstatoil(298.15, 30.0);
@@ -313,7 +314,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsMixed.TPflash();
     withMixedSalt.initProperties();
 
-    double propaneWithMixedSalt = withMixedSalt.getPhase(PhaseType.AQUEOUS).getComponent("propane").getx();
+    double propaneWithMixedSalt = aqueousMolalityPerFugacity(withMixedSalt, "propane");
 
     // Higher ionic strength should give stronger salting-out effect
     // Using propane since it has higher solubility than methane in this system
@@ -339,7 +340,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsNoSalt.TPflash();
     pureWater.initProperties();
 
-    double n2NoSalt = pureWater.getPhase(PhaseType.AQUEOUS).getComponent("nitrogen").getx();
+    double n2NoSalt = aqueousMolalityPerFugacity(pureWater, "nitrogen");
 
     // System with salt
     SystemInterface salineWater = new SystemElectrolyteCPAstatoil(298.15, 50.0);
@@ -352,7 +353,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsSalt.TPflash();
     salineWater.initProperties();
 
-    double n2WithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("nitrogen").getx();
+    double n2WithSalt = aqueousMolalityPerFugacity(salineWater, "nitrogen");
 
     assertTrue(n2WithSalt < n2NoSalt, "N2 solubility should decrease with salinity "
         + "(salting-out effect). Without salt: " + n2NoSalt + ", With salt: " + n2WithSalt);
@@ -376,8 +377,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsNoSalt.TPflash();
     pureWater.initProperties();
 
-    double ch4NoSalt = pureWater.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
-    double n2NoSalt = pureWater.getPhase(PhaseType.AQUEOUS).getComponent("nitrogen").getx();
+    double ch4NoSalt = aqueousMolalityPerFugacity(pureWater, "methane");
+    double n2NoSalt = aqueousMolalityPerFugacity(pureWater, "nitrogen");
 
     // Natural gas mixture with formation water
     SystemInterface salineWater = new SystemElectrolyteCPAstatoil(298.15, 50.0);
@@ -392,14 +393,43 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     opsSalt.TPflash();
     salineWater.initProperties();
 
-    double ch4WithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
-    double n2WithSalt = salineWater.getPhase(PhaseType.AQUEOUS).getComponent("nitrogen").getx();
+    double ch4WithSalt = aqueousMolalityPerFugacity(salineWater, "methane");
+    double n2WithSalt = aqueousMolalityPerFugacity(salineWater, "nitrogen");
 
     // All gas components should show salting-out
     assertTrue(ch4WithSalt < ch4NoSalt, "CH4 should show salting-out in natural gas mixture. Without salt: " + ch4NoSalt
         + ", With salt: " + ch4WithSalt);
     assertTrue(n2WithSalt < n2NoSalt,
         "N2 should show salting-out in natural gas mixture. Without salt: " + n2NoSalt + ", With salt: " + n2WithSalt);
+  }
+
+  /**
+   * Compare molal solubility at a common gas fugacity. Salt can change gas composition and phase topology at fixed
+   * overall feed, so an aqueous mole-fraction comparison alone is not a Setschenow test. Normalizing by fugacity uses
+   * the Henry-law approximation for dilute dissolved gas. See the concentration-basis definitions in NIST Standard
+   * Reference Database 106, system 62_73.
+   *
+   * @param fluid equilibrated fluid containing gas and aqueous phases
+   * @param component name of the neutral dissolved gas
+   * @return aqueous molality divided by gas fugacity, in mol/(kg water bar)
+   */
+  private static double aqueousMolalityPerFugacity(SystemInterface fluid, String component) {
+    PhaseInterface aqueous = fluid.getPhase(PhaseType.AQUEOUS);
+    PhaseInterface gas = fluid.getPhase(PhaseType.GAS);
+    double gasFugacity = gas.getComponent(component).getx() * gas.getComponent(component).getFugacityCoefficient()
+        * gas.getPressure();
+    double aqueousFugacity = aqueous.getComponent(component).getx()
+        * aqueous.getComponent(component).getFugacityCoefficient() * aqueous.getPressure();
+    double waterMass = aqueous.getComponent("water").getNumberOfMolesInPhase()
+        * aqueous.getComponent("water").getMolarMass();
+    assertTrue(Double.isFinite(gasFugacity) && gasFugacity > 0.0, "The gas fugacity must be finite and positive");
+    assertTrue(Double.isFinite(aqueousFugacity) && aqueousFugacity > 0.0,
+        "The aqueous fugacity must be finite and positive");
+    assertTrue(Double.isFinite(waterMass) && waterMass > 0.0,
+        "The aqueous water inventory must be finite and positive");
+    assertEquals(0.0, Math.log(aqueousFugacity / gasFugacity), 1.0e-7,
+        "Salting direction requires a converged gas-aqueous equilibrium");
+    return aqueous.getComponent(component).getNumberOfMolesInPhase() / waterMass / gasFugacity;
   }
 
   // ============================================================================

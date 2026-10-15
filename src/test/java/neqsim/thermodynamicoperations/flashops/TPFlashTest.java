@@ -287,10 +287,49 @@ class TPFlashTest {
     testOps = new ThermodynamicOperations(testSystem5);
     testOps.TPflash();
     testSystem5.initProperties();
-    // testSystem5.prettyPrint();
-    double beta = testSystem5.getBeta();
-    assertEquals(1, testSystem5.getNumberOfPhases());
-    assertEquals(1.0, beta, 1.0e-12);
+    // Correctly normalized stability trials resolve a material incipient gas phase at the original fixture.
+    // The homogeneous feed has negative normalized TPD, so its former single-phase expectation was unstable.
+    assertEquals(2, testSystem5.getNumberOfPhases());
+    assertClosedEquilibrium(testSystem5, "tiny-flow incipient split");
+    int gas = testSystem5.getPhaseNumberOfPhase("gas");
+    double gasBeta = testSystem5.getBeta(gas);
+    assertTrue(gasBeta > 1e-8 && gasBeta < 1e-5);
+    SystemInterface homogeneous = testSystem5.clone();
+    homogeneous.setNumberOfPhases(1);
+    homogeneous.setBeta(0, 1.0);
+    homogeneous.setPhaseType(0, PhaseType.LIQUID);
+    for (int component = 0; component < homogeneous.getNumberOfComponents(); component++) {
+      homogeneous.getPhase(0).getComponent(component).setx(homogeneous.getComponent(component).getz());
+    }
+    homogeneous.init(3);
+    FluidEquilibriumChecks.validatePressureRoot(homogeneous.getPhase(0));
+    double tangentPlaneDistance = 0.0;
+    for (int component = 0; component < homogeneous.getNumberOfComponents(); component++) {
+      double y = testSystem5.getPhase(gas).getComponent(component).getx();
+      tangentPlaneDistance += y
+          * (Math.log(y) + testSystem5.getPhase(gas).getComponent(component).getLogFugacityCoefficient()
+              - Math.log(homogeneous.getComponent(component).getz())
+              - homogeneous.getPhase(0).getComponent(component).getLogFugacityCoefficient());
+    }
+    assertTrue(tangentPlaneDistance < -1e-8, "The former homogeneous endpoint is unstable to the vapor trial");
+    for (double flowScale : new double[] {1.0, 1e6}) {
+      SystemInterface repeated = testSystem5.clone();
+      repeated.setTotalFlowRate(flowScale * 4.925e-7, "kg/sec");
+      new ThermodynamicOperations(repeated).TPflash();
+      assertEquals(2, repeated.getNumberOfPhases());
+      assertEquals(gasBeta, repeated.getBeta(repeated.getPhaseNumberOfPhase("gas")), 1e-9);
+      assertClosedEquilibrium(repeated, "scaled incipient split");
+      for (int phase = 0; phase < repeated.getNumberOfPhases(); phase++) {
+        FluidEquilibriumChecks.validatePressureRoot(repeated.getPhase(phase));
+      }
+      for (double pressureOffset : new double[] {-0.001, 0.001}) {
+        SystemInterface bracket = repeated.clone();
+        bracket.setPressure(90.03461693 + pressureOffset);
+        new ThermodynamicOperations(bracket).TPflash();
+        assertEquals(pressureOffset < 0.0 ? 2 : 1, bracket.getNumberOfPhases(), "Bubble boundary bracket");
+        assertClosedEquilibrium(bracket, "bubble boundary bracket");
+      }
+    }
   }
 
   @Test

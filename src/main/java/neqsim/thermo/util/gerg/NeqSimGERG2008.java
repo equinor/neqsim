@@ -1,6 +1,7 @@
 package neqsim.thermo.util.gerg;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.EnumMap;
+import java.util.concurrent.atomic.AtomicLong;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
@@ -16,32 +17,44 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <p>
  * This class provides a wrapper around the GERG-2008 equation of state for calculating thermodynamic properties of
- * natural gas mixtures. The GERG-2008 parameters are cached statically to avoid expensive re-initialization on every
- * call, which significantly improves performance for applications that make repeated property calculations (such as
- * compressor performance estimation).
+ * natural gas mixtures. Initialized native models are reused per thread and variant. Their coefficient tables and
+ * mutable temperature/composition workspaces are never shared across threads; repeated calls on one thread avoid
+ * repeating parameter initialization. Configuring a utility or its phase concurrently with evaluation is unsupported.
  * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class NeqSimGERG2008 {
+  /** Generation invalidating initialized working models on every thread after {@link #clearCache()}. */
+  private static final AtomicLong CACHE_GENERATION = new AtomicLong();
+
+  /** One native working model per thread and variant; native composition/temperature caches are mutable. */
+  private static final ThreadLocal<WorkingModels> MODEL_CACHE = ThreadLocal.withInitial(WorkingModels::new);
+
   /**
-   * Cache of initialized GERG-2008 model instances by type. The SetupGERG() method initializes ~3000 lines of constant
-   * parameters, so caching provides significant performance improvement for repeated calculations.
+   * Thread-owned model tables and calculation scratch, reused until the cache generation changes.
+   *
+   * @author NeqSim contributors
+   * @version 1.0
    */
-  private static final ConcurrentHashMap<GERG2008Type, GERG2008> MODEL_CACHE = new ConcurrentHashMap<>();
+  private static final class WorkingModels {
+    /** Last global invalidation observed by this thread. */
+    private long generation = -1;
+    /** Initialized variants owned by this thread. */
+    private final EnumMap<GERG2008Type, GERG2008> models = new EnumMap<>(GERG2008Type.class);
+  }
 
   double[] normalizedGERGComposition = new double[22 + 1];
   double[] notNormalizedGERGComposition = new double[22 + 1];
   PhaseInterface phase = null;
-  GERG2008 GERG2008;
   private GERG2008Type modelType = GERG2008Type.STANDARD;
 
   /**
    * Constructor for NeqSimGERG2008.
    */
   public NeqSimGERG2008() {
-    this.GERG2008 = getCachedModel(GERG2008Type.STANDARD);
+    getCachedModel(GERG2008Type.STANDARD);
   }
 
   /**
@@ -61,30 +74,39 @@ public class NeqSimGERG2008 {
    */
   public NeqSimGERG2008(PhaseInterface phase, GERG2008Type modelType) {
     this.modelType = modelType;
-    this.GERG2008 = getCachedModel(modelType);
+    getCachedModel(modelType);
     this.setPhase(phase);
   }
 
   /**
-   * Gets a cached and initialized GERG-2008 model instance for the specified type. If no cached instance exists,
-   * creates one and initializes it with SetupGERG(). This method is thread-safe.
+   * Obtains this thread's initialized native model, including its owned mutable calculation scratch.
    *
-   * <p>
-   * Performance note: The SetupGERG() method initializes approximately 3000 lines of constant parameters for the
-   * GERG-2008 equation of state. Caching these initialized models provides significant performance improvement for
-   * applications that make repeated property calculations, such as compressor performance estimation where hundreds of
-   * flash calculations may be required.
-   * </p>
-   *
-   * @param type the GERG-2008 model variant (STANDARD or HYDROGEN_ENHANCED)
-   * @return a cached, initialized GERG2008 instance
+   * @param type reference model variant
+   * @return thread-confined working model
    */
   private static GERG2008 getCachedModel(GERG2008Type type) {
-    return MODEL_CACHE.computeIfAbsent(type, t -> {
-      GERG2008 model = createNewModel(t);
+    WorkingModels cache = MODEL_CACHE.get();
+    long generation = CACHE_GENERATION.get();
+    if (cache.generation != generation) {
+      cache.models.clear();
+      cache.generation = generation;
+    }
+    GERG2008 model = cache.models.get(type);
+    if (model == null) {
+      model = createNewModel(type);
       model.SetupGERG();
-      return model;
-    });
+      cache.models.put(type, model);
+    }
+    return model;
+  }
+
+  /**
+   * Resolves working state on the calling thread rather than retaining a constructor-thread model.
+   *
+   * @return this thread's working model for the configured variant
+   */
+  private GERG2008 model() {
+    return getCachedModel(modelType);
   }
 
   /**
@@ -106,11 +128,12 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * Clears the cached GERG-2008 model instances. This is primarily useful for testing or when parameters need to be
-   * reloaded.
+   * Invalidates all threads' GERG-2008 working models on their next evaluation. An evaluation already in progress
+   * finishes using its owned model. This is useful for tests and parameter reloads.
    */
   public static void clearCache() {
-    MODEL_CACHE.clear();
+    CACHE_GENERATION.incrementAndGet();
+    MODEL_CACHE.remove();
   }
 
   /**
@@ -130,7 +153,7 @@ public class NeqSimGERG2008 {
   public void setModelType(GERG2008Type modelType) {
     if (this.modelType != modelType) {
       this.modelType = modelType;
-      this.GERG2008 = getCachedModel(modelType);
+      getCachedModel(modelType);
     }
   }
 
@@ -173,11 +196,53 @@ public class NeqSimGERG2008 {
    * @return a double
    */
   public double getPressure() {
-    double moldens = getMolarDensity();
+    GERG2008 workingModel = model();
+    double moldens = getMolarDensity(workingModel);
     doubleW P = new doubleW(0.0);
     doubleW Z = new doubleW(0.0);
-    GERG2008.PressureGERG(phase.getTemperature(), moldens, normalizedGERGComposition, P, Z);
+    workingModel.PressureGERG(phase.getTemperature(), moldens, normalizedGERGComposition, P, Z);
     return P.val;
+  }
+
+  /**
+   * Evaluates the reference equation at a specified molar density without solving a new pressure root.
+   *
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/L
+   * @return pressure in kPa
+   */
+  public double pressureFromMolarDensity(double temperature, double molarDensity) {
+    GERG2008 workingModel = model();
+    doubleW calculatedPressure = new doubleW(0.0);
+    doubleW compressibility = new doubleW(0.0);
+    workingModel.PressureGERG(temperature, molarDensity, normalizedGERGComposition, calculatedPressure,
+        compressibility);
+    return calculatedPressure.val;
+  }
+
+  /**
+   * Evaluates the isothermal reference pressure derivative at a specified molar density.
+   *
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/L
+   * @return pressure derivative in kPa per mol/L
+   */
+  public double pressureDerivativeMolarDensity(double temperature, double molarDensity) {
+    doubleW calculatedPressure = new doubleW(0.0);
+    doubleW compressibility = new doubleW(0.0);
+    GERG2008 workingModel = model();
+    workingModel.PressureGERG(temperature, molarDensity, normalizedGERGComposition, calculatedPressure,
+        compressibility);
+    return workingModel.dPdDsave;
+  }
+
+  /**
+   * Returns the native gas constant used to nondimensionalize the GERG Helmholtz energy.
+   *
+   * @return native gas constant in J/(mol K)
+   */
+  public double getGasConstant() {
+    return model().RGERG;
   }
 
   /**
@@ -186,8 +251,9 @@ public class NeqSimGERG2008 {
    * @return a double
    */
   public double getMolarMass() {
+    GERG2008 workingModel = model();
     doubleW mm = new doubleW(0.0);
-    GERG2008.MolarMassGERG(normalizedGERGComposition, mm);
+    workingModel.MolarMassGERG(normalizedGERGComposition, mm);
     return mm.val / 1.0e3;
   }
 
@@ -197,6 +263,16 @@ public class NeqSimGERG2008 {
    * @return a double
    */
   public double getMolarDensity() {
+    return getMolarDensity(model());
+  }
+
+  /**
+   * Solves density using one thread-owned model for the complete bounded root search.
+   *
+   * @param workingModel native model retained throughout this evaluation
+   * @return molar density in mol/L
+   */
+  private double getMolarDensity(GERG2008 workingModel) {
     int flag = 0;
     if (phase != null) {
       PhaseType type = phase.getType();
@@ -212,7 +288,7 @@ public class NeqSimGERG2008 {
       double liquidDensity = ReferenceEosLiquidDensitySolver.solve(pressure, density -> {
         doubleW calculatedPressure = new doubleW(0.0);
         doubleW compressibility = new doubleW(0.0);
-        GERG2008.PressureGERG(phase.getTemperature(), density, normalizedGERGComposition, calculatedPressure,
+        workingModel.PressureGERG(phase.getTemperature(), density, normalizedGERGComposition, calculatedPressure,
             compressibility);
         return calculatedPressure.val;
       });
@@ -220,7 +296,7 @@ public class NeqSimGERG2008 {
         return liquidDensity;
       }
     }
-    GERG2008.DensityGERG(flag, phase.getTemperature(), pressure, normalizedGERGComposition, D, ierr, herr);
+    workingModel.DensityGERG(flag, phase.getTemperature(), pressure, normalizedGERGComposition, D, ierr, herr);
     return D.val;
   }
 
@@ -273,6 +349,7 @@ public class NeqSimGERG2008 {
    * @return an array of type double
    */
   public double[] propertiesGERG() {
+    GERG2008 workingModel = model();
     doubleW p = new doubleW(0.0);
     doubleW z = new doubleW(0.0);
     doubleW dpdd = new doubleW(0.0);
@@ -289,11 +366,11 @@ public class NeqSimGERG2008 {
     doubleW jt = new doubleW(0.0);
     doubleW kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
-    double dens = getMolarDensity();
+    double dens = getMolarDensity(workingModel);
     // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
     // arg7);
-    GERG2008.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd, d2pdd2, d2pdtd, dpdt,
-        u, h, s, cv, cp, w, g, jt, kappa, A);
+    workingModel.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd, d2pdd2, d2pdtd,
+        dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
     double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
         cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
     return properties;
@@ -433,9 +510,10 @@ public class NeqSimGERG2008 {
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
   public doubleW[] getAlpha0_GERG2008() {
+    GERG2008 workingModel = model();
     // Get temperature and molar density from the phase object
     double temperature = phase.getTemperature();
-    double molarDensity = getMolarDensity(phase);
+    double molarDensity = getMolarDensity(workingModel);
 
     // Create and initialize a 4x4 array for the derivatives.
     // Assuming doubleW is a simple wrapper with a public field 'val'.
@@ -448,7 +526,7 @@ public class NeqSimGERG2008 {
 
     // Call the GERG2008 function to fill in the ar array.
     // The first two parameters (itau and idelta) are set to 0.
-    GERG2008.Alpha0GERG(temperature, molarDensity, normalizedGERGComposition, a0);
+    workingModel.Alpha0GERG(temperature, molarDensity, normalizedGERGComposition, a0);
 
     // Return the computed dimensionless residual Helmholtz free energy.
     // This is equivalent to alpha_res = A^r/(RT)
@@ -470,9 +548,10 @@ public class NeqSimGERG2008 {
    * @return a doubleW[][] representing the reduced residual helmholtz free energy
    */
   public doubleW[][] getAlphares_GERG2008() {
+    GERG2008 workingModel = model();
     // Get temperature and molar density from the phase object
     double temperature = phase.getTemperature();
-    double molarDensity = getMolarDensity(phase);
+    double molarDensity = getMolarDensity(workingModel);
 
     // Create and initialize a 4x4 array for the derivatives.
     // Assuming doubleW is a simple wrapper with a public field 'val'.
@@ -491,7 +570,7 @@ public class NeqSimGERG2008 {
     // derivatives as well as up to third-order volume derivatives, so request
     // \u03c4-derivatives up to second order and \u03b4-derivatives up to third
     // order.
-    GERG2008.AlpharGERG(2, 3, temperature, molarDensity, normalizedGERGComposition, ar);
+    workingModel.AlpharGERG(2, 3, temperature, molarDensity, normalizedGERGComposition, ar);
 
     // Return the computed dimensionless residual Helmholtz free energy.
     // This is equivalent to alpha_res = A^r/(RT)
@@ -511,13 +590,14 @@ public class NeqSimGERG2008 {
    * @return dimensionless residual Helmholtz energy, {@code alphaR = Ares/(nRT)}
    */
   public double getResidualHelmholtzEnergy(double temperature, double molarDensity) {
+    GERG2008 workingModel = model();
     doubleW[][] residualHelmholtz = new doubleW[4][4];
     for (int i = 0; i < residualHelmholtz.length; i++) {
       for (int j = 0; j < residualHelmholtz[i].length; j++) {
         residualHelmholtz[i][j] = new doubleW(0.0);
       }
     }
-    GERG2008.AlpharGERG(1, 0, temperature, molarDensity, normalizedGERGComposition, residualHelmholtz);
+    workingModel.AlpharGERG(1, 0, temperature, molarDensity, normalizedGERGComposition, residualHelmholtz);
     return residualHelmholtz[0][0].val;
   }
 

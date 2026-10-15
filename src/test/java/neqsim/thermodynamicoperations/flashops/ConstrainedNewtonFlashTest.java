@@ -148,10 +148,12 @@ class ConstrainedNewtonFlashTest {
   /**
    * Legacy serialized state can reenter through either public initializer before taking a Newton step.
    *
+   * @param serializedActivePhases retained phase count, or zero when absent from the older stream
    * @throws Exception if reflective access fails
    */
-  @Test
-  void missingSerializedOrientationIsRebuiltByPublicInitializers() throws Exception {
+  @ParameterizedTest
+  @ValueSource(ints = {0, 2})
+  void missingSerializedOrientationIsRebuiltByPublicInitializers(int serializedActivePhases) throws Exception {
     for (boolean initializeAmounts : new boolean[] {false, true}) {
       SystemInterface fluid = seededBrine(false);
       SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, fluid.getNumberOfComponents());
@@ -161,6 +163,9 @@ class ConstrainedNewtonFlashTest {
       Field orientation = SysNewtonRhapsonTPflash.class.getDeclaredField("secondPhaseCoordinate");
       orientation.setAccessible(true);
       orientation.set(solver, null);
+      Field activePhases = SysNewtonRhapsonTPflash.class.getDeclaredField("activePhases");
+      activePhases.setAccessible(true);
+      activePhases.setInt(solver, serializedActivePhases);
       if (initializeAmounts) {
         solver.setu();
       }

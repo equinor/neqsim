@@ -1,8 +1,12 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
+import Jama.Matrix;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
+import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.EosGeFlashModel;
@@ -18,7 +22,9 @@ import neqsim.thermodynamicoperations.flashops.reactiveflash.FormulaMatrix;
  * ion-stripped phase trials into the generic coupled multiphase iteration. A result requires simultaneous molecular
  * fugacity equality, reaction equilibrium where an aqueous material phase exists, elemental conservation and
  * electroneutrality. An ion-free separated stream can retain registered reactive species without requiring an aqueous
- * phase; reaction coupling resumes if an aqueous phase appears at a later state. The caller is updated only after all
+ * phase when conservative reactive aqueous stability trials qualify that neutral endpoint. A negative or unqualified
+ * reactive trial rejects the endpoint; constructing a new reaction-stabilized split is outside that absence check.
+ * Reaction coupling resumes if the molecular phase solve creates an aqueous phase. The caller is updated only after all
  * checks succeed; no EOS, hydrate or reaction parameters are changed.
  * </p>
  *
@@ -31,6 +37,8 @@ final class AqueousReactionEquilibrium {
   private final SystemInterface system;
   private double minimumTrialDistance = Double.NaN;
   private int iterations;
+  /** Number of accepted conservative reaction-extent corrections. */
+  private int reactionNewtonSteps;
   /** Acceleration state and diagnostics for the most recent coupled solve. */
   private InventoryAcceleration acceleration;
 
@@ -64,6 +72,7 @@ final class AqueousReactionEquilibrium {
    */
   public void run() {
     iterations = 0;
+    reactionNewtonSteps = 0;
     minimumTrialDistance = Double.NaN;
     checkInterrupted();
     if (!isApplicable(system)) {
@@ -74,6 +83,8 @@ final class AqueousReactionEquilibrium {
     double[] elements = formula.computeElementVector(overallMoles(system));
     SystemInterface work = system.clone();
     double reactionResidual = Double.NaN;
+    double previousCouplingResidual = Double.POSITIVE_INFINITY;
+    boolean coupledNewtonActive = false;
     acceleration = new InventoryAcceleration();
     for (int iteration = 0; iteration < MAXIMUM_ITERATIONS; iteration++) {
       iterations = iteration + 1;
@@ -91,6 +102,9 @@ final class AqueousReactionEquilibrium {
         if (acceleration.restoreUnaccelerated(work)) {
           continue;
         }
+        if (acceptNeutralBoundary(work, formula, elements)) {
+          return;
+        }
         throw new IllegalStateException("Aqueous reaction phase equilibrium failed: " + ex.getMessage(), ex);
       }
       work.isChemicalSystem(true);
@@ -101,8 +115,21 @@ final class AqueousReactionEquilibrium {
         }
       }
       if (aqueousCount == 0 && !FlashPhaseConstraints.hasIonicInventory(work)) {
-        // Separated gas/oil streams retain the registered reaction species but can have no aqueous inventory.
-        // The frozen-species phase solve is already qualified; no aqueous reaction residual is defined here.
+        // Exact-zero ionic products can still form a reaction-stabilized aqueous phase. Qualify the molecular
+        // endpoint against conservative reactive aqueous trials before accepting that boundary.
+        boolean reactiveInventory = false;
+        for (ChemicalReaction reaction : work.getChemicalReactionOperations().getReactionList()
+            .getChemicalReactionList()) {
+          for (String name : reaction.getNames()) {
+            reactiveInventory |= work.getComponent(name).getNumberOfmoles() > 0.0;
+          }
+        }
+        if (reactiveInventory) {
+          if (acceptNeutralBoundary(work, formula, elements)) {
+            return;
+          }
+          throw new IllegalStateException("Could not establish reactive aqueous stability of the neutral endpoint");
+        }
         checkInterrupted();
         copyResult(work);
         minimumTrialDistance = minimumTrialDistance(phaseFlash);
@@ -111,6 +138,9 @@ final class AqueousReactionEquilibrium {
       if (aqueousCount != 1) {
         if (acceleration.restoreUnaccelerated(work)) {
           continue;
+        }
+        if (aqueousCount == 0 && acceptNeutralBoundary(work, formula, elements)) {
+          return;
         }
         throw new IllegalStateException("Aqueous reaction coupling requires exactly one aqueous material phase");
       }
@@ -129,10 +159,26 @@ final class AqueousReactionEquilibrium {
         return;
       }
 
+      // Keep the inexpensive fixed point for readily coupled fluids. Strong gas buffering can make that
+      // iteration nearly stationary even when each isolated aqueous chemical solve is well converged.
+      boolean attemptedNewton = coupledNewtonActive
+          || iteration >= 6 && reactionResidual > 0.5 * previousCouplingResidual;
+      previousCouplingResidual = reactionResidual;
+      if (attemptedNewton) {
+        SystemInterface corrected = reactionNewtonTrial(work);
+        if (corrected != null) {
+          verifyElements(formula, elements, overallMoles(corrected));
+          work = corrected;
+          acceleration.clearHistory();
+          reactionNewtonSteps++;
+          coupledNewtonActive = true;
+          continue;
+        }
+      }
       SystemInterface aqueous = work.phaseToSystem("aqueous");
       // phaseToSystem replaces both the material basis and the reactive phase index. Rebuild the chemical
       // initialization on that isolated basis rather than retaining its parent's phase-bound helpers.
-      aqueous.chemicalReactionInit();
+      aqueous.getChemicalReactionOperations().reinitialize();
       aqueous.setNumberOfPhases(1);
       aqueous.setPhaseType(0, PhaseType.AQUEOUS);
       aqueous.setBeta(0, 1.0);
@@ -142,6 +188,17 @@ final class AqueousReactionEquilibrium {
       if (!chemistry.solveChemEq(0, 1)) {
         if (acceleration.restoreUnaccelerated(work)) {
           continue;
+        }
+        if (!attemptedNewton) {
+          SystemInterface corrected = reactionNewtonTrial(work);
+          if (corrected != null) {
+            verifyElements(formula, elements, overallMoles(corrected));
+            work = corrected;
+            acceleration.clearHistory();
+            reactionNewtonSteps++;
+            coupledNewtonActive = true;
+            continue;
+          }
         }
         throw new IllegalStateException("Aqueous reaction aqueous chemistry did not converge: reaction residual="
             + chemistry.getMaximumAbsoluteReactionLogResidual() + ", element residual="
@@ -174,6 +231,389 @@ final class AqueousReactionEquilibrium {
   }
 
   /**
+   * Commits a neutral boundary only after conservative recombination and reactive aqueous stability qualification.
+   *
+   * @param work owned trial at the failed or disappearing aqueous boundary
+   * @param formula complete elemental and charge basis
+   * @param elements original conserved inventory
+   * @return whether a qualified endpoint was committed
+   */
+  private boolean acceptNeutralBoundary(SystemInterface work, FormulaMatrix formula, double[] elements) {
+    ReactiveAqueousBoundary.Result endpoint = ReactiveAqueousBoundary.trySolve(work);
+    if (endpoint == null) {
+      return false;
+    }
+    verifyElements(formula, elements, overallMoles(endpoint.getFluid()));
+    checkInterrupted();
+    copyResult(endpoint.getFluid());
+    minimumTrialDistance = endpoint.getNeutralDistance();
+    return true;
+  }
+
+  /**
+   * Attempts a conservative coupled correction without changing the current fluid.
+   *
+   * <p>
+   * The unknowns are reaction extents, so every trial preserves all linear invariants of the registered reaction
+   * network, including elemental amounts and spectator inventories. Reaction affinities are evaluated after molecular
+   * phase equilibrium. Differentiating that reduced residual includes the response of the phase split to reaction,
+   * which an isolated aqueous chemical Jacobian omits. Centered perturbations use local fixed-topology phase solves;
+   * accepted steps use the complete phase flash and its physical checks. A fraction-to-boundary line search requires a
+   * decrease of the actual squared reaction-log residual. Singular reaction bases, unavailable derivatives and failed
+   * trials leave the original conservative fixed point available.
+   * </p>
+   *
+   * @param current phase-equilibrated reactive fluid with one aqueous material phase
+   * @return qualified lower-residual trial, or null if no correction can be qualified
+   */
+  private SystemInterface reactionNewtonTrial(SystemInterface current) {
+    checkInterrupted();
+    try {
+      return computeReactionNewtonTrial(current);
+    } catch (CancellationException ex) {
+      throw ex;
+    } catch (RuntimeException ex) {
+      // A derivative or linear solve is optional; the original chemical update remains available.
+      return null;
+    }
+  }
+
+  /**
+   * Builds and safeguards the Newton correction in scaled reaction-extent coordinates.
+   *
+   * @param current phase-equilibrated fluid
+   * @return accepted trial, or null when no merit-decreasing positive step exists
+   */
+  private SystemInterface computeReactionNewtonTrial(SystemInterface current) {
+    ArrayList<ChemicalReaction> reactions = current.getChemicalReactionOperations().getReactionList()
+        .getChemicalReactionList();
+    int nr = reactions.size();
+    if (nr == 0) {
+      return null;
+    }
+    double[] inventory = overallMoles(current);
+    double[][] stoichiometry = new double[nr][inventory.length];
+    double[] scale = new double[nr];
+    double[] residual = reactionResiduals(current, reactions);
+    double[][] jacobian = new double[nr][nr];
+    for (int reaction = 0; reaction < nr; reaction++) {
+      checkInterrupted();
+      String[] names = reactions.get(reaction).getNames();
+      double[] coefficients = reactions.get(reaction).getStocCoefs();
+      for (int term = 0; term < names.length; term++) {
+        stoichiometry[reaction][current.getComponent(names[term]).getComponentNumber()] = coefficients[term];
+      }
+      double available = Double.POSITIVE_INFINITY;
+      for (int component = 0; component < inventory.length; component++) {
+        double coefficient = stoichiometry[reaction][component];
+        if (coefficient != 0.0) {
+          available = Math.min(available, inventory[component] / Math.abs(coefficient));
+        }
+      }
+      if (!Double.isFinite(available) || available <= 0.0) {
+        return null;
+      }
+      scale[reaction] = available;
+      double[] plusAmounts = inventory.clone();
+      double[] minusAmounts = inventory.clone();
+      double fraction = 1.0e-3;
+      for (int component = 0; component < inventory.length; component++) {
+        double perturbation = fraction * available * stoichiometry[reaction][component];
+        plusAmounts[component] += perturbation;
+        minusAmounts[component] -= perturbation;
+      }
+      double[] plus = reactionResiduals(fixedPhaseReactionTrial(current, plusAmounts), reactions);
+      double[] minus = reactionResiduals(fixedPhaseReactionTrial(current, minusAmounts), reactions);
+      for (int row = 0; row < nr; row++) {
+        jacobian[row][reaction] = (plus[row] - minus[row]) / (2.0 * fraction);
+      }
+    }
+    double[] correction = new Matrix(jacobian).solve(new Matrix(residual, nr)).getColumnPackedCopy();
+    double[] delta = new double[inventory.length];
+    double alpha = 1.0;
+    for (int component = 0; component < inventory.length; component++) {
+      for (int reaction = 0; reaction < nr; reaction++) {
+        delta[component] -= stoichiometry[reaction][component] * scale[reaction] * correction[reaction];
+      }
+      if (!Double.isFinite(delta[component])) {
+        return null;
+      }
+      if (delta[component] < 0.0) {
+        alpha = Math.min(alpha, 0.99 * inventory[component] / -delta[component]);
+      }
+    }
+    double initialMerit = residualMerit(residual);
+    if (!Double.isFinite(initialMerit) || !Double.isFinite(alpha) || alpha <= 0.0) {
+      return null;
+    }
+    for (int backtrack = 0; backtrack < 10; backtrack++) {
+      checkInterrupted();
+      double[] candidate = inventory.clone();
+      for (int component = 0; component < candidate.length; component++) {
+        candidate[component] += alpha * delta[component];
+      }
+      try {
+        SystemInterface trial = reactionTrial(current, candidate);
+        double merit = residualMerit(reactionResiduals(trial, reactions));
+        try {
+          SystemInterface projected = chemicalProjection(trial);
+          if (projected != null) {
+            double projectedMerit = residualMerit(reactionResiduals(projected, reactions));
+            if (Double.isFinite(projectedMerit) && projectedMerit < merit) {
+              trial = projected;
+              merit = projectedMerit;
+            }
+          }
+        } catch (CancellationException ex) {
+          throw ex;
+        } catch (RuntimeException projectionFailure) {
+          // The raw conservative Newton candidate remains available.
+        }
+        if (Double.isFinite(merit) && merit < initialMerit * (1.0 - 1.0e-4 * alpha)) {
+          return trial;
+        }
+      } catch (CancellationException ex) {
+        throw ex;
+      } catch (RuntimeException ex) {
+        // Reduce the same conservative extent step when a phase or chemical trial cannot be qualified.
+      }
+      alpha *= 0.5;
+    }
+    return null;
+  }
+
+  /**
+   * Supplies an optional nonlinear chemical correction inside the coupled line search.
+   *
+   * @param current conservative phase-equilibrated Newton trial
+   * @return phase-equilibrated trial after transferring the isolated aqueous chemical increment, or null
+   */
+  private SystemInterface chemicalProjection(SystemInterface current) {
+    SystemInterface aqueous = current.phaseToSystem("aqueous");
+    aqueous.getChemicalReactionOperations().reinitialize();
+    aqueous.setNumberOfPhases(1);
+    aqueous.setPhaseType(0, PhaseType.AQUEOUS);
+    aqueous.setBeta(0, 1.0);
+    aqueous.init(1);
+    double[] before = overallMoles(aqueous);
+    if (!aqueous.getChemicalReactionOperations().solveChemEq(0, 1)) {
+      return null;
+    }
+    double[] after = overallMoles(aqueous);
+    double[] updated = overallMoles(current);
+    double[] increment = new double[updated.length];
+    for (int component = 0; component < updated.length; component++) {
+      increment[component] = after[component] - before[component];
+    }
+    double[] conservative = conservativeReactionIncrement(current, increment, before, after);
+    for (int component = 0; component < updated.length; component++) {
+      updated[component] += conservative[component];
+    }
+    return reactionTrial(current, updated);
+  }
+
+  /**
+   * Removes qualified roundoff from a chemical increment using the complete registered reaction stoichiometric span.
+   *
+   * @param current reference fluid defining the active independent reaction basis
+   * @param increment proposed full-fluid chemical inventory change
+   * @param before aqueous species amounts before chemistry
+   * @param after aqueous species amounts after chemistry
+   * @return conservative reconstructed increment
+   */
+  private double[] conservativeReactionIncrement(SystemInterface current, double[] increment, double[] before,
+      double[] after) {
+    ArrayList<ChemicalReaction> reactions = current.getChemicalReactionOperations().getReactionList()
+        .getChemicalReactionList();
+    double[][] columns = new double[increment.length][reactions.size()];
+    for (int reaction = 0; reaction < reactions.size(); reaction++) {
+      String[] names = reactions.get(reaction).getNames();
+      double[] coefficients = reactions.get(reaction).getStocCoefs();
+      for (int term = 0; term < names.length; term++) {
+        columns[current.getComponent(names[term]).getComponentNumber()][reaction] = coefficients[term];
+      }
+    }
+    Matrix basis = new Matrix(columns);
+    Matrix delta = new Matrix(increment, increment.length);
+    double[] reconstructed = basis.times(basis.solve(delta)).getColumnPackedCopy();
+    double arithmeticScale = 0.0;
+    double incrementScale = 0.0;
+    for (int component = 0; component < increment.length; component++) {
+      arithmeticScale = Math.max(arithmeticScale, Math.max(Math.abs(before[component]), Math.abs(after[component])));
+      incrementScale = Math.max(incrementScale, Math.abs(increment[component]));
+    }
+    double tolerance = Math.max(64.0 * Math.ulp(arithmeticScale), 1.0e-9 * incrementScale);
+    for (int component = 0; component < increment.length; component++) {
+      boolean spectator = true;
+      for (int reaction = 0; reaction < reactions.size(); reaction++) {
+        spectator &= columns[component][reaction] == 0.0;
+      }
+      if (spectator && increment[component] != 0.0) {
+        throw new IllegalStateException("A chemical projection changed a spectator species");
+      }
+      if (!Double.isFinite(reconstructed[component])
+          || Math.abs(reconstructed[component] - increment[component]) > tolerance) {
+        throw new IllegalStateException("A chemical projection left the registered reaction stoichiometric span");
+      }
+    }
+    return reconstructed;
+  }
+
+  /**
+   * Equilibrates a small derivative perturbation while retaining the current phase topology.
+   *
+   * @param current phase-equilibrated fluid
+   * @param amounts perturbed full-fluid species inventory
+   * @return locally phase-equilibrated perturbed fluid
+   */
+  private SystemInterface fixedPhaseReactionTrial(SystemInterface current, double[] amounts) {
+    SystemInterface trial = current.clone();
+    int np = current.getNumberOfPhases();
+    double[] original = overallMoles(current);
+    double[][] phaseAmounts = new double[np][amounts.length];
+    double[] phaseTotals = new double[np];
+    double total = 0.0;
+    for (int component = 0; component < amounts.length; component++) {
+      total += amounts[component];
+      for (int phase = 0; phase < np; phase++) {
+        if (original[component] > 0.0) {
+          phaseAmounts[phase][component] = current.getPhase(phase).getComponent(component).getNumberOfMolesInPhase()
+              * amounts[component] / original[component];
+        } else if (amounts[component] != 0.0) {
+          throw new IllegalStateException("A derivative perturbation cannot introduce an absent species");
+        }
+        phaseTotals[phase] += phaseAmounts[phase][component];
+      }
+    }
+    trial.setMolarFlowRates(amounts);
+    trial.isChemicalSystem(false);
+    trial.setNumberOfPhases(np);
+    for (int phase = 0; phase < np; phase++) {
+      trial.setBeta(phase, phaseTotals[phase] / total);
+      for (int component = 0; component < amounts.length; component++) {
+        trial.getPhase(phase).getComponent(component).setx(phaseAmounts[phase][component] / phaseTotals[phase]);
+        trial.getPhase(phase).getComponent(component).setNumberOfMolesInPhase(phaseAmounts[phase][component]);
+      }
+    }
+    trial.init(3);
+    if (np > 1) {
+      SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(trial, np, amounts.length);
+      for (int correction = 0; correction < 8; correction++) {
+        checkInterrupted();
+        double error = solver.solve();
+        if (error < 1e-10) {
+          break;
+        }
+      }
+    }
+    FluidEquilibriumChecks.validate(trial, amounts);
+    trial.isChemicalSystem(true);
+    verifyReactionConfiguration(current, trial);
+    return trial;
+  }
+
+  /**
+   * Runs the complete frozen-species phase solve for a conservative reaction trial.
+   *
+   * @param current unchanged reference fluid
+   * @param amounts proposed species inventory
+   * @return physically checked trial retaining its aqueous reaction host
+   */
+  private SystemInterface reactionTrial(SystemInterface current, double[] amounts) {
+    checkInterrupted();
+    for (double amount : amounts) {
+      if (!Double.isFinite(amount) || amount < 0.0) {
+        throw new IllegalStateException("A reaction trial requires finite nonnegative species amounts");
+      }
+    }
+    SystemInterface trial = current.clone();
+    trial.setMolarFlowRates(amounts);
+    trial.isChemicalSystem(false);
+    TPflash flash = new TPflash(trial);
+    flash.run();
+    FluidEquilibriumChecks.validate(trial, amounts);
+    trial.isChemicalSystem(true);
+    verifyReactionConfiguration(current, trial);
+    int aqueousCount = 0;
+    for (int phase = 0; phase < trial.getNumberOfPhases(); phase++) {
+      if (trial.getPhase(phase).getType() == PhaseType.AQUEOUS) {
+        aqueousCount++;
+      }
+    }
+    if (aqueousCount != 1) {
+      throw new IllegalStateException("A reaction extent trial requires one aqueous material phase");
+    }
+    return trial;
+  }
+
+  /**
+   * Ensures a phase trial cannot silently discover components or replace the caller's configured reactions.
+   *
+   * @param current unchanged reference fluid
+   * @param trial candidate fluid
+   */
+  private void verifyReactionConfiguration(SystemInterface current, SystemInterface trial) {
+    if (!Arrays.equals(current.getComponentNames(), trial.getComponentNames())
+        || current.getChemicalReactionConcentrationBasis() != trial.getChemicalReactionConcentrationBasis()
+        || current.getChemicalReactionDataSource() != trial.getChemicalReactionDataSource()) {
+      throw new IllegalStateException("A reaction trial changed the configured component or reaction basis");
+    }
+    ArrayList<ChemicalReaction> expected = current.getChemicalReactionOperations().getReactionList()
+        .getChemicalReactionList();
+    ArrayList<ChemicalReaction> actual = trial.getChemicalReactionOperations().getReactionList()
+        .getChemicalReactionList();
+    if (expected.size() != actual.size()) {
+      throw new IllegalStateException("A reaction trial changed the registered reaction set");
+    }
+    for (int reaction = 0; reaction < expected.size(); reaction++) {
+      ChemicalReaction first = expected.get(reaction);
+      ChemicalReaction second = actual.get(reaction);
+      if (!first.getName().equals(second.getName()) || !Arrays.equals(first.getNames(), second.getNames())
+          || !Arrays.equals(first.getStocCoefs(), second.getStocCoefs())
+          || !Arrays.equals(first.getEquilibriumConstantCoefficients(), second.getEquilibriumConstantCoefficients())
+          || first.getKineticRateLaw() != second.getKineticRateLaw() || first.getRateFactor() != second.getRateFactor()
+          || first.getActivationEnergy() != second.getActivationEnergy()
+          || first.getReferenceTemperature() != second.getReferenceTemperature()) {
+        throw new IllegalStateException("A reaction trial changed configured reaction parameters");
+      }
+    }
+  }
+
+  /**
+   * Reads finite reaction affinities in the fixed reaction-list order.
+   *
+   * @param fluid initialized reactive fluid
+   * @param reactions ordered reaction basis
+   * @return reaction log residuals
+   */
+  private double[] reactionResiduals(SystemInterface fluid, ArrayList<ChemicalReaction> reactions) {
+    Map<String, Double> values = fluid.getChemicalReactionOperations().getReactionLogResiduals();
+    double[] residual = new double[reactions.size()];
+    for (int reaction = 0; reaction < residual.length; reaction++) {
+      Double value = values.get(reactions.get(reaction).getName());
+      if (value == null || !Double.isFinite(value)) {
+        throw new IllegalStateException("A reaction trial requires finite affinities for every registered reaction");
+      }
+      residual[reaction] = value;
+    }
+    return residual;
+  }
+
+  /**
+   * Evaluates the coupled line-search merit on dimensionless reaction residuals.
+   *
+   * @param residual reaction log residuals
+   * @return squared Euclidean residual norm
+   */
+  private double residualMerit(double[] residual) {
+    double merit = 0.0;
+    for (double value : residual) {
+      merit += value * value;
+    }
+    return merit;
+  }
+
+  /**
    * Safeguarded vector secant acceleration for the conservative reaction-inventory fixed point.
    *
    * <p>
@@ -203,6 +643,14 @@ final class AqueousReactionEquilibrium {
     private int rejectedTrials;
     /** Material and requested phase roles associated with the secant history. */
     private PhaseType[] previousTopology;
+
+    /** Discards secant history after a different conservative correction, retaining calculation diagnostics. */
+    private void clearHistory() {
+      previousDelta = null;
+      previousStep = null;
+      previousTopology = null;
+      fallback = null;
+    }
 
     /**
      * Tests the residual safeguard for a pending extrapolation.
@@ -302,6 +750,11 @@ final class AqueousReactionEquilibrium {
     return iterations;
   }
 
+  /** @return number of accepted coupled reaction-extent Newton steps in the most recent calculation */
+  int getReactionNewtonStepCount() {
+    return reactionNewtonSteps;
+  }
+
   /** @return number of extrapolated inventory trials in the most recent calculation */
   int getAcceleratedTrialCount() {
     return acceleration == null ? 0 : acceleration.attemptedTrials;
@@ -378,6 +831,7 @@ final class AqueousReactionEquilibrium {
    * @param result qualified full-fluid state
    */
   private void copyResult(SystemInterface result) {
+    verifyReactionConfiguration(system, result);
     system.setMolarFlowRates(overallMoles(result));
     system.setNumberOfPhases(result.getNumberOfPhases());
     for (int phase = 0; phase < result.getNumberOfPhases(); phase++) {
@@ -388,6 +842,6 @@ final class AqueousReactionEquilibrium {
       system.setBeta(phase, result.getBeta(phase));
     }
     // Phase objects and the chemical balance basis changed even when their array indices stayed unchanged.
-    system.chemicalReactionInit();
+    system.getChemicalReactionOperations().reinitialize();
   }
 }

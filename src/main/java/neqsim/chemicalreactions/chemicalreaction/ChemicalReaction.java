@@ -173,6 +173,27 @@ public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.Th
   }
 
   /**
+   * Copies the configured reaction without sharing mutable stoichiometry, equilibrium or kinetic arrays.
+   *
+   * @return independent reaction with the same parameter values, provenance and selected kinetic law
+   */
+  public ChemicalReaction copy() {
+    ChemicalReaction copy = new ChemicalReaction(getName(), names, stocCoefs, K, rateFactor, activationEnergy, refT,
+        reference, validationStatus);
+    copy.kineticRateLaw = kineticRateLaw;
+    copy.shiftSignK = shiftSignK;
+    copy.G = G;
+    copy.lnK = lnK;
+    copy.reactantNames = reactantNames == null ? null : reactantNames.clone();
+    copy.productNames = productNames == null ? null : productNames.clone();
+    copy.numberOfReactants = numberOfReactants;
+    copy.moles = moles == null ? null : moles.clone();
+    copy.reacCoefs = reacCoefs == null ? null : reacCoefs.clone();
+    copy.prodCoefs = prodCoefs == null ? null : prodCoefs.clone();
+    return copy;
+  }
+
+  /**
    * Get the reference temperature stored with the reaction parameters.
    *
    * @return reference temperature in kelvin

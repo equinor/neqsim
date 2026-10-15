@@ -1,6 +1,11 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -33,10 +38,6 @@ class AqueousReactionAccelerationTest extends neqsim.NeqSimTest {
     AqueousReactionEquilibrium flash = new AqueousReactionEquilibrium(fluid);
     flash.run();
     assertTrue(flash.getAcceleratedTrialCount() > 0, "the slow coupling must use acceleration");
-    if (temperature == 313.15) {
-      assertTrue(flash.getRejectedAcceleratedTrialCount() > 0,
-          "this case must exercise rollback of a worsening extrapolation before accepting equilibrium");
-    }
     assertTrue(flash.getIterations() < 30, "acceleration must converge within the unchanged coupling bound");
     assertTrue(fluid.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual() < 2.0e-6);
     FluidEquilibriumChecks.validate(fluid, FluidEquilibriumChecks.inventory(fluid));
@@ -51,4 +52,54 @@ class AqueousReactionAccelerationTest extends neqsim.NeqSimTest {
     FluidEquilibriumChecks.validate(fluid, FluidEquilibriumChecks.inventory(fluid));
     assertTrue(fluid.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual() < 2.0e-6);
   }
+
+  /**
+   * Rejection restores the conservative update exactly, independently of a particular converged trajectory.
+   *
+   * @param rejectedResidual deliberately worsened or nonfinite reaction residual
+   * @throws ReflectiveOperationException if the internal safeguard cannot be exercised
+   */
+  @ParameterizedTest
+  @ValueSource(doubles = {0.4, Double.NaN})
+  void rejectedExtrapolationRestoresConservativeInventory(double rejectedResidual) throws ReflectiveOperationException {
+    SystemInterface original = new SystemElectrolyteCPAstatoil(298.15, 1.0);
+    original.addComponent("water", 10.0);
+    original.addComponent("OH-", 1.0);
+    original.addComponent("H3O+", 1.0);
+    original.setMixingRule(10);
+    SystemInterface work = original.clone();
+    Class<?> type = Class.forName(AqueousReactionEquilibrium.class.getName() + "$InventoryAcceleration");
+    Constructor<?> constructor = type.getDeclaredConstructor();
+    constructor.setAccessible(true);
+    Object acceleration = constructor.newInstance();
+    Method next = type.getDeclaredMethod("nextInventory", SystemInterface.class, double[].class, double[].class,
+        double.class);
+    Method worsened = type.getDeclaredMethod("residualWorsened", double.class);
+    Method restore = type.getDeclaredMethod("restoreUnaccelerated", SystemInterface.class);
+    next.setAccessible(true);
+    worsened.setAccessible(true);
+    restore.setAccessible(true);
+    double[] initial = {10.0, 1.0, 1.0};
+    double[] first = {8.0, 2.0, 2.0};
+    double[] conservative = {7.0, 2.5, 2.5};
+    assertArrayEquals(first, (double[]) next.invoke(acceleration, work, initial, first, 0.6), 0.0);
+    double[] extrapolated = (double[]) next.invoke(acceleration, work, first, conservative, 0.3);
+    assertArrayEquals(new double[] {6.0, 3.0, 3.0}, extrapolated, 0.0,
+        "the controlled contraction must create a genuine extrapolation");
+    work.setMolarFlowRates(extrapolated);
+    assertTrue((Boolean) worsened.invoke(acceleration, rejectedResidual));
+    assertTrue((Boolean) restore.invoke(acceleration, work));
+    assertArrayEquals(conservative, FluidEquilibriumChecks.inventory(work), 0.0);
+    assertArrayEquals(initial, FluidEquilibriumChecks.inventory(original), 0.0,
+        "an unaccepted work trial must not alter its caller");
+    assertFalse((Boolean) restore.invoke(acceleration, work), "a rejected trial can only be restored once");
+    assertFalse((Boolean) worsened.invoke(acceleration, rejectedResidual), "no rejected trial remains pending");
+    double[] nextConservative = {6.5, 2.75, 2.75};
+    assertArrayEquals(nextConservative, (double[]) next.invoke(acceleration, work, conservative, nextConservative, 0.2),
+        0.0, "rollback must discard the rejected secant history");
+    FormulaMatrix formula = new FormulaMatrix(original);
+    assertArrayEquals(formula.computeElementVector(initial), formula.computeElementVector(conservative), 0.0,
+        "the restored update retains every elemental and charge invariant");
+  }
+
 }

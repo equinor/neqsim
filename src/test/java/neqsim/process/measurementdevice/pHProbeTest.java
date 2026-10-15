@@ -44,7 +44,20 @@ class pHProbeTest {
     pHProbe phmeasurement = new pHProbe(stream_1);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(5.04, phmeasurement.getMeasuredValue(), 0.01);
+    // In unbuffered CO2-water, electroneutrality gives m_H ~= m_HCO3.
+    // Use an independent Plummer-Busenberg molal K1, not the former legacy x-scale pH.
+    neqsim.thermo.phase.PhaseInterface aqueous = phmeasurement.reactiveThermoSystem.getPhase("aqueous");
+    double t = aqueous.getTemperature();
+    double association2 = 107.8871 + 0.03252849 * t - 5151.79 / t - 38.92561 * Math.log10(t) + 563713.9 / (t * t);
+    double association12 = 464.1965 + 0.09344813 * t - 26986.16 / t - 165.75951 * Math.log10(t) + 2248628.9 / (t * t);
+    double waterActivity = aqueous.getComponent("water").getx()
+        * aqueous.getActivityCoefficient(aqueous.getComponent("water").getComponentNumber());
+    int water = aqueous.getComponent("water").getComponentNumber();
+    double ionGammaRatio = aqueous.getActivityCoefficient(aqueous.getComponent("H3O+").getComponentNumber(), water)
+        / aqueous.getActivityCoefficient(aqueous.getComponent("HCO3-").getComponentNumber(), water);
+    double referencePH = -0.5 * (association2 - association12 + 2.0 * Math.log10(waterActivity)
+        + Math.log10(molalActivity(aqueous, "CO2")) + Math.log10(ionGammaRatio));
+    assertEquals(referencePH, phmeasurement.getMeasuredValue(), 0.01);
   }
 
   @Test
@@ -53,7 +66,15 @@ class pHProbeTest {
     phmeasurement.setAlkalinity(50.0);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(13.5830, phmeasurement.getMeasuredValue(), 0.01);
+    // At finite alkalinity, use the independent USGS/PHREEQC water ionization
+    // expression and the measured hydroxide inventory: a_H = K_w*a_water^2/a_OH.
+    neqsim.thermo.phase.PhaseInterface aqueous = phmeasurement.reactiveThermoSystem.getPhase("aqueous");
+    double t = aqueous.getTemperature();
+    double logKw = 293.29227 + 0.1360833 * t - 10576.913 / t - 123.73158 * Math.log10(t) - 6.996455e-5 * t * t;
+    double waterActivity = aqueous.getComponent("water").getx()
+        * aqueous.getActivityCoefficient(aqueous.getComponent("water").getComponentNumber());
+    double referencePH = -logKw - 2.0 * Math.log10(waterActivity) + Math.log10(molalActivity(aqueous, "OH-"));
+    assertEquals(referencePH, phmeasurement.getMeasuredValue(), 0.01);
     assertEquals(1, phmeasurement.reactiveThermoSystem.getNumberOfPhases());
     assertEquals(1, phmeasurement.reactiveThermoSystem.getMaxNumberOfPhases());
     assertTrue(phmeasurement.reactiveThermoSystem.isForcePhaseTypes());
@@ -65,4 +86,20 @@ class pHProbeTest {
     assertTrue(phmeasurement.reactiveThermoSystem.getChemicalReactionOperations()
         .getMaximumAbsoluteElementBalanceResidual() <= 1.0e-8);
   }
+
+  /**
+   * Calculates the EOS solute activity from the aqueous inventory and unsymmetric mole-fraction coefficient.
+   *
+   * @param phase sampled electrolyte phase
+   * @param name solute name
+   * @return dimensionless molal activity relative to 1 mol/kg water
+   */
+  private double molalActivity(neqsim.thermo.phase.PhaseInterface phase, String name) {
+    int water = phase.getComponent("water").getComponentNumber();
+    double waterMass = phase.getComponent(water).getNumberOfMolesInPhase() * phase.getComponent(water).getMolarMass();
+    int component = phase.getComponent(name).getComponentNumber();
+    return phase.getComponent(component).getNumberOfMolesInPhase() / waterMass
+        * phase.getActivityCoefficient(component, water) * phase.getComponent(water).getx();
+  }
+
 }

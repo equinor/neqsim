@@ -51,7 +51,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
         + "total_pressure_bara,aqueous_x_co2,fluid_phases");
 
     double previousExperimentalMolality = Double.POSITIVE_INFINITY;
-    double previousModelMolality = Double.NEGATIVE_INFINITY;
+    double previousModelMolality = Double.POSITIVE_INFINITY;
     for (Reference reference : references) {
       Result result = calculate(reference);
       assertTrue(reference.experimentalCo2Molality < previousExperimentalMolality,
@@ -60,8 +60,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
           reference.pointId + " CO2 partial-pressure iteration did not converge");
       assertTrue(Double.isFinite(result.modelCo2Molality) && result.modelCo2Molality > 0.0,
           reference.pointId + " model CO2 molality must be finite and positive");
-      assertTrue(result.modelCo2Molality > previousModelMolality,
-          reference.pointId + " must retain the diagnosed model salting-in sequence opposite to experiment");
+      assertTrue(result.modelCo2Molality < previousModelMolality,
+          reference.pointId + " must retain the independently observed KCl salting-out sequence");
       report.add(result.toCsv(reference));
       previousExperimentalMolality = reference.experimentalCo2Molality;
       previousModelMolality = result.modelCo2Molality;

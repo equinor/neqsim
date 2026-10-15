@@ -232,21 +232,16 @@ public class ChemicalEquilibrium implements java.io.Serializable {
           M_matrix[i][k] -= 1.0 / Math.max(MIN_MOLES, n_t);
         }
 
-        // Add fugacity coefficient derivative if enabled
-        // dfugdn contains: δ_ij/n_i - 1/n_t + ∂ln(φ_i)/∂n_j
-        // The original M_matrix is just δ_ij/n_i (ideal, no mixing term)
-        // To add non-ideal effects, we need ∂ln(φ_i)/∂n_j = dfugdn - δ_ij/n_i + 1/n_t
-        if (useFugacityDerivatives) {
+        // getdfugdn is the derivative of ln(phi), without the ideal concentration terms.
+        // The pure-solvent and binary infinite-dilution references are fixed at this T and P,
+        // so their derivatives vanish. Retain the ideal curvature already assembled above.
+        if (useFugacityDerivatives && components[i].calcActivity()) {
           try {
             int compNumI = components[i].getComponentNumber();
             int compNumK = components[k].getComponentNumber();
             double dfugdN = system.getPhase(phasenumb).getComponent(compNumI).getdfugdn(compNumK);
             if (!Double.isNaN(dfugdN) && !Double.isInfinite(dfugdN)) {
-              // Extract just the non-ideal part: ∂ln(φ)/∂n = dfugdn - δ/n +
-              // 1/n_t
-              double idealPart = (i == k ? 1.0 / molesForDiv : 0.0) - 1.0 / n_t;
-              double nonIdealPart = dfugdN - idealPart;
-              M_matrix[i][k] += nonIdealPart;
+              M_matrix[i][k] += dfugdN;
             }
           } catch (Exception ex) {
             // Derivative not available, use ideal term only
@@ -309,11 +304,18 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     Matrix conservationCorrection = new Matrix(NELE, 1);
     if (system.getNumberOfPhases() == 1) {
       Matrix currentConservedQuantities = A_Jama_matrix.times(nmol.transpose()).transpose();
+      // The normalization derivative is A*n at the current iterate, even when the
+      // small difference from the target is below the conservation correction gate.
+      // Using the target here creates spurious relative steps for trace species.
+      couplingQuantities = currentConservedQuantities;
       for (int elementIndex = 0; elementIndex < NELE; elementIndex++) {
         double target = b_matrix.get(0, elementIndex);
         double current = currentConservedQuantities.get(0, elementIndex);
-        if (Math.abs(target - current) > CONSERVATION_CORRECTION_TOLERANCE * Math.max(1.0, Math.abs(target))) {
-          couplingQuantities = currentConservedQuantities;
+        // Keep the relative gate independent of feed size without chasing roundoff
+        // in elemental sums or a zero charge target.
+        double roundoff = 64.0 * Math.ulp(n_t);
+        double tolerance = Math.max(roundoff, CONSERVATION_CORRECTION_TOLERANCE * Math.abs(target));
+        if (Math.abs(target - current) > tolerance) {
           conservationCorrection = b_matrix.minus(currentConservedQuantities).transpose();
           break;
         }

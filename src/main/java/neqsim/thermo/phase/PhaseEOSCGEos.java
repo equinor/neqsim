@@ -72,6 +72,30 @@ public class PhaseEOSCGEos extends PhaseGERG2008Eos {
 
   /** {@inheritDoc} */
   @Override
+  public double calcPressure() {
+    return new NeqSimEOSCG(this).getPressure(100.0 / getMolarVolume()) / 100.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calcPressuredV() {
+    double molarDensity = 100.0 / getMolarVolume();
+    double nativeDerivative = new NeqSimEOSCG(this).propertiesEOSCG(molarDensity)[2];
+    // Native kPa/(mol/L) converted to bar per total internal volume (V_SI * 1e5).
+    return -nativeDerivative * molarDensity / (100.0 * getTotalVolume());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double dFdVdV() {
+    doubleW[][] residual = new NeqSimEOSCG(this).getAlphares_EOSCG(100.0 / getMolarVolume());
+    double volume = getTotalVolume();
+    // Differentiate n*alphaR directly, using EOS-CG rather than GERG parameters or gas constant.
+    return numberOfMolesInPhase * (2.0 * residual[0][1].val + residual[0][2].val) / (volume * volume);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getDensity_GERG2008() {
     double molarDensityMolPerL = resolveMolarDensity(activeRootType());
     return molarDensityMolPerL * getMolarMass() * 1000.0;

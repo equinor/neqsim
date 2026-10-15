@@ -34,6 +34,57 @@ class TPflashNewtonSafeguardTest {
     assertBalanced(fluid);
   }
 
+  /** Trace-species curvature must not prevent abundant species from reaching local equilibrium. */
+  @Test
+  void traceSpeciesCurvatureDoesNotFreezeAbundantSpecies() {
+    for (double traceAmount : new double[] {1e-8, 1e-12, 1e-16}) {
+      SystemInterface fluid = new SystemSrkEos(300.0, 20.0);
+      fluid.addComponent("methane", 0.5);
+      fluid.addComponent("n-heptane", 0.5);
+      fluid.addComponent("nitrogen", traceAmount);
+      fluid.setMixingRule("classic");
+      new ThermodynamicOperations(fluid).TPflash();
+      assertEquals(2, fluid.getNumberOfPhases());
+      double[] amounts = new double[fluid.getNumberOfComponents()];
+      for (int component = 0; component < amounts.length; component++) {
+        amounts[component] = fluid.getBeta(0) * fluid.getPhase(0).getComponent(component).getx();
+      }
+      amounts[0] -= 0.002;
+      amounts[1] += 0.0001;
+      double beta = 0.0;
+      for (double amount : amounts) {
+        beta += amount;
+      }
+      fluid.setBeta(0, beta);
+      fluid.setBeta(1, 1.0 - beta);
+      for (int component = 0; component < amounts.length; component++) {
+        fluid.getPhase(0).getComponent(component).setx(amounts[component] / beta);
+        fluid.getPhase(1).getComponent(component)
+            .setx((fluid.getComponent(component).getz() - amounts[component]) / (1.0 - beta));
+      }
+      fluid.init(3);
+      double initialObjective = gibbs(fluid);
+      assertTrue(residual(fluid) > 1e-3, "The local seed must require a measurable phase transfer");
+      SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, amounts.length);
+      for (int iteration = 0; iteration < 8 && residual(fluid) > 1e-10; iteration++) {
+        solver.solve();
+      }
+      assertTrue(residual(fluid) < 1e-8, "Trace amount " + traceAmount + " must not freeze the bulk correction");
+      assertTrue(gibbs(fluid) < initialObjective);
+      assertBalanced(fluid);
+      for (int component = 0; component < amounts.length; component++) {
+        double inventory = 0.0;
+        for (int phase = 0; phase < 2; phase++) {
+          double composition = fluid.getPhase(phase).getComponent(component).getx();
+          assertTrue(Double.isFinite(composition) && composition > 0.0);
+          inventory += fluid.getBeta(phase) * composition;
+        }
+        double feed = fluid.getComponent(component).getz();
+        assertEquals(feed, inventory, feed * 1e-13, "Each inventory, including the trace, must be conserved");
+      }
+    }
+  }
+
   /**
    * The reduced Gibbs objective must have the physical fugacity residual as its directional derivative.
    *
@@ -280,7 +331,7 @@ class TPflashNewtonSafeguardTest {
    */
   private double residual(SystemInterface fluid) {
     double maximum = 0.0;
-    for (int component = 0; component < 2; component++) {
+    for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
       double first = fluid.getPhase(0).getComponent(component).getx()
           * fluid.getPhase(0).getComponent(component).getFugacityCoefficient();
       double second = fluid.getPhase(1).getComponent(component).getx()
@@ -299,7 +350,7 @@ class TPflashNewtonSafeguardTest {
   private double gibbs(SystemInterface fluid) {
     double value = 0.0;
     for (int phase = 0; phase < 2; phase++) {
-      for (int component = 0; component < 2; component++) {
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
         double x = fluid.getPhase(phase).getComponent(component).getx();
         value += fluid.getBeta(phase) * x
             * Math.log(x * fluid.getPhase(phase).getComponent(component).getFugacityCoefficient());

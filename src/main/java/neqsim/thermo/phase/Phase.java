@@ -8,6 +8,7 @@ package neqsim.thermo.phase;
 
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.netlib.util.doubleW;
@@ -44,12 +45,6 @@ public abstract class Phase implements PhaseInterface {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Phase.class);
-
-  /**
-   * Inverse of water molality (1/55.51 mol/kg). Used for converting activity coefficients from mole fraction scale to
-   * molality scale: γ_m = γ_x * x_w / 55.51
-   */
-  private static final double INV_WATER_MOLALITY = 1.0 / 55.51;
 
   public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
@@ -94,6 +89,9 @@ public abstract class Phase implements PhaseInterface {
 
   /** Reference phase per component. Relevant for solids and chemicalreactions. */
   protected PhaseInterface[] refPhase = null;
+
+  /** Identity map scoped to one reference graph copy; separate threads never share a clone context. */
+  private static final ThreadLocal<IdentityHashMap<PhaseInterface, PhaseInterface>> REFERENCE_CLONE_CONTEXT = new ThreadLocal<>();
   protected PhaseType pt = PhaseType.GAS;
 
   /**
@@ -119,23 +117,51 @@ public abstract class Phase implements PhaseInterface {
    * @return shallow phase with independent component-array storage and physical-property handler
    */
   protected Phase cloneWithoutComponents() {
-    Phase clonedPhase = null;
-
+    IdentityHashMap<PhaseInterface, PhaseInterface> references = REFERENCE_CLONE_CONTEXT.get();
+    boolean ownsContext = references == null && refPhase != null;
+    if (ownsContext) {
+      references = new IdentityHashMap<>();
+      REFERENCE_CLONE_CONTEXT.set(references);
+    }
     try {
-      clonedPhase = (Phase) super.clone();
-    } catch (CloneNotSupportedException ex) {
-      throw new AssertionError("Clone failed for Phase", ex);
+      Phase clonedPhase;
+      try {
+        clonedPhase = (Phase) super.clone();
+      } catch (CloneNotSupportedException ex) {
+        throw new AssertionError("Clone failed for Phase", ex);
+      }
+      if (references != null) {
+        // Register before traversing: custom references can point back to this phase.
+        references.put(this, clonedPhase);
+      }
+      clonedPhase.componentArray = this.componentArray.clone();
+      if (physicalPropertyHandler != null) {
+        clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
+      }
+      clonedPhase.componentNames = null;
+      if (refPhase != null) {
+        // Preserve graph identity, configured subtype state and null entries while
+        // detaching mutable activity references from the source. Virtual clone keeps
+        // each model's ownership policy; the shared context terminates cyclic graphs.
+        clonedPhase.refPhase = refPhase.clone();
+        for (int i = 0; i < refPhase.length; i++) {
+          PhaseInterface reference = refPhase[i];
+          if (reference != null) {
+            PhaseInterface copiedReference = references.get(reference);
+            if (copiedReference == null) {
+              copiedReference = reference.clone();
+              references.put(reference, copiedReference);
+            }
+            clonedPhase.refPhase[i] = copiedReference;
+          }
+        }
+      }
+      return clonedPhase;
+    } finally {
+      if (ownsContext) {
+        REFERENCE_CLONE_CONTEXT.remove();
+      }
     }
-
-    clonedPhase.componentArray = this.componentArray.clone();
-    // System.out.println("cloned length: " + componentArray.length);
-    if (physicalPropertyHandler != null) {
-      clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
-    }
-
-    clonedPhase.componentNames = null;
-
-    return clonedPhase;
   }
 
   /**
@@ -1685,7 +1711,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getActivityCoefficient(int k, String scale) {
-    double gammaX = getActivityCoefficient(k); // mole fraction scale
+    double gammaX = getMoleFractionActivityCoefficient(k);
 
     if (scale.equalsIgnoreCase("molefraction")) {
       return gammaX;
@@ -1704,29 +1730,42 @@ public abstract class Phase implements PhaseInterface {
 
     double xWater = getComponent(waterIndex).getx();
 
-    // Defensive check: if essentially pure water, return mole fraction γ
+    // No usable aqueous solvent reference: retain the native coefficient.
     if (xWater < 1e-12) {
       return gammaX;
     }
 
-    // Conversion from mole fraction to molality scale:
-    // From a_i = γ_x * x_i = γ_m * m_i / m° and m_i = (x_i / x_w) * (1000 / M_w)
-    // we get: γ_m = γ_x * x_w / 55.51 (where 55.51 mol/kg is molality of pure
-    // water)
-    // Note: This conversion is independent of total molality and component i
-    if (scale.equalsIgnoreCase("molality")) {
-      return gammaX * xWater * INV_WATER_MOLALITY;
-    }
-
-    if (scale.equalsIgnoreCase("molarity")) {
-      // For dilute aqueous solutions: γ_c ≈ γ_m
-      // The exact relation γ_c = γ_x * c° / ρ_n requires total molar density,
-      // but for practical purposes γ_c ≈ γ_m is sufficient
-      return gammaX * xWater * INV_WATER_MOLALITY;
+    // Solvents retain their pure-component reference. Solute molality coefficients
+    // are normalized to unity at infinite dilution; the standard chemical potential
+    // absorbs the water-molar-mass factor, so gamma_m = gamma_x * x_water.
+    if (scale.equalsIgnoreCase("molality") || scale.equalsIgnoreCase("molarity")) {
+      // The molarity overload retains the dilute-aqueous gamma_c ~= gamma_m approximation.
+      return k == waterIndex ? gammaX : getMolalityActivityCoefficient(k, waterIndex);
     }
 
     // Unknown scale - return mole fraction
     return gammaX;
+  }
+
+  /**
+   * Returns the model's coefficient on the mole-fraction concentration scale.
+   *
+   * @param component component index
+   * @return mole-fraction activity coefficient
+   */
+  protected double getMoleFractionActivityCoefficient(int component) {
+    return getActivityCoefficient(component);
+  }
+
+  /**
+   * Returns a solute coefficient on the aqueous molality standard state.
+   *
+   * @param component solute component index
+   * @param solvent water component index
+   * @return molality activity coefficient, tending to unity at infinite dilution
+   */
+  protected double getMolalityActivityCoefficient(int component, int solvent) {
+    return getActivityCoefficient(component) * getComponent(solvent).getx();
   }
 
   /** {@inheritDoc} */
@@ -1773,9 +1812,8 @@ public abstract class Phase implements PhaseInterface {
    * </pre>
    *
    * <p>
-   * This relationship arises because the unsymmetric standard state (infinite dilution) already incorporates the
-   * 1/55.51 factor that would appear in the symmetric convention. For the symmetric convention (γ → 1 as x → 1), the
-   * full formula would be: γ±,m = γ±,x(sym) * x_water / 55.51
+   * The change in standard chemical potential absorbs the solvent-molar-mass factor. Symmetric coefficients must
+   * additionally be divided by their infinite-dilution values before applying this concentration conversion.
    * </p>
    *
    * <p>
@@ -1785,31 +1823,13 @@ public abstract class Phase implements PhaseInterface {
    */
   @Override
   public double getMolalMeanIonicActivity(int comp1, int comp2) {
-    int watNumb = 0;
-    for (int j = 0; j < this.numberOfComponents; j++) {
-      if (getComponent(j).getComponentName().equals("water")) {
-        watNumb = j;
-        break;
-      }
-    }
-
-    double xWater = getComponent(watNumb).getx();
-
-    // Get activity coefficients on mole fraction scale, raised to stoichiometric
-    // powers
-    // For electrolyte C_ν+ A_ν-: γ± = (γ+^ν+ * γ-^ν-)^(1/(ν+ + ν-))
-    double nuPlus = Math.abs(getComponent(comp2).getIonicCharge()); // stoichiometric coeff of comp1
-    double nuMinus = Math.abs(getComponent(comp1).getIonicCharge()); // stoichiometric coeff of
-    // comp2
-
-    double act1 = Math.pow(getActivityCoefficient(comp1, watNumb), nuPlus);
-    double act2 = Math.pow(getActivityCoefficient(comp2, watNumb), nuMinus);
-
-    // Mean ionic activity coefficient on mole fraction scale (unsymmetric)
-    double gammaPlusMinus_x = Math.pow(act1 * act2, 1.0 / (nuPlus + nuMinus));
-
-    // Convert to molality scale: γ±,m = γ±,x * x_water (for unsymmetric convention)
-    return gammaPlusMinus_x * xWater;
+    double nuPlus = Math.abs(getComponent(comp2).getIonicCharge());
+    double nuMinus = Math.abs(getComponent(comp1).getIonicCharge());
+    // Compose the model-owned single-ion molality coefficients. In particular,
+    // Pitzer's native coefficients must not be multiplied by x_water again.
+    double act1 = Math.pow(getActivityCoefficient(comp1, "molality"), nuPlus);
+    double act2 = Math.pow(getActivityCoefficient(comp2, "molality"), nuMinus);
+    return Math.pow(act1 * act2, 1.0 / (nuPlus + nuMinus));
   }
 
   /** {@inheritDoc} */
@@ -2230,7 +2250,7 @@ public abstract class Phase implements PhaseInterface {
 
         double h3oMoles = componentArray[i].getNumberOfMolesInPhase();
         double waterMoles = getComponent(waterIndex).getNumberOfMolesInPhase();
-        double waterMolarMass = 0.018015; // kg/mol
+        double waterMolarMass = getComponent(waterIndex).getMolarMass(); // kg/mol
         double waterMass = waterMoles * waterMolarMass; // kg
 
         double h3oMolality = h3oMoles / waterMass; // mol/kg (relative to m° = 1 mol/kg)
@@ -2254,7 +2274,7 @@ public abstract class Phase implements PhaseInterface {
   }
 
   /**
-   * Calculate pH based on activity (mole fraction * activity coefficient).
+   * Calculate legacy pH from mole-fraction hydrogen-ion activity.
    *
    * @return pH value based on H3O+ activity, or NaN if result is physically unrealistic
    */

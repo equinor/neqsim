@@ -493,9 +493,14 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     SimpleMatrix QVVksi = KlkVVMatrixTImesKsi.scale(-1.0);
     SimpleMatrix QksiVksi = KlkVMatrix.scale(-1.0);
 
+    // Q_{ksi,ksi,ksi} is diagonal: contract each site with its own three derivatives.
+    double thirdSiteContribution = 0.0;
+    for (int site = 0; site < totalNumberOfAccociationSites; site++) {
+      double derivative = XV.get(site, 0);
+      thirdSiteContribution += QMatksiksiksi.get(site, 0) * derivative * derivative * derivative;
+    }
     dFCPAdVdVdV = -0.5 * QVVV.get(0, 0) + QVVksi.transpose().mult(XV).get(0, 0) * 3.0
-        + XVtranspose.mult(QksiVksi.mult(XV)).get(0, 0) * 3.0
-        + XVtranspose.mult(QMatksiksiksi.mult(XVtranspose)).mult(XV).get(0, 0);
+        + XVtranspose.mult(QksiVksi.mult(XV)).get(0, 0) * 3.0 + thirdSiteContribution;
 
     if (type == 1) {
       return;

@@ -73,9 +73,79 @@ and their inheritance paths.
 | Electrolyte CPA and Statoil | No | Inherit the base component Born derivative; scaling regression |
 | Electrolyte CPA Advanced | No | Uses the inherited chain rule and overridden Born radii/sum; scaling regression |
 | Electrolyte CPA Old | No in this path | Source inspection: inherits the base Born derivative |
-| Electrolyte CPA MM | No | Explicit chain rule; scaling regression for molar, volume, Looyenga and Lichtenecker solvent mixing |
+| Electrolyte CPA MM | No | Exact forward derivatives of the implemented electrolyte energy; independent mixed-derivative checks for all five solvent mixing rules |
 | Ordinary SRK, PR, CPA and non-electrolyte SAFT models | This specific defect does not apply | Do not inherit the faulty Mod2004 Born implementation |
 | Pitzer / activity-coefficient models | This specific defect does not apply | Separate implementation path; not a full derivative qualification |
+
+### MM electrolyte derivative correction
+
+The MM review found additional inconsistencies beyond the Born scaling defect.
+The Debye–Hückel volume derivative held the screening parameter fixed even
+though it depends on volume. Its composition derivatives varied volume where
+the Helmholtz derivative requires fixed total volume. Short-range composition
+derivatives omitted packing-fraction dependence, and several mixed derivatives
+were absent. Volume iteration also reused electrolyte quantities from a
+different volume. These errors can produce a spurious salt-rich phase even
+when a flash satisfies its internally inconsistent fugacity equations.
+
+`MMResidualDerivative` differentiates the implemented Debye–Hückel, Born and
+short-range energies with forward automatic differentiation. A phase-local cache
+reuses the joint composition, temperature and volume Hessian at an exactly
+matching state; a separate one-direction calculation supplies third volume
+derivatives. The key includes every amount, temperature, volume, term switch,
+mixing rule, ion size, dielectric input and short-range coefficient. Parameter
+changes invalidate reuse, and clones never share this transient cache. All
+composition, screening, ion-diameter, packing and solvent-permittivity
+dependencies are retained. A cancellation-free Debye–Hückel charging function
+is shared mathematically by the scalar energy and derivative evaluations.
+Non-associating ions also retain their association contribution from displacing
+the associating solvent.
+
+`ElectrolyteCPAMMDerivativeConsistencyTest` compares derivatives with independent
+fixed-volume perturbations, checks mixed-derivative symmetry, Euler homogeneity,
+Gibbs–Duhem consistency and EOS pressure closure, and exercises all five solvent
+mixing rules and all combinations of electrolyte term switches. Separate cases
+cover dilute-to-concentrated NaCl, positive trace ions, the zero-ion limit,
+legacy component state and concurrent independent clones. At exactly zero ion
+inventory, a zero Debye–Hückel Hessian contribution is an inactive-boundary
+solver convention. The physical Hessian grows without bound toward that limit;
+positive trace ions retain this behavior.
+
+This is a derivative correction to NeqSim's existing hybrid model. Its empirical
+permittivity mixing and additive short-range energy are not the complete
+published Maribo-Mogensen e-CPA formulation. No fitted ion parameters are changed
+by the derivative correction. Activity and osmotic accuracy require separate
+experimental validation with the correct concentration and reference-state
+conventions.
+
+A separate model-consistency correction uses the same concentration-dependent
+phase permittivity in the Born and Debye–Hückel energies. The previous Born
+term used solvent-only permittivity and omitted the ionic decrement. This
+choice follows Kontogeorgis, Maribo-Mogensen and Thomsen (2018),
+[doi:10.1016/j.fluid.2018.01.004](https://doi.org/10.1016/j.fluid.2018.01.004),
+and carries the resulting composition and volume dependence through the exact
+derivatives. Reference phases also inherit the current term switches, mixing
+rule and ion parameters; their caches are detached on cloning.
+
+No parameters were fitted for this correction. Against seven primary
+Hamer–Wu NaCl points at 298.15 K and 1 bar, from 0.001 to 3 mol/kg water, the
+maximum relative errors are 4.42% for the molality-scale mean ionic activity
+coefficient and 1.28% for the osmotic coefficient. The characterization test
+declares 5% and 2% engineering acceptance bounds, respectively; these are not
+experimental uncertainties. A former diagnostic compared mole-fraction
+activity coefficients with molality data and is now explicitly a numerical
+regression. The same correction improves the examined KCl and NaBr points,
+but their maximum activity-coefficient errors remain about 44%. This is not
+an accuracy qualification for those salts or other temperatures.
+
+The underlying `PhaseSrkCPA` third-volume derivative also contained an incorrect
+association-site tensor contraction. A diagonal third derivative requires the
+sum of each site's coefficient multiplied by that site's volume response cubed;
+an outer product incorrectly mixes different sites. The active calculation now
+uses the diagonal contraction. `PhaseSrkCPAVolumeDerivativeTest` independently
+differences the second derivative for water and water/MEG at three temperatures
+and two amount scales. The unused legacy `initCPAMatrixOld` path has separate
+qualification scope.
 
 Passing the scaling checks does not establish complete derivative consistency
 or accuracy against experimental electrolyte data. It answers the narrower
@@ -115,6 +185,14 @@ The separate legacy Mod2004 implementation is outside this correction. Complete
 third-order volume derivatives and general mixture accuracy are not established
 by second-derivative tests.
 
+The Furst Born contribution now uses the characteristic ionic size specified
+in Solbraa (2002), Appendix C, Eq. C.10: Stokes diameter for cations and Pauling
+diameter for anions. Its component derivatives use the same size. The previous
+implementation used the distinct hard-sphere diameter derived from covolume.
+Hard-sphere packing and MSA sizes are unchanged. This restores the published
+term definition without refitting radii or interactions; improved experimental
+accuracy is a separate requirement.
+
 ### Checking a model without hiding failures
 
 `ThermodynamicModelTest` checks each active phase and each derivative entry,
@@ -126,25 +204,37 @@ must preserve the caller's state and must not change the caller's tolerance.
 Analytical identities, finite differences and experimental validation answer
 different questions; none replaces the other two.
 
-### Neutral-component dielectric data remains unqualified
+### Neutral-component dielectric inputs and remaining qualification
 
 At the audited master snapshot `d28b180969e248837e68b5e982374db69e11a376`,
 the nitrogen, n-butane and n-hexane rows in `COMP.csv` and `COMP_EXT.csv` give
 relative permittivity about $826674.56$ at 298.15 K under
 `Component.getDielectricConstant(T)`. The same malformed polynomial occurs in
-14 rows of each table. These inputs affect all four currently failing salting-out
-fixtures, although identifying the defect does not prove that a data correction
+14 rows of each table. These inputs affect the four salting-out fixtures that
+failed during the initial review, although identifying the defect does not prove that a data correction
 alone will resolve every prediction. The coefficients resemble incorrectly scaled
 water coefficients; simply repairing their exponents would supply a water curve,
 not species-valid gas or alkane data. Correcting derivatives does not qualify
 these inputs or the resulting salting-out predictions.
 
+The nitrogen row has now been restored to the published model approximation
+`epsilon = 2` from Solbraa (2002), Table 8-13, p. 176, with zero temperature
+derivatives. This is the source model's effective input, not a measurement of
+pure nitrogen gas. The n-butane and n-hexane inputs now reproduce published
+liquid reference data within the temperature ranges documented in
+[Hydrocarbon dielectric inputs](ElectrolyteHydrocarbonDielectric.md).
+Canonical `COMP.csv` supplies the repaired values in both standard and extended
+database modes: the existing extended loader replaces shared neutral properties
+after reading its raw table. Direct consumers of the raw extended CSV bypass
+that reconciliation. The remaining malformed species inputs are unqualified.
+These repairs do not establish the accuracy of gas-ion interaction parameters.
+
 Harvey and Lemmon's primary correlation calculates gas-component permittivity
 from temperature and density and supplies a mixture-polarization treatment
 ([NIST paper, DOI 10.1007/s10765-005-2351-5](https://www.nist.gov/system/files/documents/mml/acmd/fluids_modeling/Harvey-Lemmon-50062.pdf)).
 The existing temperature-only component API cannot directly represent that
-correlation. No arbitrary constant, water correlation or fitted offset is
-substituted here. A phase-aware dielectric model needs its own consistent
+correlation. The restored nitrogen approximation should not be confused with
+that density-dependent physical correlation. A phase-aware dielectric model needs its own consistent
 derivatives, reference-state decision and independent property/phase-equilibrium
 validation before these predictions can be qualified. A separate dataset repair
 must establish species-specific property sources, applicability ranges and phase

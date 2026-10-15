@@ -7,6 +7,26 @@ NeqSim exposes implementations of the **GERG-2008** and **EOS-CG** equations of 
 
 The current `SystemGERG2008Eos` and `SystemEOSCGEos` implementations do not advertise analytical composition, pressure, or temperature fugacity derivatives. Positive finite results from the examples below prove API execution and model selection only; they do not establish custody-transfer accuracy, published-range reproduction, or fitness for a particular engineering decision. Validate the selected mixture and operating envelope against controlled reference data before use.
 
+The GERG-2008 and EOS-CG phase adapters evaluate pressure at their stored molar
+volume using their respective native reference equations. Native molar density avoids discrepancies between
+database and reference molecular weights. Pressure is converted from kPa to bar,
+and its derivative uses total internal volume, including the phase mole amount.
+GERG residual volume curvature removes the ideal-gas contribution and uses its
+native gas constant. EOS-CG differentiates its own dimensionless residual
+Helmholtz energy directly; inheriting the GERG pressure or curvature would use
+the wrong equation for EOS-CG mixtures.
+Independent native-equation and finite-difference tests cover gas and dense
+roots, changes in stored volume and material scaling. These checks qualify this
+pressure/volume contract, not every inherited residual or fugacity derivative.
+
+`NeqSimGERG2008` reuses one initialized native working model per thread and model
+variant. `NeqSimEOSCG` similarly owns a native EOS-CG working model per thread. Native temperature and composition caches are mutable and are not shared
+between threads. `clearCache()` invalidates each thread's working models on its
+next evaluation; an evaluation in progress finishes on its owned instance.
+Concurrent evaluation of unchanged utility configuration is covered, including
+shared read-only utilities and cache invalidation. Concurrent mutation of the
+utility or its phase remains unsupported.
+
 ## 1. Mathematical Framework
 
 Both GERG-2008 and EOS-CG share the same fundamental mathematical structure. They are fundamental equations of state explicit in the **dimensionless Helmholtz free energy** $\alpha$.

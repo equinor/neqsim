@@ -178,9 +178,18 @@ literature-based development recommendations.
 The base Furst/electrolyte CPA derivative implementation includes the implicit
 response of the stationary shielding parameter and the complete dielectric/Born
 second-derivative chain rules. See the same guide for finite-difference
-qualification and the remaining nitrogen, n-butane and n-hexane dielectric-data
-limitations. Those components share malformed default coefficients; replacing them
-requires species-valid property data and separate salting-out validation. A converged
+qualification. The n-butane and n-hexane temperature-only dielectric inputs use
+qualified liquid reference data described in [hydrocarbon dielectric inputs](ElectrolyteHydrocarbonDielectric.md).
+Nitrogen uses the
+constant relative permittivity 2.0 specified in Solbraa (2002), Table 8-13, p. 176,
+with zero temperature derivatives in equation (8.17). The table also uses this
+approximation for methane and CO2; it supplies no temperature validity range for
+these gases. This is an input to the electrolyte model, not a measured
+density-independent pure-gas dielectric correlation. Both standard and extended
+database loading obtain these neutral-component coefficients from canonical
+`COMP.csv`; the existing extended loader replaces shared neutral properties
+after reading `COMP_EXT.csv`. Restoring this documented input
+does not by itself establish quantitative nitrogen salting-out accuracy. A converged
 flash or consistent Jacobian does not by itself qualify the model's salting-out
 or mixed-inhibitor accuracy.
 
@@ -435,31 +444,65 @@ against experimental data.
 
 ## Gas-Ion Interaction Parameters (Salting-Out Effect)
 
-The electrolyte CPA model includes gas-ion interaction parameters to correctly predict the salting-out effect. The salting-out coefficient (k_s) determines how much dissolved gas solubility decreases with salt concentration.
+Gas-ion short-range interaction parameters affect gas solubility, but numerical convergence
+alone does not establish their physical accuracy. The current default table is a legacy
+NaCl-oriented calibration. Its transfer to other salts, mixed salts, and solvent mixtures
+requires independent qualification; the same charge sign does not imply the same gas-ion
+interaction.
 
-### Setschenow Equation
+### Setschenow Equation and Comparison Basis
 
-$$\log\left(\frac{S_0}{S}\right) = k_s \cdot c_{salt}$$
+For a molality basis at fixed temperature and gas fugacity,
 
-Where:
-- $S_0$ = gas solubility in pure water
-- $S$ = gas solubility in salt solution
-- $k_s$ = Setschenow (salting-out) coefficient (L/mol)
-- $c_{salt}$ = salt concentration (mol/L)
+$$\log_{10}\left(\frac{m_g^0/f_g^0}{m_g/f_g}\right)=k_{s,mm}m_s$$
 
-### Fitted Gas-Ion Parameters
+Here $m_g$ is dissolved gas in mol/kg water, $f_g$ is gas fugacity in bar, and $m_s$ is
+salt molality in mol/kg water. Thus $k_{s,mm}$ has units kg/mol. The superscript zero
+identifies the salt-free reference. For unequal gas fugacities, the normalized comparison
+uses the dilute-gas Henry-law approximation. A changed gas composition or phase split
+can raise aqueous mole fraction even while molality per gas fugacity falls.
 
-| Gas | k_s (L/mol) | W_cation | W_anion | Notes |
-|-----|-------------|----------|---------|-------|
-| CO₂ | 0.10 | 1.05e-4 | 1.05e-4 | Polar, acidic gas |
-| CH₄ | 0.12 | 1.10e-4 | 1.10e-4 | Reference hydrocarbon |
-| C₂H₆ | 0.13 | 1.13e-4 | 1.13e-4 | Slightly larger |
-| C₃H₈ | 0.14 | 1.15e-4 | 1.15e-4 | Larger hydrocarbon |
-| C₄ (butanes) | 0.15 | 1.20e-4 | 1.20e-4 | Heavier hydrocarbon |
-| C₅+ | 0.16 | 1.25e-4 | 1.25e-4 | Heaviest fractions |
-| N₂ | 0.10-0.12 | 1.05e-4 | 1.05e-4 | Similar to CH₄ |
-| H₂S | 0.06-0.08 | 1.10e-4 | 1.10e-4 | Polar, acidic |
-| H₂ | 0.10 | 1.30e-4 | 1.30e-4 | Very small molecule |
+The concentration form uses mol/L and a coefficient in L/mol; it is a different
+coefficient. Natural-log coefficients are $\ln(10)$ times their base-10 counterparts.
+[NIST SRD 106, system 62_73](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_73)
+defines the concentration bases and conversions. Do not mix molality, molarity, ionic
+strength, or logarithm bases when importing data.
+
+### Legacy Gas-Ion Parameters
+
+These are the current source values in `FurstElectrolyteConstants.furstParamsGasIon`,
+in m³/mol. They are model parameters, not measured Setschenow coefficients. The original
+claimed coefficients and quantitative accuracy have not been established by a reproducible
+independent dataset and must not be used as acceptance evidence.
+
+| Gas | W_cation (m³/mol) | W_anion (m³/mol) |
+|-----|-----------------|-----------------|
+| CO₂ | 1.27e-4 | 1.27e-4 |
+| CH₄ | 1.05e-4 | 1.05e-4 |
+| C₂H₆ | 1.10e-4 | 1.10e-4 |
+| C₃H₈ | 1.15e-4 | 1.15e-4 |
+| C₄ (butanes) | 1.20e-4 | 1.20e-4 |
+| C₅+ | 1.25e-4 | 1.25e-4 |
+| N₂ | 1.05e-4 | 1.05e-4 |
+| H₂S | 1.10e-4 | 1.10e-4 |
+| H₂ | 1.30e-4 | 1.30e-4 |
+
+For `SystemElectrolyteCPAstatoil`, the bounded nitrogen–NaCl correction and
+unfitted divalent-chloride prediction override selected entries of this legacy
+table. See [gas–salt parameter qualification](ElectrolyteNitrogenSalting.md)
+for the temperature correlation, explicit/global override behavior, independent
+holdouts and large remaining concentrated-brine errors.
+
+The `SystemElectrolyteCPAstatoil` CO2/K+ pair has a separately qualified default
+in the fixed CO2/Cl− gauge. See [CO2–KCl interaction qualification](CO2KClInteractionQualification.md)
+for its units, calibration source, independent holdouts, remaining absolute-solubility
+bias, and explicit-parameter priority. Other potassium-containing mixtures are not
+implied to retain unchanged predictions or validated accuracy.
+
+A defensible recalibration must first qualify dielectric data and the complete Helmholtz
+energy derivatives, state the training data and reference basis, then validate held-out
+temperatures, pressures, concentrations, and salt mixtures. Parameters from a different
+e-CPA short-range model cannot be copied directly into the Fürst $W_{ij}$ expression.
 
 **Usage Example - Methane Solubility with Salt:**
 ```java
@@ -473,7 +516,7 @@ fluid.setMixingRule(10);
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 
-// Methane solubility decreases with salt (salting-out effect)
+// Read the calculated mole fraction; compare molality at matched fugacity for salting-out.
 double ch4InAqueous = fluid.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
 ```
 
@@ -626,25 +669,87 @@ ops.TPflash();
 
 // Access aqueous phase
 int aq = system.getPhaseNumberOfPhase("aqueous");
-double pH = -Math.log10(system.getPhase(aq).getComponent("H3O+").getx() * 55.5);
+double pH = system.getPhase(aq).getpH("molality");
 ```
+
+For reactive ionic feeds with freely selected fluid phases, the flash alternates
+phase equilibrium and aqueous speciation while conserving the full feed's element
+inventory. Slow gas-buffered coupling can activate a safeguarded correction in
+reaction-extent coordinates. Each accepted correction retains nonnegative species
+amounts, decreases the reaction residual, and rechecks phase equilibrium; final
+acceptance still requires the reaction, electroneutrality, and element-balance
+gates. A converged isolated aqueous calculation alone does not establish equilibrium
+with a finite gas inventory.
+
+The single-phase chemical Newton equations use the current conserved inventory
+in the normalization derivative even when its difference from the target is
+below the conservation-correction gate. Otherwise a nearly stationary solution
+can acquire artificial relative steps in trace carbonate species. The correction
+gate scales with the target inventory and a floating-point roundoff allowance;
+it has no one-mole floor. Analytical stationary-potential and material-restoration
+tests cover feed scaling, alongside the public iron-carbonate saturation case.
+
+Activity normalization also requires consistent model settings in the mixture and
+its reference states. Automatically constructed MM references inherit the active
+term switches, dielectric mixing rule, and customized ion parameters before each
+evaluation. Explicitly supplied references retain their own settings, including
+references using the MM model. Both reference setters transfer configuration
+ownership to the caller; replacing an entry through the exposed reference array
+does the same. In-place edits to an automatic reference remain managed until it
+is passed through a setter. This distinction survives cloning and serialization.
+Phase clones own their mutable activity-reference phases while preserving custom
+values and repeated or cyclic reference relationships. This complements ownership
+of the CPA association state used during independent phase evaluation.
 
 ### In-situ pH — `getpH()` and the acid-gas fallback
 
-The recommended way to read the aqueous pH is `getpH()` on the aqueous phase (or
-`SystemInterface.getpH()`, which delegates to it). It supports several scales:
+Use `aqueousPhase.getpH("molality")` for IUPAC pH, measurements, and corrosion calculations.
+The no-argument `getpH()` (including the `SystemInterface` delegate) retains its documented
+legacy mole-fraction activity convention for compatibility. The available scales are:
 
 | Method | Definition | Notes |
 |--------|-----------|-------|
-| `getpH()` / `getpH("activity")` | `-log10(γ_x · x_H3O+)` | default; mole-fraction activity, consistent with NeqSim's reaction K's |
+| `getpH()` / `getpH("activity")` | `-log10(γ_x · x_H3O+)` | legacy default; mole-fraction activity, not IUPAC pH |
 | `getpH("molality")` | `-log10(γ_m · m_H3O+)` | IUPAC standard (mol H₃O⁺ / kg water) |
-| `getpH("molarity")` | `-log10([H3O+])` | mol/L, ignores activity coefficient |
+| `getpH("molarity")` | `-log10(γ_c · [H3O+])` | mol/L; dilute-aqueous approximation `γ_c ≈ γ_m` |
 | `getpH("acidgas")` | carbonic/hydrosulfuric acid dissociation estimate | screening in-situ pH from dissolved CO₂/H₂S |
 
+For EOS solute coefficients normalized at infinite dilution, `γ_m = γ_x · x_water`.
+The standard chemical potential absorbs the water-molar-mass factor; dividing the
+activity coefficient by 55.51 again is incorrect. Symmetric GE coefficients are first
+normalized by their infinite-dilution value; Pitzer and Duan–Sun coefficients already use molality.
+Deshmukh–Mather converts its native kg-of-all-solvents coefficient to kg-of-water while
+preserving the native chemical activity. Kent–Eisenberg retains its ideal mole-fraction
+activities and converts only the concentration scale.
+For EOS solute coefficients with `γ_m = γ_x · x_water`,
+`γ_m · m_H3O+ = γ_x · x_H3O+ / M_water`. The legacy mole-fraction activity result
+therefore exceeds molal pH by `-log10(M_water [kg/mol]) ≈ 1.744`. Migrate physical pH consumers explicitly to
+`getpH("molality")`; do not subtract a constant from all model outputs because native
+activity conventions differ. The acid-gas fallback is a molarity-based dilute-water screening estimate.
+
+Reaction constants and reporting scales are separate choices. For a reaction with
+solute stoichiometric sum `Δν`, `K_x = K_m · M_water^Δν`, retaining solvent activity.
+The default CO2 dissociation correlation requires one such conversion; the water
+autodissociation constant already contains two and must not be converted again.
+This follows the standard-state transformation derived by
+[Smith, Rutherford, and Leal (2026), equations 34 and 36](https://doi.org/10.1002/cjce.70438).
+
+The default mole-fraction reaction database uses the following provenance:
+
+| Reaction | Source basis and implemented correction |
+|----------|----------------------------------------|
+| CO2 + 2 H2O ⇌ HCO3− + H3O+ | The existing correlation follows the molality constant of [Plummer and Busenberg (1982)](https://pubs.usgs.gov/publication/70011789). Its constant term changes from `253.235548` to `249.218997465218` by adding `ln(0.018015)`; temperature-dependent terms are retained. |
+| HCO3− + H2O ⇌ CO3²− + H3O+ | The mole-fraction correlation in [Huttenhuis et al. (2008), Table 2](https://doi.org/10.1016/j.fluid.2007.10.020) gives the constant term `216.049`, correcting the previous `209.141`; other coefficients are retained. |
+| 2 H2O ⇌ H3O+ + OH− | The existing mole-fraction correlation already includes the two-solute conversion and is unchanged. |
+
+Pitzer uses its separate molality reaction database. Regression checks compare the
+carbonate correlations with published values across temperature and independently
+verify the concentration-scale identity and closed-feed conservation.
+
 **Acid-gas fallback (no `chemicalReactionInit()` required).** The rigorous
-`activity`/`molality`/`molarity` scales need explicit `H3O+` species, which only
-exist after `chemicalReactionInit()` has solved the water/carbonic dissociation
-equilibria. If those reactions were **not** initialised (or the electrolyte
+`activity`/`molality`/`molarity` scales need an explicit `H3O+` inventory. Normally,
+`chemicalReactionInit()` registers the reaction species and a subsequent reactive
+flash solves their equilibrium amounts; species can also be added explicitly. If those reactions were **not** initialised (or the electrolyte
 solver is numerically unstable and yields no/NaN `H3O+`, e.g. at low pressure),
 `getpH()` now falls back to an acid-gas dissociation estimate whenever the
 aqueous phase contains water together with dissolved CO₂ and/or H₂S — instead of
@@ -711,7 +816,7 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 
 ## References
 
-1. Solbraa, E. (2002). "Measurement and Modelling of Absorption of Carbon Dioxide into Methyldiethanolamine Solutions at High Pressures." PhD Thesis, Norwegian University of Science and Technology.
+1. Solbraa, E. (2002). "Measurement and Modelling of Absorption of Carbon Dioxide into Methyldiethanolamine Solutions at High Pressures." PhD Thesis, Norwegian University of Science and Technology. [Original thesis](http://hdl.handle.net/11250/231326), equation (8.17) and Table 8-13, p. 176.
 
 2. Fürst, W., & Renon, H. (1993). "Representation of excess properties of electrolyte solutions using a new equation of state." AIChE Journal, 39(2), 335-343.
 
@@ -733,7 +838,7 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 | 2024 | Refitted monovalent parameters to Robinson & Stokes | γ± error: 2.8% |
 | Dec 2024 | Refitted divalent cation parameters [6-9] | CaCl₂: 16%→7%, MgCl₂: 22%→10% |
 | Dec 2024 | Updated chemical equilibrium solver | Improved pH accuracy |
-| Dec 2024 | Added gas-ion parameters for C2-C5+, N₂, H₂S, H₂ | Correct salting-out for all gases |
+| Dec 2024 | Added gas-ion parameters for C2-C5+, N₂, H₂S, H₂ | Legacy calibration; independent salt-specific qualification required |
 | Feb 2026 | Added OI-ion parameters for Hu-Lee-Sum compliance | Additive hydrate inhibition with combined inhibitors |
 | Jul 2026 | `getpH()` acid-gas dissociation fallback | Acidic in-situ pH for CO₂/H₂S water without `chemicalReactionInit()`; no more silent 7.0 |
 

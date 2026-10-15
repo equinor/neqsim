@@ -1,6 +1,7 @@
 package neqsim.thermo.util.gerg;
 
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
@@ -11,29 +12,44 @@ import neqsim.thermo.phase.PhaseType;
  * Wrapper for calling the EOS-CG multi-fluid model using the GERG-2008 API.
  *
  * <p>
- * This class provides a wrapper around the EOS-CG (Equation of State for Combustion Gases) multi-fluid model. The
- * EOS-CG parameters are cached statically to avoid expensive re-initialization on every call, which significantly
- * improves performance for applications that make repeated property calculations.
+ * This class provides a wrapper around the EOS-CG (Equation of State for Combustion Gases) multi-fluid model.
+ * Initialized native models are reused per thread. Their coefficient tables and mutable temperature/composition
+ * workspaces are never shared across threads; repeated calls on one thread avoid repeating parameter initialization.
+ * Configuring a utility or its phase concurrently with evaluation is unsupported.
  * </p>
+ *
+ * @author NeqSim contributors
+ * @version 1.0
  */
 public class NeqSimEOSCG {
+  /** Generation invalidating initialized working models on every thread after {@link #clearCache()}. */
+  private static final AtomicLong CACHE_GENERATION = new AtomicLong();
+
+  /** One native working model per thread; native composition/temperature caches are mutable. */
+  private static final ThreadLocal<WorkingModel> MODEL_CACHE = ThreadLocal.withInitial(WorkingModel::new);
+
   /**
-   * Cached EOS-CG model instance. The setup() method initializes constant parameters, so caching provides significant
-   * performance improvement for repeated calculations.
+   * Thread-owned model tables and calculation scratch, reused until the cache generation changes.
+   *
+   * @author NeqSim contributors
+   * @version 1.0
    */
-  private static volatile EOSCG cachedModel = null;
-  private static final Object CACHE_LOCK = new Object();
+  private static final class WorkingModel {
+    /** Last global invalidation observed by this thread. */
+    private long generation = -1;
+    /** Initialized native model owned by this thread. */
+    private EOSCG model;
+  }
 
   double[] normalizedComposition = new double[28 + 1];
   double[] notNormalizedComposition = new double[28 + 1];
   PhaseInterface phase = null;
-  EOSCG eosCG;
 
   /**
    * Default constructor.
    */
   public NeqSimEOSCG() {
-    this.eosCG = getCachedModel();
+    getCachedModel();
   }
 
   /**
@@ -42,37 +58,44 @@ public class NeqSimEOSCG {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public NeqSimEOSCG(PhaseInterface phase) {
-    this.eosCG = getCachedModel();
+    getCachedModel();
     this.setPhase(phase);
   }
 
   /**
-   * Gets a cached and initialized EOS-CG model instance. If no cached instance exists, creates one and initializes it
-   * with setup(). This method is thread-safe.
+   * Obtains this thread's initialized native model, including its owned mutable calculation scratch. Resolving on each
+   * call avoids retaining a constructor-thread model when a utility is subsequently used on another thread.
    *
-   * @return a cached, initialized EOSCG instance
+   * @return thread-confined working model
    */
   private static EOSCG getCachedModel() {
-    if (cachedModel == null) {
-      synchronized (CACHE_LOCK) {
-        if (cachedModel == null) {
-          EOSCG model = new EOSCG();
-          model.setup();
-          cachedModel = model;
-        }
-      }
+    WorkingModel cache = MODEL_CACHE.get();
+    long generation = CACHE_GENERATION.get();
+    if (cache.generation != generation) {
+      EOSCG model = new EOSCG();
+      model.setup();
+      cache.model = model;
+      cache.generation = generation;
     }
-    return cachedModel;
+    return cache.model;
   }
 
   /**
-   * Clears the cached EOS-CG model instance. This is primarily useful for testing or when parameters need to be
-   * reloaded.
+   * Resolves working state on the calling thread rather than retaining a constructor-thread model.
+   *
+   * @return this thread's working model
+   */
+  EOSCG model() {
+    return getCachedModel();
+  }
+
+  /**
+   * Invalidates all threads' EOS-CG working models on their next evaluation. An evaluation already in progress finishes
+   * using its owned model. This is useful for tests and parameter reloads.
    */
   public static void clearCache() {
-    synchronized (CACHE_LOCK) {
-      cachedModel = null;
-    }
+    CACHE_GENERATION.incrementAndGet();
+    MODEL_CACHE.remove();
   }
 
   public double getMolarDensity(PhaseInterface phase) {
@@ -106,13 +129,13 @@ public class NeqSimEOSCG {
     }
     doubleW P = new doubleW(0.0);
     doubleW Z = new doubleW(0.0);
-    eosCG.pressure(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, P, Z);
+    model().pressure(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, P, Z);
     return P.val;
   }
 
   public double getMolarMass() {
     doubleW mm = new doubleW(0.0);
-    eosCG.molarMass(normalizedComposition, mm);
+    model().molarMass(normalizedComposition, mm);
     return mm.val / 1.0e3;
   }
 
@@ -128,6 +151,7 @@ public class NeqSimEOSCG {
    * @throws IllegalStateException if the requested density root cannot be found
    */
   public double getMolarDensity(PhaseType phaseType) {
+    EOSCG eosCG = model();
     boolean liquidRoot = phaseType == PhaseType.LIQUID || phaseType == PhaseType.OIL || phaseType == PhaseType.AQUEOUS;
     int flag = liquidRoot ? 2 : 0;
     intW ierr = new intW(0);
@@ -209,7 +233,7 @@ public class NeqSimEOSCG {
     doubleW jt = new doubleW(0.0);
     doubleW kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
-    eosCG.properties(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, p, z, dpdd, d2pdd2, d2pdtd,
+    model().properties(phase.getTemperature(), molarDensityMolPerL, normalizedComposition, p, z, dpdd, d2pdd2, d2pdtd,
         dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
     return new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val, cv.val, cp.val,
         w.val, g.val, jt.val, kappa.val};
@@ -369,7 +393,7 @@ public class NeqSimEOSCG {
     for (int i = 0; i < rows; i++) {
       a0[i] = new doubleW(0.0);
     }
-    eosCG.alpha0(temperature, molarDensityMolPerL, normalizedComposition, a0);
+    model().alpha0(temperature, molarDensityMolPerL, normalizedComposition, a0);
     return a0;
   }
 
@@ -395,7 +419,7 @@ public class NeqSimEOSCG {
       }
     }
 
-    eosCG.alphar(2, 3, temperature, molarDensityMolPerL, normalizedComposition, ar);
+    model().alphar(2, 3, temperature, molarDensityMolPerL, normalizedComposition, ar);
     return ar;
   }
 
@@ -418,7 +442,7 @@ public class NeqSimEOSCG {
         residualHelmholtz[i][j] = new doubleW(0.0);
       }
     }
-    eosCG.alphar(1, 0, temperature, molarDensity, normalizedComposition, residualHelmholtz);
+    model().alphar(1, 0, temperature, molarDensity, normalizedComposition, residualHelmholtz);
     return residualHelmholtz[0][0].val;
   }
 }

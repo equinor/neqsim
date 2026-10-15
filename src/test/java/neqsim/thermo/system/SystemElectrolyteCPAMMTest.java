@@ -1273,8 +1273,8 @@ public class SystemElectrolyteCPAMMTest {
     double gammaZB = zeroBsys.getPhase(0).getMeanIonicActivity(naZB, clZB);
     logger.info(String.format("%-30s | %-12.6f | %-12.4f", "b~0 ions, DH+Born+SR", gammaZB, Math.log(gammaZB)));
 
-    // Diagnostic should produce DH+Born+SR γ± close to literature (0.657)
-    // The first config (full model) should give γ± within 2% of 0.657
+    // This native API returns gamma_x. The old comparison with Hamer-Wu gamma_m was invalid.
+    // Keep an explicit numerical regression; primary-data molality validation is tested separately.
     SystemElectrolyteCPAMM fullSys = new SystemElectrolyteCPAMM(298.15, 1.0);
     fullSys.addComponent("water", molesWater);
     fullSys.addComponent("Na+", m);
@@ -1287,12 +1287,9 @@ public class SystemElectrolyteCPAMMTest {
     int naFull = fullSys.getPhase(0).getComponent("Na+").getComponentNumber();
     int clFull = fullSys.getPhase(0).getComponent("Cl-").getComponentNumber();
     double gammaFull = fullSys.getPhase(0).getMeanIonicActivity(naFull, clFull);
-    double literatureGamma = 0.657;
-    double relError = Math.abs(gammaFull - literatureGamma) / literatureGamma;
-    logger.info(String.format("\nFull MM model γ± = %.6f (literature: %.3f, error: %.1f%%)", gammaFull, literatureGamma,
-        relError * 100));
-    assertEquals(literatureGamma, gammaFull, 0.02,
-        "MM e-CPA γ± for NaCl 1 molal should be within 0.02 of Robinson & Stokes");
+    logger.info(String.format("\nMM hybrid native gamma_x = %.6f (numerical regression only)", gammaFull));
+    assertEquals(0.650620, gammaFull, 1e-5,
+        "Native gamma_x regression; experimental gamma_m is checked on the explicit molality basis");
   }
 
   @Test

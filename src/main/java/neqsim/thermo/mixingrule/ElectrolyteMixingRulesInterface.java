@@ -37,11 +37,18 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
       int numbcomp);
 
   /**
-   * setWijParameter.
+   * Sets the symmetric pair coefficient at the reference temperature, 298.15 K.
    *
-   * @param i a int
-   * @param j a int
-   * @param value a double
+   * <p>
+   * Setting any coefficient marks the entire symmetric pair as explicitly fitted. Calculated-default refresh during
+   * initialization preserves all three coefficients of that pair; the two coefficients not set by this call retain
+   * their current values. Set all three explicitly when supplying a complete temperature correlation, including zero
+   * values for unused terms. Configure every phase after selecting its mixing rule and before running a flash.
+   * </p>
+   *
+   * @param i first component index
+   * @param j second component index
+   * @param value coefficient in m3/mol
    */
   public void setWijParameter(int i, int j, double value);
 
@@ -55,11 +62,18 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
   public double getWijParameter(int i, int j);
 
   /**
-   * setWijT1Parameter.
+   * Sets the symmetric pair coefficient multiplying (1/T - 1/298.15).
    *
-   * @param i a int
-   * @param j a int
-   * @param value a double
+   * <p>
+   * Setting any coefficient marks the entire symmetric pair as explicitly fitted. Calculated-default refresh during
+   * initialization preserves all three coefficients of that pair; the two coefficients not set by this call retain
+   * their current values. Set all three explicitly when supplying a complete temperature correlation, including zero
+   * values for unused terms. Configure every phase after selecting its mixing rule and before running a flash.
+   * </p>
+   *
+   * @param i first component index
+   * @param j second component index
+   * @param value coefficient in m3 K/mol
    */
   public void setWijT1Parameter(int i, int j, double value);
 
@@ -73,11 +87,18 @@ public interface ElectrolyteMixingRulesInterface extends MixingRulesInterface {
   public double gettWijT1Parameter(int i, int j);
 
   /**
-   * setWijT2Parameter.
+   * Sets the symmetric pair coefficient multiplying ((298.15 - T)/T + ln(T/298.15)).
    *
-   * @param i a int
-   * @param j a int
-   * @param value a double
+   * <p>
+   * Setting any coefficient marks the entire symmetric pair as explicitly fitted. Calculated-default refresh during
+   * initialization preserves all three coefficients of that pair; the two coefficients not set by this call retain
+   * their current values. Set all three explicitly when supplying a complete temperature correlation, including zero
+   * values for unused terms. Configure every phase after selecting its mixing rule and before running a flash.
+   * </p>
+   *
+   * @param i first component index
+   * @param j second component index
+   * @param value coefficient in m3/mol
    */
   public void setWijT2Parameter(int i, int j, double value);
 

@@ -227,7 +227,7 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
 
     freeWaterPresent = work.hasPhaseType(PhaseType.AQUEOUS);
     if (freeWaterPresent) {
-      inSituPH = work.getPhase(PhaseType.AQUEOUS).getpH();
+      inSituPH = work.getPhase(PhaseType.AQUEOUS).getpH("molality");
       bicarbonateMgL = extractBicarbonateMgL(work);
       feCO3SaturationRatio = computeFeCO3SaturationRatio(work);
     } else {

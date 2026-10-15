@@ -777,6 +777,9 @@ public class TPflash extends Flash {
       }
       validateTraceWaterAqueousRepair();
       validateCharacterizedFluidPhaseInventories();
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        FluidEquilibriumChecks.validatePressureRoot(system.getPhase(phase));
+      }
       if (ionicInputMoles != null) {
         FluidEquilibriumChecks.validate(system, ionicInputMoles);
         if (system.getNumberOfPhases() == 1) {
@@ -1041,6 +1044,37 @@ public class TPflash extends Flash {
       throw new IllegalStateException("TPflash failed to conserve the feed: component mole-fraction residual="
           + materialResidual + ", phase-fraction sum=" + betaSum);
     }
+  }
+
+  /**
+   * Returns the dimensionless molar Gibbs contribution that differs between roots at fixed composition.
+   *
+   * @param phase initialized phase whose root is compared
+   * @return sum of mole fraction times logarithmic fugacity coefficient
+   * @throws IllegalStateException when an occupied contribution is non-finite or a composition is invalid
+   */
+  private double rootLogFugacityContribution(int phase) {
+    double contribution = 0.0;
+    for (int component = 0; component < system.getNumberOfComponents(); component++) {
+      ComponentInterface species = system.getPhase(phase).getComponent(component);
+      double fraction = species.getx();
+      if (!Double.isFinite(fraction) || fraction < 0.0) {
+        throw new IllegalStateException("Root comparison requires a finite nonnegative composition");
+      }
+      if (fraction == 0.0) {
+        continue;
+      }
+      double term = fraction * species.getLogFugacityCoefficient();
+      if (!Double.isFinite(term)) {
+        throw new IllegalStateException(
+            "Root comparison requires a finite occupied fugacity contribution: " + species.getComponentName());
+      }
+      contribution += term;
+    }
+    if (!Double.isFinite(contribution)) {
+      throw new IllegalStateException("Root comparison produced a non-finite molar Gibbs contribution");
+    }
+    return contribution;
   }
 
   /**
@@ -1353,11 +1387,13 @@ public class TPflash extends Flash {
     double gasgib = 0.0;
     double liqgib = 0.0;
     if (gammaPhiModel == null && !(system instanceof EosGeFlashModel)) {
-      // Checks if gas or oil is the most stable phase for the ordinary EOS flash.
-      gasgib = system.getPhase(0).getGibbsEnergy();
+      // Compare roots at the same composition through chemical potentials. The common ideal-gas
+      // reference and mixing terms cancel; H - T*S can lose the small extensive difference when
+      // a phase approaches its amount bound and caloric derivatives are stale after init(1).
+      gasgib = rootLogFugacityContribution(0);
       system.setPhaseType(0, PhaseType.LIQUID);
       system.init(1, 0);
-      liqgib = system.getPhase(0).getGibbsEnergy();
+      liqgib = rootLogFugacityContribution(0);
 
       if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
         system.setPhaseType(0, PhaseType.GAS);
@@ -1410,9 +1446,11 @@ public class TPflash extends Flash {
         // generic cubic-EOS Newton solver does not implement that contract and must not replace it.
         // Close to a phase-fraction bound, the interior Newton line search cannot remove the phase.
         // Let the Rachford-Rice SSI step select the boundary active set instead of accepting tiny Newton steps.
+        // Ionic feeds retain constrained Newton: the aqueous host cannot disappear with its conserved ions,
+        // and the neutral Rachford-Rice boundary does not describe that constrained active set.
         if (iterations < activeNewtonLimit || gammaPhiModel != null || system.isChemicalSystem()
-            || system.getBeta() < 10.0 * phaseFractionMinimumLimit
-            || system.getBeta() > 1.0 - 10.0 * phaseFractionMinimumLimit
+            || !FlashPhaseConstraints.hasIonicInventory(system) && (system.getBeta() < 10.0 * phaseFractionMinimumLimit
+                || system.getBeta() > 1.0 - 10.0 * phaseFractionMinimumLimit)
             || !system.isImplementedCompositionDeriativesofFugacity()
             || (FlashPhaseConstraints.hasIonicInventory(system)
                 && !FlashPhaseConstraints.capture(system).supportsTwoPhaseSplit())) {

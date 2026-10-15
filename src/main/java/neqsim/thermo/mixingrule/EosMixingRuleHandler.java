@@ -3421,34 +3421,11 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         }
       }
 
-      // Handle gas-ion interactions for salting out effect
-      // CO2, CH4, and other hydrocarbons have specific interaction parameters with
-      // ions
-      // The Wij compensates for implicit salting effect from FSR2eps*epsi term
-      //
-      // The implicit salting effect from FSR2eps*epsi varies significantly across
-      // different ion types in complex ways that depend on ion size, charge, and
-      // ion-solvent interactions. Simple correlations cannot capture this complexity.
-      //
-      // Current approach: Use fixed parameters calibrated for Na+/Cl- (the most
-      // common
-      // electrolyte in process simulations). This gives ~10% salting out at 1 mol/kg,
-      // matching the experimental Setchenow coefficient k_s ~ 0.1 L/mol.
-      //
-      // Heavier hydrocarbons (ethane, propane, butane, pentane) also need proper
-      // gas-ion interaction parameters to exhibit correct salting-out behavior.
-      // Without these, adding hydrocarbons can cause incorrect salting-in effects.
-      //
-      // Limitations: Other ion pairs (K+, MDEA+, HCO3-, Ca++, etc.) may show
-      // different
-      // salting behavior. For accurate predictions with specific ion pairs,
-      // ion-specific
-      // parameters should be fitted and stored in the database.
-      //
-      // Reference: Na+/Cl- validation at 298 K:
-      // 0.5 mol/kg: ~5% salting out
-      // 1.0 mol/kg: ~10% salting out
-      // 2.0 mol/kg: ~18% salting out
+      // Gas-ion short-range defaults. The legacy coefficients were described as NaCl-oriented,
+      // but their calibration dataset was not recorded; they are not measured Setschenow coefficients.
+      // Statoil CPA has separately qualified nitrogen/NaCl parameters and an unfitted divalent
+      // chloride prediction. Explicit pair values and changed global gas-ion parameters take priority.
+      // See docs/thermo/ElectrolyteNitrogenSalting.md for sources, units and quantitative limitations.
 
       for (int i = 0; i < numbcomp; i++) {
         String nameI = compArray[i].getComponentName().toLowerCase();
@@ -3514,6 +3491,40 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
                     .getFurstParamGasIon(cationParamIndex);
                 wij[0][j][i] = wij[0][i][j];
+                if (phase instanceof neqsim.thermo.phase.PhaseElectrolyteCPAstatoil
+                    && neqsim.thermo.util.constants.FurstElectrolyteConstants.isDefaultGasIonParameter(cationParamIndex)
+                    && neqsim.thermo.util.constants.FurstElectrolyteConstants
+                        .isDefaultGasIonParameter(anionParamIndex)) {
+                  if (isN2 && compArray[j].getComponentName().equals("Na+")) {
+                    // Morrison and Billett (1952), base-10 molal Setschenow coefficients at
+                    // 285.75, 322.55 and 344.85 K. Preserve the legacy chloride gauge and
+                    // assign the identified neutral-salt sum to sodium. See
+                    // docs/thermo/ElectrolyteNitrogenSalting.md for scope and held-out data.
+                    wij[0][i][j] = 2.0 * 1.0718504029482e-5 - 1.05e-4;
+                    wij[1][i][j] = -0.107669626430738;
+                    wij[2][i][j] = -0.0028449859260332;
+                  } else if (isCO2 && compArray[j].getComponentName().equals("K+")) {
+                    // Onda et al. (1970), DOI 10.1252/jcej.3.18, Table 3: KCl k_s = 0.0777 L/mol at 298.15 K.
+                    // Fit in the fixed legacy CO2/Cl- gauge using physical solution volume at 1 mol/kg water.
+                    // Independent solubility/hydrate checks and remaining bias are documented in
+                    // docs/thermo/CO2KClInteractionQualification.md. Clear inherited water temperature terms.
+                    wij[0][i][j] = -2.31476480642442e-4;
+                    wij[1][i][j] = 0.0;
+                    wij[2][i][j] = 0.0;
+                  } else if (ionCharge == 2.0) {
+                    // Unfitted divalent chloride prediction: omit the gas-salt short-range
+                    // residual in the retained chloride gauge, W(g,c) + z*W(g,Cl) = 0.
+                    // This replaces an unsupported transfer of NaCl-oriented parameters;
+                    // it is not a measured divalent-gas interaction or a quantitative fit.
+                    wij[0][i][j] = -ionCharge
+                        * neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(anionParamIndex);
+                    wij[1][i][j] = 0.0;
+                    wij[2][i][j] = 0.0;
+                  }
+                  for (int coefficient = 0; coefficient < 3; coefficient++) {
+                    wij[coefficient][j][i] = wij[coefficient][i][j];
+                  }
+                }
               } else if (ionCharge < -0.01) {
                 // Gas-anion interaction
                 wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
@@ -3598,6 +3609,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       // System.out.println("intparam: " + value);
       wij[0][i][j] = value;
       wij[0][j][i] = value;
+      // Explicit pair parameters must survive calculated-default refresh during flash initialization.
+      wijCalcOrFitted[i][j] = 1;
+      wijCalcOrFitted[j][i] = 1;
     }
 
     /** {@inheritDoc} */
@@ -3611,6 +3625,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public void setWijT1Parameter(int i, int j, double value) {
       wij[1][i][j] = value;
       wij[1][j][i] = value;
+      // Explicit pair parameters must survive calculated-default refresh during flash initialization.
+      wijCalcOrFitted[i][j] = 1;
+      wijCalcOrFitted[j][i] = 1;
     }
 
     /** {@inheritDoc} */
@@ -3624,6 +3641,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public void setWijT2Parameter(int i, int j, double value) {
       wij[2][i][j] = value;
       wij[2][j][i] = value;
+      // Explicit pair parameters must survive calculated-default refresh during flash initialization.
+      wijCalcOrFitted[i][j] = 1;
+      wijCalcOrFitted[j][i] = 1;
     }
 
     /** {@inheritDoc} */

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.concurrent.CancellationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -80,9 +81,9 @@ class TPflashZeroIonicInventoryTest extends neqsim.NeqSimTest {
     }
   }
 
-  /** A rejected last-aqueous-phase transition must preserve the complete caller material state. */
+  /** A cancelled last-aqueous-phase transition must preserve the complete caller material state. */
   @Test
-  void unsupportedReactiveAqueousDisappearanceIsTransactional() {
+  void cancelledReactiveAqueousDisappearanceIsTransactional() {
     SystemInterface feed = fluid(298.15, 1.0, 0.1, 0.001);
     feed.chemicalReactionInit();
     feed.setMixingRule(10);
@@ -99,9 +100,13 @@ class TPflashZeroIonicInventoryTest extends neqsim.NeqSimTest {
 
     gas.setTemperature(320.0);
     SystemInterface before = gas.clone();
-    IllegalStateException failure = assertThrows(IllegalStateException.class,
-        () -> new ThermodynamicOperations(gas).TPflash());
-    assertTrue(failure.getMessage().contains("requires exactly one aqueous material phase"));
+    Thread.currentThread().interrupt();
+    try {
+      assertThrows(CancellationException.class, () -> new ThermodynamicOperations(gas).TPflash());
+      assertTrue(Thread.currentThread().isInterrupted(), "cancellation must retain the interrupt signal");
+    } finally {
+      Thread.interrupted();
+    }
     assertEquals(before.getTotalNumberOfMoles(), gas.getTotalNumberOfMoles(), 0.0);
     assertEquals(before.getNumberOfPhases(), gas.getNumberOfPhases());
     assertEquals(before.getNumberOfComponents(), gas.getNumberOfComponents());

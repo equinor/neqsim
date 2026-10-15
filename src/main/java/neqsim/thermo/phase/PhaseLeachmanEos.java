@@ -3,6 +3,7 @@ package neqsim.thermo.phase;
 import org.netlib.util.doubleW;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentLeachmanEos;
+import neqsim.thermo.util.leachman.NeqSimLeachman;
 
 /**
  * PhaseLeachmanEos class.
@@ -234,20 +235,24 @@ public class PhaseLeachmanEos extends PhaseEos {
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
-    return getMolarMass() * 1e5 / getDensity_Leachman();
+    // Native molar density avoids a database/reference molecular-weight mismatch.
+    return 100.0 / new NeqSimLeachman(this, "").getMolarDensity();
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressure() {
-    return numberOfMolesInPhase / getVolume() * R * temperature * (1 + ar[0][1].val);
+    // Evaluate the actual returned volume with the reference EOS and its native gas constant.
+    return new NeqSimLeachman(this, "").pressureFromMolarDensity(temperature, 100.0 / getMolarVolume()) / 100.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
-    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val)
-        / numberOfMolesInPhase;
+    double molarDensity = 100.0 / getMolarVolume();
+    double derivative = new NeqSimLeachman(this, "").pressureDerivativeMolarDensity(temperature, molarDensity);
+    // Convert kPa/(mol/L) to bar per total internal volume (V_SI * 1e5).
+    return -derivative * molarDensity / (100.0 * getTotalVolume());
   }
 
   /** {@inheritDoc} */

@@ -426,20 +426,26 @@ public class PhaseGERG2008Eos extends PhaseEos {
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
-    return getMolarMass() * 1e5 / getDensity_GERG2008();
+    // Native molar density avoids a database/reference molecular-weight mismatch.
+    return 100.0 / new NeqSimGERG2008(this, gergModelType).getMolarDensity();
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressure() {
-    return numberOfMolesInPhase / getVolume() * R * temperature * (1 + ar[0][1].val);
+    // Evaluate the actual returned volume with the reference EOS and its native gas constant.
+    return new NeqSimGERG2008(this, gergModelType).pressureFromMolarDensity(temperature, 100.0 / getMolarVolume())
+        / 100.0;
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcPressuredV() {
-    return -Math.pow(getDensity() / getMolarMass(), 2) * R * temperature * (1 + 2 * ar[0][1].val + ar[0][2].val)
-        / numberOfMolesInPhase;
+    double molarDensity = 100.0 / getMolarVolume();
+    double derivative = new NeqSimGERG2008(this, gergModelType).pressureDerivativeMolarDensity(temperature,
+        molarDensity);
+    // Convert kPa/(mol/L) to bar per total internal volume (V_SI * 1e5).
+    return -derivative * molarDensity / (100.0 * getTotalVolume());
   }
 
   /** {@inheritDoc} */
@@ -482,14 +488,11 @@ public class PhaseGERG2008Eos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double dFdVdV() {
-    // During early initialisation the Helmholtz derivative array may not yet be
-    // populated. In that case fall back to the default implementation.
-    if (ar == null) {
-      return super.dFdVdV();
-    }
-    // d^2(F/RT)/dV^2 = -(1/(R T)) * (dP/dV)_T
-    double dPdV = calcPressuredV();
-    return -dPdV / (R * temperature);
+    // GERG residual chemical potentials use F = n * alphaR, nondimensionalized with native R.
+    // Removing the ideal-gas curvature is essential now that dP/dV uses total internal volume.
+    double nativeR = new NeqSimGERG2008(this, gergModelType).getGasConstant();
+    double volume = getTotalVolume();
+    return -calcPressuredV() / (nativeR * temperature) - numberOfMolesInPhase / (volume * volume);
   }
 
   /** {@inheritDoc} */

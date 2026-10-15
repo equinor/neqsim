@@ -1644,7 +1644,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     if (chemicalReactionOperations != null) {
-      clonedSystem.chemicalReactionInit();
+      clonedSystem.chemicalReactionOperations = chemicalReactionOperations.copyForSystem(clonedSystem);
     }
 
     return clonedSystem;
@@ -4160,7 +4160,8 @@ public abstract class SystemThermo implements SystemInterface {
   }
 
   /**
-   * initAnalytic.
+   * Initializes analytic thermodynamic state. Level zero activates up to two initialized phase slots while preserving
+   * the configured maximum; a maximum of one therefore remains a single-phase system.
    *
    * @param type a int. 0 to initialize and 1 to reset, 2 to calculate T and P derivatives, 3 to calculate all
    * derivatives and 4 to calculate all derivatives numerically
@@ -4174,7 +4175,9 @@ public abstract class SystemThermo implements SystemInterface {
               beta[phaseIndex[i]]);
         }
       }
-      setNumberOfPhases(2);
+      // Only activate initialized phase slots. A single-phase configuration must not
+      // expose an uninitialized second phase or increase its configured maximum.
+      setNumberOfPhases(Math.min(2, getMaxNumberOfPhases()));
     }
 
     if (type > 0) {

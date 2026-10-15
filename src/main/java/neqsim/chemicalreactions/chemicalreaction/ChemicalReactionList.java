@@ -44,6 +44,20 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   private ChemicalReactionDataSource reactionDataSource = ChemicalReactionDataSource.STANDARD;
 
   /**
+   * Copies configured reactions and their selected data-source policy without reloading database defaults.
+   *
+   * @return independent reaction list; phase-dependent matrices are rebuilt by its new owner
+   */
+  public ChemicalReactionList copy() {
+    ChemicalReactionList copy = new ChemicalReactionList();
+    copy.reactionDataSource = reactionDataSource;
+    for (ChemicalReaction reaction : chemicalReactionList) {
+      copy.chemicalReactionList.add(reaction.copy());
+    }
+    return copy;
+  }
+
+  /**
    * readReactions.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object

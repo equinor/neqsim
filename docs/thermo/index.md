@@ -8,4 +8,7 @@ keywords: "thermodynamics, EOS, equation of state, SRK, Peng-Robinson, CPA, flas
 
 - [Component database and parameter provenance](./component_database_guide.md)
 - [Pure-water Henry database](./henry_water_database.md)
+- [Hydrocarbon dielectric inputs](./ElectrolyteHydrocarbonDielectric.md)
+- [Bounded gas–salt parameter qualification](./ElectrolyteNitrogenSalting.md)
+- [CO2–KCl interaction qualification](./CO2KClInteractionQualification.md)
 - [Petroleum and refinery characterization](./characterization/README.md)

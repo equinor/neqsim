@@ -412,8 +412,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
     if (disc >= 0) {
       double sqrtDisc = Math.sqrt(disc);
-      double u = Math.cbrt(-q / 2.0 + sqrtDisc);
-      double v = Math.cbrt(-q / 2.0 - sqrtDisc);
+      // Evaluate the larger Cardano radicand, then recover its partner through u*v = -p/3.
+      // Subtracting nearly equal q/2 and sqrt(disc) loses digits before the cube root and can leave
+      // a dense, mechanically stable EOS root with a significant pressure residual.
+      double u = Math.cbrt(-q / 2.0 - Math.copySign(sqrtDisc, q));
+      double v = u == 0.0 ? 0.0 : -p / (3.0 * u);
       roots[0] = u + v - b / (3.0 * a);
       roots[1] = Double.NaN;
       roots[2] = Double.NaN;
@@ -509,15 +512,27 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (error > 1.0e-10 && iterations < maxIterations);
-    if (iterations >= maxIterations) {
-      return molarVolumeAnalytical(pressure, temperature, pt);
-    }
-    if (Double.isNaN(getMolarVolume())) {
+    // A small volume step is not sufficient: the iteration can stall at a spinodal where dP/dV vanishes.
+    double pressureSlope = calcPressuredV();
+    double pressureTolerance = Math.max(1.0e-8 * Math.max(1.0, Math.abs(pressure)),
+        1.0e-10 * Math.abs(getTotalVolume() * pressureSlope));
+    double pressureResidual = Math.abs(calcPressure() - pressure);
+    if (iterations >= maxIterations || !Double.isFinite(getMolarVolume()) || !(getMolarVolume() > 0.0)
+        || !Double.isFinite(pressureSlope) || pressureSlope > 0.0 || !Double.isFinite(pressureTolerance)
+        || !Double.isFinite(pressureResidual) || pressureResidual > pressureTolerance) {
       double analyticalVolume = molarVolumeAnalytical(pressure, temperature, pt);
-      if (Double.isNaN(analyticalVolume) || analyticalVolume <= 0.0 || !Double.isFinite(analyticalVolume)) {
-        throw new neqsim.util.exception.IsNaNException(this, "molarVolume", "Molar volume");
+      // Subclasses may add non-cubic pressure terms. An analytical candidate is accepted only if it also solves
+      // the actual virtual EOS; the fallback must never silently replace those additional terms by a cubic model.
+      double verifiedPressure = calcPressure();
+      double verifiedSlope = calcPressuredV();
+      pressureTolerance = Math.max(1.0e-8 * Math.max(1.0, Math.abs(pressure)),
+          1.0e-10 * Math.abs(getTotalVolume() * verifiedSlope));
+      if (!Double.isFinite(analyticalVolume) || !(analyticalVolume > 0.0) || !Double.isFinite(verifiedPressure)
+          || !Double.isFinite(verifiedSlope) || verifiedSlope > 0.0 || !Double.isFinite(pressureTolerance)
+          || Math.abs(verifiedPressure - pressure) > pressureTolerance) {
+        throw new neqsim.util.exception.IsNaNException(getClass().getSimpleName(), "molarVolume",
+            "Analytical fallback does not satisfy the phase pressure equation");
       }
-      setMolarVolume(analyticalVolume);
     }
     return getMolarVolume();
   }

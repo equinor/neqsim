@@ -379,7 +379,7 @@ public class CO2CorrosionAnalyzer implements Serializable {
     freeWaterPresent = thermoSystem.hasPhaseType(PhaseType.AQUEOUS);
 
     if (freeWaterPresent) {
-      aqueousPH = thermoSystem.getPhase(PhaseType.AQUEOUS).getpH();
+      aqueousPH = thermoSystem.getPhase(PhaseType.AQUEOUS).getpH("molality");
 
       // CO2 dissolved in aqueous phase
       if (thermoSystem.getPhase(PhaseType.AQUEOUS).hasComponent("CO2")) {

@@ -62,8 +62,7 @@ class EOSCGMixtureReducingTest {
     fluid.addComponent("CO2", 0.95);
     fluid.addComponent("SO2", 0.05);
     fluid.init(0);
-    NeqSimEOSCG eos = new NeqSimEOSCG(fluid.getPhase(0));
-    eos.eosCG = new EOSCG() {
+    EOSCG nonconvergedModel = new EOSCG() {
       @Override
       public void pressure(double temperature, double density, double[] composition, doubleW p, doubleW z) {
         p.val = Double.NaN;
@@ -76,6 +75,12 @@ class EOSCGMixtureReducingTest {
         density.val = pressure / (8.314462618 * temperature);
         error.val = 1;
         message.val = "Calculation failed to converge; ideal gas density returned.";
+      }
+    };
+    NeqSimEOSCG eos = new NeqSimEOSCG(fluid.getPhase(0)) {
+      @Override
+      EOSCG model() {
+        return nonconvergedModel;
       }
     };
     IllegalStateException failure = assertThrows(IllegalStateException.class, () -> eos.getMolarDensity(phaseType));

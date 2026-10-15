@@ -204,6 +204,16 @@ public class PhaseDesmukhMather extends PhaseGE {
     return ((ComponentGEInterface) getComponent(k)).getGamma();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  protected double getMolalityActivityCoefficient(int component, int solvent) {
+    // The native correlation uses mol/kg of all solvents and stores
+    // gamma_x = gamma_m,all / sum(x_solvents). Preserve its chemical activity
+    // when reporting per kg water: gamma_m,water = gamma_m,all * mass_water/mass_solvents.
+    return getActivityCoefficient(component) * getComponent(solvent).getx() * getComponent(solvent).getMolarMass()
+        / getSolventMolarMass();
+  }
+
   /**
    * getIonicStrength.
    *
