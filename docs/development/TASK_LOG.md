@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
+**Type:** A (Property)
+**Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
+**Solution:** Stack PR #4330 on the shared classic mixing-rule accumulator foundation while preserving its characterization implementation, regression tests and mathematical documentation byte-for-byte. Regenerate engineering coverage for the combined source tree.
+**Notes:** The unchanged field-to-facility acceptance class passed three fresh-JVM runs on both the original head and the foundation overlay (six tests per variant, none failed or skipped). A read-only fixture probe confirmed the parallel HP/LP branches share phase-specific mixing handlers. Java 8 dependencies and release-8 bytecode were tested on Linux Java 17. This validates the shared dependency; it does not establish the cause of the earlier Windows Java 8 accepted-point replay failure, which remains a hosted CI gate. No solver tolerance or execution setting changed.
+
 ### 2026-10-14 — Isolate shared classic mixing-rule accumulators
 **Type:** A (Property)
 **Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306
