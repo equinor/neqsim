@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,7 +44,7 @@ class CO2KClHydrateAccuracyAssessmentTest {
         + "pure_water_baseline_K,model_suppression_K,water_activity_proxy,aqueous_x_co2,"
         + "guest_co2_fugacity_bara,aqueous_water_fugacity_bara,hydrate_water_fugacity_bara,"
         + "hydrate_residual,fluid_fugacity_residual,component_balance_residual,charge_residual,"
-        + "fluid_phases,saturated_co2_boundary");
+        + "fluid_phases,normalized_ionic_stability_assessed,saturated_co2_boundary");
 
     int diagnosticEndpointCount = 0;
     for (ReferencePoint point : points) {
@@ -115,7 +116,15 @@ class CO2KClHydrateAccuracyAssessmentTest {
     HydrateEquilibriumDiagnostics diagnostics = ((HydrateFormationTemperatureFlash) operations.getOperation())
         .getDiagnostics();
     assertTrue(diagnostics.isConverged());
-    assertTrue(diagnostics.isSaturatedCO2Boundary());
+    // The unchanged endpoint audit above verifies the physical split for every scenario.
+    // Neutral fluids do not expose a normalized ionic-reference stability assessment.
+    if (fluid.hasIons()) {
+      assertTrue(Double.isFinite(diagnostics.getMinimumFluidTrialDistance()));
+      assertTrue(diagnostics.isSaturatedCO2Boundary());
+    } else {
+      assertTrue(Double.isNaN(diagnostics.getMinimumFluidTrialDistance()));
+      assertFalse(diagnostics.isSaturatedCO2Boundary());
+    }
 
     PhaseInterface aqueous = fluid.getPhase("aqueous");
     assertNotNull(aqueous);
@@ -220,7 +229,7 @@ class CO2KClHydrateAccuracyAssessmentTest {
           + "," + hydrateWaterFugacity + "," + diagnostics.getHydrateResidual() + ","
           + diagnostics.getFluidFugacityResidual() + "," + diagnostics.getComponentBalanceResidual() + ","
           + diagnostics.getChargeResidual() + "," + String.join("+", diagnostics.getPhaseTypes()) + ","
-          + diagnostics.isSaturatedCO2Boundary();
+          + Double.isFinite(diagnostics.getMinimumFluidTrialDistance()) + "," + diagnostics.isSaturatedCO2Boundary();
     }
   }
 }

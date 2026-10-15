@@ -104,7 +104,9 @@ final class FluidEquilibriumChecks {
       if (Math.abs(recovered - originalMoles[component] / total) > BALANCE_TOLERANCE
           || Math.abs(system.getPhase(0).getComponent(component).getNumberOfmoles() / total
               - originalMoles[component] / total) > BALANCE_TOLERANCE) {
-        throw new IllegalStateException("Fluid equilibrium failed original species conservation");
+        throw new IllegalStateException(
+            "Fluid equilibrium failed original species conservation for " + system.getComponent(component).getName()
+                + ": feed=" + originalMoles[component] / total + ", recovered=" + recovered);
       }
       if (originalMoles[component] / total <= 1.0e-50
           || FlashPhaseConstraints.isIon(system.getPhase(0).getComponent(component))) {
@@ -118,7 +120,9 @@ final class FluidEquilibriumChecks {
         double fugacity = system.getPhase(phase).getFugacity(component);
         if (!(fugacity > 0.0) || !Double.isFinite(fugacity)
             || Math.abs(Math.log(fugacity) - Math.log(reference)) > FUGACITY_TOLERANCE) {
-          throw new IllegalStateException("Fluid equilibrium failed molecular fugacity equality");
+          throw new IllegalStateException(
+              "Fluid equilibrium failed molecular fugacity equality for " + system.getComponent(component).getName()
+                  + " in phase " + phase + ": log residual=" + (Math.log(fugacity) - Math.log(reference)));
         }
       }
     }

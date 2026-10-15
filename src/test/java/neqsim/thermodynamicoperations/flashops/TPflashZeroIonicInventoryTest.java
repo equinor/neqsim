@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -77,6 +78,54 @@ class TPflashZeroIonicInventoryTest extends neqsim.NeqSimTest {
       assertEquals(0.0, gas.getComponent("Cl-").getNumberOfmoles(), 0.0);
       assertEquals(registeredComponents, gas.getNumberOfComponents());
     }
+  }
+
+  /** A rejected last-aqueous-phase transition must preserve the complete caller material state. */
+  @Test
+  void unsupportedReactiveAqueousDisappearanceIsTransactional() {
+    SystemInterface feed = fluid(298.15, 1.0, 0.1, 0.001);
+    feed.chemicalReactionInit();
+    feed.setMixingRule(10);
+    new ThermodynamicOperations(feed).TPflash();
+    SystemInterface gas = feed.phaseToSystem("gas");
+    new ThermodynamicOperations(gas).TPflash();
+    gas.setTemperature(320.0);
+    new ThermodynamicOperations(gas).TPflash();
+    gas.setTemperature(280.0);
+    new ThermodynamicOperations(gas).TPflash();
+    assertTrue(gas.hasPhaseType(PhaseType.AQUEOUS));
+    assertTrue(FlashPhaseConstraints.hasIonicInventory(gas));
+    assertTrue(gas.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual() < 2.0e-6);
+
+    gas.setTemperature(320.0);
+    SystemInterface before = gas.clone();
+    IllegalStateException failure = assertThrows(IllegalStateException.class,
+        () -> new ThermodynamicOperations(gas).TPflash());
+    assertTrue(failure.getMessage().contains("requires exactly one aqueous material phase"));
+    assertEquals(before.getTotalNumberOfMoles(), gas.getTotalNumberOfMoles(), 0.0);
+    assertEquals(before.getNumberOfPhases(), gas.getNumberOfPhases());
+    assertEquals(before.getNumberOfComponents(), gas.getNumberOfComponents());
+    assertTrue(gas.isChemicalSystem());
+    for (int phase = 0; phase < before.getNumberOfPhases(); phase++) {
+      assertEquals(before.getPhaseType(phase), gas.getPhaseType(phase));
+      assertEquals(before.getPhase(phase).getType(), gas.getPhase(phase).getType());
+      assertEquals(before.getBeta(phase), gas.getBeta(phase), 0.0);
+      assertEquals(before.getPhase(phase).getNumberOfMolesInPhase(), gas.getPhase(phase).getNumberOfMolesInPhase(),
+          0.0);
+      for (int component = 0; component < before.getNumberOfComponents(); component++) {
+        assertEquals(before.getPhase(phase).getComponent(component).getNumberOfmoles(),
+            gas.getPhase(phase).getComponent(component).getNumberOfmoles(), 0.0);
+        assertEquals(before.getPhase(phase).getComponent(component).getNumberOfMolesInPhase(),
+            gas.getPhase(phase).getComponent(component).getNumberOfMolesInPhase(), 0.0);
+        assertEquals(before.getPhase(phase).getComponent(component).getx(),
+            gas.getPhase(phase).getComponent(component).getx(), 0.0);
+      }
+    }
+    // Every species and phase amount is unchanged, so element inventory and charge are also unchanged.
+    gas.setTemperature(280.0);
+    new ThermodynamicOperations(gas).TPflash();
+    assertTrue(gas.hasPhaseType(PhaseType.AQUEOUS));
+    assertTrue(gas.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual() < 2.0e-6);
   }
 
   /** Zero-amount ionic registrations must leave a neutral gas equilibrium unchanged. */

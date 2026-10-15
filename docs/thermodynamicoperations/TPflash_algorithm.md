@@ -318,7 +318,8 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 |-----------|-------|-------------|
 | `phaseFractionMinimumLimit` | ~1e-12 | Minimum allowed phase fraction |
 | Unchanged one-phase closure | `abs(beta - 1) < 1e-12`; `abs(delta Z) <= 1e-11`; `max abs(delta x_i) <= 1e-11` | When multiphase checking finds no new stable phase and returns the same phase type, compressibility factor, and composition as the accepted one-phase reference, normalize a stale beta and reinitialize. Different roots, chemical-equilibrium states, and internal multiphase trial states retain their existing finalization paths. |
-| Ionic fluid closure | full species inventory with a unique aqueous host | Shared RR/SSI/Newton and stability constraints; `1e-10` species/phase amount closure, `1e-12` beta normalization, aqueous ion confinement and `1e-8` molecular log-fugacity equality. Failure is explicit. |
+| Ionic fluid closure | full species inventory with a unique aqueous host | Shared RR/SSI/Newton and stability constraints; `1e-10` species/phase amount closure, `1e-12` beta normalization, aqueous ion confinement and `1e-8` molecular log-fugacity equality. The constrained Newton iteration targets `1e-10` internally so subsequent association/property initialization does not invalidate an endpoint accepted at the outer tolerance boundary. Failure identifies the offending species and residual. Failure is explicit. |
+| Ionic host assignment | More than one material liquid has the model's aqueous classification | Move the complete ionic inventory to each alternate liquid on an isolated clone, conserving every species and charge; solve the same fixed-topology beta/Newton equations. Adopt only a result passing the unchanged physical checks, retaining its requested roots and material phases, and lowering Gibbs energy by more than `max(1e-8 J, 1e-10 abs(G))`. A gas/brine endpoint with one eligible liquid creates no trial. This compares single-host active sets; it does not model ion partitioning between multiple ionic aqueous phases. |
 | Trace duplicate phase cleanup | `min(beta_i, beta_j) < 10 beta_min`, same `PhaseType`, and `max abs(x_i - x_j) < 1e-6` | Merge and remove an already-disappeared numerical duplicate for any EOS while conserving phase fraction. Material-fraction duplicate cleanup remains limited to CPA models to protect near-critical cubic-EOS splits. |
 | Initial SSI iterations | 3 | Preliminary iterations before stability check |
 | `accelerateInterval` | 5 | Apply DEM every 5th iteration in the ordinary TPflash loop |
@@ -503,7 +504,15 @@ $$\mathbf{u}^{(n+1)} = \mathbf{u}^{(n)} - \mathbf{J}^{-1} \mathbf{f}(\mathbf{u}^
 
 Where $\mathbf{u} = (\beta y_1, \beta y_2, \ldots, \beta y_{N_c})^T$ and the Jacobian $\mathbf{J}$ includes composition derivatives of fugacity coefficients:
 
-$$J_{ij} = \frac{\partial f_i}{\partial u_j} = \frac{1}{\beta}\left(\frac{\delta_{ij}}{x_i} - 1 + \frac{\partial \ln \phi_i^V}{\partial x_j}\right) + \frac{1}{1-\beta}\left(\frac{\delta_{ij}}{y_i} - 1 + \frac{\partial \ln \phi_i^L}{\partial y_j}\right)$$
+$$J_{ij} = \frac{\partial f_i}{\partial u_j} = \frac{1}{\beta}\left(\frac{\delta_{ij}}{y_i} - 1 + \frac{\partial \ln \phi_i^V}{\partial y_j}\right) + \frac{1}{1-\beta}\left(\frac{\delta_{ij}}{x_i} - 1 + \frac{\partial \ln \phi_i^L}{\partial x_j}\right)$$
+
+The two-phase implementation stores the initially smaller allowed-phase amount for
+each partitioning species. This preserves a positive trace that would disappear in
+the subtraction of nearly equal feed and phase amounts. The orientation stays fixed
+during the local solve. With diagonal signs $D_{ii}=+1$ for first-phase amounts and
+$D_{ii}=-1$ for second-phase amounts, the transformed gradient and Hessian are
+$D\mathbf{f}$ and $D\mathbf{J}D$. The conserved objective and phase constraints are
+unchanged. Fixed ions retain their complete inventory in their admissible phase.
 
 **NeqSim Implementation:**
 
@@ -512,10 +521,28 @@ See [SysNewtonRhapsonTPflash.java](https://github.com/equinor/neqsim/blob/master
 The line search evaluates the reduced Gibbs energy with the **trial phase component
 amounts**, together with fugacities evaluated at that same trial. A candidate must be
 finite, feasible and satisfy Armijo descent before the retained Newton inventory is
-updated. The eight-trial limit is a work bound, not permission to accept an untested
+updated. When the predicted decrease is below 32 ulp of the current objective, an
+otherwise valid trial may instead qualify if its apparent objective increase is also
+within that roundoff bound and its maximum log-fugacity residual falls by more than
+half. This only resolves the objective's numerical precision limit; the final
+equilibrium tolerances remain unchanged. The eight-trial limit is a work bound, not permission to accept an untested
 smaller step. If no candidate qualifies, the solver restores the preceding split and
 reports rejection to the existing successive-substitution fallback. Non-finite,
 singular and non-descent Newton directions are rejected before changing the split.
+
+The convergence measure is the maximum of the relative accepted step and the
+remaining component log-fugacity mismatch. A tiny line-search step alone does not
+establish equilibrium. Within ten times the existing minimum phase fraction of
+either two-phase boundary, TPflash uses successive substitution with Rachford-Rice
+instead of the interior Newton step, so a disappearing phase can reach its bound
+and be removed. This numerical active-set safeguard uses no component-family
+screen and adds no EOS evaluations to the Newton convergence check.
+
+For electrolyte CPA, every positive initialization level refreshes association
+contact values, site fractions and component properties at the final returned
+volume. Property initialization (`init(1)`) and derivative initialization
+(`init(3)`) must therefore give the same fugacities at an unchanged state; stale
+association caches must not invalidate a converged endpoint.
 
 An already equilibrated state with log-fugacity mismatch at floating-point roundoff
 (32 ulp of one) returns a zero correction because its Gibbs decrease cannot be
@@ -1452,6 +1479,22 @@ changes are transferred back to the full fluid. Element totals include spectator
 
 A result needs molecular log-fugacity equality within `1e-8`, reaction log residual within `2e-6`,
 charge closure and the original elemental inventory. At most 30 coupling iterations are allowed.
+Slowly converging reaction/phase coupling uses a safeguarded scalar secant estimate for the complete
+reaction-induced inventory increment. The extrapolation preserves the increment's elemental and
+charge balances, is bounded by species positivity, and is accepted only through the same physical
+checks. A worsening reaction residual or a failed accelerated phase solve restores the conservative
+unaccelerated chemical update and resets the secant history. The convergence tolerances and the
+30-iteration bound are unchanged. A change in the material or requested phase roles clears the
+acceleration history.
+
+This uses vector Aitken acceleration (Irons and Tuck, *International Journal for Numerical Methods
+in Engineering* **1**, 275–277, 1969,
+[doi:10.1002/nme.1620010306](https://doi.org/10.1002/nme.1620010306)). For the conservative fixed-point
+increment $r_k=F(n_k)-n_k$ and actual previous step $s_{k-1}=n_k-n_{k-1}$, the scalar inverse-secant
+estimate is $\alpha_k=-s_{k-1}^{T}(r_k-r_{k-1})/\lVert r_k-r_{k-1}\rVert^2$. This implementation
+bounds the factor to $[1,10]$ and limits an extrapolated decrement to 99% of each positive species
+inventory; the original chemical update remains the fallback. This accelerates an existing local
+coupling and makes no new claim of global reactive phase stability.
 Failures and cancellation leave the caller uncommitted. This supports general molecular mixtures;
 the old `ReactiveCO2BrinePhaseEquilibrium` class is a deprecated compatibility adapter.
 A fixed-species phase flash conserves each species; reactions instead conserve elements and may

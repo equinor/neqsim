@@ -285,7 +285,8 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
           logger.warn("Modified RAND solver did not converge at outer iteration " + outerIter);
           // Accept near-converged multi-phase solutions to prevent outer loop
           // from restarting and overshooting a good solution
-          if (system.getNumberOfPhases() > 1 && randSolver.getFinalResidual() < 5.0e-3
+          if (system.getNumberOfPhases() > 1
+              && randSolver.getFinalResidual() < (formulaMatrix.hasIonicSpecies() ? 1.0e-6 : 5.0e-3)
               && (!formulaMatrix.hasIonicSpecies() || randSolver.getFinalElementResidual() < 1.0e-8)) {
             converged = true;
             logger.info("Accepted near-converged (residual=" + randSolver.getFinalResidual() + ")");

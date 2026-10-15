@@ -17,17 +17,19 @@ import neqsim.thermo.phase.PhaseType;
  * </p>
  *
  * <p>
- * In the two-phase path, variables: u[i] = beta[0] * x[0][i] (Michelsen 1982b). Residuals equate chemical potentials
- * only for species allowed in both phases. Species restricted to one phase retain their complete feed inventory there,
- * but remain in phase properties and the Gibbs objective. Jacobian: Hessian of the reduced Gibbs energy Q(u). Uses a
- * bounded Armijo backtracking line search on Q (Michelsen &amp; Mollerup 2007, Ch. 12). Rejected steps leave the last
- * accepted split available for the caller's fallback; this local solver does not certify global phase stability.
+ * In the two-phase path, each variable stores the initially smaller allowed-phase amount (Michelsen 1982b). Residuals
+ * equate chemical potentials only for species allowed in both phases. Species restricted to one phase retain their
+ * complete feed inventory there, but remain in phase properties and the Gibbs objective. Jacobian: Hessian of the
+ * reduced Gibbs energy Q(u). Uses a bounded Armijo backtracking line search on Q (Michelsen &amp; Mollerup 2007, Ch.
+ * 12). Rejected steps leave the last accepted split available for the caller's fallback; this local solver does not
+ * certify global phase stability.
  * </p>
  *
  * <p>
  * Both allowed-phase amounts must be positive in floating-point arithmetic. No absolute composition floor excludes a
- * representable trace species. The first-phase amount coordinate cannot resolve a second-phase amount smaller than the
- * spacing of its feed fraction; such a trial is rejected for the caller's constrained partitioning fallback.
+ * representable trace species. Storing the smaller amount avoids subtractive loss of a trace from its much larger feed.
+ * Coordinate signs multiply the corresponding residual and both Hessian indices; this is an exact linear change of
+ * variables in the same reduced Gibbs objective. The orientation stays fixed during each local Newton solve.
  * </p>
  *
  * <p>
@@ -72,6 +74,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** Whether each component can partition between the active phases. */
   private boolean[] freeComponent;
 
+  /** Whether a two-phase free component uses its second-phase amount as the independent coordinate. */
+  private boolean[] secondPhaseCoordinate;
+
   /** Phase admissibility captured before compositions are perturbed. */
   private FlashPhaseConstraints phaseConstraints;
 
@@ -88,7 +93,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /** Work copy of Jacobian for LU decomposition. */
   private DMatrixRMaj jacWork;
 
-  /** Independent first-phase amounts for two phases; full phase-major amounts for more phases. */
+  /** Independent smaller-phase amounts for two phases; full phase-major amounts for more phases. */
   private double[] uVector;
 
   /** Trial u-vector used by the Armijo line search. */
@@ -110,6 +115,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     z = new double[numberOfComponents];
     variableComponents = new int[numberOfComponents];
     freeComponent = new boolean[numberOfComponents];
+    secondPhaseCoordinate = new boolean[numberOfComponents];
     uVector = new double[numberOfComponents];
     uTrialVector = new double[numberOfComponents];
     refreshActiveVariables();
@@ -162,6 +168,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       variableComponents = new int[numberOfComponents];
       freeComponent = new boolean[numberOfComponents];
     }
+    if (secondPhaseCoordinate == null || secondPhaseCoordinate.length != numberOfComponents) {
+      secondPhaseCoordinate = new boolean[numberOfComponents];
+    }
     int activeCount = 0;
     for (int component = 0; component < numberOfComponents; component++) {
       z[component] = system.getPhase(0).getComponent(component).getz();
@@ -171,6 +180,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
         throw new IllegalStateException("Occupied component has no admissible phase in the Newton active set");
       }
       freeComponent[component] = z[component] > 0.0 && firstAllowed && secondAllowed;
+      secondPhaseCoordinate[component] = freeComponent[component]
+          && system.getBeta(1) * system.getPhase(1).getComponent(component).getx() < system.getBeta(0)
+              * system.getPhase(0).getComponent(component).getx();
       if (freeComponent[component]) {
         variableComponents[activeCount++] = component;
       }
@@ -198,10 +210,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     }
     for (int row = 0; row < neq; row++) {
       int i = variableComponents[row];
-      fvecVector.set(row, 0, Math
+      double residual = Math
           .log(system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getComponent(i).getx())
           - Math.log(
-              system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getComponent(i).getx()));
+              system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getComponent(i).getx());
+      fvecVector.set(row, 0, secondPhaseCoordinate[i] ? -residual : residual);
     }
   }
 
@@ -236,7 +249,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
         dij = i == j ? 1.0 : 0.0;
         tempJ = invBeta * (dij * invYi - 1.0 + system.getPhase(0).getComponent(i).getdfugdx(j))
             + invOneMinusBeta * (dij * invXi - 1.0 + system.getPhase(1).getComponent(i).getdfugdx(j));
-        jacMatrix.set(row, column, tempJ);
+        jacMatrix.set(row, column, secondPhaseCoordinate[i] == secondPhaseCoordinate[j] ? tempJ : -tempJ);
       }
     }
   }
@@ -245,6 +258,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * Setter for the field <code>u</code>.
    */
   public void setu() {
+    if (activePhases == 2 && secondPhaseCoordinate == null) {
+      refreshActiveVariables();
+    }
     if (activePhases > 2) {
       for (int phase = 0; phase < activePhases; phase++) {
         for (int component = 0; component < numberOfComponents; component++) {
@@ -260,7 +276,8 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       return;
     }
     for (int i = 0; i < numberOfComponents; i++) {
-      uVector[i] = freeComponent[i] ? system.getBeta(0) * system.getPhase(0).getComponent(i).getx()
+      int phase = secondPhaseCoordinate[i] ? 1 : 0;
+      uVector[i] = freeComponent[i] ? system.getBeta(phase) * system.getPhase(phase).getComponent(i).getx()
           : phaseConstraints.isAllowed(0, i) ? z[i] : 0.0;
     }
   }
@@ -269,14 +286,20 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * init.
    */
   public void init() {
+    if (activePhases == 2 && secondPhaseCoordinate == null) {
+      // Older serialized solvers stored first-phase coordinates without an orientation map.
+      refreshActiveVariables();
+      setu();
+    }
     setCompositions(uVector);
     // Full system init: computes fugacities, T/P/composition derivatives
     system.init(3);
   }
 
   /**
-   * Compute Michelsen's reduced Gibbs energy Q(u). Q = sum[u_i * ln(y_i * phi_gas_i) + (z_i - u_i) * ln(x_i *
-   * phi_liq_i)]. Gradient of Q equals fvec; Hessian of Q equals Jac.
+   * Computes Michelsen's reduced Gibbs energy from complete phase amounts. Each two-phase coordinate represents the
+   * initially smaller amount; its complement contains the remainder. The signed gradient and Hessian follow this
+   * coordinate orientation.
    *
    * @param amounts complete component amount coordinates at the evaluated state
    * @return Q value
@@ -297,11 +320,12 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     double q = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       // A forbidden or absent species contributes lim(n * log(n)) = 0. Never evaluate log(0) for it.
-      if (amounts[i] > 0.0) {
-        q += amounts[i] * (Math.log(system.getPhase(0).getComponent(i).getx())
+      double firstAmount = secondPhaseCoordinate[i] ? z[i] - amounts[i] : amounts[i];
+      if (firstAmount > 0.0) {
+        q += firstAmount * (Math.log(system.getPhase(0).getComponent(i).getx())
             + Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()));
       }
-      double secondAmount = z[i] - amounts[i];
+      double secondAmount = secondPhaseCoordinate[i] ? amounts[i] : z[i] - amounts[i];
       if (secondAmount > 0.0) {
         q += secondAmount * (Math.log(system.getPhase(1).getComponent(i).getx())
             + Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient()));
@@ -349,7 +373,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       } else if (uTrial[i] != (phaseConstraints.isAllowed(0, i) ? z[i] : 0.0)) {
         return false;
       }
-      betaTrial += uTrial[i];
+      betaTrial += secondPhaseCoordinate[i] ? z[i] - uTrial[i] : uTrial[i];
     }
     return betaTrial > 1e-12 && betaTrial < 1.0 - 1e-12;
   }
@@ -393,7 +417,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     }
     double beta = 0.0;
     for (int component = 0; component < numberOfComponents; component++) {
-      beta += amounts[component];
+      beta += secondPhaseCoordinate[component] ? z[component] - amounts[component] : amounts[component];
     }
     if (!(beta > 0.0 && beta < 1.0)) {
       throw new IllegalStateException("Newton active set does not contain two finite phase amounts");
@@ -401,8 +425,10 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     system.setBeta(0, beta);
     system.setBeta(1, 1.0 - beta);
     for (int component = 0; component < numberOfComponents; component++) {
-      double firstComposition = amounts[component] / beta;
-      double secondComposition = (z[component] - amounts[component]) / (1.0 - beta);
+      double firstAmount = secondPhaseCoordinate[component] ? z[component] - amounts[component] : amounts[component];
+      double secondAmount = secondPhaseCoordinate[component] ? amounts[component] : z[component] - amounts[component];
+      double firstComposition = firstAmount / beta;
+      double secondComposition = secondAmount / (1.0 - beta);
       system.getPhase(0).getComponent(component).setx(firstComposition);
       system.getPhase(1).getComponent(component).setx(secondComposition);
       // Fixed-species K is only a finite compatibility value for callers retaining log-K history.
@@ -440,7 +466,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * Lazily initializes the EJML solver after deserialization.
    */
   private void ensureSolverInitialized() {
-    if (phaseConstraints == null || activePhases == 0) {
+    if (phaseConstraints == null || activePhases == 0 || (activePhases == 2 && secondPhaseCoordinate == null)) {
       // Streams serialized before phase constraints were introduced do not contain an active-variable map.
       refreshActiveVariables();
       setu();
@@ -491,7 +517,7 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   /**
    * Takes one finite, feasible, descent-qualified Newton step.
    *
-   * @return relative norm of the accepted correction
+   * @return maximum of the relative accepted correction and remaining log-fugacity residual
    * @throws IllegalStateException if the direction or every bounded trial is rejected
    */
   public double solve() {
@@ -565,6 +591,21 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
             accepted = true;
             break;
           }
+          // Below objective resolution, require a substantial decrease of the actual equilibrium residual.
+          // This admits a local correction only when both its predicted decrease and apparent energy increase
+          // are bounded by roundoff; the finite descent and feasibility checks above still apply.
+          double objectiveRoundoff = 32.0 * Math.ulp(Math.abs(qCurrent));
+          if (Double.isFinite(qTrial) && alpha * slope <= objectiveRoundoff && qTrial <= qCurrent + objectiveRoundoff) {
+            setfvec();
+            double trialResidual = 0.0;
+            for (int row = 0; row < neq; row++) {
+              trialResidual = Math.max(trialResidual, Math.abs(fvecVector.get(row, 0)));
+            }
+            if (Double.isFinite(trialResidual) && trialResidual < 0.5 * maximumResidual) {
+              accepted = true;
+              break;
+            }
+          }
         } catch (Exception ex) {
           // Cubic solver failed at trial point — try shorter step
         }
@@ -589,8 +630,20 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       int index = activePhases > 2 ? variablePhases[row] * numberOfComponents + component : component;
       uNormSq += uTrialVector[index] * uTrialVector[index];
     }
+    // A bound-limited correction can be tiny while the phase equilibrium equations remain unsolved.
+    // Report the actual residual as well, so the caller continues to a feasible equilibrium or SSI boundary step.
+    setfvec();
+    double remainingResidual = 0.0;
+    for (int row = 0; row < neq; row++) {
+      double residual = fvecVector.get(row, 0);
+      if (!Double.isFinite(residual)) {
+        init();
+        throw new IllegalStateException("Non-finite accepted Newton flash residual");
+      }
+      remainingResidual = Math.max(remainingResidual, Math.abs(residual));
+    }
     System.arraycopy(uTrialVector, 0, uVector, 0, uVector.length);
-    return Math.sqrt(stepNormSq) / Math.max(Math.sqrt(uNormSq), 1e-10);
+    return Math.max(remainingResidual, Math.sqrt(stepNormSq) / Math.max(Math.sqrt(uNormSq), 1e-10));
   }
 
   /** Refreshes the variable map for more than two fixed fluid phases. */

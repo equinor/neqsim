@@ -42,6 +42,29 @@ class ElectrolyteCPAFinalVolumeDerivativeTest {
     assertCompositionIdentities(fluid);
   }
 
+  /** Fugacity values use final-volume association caches at every property initialization level. */
+  @Test
+  void propertyAndDerivativeInitializationGiveTheSameFugacities() {
+    SystemInterface fluid = flashedFluid();
+    fluid.init(3);
+    double[][] logarithms = new double[fluid.getNumberOfPhases()][fluid.getNumberOfComponents()];
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        logarithms[phase][component] = fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient();
+      }
+    }
+    for (int level : new int[] {1, 3, 1}) {
+      fluid.init(level);
+      for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+        for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+          assertEquals(logarithms[phase][component],
+              fluid.getPhase(phase).getComponent(component).getLogFugacityCoefficient(), 1e-12,
+              "Final-volume fugacity at initialization level " + level);
+        }
+      }
+    }
+  }
+
   /**
    * Creates the existing two-phase methane/water/NaCl regression fixture.
    *

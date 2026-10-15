@@ -34,6 +34,8 @@ public class SystemFurstElectrolyteEosTest extends neqsim.NeqSimTest {
     testOps = new ThermodynamicOperations(thermoSystem);
     testOps.TPflash();
     thermoSystem.initProperties();
+    // initProperties() initializes only through level 2; composition identities require level 3.
+    thermoSystem.init(3);
   }
 
   /**

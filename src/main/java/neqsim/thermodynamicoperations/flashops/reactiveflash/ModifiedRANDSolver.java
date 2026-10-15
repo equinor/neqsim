@@ -211,6 +211,7 @@ public class ModifiedRANDSolver implements java.io.Serializable {
     b = specifiedElementBalance == null ? formulaMatrix.computeElementVector(feedMoles)
         : specifiedElementBalance.clone();
     double elementTolerance = hasIonicSpecies ? 1.0e-8 : 1.0e-4;
+    double chemicalTolerance = hasIonicSpecies ? 1.0e-6 : 1.0e-4;
 
     // When NR=0 (no independent reactions), the element balance constraints fully
     // determine the composition. The RAND Newton matrix C = A*diag(n)*A^T is singular
@@ -430,13 +431,19 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       updateSystem();
       updateLnPhi();
 
-      // Check convergence
+      // Evaluate convergence on the accepted state, including its updated fugacities.
+      // The Newton error above belongs to the previous iterate.
       double maxE = 0.0;
       int maxEcomp = -1;
       int maxEphase = -1;
       for (int j = 0; j < np; j++) {
         for (int i = 0; i < nc; i++) {
           if (n[j][i] > 1.0e-10 * totalMoles) {
+            double sumLA = 0.0;
+            for (int k = 0; k < ne; k++) {
+              sumLA += lambda[k] * A[k][i];
+            }
+            e[j][i] = g0[i] + Math.log(Math.max(x[j][i], EPS)) + lnPhi[j][i] - sumLA;
             if (Math.abs(e[j][i]) > maxE) {
               maxE = Math.abs(e[j][i]);
               maxEcomp = i;
@@ -463,9 +470,9 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       }
 
       // Relaxed convergence for multi-phase reactive systems.
-      // Keep the established non-ionic tolerance, but require strict conservation
-      // when a charge row is part of the element constraints.
-      if (np > 1 && maxE < 1.0e-4 && elemResid < elementTolerance) {
+      // Keep the established non-ionic tolerance, but require tighter chemical
+      // equilibrium and conservation when a charge row is part of the constraints.
+      if (np > 1 && maxE < chemicalTolerance && elemResid < elementTolerance) {
         converged = true;
         break;
       }
@@ -514,7 +521,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
       }
 
       // If stagnating for many iterations at a small residual, accept
-      if (stagnationCount > 50 && maxE < 1.0e-3 && elemResid < elementTolerance) {
+      if (stagnationCount > 50 && maxE < (hasIonicSpecies ? chemicalTolerance : 1.0e-3)
+          && elemResid < elementTolerance) {
         converged = true;
         break;
       }
@@ -573,7 +581,8 @@ public class ModifiedRANDSolver implements java.io.Serializable {
             double diisElemResid = computeElementResidual();
             double diisFullResid = Math.max(diisMaxE, diisElemResid);
             if (diisFullResid < finalResidual * 1.1) {
-              finalResidual = Math.min(finalResidual, diisFullResid);
+              finalResidual = diisFullResid;
+              finalElementResidual = diisElemResid;
               diisStepsAccepted++;
             } else {
               // Reject DIIS, restore state

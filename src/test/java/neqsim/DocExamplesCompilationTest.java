@@ -865,7 +865,7 @@ public class DocExamplesCompilationTest {
     brine.addComponent("CO2", 0.01);
     brine.addComponent("water", 0.90);
     brine.addComponent("Na+", 0.03);
-    brine.addComponent("Cl-", 0.035);
+    brine.addComponent("Cl-", 0.033); // Charge-balanced Na/Ca/Ba/sulfate/bicarbonate feed.
     brine.addComponent("Ca++", 0.005);
     brine.addComponent("Ba++", 0.001);
     brine.addComponent("SO4--", 0.002);

@@ -595,7 +595,7 @@ public class TPmultiflash extends TPflash {
       SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(system, phases, system.getNumberOfComponents());
       for (int iteration = 0; iteration < 20; iteration++) {
         try {
-          FluidEquilibriumChecks.validate(system, inputMoles);
+          validateConstrainedNewtonEndpoint(inputMoles);
           return true;
         } catch (IllegalStateException notConverged) {
           try {
@@ -606,7 +606,7 @@ public class TPmultiflash extends TPflash {
             }
             FlashPhaseState localReference = FlashPhaseState.captureWithGibbsEnergy(system);
             solver.polishConvergedEquilibrium();
-            FluidEquilibriumChecks.validate(system, inputMoles);
+            validateConstrainedNewtonEndpoint(inputMoles);
             double energy = system.getGibbsEnergy();
             double roundoff = 128.0 * Math.ulp(Math.abs(localReference.getGibbsEnergy()));
             if (!Double.isFinite(energy) || energy > localReference.getGibbsEnergy() + roundoff
@@ -623,11 +623,30 @@ public class TPmultiflash extends TPflash {
           }
         }
       }
-      FluidEquilibriumChecks.validate(system, inputMoles);
+      validateConstrainedNewtonEndpoint(inputMoles);
       return true;
     } catch (RuntimeException rejected) {
       reference.restore(system);
       return false;
+    }
+  }
+
+  /**
+   * Checks a Newton endpoint with a residual margin for subsequent property initialization.
+   *
+   * <p>
+   * Association and volume iterations can shift molecular fugacities slightly when the accepted state is initialized
+   * again. Solve the inner Newton equations more accurately than the common endpoint tolerance instead of accepting a
+   * point on its boundary that fails the same physical checks after initialization.
+   * </p>
+   *
+   * @param inputMoles original frozen species inventory
+   * @throws IllegalStateException if the endpoint is invalid or needs another Newton correction
+   */
+  private void validateConstrainedNewtonEndpoint(double[] inputMoles) {
+    FluidEquilibriumChecks.validate(system, inputMoles);
+    if (maximumMolecularLogFugacityResidual() > 1.0e-10) {
+      throw new IllegalStateException("Constrained Newton equilibrium needs a final molecular correction");
     }
   }
 
@@ -3826,9 +3845,121 @@ public class TPmultiflash extends TPflash {
       }
     }
     if (inputMoles != null && rerunDepth == 0) {
+      selectLowerGibbsIonicHost(inputMoles);
       system.normalizeBeta();
       system.init(1);
       FluidEquilibriumChecks.validate(system, inputMoles);
+    }
+  }
+
+  /**
+   * Compares admissible aqueous host assignments after a constrained fluid split has converged.
+   *
+   * <p>
+   * A polar solvent phase and a water-rich phase can both carry the model's aqueous classification. Keeping the first
+   * liquid root as the ionic host can then leave a constrained local minimum with the salt in the less favorable
+   * solvent. Each alternate assignment moves the complete ionic inventory conservatively between material liquids and
+   * reruns the same fixed-topology beta/Newton equations on a clone. Only a physically qualified lower-Gibbs result is
+   * adopted. Gas/brine endpoints have one candidate and allocate no trial. This does not solve coexistence of multiple
+   * ionic aqueous phases: exactly one host remains imposed throughout each candidate solve.
+   * </p>
+   *
+   * @param inputMoles conserved species inventory before phase iteration
+   */
+  private void selectLowerGibbsIonicHost(double[] inputMoles) {
+    if (system instanceof EosGeFlashModel || system.isChemicalSystem() || system.doSolidPhaseCheck()
+        || system.isMultiphaseWaxCheck() || system.getNumberOfPhases() < 2) {
+      return;
+    }
+    int currentHost = ionicAqueousPhase();
+    int candidates = 0;
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (phase != currentHost && system.getPhase(phase).getType() == PhaseType.AQUEOUS
+          && system.getPhaseType(phase) != PhaseType.GAS && system.getBeta(phase) > 1.1 * phaseFractionMinimumLimit) {
+        candidates++;
+      }
+    }
+    if (candidates == 0) {
+      return;
+    }
+    try {
+      FluidEquilibriumChecks.validate(system, inputMoles);
+    } catch (IllegalStateException invalidIncumbent) {
+      return;
+    }
+    double bestEnergy = system.getGibbsEnergy();
+    if (!Double.isFinite(bestEnergy)) {
+      return;
+    }
+    SystemInterface best = null;
+    for (int host = 0; host < system.getNumberOfPhases(); host++) {
+      if (host == currentHost || system.getPhase(host).getType() != PhaseType.AQUEOUS
+          || system.getPhaseType(host) == PhaseType.GAS || system.getBeta(host) <= 1.1 * phaseFractionMinimumLimit) {
+        continue;
+      }
+      SystemInterface candidate = system.clone();
+      try {
+        int phases = candidate.getNumberOfPhases();
+        int components = candidate.getNumberOfComponents();
+        double[][] amounts = new double[phases][components];
+        for (int phase = 0; phase < phases; phase++) {
+          for (int component = 0; component < components; component++) {
+            amounts[phase][component] = FlashPhaseConstraints.isIon(candidate.getComponent(component))
+                ? (phase == host ? candidate.getComponent(component).getz() : 0.0)
+                : candidate.getBeta(phase) * candidate.getPhase(phase).getComponent(component).getx();
+          }
+        }
+        candidate.setPhaseType(currentHost, PhaseType.LIQUID);
+        candidate.setPhaseType(host, PhaseType.AQUEOUS);
+        for (int phase = 0; phase < phases; phase++) {
+          double beta = 0.0;
+          for (int component = 0; component < components; component++) {
+            beta += amounts[phase][component];
+          }
+          if (!(beta > phaseFractionMinimumLimit && beta < 1.0 - phaseFractionMinimumLimit)) {
+            throw new IllegalStateException("Ionic host trial has no interior material phase");
+          }
+          candidate.setBeta(phase, beta);
+          for (int component = 0; component < components; component++) {
+            candidate.getPhase(phase).getComponent(component).setx(amounts[phase][component] / beta);
+          }
+        }
+        candidate.normalizeBeta();
+        candidate.init(3);
+        TPmultiflash trial = new TPmultiflash(candidate, false);
+        trial.ionicAqueousSlot = candidate.getPhaseIndex(host);
+        trial.setDoubleArrays();
+        for (int iteration = 0; iteration < 30; iteration++) {
+          if (trial.solveBeta() < 1.0e-12) {
+            break;
+          }
+        }
+        candidate.init(1);
+        FluidEquilibriumChecks.validate(candidate, inputMoles);
+        for (int phase = 0; phase < phases; phase++) {
+          PhaseType expectedRoot = phase == host ? PhaseType.AQUEOUS
+              : phase == currentHost ? PhaseType.LIQUID : system.getPhaseType(phase);
+          if (candidate.getPhaseType(phase) != expectedRoot
+              || candidate.getBeta(phase) <= 10.0 * phaseFractionMinimumLimit) {
+            throw new IllegalStateException("Ionic host trial changed its fixed fluid active set");
+          }
+        }
+        if (candidate.getPhase(host).getType() != PhaseType.AQUEOUS) {
+          continue;
+        }
+        double energy = candidate.getGibbsEnergy();
+        double margin = Math.max(1.0e-8, 1.0e-10 * Math.abs(bestEnergy));
+        if (Double.isFinite(energy) && energy < bestEnergy - margin) {
+          bestEnergy = energy;
+          best = candidate;
+        }
+      } catch (RuntimeException rejected) {
+        // The incumbent is untouched until a complete conservative equilibrium is qualified.
+      }
+    }
+    if (best != null) {
+      FlashPhaseState.copyInitializedPhases(best, system);
+      ionicAqueousSlot = system.getPhaseIndex(FlashPhaseConstraints.capture(system).getAqueousPhase());
     }
   }
 

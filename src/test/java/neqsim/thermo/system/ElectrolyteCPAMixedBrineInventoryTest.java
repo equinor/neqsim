@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.lang.reflect.Method;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.thermodynamicoperations.flashops.TPflash;
 import neqsim.thermodynamicoperations.flashops.saturationops.HydrateFormationTemperatureFlash;
 
 /** Component conservation regressions for non-reactive mixed brines (issue #3585). */
@@ -74,8 +72,13 @@ class ElectrolyteCPAMixedBrineInventoryTest extends neqsim.NeqSimTest {
     }
   }
 
+  /**
+   * The public TP flash must recover conserved equilibrium even if an infeasible warm start has lower Gibbs energy.
+   *
+   * @throws Exception if the initial hydrate-boundary calculation fails
+   */
   @Test
-  void lowerGibbsOfUnbalancedInventoryCannotVetoIonicRefinement() throws Exception {
+  void lowerGibbsOfUnbalancedInventoryCannotVetoPublicTpFlash() throws Exception {
     SystemInterface fluid = createBrine(50.0, 3.0, 0.6, "Ca++", false);
     new ThermodynamicOperations(fluid).hydrateFormationTemperature();
     SystemInterface reference = fluid.clone();
@@ -87,9 +90,11 @@ class ElectrolyteCPAMixedBrineInventoryTest extends neqsim.NeqSimTest {
     fluid.init(1);
     assertTrue(fluid.getGibbsEnergy() < referenceGibbs,
         "The infeasible state reproduces the former lower-Gibbs rejection condition");
-    Method refinement = TPflash.class.getDeclaredMethod("refineIonicGasAqueousEndpoint");
-    refinement.setAccessible(true);
-    refinement.invoke(new TPflash(fluid));
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    assertFluidEquivalent(reference, fluid);
+    // TPflash updates fluid phases, so evaluate the hydrate boundary again before reading its fugacity.
+    operations.hydrateFormationTemperature();
     assertEquivalent(reference, fluid);
   }
 
@@ -129,10 +134,20 @@ class ElectrolyteCPAMixedBrineInventoryTest extends neqsim.NeqSimTest {
   }
 
   private static void assertEquivalent(SystemInterface expected, SystemInterface actual) {
-    assertInventory(expected);
-    assertInventory(actual);
+    assertFluidEquivalent(expected, actual);
     assertHydrateResidual(expected);
     assertHydrateResidual(actual);
+  }
+
+  /**
+   * Compares the conserved fluid equilibrium independently of an inactive hydrate phase's cached properties.
+   *
+   * @param expected reference equilibrium state
+   * @param actual recalculated fluid state
+   */
+  private static void assertFluidEquivalent(SystemInterface expected, SystemInterface actual) {
+    assertInventory(expected);
+    assertInventory(actual);
     assertEquals(expected.getTemperature(), actual.getTemperature(), 1.0e-4);
     assertEquals(expected.getNumberOfPhases(), actual.getNumberOfPhases());
     for (int phase = 0; phase < expected.getNumberOfPhases(); phase++) {

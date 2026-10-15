@@ -1408,7 +1408,11 @@ public class TPflash extends Flash {
 
         // A direct gamma-phi model owns its K-value update, damping and vapour reference. The
         // generic cubic-EOS Newton solver does not implement that contract and must not replace it.
+        // Close to a phase-fraction bound, the interior Newton line search cannot remove the phase.
+        // Let the Rachford-Rice SSI step select the boundary active set instead of accepting tiny Newton steps.
         if (iterations < activeNewtonLimit || gammaPhiModel != null || system.isChemicalSystem()
+            || system.getBeta() < 10.0 * phaseFractionMinimumLimit
+            || system.getBeta() > 1.0 - 10.0 * phaseFractionMinimumLimit
             || !system.isImplementedCompositionDeriativesofFugacity()
             || (FlashPhaseConstraints.hasIonicInventory(system)
                 && !FlashPhaseConstraints.capture(system).supportsTwoPhaseSplit())) {

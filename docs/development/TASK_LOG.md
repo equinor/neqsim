@@ -34,6 +34,12 @@ requirement`, or `confidential compressor route`.
 
 ## Log
 
+### 2026-10-15 — Repair converged-state and trace-inventory defects in PR 4306
+**Type:** A (Property)
+**Keywords:** Newton, trace inventory, Armijo, electrolyte CPA, NRTL, ionic host, Aitken, reactive flash, PR 4306
+**Solution:** Require actual post-step chemical-potential closure, retain the smaller two-phase species amount with a signed gradient/Hessian, and admit objective-roundoff corrections only with substantial residual reduction. Refresh electrolyte CPA association caches at the final volume for every positive initialization level. Make classic/HV pair initialization independent of derivative level. Compare conservative alternate ionic liquid hosts by qualified Gibbs energy. Evaluate RAND residuals at the accepted state and accelerate the bounded aqueous reaction/flash inventory iteration with rollback.
+**Notes:** New regressions cover sub-ULP traces, mixed-sign Hessian finite differences, old solver initialization, cache invariance, host order/temperature/repeat independence, accelerated-trial rejection and unsupported reactive reheating rollback. Existing high-temperature, saturation, density, hydrate and conservation assertions remain. Correct charge-unbalanced examples, derivative initialization, obsolete private-helper/cap assumptions and neutral hydrate diagnostic semantics without weakening physical acceptance thresholds. The review evidence bundle records exact source/dependency hashes, raw matched complete-flash benchmarks and final test failures. Salting/activity-model qualification, salt saturation and last reactive aqueous disappearance remain merge gates; numerical closure is not experimental validation. Local Java 17 with the Java 8 POM and release-8 compilation does not replace hosted Java 8/21 execution or independent domain/owner review.
+
 ### 2026-10-14 — Remove unreachable multiphase composition branch
 **Type:** A (Property)
 **Keywords:** multiphase flash, ionic inventory, control flow, review cleanup, PR 4306

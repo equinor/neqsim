@@ -114,7 +114,7 @@ public class NorsokM506ElectrolyteBridgeTest {
     fluid.addComponent("CO2", 0.10);
     fluid.addComponent("water", 0.88);
     fluid.addComponent("Na+", 0.01);
-    fluid.addComponent("Cl-", 0.005);
+    fluid.addComponent("Cl-", 0.0101); // Balance Na+ and both positive charges of Fe++.
     fluid.addComponent("Fe++", 5.0e-5);
     fluid.chemicalReactionInit();
     fluid.createDatabase(true);

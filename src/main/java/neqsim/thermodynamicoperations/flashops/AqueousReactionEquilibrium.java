@@ -1,5 +1,6 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import java.util.Arrays;
 import java.util.concurrent.CancellationException;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.thermo.phase.PhaseType;
@@ -30,6 +31,8 @@ final class AqueousReactionEquilibrium {
   private final SystemInterface system;
   private double minimumTrialDistance = Double.NaN;
   private int iterations;
+  /** Acceleration state and diagnostics for the most recent coupled solve. */
+  private InventoryAcceleration acceleration;
 
   /**
    * Creates a coupled calculation without modifying the supplied fluid.
@@ -71,6 +74,7 @@ final class AqueousReactionEquilibrium {
     double[] elements = formula.computeElementVector(overallMoles(system));
     SystemInterface work = system.clone();
     double reactionResidual = Double.NaN;
+    acceleration = new InventoryAcceleration();
     for (int iteration = 0; iteration < MAXIMUM_ITERATIONS; iteration++) {
       iterations = iteration + 1;
       checkInterrupted();
@@ -79,14 +83,17 @@ final class AqueousReactionEquilibrium {
       TPflash phaseFlash = new TPflash(work);
       try {
         phaseFlash.run();
+        FluidEquilibriumChecks.validate(work, phaseInventory);
+        verifyElements(formula, elements, overallMoles(work));
       } catch (CancellationException ex) {
         throw ex;
       } catch (IllegalStateException ex) {
+        if (acceleration.restoreUnaccelerated(work)) {
+          continue;
+        }
         throw new IllegalStateException("Aqueous reaction phase equilibrium failed: " + ex.getMessage(), ex);
       }
-      FluidEquilibriumChecks.validate(work, phaseInventory);
       work.isChemicalSystem(true);
-      verifyElements(formula, elements, overallMoles(work));
       int aqueousCount = 0;
       for (int phase = 0; phase < work.getNumberOfPhases(); phase++) {
         if (work.getPhase(phase).getType() == PhaseType.AQUEOUS) {
@@ -102,9 +109,15 @@ final class AqueousReactionEquilibrium {
         return;
       }
       if (aqueousCount != 1) {
+        if (acceleration.restoreUnaccelerated(work)) {
+          continue;
+        }
         throw new IllegalStateException("Aqueous reaction coupling requires exactly one aqueous material phase");
       }
       reactionResidual = work.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual();
+      if (acceleration.residualWorsened(reactionResidual) && acceleration.restoreUnaccelerated(work)) {
+        continue;
+      }
       if (Double.isFinite(reactionResidual) && reactionResidual <= REACTION_TOLERANCE) {
         double charge = work.getChemicalReactionOperations().getReactivePhaseChargeMoles();
         if (!Double.isFinite(charge) || Math.abs(charge) > 1.0e-8) {
@@ -127,6 +140,9 @@ final class AqueousReactionEquilibrium {
       double[] before = overallMoles(aqueous);
       ChemicalReactionOperations chemistry = aqueous.getChemicalReactionOperations();
       if (!chemistry.solveChemEq(0, 1)) {
+        if (acceleration.restoreUnaccelerated(work)) {
+          continue;
+        }
         throw new IllegalStateException("Aqueous reaction aqueous chemistry did not converge: reaction residual="
             + chemistry.getMaximumAbsoluteReactionLogResidual() + ", element residual="
             + chemistry.getMaximumAbsoluteElementBalanceResidual() + ", charge="
@@ -143,15 +159,157 @@ final class AqueousReactionEquilibrium {
         updated[component] = Math.max(0.0, updated[component]);
       }
       verifyElements(formula, elements, updated);
-      work.setMolarFlowRates(updated);
+      double[] candidate = acceleration.nextInventory(work, overallMoles(work), updated, reactionResidual);
+      try {
+        verifyElements(formula, elements, candidate);
+        work.setMolarFlowRates(candidate);
+      } catch (IllegalStateException ex) {
+        if (!acceleration.restoreUnaccelerated(work)) {
+          throw ex;
+        }
+      }
     }
     throw new IllegalStateException("Aqueous reaction equilibrium exceeded " + MAXIMUM_ITERATIONS
         + " coupling iterations: reaction residual=" + reactionResidual);
   }
 
+  /**
+   * Safeguarded vector secant acceleration for the conservative reaction-inventory fixed point.
+   *
+   * <p>
+   * The chemical solver supplies a stoichiometric inventory increment. Scaling the complete increment preserves its
+   * element and charge balances. A scalar inverse-Jacobian estimate uses consecutive increments and the actual prior
+   * step, with bounded extrapolation and a fraction-to-boundary safeguard. Every extrapolation remains a trial: the
+   * next phase/reaction residual must improve and all physical acceptance checks remain unchanged. A failed trial
+   * restores the unaccelerated chemical update and discards its secant history. Phase-topology changes also discard the
+   * history. The vector Aitken approach follows Irons and Tuck, International Journal for Numerical Methods in
+   * Engineering 1 (1969), 275-277, doi:10.1002/nme.1620010306; positivity and residual rollback are safeguards here.
+   * </p>
+   */
+  private static final class InventoryAcceleration {
+    /** Largest extrapolation factor allowed for the scalar secant estimate. */
+    private static final double MAXIMUM_FACTOR = 10.0;
+    /** Previous unaccelerated reaction-inventory increment. */
+    private double[] previousDelta;
+    /** Previous actual inventory step, including any acceleration. */
+    private double[] previousStep;
+    /** Conservative unaccelerated inventory retained while an extrapolation is evaluated. */
+    private double[] fallback;
+    /** Reaction residual before the pending extrapolation. */
+    private double previousResidual;
+    /** Number of extrapolated inventory trials. */
+    private int attemptedTrials;
+    /** Number of extrapolated trials restored to the unaccelerated update. */
+    private int rejectedTrials;
+    /** Material and requested phase roles associated with the secant history. */
+    private PhaseType[] previousTopology;
+
+    /**
+     * Tests the residual safeguard for a pending extrapolation.
+     *
+     * @param residual maximum reaction log residual after the next phase solve
+     * @return whether the extrapolation worsened the residual or made it nonfinite
+     */
+    private boolean residualWorsened(double residual) {
+      return fallback != null && (!Double.isFinite(residual) || residual > previousResidual);
+    }
+
+    /**
+     * Restores a failed extrapolation to its conservative unaccelerated chemical update.
+     *
+     * @param fluid isolated coupling work system
+     * @return whether an extrapolation was pending and was restored
+     */
+    private boolean restoreUnaccelerated(SystemInterface fluid) {
+      if (fallback == null) {
+        return false;
+      }
+      fluid.setMolarFlowRates(fallback);
+      rejectedTrials++;
+      fallback = null;
+      previousDelta = null;
+      previousStep = null;
+      previousTopology = null;
+      return true;
+    }
+
+    /**
+     * Constructs the next conservative inventory, with bounded secant acceleration when history permits.
+     *
+     * @param fluid initialized fluid defining the current component basis and phase topology
+     * @param current inventory before the aqueous chemical solve
+     * @param corrected inventory after transferring the converged aqueous chemical changes
+     * @param residual reaction residual before the aqueous chemical solve
+     * @return trial inventory; a failed extrapolation can be restored through {@link #restoreUnaccelerated}
+     */
+    private double[] nextInventory(SystemInterface fluid, double[] current, double[] corrected, double residual) {
+      PhaseType[] topology = new PhaseType[2 * fluid.getNumberOfPhases()];
+      for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+        topology[2 * phase] = fluid.getPhase(phase).getType();
+        topology[2 * phase + 1] = fluid.getPhaseType(phase);
+      }
+      if (!Arrays.equals(topology, previousTopology)
+          || previousDelta != null && previousDelta.length != current.length) {
+        previousDelta = null;
+        previousStep = null;
+      }
+      previousTopology = topology;
+      double[] delta = new double[current.length];
+      for (int component = 0; component < delta.length; component++) {
+        delta[component] = corrected[component] - current[component];
+      }
+      double factor = 1.0;
+      if (previousDelta != null) {
+        double numerator = 0.0;
+        double denominator = 0.0;
+        for (int component = 0; component < delta.length; component++) {
+          double difference = delta[component] - previousDelta[component];
+          numerator -= previousStep[component] * difference;
+          denominator += difference * difference;
+        }
+        if (denominator > 0.0) {
+          factor = Math.max(1.0, Math.min(MAXIMUM_FACTOR, numerator / denominator));
+        }
+        for (int component = 0; component < delta.length; component++) {
+          if (delta[component] < 0.0) {
+            factor = Math.min(factor, 0.99 * current[component] / -delta[component]);
+          }
+        }
+        if (!Double.isFinite(factor) || factor < 1.0) {
+          factor = 1.0;
+        }
+      }
+      previousStep = delta.clone();
+      previousDelta = delta;
+      fallback = null;
+      if (factor == 1.0) {
+        return corrected;
+      }
+      attemptedTrials++;
+      fallback = corrected.clone();
+      previousResidual = residual;
+      double[] candidate = new double[current.length];
+      for (int component = 0; component < candidate.length; component++) {
+        previousStep[component] *= factor;
+        candidate[component] = current[component] + previousStep[component];
+      }
+      return candidate;
+    }
+  }
+
   /** @return number of phase/reaction coupling iterations in the most recent calculation */
   public int getIterations() {
     return iterations;
+  }
+
+  /** @return number of extrapolated inventory trials in the most recent calculation */
+  int getAcceleratedTrialCount() {
+    return acceleration == null ? 0 : acceleration.attemptedTrials;
+  }
+
+  /** @return number of extrapolations rejected and restored during the most recent calculation */
+  int getRejectedAcceleratedTrialCount() {
+    return acceleration == null ? 0 : acceleration.rejectedTrials;
   }
 
   /** @return minimum fluid trial distance at the accepted speciation, or NaN if no result was accepted */

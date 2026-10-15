@@ -137,6 +137,8 @@ Temperature dependence uses van't Hoff correction with $\Delta H / R$ coefficien
 
 Uses full thermodynamic model (Electrolyte CPA or Pitzer) to compute activity-based ion activity products.
 
+Ionic feeds must be electroneutral before flashing. In the examples below, 0.042 mol of positive charge is balanced by 0.033 mol of chloride, 0.004 mol of sulfate charge, and 0.005 mol of bicarbonate charge. Reactions conserve charge; they cannot repair a charge-imbalanced feed.
+
 ### Usage via ThermodynamicOperations
 
 ```java
@@ -145,7 +147,7 @@ SystemInterface brine = new SystemElectrolyteCPAstatoil(273.15 + 80.0, 100.0);
 brine.addComponent("CO2", 0.01);
 brine.addComponent("water", 0.90);
 brine.addComponent("Na+", 0.03);
-brine.addComponent("Cl-", 0.035);
+brine.addComponent("Cl-", 0.033); // Balance the total ionic charge.
 brine.addComponent("Ca++", 0.005);
 brine.addComponent("Ba++", 0.001);
 brine.addComponent("SO4--", 0.002);
@@ -182,8 +184,9 @@ brine = SystemElectrolyteCPAstatoil(273.15 + 80.0, 100.0)
 brine.addComponent("CO2", 0.01)
 brine.addComponent("water", 0.90)
 brine.addComponent("Na+", 0.03)
-brine.addComponent("Cl-", 0.035)
+brine.addComponent("Cl-", 0.033)  # Balance the total ionic charge.
 brine.addComponent("Ca++", 0.005)
+brine.addComponent("Ba++", 0.001)
 brine.addComponent("SO4--", 0.002)
 brine.addComponent("HCO3-", 0.005)
 brine.chemicalReactionInit()

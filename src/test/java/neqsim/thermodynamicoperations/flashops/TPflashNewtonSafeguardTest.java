@@ -45,14 +45,20 @@ class TPflashNewtonSafeguardTest {
     SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, 2);
     solver.init();
     double expectedDerivative = 0.0;
-    double[] amounts = new double[2];
+    Field coordinates = SysNewtonRhapsonTPflash.class.getDeclaredField("uVector");
+    coordinates.setAccessible(true);
+    double[] amounts = ((double[]) coordinates.get(solver)).clone();
+    Field orientation = SysNewtonRhapsonTPflash.class.getDeclaredField("secondPhaseCoordinate");
+    orientation.setAccessible(true);
+    boolean[] second = (boolean[]) orientation.get(solver);
     double[] direction = {0.1, -0.1};
     for (int component = 0; component < 2; component++) {
-      amounts[component] = fluid.getBeta(0) * fluid.getPhase(0).getComponent(component).getx();
       expectedDerivative += direction[component] * (Math.log(fluid.getPhase(0).getComponent(component).getx())
           + fluid.getPhase(0).getComponent(component).getLogFugacityCoefficient()
           - Math.log(fluid.getPhase(1).getComponent(component).getx())
           - fluid.getPhase(1).getComponent(component).getLogFugacityCoefficient());
+      // Keep the same physical first-phase transfer direction under the signed coordinates.
+      direction[component] *= second[component] ? -1.0 : 1.0;
     }
     Method trial = SysNewtonRhapsonTPflash.class.getDeclaredMethod("setTrialAndComputeFugacities", double[].class);
     trial.setAccessible(true);
@@ -189,6 +195,24 @@ class TPflashNewtonSafeguardTest {
     injectStep(solver, Double.NaN);
     assertThrows(IllegalStateException.class, solver::solve);
     assertSnapshot(before, fluid);
+  }
+
+  /**
+   * A tiny accepted correction is not a convergence certificate when fugacity equality remains unsolved.
+   *
+   * @throws Exception if reflective access to the solver fails
+   */
+  @Test
+  void smallAcceptedStepDoesNotHidePhysicalResidual() throws Exception {
+    SystemInterface fluid = perturbedFluid();
+    SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, 2);
+    injectStep(solver, 1.0e-12);
+    double reportedDeviation = solver.solve();
+    double physicalResidual = residual(fluid);
+    assertTrue(physicalResidual > 1.0e-6, "The injected correction must leave a measurable fugacity residual");
+    assertTrue(reportedDeviation >= physicalResidual * (1.0 - 1.0e-12),
+        "A small accepted step must not report convergence while phase fugacities disagree");
+    assertBalanced(fluid);
   }
 
   /**

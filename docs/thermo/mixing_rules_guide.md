@@ -193,6 +193,14 @@ interleaving against isolated SRK and PR calculations for all three sums.
 
 Huron-Vidal (HV) mixing rules combine cubic EoS with activity coefficient models (like NRTL or UNIFAC) for improved liquid-phase behavior.
 
+The modified NRTL implementation can combine HV and classical component pairs.
+Classical pairs use zero nonrandomness independently of neighboring HV pairs and
+of the initialization level. Activity coefficients and fugacities at fixed
+temperature, pressure and composition must therefore agree between `init(1)`,
+`init(2)` and `init(3)`; requesting additional derivatives does not change the
+equilibrium state. This corrects earlier level-1 calculations in which an HV
+pair could contaminate the following classical pair.
+
 ### 4.1 Mathematical Framework
 
 The excess Gibbs energy from an activity coefficient model is incorporated into the EoS:

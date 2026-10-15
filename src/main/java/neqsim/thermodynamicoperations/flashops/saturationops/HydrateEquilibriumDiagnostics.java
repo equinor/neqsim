@@ -153,9 +153,16 @@ public final class HydrateEquilibriumDiagnostics implements Serializable {
   }
 
   /**
-   * Checks numerical evidence for a saturated CO2/brine boundary.
+   * Checks numerical evidence for a saturated CO2/brine boundary with an assessed ionic reference.
    *
-   * @return true when a converged aqueous/CO2-rich split also closes molecular fugacities and balances
+   * <p>
+   * A neutral-fluid calculation does not expose normalized ionic-reference stability evidence, so this conservative
+   * predicate returns false even when material CO2-rich and aqueous phases coexist. Consult the phase and residual
+   * accessors separately; false does not by itself establish undersaturation.
+   * </p>
+   *
+   * @return true when a converged aqueous/CO2-rich split closes molecular fugacities and balances and has finite
+   * normalized ionic-reference stability evidence
    */
   public boolean isSaturatedCO2Boundary() {
     return converged && aqueousPhase && co2RichPhase && componentBalanceResidual <= 1.0e-9 && chargeResidual <= 1.0e-10

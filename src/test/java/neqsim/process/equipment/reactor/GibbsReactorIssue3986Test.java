@@ -240,6 +240,11 @@ class GibbsReactorIssue3986Test extends neqsim.NeqSimTest {
     }
   }
 
+  /**
+   * A deliberately homogeneous ideal-gas fixture isolates the reactor's element and charge constraints.
+   *
+   * @throws Exception if the synthetic standard-state database cannot be installed
+   */
   @Test
   void syntheticIonicEquilibriumConservesChargeSodiumAndArgon() throws Exception {
     for (double sodiumFeed : new double[] {0.0, 0.1}) {
@@ -251,6 +256,9 @@ class GibbsReactorIssue3986Test extends neqsim.NeqSimTest {
       fluid.addComponent("OH-", 0.0);
       fluid.addComponent("Na+", sodiumFeed);
       fluid.addComponent("argon", 0.2);
+      // This synthetic charged gas is not an aqueous-electrolyte phase-equilibrium model.
+      // Keep the explicitly homogeneous fixture when the reactor flashes its outlet stream.
+      fluid.setForceSinglePhase(neqsim.thermo.phase.PhaseType.GAS);
       GibbsReactor reactor = new GibbsReactor("synthetic ions", new Stream("feed", fluid));
       // Equal standard chemical potentials give an interior solution that tests the
       // constraints without claiming physical validity of ideal-gas electrolyte data.

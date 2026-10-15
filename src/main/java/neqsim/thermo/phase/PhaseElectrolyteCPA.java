@@ -204,8 +204,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       // super.init(totalNumberOfMoles, numberOfComponents, type, pt, beta);
     }
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
-    if (initType > 1) {
-      // The final superclass initialization solves the volume again. Rebuild derivatives
+    if (initType > 0) {
+      // The final superclass initialization solves the volume again. Rebuild properties and derivatives
       // at that returned volume rather than retaining the previous volume iteration.
       volInit();
       gcpa = calc_g();

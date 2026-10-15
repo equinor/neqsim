@@ -336,9 +336,14 @@ The formula matrix automatically adds a charge balance row for systems with ioni
 Multiphase reactive flash is significantly harder than single-phase CE. The solver uses:
 
 - **Adaptive damping** with a sliding window to balance stability and speed
-- **Relaxed convergence** (tolerance 1e-4) for multiphase systems — engineering-accurate
+- **Relaxed convergence** (tolerance 1e-4) for non-ionic multiphase systems
+- **Ionic convergence** requires chemical-potential residual below 1e-6 and normalized
+  element/charge-balance residual below 1e-8, including stagnation and outer-loop acceptance
 - **Outer loop restart** to escape local minima
 - **Near-convergence acceptance** for systems that asymptotically approach the solution
+
+Chemical-potential residuals are evaluated after the accepted composition and fugacity update.
+When a DIIS extrapolation is accepted, both reported residuals describe that accepted state.
 
 For complex systems (8+ components, 2+ phases, ionic reactions), convergence may take 30-60 seconds.
 

@@ -28,6 +28,11 @@ When a caller consumes temperature derivatives after `TPflash`, initialize them 
 the resulting phase state with `init(2)`. Initializing before the flash is insufficient
 when it replaces phases; the legacy cricondenbar iteration is a regression example.
 
+For tests or solvers reading composition derivatives, call `init(3)` on the final
+state after `initProperties()`. The latter refreshes level-2 thermodynamics and
+physical properties; it does not certify that a cached composition Jacobian still
+belongs to the current state. Keep derivative-consistency tolerances unchanged.
+
 After phase removal, verify component inventory as well as normalized compositions:
 `sum(beta[p] * x[p][i])` must reconstruct the feed. Do not repair a failed endpoint
 only by assigning `x = z`; that can conceal a genuine phase instability. Compare

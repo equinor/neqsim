@@ -53,11 +53,12 @@ class ConstrainedNewtonFlashTest {
     SystemInterface fluid = seededBrine(false);
     SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, fluid.getNumberOfComponents());
     solver.init();
-    double[] amounts = new double[fluid.getNumberOfComponents()];
+    Field coordinates = SysNewtonRhapsonTPflash.class.getDeclaredField("uVector");
+    coordinates.setAccessible(true);
+    double[] amounts = ((double[]) coordinates.get(solver)).clone();
     double expected = 0.0;
     double ionicContribution = 0.0;
     for (int component = 0; component < amounts.length; component++) {
-      amounts[component] = fluid.getBeta(0) * fluid.getPhase(0).getComponent(component).getx();
       for (int phase = 0; phase < 2; phase++) {
         double composition = fluid.getPhase(phase).getComponent(component).getx();
         if (composition > 0.0) {
@@ -76,6 +77,98 @@ class ConstrainedNewtonFlashTest {
     assertTrue(Double.isFinite(actual));
     assertTrue(Math.abs(ionicContribution) > 1e-3, "This fixture must exercise the retained ionic contribution");
     assertEquals(expected, actual, 1e-12);
+  }
+
+  /**
+   * Both logical phase orders preserve a trace whose complement rounds to the complete feed amount.
+   *
+   * @param aqueousFirst whether the aqueous phase is first
+   */
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void smallerAmountCoordinatePreservesSubUlpTrace(boolean aqueousFirst) {
+    SystemInterface fluid = seededBrine(aqueousFirst);
+    int aqueous = aqueousFirst ? 0 : 1;
+    int gas = 1 - aqueous;
+    double trace = 1e-24;
+    double feed = fluid.getComponent(0).getz();
+    assertEquals(feed, feed - trace, 0.0, "This trace cannot be recovered by subtraction from the feed");
+    fluid.getPhase(aqueous).getComponent(0).setx(trace / fluid.getBeta(aqueous));
+    fluid.getPhase(gas).getComponent(0).setx(feed / fluid.getBeta(gas));
+    SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, fluid.getNumberOfComponents());
+    solver.init();
+    assertEquals(trace, fluid.getBeta(aqueous) * fluid.getPhase(aqueous).getComponent(0).getx(), 1e-38);
+    assertPhysicalInventory(fluid, aqueous);
+  }
+
+  /**
+   * Mixed coordinate orientations apply the same sign to the gradient and both Hessian indices.
+   *
+   * @throws Exception if reflective access fails
+   */
+  @Test
+  void mixedCoordinateHessianDifferentiatesSignedChemicalPotentials() throws Exception {
+    SystemInterface fluid = seededBrine(false);
+    SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, fluid.getNumberOfComponents());
+    solver.init();
+    solver.setJac();
+    Field jacobian = SysNewtonRhapsonTPflash.class.getDeclaredField("jacMatrix");
+    Field coordinates = SysNewtonRhapsonTPflash.class.getDeclaredField("uVector");
+    Field gradient = SysNewtonRhapsonTPflash.class.getDeclaredField("fvecVector");
+    Field orientation = SysNewtonRhapsonTPflash.class.getDeclaredField("secondPhaseCoordinate");
+    for (Field field : new Field[] {jacobian, coordinates, gradient, orientation}) {
+      field.setAccessible(true);
+    }
+    boolean[] second = (boolean[]) orientation.get(solver);
+    assertTrue(second[0] != second[1], "The fixture must exercise opposite coordinate signs");
+    DMatrixRMaj analytical = ((DMatrixRMaj) jacobian.get(solver)).copy();
+    double[] amounts = (double[]) coordinates.get(solver);
+    for (int column = 0; column < solver.neq; column++) {
+      double initial = amounts[column];
+      double step = 1e-4 * initial;
+      amounts[column] = initial + step;
+      solver.init();
+      solver.setfvec();
+      DMatrixRMaj plus = ((DMatrixRMaj) gradient.get(solver)).copy();
+      amounts[column] = initial - step;
+      solver.init();
+      solver.setfvec();
+      DMatrixRMaj minus = ((DMatrixRMaj) gradient.get(solver)).copy();
+      amounts[column] = initial;
+      for (int row = 0; row < solver.neq; row++) {
+        double numerical = (plus.get(row, 0) - minus.get(row, 0)) / (2.0 * step);
+        assertEquals(numerical, analytical.get(row, column), 2e-5 * Math.max(1.0, Math.abs(numerical)),
+            "Signed Hessian entry " + row + ", " + column);
+      }
+    }
+    solver.init();
+    assertPhysicalInventory(fluid, 1);
+  }
+
+  /**
+   * Legacy serialized state can reenter through either public initializer before taking a Newton step.
+   *
+   * @throws Exception if reflective access fails
+   */
+  @Test
+  void missingSerializedOrientationIsRebuiltByPublicInitializers() throws Exception {
+    for (boolean initializeAmounts : new boolean[] {false, true}) {
+      SystemInterface fluid = seededBrine(false);
+      SysNewtonRhapsonTPflash solver = new SysNewtonRhapsonTPflash(fluid, 2, fluid.getNumberOfComponents());
+      solver.init();
+      double beta = fluid.getBeta(0);
+      double composition = fluid.getPhase(1).getComponent(0).getx();
+      Field orientation = SysNewtonRhapsonTPflash.class.getDeclaredField("secondPhaseCoordinate");
+      orientation.setAccessible(true);
+      orientation.set(solver, null);
+      if (initializeAmounts) {
+        solver.setu();
+      }
+      solver.init();
+      assertEquals(beta, fluid.getBeta(0), 1e-14);
+      assertEquals(composition, fluid.getPhase(1).getComponent(0).getx(), 1e-14);
+      assertPhysicalInventory(fluid, 1);
+    }
   }
 
   /** Rebinding a cached solver refreshes both the feed and the captured aqueous role. */

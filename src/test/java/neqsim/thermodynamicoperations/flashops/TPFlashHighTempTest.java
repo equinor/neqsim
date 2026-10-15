@@ -60,6 +60,10 @@ class TPFlashHighTempTest {
     for (double temperatureC : new double[] {267.0, 269.0}) {
       SystemInterface nearbyOrdinary = flash(pengRobinson, temperatureC, false, false);
       SystemInterface nearbyMultiphase = flash(pengRobinson, temperatureC, true, false);
+      if (!pengRobinson && temperatureC > REFERENCE_TEMPERATURE_C) {
+        assertEquals(1, nearbyOrdinary.getNumberOfPhases(), "The incipient SRK gas phase must disappear at 269 C");
+        assertEquals(1, nearbyMultiphase.getNumberOfPhases(), "Both flash paths must remove the vanished SRK phase");
+      }
       assertClosedEquilibrium(nearbyOrdinary, modelLabel + " ordinary at " + temperatureC + " C");
       assertClosedEquilibrium(nearbyMultiphase, modelLabel + " multiphase at " + temperatureC + " C");
       assertEquivalentState(nearbyOrdinary, nearbyMultiphase, 1.0e-8,

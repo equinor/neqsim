@@ -297,7 +297,15 @@ balance residuals, material phase labels and CO2-rich-phase presence. The
 `getMinimumFluidTrialDistance()` reports the normalized molecular trial distance against the
 ionic aqueous reference when evaluated; the historical CO2-named getter delegates to it. A negative
 value indicates instability of that reference, not the final multiphase state. Neutral-fluid legacy
-stability metrics are not relabeled as normalized aqueous-reference distances; they report `NaN`. A snapshot is null before the first run. Its
+stability metrics are not relabeled as normalized aqueous-reference distances; they report `NaN`.
+`isSaturatedCO2Boundary()` requires that normalized ionic-reference evidence, so it
+returns false for a neutral baseline even when aqueous and CO2-rich phases
+coexist with closed fugacities and material balance. This conservative false
+result does not establish physical undersaturation. Use the phase-presence and
+residual accessors to inspect the neutral equilibrium. The KCl assessment keeps
+its independent physical endpoint checks for every scenario and reports
+`normalized_ionic_stability_assessed` separately from the composite boundary flag.
+A snapshot is null before the first run. Its
 convergence flag includes the independent verification and agrees with
 `isConverged()`; the hydrate residual agrees with `getLastResidual()`. A failed
 search captures diagnostic evidence before restoring the input inventory and
