@@ -206,7 +206,7 @@ wax_weight_fractions = list(wax.getWaxWeightFractions())
 | WAT is unrealistically low | Heavy-end characterization is too light or missing n-paraffins | Review TBP cuts, plus-fraction molar mass, density, and wax model parameters |
 | WAT calculation fails | Search range or initial fluid state is poor | Use `WaxCurveCalculator` over a broad temperature range and inspect failed flashes |
 | `calcWAT()` throws `molarVolumeAnalytical - compressibility factor is NaN`, or `WaxCurveCalculator` returns `NaN` WAT | Synthetic/hand-built heavy end with no n-paraffin distribution — the wax model has nothing physical to solve against | Do **not** substitute a guessed WAT. Report it as a lab-data gap and require a measured WAT/DSC or a real PVTsim/E300 characterization |
-| Wax fraction decreases when cooling | Numerical flash artifact | Use monotonicity-enforced `WaxCurveCalculator` output and record correction count |
+| Wax fraction decreases or gas/wax disappears when cooling | Possible phase-selection or convergence artifact | Inspect unsmoothed independent TP trials, phase identities, conserved inventories and component fugacities; material balance or monotonicity smoothing alone cannot validate stability. See the #4324 cold-start regression in the [wax guide](../../../docs/thermo/characterization/wax_characterization.md). |
 | Python notebook sees old API | Installed neqsim package is stale | Use the devtools setup cell with workspace classes or rebuild/package the JAR |
 
 ## Reporting Requirements

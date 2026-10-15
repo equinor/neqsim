@@ -409,7 +409,8 @@ public class BottleneckAnalysisOptimizerTest {
     boolean processRejectedExtremeFlow = processRunFailure != null && processRunFailure.getMessage() != null
         && processRunFailure.getMessage().contains("Failed to run unit operation")
         && (processRunFailure.getMessage().contains("Compressor Outlet Manifold")
-            || rejectedNegativeOutletPipePressure(processRunFailure));
+            || rejectedNegativeOutletPipePressure(processRunFailure)
+            || rejectedInvalidCompressorMap(processRunFailure));
     if (processRunFailure != null && !processRejectedExtremeFlow) {
       throw processRunFailure;
     }
@@ -429,6 +430,7 @@ public class BottleneckAnalysisOptimizerTest {
     // At very high flow, compressors should either:
     // - Have zero/negative polytropic head
     // - Have speed outside chart range
+    // - Reject a pressure-target search with no finite chart operating point
     // - Cause the downstream manifold run to reject the infeasible operating point
     Assertions.assertTrue(anyInvalid || !ups3Errors.isEmpty() || processRejectedExtremeFlow,
         "At extreme flow rates, compressors should show invalid simulation or validation errors");
@@ -451,6 +453,26 @@ public class BottleneckAnalysisOptimizerTest {
         return true;
       }
       cause = cause.getCause();
+    }
+    return false;
+  }
+
+  /**
+   * Recognizes a failed compressor speed search at extreme flow, without accepting unrelated process failures.
+   *
+   * @param failure process run failure
+   * @return true only for a named compressor with the specific invalid-map cause and failed convergence diagnostics
+   */
+  private boolean rejectedInvalidCompressorMap(RuntimeException failure) {
+    for (Compressor compressor : new Compressor[] {ups1Comp, ups2Comp, ups3Comp}) {
+      if (!failure.getMessage().equals("Failed to run unit operation " + compressor.getName())) {
+        continue;
+      }
+      Throwable cause = failure.getCause();
+      if (cause instanceof Compressor.SpeedSolveException && cause.getMessage()
+          .equals("Speed solver found no finite chart operating point for " + compressor.getName())) {
+        return !compressor.isSpeedSolveConverged() && !compressor.solved() && !compressor.isSimulationValid();
+      }
     }
     return false;
   }

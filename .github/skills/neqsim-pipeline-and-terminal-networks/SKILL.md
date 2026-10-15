@@ -91,7 +91,12 @@ Register configured rotating-equipment maps with
 existing `Pump`/`Compressor` remains the chart owner under the canonical edge identity.
 `ProcessModel.getPower(...)` includes solved pump/compressor demand inside standalone
 `LoopedPipeNetwork` and wrapped `FieldWellNetworkProcessUnit` equipment; use that total
-for shared host-power evidence and fail closed on non-finite map results.
+for shared host-power evidence and fail closed on non-finite map results. Registration
+requires an enabled map before graph mutation, and a chart-backed compressor calculation
+failure must remain infeasible rather than falling through to simplified polytropic physics.
+Recheck chart availability and the equipment's `solved()` contract for every mapped
+calculation. Finite forward results from a failed pressure-target speed search are not
+accepted operating points; rejected results must invalidate power and clear stored thermal state.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
