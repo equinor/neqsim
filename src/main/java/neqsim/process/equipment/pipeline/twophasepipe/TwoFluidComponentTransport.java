@@ -41,6 +41,18 @@ public final class TwoFluidComponentTransport implements Serializable {
    * @param sections initialized hydrodynamic cells
    */
   public TwoFluidComponentTransport(SystemInterface fluidTemplate, TwoFluidSection[] sections) {
+    this(fluidTemplate, sections, null);
+  }
+
+  /**
+   * Initialize with an independent aqueous composition, without equilibrating it with the gas.
+   *
+   * @param fluidTemplate gas/reference fluid containing the complete named-component slate
+   * @param sections initialized hydrodynamic cells
+   * @param aqueousFluid independent aqueous composition, or null for equilibrium initialization
+   */
+  public TwoFluidComponentTransport(SystemInterface fluidTemplate, TwoFluidSection[] sections,
+      SystemInterface aqueousFluid) {
     if (fluidTemplate == null || sections == null || sections.length == 0) {
       throw new IllegalArgumentException("Component transport requires a fluid template and at least one section");
     }
@@ -58,6 +70,14 @@ public final class TwoFluidComponentTransport implements Serializable {
       localFluid.setTemperature(sections[cell].getTemperature(), "K");
       localFluid = prepareFluid(localFluid, "initial component state for cell " + cell);
       double[][] initialPhaseFractions = phaseMassFractions(localFluid);
+      if (aqueousFluid != null) {
+        validateComponentSlate(aqueousFluid);
+        double molarMass = aqueousFluid.getMolarMass();
+        for (int component = 0; component < componentNames.length; component++) {
+          initialPhaseFractions[WATER][component] = aqueousFluid.getPhase(0).getComponent(componentNames[component])
+              .getz() * componentMolarMassKgMol[component] / molarMass;
+        }
+      }
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
         double phaseMassKg = phaseMassKg(sections[cell], phase);
         if (phaseMassKg > MASS_FLOOR_KG && sum(initialPhaseFractions[phase]) <= 0.0) {
@@ -88,6 +108,57 @@ public final class TwoFluidComponentTransport implements Serializable {
     intervalCellInterphaseTransferKg = copy(accepted.intervalCellInterphaseTransferKg);
     intervalLatentHeatEnergyJ = accepted.intervalLatentHeatEnergyJ;
     maximumPhaseMassSynchronizationErrorKg = accepted.maximumPhaseMassSynchronizationErrorKg;
+  }
+
+  /**
+   * Obtain a defensive snapshot of the cell/phase/component inventories.
+   *
+   * @return component masses in kg, with gas/oil/aqueous phase order
+   */
+  public double[][][] getInventoryKg() {
+    return copy(componentInventoryKg);
+  }
+
+  /**
+   * Construct a homogeneous EOS state at the actual transported phase composition. No TP flash or component
+   * redistribution is performed.
+   *
+   * @param cell cell index
+   * @param phase gas=0, oil=1, aqueous=2
+   * @param template thermodynamic template
+   * @param pressurePa absolute pressure in Pa
+   * @param temperatureK temperature in K
+   * @return initialized single-phase fluid
+   */
+  public SystemInterface createPhaseState(int cell, int phase, SystemInterface template, double pressurePa,
+      double temperatureK) {
+    validateComponentSlate(template);
+    double[] amounts = componentInventoryKg[cell][phase];
+    double totalMoles = 0.0;
+    for (int i = 0; i < amounts.length; i++) {
+      totalMoles += amounts[i] / componentMolarMassKgMol[i];
+    }
+    if (!(totalMoles > 0.0)) {
+      throw new IllegalStateException("Cannot evaluate an empty transported phase");
+    }
+    SystemInterface fluid = template.clone();
+    double[] composition = new double[fluid.getNumberOfComponents()];
+    for (int i = 0; i < composition.length; i++) {
+      int index = componentIndex(fluid.getPhase(0).getComponent(i).getComponentName());
+      composition[i] = amounts[index] / componentMolarMassKgMol[index] / totalMoles;
+    }
+    fluid.setMolarComposition(composition);
+    fluid.setPressure(pressurePa / 1.0e5);
+    fluid.setTemperature(temperatureK);
+    fluid.setNumberOfPhases(1);
+    fluid.setMaxNumberOfPhases(1);
+    fluid.setForcePhaseTypes(true);
+    fluid.init(0);
+    fluid.setNumberOfPhases(1);
+    fluid.setBeta(0, 1.0);
+    fluid.setPhaseType(0, forcedPhaseType(phase));
+    fluid.initProperties();
+    return fluid;
   }
 
   /** Reset per-call boundary and interphase ledgers while retaining distributed inventories. */
