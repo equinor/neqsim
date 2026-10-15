@@ -37,7 +37,8 @@ class ThermodynamicsCookbookCharacterizationTest(unittest.TestCase):
         assigned = {node.targets[0].id for node in tree.body
                     if isinstance(node, ast.Assign)
                     and isinstance(node.targets[0], ast.Name)}
-        self.assertTrue({"default_fluid", "rd1980_fluid"} <= assigned)
+        required = {"default_fluid", "rd1980_fluid"}
+        self.assertEqual(required, required & assigned)
         self.assertEqual(2, code.count("SystemPrEos(333.15, 20.0)"))
         self.assertIn('default_fluid.addTBPfraction_Sg_Tb("C10", 1.0, 0.734, 447.3)', code)
         self.assertIn('"C10", 1.0, 0.734, 447.3, TbpClosure.RIAZI_DAUBERT_1980', code)
