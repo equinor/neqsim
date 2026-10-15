@@ -2,11 +2,16 @@ package neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolv
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 
 /**
  * TwoPhasePipeFlowSolver class.
+ *
+ * <p>
+ * Protected phase and component solution columns use EJML. Serialized solver state from versions using Jama matrix
+ * fields is not compatible with this representation.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,12 +23,12 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
   static Logger logger = LogManager.getLogger(TwoPhasePipeFlowSolver.class);
 
   protected double[] PbArray; // = new double[100];
-  protected Matrix[] solMatrix;
-  protected Matrix[][] solMolFracMatrix;
-  protected Matrix[] solPhaseConsMatrix;
-  protected Matrix sol2Matrix;
-  protected Matrix[] sol3Matrix;
-  protected Matrix[] sol4Matrix;
+  protected DMatrixRMaj[] solMatrix;
+  protected DMatrixRMaj[][] solMolFracMatrix;
+  protected DMatrixRMaj[] solPhaseConsMatrix;
+  protected DMatrixRMaj sol2Matrix;
+  protected DMatrixRMaj[] sol3Matrix;
+  protected DMatrixRMaj[] sol4Matrix;
 
   protected double[] a;
   protected double[] b;
@@ -51,22 +56,22 @@ public class TwoPhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.one
     this.length = length;
     this.numberOfNodes = nodes;
     PbArray = new double[nodes];
-    solMatrix = new Matrix[2];
-    sol3Matrix = new Matrix[2];
-    solPhaseConsMatrix = new Matrix[2];
-    solMolFracMatrix = new Matrix[2][pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    solMatrix[0] = new Matrix(PbArray, 1).transpose();
-    solMatrix[1] = new Matrix(PbArray, 1).transpose();
+    solMatrix = new DMatrixRMaj[2];
+    sol3Matrix = new DMatrixRMaj[2];
+    solPhaseConsMatrix = new DMatrixRMaj[2];
+    solMolFracMatrix = new DMatrixRMaj[2][pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    solMatrix[0] = new DMatrixRMaj(nodes, 1);
+    solMatrix[1] = new DMatrixRMaj(nodes, 1);
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
       for (int i = 0; i < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-        solMolFracMatrix[phaseNum][i] = new Matrix(PbArray, 1).transpose();
+        solMolFracMatrix[phaseNum][i] = new DMatrixRMaj(nodes, 1);
       }
     }
-    sol3Matrix[0] = new Matrix(PbArray, 1).transpose();
-    sol3Matrix[1] = new Matrix(PbArray, 1).transpose();
-    solPhaseConsMatrix[0] = new Matrix(PbArray, 1).transpose();
-    solPhaseConsMatrix[1] = new Matrix(PbArray, 1).transpose();
-    sol2Matrix = new Matrix(PbArray, 1).transpose();
+    sol3Matrix[0] = new DMatrixRMaj(nodes, 1);
+    sol3Matrix[1] = new DMatrixRMaj(nodes, 1);
+    solPhaseConsMatrix[0] = new DMatrixRMaj(nodes, 1);
+    solPhaseConsMatrix[1] = new DMatrixRMaj(nodes, 1);
+    sol2Matrix = new DMatrixRMaj(nodes, 1);
     a = new double[nodes];
     b = new double[nodes];
     c = new double[nodes];

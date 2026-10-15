@@ -3,7 +3,8 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -25,6 +26,7 @@ public class SolidFlash1 extends TPflash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SolidFlash1.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -215,7 +217,8 @@ public class SolidFlash1 extends TPflash {
     double[] oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
     // double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
     int iter = 0;
-    Matrix ans = new Matrix(system.getNumberOfPhases() - solidsNumber, 1);
+    double[] ans = new double[system.getNumberOfPhases() - solidsNumber];
+    double stepNorm;
     double Qold = 0;
     double betaReductionFactor = 1.0;
     double Qnew = 0;
@@ -231,16 +234,12 @@ public class SolidFlash1 extends TPflash {
         oldBeta[k] = system.getBeta(k);
       }
 
-      Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
-      Matrix betaMatrixOld = new Matrix(oldBeta, 1).transpose();
-      Matrix betaMatrixTemp = new Matrix(oldBeta, 1).transpose();
-      Matrix dQM = new Matrix(dQdbeta, 1);
-      Matrix dQdBM = new Matrix(Qmatrix);
+      double[] betaMatrix = oldBeta.clone();
 
       try {
-        ans = dQdBM.solve(dQM.transpose());
+        ans = ALGEBRA.solve(Qmatrix, dQdbeta);
       } catch (Exception ex) {
-        // ans = dQdBM.solve(dQM.transpose());
+        logger.debug("Solid-fraction solve failed; retaining the previous step", ex);
       }
       // dQdBM.print(10, 10);
       // logger.info("BetaStep: ");
@@ -249,7 +248,7 @@ public class SolidFlash1 extends TPflash {
       betaReductionFactor = 1.0;
       // logger.info("Oldbeta befor update");
       // betaMatrix.print(10, 10);
-      betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
+      double[] betaMatrixTemp = ALGEBRA.subtract(betaMatrix, ALGEBRA.scale(ans, betaReductionFactor));
       // logger.info("Beta before multiplying reduction Factoer");
       // betaMatrixTemp.print(10, 2);
 
@@ -257,28 +256,28 @@ public class SolidFlash1 extends TPflash {
       int minBetaTemIndex = 0;
 
       for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
-        if (betaMatrixTemp.get(k, 0) * FluidPhaseActiveDescriptors[k] < minBetaTem) {
-          minBetaTem = betaMatrixTemp.get(k, 0);
+        if (betaMatrixTemp[k] * FluidPhaseActiveDescriptors[k] < minBetaTem) {
+          minBetaTem = betaMatrixTemp[k];
           minBetaTemIndex = k;
         }
       }
 
       for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
         if ((minBetaTem < -1.0E-10)) {
-          betaReductionFactor = 1.0 + betaMatrixTemp.get(minBetaTemIndex, 0) / ans.get(minBetaTemIndex, 0);
+          betaReductionFactor = 1.0 + betaMatrixTemp[minBetaTemIndex] / ans[minBetaTemIndex];
         }
       }
       // logger.info("Reduction Factor " + betaReductionFactor);
-      betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
+      betaMatrixTemp = ALGEBRA.subtract(betaMatrix, ALGEBRA.scale(ans, betaReductionFactor));
 
       // logger.info("Beta after multiplying reduction Factoer");
       // betaMatrixTemp.print(10, 2);
 
-      betaMatrixOld = betaMatrix.copy();
-      betaMatrix = betaMatrixTemp.copy();
+      double[] betaMatrixOld = betaMatrix.clone();
+      betaMatrix = betaMatrixTemp.clone();
       boolean deactivatedPhase = false;
       for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
-        double currBeta = betaMatrix.get(k, 0);
+        double currBeta = betaMatrix[k];
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           // This used to be verified with abs(betamatrix.get(i,0)) < 1.0e-10
@@ -301,10 +300,10 @@ public class SolidFlash1 extends TPflash {
         do {
           iter2++;
           betaReductionFactor /= 2.0;
-          betaMatrixTemp = betaMatrixOld.minus(ans.times(betaReductionFactor));
+          betaMatrixTemp = ALGEBRA.subtract(betaMatrixOld, ALGEBRA.scale(ans, betaReductionFactor));
           betaMatrix = betaMatrixTemp;
           for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
-            system.setBeta(i, betaMatrix.get(i, 0));
+            system.setBeta(i, betaMatrix[i]);
             if (Math.abs(system.getBeta(i)) < 1.0e-10) {
               FluidPhaseActiveDescriptors[i] = 0;
             } else {
@@ -314,7 +313,11 @@ public class SolidFlash1 extends TPflash {
           Qnew = calcQ();
         } while (Qnew > Qold + 1.0e-10 && iter2 < 5);
       }
-    } while ((Math.abs(ans.norm1()) > 1e-7 && iter < 100) || iter < 2);
+      stepNorm = 0.0;
+      for (double value : ans) {
+        stepNorm += Math.abs(value);
+      }
+    } while ((Math.abs(stepNorm) > 1e-7 && iter < 100) || iter < 2);
   }
 
   /**

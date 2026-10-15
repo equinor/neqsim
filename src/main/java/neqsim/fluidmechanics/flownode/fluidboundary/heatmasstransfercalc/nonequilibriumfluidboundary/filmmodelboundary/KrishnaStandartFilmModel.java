@@ -2,6 +2,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
@@ -41,8 +42,8 @@ public class KrishnaStandartFilmModel extends
         .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
     binarySchmidtNumber = new double[2][getBulkSystem().getPhases()[0]
         .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    uMassTrans = new Matrix(neq, 1);
-    Xgij = new Matrix(neq, 4);
+    uMassTrans = new DMatrixRMaj(neq, 1);
+    Xgij = new DMatrixRMaj(neq, 4);
     this.setuMassTrans();
     uMassTransold = uMassTrans.copy();
     phiMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
@@ -61,8 +62,8 @@ public class KrishnaStandartFilmModel extends
         .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
     binarySchmidtNumber = new double[2][getBulkSystem().getPhases()[0]
         .getNumberOfComponents()][getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    uMassTrans = new Matrix(neq, 1);
-    Xgij = new Matrix(neq, 4);
+    uMassTrans = new DMatrixRMaj(neq, 1);
+    Xgij = new DMatrixRMaj(neq, 4);
     this.setuMassTrans();
     uMassTransold = uMassTrans.copy();
     phiMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,

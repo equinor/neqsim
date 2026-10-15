@@ -9,7 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.distillation.internals.PackingHydraulicsCalculator;
@@ -1179,7 +1182,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       if (best.norm <= columnResidualTolerance) {
         return best.withIterations(iteration);
       }
-      Matrix step = calculateColumnResidualStep(gasIn, liquidIn, components, unknowns, best, homotopyFactor);
+      DMatrixRMaj step = calculateColumnResidualStep(gasIn, liquidIn, components, unknowns, best, homotopyFactor);
       if (step == null) {
         return best.withIterations(iteration);
       }
@@ -1329,8 +1332,8 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param homotopyFactor continuation factor from zero to one
    * @return Newton step, or null if the least-squares solve fails
    */
-  private Matrix calculateColumnResidualStep(SystemInterface gasIn, SystemInterface liquidIn, List<String> components,
-      double[] unknowns, ColumnResidualEvaluation evaluation, double homotopyFactor) {
+  private DMatrixRMaj calculateColumnResidualStep(SystemInterface gasIn, SystemInterface liquidIn,
+      List<String> components, double[] unknowns, ColumnResidualEvaluation evaluation, double homotopyFactor) {
     int residualCount = evaluation.normalizedResiduals.length;
     int variableCount = unknowns.length;
     SparseJacobian sparseJacobian = new SparseJacobian(residualCount, variableCount);
@@ -1361,15 +1364,19 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       }
     }
     try {
-      Matrix jacobian = sparseJacobian.toDenseMatrix();
-      Matrix normalMatrix = jacobian.transpose().times(jacobian)
-          .plus(Matrix.identity(variableCount, variableCount).times(1.0e-10));
-      double[][] rhsValues = new double[residualCount][1];
-      for (int row = 0; row < residualCount; row++) {
-        rhsValues[row][0] = -evaluation.normalizedResiduals[row];
+      DMatrixRMaj jacobian = sparseJacobian.toDenseMatrix();
+      DMatrixRMaj normalMatrix = new DMatrixRMaj(variableCount, variableCount);
+      CommonOps_DDRM.multTransA(jacobian, jacobian, normalMatrix);
+      for (int variable = 0; variable < variableCount; variable++) {
+        normalMatrix.add(variable, variable, 1.0e-10);
       }
-      Matrix normalRhs = jacobian.transpose().times(new Matrix(rhsValues));
-      return normalMatrix.solve(normalRhs);
+      DMatrixRMaj rhsValues = new DMatrixRMaj(residualCount, 1);
+      for (int row = 0; row < residualCount; row++) {
+        rhsValues.set(row, 0, -evaluation.normalizedResiduals[row]);
+      }
+      DMatrixRMaj normalRhs = new DMatrixRMaj(variableCount, 1);
+      CommonOps_DDRM.multTransA(jacobian, rhsValues, normalRhs);
+      return solveDenseStep(normalMatrix, normalRhs);
     } catch (RuntimeException ex) {
       return null;
     }
@@ -1386,7 +1393,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param components active transfer components
    * @return bounded candidate unknowns
    */
-  private double[] applyColumnResidualStep(double[] unknowns, Matrix step, double damping, SystemInterface gasIn,
+  private double[] applyColumnResidualStep(double[] unknowns, DMatrixRMaj step, double damping, SystemInterface gasIn,
       SystemInterface liquidIn, List<String> components) {
     double[] candidate = unknowns.clone();
     for (int i = 0; i < candidate.length; i++) {
@@ -1959,7 +1966,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       if (best.norm <= segmentResidualTolerance) {
         return best;
       }
-      Matrix step = calculateResidualStep(gas, liquid, snapshot, components, unknowns, best);
+      DMatrixRMaj step = calculateResidualStep(gas, liquid, snapshot, components, unknowns, best);
       if (step == null) {
         return best;
       }
@@ -2071,10 +2078,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param evaluation current residual evaluation
    * @return Newton step, or null if the linear solve fails
    */
-  private Matrix calculateResidualStep(SystemInterface gas, SystemInterface liquid, TransportSnapshot snapshot,
+  private DMatrixRMaj calculateResidualStep(SystemInterface gas, SystemInterface liquid, TransportSnapshot snapshot,
       List<String> components, double[] unknowns, SegmentResidualEvaluation evaluation) {
     int dimension = unknowns.length;
-    double[][] jacobian = new double[dimension][dimension];
+    DMatrixRMaj jacobian = new DMatrixRMaj(dimension, dimension);
     for (int variable = 0; variable < dimension; variable++) {
       double step = residualVariableStep(unknowns, variable, components.size());
       double[] shifted = unknowns.clone();
@@ -2088,25 +2095,47 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
         actualStep = shifted[variable] - unknowns[variable];
       }
       if (Math.abs(actualStep) < 1.0e-20) {
-        jacobian[variable][variable] = 1.0;
+        jacobian.set(variable, variable, 1.0);
       } else {
         SegmentResidualEvaluation shiftedEvaluation = evaluateSegmentResidual(gas, liquid, snapshot, components,
             shifted, evaluation.iterations);
         for (int row = 0; row < dimension; row++) {
-          jacobian[row][variable] = (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row])
-              / actualStep;
+          jacobian.set(row, variable,
+              (shiftedEvaluation.normalizedResiduals[row] - evaluation.normalizedResiduals[row]) / actualStep);
         }
       }
     }
-    double[][] rhsValues = new double[dimension][1];
+    DMatrixRMaj rhsValues = new DMatrixRMaj(dimension, 1);
     for (int row = 0; row < dimension; row++) {
-      rhsValues[row][0] = -evaluation.normalizedResiduals[row];
+      rhsValues.set(row, 0, -evaluation.normalizedResiduals[row]);
     }
     try {
-      return new Matrix(jacobian).solve(new Matrix(rhsValues));
+      return solveDenseStep(jacobian, rhsValues);
     } catch (RuntimeException ex) {
       return null;
     }
+  }
+
+  /**
+   * Solves a square Newton system using LU without adding a numerical rank threshold.
+   *
+   * @param jacobian square coefficient matrix
+   * @param residual right-hand-side column vector
+   * @return finite Newton step, or null if factorization or the solution fails
+   */
+  private DMatrixRMaj solveDenseStep(DMatrixRMaj jacobian, DMatrixRMaj residual) {
+    LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(jacobian.getNumRows());
+    if (!solver.setA(jacobian)) {
+      return null;
+    }
+    DMatrixRMaj step = new DMatrixRMaj(jacobian.getNumCols(), residual.getNumCols());
+    solver.solve(residual, step);
+    for (int row = 0; row < step.getNumRows(); row++) {
+      if (!Double.isFinite(step.get(row, 0))) {
+        return null;
+      }
+    }
+    return step;
   }
 
   /**
@@ -2120,7 +2149,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * @param components active transfer components
    * @return bounded candidate unknowns
    */
-  private double[] applyResidualStep(double[] unknowns, Matrix step, double damping, SystemInterface gas,
+  private double[] applyResidualStep(double[] unknowns, DMatrixRMaj step, double damping, SystemInterface gas,
       SystemInterface liquid, List<String> components) {
     double[] candidate = unknowns.clone();
     for (int i = 0; i < candidate.length; i++) {
@@ -2399,7 +2428,7 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
       return scaleFilmCoefficient(baseCoefficient, diffusivity, referenceDiffusivity);
     }
     try {
-      Matrix resistanceMatrix = new Matrix(reducedDimension, reducedDimension);
+      DMatrixRMaj resistanceMatrix = new DMatrixRMaj(reducedDimension, reducedDimension);
       for (int row = 0; row < reducedDimension; row++) {
         double rowSum = 0.0;
         double referenceCoefficient = binaryFilmCoefficient(phase, row, reducedDimension, baseCoefficient,
@@ -2418,7 +2447,14 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
         resistanceMatrix.set(row, row,
             resistanceMatrix.get(row, row) + rowSum + moleFraction(phase, row) / referenceCoefficient);
       }
-      Matrix coefficientMatrix = resistanceMatrix.inverse();
+      DMatrixRMaj coefficientMatrix = new DMatrixRMaj(reducedDimension, reducedDimension);
+      LinearSolverDense<DMatrixRMaj> inverseSolver = LinearSolverFactory_DDRM.lu(reducedDimension);
+      if (!inverseSolver.setA(resistanceMatrix)) {
+        return scaleFilmCoefficient(baseCoefficient,
+            mixtureDiffusivityForComponent(phase, componentIndex, referenceDiffusivity, gasPhase),
+            referenceDiffusivity);
+      }
+      inverseSolver.invert(coefficientMatrix);
       double coefficient = coefficientMatrix.get(componentIndex, componentIndex);
       if (isFinitePositive(coefficient)) {
         return clamp(coefficient, baseCoefficient * 0.02, baseCoefficient * 50.0);
@@ -3898,15 +3934,15 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
      *
      * @return dense matrix representation
      */
-    private Matrix toDenseMatrix() {
-      double[][] dense = new double[rows][columns];
+    private DMatrixRMaj toDenseMatrix() {
+      DMatrixRMaj dense = new DMatrixRMaj(rows, columns);
       for (Map.Entry<Integer, Map<Integer, Double>> rowEntry : values.entrySet()) {
         int row = rowEntry.getKey().intValue();
         for (Map.Entry<Integer, Double> columnEntry : rowEntry.getValue().entrySet()) {
-          dense[row][columnEntry.getKey().intValue()] = columnEntry.getValue().doubleValue();
+          dense.set(row, columnEntry.getKey().intValue(), columnEntry.getValue().doubleValue());
         }
       }
-      return new Matrix(dense);
+      return dense;
     }
   }
 

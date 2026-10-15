@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -12,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
 public class CricondenBarTemp implements java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
   int neq = 0;
   int iter = 0;
   int ic02p = -100;
@@ -27,19 +29,19 @@ public class CricondenBarTemp implements java.io.Serializable {
   double TC2 = 0;
   double PC1 = 0;
   double PC2 = 0;
-  Matrix Jac;
-  Matrix fvec;
-  Matrix u;
-  Matrix uold;
-  Matrix Xgij;
+  double[][] Jac;
+  double[] fvec;
+  double[] u;
+  double[] uold;
+  double[][] Xgij;
   SystemInterface system;
   int numberOfComponents;
   int speceq = 0;
-  Matrix a = new Matrix(4, 4);
-  Matrix s = new Matrix(1, 4);
-  Matrix xg;
-  Matrix dx;
-  Matrix xcoef;
+  double[][] a = new double[4][4];
+  double[][] s = new double[1][4];
+  double[][] xg;
+  double[] dx;
+  double[][] xcoef;
 
   /**
    * Constructor for cricondenBarTemp.
@@ -52,12 +54,12 @@ public class CricondenBarTemp implements java.io.Serializable {
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     neq = numberOfComponents;
-    Jac = new Matrix(neq, neq);
-    fvec = new Matrix(neq, 1);
-    u = new Matrix(neq, 1);
-    Xgij = new Matrix(neq, 4);
+    Jac = new double[neq][neq];
+    fvec = new double[neq];
+    u = new double[neq];
+    Xgij = new double[neq][4];
     setu();
-    uold = u.copy();
+    uold = u.clone();
     // System.out.println("Spec : " +speceq);
   }
 
@@ -66,11 +68,11 @@ public class CricondenBarTemp implements java.io.Serializable {
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
-      fvec.set(i, 0,
-          Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
+      fvec[i] = Math
+          .log(system.getPhases()[0].getComponent(i).getFugacityCoefficient()
               * system.getPhases()[0].getComponent(i).getx() * system.getPressure())
-              - Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-                  * system.getPhases()[1].getComponent(i).getx() * system.getPressure()));
+          - Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
+              * system.getPhases()[1].getComponent(i).getx() * system.getPressure());
     }
   }
 
@@ -78,7 +80,6 @@ public class CricondenBarTemp implements java.io.Serializable {
    * setJac.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
     double dij = 0.0;
 
     double tempJ = 0.0;
@@ -90,7 +91,7 @@ public class CricondenBarTemp implements java.io.Serializable {
                 + system.getPhases()[0].getComponent(i).getdfugdx(j))
             + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx() - 1.0
                 + system.getPhases()[1].getComponent(i).getdfugdx(j));
-        Jac.set(i, j, tempJ);
+        Jac[i][j] = tempJ;
       }
     }
   }
@@ -100,7 +101,7 @@ public class CricondenBarTemp implements java.io.Serializable {
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
-      u.set(i, 0, system.getBeta() * system.getPhases()[0].getComponent(i).getx());
+      u[i] = system.getBeta() * system.getPhases()[0].getComponent(i).getx();
     }
   }
 
@@ -111,14 +112,14 @@ public class CricondenBarTemp implements java.io.Serializable {
     double temp = 0;
 
     for (int i = 0; i < numberOfComponents; i++) {
-      temp += u.get(i, 0);
+      temp += u[i];
     }
     system.setBeta(temp);
 
     for (int i = 0; i < numberOfComponents; i++) {
-      system.getPhases()[0].getComponent(i).setx(u.get(i, 0) / system.getBeta());
+      system.getPhases()[0].getComponent(i).setx(u[i] / system.getBeta());
       system.getPhases()[1].getComponent(i)
-          .setx((system.getPhases()[0].getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
+          .setx((system.getPhases()[0].getComponent(i).getz() - u[i]) / (1.0 - system.getBeta()));
       system.getPhases()[0].getComponent(i)
           .setK(system.getPhases()[0].getComponent(i).getx() / system.getPhases()[1].getComponent(i).getx());
       system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
@@ -137,9 +138,8 @@ public class CricondenBarTemp implements java.io.Serializable {
     init();
     setfvec();
     setJac();
-    dx = Jac.solve(fvec);
-    // dx.print(10,10);
-    u.minusEquals(dx);
-    return (dx.norm2() / u.norm2());
+    dx = ALGEBRA.solve(Jac, fvec);
+    u = ALGEBRA.subtract(u, dx);
+    return ALGEBRA.euclideanNorm(dx) / ALGEBRA.euclideanNorm(u);
   }
 }
