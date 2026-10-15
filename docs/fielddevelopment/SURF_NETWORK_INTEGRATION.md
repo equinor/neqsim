@@ -4,11 +4,11 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The current baseline is `b37a84f17ae669ddcc8d6c149b0b6813b1b22d35`.
+The baseline for the lifecycle acceptance extension is `bc579afa797f3f40bc1f4b748823fcdc337b649b`.
 Source implementation, regression evidence and field qualification are different maturity levels.
 Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
 pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
-The current increment binds explicit DNV-ST-F101 limit-state and DNV-RP-F109 on-bottom-stability
+Merged design increments bind explicit DNV-ST-F101 limit-state and DNV-RP-F109 on-bottom-stability
 inputs to those same route identities and independently checks the steady thermal resistance and
 arrival-temperature equations. The specialist screening kernels remain the calculation owners;
 none of this completes field, vendor, independent-verification or AFC qualification.
@@ -530,6 +530,69 @@ pressure route must reduce well backpressure and increase deliverability. A rout
 rejected by compressor or other hard evidence remains rejected; the test does not relax
 physical limits to obtain a feasible optimizer result.
 
+### Repeated production periods and moving host limits
+
+`FieldToFacilityOptimizationAcceptanceTest.replaysLifecyclePeriodsWithMovingHostLimits`
+reuses the ten-well fixture, one `ProcessModelSimulationEvaluator` and one
+`ProcessModelOperatingActionSetEvaluator`. It changes each production well's existing
+reservoir inlet stream by -1, -2 and -3 bara relative to its initial pressure; these
+are prescribed quasi-steady boundaries, not calculated reservoir depletion or elapsed
+time. The lean gas is SRK/classic, 90/7/3 mole percent methane/ethane/propane, initially
+330.15 K. All chokes remain at 70%, with alternating HP/LP routes. The graph, edge
+hydraulics, map objects, driver ratings and evidence tolerances are not rebuilt or retuned.
+
+| Period | Additional temporary host restriction | Required behavior |
+|---|---|---|
+| 1 | HP separator gas-handling limit set to 95% of its current inlet mass rate | Fresh vessel evidence rejects the unchanged action vector |
+| 2 | LP suction-scrubber gas-handling limit set to 95% of its current inlet mass rate | Fresh scrubber evidence rejects the unchanged action vector |
+| 3 | Shared host shaft-power budget set to 95% of current demand | Fresh shared-resource evidence rejects the unchanged action vector |
+
+Before each restriction, the test requires a converged, feasible operating point and
+export reduction exceeding 0.1% from the preceding pressure boundary. Every evaluation
+must reconverge after restoring its actions and close the field mass balance to
+1e-6 kg/s. Power evidence must match the current `ProcessModel` total, including both
+production compressors and the mapped injection utility pump. Each period restores
+the original host limits and requires a new feasible evaluation. Finally it restores
+the reservoir boundaries and checks export recovery within 1e-5 relative tolerance.
+Earlier immutable evidence remains historical evidence; it must not be reused as
+acceptance of the changed period. New power samples carry new calculation identifiers.
+This is a lower-level repeated-solve regression, not reuse of an accepted search across
+periods. `ProcessModelOperatingEnvelopeLifecycleStudy` still requires independently
+configured period evaluators and fresh optimize/replay/slice evidence as described in
+the [optimization guide](../process/optimization/OPTIMIZATION_OVERVIEW.md).
+
+Run the fixture with `./mvnw -Dtest=FieldToFacilityOptimizationAcceptanceTest test`.
+Enable the test class's Log4j logger at INFO to retain per-period export in kg/hr and
+shared power in kW (the default test logging configuration is silent). Its maps, limits and
+depletion steps are synthetic integration inputs. The injection utility here is a
+fixed-pressure liquid pumping network, **not** a live reservoir injection well; the
+separate `FieldWellNetworkProcessUnitTest` covers controlled live multi-zone injection.
+Its `replaysLiveInjectionPeriodsWithMovingHostPowerBudget` case holds the primary route
+and synthetic pump curve fixed while raising both zone pressures by 5, 10 and 15 bara.
+It updates each layer through `setReservoirPressure`, checks the owning stream is
+synchronized, requires injection reduction beyond 0.1% per step, 1e-8 kg/s network mass
+closure, normalized two-zone allocation and no flagged fracture risk. Each period's
+fresh pump-power evidence rejects a temporary budget at 95% of demand and becomes
+feasible again when the budget is restored. Finally the original pressures recover
+rate and power within 1e-4 relative tolerance. Run it with
+`./mvnw -Dtest=FieldWellNetworkProcessUnitTest test`.
+These checks establish repeated-solve conservation and expected trends, not vendor-map
+qualification, a production forecast, coupled reservoir material balance, optimal
+lifecycle economics or transient validation. Durable candidate storage and fresh replay
+remain owned by the #4188/#3154 optimization workflow (including merged #4312); this
+fixture adds no competing persistence or optimization layer.
+
+Local Linux OpenJDK 17.0.20 execution on 2026-10-15, integrating these tests with
+#4342 head `2273331300be18472dc684f6ddadd898b409eb20`, produced the following rounded
+values. They are reproducibility observations, not calibrated reference data or new
+hard-coded test targets; the acceptance criteria above remain the gates.
+
+| Production pressure decrement (bara) | Export (kg/hr) | Total host power (kW) | Temporary restriction feasible? |
+|---|---|---|---|
+| 1 | 772.171922 | 49.446343 | No — HP separator |
+| 2 | 763.585471 | 49.298065 | No — LP suction scrubber |
+| 3 | 755.035017 | 49.149784 | No — shared power |
+
 ## Dependency-ordered continuation
 
 1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
@@ -538,9 +601,12 @@ physical limits to obtain a feasible optimizer result.
    The canonical multi-edge line-up contract now supports branch/loop outage and brownfield
    actions through #4188/#3154 optimization and is exercised on live production and
    multi-zone injection wells with controlled reservoir-pressure updates. Typed configured
-   pump/compressor maps and shared `ProcessModel` power accounting are now supported; next
-   qualify those maps and scale the same contract to shared host capacity constraints and
-   multi-period lifecycle evidence.
+   pump/compressor maps and shared `ProcessModel` power accounting are now supported.
+   Ten-well production and separate live two-zone injection periods now have synthetic
+   moving separator, scrubber and shared-power acceptance coverage. Next qualify the maps
+   and connect production and live multi-zone injection in one reservoir-owned lifecycle
+   case, using the existing lifecycle and persisted-candidate contracts rather than a
+   second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic
