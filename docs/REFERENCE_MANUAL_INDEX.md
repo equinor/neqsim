@@ -605,6 +605,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 | --- | --- | --- |
+| NeqSim Requests for Comments | [docs/rfcs/index.md](rfcs/index.md) | Architecture proposals, recorded decisions and qualification boundaries |
+| NRC-2937: TP-flash state contracts | [docs/rfcs/2937-tpflash-state-contracts.md](rfcs/2937-tpflash-state-contracts.md) | Proposed shared fluid, hydrate and process-consumer contracts; not accepted |
 | **Engineering Hub** | [docs/engineering/index.md](engineering/index.md) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
 | **Engineering Guide** | [docs/engineering/guide.md](engineering/guide.md) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
 | **Current Engineering Capabilities** | [docs/engineering/current-capabilities.md](engineering/current-capabilities.md) | **Implemented entry points, discipline coverage, qualification layers, readiness levels, and accountable-review boundaries** |

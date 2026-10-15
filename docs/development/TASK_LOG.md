@@ -59,6 +59,14 @@ requirement`, or `confidential compressor route`.
 **Keywords:** compressor, speed solve, invalid chart, optimizer, infeasible trials, lift curves, CI, 4326
 **Solution:** `Compressor.SpeedSolveException`, `ProductionOptimizer` candidate rejection and hard convergence gate, and conditional chart-setup process runs in `FlowRateOptimizer`.
 **Notes:** Reproduced all three failing optimizer cases on PR #4326 before repair. A no-valid-map trial is rejected without reading stale objectives or downstream constraints; unrelated exceptions still propagate. Capacity analysis and optional output validation cannot bypass the pressure-target convergence requirement. Repeated table setup reuses existing charts without rerunning an invalid preceding probe. Updated compressor/optimization guides, the compressor skill and the generated coverage inventory; regression tests cover stale outputs, hard convergence, recovery and chart reuse.
+### 2026-10-14 — Propose shared flash and process state contracts
+**Type:** G (Workflow)
+**Keywords:** NRC-2937, TPflash, phase inventory, hydrate, inactive streams, coordinated PR review
+**Solution:** `docs/rfcs/2937-tpflash-state-contracts.md` and the RFC index.
+**Notes:** Record the proposed state ownership, physical acceptance, compatibility and process-consumer contracts shared by PRs #4306, #4320 and #4277. Preserve explicit physical model boundaries and separate model corrections from solver qualification. Status remains PROPOSED; this document supplies no architecture acceptance, independent approval or merge qualification.
+
+The RFC index is the 51st first-level landing page and participates in the navigation contracts. Its title is rendered from front matter rather than duplicated as an H1; the inventory assertion and explicit RFC-index membership check cover the new page. Correct the exchanger method's inline code span in the proposal.
+
 
 ### 2026-10-14 — Preserve production proposal guards across interrupted cycles
 **Type:** G (Workflow)
