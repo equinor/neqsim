@@ -189,7 +189,7 @@ def render_catalog(equipment: Sequence[JavaType]) -> str:
         "Regenerate this page after adding or removing equipment:",
         "",
         "```text",
-        "python devtools/generate_equipment_documentation_catalog.py",
+        "uv run devtools/generate_equipment_documentation_catalog.py",
         "```",
         "",
         "## Equipment by source package",
