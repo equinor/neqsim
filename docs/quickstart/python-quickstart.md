@@ -155,20 +155,50 @@ print(f"{comp_name:<12}")  # Works!
 
 ## Working with Units
 
+This standalone example uses an SRK hydrocarbon mixture. Set the stream's state
+and flow before running it, then read properties from its **current fluid**:
+`run()` may replace the fluid object. Rerun and initialize properties again after
+changing temperature, pressure, composition, or flow.
+
 ```python
-# Temperature: always Kelvin internally
-temp_kelvin = fluid.getTemperature()
-temp_celsius = fluid.getTemperature() - 273.15
+import math
+from neqsim import jneqsim
 
-# Setting with units
-stream.setTemperature(30.0, "C")      # Celsius
-stream.setPressure(50.0, "bara")      # bara
+fluid = jneqsim.thermo.system.SystemSrkEos(298.15, 10.0)  # K, bara
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+fluid.setMixingRule("classic")
 
-# Getting with units
-density = fluid.getDensity("kg/m3")   # Explicit unit; correction is a separate model choice
-viscosity = fluid.getViscosity("cP")
-enthalpy = fluid.getEnthalpy("kJ/kg")
+stream = jneqsim.process.equipment.stream.Stream("units example", fluid)
+stream.setFlowRate(1000.0, "kg/hr")
+stream.setTemperature(30.0, "C")
+stream.setPressure(50.0, "bara")       # Absolute pressure, not gauge pressure
+stream.run()                          # TP flash at the specified stream state
+
+solved_fluid = stream.getFluid()
+solved_fluid.initProperties()          # Initialize caloric and transport properties
+temp_kelvin = solved_fluid.getTemperature()
+temp_celsius = solved_fluid.getTemperature("C")
+pressure = solved_fluid.getPressure("bara")
+density = solved_fluid.getDensity("kg/m3")
+viscosity = solved_fluid.getViscosity("cP")
+enthalpy = solved_fluid.getEnthalpy("kJ/kg")  # Specific enthalpy, not an energy rate
+
+assert math.isclose(temp_kelvin, 303.15, abs_tol=1e-8)
+assert math.isclose(temp_celsius, 30.0, abs_tol=1e-8)
+assert math.isclose(pressure, 50.0, abs_tol=1e-8)
+assert math.isfinite(density) and density > 0.0
+assert math.isfinite(viscosity) and viscosity > 0.0
+assert math.isfinite(enthalpy)          # Its sign depends on the reference state
+print(f"T = {temp_celsius:.2f} C, P = {pressure:.2f} bara")
+print(f"Density = {density:.3f} kg/m3, viscosity = {viscosity:.5f} cP")
+print(f"Specific enthalpy = {enthalpy:.3f} kJ/kg")
 ```
+
+Choosing `"kg/m3"` changes the density unit, not the density model; Peneloux
+volume correction is a separate model choice. These checks demonstrate API and
+unit handling, not experimental validation of this fluid model.
 
 ## Next Steps
 
