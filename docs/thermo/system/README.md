@@ -362,6 +362,13 @@ SystemInterface copy = fluid.clone();
 copy.setTemperature(400.0);
 ```
 
+EOS component clones retain independent attraction and covolume derivative work
+arrays. Initializing a clone at a different temperature therefore cannot overwrite
+the source component's cached composition curvature. Ordinary SRK-CPA component
+clones also own each row of their association composition derivatives. This is a
+component-storage guarantee; it does not establish thread safety for every phase
+cache or for concurrent changes to shared mixing-rule configuration.
+
 ---
 
 ## Related Documentation
