@@ -279,7 +279,12 @@ class SaltSaturationTest {
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
     SaltSaturationResult result = operations.calcSaltSaturationWithDiagnostics(saltName);
     assertTrue(result.getInitialSaturationRatio() < 1.0, "The addition test must start undersaturated");
-    assertTrue(result.isConverged(), "Salt saturation must meet its own convergence criterion");
+    assertTrue(result.isConverged(),
+        saltName + " salt saturation did not meet its convergence criterion: initial SR="
+            + result.getInitialSaturationRatio() + ", final SR=" + result.getFinalSaturationRatio() + ", residual="
+            + result.getAbsoluteSaturationRatioResidual() + ", bracket iterations=" + result.getBracketIterations()
+            + ", solve iterations=" + result.getSolveIterations() + ", iteration limit reached="
+            + result.isIterationLimitReached());
     operations.TPflash();
     system.initProperties();
 
