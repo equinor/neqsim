@@ -5,6 +5,18 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 # Task Log
 
+### 2026-10-16 — Shared-reservoir production and injection acceptance
+**Type:** E (Feature)
+**Keywords:** SURF, production, injection, reservoir inventory, shared power, accepted period
+**Solution:** `FieldWellNetworkProcessUnitTest.conservesSharedReservoirAcrossProductionInjectionPeriods`
+composes existing live production/injection networks with one `SimpleReservoir` and a multi-area
+`ProcessModel`; the integration guide and network routing skill document the executable pattern.
+**Notes:** Synthetic mapped host-compressor and injection-pump demand share one current power budget.
+Rejected/recovered steady trials cannot advance reservoir time or component inventory; converged rates
+are transferred before one accepted material-balance step, followed by synchronized well boundaries.
+Component closure and opposite production/injection pressure response are regression gates, not field,
+map, injectivity, energy or timestep qualification. Persistence remains with the existing optimization lane.
+
 > **Purpose:** Persistent memory across sessions. Every solved task gets an entry here
 > so future sessions can find prior solutions instead of starting from scratch.
 >

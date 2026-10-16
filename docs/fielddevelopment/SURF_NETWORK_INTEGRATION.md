@@ -4,12 +4,12 @@ description: "Current functionality, integration decisions, hydraulic fidelity a
 ---
 
 This is the implementation and capability audit for [campaign #4228](https://github.com/equinor/neqsim/issues/4228).
-The baseline for the lifecycle acceptance extension is `bc579afa797f3f40bc1f4b748823fcdc337b649b`.
+The baseline for the shared-reservoir acceptance extension is `932604c3240549ccad1f9ce5ffbe6f20528f631e`.
 Source implementation, regression evidence and field qualification are different maturity levels.
 Merged increments supply edge-local hydraulic fidelity, typed field/equipment identity, live well
 pressure-rate coupling, same-topology hydraulic comparison and a guarded steady-to-transient handoff.
 Merged design increments bind explicit DNV-ST-F101 limit-state and DNV-RP-F109 on-bottom-stability
-inputs to those same route identities and independently checks the steady thermal resistance and
+inputs to those same route identities and independently check the steady thermal resistance and
 arrival-temperature equations. The specialist screening kernels remain the calculation owners;
 none of this completes field, vendor, independent-verification or AFC qualification.
 
@@ -593,6 +593,67 @@ hard-coded test targets; the acceptance criteria above remain the gates.
 | 2 | 763.585471 | 49.298065 | No — LP suction scrubber |
 | 3 | 755.035017 | 49.149784 | No — shared power |
 
+### Shared-reservoir production and injection acceptance
+
+`FieldWellNetworkProcessUnitTest.conservesSharedReservoirAcrossProductionInjectionPeriods`
+connects the existing production and live two-zone injection fixtures to one `SimpleReservoir`.
+The reservoir owns all component inventory and its constant-volume, constant-temperature
+material balance; the two canonical field networks own pressure/rate equilibrium. A normal
+`ProcessModel` combines the production/host and injection `ProcessSystem` areas. The host
+compressor and injection pump both use synthetic charts and contribute to one current
+shared shaft-power sample. No new reservoir model, scheduler, optimizer or evidence store
+is introduced.
+
+The initial reservoir uses SRK/classic at 330.15 K and 150 bara, with 1,000 m3 gas and
+100 m3 aqueous phase volumes. The base gas proportions are 90/7/3 methane/ethane/propane;
+water is added before resetting the mixing rule and flashing the inventory. Injection
+is pure water at 298.15 K, retaining the reservoir's complete ordered component slate
+with zero hydrocarbon fractions. Both completion zones receive the same reservoir
+pressure; they represent parallel injectivity allocations, not independent geological
+reservoirs. The initial injection-node pressure guess is above reservoir pressure so
+the initial live well is not shut in. The existing Darcy pipe choices, geometry, route
+selectors, injectivity parameters, fracture limits and charts remain unchanged during
+the periods.
+
+Each period first runs the normal steady evaluator. A temporary power budget at 95%
+of current compressor-plus-pump demand must reject the candidate; restoring the budget
+must recover feasibility and produce fresh evidence. Those steady trials must leave
+reservoir time and every component inventory exactly unchanged. Only after recovery
+does the test transfer the converged production and injection mass rates to the existing
+reservoir streams and call `SimpleReservoir.runTransient` once. In particular, the
+production `WellFlow` inlet stream's placeholder rate is not the solved production rate.
+The explicit component check is
+
+$$n_{i,k+1}=n_{i,k}+\Delta t_k(\dot n_{i,\mathrm{inj}}-\dot n_{i,\mathrm{prod}}).$$
+
+Here $n_i$ is component inventory in mol, $\dot n_i$ is molar flow in mol/s, and
+$\Delta t$ is seconds. The 60, 120 and 240 s committed steps close each component to
+`max(1e-8 mol, 1e-10 * abs(expected inventory))`; both network mass residuals must be
+below 1e-8 kg/s. Following each step, the reservoir-owned producer stream and both
+injection-layer pressures feed the next converged solve. Production deliverability
+must change in the same direction as reservoir pressure, and injection acceptance in
+the opposite direction. Zone allocation, fracture flags, route selection and chart
+identity are also checked.
+
+The initial Linux/OpenJDK 17 run produced the following post-step observations. These
+small changes are expected for this short, low-rate synthetic case; the conservation
+and trend assertions above, not these rounded observations, are the regression gates.
+
+| Elapsed time (s) | Reservoir pressure (bara) | Production (kg/s) | Injection (kg/s) | Shared shaft power (kW) |
+| --- | --- | --- | --- | --- |
+| 60 | 149.998762 | 0.017727467 | 0.014271266 | 3.004354 |
+| 180 | 149.996287 | 0.017726814 | 0.014271868 | 3.004328 |
+| 420 | 149.991337 | 0.017725513 | 0.014273199 | 3.004280 |
+
+This is a runnable synthetic coupling example and conservation/trend regression, not
+a calibrated reservoir forecast, qualified liquid injectivity law, OEM-map qualification,
+energy-balance qualification or timestep-refinement study. Holding accepted rates during
+each inventory step is an explicit quasi-steady approximation, not an implicit coupled
+transient solve. Reservoir advancement must remain outside steady candidate evaluation;
+production/injection physics must not also be advanced through a second network forecast.
+Persistent period acceptance and changed-input revalidation remain owned by #4188/#3154
+and their existing ledger, including #4359.
+
 ## Dependency-ordered continuation
 
 1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
@@ -603,10 +664,11 @@ hard-coded test targets; the acceptance criteria above remain the gates.
    multi-zone injection wells with controlled reservoir-pressure updates. Typed configured
    pump/compressor maps and shared `ProcessModel` power accounting are now supported.
    Ten-well production and separate live two-zone injection periods now have synthetic
-   moving separator, scrubber and shared-power acceptance coverage. Next qualify the maps
-   and connect production and live multi-zone injection in one reservoir-owned lifecycle
-   case, using the existing lifecycle and persisted-candidate contracts rather than a
-   second scheduler or optimizer.
+   moving separator, scrubber and shared-power acceptance coverage. A shared-reservoir
+   production/live-injection case now checks component inventory and accepted-step ownership.
+   Next qualify the maps and injectivity laws, add timestep-refinement evidence and
+   map-region/driver-limit migration, and connect this case to the existing lifecycle
+   and persisted-candidate contracts rather than a second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic
