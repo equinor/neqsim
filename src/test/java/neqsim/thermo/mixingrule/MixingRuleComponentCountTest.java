@@ -83,30 +83,47 @@ class MixingRuleComponentCountTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Cubic and Huron-Vidal rules also need rebuilding after the component count changes.
+   * Non-electrolyte setup may initialize component data before rebuilding interaction matrices.
    *
    * @param mixingRule selected mixing rule number
    */
   @ParameterizedTest
   @ValueSource(ints = {2, 4, 10})
-  void nonElectrolyteRulesRejectComponentGrowth(int mixingRule) {
+  void nonElectrolyteRulesAllowComponentPreparationBeforeRefresh(int mixingRule) {
     SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 0.9);
     fluid.addComponent("ethane", 0.1);
     fluid.setMixingRule(mixingRule);
     fluid.addComponent("CO2", 0.01);
 
-    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> fluid.init(0));
-    assertRecoveryMessage(failure, 2, 3);
+    // Characterization and catalog validation use init(0) before final mixing-rule configuration.
+    fluid.init(0);
     fluid.setMixingRule(mixingRule);
     fluid.init(0);
     fluid.init(1);
     assertTrue(Double.isFinite(fluid.getZ()));
   }
 
-  /** Removing a species must not silently use the old component-indexed parameters. */
+  /**
+   * Electrolyte component removal must still reject stale species-indexed parameters.
+   *
+   * @param model electrolyte model selector
+   */
+  @ParameterizedTest
+  @ValueSource(ints = {0, 1, 2, 3, 4})
+  void electrolyteComponentRemovalRequiresRefresh(int model) {
+    SystemInterface fluid = brine(model);
+    fluid.setMixingRule(model < 2 ? 4 : 10);
+    fluid.removeComponent("CO2");
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> fluid.init(0));
+    assertRecoveryMessage(failure, 4, 3);
+    assertThrows(IllegalStateException.class, () -> fluid.init(1));
+  }
+
+  /** Non-electrolyte projection can prepare component data before restoring named interactions. */
   @Test
-  void componentRemovalRequiresRefresh() {
+  void nonElectrolyteComponentRemovalAllowsPreparationBeforeRefresh() {
     SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 0.8);
     fluid.addComponent("ethane", 0.1);
@@ -114,8 +131,7 @@ class MixingRuleComponentCountTest extends neqsim.NeqSimTest {
     fluid.setMixingRule(2);
     fluid.removeComponent("ethane");
 
-    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> fluid.init(0));
-    assertRecoveryMessage(failure, 3, 2);
+    fluid.init(0);
     fluid.setMixingRule(2);
     fluid.init(0);
     fluid.init(1);

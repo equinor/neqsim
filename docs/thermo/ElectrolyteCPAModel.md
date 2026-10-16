@@ -37,11 +37,14 @@ system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composi
 cover the final component set.
 
 If the rule was selected first and the component count subsequently changes,
-`init(...)` now throws an `IllegalStateException` reporting the configured and
+Fürst/electrolyte-CPA `init(...)` throws an `IllegalStateException` reporting the configured and
 current counts and the recovery steps. Direct electrolyte `calcWij(...)` calls
 also reject this stale state. Previously the reported four-to-eight-component
-case failed with an `ArrayIndexOutOfBoundsException`. The count check also applies
-to classical and Huron–Vidal EOS interaction rules, including component removal.
+case failed with an `ArrayIndexOutOfBoundsException`. The check covers species
+addition and removal in both Fürst phase implementations and their electrolyte
+CPA subclasses. It is not a global guard on ordinary cubic-EOS initialization:
+non-electrolyte component projection, characterization, and stream-union setup
+retain their existing initialization sequence.
 
 To recover, complete reaction initialization, call `createDatabase(true)`, and
 reapply the chosen mixing rule (10 for electrolyte CPA). Apply any custom
@@ -57,7 +60,7 @@ chemical-reaction topology guard still requires `chemicalReactionInit()` again
 when component identities change after chemistry was initialized.
 
 Regression coverage: `MixingRuleComponentCountTest` checks all five Fürst/CPA
-electrolyte variants, explicit recovery, unchanged initialized properties and
+electrolyte variants, species removal, explicit recovery, unchanged initialized properties and
 inventories relative to a correctly ordered setup, and preservation of custom
 parameters when stale state is rejected.
 

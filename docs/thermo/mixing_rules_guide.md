@@ -91,16 +91,20 @@ fluid.setMixingRule("WS", "NRTL");
 
 Configure interaction-based mixing rules after the final component set is known.
 In reactive systems, `chemicalReactionInit()` can add species, so call it before
-`createDatabase(true)` and `setMixingRule(...)`. If components are added or removed
-after configuration, EOS initialization rejects the stale rule with an
-`IllegalStateException` that reports both component counts and the recovery steps.
+`createDatabase(true)` and `setMixingRule(...)`. For Fürst/electrolyte-CPA phases,
+adding or removing components after configuration makes the ionic interaction
+matrices stale. Initialization rejects this state with an `IllegalStateException`
+that reports both component counts and the recovery steps.
 Rebuild the database and reapply the rule, then restore any custom interaction
 parameters and call `init(0)` before further calculations. Same-count replacements
 or renaming also require rebuilding, although the count check cannot detect them.
 
 Changing only the amounts of existing components does not require a rebuild.
-The zero-interaction `NO` rule does not depend on fitted pair matrices and is
-exempt from this EOS count check. See the
+This diagnostic is local to the electrolyte phase family and direct ionic
+interaction recalculation. Ordinary cubic-EOS initialization retains its existing
+behavior, including component preparation with `init(0)` before rebuilding the
+rule. The ordinary zero-interaction `NO` rule is also unchanged. These paths do
+not acquire automatic parameter repair or a new general topology guarantee. See the
 [electrolyte CPA initialization guidance](ElectrolyteCPAModel.md#reaction-species-and-mixing-rule-initialization-order)
 for the reaction-specific ordering and regression coverage.
 

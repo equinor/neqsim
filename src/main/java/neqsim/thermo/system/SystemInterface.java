@@ -763,9 +763,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * <p>
    * This call can add reaction species. Configure the component database and mixing rule afterwards. If a mixing rule
-   * was already selected and the component count changes, EOS initialization rejects its stale interaction matrices
-   * with an {@link IllegalStateException}. Re-run {@code createDatabase(true)} and {@code setMixingRule(...)} before
-   * initialization or a flash, then reapply any custom interaction parameters.
+   * was already selected and the component count changes, Furst/electrolyte-CPA initialization rejects its stale
+   * interaction matrices with an {@link IllegalStateException}. Re-run {@code createDatabase(true)} and
+   * {@code setMixingRule(...)} before initialization or a flash, then reapply any custom interaction parameters.
    * </p>
    *
    * <p>
