@@ -236,7 +236,7 @@ public class MaterialLayer implements java.io.Serializable {
   }
 
   /**
-   * Gets the specific heat capacity (Cp).
+   * Gets the specific heat capacity (Cv).
    *
    * @return Specific heat capacity in J/(kg·K)
    * @deprecated Use {@link #getSpecificHeatCapacity()} instead
@@ -247,7 +247,7 @@ public class MaterialLayer implements java.io.Serializable {
   }
 
   /**
-   * Sets the specific heat capacity.
+   * Sets the specific heat capacity (Cv).
    *
    * @param Cv Specific heat capacity in J/(kg·K)
    * @deprecated Use {@link #setSpecificHeatCapacity(double)} instead

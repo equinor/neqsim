@@ -1503,12 +1503,11 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public int getNumberOfComponents();
 
   /**
-   * Getter for property <code>numberOfMoles</code>.
+   * Getter for property <code>totalNumberOfMoles</code>.
    *
    * @return a double
    * @deprecated Replaced by {@link getTotalNumberOfMoles}
    */
-  @Deprecated
   public default double getNumberOfMoles() {
     return getTotalNumberOfMoles();
   }

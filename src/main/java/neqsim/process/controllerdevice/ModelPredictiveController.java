@@ -877,17 +877,6 @@ public class ModelPredictiveController extends NamedBaseClass
   }
 
   /**
-   * @deprecated Use {@link #setPreferredControlVector(double...)} to configure the nominal control point. This method
-   * is retained for backwards compatibility with earlier snapshots of the MPC implementation.
-   *
-   * @param references preferred control levels for the energy terms
-   */
-  @Deprecated
-  public void setEnergyReferenceVector(double... references) {
-    setPreferredControlVector(references);
-  }
-
-  /**
    * Retrieve the ordered list of configured control names.
    *
    * @return unmodifiable list of control names
@@ -1329,17 +1318,6 @@ public class ModelPredictiveController extends NamedBaseClass
     }
     this.minMove = minDelta;
     this.maxMove = maxDelta;
-  }
-
-  /**
-   * @deprecated Use {@link #setPreferredControlValue(double)} when configuring the MPC economic target. This method is
-   * kept for compatibility with earlier code samples.
-   *
-   * @param reference preferred steady-state control value for the single-input controller
-   */
-  @Deprecated
-  public void setEnergyReference(double reference) {
-    setPreferredControlValue(reference);
   }
 
   /**
