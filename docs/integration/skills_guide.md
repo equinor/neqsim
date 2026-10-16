@@ -1125,12 +1125,12 @@ stidapi:
 
 ```bash
 # Download documents for specific equipment tags
-python devtools/stid_download.py \
+uv run --project devtools --locked devtools/stid_download.py \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --tags 35-KA001A 35-KA001B
 
 # Download + convert to PNG for AI image analysis
-python devtools/stid_download.py \
+uv run --project devtools --locked devtools/stid_download.py \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --tags 35-KA001A --convert-png
 ```
@@ -1138,7 +1138,7 @@ python devtools/stid_download.py \
 ### Download by Document Number
 
 ```bash
-python devtools/stid_download.py \
+uv run --project devtools --locked devtools/stid_download.py \
     --task-dir task_solve/2026-04-19_my_task \
     --inst GRANE --docs E001-AS-P-XB-00001-01
 ```

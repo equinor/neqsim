@@ -896,6 +896,25 @@ mechanical-force diagnostic retains its documented six gas/liquid columns. Its b
 only to the current trial. Callers must supply trial section clones and synchronize configuration on
 the equations instance.
 
+Every internal gas/oil/water face also has an immutable directional transport entry. It keeps
+forward and reverse mass transport nonnegative, separates advective momentum from pressure traction,
+and records the two donor masses and momenta used by the free flux. The experimental opt-in
+`UnsplitTransientSolver` complementarity path augments the cell state with signed-direction mass,
+advective momentum and donor multiplier variables for those faces. Present donors use the
+normalized conservative advection row; an exactly absent donor uses an exact zero-momentum and
+donor-presence row without an inventory floor. The solved flux replaces the free internal flux in
+both neighboring cells and is carried into independent prepared-step verification.
+
+This is a numerical foundation, not a physical qualification. Exact-bound regressions now cover
+phase disappearance after transporting only the available mass, an initially absent donor, and
+reversal to a present opposite donor. Nonnegative variables may land exactly on zero, and the
+signed free flux refreshes the donor direction between frozen Jacobians; rejected line-search
+trials cannot mutate the accepted choices. No inventory threshold or accepted-mass clipping is
+used. Six unchanged 0.1 s Tengesdal lanes pass, but the directly affected nine unchanged
+five-second cases still fail line search at 0.63125--1.83515625 s. The full 15-case gate therefore
+remains failed. Do not infer 180/600 s severe-slugging, restart or coupled-pigging capability from
+the augmented short-step regressions.
+
 `TwoFluidUnsplitModelAdapter.prepareStep` checks a converged candidate independently against the
 current selected-time operator and endpoint volume closure, then returns defensive endpoint clones and
 the exact phase transport ledger with inventories integrated over each cell length. It rejects

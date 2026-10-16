@@ -23,9 +23,17 @@ engineering packages.
 ## Deprecation
 
 Deprecation requires documentation of the replacement and migration path. A
-deprecated public contract remains supported for at least one normal release
-cycle and, when included in an LTS release, until the next LTS line unless a
-security or correctness issue makes that unsafe.
+deprecated public contract remains supported through at least one subsequent
+minor- or major-version release after the deprecation is announced. A
+patch-version release does not satisfy this minimum. For the current NeqSim
+release workflow, count the minor- or major-version release when it is published
+using the version set in the POM. Removal is a separate breaking change and
+must follow the rules below, including a new major contract version.
+
+An LTS release does not by itself extend this minimum period. If the contract
+has an explicit LTS support commitment, keep supporting it for that LTS line
+until its published end-of-support date, unless a security or correctness issue
+makes that unsafe.
 
 ## Breaking changes
 

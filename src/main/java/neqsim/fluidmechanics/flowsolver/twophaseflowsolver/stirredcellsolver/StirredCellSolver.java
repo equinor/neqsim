@@ -2,7 +2,7 @@ package neqsim.fluidmechanics.flowsolver.twophaseflowsolver.stirredcellsolver;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
 import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver;
 import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhasePipeFlowSolver;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
@@ -20,10 +20,10 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StirredCellSolver.class);
-  Matrix diffMatrix;
+  DMatrixRMaj diffMatrix;
   double[][] dn;
   int iter = 0;
-  Matrix[] diff4Matrix;
+  DMatrixRMaj[] diff4Matrix;
   double[][][] xNew;
   protected double[][] oldMass;
   protected double[][] oldComp;
@@ -65,7 +65,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
     oldMass = new double[2][nodes];
     oldComp = new double[2][nodes];
     oldImpuls = new double[2][nodes];
-    diff4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    diff4Matrix = new DMatrixRMaj[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
     oldEnergy = new double[2][nodes];
     oldVelocity = new double[2][nodes];
     oldDensity = new double[2][nodes];

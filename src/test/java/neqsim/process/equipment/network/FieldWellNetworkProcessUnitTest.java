@@ -19,6 +19,14 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimizer.PlantConstraintDefinition;
+import neqsim.process.util.optimizer.PlantConstraintEvidence;
+import neqsim.process.util.optimizer.PlantConstraintParticipant;
+import neqsim.process.util.optimizer.PlantConstraintScope;
+import neqsim.process.util.optimizer.PlantSharedResourceEvidence;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator;
+import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.EvaluationResult;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -269,6 +277,89 @@ class FieldWellNetworkProcessUnitTest {
     assertTrue(unit.solved(), unit.getLastCouplingResult().getMessage());
     assertFalse(injectionWell.getZoneFractureRisk()[0]);
     assertFalse(injectionWell.getZoneFractureRisk()[1]);
+  }
+
+  /** Repeated live injection periods must resample pump demand and preserve controlled reservoir ownership. */
+  @Test
+  void replaysLiveInjectionPeriodsWithMovingHostPowerBudget() {
+    WellFlow well = createConfiguredInjectionWell();
+    FieldWellNetworkProcessUnit unit = createConfiguredInjectionUnit(well);
+    ProcessSystem injection = new ProcessSystem("injection field");
+    injection.add(unit);
+    ProcessModel model = new ProcessModel();
+    model.add("Injection", injection);
+    model.run();
+    assertTrue(model.isModelConverged(), couplingDiagnostic(unit));
+    double originalRate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+    double originalPower = model.getPower("kW");
+    assertTrue(Double.isFinite(originalPower) && originalPower > 0.0);
+    Object pumpChart = unit.getHydraulicNetwork().getPipe("injection pump").getPumpModel().getPumpChart();
+    final double[] budgetKw = {originalPower * 2.0};
+    PlantConstraintDefinition power = PlantConstraintDefinition
+        .builder("injection-shaft-power", PlantConstraintScope.sharedResource("Host", "injection power"))
+        .aggregationPolicy(PlantConstraintDefinition.AggregationPolicy.SHARED_BUDGET)
+        .limitDirection(PlantConstraintDefinition.LimitDirection.MAXIMUM)
+        .category(PlantConstraintDefinition.Category.OPERATING).severity(ConstraintSeverity.HARD).unit("kW")
+        .basis("compressor and pump shaft power").provenance("synthetic injection period budget")
+        .participant(PlantConstraintParticipant.direct("Injection", "kW", "compressor and pump shaft power")).build();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addPlantConstraint(power,
+        (process, calculationId) -> PlantSharedResourceEvidence.fromProcessModelShaftPower(power, calculationId,
+            budgetKw[0], process, process.isModelConverged(), "synthetic injection period budget")
+            .toPlantConstraintSample());
+    double previousRate = originalRate;
+    try {
+      for (int period = 1; period <= 3; period++) {
+        for (int zone = 0; zone < 2; zone++) {
+          double reservoirPressure = 100.0 + zone * 10.0 + period * 5.0;
+          well.getLayer(zone).setReservoirPressure(reservoirPressure, "bara");
+          assertEquals(reservoirPressure, well.getLayer(zone).getReservoirPressure("bara"), 0.0);
+          assertEquals(reservoirPressure, well.getLayer(zone).stream.getPressure("bara"), 0.0);
+        }
+        EvaluationResult available = evaluator.evaluate(new double[0]);
+        assertTrue(available.isSimulationConverged(), couplingDiagnostic(unit));
+        assertTrue(available.isFeasible());
+        double rate = unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+        assertTrue(rate > 0.0 && rate < previousRate * 0.999,
+            "Higher reservoir pressure must reduce injection beyond solver noise");
+        previousRate = rate;
+        assertEquals(0.0, unit.getLastCouplingResult().getMassBalanceResidualKgS(), 1.0e-8);
+        assertEquals(1.0, well.getZoneAllocationFractions()[0] + well.getZoneAllocationFractions()[1], 1.0e-12);
+        assertFalse(well.getZoneFractureRisk()[0]);
+        assertFalse(well.getZoneFractureRisk()[1]);
+        PlantConstraintEvidence before = available.getPlantConstraintEvidence().get(0);
+        assertTrue(before.hasAvailableEvidence());
+        double periodPower = model.getPower("kW");
+        assertTrue(Double.isFinite(periodPower) && periodPower > 0.0);
+        assertEquals(periodPower, before.getSample().getSampledValue(), 1.0e-9);
+        assertEquals(unit.getPower("kW"), periodPower, 1.0e-9);
+        budgetKw[0] = periodPower * 0.95;
+        EvaluationResult restricted = evaluator.evaluate(new double[0]);
+        assertTrue(restricted.isSimulationConverged(), couplingDiagnostic(unit));
+        assertFalse(restricted.isFeasible());
+        PlantConstraintEvidence after = restricted.getPlantConstraintEvidence().get(0);
+        assertFalse(after.isFeasible());
+        assertEquals(budgetKw[0], after.getSample().getApplicableLimit(), 0.0);
+        assertFalse(before.getSample().getCalculationId().equals(after.getSample().getCalculationId()));
+        assertTrue(before.isFeasible());
+        assertEquals(originalPower * 2.0, before.getSample().getApplicableLimit(), 0.0);
+        budgetKw[0] = originalPower * 2.0;
+        assertTrue(evaluator.evaluate(new double[0]).isFeasible());
+        assertEquals(0, unit.getRouteConfigurationSelection("injector route"));
+        assertEquals(0.0, unit.getHydraulicNetwork().getPipe("brownfield injection flowline").getFlowRate(), 1.0e-12);
+        assertTrue(pumpChart == unit.getHydraulicNetwork().getPipe("injection pump").getPumpModel().getPumpChart());
+      }
+    } finally {
+      well.getLayer(0).setReservoirPressure(100.0, "bara");
+      well.getLayer(1).setReservoirPressure(110.0, "bara");
+      budgetKw[0] = originalPower * 2.0;
+      model.run();
+    }
+    assertTrue(model.isModelConverged(), couplingDiagnostic(unit));
+    assertEquals(originalRate, unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS(),
+        originalRate * 1.0e-4);
+    assertEquals(originalPower, model.getPower("kW"), originalPower * 1.0e-4);
   }
 
   /** Build a compact failure diagnostic for coupled acceptance assertions. */

@@ -355,7 +355,7 @@ require regression review when their underlying Henry reference changes.
 
 ## Reproduction and remaining work
 
-Run `python3 devtools/check_henry_water_data.py` to check every compiled row,
+Run `uv run --project devtools --locked devtools/check_henry_water_data.py` to check every compiled row,
 identity, exact-alias equivalence, provenance coverage, point-only separation and polynomial conversion.
 Supply the downloaded `henry_5.0.0_f90.zip` as an argument to additionally verify
 each selected correlation and reference point against the original Fortran source.

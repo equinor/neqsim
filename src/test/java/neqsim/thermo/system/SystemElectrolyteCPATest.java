@@ -43,6 +43,8 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
     testOps = new ThermodynamicOperations(thermoSystem);
     testOps.TPflash();
     thermoSystem.initProperties();
+    // Composition identities require the level-3 initialization, not empty derivative caches.
+    thermoSystem.init(3);
   }
 
   /**

@@ -13,7 +13,7 @@ excluded from the equipment count.
 Regenerate this page after adding or removing equipment:
 
 ```text
-python devtools/generate_equipment_documentation_catalog.py
+uv run --project devtools --locked devtools/generate_equipment_documentation_catalog.py
 ```
 
 ## Equipment by source package

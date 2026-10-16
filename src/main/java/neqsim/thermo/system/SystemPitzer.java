@@ -130,6 +130,22 @@ public class SystemPitzer extends SystemEosGE {
   }
 
   /**
+   * Reports all missing rows in the automatic PHREEQC catalog candidate without changing the selected dataset.
+   *
+   * <p>
+   * After adding components or changing composition, call {@code init(0)} before this read-only preflight. The result
+   * describes the pinned source catalog, not user-supplied parameters or the legacy fallback. An empty list is not
+   * scientific qualification and does not establish mineral saturation or precipitation accuracy.
+   * </p>
+   *
+   * @return immutable sorted missing-row descriptions
+   * @see PitzerParameterDatasets#getMissingPhreeqcPitzerCatalogRows(PhasePitzer)
+   */
+  public java.util.List<String> getMissingPhreeqcPitzerCatalogRows() {
+    return PitzerParameterDatasets.getMissingPhreeqcPitzerCatalogRows((PhasePitzer) phaseArray[1]);
+  }
+
+  /**
    * Returns scientific qualification metadata for the selected Pitzer parameter dataset.
    *
    * <p>

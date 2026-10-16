@@ -36,6 +36,19 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-15 — Replay live SURF production and injection under moving host limits
+**Type:** E (Feature)
+**Keywords:** SURF, lifecycle, reservoir pressure, two-zone injection, shared power, separator, scrubber, 4228, 4188
+**Solution:** Extend `FieldToFacilityOptimizationAcceptanceTest` and `FieldWellNetworkProcessUnitTest` on the existing lifecycle-envelope PR, preserving its independent-period accepted-search contract. Reuse canonical topology, live well coupling, mapped equipment and current constraint sampling; introduce no runtime model, optimizer or persistence abstraction.
+**Notes:** New same-model production and injection regressions pass on the integrated lifecycle branch. Prescribed production pressure reductions of 1/2/3 bara produce 772.171922/763.585471/755.035017 kg/hr export; separator, scrubber and shared-power restrictions each reject current evidence and recover after restoration. Live two-zone injection checks synchronized layer/stream pressures, decreasing injectivity, conservation, allocation, fracture flags and pump-power rejection/recovery. These are synthetic conservation/trend and replay checks, not independent map, reservoir, hydraulic, transient or design qualification. Updated SURF guide and network routing skill distinguish lower-level repeated solves from independent accepted lifecycle periods.
+**Validation:** Integrated Linux OpenJDK 17.0.20 run: 61 tests passed, zero failures/errors/skips across field/facility, topology, well coupling, mapped compressors, hydraulic fidelity/comparison and operating-envelope/search/action suites. The optimization documentation gate compiled 205 Java fences with release 8 and executed 99 fragments; optimizer-package Javadocs passed using the installed JDK module launcher. Spotless apply/check, documentation search, engineering-coverage check and whitespace checks passed. Actual Java 8/21 platform execution and final review remain hosted CI gates; no independent engineering qualification is claimed.
+
+### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
+**Type:** A (Property)
+**Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
+**Solution:** Stack PR #4330 on the shared classic mixing-rule accumulator foundation while preserving its characterization implementation, regression tests and mathematical documentation byte-for-byte. Regenerate engineering coverage for the combined source tree.
+**Notes:** The unchanged field-to-facility acceptance class passed three fresh-JVM runs on both the original head and the foundation overlay (six tests per variant, none failed or skipped). A read-only fixture probe confirmed the parallel HP/LP branches share phase-specific mixing handlers. Java 8 dependencies and release-8 bytecode were tested on Linux Java 17. This validates the shared dependency; it does not establish the cause of the earlier Windows Java 8 accepted-point replay failure, which remains a hosted CI gate. No solver tolerance or execution setting changed.
+
 ### 2026-10-14 — Isolate shared classic mixing-rule accumulators
 **Type:** A (Property)
 **Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306
@@ -53,6 +66,32 @@ requirement`, or `confidential compressor route`.
 **Keywords:** compressor, speed solve, invalid chart, optimizer, infeasible trials, lift curves, CI, 4326
 **Solution:** `Compressor.SpeedSolveException`, `ProductionOptimizer` candidate rejection and hard convergence gate, and conditional chart-setup process runs in `FlowRateOptimizer`.
 **Notes:** Reproduced all three failing optimizer cases on PR #4326 before repair. A no-valid-map trial is rejected without reading stale objectives or downstream constraints; unrelated exceptions still propagate. Capacity analysis and optional output validation cannot bypass the pressure-target convergence requirement. Repeated table setup reuses existing charts without rerunning an invalid preceding probe. Updated compressor/optimization guides, the compressor skill and the generated coverage inventory; regression tests cover stale outputs, hard convergence, recovery and chart reuse.
+### 2026-10-14 — Propose shared flash and process state contracts
+**Type:** G (Workflow)
+**Keywords:** NRC-2937, TPflash, phase inventory, hydrate, inactive streams, coordinated PR review
+**Solution:** `docs/rfcs/2937-tpflash-state-contracts.md` and the RFC index.
+**Notes:** Record the proposed state ownership, physical acceptance, compatibility and process-consumer contracts shared by PRs #4306, #4320 and #4277. Preserve explicit physical model boundaries and separate model corrections from solver qualification. Status remains PROPOSED; this document supplies no architecture acceptance, independent approval or merge qualification.
+
+The RFC index is the 51st first-level landing page and participates in the navigation contracts. Its title is rendered from front matter rather than duplicated as an H1; the inventory assertion and explicit RFC-index membership check cover the new page. Correct the exchanger method's inline code span in the proposal.
+
+
+### 2026-10-14 — Preserve production proposal guards across interrupted cycles
+**Type:** G (Workflow)
+**Keywords:** PR 4312, resume, proposal guard, evidence ledger, frozen user input, fail closed
+**Solution:** `devtools/neqsim_continuous/cycle.py`, `user_input.py`, `stages.py`, and `devtools/test_neqsim_production.py`.
+**Notes:** A completed guard status did not preserve its filtered proposals or upstream blocks: resuming before ledger publication could mark previously withheld advice as current evidence. Resume now revalidates the inexpensive gates, constraints and guard against restored calculation outputs, reapplies frozen user restrictions, and blocks advice if the input checkpoint is unavailable. Completed model/optimizer work and persisted ledger events remain checkpointed. The ledger binds publication to the exact current-cycle guarded proposal content, rejecting post-guard mutations, added proposals and reused old-cycle evidence. Thirteen deterministic regressions failed on the previous head and pass with the repair; the full production suite passes 57 cases. Continuous/living coverage passes 42 cases, with one existing optional DOCX-report test skipped because its dependency is unavailable. Hosted CI remains a publication gate.
+
+### 2026-10-14 — Isolate evidence routing tests from optional agent installations
+**Type:** G (Workflow)
+**Keywords:** evidence-source-cues, hermetic tests, plugin discovery, production guard, CI, PR 4312
+**Solution:** `devtools/test_evidence_sources.py` and `.github/workflows/ai-devtools-python-tests.yml`.
+**Notes:** The validator loads cue declarations from discovered agents; public CI has no optional provider catalog. Tests now supply a temporary synthetic catalog and isolate checkout, installed-agent and plugin roots while exercising real discovery and parsing. Cover missing catalogs, plugin-only aliases, duplicate/invalid cues and invalid statuses. Keep provider routing policy out of the validator. Include the production-envelope guard and persistent-ledger regression suite in Devtools CI. The coordinated master workflow now retains this shared repair.
+
+### 2026-10-14 — Invalidate field evidence before optimizer or guard failure
+**Type:** B (Bug fix)
+**Keywords:** PR 4312, persistent envelope, evidence invalidation, failed guard, power limit, resume
+**Solution:** `devtools/neqsim_continuous/stages.py` and `devtools/test_neqsim_production.py`.
+**Notes:** An existing proposal remained current after a changed shared-power limit and malformed optimizer output skipped the guarded ledger stage. Move invalidation to evidence assessment and restore, preserving the guard for new proposals. Repeated failures remain idempotent, implemented history remains stale and traceable, and resumed publication retains its fresh cycle evidence. Add failure/recovery, report, dry-run and resume regressions. Integrate current master workflow naming and shared CI repairs; use `ai-devtools-python-tests.yml` rather than restoring the removed workflow filename.
 
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
 **Type:** G (Workflow)
@@ -1751,3 +1790,84 @@ and preservation of the source stream. The existing explicit zero-flow boundary 
 `b0de5165`. Final expanded test results, formatting/documentation gates and paired performance
 measurements are recorded in the PR validation update. No physical acceptance threshold is relaxed.
 **Documentation impact:** Updated flow-setting and well-simulation guides and the setter JavaDoc.
+### 2026-10-14 — Electrolyte derivative consistency and model diagnostics
+
+Baseline: master `d28b180969e248837e68b5e982374db69e11a376`.
+Corrected the base Furst/electrolyte CPA dielectric and Born second derivatives
+and included the stationary shielding response in the long-range Hessian.
+The shielding solve now checks a relative residual and starts from the
+Debye–Hückel upper bound; zero ionic inventory has exactly zero shielding.
+The model checker evaluates every phase and derivative entry, rejects non-finite
+values and compares independent numerical trials without changing the source fluid.
+Prior validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
+parameter-selection, extensivity and diagnostic classes, including 34 new
+regressions and the 28 slow electrolyte CPA tests enabled explicitly.
+A follow-up initialized-derivative check exposed stale electrolyte/CPA caches after
+the final volume solve. Derivative initialization now refreshes those caches at the
+returned volume, without changing the volume root or solver tolerances. The legacy
+CPA test fixture explicitly initializes composition derivatives; its previous zero
+caches could falsely pass the Gibbs–Duhem check. Two regressions fail before this
+repair and pass afterward, including detached repeated initialization.
+Three-phase qualification then exposed shared association-derivative rows in
+electrolyte CPA clones and shared fugacity composition-derivative caches in base
+component clones. Both now preserve cached values in independently owned arrays.
+Four added regressions cover full-cache preservation, mutation isolation and
+fugacity-derivative invariance under either liquid-phase initialization order;
+each fails before its repair. Independent fixed-state finite differences confirm
+the repaired Jacobian. This qualifies component derivative ownership, not general
+concurrent safety of cloned phase workspaces.
+A later boundary-CI check exposed an invalid 1000 K fixture: the mixture dielectric
+constant was -166.7429 (and -15.6928 at a 656.575 K continuation state). Ionic
+shielding now diagnoses nonpositive or nonfinite permittivity explicitly, while
+zero-ion states keep zero shielding. The public boundary regression checks the
+rejection and unchanged feed; four model cases cover both Furst and CPA domain
+handling and the zero-ion exception. Positive brine-boiling and gas/oil/brine
+pressure-boundary contracts are qualified with the general solver in #4306;
+the legacy boundary solver is not qualified by this model repair. Follow-up
+validation passed 40 focused model and boundary tests, with slow cases enabled,
+and 28 documentation/coverage tests; formatting and pre-push checks passed.
+Independent agent review checked the analytical derivation and cache lifecycle;
+this is not domain-maintainer approval.
+Documentation impact: updated the electrolyte CPA guide and Born-derivative guide
+with the corrected equations, numerical behavior and qualification limits.
+No fitted parameters or dielectric data changed. Nitrogen, n-butane and n-hexane
+dielectric inputs and salting-out accuracy, third-order volume derivatives, the singular zero-concentration
+composition curvature and the separate legacy Mod2004 implementation remain unqualified.
+
+### 2026-10-16 — Persistent lifecycle-envelope revalidation
+
+**Type:** E (Feature)
+**Keywords:** field optimization, lifecycle, operating envelope, continuous task, evidence, guard, ledger
+
+Extended the existing #4187 production guard and append-only ledger path to consume the lifecycle evidence added by
+#4342. Persisted JSON is revalidated fail-closed: every ordered period must retain finite increasing time, stable
+action/study/evaluator identities, complete envelope and restoration evidence, closed aggregate counts/runtime and
+the exact adjacent bottleneck-transition list. Exactly one period must use the current task cycle and equal the
+proposal's current accepted-point envelope. Mapped reservoir, availability, route or limit changes invalidate and
+supersede the complete lifecycle advice through the existing `evidence_current` and `revalidation_of` contracts.
+No process, well, network, compressor, shaft, driver or shared-power physics is duplicated or changed.
+
+**Documentation impact:** the production task template, continuous-task guide and optimization overview document the
+optional lifecycle field, strict requirement flag, current-period binding and change-driven persistence behavior.
+
+### 2026-10-16 — Issue #4351: barite source-coverage qualification report
+
+Investigated the public Na–Ba–Cl–SO4 reproducer on master
+`459b9eccf22f335ce88a6c3ec85338844b5a95c4`. The precipitation refusal is correct:
+legacy missing interactions and candidate PHREEQC missing source rows are different inventories.
+Added a read-only catalog preflight sharing the existing selection traversal, a seven-feed
+molality fixture, and regression coverage for exact missing rows, explicit zeros, rejection
+inventory, repeatability, ordering, manual-parameter preservation and neutral/hydrocarbon policy.
+No parameter, model equation, flash tolerance or qualification level was changed.
+
+Documentation impact: added `docs/thermo/pitzer_barite_qualification.md` with primary-literature
+leads, source-row gaps, standard states and the independent equilibrium/continuation completion
+procedure; linked it from the parameter guide, scale API and documentation indexes. This fulfills
+the issue's actionable-report alternative, not full precipitation qualification. Keep #4351 open:
+SI, equilibrium dissolved inventories, solid mass, complementarity and dissolution still require
+a coherent reviewed parameter/speciation set and independent evidence.
+
+Validation: the original exception was reproduced; 53 focused tests passed with the default POM,
+then the final 54 tests passed with `pomJava8.xml` after a clean build on Java 17. Changed classes
+have Java 8 bytecode (major 52); this is not execution on a Java 8 JVM. Hosted CI and accountable
+subsystem-owner/independent-maintainer review remain required before merge.

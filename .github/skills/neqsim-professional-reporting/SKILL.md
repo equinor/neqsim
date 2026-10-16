@@ -586,7 +586,7 @@ generator:
 - [ ] Risk register with 5×5 scoring (Standard+ tasks)
 - [ ] Benchmark comparison ≤ 5% deviation OR justified
 - [ ] AACE class declared for cost numbers
-- [ ] `python devtools/consistency_checker.py` passes
+- [ ] `uv run --project devtools --locked devtools/consistency_checker.py` passes
 - [ ] Limitations section honest about model assumptions
 - [ ] Next-actions list at end (what would close the gaps)
 

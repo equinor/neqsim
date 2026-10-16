@@ -31,10 +31,14 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.0
         with:
-          python-version: "3.x"
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Sync devtools test environment
+        run: uv sync --project devtools --locked --group test
 
       - name: Run benchmark
         run: >-
@@ -47,12 +51,12 @@ jobs:
 
       - name: Validate benchmark evidence
         run: >-
-          python devtools/validate_engineering_diagram_performance.py
+          uv run --project devtools --locked --group test devtools/validate_engineering_diagram_performance.py
           --report target/engineering-diagram-performance.json
           --budget devtools/baselines/engineering_diagram_performance.json
 
       - name: Test evidence validator
-        run: python -m unittest devtools.test_validate_engineering_diagram_performance
+        run: uv run --project devtools --locked --group test python -m unittest devtools.test_validate_engineering_diagram_performance
 
       - name: Upload benchmark evidence
         if: always()

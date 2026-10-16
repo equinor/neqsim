@@ -146,14 +146,14 @@ text_by_page = extract_text(pdf, force_ocr=True, dpi=400, psm=11)
 
 ```powershell
 # Extract text to JSON
-python devtools/pdf_ocr.py step1_scope_and_research/references/datasheet.pdf `
+uv run --project devtools --locked devtools/pdf_ocr.py step1_scope_and_research/references/datasheet.pdf `
     --json step1_scope_and_research/datasheet_text.json
 
 # P&ID preset (400 DPI, sparse PSM, force OCR, print tags)
-python devtools/pdf_ocr.py references/PID-001.pdf --pid
+uv run --project devtools --locked devtools/pdf_ocr.py references/PID-001.pdf --pid
 
 # Add searchable layer for archival
-python devtools/pdf_ocr.py scanned.pdf --add-text-layer --output scanned_ocr.pdf
+uv run --project devtools --locked devtools/pdf_ocr.py scanned.pdf --add-text-layer --output scanned_ocr.pdf
 ```
 
 ## Common Mistakes

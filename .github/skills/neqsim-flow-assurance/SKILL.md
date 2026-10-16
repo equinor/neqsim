@@ -1097,6 +1097,15 @@ commercial-simulator comparison.
   on requested elapsed time, conservation, positivity, refinement, and all
   applicable sticky solver/boundary diagnostics. Exclude a failed or unsupported
   row instead of quoting it.
+- The experimental unsplit directional-complementarity path now solves signed
+  mass, advective momentum and donor multipliers and verifies its solved ledger
+  independently. It also permits exact zero-bound events, donor-direction refresh
+  from the signed free flux, and exact donor-row release without a mass clip or
+  inventory tolerance. Treat its disappearance, reversal and short-step
+  conservation tests as numerical evidence only: the directly affected nine
+  unchanged five-second cases still stop at 0.63125--1.83515625 s and the complete
+  fifteen-case riser matrix remains failed. Require that entire matrix before progressing to 180/600 s,
+  physical restart, swept-liquid, receiver-surge or hydraulic-pigging claims.
 - Do not over-constrain `setOutletPressure` with a measured pressure drop the
   modelled geometry cannot produce. Investigate valves, fittings, elevations, and
   boundary consistency separately.

@@ -64,12 +64,39 @@ class ProcessModelOperatingEnvelopeStudyTest {
     }
   }
 
+  /** Validated accepted-point inputs retained for one lifecycle period. */
+  private static final class AcceptedPeriod {
+    private final Fixture fixture;
+    private final ProcessModelOperatingEnvelopeStudy study;
+    private final OperatingPointSearchResult search;
+    private final SliceResult slice;
+
+    private AcceptedPeriod(Fixture fixture, ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search,
+        SliceResult slice) {
+      this.fixture = fixture;
+      this.study = study;
+      this.search = search;
+      this.slice = slice;
+    }
+  }
+
   /**
    * Creates a synthetic two-producer model with one producer-local and one shared gathering limit.
    *
    * @return configured model fixture
    */
   private Fixture createFixture() {
+    return createFixture(800.0, 1200.0);
+  }
+
+  /**
+   * Creates a synthetic two-producer model for one independently configured lifecycle period.
+   *
+   * @param producerOperatingLimit producer-A operating limit in kg/hr
+   * @param sharedOperatingLimit shared gathering limit in kg/hr
+   * @return configured model fixture
+   */
+  private Fixture createFixture(double producerOperatingLimit, double sharedOperatingLimit) {
     SystemInterface fluidA = new SystemSrkEos(298.15, 50.0);
     fluidA.addComponent("methane", 0.90);
     fluidA.addComponent("ethane", 0.10);
@@ -87,14 +114,14 @@ class ProcessModelOperatingEnvelopeStudyTest {
     Separator gatheringSink = new Separator("gathering sink", chokeA.getOutletStream());
 
     CapacityConstraint producerLimit = new CapacityConstraint("producer A rate", "kg/hr", ConstraintType.HARD)
-        .setDesignValue(800.0).setSeverity(ConstraintSeverity.HARD).setDataSource("synthetic producer choke envelope")
-        .setConfidence(0.95).setValidityRange(200.0, 1000.0)
-        .setOperatingLimit(800.0, ConstraintSource.USER_RULE, "synthetic facility choke rule")
-        .setOperatingLimitConfidence(0.90).setOperatingLimitValidityRange(200.0, 900.0)
+        .setDesignValue(Math.max(1600.0, producerOperatingLimit)).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("synthetic producer choke envelope").setConfidence(0.95).setValidityRange(200.0, 2000.0)
+        .setOperatingLimit(producerOperatingLimit, ConstraintSource.USER_RULE, "synthetic facility choke rule")
+        .setOperatingLimitConfidence(0.90).setOperatingLimitValidityRange(200.0, 2000.0)
         .setValueSupplier(() -> producerA.getFlowRate("kg/hr"));
     CapacityConstraint sharedLimit = new CapacityConstraint("shared gathering rate", "kg/hr", ConstraintType.HARD)
-        .setDesignValue(1200.0).setSeverity(ConstraintSeverity.HARD).setDataSource("synthetic shared manifold basis")
-        .setConfidence(0.95).setValidityRange(400.0, 1600.0)
+        .setDesignValue(sharedOperatingLimit).setSeverity(ConstraintSeverity.HARD)
+        .setDataSource("synthetic shared manifold basis").setConfidence(0.95).setValidityRange(400.0, 2500.0)
         .setValueSupplier(() -> producerA.getFlowRate("kg/hr") + producerB.getFlowRate("kg/hr"));
     gatheringSink.clearCapacityConstraints();
     gatheringSink.addCapacityConstraint(producerLimit);
@@ -112,6 +139,34 @@ class ProcessModelOperatingEnvelopeStudyTest {
     model.add("gathering", gathering);
     model.run();
     return new Fixture(producerA, producerB, model);
+  }
+
+  /**
+   * Runs one independent accepted-point search and nearby slice for lifecycle aggregation.
+   *
+   * @param periodId period identifier used by the optimizer and study
+   * @param producerOperatingLimit producer-A operating limit in kg/hr
+   * @param sharedOperatingLimit shared gathering limit in kg/hr
+   * @return complete accepted period inputs
+   */
+  private AcceptedPeriod createAcceptedPeriod(String periodId, double producerOperatingLimit,
+      double sharedOperatingLimit) {
+    Fixture fixture = createFixture(producerOperatingLimit, sharedOperatingLimit);
+    ProcessModelOperatingActionSetEvaluator evaluator = createEvaluator(fixture);
+    ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer(periodId + "-search",
+        periodId + " search", "synthetic lifecycle accepted-point search", evaluator)
+        .setInitialCandidate(new double[] {600.0, 400.0}).setMaximumEvaluations(30).setInitialStepFraction(0.25)
+        .setRelativeStepTolerance(0.05)
+        .setObjectiveImprovementTolerance(1.0e-6, "synthetic lifecycle objective tolerance");
+    OperatingPointSearchResult search = optimizer.optimize();
+    assertTrue(search.isAcceptedPointReplayed(), search.getOutcome() + ": " + search.getDiagnostics());
+    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy(periodId + "-envelope",
+        periodId + " envelope", "synthetic lifecycle period", evaluator);
+    double[] accepted = search.getAcceptedCandidateValues();
+    SliceResult slice = study.evaluateOneDimensional("producer-a-rate",
+        new double[] {Math.max(200.0, accepted[0] - 50.0), accepted[0]}, search);
+    assertTrue(slice.isComplete(), slice.getDiagnostics().toString());
+    return new AcceptedPeriod(fixture, study, search, slice);
   }
 
   /**
@@ -282,6 +337,9 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(evaluationsBeforeEvidence, evaluator.getSimulationEvaluator().getEvaluationCount());
     assertEquals(Integer.valueOf(1), envelopeEvidence.get("schema_version"));
     assertEquals("cycle-43", envelopeEvidence.get("cycle_id"));
+    assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), envelopeEvidence.get("accepted_action_ids"));
+    assertEquals(Arrays.asList(Double.valueOf(accepted[0]), Double.valueOf(accepted[1])),
+        envelopeEvidence.get("accepted_candidate_values"));
     assertEquals(Integer.valueOf(2), envelopeEvidence.get("slice_count"));
     assertEquals(Long.valueOf(4L), envelopeEvidence.get("envelope_evaluation_count"));
     assertEquals(Long.valueOf(search.getEvaluationCount() + 4L), envelopeEvidence.get("total_evaluation_count"));
@@ -335,6 +393,74 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertThrows(IllegalStateException.class,
         () -> study.evaluateOneDimensional("producer-a-rate", new double[] {accepted[0]}, search));
     assertEquals(evaluationsBeforeDefinitionChange, evaluator.getSimulationEvaluator().getEvaluationCount());
+  }
+
+  /**
+   * Verifies independently configured periods retain complete envelope evidence and report an accepted bottleneck
+   * migration without reusing mutable process state between periods.
+   */
+  @Test
+  void lifecycleEvidenceTracksIndependentPeriodBottleneckMigration() {
+    AcceptedPeriod early = createAcceptedPeriod("early-life", 650.0, 2000.0);
+    AcceptedPeriod late = createAcceptedPeriod("late-life", 1500.0, 1200.0);
+    assertEquals("gathering::gathering sink/producer A rate",
+        early.study.getAcceptedPointBottleneck(early.search).getQualifiedConstraintName());
+    assertEquals("gathering::gathering sink/shared gathering rate",
+        late.study.getAcceptedPointBottleneck(late.search).getQualifiedConstraintName());
+
+    ProcessModelOperatingEnvelopeLifecycleStudy lifecycle = new ProcessModelOperatingEnvelopeLifecycleStudy(
+        "two-period-field", "Two-period field envelope", "synthetic changing facility limits", "year")
+        .addPeriod("early-life", "Early life", 0.0, "producer-A operating limit governs", early.study, early.search,
+            early.slice)
+        .addPeriod("late-life", "Late life", 5.0, "shared gathering limit governs", late.study, late.search,
+            late.slice);
+
+    assertEquals(2, lifecycle.getPeriods().size());
+    assertEquals(1, lifecycle.getBottleneckTransitions().size());
+    ProcessModelOperatingEnvelopeLifecycleStudy.LifecycleBottleneckTransition transition = lifecycle
+        .getBottleneckTransitions().get(0);
+    assertEquals("early-life", transition.getFromPeriodId());
+    assertEquals("late-life", transition.getToPeriodId());
+    assertEquals("gathering::gathering sink/producer A rate", transition.getFromConstraint());
+    assertEquals("gathering::gathering sink/shared gathering rate", transition.getToConstraint());
+
+    Map<String, Object> evidence = lifecycle.toEvidenceMap("cycle-lifecycle-1");
+    assertEquals(Integer.valueOf(1), evidence.get("schema_version"));
+    assertEquals("cycle-lifecycle-1", evidence.get("cycle_id"));
+    assertEquals(Integer.valueOf(2), evidence.get("period_count"));
+    assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), evidence.get("accepted_action_ids"));
+    assertEquals(Integer.valueOf(4), evidence.get("requested_point_count"));
+    assertEquals(Integer.valueOf(4), evidence.get("completed_point_count"));
+    assertTrue(((Long) evidence.get("total_evaluation_count")).longValue() >= 4L);
+    assertTrue(Double.isFinite(((Double) evidence.get("envelope_runtime_seconds")).doubleValue()));
+    assertEquals(2, ((List<?>) evidence.get("periods")).size());
+    assertEquals(1, ((List<?>) evidence.get("bottleneck_transitions")).size());
+    assertThrows(UnsupportedOperationException.class, () -> evidence.put("period_count", Integer.valueOf(0)));
+
+    assertEquals(600.0, early.fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(400.0, early.fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(600.0, late.fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(400.0, late.fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
+    assertTrue(early.fixture.model.isModelConverged());
+    assertTrue(late.fixture.model.isModelConverged());
+  }
+
+  /** Verifies malformed lifecycle ordering is rejected before accepting another period. */
+  @Test
+  void lifecycleEvidenceRejectsDuplicateOrNonIncreasingPeriods() {
+    AcceptedPeriod early = createAcceptedPeriod("early-life", 650.0, 2000.0);
+    ProcessModelOperatingEnvelopeLifecycleStudy empty = new ProcessModelOperatingEnvelopeLifecycleStudy("empty-field",
+        "Empty field envelope", "synthetic validation", "year");
+    assertThrows(IllegalStateException.class, () -> empty.toEvidenceMap("cycle-empty"));
+
+    ProcessModelOperatingEnvelopeLifecycleStudy lifecycle = new ProcessModelOperatingEnvelopeLifecycleStudy(
+        "ordered-field", "Ordered field envelope", "synthetic validation", "year")
+        .addPeriod("early-life", "Early life", 0.0, "initial constraints", early.study, early.search, early.slice);
+    assertThrows(IllegalArgumentException.class, () -> lifecycle.addPeriod("early-life", "Duplicate", 1.0,
+        "duplicate identifier", early.study, early.search, early.slice));
+    assertThrows(IllegalArgumentException.class, () -> lifecycle.addPeriod("same-time", "Same time", 0.0,
+        "non-increasing time", early.study, early.search, early.slice));
+    assertEquals(1, lifecycle.getPeriods().size());
   }
 
   /**

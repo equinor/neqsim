@@ -127,7 +127,7 @@ from `COMP.csv`. Optional research dependencies are NumPy, SciPy and `iapws`;
 they are not NeqSim runtime dependencies.
 
 ```bash
-python devtools/generate_water_caloric_alpha_reference.py --refit --output-dir /tmp/cpa-water-reference
+uv run --project devtools --locked devtools/generate_water_caloric_alpha_reference.py --refit --output-dir /tmp/cpa-water-reference
 ./mvnw -Dtest=CPAWaterCaloricTest,SystemSrkCPAstatoilTest,PHFlashCPATest test
 ```
 

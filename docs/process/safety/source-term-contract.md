@@ -86,7 +86,7 @@ major versions, wrong units, missing successful payloads, and numeric payloads o
 The writer additionally rejects nonfinite values, invalid unit direction vectors and malformed
 identity/time fields. Phase/composition normalization is enforced by station construction.
 
-Run `SourceTermFrameTest`, then `python devtools/validate_source_term_contract.py` in an
+Run `SourceTermFrameTest`, then `uv run --project devtools --locked devtools/validate_source_term_contract.py` in an
 environment with `jsonschema` installed. The validator checks actual Java-emitted success,
 located, invalid, unsupported, stale and disabled frames, plus deliberate schema corruptions.
 The Python package is a validation dependency only; the Java producer uses existing core dependencies.

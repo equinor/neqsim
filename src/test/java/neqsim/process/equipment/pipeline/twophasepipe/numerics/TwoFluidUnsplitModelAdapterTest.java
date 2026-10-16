@@ -131,6 +131,28 @@ class TwoFluidUnsplitModelAdapterTest {
   }
 
   @Test
+  void directionalComplementarityCandidateIsIndependentlyPreparedWithSolvedFaces() {
+    TwoFluidSection[] accepted = {section(0.0), section(10.0), section(20.0)};
+    TwoFluidConservationEquations equations = isothermalEquations();
+    equations.setAllowOutletPhaseBackflow(true);
+    TwoFluidUnsplitModelAdapter adapter = adapter(equations, accepted);
+    UnsplitTransientSolver solver = solver();
+    solver.setDirectionalComplementarityEnabled(true);
+    double timeStep = 0.001;
+    UnsplitTransientSolver.Result result = solver.solve(states(accepted), pressures(accepted), areas(accepted),
+        timeStep, 0.0, 4.999e6, true, adapter);
+
+    assertTrue(result.isConverged(), () -> result.getTerminationReason() + ": " + result.getMaximumScaledResidual());
+    PreparedStep prepared = adapter.prepareStep(result, timeStep, 0.0, 4.999e6, true, 1.0e-8);
+    assertEquals(2, prepared.getSolvedDirectionalPhaseFaceFluxes().length);
+    assertEquals(3, prepared.getSolvedDirectionalPhaseFaceFluxes()[0].length);
+    assertTrue(prepared.getMaximumScaledResidual() <= 1.0e-8);
+    for (double residual : prepared.getMassResidualKg()) {
+      assertEquals(0.0, residual, 1.0e-7);
+    }
+  }
+
+  @Test
   void rejectsMalformedAcceptedTemplatesBeforeCallingClosures() {
     TwoFluidSection template = section(0.0);
     template.setPressure(Double.NaN);

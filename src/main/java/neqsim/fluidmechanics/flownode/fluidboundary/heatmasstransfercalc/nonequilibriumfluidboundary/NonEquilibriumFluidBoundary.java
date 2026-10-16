@@ -2,12 +2,20 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
  * Abstract NonEquilibriumFluidBoundary class.
+ *
+ * <p>
+ * Newton working matrices use EJML storage. Subclasses using these protected fields must use {@link DMatrixRMaj};
+ * serialized instances containing the former Jama working matrices are not compatible with this representation.
+ * Exported mass-transfer coefficient matrices retain their live Jama storage.
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,12 +28,12 @@ public abstract class NonEquilibriumFluidBoundary
   static Logger logger = LogManager.getLogger(NonEquilibriumFluidBoundary.class);
 
   protected int neq = 0;
-  protected Matrix dx;
-  protected Matrix Jac;
-  protected Matrix fvec;
-  protected Matrix uMassTrans;
-  protected Matrix uMassTransold;
-  protected Matrix Xgij;
+  protected DMatrixRMaj dx;
+  protected DMatrixRMaj Jac;
+  protected DMatrixRMaj fvec;
+  protected DMatrixRMaj uMassTrans;
+  protected DMatrixRMaj uMassTransold;
+  protected DMatrixRMaj Xgij;
 
   public double[][] molFractionDifference;
 
@@ -37,8 +45,8 @@ public abstract class NonEquilibriumFluidBoundary
   public NonEquilibriumFluidBoundary(SystemInterface system) {
     super(system);
     neq = 3 * bulkSystem.getPhases()[0].getNumberOfComponents();
-    Jac = new Matrix(neq, neq);
-    fvec = new Matrix(neq, 1);
+    Jac = new DMatrixRMaj(neq, neq);
+    fvec = new DMatrixRMaj(neq, 1);
     massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
         getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
     massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
@@ -62,8 +70,8 @@ public abstract class NonEquilibriumFluidBoundary
   public NonEquilibriumFluidBoundary(FlowNodeInterface flowNode) {
     super(flowNode);
     neq = 3 * bulkSystem.getPhases()[0].getNumberOfComponents();
-    Jac = new Matrix(neq, neq);
-    fvec = new Matrix(neq, 1);
+    Jac = new DMatrixRMaj(neq, neq);
+    fvec = new DMatrixRMaj(neq, 1);
     massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
         getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
     massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
@@ -195,7 +203,7 @@ public abstract class NonEquilibriumFluidBoundary
   public void setJacMassTrans() {
     double dij = 0;
     double tempJ = 0;
-    Jac.timesEquals(0.0);
+    CommonOps_DDRM.scale(0.0, Jac);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents() - 1; i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
@@ -260,7 +268,7 @@ public abstract class NonEquilibriumFluidBoundary
   public void setJacMassTrans2() {
     double dij = 0;
     double tempJ = 0;
-    Jac.timesEquals(0.0);
+    CommonOps_DDRM.scale(0.0, Jac);
 
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
@@ -526,7 +534,7 @@ public abstract class NonEquilibriumFluidBoundary
 
       // Check for singular or ill-conditioned Jacobian
       try {
-        dx = Jac.solve(fvec);
+        dx = solveMassTransferStep();
       } catch (RuntimeException e) {
         // Matrix solve failed - likely singular matrix
         logger.debug("Jacobian solve failed in mass transfer calculation: {}", e.getMessage());
@@ -538,16 +546,20 @@ public abstract class NonEquilibriumFluidBoundary
         continue;
       }
 
-      if (dx != null && !Double.valueOf(dx.norm2()).isNaN()) {
+      if (dx != null && !Double.valueOf(massTransferColumnNorm(dx)).isNaN()) {
         nanCount = 0; // Reset counter on successful solve
-        double uMassTransNorm = uMassTrans.norm2();
+        double uMassTransNorm = massTransferColumnNorm(uMassTrans);
         if (uMassTransNorm > 1e-20) {
-          uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
-          err = Math.abs(dx.norm2() / uMassTransNorm);
+          DMatrixRMaj dampedStep = dx.copy();
+          CommonOps_DDRM.scale(iter / (iter + factor), dampedStep);
+          CommonOps_DDRM.subtractEquals(uMassTrans, dampedStep);
+          err = Math.abs(massTransferColumnNorm(dx) / uMassTransNorm);
         } else {
           // Avoid division by zero
-          uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
-          err = Math.abs(dx.norm2());
+          DMatrixRMaj dampedStep = dx.copy();
+          CommonOps_DDRM.scale(iter / (iter + factor), dampedStep);
+          CommonOps_DDRM.subtractEquals(uMassTrans, dampedStep);
+          err = Math.abs(massTransferColumnNorm(dx));
         }
         updateMassTrans();
         calcFluxes();
@@ -566,6 +578,39 @@ public abstract class NonEquilibriumFluidBoundary
       // System.out.println("err " + err);
     } while ((err > 1.e-4 && iter < 100) || iter < 5);
     calcFluxes();
+  }
+
+  /**
+   * Solves the Newton system using the legacy LU backend. Film Jacobians can be extremely ill-conditioned, so changing
+   * the factorization backend requires separate qualification from changing the working storage.
+   *
+   * @return Newton step, including non-finite entries for the existing recovery branch to inspect
+   * @throws RuntimeException if the legacy factorization rejects the system
+   */
+  private DMatrixRMaj solveMassTransferStep() {
+    Matrix coefficients = new Matrix(neq, neq);
+    for (int row = 0; row < neq; row++) {
+      for (int column = 0; column < neq; column++) {
+        coefficients.set(row, column, Jac.get(row, column));
+      }
+    }
+    Matrix step = coefficients.solve(new Matrix(fvec.getData(), neq));
+    return new DMatrixRMaj(neq, 1, true, step.getColumnPackedCopy());
+  }
+
+  /**
+   * Measures a solution column without treating an all-NaN vector as a zero update.
+   *
+   * @param column Newton residual or state column
+   * @return Euclidean norm, or NaN if any entry is NaN
+   */
+  private static double massTransferColumnNorm(DMatrixRMaj column) {
+    for (int row = 0; row < column.getNumRows(); row++) {
+      if (Double.isNaN(column.get(row, 0))) {
+        return Double.NaN;
+      }
+    }
+    return NormOps_DDRM.normP2(column);
   }
 
   /** {@inheritDoc} */

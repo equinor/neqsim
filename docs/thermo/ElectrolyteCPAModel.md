@@ -29,6 +29,41 @@ system.createDatabase(true);
 system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composition dependency
 ```
 
+### Reaction species and mixing-rule initialization order
+
+`chemicalReactionInit()` can add species such as `H3O+`, `OH-`, `HCO3-`, and
+`CO3--`. Select the mixing rule **after** reaction initialization and
+`createDatabase(true)`, as in the example above. The interaction matrices must
+cover the final component set.
+
+If the rule was selected first and the component count subsequently changes,
+Fürst/electrolyte-CPA `init(...)` throws an `IllegalStateException` reporting the configured and
+current counts and the recovery steps. Direct electrolyte `calcWij(...)` calls
+also reject this stale state. Previously the reported four-to-eight-component
+case failed with an `ArrayIndexOutOfBoundsException`. The check covers species
+addition and removal in both Fürst phase implementations and their electrolyte
+CPA subclasses. It is not a global guard on ordinary cubic-EOS initialization:
+non-electrolyte component projection, characterization, and stream-union setup
+retain their existing initialization sequence.
+
+To recover, complete reaction initialization, call `createDatabase(true)`, and
+reapply the chosen mixing rule (10 for electrolyte CPA). Apply any custom
+interaction parameters **after** rebuilding the rule, then call `init(0)` before
+property calculations or a flash. The check does not silently reload fitted
+parameters or fill missing interactions with zeros. Changing only component
+amounts, or repeating chemistry initialization without adding species, does not
+require a mixing-rule refresh.
+
+This count check does not detect same-count component replacement or renaming;
+rebuild the database and mixing rule after those changes as well. The separate
+chemical-reaction topology guard still requires `chemicalReactionInit()` again
+when component identities change after chemistry was initialized.
+
+Regression coverage: `MixingRuleComponentCountTest` checks all five Fürst/CPA
+electrolyte variants, species removal, explicit recovery, unchanged initialized properties and
+inventories relative to a correctly ordered setup, and preservation of custom
+parameters when stale state is rejected.
+
 ### Key Features of the Statoil Implementation
 
 | Feature | Description |
@@ -175,6 +210,35 @@ the chemical potential stays intensive. See
 the chain rule, the legacy Mod2004 correction, the related EOS audit, and the
 literature-based development recommendations.
 
+The base Furst/electrolyte CPA derivative implementation includes the implicit
+response of the stationary shielding parameter and the complete dielectric/Born
+second-derivative chain rules. See the same guide for finite-difference
+qualification and the remaining nitrogen, n-butane and n-hexane dielectric-data
+limitations. Those components share malformed default coefficients; replacing them
+requires species-valid property data and separate salting-out validation. A converged
+flash or consistent Jacobian does not by itself qualify the model's salting-out
+or mixed-inhibitor accuracy.
+
+Call `system.init(3)` before inspecting composition derivatives or running their
+consistency checks. A flash followed only by `initProperties()` may leave those
+arrays uninitialized. Derivative initialization refreshes electrolyte and CPA
+association caches at the final returned volume; repeated initialization and
+detached copies are covered by the final-volume regression tests.
+Component clones preserve fugacity composition-derivative caches in independently
+owned arrays. Electrolyte CPA component clones also own their association-composition
+derivative rows, so initializing one liquid phase cannot overwrite another phase's
+component derivatives. This does not qualify concurrent access to all cloned phase
+workspaces.
+
+Ionic shielding requires finite positive phase permittivity. If an extrapolated
+dielectric correlation violates that domain, the calculation raises an explicit
+error; ion-free states retain exactly zero shielding. In particular, a 1000 K
+endpoint for aqueous-phase disappearance in gas/oil/brine is invalid with the
+current solvent correlation. These model corrections do not qualify the legacy
+TP-flash boundary solver: brine boiling and gas/oil/brine pressure boundaries
+require the [general equilibrium solver work](https://github.com/equinor/neqsim/pull/4306)
+for strict conservation, ion-confinement and fugacity-closure checks.
+
 ## Short-Range Interaction Parameters (Wij)
 
 ### Overview
@@ -306,7 +370,7 @@ The model supports three dielectric constant mixing rules:
 
 $$\varepsilon_{mix} = \sum_i x_i \varepsilon_i$$
 
-- Thermodynamically consistent (passes all derivative checks)
+- Validated by the targeted derivative checks described above
 - Recommended for general use
 
 ### 2. VOLUME_AVERAGE

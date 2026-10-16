@@ -1425,6 +1425,36 @@ diagnostic getters after a transactional probe still returns the preceding publi
 not the probe's ledger. Caller-supplied sections are trial objects and may be updated by closures;
 accepted sections must be cloned first. Concurrent configuration must use the same equations lock.
 
+The transactional evaluation also carries an immutable directional ledger for every internal face
+and gas/oil/water phase. Each entry separates nonnegative forward and reverse mass transport,
+advective momentum, and pressure traction, while retaining the left and right donor mass and
+momentum used by the accepted free-flux evaluation. `UnsplitTransientSolver` can now opt into a
+compressed mixed system through `setDirectionalComplementarityEnabled(true)`. The system adds
+signed-direction mass magnitude, advective momentum and a donor-presence multiplier per phase
+face, uses a normalized donor relation for present phases, and pins advective momentum exactly to
+zero for an absent donor. Its 53-color finite-difference schedule covers the existing five-cell
+stencil plus two adjacent nine-variable face blocks. Solved internal fluxes replace the free flux
+equal-and-oppositely in adjacent cells and are independently rechecked by
+`TwoFluidUnsplitModelAdapter.prepareStep`; no cell mass is clipped and pressure traction remains in
+the cell operator exactly once.
+
+This remains an experimental opt-in numerical path. All six unchanged 0.1 s historical and
+pressure-interpolated Tengesdal lanes pass at 16/24 cells, and exact-bound regressions now cover an
+initially absent donor, disappearance after transporting only the available mass, and reversal to a
+present opposite donor. Nonnegative phase masses and face variables may land exactly on zero; an
+outward Newton component at an already active zero bound is projected onto the feasible tangent
+cone before a trial is formed. Between Jacobians, the unmodified signed free flux selects direction
+and the exact donor row can activate or release. Line-search trials use reversible copies of those
+choices, so a rejected trial cannot mutate the accepted active set. None of these operations clips
+accepted mass or introduces an inventory tolerance.
+
+The directly affected unchanged nine five-second historical/pressure-interpolated/explicit-face
+cases still fail line search. Their last local times are 0.63125--1.83515625 s: materially beyond
+the earlier 0.1251953125--0.831640625 s envelope for several lanes, but short of the required 5 s.
+Therefore the full unchanged 15-case matrix remains failed. This increment establishes exact phase
+disappearance and donor-transition mechanics only; it does not qualify reappearance in the public
+riser, severe slugging, restart or hydraulic pigging, and no 180 s or 600 s run is justified.
+
 `TwoFluidUnsplitModelAdapter.prepareStep` independently re-evaluates a converged, active-set-stable
 candidate against its accepted templates, requested time step, boundary, and current operator. It
 checks all six selected-time conservation equations and the endpoint occupied volume. A `PreparedStep`

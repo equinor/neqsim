@@ -15,6 +15,15 @@ Both approaches share improved Ksp correlations, pressure corrections, and T-dep
 
 ---
 
+## Full-Pitzer barite mixing qualification
+
+Na–Ba–Cl–SO4 formation-water mixtures remain unsupported for qualified full-Pitzer barite
+precipitation. After `init(0)`, `SystemPitzer.getMissingPhreeqcPitzerCatalogRows()` reports all
+absent candidate source rows without invoking a flash. See the
+[barite qualification report](../thermo/pitzer_barite_qualification.md) for the exact gaps,
+public feed matrix, standard states and independent-validation requirements. Preserve the
+coverage failure; standalone binary screening is not a substitute for full-mixture qualification.
+
 ## Architecture Overview
 
 ```

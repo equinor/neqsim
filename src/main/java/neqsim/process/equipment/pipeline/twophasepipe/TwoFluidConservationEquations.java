@@ -13,6 +13,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalcu
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseFlux;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.AUSMPlusFluxCalculator.PhaseState;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.DispersedBubbleDragSolver;
+import neqsim.process.equipment.pipeline.twophasepipe.numerics.DirectionalPhaseFaceFlux;
 import neqsim.process.equipment.pipeline.twophasepipe.numerics.MUSCLReconstructor;
 import neqsim.thermo.system.SystemInterface;
 
@@ -444,6 +445,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Phase-resolved face mass flows from the most recent {@link #calcRHS} evaluation. */
   private double[][] lastPhaseMassFaceFluxes = new double[0][3];
 
+  /** Transactional directional mass/momentum decomposition at internal faces. */
+  private DirectionalPhaseFaceFlux[][] lastDirectionalPhaseFaceFluxes = new DirectionalPhaseFaceFlux[0][3];
+
   /** Phase-resolved cell source rates from the most recent {@link #calcRHS} evaluation. */
   private double[][] lastPhaseMassSourcesPerLength = new double[0][3];
   private boolean momentumForceDiagnosticsEnabled;
@@ -869,7 +873,8 @@ public class TwoFluidConservationEquations implements Serializable {
       outletBackflowClamped = false;
       double[][] rates = calcRHS(sections, dx);
       return new TransactionalEvaluation(rates, lastMassBalanceRate, lastPhaseMassFaceFluxes,
-          lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength, outletBackflowClamped);
+          lastDirectionalPhaseFaceFluxes, lastPhaseMassSourcesPerLength, lastMomentumSourceForcesPerLength,
+          outletBackflowClamped);
     } finally {
       saved.restore();
     }
@@ -881,15 +886,18 @@ public class TwoFluidConservationEquations implements Serializable {
     private final double[][] rates;
     private final MassBalanceRate massBalanceRate;
     private final double[][] phaseMassFaceFluxes;
+    private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
     private final double[][] phaseMassSourcesPerLength;
     private final double[][] momentumSourceForcesPerLength;
     private final boolean outletBackflowClamped;
 
     private TransactionalEvaluation(double[][] rates, MassBalanceRate massBalanceRate, double[][] phaseMassFaceFluxes,
-        double[][] phaseMassSourcesPerLength, double[][] momentumSourceForcesPerLength, boolean outletBackflowClamped) {
+        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes, double[][] phaseMassSourcesPerLength,
+        double[][] momentumSourceForcesPerLength, boolean outletBackflowClamped) {
       this.rates = copyMatrix(rates);
       this.massBalanceRate = massBalanceRate;
       this.phaseMassFaceFluxes = copyMatrix(phaseMassFaceFluxes);
+      this.directionalPhaseFaceFluxes = copyDirectionalFluxes(directionalPhaseFaceFluxes);
       this.phaseMassSourcesPerLength = copyMatrix(phaseMassSourcesPerLength);
       this.momentumSourceForcesPerLength = copyMatrix(momentumSourceForcesPerLength);
       this.outletBackflowClamped = outletBackflowClamped;
@@ -908,6 +916,20 @@ public class TwoFluidConservationEquations implements Serializable {
     /** @return defensive face mass fluxes in kg/s, shape [cellCount + 1][3] */
     public double[][] getPhaseMassFaceFluxes() {
       return copyMatrix(phaseMassFaceFluxes);
+    }
+
+    /**
+     * Return the free directional mass and advective-momentum transport used at each internal face.
+     *
+     * <p>
+     * The shape is {@code [cellCount - 1][3]} in gas, oil and water order. Immutable entries retain pressure traction
+     * separately from donor advection so a mixed face solve can replace the latter without double-counting pressure.
+     * </p>
+     *
+     * @return defensive outer copy of immutable directional face ledgers
+     */
+    public DirectionalPhaseFaceFlux[][] getDirectionalPhaseFaceFluxes() {
+      return copyDirectionalFluxes(directionalPhaseFaceFluxes);
     }
 
     /** @return defensive phase mass sources in kg/(m s), shape [cellCount][3] */
@@ -940,6 +962,8 @@ public class TwoFluidConservationEquations implements Serializable {
     private final boolean savedBackflow = outletBackflowClamped;
     private final MassBalanceRate savedBalance = lastMassBalanceRate;
     private final double[][] savedFaces = copyMatrix(lastPhaseMassFaceFluxes);
+    private final DirectionalPhaseFaceFlux[][] savedDirectionalFaces = copyDirectionalFluxes(
+        lastDirectionalPhaseFaceFluxes);
     private final double[][] savedSources = copyMatrix(lastPhaseMassSourcesPerLength);
     private final double[][] savedForces = copyMatrix(lastMomentumSourceForcesPerLength);
 
@@ -953,6 +977,7 @@ public class TwoFluidConservationEquations implements Serializable {
       outletBackflowClamped = savedBackflow;
       lastMassBalanceRate = savedBalance;
       lastPhaseMassFaceFluxes = savedFaces;
+      lastDirectionalPhaseFaceFluxes = savedDirectionalFaces;
       lastPhaseMassSourcesPerLength = savedSources;
       lastMomentumSourceForcesPerLength = savedForces;
     }
@@ -965,6 +990,18 @@ public class TwoFluidConservationEquations implements Serializable {
     double[][] copy = new double[source.length][];
     for (int row = 0; row < source.length; row++) {
       copy[row] = source[row] == null ? null : source[row].clone();
+    }
+    return copy;
+  }
+
+  /** Copy the array structure; each directional flux value is immutable. */
+  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] source) {
+    if (source == null) {
+      return null;
+    }
+    DirectionalPhaseFaceFlux[][] copy = new DirectionalPhaseFaceFlux[source.length][];
+    for (int face = 0; face < source.length; face++) {
+      copy[face] = source[face] == null ? null : source[face].clone();
     }
     return copy;
   }
@@ -1464,6 +1501,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
     interfacePhaseHoldup = new double[nInterfaces][3];
     interfacePhasePressure = new double[nInterfaces][3];
+    lastDirectionalPhaseFaceFluxes = new DirectionalPhaseFaceFlux[nInterfaces][3];
     SlugFilmCoupling.Reconstruction[] reconstructions = new SlugFilmCoupling.Reconstruction[nCells];
     if (!conservativeSlugs.isEmpty()) {
       for (int cell = 0; cell < nCells; cell++) {
@@ -1494,6 +1532,7 @@ public class TwoFluidConservationEquations implements Serializable {
       interfacePressure[i] = gasFlux.interfacePressure;
       interfacePhaseHoldup[i][0] = gasFlux.interfaceHoldup;
       interfacePhasePressure[i][0] = gasFlux.interfacePressure;
+      lastDirectionalPhaseFaceFluxes[i][0] = directionalFlux(gasFlux, gasL, gasR, A);
 
       if (enableWaterOilSlip) {
         // Each phase has its own donor and velocity, including countercurrent oil/water flow.
@@ -1513,6 +1552,8 @@ public class TwoFluidConservationEquations implements Serializable {
         interfacePhaseHoldup[i][2] = waterFlux.interfaceHoldup;
         interfacePhasePressure[i][1] = oilFlux.interfacePressure;
         interfacePhasePressure[i][2] = waterFlux.interfacePressure;
+        lastDirectionalPhaseFaceFluxes[i][1] = directionalFlux(oilFlux, oilL, oilR, A);
+        lastDirectionalPhaseFaceFluxes[i][2] = directionalFlux(waterFlux, waterL, waterR, A);
         interfaceLiquidHoldup[i] = oilFlux.interfaceHoldup + waterFlux.interfaceHoldup;
         if (gasFlux.interfaceHoldup == 0.0) {
           interfacePressure[i] = oilFlux.interfaceHoldup > 0.0 ? oilFlux.interfacePressure
@@ -1576,12 +1617,39 @@ public class TwoFluidConservationEquations implements Serializable {
       fluxes[i][IDX_OIL_MOMENTUM] = fluxes[i][IDX_OIL_MASS] * vO + upwindOilFrac * liquidPressureFlux;
       fluxes[i][IDX_WATER_MOMENTUM] = fluxes[i][IDX_WATER_MASS] * vW + upwindWaterCut * liquidPressureFlux;
 
+      PhaseState oilL = createLiquidPhaseState(left, false);
+      PhaseState oilR = createLiquidPhaseState(right, false);
+      PhaseState waterL = createLiquidPhaseState(left, true);
+      PhaseState waterR = createLiquidPhaseState(right, true);
+      lastDirectionalPhaseFaceFluxes[i][1] = directionalFlux(fluxes[i][IDX_OIL_MASS],
+          fluxes[i][IDX_OIL_MOMENTUM] - upwindOilFrac * liquidPressureFlux, upwindOilFrac * liquidPressureFlux, oilL,
+          oilR, A);
+      lastDirectionalPhaseFaceFluxes[i][2] = directionalFlux(fluxes[i][IDX_WATER_MASS],
+          fluxes[i][IDX_WATER_MOMENTUM] - upwindWaterCut * liquidPressureFlux, upwindWaterCut * liquidPressureFlux,
+          waterL, waterR, A);
+
       if (includeEnergyEquation) {
         fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + liqFlux.energyFlux;
       }
     }
 
     return fluxes;
+  }
+
+  /** Build the immutable donor ledger from one phase flux. */
+  private static DirectionalPhaseFaceFlux directionalFlux(PhaseFlux flux, PhaseState left, PhaseState right,
+      double area) {
+    double pressureTraction = flux.interfaceHoldup * flux.interfacePressure * area;
+    return directionalFlux(flux.massFlux, flux.momentumFlux - pressureTraction, pressureTraction, left, right, area);
+  }
+
+  /** Build the immutable donor ledger from explicit signed transport. */
+  private static DirectionalPhaseFaceFlux directionalFlux(double massFlow, double advectiveMomentum,
+      double pressureTraction, PhaseState left, PhaseState right, double area) {
+    double leftMass = left.holdup * left.density * area;
+    double rightMass = right.holdup * right.density * area;
+    return new DirectionalPhaseFaceFlux(massFlow, advectiveMomentum, pressureTraction, leftMass, rightMass,
+        leftMass * left.velocity, rightMass * right.velocity);
   }
 
   /** A face pressure impulse must not obtain its density from an absent phase's algebraic extension. */

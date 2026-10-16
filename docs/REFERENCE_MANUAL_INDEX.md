@@ -169,6 +169,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Phase Package             | [docs/thermo/phase/README.md](thermo/phase/README.md)                       | Phase modeling                                                                                                       |
 | Electrolyte CPA           | [docs/thermo/ElectrolyteCPAModel.md](thermo/ElectrolyteCPAModel.md)   | Electrolyte CPA model                                                                                                |
 | Pitzer Parameters         | [docs/thermo/pitzer_parameter_provenance.md](thermo/pitzer_parameter_provenance.md) | Pitzer dataset identity, provenance, mixed-ion coverage diagnostics, and adoption gates                              |
+| Pitzer Barite Qualification | [Barite mixing qualification](thermo/pitzer_barite_qualification.md) | Source gaps, frozen feeds and remaining independent precipitation evidence |
 
 ### Chapter 7: Flash Calculations
 
@@ -605,6 +606,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 | --- | --- | --- |
+| NeqSim Requests for Comments | [docs/rfcs/index.md](rfcs/index.md) | Architecture proposals, recorded decisions and qualification boundaries |
+| NRC-2937: TP-flash state contracts | [docs/rfcs/2937-tpflash-state-contracts.md](rfcs/2937-tpflash-state-contracts.md) | Proposed shared fluid, hydrate and process-consumer contracts; not accepted |
 | **Engineering Hub** | [docs/engineering/index.md](engineering/index.md) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
 | **Engineering Guide** | [docs/engineering/guide.md](engineering/guide.md) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
 | **Current Engineering Capabilities** | [docs/engineering/current-capabilities.md](engineering/current-capabilities.md) | **Implemented entry points, discipline coverage, qualification layers, readiness levels, and accountable-review boundaries** |

@@ -16,6 +16,7 @@ Stages registered here (all optional, all driven by ``goal.yaml`` and ``cycle_pl
 The optimiser itself stays a task-local ``script:`` stage that returns ``proposals``.
 """
 
+import json
 import math
 import os
 
@@ -174,11 +175,15 @@ def _gain_value(proposal):
 
 def _optimizer_evidence_reasons(ctx, proposal):
     """Return fail-closed reasons for incomplete or stale optimizer validation evidence."""
-    evidence = proposal.get("optimizer_evidence")
+    return _validate_optimizer_evidence(proposal.get("optimizer_evidence"), ctx.cycle_id)
+
+
+def _validate_optimizer_evidence(evidence, expected_cycle_id):
+    """Validate optimizer evidence for an explicitly identified engineering cycle."""
     if not isinstance(evidence, dict):
         return ["missing_optimizer_evidence"]
     reasons = []
-    if evidence.get("cycle_id") != ctx.cycle_id:
+    if evidence.get("cycle_id") != expected_cycle_id:
         reasons.append("stale_candidate")
     for field, reason in OPTIMIZER_EVIDENCE:
         if evidence.get(field) is not True:
@@ -193,6 +198,313 @@ def _optimizer_evidence_reasons(ctx, proposal):
     return reasons
 
 
+def _positive_integer(value):
+    """Return true only for a positive, finite integer value."""
+    return _number(value) and value >= 1 and float(value) == int(value)
+
+
+def _non_negative_integer(value):
+    """Return true only for a non-negative, finite integer value."""
+    return _number(value) and value >= 0 and float(value) == int(value)
+
+
+def _same_finite_vector(first, second):
+    """Return true for equal-length, exactly equal finite numeric vectors."""
+    if not isinstance(first, list) or not isinstance(second, list) or len(first) != len(second):
+        return False
+    return all(_number(left) and _number(right) and float(left) == float(right)
+               for left, right in zip(first, second))
+
+
+def _envelope_evidence_reasons(ctx, proposal, required=False):
+    """Validate a persisted accepted-point envelope without trusting its Java origin."""
+    if "accepted_point_envelope_evidence" not in proposal:
+        return ["missing_accepted_point_envelope_evidence"] if required else []
+    evidence = proposal.get("accepted_point_envelope_evidence")
+    if not isinstance(evidence, dict):
+        return ["invalid_accepted_point_envelope_evidence"]
+
+    return _validate_envelope_evidence(
+        evidence, proposal.get("optimizer_evidence"), proposal.get("setpoints"), ctx.cycle_id)
+
+
+def _validate_envelope_evidence(evidence, optimizer_evidence, setpoints, expected_cycle_id):
+    """Validate one complete accepted-point envelope against its owning cycle and proposal."""
+
+    reasons = []
+    if evidence.get("schema_version") != 1:
+        reasons.append("unsupported_envelope_schema")
+    if evidence.get("cycle_id") != expected_cycle_id:
+        reasons.append("stale_envelope_evidence")
+    if evidence.get("optimizer_evidence") != optimizer_evidence:
+        reasons.append("envelope_optimizer_evidence_mismatch")
+
+    action_ids = evidence.get("accepted_action_ids")
+    accepted = evidence.get("accepted_candidate_values")
+    valid_actions = (isinstance(action_ids, list) and action_ids
+                     and all(isinstance(item, str) and item for item in action_ids)
+                     and len(set(action_ids)) == len(action_ids))
+    accepted_ids = action_ids if valid_actions else []
+    if not valid_actions or not isinstance(accepted, list) or len(accepted) != len(accepted_ids):
+        reasons.append("invalid_accepted_action_vector")
+    elif (not isinstance(setpoints, dict) or set(setpoints) != set(accepted_ids)
+          or not _same_finite_vector([setpoints.get(action_id) for action_id in accepted_ids], accepted)):
+        reasons.append("envelope_setpoints_mismatch")
+
+    slices = evidence.get("slices")
+    slice_count = evidence.get("slice_count")
+    if not _positive_integer(slice_count) or not isinstance(slices, list) or len(slices) != int(slice_count or 0):
+        reasons.append("invalid_envelope_slice_count")
+        return reasons
+
+    requested_total = 0
+    completed_total = 0
+    evaluation_total = 0
+    runtime_total = 0.0
+    axis_signatures = set()
+    for index, row in enumerate(slices):
+        prefix = "envelope_slice_{}".format(index)
+        if not isinstance(row, dict):
+            reasons.append(prefix + "_invalid")
+            continue
+        if (row.get("study_id") != evidence.get("study_id")
+                or row.get("candidate_evaluator_id") != evidence.get("candidate_evaluator_id")):
+            reasons.append(prefix + "_identity_mismatch")
+        if row.get("complete") is not True or row.get("outcome") != "COMPLETE":
+            reasons.append(prefix + "_incomplete")
+        if not _same_finite_vector(row.get("anchor_values"), accepted):
+            reasons.append(prefix + "_anchor_mismatch")
+
+        axes = row.get("axis_action_ids")
+        if (not isinstance(axes, list) or not axes
+                or any(not isinstance(axis, str) or axis not in accepted_ids for axis in axes)
+                or len(set(axes)) != len(axes)):
+            reasons.append(prefix + "_invalid_axes")
+        else:
+            signature = tuple(axes)
+            if signature in axis_signatures:
+                reasons.append("duplicate_envelope_axes")
+            axis_signatures.add(signature)
+
+        requested = row.get("requested_point_count")
+        completed = row.get("completed_point_count")
+        evaluations = row.get("evaluation_count")
+        runtime = row.get("runtime_seconds")
+        points = row.get("points")
+        if (not _positive_integer(requested) or not _positive_integer(completed)
+                or int(requested) != int(completed)
+                or not _positive_integer(evaluations)
+                or not _number(runtime) or runtime < 0
+                or not isinstance(points, list) or len(points) != int(completed or 0)):
+            reasons.append(prefix + "_invalid_counts")
+        else:
+            requested_total += int(requested)
+            completed_total += int(completed)
+            evaluation_total += int(evaluations)
+            runtime_total += float(runtime)
+        if isinstance(points, list):
+            for point in points:
+                if (not isinstance(point, dict) or point.get("baseline_restored") is not True
+                        or point.get("baseline_simulation_converged") is not True):
+                    reasons.append(prefix + "_point_recovery_incomplete")
+                    break
+                if (not isinstance(point.get("candidate_values"), list)
+                        or len(point["candidate_values"]) != len(accepted_ids)
+                        or any(not _number(value) for value in point["candidate_values"])):
+                    reasons.append(prefix + "_invalid_point_candidate")
+                    break
+
+    if (evidence.get("requested_point_count") != requested_total
+            or evidence.get("completed_point_count") != completed_total
+            or evidence.get("envelope_evaluation_count") != evaluation_total):
+        reasons.append("envelope_aggregate_count_mismatch")
+    envelope_runtime = evidence.get("envelope_runtime_seconds")
+    if (not _number(envelope_runtime) or envelope_runtime < 0
+            or not math.isclose(float(envelope_runtime), runtime_total, rel_tol=1.0e-12, abs_tol=1.0e-12)):
+        reasons.append("envelope_runtime_mismatch")
+    optimizer = optimizer_evidence
+    optimizer_count = optimizer.get("evaluation_count") if isinstance(optimizer, dict) else None
+    total_count = evidence.get("total_evaluation_count")
+    if (not _non_negative_integer(total_count) or not _positive_integer(optimizer_count)
+            or int(total_count) != int(optimizer_count) + evaluation_total):
+        reasons.append("envelope_total_evaluation_count_mismatch")
+    if evidence.get("advisory") is not True:
+        reasons.append("envelope_not_advisory")
+    return reasons
+
+
+def _text(value):
+    """Return true only for non-blank text."""
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _action_ids(value):
+    """Return a validated ordered action-identifier list, or None."""
+    if (not isinstance(value, list) or not value
+            or any(not _text(item) for item in value)
+            or len(set(value)) != len(value)):
+        return None
+    return value
+
+
+def _bottleneck_name(value):
+    """Return the qualified bottleneck identity, or None for valid absent evidence."""
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        return False
+    if (value.get("source") not in (
+            "INSTALLED_EQUIPMENT", "REQUIRED_HYDRAULIC", "PLANT_CONSTRAINT",
+            "REGISTERED_MODEL_CONSTRAINT")
+            or not _text(value.get("qualified_constraint_name"))
+            or not isinstance(value.get("feasible"), bool)):
+        return False
+    for field in ("normalized_utilization", "normalized_margin", "current_value",
+                  "applicable_limit", "physical_margin"):
+        if value.get(field) is not None and not _number(value.get(field)):
+            return False
+    for field in ("physical_unit", "diagnostic", "applicable_limit_role",
+                  "applicable_limit_provenance"):
+        if not isinstance(value.get(field), str):
+            return False
+    return value["qualified_constraint_name"]
+
+
+def _lifecycle_evidence_reasons(ctx, proposal, required=False):
+    """Validate persisted lifecycle envelopes and bind the current period to the proposal."""
+    if "lifecycle_envelope_evidence" not in proposal:
+        return ["missing_lifecycle_envelope_evidence"] if required else []
+    evidence = proposal.get("lifecycle_envelope_evidence")
+    if not isinstance(evidence, dict):
+        return ["invalid_lifecycle_envelope_evidence"]
+
+    reasons = []
+    if evidence.get("schema_version") != 1:
+        reasons.append("unsupported_lifecycle_envelope_schema")
+    if evidence.get("cycle_id") != ctx.cycle_id:
+        reasons.append("stale_lifecycle_envelope_evidence")
+    for field in ("lifecycle_study_id", "lifecycle_study_name",
+                  "lifecycle_study_provenance", "time_unit"):
+        if not _text(evidence.get(field)):
+            reasons.append("invalid_lifecycle_{}".format(field))
+
+    action_ids = _action_ids(evidence.get("accepted_action_ids"))
+    if action_ids is None:
+        reasons.append("invalid_lifecycle_action_ids")
+        action_ids = []
+    periods = evidence.get("periods")
+    period_count = evidence.get("period_count")
+    if (not _positive_integer(period_count) or not isinstance(periods, list)
+            or len(periods) != int(period_count or 0)):
+        reasons.append("invalid_lifecycle_period_count")
+        return reasons
+
+    requested_total = 0
+    completed_total = 0
+    evaluation_total = 0
+    runtime_total = 0.0
+    seen_period_ids = set()
+    previous_elapsed = None
+    period_rows = []
+    current_envelope = None
+    for index, row in enumerate(periods):
+        prefix = "lifecycle_period_{}".format(index)
+        if not isinstance(row, dict):
+            reasons.append(prefix + "_invalid")
+            continue
+        period_id = row.get("period_id")
+        if not _text(period_id) or period_id in seen_period_ids:
+            reasons.append(prefix + "_invalid_id")
+        else:
+            seen_period_ids.add(period_id)
+        if (not _text(row.get("period_name"))
+                or not _text(row.get("configuration_provenance"))):
+            reasons.append(prefix + "_invalid_metadata")
+        elapsed = row.get("elapsed_time")
+        if (not _number(elapsed) or elapsed < 0
+                or (previous_elapsed is not None and elapsed <= previous_elapsed)):
+            reasons.append(prefix + "_invalid_elapsed_time")
+        else:
+            previous_elapsed = float(elapsed)
+        if row.get("time_unit") != evidence.get("time_unit"):
+            reasons.append(prefix + "_time_unit_mismatch")
+
+        envelope = row.get("envelope_evidence")
+        if not isinstance(envelope, dict):
+            reasons.append(prefix + "_invalid_envelope")
+            continue
+        if (row.get("envelope_study_id") != envelope.get("study_id")
+                or row.get("candidate_evaluator_id") != envelope.get("candidate_evaluator_id")):
+            reasons.append(prefix + "_identity_mismatch")
+        if envelope.get("accepted_action_ids") != action_ids:
+            reasons.append(prefix + "_action_ids_mismatch")
+
+        accepted = envelope.get("accepted_candidate_values")
+        optimizer = envelope.get("optimizer_evidence")
+        period_setpoints = ({action_id: value for action_id, value in zip(action_ids, accepted)}
+                            if isinstance(accepted, list) and len(accepted) == len(action_ids)
+                            else {})
+        period_reasons = _validate_envelope_evidence(
+            envelope, optimizer, period_setpoints, period_id)
+        period_reasons.extend(_validate_optimizer_evidence(optimizer, period_id))
+        reasons.extend(prefix + "_" + reason for reason in period_reasons)
+
+        requested = envelope.get("requested_point_count")
+        completed = envelope.get("completed_point_count")
+        evaluations = envelope.get("total_evaluation_count")
+        runtime = envelope.get("envelope_runtime_seconds")
+        if (_non_negative_integer(requested) and _non_negative_integer(completed)
+                and _non_negative_integer(evaluations) and _number(runtime) and runtime >= 0):
+            requested_total += int(requested)
+            completed_total += int(completed)
+            evaluation_total += int(evaluations)
+            runtime_total += float(runtime)
+
+        bottleneck = row.get("accepted_bottleneck")
+        bottleneck_name = _bottleneck_name(bottleneck)
+        if bottleneck_name is False:
+            reasons.append(prefix + "_invalid_bottleneck")
+            bottleneck_name = None
+        if bottleneck != envelope.get("accepted_point_bottleneck"):
+            reasons.append(prefix + "_bottleneck_mismatch")
+        period_rows.append((period_id, elapsed, bottleneck_name))
+        if period_id == ctx.cycle_id:
+            current_envelope = envelope
+
+    if current_envelope is None:
+        reasons.append("missing_current_lifecycle_period")
+    elif current_envelope != proposal.get("accepted_point_envelope_evidence"):
+        reasons.append("lifecycle_current_period_envelope_mismatch")
+
+    if (evidence.get("requested_point_count") != requested_total
+            or evidence.get("completed_point_count") != completed_total
+            or evidence.get("total_evaluation_count") != evaluation_total):
+        reasons.append("lifecycle_aggregate_count_mismatch")
+    runtime = evidence.get("envelope_runtime_seconds")
+    if (not _number(runtime) or runtime < 0
+            or not math.isclose(float(runtime), runtime_total,
+                                rel_tol=1.0e-12, abs_tol=1.0e-12)):
+        reasons.append("lifecycle_runtime_mismatch")
+
+    expected_transitions = []
+    for previous, current in zip(period_rows, period_rows[1:]):
+        if previous[2] != current[2]:
+            expected_transitions.append({
+                "from_period_id": previous[0],
+                "to_period_id": current[0],
+                "from_elapsed_time": previous[1],
+                "to_elapsed_time": current[1],
+                "time_unit": evidence.get("time_unit"),
+                "from_constraint": previous[2],
+                "to_constraint": current[2],
+            })
+    if evidence.get("bottleneck_transitions") != expected_transitions:
+        reasons.append("lifecycle_bottleneck_transitions_mismatch")
+    if evidence.get("advisory") is not True:
+        reasons.append("lifecycle_envelope_not_advisory")
+    return reasons
+
+
 def _non_finite_fields(values):
     """Return sorted keys whose proposed numeric values are absent or non-finite."""
     if not isinstance(values, dict):
@@ -200,8 +512,14 @@ def _non_finite_fields(values):
     return sorted(str(key) for key, value in values.items() if not _number(value))
 
 
+def _proposal_snapshot(proposal):
+    """Bind publication to exact JSON content, including evidence boolean types."""
+    return json.dumps(proposal, sort_keys=True, separators=(",", ":"))
+
+
 def guard(ctx, spec):
     """Keep only proposals that are safe to show; record why the others were withheld."""
+    ctx.guarded_proposals = set()
     settings = ctx.plan.get("production", {}) or {}
     configured_min_gain = settings.get("min_gain", 0.0)
     invalid_min_gain = not _number(configured_min_gain)
@@ -234,6 +552,11 @@ def guard(ctx, spec):
         if not isinstance(proposal.get("objective_kpi"), str) or not proposal.get("objective_kpi"):
             reasons.append("missing_objective_kpi")
         reasons.extend(_optimizer_evidence_reasons(ctx, proposal))
+        reasons.extend(_envelope_evidence_reasons(
+            ctx, proposal, required=settings.get("require_envelope_evidence") is True))
+        reasons.extend(_lifecycle_evidence_reasons(
+            ctx, proposal,
+            required=settings.get("require_lifecycle_envelope_evidence") is True))
         for constraint in hard:
             name = constraint.get("name") or constraint["kpi"]
             room = slack(constraint, predicted.get(constraint["kpi"]))
@@ -246,6 +569,7 @@ def guard(ctx, spec):
         else:
             accepted.append(dict(proposal, requires_approval=True, guard="passed"))
     ctx.proposals = accepted
+    ctx.guarded_proposals = {_proposal_snapshot(proposal) for proposal in accepted}
     write_json(os.path.join(ctx.cycle_dir, "guard.json"), {"accepted": [p.get("title") for p in accepted],
                                                             "withheld": withheld, "blocks": list(ctx.guard_blocks)})
     _section(ctx, "Proposals withheld", ["{} ({})".format(w["title"], ", ".join(w["reasons"])) for w in withheld])

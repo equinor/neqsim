@@ -108,7 +108,7 @@ the source of their common pure-component parameters. The extended table keeps
 its own unique `ID` and `COMPINDEX`, and ion rows retain their electrolyte model
 parameters. Newly imported standard names receive unique IDs. The stored
 `COMP_EXT.csv` is synchronized with the neutral rows by
-`python3 devtools/repair_water_cp_placeholders.py --write`; the database loader
+`uv run --project devtools --locked devtools/repair_water_cp_placeholders.py --write`; the database loader
 also reapplies the standard values on switching modes so future additions to
 `COMP.csv` cannot silently revive stale extended values.
 Read CSV names with a CSV parser because systematic names can contain commas.
@@ -232,7 +232,7 @@ Water's own coefficients are retained. The full list of Cp names,
 CAS numbers, structure-group counts, method, and predicted values at 298.15 and
 500 K is in [the Cp replacement inventory](data/water_cp_replacements.csv).
 The migration can be checked with
-`python3 devtools/repair_water_cp_placeholders.py --check`.
+`uv run --project devtools --locked devtools/repair_water_cp_placeholders.py --check`.
 
 For 1,2,4-trimethylbenzene, `CPA`–`CPE` are a quartic least-squares fit to
 [NIST Chemistry WebBook gas-phase Cp data for CAS 95-63-6](https://webbook.nist.gov/cgi/cbook.cgi?ID=C95636&Mask=1)
@@ -833,8 +833,8 @@ must be removed in the same change. Do not add newly introduced defects to make
 a test pass. The screening commands below can help inspect a proposed data change:
 
 ```bash
-python devtools/screen_unifac_tables.py --tsv > src/test/resources/data/unifac_known_issues.tsv
-python devtools/screen_component_database.py --tsv > src/test/resources/data/comp_known_issues.tsv
+uv run --project devtools --locked devtools/screen_unifac_tables.py --tsv > src/test/resources/data/unifac_known_issues.tsv
+uv run --project devtools --locked devtools/screen_component_database.py --tsv > src/test/resources/data/comp_known_issues.tsv
 ```
 
 Write these files as UTF-8 without a byte order mark. On Windows use Python

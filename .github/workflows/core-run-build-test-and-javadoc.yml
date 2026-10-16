@@ -288,6 +288,17 @@ jobs:
           path: target/surefire-reports/
           if-no-files-found: warn
 
+  test_java_slow_required:
+    name: Assert all slow tests with Java 21 on Ubuntu
+    runs-on: ubuntu-latest
+    needs: [changes, test_java_slow]
+    if: always() && (needs.changes.result != 'success' || needs.changes.outputs.run_tests == 'true')
+    steps:
+      - name: Require every slow-test shard to pass
+        env:
+          SLOW_TEST_RESULT: ${{ needs.test_java_slow.result }}
+        run: test "$SLOW_TEST_RESULT" = success
+
   # Preserve the four historical required-check contexts while eight jobs run
   # the numerical tests. Every compatibility context requires ALL shards.
   test_java_slow_compatibility:
@@ -353,9 +364,13 @@ jobs:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           token: ${{ github.token }}
           fetch-depth: 1
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.0
         with:
-          python-version: '3.12'
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Sync devtools environment
+        run: uv sync --project devtools --locked
       - name: Check agent-skill references
-        run: python devtools/verify_agent_skill_refs.py
+        run: uv run --project devtools --locked devtools/verify_agent_skill_refs.py

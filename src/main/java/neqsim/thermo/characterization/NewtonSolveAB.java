@@ -1,8 +1,10 @@
 package neqsim.thermo.characterization;
 
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -17,11 +19,13 @@ public class NewtonSolveAB implements java.io.Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NewtonSolveAB.class);
 
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+
   int iter = 0;
-  Matrix Jac;
-  Matrix fvec;
-  Matrix sol;
-  Matrix dx;
+  double[][] Jac;
+  double[] fvec;
+  double[] sol;
+  double[] dx;
   int numberOfComponents = 0;
   TBPCharacterize characterizeClass;
   SystemInterface system = null;
@@ -42,11 +46,9 @@ public class NewtonSolveAB implements java.io.Serializable {
     this.system = system;
     this.characterizeClass = characterizeClass;
     numberOfComponents = system.getPhase(0).getNumberOfComponents();
-    Jac = new Matrix(2, 2);
-    fvec = new Matrix(2, 1);
-    sol = new Matrix(2, 1);
-    sol.set(0, 0, characterizeClass.getPlusCoefs(0));
-    sol.set(1, 0, characterizeClass.getPlusCoefs(1));
+    Jac = new double[2][2];
+    fvec = new double[2];
+    sol = new double[] {characterizeClass.getPlusCoefs(0), characterizeClass.getPlusCoefs(1)};
   }
 
   /**
@@ -58,28 +60,26 @@ public class NewtonSolveAB implements java.io.Serializable {
         .getLastPlusFractionNumber(); i++) {
       f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
-    fvec.set(0, 0, f0);
+    fvec[0] = f0;
 
     f0 = -characterizeClass.getMPlus() * characterizeClass.getZPlus();
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
       f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i)) * (14.0 * i - 4.0);
     }
-    fvec.set(1, 0, f0);
+    fvec[1] = f0;
   }
 
   /**
    * setJac.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
-
     double f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
       f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
-    Jac.set(0, 0, f0 + (0.0));
+    Jac[0][0] = f0 + (0.0);
 
     f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
@@ -87,14 +87,14 @@ public class NewtonSolveAB implements java.io.Serializable {
       f0 += characterizeClass.getPlusCoefs(1)
           * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
-    Jac.set(1, 0, f0);
+    Jac[1][0] = f0;
 
     f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
       f0 += (14.0 * i - 4.0) * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
-    Jac.set(0, 1, f0);
+    Jac[0][1] = f0;
 
     f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
@@ -102,7 +102,7 @@ public class NewtonSolveAB implements java.io.Serializable {
       f0 += (14.0 * i - 4.0) * characterizeClass.getPlusCoefs(1)
           * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
-    Jac.set(1, 1, f0 + (0.0));
+    Jac[1][1] = f0 + (0.0);
   }
 
   /**
@@ -112,18 +112,20 @@ public class NewtonSolveAB implements java.io.Serializable {
     do {
       iter++;
       setfvec();
-      fvec.print(10, 2);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Residual: {}", Arrays.toString(fvec));
+      }
       setJac();
-      Jac.print(10, 2);
-      dx = Jac.solve(fvec);
-      logger.info("dx: ");
-      dx.print(10, 3);
-      // System.out.println("dx ");
-      // dx.print(10,3);
-      sol.minusEquals(dx.times(iter / (iter + 100.0)));
-      characterizeClass.setPlusCoefs(sol.transpose().copy().getArray()[0]);
-    } while (((dx.norm2() / sol.norm2() < 1e-6 || iter < 15000) && iter < 50000));
-    logger.info("ok char: ");
-    sol.print(10, 10);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Jacobian: {}", Arrays.deepToString(Jac));
+      }
+      dx = ALGEBRA.solve(Jac, fvec);
+      if (logger.isDebugEnabled()) {
+        logger.debug("Newton step: {}", Arrays.toString(dx));
+      }
+      sol = ALGEBRA.subtract(sol, ALGEBRA.scale(dx, iter / (iter + 100.0)));
+      characterizeClass.setPlusCoefs(sol.clone());
+    } while (((ALGEBRA.euclideanNorm(dx) / ALGEBRA.euclideanNorm(sol) < 1e-6 || iter < 15000) && iter < 50000));
+    logger.info("Characterization coefficients: {}", Arrays.toString(sol));
   }
 }

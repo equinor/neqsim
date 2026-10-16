@@ -35,11 +35,13 @@ fluid.setMixingRule("classic")
 ```
 
 The constructor uses kelvin and bara. Component amounts are relative mole amounts; they do not
-need to sum to one. Set the mixing rule after all components are added.
+need to sum to one. Set the mixing rule after all components are added and after any
+characterization that changes the component list.
 
 ### Create Oil with a Characterized Plus Fraction
 
 ```python
+import math
 from neqsim import jneqsim
 
 fluid = jneqsim.thermo.system.SystemPrEos(333.15, 200.0)
@@ -55,11 +57,25 @@ fluid.addComponent("n-hexane", 2.0)
 # Arguments: relative mole amount, molar mass (kg/mol), density (g/cm3).
 # Use a terminal numeric label before default Pedersen characterization.
 fluid.addPlusFraction("C7", 32.5, 0.220, 0.82)
-fluid.setMixingRule("classic")
 fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12)
 fluid.getCharacterization().characterisePlusFraction()
+fluid.setMixingRule("classic")
 fluid.setMultiPhaseCheck(True)
+
+# Eight named components plus twelve characterized pseudo-components.
+assert fluid.getNumberOfComponents() == 20
+operations = jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid)
+operations.TPflash()
+fluid.initProperties()
+density_kg_m3 = fluid.getDensity("kg/m3")
+assert math.isfinite(density_kg_m3) and density_kg_m3 > 0.0
 ```
+
+Characterization replaces the plus fraction with a new component inventory. Initialize the
+mixing rule **after** that replacement so its interaction matrix matches the final component
+count. A successful characterization alone is not a flash test: the example explicitly flashes
+and initializes properties before checking density. Its component count and positive density are
+software sanity checks, not validation against oil PVT data.
 
 `addTBPfraction(...)` creates one specified pseudo-component. Use `addPlusFraction(...)` followed
 by `characterisePlusFraction()` when a residual fraction is to be split and lumped. Although
@@ -104,12 +120,31 @@ correlation that supplies the third is the *closure*, selected with a `TbpClosur
 overloads that need one:
 
 ```python
+import math
 from neqsim import jneqsim
+
 TbpClosure = jneqsim.thermo.characterization.TbpClosure
 
-fluid.addTBPfraction_Sg_Tb("C10", 1.0, 0.734, 447.3)                              # default
-fluid.addTBPfraction_Sg_Tb("C10", 1.0, 0.734, 447.3, TbpClosure.RIAZI_DAUBERT_1980)  # explicit
+default_fluid = jneqsim.thermo.system.SystemPrEos(333.15, 20.0)
+default_fluid.addTBPfraction_Sg_Tb("C10", 1.0, 0.734, 447.3)
+
+rd1980_fluid = jneqsim.thermo.system.SystemPrEos(333.15, 20.0)
+rd1980_fluid.addTBPfraction_Sg_Tb(
+    "C10", 1.0, 0.734, 447.3, TbpClosure.RIAZI_DAUBERT_1980
+)
+
+for candidate in (default_fluid, rd1980_fluid):
+    candidate.setMixingRule("classic")
+    jneqsim.thermodynamicoperations.ThermodynamicOperations(candidate).TPflash()
+    candidate.initProperties()
+    assert candidate.getNumberOfComponents() == 1
+    molar_mass_kg_mol = candidate.getMolarMass("kg/mol")
+    assert math.isfinite(molar_mass_kg_mol) and molar_mass_kg_mol > 0.0
 ```
+
+The two closure choices are alternatives on independent fluids, not two additions of the same
+named cut to one fluid. Both constructors use 333.15 K and 20 bara. Compare their predicted molar
+masses against measured data before selecting a closure for an engineering study.
 
 Accuracy against the pure components in `COMP.csv`, as absolute average deviation in molar mass
 predicted from boiling point and specific gravity:
@@ -121,7 +156,7 @@ predicted from boiling point and specific gravity:
 | `RIAZI_DAUBERT_1980` | 5.4 % | 13.6 % | yes |
 | `TBP_MODEL` | follows the fluid's characterization model | | no |
 
-Reproduce the table with `python devtools/validate_tbp_closures.py`.
+Reproduce the table with `uv run --project devtools --locked devtools/validate_tbp_closures.py`.
 
 #### Forward use versus inverted use
 
@@ -144,7 +179,7 @@ molar mass amplifies into a 7–21 % error in specific gravity. RD-1980's expone
 its inverse is unique and carries error 1:1. `addTBPfraction_Mw_Tb` therefore defaults to RD-1980,
 and asking a non-invertible closure for a density throws rather than returning one of two roots.
 
-Reproduce these numbers with `python devtools/analyze_rd1987_inversion.py`.
+Reproduce these numbers with `uv run --project devtools --locked devtools/analyze_rd1987_inversion.py`.
 
 #### Defining a cut from a detailed hydrocarbon analysis
 
@@ -152,7 +187,17 @@ When a DHA gives a boiling point and a paraffin / naphthene / aromatic split but
 nor density, use `addTBPfraction_Tb_Pna`:
 
 ```python
+import math
+from neqsim import jneqsim
+
+fluid = jneqsim.thermo.system.SystemPrEos(333.15, 20.0)
 fluid.addTBPfraction_Tb_Pna("cut1", 1.0, 450.0, 0.60, 0.25, 0.15)
+fluid.setMixingRule("classic")
+jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash()
+fluid.initProperties()
+assert fluid.getNumberOfComponents() == 1
+density_kg_m3 = fluid.getDensity("kg/m3")
+assert math.isfinite(density_kg_m3) and density_kg_m3 > 0.0
 ```
 
 The PNA fractions are blended linearly into a Watson factor using family values derived from the

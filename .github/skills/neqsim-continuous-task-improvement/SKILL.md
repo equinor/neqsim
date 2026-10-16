@@ -198,6 +198,25 @@ writes to a control system and every proposal carries `requires_approval`.
   candidates. It keeps only proposals that also satisfy every hard constraint with margin; every rejection is
   listed in `guard.json`. Also record a positive integer `evaluation_count` and finite non-negative
   `runtime_seconds`; the ledger retains the evidence block for persistent incumbent and performance provenance.
+  Field studies can set `production.require_envelope_evidence: true` and attach the Java
+  `getAcceptedPointEnvelopeEvidence(...)` map as `accepted_point_envelope_evidence`. The guard requires exact
+  cycle/optimizer identity, action-id/setpoint binding, complete uniquely addressed slices, safe recovery of every
+  sampled point, and reconciled point/evaluation/runtime totals before the existing ledger persists it. A supplied
+  block is always validated even when the setting is false; never copy envelope evidence into a later cycle.
+  Map production/injection route line-ups, controlled reservoir-lifecycle boundaries, mapped rotating-equipment
+  power, common-shaft speed/power, driver limits, shared host-power limits, and other operating-limit files to
+  `guard` with dependencies on the model update, optimizer, gates, and constraints. Keep route selectors as process
+  actions, reservoir pressure as a model input owned by `WellFlow.ReservoirLayer`, and mapped equipment power as
+  solved evidence read from the canonical `ProcessModel.getPower(...)` path. On a detected relevant revision
+  the append-only ledger marks old validation evidence non-current
+  and supersedes unfinished advice during the evidence stage, before model/optimizer/guard work can fail. A failed
+  guard still blocks publication of new advice, but cannot leave the old item marked current. Retry and resume
+  preserve idempotent invalidation and the current cycle's already-persisted replacement; dry runs do not mutate the
+  ledger. Custom production plans must keep `evidence` before model update, optimization, and `guard` to retain this
+  failure-path guarantee. Only a newly guarded point becomes a separate
+  `proposed` item with `revalidation_of`; if no safe replacement exists, expose none and never retain stale advice.
+  When a later revision is safe, resume lineage from the most recent superseded item rather than silently starting
+  a disconnected incumbent.
 - **Outcome**: ledger items set to `implemented` with `objective_kpi` and `baseline_value` are compared with
   the realised gain each cycle (`outcome_confirmed` / `outcome_miss`); the engineer decides on `verified`.
 - **Boundary conditions**: read the measured process boundary (here gas export and injection pressure and

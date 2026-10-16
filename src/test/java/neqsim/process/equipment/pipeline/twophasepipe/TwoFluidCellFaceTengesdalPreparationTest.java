@@ -58,6 +58,7 @@ class TwoFluidCellFaceTengesdalPreparationTest {
     UnsplitTransientSolver solver = new UnsplitTransientSolver();
     solver.setRelativeTolerance(1.0e-9);
     solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    solver.setDirectionalComplementarityEnabled(Boolean.getBoolean("neqsim.unsplit.directional-complementarity"));
     PreparedInterval interval = pipe.prepareUnsplitTransient(duration, maximumStep, solver,
         pipe.createUnsplitDensityModel());
     assertEquals(duration, interval.getEndTimeSeconds(), 0.0);

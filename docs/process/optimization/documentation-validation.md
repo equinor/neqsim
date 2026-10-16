@@ -58,7 +58,8 @@ tests can also be run directly:
 ./mvnw -B -ntp \
   -Dtest=PracticalOptimizationDocumentationTest,OptimizationEntryDocumentationTest,ProductionOptimizationGuideExamplesTest,ProcessModelOptimizationOverviewDocumentationTest,OptimizationGuideExamplesTest,CapacityOptimizationDocumentationTest,OptimizationIntegrationDocumentationTest \
   test
-python devtools/check_optimization_java_fragments.py
+uv sync --project devtools --group test --group optimization-docs --upgrade-package neqsim
+uv run --project devtools --locked devtools/check_optimization_java_fragments.py
 ```
 
 Select the compiled Java source for Python checks; otherwise the two standalone example
@@ -66,11 +67,11 @@ tests use the installed `neqsim` package's JAR:
 
 ```bash
 export NEQSIM_TEST_CLASSPATH="$PWD/target/classes:$(cat target/optimization-classpath.txt)"
-python -m unittest devtools.test_practical_optimization_examples -v
-python -m unittest devtools.test_optimization_entry_examples -v
+uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_practical_optimization_examples -v
+uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_optimization_entry_examples -v
 python src/test/python/test_production_optimization_guides.py
-python -m unittest devtools.test_optimizer_guide_examples -v
-python devtools/test_optimization_integration_examples.py
+uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_optimizer_guide_examples -v
+uv run --project devtools --locked devtools/test_optimization_integration_examples.py
 ```
 
 Prepare the notebook dependency classpath, then run all notebooks or name one from the
@@ -79,8 +80,8 @@ runner's help output:
 ```bash
 ./mvnw -B -ntp dependency:build-classpath \
   -Dmdep.outputFile=target/neqsim-dev-classpath.txt
-python devtools/check_optimization_notebooks.py
-python devtools/check_optimization_notebooks.py ProductionOptimizer_Tutorial
+uv run --project devtools --locked devtools/check_optimization_notebooks.py
+uv run --project devtools --locked devtools/check_optimization_notebooks.py ProductionOptimizer_Tutorial
 ```
 
 The default executor is `nbclient`, with a fresh kernel using the exact selected Python
