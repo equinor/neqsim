@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
           cache: maven
       - uses: astral-sh/setup-uv@v10.3.0
         with:
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
           cache: maven
       - uses: astral-sh/setup-uv@v10.3.0
         with:
