@@ -1,10 +1,13 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /** Conservation, phase-limit and structural tests for signed face complementarity. */
 class SignedFaceComplementarityTest {
@@ -63,6 +66,24 @@ class SignedFaceComplementarityTest {
   }
 
   @Test
+  void reversingFreeFluxSelectsPresentOppositeDonorAndReleasesConstraint() {
+    DirectionalPhaseFaceFlux[][] forwardFaces = {faces(0.4, 1.2, 0.0, 0.3, 0.0, -1.5)};
+    double[][] endpoint = {{0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0}, {0.3, 1.0, 1.0, -1.5, 0.0, 0.0, 0.0}};
+    SignedFaceComplementarity.State state = SignedFaceComplementarity
+        .initialize(evaluation(new double[2][6], forwardFaces, new double[] {1.0, 1.0}), endpoint);
+    assertTrue(state.isConstrained(0, 0));
+    assertEquals(1, state.getDirection(0, 0));
+
+    DirectionalPhaseFaceFlux[][] reverseFaces = {faces(-0.4, -1.2, 0.0, 0.3, 0.0, -1.5)};
+    boolean changed = SignedFaceComplementarity
+        .refreshActiveSet(evaluation(new double[2][6], reverseFaces, new double[] {1.0, 1.0}), endpoint, state);
+
+    assertTrue(changed);
+    assertEquals(-1, state.getDirection(0, 0));
+    assertFalse(state.isConstrained(0, 0));
+  }
+
+  @Test
   void structuralScheduleUsesFiftyThreeConflictFreeColors() {
     for (int cellCount : new int[] {16, 24}) {
       boolean[] seen = new boolean[SignedFaceComplementarity.TOTAL_COLOR_COUNT];
@@ -113,6 +134,38 @@ class SignedFaceComplementarityTest {
     assertEquals(0.0, result.getState()[0][0], 1.0e-10);
     assertEquals(0.5, result.getState()[1][0], 1.0e-10);
     assertEquals(0.0, result.getDirectionalPhaseFaceFluxes()[0][0].getSignedMassFlowKgPerSecond(), 1.0e-10);
+    assertEquals(2.0, result.getState()[0][0] + result.getState()[0][1] + result.getState()[0][2]
+        + result.getState()[1][0] + result.getState()[1][1] + result.getState()[1][2], 1.0e-12);
+  }
+
+  @ParameterizedTest
+  @ValueSource(doubles = {0.5, 1.0, 2.0})
+  void augmentedSolverLandsOnPhaseDisappearanceAndTransfersOnlyAvailableMass(double timeStep) {
+    double[][] initial = {{0.1, 0.45, 0.45, 0.0, 0.0, 0.0, 0.0}, {0.5, 0.25, 0.25, 0.0, 0.0, 0.0, 0.0}};
+    double[] pressure = {2.0e5, 2.0e5};
+    double[] areas = {1.0, 1.0};
+    UnsplitTransientSolver.Model model = (state, selectedPressure, closureState, closurePressure, time, outletPressure,
+        outletPressureFixed) -> {
+      double[][] rates = {{-0.2, 0.0, 0.0, 0.0, 0.0, 0.0}, {0.2, 0.0, 0.0, 0.0, 0.0, 0.0}};
+      DirectionalPhaseFaceFlux[][] faces = {faces(0.2, 0.0, state[0][0], state[1][0], state[0][3], state[1][3])};
+      double[][] densities = new double[3][2];
+      for (int phase = 0; phase < 3; phase++) {
+        densities[phase][0] = closurePressure[0] / 2.0e5;
+        densities[phase][1] = closurePressure[1] / 2.0e5;
+      }
+      return new UnsplitTransientSolver.Evaluation(rates, densities, faces, new double[] {1.0, 1.0}, new double[2][3]);
+    };
+    UnsplitTransientSolver solver = new UnsplitTransientSolver();
+    solver.setDirectionalComplementarityEnabled(true);
+    solver.setTimeIntegrationMethod(UnsplitTransientSolver.TimeIntegrationMethod.BACKWARD_EULER);
+    solver.setRelativeTolerance(1.0e-10);
+    UnsplitTransientSolver.Result result = solver.solve(initial, pressure, areas, timeStep, 0.0, Double.NaN, false,
+        model);
+
+    assertTrue(result.isConverged(), result.getTerminationReason().name());
+    assertEquals(0.0, result.getState()[0][0], 0.0);
+    assertEquals(0.6, result.getState()[1][0], 1.0e-10);
+    assertEquals(0.1 / timeStep, result.getDirectionalPhaseFaceFluxes()[0][0].getSignedMassFlowKgPerSecond(), 1.0e-10);
     assertEquals(2.0, result.getState()[0][0] + result.getState()[0][1] + result.getState()[0][2]
         + result.getState()[1][0] + result.getState()[1][1] + result.getState()[1][2], 1.0e-12);
   }
