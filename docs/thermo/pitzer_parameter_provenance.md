@@ -61,6 +61,16 @@ level-zero state initialization. Call `init(0)` after changing composition, as r
 general NeqSim state contract. This work is confined to `PhasePitzer` and `ComponentGePitzer`;
 neutral PR, SRK, CPA, Electrolyte-CPA, and Fürst electrolyte-EOS paths do no new work.
 
+## Candidate catalog preflight for unsupported mixtures
+
+`SystemPitzer.getMissingPhreeqcPitzerCatalogRows()` lists every absent required source row in the
+candidate PHREEQC catalog without selecting parameters or running a flash. Call it after `init(0)`.
+It is separate from the selected-dataset coverage diagnostic: for Na–Ba–Cl–SO4 the legacy exception
+lists missing theta/psi interactions, whereas the source catalog lacks Ba–SO4 B0/B1/C0 and three
+psi rows. See the [barite qualification report](pitzer_barite_qualification.md) for the frozen
+feeds, precise source inventory, primary literature and outstanding independent validation gates.
+Neither an empty source-gap list nor an explicit zero proves scientific qualification.
+
 ## Complete-dataset qualification publication gate
 
 For CO2 with Na/K/Ca/Mg chlorides, the explicit

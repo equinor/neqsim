@@ -333,6 +333,32 @@ public final class PitzerParameterDatasets {
   }
 
   /**
+   * Lists all explicit source rows missing from the automatic PHREEQC catalog candidate.
+   *
+   * <p>
+   * This read-only preflight uses the same topology traversal as catalog selection, including neutral lambda and zeta
+   * requirements and the automatic EOS-hydrocarbon exclusion. It neither selects a dataset nor runs a flash. Call
+   * {@code init(0)} after changing the system composition before auditing the aqueous role. An empty list establishes
+   * only source-row coverage; it does not qualify activities, mineral equilibria, or the current temperature and
+   * pressure. Optional beta2/alpha rows and higher-order neutral families are not required by automatic selection.
+   * </p>
+   *
+   * @param phase aqueous Pitzer role phase
+   * @return immutable sorted entries in the form {@code FAMILY:[sorted species names]}
+   * @throws IllegalArgumentException if the phase is null
+   */
+  public static List<String> getMissingPhreeqcPitzerCatalogRows(PhasePitzer phase) {
+    if (phase == null) {
+      throw new IllegalArgumentException("Pitzer phase must not be null");
+    }
+    List<String> missing = new ArrayList<String>();
+    validateCatalogTopology(phase, PhreeqcPitzerParameterCatalog.getInstance(), activeIons(phase),
+        activeAqueousNeutrals(phase, true), null, missing);
+    Collections.sort(missing);
+    return Collections.unmodifiableList(missing);
+  }
+
+  /**
    * Applies every explicit PHREEQC Pitzer row required by the phase's active species topology.
    *
    * <p>
@@ -454,6 +480,21 @@ public final class PitzerParameterDatasets {
 
   private static void validateCatalogTopology(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
       List<Integer> ions, List<Integer> neutrals, Double potassiumMagnesiumTheta) {
+    validateCatalogTopology(phase, catalog, ions, neutrals, potassiumMagnesiumTheta, null);
+  }
+
+  /**
+   * Traverses the selection requirements, either failing fast or collecting every absent source row.
+   *
+   * @param phase aqueous phase
+   * @param catalog immutable source catalog
+   * @param ions active ion indexes
+   * @param neutrals active aqueous neutral indexes
+   * @param potassiumMagnesiumTheta optional explicit compatibility override
+   * @param missing optional diagnostic collector; null preserves fail-fast selection
+   */
+  private static void validateCatalogTopology(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
+      List<Integer> ions, List<Integer> neutrals, Double potassiumMagnesiumTheta, List<String> missing) {
     for (int first = 0; first < ions.size(); first++) {
       int firstIndex = ions.get(first);
       for (int second = first + 1; second < ions.size(); second++) {
@@ -461,24 +502,28 @@ public final class PitzerParameterDatasets {
         String firstName = phase.getComponent(firstIndex).getComponentName();
         String secondName = phase.getComponent(secondIndex).getComponentName();
         if (phase.getComponent(firstIndex).getIonicCharge() * phase.getComponent(secondIndex).getIonicCharge() < 0.0) {
-          catalog.require(PhreeqcPitzerParameterCatalog.Family.B0, firstName, secondName);
-          catalog.require(PhreeqcPitzerParameterCatalog.Family.B1, firstName, secondName);
-          catalog.require(PhreeqcPitzerParameterCatalog.Family.C0, firstName, secondName);
+          requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.B0, firstName, secondName);
+          requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.B1, firstName, secondName);
+          requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.C0, firstName, secondName);
         } else {
-          catalogTheta(catalog, firstName, secondName, potassiumMagnesiumTheta);
+          if (missing == null) {
+            catalogTheta(catalog, firstName, secondName, potassiumMagnesiumTheta);
+          } else {
+            requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.THETA, firstName, secondName);
+          }
         }
       }
     }
-    validateCatalogPsiTopology(phase, catalog, ions);
+    validateCatalogPsiTopology(phase, catalog, ions, missing);
     for (int neutralPosition = 0; neutralPosition < neutrals.size(); neutralPosition++) {
       int neutral = neutrals.get(neutralPosition);
       String neutralName = phase.getComponent(neutral).getComponentName();
       for (int second = neutralPosition; second < neutrals.size(); second++) {
-        catalog.require(PhreeqcPitzerParameterCatalog.Family.LAMBDA, neutralName,
+        requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.LAMBDA, neutralName,
             phase.getComponent(neutrals.get(second)).getComponentName());
       }
       for (int ion : ions) {
-        catalog.require(PhreeqcPitzerParameterCatalog.Family.LAMBDA, neutralName,
+        requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.LAMBDA, neutralName,
             phase.getComponent(ion).getComponentName());
       }
       for (int cation : ions) {
@@ -487,7 +532,7 @@ public final class PitzerParameterDatasets {
         }
         for (int anion : ions) {
           if (phase.getComponent(anion).getIonicCharge() < 0.0) {
-            catalog.require(PhreeqcPitzerParameterCatalog.Family.ZETA, neutralName,
+            requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.ZETA, neutralName,
                 phase.getComponent(cation).getComponentName(), phase.getComponent(anion).getComponentName());
           }
         }
@@ -495,8 +540,16 @@ public final class PitzerParameterDatasets {
     }
   }
 
+  /**
+   * Checks all distinct mixed-charge triples for a source psi row.
+   *
+   * @param phase aqueous phase
+   * @param catalog source catalog
+   * @param ions active ion indexes
+   * @param missing optional diagnostic collector
+   */
   private static void validateCatalogPsiTopology(PhasePitzer phase, PhreeqcPitzerParameterCatalog catalog,
-      List<Integer> ions) {
+      List<Integer> ions, List<String> missing) {
     for (int first = 0; first < ions.size(); first++) {
       for (int second = first + 1; second < ions.size(); second++) {
         for (int third = second + 1; third < ions.size(); third++) {
@@ -507,11 +560,31 @@ public final class PitzerParameterDatasets {
               + (phase.getComponent(secondIndex).getIonicCharge() > 0.0 ? 1 : 0)
               + (phase.getComponent(thirdIndex).getIonicCharge() > 0.0 ? 1 : 0);
           if (positives == 1 || positives == 2) {
-            catalog.require(PhreeqcPitzerParameterCatalog.Family.PSI, phase.getComponent(firstIndex).getComponentName(),
-                phase.getComponent(secondIndex).getComponentName(), phase.getComponent(thirdIndex).getComponentName());
+            requireCatalogRow(catalog, missing, PhreeqcPitzerParameterCatalog.Family.PSI,
+                phase.getComponent(firstIndex).getComponentName(), phase.getComponent(secondIndex).getComponentName(),
+                phase.getComponent(thirdIndex).getComponentName());
           }
         }
       }
+    }
+  }
+
+  /**
+   * Checks one source row without treating an omitted row as an explicitly defined zero.
+   *
+   * @param catalog source catalog
+   * @param missing collector, or null to retain the existing fail-fast exception
+   * @param family required interaction family
+   * @param species species names in NeqSim notation
+   */
+  private static void requireCatalogRow(PhreeqcPitzerParameterCatalog catalog, List<String> missing,
+      PhreeqcPitzerParameterCatalog.Family family, String... species) {
+    if (missing == null) {
+      catalog.require(family, species);
+    } else if (catalog.find(family, species) == null) {
+      String[] sorted = species.clone();
+      Arrays.sort(sorted);
+      missing.add(family.name() + ":" + Arrays.toString(sorted));
     }
   }
 
