@@ -85,11 +85,40 @@ if errorlevel 1 goto :err_pip
 goto :done
 
 :install_uv
+set "UV_EXE=%USERPROFILE%\.local\bin\uv.exe"
+if exist "%UV_EXE%" goto :uv_ready
 where uv >nul 2>&1
-if errorlevel 1 goto :err_no_uv
+if not errorlevel 1 (
+	set "UV_EXE=uv"
+	goto :uv_ready
+)
+echo uv not found - bootstrapping it with the selected Python...
+%PY% -m pip --version >nul 2>&1
+if not errorlevel 1 goto :uv_pip_ok
+%PY% -m ensurepip --upgrade
+if errorlevel 1 goto :err_uv_boot
+:uv_pip_ok
+%PY% -m pip install --user uv >nul 2>&1
+if errorlevel 1 goto :uv_install_current
+set "UV_INSTALL_MODE=user"
+goto :uv_find_executable
+:uv_install_current
+%PY% -m pip install uv
+if errorlevel 1 goto :err_uv_boot
+set "UV_INSTALL_MODE=current"
+:uv_find_executable
+if /I "%UV_INSTALL_MODE%"=="user" goto :uv_user_scripts
+for /f "usebackq delims=" %%E in (`%PY% -c "import sysconfig; print(sysconfig.get_path('scripts'))"`) do set "UV_SCRIPTS=%%E"
+goto :uv_set_executable
+:uv_user_scripts
+for /f "usebackq delims=" %%E in (`%PY% -c "import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))"`) do set "UV_SCRIPTS=%%E"
+:uv_set_executable
+set "UV_EXE=%UV_SCRIPTS%\uv.exe"
+if not exist "%UV_EXE%" goto :err_uv_boot
+:uv_ready
 for /f "delims=" %%E in ('%PY% -c "import sys; print(sys.executable)"') do set "PYEXE=%%E"
 echo Installing (editable, via uv): %TARGET%
-uv pip install --python "%PYEXE%" -e "%TARGET%"
+"%UV_EXE%" pip install --python "%PYEXE%" -e "%TARGET%"
 if errorlevel 1 goto :err_uv
 goto :done
 
@@ -147,8 +176,10 @@ exit /b 1
 :err_pip
 echo ERROR: pip install failed. See the output above for details.
 exit /b 1
-:err_no_uv
-echo ERROR: 'uv' was requested but is not installed. Run: %PY% -m pip install uv
+:err_uv_boot
+echo ERROR: could not bootstrap uv with the selected Python.
+echo Check that pip and network access are available, then install uv manually:
+echo   https://docs.astral.sh/uv/getting-started/installation/
 exit /b 1
 :err_uv
 echo ERROR: 'uv pip install' failed. See the output above for details.

@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
-
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_ROOT = ROOT / "src" / "main" / "java" / "neqsim" / "process" / "equipment"
 CATALOG = ROOT / "docs" / "process" / "equipment" / "equipment_catalog.md"
@@ -32,39 +31,117 @@ class JavaType:
 
 
 PACKAGE_GUIDES: Mapping[str, Tuple[str, str]] = {
-    "absorber": ("[Absorbers and strippers](absorbers)", "Gas absorption, stripping, amine, and TEG contactors"),
-    "adsorber": ("[Adsorbers](adsorbers) and [adsorption beds](adsorption_bed)", "Adsorption beds, mercury removal, and PSA equipment"),
-    "battery": ("[Battery storage](battery_storage)", "Electrical energy storage and balancing"),
-    "blackoil": ("[Black-oil separation](black_oil_separator)", "Black-oil PVT separation in ProcessSystem"),
-    "compressor": ("[Compressors](compressors)", "Compressors, trains, drivers, maps, and anti-surge models"),
-    "diffpressure": ("[Differential-pressure equipment](differential_pressure)", "Orifice and differential-pressure flow equipment"),
-    "distillation": ("[Distillation](distillation)", "Tray, packed, reactive, and shortcut columns"),
+    "absorber": (
+        "[Absorbers and strippers](absorbers)",
+        "Gas absorption, stripping, amine, and TEG contactors",
+    ),
+    "adsorber": (
+        "[Adsorbers](adsorbers) and [adsorption beds](adsorption_bed)",
+        "Adsorption beds, mercury removal, and PSA equipment",
+    ),
+    "battery": (
+        "[Battery storage](battery_storage)",
+        "Electrical energy storage and balancing",
+    ),
+    "blackoil": (
+        "[Black-oil separation](black_oil_separator)",
+        "Black-oil PVT separation in ProcessSystem",
+    ),
+    "compressor": (
+        "[Compressors](compressors)",
+        "Compressors, trains, drivers, maps, and anti-surge models",
+    ),
+    "diffpressure": (
+        "[Differential-pressure equipment](differential_pressure)",
+        "Orifice and differential-pressure flow equipment",
+    ),
+    "distillation": (
+        "[Distillation](distillation)",
+        "Tray, packed, reactive, and shortcut columns",
+    ),
     "ejector": ("[Ejectors](ejectors)", "Motive/suction ejector equipment"),
-    "electrolyzer": ("[Electrolyzers](electrolyzers)", "Water and carbon-dioxide electrolysis"),
-    "energy": ("[Energy conversion equipment](energy_conversion)", "Motors, generators, converters, utility sources, and network solvers"),
-    "expander": ("[Expanders](expanders)", "Turboexpanders and coupled expander-compressor units"),
+    "electrolyzer": (
+        "[Electrolyzers](electrolyzers)",
+        "Water and carbon-dioxide electrolysis",
+    ),
+    "energy": (
+        "[Energy conversion equipment](energy_conversion)",
+        "Motors, generators, converters, utility sources, and network solvers",
+    ),
+    "expander": (
+        "[Expanders](expanders)",
+        "Turboexpanders and coupled expander-compressor units",
+    ),
     "filter": ("[Filters](filters)", "Particulate, charcoal, and sulfur filters"),
     "flare": ("[Flares](flares)", "Flare units and stacks"),
-    "heatexchanger": ("[Heat exchangers](heat_exchangers)", "Heaters, coolers, exchangers, evaporators, and dryers"),
-    "lng": ("[LNG cargo ageing](../lng-ageing)", "LNG storage, ageing, boil-off, and transport scenarios"),
-    "manifold": ("[Manifolds](manifolds)", "Multi-inlet production and routing manifolds"),
+    "heatexchanger": (
+        "[Heat exchangers](heat_exchangers)",
+        "Heaters, coolers, exchangers, evaporators, and dryers",
+    ),
+    "lng": (
+        "[LNG cargo ageing](../lng-ageing)",
+        "LNG storage, ageing, boil-off, and transport scenarios",
+    ),
+    "manifold": (
+        "[Manifolds](manifolds)",
+        "Multi-inlet production and routing manifolds",
+    ),
     "membrane": ("[Membranes](membranes)", "Membrane separators"),
-    "mixer": ("[Mixers and splitters](mixers_splitters)", "Equilibrium, static, non-equilibrium, and phase mixers"),
+    "mixer": (
+        "[Mixers and splitters](mixers_splitters)",
+        "Equilibrium, static, non-equilibrium, and phase mixers",
+    ),
     "network": ("[Networks](networks)", "Pipe, looped, and well-flowline networks"),
-    "pipeline": ("[Pipelines](pipelines)", "Steady and transient single-, two-, and multiphase pipelines"),
-    "powergeneration": ("[Power generation](power_generation)", "Turbines, fuel cells, renewables, and combined-cycle systems"),
+    "pipeline": (
+        "[Pipelines](pipelines)",
+        "Steady and transient single-, two-, and multiphase pipelines",
+    ),
+    "powergeneration": (
+        "[Power generation](power_generation)",
+        "Turbines, fuel cells, renewables, and combined-cycle systems",
+    ),
     "pump": ("[Pumps](pumps)", "Centrifugal, ESP, jet, and sucker-rod pumps"),
-    "reactor": ("[Reactors](reactors) and [multi-burner hot-oil heater](multi_burner_fired_heater)", "Chemical reactors and optional finite-rate gas-fired hot-oil equipment"),
-    "reservoir": ("[Reservoirs and wells](reservoirs)", "Reservoir, inflow, surveillance, and well-system equipment"),
-    "separator": ("[Separators](separators)", "Phase, solids, cryogenic, and extraction separators"),
-    "solidhandling": ("[Solid handling](solid_handling)", "Biological feedstock preparation and solids handling"),
-    "splitter": ("[Mixers and splitters](mixers_splitters)", "Flow, component, capture, and upgrading splitters"),
-    "stream": ("[Streams](streams)", "Material, equilibrium, virtual, and diagnostic streams"),
-    "subsea": ("[Subsea equipment](subsea_equipment)", "Trees, manifolds, boosters, jumpers, flowlines, and umbilicals"),
+    "reactor": (
+        "[Reactors](reactors) and [multi-burner hot-oil heater](multi_burner_fired_heater)",
+        "Chemical reactors and optional finite-rate gas-fired hot-oil equipment",
+    ),
+    "reservoir": (
+        "[Reservoirs and wells](reservoirs)",
+        "Reservoir, inflow, surveillance, and well-system equipment",
+    ),
+    "separator": (
+        "[Separators](separators)",
+        "Phase, solids, cryogenic, and extraction separators",
+    ),
+    "solidhandling": (
+        "[Solid handling](solid_handling)",
+        "Biological feedstock preparation and solids handling",
+    ),
+    "splitter": (
+        "[Mixers and splitters](mixers_splitters)",
+        "Flow, component, capture, and upgrading splitters",
+    ),
+    "stream": (
+        "[Streams](streams)",
+        "Material, equilibrium, virtual, and diagnostic streams",
+    ),
+    "subsea": (
+        "[Subsea equipment](subsea_equipment)",
+        "Trees, manifolds, boosters, jumpers, flowlines, and umbilicals",
+    ),
     "tank": ("[Tanks](tanks)", "Storage, LNG, and vessel-depressurization equipment"),
-    "util": ("[Process utilities](util/)", "Adjusters, recycles, calculators, fitters, setters, and utility systems"),
-    "valve": ("[Valves](valves)", "Control, shutdown, relief, rupture-disk, and throttling valves"),
-    "watertreatment": ("[Water treatment](water_treatment)", "Hydrocyclone, flotation, and produced-water treatment trains"),
+    "util": (
+        "[Process utilities](util/)",
+        "Adjusters, recycles, calculators, fitters, setters, and utility systems",
+    ),
+    "valve": (
+        "[Valves](valves)",
+        "Control, shutdown, relief, rupture-disk, and throttling valves",
+    ),
+    "watertreatment": (
+        "[Water treatment](water_treatment)",
+        "Hydrocyclone, flotation, and produced-water treatment trains",
+    ),
 }
 
 
@@ -93,7 +170,8 @@ def read_java_types() -> Dict[str, JavaType]:
         package_name = package_match.group(1)
         simple_name = declaration.group("name")
         imports = {
-            qualified.rsplit(".", 1)[-1]: qualified for qualified in IMPORT.findall(text)
+            qualified.rsplit(".", 1)[-1]: qualified
+            for qualified in IMPORT.findall(text)
         }
         interfaces = tuple(
             value.strip().split("<", 1)[0]
@@ -117,7 +195,9 @@ def read_java_types() -> Dict[str, JavaType]:
     return types
 
 
-def resolve_reference(reference: str, owner: JavaType, types: Mapping[str, JavaType]) -> str:
+def resolve_reference(
+    reference: str, owner: JavaType, types: Mapping[str, JavaType]
+) -> str:
     """Resolve a source-level superclass or interface reference when possible."""
 
     plain = reference.strip().split("<", 1)[0]
@@ -128,7 +208,9 @@ def resolve_reference(reference: str, owner: JavaType, types: Mapping[str, JavaT
     same_package = owner.package_name + "." + plain
     if same_package in types:
         return same_package
-    matches = [name for name, java_type in types.items() if java_type.simple_name == plain]
+    matches = [
+        name for name, java_type in types.items() if java_type.simple_name == plain
+    ]
     return matches[0] if len(matches) == 1 else plain
 
 
@@ -143,10 +225,13 @@ def concrete_equipment(types: Mapping[str, JavaType]) -> List[JavaType]:
     while changed:
         changed = False
         for qualified_name, java_type in types.items():
-            parents: Iterable[str] = ([java_type.superclass] if java_type.superclass else [])
+            parents: Iterable[str] = (
+                [java_type.superclass] if java_type.superclass else []
+            )
             parents = list(parents) + list(java_type.interfaces)
             if qualified_name not in equipment and any(
-                resolve_reference(parent, java_type, types) in equipment for parent in parents
+                resolve_reference(parent, java_type, types) in equipment
+                for parent in parents
             ):
                 equipment.add(qualified_name)
                 changed = True
@@ -171,7 +256,10 @@ def render_catalog(equipment: Sequence[JavaType]) -> str:
         grouped.setdefault(java_type.source_package, []).append(java_type)
     missing_guides = sorted(set(grouped) - set(PACKAGE_GUIDES))
     if missing_guides:
-        raise ValueError("Equipment source packages need documentation mappings: " + ", ".join(missing_guides))
+        raise ValueError(
+            "Equipment source packages need documentation mappings: "
+            + ", ".join(missing_guides)
+        )
 
     lines = [
         "---",
@@ -189,7 +277,7 @@ def render_catalog(equipment: Sequence[JavaType]) -> str:
         "Regenerate this page after adding or removing equipment:",
         "",
         "```text",
-        "python devtools/generate_equipment_documentation_catalog.py",
+        "uv run --project devtools --locked devtools/generate_equipment_documentation_catalog.py",
         "```",
         "",
         "## Equipment by source package",
@@ -199,10 +287,10 @@ def render_catalog(equipment: Sequence[JavaType]) -> str:
     ]
     for source_package in sorted(grouped):
         guide, purpose = PACKAGE_GUIDES[source_package]
-        classes = ", ".join(f"`{java_type.simple_name}`" for java_type in grouped[source_package])
-        lines.append(
-            f"| `{source_package}` | {guide}<br>{purpose} | {classes} |"
+        classes = ", ".join(
+            f"`{java_type.simple_name}`" for java_type in grouped[source_package]
         )
+        lines.append(f"| `{source_package}` | {guide}<br>{purpose} | {classes} |")
 
     lines.extend(
         [
@@ -243,15 +331,21 @@ def main(argv: Sequence[str] = ()) -> int:
     """Generate or check the catalog."""
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="fail when the committed catalog is stale")
+    parser.add_argument(
+        "--check", action="store_true", help="fail when the committed catalog is stale"
+    )
     args = parser.parse_args(argv)
     expected = expected_catalog()
     if args.check:
         actual = CATALOG.read_text(encoding="utf-8-sig") if CATALOG.is_file() else ""
         if actual != expected:
-            print(f"{CATALOG.relative_to(ROOT)} is stale; regenerate it", file=sys.stderr)
+            print(
+                f"{CATALOG.relative_to(ROOT)} is stale; regenerate it", file=sys.stderr
+            )
             return 1
-        print(f"Equipment catalog is current: {len(concrete_equipment(read_java_types()))} concrete classes.")
+        print(
+            f"Equipment catalog is current: {len(concrete_equipment(read_java_types()))} concrete classes."
+        )
         return 0
     CATALOG.write_text(expected, encoding="utf-8")
     print(f"Generated {CATALOG.relative_to(ROOT)}")

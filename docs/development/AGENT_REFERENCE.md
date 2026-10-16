@@ -203,7 +203,7 @@ Run the dependency-free generator to organize loose files into source folders
 and (re)build `collection_manifest.json` + `SOURCES.md`:
 
 ```bash
-python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize
+uv run --project devtools --locked devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize
 ```
 
 `SOURCES.md` lists, per source, each file with its origin (document number /
@@ -235,13 +235,13 @@ Regenerate it whenever documents are added and before finalizing the task.
    - **Run `@capability-scout` and write the result to** `step1_scope_and_research/capability_assessment.md` (mandatory for Standard/Comprehensive). The validator will warn if this artifact is missing or unfilled.
    - **Discover the right skills** via semantic search:
      ```bash
-     python devtools/skill_search.py "<your task title>" --top 5
+     uv run --project devtools --locked devtools/skill_search.py "<your task title>" --top 5
      ```
      Load the top-3 skills before starting analysis.
    - **Discover the best agents** across all repos (neqsim + community +
      enterprise) and plan the workflow — do not rely only on `router.agent.md`:
      ```bash
-     python devtools/agent_search.py "<your task title>" --top 8 \
+     uv run --project devtools --locked devtools/agent_search.py "<your task title>" --top 8 \
          --json --out step1_scope_and_research/agent_plan.json
      ```
      Record the chosen agents in `capability_assessment.md` §4b and the
@@ -252,10 +252,10 @@ Regenerate it whenever documents are added and before finalizing the task.
    - **Pull literature and internal docs** via `@literature-scout`. PDFs land in `step1_scope_and_research/references/` (in per-source subfolders, e.g. `literature/`, `stid/`); manifest in `references/collection_manifest.json`; summaries appended to `notes.md`.
    - Write **substantive** research notes to `step1_scope_and_research/notes.md` (no empty template sections)
    - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/` under the matching source subfolder (`literature/`, `lab/`, `stid/`, `vendor/`, `manual/` ...)
-   - **Organize + summarize the collection** by running `python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize` — it files loose docs into per-source folders and writes the distributable `references/SOURCES.md` + `references/collection_manifest.json`. Rerun whenever new documents are added.
+   - **Organize + summarize the collection** by running `uv run --project devtools --locked devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize` — it files loose docs into per-source folders and writes the distributable `references/SOURCES.md` + `references/collection_manifest.json`. Rerun whenever new documents are added.
    - **Extract figures from PDFs** using `devtools/pdf_to_figures.py`:
      ```bash
-     python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+     uv run --project devtools --locked devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
      ```
      Then view extracted pages with `view_image` to read diagrams, P&IDs, charts, and tables.
    - Summarise each document's key contributions in `notes.md` under "Literature & Reference Documents"
@@ -303,7 +303,7 @@ Regenerate it whenever documents are added and before finalizing the task.
    - **Save results.json** in the task root (see pattern below)
 
    **Step 2.5 — Consistency Check (MANDATORY before report)**
-   - Run `python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
+   - Run `uv run --project devtools --locked devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
    - The tool extracts numerical values from all notebooks and results.json
    - Detects inconsistencies: numerical mismatches, scope mismatches (e.g., volumetric vs mass-based), contradictory claims
    - Produces `consistency_report.json` in the task folder
@@ -655,7 +655,7 @@ When working iteratively with continuous updates:
 
 4. **Run Consistency Check** before report generation:
    ```bash
-   python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/
+   uv run --project devtools --locked devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/
    ```
 
 5. **Regenerate Report** — The report generator dynamically includes sections based on
@@ -665,7 +665,7 @@ When working iteratively with continuous updates:
 The report generator auto-reads this file to populate Results and Validation sections.
 - **key_results**: Rendered as styled table with auto-detected units (use suffixes like `_C`, `_bar`, `_kg`, `_hours`)
 - **validation**: Rendered as pass/fail table with color coding
-- **Information Sources and Evidence Basis** (no results.json key needed): built from `step1_scope_and_research/references/collection_manifest.json` — how many documents came from each source system (STID, SAP/Maintenance, PEPR, TR2000, historian, vendor, literature …), plus the `inputs.data_sources` systems read with their captured-evidence paths, plus documents sought but not obtained. Run `python devtools/generate_sources_md.py <task> --organize` so the manifest exists.
+- **Information Sources and Evidence Basis** (no results.json key needed): built from `step1_scope_and_research/references/collection_manifest.json` — how many documents came from each source system (STID, SAP/Maintenance, PEPR, TR2000, historian, vendor, literature …), plus the `inputs.data_sources` systems read with their captured-evidence paths, plus documents sought but not obtained. Run `uv run --project devtools --locked devtools/generate_sources_md.py <task> --organize` so the manifest exists.
 - **assumptions / data_gaps** (also accepted: `assumptions_and_gaps: {assumptions: [], data_gaps: []}`, `evidence_gaps`, `assumptions_gaps`): rendered as the **Assumptions and Data Gaps** section. Assumptions may be plain strings, or dicts with `assumption` / `basis` / `effect`. Data gaps should be dicts with `gap` (or `blocker`), `source`, `status`, `assumed` (what was used in its place) and `effect`. The gate warns when a declared data source has no captured evidence but nothing is registered here — a study that could not get a document still reached an answer somehow, and that substitution must be visible.
 - **equations**: KaTeX in HTML, PNG images in Word
 - **figures**: Numbered captions from `figure_captions`
@@ -1403,7 +1403,7 @@ ImpurityMonitor = ns.JClass("neqsim.process.measurementdevice.ImpurityMonitor")
 | `devtools/new_task.py` | Task-solving script |
 | `devtools/neqsim_runner/` | Supervised simulation runner — isolated subprocess per job, auto-retry, checkpoint/resume, SQLite state. Use `AgentBridge` for task-solving integration. |
 | `devtools/pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf`. |
-| `devtools/skill_search.py` | Semantic skill retrieval — TF-IDF + cosine over every SKILL.md `description`. Run `python devtools/skill_search.py "<task title>" --top 5` at the start of a task to load the right skills. Falls back to Jaccard tokens if scikit-learn is missing. |
+| `devtools/skill_search.py` | Semantic skill retrieval — TF-IDF + cosine over every SKILL.md `description`. Run `uv run --project devtools --locked devtools/skill_search.py "<task title>" --top 5` at the start of a task to load the right skills. Falls back to Jaccard tokens if scikit-learn is missing. |
 | `devtools/validate_task_results.py` | CI gate that mirrors `TaskResultValidator` rules in pure Python. Modes: positional, `--all`, `--changed` (reads `CHANGED_FILES`), `--enterprise-gate`. Warns when `step1_scope_and_research/capability_assessment.md` is missing or unfilled. With `--enterprise-gate` a Standard/Comprehensive task carrying neither a `benchmark_validation` nor a model-vs-plant comparison **fails** instead of warning. Task folders outside the repo are supported (`neqsim --set-task-root`). |
 | `devtools/verify_skill_api_refs.py` | API-drift linter: resolves every fully-qualified `neqsim.*` class reference in `.github/skills/` and `.github/agents/` against the Java source tree and fails on unresolved ones; warns on missing or stale `last_verified`. Bare class names are ignored on purpose (false positives). Runs in `ai-skills-and-agents-lint.yml`. |
 | `neqsim report [TASK_DIR]` | Runs the canonical `devtools/task_template/step3_report/generate_report.py` against **any** task folder (old or new), forwarding `--paper` / `--template PATH` / `--no-template`. Use it instead of copying the generator into a task; equivalent to `--task-dir PATH` / `NEQSIM_TASK_DIR`. |
@@ -1901,8 +1901,8 @@ Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early. A
 - **Model Calibration and Data Reconciliation**: When reducing model-vs-plant mismatch, tuning parameters with bounded optimization, reconciling noisy measurements, or producing train/validation fit reports, use the `neqsim-model-calibration-and-data-reconciliation` skill.
 - **API Changelog**: Check `CHANGELOG_AGENT_NOTES.md` in the repo root for recent API changes, new classes, deprecated methods, and known method name corrections.
 - **Capability Assessment**: Before starting complex engineering tasks, use the `@capability-scout` agent or the `neqsim-capability-map` skill to identify what NeqSim can do, find gaps, and plan implementations. The result MUST be saved to `step1_scope_and_research/capability_assessment.md` (mandatory artifact for Standard/Comprehensive tasks).
-- **Skill Discovery**: Run `python devtools/skill_search.py "<task title>" --top 5` at the start of any task to surface the most relevant skills via TF-IDF over the SKILL.md `description` fields. Prefer this over manual lookup in `skill-index.json` (which is now a curated short-list, not exhaustive).
-- **Agent Discovery**: Run `python devtools/agent_search.py "<task title>" --top 8 --json --out step1_scope_and_research/agent_plan.json` to rank the best specialist agents across all repos (neqsim + community + enterprise) — the search output lists the skills each agent loads. Record the chosen agents and the composition/workflow in `capability_assessment.md` §4b/§4c and mirror it into `results.json` `agent_workflow_plan`. Prefer delegating to a specialist agent (so its governance and internal workflow are reused) over re-loading its skills manually. For tasks spanning ≥3 disciplines, compose a declarative workflow via MCP `composeWorkflow`/`composeMultiServerWorkflow` or an `engineering-harness` study instead of a single agent.
+- **Skill Discovery**: Run `uv run --project devtools --locked devtools/skill_search.py "<task title>" --top 5` at the start of any task to surface the most relevant skills via TF-IDF over the SKILL.md `description` fields. Prefer this over manual lookup in `skill-index.json` (which is now a curated short-list, not exhaustive).
+- **Agent Discovery**: Run `uv run --project devtools --locked devtools/agent_search.py "<task title>" --top 8 --json --out step1_scope_and_research/agent_plan.json` to rank the best specialist agents across all repos (neqsim + community + enterprise) — the search output lists the skills each agent loads. Record the chosen agents and the composition/workflow in `capability_assessment.md` §4b/§4c and mirror it into `results.json` `agent_workflow_plan`. Prefer delegating to a specialist agent (so its governance and internal workflow are reused) over re-loading its skills manually. For tasks spanning ≥3 disciplines, compose a declarative workflow via MCP `composeWorkflow`/`composeMultiServerWorkflow` or an `engineering-harness` study instead of a single agent.
 - **Literature & Document Pull**: Use `@literature-scout` to fetch papers, standards, and internal STID/vendor docs into `step1_scope_and_research/references/`. The agent writes `references/manifest.json` and summarises sources into `notes.md`.
 - **Pre-PR Quality Gate**: Before opening a PR for a task, invoke `@review <task folder>` (read-only). It wraps `validate_task_results.py`, `consistency_checker.py`, capability-assessment presence, figure→discussion traceability, and repo-memory hits, returning a PASS/WARN/FAIL grade.
 - **Skills/Agents CI Lint**: `.github/workflows/ai-skills-and-agents-lint.yml` runs `devtools/verify_skills_agents.py` (front-matter + skill-index reference check) and `devtools/generate_agent_skill_map.py` (auto-generates `docs/development/AGENT_SKILL_MAP.md`) on every PR touching `.github/skills/` or `.github/agents/`. The map is rebuilt from `Loaded skills:` lines in agent files; CI fails if the committed map is stale.
@@ -2249,13 +2249,13 @@ not the document root: run `neqsim fetch-docs <task_dir>` (automatic in
    Runtime rule above. Same entry point, same arguments; applies to every
    `neqsim ...` command below. Never skip the step or hand-create the folder.
 2. **All output goes to** `task_solve/YYYY-MM-DD_slug/` — never to `examples/`, `docs/`, or workspace root
-3. **All downloaded documents** go inside the task folder at `step1_scope_and_research/references/`, filed into **per-source subfolders** (`stid/`, `pepr/`, `tr2000/`, `maintenance/`, `servicenow/`, `tagreader/`, `seeq/`, `rigga/`, `vendor/`, `lab/`, `literature/`, `web/`, `manual/`). Run `python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize` to file loose docs and (re)build the distributable `references/SOURCES.md` + `references/collection_manifest.json` so the whole task folder can be handed to others. The manifest also drives the report's **Information Sources and Evidence Basis** section (how many documents came from STID, SAP, PEPR, …), so regenerate it before the report.
+3. **All downloaded documents** go inside the task folder at `step1_scope_and_research/references/`, filed into **per-source subfolders** (`stid/`, `pepr/`, `tr2000/`, `maintenance/`, `servicenow/`, `tagreader/`, `seeq/`, `rigga/`, `vendor/`, `lab/`, `literature/`, `web/`, `manual/`). Run `uv run --project devtools --locked devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize` to file loose docs and (re)build the distributable `references/SOURCES.md` + `references/collection_manifest.json` so the whole task folder can be handed to others. The manifest also drives the report's **Information Sources and Evidence Basis** section (how many documents came from STID, SAP, PEPR, …), so regenerate it before the report.
 3b. **State every assumption, especially where data could not be found.** Put `assumptions` and `data_gaps` in results.json (gap fields: `gap`/`blocker`, `source`, `status`, `assumed` — what was used instead — and `effect`). They render as the report's **Assumptions and Data Gaps** section, and the gate warns when a declared source system has no captured evidence but nothing is registered.
 4. Follow the 3-step workflow: **Scope & Research** → **Analysis & Evaluation** → **Report**
 5. **Benchmark validation (MANDATORY):** Compare NeqSim results against independent reference data
 6. **Uncertainty analysis:** Monte Carlo with P10/P50/P90 + tornado diagram (MANDATORY for Standard/Comprehensive tasks with economics or reserves; optional for Quick tasks)
 7. **Risk evaluation:** Risk register with ISO 31000 5×5 matrix (MANDATORY for Standard/Comprehensive tasks; optional for Quick tasks)
-8. **Consistency check:** Run `python devtools/consistency_checker.py` before generating reports
+8. **Consistency check:** Run `uv run --project devtools --locked devtools/consistency_checker.py` before generating reports
 8b. **Report files are named after the report title.** Set `study.title` in `study_config.yaml` (or pass `--title`) before generating: a study titled "Hydrate margin for the export line" ships `step3_report/Hydrate_margin_for_the_export_line.docx` + `.html`, so the deliverable is identifiable outside its task folder. Files written under an earlier title are deleted on regeneration — never leave a superseded `Report.docx` beside the current one.
 8c. **Report language is English unless configured.** Set `report.language` in `study_config.yaml` (`en` default, `nb`/`no` for Norwegian, any ISO code); `--language CODE` / `NEQSIM_REPORT_LANGUAGE` override it for one run. It translates the generator's headings, cover labels, and caption prefixes and sets the document language for Word spell-check — write `results.json` and `task_spec.md` in the same language. The scientific paper stays English.
 9. **Work record (generated with every report):** `generate_report.py` / `neqsim report` also writes `step3_report/WORK_RECORD.md` — what was done, how, which data and scripts were used, and where every file lives. Fill its `background`, `method`, and `limitations` narrative blocks by hand (preserved on regeneration); verify with `neqsim work-record <task> --check`.

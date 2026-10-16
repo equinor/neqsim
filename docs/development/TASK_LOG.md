@@ -36,6 +36,13 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-15 — Replay live SURF production and injection under moving host limits
+**Type:** E (Feature)
+**Keywords:** SURF, lifecycle, reservoir pressure, two-zone injection, shared power, separator, scrubber, 4228, 4188
+**Solution:** Extend `FieldToFacilityOptimizationAcceptanceTest` and `FieldWellNetworkProcessUnitTest` on the existing lifecycle-envelope PR, preserving its independent-period accepted-search contract. Reuse canonical topology, live well coupling, mapped equipment and current constraint sampling; introduce no runtime model, optimizer or persistence abstraction.
+**Notes:** New same-model production and injection regressions pass on the integrated lifecycle branch. Prescribed production pressure reductions of 1/2/3 bara produce 772.171922/763.585471/755.035017 kg/hr export; separator, scrubber and shared-power restrictions each reject current evidence and recover after restoration. Live two-zone injection checks synchronized layer/stream pressures, decreasing injectivity, conservation, allocation, fracture flags and pump-power rejection/recovery. These are synthetic conservation/trend and replay checks, not independent map, reservoir, hydraulic, transient or design qualification. Updated SURF guide and network routing skill distinguish lower-level repeated solves from independent accepted lifecycle periods.
+**Validation:** Integrated Linux OpenJDK 17.0.20 run: 61 tests passed, zero failures/errors/skips across field/facility, topology, well coupling, mapped compressors, hydraulic fidelity/comparison and operating-envelope/search/action suites. The optimization documentation gate compiled 205 Java fences with release 8 and executed 99 fragments; optimizer-package Javadocs passed using the installed JDK module launcher. Spotless apply/check, documentation search, engineering-coverage check and whitespace checks passed. Actual Java 8/21 platform execution and final review remain hosted CI gates; no independent engineering qualification is claimed.
+
 ### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
 **Type:** A (Property)
 **Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
@@ -1783,3 +1790,46 @@ and preservation of the source stream. The existing explicit zero-flow boundary 
 `b0de5165`. Final expanded test results, formatting/documentation gates and paired performance
 measurements are recorded in the PR validation update. No physical acceptance threshold is relaxed.
 **Documentation impact:** Updated flow-setting and well-simulation guides and the setter JavaDoc.
+### 2026-10-14 — Electrolyte derivative consistency and model diagnostics
+
+Baseline: master `d28b180969e248837e68b5e982374db69e11a376`.
+Corrected the base Furst/electrolyte CPA dielectric and Born second derivatives
+and included the stationary shielding response in the long-range Hessian.
+The shielding solve now checks a relative residual and starts from the
+Debye–Hückel upper bound; zero ionic inventory has exactly zero shielding.
+The model checker evaluates every phase and derivative entry, rejects non-finite
+values and compares independent numerical trials without changing the source fluid.
+Prior validation: 193 tests passed across 19 targeted model, mixed-brine inventory,
+parameter-selection, extensivity and diagnostic classes, including 34 new
+regressions and the 28 slow electrolyte CPA tests enabled explicitly.
+A follow-up initialized-derivative check exposed stale electrolyte/CPA caches after
+the final volume solve. Derivative initialization now refreshes those caches at the
+returned volume, without changing the volume root or solver tolerances. The legacy
+CPA test fixture explicitly initializes composition derivatives; its previous zero
+caches could falsely pass the Gibbs–Duhem check. Two regressions fail before this
+repair and pass afterward, including detached repeated initialization.
+Three-phase qualification then exposed shared association-derivative rows in
+electrolyte CPA clones and shared fugacity composition-derivative caches in base
+component clones. Both now preserve cached values in independently owned arrays.
+Four added regressions cover full-cache preservation, mutation isolation and
+fugacity-derivative invariance under either liquid-phase initialization order;
+each fails before its repair. Independent fixed-state finite differences confirm
+the repaired Jacobian. This qualifies component derivative ownership, not general
+concurrent safety of cloned phase workspaces.
+A later boundary-CI check exposed an invalid 1000 K fixture: the mixture dielectric
+constant was -166.7429 (and -15.6928 at a 656.575 K continuation state). Ionic
+shielding now diagnoses nonpositive or nonfinite permittivity explicitly, while
+zero-ion states keep zero shielding. The public boundary regression checks the
+rejection and unchanged feed; four model cases cover both Furst and CPA domain
+handling and the zero-ion exception. Positive brine-boiling and gas/oil/brine
+pressure-boundary contracts are qualified with the general solver in #4306;
+the legacy boundary solver is not qualified by this model repair. Follow-up
+validation passed 40 focused model and boundary tests, with slow cases enabled,
+and 28 documentation/coverage tests; formatting and pre-push checks passed.
+Independent agent review checked the analytical derivation and cache lifecycle;
+this is not domain-maintainer approval.
+Documentation impact: updated the electrolyte CPA guide and Born-derivative guide
+with the corrected equations, numerical behavior and qualification limits.
+No fitted parameters or dielectric data changed. Nitrogen, n-butane and n-hexane
+dielectric inputs and salting-out accuracy, third-order volume derivatives, the singular zero-concentration
+composition curvature and the separate legacy Mod2004 implementation remain unqualified.

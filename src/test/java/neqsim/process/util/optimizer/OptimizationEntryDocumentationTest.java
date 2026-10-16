@@ -75,11 +75,20 @@ class OptimizationEntryDocumentationTest extends NeqSimTest {
           StandardCharsets.UTF_8);
       Matcher blocks = Pattern.compile("```java\\n(.*?)```", Pattern.DOTALL).matcher(markdown);
       int index = 0;
+      int previousBlockEnd = 0;
       while (blocks.find()) {
-        if (document.equals("OPTIMIZATION_OVERVIEW.md")
-            && !Arrays.asList(0, 1, 4, 10, 11, 12, 13, 14).contains(index)) {
-          index++;
-          continue;
+        if (document.equals("OPTIMIZATION_OVERVIEW.md")) {
+          Matcher marker = Pattern.compile("<!-- overview-example: (\\d+) -->")
+              .matcher(markdown.substring(previousBlockEnd, blocks.start()));
+          int exampleId = -1;
+          while (marker.find()) {
+            exampleId = Integer.parseInt(marker.group(1));
+          }
+          previousBlockEnd = blocks.end();
+          if (!Arrays.asList(0, 1, 4, 9, 10, 11, 12, 13).contains(exampleId)) {
+            index++;
+            continue;
+          }
         }
         String source = blocks.group(1);
         Matcher type = Pattern.compile("public class (\\w+)").matcher(source);
@@ -104,7 +113,7 @@ class OptimizationEntryDocumentationTest extends NeqSimTest {
         index++;
       }
     }
-    assertEquals(54, snippetCount, "Cover both entry guides and all eight standalone overview examples");
+    assertEquals(54, snippetCount, "Cover both entry guides and all eight marked standalone overview examples");
     String overview = new String(Files.readAllBytes(Paths.get("docs/process/optimization/OPTIMIZATION_OVERVIEW.md")),
         StandardCharsets.UTF_8);
     Matcher yaml = Pattern.compile("```yaml\\n(.*?)```", Pattern.DOTALL).matcher(overview);

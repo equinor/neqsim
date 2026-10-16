@@ -104,9 +104,9 @@ mvnw.cmd javadoc:javadoc
 When only agent/skill files were edited, run:
 
 ```powershell
-python devtools/verify_skills_agents.py
-python devtools/generate_agent_skill_map.py
-python devtools/verify_skills_agents.py
+uv run --project devtools --locked devtools/verify_skills_agents.py
+uv run --project devtools --locked devtools/generate_agent_skill_map.py
+uv run --project devtools --locked devtools/verify_skills_agents.py
 ```
 
 ## Common Pitfalls

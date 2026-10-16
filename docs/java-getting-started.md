@@ -221,9 +221,9 @@ On Windows use `mvnw.cmd install`. Useful focused commands include:
 ```bash
 ./mvnw test -Dtest=SeparatorTest
 ./mvnw test -Dtest=SeparatorTest#testTwoPhase
-python devtools/run_spotless.py apply
-python devtools/run_spotless.py check
-python devtools/check_documentation_search.py
+uv run --project devtools --locked devtools/run_spotless.py apply
+uv run --project devtools --locked devtools/run_spotless.py check
+uv run --project devtools --locked devtools/check_documentation_search.py
 ```
 
 All contributed Java source must remain Java 8 compatible even when the build runs on

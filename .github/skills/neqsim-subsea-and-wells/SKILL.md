@@ -11,6 +11,9 @@ estimation, and tieback analysis using NeqSim.
 
 For platform-drilled extended-reach wells (reach, torque and drag, slot and riser census) see the
 community skill `neqsim-erd-reach-screening`; NeqSim has no torque-and-drag class yet (NIP-1).
+For 3D well paths, position uncertainty and ISCWSA separation-factor anti-collision against offset
+wells (slot occupancy, sidetrack parent exit, target pull-back) see the community skill
+`neqsim-well-trajectory-anticollision`; NeqSim has no wellbore-positioning class.
 
 ---
 

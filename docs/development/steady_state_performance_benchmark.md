@@ -72,7 +72,7 @@ java -Xms512m -Xmx512m -XX:ActiveProcessorCount=4 -cp <classpath> \
   neqsim.process.processmodel.LargeProcessSteadyStateBenchmark \
   serial changed 40 60 20 sequential <output.json>
 
-python devtools/benchmark_large_process.py \
+uv run --project devtools --locked devtools/benchmark_large_process.py \
   --baseline-classpath <baseline-classpath> \
   --candidate-classpath <candidate-classpath> \
   --output <output-directory> --workload serial --size 20 \

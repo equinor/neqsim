@@ -156,7 +156,7 @@ predicted from boiling point and specific gravity:
 | `RIAZI_DAUBERT_1980` | 5.4 % | 13.6 % | yes |
 | `TBP_MODEL` | follows the fluid's characterization model | | no |
 
-Reproduce the table with `python devtools/validate_tbp_closures.py`.
+Reproduce the table with `uv run --project devtools --locked devtools/validate_tbp_closures.py`.
 
 #### Forward use versus inverted use
 
@@ -179,7 +179,7 @@ molar mass amplifies into a 7–21 % error in specific gravity. RD-1980's expone
 its inverse is unique and carries error 1:1. `addTBPfraction_Mw_Tb` therefore defaults to RD-1980,
 and asking a non-invertible closure for a density throws rather than returning one of two roots.
 
-Reproduce these numbers with `python devtools/analyze_rd1987_inversion.py`.
+Reproduce these numbers with `uv run --project devtools --locked devtools/analyze_rd1987_inversion.py`.
 
 #### Defining a cut from a detailed hydrocarbon analysis
 

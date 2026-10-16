@@ -1033,17 +1033,17 @@ single plant model, and it is how the column defect above was found.
 
 ```bash
 # Convert every case, one subprocess each (a COM failure cannot abort the batch)
-python devtools/unisim_batch_check.py \
+uv run --project devtools --locked devtools/unisim_batch_check.py \
     --samples-dir "C:\Program Files (x86)\Honeywell\UniSim Design R510\Samples" \
     --out report.json --work-dir %TEMP%\unisim_batch\run1
 
 # Then RUN every generated model — static checks are not enough
-python devtools/unisim_run_generated.py --dir %TEMP%\unisim_batch\run1 \
+uv run --project devtools --locked devtools/unisim_run_generated.py --dir %TEMP%\unisim_batch\run1 \
     --out runs.json --timeout 300
 
 # Discover COM attribute names of an operation type the reader mishandles
-python devtools/unisim_probe_ops.py --usc <case.usc> --types columnop,absorber
-python devtools/unisim_probe_column.py <case.usc>
+uv run --project devtools --locked devtools/unisim_probe_ops.py --usc <case.usc> --types columnop,absorber
+uv run --project devtools --locked devtools/unisim_probe_column.py <case.usc>
 ```
 
 `unisim_batch_check.py` records read/convert timings, the operation-type
@@ -1392,34 +1392,34 @@ plant.run()
 
 ```bash
 # Print model summary
-python devtools/unisim_reader.py path/to/file.usc --summary
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --summary
 
 # Output NeqSim JSON
-python devtools/unisim_reader.py path/to/file.usc --json
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --json
 
 # Generate standalone Python script
-python devtools/unisim_reader.py path/to/file.usc --python process.py
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --python process.py
 
 # Generate Jupyter notebook
-python devtools/unisim_reader.py path/to/file.usc --notebook process.ipynb
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --notebook process.ipynb
 
 # Generate EOT / ProcessPilot simulator
-python devtools/unisim_reader.py path/to/file.usc --eot my_sim.py --eot-class MySimulator
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --eot my_sim.py --eot-class MySimulator
 
 # Generate EOT demo notebook
-python devtools/unisim_reader.py path/to/file.usc --eot-notebook eot_demo.ipynb
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --eot-notebook eot_demo.ipynb
 
 # Save full extracted model
-python devtools/unisim_reader.py path/to/file.usc --save extracted.json
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --save extracted.json
 
 # Fast extraction (topology only, no stream properties)
-python devtools/unisim_reader.py path/to/file.usc --no-streams --summary
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --no-streams --summary
 
 # Combined: Python + notebook + EOT in one command
-python devtools/unisim_reader.py path/to/file.usc --python p.py --notebook n.ipynb --eot s.py
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --python p.py --notebook n.ipynb --eot s.py
 
 # Show UniSim GUI window during extraction (useful for debugging)
-python devtools/unisim_reader.py path/to/file.usc --visible --summary
+uv run --project devtools --locked devtools/unisim_reader.py path/to/file.usc --visible --summary
 ```
 
 ---
@@ -1864,7 +1864,7 @@ to NeqSim and extend the converter registry instead:
 5. Promote an adapter to a real NeqSim equipment class only when equations,
    ports, properties, and regression tests are clear.
 
-Validate registry changes with `python devtools/test_unisim_outputs.py`. The
+Validate registry changes with `uv run --project devtools --locked devtools/test_unisim_outputs.py`. The
 suite includes pure-Python checks for output modes, E300 transfer, operation
 handler strategy, and JSON `_unisim_operation_mapping` summaries.
 

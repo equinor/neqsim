@@ -6,7 +6,7 @@
 > - [docs/development/AGENT_REFERENCE.md](docs/development/AGENT_REFERENCE.md) — full
 >   workflow, `results.json` schema, Automation API, code patterns, key paths, JavaDoc
 >   and documentation rules. Search it for the heading you need; never read it whole.
-> - Skills in `.github/skills/` (find them with `python devtools/skill_search.py "<topic>"`).
+> - Skills in `.github/skills/` (find them with `uv run --project devtools --locked devtools/skill_search.py "<topic>"`).
 > - [CONTEXT.md](CONTEXT.md) — 60-second repo map. `docs/development/CODE_PATTERNS.md` — starters.
 
 ## Hard constraints (CI fails otherwise)
@@ -28,7 +28,7 @@
 - **Verify APIs before use:** find the class, read constructor/method signatures, never assume
   convenience overloads, enum locations or getter arguments.
 - **Agent/MCP coverage:** after Java formatting or agent/skill mapping changes, run
-  `python devtools/build_engineering_coverage.py` and commit the generated inventory.
+  `uv run --project devtools --locked devtools/build_engineering_coverage.py` and commit the generated inventory.
   Register new engineering operations with routes and evidence; source presence is not validation.
 - **AI workflow names:** GitHub Actions workflows for agent, skill, MCP, task, or research
   tooling MUST use `ai-<purpose>.yml` in lowercase kebab-case, directly in `.github/workflows/`.
@@ -52,7 +52,7 @@
   `sys.executable`. Missing package or interpreter = report the blocker.
 - **Task notebooks** load workspace classes through `devtools/neqsim_dev_setup.py`
   (`ns = neqsim_init(project_root=...)`, then `ns.*` / `ns.JClass`); never `from neqsim import jneqsim`.
-  Java not found → `python devtools/java_locator.py` / `ensure_java_home()` before declaring it missing.
+  Java not found → `uv run --project devtools --locked devtools/java_locator.py` / `ensure_java_home()` before declaring it missing.
 - **Build/test:** `mvnw.cmd install`; single test `mvnw.cmd test -Dtest=Class#method`;
   static analysis `checkstyle:check spotbugs:check pmd:check`.
 - **"Package and update python":** `.\mvnw.cmd package -DskipTests`, then copy
@@ -89,7 +89,7 @@ Non-negotiables:
    task path to every child agent/tool; resume existing tasks in place; never fall back silently.
 2. **All output and downloaded documents stay in the task folder** — documents under
    `step1_scope_and_research/references/<source>/`; run
-   `python devtools/generate_sources_md.py <task> --organize` for `SOURCES.md` + manifest.
+   `uv run --project devtools --locked devtools/generate_sources_md.py <task> --organize` for `SOURCES.md` + manifest.
    Search the optional document root (`neqsim documents PATTERN`, read-only) and run
    `neqsim fetch-docs <task>` before calling a standard, datasheet or P&ID unavailable.
 3. Standard/Comprehensive: `capability_assessment.md`, `analysis.md`, skill + agent discovery

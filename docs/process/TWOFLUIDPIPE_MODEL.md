@@ -1439,12 +1439,21 @@ equal-and-oppositely in adjacent cells and are independently rechecked by
 the cell operator exactly once.
 
 This remains an experimental opt-in numerical path. All six unchanged 0.1 s historical and
-pressure-interpolated Tengesdal lanes pass at 16/24 cells, and an exactly absent donor regression
-drives the prohibited face transport below $10^{-10}$ kg/s while closing total inventory. The
-unchanged 15-case five-second matrix still fails between 0.1251953125 s and 0.831640625 s by line
-search or iteration limit. Therefore this increment establishes the augmented residual, Jacobian,
-conservation and prepared-step contract; it does not yet qualify disappearance/reappearance,
-severe slugging, restart or hydraulic pigging, and no 180 s or 600 s run is justified.
+pressure-interpolated Tengesdal lanes pass at 16/24 cells, and exact-bound regressions now cover an
+initially absent donor, disappearance after transporting only the available mass, and reversal to a
+present opposite donor. Nonnegative phase masses and face variables may land exactly on zero; an
+outward Newton component at an already active zero bound is projected onto the feasible tangent
+cone before a trial is formed. Between Jacobians, the unmodified signed free flux selects direction
+and the exact donor row can activate or release. Line-search trials use reversible copies of those
+choices, so a rejected trial cannot mutate the accepted active set. None of these operations clips
+accepted mass or introduces an inventory tolerance.
+
+The directly affected unchanged nine five-second historical/pressure-interpolated/explicit-face
+cases still fail line search. Their last local times are 0.63125--1.83515625 s: materially beyond
+the earlier 0.1251953125--0.831640625 s envelope for several lanes, but short of the required 5 s.
+Therefore the full unchanged 15-case matrix remains failed. This increment establishes exact phase
+disappearance and donor-transition mechanics only; it does not qualify reappearance in the public
+riser, severe slugging, restart or hydraulic pigging, and no 180 s or 600 s run is justified.
 
 `TwoFluidUnsplitModelAdapter.prepareStep` independently re-evaluates a converged, active-set-stable
 candidate against its accepted templates, requested time step, boundary, and current operator. It

@@ -24,12 +24,12 @@ import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.ObjectiveDe
  * <p>
  * Every point is a complete action vector evaluated by {@link ProcessModelOperatingActionSetEvaluator}. Infeasible
  * candidates remain in the trace when baseline recovery succeeds. Sampling stops immediately when restoration or
- * restored-baseline convergence fails. Leading-bottleneck transitions use only the evaluator's already ranked, finite
- * installed-equipment evidence for feasible points. Infeasible points retain the exact fail-closed rejection source:
- * first the applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated
- * hard registered model constraint in declaration order. Physical values with unlike units are never numerically ranked
- * against each other. Transitions are sampled identity changes, not proof of a continuous boundary, an optimizer active
- * set, or operating approval.
+ * restored-baseline convergence fails. Leading-bottleneck transitions compare the evaluator's finite normalized
+ * installed-equipment and typed plant/shared/coupled evidence for feasible points. Infeasible points retain the exact
+ * fail-closed rejection source: first the applicable required hydraulic binding, then typed plant/shared/coupled
+ * evidence, then the first violated hard registered model constraint in declaration order. Physical values with unlike
+ * units are never numerically ranked against each other. Transitions are sampled identity changes, not proof of a
+ * continuous boundary, an optimizer active set, or operating approval.
  * </p>
  *
  * @author NeqSim Development Team
@@ -615,6 +615,21 @@ public final class ProcessModelOperatingEnvelopeStudy {
     return null;
   }
 
+  /** Selects the leading finite enabled plant/shared/coupled constraint by normalized utilization. */
+  private static PlantConstraintEvidence leadingPlant(CandidateSetEvaluationResult result) {
+    PlantConstraintEvidence leading = null;
+    for (PlantConstraintEvidence evidence : result.getPlantConstraintEvidence()) {
+      if (!evidence.getDefinition().isEnabled() || !evidence.hasAvailableEvidence()
+          || !Double.isFinite(evidence.getNormalizedUtilization())) {
+        continue;
+      }
+      if (leading == null || evidence.getNormalizedUtilization() > leading.getNormalizedUtilization()) {
+        leading = evidence;
+      }
+    }
+    return leading;
+  }
+
   /** Selects the unit-safe leading constraint or exact fail-closed rejection source. */
   private static LeadingConstraintEvidence leading(CandidateSetEvaluationResult result,
       InstalledEquipmentCapacityEvidence installed) {
@@ -645,7 +660,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
     default:
       break;
     }
-    return installed == null ? null : LeadingConstraintEvidence.fromInstalled(installed);
+    PlantConstraintEvidence plant = leadingPlant(result);
+    if (installed == null) {
+      return plant == null ? null : LeadingConstraintEvidence.fromPlant(plant);
+    }
+    if (plant != null && plant.getNormalizedUtilization() > installed.getNormalizedUtilization()) {
+      return LeadingConstraintEvidence.fromPlant(plant);
+    }
+    return LeadingConstraintEvidence.fromInstalled(installed);
   }
 
   /** Matches one required-hydraulic snapshot to the evaluator's fail-closed outcome. */

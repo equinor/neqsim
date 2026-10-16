@@ -46,7 +46,7 @@ set on which Java **language features** are allowed, load `neqsim-java8-rules`.
 - `spotless:apply` fixes: indentation (2 spaces), trailing whitespace, blank lines,
   brace placement, line wrapping of long method chains and string concatenations.
 - `spotless:apply` does NOT fix: import ordering, JavaDoc content/structure, unused variables.
-- Convenience wrapper also available: `python devtools/run_spotless.py` / `devtools/run_spotless.sh`.
+- Convenience wrapper also available: `uv run --project devtools --locked devtools/run_spotless.py` / `devtools/run_spotless.sh`.
 
 ## Checkstyle: Import Ordering
 

@@ -651,6 +651,7 @@ public final class UnsplitTransientSolver implements Serializable {
         terminationReason = TerminationReason.SINGULAR_JACOBIAN;
         break;
       }
+      projectDirectionalUpdateAtActiveBounds(state, auxiliary, variableScale, normalizedUpdate);
       double admissibleStep = directionalAdmissibleStepLength(state, pressure, auxiliary, variableScale,
           normalizedUpdate);
       double stepLength = Math.min(1.0, admissibleStep);
@@ -663,13 +664,21 @@ public final class UnsplitTransientSolver implements Serializable {
       double[][] trialState = state;
       double[] trialPressure = pressure;
       double[] trialAuxiliary = auxiliary;
+      SignedFaceComplementarity.State trialFaceState = faceState;
       for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
         trialState = copy(state);
         trialPressure = pressure.clone();
         trialAuxiliary = auxiliary.clone();
+        trialFaceState = faceState.copy();
         applyDirectionalUpdate(trialState, trialPressure, trialAuxiliary, variableScale, normalizedUpdate, stepLength);
         trial = evaluateDirectionalResidual(previousState, previousPressure, trialState, trialPressure, trialAuxiliary,
-            faceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+            trialFaceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel,
+            timeWeight);
+        if (SignedFaceComplementarity.refreshActiveSet(trial.modelEvaluation, trialState, trialFaceState)) {
+          trial = evaluateDirectionalResidual(previousState, previousPressure, trialState, trialPressure,
+              trialAuxiliary, trialFaceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
+              countedModel, timeWeight);
+        }
         double trialNorm = maximumAbsolute(trial.residual);
         if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < relativeTolerance) {
           accepted = true;
@@ -684,6 +693,7 @@ public final class UnsplitTransientSolver implements Serializable {
       state = trialState;
       pressure = trialPressure;
       auxiliary = trialAuxiliary;
+      faceState = trialFaceState;
       faceState.setValues(auxiliary);
       current = trial;
       minimumAcceptedStep = Math.min(minimumAcceptedStep, stepLength);
@@ -929,10 +939,66 @@ public final class UnsplitTransientSolver implements Serializable {
     return occupiedAreaDifference / cellAreas[cell];
   }
 
-  /** Bound cell phase masses, pressure, directional magnitude and multiplier. */
+  /**
+   * Project outward Newton components at exact nonnegative bounds onto the feasible tangent cone.
+   *
+   * <p>
+   * This changes the search direction before a trial is formed; it does not clip a cell inventory or accepted flux.
+   * Positive release directions remain available to the nonlinear solve.
+   * </p>
+   *
+   * @param state current conservative cell state
+   * @param auxiliary current face variables
+   * @param variableScale physical scaling for the augmented nonlinear vector
+   * @param normalizedUpdate Newton update to project in place
+   */
+  private static void projectDirectionalUpdateAtActiveBounds(double[][] state, double[] auxiliary,
+      double[] variableScale, double[] normalizedUpdate) {
+    for (int cell = 0; cell < state.length; cell++) {
+      int cellOffset = cell * BLOCK_SIZE;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        int variable = cellOffset + phase;
+        if (state[cell][phase] == 0.0 && variableScale[variable] * normalizedUpdate[variable] < 0.0) {
+          normalizedUpdate[variable] = 0.0;
+        }
+      }
+    }
+    int offset = state.length * BLOCK_SIZE;
+    for (int variable = 0; variable < auxiliary.length; variable++) {
+      int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
+      if (localVariable != SignedFaceComplementarity.ADVECTIVE_MOMENTUM && auxiliary[variable] == 0.0
+          && variableScale[offset + variable] * normalizedUpdate[offset + variable] < 0.0) {
+        normalizedUpdate[offset + variable] = 0.0;
+      }
+    }
+  }
+
+  /**
+   * Bound cell phase masses, pressure, directional magnitude and multiplier.
+   *
+   * <p>
+   * Directional phase masses and complementarity variables may land exactly on zero so the next frozen active-set
+   * refresh can select an exact phase-absence or donor-direction event. Pressure retains the configured interior
+   * fraction because it has no complementary boundary row.
+   * </p>
+   */
   private double directionalAdmissibleStepLength(double[][] state, double[] pressure, double[] auxiliary,
       double[] variableScale, double[] normalizedUpdate) {
-    double step = admissibleStepLength(state, pressure, variableScale, normalizedUpdate);
+    double step = 1.0;
+    for (int cell = 0; cell < state.length; cell++) {
+      int cellOffset = cell * BLOCK_SIZE;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        double change = variableScale[cellOffset + phase] * normalizedUpdate[cellOffset + phase];
+        if (change < 0.0) {
+          step = Math.min(step, state[cell][phase] / -change);
+        }
+      }
+      double pressureChange = variableScale[cellOffset + CONSERVATIVE_VARIABLE_COUNT]
+          * normalizedUpdate[cellOffset + CONSERVATIVE_VARIABLE_COUNT];
+      if (pressureChange < 0.0) {
+        step = Math.min(step, fractionToBoundary * (pressure[cell] - minimumPressure) / -pressureChange);
+      }
+    }
     int offset = state.length * BLOCK_SIZE;
     for (int variable = 0; variable < auxiliary.length; variable++) {
       int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
@@ -941,7 +1007,7 @@ public final class UnsplitTransientSolver implements Serializable {
       }
       double change = variableScale[offset + variable] * normalizedUpdate[offset + variable];
       if (change < 0.0) {
-        step = Math.min(step, fractionToBoundary * auxiliary[variable] / -change);
+        step = Math.min(step, auxiliary[variable] / -change);
       }
     }
     return Math.max(0.0, step);
@@ -950,10 +1016,27 @@ public final class UnsplitTransientSolver implements Serializable {
   /** Apply one augmented Newton update. */
   private static void applyDirectionalUpdate(double[][] state, double[] pressure, double[] auxiliary,
       double[] variableScale, double[] normalizedUpdate, double stepLength) {
+    double[][] originalState = copy(state);
+    double[] originalAuxiliary = auxiliary.clone();
     applyUpdate(state, pressure, variableScale, normalizedUpdate, stepLength);
     int offset = state.length * BLOCK_SIZE;
+    for (int cell = 0; cell < state.length; cell++) {
+      int cellOffset = cell * BLOCK_SIZE;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        double change = variableScale[cellOffset + phase] * normalizedUpdate[cellOffset + phase];
+        if (change < 0.0 && stepLength == originalState[cell][phase] / -change) {
+          state[cell][phase] = 0.0;
+        }
+      }
+    }
     for (int variable = 0; variable < auxiliary.length; variable++) {
-      auxiliary[variable] += stepLength * variableScale[offset + variable] * normalizedUpdate[offset + variable];
+      double change = variableScale[offset + variable] * normalizedUpdate[offset + variable];
+      auxiliary[variable] += stepLength * change;
+      int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
+      if (localVariable != SignedFaceComplementarity.ADVECTIVE_MOMENTUM && change < 0.0
+          && stepLength == originalAuxiliary[variable] / -change) {
+        auxiliary[variable] = 0.0;
+      }
     }
   }
 

@@ -37,6 +37,7 @@ This document provides a high-level introduction to the process optimization cap
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) |
 | Optimize full multi-area process models | `ProcessModelSimulationEvaluator` | Use area-qualified `ProcessAutomation` addresses and installed `CapacityConstraint` limits |
 | Sample fail-closed 1D/2D operating-envelope slices | `ProcessModelOperatingEnvelopeStudy` | Reuse `ProcessModelOperatingActionSetEvaluator`; every point retains complete candidate/restoration evidence |
+| Compare accepted envelopes across ordered lifecycle periods | `ProcessModelOperatingEnvelopeLifecycleStudy` | Admit only complete exact-runtime period evidence; retain stable action identities and report sampled bottleneck migration |
 | Ramp producers until a full facility reaches a bottleneck | `ProcessModelThroughputOptimizer` | Use producer mappings, installed capacity tables, and exported case traces |
 | Compare one installed capacity alternative with the same search policy | `ProcessModelDebottleneckStudy` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#paired-installed-capacity-alternatives) |
 | Rank independently documented capacity alternatives on one compatible metric | `ProcessModelDebottleneckRanking` | [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md#ranking-independent-debottleneck-alternatives) |
@@ -238,7 +239,8 @@ logger.info("Optimal rate: {} kg/hr", result.getOptimalRate());
 | "Optimize pressure AND flow rate together" | `ProductionOptimizer` | Multi-variable support |
 | "Trade off throughput vs power consumption" | `ProductionOptimizer.optimizePareto()` | Pareto multi-objective |
 | "Increase several producers until the full facility reaches a bottleneck" | `ProcessModelThroughputOptimizer` | Maps producers, loads installed capacities, and records the active bottleneck per case |
-| "Trace how the feasible region and installed bottleneck change across one or two declared actions" | `ProcessModelOperatingEnvelopeStudy` | Samples the existing transactional action evaluator, keeps infeasible points, and stops on unsafe baseline recovery |
+| "Trace how the feasible region and installed or plant bottleneck changes across one or two declared actions" | `ProcessModelOperatingEnvelopeStudy` | Samples the existing transactional action evaluator, keeps infeasible points, and stops on unsafe baseline recovery |
+| "Compare accepted envelopes as reservoir, availability, and operating limits change" | `ProcessModelOperatingEnvelopeLifecycleStudy` | Aggregates independently validated periods with stable action identities and no shared mutable model state |
 | "Quantify one documented equipment expansion against the installed case" | `ProcessModelDebottleneckStudy` | Pairs identical searches, metrics, evidence, and state recovery |
 | "Rank several independently evaluated equipment alternatives" | `ProcessModelDebottleneckRanking` | Requires one exact metric definition and one identical deterministic baseline; rejects unlike evidence |
 | "Evaluate 100 scenarios in parallel" | `ProductionOptimizer` | Has parallel evaluation |
@@ -252,7 +254,7 @@ Use `ProcessModelThroughputOptimizer` for large fixed-equipment studies such as 
 
 Use `ProcessModelSimulationEvaluator` directly when you need a lower-level black-box bridge to SciPy, NLopt, SQP, Pyomo, or another external optimizer.
 
-Use `ProcessModelOperatingEnvelopeStudy` when the engineering question is a sampled one- or two-dimensional operating envelope over already-declared `ProcessModelOperatingAction` controls. The study reuses `ProcessModelOperatingActionSetEvaluator` for every grid point, so failed or infeasible points retain the same constraint and restoration evidence and sampling stops immediately if the mutable baseline cannot be restored and reconverged. Feasible points retain the existing ranked installed-equipment bottleneck. Infeasible points use the exact fail-closed rejection source: the first applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated hard model constraint in declaration order. The result retains physical value, limit, margin, unit and normalized evidence without comparing kW, velocity, rate, surge margin or other unlike quantities. A sampled slice is not proof of a continuous feasible boundary or optimizer active set.
+Use `ProcessModelOperatingEnvelopeStudy` when the engineering question is a sampled one- or two-dimensional operating envelope over already-declared `ProcessModelOperatingAction` controls. The study reuses `ProcessModelOperatingActionSetEvaluator` for every grid point, so failed or infeasible points retain the same constraint and restoration evidence and sampling stops immediately if the mutable baseline cannot be restored and reconverged. At feasible points, the leading row is selected from finite normalized installed-equipment and typed plant/shared/coupled evidence; raw kW, velocity, rate, surge margin, and other unlike physical quantities are never compared. Infeasible points use the exact fail-closed rejection source: the first applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated hard model constraint in declaration order. A sampled slice is not proof of a continuous feasible boundary or optimizer active set.
 
 For a live field network, add `FieldWellNetworkProcessUnit` to the normal process area
 and address its canonical choke and edge controls through `ProcessAutomation`. This
@@ -781,6 +783,34 @@ accepted candidate anchor, and have complete restoration/reconvergence. A foreig
 duplicate-axis, partial-recovery, or stale slice is rejected before export. Non-finite optional
 numerical fields are emitted as JSON `null`; they are never promoted to accepted evidence. Runtime
 is provenance for #2939 coordination, not a generic performance claim.
+
+Use `ProcessModelOperatingEnvelopeLifecycleStudy` when the accepted envelope must be compared across
+ordered field periods. Build each period from its own converged model/evaluator definition, search, and
+accepted-point slices, then add it with a non-negative strictly increasing elapsed time and explicit
+configuration provenance. The lifecycle study invokes the same exact-runtime envelope export gate before
+accepting a period, requires identical ordered action identifiers across periods, aggregates evaluation/runtime
+provenance, and reports changes in the accepted leading constraint between adjacent periods. It does not copy
+reservoir, separator, compressor-map, shaft, driver, or power-limit physics; those remain in each period's
+canonical model and constraint evidence.
+
+```java
+ProcessModelOperatingEnvelopeLifecycleStudy lifecycle =
+    new ProcessModelOperatingEnvelopeLifecycleStudy(
+        "field-life", "Field lifecycle envelope", "approved forecast cases", "year");
+lifecycle.addPeriod(
+    "year-0", "Early life", 0.0, "forecast case E0",
+    earlyStudy, earlySearch, earlyChokeSlice, earlyRoutingSlice, earlyPowerSlice);
+lifecycle.addPeriod(
+    "year-5", "Late life", 5.0, "forecast case L5",
+    lateStudy, lateSearch, lateChokeSlice, lateRoutingSlice, latePowerSlice);
+Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap(currentCycleId);
+```
+
+Periods are independent by design: never mutate a completed period's model and reuse its accepted search as
+evidence for a later period. A missing, stale, unconverged, non-finite, partially restored, foreign, duplicate-axis,
+or action-incompatible period is rejected instead of producing a partial lifecycle report. Bottleneck transitions
+are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
+operating approval.
 
 ### Trace-qualified bottleneck-relief evidence
 

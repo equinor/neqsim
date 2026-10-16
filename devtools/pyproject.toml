@@ -11,6 +11,18 @@ requires-python = ">=3.10,<3.15"
 # no source checkout is present (agent-plugin installs).
 dependencies = ["jpype1", "pyyaml>=5.1", "neqsim>=3.18", "python-docx>=1.1", "matplotlib>=3.7"]
 
+[dependency-groups]
+test = ["pytest", "scikit-learn", "trimesh", "jsonschema==4.26.0"]
+install-smoke = ["pip"]
+optimization-docs = ["numpy", "scipy", "pandas", "matplotlib", "nlopt"]
+optimization-notebooks = [
+    { include-group = "optimization-docs" },
+    "nbformat",
+    "nbclient",
+    "nbconvert",
+    "ipykernel",
+]
+
 [project.optional-dependencies]
 combustion = ["cantera==3.2.0"]
 pdf = ["pymupdf>=1.22.0"]

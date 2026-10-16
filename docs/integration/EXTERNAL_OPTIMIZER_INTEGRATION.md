@@ -1094,6 +1094,15 @@ study plus complete, uniquely addressed slices anchored at the accepted candidat
 foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
 rather than combining it into a current cycle.
 
+For ordered reservoir/facility periods, add each independently completed search and slice set to
+`ProcessModelOperatingEnvelopeLifecycleStudy`. The lifecycle layer reuses the exact-runtime envelope export gate,
+requires stable ordered action identifiers, and records adjacent-period changes in the accepted leading constraint.
+Each period may have its own canonical reservoir inputs, equipment availability, separator/scrubber limits,
+qualified compressor maps, shaft/driver limits, and shared-power budget. Do not carry a mutable evaluator or accepted
+search into a revised period: rebuild, converge, optimize, replay, and sample that period independently. The lifecycle
+map is rejected rather than partially emitted if a period is stale, unconverged, non-finite, incompletely restored, or
+action-incompatible. Its transitions remain sampled advisory evidence, not a continuous forecast or operating approval.
+
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set
 `production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard

@@ -81,6 +81,77 @@ Passing the scaling checks does not establish complete derivative consistency
 or accuracy against experimental electrolyte data. It answers the narrower
 question of whether the same extensive term contaminates the chemical potential.
 
+## Derivative consistency of the base Furst and electrolyte CPA terms
+
+The base Furst implementation and its electrolyte CPA subclasses also require
+the complete dielectric and stationary-shielding chain rules. These corrections
+retain the implemented free energy and fitted parameter tables:
+
+- The ion-ion and ion-volume dielectric second derivatives retain the
+  solvent-permittivity contrast, $\varepsilon_s-1$.
+- The Born temperature curvature includes both mixed terms and both solvent
+  dielectric derivatives:
+  $F_{B,TT}=F_{B,TT}|_{\varepsilon_s}+2F_{B,T\varepsilon_s}\varepsilon_{s,T}
+  +F_{B,\varepsilon_s\varepsilon_s}\varepsilon_{s,T}^2
+  +F_{B,\varepsilon_s}\varepsilon_{s,TT}$.
+- The long-range shielding parameter is an implicit stationary variable.
+  If $F_\Gamma=0$, eliminating it gives
+  $\overline F_{ab}=F_{ab}-F_{a\Gamma}F_{\Gamma b}/F_{\Gamma\Gamma}$
+  for thermodynamic coordinates $a,b$ in temperature, total volume and species
+  amounts. Holding shielding fixed in the Hessian omits this response, even
+  though the first derivative can use the envelope theorem.
+
+The shielding solve uses a residual scaled by the two terms in its defining
+equation. An absolute cutoff on that dimensional equation can return a
+nonstationary shielding value and spoil numerical derivative comparisons.
+The initial estimate uses the analytic upper bound obtained by omitting the
+finite-ion-diameter denominators, avoiding unnecessary iterations without
+weakening convergence. The zero-ion limit remains explicit; this does not
+qualify composition curvature at the singular zero-concentration boundary.
+
+These are derivative repairs, not a new electrolyte fit or a replacement flash
+solver. They can change heat capacities, composition Jacobians and convergence.
+The separate legacy Mod2004 implementation is outside this correction. Complete
+third-order volume derivatives and general mixture accuracy are not established
+by second-derivative tests.
+
+### Checking a model without hiding failures
+
+`ThermodynamicModelTest` checks each active phase and each derivative entry,
+rejects non-finite values, and reports numerical mismatches instead of returning
+success unconditionally. Its finite differences use detached system snapshots
+to test the API's unconstrained partial derivatives. Separate electrolyte
+regressions use charge-compatible composition directions. Checking a model
+must preserve the caller's state and must not change the caller's tolerance.
+Analytical identities, finite differences and experimental validation answer
+different questions; none replaces the other two.
+
+### Neutral-component dielectric data remains unqualified
+
+At the audited master snapshot `d28b180969e248837e68b5e982374db69e11a376`,
+the nitrogen, n-butane and n-hexane rows in `COMP.csv` and `COMP_EXT.csv` give
+relative permittivity about $826674.56$ at 298.15 K under
+`Component.getDielectricConstant(T)`. The same malformed polynomial occurs in
+14 rows of each table. These inputs affect all four currently failing salting-out
+fixtures, although identifying the defect does not prove that a data correction
+alone will resolve every prediction. The coefficients resemble incorrectly scaled
+water coefficients; simply repairing their exponents would supply a water curve,
+not species-valid gas or alkane data. Correcting derivatives does not qualify
+these inputs or the resulting salting-out predictions.
+
+Harvey and Lemmon's primary correlation calculates gas-component permittivity
+from temperature and density and supplies a mixture-polarization treatment
+([NIST paper, DOI 10.1007/s10765-005-2351-5](https://www.nist.gov/system/files/documents/mml/acmd/fluids_modeling/Harvey-Lemmon-50062.pdf)).
+The existing temperature-only component API cannot directly represent that
+correlation. No arbitrary constant, water correlation or fitted offset is
+substituted here. A phase-aware dielectric model needs its own consistent
+derivatives, reference-state decision and independent property/phase-equilibrium
+validation before these predictions can be qualified. A separate dataset repair
+must establish species-specific property sources, applicability ranges and phase
+or reference-state conventions, then rerun matched-fugacity molality-based
+salting benchmarks. Gas-ion interaction parameters require their own validation
+after the dielectric inputs are corrected.
+
 ## What modern electrolyte-model development requires
 
 The literature supports explicit ion-solvation contributions with a documented
@@ -150,3 +221,18 @@ flash from issue #3862 at several feed amounts.
 The single-solvent finite difference intentionally holds the solvent dielectric
 constant unchanged at the selected temperature; it does not qualify the omitted
 mixed-solvent or thermal chain rules described above.
+
+### KCl numerical reference after the shielding correction
+
+At 273.15 K and 1.01325 bara, the 2.36154 mol/kg KCl fixture changes its
+numerical water-activity reference from 0.9223375797090876 to
+0.9223375640965604. The difference is about 1.56e-8. Restoring only the former
+absolute-residual shielding solver makes the original reference test pass;
+removing only the final-volume cache refresh does not. This isolates the
+reference shift to shielding convergence, rather than a new fitted parameter.
+
+The regression retains its 1e-8 water-activity tolerance and the Archer reference
+observation of 0.92701. It additionally evaluates the shielding equation at each
+final aqueous state and requires a finite relative residual below 1e-10. This
+numerical baseline update does not improve or qualify experimental salting
+accuracy and does not resolve the property-data questions in issue #4334.

@@ -272,7 +272,7 @@ From a NeqSim checkout, build the workspace classes and execute the notebook wit
 
 ```bash
 ./mvnw -DskipTests package
-python devtools/verify_notebooks.py examples/notebooks/complete_offshore_process_engineering_study.ipynb
+uv run --project devtools --locked devtools/verify_notebooks.py examples/notebooks/complete_offshore_process_engineering_study.ipynb
 ```
 
 The first code cell locates `NEQSIM_PROJECT_ROOT` and loads `target/classes` through

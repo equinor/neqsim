@@ -290,7 +290,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
   public double dFLRdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLRdX() * XLRi
         * ((PhaseModifiedFurstElectrolyteEos) phase).getAlphaLRT()
-        + ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLR() * alphaiT;
+        + ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLR() * alphaiT
+        + dFLRdNdGamma(phase) * ((PhaseModifiedFurstElectrolyteEos) phase).calcShieldingParameterdT();
   }
 
   /**
@@ -305,7 +306,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
   public double dFLRdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return 1e-5 * (((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLRdX() * XLRi
         * ((PhaseModifiedFurstElectrolyteEos) phase).getAlphaLRV()
-        + ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLR() * alphaiV);
+        + ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLR() * alphaiV
+        + dFLRdNdGamma(phase) * ((PhaseModifiedFurstElectrolyteEos) phase).calcGammaLRdV());
   }
 
   /**
@@ -326,7 +328,9 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
             * dAlphaLRdndn(j, phase, numberOfComponents, temperature, pressure)
         + ((PhaseModifiedFurstElectrolyteEos) phase).dFdAlphaLRdX() * alphai
             * ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase).getComponent(j))
-                .getXLRi();
+                .getXLRi()
+        + dFLRdNdGamma(phase) * ((ComponentModifiedFurstElectrolyteEos) phase.getComponent(j)).calcGammaLRdn(phase,
+            numberOfComponents, temperature, pressure);
   }
 
   /**
@@ -462,7 +466,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     double dXdf = ((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonicdV() * -3.0 / 2.0
         / Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0 + 1.0, 2.0);
     double dYdf = getSolventDiElectricConstantdn();
-    double d1 = ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant();
+    // The dielectric mixture is 1 + (solvent dielectric - 1) times the ionic packing correction.
+    double d1 = ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant() - 1.0;
     double d2 = epsIoniciV * -3.0 / 2.0
         / Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0 + 1.0, 2.0);
     double d3 = ((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonicdV() * epsIonici * 3.0 / 2.0
@@ -490,7 +495,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     double dXdf = ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase).getComponent(j))
         .getEpsIonici() * getEpsIonici() * 3.0 / 2.0
         / Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getEpsIonic() / 2.0 + 1.0, 3.0);
-    double d1 = ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant();
+    // The dielectric mixture is 1 + (solvent dielectric - 1) times the ionic packing correction.
+    double d1 = ((PhaseModifiedFurstElectrolyteEos) phase).getSolventDiElectricConstant() - 1.0;
 
     double d2 = ((ComponentModifiedFurstElectrolyteEos) ((PhaseModifiedFurstElectrolyteEos) phase).getComponent(j))
         .getEpsIonici() * -3.0 / 2.0
@@ -523,41 +529,31 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     return dYdf * X + Y * dXdf;
   }
 
-  // a little simplified
   /**
-   * calcGammaLRdn.
+   * Derivative of the stationary shielding parameter with respect to this component amount at fixed T and V.
    *
-   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param numberOfComponents a int
-   * @param temperature a double
-   * @param pressure a double
-   * @return a double
+   * @param phase current electrolyte phase
+   * @param numberOfComponents number of components in the phase
+   * @param temperature temperature in kelvin
+   * @param pressure pressure in bara
+   * @return implicit shielding response, or zero when the phase has no ionic inventory
    */
   public double calcGammaLRdn(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-    return 0.0;
-    // if(((PhaseModifiedFurstElectrolyteEos) phase).getPhaseType()==1) return 0.0;
-    // double temp =
-    // Math.pow(getIonicCharge()/(1.0+((PhaseModifiedFurstElectrolyteEos)
-    // phase).getShieldingParameter()*getLennardJonesMolecularDiameter()*1e-10),2.0);
-    // return 1.0/(8.0*((PhaseModifiedFurstElectrolyteEos)
-    // phase).getShieldingParameter() + 4.0 *
-    // Math.pow(((PhaseModifiedFurstElectrolyteEos)
-    // phase).calcShieldingParameter2(),2.0) * 2.0 *
-    // getLennardJonesMolecularDiameter()*1e-10) *
-    // ((temp * ((PhaseModifiedFurstElectrolyteEos)
-    // phase).getAlphaLR2()/(((PhaseModifiedFurstElectrolyteEos)
-    // phase).getMolarVolume()*1e-5*((PhaseModifiedFurstElectrolyteEos)
-    // phase).getNumberOfMolesInPhase()) * avagadroNumber)
-    // + 4.0 * Math.pow(((PhaseModifiedFurstElectrolyteEos)
-    // phase).getShieldingParameter(),2.0) / ((PhaseModifiedFurstElectrolyteEos)
-    // phase).getAlphaLR2() * alphai );
-    // Math.pow(getIonicCharge()/(1.0+((PhaseModifiedFurstElectrolyteEos)
-    // phase).getShieldingParameter()*getLennardJonesMolecularDiameter()*1e-10),2.0)
-    // + alphai*temp) /(8.0*((PhaseModifiedFurstElectrolyteEos)
-    // phase).getShieldingParameter());
-    // + 2.0*getLennardJonesMolecularDiameter()*1e-10 * 4.0 *
-    // Math.pow(((PhaseModifiedFurstElectrolyteEos)
-    // phase).calcShieldingParameter2(),2.0))*
+    PhaseModifiedFurstElectrolyteEos electrolyte = (PhaseModifiedFurstElectrolyteEos) phase;
+    return electrolyte.getShieldingParameter() == 0.0 ? 0.0 : -dFLRdNdGamma(phase) / electrolyte.dFLRdGammaLRdGammaLR();
+  }
+
+  /**
+   * Mixed component-shielding derivative before eliminating the stationary shielding coordinate.
+   *
+   * @param phase current electrolyte phase with initialized component derivatives
+   * @return the long-range mixed derivative at fixed T and total volume
+   */
+  private double dFLRdNdGamma(PhaseInterface phase) {
+    PhaseModifiedFurstElectrolyteEos electrolyte = (PhaseModifiedFurstElectrolyteEos) phase;
+    double denominator = 1.0 + electrolyte.getShieldingParameter() * getLennardJonesMolecularDiameter() * 1e-10;
+    return -(alphai * electrolyte.XLRdGammaLR()
+        + electrolyte.getAlphaLR2() * getIonicCharge() * getIonicCharge() / (denominator * denominator)) / (4.0 * pi);
   }
 
   // Short Range term equations and derivatives

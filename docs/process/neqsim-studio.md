@@ -244,7 +244,7 @@ The `*_spec` template builders, the natural-language parser, the
 pure Python. Run the suite (no Java required):
 
 ```bash
-python devtools/test_neqsim_studio.py
+uv run --project devtools --locked devtools/test_neqsim_studio.py
 # 27 passed, 0 failed
 ```
 
