@@ -27,11 +27,14 @@ ControlsBenchmarkSuite.CaseResult level = report.getCase("control_level_setpoint
 double levelIae = level.getMetrics().getIntegralAbsoluteError();
 ```
 
-`Report.getCases()` returns the uniformly sampled time, process-value, set-point,
-and controller-output vectors for every case. Each result also exposes
-`ControllerPerformanceMetrics`, the final relative error, process-value range,
-the case-specific acceptance detail, and the corresponding
-`AgentBenchmarkSuite` verdict.
+`Report.getCases()` returns an unmodifiable list of the six `CaseResult` objects
+in stable execution order. For each case, `getTimeSeconds()`, `getProcessValue()`,
+`getSetPoint()`, and `getControllerOutput()` return copies of the uniformly sampled
+trace arrays. `CaseResult.getMetrics()` exposes `ControllerPerformanceMetrics`;
+the case result also provides the final relative error, process-value range, and
+case-specific acceptance detail. `Report.getAgentBenchmarkReport()` returns the
+aggregate `AgentBenchmarkSuite` report. `Report.isPassed()` requires both all case
+acceptance checks and all agent benchmark comparisons to pass.
 
 ## Model and numerical contract
 
