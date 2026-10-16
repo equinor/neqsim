@@ -153,8 +153,7 @@ jobs:
               checked += 1
               if checked >= 5:
                   break
-              PY
-
           if checked == 0:
               print("No package-backed skills in the community catalog yet; nothing to probe.")
           print("Package-install probe complete.")
+          PY
