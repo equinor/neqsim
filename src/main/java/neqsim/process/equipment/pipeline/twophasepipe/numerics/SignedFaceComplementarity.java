@@ -8,9 +8,10 @@ import java.io.Serializable;
  * <p>
  * Every internal gas, oil and water face owns three auxiliary variables: nonnegative signed-direction mass-flow
  * magnitude, advective momentum flux and a nonnegative donor-presence multiplier. The direction and the active donor
- * row are frozen while a Jacobian is assembled. A present donor uses the normalized conservative relation between mass
- * and momentum transport; an absent donor pins advective momentum to zero exactly. Replacing the free internal flux in
- * both adjacent cells preserves total mass and momentum without clipping either cell inventory.
+ * row are frozen while a Jacobian is assembled, then refreshed from the unmodified free flux between Newton
+ * linearizations. A present donor uses the normalized conservative relation between mass and momentum transport; an
+ * absent donor pins advective momentum to zero exactly. Replacing the free internal flux in both adjacent cells
+ * preserves total mass and momentum without clipping either cell inventory.
  * </p>
  *
  * <p>
@@ -72,6 +73,25 @@ final class SignedFaceComplementarity implements Serializable {
       }
     }
 
+    /**
+     * Copy a frozen choice set for an independently reversible line-search trial.
+     *
+     * @param source state to copy
+     */
+    private State(State source) {
+      cellCount = source.cellCount;
+      direction = source.direction.clone();
+      constrained = source.constrained.clone();
+      values = source.values.clone();
+      scales = source.scales.clone();
+      donorMassScales = source.donorMassScales.clone();
+    }
+
+    /** @return independent copy of values, scales and frozen choices */
+    State copy() {
+      return new State(this);
+    }
+
     /** @return defensive auxiliary values ordered by face, phase and variable */
     double[] getValues() {
       return values.clone();
@@ -113,6 +133,21 @@ final class SignedFaceComplementarity implements Serializable {
     /** Release a donor-presence row. */
     void release(int face, int phase) {
       constrained[phaseFace(face, phase)] = false;
+    }
+
+    /**
+     * Select a new signed donor direction and its physical mass scale.
+     *
+     * @param face internal face index
+     * @param phase phase index
+     * @param selectedDirection positive for left-to-right or negative for right-to-left
+     * @param endpointState endpoint conservative state
+     */
+    void selectDirection(int face, int phase, int selectedDirection, double[][] endpointState) {
+      int phaseFace = phaseFace(face, phase);
+      direction[phaseFace] = selectedDirection;
+      int donorCell = selectedDirection > 0 ? face : face + 1;
+      donorMassScales[phaseFace] = Math.max(1.0, Math.abs(endpointState[donorCell][phase]));
     }
 
     /** @return endpoint donor-mass scale for one phase face */
@@ -258,7 +293,7 @@ final class SignedFaceComplementarity implements Serializable {
   }
 
   /**
-   * Refresh exact donor-presence rows without using an inventory floor.
+   * Refresh signed donor directions and exact donor-presence rows without using an inventory floor.
    *
    * @param evaluation current free model evaluation
    * @param endpointState current endpoint state
@@ -270,11 +305,21 @@ final class SignedFaceComplementarity implements Serializable {
     boolean changed = false;
     for (int face = 0; face < faces.length; face++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        double signedFreeFlow = faces[face][phase].getSignedMassFlowKgPerSecond();
         int direction = state.getDirection(face, phase);
+        int selectedDirection = signedFreeFlow == 0.0 ? direction : signedFreeFlow < 0.0 ? -1 : 1;
+        if (selectedDirection != direction) {
+          state.selectDirection(face, phase, selectedDirection, endpointState);
+          direction = selectedDirection;
+          changed = true;
+        }
         int donorCell = direction > 0 ? face : face + 1;
         boolean absent = endpointState[donorCell][phase] == 0.0 || donorMass(faces[face][phase], direction) == 0.0;
         if (absent && !state.isConstrained(face, phase)) {
           state.constrain(face, phase);
+          changed = true;
+        } else if (!absent && state.isConstrained(face, phase)) {
+          state.release(face, phase);
           changed = true;
         }
       }
