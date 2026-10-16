@@ -6,13 +6,13 @@
 
 package neqsim.chemicalreactions.chemicalreaction;
 
-import Jama.Matrix;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -515,13 +515,13 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * calcReacRates.
+   * Calculates the reaction rates for the given phase and components.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @return a Jama compatibility column containing component rates in the supplied component order
+   * @return component rates in the supplied component order
    */
-  public Matrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
+  public double[] calcReationRates(PhaseInterface phase, ComponentInterface[] components) {
     double[][] modReacMatrix = new double[reacMatrix.length][components.length];
     // System.out.println(" vol " + system.getPhases()[1].getMolarVolume());
 
@@ -558,7 +558,20 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       }
     }
 
-    return new Matrix(componentRates, componentRates.length);
+    return componentRates;
+  }
+
+  /**
+   * Calculates reaction rates and returns them as a Jama column for legacy callers.
+   *
+   * @param phase thermodynamic phase used to evaluate the reaction rates
+   * @param components reactive components in the expected output order
+   * @return component rates as a Jama column
+   * @deprecated Use {@link #calcReationRates(PhaseInterface, ComponentInterface[])} which returns a primitive array.
+   */
+  @Deprecated
+  public Matrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
+    return new Matrix(calcReationRates(phase, components), components.length);
   }
 
   /**

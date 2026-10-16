@@ -60,6 +60,10 @@
 
 ## Physics and API gotchas
 
+- **Incremental Jama migration:** New numerical APIs should use primitive arrays for data and EJML or
+  `LinearAlgebraOperations` for calculations. Where a public Jama signature must remain, make the array API primary and
+  keep Jama as a thin `@Deprecated` compatibility wrapper. Migrate callers and tests to the array API incrementally;
+  preserve dimensions, orientation and ownership, and keep the dependency until live compatibility bridges are retired.
 - Always `setMixingRule(...)` (numeric for CPA); `createDatabase(true)` for new components.
   Temperatures in K and pressures in bara by default. `clone()` fluids before branching.
 - After any flash call `fluid.initProperties()` before reading density/viscosity/conductivity;

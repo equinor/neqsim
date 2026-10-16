@@ -1,8 +1,9 @@
 package neqsim.chemicalreactions.chemicalreaction;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import Jama.Matrix;
 import org.junit.jupiter.api.Test;
+import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
@@ -79,8 +80,9 @@ class ChemicalReactionListReferencePotentialTest {
   /**
    * Verifies the reaction-rate column combines every reaction and follows the supplied component ordering.
    */
+  @SuppressWarnings("deprecation")
   @Test
-  void reactionRatesCombineMultipleReactionsInComponentOrder() {
+  void reactionRatesReturnArrayAndDeprecatedJamaBridgeMatches() {
     SystemInterface system = createSystem(new String[] {"CO2", "water"}, new double[] {0.1, 10.0});
     system.initProperties();
     PhaseInterface phase = system.getPhase(0);
@@ -92,10 +94,13 @@ class ChemicalReactionListReferencePotentialTest {
     }
     list.createReactionMatrix(phase, components);
 
-    Matrix rates = list.calcReacRates(phase, components);
+    double[] rates = list.calcReationRates(phase, components);
 
-    assertEquals(components.length, rates.getRowDimension());
-    assertEquals(1, rates.getColumnDimension());
+    assertEquals(components.length, rates.length);
+    Matrix legacyRates = list.calcReacRates(phase, components);
+    assertEquals(components.length, legacyRates.getRowDimension());
+    assertEquals(1, legacyRates.getColumnDimension());
+    assertArrayEquals(rates, legacyRates.getColumnPackedCopy(), 0.0);
     double[][] stoichiometry = list.getReactionMatrix();
     double concentrationFactor = phase.getDensity() / phase.getMolarMass();
     for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
@@ -116,7 +121,7 @@ class ChemicalReactionListReferencePotentialTest {
         }
         expectedRate += stoichiometry[reactionIndex][componentIndex] * (forward - backward);
       }
-      assertEquals(expectedRate, rates.get(componentIndex, 0), Math.max(1.0e-12, Math.abs(expectedRate) * 1.0e-12));
+      assertEquals(expectedRate, rates[componentIndex], Math.max(1.0e-12, Math.abs(expectedRate) * 1.0e-12));
     }
   }
 }
