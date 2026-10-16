@@ -29,6 +29,38 @@ system.createDatabase(true);
 system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composition dependency
 ```
 
+### Reaction species and mixing-rule initialization order
+
+`chemicalReactionInit()` can add species such as `H3O+`, `OH-`, `HCO3-`, and
+`CO3--`. Select the mixing rule **after** reaction initialization and
+`createDatabase(true)`, as in the example above. The interaction matrices must
+cover the final component set.
+
+If the rule was selected first and the component count subsequently changes,
+`init(...)` now throws an `IllegalStateException` reporting the configured and
+current counts and the recovery steps. Direct electrolyte `calcWij(...)` calls
+also reject this stale state. Previously the reported four-to-eight-component
+case failed with an `ArrayIndexOutOfBoundsException`. The count check also applies
+to classical and Huron–Vidal EOS interaction rules, including component removal.
+
+To recover, complete reaction initialization, call `createDatabase(true)`, and
+reapply the chosen mixing rule (10 for electrolyte CPA). Apply any custom
+interaction parameters **after** rebuilding the rule, then call `init(0)` before
+property calculations or a flash. The check does not silently reload fitted
+parameters or fill missing interactions with zeros. Changing only component
+amounts, or repeating chemistry initialization without adding species, does not
+require a mixing-rule refresh.
+
+This count check does not detect same-count component replacement or renaming;
+rebuild the database and mixing rule after those changes as well. The separate
+chemical-reaction topology guard still requires `chemicalReactionInit()` again
+when component identities change after chemistry was initialized.
+
+Regression coverage: `MixingRuleComponentCountTest` checks all five Fürst/CPA
+electrolyte variants, explicit recovery, unchanged initialized properties and
+inventories relative to a correctly ordered setup, and preservation of custom
+parameters when stale state is rejected.
+
 ### Key Features of the Statoil Implementation
 
 | Feature | Description |

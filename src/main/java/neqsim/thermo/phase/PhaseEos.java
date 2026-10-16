@@ -97,6 +97,9 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     if (!isMixingRuleDefined()) {
       setMixingRule(EosMixingRuleType.NO);
     }
+    if (mixingRuleType != EosMixingRuleType.NO) {
+      mixSelect.requireCurrentComponentCount(this);
+    }
 
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
 
