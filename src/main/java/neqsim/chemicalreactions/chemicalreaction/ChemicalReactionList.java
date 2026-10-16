@@ -6,14 +6,14 @@
 
 package neqsim.chemicalreactions.chemicalreaction;
 
+import Jama.Matrix;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -33,7 +33,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   static Logger logger = LogManager.getLogger(ChemicalReactionList.class);
 
   /** Dense linear algebra used for the stoichiometric rank test. */
-  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   ArrayList<ChemicalReaction> chemicalReactionList = new ArrayList<ChemicalReaction>();
   String[] reactiveComponentList;
@@ -346,10 +346,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       logger.error(ex.getMessage(), ex);
     }
 
-    /*
-     * Matrix reacMatr; if (reacGMatrix.length > 0) { reacMatr = new Matrix(reacGMatrix); }
-     * System.out.println("reac matrix: "); reacMatr.print(10,3);
-     */
     return reacMatrix;
   }
 
@@ -498,10 +494,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       }
     }
 
-    // Matrix temp = new Matrix(tempReacMatrix);
-    // Matrix temp2 = new Matrix(tempStocMatrix);
-    // temp.print(10,10);
-    // temp2.print(10,10);
   }
 
   /**
@@ -527,21 +519,20 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
-   * @return a {@link Jama.Matrix} object
+   * @return a Jama compatibility column containing component rates in the supplied component order
    */
   public Matrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
-    Matrix modReacMatrix = new Matrix(reacMatrix).copy();
+    double[][] modReacMatrix = new double[reacMatrix.length][components.length];
     // System.out.println(" vol " + system.getPhases()[1].getMolarVolume());
 
     for (int i = 0; i < chemicalReactionList.size(); i++) {
       for (int j = 0; j < components.length; j++) {
         // System.out.println("mol cons " +
         // components[j].getx()/system.getPhases()[1].getMolarMass());
-        modReacMatrix.set(i, j,
-            Math.pow(components[j].getx() * phase.getDensity() / phase.getMolarMass(), Math.abs(reacMatrix[i][j])));
+        modReacMatrix[i][j] = Math.pow(components[j].getx() * phase.getDensity() / phase.getMolarMass(),
+            Math.abs(reacMatrix[i][j]));
       }
     }
-    // modReacMatrix.print(10,10);
     double[] tempForward = new double[chemicalReactionList.size()];
     double[] tempBackward = new double[chemicalReactionList.size()];
     double[] reacVec = new double[chemicalReactionList.size()];
@@ -551,30 +542,23 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       tempBackward[i] = (chemicalReactionList.get(i)).getK(phase) / (chemicalReactionList.get(i)).getRateFactor();
       for (int j = 0; j < components.length; j++) {
         if (reacMatrix[i][j] > 0) {
-          tempForward[i] *= modReacMatrix.get(i, j);
+          tempForward[i] *= modReacMatrix[i][j];
         }
         if (reacMatrix[i][j] < 0) {
-          tempBackward[i] *= modReacMatrix.get(i, j);
+          tempBackward[i] *= modReacMatrix[i][j];
         }
       }
       reacVec[i] = tempForward[i] - tempBackward[i];
     }
 
-    Matrix reacMatVec = new Matrix(reacVec, 1);
-    Matrix reacMat = new Matrix(reacMatrix).transpose().times(reacMatVec);
-
-    double[] reactRates = new double[phase.getComponents().length];
-    for (int j = 0; j < components.length; j++) {
-      reactRates[components[j].getComponentNumber()] = reacMat.get(j, 0);
+    double[] componentRates = new double[components.length];
+    for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
+      for (int reactionIndex = 0; reactionIndex < chemicalReactionList.size(); reactionIndex++) {
+        componentRates[componentIndex] += reacMatrix[reactionIndex][componentIndex] * reacVec[reactionIndex];
+      }
     }
 
-    for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-      // System.out.println("reac " +j + " " + reactRates[j] );
-    }
-
-    // System.out.println("reac matrix ");
-    // reacMat.print(10,10);
-    return reacMat;
+    return new Matrix(componentRates, componentRates.length);
   }
 
   /**
