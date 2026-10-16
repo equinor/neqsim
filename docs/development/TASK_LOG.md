@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-16 — Live cargo-pump fleet dashboard on historian data (period pull, slider, trends, live follow)
+**Type:** G (Workflow)
+**Keywords:** cargo pump, FPSO, Plotly Dash, dashboard, historian, OTS, Omnia Timeseries, Seeq SPy, tagreader, device-code sign-in, live streaming, time slider, pump head, vendor curve, head ratio, NPSH margin, U053 shaft power, soft flow sensor, tank dV/dt
+**Solution:** private operator repo (redacted) `app/` package (`tags.py`, `sources/{ots,seeq}.py`, `compute.py`, `figures.py`, `dashboard.py`), `tests/test_app.py`, `tools/ots_login.py`
+**Notes:** Built a 14-pump fleet dashboard on top of an existing RCA model repo rather than a fresh task folder: the repo already held per-pump tag bindings (with inferences marked), geometry constants with evidence status, digitised vendor head/power/NPSHr curves and the IOC head route, so the app only added a tag registry (269 tags), a pluggable `DataSource` (OTS default, Seeq alternative, parquet cache), a per-pump calculation (head vs curve, ratio, shaft/hydraulic/expected power, efficiency, NPSHa/NPSHr/margin, submergence, affinity-scaled minimum flow) and a Dash UI with a server-side state dict (frames are far too large for `dcc.Store`). Verified on an 8 h real window: all 269 tags resolved in Seeq, 37 s pull, operating point landed on the vendor curve at the reported speed. Gotchas: (1) `ots_sdk`'s `InteractiveBrowserCredential` never completes from an agent shell and the skill's watchdog retries collide with a "state mismatch" — use `DeviceCodeCredential` with `TokenCachePersistenceOptions(name="ots_sdk")` and write the serialized `AuthenticationRecord` to `ots_sdk_auth.json` (git-ignore it) so the SDK is silent afterwards; scope is `TimeseriesApiEnvironment(Prod).resource_id + "/.default"`. (2) Mask efficiency and head ratio during start/stop transients (flow < 50 m3/h or shaft power < 5 % of rating) or they spike to 4+. (3) Keyphasor speed reads 100-200 rpm while stopped; the VSD speed is the running-state signal. (4) Tank `-dV/dt` goes strongly negative during tank loading — it is a flow basis only when the inflow valves are closed.
+
 ### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
 **Type:** A (Property)
 **Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
