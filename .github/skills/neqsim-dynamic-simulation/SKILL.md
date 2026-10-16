@@ -533,8 +533,14 @@ vector with signed mass magnitude, advective momentum and a donor multiplier per
 face, conservatively replaces the free flux, and carries solved faces into prepared-step
 verification. Exactly absent donors use exact donor-presence and zero-momentum rows; do not add an
 inventory floor. This is not yet a qualified phase-transition path: the six unchanged 0.1 s lanes
-pass, but every unchanged five-second Tengesdal case still fails. Retain all five-second, 180 s and
-600 s gates.
+pass. The nonlinear path may now land exactly on a zero phase/face bound, project only outward
+search components at an already active exact bound, select the donor from the unmodified signed
+free flux between frozen Jacobians, and release an exact donor row when the selected donor is
+present. Rejected line-search trials use independent active-set copies. These are conservative
+transition mechanics, not a tolerance, inventory clip, or fitted donor smear. Exact disappearance
+and opposite-donor unit cases pass, but the directly affected nine unchanged five-second lanes
+still fail line search at 0.63125--1.83515625 s and the complete 15-case gate remains failed. Retain
+all five-second, 180 s and 600 s gates.
 
 Make every cycle-count assertion feasible for its sampled window. A detector that reports `N`
 completed intervals needs `N + 1` events, so the settled window must span at least `N` times the

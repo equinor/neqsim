@@ -97,6 +97,15 @@ failure must remain infeasible rather than falling through to simplified polytro
 Recheck chart availability and the equipment's `solved()` contract for every mapped
 calculation. Finite forward results from a failed pressure-target speed search are not
 accepted operating points; rejected results must invalidate power and clear stored thermal state.
+For repeated quasi-steady field-to-host studies, reuse the live model and evaluator but
+sample constraints again after each reservoir boundary or host-limit update. The ten-well
+`FieldToFacilityOptimizationAcceptanceTest` exercises moving separator, scrubber and
+shared-power limits without rebuilding topology or maps. Frozen evidence describes its
+original calculation only; it is not acceptance of a later period. Its mapped injection
+utility is not a live injector, and prescribed pressure steps are not a reservoir forecast.
+Use `FieldWellNetworkProcessUnitTest` for the separate live two-zone injection period
+case: synchronized layer/stream pressure updates, allocation and fracture checks, fresh
+shared-power rejection/recovery, and original-boundary rate/power restoration.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 

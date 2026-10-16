@@ -152,14 +152,18 @@ class ProcessModelPlantConstraintIntegrationTest {
     assertEquals(2, sampleCalls.get(), "plant sampler must run once for each candidate, not once per constraint");
     assertTrue(result.getPoints().get(0).isFeasible());
     assertFalse(result.getPoints().get(1).isFeasible());
+    LeadingConstraintEvidence feasibleBottleneck = result.getPoints().get(0).getLeadingConstraint();
+    assertEquals(LeadingConstraintEvidence.Source.PLANT_CONSTRAINT, feasibleBottleneck.getSource());
+    assertEquals(sharedPower.getQualifiedId(), feasibleBottleneck.getQualifiedConstraintName());
+    assertTrue(feasibleBottleneck.getPhysicalMargin() > 0.0);
     assertEquals(Outcome.OTHER_MODEL_CONSTRAINT_VIOLATED, result.getPoints().get(1).getEvaluation().getOutcome());
     LeadingConstraintEvidence rejection = result.getPoints().get(1).getLeadingConstraint();
     assertEquals(LeadingConstraintEvidence.Source.PLANT_CONSTRAINT, rejection.getSource());
     assertEquals(sharedPower.getQualifiedId(), rejection.getQualifiedConstraintName());
     assertEquals("kW", rejection.getPhysicalUnit());
     assertTrue(rejection.getPhysicalMargin() < 0.0);
-    assertEquals(1, result.getBottleneckTransitions().size());
-    assertEquals(sharedPower.getQualifiedId(), result.getBottleneckTransitions().get(0).getToConstraint());
+    assertTrue(result.getBottleneckTransitions().isEmpty(),
+        "Crossing a feasibility boundary without changing constraint identity is not a bottleneck transition");
     assertEquals(400.0, fixture.feedA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.feedB.getFlowRate("kg/hr"), 1.0e-8);
   }

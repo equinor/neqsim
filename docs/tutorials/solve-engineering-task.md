@@ -482,7 +482,8 @@ Every solved task can benefit the next person. Choose your level:
 
 ### Minimum: Log It
 
-Add an entry to `docs/development/TASK_LOG.md`:
+Add an entry to the local `docs/development/TASK_LOG.md` (create it if missing).
+This file is ignored by Git; do not commit it or include non-public task details in a PR:
 
 ```markdown
 ### 2026-03-07 — Hydrate formation temperature for wet gas
@@ -510,7 +511,7 @@ git checkout -b task/hydrate-formation
 # Copy reusable outputs to proper locations
 Copy-Item task_solve/.../HydrateTest.java src/test/java/neqsim/thermo/
 Copy-Item task_solve/.../notebook.ipynb examples/notebooks/
-git add src/test/ examples/notebooks/ docs/development/TASK_LOG.md
+git add src/test/ examples/notebooks/
 git commit -m "Add hydrate formation temperature analysis"
 git push -u origin task/hydrate-formation
 
@@ -522,7 +523,7 @@ git push -u origin task/hydrate-formation
 - [Agents and Skills Reference](../integration/ai_agents_reference) — Complete catalog of all 16 agents and 14 skills
 - [Agentic Workflow Examples](../integration/ai_workflow_examples) — Step-by-step walkthroughs from simple to complex
 - [Code Patterns](../development/CODE_PATTERNS) — Copy-paste code starters for common tasks
-- [Task Log](../development/TASK_LOG) — Search past solved tasks before starting
+- Local task log (`docs/development/TASK_LOG.md`; ignored by Git) — Search past solved tasks before starting
 gh pr create --title "Add hydrate formation analysis" --body "From task-solving workflow"
 ```
 
@@ -678,7 +679,7 @@ heater.getDuty()                     # Watts
 | 60-second orientation | [CONTEXT.md](../../CONTEXT.md) | Repo map, build commands, constraints |
 | Full workflow reference | [TASK_SOLVING_GUIDE.md](../development/TASK_SOLVING_GUIDE) | Detailed workflow, AI agents, extending the API |
 | Code patterns | [CODE_PATTERNS.md](../development/CODE_PATTERNS) | Copy-paste starters for every task type |
-| Past solved tasks | [TASK_LOG.md](../development/TASK_LOG) | Search before starting — it may be solved already |
+| Past solved tasks | `TASK_LOG.md` (local only; ignored by Git) | Search before starting — it may be solved already |
 | Python quickstart | [Python Quickstart](../quickstart/python-quickstart) | Minimal Python setup |
 | TEG tutorial | [TEG Dehydration](teg_dehydration_tutorial) | Complete process simulation walkthrough |
 | GOSP tutorial | [Gas-Oil Separation Plant](gosp_tutorial) | Multi-stage separation example |

@@ -131,7 +131,9 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     clonedComponent.xsitedTdT = xsitedTdT.clone();
     System.arraycopy(this.xsitedTdT, 0, clonedComponent.xsitedTdT, 0, xsitedTdT.length);
     clonedComponent.xsitedni = xsitedni.clone();
-    System.arraycopy(this.xsitedni, 0, clonedComponent.xsitedni, 0, xsitedni.length);
+    for (int site = 0; site < xsitedni.length; site++) {
+      clonedComponent.xsitedni[site] = xsitedni[site] == null ? null : xsitedni[site].clone();
+    }
     return clonedComponent;
   }
 
