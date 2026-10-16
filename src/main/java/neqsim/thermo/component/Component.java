@@ -690,6 +690,9 @@ public abstract class Component implements ComponentInterface {
       throw new AssertionError("Clone failed for Component", ex);
     }
 
+    // Phase clones evaluate composition derivatives independently.
+    clonedComponent.dfugdn = dfugdn.clone();
+    clonedComponent.dfugdx = dfugdx.clone();
     return clonedComponent;
   }
 
