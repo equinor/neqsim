@@ -203,7 +203,7 @@ def main(argv=None):
     path = ROOT / OUTPUT
     if args.check:
         if not path.exists() or path.read_text() != rendered:
-            print("Engineering coverage is stale; run python devtools/build_engineering_coverage.py")
+            print("Engineering coverage is stale; run uv devtools/build_engineering_coverage.py")
             return 1
     else:
         path.parent.mkdir(parents=True, exist_ok=True)

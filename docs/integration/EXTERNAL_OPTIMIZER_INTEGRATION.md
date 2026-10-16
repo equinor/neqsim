@@ -1094,6 +1094,33 @@ study plus complete, uniquely addressed slices anchored at the accepted candidat
 foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
 rather than combining it into a current cycle.
 
+The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
+the proposal as `accepted_point_envelope_evidence` and set
+`production.require_envelope_evidence: true` in a continuous field-study plan. The existing living-task guard
+then verifies exact action/setpoint binding, optimizer/cycle identity, slice identity and anchors, complete
+baseline recovery, unique axes, and reconciled point/evaluation/runtime totals before the existing ledger stores
+the proposal. A later route, limit or evidence revision must run a new cycle and produce a fresh block; a stale
+cycle id, mismatched action vector, or copied partial slice is withheld rather than resumed as a current candidate.
+For a persistent field study, map production/injection route line-ups, controlled reservoir-lifecycle boundaries,
+mapped network pump/compressor power, common-shaft speed/power, driver limits, shared host-power limits, and
+`continuous/goal.yaml` limits to the living-task `guard`, with dependencies on the model update, optimizer,
+gates, and constraints. Canonical route selectors remain discrete process actions; reservoir pressure remains a model
+input synchronized by its owning `WellFlow.ReservoirLayer`. Mapped field-network and standalone rotating-equipment
+power remains solved evidence from `ProcessModel.getPower(...)`, with the existing common-shaft and shared-resource
+constraint evidence retained. Do not copy map or driver physics into the task layer. Non-finite power evidence or an
+exceeded driver/shared-power limit fails closed without replacement advice. The evidence stage appends
+an invalidation event for the old ledger item before model, optimizer, or guard execution. This remains effective
+if optimizer output is malformed or the guard fails and the proposal-publication stage is skipped. Retried and
+resumed invalidation is idempotent; dry runs do not change the ledger. Unfinished advice is superseded; a new item is proposed only
+after the revised full-model point and envelope pass the same guard. The replacement carries `revalidation_of` and
+the changed paths, so an earlier approval is never silently transferred to new setpoints or a new physical limit.
+If re-optimization finds no safe point, the old evidence remains explicitly non-current and no replacement advice
+is exposed. A later safe operating definition resumes the append-only lineage from that superseded item instead of
+creating an untraceable incumbent. This reuses the standard evidence inventory and append-only ledger rather than
+adding optimizer state.
+In custom production plans, retain the template's ordering with `evidence` before model update, optimization, and
+`guard` so invalidation happens even when later stages fail.
+
 ### Search a fixed-total continuous allocation
 
 `ProcessModelAllocationOptimizer` composes the atomic evaluator when all allocation actions are

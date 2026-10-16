@@ -6,21 +6,32 @@
 
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver;
 
-import Jama.Matrix;
+import java.util.Arrays;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
 import neqsim.mathlib.generalmath.TDMAsolve;
 
 /**
  * FluidBoundarySolver class.
  *
+ * <p>
+ * Protected component-profile and update columns use EJML; the conservation equations retain their tridiagonal
+ * coefficient arrays and TDMA solution.
+ * </p>
+ *
  * @author esol
  * @version $Id: $Id
  */
 public class FluidBoundarySolver implements FluidBoundarySolverInterface {
+  private static final Logger logger = LogManager.getLogger(FluidBoundarySolver.class);
   FluidBoundarySystemInterface boundary;
   double[][] xNew;
-  protected Matrix[] solMatrix;
-  protected Matrix[] diffMatrix;
+  protected DMatrixRMaj[] solMatrix;
+  protected DMatrixRMaj[] diffMatrix;
   protected double[] a;
   protected double[] b;
   protected double[] c;
@@ -48,11 +59,11 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     c = new double[boundary.getNumberOfNodes()];
     r = new double[boundary.getNumberOfNodes()];
 
-    solMatrix = new Matrix[boundary.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
-    diffMatrix = new Matrix[boundary.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    solMatrix = new DMatrixRMaj[boundary.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    diffMatrix = new DMatrixRMaj[boundary.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
     for (int k = 0; k < boundary.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); k++) {
-      diffMatrix[k] = new Matrix(a, 1).transpose();
-      solMatrix[k] = new Matrix(a, 1).transpose();
+      diffMatrix[k] = new DMatrixRMaj(a.length, 1);
+      solMatrix[k] = new DMatrixRMaj(a.length, 1);
     }
   }
 
@@ -73,7 +84,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
    * initProfiles.
    */
   public void initProfiles() {
-    Matrix reacRates = new Matrix(1, 1);
+    double[][] reacRates = new double[1][1];
     for (int i = 0; i < boundary.getNumberOfNodes() - 1; i++) {
       boundary.getNode(i).getBulkSystem().init(3);
       boundary.getNode(i).getBulkSystem().getPhases()[1].initPhysicalProperties();
@@ -87,18 +98,15 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         double dx = xinterphase - xbulk;
         double last = boundary.getNode(i).getBulkSystem().getPhases()[1].getComponent(j).getx();
         if (reactive) {
-          boundary.getNode(i + 1).getBulkSystem().getPhases()[1]
-              .getComponent(
-                  j)
-              .setx(last - dx
-                  - reacRates.get(j, 0) / boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
-                      .getEffectiveDiffusionCoefficient(j) * Math.pow(boundary.getNodeLength(), 2.0));
+          boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponent(j).setx(
+              last - dx - reacRates[j][0] / boundary.getNode(i).getBulkSystem().getPhases()[1].getPhysicalProperties()
+                  .getEffectiveDiffusionCoefficient(j) * Math.pow(boundary.getNodeLength(), 2.0));
         } else {
           boundary.getNode(i + 1).getBulkSystem().getPhases()[1].getComponent(j)
               .setx(xinterphase - dx * ((double) (i + 1) / boundary.getNumberOfNodes()));
         }
-        System.out.println(
-            "x comp " + reactive + "  " + boundary.getNode(i).getBulkSystem().getPhases()[1].getComponent(j).getx());
+        logger.debug("Component profile (reactive={}): {}", reactive,
+            boundary.getNode(i).getBulkSystem().getPhases()[1].getComponent(j).getx());
       }
     }
   }
@@ -147,7 +155,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     c[0] = 0.0;
     b[0] = 1.0; // boundary.getNode(0).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
     r[0] = boundary.getNode(0).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
-    System.out.println("b0 :" + b[0]);
+    logger.debug("First boundary coefficient: {}", b[0]);
     // setter ligningen paa rett form
     a[0] = -a[0];
     c[0] = -c[0];
@@ -179,7 +187,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     c[i] = 0.0;
     b[i] = 1.0; // boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
     r[i] = boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
-    System.out.println("bn :" + b[i]);
+    logger.debug("Last boundary coefficient: {}", b[i]);
     // setter ligningen paa rett form
     a[i] = -a[i];
     c[i] = -c[i];
@@ -213,7 +221,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     initProfiles();
     initMatrix();
     initComposition(1);
-    System.out.println(" vol " + boundary.getNode(2).getBulkSystem().getPhases()[0].getMolarVolume());
+    logger.debug("Boundary molar volume: {}", boundary.getNode(2).getBulkSystem().getPhases()[0].getMolarVolume());
 
     int iter = 0;
     int iterTop = 0;
@@ -228,13 +236,18 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         iter++;
         for (int p = 0; p < boundary.getNode(0).getBulkSystem().getPhases()[1].getNumberOfComponents(); p++) {
           setComponentConservationMatrix(p);
-          Matrix solOld = solMatrix[p].copy();
-          solOld.print(20, 20);
+          DMatrixRMaj solOld = solMatrix[p].copy();
+          if (logger.isDebugEnabled()) {
+            logger.debug("Previous component profile: {}", Arrays.toString(solOld.getData()));
+          }
           xNew[p] = TDMAsolve.solve(a, b, c, r);
-          solMatrix[p] = new Matrix(xNew[p], 1).transpose();
-          solMatrix[p].print(20, 20);
-          diffMatrix[p] = solMatrix[p].minus(solOld);
-          diff = Math.abs(diffMatrix[p].norm1() / (solMatrix[p].norm1()));
+          solMatrix[p] = new DMatrixRMaj(xNew[p].length, 1, true, xNew[p]);
+          if (logger.isDebugEnabled()) {
+            logger.debug("Component profile: {}", Arrays.toString(solMatrix[p].getData()));
+          }
+          diffMatrix[p] = new DMatrixRMaj(xNew[p].length, 1);
+          CommonOps_DDRM.subtract(solMatrix[p], solOld, diffMatrix[p]);
+          diff = Math.abs(NormOps_DDRM.normP1(diffMatrix[p]) / NormOps_DDRM.normP1(solMatrix[p]));
           if (diff > maxDiff) {
             maxDiff = diff;
           }
@@ -243,7 +256,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         // solMatrix.print(10,10);
       } while (diff > 1e-15 && iter < 100);
 
-      System.out.println("maxDiff " + maxDiff);
+      logger.debug("Maximum profile update: {}", maxDiff);
     } while (Math.abs(maxDiff) > 1e-10 && iterTop < 10);
     // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
   }

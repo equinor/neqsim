@@ -278,11 +278,18 @@ def build(task_dir):
         for key, item in sorted(items.items()):
             decided = [h for h in item.get("history", []) if h.get("event") == "status_changed"]
             value = item.get("value")
+            evidence = "-"
+            if item.get("evidence_current") is True:
+                evidence = "current"
+            elif item.get("evidence_current") is False:
+                evidence = "stale since {}".format(item.get("evidence_invalidated_cycle") or "unknown cycle")
             rows.append((key, item.get("status"), item.get("category"), item.get("title"),
                          value.get("value") if isinstance(value, dict) else value,
+                         evidence,
                          "{} {}".format(decided[-1].get("by"), str(decided[-1].get("at", ""))[:10])
                          if decided else "-"))
-        out += _table(["Id", "Status", "Category", "Title", "Latest value", "Last decision"], rows)
+        out += _table(["Id", "Status", "Category", "Title", "Latest value", "Evidence",
+                       "Last decision"], rows)
         waiting = [k for k, v in items.items() if v.get("status") == "proposed"]
         if waiting:
             out += ["", "Waiting for a decision: " + ", ".join(sorted(waiting)) +

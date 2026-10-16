@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
+**Type:** A (Property)
+**Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
+**Solution:** Stack PR #4330 on the shared classic mixing-rule accumulator foundation while preserving its characterization implementation, regression tests and mathematical documentation byte-for-byte. Regenerate engineering coverage for the combined source tree.
+**Notes:** The unchanged field-to-facility acceptance class passed three fresh-JVM runs on both the original head and the foundation overlay (six tests per variant, none failed or skipped). A read-only fixture probe confirmed the parallel HP/LP branches share phase-specific mixing handlers. Java 8 dependencies and release-8 bytecode were tested on Linux Java 17. This validates the shared dependency; it does not establish the cause of the earlier Windows Java 8 accepted-point replay failure, which remains a hosted CI gate. No solver tolerance or execution setting changed.
+
 ### 2026-10-14 — Isolate shared classic mixing-rule accumulators
 **Type:** A (Property)
 **Keywords:** classic mixing rule, concurrency, cloned fluids, heat capacity, compressor pressure replay, SRK, PR, 4326, 4306
@@ -53,6 +59,32 @@ requirement`, or `confidential compressor route`.
 **Keywords:** compressor, speed solve, invalid chart, optimizer, infeasible trials, lift curves, CI, 4326
 **Solution:** `Compressor.SpeedSolveException`, `ProductionOptimizer` candidate rejection and hard convergence gate, and conditional chart-setup process runs in `FlowRateOptimizer`.
 **Notes:** Reproduced all three failing optimizer cases on PR #4326 before repair. A no-valid-map trial is rejected without reading stale objectives or downstream constraints; unrelated exceptions still propagate. Capacity analysis and optional output validation cannot bypass the pressure-target convergence requirement. Repeated table setup reuses existing charts without rerunning an invalid preceding probe. Updated compressor/optimization guides, the compressor skill and the generated coverage inventory; regression tests cover stale outputs, hard convergence, recovery and chart reuse.
+### 2026-10-14 — Propose shared flash and process state contracts
+**Type:** G (Workflow)
+**Keywords:** NRC-2937, TPflash, phase inventory, hydrate, inactive streams, coordinated PR review
+**Solution:** `docs/rfcs/2937-tpflash-state-contracts.md` and the RFC index.
+**Notes:** Record the proposed state ownership, physical acceptance, compatibility and process-consumer contracts shared by PRs #4306, #4320 and #4277. Preserve explicit physical model boundaries and separate model corrections from solver qualification. Status remains PROPOSED; this document supplies no architecture acceptance, independent approval or merge qualification.
+
+The RFC index is the 51st first-level landing page and participates in the navigation contracts. Its title is rendered from front matter rather than duplicated as an H1; the inventory assertion and explicit RFC-index membership check cover the new page. Correct the exchanger method's inline code span in the proposal.
+
+
+### 2026-10-14 — Preserve production proposal guards across interrupted cycles
+**Type:** G (Workflow)
+**Keywords:** PR 4312, resume, proposal guard, evidence ledger, frozen user input, fail closed
+**Solution:** `devtools/neqsim_continuous/cycle.py`, `user_input.py`, `stages.py`, and `devtools/test_neqsim_production.py`.
+**Notes:** A completed guard status did not preserve its filtered proposals or upstream blocks: resuming before ledger publication could mark previously withheld advice as current evidence. Resume now revalidates the inexpensive gates, constraints and guard against restored calculation outputs, reapplies frozen user restrictions, and blocks advice if the input checkpoint is unavailable. Completed model/optimizer work and persisted ledger events remain checkpointed. The ledger binds publication to the exact current-cycle guarded proposal content, rejecting post-guard mutations, added proposals and reused old-cycle evidence. Thirteen deterministic regressions failed on the previous head and pass with the repair; the full production suite passes 57 cases. Continuous/living coverage passes 42 cases, with one existing optional DOCX-report test skipped because its dependency is unavailable. Hosted CI remains a publication gate.
+
+### 2026-10-14 — Isolate evidence routing tests from optional agent installations
+**Type:** G (Workflow)
+**Keywords:** evidence-source-cues, hermetic tests, plugin discovery, production guard, CI, PR 4312
+**Solution:** `devtools/test_evidence_sources.py` and `.github/workflows/ai-devtools-python-tests.yml`.
+**Notes:** The validator loads cue declarations from discovered agents; public CI has no optional provider catalog. Tests now supply a temporary synthetic catalog and isolate checkout, installed-agent and plugin roots while exercising real discovery and parsing. Cover missing catalogs, plugin-only aliases, duplicate/invalid cues and invalid statuses. Keep provider routing policy out of the validator. Include the production-envelope guard and persistent-ledger regression suite in Devtools CI. The coordinated master workflow now retains this shared repair.
+
+### 2026-10-14 — Invalidate field evidence before optimizer or guard failure
+**Type:** B (Bug fix)
+**Keywords:** PR 4312, persistent envelope, evidence invalidation, failed guard, power limit, resume
+**Solution:** `devtools/neqsim_continuous/stages.py` and `devtools/test_neqsim_production.py`.
+**Notes:** An existing proposal remained current after a changed shared-power limit and malformed optimizer output skipped the guarded ledger stage. Move invalidation to evidence assessment and restore, preserving the guard for new proposals. Repeated failures remain idempotent, implemented history remains stale and traceable, and resumed publication retains its fresh cycle evidence. Add failure/recovery, report, dry-run and resume regressions. Integrate current master workflow naming and shared CI repairs; use `ai-devtools-python-tests.yml` rather than restoring the removed workflow filename.
 
 ### 2026-10-14 — Repair shared CI failures and preserve workflow diagnostics
 **Type:** G (Workflow)

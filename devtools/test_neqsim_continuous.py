@@ -82,6 +82,15 @@ def test_ledger_lifecycle_and_merge(tmp_path):
     ledger.update_value("OPP-0001", {"p50": 0.38}, cycle="c2")
     assert ledger.current()["OPP-0001"]["status"] == "accepted"
     assert ledger.current()["OPP-0001"]["value"] == {"p50": 0.38}
+    ledger.invalidate_evidence("OPP-0001", [{
+        "path": "study_config.yaml", "change": "modified",
+        "before_sha256": "old", "after_sha256": "new",
+        "impact_rules": ["operating-definition"],
+    }], cycle="c3")
+    invalidated = ledger.current()["OPP-0001"]
+    assert invalidated["evidence_current"] is False
+    assert invalidated["evidence_invalidated_cycle"] == "c3"
+    assert invalidated["evidence_invalidated_by"][0]["path"] == "study_config.yaml"
 
     server = nc.Ledger(tmp_path / "server" / "events.jsonl")
     for event in ledger.events():

@@ -3,7 +3,8 @@ package neqsim.thermodynamicoperations.flashops;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
@@ -18,6 +19,7 @@ public class TPmultiflashWAX extends TPflash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TPmultiflashWAX.class);
+  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;
@@ -172,7 +174,7 @@ public class TPmultiflashWAX extends TPflash {
     double[] oldBeta = new double[system.getNumberOfPhases()];
     // double newBeta[] = new double[system.getNumberOfPhases()];
 
-    Matrix ans = new Matrix(system.getNumberOfPhases() - 1, 1);
+    double[] ans = new double[system.getNumberOfPhases() - 1];
 
     int iter = 1;
     do {
@@ -183,23 +185,21 @@ public class TPmultiflashWAX extends TPflash {
 
       calcQ();
 
-      Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
-      Matrix dQM = new Matrix(dQdbeta, 1);
-      Matrix dQdBM = new Matrix(Qmatrix);
       try {
-        ans = dQdBM.solve(dQM.transpose());
+        ans = ALGEBRA.solve(Qmatrix, dQdbeta);
       } catch (Exception ex) {
+        logger.debug("Wax-fraction solve failed; retaining the previous step", ex);
       }
-      betaMatrix.minusEquals(ans.times(iter / (iter + 2.0)));
+      double[] betaMatrix = ALGEBRA.subtract(oldBeta, ALGEBRA.scale(ans, iter / (iter + 2.0)));
       // ans.print(10,2);
       // betaMatrix.print(10,2);
 
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        system.setBeta(k, betaMatrix.get(k, 0));
-        if (betaMatrix.get(k, 0) < 0) {
+        system.setBeta(k, betaMatrix[k]);
+        if (betaMatrix[k] < 0) {
           system.setBeta(k, 1.0e-9);
         }
-        if (betaMatrix.get(k, 0) > 1) {
+        if (betaMatrix[k] > 1) {
           system.setBeta(k, 1.0 - 1e-9);
         }
       }
@@ -212,7 +212,7 @@ public class TPmultiflashWAX extends TPflash {
       if (updateFugacities) {
         system.init(1);
       }
-    } while ((ans.norm2() > 1e-6 && iter < 20) || iter < 3);
+    } while ((ALGEBRA.euclideanNorm(ans) > 1e-6 && iter < 20) || iter < 3);
   }
 
   /**

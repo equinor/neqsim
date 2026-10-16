@@ -966,7 +966,7 @@ SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
 | `inheritReferenceProperties` | Inherit the reference lump properties (molar mass, density, critical constants). When `false`, lump properties are recomputed from the source mass on the reference cut grid | `true` |
 | `delumpBeforeRecharacterization` | Split each coarse source lump into finer single-carbon-number sub-fractions before re-binning onto the reference cuts (Pedersen Ch. 5 delumping). Conserves source moles and mass exactly | `false` |
 | `delumpResolution` | Number of sub-fractions per source lump when delumping (also the fine grid for equal-mass reference boundaries). Values ≤ 1 disable splitting | `12` |
-| `sharedImaginaryBoundaries` | Place reference cut boundaries as carbon-number **equal-mass** cut points on the reference's imaginary (delumped) composition (Pedersen Ch. 5.6, Eqs. 5.58–5.59) instead of boiling-point midpoints | `false` |
+| `sharedImaginaryBoundaries` | Use discrete mass-quantile candidates from the reference's imaginary (delumped) composition, projected into adjacent reference gaps; final cut masses need not be equal | `false` |
 
 #### Property inheritance vs. recomputation (`inheritReferenceProperties`)
 
@@ -978,7 +978,11 @@ When a field's native lumps already sit close to the reference grid, the naive s
 
 #### Equal-mass reference boundaries (`sharedImaginaryBoundaries`)
 
-By default the reference cut boundaries are the arithmetic boiling-point midpoints between adjacent reference lumps, which ignores how much mass each lump represents. With `sharedImaginaryBoundaries(true)` the reference is first rebuilt into a fine single-carbon-number "imaginary" composition (using `delumpResolution`) and the cut points are placed so each cut carries an **equal mass fraction** — the reference-only (NFLUID = 1) form of the Pedersen Ch. 5.6 common-slate rule (Eqs. 5.58–5.59 with §5.3 cut criterion). Each equal-mass cut is then *clamped* into the gap between the two adjacent reference pseudo-components, guaranteeing every reference lump stays inside its own cut so the one-to-one property inheritance is preserved even when the reference lumps carry unequal mass. With `delumpResolution ≤ 1` it falls back to boiling-point midpoints.
+By default the reference cut boundaries are the arithmetic boiling-point midpoints between adjacent reference lumps. With `sharedImaginaryBoundaries(true)`, the reference is first rebuilt into a fine imaginary composition using `delumpResolution`. The discrete cumulative-mass quantiles provide candidate boundaries on the sorting-key axis (normal boiling point, falling back to molar mass).
+
+Each finite candidate is projected into the gap between the corresponding adjacent reference keys: a candidate below the gap moves to the next representable value above its lower key, while a candidate above the gap moves to the next representable value below its upper key. A candidate already inside the gap is retained. This keeps each distinct reference lump in its own cut when a representable interior exists, without discarding an out-of-gap candidate in favor of the midpoint. Missing or non-finite candidates, equal/non-finite keys, gaps with no representable interior, and `delumpResolution ≤ 1` retain the legacy midpoint fallback. Equal keys cannot define separate ordered cuts.
+
+These are **constrained mass-quantile boundaries**, not a guarantee of equal final cut masses: both projection and the finite imaginary grid can prevent exact equality. Source lumps are assigned whole unless source delumping is enabled, so changing a boundary only changes the result when a source contribution crosses it. With `inheritReferenceProperties(false)`, redistribution preserves source moles and mass; inheriting reference molar masses can change source mass. The synthetic delumping distribution is an approximation and is not independently validated by the cut-placement regression tests.
 
 > **Why reference-only here?** `characterizeToReference` inherits the trusted reference's lump properties one-to-one, so the reference fluid is the correct authority for the grid. The pooled multi-fluid imaginary composition of Eqs. 5.58–5.59 remains used by `characterizeToCommonSlate` (free new slate); applying it to the inherit-from-fixed-reference path would break the inherit alignment.
 
@@ -1051,7 +1055,7 @@ System.out.println(report.toReportString());
 When matching a source fluid to a reference PC structure:
 
 1. **Component Mapping**: Discrete components (C1, C2, CO₂, etc.) are mapped directly
-2. **Cut boundaries**: The reference lumps define cut boundaries on the carbon-number (boiling-point) axis — boiling-point midpoints by default, or carbon-number **equal-mass** cut points with `sharedImaginaryBoundaries(true)`
+2. **Cut boundaries**: The reference lumps define cut boundaries on the carbon-number (boiling-point) axis — boiling-point midpoints by default, or constrained mass-quantile cut points with `sharedImaginaryBoundaries(true)`
 3. **PC binning**: Each source pseudo-component (optionally first delumped into single-carbon-number sub-fractions, see `delumpBeforeRecharacterization`) is assigned to the reference cut whose boundary range contains its boiling point; the lump moles and mass are accumulated per cut
 4. **Lump properties**: Either inherited from the reference (`inheritReferenceProperties(true)`) or recomputed as molar mass = mass / moles per cut (`inheritReferenceProperties(false)`)
 5. **Mass Conservation**: Total source pseudo-fraction moles and mass are preserved through the binning

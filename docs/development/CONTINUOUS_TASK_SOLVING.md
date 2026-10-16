@@ -477,7 +477,11 @@ rewritten. The persisted identity is task-relative and records writer provenance
 than checkout-absolute paths, so moving a task between machines does not invalidate it.
 
 If a process stops after a cycle begins, `task-resume` reuses the same cycle id and skips
-already completed stages even when the wall clock or host changes. Completed digest,
+already completed calculation stages even when the wall clock or host changes. Production
+gates, constraints and proposal validation run again against the restored values before
+advice can be published; a saved successful stage status does not restore its filtering.
+The input stage reapplies its frozen restrictions without repeating input side effects.
+An unavailable input checkpoint blocks advice. Completed digest,
 notification and agent-review metadata are restored when such stages are skipped, so a
 resumed cycle cannot erase already recorded side effects. If a solve cycle completed but
 the process died before `state.json` was checkpointed, the solve loop adopts that completed
@@ -557,7 +561,7 @@ neqsim task-solve <task> --reset             # forget earlier solve rounds
 
 Each cycle prints its digest. The cycle id is the UTC time and host
 (`2026-09-30T0500Z@myhost`); a rerun in the same minute gets `-r2`. A crashed
-cycle is resumed by running it again: completed stages are skipped.
+cycle is resumed by running it again: completed calculations are reused and production validation is rerun.
 
 ---
 
@@ -935,8 +939,8 @@ The loop is **advisory**: nothing is written to the control system, and every ac
 | `model_update` (your script) | Reads live data, updates and runs the model, returns KPIs and the residuals against the measurements |
 | `gates` | `gates:` in the plan (`{name, kpi, abs_max\|max\|min}`). A failed or missing KPI blocks all advice (`model_gate:<name>`) |
 | `constraints` | `constraints:` in `goal.yaml` (`{name, kpi, op, limit, margin, warn, hard, source}`). `margin` tightens the limit. A hard constraint with no `limit` is *unconfirmed* and blocks all advice |
-| `optimize` (your script) | Searches the levers and returns `proposals` with `setpoints`, `expected_gain`, `predicted` KPIs, `objective_kpi`, `baseline_value`, and the fail-closed `optimizer_evidence` below |
-| `guard` | Keeps a proposal only if its numeric data are finite, its evidence belongs to the current cycle and proves a fully validated/replayed candidate, it has a gain above `production.min_gain`, and every hard constraint is predicted inside its margin. `guard.json` lists the reasons for every withheld proposal |
+| `optimize` (your script) | Searches the levers and returns `proposals` with `setpoints`, `expected_gain`, `predicted` KPIs, `objective_kpi`, `baseline_value`, and the fail-closed `optimizer_evidence` below; field studies may also return `accepted_point_envelope_evidence` |
+| `guard` | Keeps a proposal only if its numeric data are finite, its evidence belongs to the current cycle and proves a fully validated/replayed candidate, it has a gain above `production.min_gain`, and every hard constraint is predicted inside its margin. When `production.require_envelope_evidence` is `true`, the guard also requires a complete accepted-point envelope bound exactly to the proposal's action identifiers and values. `guard.json` lists the reasons for every withheld proposal |
 | `outcome` | For ledger items in status `implemented`: realised gain against predicted gain (`outcome_confirmed:` / `outcome_miss:`) |
 
 `demonstrated_limit(values, quantile=0.99, design=...)` gives an equipment limit from operating experience: the
@@ -965,6 +969,68 @@ optimizer_evidence:
 `actions_complete` must be false when any requested setpoint or routing action was rejected. The accepted ledger
 item retains this block, including the positive integer evaluation count and finite non-negative runtime, so
 resume and change-driven cycles preserve the incumbent's validation and performance provenance.
+
+For field-to-facility studies, set `production.require_envelope_evidence: true` and attach the map from
+`ProcessModelOperatingEnvelopeStudy.getAcceptedPointEnvelopeEvidence(...)` as
+`accepted_point_envelope_evidence`. The guard revalidates the persisted JSON instead of trusting its Java origin:
+the cycle and optimizer block must match; ordered `accepted_action_ids` and
+`accepted_candidate_values` must bind exactly to `setpoints`; slice study/evaluator identities and anchors must
+match; ordered axis sets must be unique; every slice must be complete; every point must have restored and
+reconverged the baseline; and point, evaluation and runtime totals must reconcile. Exploratory points may be
+physically infeasible or fail candidate convergence—the envelope records those boundaries—but they cannot leave
+the live model partially restored. The ordinary production template leaves this requirement disabled for backward
+compatibility; a supplied envelope is always validated strictly. Accepted proposals retain the complete block in
+the existing append-only ledger, so resume and evidence-change cycles do not depend on chat history or a second
+state store.
+
+Map every file that defines routing, constraints, limits, or model inputs to the production `guard`, including
+mapped network pump/compressor power, common-shaft speed and power, driver limits, and shared host-power limits.
+Declare the production-stage dependencies that must rebuild its evidence:
+
+```yaml
+evidence:
+  rules:
+    - name: field-operating-definition
+      matches: [study_config.yaml, continuous/goal.yaml]
+      stages: [guard]
+      conclusions: [validated field operating point and envelope]
+  dependencies:
+    guard: ["script:optimize", gates, constraints]
+    "script:optimize": ["script:model_update"]
+    gates: ["script:model_update"]
+    constraints: ["script:model_update"]
+```
+
+`neqsim task-update <task>` then reruns the model, optimizer, constraints, and guard while retaining unrelated
+cycle results. Map production and injection line-ups plus controlled reservoir-lifecycle boundaries and host-power
+definitions through the same rule. The route selectors remain discrete process actions, while reservoir pressure
+remains a model input synchronized through its owning `WellFlow.ReservoirLayer`. Read mapped network and standalone
+rotating-equipment demand from the canonical `ProcessModel.getPower(...)` result and preserve the common-shaft,
+driver, and shared-resource evidence; the task layer does not duplicate well, network, or rotating-equipment physics.
+Non-finite mapped demand or a driver/shared-power breach produces no replacement proposal. Before any
+model update, optimization, or guard runs, the evidence stage marks prior optimizer/envelope evidence in the ledger
+`evidence_current: false`. Unfinished advice is superseded and cannot remain the current incumbent. A replacement
+is a new `proposed` ledger item with `revalidation_of`, the changed evidence paths, the new cycle identity, and a
+fresh envelope; this deliberately requires a new engineering review. If the revised limit or route leaves no safe
+candidate, no replacement is created. Historical `implemented` records are retained for outcome traceability but
+their validation evidence is still marked non-current. If a later operating definition becomes safe again, its new
+item links to the most recent superseded item even when an intermediate cycle produced no proposal. Changes mapped
+only to reporting stages do not invalidate
+optimizer evidence. The Living Report exposes the evidence state for every ledger item. Unmapped changes and malformed
+`evidence_sensitive_stages` configuration retain fail-closed invalidation behavior.
+
+A malformed optimizer result or failed guard still leaves the old advice visibly stale, even when the guarded
+ledger-publication stage is skipped. Retrying or resuming the same invalidation does not duplicate its events;
+resuming after a replacement was already persisted preserves that cycle's fresh evidence. Resume restores the
+original optimizer proposals and reruns the inexpensive gates, constraints and guard; withheld proposals remain
+withheld, and accepted proposals retain their approval requirement. It does not rerun the completed model or
+optimizer. The ledger also requires optimizer/envelope proposals to match the exact content accepted by the
+current cycle's guard. This rejects custom plans that omit the guard, proposals inserted after the guard,
+and changes to already guarded proposals. A dry run reports the
+opportunities it would invalidate without changing the persisted ledger. The guard remains required before any
+new proposal can be written.
+Custom production plans must keep `evidence` before model update, optimization, and `guard`, as the production
+template does. The ledger fallback alone cannot provide early invalidation when a failed guard skips publication.
 
 ### 17.2 Levers: every operator-adjustable parameter
 

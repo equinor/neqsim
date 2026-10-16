@@ -30,6 +30,7 @@ import neqsim.process.equipment.network.FieldWellNetworkCoupler.WellResult;
 import neqsim.process.equipment.network.FieldWellNetworkProcessUnit;
 import neqsim.process.equipment.network.LoopedPipeNetwork;
 import neqsim.process.equipment.network.NetworkDecisionVariable;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.EnergyPort;
@@ -51,7 +52,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Synthetic end-to-end acceptance for live wells, reversible separator routing and host constraints.
+ * Synthetic end-to-end acceptance for live wells, reversible separator routing, mapped network power and host
+ * constraints.
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -61,6 +63,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
   private static final class Fixture {
     private final ProcessModel model;
     private final FieldWellNetworkProcessUnit networkUnit;
+    private final LoopedPipeNetwork mappedInjectionPowerNetwork;
     private final Separator highPressureSeparator;
     private final Separator lowPressureSeparator;
     private final Separator highPressureScrubber;
@@ -82,6 +85,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
      *
      * @param model coupled process model
      * @param networkUnit live well/network unit
+     * @param mappedInjectionPowerNetwork curve-backed injection utility included in shared host power
      * @param highPressureSeparator high-pressure separator
      * @param lowPressureSeparator low-pressure separator
      * @param highPressureScrubber high-pressure compressor suction scrubber
@@ -98,13 +102,15 @@ class FieldToFacilityOptimizationAcceptanceTest {
      * @param baselineRouteAHigh baseline producer-A high-pressure route flow in kg/hr
      * @param wellSuffixes deterministic well identities
      */
-    private Fixture(ProcessModel model, FieldWellNetworkProcessUnit networkUnit, Separator highPressureSeparator,
-        Separator lowPressureSeparator, Separator highPressureScrubber, Separator lowPressureScrubber,
-        Compressor highPressureCompressor, Compressor lowPressureCompressor, Mixer exportMixer,
-        ThrottlingValve exportValve, MechanicalShaft shaft, EnergyPort driverPort, CompressorDriver driver,
-        Gearbox gearbox, double sharedPowerLimitKw, double baselineRouteAHigh, List<String> wellSuffixes) {
+    private Fixture(ProcessModel model, FieldWellNetworkProcessUnit networkUnit,
+        LoopedPipeNetwork mappedInjectionPowerNetwork, Separator highPressureSeparator, Separator lowPressureSeparator,
+        Separator highPressureScrubber, Separator lowPressureScrubber, Compressor highPressureCompressor,
+        Compressor lowPressureCompressor, Mixer exportMixer, ThrottlingValve exportValve, MechanicalShaft shaft,
+        EnergyPort driverPort, CompressorDriver driver, Gearbox gearbox, double sharedPowerLimitKw,
+        double baselineRouteAHigh, List<String> wellSuffixes) {
       this.model = model;
       this.networkUnit = networkUnit;
+      this.mappedInjectionPowerNetwork = mappedInjectionPowerNetwork;
       this.highPressureSeparator = highPressureSeparator;
       this.lowPressureSeparator = lowPressureSeparator;
       this.highPressureScrubber = highPressureScrubber;
@@ -299,15 +305,28 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(routingSlice.isComplete(), routingSlice.getDiagnostics().toString());
     assertTrue(routingSlice.getPoints().stream().allMatch(
         point -> point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()));
+    double nearbyChokeB = Math.max(actions.get(1).getLowerBound(), accepted[1] - 5.0);
+    SliceResult hostPowerSlice = acceptedPointStudy.evaluateOneDimensional(actions.get(1).getId(),
+        new double[] {nearbyChokeB, accepted[1]}, result);
+    assertTrue(hostPowerSlice.isComplete(), hostPowerSlice.getDiagnostics().toString());
+    String sharedPowerId = sharedPowerDefinition().getQualifiedId();
+    assertTrue(hostPowerSlice.getPoints().stream().allMatch(
+        point -> point.getEvaluation().isBaselineRestored() && point.getEvaluation().isBaselineSimulationConverged()
+            && point.getEvaluation().getPlantConstraintEvidence().stream()
+                .anyMatch(power -> sharedPowerId.equals(power.getQualifiedConstraintId())
+                    && power.hasAvailableEvidence() && Double.isFinite(power.getSample().getSampledValue()))));
     int evaluationsBeforeExport = simulation.getEvaluationCount();
     Map<String, Object> envelopeEvidence = acceptedPointStudy.getAcceptedPointEnvelopeEvidence("synthetic-cycle-1",
-        result, acceptedSlice, routingSlice);
+        result, acceptedSlice, routingSlice, hostPowerSlice);
     assertEquals(evaluationsBeforeExport, simulation.getEvaluationCount());
-    assertEquals(Integer.valueOf(2), envelopeEvidence.get("slice_count"));
-    assertEquals(Integer.valueOf(4), envelopeEvidence.get("requested_point_count"));
-    assertEquals(Integer.valueOf(4), envelopeEvidence.get("completed_point_count"));
-    assertEquals(Long.valueOf(4L), envelopeEvidence.get("envelope_evaluation_count"));
-    assertEquals(Long.valueOf(result.getEvaluationCount() + 4L), envelopeEvidence.get("total_evaluation_count"));
+    assertEquals(actions.stream().map(ProcessModelOperatingAction::getId).collect(java.util.stream.Collectors.toList()),
+        envelopeEvidence.get("accepted_action_ids"));
+    assertEquals(actions.size(), ((List<?>) envelopeEvidence.get("accepted_candidate_values")).size());
+    assertEquals(Integer.valueOf(3), envelopeEvidence.get("slice_count"));
+    assertEquals(Integer.valueOf(6), envelopeEvidence.get("requested_point_count"));
+    assertEquals(Integer.valueOf(6), envelopeEvidence.get("completed_point_count"));
+    assertEquals(Long.valueOf(6L), envelopeEvidence.get("envelope_evaluation_count"));
+    assertEquals(Long.valueOf(result.getEvaluationCount() + 6L), envelopeEvidence.get("total_evaluation_count"));
     assertTrue(Double.isFinite(((Double) envelopeEvidence.get("envelope_runtime_seconds")).doubleValue()));
     assertEquals(acceptedBottleneck.getQualifiedConstraintName(),
         ((Map<?, ?>) envelopeEvidence.get("accepted_point_bottleneck")).get("qualified_constraint_name"));
@@ -403,6 +422,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
     exportMixer.addStream(lowPressureCompressor.getOutletStream());
     ThrottlingValve exportValve = new ThrottlingValve("gas export pressure control", exportMixer.getOutletStream());
     exportValve.setOutletPressure(100.0, "bara");
+    LoopedPipeNetwork mappedInjectionPowerNetwork = createMappedInjectionPowerNetwork();
 
     ProcessSystem process = new ProcessSystem("field to facility");
     process.add(networkUnit);
@@ -414,10 +434,14 @@ class FieldToFacilityOptimizationAcceptanceTest {
     process.add(lowPressureCompressor);
     process.add(exportMixer);
     process.add(exportValve);
+    process.add(mappedInjectionPowerNetwork);
     ProcessModel model = new ProcessModel();
     model.add("Field", process);
     model.run();
     assertTrue(model.isModelConverged());
+    assertTrue(mappedInjectionPowerNetwork.isConverged());
+    assertTrue(Double.isFinite(mappedInjectionPowerNetwork.getPower("kW")));
+    assertTrue(mappedInjectionPowerNetwork.getPower("kW") > 0.0);
     highPressureCompressor.generateCompressorChart("normal curves", 5);
     lowPressureCompressor.generateCompressorChart("normal curves", 5);
     highPressureCompressor.getCompressorChart().setUseCompressorChart(true);
@@ -439,6 +463,9 @@ class FieldToFacilityOptimizationAcceptanceTest {
         EnergyPortMode.CALCULATED);
     driverPort.connect(shaft);
     double baselinePowerKw = model.getPower("kW");
+    double expectedPowerKw = highPressureCompressor.getPower("kW") + lowPressureCompressor.getPower("kW")
+        + mappedInjectionPowerNetwork.getPower("kW");
+    assertEquals(expectedPowerKw, baselinePowerKw, Math.max(1.0e-9, expectedPowerKw * 1.0e-10));
     double driverLimitKw = baselinePowerKw * 1.8 / 0.98;
     CompressorDriver driver = new CompressorDriver(DriverType.ELECTRIC_MOTOR, driverLimitKw);
     driver.setMaxPower(driverLimitKw);
@@ -467,9 +494,53 @@ class FieldToFacilityOptimizationAcceptanceTest {
 
     configureInstalledLimits(networkUnit, highPressureSeparator, lowPressureSeparator, highPressureScrubber,
         lowPressureScrubber, network, routeAHighOperatingLimit, wellSuffixes);
-    return new Fixture(model, networkUnit, highPressureSeparator, lowPressureSeparator, highPressureScrubber,
-        lowPressureScrubber, highPressureCompressor, lowPressureCompressor, exportMixer, exportValve, shaft, driverPort,
-        driver, gearbox, baselinePowerKw * 1.8, baselineRouteAHigh, wellSuffixes);
+    PlantSharedResourceEvidence baselinePowerEvidence = PlantSharedResourceEvidence.fromProcessModelShaftPower(
+        sharedPowerDefinition(), "mapped-power-baseline", baselinePowerKw * 1.8, model, model.isModelConverged(),
+        "synthetic mapped network and common-shaft power baseline");
+    assertTrue(baselinePowerEvidence.isComplete(), baselinePowerEvidence.getDiagnostics().toString());
+    assertEquals(baselinePowerKw, baselinePowerEvidence.getAggregateValue(),
+        Math.max(1.0e-9, baselinePowerKw * 1.0e-10));
+    assertEquals(1, baselinePowerEvidence.getParticipants().size());
+    assertEquals("Field", baselinePowerEvidence.getParticipants().get(0).getSourceId());
+    assertEquals(baselinePowerKw, baselinePowerEvidence.getParticipants().get(0).getValue(),
+        Math.max(1.0e-9, baselinePowerKw * 1.0e-10));
+    return new Fixture(model, networkUnit, mappedInjectionPowerNetwork, highPressureSeparator, lowPressureSeparator,
+        highPressureScrubber, lowPressureScrubber, highPressureCompressor, lowPressureCompressor, exportMixer,
+        exportValve, shaft, driverPort, driver, gearbox, baselinePowerKw * 1.8, baselineRouteAHigh, wellSuffixes);
+  }
+
+  /**
+   * Build one independent curve-backed injection utility on the canonical field-network graph.
+   *
+   * @return convergable mapped pump network included in the host shared-power budget
+   */
+  private LoopedPipeNetwork createMappedInjectionPowerNetwork() {
+    SystemInterface liquid = new SystemSrkEos(298.15, 5.0);
+    liquid.addComponent("nC10", 0.70);
+    liquid.addComponent("nC16", 0.30);
+    liquid.setMixingRule("classic");
+
+    FieldNetworkTopology topology = new FieldNetworkTopology("mapped injection utility");
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    network.setFluidTemplate(liquid);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(100);
+    network.setTolerance(500.0);
+    topology.addPressureSource("pump suction", "HOST-P401", NodeRole.INJECTION_SOURCE, Service.INJECTION, 5.0, 0.0,
+        0.0);
+    topology.addFixedPressureSink("pump delivery", "P-401-D", NodeRole.HOST, Service.INJECTION, 12.0, 0.0);
+
+    Pump pump = new Pump("mapped injection utility pump");
+    pump.setSpeed(2500.0);
+    pump.getPumpChart().setCurves(new double[] {0.200, 298.15, 1.0, 1.0, 850.0}, new double[] {2000.0, 3000.0},
+        new double[][] {{20.0, 40.0, 60.0}, {30.0, 60.0, 90.0}},
+        new double[][] {{80.0, 70.0, 50.0}, {180.0, 158.0, 113.0}},
+        new double[][] {{65.0, 75.0, 68.0}, {68.0, 80.0, 72.0}});
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.getPumpChart().setUsePumpChart(true);
+    topology.addPumpWithCurve("mapped injection pump", "P-401", Service.INJECTION, FlowDirection.FROM_TO,
+        "pump suction", "suction", "pump delivery", "discharge", pump).setPumpSpeed(2500.0);
+    return network;
   }
 
   /** Add one live well node, header and production choke. */
@@ -653,6 +724,8 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertEquals(100.0, fixture.exportValve.getOutletStream().getPressure("bara"), 1.0e-6);
     assertTrue(fixture.model.isModelConverged());
     assertTrue(fixture.networkUnit.getLastCouplingResult().isConverged());
+    assertTrue(fixture.mappedInjectionPowerNetwork.isConverged());
+    assertTrue(Double.isFinite(fixture.mappedInjectionPowerNetwork.getPower("kW")));
   }
 
   /** Create a lean SRK gas for every live well and route. */

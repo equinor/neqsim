@@ -9,7 +9,9 @@ package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolv
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
 import neqsim.mathlib.generalmath.BandedLinearSystemSolver;
 import neqsim.mathlib.generalmath.TDMAsolve;
 import neqsim.fluidmechanics.flowsolver.SpeciesAdvectionScheme;
@@ -43,9 +45,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
   private static final double SPECIES_COUPLING_TOLERANCE = 1.0e-10;
   private static final double THERMODYNAMIC_COMPOSITION_TOLERANCE = 1.0e-10;
 
-  Matrix diffMatrix;
+  DMatrixRMaj diffMatrix;
   int iter = 0;
-  Matrix[] diff4Matrix;
+  DMatrixRMaj[] diff4Matrix;
   double[][] xNew;
   protected double[] oldMass;
   protected double[] oldComp;
@@ -86,7 +88,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     oldMass = new double[nodes];
     oldComp = new double[nodes];
     oldImpuls = new double[nodes];
-    diff4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    diff4Matrix = new DMatrixRMaj[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
     oldEnergy = new double[nodes];
     oldVelocity = new double[nodes];
     oldDensity = new double[nodes];
@@ -1092,10 +1094,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           do {
             iter++;
             setImpulsMatrixTDMA();
-            Matrix solOld = solMatrix.copy();
+            DMatrixRMaj solOld = solMatrix.copy();
             d = TDMAsolve.solve(a, b, c, r);
-            solMatrix = new Matrix(d, 1).transpose();
-            diffMatrix = solMatrix.minus(solOld);
+            solMatrix = new DMatrixRMaj(d.length, 1, true, d);
+            diffMatrix = new DMatrixRMaj(d.length, 1);
+            CommonOps_DDRM.subtract(solMatrix, solOld, diffMatrix);
             // if(dynamic) solMatrix.print(10,10);
 
             // System.out.println("diff1: ");
@@ -1104,7 +1107,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             // diffMatrix.norm1()/solMatrix.norm1());
             initVelocity(iter);
 
-            diff = Math.abs(diffMatrix.norm1() / solMatrix.norm1());
+            diff = Math.abs(NormOps_DDRM.normP1(diffMatrix) / NormOps_DDRM.normP1(solMatrix));
             if (diff > maxDiff) {
               maxDiff = diff;
             }
@@ -1117,14 +1120,15 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
               // System.out.println("iter: " +iter);
               setMassConservationMatrixTDMA();
               d = TDMAsolve.solve(a, b, c, r);
-              Matrix sol2Old = sol2Matrix.copy();
+              DMatrixRMaj sol2Old = sol2Matrix.copy();
               // sol2Matrix.print(10,10);
-              sol2Matrix = new Matrix(d, 1).transpose();
-              diffMatrix = sol2Matrix.minus(sol2Old);
+              sol2Matrix = new DMatrixRMaj(d.length, 1, true, d);
+              diffMatrix = new DMatrixRMaj(d.length, 1);
+              CommonOps_DDRM.subtract(sol2Matrix, sol2Old, diffMatrix);
               // System.out.println("diff2:
               // "+diffMatrix.norm1()/sol2Matrix.norm1());
               initPressure(iter);
-              diff = Math.abs(diffMatrix.norm1() / sol2Matrix.norm1());
+              diff = Math.abs(NormOps_DDRM.normP1(diffMatrix) / NormOps_DDRM.normP1(sol2Matrix));
               if (diff > maxDiff) {
                 maxDiff = diff;
               }
@@ -1138,15 +1142,16 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         iter = 0;
         do {
           iter++;
-          Matrix sol3Old = sol3Matrix.copy();
+          DMatrixRMaj sol3Old = sol3Matrix.copy();
           setEnergyMatrixTDMA();
           d = TDMAsolve.solve(a, b, c, r);
-          sol3Matrix = new Matrix(d, 1).transpose();
-          diffMatrix = sol3Matrix.minus(sol3Old);
+          sol3Matrix = new DMatrixRMaj(d.length, 1, true, d);
+          diffMatrix = new DMatrixRMaj(d.length, 1);
+          CommonOps_DDRM.subtract(sol3Matrix, sol3Old, diffMatrix);
           // System.out.println("diff3: " + diffMatrix.norm1() / sol3Matrix.norm1());
           initTemperature(iter);
 
-          diff = Math.abs(diffMatrix.norm1() / sol3Matrix.norm1());
+          diff = Math.abs(NormOps_DDRM.normP1(diffMatrix) / NormOps_DDRM.normP1(sol3Matrix));
           if (diff > maxDiff) {
             maxDiff = diff;
           }
@@ -1159,11 +1164,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           iter++;
           for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); p++) {
             setComponentConservationMatrix(p);
-            Matrix sol4Old = sol4Matrix[p].copy();
+            DMatrixRMaj sol4Old = sol4Matrix[p].copy();
             xNew[p] = TDMAsolve.solve(a, b, c, r);
-            sol4Matrix[p] = new Matrix(xNew[p], 1).transpose();
-            diff4Matrix[p] = sol4Matrix[p].minus(sol4Old);
-            diff = Math.abs(diff4Matrix[p].norm1() / (sol4Matrix[p].norm1()));
+            sol4Matrix[p] = new DMatrixRMaj(xNew[p].length, 1, true, xNew[p]);
+            diff4Matrix[p] = new DMatrixRMaj(xNew[p].length, 1);
+            CommonOps_DDRM.subtract(sol4Matrix[p], sol4Old, diff4Matrix[p]);
+            diff = Math.abs(NormOps_DDRM.normP1(diff4Matrix[p]) / NormOps_DDRM.normP1(sol4Matrix[p]));
             if (diff > maxDiff) {
               maxDiff = diff;
             }
