@@ -51,80 +51,11 @@ jobs:
       - name: Check Phase 0 documentation accounting
         run: python neqsim-mcp-server/tests/documentation/test_phase0_documentation.py
 
-      - name: Install exact NeqSim core without tests
-        run: mvn -B install -DskipTests -Dmaven.javadoc.skip=true -ntp
-
-      - name: Run focused model-registry Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.ModelRegistryTest test -ntp
-
-      - name: Run focused session-lifecycle Java contracts
-        run: mvn -B -Dtest=neqsim.mcp.runners.SessionRunnerTest,neqsim.mcp.runners.SessionRunnerContractTest test -ntp
-
-      - name: Run focused persisted-state Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.StatePersistenceRunnerTest test -ntp
-
-      - name: Run focused adjustable-parameter Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.AutomationLoopRunnerTest test -ntp
-
-      - name: Run focused simulation-variable mutation Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.AutomationVariableWriteContractTest test -ntp
-
-      - name: Run focused simulation-state snapshot Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.McpRunnerContractTest test -ntp
-
-      - name: Run focused visualization Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.VisualizationRunnerTest test -ntp
-
-      - name: Run focused process-local plugin Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.PluginRegistryContractTest test -ntp
-
-      - name: Run focused runtime-capability Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.GeneralCapabilityRunnerTest test -ntp
-
-      - name: Run focused task-solver and composed-workflow Java contracts
-        run: mvn -B -Dtest=neqsim.mcp.runners.TaskSolverRunnerTest test -ntp
-
-      - name: Run focused bounded-streaming Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.StreamingRunnerTest,neqsim.mcp.runners.McpPrincipalScopingTest test -ntp
-
-      - name: Run focused multi-server composition Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.CompositionRunnerTest test -ntp
-
-      - name: Run focused bounded risk-matrix Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.RiskMatrixRunnerTest test -ntp
-
-      - name: Run focused bounded LOPA Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.LOPARunnerTest test -ntp
-
-      - name: Run focused pre-flight validator Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.ValidatorTest test -ntp
-
-      - name: Run focused result-validator Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.EngineeringValidatorTest test -ntp
-
-      - name: Run focused process-comparison Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.ProcessComparisonRunnerTest test -ntp
-
-      - name: Run focused bounded operational-study Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.OperationalStudyRunnerTest test -ntp
-
-      - name: Run focused HAZOP-scenario Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.HazopScenarioRunnerTest test -ntp
-
-      - name: Run focused safety-system-performance Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.SafetySystemPerformanceRunnerTest test -ntp
-
-      - name: Run focused open-drain-review Java contract
-        run: mvn -B -Dtest=neqsim.mcp.runners.OpenDrainReviewRunnerTest test -ntp
-
-      - name: Run focused NORSOK S-001 Clause 10 review Java contracts
-        run: mvn -B -Dtest=neqsim.mcp.runners.NorsokS001Clause10ReviewRunnerTest,neqsim.process.safety.processsafetysystem.ProcessSafetySystemReviewEngineTest test -ntp
-
-      - name: Run focused reporting Java contracts
-        run: mvn -B -Dtest=neqsim.mcp.runners.ReportRunnerTest test -ntp
-
-      - name: Run focused security-management Java contracts
-        run: mvn -B -Dtest=neqsim.mcp.runners.SecurityRunnerTest,neqsim.mcp.runners.McpSecurityEnforcementTest test -ntp
+      - name: Install exact core and run focused Java contracts
+        run: |
+          mvn -B install \
+            -Dtest=neqsim.mcp.runners.ModelRegistryTest,neqsim.mcp.runners.SessionRunnerTest,neqsim.mcp.runners.SessionRunnerContractTest,neqsim.mcp.runners.StatePersistenceRunnerTest,neqsim.mcp.runners.AutomationLoopRunnerTest,neqsim.mcp.runners.AutomationVariableWriteContractTest,neqsim.mcp.runners.McpRunnerContractTest,neqsim.mcp.runners.VisualizationRunnerTest,neqsim.mcp.runners.PluginRegistryContractTest,neqsim.mcp.runners.GeneralCapabilityRunnerTest,neqsim.mcp.runners.TaskSolverRunnerTest,neqsim.mcp.runners.StreamingRunnerTest,neqsim.mcp.runners.McpPrincipalScopingTest,neqsim.mcp.runners.CompositionRunnerTest,neqsim.mcp.runners.RiskMatrixRunnerTest,neqsim.mcp.runners.LOPARunnerTest,neqsim.mcp.runners.ValidatorTest,neqsim.mcp.runners.EngineeringValidatorTest,neqsim.mcp.runners.ProcessComparisonRunnerTest,neqsim.mcp.runners.OperationalStudyRunnerTest,neqsim.mcp.runners.HazopScenarioRunnerTest,neqsim.mcp.runners.SafetySystemPerformanceRunnerTest,neqsim.mcp.runners.OpenDrainReviewRunnerTest,neqsim.mcp.runners.NorsokS001Clause10ReviewRunnerTest,neqsim.process.safety.processsafetysystem.ProcessSafetySystemReviewEngineTest,neqsim.mcp.runners.ReportRunnerTest,neqsim.mcp.runners.SecurityRunnerTest,neqsim.mcp.runners.McpSecurityEnforcementTest \
+            -Djacoco.skip=true -Dmaven.javadoc.skip=true -ntp
 
       - name: Build exact MCP server package
         shell: bash
