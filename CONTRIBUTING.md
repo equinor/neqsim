@@ -18,7 +18,7 @@ neqsim doctor              # detailed environment health check
 
 > The `install` script finds a working Python and runs `python -m pip` for you,
 > so it works even when `pip`/`python` are not on PATH. To install manually,
-> use `python -m pip install -e devtools/` (not bare `pip`).
+> use `uv sync --project devtools` (not bare `pip`).
 
 > **`neqsim` not found?** Your Python Scripts directory may not be on PATH.
 > See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found) for fix instructions.
@@ -68,10 +68,12 @@ To format automatically on every commit (and verify on push), install the local
 [pre-commit](https://pre-commit.com/) hooks from `.pre-commit-config.yaml`:
 
 - `pre-commit` stage: `spotless:apply` (auto-format Java files on commit)
+- `pre-commit` stage: regenerate engineering capability coverage when related
+   Java, catalog, skill, or agent files change (`uv run --project devtools --locked devtools/build_engineering_coverage.py`)
 - `pre-push` stage: `spotless:check` (verify formatting before push)
 
 ```bash
-pip install pre-commit
+uv tool install pre-commit
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
@@ -81,7 +83,8 @@ Run the hooks manually across the whole repository:
 pre-commit run --all-files
 ```
 
-> These hooks require a local JDK and Maven. They invoke the Maven wrapper through
+> These hooks require `uv`, a local JDK, and Maven. Python devtools commands run through the
+> `devtools` project and its lockfile. Java formatting invokes the Maven wrapper through
 > `devtools/run_spotless.py`, which selects `mvnw.cmd` on Windows and `./mvnw` elsewhere, so the
 > hooks work on Windows, macOS, and Linux. They are **not** run by pre-commit.ci, which has no JVM —
 > formatting is checked by the `Pre-commit checks` GitHub Action instead.

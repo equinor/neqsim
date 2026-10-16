@@ -126,18 +126,31 @@ if ($Extras) {
 
 if ($Uv) {
     # Fast path: install with uv into the detected interpreter's environment.
-    if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
-        Write-Host ""
-        Write-Host "ERROR: -Uv was requested but 'uv' is not installed." -ForegroundColor Red
-        Write-Host "Install uv with one of:" -ForegroundColor Yellow
-        Write-Host "  * winget install astral-sh.uv"
-        Write-Host "  * powershell -c `"irm https://astral.sh/uv/install.ps1 | iex`""
-        Write-Host "  * $pythonDisplay -m pip install uv"
-        Write-Host "Or re-run without -Uv to use pip."
-        exit 1
+    $uvInstallDir = Join-Path $HOME ".local\bin"
+    $uvExecutable = Join-Path $uvInstallDir "uv.exe"
+    if (-not (Test-Path $uvExecutable) -and -not (Get-Command uv -ErrorAction SilentlyContinue)) {
+        Write-Host "uv not found - installing it for the current user..."
+        try {
+            New-Item -ItemType Directory -Path $uvInstallDir -Force | Out-Null
+            $env:UV_INSTALL_DIR = $uvInstallDir
+            Invoke-Expression (Invoke-RestMethod "https://astral.sh/uv/install.ps1")
+        } catch {
+            Write-Host "ERROR: could not install uv. Check network access or install uv manually." -ForegroundColor Red
+            Write-Host "  https://docs.astral.sh/uv/getting-started/installation/" -ForegroundColor Yellow
+            exit 1
+        }
+    }
+    if (-not (Test-Path $uvExecutable)) {
+        $uvCommand = Get-Command uv -ErrorAction SilentlyContinue
+        if ($uvCommand) {
+            $uvExecutable = $uvCommand.Source
+        } else {
+            Write-Host "ERROR: uv installation completed but uv.exe was not found." -ForegroundColor Red
+            exit 1
+        }
     }
     Write-Host "Installing (editable, via uv): $target"
-    & uv pip install --python "$pythonExe" -e "$target"
+    & $uvExecutable pip install --python "$pythonExe" -e "$target"
     if ($LASTEXITCODE -ne 0) {
         Write-Host "ERROR: 'uv pip install' failed. See the output above for details." -ForegroundColor Red
         exit 1

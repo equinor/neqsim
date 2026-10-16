@@ -24,9 +24,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: astral-sh/setup-uv@v10.3.0
         with:
           python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
       - uses: actions/cache@v6
         with:
           path: |
@@ -36,7 +38,9 @@ jobs:
           restore-keys: |
             pre-commit-${{ runner.os }}-
       - name: Install pre-commit
-        run: python -m pip install pre-commit
+        run: |
+          uv tool install pre-commit
+          uv sync --project devtools --locked
       - name: Run pre-commit checks
         shell: bash
         run: |

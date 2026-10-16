@@ -1,89 +1,28 @@
-# devtools — Jupyter Development Helpers for NeqSim
+# devtools — Python Development Tools for NeqSim
 
-This directory contains a small pip-installable Python package that makes it
-easy to use **Jupyter notebooks** for NeqSim Java development — edit Java code,
-compile, and immediately test from Python without rebuilding a JAR.
+This directory is the Python project for NeqSim development scripts, CLI tools,
+and Jupyter helpers. Use `uv` to resolve its dependencies and run its commands
+from the repository root.
 
-## Setting up a Python environment (recommended)
+## Set up with uv
 
-A **virtual environment (venv)** is an isolated, per-project Python. It keeps
-NeqSim's dependencies separate from other projects and — importantly — puts the
-`neqsim` command on your PATH automatically, avoiding the most common install
-problems. Use one whenever you can.
-
-**1. Create the environment (once per clone).** Run from the project root:
-
-```powershell
-# Windows (PowerShell)
-py -3 -m venv .venv        # or: python -m venv .venv
-```
+Install `uv`, then sync the devtools environment from the repository root:
 
 ```bash
-# macOS / Linux
-python3 -m venv .venv
+uv sync --project devtools
+uv run --project devtools --locked neqsim --help
 ```
 
-This creates a `.venv/` folder containing a private copy of Python + pip.
-
-**2. Activate it (every new terminal session).** Activation points `python`,
-`pip`, and `neqsim` at the venv for the current shell:
-
-```powershell
-# Windows PowerShell
-.\.venv\Scripts\Activate.ps1
-```
-
-```bat
-:: Windows Command Prompt (cmd.exe)
-.\.venv\Scripts\activate.bat
-```
+Use the test dependency group when running devtools tests:
 
 ```bash
-# macOS / Linux (bash / zsh)
-source .venv/bin/activate
+uv sync --project devtools --group test
+uv run --project devtools --locked --group test python -m pytest devtools/
 ```
 
-Your prompt now shows `(.venv)`. Confirm the right Python is active:
-
-```powershell
-python -c "import sys; print(sys.executable)"   # should print a path inside .venv
-```
-
-> **PowerShell blocks the activation script?** If you see
-> *"running scripts is disabled on this system"*, allow local scripts for the
-> current session and try again:
-> ```powershell
-> Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-> ```
-
-**3. Install NeqSim devtools into the active venv:**
-
-```powershell
-.\install.ps1            # Windows  (uses the active venv automatically)
-./install.sh             # macOS / Linux
-```
-
-**4. Deactivate when you're done** (or just close the terminal):
-
-```bash
-deactivate
-```
-
-**Using [uv](https://docs.astral.sh/uv/)?** uv can create and manage the venv
-for you (and is much faster):
-
-```bash
-uv venv                        # create .venv
-# activate as in step 2 above, then:
-.\install.ps1 -Uv              # Windows   (or: ./install.sh --uv)
-# ...or install directly with uv into the active venv:
-uv pip install -e devtools/
-```
-
-> **No venv?** The installer still works — it falls back to your system/user
-> Python. But then the `neqsim` command may not be on PATH; see
-> [Troubleshooting](#troubleshooting-neqsim-not-found) below, or use
-> `python -m neqsim_cli` as a fallback.
+The `install.sh` and `install.ps1` scripts remain available for users who need
+to install the CLI into an existing Python environment. For repository
+development and CI, use the uv project and committed lockfile.
 
 ## Recommended no-admin runbook for the user
 
@@ -277,10 +216,15 @@ and the [Skills & Agents Guide](../docs/integration/skills_guide.md#private-skil
 
 ## One-time setup
 
-**Recommended (works even when `pip`/`python` are not on PATH).** Run the
-bootstrap installer from the **project root** — it finds a working Python
-interpreter for you (preferring an active venv) and runs `python -m pip` under
-the hood:
+**Recommended:** sync the uv project from the repository root:
+
+```bash
+uv sync --project devtools
+uv run --project devtools --locked neqsim --help
+```
+
+The platform installer scripts remain available for existing Python
+environments. They find a working interpreter and install the package there:
 
 ```powershell
 # Windows (PowerShell):
@@ -294,8 +238,7 @@ the hood:
 
 > **"install.ps1 is not digitally signed" / execution-policy error on Windows?**
 > That is PowerShell blocking scripts, not a problem with the file. Use the
-> pure-batch installer instead — it calls Python/pip directly and never touches
-> PowerShell, so it works even on locked-down machines where the execution
+> pure-batch installer instead — it avoids PowerShell, so it works even on locked-down machines where the execution
 > policy is enforced by **Group Policy** (where even
 > `powershell -ExecutionPolicy Bypass` is ignored):
 >
@@ -306,37 +249,31 @@ the hood:
 > install.cmd uv         :: install with the fast 'uv' package manager
 > ```
 >
-> Equivalent one-liner (no script at all): `py -m pip install -e devtools/`.
+> Equivalent one-liner (no script at all): `uv sync --project devtools`.
 > The `-InstallJdk` option is `install.ps1`-only; on a GPO-locked machine
-> install a JDK separately. After install, if the `neqsim` command is not on
-> PATH, use `py -m neqsim_cli --help`.
+> install a JDK separately. With uv, use `uv run --project devtools --locked neqsim`
+> instead of relying on a shell PATH entry.
 
-**Using [uv](https://docs.astral.sh/uv/)?** Pass the `uv` flag to install with
-the fast `uv` package manager instead of pip:
+**Using [uv](https://docs.astral.sh/uv/)?** The installer scripts also support
+uv when installing into an existing environment. If uv is missing, the selected
+uv installer path bootstraps it before installing the package:
 
 ```powershell
 .\install.ps1 -Uv        # Windows
 ./install.sh --uv        # macOS / Linux
 ```
 
-**Manual alternative.** If you prefer to install by hand, always use
-`python -m pip` (not bare `pip`) so it targets the interpreter you are running:
+**Manual alternative.** From the repository root, sync the uv project:
 
 ```bash
-# From the project root (with your venv active):
-python -m pip install -e devtools/
-
-# ...or with uv:
-uv pip install -e devtools/
+uv sync --project devtools
 ```
 
-> Do **not** use bare `pip install -e devtools/`. If `pip` is not on PATH it
-> fails with "pip not available"; `python -m pip` avoids that. On Windows, if
-> `python` opens the Microsoft Store, use the `py` launcher (`py -m pip ...`)
-> or run `.\install.ps1`, which handles this automatically.
+Run the CLI without activating the project environment with
+`uv run --project devtools --locked neqsim --help`.
 
-This installs `neqsim_dev_setup` as an editable package and registers the **`neqsim` CLI**
-so every notebook in the venv can import it — no `sys.path` hacks needed.
+This installs `neqsim_dev_setup` and the **`neqsim` CLI** into the project
+environment, so notebooks can import it without `sys.path` hacks.
 
 ### The `neqsim` CLI
 
@@ -359,21 +296,21 @@ Run `neqsim --help` for the full list.
 
 ### Troubleshooting: `neqsim` not found
 
-If `neqsim` is not recognized after `pip install -e devtools/`, the Python
-Scripts directory is not on your PATH. The install itself is fine.
+If `neqsim` is not recognized in your shell, run it through the project:
+`uv run --project devtools --locked neqsim`. The project environment does not need to be
+activated or added to PATH.
 
 **Unblock yourself immediately (no setup, always works):**
 ```bash
-python -m neqsim_cli --help      # py -m neqsim_cli --help  on Windows
+uv run --project devtools --locked neqsim --help
 ```
 This is the same entry point the `neqsim` command runs, so every command in this
-README works with it — just substitute it for `neqsim`. Many contributors use
-only this form.
+README works with it — prefix commands with `uv run --project devtools --locked`.
 
 **Find out why, and fix it:**
 ```bash
-python -m neqsim_cli doctor --skip-jar   # names the cause under "CLI command"
-python devtools/ensure_on_path.py        # puts the Scripts dir on your user PATH
+uv run --project devtools --locked neqsim doctor --skip-jar   # names the cause under "CLI command"
+uv run --project devtools --locked devtools/ensure_on_path.py  # puts the Scripts dir on your user PATH
 ```
 Use `ensure_on_path.py` rather than editing PATH by hand: it writes the user
 PATH through the registry, which avoids the truncation and the
@@ -382,19 +319,12 @@ machine-PATH-duplicated-into-user-PATH damage that `setx %PATH%` and
 terminal — and in VS Code, fully quit and reopen the window, because VS Code
 captures PATH at launch and a new integrated terminal is not enough.
 
-**Using a virtual environment:**
+**Using the project environment:**
 ```bash
-python -m venv .venv
-# Windows:  .venv\Scripts\Activate.ps1
-# macOS/Linux:  source .venv/bin/activate
-pip install -e devtools/
-neqsim --help
+uv sync --project devtools
+uv run --project devtools --locked neqsim --help
 ```
-A venv is activated **per terminal**, so activate it in every new terminal (or
-let VS Code do it via *Python: Select Interpreter*). Restarting the machine does
-not change this. Note that VS Code can set `VIRTUAL_ENV` without actually
-activating the environment — if `neqsim` is missing while `VIRTUAL_ENV` is set,
-that is the cause, and `neqsim doctor` will say so.
+`uv run` selects the project environment automatically in every terminal.
 
 **Where did pip put it?**
 ```bash
@@ -414,7 +344,7 @@ export PATH="$HOME/.local/bin:$PATH"
 **Alternative — run without PATH (works everywhere):**
 ```bash
 python -m neqsim_cli          # runs the CLI module directly
-python devtools/neqsim_cli.py  # runs the script file directly
+uv run --project devtools --locked devtools/neqsim_cli.py  # runs the script file directly
 ```
 
 ## Usage (any notebook, any directory)
@@ -457,7 +387,7 @@ for a full explanation of the architecture and internals.
 | `neqsim_try.py` | Interactive playground — drops into a Python REPL with a sample fluid ready |
 | `neqsim_contribute.py` | Guided contribution wizard — walks new contributors through their first PR |
 | `neqsim_dev_setup.py` | JVM bootstrap, class imports, compile + kernel restart |
-| `pyproject.toml` | Makes it pip-installable (`pip install -e devtools/`) |
+| `pyproject.toml`, `uv.lock` | Define and lock the uv-managed devtools project |
 | `new_task.py` | Create task-solving folders for the 4-step AI workflow |
 | `new_skill.py` | Scaffold a new skill for the agentic system (`neqsim new-skill "name"`) |
 | `install_skill.py` | Community/private skill manager — `neqsim skill list/search/info/install[/--all]/installed/export/remove/publish/sync-packages/ensure/doctor/private-init/add-repo` |
@@ -468,7 +398,7 @@ for a full explanation of the architecture and internals.
 | `unisim_reader.py` | UniSim/HYSYS .usc COM reader → NeqSim Python/notebook/EOT/JSON. Full-mode conversion with E300 full-fluid export, registry-driven operation mapping, port-specific forward refs, and auto-recycle wiring. |
 | `test_unisim_outputs.py` | Pure-Python regression tests for UniSim converter output modes, E300 fluid export, operation handler strategies, and mapping summaries (no COM needed) |
 | `explore_unisim_com.py` | Diagnostic: dump UniSim COM object model from any .usc file |
-| `pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires `pymupdf` (`pip install pymupdf`). |
+| `pdf_to_figures.py` | Convert PDF pages to PNG images for AI analysis. Use `pdf_to_pngs()` for single files, `pdf_folder_to_pngs()` for batch. Requires the `pdf` extra (`uv sync --project devtools --extra pdf`). |
 | `neqsim_runner/` | Supervised simulation execution — isolated subprocesses with own JVM, auto-retry, checkpointing, rate limiting, and context-window-exhaustion resilience. See [`neqsim_runner/README.md`](neqsim_runner/README.md). |
 
 ## Solving Engineering Tasks

@@ -123,7 +123,7 @@ references/
    web extracts are organized and indexed:
 
    ```bash
-   python devtools/generate_sources_md.py <task_dir> --organize
+   uv run --project devtools --locked devtools/generate_sources_md.py <task_dir> --organize
    ```
 
    It files loose files into `literature/` / `web/` and rebuilds

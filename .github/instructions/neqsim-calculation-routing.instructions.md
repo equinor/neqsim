@@ -32,7 +32,7 @@ profile, the Windows registry, and the JRE bundled with the VS Code Java
 extension:
 
 ```powershell
-python devtools/java_locator.py        # source checkout: lists every usable Java
+uv run --project devtools --locked devtools/java_locator.py        # source checkout: lists every usable Java
 neqsim doctor                          # pip install of the CLI: names the found Java
 ```
 

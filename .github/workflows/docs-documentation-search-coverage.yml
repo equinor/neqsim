@@ -28,20 +28,24 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/docs/Gemfile
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
+      - uses: astral-sh/setup-uv@v10.3.0
         with:
           python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Sync devtools test environment
+        run: uv sync --project devtools --locked --group test
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
           bundler-cache: true
       - name: Check search source contracts
-        run: python devtools/check_documentation_search.py
+        run: uv run --project devtools --locked devtools/check_documentation_search.py
       - name: Run documentation contract tests
-        run: python -m unittest discover -s docs -p "test_*.py" -v
+        run: uv run --project devtools --locked --group test python -m unittest discover -s docs -p "test_*.py" -v
       - name: Build documentation
         run: bundle exec jekyll build --source docs --destination _site
       - name: Verify generated search coverage
-        run: python devtools/check_documentation_search.py --site _site
+        run: uv run --project devtools --locked devtools/check_documentation_search.py --site _site
       - name: Check search JavaScript syntax
         run: node --check docs/assets/js/search.js

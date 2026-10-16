@@ -509,7 +509,7 @@ Optionally, install local pre-commit hooks to format on commit and verify on pus
 local JDK + Maven):
 
 ```bash
-pip install pre-commit
+uv tool install pre-commit
 pre-commit install --hook-type pre-commit --hook-type pre-push
 pre-commit run --all-files   # run hooks manually across the repo
 ```
@@ -629,17 +629,19 @@ neqsim onboard
 > would need a new terminal.
 >
 > The `install` script finds a working Python for you and runs `python -m pip`
-> under the hood, so it works even when `pip`/`python` are not on PATH. To
-> install manually, use `python -m pip install -e devtools/` (not bare `pip`).
+> under the hood, so it works even when `pip`/`python` are not on PATH. When
+> you explicitly select the uv path (`-Uv`, `--uv`, or `install.cmd uv`), the
+> script bootstraps uv if it is missing. To install manually,
+> use `uv sync --project devtools` (not bare `pip`).
 >
 > **Windows: "install.ps1 is not digitally signed" error?** This is PowerShell's
 > execution policy, not a problem with the file. Run the pure-batch installer
-> `.\install.cmd` (calls Python/pip directly, works even when the policy is
-> locked by Group Policy), or just run `py -m pip install -e devtools/`.
+> `.\install.cmd` (works even when the policy is locked by Group Policy), or
+> run `uv sync --project devtools` from the repository root.
 
-> **Tip:** Using a virtual environment (`python -m venv .venv` then activate it) avoids
-> PATH issues on all platforms. See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found)
-> if `neqsim` is not found, or use `python -m neqsim_cli` as a fallback.
+> **Tip:** `uv run --project devtools --locked neqsim` avoids PATH issues on all platforms.
+> See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found)
+> for setup and diagnostics.
 
 Or skip local setup entirely: **[Open in GitHub Codespaces](https://github.com/codespaces/new?hide_repo_select=true&ref=master&repo=equinor/neqsim)**, with everything pre-installed in the browser.
 

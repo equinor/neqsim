@@ -21,7 +21,7 @@ skill tree or edit a second copy. The structural lint verifies both the link tar
 directory:
 
 ```bash
-python devtools/verify_skills_agents.py
+uv run --project devtools --locked devtools/verify_skills_agents.py
 git ls-files -s .agents/skills  # mode must be 120000
 ```
 
@@ -49,7 +49,7 @@ Codex repository path and symbolic-link behavior.
 Two complementary mechanisms exist:
 
 1. **Semantic search (preferred for new tasks).** Run
-   `python devtools/skill_search.py "<your task title>" --top 5`. The script
+   `uv run --project devtools --locked devtools/skill_search.py "<your task title>" --top 5`. The script
    ranks every SKILL.md by TF-IDF cosine similarity over the front-matter
    `description`. Add or sharpen a skill's `description` to improve recall.
 2. **Keyword index (`skill-index.json`).** A curated short-list mapping
@@ -378,7 +378,7 @@ Run the CI cross-reference script to verify all skill references in agent files
 resolve to actual skill folders:
 
 ```bash
-python devtools/verify_agent_skill_refs.py
+uv run --project devtools --locked devtools/verify_agent_skill_refs.py
 ```
 
 This checks that:

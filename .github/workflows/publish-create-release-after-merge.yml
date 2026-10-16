@@ -74,7 +74,7 @@ jobs:
           path: staging
 
   compile_java:
-    name: Build Neqsim ${{ needs.get_versions.outputs.version }} with java 17
+    name: Build Neqsim ${{ needs.get_versions.outputs.version }} for java 17
     needs: get_versions
 
     if: ${{ needs.get_versions.outputs.version_8 == needs.get_versions.outputs.version }}
@@ -83,11 +83,11 @@ jobs:
     steps:
       - name: Check out neqsim java project
         uses: actions/checkout@v7
-      - name: Set up Java 21 environment
+      - name: Set up Java 17 environment
         uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '17'
           cache: 'maven'
       - name: Build java 17 version with Maven, do not test
         run: mvn -B package --file pom.xml -DskipTests -Djacoco.skip=true -ntp

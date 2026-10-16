@@ -323,7 +323,7 @@ with a DEXPI 2.0 header while native graphical DEXPI 2.0 coverage is expanded.
 
 `plant-pydexpi.xml` contains the same governed graphical model with the namespace omitted for compatibility with the
 pyDEXPI Proteus importer. Run
-`python devtools/validate_dexpi_interoperability.py engineering-package --require-pydexpi --output
+`uv run --project devtools --locked devtools/validate_dexpi_interoperability.py engineering-package --require-pydexpi --output
 engineering-package/interoperability-report.json` to qualify that import. The
 generated `interoperability-report.json` keeps native schema/semantic status separate from pyDEXPI and commercial-CAE
 qualification. Commercial import and round-trip evidence must follow
@@ -390,7 +390,7 @@ the tool. Supply a local checkout pinned to commit
 `18a17b1e38ba15a1a6ba49dd8265ddcff7c766ad` after installing that checkout's locked Node.js dependencies:
 
 ```text
-python devtools/validate_dexpi_interoperability.py . \
+uv run --project devtools --locked devtools/validate_dexpi_interoperability.py . \
   --native-file src/test/resources/dexpi/2.0/golden/branching-process.dexpi.xml \
   --dexpi-viewer /absolute/path/to/DEXPIViewer \
   --dexpi-viewer-baseline src/test/resources/dexpi/2.0/golden/dexpi-viewer-baseline.json \

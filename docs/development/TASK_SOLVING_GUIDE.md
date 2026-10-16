@@ -813,13 +813,13 @@ Use `devtools/pdf_to_figures.py` to convert pages to PNG images that AI tools ca
 
 ```bash
 # Convert all PDFs in the references folder
-python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
 
 # Convert specific pages from a single PDF
-python devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
 
 # Higher DPI for detailed engineering drawings
-python devtools/pdf_to_figures.py path/to/drawing.pdf --dpi 300 --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py path/to/drawing.pdf --dpi 300 --outdir figures/
 ```
 
 Then use `view_image` on the extracted PNGs to:
@@ -1070,7 +1070,7 @@ The workflow enforces quality gates between steps:
 - Figures saved to `figures/` as PNG
 - **Benchmark validation notebook** exists with comparison table and deviation plot
 - `benchmark_validation` section populated in results.json
-- **Consistency check PASSED**: Run `python devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
+- **Consistency check PASSED**: Run `uv run --project devtools --locked devtools/consistency_checker.py task_solve/YYYY-MM-DD_slug/`
   to detect inconsistencies across notebooks. Fix CRITICAL issues before generating reports.
   Common issues: numerical mismatches, scope mismatches (volumetric vs mass-based calculations),
   contradictory conclusions, or external study data measuring different quantities than notebooks.
