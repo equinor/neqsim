@@ -36,6 +36,13 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-10-15 — Replay live SURF production and injection under moving host limits
+**Type:** E (Feature)
+**Keywords:** SURF, lifecycle, reservoir pressure, two-zone injection, shared power, separator, scrubber, 4228, 4188
+**Solution:** Extend `FieldToFacilityOptimizationAcceptanceTest` and `FieldWellNetworkProcessUnitTest` on the existing lifecycle-envelope PR, preserving its independent-period accepted-search contract. Reuse canonical topology, live well coupling, mapped equipment and current constraint sampling; introduce no runtime model, optimizer or persistence abstraction.
+**Notes:** New same-model production and injection regressions pass on the integrated lifecycle branch. Prescribed production pressure reductions of 1/2/3 bara produce 772.171922/763.585471/755.035017 kg/hr export; separator, scrubber and shared-power restrictions each reject current evidence and recover after restoration. Live two-zone injection checks synchronized layer/stream pressures, decreasing injectivity, conservation, allocation, fracture flags and pump-power rejection/recovery. These are synthetic conservation/trend and replay checks, not independent map, reservoir, hydraulic, transient or design qualification. Updated SURF guide and network routing skill distinguish lower-level repeated solves from independent accepted lifecycle periods.
+**Validation:** Integrated Linux OpenJDK 17.0.20 run: 61 tests passed, zero failures/errors/skips across field/facility, topology, well coupling, mapped compressors, hydraulic fidelity/comparison and operating-envelope/search/action suites. The optimization documentation gate compiled 205 Java fences with release 8 and executed 99 fragments; optimizer-package Javadocs passed using the installed JDK module launcher. Spotless apply/check, documentation search, engineering-coverage check and whitespace checks passed. Actual Java 8/21 platform execution and final review remain hosted CI gates; no independent engineering qualification is claimed.
+
 ### 2026-10-14 — Coordinate shared-slate characterization with mixing-rule isolation
 **Type:** A (Property)
 **Keywords:** shared reference slate, quantile projection, shared mixing handler, accepted-point replay, 4330, 4333
