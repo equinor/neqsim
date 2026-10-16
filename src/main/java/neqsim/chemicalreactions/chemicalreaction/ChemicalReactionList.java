@@ -558,7 +558,20 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
       }
     }
 
-    return new Matrix(componentRates, componentRates.length);
+    return componentRates;
+  }
+
+  /**
+   * Calculates reaction rates and returns them as a Jama column for legacy callers.
+   *
+   * @param phase thermodynamic phase used to evaluate the reaction rates
+   * @param components reactive components in the expected output order
+   * @return component rates as a Jama column
+   * @deprecated Use {@link #calcReationRates(PhaseInterface, ComponentInterface[])} which returns a primitive array.
+   */
+  @Deprecated
+  public Matrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
+    return new Matrix(calcReationRates(phase, components), components.length);
   }
 
   /**
