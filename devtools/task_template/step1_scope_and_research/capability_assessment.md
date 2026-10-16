@@ -52,7 +52,7 @@ or mark it as a gap.
 ## 4. Skills to Load
 
 List the skills the solver should load for this task (run
-`python devtools/skill_search.py "<task title>"` to get top-k recommendations,
+`uv run --project devtools --locked devtools/skill_search.py "<task title>"` to get top-k recommendations,
 then prune).
 
 - `neqsim-...`
@@ -60,7 +60,7 @@ then prune).
 
 ## 4b. Agents to Delegate To
 
-Run `python devtools/agent_search.py "<task title>" --top 8` to rank the best
+Run `uv run --project devtools --locked devtools/agent_search.py "<task title>" --top 8` to rank the best
 specialist agents across all repos (neqsim + community + enterprise), then
 prune. Record the chosen agents and *why*. The skills each agent loads are shown
 in the search output — prefer delegating to an agent over re-loading its skills
@@ -72,7 +72,7 @@ manually, so authentication/governance and its internal workflow are handled.
 | 2 |  |  |  |  |
 | 3 |  |  |  |  |
 
-> Store the raw ranking: `python devtools/agent_search.py "<task>" --json --out
+> Store the raw ranking: `uv run --project devtools --locked devtools/agent_search.py "<task>" --json --out
 > step1_scope_and_research/agent_plan.json` — this file is part of the audit
 > trail and feeds `results.json` `agent_workflow_plan`.
 

@@ -34,19 +34,22 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
-      - uses: actions/setup-python@v7
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
+      - name: Sync devtools test environment
+        run: uv sync --project devtools --locked --group test
       - name: Check formatting and process/source regressions
         run: |
           ./mvnw -B -ntp spotless:check
           ./mvnw -B -ntp -Dtest=DynamicCapabilityBuiltInInventoryTest,ReleaseFlowModelTest,ReleaseFlowFlashingTest,ReleaseFlowAdapterTest,IdealGasFannoPipeReleaseModelTest,DriftFluxHomogeneousEquilibriumReleaseModelTest,FiniteRateDriftFluxReleaseModelTest,ComponentSelectiveFiniteRateReleaseModelTest,RanzMarshallFiniteRateReleaseModelTest,PredictiveBubbleTransferZoneReleaseModelTest,ReleaseInventoryTest,LeakModelTest,SourceTermFrameTest,SourceTermSessionTest,ReleaseFlowEnsembleTest,ReleaseFlowBenchmarkTest test
       - name: Validate emitted frames and schema rejection cases
         run: |
-          python -m pip install jsonschema==4.26.0
-          python devtools/validate_source_term_contract.py
+          uv run --project devtools --locked --group test devtools/validate_source_term_contract.py
       - name: Check documentation discovery
-        run: python devtools/check_documentation_search.py
+        run: uv run --project devtools --locked devtools/check_documentation_search.py
       - name: Retain test reports and emitted contract fixtures
         if: always()
         uses: actions/upload-artifact@v7

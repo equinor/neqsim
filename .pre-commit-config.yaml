@@ -9,6 +9,14 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         verbose: false
+      - id: engineering-capability-coverage
+        name: Build Engineering Capability Coverage
+        entry: uv run --project devtools --locked devtools/build_engineering_coverage.py
+        language: system
+        files: ^(src/(main|test)/java/|src/main/resources/neqsim/mcp/|\.github/(skills|agents)/|devtools/(engineering_capabilities\.json|build_engineering_coverage\.py))
+        pass_filenames: false
+        stages: [pre-commit]
+        verbose: true
 
   - repo: local
     hooks:
@@ -25,7 +33,7 @@ repos:
     hooks:
       - id: documentation-search-check
         name: Documentation Search Coverage
-        entry: python devtools/check_documentation_search.py
+        entry: uv run --project devtools --locked devtools/check_documentation_search.py
         language: system
         files: ^(docs/|devtools/(check_documentation_search|generate_equipment_documentation_catalog)\.py|src/main/java/neqsim/process/equipment/|\.github/workflows/docs-documentation-search-coverage\.yml|\.pre-commit-config\.yaml)
         pass_filenames: false

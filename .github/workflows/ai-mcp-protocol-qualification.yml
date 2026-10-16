@@ -46,7 +46,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.12'
+          python-version: "3.13"
 
       - name: Check Phase 0 documentation accounting
         run: python neqsim-mcp-server/tests/documentation/test_phase0_documentation.py

@@ -75,18 +75,31 @@ fi
 
 if [ "$USE_UV" -eq 1 ]; then
     # Fast path: install with uv into the detected interpreter's environment.
-    if ! command -v uv >/dev/null 2>&1; then
-        echo "" >&2
-        echo "ERROR: --uv was requested but 'uv' is not installed." >&2
-        echo "Install uv with one of:" >&2
-        echo "  * curl -LsSf https://astral.sh/uv/install.sh | sh" >&2
-        echo "  * brew install uv" >&2
-        echo "  * $PYTHON -m pip install uv" >&2
-        echo "Or re-run without --uv to use pip." >&2
+    UV_INSTALL_DIR="$HOME/.local/bin"
+    UV_EXECUTABLE="$UV_INSTALL_DIR/uv"
+    if ! command -v uv >/dev/null 2>&1 && [ ! -x "$UV_EXECUTABLE" ]; then
+        echo "uv not found - installing it for the current user..."
+        if ! command -v curl >/dev/null 2>&1; then
+            echo "ERROR: curl is required to bootstrap uv automatically." >&2
+            echo "Install curl or install uv manually: https://docs.astral.sh/uv/getting-started/installation/" >&2
+            exit 1
+        fi
+        mkdir -p "$UV_INSTALL_DIR"
+        if ! curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$UV_INSTALL_DIR" sh; then
+            echo "ERROR: could not install uv. Check network access or install uv manually." >&2
+            echo "  https://docs.astral.sh/uv/getting-started/installation/" >&2
+            exit 1
+        fi
+    fi
+    if [ ! -x "$UV_EXECUTABLE" ]; then
+        UV_EXECUTABLE="$(command -v uv || true)"
+    fi
+    if [ -z "$UV_EXECUTABLE" ] || [ ! -x "$UV_EXECUTABLE" ]; then
+        echo "ERROR: uv installation completed but the executable was not found." >&2
         exit 1
     fi
     echo "Installing (editable, via uv): $TARGET"
-    uv pip install --python "$PYEXE" -e "$TARGET"
+    "$UV_EXECUTABLE" pip install --python "$PYEXE" -e "$TARGET"
 else
     # Ensure pip is available for this interpreter.
     if ! "$PYTHON" -m pip --version >/dev/null 2>&1; then

@@ -661,7 +661,7 @@ heater.getDuty()                     # Watts
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| `ModuleNotFoundError: neqsim` | Not installed | Run `.\install.ps1` (or `python -m pip install -e devtools/`) |
+| `ModuleNotFoundError: neqsim` | Not installed | Run `.\install.ps1` (or `uv sync --project devtools`) |
 | JVM won't start | Java not found | Install JDK 8+ and set `JAVA_HOME` |
 | Flash doesn't converge | Wrong EOS or bad composition | Check mole fractions sum to 1.0, try different EOS |
 | Report generator fails | Missing python-docx | Run `pip install python-docx matplotlib` |

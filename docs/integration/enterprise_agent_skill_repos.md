@@ -44,7 +44,7 @@ see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-f
 2. **Install NeqSim.** On a locked-down/no-admin Windows PC use the GPO-proof
    batch installer (no PowerShell, no admin):
    ```powershell
-   .\install.cmd            # or: py -m pip install -e devtools/
+  .\install.cmd            # or: uv sync --project devtools
    ```
    macOS/Linux: `./install.sh`. The installer puts the `neqsim` command on PATH
    and then tells you whether it resolves; if it does not, use

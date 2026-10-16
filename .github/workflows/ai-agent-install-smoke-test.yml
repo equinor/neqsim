@@ -52,39 +52,42 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v7
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: devtools/uv.lock
 
-      - name: Install the neqsim CLI from this checkout
-        run: python -m pip install --upgrade pip && python -m pip install -e devtools
+      - name: Sync the neqsim CLI project
+        run: uv sync --project devtools --locked --group install-smoke
 
       - name: CLI is on PATH and reports health
         run: |
-          neqsim --help
+          uv run --project devtools --locked neqsim --help
           # This job installs the CLI and agents; the Java build has its own CI.
-          neqsim doctor --skip-jar
+          uv run --project devtools --locked neqsim doctor --skip-jar
 
       - name: List the public community catalogs
         run: |
-          neqsim agent list
-          neqsim skill list
+          uv run --project devtools --locked neqsim agent list
+          uv run --project devtools --locked neqsim skill list
 
       - name: Install every community agent + its required skills, export to VS Code
-        run: neqsim agent install --all --source community --vscode --force
+        run: uv run --project devtools --locked neqsim agent install --all --source community --vscode --force
 
       - name: Re-run with --force (must be idempotent, not a no-op)
-        run: neqsim agent install --all --source community --vscode --force
+        run: uv run --project devtools --locked neqsim agent install --all --source community --vscode --force
 
       - name: Verify installed agents and skills resolve
         run: |
-          neqsim agent installed
-          neqsim skill installed
-          neqsim agent doctor --target vscode --source community
+          uv run --project devtools --locked neqsim agent installed
+          uv run --project devtools --locked neqsim skill installed
+          uv run --project devtools --locked neqsim agent doctor --target vscode --source community
 
       - name: Assert agents and skills actually landed on disk
-        shell: python
+        shell: bash
         run: |
+          uv run --project devtools --locked python - <<'PY'
           import json
           import os
           import sys
@@ -118,10 +121,12 @@ jobs:
               print("\n".join(f"FAIL: {f}" for f in failures))
               sys.exit(1)
           print("Install smoke test passed.")
+          PY
 
       - name: A package-backed skill is importable (auto pip install worked)
-        shell: python
+        shell: bash
         run: |
+          uv run --project devtools --locked python - <<'PY'
           import json
           import os
           import subprocess
@@ -148,6 +153,7 @@ jobs:
               checked += 1
               if checked >= 5:
                   break
+              PY
 
           if checked == 0:
               print("No package-backed skills in the community catalog yet; nothing to probe.")

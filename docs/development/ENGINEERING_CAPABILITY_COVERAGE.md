@@ -62,7 +62,7 @@ presence automatically to successful execution or engineering qualification.
 
 Add registrations to `devtools/engineering_capabilities.json`: stable operation
 ID, existing MCP tool, exact API anchors, skills, agents, test paths and limits.
-Run `python devtools/build_engineering_coverage.py` after Java formatting and
+Run `uv run --project devtools --locked devtools/build_engineering_coverage.py` after Java formatting and
 relevant source/agent/skill changes. Commit the generated resource at
 `src/main/resources/neqsim/mcp/engineering-coverage.json`.
 

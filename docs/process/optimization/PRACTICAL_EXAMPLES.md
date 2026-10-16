@@ -1080,11 +1080,13 @@ sets and error propagation, and verifies the power limit and mass balance.
 
 ```bash
 ./mvnw -Dtest=ProcessOptimizationEngineOperatingPointTest,PracticalOptimizationDocumentationTest test
-python -m unittest devtools.test_practical_optimization_examples -v
+uv sync --project devtools --group test --group optimization-docs --upgrade-package neqsim
+uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_practical_optimization_examples -v
 ```
 
-The Python examples were tested with Python 3.12, Java 17, and NeqSim 3.20.0,
-and against the corrected Java source. Representative released-package output is
+The Python examples are tested with Python 3.12 and Java 17 against the latest
+published NeqSim package and the current compiled Java source. Representative
+released-package output is
 76,743 kg/hr at 4,000 kW for the basic optimization, and 31 feasible points out of
 50 in the sweep. The plotted envelope is the largest feasible **sampled** flow at
 each inlet pressure, so it is limited by grid spacing and the upper sampled rate.

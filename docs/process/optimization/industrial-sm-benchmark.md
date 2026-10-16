@@ -49,7 +49,7 @@ aggregate before writing it.
 
 ```bash
 eval "$(python3 /path/to/work-with-neqsim/scripts/prepare_maven.py)"
-python devtools/industrial_sm_benchmark.py run \
+uv run --project devtools --locked devtools/industrial_sm_benchmark.py run \
   --baseline-commit "$(git rev-parse HEAD)" \
   --forks 5 \
   --raw-dir target/industrial-sm-benchmark \
@@ -59,7 +59,7 @@ python devtools/industrial_sm_benchmark.py run \
 Validate a previously generated or checked-in aggregate without running Maven:
 
 ```bash
-python devtools/industrial_sm_benchmark.py validate \
+uv run --project devtools --locked devtools/industrial_sm_benchmark.py validate \
   --input docs/process/optimization/benchmarks/industrial-sm-baseline-f3a2cf5f.json
 ```
 

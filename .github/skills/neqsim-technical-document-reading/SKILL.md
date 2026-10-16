@@ -248,10 +248,10 @@ engineering drawings, P&IDs, charts, tables, and compressor maps:
 
 ```python
 # CLI — convert all PDFs in the references folder
-python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
 
 # CLI — specific pages only (1-indexed)
-python devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py path/to/document.pdf --pages 1 3 5 --outdir figures/
 
 # Python / Notebook — programmatic use
 from devtools.pdf_to_figures import pdf_to_pngs, pdf_folder_to_pngs
@@ -781,13 +781,13 @@ PDF/Image Document → pdf_to_figures.py → PNG pages → view_image → Struct
 
 ```bash
 # Single file
-python devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/ --dpi 200
+uv run --project devtools --locked devtools/pdf_to_figures.py path/to/document.pdf --outdir figures/ --dpi 200
 
 # Specific pages
-python devtools/pdf_to_figures.py document.pdf --outdir figures/ --pages 1,3,5
+uv run --project devtools --locked devtools/pdf_to_figures.py document.pdf --outdir figures/ --pages 1,3,5
 
 # Batch (all PDFs in a folder)
-python devtools/pdf_to_figures.py references/ --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py references/ --outdir figures/
 ```
 
 **Step 2: View and analyze each page with `view_image`**

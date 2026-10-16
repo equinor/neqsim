@@ -440,7 +440,7 @@ Recovery, in order:
    `neqsim-api-patterns` § "MCP server vs. Python/Java API").
 2. **Find the installed Java** instead of hunting by hand:
    ```powershell
-   python devtools/java_locator.py     # source checkout: usable Javas, best first
+   uv run --project devtools --locked devtools/java_locator.py     # source checkout: usable Javas, best first
    neqsim doctor                       # plugin / pip install: names the found Java
    ```
 3. **Make it usable for this process** — no admin, no persisted env change:

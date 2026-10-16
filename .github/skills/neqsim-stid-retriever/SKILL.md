@@ -35,7 +35,7 @@ out_dir = "output/stid_docs"  # NEVER
 
 **For PDF-to-PNG conversion:** Output to the task's `figures/`:
 ```bash
-python devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/ \
+uv run --project devtools --locked devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_research/references/ \
     --outdir task_solve/YYYY-MM-DD_slug/figures/
 ```
 
@@ -89,7 +89,7 @@ dependency-free generator to file any loose files and (re)build the
 distributable summary + manifest:
 
 ```bash
-python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_task_slug --organize
+uv run --project devtools --locked devtools/generate_sources_md.py task_solve/YYYY-MM-DD_task_slug --organize
 ```
 
 `SOURCES.md` lists, per source, each file with its origin (document number /
@@ -129,15 +129,15 @@ so the helper no longer has to guess between multiple hand-built URL patterns:
 
 ```bash
 # Download documents by tag — saves to task's references/ folder
-python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
+uv run --project devtools --locked devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
     --inst MYINST --tags 30PT0001 30PT0002 33AI0001
 
 # Download + convert to PNG for AI analysis
-python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
+uv run --project devtools --locked devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
     --inst MYINST --tags 30PT0001 --convert-png
 
 # Download specific document numbers
-python devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
+uv run --project devtools --locked devtools/stid_download.py --task-dir task_solve/2026-04-16_my_task \
     --inst MYINST --docs E001-AS-P-XB-00001-01 E001-AS-BI000-DS-00001
 ```
 
@@ -348,7 +348,7 @@ def pdf_to_pngs(pdf_path, output_dir, dpi=200):
 Or use the built-in utility:
 
 ```bash
-python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
+uv run --project devtools --locked devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/
 ```
 
 Then use `view_image` on extracted PNGs to read compressor curves,

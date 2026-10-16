@@ -93,7 +93,7 @@ continuous/
 | The shared Python environment (with `pyyaml`) | Runs the runner and stage scripts | `C:\appl\neqsim-venv\Scripts\python.exe -c "import yaml"` |
 | The `neqsim` CLI | All `task-*` commands | `neqsim task-status --help` |
 | A NeqSim source checkout | Runner code lives in `devtools/neqsim_continuous/` | `neqsim --show-task-root` |
-| Java (only for stages that call NeqSim) | NeqSim thermodynamics | `python devtools/java_locator.py` |
+| Java (only for stages that call NeqSim) | NeqSim thermodynamics | `uv run --project devtools --locked devtools/java_locator.py` |
 | GitHub Copilot CLI, signed in (only for automatic agent triage) | Headless agent sessions | `copilot --version` |
 | A community or enterprise adapter (only for live historian data) | Pulls data from PI/IP.21, OTS, PDM | see [section 14](#14-company-data-sources) |
 
