@@ -52,6 +52,7 @@ public final class UnsplitTransientSolver implements Serializable {
   private double minimumPressure = 1.0;
   private double fractionToBoundary = 0.99;
   private TimeIntegrationMethod timeIntegrationMethod = TimeIntegrationMethod.IMPLICIT_MIDPOINT;
+  private boolean directionalComplementarityEnabled;
 
   /** Supported time levels for evaluating the complete conservative spatial operator. */
   public enum TimeIntegrationMethod {
@@ -123,6 +124,9 @@ public final class UnsplitTransientSolver implements Serializable {
   public static final class Evaluation {
     private final double[][] conservativeRates;
     private final double[][] phaseDensities;
+    private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
+    private final double[] cellLengthsM;
+    private final double[][] phaseMassSourcesPerLength;
 
     /**
      * Create an evaluation.
@@ -131,11 +135,44 @@ public final class UnsplitTransientSolver implements Serializable {
      * @param phaseDensities gas, oil and water densities with shape {@code [3][cellCount]}
      */
     public Evaluation(double[][] conservativeRates, double[][] phaseDensities) {
+      this(conservativeRates, phaseDensities, null, null, null);
+    }
+
+    /**
+     * Create an evaluation carrying the exact free directional face ledger used by the conservative rates.
+     *
+     * @param conservativeRates six or more rates per cell in conservative-variable order
+     * @param phaseDensities gas, oil and water densities with shape {@code [3][cellCount]}
+     * @param directionalPhaseFaceFluxes internal-face ledgers with shape {@code [cellCount - 1][3]}, or null for a
+     * model without face diagnostics
+     */
+    public Evaluation(double[][] conservativeRates, double[][] phaseDensities,
+        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes) {
+      this(conservativeRates, phaseDensities, directionalPhaseFaceFluxes, null, null);
+    }
+
+    /**
+     * Create an evaluation carrying the complete geometry and source ledger needed by a mixed face solve.
+     *
+     * @param conservativeRates six or more rates per cell in conservative-variable order
+     * @param phaseDensities gas, oil and water densities with shape {@code [3][cellCount]}
+     * @param directionalPhaseFaceFluxes internal-face ledgers with shape {@code [cellCount - 1][3]}, or null for a
+     * model without face diagnostics
+     * @param cellLengthsM physical cell lengths in m, or null for a model without geometry diagnostics
+     * @param phaseMassSourcesPerLength phase mass sources in kg/(m s), shape {@code [cellCount][3]}, or null for a
+     * model without source diagnostics
+     */
+    public Evaluation(double[][] conservativeRates, double[][] phaseDensities,
+        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes, double[] cellLengthsM,
+        double[][] phaseMassSourcesPerLength) {
       if (conservativeRates == null || phaseDensities == null) {
         throw new IllegalArgumentException("Model evaluation arrays cannot be null");
       }
       this.conservativeRates = copy(conservativeRates);
       this.phaseDensities = copy(phaseDensities);
+      this.directionalPhaseFaceFluxes = copyDirectionalFluxes(directionalPhaseFaceFluxes);
+      this.cellLengthsM = cellLengthsM == null ? null : cellLengthsM.clone();
+      this.phaseMassSourcesPerLength = phaseMassSourcesPerLength == null ? null : copy(phaseMassSourcesPerLength);
     }
 
     private void validate(int cellCount) {
@@ -162,6 +199,72 @@ public final class UnsplitTransientSolver implements Serializable {
           }
         }
       }
+      if (directionalPhaseFaceFluxes != null) {
+        if (directionalPhaseFaceFluxes.length != Math.max(0, cellCount - 1)) {
+          throw new IllegalArgumentException("Directional face count must be one less than the cell count");
+        }
+        for (DirectionalPhaseFaceFlux[] face : directionalPhaseFaceFluxes) {
+          if (face == null || face.length != PHASE_COUNT) {
+            throw new IllegalArgumentException("Every directional face requires gas, oil and water ledgers");
+          }
+          for (DirectionalPhaseFaceFlux phase : face) {
+            if (phase == null) {
+              throw new IllegalArgumentException("Directional phase face ledgers cannot be null");
+            }
+          }
+        }
+      }
+      if (cellLengthsM != null) {
+        if (cellLengthsM.length != cellCount) {
+          throw new IllegalArgumentException("Cell-length count must match the cell count");
+        }
+        for (double cellLength : cellLengthsM) {
+          if (!(cellLength > 0.0) || !Double.isFinite(cellLength)) {
+            throw new IllegalArgumentException("Cell lengths must be positive and finite");
+          }
+        }
+      }
+      if (phaseMassSourcesPerLength != null) {
+        if (phaseMassSourcesPerLength.length != cellCount) {
+          throw new IllegalArgumentException("Phase-source count must match the cell count");
+        }
+        for (double[] cellSources : phaseMassSourcesPerLength) {
+          if (cellSources == null || cellSources.length != PHASE_COUNT) {
+            throw new IllegalArgumentException("Every cell requires gas, oil and water source rates");
+          }
+          for (double source : cellSources) {
+            if (!Double.isFinite(source)) {
+              throw new IllegalArgumentException("Phase mass sources must be finite");
+            }
+          }
+        }
+      }
+    }
+
+    /**
+     * Return the exact free face transport associated with this rate evaluation.
+     *
+     * @return defensive outer copy, or null when the model did not provide a face ledger
+     */
+    public DirectionalPhaseFaceFlux[][] getDirectionalPhaseFaceFluxes() {
+      return copyDirectionalFluxes(directionalPhaseFaceFluxes);
+    }
+
+    /** @return defensive cell lengths in m, or null when the model did not provide geometry diagnostics */
+    public double[] getCellLengthsM() {
+      return cellLengthsM == null ? null : cellLengthsM.clone();
+    }
+
+    /**
+     * @return defensive phase mass sources in kg/(m s), or null when the model did not provide source diagnostics
+     */
+    public double[][] getPhaseMassSourcesPerLength() {
+      return phaseMassSourcesPerLength == null ? null : copy(phaseMassSourcesPerLength);
+    }
+
+    /** @return defensive conservative rates for an internal augmented residual */
+    double[][] copyConservativeRates() {
+      return copy(conservativeRates);
     }
   }
 
@@ -196,10 +299,12 @@ public final class UnsplitTransientSolver implements Serializable {
     private final boolean converged;
     private final TerminationReason terminationReason;
     private final double timeIntegrationWeight;
+    private final DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes;
 
     private Result(double[][] state, double[] pressure, int iterations, int modelEvaluations,
         double maximumScaledResidual, double minimumAcceptedStepLength, boolean activeSetStable, boolean converged,
-        TerminationReason terminationReason, double timeIntegrationWeight) {
+        TerminationReason terminationReason, double timeIntegrationWeight,
+        DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes) {
       this.state = copy(state);
       this.pressure = pressure.clone();
       this.iterations = iterations;
@@ -210,6 +315,7 @@ public final class UnsplitTransientSolver implements Serializable {
       this.converged = converged;
       this.terminationReason = terminationReason;
       this.timeIntegrationWeight = timeIntegrationWeight;
+      this.directionalPhaseFaceFluxes = copyDirectionalFluxes(directionalPhaseFaceFluxes);
     }
 
     /** @return defensive copy of the conservative state */
@@ -268,6 +374,15 @@ public final class UnsplitTransientSolver implements Serializable {
     public double getTimeIntegrationWeight() {
       // Results serialized before the method option was introduced used midpoint and have a zero field.
       return timeIntegrationWeight == 0.0 ? 0.5 : timeIntegrationWeight;
+    }
+
+    /**
+     * Return solved internal gas/oil/water face transport when directional complementarity was enabled.
+     *
+     * @return defensive face-ledger array, or null for the legacy cell-only solve
+     */
+    public DirectionalPhaseFaceFlux[][] getDirectionalPhaseFaceFluxes() {
+      return copyDirectionalFluxes(directionalPhaseFaceFluxes);
     }
   }
 
@@ -328,6 +443,27 @@ public final class UnsplitTransientSolver implements Serializable {
     }
   }
 
+  /** One evaluation of the augmented cell and face residual. */
+  private static final class DirectionalResidualEvaluation {
+    private final double[] residual;
+    private final double[][] midpointState;
+    private final double[] midpointPressure;
+    private final Evaluation modelEvaluation;
+    private final double[][] correctedRates;
+    private final DirectionalPhaseFaceFlux[][] solvedFaces;
+
+    /** Store one augmented residual and the ledgers needed by finite differences. */
+    private DirectionalResidualEvaluation(double[] residual, double[][] midpointState, double[] midpointPressure,
+        Evaluation modelEvaluation, double[][] correctedRates, DirectionalPhaseFaceFlux[][] solvedFaces) {
+      this.residual = residual;
+      this.midpointState = midpointState;
+      this.midpointPressure = midpointPressure;
+      this.modelEvaluation = modelEvaluation;
+      this.correctedRates = correctedRates;
+      this.solvedFaces = solvedFaces;
+    }
+  }
+
   private static final class Linearization implements AutoCloseable {
     private final Model model;
 
@@ -370,6 +506,10 @@ public final class UnsplitTransientSolver implements Serializable {
       double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
     validateInputs(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
         model);
+    if (isDirectionalComplementarityEnabled()) {
+      return solveDirectional(previousState, previousPressure, cellAreas, timeStep, startTime, outletPressure,
+          outletPressureFixed, model);
+    }
     double timeWeight = getTimeIntegrationMethod().weight;
     double[][] state = copy(previousState);
     double[] pressure = previousPressure.clone();
@@ -458,7 +598,363 @@ public final class UnsplitTransientSolver implements Serializable {
       terminationReason = TerminationReason.CONVERGED;
     }
     return new Result(state, pressure, iterations, countedModel.evaluations, residualNorm, minimumAcceptedStep,
-        activeSetStable, converged, terminationReason, timeWeight);
+        activeSetStable, converged, terminationReason, timeWeight, null);
+  }
+
+  /** Solve the opt-in augmented cell/face system with frozen signed donor rows. */
+  private Result solveDirectional(double[][] previousState, double[] previousPressure, double[] cellAreas,
+      double timeStep, double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
+    double timeWeight = getTimeIntegrationMethod().weight;
+    double[][] state = copy(previousState);
+    double[] pressure = previousPressure.clone();
+    CountingModel countedModel = new CountingModel(model);
+    Evaluation initialEvaluation = evaluateModel(previousState, previousPressure, state, pressure, startTime,
+        outletPressure, outletPressureFixed, countedModel, timeWeight, timeStep);
+    SignedFaceComplementarity.State faceState = SignedFaceComplementarity.initialize(initialEvaluation, state);
+    double[] auxiliary = faceState.getValues();
+    double[] variableScale = createDirectionalVariableScale(previousState, previousPressure, faceState);
+    int iterations = 0;
+    double minimumAcceptedStep = 1.0;
+    DirectionalResidualEvaluation current = evaluateDirectionalResidual(previousState, previousPressure, state,
+        pressure, auxiliary, faceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed,
+        countedModel, timeWeight);
+    boolean activeSetStable = refreshDirectionalActiveSet(previousState, previousPressure, state, pressure, auxiliary,
+        faceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, current,
+        timeWeight);
+    current = evaluateDirectionalResidual(previousState, previousPressure, state, pressure, auxiliary, faceState,
+        cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+    double residualNorm = maximumAbsolute(current.residual);
+    TerminationReason terminationReason = activeSetStable ? TerminationReason.MAXIMUM_ITERATIONS
+        : TerminationReason.ACTIVE_SET_UPDATE_LIMIT;
+
+    while (activeSetStable && iterations < maximumIterations && residualNorm > relativeTolerance) {
+      iterations++;
+      double[][] jacobian;
+      try (Linearization ignored = new Linearization(countedModel, new ResidualEvaluation(current.residual,
+          current.midpointState, current.midpointPressure, current.modelEvaluation))) {
+        current = evaluateDirectionalResidual(previousState, previousPressure, state, pressure, auxiliary, faceState,
+            cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+        residualNorm = maximumAbsolute(current.residual);
+        jacobian = approximateDirectionalJacobian(previousState, previousPressure, state, pressure, auxiliary,
+            faceState, cellAreas, variableScale, current, timeStep, startTime, outletPressure, outletPressureFixed,
+            countedModel, timeWeight);
+      }
+
+      double[] rightHandSide = new double[current.residual.length];
+      for (int row = 0; row < rightHandSide.length; row++) {
+        rightHandSide[row] = -current.residual[row];
+      }
+      double[] normalizedUpdate;
+      try {
+        normalizedUpdate = solveDense(jacobian, rightHandSide);
+      } catch (IllegalStateException singular) {
+        terminationReason = TerminationReason.SINGULAR_JACOBIAN;
+        break;
+      }
+      double admissibleStep = directionalAdmissibleStepLength(state, pressure, auxiliary, variableScale,
+          normalizedUpdate);
+      double stepLength = Math.min(1.0, admissibleStep);
+      if (!(stepLength > 0.0)) {
+        terminationReason = TerminationReason.NO_ADMISSIBLE_STEP;
+        break;
+      }
+      boolean accepted = false;
+      DirectionalResidualEvaluation trial = current;
+      double[][] trialState = state;
+      double[] trialPressure = pressure;
+      double[] trialAuxiliary = auxiliary;
+      for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
+        trialState = copy(state);
+        trialPressure = pressure.clone();
+        trialAuxiliary = auxiliary.clone();
+        applyDirectionalUpdate(trialState, trialPressure, trialAuxiliary, variableScale, normalizedUpdate, stepLength);
+        trial = evaluateDirectionalResidual(previousState, previousPressure, trialState, trialPressure, trialAuxiliary,
+            faceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+        double trialNorm = maximumAbsolute(trial.residual);
+        if (trialNorm <= residualNorm * (1.0 - 1.0e-4 * stepLength) || trialNorm < relativeTolerance) {
+          accepted = true;
+          break;
+        }
+        stepLength *= 0.5;
+      }
+      if (!accepted) {
+        terminationReason = TerminationReason.LINE_SEARCH_FAILED;
+        break;
+      }
+      state = trialState;
+      pressure = trialPressure;
+      auxiliary = trialAuxiliary;
+      faceState.setValues(auxiliary);
+      current = trial;
+      minimumAcceptedStep = Math.min(minimumAcceptedStep, stepLength);
+      activeSetStable = refreshDirectionalActiveSet(previousState, previousPressure, state, pressure, auxiliary,
+          faceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, current,
+          timeWeight);
+      current = evaluateDirectionalResidual(previousState, previousPressure, state, pressure, auxiliary, faceState,
+          cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, countedModel, timeWeight);
+      residualNorm = maximumAbsolute(current.residual);
+      if (!activeSetStable) {
+        terminationReason = TerminationReason.ACTIVE_SET_UPDATE_LIMIT;
+      }
+    }
+    boolean converged = terminationReason == TerminationReason.MAXIMUM_ITERATIONS && residualNorm <= relativeTolerance
+        && activeSetStable;
+    if (converged) {
+      terminationReason = TerminationReason.CONVERGED;
+    }
+    return new Result(state, pressure, iterations, countedModel.evaluations, residualNorm, minimumAcceptedStep,
+        activeSetStable, converged, terminationReason, timeWeight, current.solvedFaces);
+  }
+
+  /** Evaluate the free model once at the selected time level. */
+  private Evaluation evaluateModel(double[][] previousState, double[] previousPressure, double[][] candidateState,
+      double[] candidatePressure, double startTime, double outletPressure, boolean outletPressureFixed, Model model,
+      double timeWeight, double timeStep) {
+    int cellCount = previousState.length;
+    double[][] selectedState = copy(previousState);
+    double[] selectedPressure = new double[cellCount];
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int variable = 0; variable < CONSERVATIVE_VARIABLE_COUNT; variable++) {
+        selectedState[cell][variable] = timeWeight == 1.0 ? candidateState[cell][variable]
+            : 0.5 * (previousState[cell][variable] + candidateState[cell][variable]);
+      }
+      selectedPressure[cell] = timeWeight == 1.0 ? candidatePressure[cell]
+          : 0.5 * (previousPressure[cell] + candidatePressure[cell]);
+    }
+    Evaluation evaluation = model.evaluate(copy(selectedState), selectedPressure.clone(), copy(candidateState),
+        candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure, outletPressureFixed);
+    if (evaluation == null) {
+      throw new IllegalArgumentException("Model evaluation cannot be null");
+    }
+    evaluation.validate(cellCount);
+    return evaluation;
+  }
+
+  /** Evaluate cell conservation, endpoint volume and signed-face KKT rows together. */
+  private DirectionalResidualEvaluation evaluateDirectionalResidual(double[][] previousState, double[] previousPressure,
+      double[][] candidateState, double[] candidatePressure, double[] auxiliary,
+      SignedFaceComplementarity.State faceState, double[] cellAreas, double timeStep, double startTime,
+      double outletPressure, boolean outletPressureFixed, Model model, double timeWeight) {
+    int cellCount = previousState.length;
+    double[][] midpointState = copy(previousState);
+    double[] midpointPressure = new double[cellCount];
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int variable = 0; variable < CONSERVATIVE_VARIABLE_COUNT; variable++) {
+        midpointState[cell][variable] = timeWeight == 1.0 ? candidateState[cell][variable]
+            : 0.5 * (previousState[cell][variable] + candidateState[cell][variable]);
+      }
+      midpointPressure[cell] = timeWeight == 1.0 ? candidatePressure[cell]
+          : 0.5 * (previousPressure[cell] + candidatePressure[cell]);
+    }
+    Evaluation evaluation = model.evaluate(copy(midpointState), midpointPressure.clone(), copy(candidateState),
+        candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure, outletPressureFixed);
+    if (evaluation == null) {
+      throw new IllegalArgumentException("Model evaluation cannot be null");
+    }
+    evaluation.validate(cellCount);
+    faceState.setValues(auxiliary);
+    SignedFaceComplementarity.Evaluation faceEvaluation = SignedFaceComplementarity.evaluate(evaluation, candidateState,
+        faceState);
+    double[][] correctedRates = faceEvaluation.getConservativeRates();
+    double[] faceResidual = faceEvaluation.getResidual();
+    double[] residual = new double[cellCount * BLOCK_SIZE + faceResidual.length];
+    for (int cell = 0; cell < cellCount; cell++) {
+      int offset = cell * BLOCK_SIZE;
+      for (int variable = 0; variable < CONSERVATIVE_VARIABLE_COUNT; variable++) {
+        double scale = Math.max(MINIMUM_SCALE, Math.abs(previousState[cell][variable]));
+        residual[offset + variable] = (candidateState[cell][variable] - previousState[cell][variable]
+            - timeStep * correctedRates[cell][variable]) / scale;
+      }
+      double occupiedArea = 0.0;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        occupiedArea += candidateState[cell][phase] / evaluation.phaseDensities[phase][cell];
+      }
+      residual[offset + CONSERVATIVE_VARIABLE_COUNT] = (occupiedArea - cellAreas[cell]) / cellAreas[cell];
+    }
+    System.arraycopy(faceResidual, 0, residual, cellCount * BLOCK_SIZE, faceResidual.length);
+    return new DirectionalResidualEvaluation(residual, midpointState, midpointPressure, evaluation, correctedRates,
+        faceEvaluation.getSolvedFaces());
+  }
+
+  /** Refresh model and exact donor-presence active rows with a bounded deterministic loop. */
+  private boolean refreshDirectionalActiveSet(double[][] previousState, double[] previousPressure,
+      double[][] candidateState, double[] candidatePressure, double[] auxiliary,
+      SignedFaceComplementarity.State faceState, double[] cellAreas, double timeStep, double startTime,
+      double outletPressure, boolean outletPressureFixed, Model model, DirectionalResidualEvaluation current,
+      double timeWeight) {
+    for (int update = 0; update < getMaximumActiveSetUpdates(); update++) {
+      boolean changed = model.updateActiveSet(copy(current.midpointState), current.midpointPressure.clone());
+      changed |= SignedFaceComplementarity.refreshActiveSet(current.modelEvaluation, candidateState, faceState);
+      if (!changed) {
+        return true;
+      }
+      current = evaluateDirectionalResidual(previousState, previousPressure, candidateState, candidatePressure,
+          auxiliary, faceState, cellAreas, timeStep, startTime, outletPressure, outletPressureFixed, model, timeWeight);
+    }
+    return false;
+  }
+
+  /** Create fixed physical scaling for cell and auxiliary unknowns. */
+  private static double[] createDirectionalVariableScale(double[][] state, double[] pressure,
+      SignedFaceComplementarity.State faceState) {
+    double[] cellScale = createVariableScale(state, pressure);
+    double[] faceScale = faceState.getScales();
+    double[] result = new double[cellScale.length + faceScale.length];
+    System.arraycopy(cellScale, 0, result, 0, cellScale.length);
+    System.arraycopy(faceScale, 0, result, cellScale.length, faceScale.length);
+    return result;
+  }
+
+  /** Build the exact 53-color augmented finite-difference Jacobian. */
+  private double[][] approximateDirectionalJacobian(double[][] previousState, double[] previousPressure,
+      double[][] candidateState, double[] candidatePressure, double[] auxiliary,
+      SignedFaceComplementarity.State faceState, double[] cellAreas, double[] variableScale,
+      DirectionalResidualEvaluation base, double timeStep, double startTime, double outletPressure,
+      boolean outletPressureFixed, Model model, double timeWeight) {
+    int cellCount = previousState.length;
+    int dimension = SignedFaceComplementarity.dimension(cellCount);
+    double[][] jacobian = new double[dimension][dimension];
+    for (int color = 0; color < SignedFaceComplementarity.TOTAL_COLOR_COUNT; color++) {
+      double[][] perturbedState = copy(candidateState);
+      double[] perturbedPressure = candidatePressure.clone();
+      double[] perturbedAuxiliary = auxiliary.clone();
+      double[] increments = new double[dimension];
+      for (int column = 0; column < dimension; column++) {
+        if (SignedFaceComplementarity.color(cellCount, column) != color) {
+          continue;
+        }
+        double increment;
+        if (column < cellCount * BLOCK_SIZE) {
+          int cell = column / BLOCK_SIZE;
+          int variable = column % BLOCK_SIZE;
+          increment = finiteDifferenceIncrement(base.midpointState[cell], variable, variableScale[column]);
+          if (variable < CONSERVATIVE_VARIABLE_COUNT) {
+            perturbedState[cell][variable] += increment;
+            if (perturbedState[cell][variable] == candidateState[cell][variable]) {
+              perturbedState[cell][variable] = Math.nextUp(candidateState[cell][variable]);
+            }
+            increments[column] = perturbedState[cell][variable] - candidateState[cell][variable];
+          } else {
+            perturbedPressure[cell] += increment;
+            if (perturbedPressure[cell] == candidatePressure[cell]) {
+              perturbedPressure[cell] = Math.nextUp(candidatePressure[cell]);
+            }
+            increments[column] = perturbedPressure[cell] - candidatePressure[cell];
+          }
+        } else {
+          int local = column - cellCount * BLOCK_SIZE;
+          increment = finiteDifferenceStep * variableScale[column];
+          perturbedAuxiliary[local] += increment;
+          if (perturbedAuxiliary[local] == auxiliary[local]) {
+            perturbedAuxiliary[local] = Math.nextUp(auxiliary[local]);
+          }
+          increments[column] = perturbedAuxiliary[local] - auxiliary[local];
+        }
+      }
+      DirectionalResidualEvaluation perturbed = evaluateDirectionalResidual(previousState, previousPressure,
+          perturbedState, perturbedPressure, perturbedAuxiliary, faceState, cellAreas, timeStep, startTime,
+          outletPressure, outletPressureFixed, model, timeWeight);
+      for (int column = 0; column < dimension; column++) {
+        if (increments[column] == 0.0) {
+          continue;
+        }
+        fillDirectionalJacobianColumn(jacobian, column, increments[column], variableScale[column], previousState,
+            candidateState, perturbedState, cellAreas, base, perturbed, timeStep);
+      }
+    }
+    faceState.setValues(auxiliary);
+    return jacobian;
+  }
+
+  /** Fill only rows in the declared support of one colored column. */
+  private void fillDirectionalJacobianColumn(double[][] jacobian, int column, double increment, double columnScale,
+      double[][] previousState, double[][] candidateState, double[][] perturbedState, double[] cellAreas,
+      DirectionalResidualEvaluation base, DirectionalResidualEvaluation perturbed, double timeStep) {
+    int cellCount = previousState.length;
+    int cellDimension = cellCount * BLOCK_SIZE;
+    if (column < cellDimension) {
+      int cell = column / BLOCK_SIZE;
+      int firstCell = Math.max(0, cell - cellStencilHalfWidth);
+      int lastCell = Math.min(cellCount - 1, cell + cellStencilHalfWidth);
+      for (int rowCell = firstCell; rowCell <= lastCell; rowCell++) {
+        for (int variable = 0; variable < BLOCK_SIZE; variable++) {
+          int row = rowCell * BLOCK_SIZE + variable;
+          jacobian[row][column] = directionalResidualDifference(previousState, candidateState, perturbedState,
+              cellAreas, base, perturbed, rowCell, variable, timeStep) / increment * columnScale;
+        }
+      }
+      int firstFace = Math.max(0, cell - cellStencilHalfWidth);
+      int lastFace = Math.min(cellCount - 2, cell + cellStencilHalfWidth);
+      for (int face = firstFace; face <= lastFace; face++) {
+        for (int variable = 0; variable < SignedFaceComplementarity.VARIABLES_PER_FACE; variable++) {
+          int row = cellDimension + face * SignedFaceComplementarity.VARIABLES_PER_FACE + variable;
+          jacobian[row][column] = (perturbed.residual[row] - base.residual[row]) / increment * columnScale;
+        }
+      }
+      return;
+    }
+    int local = column - cellDimension;
+    int face = local / SignedFaceComplementarity.VARIABLES_PER_FACE;
+    for (int rowCell = face; rowCell <= face + 1; rowCell++) {
+      for (int variable = 0; variable < BLOCK_SIZE; variable++) {
+        int row = rowCell * BLOCK_SIZE + variable;
+        jacobian[row][column] = directionalResidualDifference(previousState, candidateState, perturbedState, cellAreas,
+            base, perturbed, rowCell, variable, timeStep) / increment * columnScale;
+      }
+    }
+    for (int variable = 0; variable < SignedFaceComplementarity.VARIABLES_PER_FACE; variable++) {
+      int row = cellDimension + face * SignedFaceComplementarity.VARIABLES_PER_FACE + variable;
+      jacobian[row][column] = (perturbed.residual[row] - base.residual[row]) / increment * columnScale;
+    }
+  }
+
+  /** Difference augmented cell residual terms before summing. */
+  private static double directionalResidualDifference(double[][] previousState, double[][] candidateState,
+      double[][] perturbedState, double[] cellAreas, DirectionalResidualEvaluation base,
+      DirectionalResidualEvaluation perturbed, int cell, int variable, double timeStep) {
+    if (variable < CONSERVATIVE_VARIABLE_COUNT) {
+      double scale = Math.max(MINIMUM_SCALE, Math.abs(previousState[cell][variable]));
+      double stateDifference = perturbedState[cell][variable] - candidateState[cell][variable];
+      double rateDifference = perturbed.correctedRates[cell][variable] - base.correctedRates[cell][variable];
+      return (stateDifference - timeStep * rateDifference) / scale;
+    }
+    double occupiedAreaDifference = 0.0;
+    for (int phase = 0; phase < PHASE_COUNT; phase++) {
+      double density = base.modelEvaluation.phaseDensities[phase][cell];
+      double perturbedDensity = perturbed.modelEvaluation.phaseDensities[phase][cell];
+      double massDifference = perturbedState[cell][phase] - candidateState[cell][phase];
+      occupiedAreaDifference += massDifference / perturbedDensity
+          + candidateState[cell][phase] / perturbedDensity * ((density - perturbedDensity) / density);
+    }
+    return occupiedAreaDifference / cellAreas[cell];
+  }
+
+  /** Bound cell phase masses, pressure, directional magnitude and multiplier. */
+  private double directionalAdmissibleStepLength(double[][] state, double[] pressure, double[] auxiliary,
+      double[] variableScale, double[] normalizedUpdate) {
+    double step = admissibleStepLength(state, pressure, variableScale, normalizedUpdate);
+    int offset = state.length * BLOCK_SIZE;
+    for (int variable = 0; variable < auxiliary.length; variable++) {
+      int localVariable = variable % SignedFaceComplementarity.VARIABLES_PER_PHASE_FACE;
+      if (localVariable == SignedFaceComplementarity.ADVECTIVE_MOMENTUM) {
+        continue;
+      }
+      double change = variableScale[offset + variable] * normalizedUpdate[offset + variable];
+      if (change < 0.0) {
+        step = Math.min(step, fractionToBoundary * auxiliary[variable] / -change);
+      }
+    }
+    return Math.max(0.0, step);
+  }
+
+  /** Apply one augmented Newton update. */
+  private static void applyDirectionalUpdate(double[][] state, double[] pressure, double[] auxiliary,
+      double[] variableScale, double[] normalizedUpdate, double stepLength) {
+    applyUpdate(state, pressure, variableScale, normalizedUpdate, stepLength);
+    int offset = state.length * BLOCK_SIZE;
+    for (int variable = 0; variable < auxiliary.length; variable++) {
+      auxiliary[variable] += stepLength * variableScale[offset + variable] * normalizedUpdate[offset + variable];
+    }
   }
 
   /**
@@ -915,6 +1411,18 @@ public final class UnsplitTransientSolver implements Serializable {
     return result;
   }
 
+  /** Copy array ownership while retaining immutable face-ledger entries. */
+  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] values) {
+    if (values == null) {
+      return null;
+    }
+    DirectionalPhaseFaceFlux[][] result = new DirectionalPhaseFaceFlux[values.length][];
+    for (int face = 0; face < values.length; face++) {
+      result[face] = values[face] == null ? null : values[face].clone();
+    }
+    return result;
+  }
+
   /**
    * Select the time level for the complete conservative operator. This does not change nonlinear tolerances or the
    * physical model. A solve captures its selection at entry; changing this option does not alter an existing result.
@@ -1005,5 +1513,21 @@ public final class UnsplitTransientSolver implements Serializable {
   /** @return configured cell stencil half-width */
   public int getCellStencilHalfWidth() {
     return cellStencilHalfWidth;
+  }
+
+  /**
+   * Select the experimental augmented signed-face complementarity path. The default remains the legacy cell-only
+   * kernel. Enabling this option requires the model evaluation to provide every internal directional phase face and
+   * physical cell length.
+   *
+   * @param enabled true to solve directional mass, advective momentum and donor multipliers with the cell state
+   */
+  public void setDirectionalComplementarityEnabled(boolean enabled) {
+    directionalComplementarityEnabled = enabled;
+  }
+
+  /** @return true when the augmented signed-face complementarity path is selected */
+  public boolean isDirectionalComplementarityEnabled() {
+    return directionalComplementarityEnabled;
   }
 }

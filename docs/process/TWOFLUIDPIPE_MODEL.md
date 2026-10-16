@@ -1425,6 +1425,27 @@ diagnostic getters after a transactional probe still returns the preceding publi
 not the probe's ledger. Caller-supplied sections are trial objects and may be updated by closures;
 accepted sections must be cloned first. Concurrent configuration must use the same equations lock.
 
+The transactional evaluation also carries an immutable directional ledger for every internal face
+and gas/oil/water phase. Each entry separates nonnegative forward and reverse mass transport,
+advective momentum, and pressure traction, while retaining the left and right donor mass and
+momentum used by the accepted free-flux evaluation. `UnsplitTransientSolver` can now opt into a
+compressed mixed system through `setDirectionalComplementarityEnabled(true)`. The system adds
+signed-direction mass magnitude, advective momentum and a donor-presence multiplier per phase
+face, uses a normalized donor relation for present phases, and pins advective momentum exactly to
+zero for an absent donor. Its 53-color finite-difference schedule covers the existing five-cell
+stencil plus two adjacent nine-variable face blocks. Solved internal fluxes replace the free flux
+equal-and-oppositely in adjacent cells and are independently rechecked by
+`TwoFluidUnsplitModelAdapter.prepareStep`; no cell mass is clipped and pressure traction remains in
+the cell operator exactly once.
+
+This remains an experimental opt-in numerical path. All six unchanged 0.1 s historical and
+pressure-interpolated Tengesdal lanes pass at 16/24 cells, and an exactly absent donor regression
+drives the prohibited face transport below $10^{-10}$ kg/s while closing total inventory. The
+unchanged 15-case five-second matrix still fails between 0.1251953125 s and 0.831640625 s by line
+search or iteration limit. Therefore this increment establishes the augmented residual, Jacobian,
+conservation and prepared-step contract; it does not yet qualify disappearance/reappearance,
+severe slugging, restart or hydraulic pigging, and no 180 s or 600 s run is justified.
+
 `TwoFluidUnsplitModelAdapter.prepareStep` independently re-evaluates a converged, active-set-stable
 candidate against its accepted templates, requested time step, boundary, and current operator. It
 checks all six selected-time conservation equations and the endpoint occupied volume. A `PreparedStep`
