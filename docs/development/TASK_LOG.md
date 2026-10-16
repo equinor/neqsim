@@ -1834,6 +1834,21 @@ No fitted parameters or dielectric data changed. Nitrogen, n-butane and n-hexane
 dielectric inputs and salting-out accuracy, third-order volume derivatives, the singular zero-concentration
 composition curvature and the separate legacy Mod2004 implementation remain unqualified.
 
+### 2026-10-16 — Persistent lifecycle-envelope revalidation
+
+**Type:** E (Feature)
+**Keywords:** field optimization, lifecycle, operating envelope, continuous task, evidence, guard, ledger
+
+Extended the existing #4187 production guard and append-only ledger path to consume the lifecycle evidence added by
+#4342. Persisted JSON is revalidated fail-closed: every ordered period must retain finite increasing time, stable
+action/study/evaluator identities, complete envelope and restoration evidence, closed aggregate counts/runtime and
+the exact adjacent bottleneck-transition list. Exactly one period must use the current task cycle and equal the
+proposal's current accepted-point envelope. Mapped reservoir, availability, route or limit changes invalidate and
+supersede the complete lifecycle advice through the existing `evidence_current` and `revalidation_of` contracts.
+No process, well, network, compressor, shaft, driver or shared-power physics is duplicated or changed.
+
+**Documentation impact:** the production task template, continuous-task guide and optimization overview document the
+optional lifecycle field, strict requirement flag, current-period binding and change-driven persistence behavior.
 
 ### 2026-10-16 — Issue #4351: barite source-coverage qualification report
 

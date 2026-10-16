@@ -76,11 +76,14 @@ production:
   min_gain: 0.0
   outcome_tolerance: 0.5
   require_envelope_evidence: false
+  require_lifecycle_envelope_evidence: false
   evidence_sensitive_stages: ["script:model_update", "script:optimize", gates, constraints, guard]
 # Each proposal must include optimizer_evidence for this cycle: converged and finite candidate,
 # complete constraint evidence, complete state restoration, accepted-point replay, and all actions applied.
 # Set require_envelope_evidence true for field studies that must persist accepted-point
 # multi-slice/bottleneck evidence bound exactly to the proposed action identifiers and values.
+# Set require_lifecycle_envelope_evidence true when the same proposal must retain independently
+# validated ordered periods; one period ID must equal the current cycle and reuse the current envelope.
 drift:
   signals: []
   settings: {lambda: 0.2, L: 3.5, k: 0.5, h: 6.0, warmup: 30}
