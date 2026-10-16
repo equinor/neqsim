@@ -762,6 +762,13 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * Initialize chemical-reaction topology for the current component identities.
    *
    * <p>
+   * This call can add reaction species. Configure the component database and mixing rule afterwards. If a mixing rule
+   * was already selected and the component count changes, Furst/electrolyte-CPA initialization rejects its stale
+   * interaction matrices with an {@link IllegalStateException}. Re-run {@code createDatabase(true)} and
+   * {@code setMixingRule(...)} before initialization or a flash, then reapply any custom interaction parameters.
+   * </p>
+   *
+   * <p>
    * Adding, removing, or renaming a component after this call makes the reaction state stale. Before the next reactive
    * calculation, call this method again, repopulate the component database, and reapply the mixing rule.
    * </p>

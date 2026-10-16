@@ -86,6 +86,29 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   }
 
   /**
+   * Reject interaction matrices built for a different number of components.
+   *
+   * <p>
+   * Reaction initialization can append species after a mixing rule has been selected. Rebuilding the rule is an
+   * explicit setup operation because it reloads database parameters and can replace user-fitted values. This check does
+   * not resize, reload, or otherwise modify the configured parameters.
+   * </p>
+   *
+   * @param phase phase whose component count must match the configured interaction matrices
+   * @throws IllegalStateException if the mixing rule was configured for a different component count
+   */
+  public void requireCurrentComponentCount(PhaseInterface phase) {
+    int configuredCount = intparam == null ? 0 : intparam.length;
+    int currentCount = phase.getNumberOfComponents();
+    if (configuredCount != currentCount) {
+      throw new IllegalStateException("Mixing-rule state is stale: configured for " + configuredCount
+          + " components, but phase contains " + currentCount + ". chemicalReactionInit() can add species. "
+          + "After finalizing the components and chemicalReactionInit(), re-run createDatabase(true) and "
+          + "setMixingRule(...) before init(...) or a flash; reapply any custom interaction parameters afterwards.");
+    }
+  }
+
+  /**
    * getMixingRule.
    *
    * @param mr a int
@@ -3226,6 +3249,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
      */
     @Override
     public void calcWij(PhaseInterface phase) {
+      requireCurrentComponentCount(phase);
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       int numbcomp = phase.getNumberOfComponents();
       boolean useCpaParameters = phase instanceof PhaseCPAInterface;

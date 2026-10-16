@@ -1849,3 +1849,25 @@ No process, well, network, compressor, shaft, driver or shared-power physics is 
 
 **Documentation impact:** the production task template, continuous-task guide and optimization overview document the
 optional lifecycle field, strict requirement flag, current-period binding and change-driven persistence behavior.
+
+### 2026-10-16 — Issue #4351: barite source-coverage qualification report
+
+Investigated the public Na–Ba–Cl–SO4 reproducer on master
+`459b9eccf22f335ce88a6c3ec85338844b5a95c4`. The precipitation refusal is correct:
+legacy missing interactions and candidate PHREEQC missing source rows are different inventories.
+Added a read-only catalog preflight sharing the existing selection traversal, a seven-feed
+molality fixture, and regression coverage for exact missing rows, explicit zeros, rejection
+inventory, repeatability, ordering, manual-parameter preservation and neutral/hydrocarbon policy.
+No parameter, model equation, flash tolerance or qualification level was changed.
+
+Documentation impact: added `docs/thermo/pitzer_barite_qualification.md` with primary-literature
+leads, source-row gaps, standard states and the independent equilibrium/continuation completion
+procedure; linked it from the parameter guide, scale API and documentation indexes. This fulfills
+the issue's actionable-report alternative, not full precipitation qualification. Keep #4351 open:
+SI, equilibrium dissolved inventories, solid mass, complementarity and dissolution still require
+a coherent reviewed parameter/speciation set and independent evidence.
+
+Validation: the original exception was reproduced; 53 focused tests passed with the default POM,
+then the final 54 tests passed with `pomJava8.xml` after a clean build on Java 17. Changed classes
+have Java 8 bytecode (major 52); this is not execution on a Java 8 JVM. Hosted CI and accountable
+subsystem-owner/independent-maintainer review remain required before merge.
