@@ -939,8 +939,8 @@ The loop is **advisory**: nothing is written to the control system, and every ac
 | `model_update` (your script) | Reads live data, updates and runs the model, returns KPIs and the residuals against the measurements |
 | `gates` | `gates:` in the plan (`{name, kpi, abs_max\|max\|min}`). A failed or missing KPI blocks all advice (`model_gate:<name>`) |
 | `constraints` | `constraints:` in `goal.yaml` (`{name, kpi, op, limit, margin, warn, hard, source}`). `margin` tightens the limit. A hard constraint with no `limit` is *unconfirmed* and blocks all advice |
-| `optimize` (your script) | Searches the levers and returns `proposals` with `setpoints`, `expected_gain`, `predicted` KPIs, `objective_kpi`, `baseline_value`, and the fail-closed `optimizer_evidence` below; field studies may also return `accepted_point_envelope_evidence` |
-| `guard` | Keeps a proposal only if its numeric data are finite, its evidence belongs to the current cycle and proves a fully validated/replayed candidate, it has a gain above `production.min_gain`, and every hard constraint is predicted inside its margin. When `production.require_envelope_evidence` is `true`, the guard also requires a complete accepted-point envelope bound exactly to the proposal's action identifiers and values. `guard.json` lists the reasons for every withheld proposal |
+| `optimize` (your script) | Searches the levers and returns `proposals` with `setpoints`, `expected_gain`, `predicted` KPIs, `objective_kpi`, `baseline_value`, and the fail-closed `optimizer_evidence` below; field studies may also return `accepted_point_envelope_evidence` and `lifecycle_envelope_evidence` |
+| `guard` | Keeps a proposal only if its numeric data are finite, its evidence belongs to the current cycle and proves a fully validated/replayed candidate, it has a gain above `production.min_gain`, and every hard constraint is predicted inside its margin. `production.require_envelope_evidence` requires a complete current accepted-point envelope bound exactly to the proposal. `production.require_lifecycle_envelope_evidence` additionally requires complete ordered lifecycle periods whose current-cycle period is that same accepted-point envelope. `guard.json` lists the reasons for every withheld proposal |
 | `outcome` | For ledger items in status `implemented`: realised gain against predicted gain (`outcome_confirmed:` / `outcome_miss:`) |
 
 `demonstrated_limit(values, quantile=0.99, design=...)` gives an equipment limit from operating experience: the
@@ -982,6 +982,18 @@ the live model partially restored. The ordinary production template leaves this 
 compatibility; a supplied envelope is always validated strictly. Accepted proposals retain the complete block in
 the existing append-only ledger, so resume and evidence-change cycles do not depend on chat history or a second
 state store.
+
+For ordered lifecycle studies, also set `production.require_lifecycle_envelope_evidence: true` and attach the map
+from `ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceMap(...)` as `lifecycle_envelope_evidence`. Keep
+`accepted_point_envelope_evidence` on the proposal: exactly one lifecycle period must use the current task-cycle ID,
+and that period's complete envelope map must equal the proposal's current accepted-point envelope. The guard then
+revalidates every period independently, including strictly increasing finite elapsed time, common time unit and
+ordered action identity, study/evaluator identity, complete slice and restoration evidence, aggregate counts and
+runtime, accepted bottleneck identity, and the exact adjacent-period bottleneck-transition list. A stale lifecycle,
+missing current period, changed forecast envelope, non-finite value, partial restoration, or aggregate/transition
+mismatch withholds the proposal. Accepted lifecycle evidence is stored in the same append-only ledger and follows
+the existing change-driven `evidence_current`, supersession and `revalidation_of` path; it does not create a second
+task-state or optimization architecture.
 
 Map every file that defines routing, constraints, limits, or model inputs to the production `guard`, including
 mapped network pump/compressor power, common-shaft speed and power, driver limits, and shared host-power limits.

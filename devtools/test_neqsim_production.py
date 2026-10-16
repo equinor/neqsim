@@ -164,6 +164,33 @@ def run(ctx):
         ],
         "advisory": True,
     }
+    lifecycle_evidence = {
+        "schema_version": 1,
+        "cycle_id": ctx.cycle_id,
+        "lifecycle_study_id": "field-lifecycle",
+        "lifecycle_study_name": "Field lifecycle envelope",
+        "lifecycle_study_provenance": "synthetic current operating definition",
+        "time_unit": "cycle",
+        "period_count": 1,
+        "accepted_action_ids": envelope_evidence["accepted_action_ids"],
+        "requested_point_count": envelope_evidence["requested_point_count"],
+        "completed_point_count": envelope_evidence["completed_point_count"],
+        "total_evaluation_count": envelope_evidence["total_evaluation_count"],
+        "envelope_runtime_seconds": envelope_evidence["envelope_runtime_seconds"],
+        "periods": [{
+            "period_id": ctx.cycle_id,
+            "period_name": "Current cycle",
+            "elapsed_time": 0.0,
+            "time_unit": "cycle",
+            "configuration_provenance": "synthetic current operating definition",
+            "envelope_study_id": envelope_evidence["study_id"],
+            "candidate_evaluator_id": envelope_evidence["candidate_evaluator_id"],
+            "accepted_bottleneck": envelope_evidence.get("accepted_point_bottleneck"),
+            "envelope_evidence": envelope_evidence,
+        }],
+        "bottleneck_transitions": [],
+        "advisory": True,
+    }
     base = {"title": "%s", "category": "operational",
             "setpoints": {"p3_barg": 0.5,
                           "configuration.field.selection": production_route,
@@ -171,7 +198,8 @@ def run(ctx):
             "expected_gain": {"value": 300.0, "kpi": "oil_Sm3d"},
             "objective_kpi": "oil_Sm3d", "baseline_value": 12700.0,
             "optimizer_evidence": optimizer_evidence,
-            "accepted_point_envelope_evidence": envelope_evidence}
+            "accepted_point_envelope_evidence": envelope_evidence,
+            "lifecycle_envelope_evidence": lifecycle_evidence}
     return {"proposals": [
         dict(base, title="safe", predicted={"rvp_bara": 0.63}),
         dict(base, title="off spec", predicted={"rvp_bara": 0.68}),
@@ -200,6 +228,7 @@ def _task(tmp_path, resid=1.0, limit=0.70):
     plan = yaml.safe_load((cont / "cycle_plan.yaml").read_text())
     plan["gates"] = [{"name": "resid", "kpi": "resid_K", "abs_max": 3.0}]
     plan["production"]["require_envelope_evidence"] = True
+    plan["production"]["require_lifecycle_envelope_evidence"] = True
     plan["evidence"] = {
         "rules": [{
             "name": "field-operating-definition",
@@ -304,6 +333,58 @@ def _valid_envelope_evidence(optimizer_evidence):
     }
 
 
+def _valid_lifecycle_evidence(current_envelope):
+    current_period_envelope = copy.deepcopy(current_envelope)
+    future_optimizer = dict(current_envelope["optimizer_evidence"], cycle_id="future-period")
+    future_envelope = copy.deepcopy(current_envelope)
+    future_envelope["cycle_id"] = "future-period"
+    future_envelope["optimizer_evidence"] = future_optimizer
+    future_envelope["accepted_candidate_values"] = [0.4]
+    future_envelope["slices"][0]["anchor_values"] = [0.4]
+    future_envelope["slices"][0]["points"][0]["candidate_values"] = [0.4]
+    periods = [
+        {
+            "period_id": "C-1",
+            "period_name": "Current cycle",
+            "elapsed_time": 0.0,
+            "time_unit": "year",
+            "configuration_provenance": "current reservoir and host limits",
+            "envelope_study_id": current_period_envelope["study_id"],
+            "candidate_evaluator_id": current_period_envelope["candidate_evaluator_id"],
+            "accepted_bottleneck": current_period_envelope.get("accepted_point_bottleneck"),
+            "envelope_evidence": current_period_envelope,
+        },
+        {
+            "period_id": "future-period",
+            "period_name": "Future period",
+            "elapsed_time": 5.0,
+            "time_unit": "year",
+            "configuration_provenance": "forecast reservoir and host limits",
+            "envelope_study_id": future_envelope["study_id"],
+            "candidate_evaluator_id": future_envelope["candidate_evaluator_id"],
+            "accepted_bottleneck": future_envelope.get("accepted_point_bottleneck"),
+            "envelope_evidence": future_envelope,
+        },
+    ]
+    return {
+        "schema_version": 1,
+        "cycle_id": "C-1",
+        "lifecycle_study_id": "field-lifecycle",
+        "lifecycle_study_name": "Field lifecycle envelope",
+        "lifecycle_study_provenance": "approved current and forecast cases",
+        "time_unit": "year",
+        "period_count": 2,
+        "accepted_action_ids": current_envelope["accepted_action_ids"],
+        "requested_point_count": 2,
+        "completed_point_count": 2,
+        "total_evaluation_count": 26,
+        "envelope_runtime_seconds": 0.2,
+        "periods": periods,
+        "bottleneck_transitions": [],
+        "advisory": True,
+    }
+
+
 def test_cycle_keeps_only_safe_proposals(tmp_path):
     task = _task(tmp_path)
     manifest = run_cycle(task, no_agent=True)
@@ -327,6 +408,11 @@ def test_cycle_keeps_only_safe_proposals(tmp_path):
     assert envelope["accepted_candidate_values"] == [0.5, 0.0, 0.0]
     assert envelope["slice_count"] == 3
     assert envelope["total_evaluation_count"] == 15
+    lifecycle = safe["lifecycle_envelope_evidence"]
+    assert lifecycle["cycle_id"] == manifest["cycle_id"]
+    assert lifecycle["period_count"] == 1
+    assert lifecycle["periods"][0]["period_id"] == manifest["cycle_id"]
+    assert lifecycle["periods"][0]["envelope_evidence"] == envelope
     assert safe["evidence_current"] is True
 
 
@@ -884,6 +970,117 @@ def test_guard_fails_closed_for_malformed_envelope_types(tmp_path):
     assert reasons["malformed envelope"] == ["invalid_accepted_point_envelope_evidence"]
     assert "invalid_accepted_action_vector" in reasons["malformed actions"]
     assert "missing_optimizer_evidence" in reasons["malformed optimizer"]
+
+
+def test_guard_persists_complete_lifecycle_envelope(tmp_path):
+    proposal = _valid_proposal()
+    proposal["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_envelope_evidence"] = True
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    lifecycle = ctx.proposals[0]["lifecycle_envelope_evidence"]
+    assert lifecycle["period_count"] == 2
+    assert lifecycle["periods"][0]["period_id"] == "C-1"
+    assert lifecycle["periods"][1]["period_id"] == "future-period"
+
+
+def test_guard_requires_lifecycle_envelope_when_configured(tmp_path):
+    proposal = _valid_proposal()
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    assert json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"] == [
+        "missing_lifecycle_envelope_evidence"
+    ]
+
+
+def test_guard_rejects_stale_or_internally_inconsistent_lifecycle_envelope(tmp_path):
+    variants = []
+
+    stale = _valid_proposal()
+    stale["title"] = "stale lifecycle"
+    stale["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        stale["accepted_point_envelope_evidence"])
+    stale["lifecycle_envelope_evidence"]["cycle_id"] = "C-0"
+    variants.append(stale)
+
+    no_current = _valid_proposal()
+    no_current["title"] = "missing current period"
+    no_current["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        no_current["accepted_point_envelope_evidence"])
+    no_current["lifecycle_envelope_evidence"]["periods"][0]["period_id"] = "past-period"
+    no_current["lifecycle_envelope_evidence"]["periods"][0]["envelope_evidence"][
+        "cycle_id"] = "past-period"
+    no_current["lifecycle_envelope_evidence"]["periods"][0]["envelope_evidence"][
+        "optimizer_evidence"]["cycle_id"] = "past-period"
+    variants.append(no_current)
+
+    changed_current = _valid_proposal()
+    changed_current["title"] = "changed current period"
+    changed_current["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        changed_current["accepted_point_envelope_evidence"])
+    changed_current["lifecycle_envelope_evidence"]["periods"][0]["envelope_evidence"][
+        "accepted_candidate_values"] = [0.6]
+    variants.append(changed_current)
+
+    unordered = _valid_proposal()
+    unordered["title"] = "unordered periods"
+    unordered["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        unordered["accepted_point_envelope_evidence"])
+    unordered["lifecycle_envelope_evidence"]["periods"][1]["elapsed_time"] = 0.0
+    variants.append(unordered)
+
+    partial = _valid_proposal()
+    partial["title"] = "partial future recovery"
+    partial["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        partial["accepted_point_envelope_evidence"])
+    partial["lifecycle_envelope_evidence"]["periods"][1]["envelope_evidence"][
+        "slices"][0]["points"][0]["baseline_restored"] = False
+    variants.append(partial)
+
+    infeasible_future = _valid_proposal()
+    infeasible_future["title"] = "infeasible future period"
+    infeasible_future["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        infeasible_future["accepted_point_envelope_evidence"])
+    infeasible_future["lifecycle_envelope_evidence"]["periods"][1]["envelope_evidence"][
+        "optimizer_evidence"]["candidate_feasible"] = False
+    variants.append(infeasible_future)
+
+    aggregate = _valid_proposal()
+    aggregate["title"] = "aggregate mismatch"
+    aggregate["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        aggregate["accepted_point_envelope_evidence"])
+    aggregate["lifecycle_envelope_evidence"]["total_evaluation_count"] = 25
+    variants.append(aggregate)
+
+    transition = _valid_proposal()
+    transition["title"] = "transition mismatch"
+    transition["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        transition["accepted_point_envelope_evidence"])
+    transition["lifecycle_envelope_evidence"]["bottleneck_transitions"] = [{}]
+    variants.append(transition)
+
+    ctx = _guard_context(tmp_path, variants[0])
+    ctx.plan["production"]["require_envelope_evidence"] = True
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    ctx.proposals.extend(variants[1:])
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    reasons = {row["title"]: row["reasons"]
+               for row in json.loads((tmp_path / "guard.json").read_text())["withheld"]}
+    assert "stale_lifecycle_envelope_evidence" in reasons["stale lifecycle"]
+    assert "missing_current_lifecycle_period" in reasons["missing current period"]
+    assert "lifecycle_current_period_envelope_mismatch" in reasons["changed current period"]
+    assert "lifecycle_period_1_invalid_elapsed_time" in reasons["unordered periods"]
+    assert "lifecycle_period_1_envelope_slice_0_point_recovery_incomplete" in reasons[
+        "partial future recovery"]
+    assert "lifecycle_period_1_infeasible_candidate" in reasons["infeasible future period"]
+    assert "lifecycle_aggregate_count_mismatch" in reasons["aggregate mismatch"]
+    assert "lifecycle_bottleneck_transitions_mismatch" in reasons["transition mismatch"]
 
 
 @pytest.mark.parametrize("field, value, reason", [
