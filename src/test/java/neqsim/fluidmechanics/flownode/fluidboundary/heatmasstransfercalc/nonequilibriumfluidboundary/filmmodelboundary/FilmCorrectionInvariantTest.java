@@ -178,6 +178,7 @@ class FilmCorrectionInvariantTest {
 
     assertTrue(film.successfulUpdates > 0, "The fixture must exercise successful Newton updates");
     assertEquals(film.finiteReferenceSteps, film.successfulUpdates);
+    film.assertSpectralCorrectionMatchesJama();
   }
 
   /**
@@ -210,6 +211,30 @@ class FilmCorrectionInvariantTest {
      */
     private NewtonFilmProbe(FlowNodeInterface node) {
       super(node);
+    }
+
+    /** Compares both actual phase correction matrices against the previous complete Jama modal expression. */
+    private void assertSpectralCorrectionMatchesJama() {
+      for (int phase = 0; phase < 2; phase++) {
+        calcPhiMatrix(phase);
+        Jama.EigenvalueDecomposition reference = new Matrix(phiMatrix).eig();
+        double[] eigenvalues = reference.getRealEigenvalues();
+        Matrix diagonal = new Matrix(eigenvalues.length, eigenvalues.length);
+        for (int index = 0; index < eigenvalues.length; index++) {
+          double value = eigenvalues[index];
+          double correction = Math.abs(value) < 1.0e-6 ? 1.0 + value / 2.0 + value * value / 12.0
+              : value > 0.0 ? value / -Math.expm1(-value) : value * Math.exp(value) / Math.expm1(value);
+          diagonal.set(index, index, correction);
+        }
+        Matrix vectors = reference.getV();
+        Matrix expected = vectors.times(diagonal.times(vectors.inverse()));
+        calcRedPhiMatrix(phase);
+        calcRedCorrectionMatrix(phase);
+        calcCorrectionMatrix(phase);
+        double residual = expected.minus(new Matrix(rateCorrectionMatrix[phase])).normF();
+        assertTrue(residual <= 1.0e-10 * Math.max(1.0, expected.normF()),
+            "Finite-flux correction must match the complete Jama reference for phase " + phase + ": " + residual);
+      }
     }
 
     /**

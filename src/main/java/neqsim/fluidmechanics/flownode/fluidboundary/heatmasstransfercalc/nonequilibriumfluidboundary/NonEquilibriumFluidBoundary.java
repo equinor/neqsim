@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
-import Jama.Matrix;
+import org.ejml.dense.row.decomposition.lu.LUDecompositionAlt_DDRM;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -561,21 +561,61 @@ public abstract class NonEquilibriumFluidBoundary
   }
 
   /**
-   * Solves the Newton system using the legacy LU backend. Film Jacobians can be extremely ill-conditioned, so changing
-   * the factorization backend requires separate qualification from changing the working storage.
+   * Solves the Newton system with EJML factors and the established column-update substitution order.
    *
    * @return Newton step, including non-finite entries for the existing recovery branch to inspect
-   * @throws RuntimeException if the legacy factorization rejects the system
+   * @throws RuntimeException if factorization fails or the system has an exactly zero pivot
    */
   private DMatrixRMaj solveMassTransferStep() {
-    Matrix coefficients = new Matrix(neq, neq);
+    double[][] coefficients = new double[neq][neq];
     for (int row = 0; row < neq; row++) {
       for (int column = 0; column < neq; column++) {
-        coefficients.set(row, column, Jac.get(row, column));
+        coefficients[row][column] = Jac.get(row, column);
       }
     }
-    Matrix step = coefficients.solve(new Matrix(fvec.getData(), neq));
-    return new DMatrixRMaj(neq, 1, true, step.getColumnPackedCopy());
+    return new DMatrixRMaj(neq, 1, true, solveFilmLinearSystem(coefficients, fvec.getData()));
+  }
+
+  /**
+   * Solves a film Jacobian using EJML LU while preserving column-ordered triangular updates.
+   *
+   * <p>
+   * Film Jacobians can be extremely ill-conditioned. Row-ordered substitution can change their Newton trajectory; this
+   * implementation retains the previous arithmetic order without retaining a Jama dependency. Non-finite results remain
+   * available to the existing caller recovery logic, and only exactly zero pivots are rejected.
+   *
+   * @param coefficients square coefficient data
+   * @param rightHandSide right-hand-side vector
+   * @return independent solution vector
+   * @throws RuntimeException if factorization fails or a pivot is exactly zero
+   */
+  protected static double[] solveFilmLinearSystem(double[][] coefficients, double[] rightHandSide) {
+    int dimension = coefficients.length;
+    LUDecompositionAlt_DDRM decomposition = new LUDecompositionAlt_DDRM();
+    if (!decomposition.decompose(new DMatrixRMaj(coefficients))) {
+      throw new IllegalStateException("Film Jacobian LU factorization failed");
+    }
+    DMatrixRMaj factors = decomposition.getLU();
+    int[] permutation = decomposition.getPivot();
+    double[] solution = new double[dimension];
+    for (int row = 0; row < dimension; row++) {
+      if (factors.get(row, row) == 0.0) {
+        throw new IllegalStateException("Film Jacobian is singular");
+      }
+      solution[row] = rightHandSide[permutation[row]];
+    }
+    for (int diagonal = 0; diagonal < dimension; diagonal++) {
+      for (int row = diagonal + 1; row < dimension; row++) {
+        solution[row] -= solution[diagonal] * factors.get(row, diagonal);
+      }
+    }
+    for (int diagonal = dimension - 1; diagonal >= 0; diagonal--) {
+      solution[diagonal] /= factors.get(diagonal, diagonal);
+      for (int row = 0; row < diagonal; row++) {
+        solution[row] -= solution[diagonal] * factors.get(row, diagonal);
+      }
+    }
+    return solution;
   }
 
   /**

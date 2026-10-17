@@ -499,7 +499,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
    * @return independent Newton update vector
    */
   protected double[] solveReactiveJacobianStep() {
-    return new Matrix(Jac).solve(new Matrix(fvec, fvec.length)).getColumnPackedCopy();
+    return solveFilmLinearSystem(Jac, fvec);
   }
 
   /**

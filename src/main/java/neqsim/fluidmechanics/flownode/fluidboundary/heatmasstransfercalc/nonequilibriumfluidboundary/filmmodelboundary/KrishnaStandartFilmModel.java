@@ -1,12 +1,13 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -20,8 +21,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Krishna-Standart film calculations with array-backed coefficient, correction and eigen data.
  *
  * <p>
- * The legacy Jama eigendecomposition is evaluated through temporary adapters; its numerical behavior is unchanged.
- * Serialized instances containing the former Jama eigen-data fields are not compatible with this layout.
+ * Commons Math supplies paired eigen data, and EJML evaluates the modal correction on primitive-array state. Serialized
+ * instances containing the former Jama eigen-data fields are not compatible with this layout.
  *
  * @author asmund
  * @version $Id: $Id
@@ -221,7 +222,7 @@ public class KrishnaStandartFilmModel extends
    * @param phase a int
    */
   public void calcRedPhiMatrix(int phase) {
-    redPhiMatrix = new Matrix(phiMatrix).eig().getRealEigenvalues();
+    redPhiMatrix = new EigenDecomposition(new Array2DRowRealMatrix(phiMatrix, true)).getRealEigenvalues();
   }
 
   /**
@@ -251,14 +252,24 @@ public class KrishnaStandartFilmModel extends
    * @param phaseNum a int
    */
   public void calcCorrectionMatrix(int phaseNum) {
-    Matrix modalPhiMatrix = new Matrix(phiMatrix).eig().getV();
-    Matrix diagonalRedCorrectionMatrix = new Matrix(getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1,
-        getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1);
-    for (int i = 0; i < getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
-      diagonalRedCorrectionMatrix.set(i, i, redCorrectionMatrix[i]);
+    EigenDecomposition eigen = new EigenDecomposition(new Array2DRowRealMatrix(phiMatrix, true));
+    DMatrixRMaj modalPhiMatrix = new DMatrixRMaj(eigen.getV().getData());
+    int dimension = modalPhiMatrix.getNumRows();
+    DMatrixRMaj diagonalCorrection = new DMatrixRMaj(dimension, dimension);
+    for (int component = 0; component < dimension; component++) {
+      diagonalCorrection.set(component, component, redCorrectionMatrix[component]);
     }
-    rateCorrectionMatrix[phaseNum] = modalPhiMatrix.times(diagonalRedCorrectionMatrix.times(modalPhiMatrix.inverse()))
-        .getArray();
+    LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(dimension);
+    if (!solver.setA(modalPhiMatrix.copy())) {
+      throw new IllegalStateException("Finite-flux eigenvector matrix is singular for phase " + phaseNum);
+    }
+    DMatrixRMaj inverse = new DMatrixRMaj(dimension, dimension);
+    solver.invert(inverse);
+    DMatrixRMaj scaledInverse = new DMatrixRMaj(dimension, dimension);
+    CommonOps_DDRM.mult(diagonalCorrection, inverse, scaledInverse);
+    DMatrixRMaj correction = new DMatrixRMaj(dimension, dimension);
+    CommonOps_DDRM.mult(modalPhiMatrix, scaledInverse, correction);
+    rateCorrectionMatrix[phaseNum] = toArray(correction);
   }
 
   /**
