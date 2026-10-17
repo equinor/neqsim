@@ -2,7 +2,12 @@ package neqsim.chemicalreactions.chemicalequilibrium;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionConcentrationBasis;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
@@ -12,6 +17,11 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * ChemicalEquilibrium class.
+ *
+ * <p>
+ * Internal dense solver state uses EJML. Serialized instances written with the former Jama matrix fields are not
+ * compatible with this representation; the public constructor and solver methods do not expose Jama types.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -91,7 +101,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   int NSPEC = 2;
   int NELE = 2;
   double R = ThermodynamicConstantsInterface.R;
-  Matrix x_solve;
+  DMatrixRMaj x_solve;
   double y_solve;
   double n_t = 0.0;
   double solventWeight = MIN_MOLES;
@@ -100,13 +110,13 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
   ComponentInterface[] components;
   double[][] M_matrix = new double[NSPEC][NSPEC];
-  Matrix M_Jama_matrix;
-  Matrix A_Jama_matrix;
-  Matrix nmu;
-  Matrix AMA_matrix; // = new double[NELE][NELE];
-  Matrix dn_matrix;
-  Matrix AMU_matrix;
-  Matrix Alambda_matrix;
+  DMatrixRMaj M_matrixDense;
+  DMatrixRMaj A_matrixDense;
+  DMatrixRMaj nmu;
+  DMatrixRMaj AMA_matrix;
+  DMatrixRMaj dn_matrix;
+  DMatrixRMaj AMU_matrix;
+  DMatrixRMaj Alambda_matrix;
   double[] d_n = new double[NSPEC];
   double[] logactivityVec = new double[NSPEC];
   double[] n0;
@@ -117,12 +127,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   // double chem_pot_dilute[];
   // double chem_pot_pure[];
   double[] b_element;
-  Matrix b_matrix;
+  DMatrixRMaj b_matrix;
 
-  Matrix A_solve;
-  Matrix b_solve;
+  DMatrixRMaj A_solve;
+  DMatrixRMaj b_solve;
   double[] chem_pot;
-  Matrix chem_pot_Jama_Matrix;
+  DMatrixRMaj chem_pot_matrix;
   int phasenumb = 1;
 
   /**
@@ -146,8 +156,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     n_mol = new double[components.length];
     logactivityVec = new double[NSPEC];
     this.chem_ref = new double[components.length];
-    A_solve = new Matrix(NELE + 1, NELE + 1);
-    b_solve = new Matrix(NELE + 1, 1);
+    A_solve = new DMatrixRMaj(NELE + 1, NELE + 1);
+    b_solve = new DMatrixRMaj(NELE + 1, 1);
     chem_ref = new double[NSPEC];
     chem_pot = new double[NSPEC];
     // chem_pot_dilute = new double[NSPEC];
@@ -155,10 +165,10 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     M_matrix = new double[NSPEC][NSPEC];
     d_n = new double[NSPEC];
     if (A_matrix != null) {
-      A_Jama_matrix = new Matrix(A_matrix);
+      A_matrixDense = new DMatrixRMaj(A_matrix);
     }
     if (b_element != null) {
-      b_matrix = new Matrix(b_element, 1);
+      b_matrix = rowVector(b_element);
     }
 
     for (int i = 0; i < components.length; i++) {
@@ -263,15 +273,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     }
     // printComp();
 
-    M_Jama_matrix = new Matrix(M_matrix);
+    M_matrixDense = new DMatrixRMaj(M_matrix);
 
-    // M_Jama_matrix.print(10, 10);
-    // Following 5 statements added by Neeraj
-    // A_Jama_matrix.print(5,2);
-    // ystem.out.println("rank of A "+A_Jama_matrix.rank());
-    // System.out.println("number of rows in A "+A_Jama_matrix.getRowDimension());
-    // if(A_Jama_matrix.rank()<A_Jama_matrix.getRowDimension())
-    // System.out.println("Rank of Matrix A low: Numerical errors may occur ");
     for (int i = 0; i < NSPEC; i++) {
       // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),
       // components[waterNumb].getComponentNumber());
@@ -284,64 +287,67 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       // System.out.println("chem ref pot " + chem_pot[i]);
     }
 
-    chem_pot_Jama_Matrix = new Matrix(chem_pot, 1);
+    chem_pot_matrix = columnVector(chem_pot);
 
     // Use solve() instead of inverse() for numerical stability and efficiency
     // M * X = A^T -> X = M.solve(A^T), then AMA = A * X
-    Matrix M_inv_AT;
+    DMatrixRMaj M_inv_AT;
     try {
-      M_inv_AT = M_Jama_matrix.solve(A_Jama_matrix.transpose());
+      M_inv_AT = solveDense(M_matrixDense, transpose(A_matrixDense));
     } catch (Exception e) {
-      M_inv_AT = solveLeastSquares(M_Jama_matrix, A_Jama_matrix.transpose());
+      M_inv_AT = solveLeastSquares(M_matrixDense, transpose(A_matrixDense));
     }
-    AMA_matrix = A_Jama_matrix.times(M_inv_AT);
+    AMA_matrix = multiply(A_matrixDense, M_inv_AT);
     // Similarly for AMU: M * Y = mu^T -> Y = M.solve(mu^T), then AMU = A * Y
-    Matrix M_inv_mu;
+    DMatrixRMaj M_inv_mu;
     try {
-      M_inv_mu = M_Jama_matrix.solve(chem_pot_Jama_Matrix.transpose());
+      M_inv_mu = solveDense(M_matrixDense, chem_pot_matrix);
     } catch (Exception e) {
-      M_inv_mu = solveLeastSquares(M_Jama_matrix, chem_pot_Jama_Matrix.transpose());
+      M_inv_mu = solveLeastSquares(M_matrixDense, chem_pot_matrix);
     }
-    AMU_matrix = A_Jama_matrix.times(M_inv_mu);
-    Matrix nmol = new Matrix(n_mol, 1);
-    nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
-    Matrix couplingQuantities = b_matrix;
-    Matrix conservationCorrection = new Matrix(NELE, 1);
+    AMU_matrix = multiply(A_matrixDense, M_inv_mu);
+    DMatrixRMaj nmol = columnVector(n_mol);
+    double nmuValue = 0.0;
+    for (int componentIndex = 0; componentIndex < NSPEC; componentIndex++) {
+      nmuValue += n_mol[componentIndex] * chem_pot[componentIndex];
+    }
+    nmu = new DMatrixRMaj(1, 1);
+    nmu.set(0, 0, nmuValue);
+    DMatrixRMaj couplingQuantities = b_matrix;
+    DMatrixRMaj conservationCorrection = new DMatrixRMaj(NELE, 1);
     if (system.getNumberOfPhases() == 1) {
-      Matrix currentConservedQuantities = A_Jama_matrix.times(nmol.transpose()).transpose();
+      DMatrixRMaj currentConservedQuantities = transpose(multiply(A_matrixDense, nmol));
       for (int elementIndex = 0; elementIndex < NELE; elementIndex++) {
         double target = b_matrix.get(0, elementIndex);
         double current = currentConservedQuantities.get(0, elementIndex);
         if (Math.abs(target - current) > CONSERVATION_CORRECTION_TOLERANCE * Math.max(1.0, Math.abs(target))) {
           couplingQuantities = currentConservedQuantities;
-          conservationCorrection = b_matrix.minus(currentConservedQuantities).transpose();
+          conservationCorrection = transpose(subtract(b_matrix, currentConservedQuantities));
           break;
         }
       }
     }
-    A_solve.setMatrix(0, NELE - 1, 0, NELE - 1, AMA_matrix);
-    A_solve.setMatrix(0, NELE - 1, NELE, NELE, couplingQuantities.transpose());
-    A_solve.setMatrix(NELE, NELE, 0, NELE - 1, couplingQuantities);
+    insert(AMA_matrix, A_solve, 0, 0);
+    insert(transpose(couplingQuantities), A_solve, 0, NELE);
+    insert(couplingQuantities, A_solve, NELE, 0);
     A_solve.set(NELE, NELE, 0.0);
 
     // A_solve.print(10,20);
     // System.out.println("Rank of A_solve "+A_solve.rank());
-    b_solve.setMatrix(0, NELE - 1, 0, 0, AMU_matrix.plus(conservationCorrection));
-    b_solve.setMatrix(NELE, NELE, 0, 0, nmu);
+    insert(add(AMU_matrix, conservationCorrection), b_solve, 0, 0);
+    b_solve.set(NELE, 0, nmu.get(0, 0));
     // b_solve.print(10,5);
     // System.out.println("det "+A_solve.det());
 
     // y_solve added by Neeraj
-    // M_Jama_matrix.print(5,5);
-    y_solve = A_solve.det();
+    y_solve = CommonOps_DDRM.det(A_solve);
     // System.out.println("Determinant "+y_solve);
     if ((y_solve < 1e-38 && y_solve > -1e-38) || y_solve < -1e70) {
       // A_solve.print(5,5);
-      y_solve = AMA_matrix.det();
+      y_solve = CommonOps_DDRM.det(AMA_matrix);
       // System.out.println("AMA det "+y_solve);
-      y_solve = A_solve.rank();
+      y_solve = numericalRank(A_solve);
       // System.out.println("Rank " + y_solve);
-      // M_Jama_matrix.print(5,5);
       // b_solve.print(5,5);
       // System.out.println("det A " + A_solve.rank());
     }
@@ -349,7 +355,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // try catch block added by Neeraj
     // Enhanced with SVD pseudo-inverse fallback for rank-deficient matrices
     try {
-      x_solve = A_solve.solve(b_solve);
+      x_solve = solveDense(A_solve, b_solve);
 
       // Check if solution is valid (no NaN or Inf)
       boolean validSolution = true;
@@ -370,23 +376,25 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         x_solve = solveLeastSquares(A_solve, b_solve);
       } catch (Exception ex2) {
         logger.error("Both regular and least-squares solve failed: " + ex2.getMessage());
-        x_solve = new Matrix(NELE + 1, 1); // Zero solution as fallback
+        x_solve = new DMatrixRMaj(NELE + 1, 1); // Zero solution as fallback
       }
     }
     // d_n_t = x_solve.get(NELE,0)*n_t;
 
     // Equation 3.115 (Smith-Missen): dn = M^-1 * (A^T * lambda - mu) + n * tau
     // Use solve() instead of inverse() for numerical stability
-    Matrix lambdaTerms = A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0));
-    Matrix rhs = lambdaTerms.minus(chem_pot_Jama_Matrix.transpose());
-    Matrix M_inv_rhs;
+    DMatrixRMaj lambdaTerms = multiply(transpose(A_matrixDense), rowRange(x_solve, 0, NELE));
+    DMatrixRMaj rhs = subtract(lambdaTerms, chem_pot_matrix);
+    DMatrixRMaj M_inv_rhs;
     try {
-      M_inv_rhs = M_Jama_matrix.solve(rhs);
+      M_inv_rhs = solveDense(M_matrixDense, rhs);
     } catch (Exception e) {
-      M_inv_rhs = solveLeastSquares(M_Jama_matrix, rhs);
+      M_inv_rhs = solveLeastSquares(M_matrixDense, rhs);
     }
-    dn_matrix = M_inv_rhs.plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
-    d_n = dn_matrix.transpose().getArray()[0];
+    DMatrixRMaj scaledMoles = columnVector(n_mol);
+    CommonOps_DDRM.scale(x_solve.get(NELE, 0), scaledMoles);
+    dn_matrix = add(M_inv_rhs, scaledMoles);
+    d_n = dn_matrix.getData().clone();
   }
 
   /**
@@ -997,8 +1005,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     double[] chem_pot_omega = new double[NSPEC];
     double[] chem_pot = new double[NSPEC];
     double G_1 = 0.0;
-
     double G_0 = 0.0;
+
     for (i = 0; i < NSPEC; i++) {
       n_omega[i] = n_mol[i] + d_n[i];
       // System.out.println("nomega " + n_omega[i] );
@@ -1009,13 +1017,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         // System.out.println("step2 ... " + step);
         return step;
       } else {
-        // chem_pot_omega[i] = R*T*(chem_ref[i]+ Math.log(n_omega[i]/n_t) +
-        // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
-        // / chem_pot_pure[i]));
-        // chem_pot[i] = R*T*(chem_ref[i] + Math.log(n_mol[i]/n_t)+
-        // Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
-        // / chem_pot_pure[i]));
-
         if (system.getChemicalReactionConcentrationBasis() == ChemicalReactionConcentrationBasis.SOLUTE_MOLALITY) {
           double molesInPhase = Math.max(MIN_MOLES,
               system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
@@ -1028,20 +1029,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
               system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
           chem_pot[i] = R * system.getPhase(phasenumb).getTemperature()
               * (chem_ref[i] + Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[i]);
-          // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
-          // System.out.println("solvent activ: "+ i + " " +
-          // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
-          // / chem_pot_pure[i]);
         } else {
           // Protect against log(0) with MIN_MOLES
           double molesInPhase = Math.max(MIN_MOLES,
               system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
           chem_pot[i] = R * system.getPhase(phasenumb).getTemperature()
               * (chem_ref[i] + Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[i]);
-          // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
-          // System.out.println("solute activ : " + i + " " +
-          // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
-          // / chem_pot_dilute[i]);
         }
         // Protect n_omega against log(0) with MIN_MOLES
         double n_omega_safe = Math.max(MIN_MOLES, n_omega[i]);
@@ -1055,7 +1048,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       }
     }
     // Added by Neeraj
-    Alambda_matrix = A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0));
+    Alambda_matrix = multiply(transpose(A_matrixDense), rowRange(x_solve, 0, NELE));
 
     G_1 = 0.0;
     for (i = 0; i < NSPEC; i++) {
@@ -1076,8 +1069,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         double molesInPhase = Math.max(MIN_MOLES,
             system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
         G_0 += (chem_pot[i] - Alambda_matrix.get(i, 0)) * d_n[i] * (1 / molesInPhase - 1 / n_t);
-        // G_0 +=
-        // (chem_pot[i]-Alambda_matrix.get(i,0))*d_n[i]*(M_Jama_matrix.get(i,i)-1/n_t);
       }
       // Protect against division by zero when G_0 ≈ G_1
       double denominator = G_0 - G_1;
@@ -1135,43 +1126,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     return step;
   }
 
-  // Method added by Neeraj
-  /*
-   * public double step(){ double step=1.0; int i, check=0; double[] F = new double[NSPEC]; double[] F_omega = new
-   * double[NSPEC]; double[] chem_pot = new double[NSPEC]; double[] n_omega = new double[NSPEC];
-   *
-   * Matrix F_matrix, F_omega_matrix, fs_matrix, f_matrix, f_omega_matrix; double fs,f,f_omega;
-   *
-   * for(i = 0;i<NSPEC;i++){ n_omega[i] = n_mol[i]+d_n[i]; if (n_omega[i]<0){ check = i; return step; } else {
-   * if(system.getPhase(phasenumb).getComponents()[components[i].
-   * getComponentNumber()].getReferenceStateType().equals("solvent")){ F[i] =
-   * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
-   * Math.log(system.getPhase(phasenumb).getComponents()[components[i]. getComponentNumber()].getNumberOfMolesInPhase())
-   * - Math.log(n_t) + Math.log(activityVec[i])); } else{ F[i] =
-   * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) +
-   * Math.log(system.getPhase(phasenumb).getComponents()[components[i]. getComponentNumber()].getNumberOfMolesInPhase())
-   * - Math.log(n_t) + Math.log(activityVec[i])); } double temp =
-   * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) + Math.log(n_omega[i]) - Math.log(n_t) +
-   * Math.log(activityVec[i])); System.out.println("temp "+activityVec[i]);
-   * system.addComponent(components[i].getComponentNumber(), d_n[i], phasenumb); calcRefPot(); F_omega[i] =
-   * (chem_ref[i]/(R*system.getPhase(phasenumb).getTemperature()) + Math.log(n_omega[i]) - Math.log(n_t) +
-   * Math.log(activityVec[i])); System.out.println("F "+activityVec[i]);
-   * system.addComponent(components[i].getComponentNumber(), -d_n[i], phasenumb); calcRefPot(); } }
-   *
-   * F_matrix = new Matrix(F,1); //F_matrix.print(5,5); F_omega_matrix = new Matrix(F_omega,1);
-   *
-   * //F_matrix = F_matrix.minus((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,NELE-1,0, 0))).transpose());
-   * //F_omega_matrix = F_omega_matrix.minus((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,
-   * NELE-1,0,0))).transpose());
-   *
-   * fs_matrix = F_matrix.transpose().times(F_matrix); fs = (-1)*fs_matrix.get(0,0); f_matrix =
-   * F_matrix.times(F_matrix.transpose()); f = 0.5*f_matrix.get(0,0); f_omega_matrix =
-   * F_omega_matrix.times(F_omega_matrix.transpose()); f_omega = 0.5*f_omega_matrix.get(0,0);
-   *
-   * step = (-1)*fs/(2*(f_omega-f-fs)); //System.out.println("f "+f); //System.out.println("f_omega "+f_omega);
-   * //System.out.println("fs "+fs); //System.out.println("step " + step); //if (step > 0.5) step = 0.5; return step; }
-   */
-
   /**
    * Solve least-squares problem using SVD pseudo-inverse.
    *
@@ -1180,32 +1134,178 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * SVD decomposition: A = U * S * V^T, then x = V * S^(-1) * U^T * b.
    * </p>
    *
-   * @param A the coefficient matrix
-   * @param b the right-hand side vector
+   * @param matrixA the coefficient matrix
+   * @param matrixB the right-hand side matrix
    * @return the least-squares solution x
    */
-  private Matrix solveLeastSquares(Matrix A, Matrix b) {
-    Jama.SingularValueDecomposition svd = A.svd();
-    Matrix U = svd.getU();
+  static DMatrixRMaj solveLeastSquares(DMatrixRMaj matrixA, DMatrixRMaj matrixB) {
+    int rows = matrixA.getNumRows();
+    int columns = matrixA.getNumCols();
+    SingularValueDecomposition_F64<DMatrixRMaj> svd = DecompositionFactory_DDRM.svd(rows, columns, true, true, false);
+    if (!svd.decompose(matrixA.copy())) {
+      throw new IllegalStateException("Chemical-equilibrium singular value decomposition did not converge");
+    }
     double[] singularValues = svd.getSingularValues();
-    Matrix V = svd.getV();
+    int singularValueCount = svd.numberOfSingularValues();
+    double largestSingularValue = 0.0;
+    for (int index = 0; index < singularValueCount; index++) {
+      largestSingularValue = Math.max(largestSingularValue, singularValues[index]);
+    }
+    double tolerance = 1e-12 * (singularValueCount > 0 ? largestSingularValue : 1.0);
 
-    // Compute pseudo-inverse: A+ = V * S+ * U^T
-    // S+ is the pseudo-inverse of the diagonal matrix of singular values
-    int m = A.getRowDimension();
-    int n = A.getColumnDimension();
-    int minDim = Math.min(m, n);
-    double tol = 1e-12 * (singularValues.length > 0 ? singularValues[0] : 1.0);
-
-    // Create S+ with dimensions n x m (transpose of S dimensions)
-    Matrix Sinv = new Matrix(n, m);
-    for (int i = 0; i < minDim; i++) {
-      if (Math.abs(singularValues[i]) > tol) {
-        Sinv.set(i, i, 1.0 / singularValues[i]);
+    DMatrixRMaj inverseSingularValues = new DMatrixRMaj(columns, rows);
+    for (int index = 0; index < Math.min(rows, columns); index++) {
+      if (Math.abs(singularValues[index]) > tolerance) {
+        inverseSingularValues.set(index, index, 1.0 / singularValues[index]);
       }
     }
 
-    // x = V * S+ * U^T * b
-    return V.times(Sinv.times(U.transpose().times(b)));
+    DMatrixRMaj leftVectors = svd.getU(null, false);
+    DMatrixRMaj rightVectors = svd.getV(null, false);
+    DMatrixRMaj projectedRightHandSide = multiply(transpose(leftVectors), matrixB);
+    return multiply(multiply(rightVectors, inverseSingularValues), projectedRightHandSide);
+  }
+
+  /**
+   * Solves a square dense system with EJML LU and supports multiple right-hand sides.
+   *
+   * @param matrixA square coefficient matrix
+   * @param matrixB right-hand side matrix
+   * @return the solution matrix
+   * @throws IllegalStateException if EJML reports a singular factorization
+   */
+  private static DMatrixRMaj solveDense(DMatrixRMaj matrixA, DMatrixRMaj matrixB) {
+    LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(matrixA.getNumRows());
+    if (!solver.setA(matrixA.copy())) {
+      throw new IllegalStateException("Chemical-equilibrium LU factorization failed");
+    }
+    DMatrixRMaj solution = new DMatrixRMaj(matrixA.getNumCols(), matrixB.getNumCols());
+    solver.solve(matrixB, solution);
+    return solution;
+  }
+
+  /**
+   * Computes the numerical rank using Jama's dimension-scaled machine-precision threshold.
+   *
+   * @param matrix matrix to inspect
+   * @return numerical rank
+   */
+  private static int numericalRank(DMatrixRMaj matrix) {
+    SingularValueDecomposition_F64<DMatrixRMaj> svd = DecompositionFactory_DDRM.svd(matrix.getNumRows(),
+        matrix.getNumCols(), false, false, true);
+    if (!svd.decompose(matrix.copy())) {
+      throw new IllegalStateException("Chemical-equilibrium rank decomposition did not converge");
+    }
+    double[] singularValues = svd.getSingularValues();
+    int count = svd.numberOfSingularValues();
+    double largest = 0.0;
+    for (int index = 0; index < count; index++) {
+      largest = Math.max(largest, singularValues[index]);
+    }
+    double tolerance = Math.max(matrix.getNumRows(), matrix.getNumCols()) * Math.ulp(1.0) * largest;
+    int rank = 0;
+    for (int index = 0; index < count; index++) {
+      if (singularValues[index] > tolerance) {
+        rank++;
+      }
+    }
+    return rank;
+  }
+
+  /**
+   * Creates a column vector from an array.
+   *
+   * @param values vector values
+   * @return column vector
+   */
+  private static DMatrixRMaj columnVector(double[] values) {
+    return new DMatrixRMaj(values.length, 1, true, values);
+  }
+
+  /**
+   * Creates a row vector from an array.
+   *
+   * @param values vector values
+   * @return row vector
+   */
+  private static DMatrixRMaj rowVector(double[] values) {
+    return new DMatrixRMaj(1, values.length, true, values);
+  }
+
+  /**
+   * Multiplies two dense matrices.
+   *
+   * @param matrixA left operand
+   * @param matrixB right operand
+   * @return matrix product
+   */
+  private static DMatrixRMaj multiply(DMatrixRMaj matrixA, DMatrixRMaj matrixB) {
+    DMatrixRMaj product = new DMatrixRMaj(matrixA.getNumRows(), matrixB.getNumCols());
+    CommonOps_DDRM.mult(matrixA, matrixB, product);
+    return product;
+  }
+
+  /**
+   * Adds two dense matrices.
+   *
+   * @param matrixA left operand
+   * @param matrixB right operand
+   * @return matrix sum
+   */
+  private static DMatrixRMaj add(DMatrixRMaj matrixA, DMatrixRMaj matrixB) {
+    DMatrixRMaj sum = new DMatrixRMaj(matrixA.getNumRows(), matrixA.getNumCols());
+    CommonOps_DDRM.add(matrixA, matrixB, sum);
+    return sum;
+  }
+
+  /**
+   * Subtracts one dense matrix from another.
+   *
+   * @param matrixA minuend
+   * @param matrixB subtrahend
+   * @return matrix difference
+   */
+  private static DMatrixRMaj subtract(DMatrixRMaj matrixA, DMatrixRMaj matrixB) {
+    DMatrixRMaj difference = new DMatrixRMaj(matrixA.getNumRows(), matrixA.getNumCols());
+    CommonOps_DDRM.subtract(matrixA, matrixB, difference);
+    return difference;
+  }
+
+  /**
+   * Transposes a dense matrix.
+   *
+   * @param matrix matrix to transpose
+   * @return transposed matrix
+   */
+  private static DMatrixRMaj transpose(DMatrixRMaj matrix) {
+    DMatrixRMaj transposed = new DMatrixRMaj(matrix.getNumCols(), matrix.getNumRows());
+    CommonOps_DDRM.transpose(matrix, transposed);
+    return transposed;
+  }
+
+  /**
+   * Inserts a dense block at the specified row and column offsets.
+   *
+   * @param block matrix block to insert
+   * @param destination matrix receiving the block
+   * @param row row offset
+   * @param column column offset
+   */
+  private static void insert(DMatrixRMaj block, DMatrixRMaj destination, int row, int column) {
+    CommonOps_DDRM.insert(block, destination, row, column);
+  }
+
+  /**
+   * Copies a contiguous range of entries from a column vector.
+   *
+   * @param matrix source column vector
+   * @param firstRow inclusive first row
+   * @param endRow exclusive end row
+   * @return the selected column vector
+   */
+  private static DMatrixRMaj rowRange(DMatrixRMaj matrix, int firstRow, int endRow) {
+    DMatrixRMaj range = new DMatrixRMaj(endRow - firstRow, matrix.getNumCols());
+    CommonOps_DDRM.extract(matrix, firstRow, endRow, 0, matrix.getNumCols(), range, 0, 0);
+    return range;
   }
 }

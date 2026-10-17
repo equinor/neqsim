@@ -133,19 +133,23 @@ public final class LevenbergMarquardtResult implements Serializable {
   }
 
   /**
-   * Returns a copy of the fitted-parameter covariance matrix.
+   * Returns the fitted-parameter covariance matrix as a Jama compatibility copy.
    *
    * @return covariance matrix, or null if unavailable
+   * @deprecated Use {@link #getCovarianceMatrixArray()}.
    */
+  @Deprecated
   public Matrix getCovarianceMatrix() {
     return covarianceMatrix == null ? null : new Matrix(copyMatrixArray(covarianceMatrix));
   }
 
   /**
-   * Returns a copy of the fitted-parameter correlation matrix.
+   * Returns the fitted-parameter correlation matrix as a Jama compatibility copy.
    *
    * @return correlation matrix, or null if unavailable
+   * @deprecated Use {@link #getCorrelationMatrixArray()}.
    */
+  @Deprecated
   public Matrix getCorrelationMatrix() {
     return correlationMatrix == null ? null : new Matrix(copyMatrixArray(correlationMatrix));
   }
@@ -175,16 +179,6 @@ public final class LevenbergMarquardtResult implements Serializable {
    */
   public double[] getParameterStandardErrors() {
     return copyArray(parameterStandardErrors);
-  }
-
-  /**
-   * Copies matrix values into an array.
-   *
-   * @param matrix matrix to copy
-   * @return copied matrix values, or null if matrix is null
-   */
-  private static double[][] matrixToArray(Matrix matrix) {
-    return matrix == null ? null : copyMatrixArray(matrix.getArray());
   }
 
   /**

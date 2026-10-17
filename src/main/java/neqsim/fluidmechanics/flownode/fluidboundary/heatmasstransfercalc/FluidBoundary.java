@@ -13,6 +13,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
@@ -22,6 +23,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Abstract FluidBoundary class.
+ *
+ * <p>
+ * Nonideal-correction, flux-type correction and interphase-flux state use EJML and primitive arrays. Serialized
+ * instances containing the former Jama correction and flux fields are not compatible; the exported mass-transfer
+ * coefficient array remains live Jama storage for API compatibility.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -44,15 +51,15 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   public boolean[] finiteFluxCorrection;
   // protected double[] dn;
   protected boolean numeric = false;
-  protected Matrix jFlux;
-  protected Matrix nFlux;
+  protected DMatrixRMaj jFlux;
+  protected DMatrixRMaj nFlux;
   protected EnhancementFactor enhancementFactor;
   // protected double[][][] massTransferCoefficient;
   protected double totalFlux = 0;
-  protected Matrix[] nonIdealCorrections;
-  protected Matrix[] fluxTypeCorrectionMatrix;
+  protected DMatrixRMaj[] nonIdealCorrections;
+  protected double[][] fluxTypeCorrectionMatrix;
   protected Matrix[] rateCorrectionMatrix;
-  protected Matrix[] fluxTypeCorrectionMatrixV;
+  protected double[][] fluxTypeCorrectionMatrixV;
   protected Matrix[] totalMassTransferCoefficientMatrix;
   protected Matrix[] massTransferCoefficientMatrix;
   protected double[][][] binarySchmidtNumber;
@@ -70,19 +77,14 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   public FluidBoundary(SystemInterface system) {
     this.bulkSystem = system;
     bulkSystemOps = new ThermodynamicOperations(bulkSystem);
-    nonIdealCorrections = new Matrix[2];
-    fluxTypeCorrectionMatrix = new Matrix[2];
-    fluxTypeCorrectionMatrixV = new Matrix[2];
+    nonIdealCorrections = new DMatrixRMaj[2];
+    fluxTypeCorrectionMatrix = new double[2][];
+    fluxTypeCorrectionMatrixV = new double[2][];
     rateCorrectionMatrix = new Matrix[2];
     totalMassTransferCoefficientMatrix = new Matrix[2];
     massTransferCoefficientMatrix = new Matrix[2];
-    jFlux = new Matrix(system.getPhases()[0].getNumberOfComponents() - 1, 1);
-    nFlux = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
-    nFlux.set(0, 0, 0.0);
-    if (system.getPhases()[0].getNumberOfComponents() > 1) {
-      nFlux.set(1, 0, 0.0);
-    }
-    // nFlux.set(1, 0, 0.0);
+    jFlux = new DMatrixRMaj(system.getPhases()[0].getNumberOfComponents() - 1, 1);
+    nFlux = new DMatrixRMaj(system.getPhases()[0].getNumberOfComponents(), 1);
     heatTransferCoefficient = new double[2];
     heatTransferCorrection = new double[2];
     thermodynamicCorrections = new boolean[2];
@@ -148,7 +150,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     }
 
     clonedSystem.interphaseSystem = interphaseSystem.clone();
-    clonedSystem.nFlux = (Matrix) nFlux.clone();
+    clonedSystem.nFlux = nFlux.copy();
 
     return clonedSystem;
   }
@@ -246,26 +248,19 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * @param k a int
    */
   public void calcFluxTypeCorrectionMatrix(int phaseNum, int k) {
-    fluxTypeCorrectionMatrixV[phaseNum] = new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents(), 1);
-    fluxTypeCorrectionMatrix[phaseNum] = new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 1);
-    double temp = 0;
+    int componentCount = bulkSystem.getPhase(phaseNum).getNumberOfComponents();
+    fluxTypeCorrectionMatrixV[phaseNum] = new double[componentCount];
+    fluxTypeCorrectionMatrix[phaseNum] = new double[componentCount - 1];
 
-    double sum = 0;
-    for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
-      temp = (i == k) ? 1.0 : 0.0;
-      fluxTypeCorrectionMatrixV[phaseNum].set(i, 0, temp);
-      sum += fluxTypeCorrectionMatrixV[phaseNum].get(i, 0) * bulkSystem.getPhase(phaseNum).getComponent(i).getx();
+    double sum = 0.0;
+    for (int i = 0; i < componentCount - 1; i++) {
+      fluxTypeCorrectionMatrixV[phaseNum][i] = i == k ? 1.0 : 0.0;
+      sum += fluxTypeCorrectionMatrixV[phaseNum][i] * bulkSystem.getPhase(phaseNum).getComponent(i).getx();
     }
 
-    sum += fluxTypeCorrectionMatrixV[phaseNum].get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0)
-        * bulkSystem.getPhase(phaseNum).getComponents()[bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1]
-            .getx();
-
-    for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
-      fluxTypeCorrectionMatrix[phaseNum].set(i, 0,
-          (fluxTypeCorrectionMatrixV[phaseNum].get(i, 0)
-              - fluxTypeCorrectionMatrixV[phaseNum].get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0))
-              / sum);
+    for (int i = 0; i < componentCount - 1; i++) {
+      fluxTypeCorrectionMatrix[phaseNum][i] = (fluxTypeCorrectionMatrixV[phaseNum][i]
+          - fluxTypeCorrectionMatrixV[phaseNum][componentCount - 1]) / sum;
     }
   }
 
@@ -275,7 +270,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * @param phaseNum a int
    */
   public void calcNonIdealCorrections(int phaseNum) {
-    nonIdealCorrections[phaseNum] = new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1,
+    nonIdealCorrections[phaseNum] = new DMatrixRMaj(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1,
         bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1);
     double temp = 0;
     for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {

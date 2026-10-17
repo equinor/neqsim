@@ -65,6 +65,13 @@ class FilmCorrectionInvariantTest {
     private Matrix expectedStep;
     private Matrix expectedState;
 
+    /** {@inheritDoc} */
+    @Override
+    public void setfvecMassTrans2() {
+      super.setfvecMassTrans2();
+      assertMassTransferResidualsMatchJama();
+    }
+
     /**
      * Creates a film using the real flow-node transport correlations.
      *
@@ -90,6 +97,8 @@ class FilmCorrectionInvariantTest {
       assertSame(uMassTrans, cloned.uMassTrans);
       assertSame(uMassTransold, cloned.uMassTransold);
       assertSame(Xgij, cloned.Xgij);
+      assertNotSame(nFlux, cloned.nFlux);
+      assertArrayEquals(nFlux.getData(), cloned.nFlux.getData(), 0.0);
       Matrix[] exported = getMassTransferCoefficientMatrix();
       assertSame(massTransferCoefficientMatrix, exported);
       Matrix replacement = exported[0].copy();
@@ -104,7 +113,7 @@ class FilmCorrectionInvariantTest {
      * @throws ClassNotFoundException if a serialized working-matrix class cannot be resolved
      */
     private void checkWorkingStateSerialization() throws IOException, ClassNotFoundException {
-      DMatrixRMaj[] matrices = {Jac, fvec, uMassTrans, uMassTransold, Xgij};
+      DMatrixRMaj[] matrices = {Jac, fvec, uMassTrans, uMassTransold, Xgij, nFlux};
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
       try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
         output.writeObject(matrices);
@@ -120,6 +129,39 @@ class FilmCorrectionInvariantTest {
         assertNotSame(matrices[index].getData(), restored[index].getData());
       }
       assertNotSame(restored[2].getData(), restored[3].getData());
+      assertNotSame(restored[2].getData(), restored[5].getData());
+    }
+
+    /**
+     * Checks the production residual entries against the former Jama vector/matrix equations.
+     */
+    private void assertMassTransferResidualsMatchJama() {
+      int componentCount = bulkSystem.getPhases()[0].getNumberOfComponents();
+      Matrix dx = new Matrix(1, componentCount - 1);
+      Matrix dy = new Matrix(1, componentCount - 1);
+      Matrix x = new Matrix(1, componentCount - 1);
+      Matrix y = new Matrix(1, componentCount - 1);
+      for (int component = 0; component < componentCount - 1; component++) {
+        dx.set(0, component, bulkSystem.getPhases()[1].getComponent(component).getx()
+            - interphaseSystem.getPhases()[1].getComponent(component).getx());
+        dy.set(0, component, bulkSystem.getPhases()[0].getComponent(component).getx()
+            - interphaseSystem.getPhases()[0].getComponent(component).getx());
+        x.set(0, component, bulkSystem.getPhases()[1].getComponent(component).getx());
+        y.set(0, component, bulkSystem.getPhases()[0].getComponent(component).getx());
+      }
+      Matrix fluxX = totalMassTransferCoefficientMatrix[1].times(dx.transpose()).times(
+          bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[1].getMolarMass());
+      Matrix fluxY = totalMassTransferCoefficientMatrix[0].times(dy.transpose()).times(
+          bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[0].getMolarMass());
+      Matrix nFluxJama = asJama(nFlux);
+      Matrix errX = nFluxJama.getMatrix(0, componentCount - 2, 0, 0).plus(fluxX).minus(x.transpose().times(totalFlux));
+      Matrix errY = nFluxJama.getMatrix(0, componentCount - 2, 0, 0).minus(fluxY).minus(y.transpose().times(totalFlux));
+      for (int component = 0; component < componentCount - 1; component++) {
+        assertEquals(errX.get(component, 0), fvec.get(componentCount + 2 + component, 0),
+            Math.max(1.0e-12, Math.abs(errX.get(component, 0)) * 1.0e-12));
+        assertEquals(errY.get(component, 0), fvec.get(2 * componentCount + 1 + component, 0),
+            Math.max(1.0e-12, Math.abs(errY.get(component, 0)) * 1.0e-12));
+      }
     }
 
     /** {@inheritDoc} */
@@ -284,7 +326,7 @@ class FilmCorrectionInvariantTest {
     Film() {
       super(fluid());
       massTransferCoefficientMatrix[1] = new Matrix(new double[][] {{2.0, 0.0}, {0.0, 3.0}});
-      nonIdealCorrections[1] = new Matrix(new double[][] {{1.5, 0.1}, {0.2, 1.2}});
+      nonIdealCorrections[1] = new DMatrixRMaj(new double[][] {{1.5, 0.1}, {0.2, 1.2}});
       rateCorrectionMatrix[1] = Matrix.identity(2, 2);
       for (double[] row : binaryMassTransferCoefficient[1]) {
         Arrays.fill(row, 0.01);
@@ -299,14 +341,37 @@ class FilmCorrectionInvariantTest {
       return totalMassTransferCoefficientMatrix[1];
     }
 
+    Matrix calculateMassTransferCoefficients(int phase) {
+      calcMassTransferCoefficients(phase);
+      return massTransferCoefficientMatrix[phase];
+    }
+
     Matrix correctedFlux(double[] flux) {
-      nFlux = new Matrix(flux, flux.length);
+      nFlux = new DMatrixRMaj(flux.length, 1, true, flux);
       initCorrections(1);
       return rateCorrectionMatrix[1];
     }
 
     void setRate(Matrix correction) {
       rateCorrectionMatrix[1] = correction;
+    }
+
+    double[] calculateFluxTypeCorrection(int phase, int component) {
+      calcFluxTypeCorrectionMatrix(phase, component);
+      return fluxTypeCorrectionMatrix[phase].clone();
+    }
+  }
+
+  @Test
+  void fluxTypeCorrectionUsesTheIndependentComponentBasis() {
+    Film film = new Film();
+    int selectedComponent = 1;
+    double[] correction = film.calculateFluxTypeCorrection(1, selectedComponent);
+    double selectedMoleFraction = film.getBulkSystem().getPhase(1).getComponent(selectedComponent).getx();
+
+    assertEquals(film.getBulkSystem().getPhase(1).getNumberOfComponents() - 1, correction.length);
+    for (int component = 0; component < correction.length; component++) {
+      assertEquals(component == selectedComponent ? 1.0 / selectedMoleFraction : 0.0, correction[component], 1e-12);
     }
   }
 
@@ -329,6 +394,35 @@ class FilmCorrectionInvariantTest {
     Matrix thermodynamic = film.evaluate(1.0, true, false).copy();
     assertMatrix(correction.times(k), film.evaluate(1.0, false, true));
     assertMatrix(correction.times(thermodynamic), film.evaluate(1.0, true, true));
+  }
+
+  /**
+   * Checks the assembled resistance inverse against raw Jama on the existing real-fluid film fixture.
+   */
+  @Test
+  void massTransferCoefficientInverseMatchesJamaReference() {
+    Film film = new Film();
+    int componentCount = film.getBulkSystem().getPhase(1).getNumberOfComponents();
+    int independentComponents = componentCount - 1;
+    Matrix resistance = new Matrix(independentComponents, independentComponents);
+    for (int i = 0; i < independentComponents; i++) {
+      double diagonal = 0.0;
+      for (int j = 0; j < componentCount; j++) {
+        double coefficient = film.binaryMassTransferCoefficient[1][i][j];
+        if (i != j) {
+          diagonal += film.getBulkSystem().getPhase(1).getComponent(j).getx() / coefficient;
+        }
+        if (j < independentComponents) {
+          resistance.set(i, j, -film.getBulkSystem().getPhase(1).getComponent(i).getx()
+              * (1.0 / coefficient - 1.0 / film.binaryMassTransferCoefficient[1][i][independentComponents]));
+        }
+      }
+      resistance.set(i, i, diagonal + film.getBulkSystem().getPhase(1).getComponent(i).getx()
+          / film.binaryMassTransferCoefficient[1][i][independentComponents]);
+    }
+    Matrix expected = resistance.inverse();
+
+    assertMatrix(expected, film.calculateMassTransferCoefficients(1));
   }
 
   @Test
@@ -359,7 +453,7 @@ class FilmCorrectionInvariantTest {
     ReactiveFilm() {
       super(fluid());
       massTransferCoefficientMatrix[1] = new Matrix(new double[][] {{2.0, 0.4}, {0.5, 3.0}});
-      nonIdealCorrections[1] = Matrix.identity(2, 2);
+      nonIdealCorrections[1] = new DMatrixRMaj(new double[][] {{1.0, 0.0}, {0.0, 1.0}});
       rateCorrectionMatrix[1] = Matrix.identity(2, 2);
       enhancementFactor = new EnhancementFactor(this) {
         @Override

@@ -55,8 +55,8 @@ class LevenbergMarquardtRegressionTest {
 
     LevenbergMarquardtResult result = optimizer.getResult();
     double[] parameterStandardErrors = result.getParameterStandardErrors();
-    Matrix covariance = result.getCovarianceMatrix();
-    Matrix correlation = result.getCorrelationMatrix();
+    double[][] covariance = result.getCovarianceMatrixArray();
+    double[][] correlation = result.getCorrelationMatrixArray();
 
     assertTrue(result.isConverged(), result.getConvergenceReason().name());
     assertEquals(2.5, function.getFittingParams(0), 1.0e-6);
@@ -67,12 +67,37 @@ class LevenbergMarquardtRegressionTest {
     assertTrue(result.getGradientNorm() < 1.0e-2);
     assertNotNull(covariance);
     assertNotNull(correlation);
-    assertEquals(2, covariance.getRowDimension());
-    assertEquals(2, correlation.getRowDimension());
+    assertEquals(2, covariance.length);
+    assertEquals(2, correlation.length);
     assertNotNull(parameterStandardErrors);
     assertEquals(2, parameterStandardErrors.length);
     assertTrue(parameterStandardErrors[0] > 0.0);
     assertTrue(parameterStandardErrors[1] > 0.0);
+  }
+
+  /**
+   * Verifies the deprecated Jama accessors preserve their column-independent shape and defensive-copy semantics.
+   */
+  @SuppressWarnings("deprecation")
+  @Test
+  void legacyJamaMatrixGettersReturnDefensiveCopies() {
+    double[][] covarianceValues = {{4.0, 1.0}, {1.0, 9.0}};
+    double[][] correlationValues = {{1.0, 0.25}, {0.25, 1.0}};
+    LevenbergMarquardtResult result = new LevenbergMarquardtResult(
+        LevenbergMarquardtResult.ConvergenceReason.CHI_SQUARE_TOLERANCE, 2, 0.0, 0.0, covarianceValues,
+        correlationValues, new double[] {2.0, 3.0});
+
+    Matrix covariance = result.getCovarianceMatrix();
+    Matrix correlation = result.getCorrelationMatrix();
+    assertEquals(2, covariance.getRowDimension());
+    assertEquals(2, covariance.getColumnDimension());
+    assertEquals(2, correlation.getRowDimension());
+    assertEquals(2, correlation.getColumnDimension());
+    covariance.set(0, 0, -1.0);
+    correlation.set(0, 0, -1.0);
+
+    assertEquals(4.0, result.getCovarianceMatrixArray()[0][0], 0.0);
+    assertEquals(1.0, result.getCorrelationMatrixArray()[0][0], 0.0);
   }
 
   /**

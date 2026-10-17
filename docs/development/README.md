@@ -35,7 +35,7 @@ This folder contains documentation for:
 | [CONTINUOUS_TASK_SOLVING.md](CONTINUOUS_TASK_SOLVING) | Living tasks: keep a solved task improving with monitor cycles and solve loops — setup, backtesting, scheduling, headless agents, ledger and baseline promotion |
 | [Solve an Engineering Task](../tutorials/solve-engineering-task) | Hands-on tutorial: from blank screen to validated report |
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
-| [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
+| `TASK_LOG.md` (local only; ignored by Git) | Persistent memory — searchable log of all solved tasks |
 | [LESSONS_LEARNED.md](LESSONS_LEARNED) | Practical lessons from 45+ solved tasks (EOS, convergence, API gotchas) |
 | [image_tools_agents_skills.md](image_tools_agents_skills) | Inventory of image-related tools, agents, and skills for P&IDs, drawings, scanned PDFs, maps, and screenshots |
 | [AGENT_SKILL_MAP.md](AGENT_SKILL_MAP) | Auto-generated map of which skills each NeqSim agent loads at invocation time |

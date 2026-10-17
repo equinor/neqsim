@@ -1793,7 +1793,7 @@ Document the independent check in `step2_analysis/notes.md` under a
     git add src/test/java/neqsim/...              # tests
     git add examples/notebooks/...                 # notebooks
     git add docs/...                               # documentation
-    git add docs/development/TASK_LOG.md           # task log entry
+    # TASK_LOG.md remains local and is ignored by Git; do not stage it.
 
     # Commit with descriptive message
     git commit -m "Add [description] from task: [TITLE]"
