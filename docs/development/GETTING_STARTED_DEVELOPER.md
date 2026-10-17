@@ -520,7 +520,7 @@ Once you're comfortable with the basics:
 
 ### Deepen Understanding
 - **[Code Patterns](CODE_PATTERNS.md)** - Copy-paste starters for common tasks
-- **[Task Log](TASK_LOG.md)** - See what problems have been solved before
+- **Local task log (`docs/development/TASK_LOG.md`; ignored by Git)** - See what problems have been solved before
 - **[AI Agents](../../.github/agents/)** - Automate repetitive tasks
 
 ### Advanced Topics

@@ -1,13 +1,14 @@
 package neqsim.thermodynamicoperations.flashops;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.Disabled;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
@@ -364,6 +365,46 @@ class NewtonSolverAnalysisTest {
     logger.info(String.format("JAMA (new alloc each): %.0f ns/call", (double) jamaTime / N));
     logger.info(String.format("EJML (pre-allocated):  %.0f ns/call", (double) ejmlTime / N));
     logger.info(String.format("Speedup:               %.2fx", (double) jamaTime / ejmlTime));
+  }
+
+  /**
+   * Compares the direct EJML step with raw Jama on the existing two-phase medium-gas fixture.
+   */
+  @SuppressWarnings("deprecation")
+  @Test
+  void deprecatedTpFlashNewtonStepMatchesJamaOnMediumGas() {
+    SystemInterface system = createMediumGas();
+    new ThermodynamicOperations(system).TPflash();
+    SysNewtonRhapsonTPflashNew flash = new SysNewtonRhapsonTPflashNew(system, system.getNumberOfPhases(),
+        system.getPhase(0).getNumberOfComponents());
+    flash.init();
+    flash.setfvec();
+    flash.setJac();
+
+    Matrix expected = copyToJama(flash.Jac).solve(copyToJama(flash.fvec));
+    DMatrixRMaj actual = flash.solveJacobianStep();
+
+    for (int row = 0; row < actual.getNumRows(); row++) {
+      double expectedValue = expected.get(row, 0);
+      assertTrue(Double.isFinite(expectedValue), "Reference step must be finite at row " + row);
+      assertEquals(expectedValue, actual.get(row, 0), Math.max(1.0e-10, Math.abs(expectedValue) * 1.0e-8));
+    }
+  }
+
+  /**
+   * Copies an EJML matrix to Jama for a numerical reference check.
+   *
+   * @param matrix EJML matrix
+   * @return copied Jama matrix
+   */
+  private static Matrix copyToJama(DMatrixRMaj matrix) {
+    double[][] values = new double[matrix.getNumRows()][matrix.getNumCols()];
+    for (int row = 0; row < matrix.getNumRows(); row++) {
+      for (int column = 0; column < matrix.getNumCols(); column++) {
+        values[row][column] = matrix.get(row, column);
+      }
+    }
+    return new Matrix(values);
   }
 
   /**

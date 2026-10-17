@@ -416,7 +416,7 @@ Regenerate it whenever documents are added and before finalizing the task.
    # Copy reusable files to proper locations (NEVER commit task_solve/ contents)
    cp task_solve/.../notebook.ipynb examples/notebooks/
    cp task_solve/.../SomeTest.java src/test/java/neqsim/...
-   git add examples/notebooks/ src/test/java/ docs/development/TASK_LOG.md
+   git add examples/notebooks/ src/test/java/
    git commit -m "Add [description] from task: [title]"
    git push -u origin task/task-slug
    gh pr create --title "Add [description]" --body "From task-solving workflow"

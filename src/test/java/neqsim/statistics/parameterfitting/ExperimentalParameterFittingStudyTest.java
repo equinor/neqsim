@@ -69,7 +69,7 @@ class ExperimentalParameterFittingStudyTest {
     assertTrue(result.getRootMeanSquareError() < 1.0e-5);
     assertTrue(result.getMeanAbsoluteError() < 1.0e-5);
     assertTrue(result.getWeightedRootMeanSquareError() < 1.0e-4);
-    assertNotNull(result.getOptimizerResult().getCovarianceMatrix());
+    assertNotNull(result.getOptimizerResult().getCovarianceMatrixArray());
   }
 
   /**

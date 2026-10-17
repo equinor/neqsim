@@ -696,7 +696,7 @@ git rebase origin/master    # Or merge if you prefer
 ## Next Steps
 
 - Explore [Code Patterns](CODE_PATTERNS.md) - Copy-paste starters
-- Read [Task Log](TASK_LOG.md) - Past solutions
+- Read Local task log (`docs/development/TASK_LOG.md`; ignored by Git) - Past solutions
 - Try [AI Agents](../../.github/agents/) - Automate common tasks
 ```
 

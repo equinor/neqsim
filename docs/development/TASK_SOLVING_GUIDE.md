@@ -1747,7 +1747,7 @@ Instructions:
    - Tests → src/test/java/neqsim/
 9. Create a PR:
    git checkout -b task/[slug]
-   git add examples/notebooks/ src/test/java/ docs/development/TASK_LOG.md
+   git add examples/notebooks/ src/test/java/
    git commit -m "Add [description] from task: [title]"
    git push -u origin task/[slug]
    gh pr create --title "Add [description]" --body "From task-solving workflow"
@@ -1783,7 +1783,7 @@ git checkout -b task/your-task-name
 # Copy and stage reusable outputs (don't commit task_solve/ contents)
 git add src/test/java/neqsim/...              # tests
 git add examples/notebooks/...                 # notebooks
-git add docs/development/TASK_LOG.md           # task log entry
+# TASK_LOG.md remains local and is ignored by Git; do not stage it.
 
 # Commit and push
 git commit -m "Add [description] from task: [title]"

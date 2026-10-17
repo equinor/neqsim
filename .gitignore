@@ -121,6 +121,8 @@ __pycache__/
 
 # Task-solving workspace (local working area, not tracked)
 task_solve/
+# Task log is local memory and may contain non-public task details - never commit it
+docs/development/TASK_LOG.md
 devtools/neqsim_dev_setup.egg-info/dependency_links.txt
 devtools/neqsim_dev_setup.egg-info/top_level.txt
 devtools/neqsim_dev_setup.egg-info/requires.txt

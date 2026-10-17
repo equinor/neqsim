@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * Comprehensive benchmark tests comparing built-in solver types on standard distillation problems. These tests validate
  * the improvements described in the distillation column paper.
  */
-@Tag("slow")
+@Tag("benchmark")
 public class DistillationSolverBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(DistillationSolverBenchmarkTest.class);
 

@@ -1,7 +1,11 @@
 package neqsim.chemicalreactions.chemicalreaction;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
+import Jama.Matrix;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 
@@ -71,5 +75,53 @@ class ChemicalReactionListReferencePotentialTest {
 
     assertEquals(4, list.getChemicalReactionList().size());
     assertReactionIdentities(list);
+  }
+
+  /**
+   * Verifies the reaction-rate column combines every reaction and follows the supplied component ordering.
+   */
+  @SuppressWarnings("deprecation")
+  @Test
+  void reactionRatesReturnArrayAndDeprecatedJamaBridgeMatches() {
+    SystemInterface system = createSystem(new String[] {"CO2", "water"}, new double[] {0.1, 10.0});
+    system.initProperties();
+    PhaseInterface phase = system.getPhase(0);
+    ChemicalReactionList list = system.getChemicalReactionOperations().getReactionList();
+    String[] reactiveNames = list.getAllComponents();
+    ComponentInterface[] components = new ComponentInterface[reactiveNames.length];
+    for (int index = 0; index < reactiveNames.length; index++) {
+      components[index] = phase.getComponent(reactiveNames[index]);
+    }
+    list.createReactionMatrix(phase, components);
+
+    double[] rates = list.calcReationRates(phase, components);
+
+    assertEquals(components.length, rates.length);
+    Matrix legacyRates = list.calcReacRates(phase, components);
+    assertEquals(components.length, legacyRates.getRowDimension());
+    assertEquals(1, legacyRates.getColumnDimension());
+    assertArrayEquals(rates, legacyRates.getColumnPackedCopy(), 0.0);
+    double[][] stoichiometry = list.getReactionMatrix();
+    double concentrationFactor = phase.getDensity() / phase.getMolarMass();
+    for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
+      double expectedRate = 0.0;
+      for (int reactionIndex = 0; reactionIndex < list.getChemicalReactionList().size(); reactionIndex++) {
+        ChemicalReaction reaction = list.getReaction(reactionIndex);
+        double forward = reaction.getRateFactor();
+        double backward = reaction.getK(phase) / reaction.getRateFactor();
+        for (int speciesIndex = 0; speciesIndex < components.length; speciesIndex++) {
+          double activity = Math.pow(components[speciesIndex].getx() * concentrationFactor,
+              Math.abs(stoichiometry[reactionIndex][speciesIndex]));
+          if (stoichiometry[reactionIndex][speciesIndex] > 0.0) {
+            forward *= activity;
+          }
+          if (stoichiometry[reactionIndex][speciesIndex] < 0.0) {
+            backward *= activity;
+          }
+        }
+        expectedRate += stoichiometry[reactionIndex][componentIndex] * (forward - backward);
+      }
+      assertEquals(expectedRate, rates[componentIndex], Math.max(1.0e-12, Math.abs(expectedRate) * 1.0e-12));
+    }
   }
 }

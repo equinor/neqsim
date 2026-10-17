@@ -902,7 +902,6 @@ git checkout -b task/your-task-name
 # 2. Stage the files you want to contribute
 git add src/test/java/neqsim/...             # tests
 git add examples/notebooks/your_notebook.ipynb # notebook
-git add docs/development/TASK_LOG.md          # task log entry
 
 # 3. Commit and push
 git commit -m "Add [description] from task solving workflow"

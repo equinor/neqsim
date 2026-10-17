@@ -12,6 +12,8 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
 
 jobs:
   changes:
@@ -293,23 +295,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes, test_java_slow]
     if: always() && (needs.changes.result != 'success' || needs.changes.outputs.run_tests == 'true')
-    steps:
-      - name: Require every slow-test shard to pass
-        env:
-          SLOW_TEST_RESULT: ${{ needs.test_java_slow.result }}
-        run: test "$SLOW_TEST_RESULT" = success
-
-  # Preserve the four historical required-check contexts while eight jobs run
-  # the numerical tests. Every compatibility context requires ALL shards.
-  test_java_slow_compatibility:
-    name: Assert slow tests (${{ matrix.label }}) with Java 21 on Ubuntu
-    runs-on: ubuntu-latest
-    needs: [changes, test_java_slow]
-    if: always() && (needs.changes.result != 'success' || needs.changes.outputs.run_tests == 'true')
-    strategy:
-      fail-fast: false
-      matrix:
-        label: [1/4, 2/4, 3/4, 4/4]
     steps:
       - name: Require every slow-test shard to pass
         env:

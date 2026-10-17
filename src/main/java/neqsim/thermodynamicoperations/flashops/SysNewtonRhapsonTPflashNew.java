@@ -1,17 +1,22 @@
 package neqsim.thermodynamicoperations.flashops;
 
-import Jama.Matrix;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.NormOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Legacy JAMA-based Newton-Raphson TP-flash solver retained for compatibility.
+ * Legacy Newton-Raphson TP-flash solver retained for compatibility.
  *
  * <p>
  * The production TP-flash path uses {@link SysNewtonRhapsonTPflash}. New callers should use
  * {@link neqsim.thermodynamicoperations.ThermodynamicOperations#TPflash()} for phase stability and equilibrium
  * orchestration. The two low-level Newton solvers use different variables and are not interchangeable iteration states.
- * Existing direct users must validate their fluid cases when migrating.
+ * Existing direct users must validate their fluid cases when migrating. Internal Newton matrices use EJML; serialized
+ * instances written with the former Jama matrix fields are incompatible.
  * </p>
  *
  * @author asmund
@@ -38,18 +43,18 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
   double TC2 = 0;
   double PC1 = 0;
   double PC2 = 0;
-  Matrix Jac;
-  Matrix fvec;
-  Matrix u;
-  Matrix uold;
-  Matrix Xgij;
+  DMatrixRMaj Jac;
+  DMatrixRMaj fvec;
+  DMatrixRMaj u;
+  DMatrixRMaj uold;
+  DMatrixRMaj Xgij;
   SystemInterface system;
   int numberOfComponents;
   int speceq = 0;
-  Matrix a = new Matrix(4, 4);
-  Matrix s = new Matrix(1, 4);
-  Matrix xg;
-  Matrix xcoef;
+  DMatrixRMaj a = new DMatrixRMaj(4, 4);
+  DMatrixRMaj s = new DMatrixRMaj(1, 4);
+  DMatrixRMaj xg;
+  DMatrixRMaj xcoef;
   NewtonRhapson solver;
   boolean etterCP = false;
   boolean etterCP2 = false;
@@ -65,10 +70,10 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     neq = numberOfComponents + 1;
-    Jac = new Matrix(neq, neq);
-    fvec = new Matrix(neq, 1);
-    u = new Matrix(neq, 1);
-    Xgij = new Matrix(neq, 4);
+    Jac = new DMatrixRMaj(neq, neq);
+    fvec = new DMatrixRMaj(neq, 1);
+    u = new DMatrixRMaj(neq, 1);
+    Xgij = new DMatrixRMaj(neq, 4);
     setu();
     uold = u.copy();
     // System.out.println("Spec : " +speceq);
@@ -97,7 +102,7 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
    * setJac.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
+    CommonOps_DDRM.scale(0.0, Jac);
     double dij = 0.0;
     double[] dxidlnk = new double[numberOfComponents];
     double[] dyidlnk = new double[numberOfComponents];
@@ -170,18 +175,34 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
    * @param np a int
    */
   public void solve(int np) {
-    Matrix dx;
+    DMatrixRMaj dx;
     iter = 0;
     do {
       iter++;
       init();
       setfvec();
       setJac();
-      dx = Jac.solve(fvec);
-      u.minusEquals(dx);
+      dx = solveJacobianStep();
+      CommonOps_DDRM.subtractEquals(u, dx);
       // System.out.println("feilen: "+dx.norm2());
-    } while (dx.norm2() / u.norm2() > 1.e-10); // && Double.isNaN(dx.norm2()));
+    } while (NormOps_DDRM.normP2(dx) / NormOps_DDRM.normP2(u) > 1.e-10);
     // System.out.println("iter: "+iter);
     init();
+  }
+
+  /**
+   * Solves the current Newton system using direct EJML LU without finite-value validation.
+   *
+   * @return Newton step
+   * @throws IllegalStateException if EJML reports the Jacobian as singular
+   */
+  DMatrixRMaj solveJacobianStep() {
+    LinearSolverDense<DMatrixRMaj> linearSolver = LinearSolverFactory_DDRM.lu(neq);
+    if (!linearSolver.setA(Jac.copy())) {
+      throw new IllegalStateException("TP-flash Newton Jacobian is singular");
+    }
+    DMatrixRMaj step = new DMatrixRMaj(neq, 1);
+    linearSolver.solve(fvec, step);
+    return step;
   }
 }
