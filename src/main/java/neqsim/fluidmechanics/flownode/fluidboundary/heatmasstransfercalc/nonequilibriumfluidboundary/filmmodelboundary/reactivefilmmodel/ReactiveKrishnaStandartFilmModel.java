@@ -60,10 +60,10 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 
   /** {@inheritDoc} */
   @Override
-  public void calcTotalMassTransferCoefficientMatrix(int phase) {
+  public void calcTotalMassTransferCoefficientArray(int phase) {
     // First compute the corrected total mass transfer coefficient matrix (parent applies
     // thermodynamic and flux-type corrections via phi matrix and bootstrap)
-    super.calcTotalMassTransferCoefficientMatrix(phase);
+    super.calcTotalMassTransferCoefficientArray(phase);
 
     // Apply per-component enhancement factors to the corrected matrix.
     // Enhancement is applied as a diagonal scaling: E_i * [k*]_ij for each row i.
@@ -72,10 +72,21 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
     int n = getBulkSystem().getPhase(0).getNumberOfComponents() - 1;
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        double val = totalMassTransferCoefficientMatrix[phase].get(i, j);
-        totalMassTransferCoefficientMatrix[phase].set(i, j, val * enhVec[i]);
+        double val = totalMassTransferCoefficientMatrix[phase][i][j];
+        totalMassTransferCoefficientMatrix[phase][i][j] = val * enhVec[i];
       }
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @deprecated Use {@link #calcTotalMassTransferCoefficientArray(int)}.
+   */
+  @Deprecated
+  @Override
+  public void calcTotalMassTransferCoefficientMatrix(int phase) {
+    calcTotalMassTransferCoefficientArray(phase);
   }
 
   /**

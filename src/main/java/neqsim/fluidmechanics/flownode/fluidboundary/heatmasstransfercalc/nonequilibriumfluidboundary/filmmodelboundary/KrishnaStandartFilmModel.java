@@ -1,12 +1,13 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -17,7 +18,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * KrishnaStandartFilmModel class.
+ * Krishna-Standart film calculations with array-backed coefficient, correction and eigen data.
+ *
+ * <p>
+ * Commons Math supplies paired eigen data, and EJML evaluates the modal correction on primitive-array state. Serialized
+ * instances containing the former Jama eigen-data fields are not compatible with this layout.
  *
  * @author asmund
  * @version $Id: $Id
@@ -29,10 +34,10 @@ public class KrishnaStandartFilmModel extends
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
-  Matrix phiMatrix;
-  Matrix redPhiMatrix;
-  Matrix redCorrectionMatrix;
-  Matrix betaMatrix;
+  double[][] phiMatrix;
+  double[] redPhiMatrix;
+  double[] redCorrectionMatrix;
+  double[][] betaMatrix;
 
   /**
    * Constructor for KrishnaStandartFilmModel.
@@ -49,9 +54,9 @@ public class KrishnaStandartFilmModel extends
     Xgij = new DMatrixRMaj(neq, 4);
     this.setuMassTrans();
     uMassTransold = uMassTrans.copy();
-    phiMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    redCorrectionMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
+    int independentComponents = getBulkSystem().getPhases()[0].getNumberOfComponents() - 1;
+    phiMatrix = new double[independentComponents][independentComponents];
+    redCorrectionMatrix = new double[independentComponents];
   }
 
   /**
@@ -69,9 +74,9 @@ public class KrishnaStandartFilmModel extends
     Xgij = new DMatrixRMaj(neq, 4);
     this.setuMassTrans();
     uMassTransold = uMassTrans.copy();
-    phiMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    redCorrectionMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
+    int independentComponents = getBulkSystem().getPhases()[0].getNumberOfComponents() - 1;
+    phiMatrix = new double[independentComponents][independentComponents];
+    redCorrectionMatrix = new double[independentComponents];
   }
 
   /** {@inheritDoc} */
@@ -172,9 +177,13 @@ public class KrishnaStandartFilmModel extends
     }
     if (invalidInverse) {
       int dim = getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1;
-      massTransferCoefficientMatrix[phaseNum] = Matrix.identity(dim, dim);
+      double[][] identity = new double[dim][dim];
+      for (int index = 0; index < dim; index++) {
+        identity[index][index] = 1.0;
+      }
+      setMassTransferCoefficientArray(phaseNum, identity);
     } else {
-      massTransferCoefficientMatrix[phaseNum] = toJama(inverseMatrix);
+      setMassTransferCoefficientArray(phaseNum, toArray(inverseMatrix));
     }
     return 1;
   }
@@ -195,17 +204,15 @@ public class KrishnaStandartFilmModel extends
               * binaryMassTransferCoefficient[phaseNum][i][j]);
         }
         if (j < n) {
-          phiMatrix.set(i, j,
-              -nFlux.get(i, 0) * (1.0
-                  / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
-                      * binaryMassTransferCoefficient[phaseNum][i][j])
-                  - 1.0 / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
-                      * binaryMassTransferCoefficient[phaseNum][i][n])));
+          phiMatrix[i][j] = -nFlux.get(i, 0) * (1.0
+              / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
+                  * binaryMassTransferCoefficient[phaseNum][i][j])
+              - 1.0 / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
+                  * binaryMassTransferCoefficient[phaseNum][i][n]));
         }
       }
-      phiMatrix.set(i, i,
-          tempVar + nFlux.get(i, 0) / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
-              * binaryMassTransferCoefficient[phaseNum][i][n]));
+      phiMatrix[i][i] = tempVar + nFlux.get(i, 0) / (1.0 / (getBulkSystem().getPhase(phaseNum).getMolarVolume() * 1e-5)
+          * binaryMassTransferCoefficient[phaseNum][i][n]);
     }
   }
 
@@ -215,7 +222,42 @@ public class KrishnaStandartFilmModel extends
    * @param phase a int
    */
   public void calcRedPhiMatrix(int phase) {
-    redPhiMatrix = new Matrix(phiMatrix.eig().getRealEigenvalues(), 1);
+    double scale = phiMatrixScale();
+    redPhiMatrix = decomposePhiMatrix(scale).getRealEigenvalues();
+    for (int component = 0; component < redPhiMatrix.length; component++) {
+      redPhiMatrix[component] *= scale;
+    }
+  }
+
+  /**
+   * Finds a nonzero scale for the finite-flux eigensystem.
+   *
+   * @return largest absolute entry, or one for the zero matrix
+   */
+  private double phiMatrixScale() {
+    double scale = 0.0;
+    for (double[] row : phiMatrix) {
+      for (double value : row) {
+        scale = Math.max(scale, Math.abs(value));
+      }
+    }
+    return scale == 0.0 ? 1.0 : scale;
+  }
+
+  /**
+   * Decomposes a scaled copy to keep the Schur calculation independent of the flux magnitude.
+   *
+   * @param scale largest absolute finite-flux matrix entry, or one for the zero matrix
+   * @return eigensystem of the normalized matrix
+   */
+  private EigenDecomposition decomposePhiMatrix(double scale) {
+    double[][] normalized = new double[phiMatrix.length][phiMatrix.length];
+    for (int row = 0; row < phiMatrix.length; row++) {
+      for (int column = 0; column < phiMatrix.length; column++) {
+        normalized[row][column] = phiMatrix[row][column] / scale;
+      }
+    }
+    return new EigenDecomposition(new Array2DRowRealMatrix(normalized, false));
   }
 
   /**
@@ -225,7 +267,7 @@ public class KrishnaStandartFilmModel extends
    */
   public void calcRedCorrectionMatrix(int phaseNum) {
     for (int i = 0; i < getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
-      double z = redPhiMatrix.get(0, i);
+      double z = redPhiMatrix[i];
       double correction;
       if (Math.abs(z) < 1e-6) {
         // Analytic continuation of z * exp(z) / (exp(z) - 1), including z = 0.
@@ -235,7 +277,7 @@ public class KrishnaStandartFilmModel extends
       } else {
         correction = z * Math.exp(z) / Math.expm1(z);
       }
-      redCorrectionMatrix.set(i, 0, correction);
+      redCorrectionMatrix[i] = correction;
     }
   }
 
@@ -245,50 +287,73 @@ public class KrishnaStandartFilmModel extends
    * @param phaseNum a int
    */
   public void calcCorrectionMatrix(int phaseNum) {
-    Matrix modalPhiMatrix = phiMatrix.eig().getV();
-    Matrix diagonalRedCorrectionMatrix = new Matrix(getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1,
-        getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1);
-    for (int i = 0; i < getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
-      diagonalRedCorrectionMatrix.set(i, i, redCorrectionMatrix.get(i, 0));
+    EigenDecomposition eigen = decomposePhiMatrix(phiMatrixScale());
+    DMatrixRMaj modalPhiMatrix = new DMatrixRMaj(eigen.getV().getData());
+    int dimension = modalPhiMatrix.getNumRows();
+    DMatrixRMaj diagonalCorrection = new DMatrixRMaj(dimension, dimension);
+    for (int component = 0; component < dimension; component++) {
+      diagonalCorrection.set(component, component, redCorrectionMatrix[component]);
     }
-    rateCorrectionMatrix[phaseNum] = modalPhiMatrix.times(diagonalRedCorrectionMatrix.times(modalPhiMatrix.inverse()));
+    LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(dimension);
+    if (!solver.setA(modalPhiMatrix.copy())) {
+      throw new IllegalStateException("Finite-flux eigenvector matrix is singular for phase " + phaseNum);
+    }
+    DMatrixRMaj inverse = new DMatrixRMaj(dimension, dimension);
+    solver.invert(inverse);
+    DMatrixRMaj scaledInverse = new DMatrixRMaj(dimension, dimension);
+    CommonOps_DDRM.mult(diagonalCorrection, inverse, scaledInverse);
+    DMatrixRMaj correction = new DMatrixRMaj(dimension, dimension);
+    CommonOps_DDRM.mult(modalPhiMatrix, scaledInverse, correction);
+    rateCorrectionMatrix[phaseNum] = toArray(correction);
   }
 
   /**
    * Composes the coefficient matrix for column-vector composition differences: Xi * K * Gamma, where K is the inverse
-   * resistance matrix. Disabled corrections act as identity matrices. The returned total matrix is independent of K so
-   * reactive enhancement cannot change the unenhanced coefficients.
+   * resistance matrix. Disabled corrections act as identity matrices. The total coefficient array is independent of K
+   * so reactive enhancement cannot change the unenhanced coefficients.
    *
    * @param phase a int
    */
-  public void calcTotalMassTransferCoefficientMatrix(int phase) {
-    DMatrixRMaj corrected = new DMatrixRMaj(massTransferCoefficientMatrix[phase].getArrayCopy());
+  public void calcTotalMassTransferCoefficientArray(int phase) {
+    DMatrixRMaj corrected = new DMatrixRMaj(getMassTransferCoefficientArray(phase));
     if (useThermodynamicCorrections(phase)) {
-      DMatrixRMaj product = new DMatrixRMaj(corrected.getNumRows(), nonIdealCorrections[phase].getNumCols());
-      CommonOps_DDRM.mult(corrected, nonIdealCorrections[phase], product);
+      DMatrixRMaj thermodynamicCorrection = new DMatrixRMaj(nonIdealCorrections[phase]);
+      DMatrixRMaj product = new DMatrixRMaj(corrected.getNumRows(), thermodynamicCorrection.getNumCols());
+      CommonOps_DDRM.mult(corrected, thermodynamicCorrection, product);
       corrected = product;
     }
     if (useFiniteFluxCorrection(phase)) {
-      DMatrixRMaj rateCorrection = new DMatrixRMaj(rateCorrectionMatrix[phase].getArrayCopy());
+      DMatrixRMaj rateCorrection = new DMatrixRMaj(rateCorrectionMatrix[phase]);
       DMatrixRMaj product = new DMatrixRMaj(rateCorrection.getNumRows(), corrected.getNumCols());
       CommonOps_DDRM.mult(rateCorrection, corrected, product);
       corrected = product;
     }
-    totalMassTransferCoefficientMatrix[phase] = toJama(corrected);
+    totalMassTransferCoefficientMatrix[phase] = toArray(corrected);
   }
 
   /**
-   * Copies an EJML matrix to the canonical Jama coefficient-matrix representation.
+   * Retains the legacy correction-calculation entry point and subclass dispatch.
+   *
+   * @param phase phase index
+   * @deprecated Use {@link #calcTotalMassTransferCoefficientArray(int)}.
+   */
+  @Deprecated
+  public void calcTotalMassTransferCoefficientMatrix(int phase) {
+    calcTotalMassTransferCoefficientArray(phase);
+  }
+
+  /**
+   * Copies an EJML matrix to primitive row-major coefficient arrays.
    *
    * @param matrix EJML coefficient matrix
-   * @return independent Jama matrix
+   * @return independent coefficient arrays
    */
-  private static Matrix toJama(DMatrixRMaj matrix) {
+  private static double[][] toArray(DMatrixRMaj matrix) {
     double[][] values = new double[matrix.getNumRows()][matrix.getNumCols()];
     for (int row = 0; row < matrix.getNumRows(); row++) {
       System.arraycopy(matrix.getData(), row * matrix.getNumCols(), values[row], 0, matrix.getNumCols());
     }
-    return new Matrix(values);
+    return values;
   }
 
   /**
@@ -300,7 +365,10 @@ public class KrishnaStandartFilmModel extends
     calcPhiMatrix(phase);
     if (hasNaN(phiMatrix)) {
       int n = getBulkSystem().getPhase(phase).getNumberOfComponents() - 1;
-      rateCorrectionMatrix[phase] = Matrix.identity(n, n);
+      rateCorrectionMatrix[phase] = new double[n][n];
+      for (int component = 0; component < n; component++) {
+        rateCorrectionMatrix[phase][component][component] = 1.0;
+      }
       return;
     }
     calcRedPhiMatrix(phase);
@@ -311,13 +379,13 @@ public class KrishnaStandartFilmModel extends
   /**
    * Checks whether a matrix contains any NaN or Infinite values.
    *
-   * @param mat the matrix to check
+   * @param values the matrix data to check
    * @return true if any element is NaN or Infinite
    */
-  private boolean hasNaN(Matrix mat) {
-    for (int i = 0; i < mat.getRowDimension(); i++) {
-      for (int j = 0; j < mat.getColumnDimension(); j++) {
-        if (Double.isNaN(mat.get(i, j)) || Double.isInfinite(mat.get(i, j))) {
+  private boolean hasNaN(double[][] values) {
+    for (double[] row : values) {
+      for (double value : row) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
           return true;
         }
       }
