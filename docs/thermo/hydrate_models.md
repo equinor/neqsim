@@ -457,20 +457,18 @@ The model correctly predicts additive water activity behavior:
 
 The actual combined ln(a_w) of -0.884 is slightly more negative than the expected -0.843, indicating the model predicts **slightly stronger than additive** inhibition, which is physically reasonable.
 
-### Gas-Ion Interaction Parameters (Salting-Out Effect)
+### Gas-Ion Interaction Parameters
 
-The electrolyte CPA model includes fitted gas-ion interaction parameters (Wij) to correctly predict the salting-out effect of dissolved gases:
+Electrolyte CPA contains legacy gas-ion short-range coefficients whose generic
+source basis has not been independently reconstructed. They must not be read as
+measured Setschenow coefficients or as blanket hydrate qualification.
 
-| Gas | k_s (L/mol) | W_cation | W_anion |
-|-----|-------------|----------|---------|
-| CO₂ | 0.10 | 1.05e-4 | 1.05e-4 |
-| CH₄ | 0.12 | 1.10e-4 | 1.10e-4 |
-| C₂H₆ | 0.13 | 1.13e-4 | 1.13e-4 |
-| C₃H₈ | 0.14 | 1.15e-4 | 1.15e-4 |
-| C₄ | 0.15 | 1.20e-4 | 1.20e-4 |
-| C₅+ | 0.16 | 1.25e-4 | 1.25e-4 |
-| N₂ | 0.10-0.12 | 1.05e-4 | 1.05e-4 |
-| H₂S | 0.06-0.08 | 1.10e-4 | 1.10e-4 |
+The `SystemElectrolyteCPAstatoil` CO2/K+ default has a narrower, reproducible
+source basis: the Onda et al. (1970) KCl correlation at 298.15 K. Dholabhai K10
+and K15 hydrate points remain independent diagnostics, and no
+hydrate-temperature offset is applied. See
+[CO2–KCl interaction provenance](./co2_kcl_interaction_provenance.md) for the
+coefficient allocation, holdouts, and limitations.
 
 ### Organic Inhibitor-Ion Parameters
 

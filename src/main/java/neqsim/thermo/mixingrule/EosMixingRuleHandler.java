@@ -17,6 +17,7 @@ import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.phase.PhaseCPAInterface;
+import neqsim.thermo.phase.PhaseElectrolyteCPAstatoil;
 import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseGENRTLmodifiedHV;
 import neqsim.thermo.phase.PhaseGEUnifac;
@@ -3537,7 +3538,20 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 // Gas-cation interaction
                 wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
                     .getFurstParamGasIon(cationParamIndex);
+                if (phase instanceof PhaseElectrolyteCPAstatoil && isCO2
+                    && compArray[j].getComponentName().equalsIgnoreCase("K+")
+                    && neqsim.thermo.util.constants.FurstElectrolyteConstants.isDefaultGasIonParameter(0)
+                    && neqsim.thermo.util.constants.FurstElectrolyteConstants.isDefaultGasIonParameter(1)) {
+                  // Onda et al. (1970), DOI 10.1252/jcej.3.18, Table 3: the
+                  // CO2/KCl salt coefficient is 0.0777 L/mol at 298.15 K. The
+                  // existing chloride coefficient is retained as the fixed gauge.
+                  wij[0][i][j] = -2.31476480642442e-4;
+                  wij[1][i][j] = 0.0;
+                  wij[2][i][j] = 0.0;
+                }
                 wij[0][j][i] = wij[0][i][j];
+                wij[1][j][i] = wij[1][i][j];
+                wij[2][j][i] = wij[2][i][j];
               } else if (ionCharge < -0.01) {
                 // Gas-anion interaction
                 wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
@@ -3619,9 +3633,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public void setWijParameter(int i, int j, double value) {
-      // System.out.println("intparam: " + value);
       wij[0][i][j] = value;
       wij[0][j][i] = value;
+      wijCalcOrFitted[i][j] = 1;
+      wijCalcOrFitted[j][i] = 1;
     }
 
     /** {@inheritDoc} */
@@ -3635,6 +3650,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public void setWijT1Parameter(int i, int j, double value) {
       wij[1][i][j] = value;
       wij[1][j][i] = value;
+      wijCalcOrFitted[i][j] = 1;
+      wijCalcOrFitted[j][i] = 1;
     }
 
     /** {@inheritDoc} */
@@ -3648,6 +3665,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     public void setWijT2Parameter(int i, int j, double value) {
       wij[2][i][j] = value;
       wij[2][j][i] = value;
+      wijCalcOrFitted[i][j] = 1;
+      wijCalcOrFitted[j][i] = 1;
     }
 
     /** {@inheritDoc} */

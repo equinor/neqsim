@@ -886,16 +886,23 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   }
 
   /**
-   * calcBornX.
+   * Calculates the Born charge-size sum using characteristic ion diameters.
    *
-   * @return a double
+   * <p>
+   * Solbraa (2002), Appendix C, equation (C.10), uses Stokes cation and Pauling anion diameters here. These are
+   * distinct from the covolume-derived hard-sphere diameters used by MSA and packing.
+   * </p>
+   *
+   * @return sum of ionic mole amounts times squared charge divided by diameter, in mol/m
    */
   public double calcBornX() {
     double ans = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getLennardJonesMolecularDiameter() > 0) {
-        ans += componentArray[i].getNumberOfMolesInPhase() * Math.pow(componentArray[i].getIonicCharge(), 2.0)
-            / (componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
+      double charge = componentArray[i].getIonicCharge();
+      double diameter = charge > 0 ? componentArray[i].getStokesCationicDiameter()
+          : componentArray[i].getPaulingAnionicDiameter();
+      if (charge != 0 && diameter > 0) {
+        ans += componentArray[i].getNumberOfMolesInPhase() * charge * charge / (diameter * 1e-10);
       }
     }
     return ans;

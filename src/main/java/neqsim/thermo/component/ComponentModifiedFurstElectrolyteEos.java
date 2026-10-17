@@ -186,9 +186,10 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
                 * Math.pow(((PhaseModifiedFurstElectrolyteEos) phase).getDielectricConstant(), 3.0) * R * temp)
             * diElectricdn * ((PhaseModifiedFurstElectrolyteEos) phase).getDielectricConstantdV();
     XLRi = calcXLRdN(phase, numberOfComponents, temp, pres);
-    if (getLennardJonesMolecularDiameter() > 0) {
-      XBorni = ionicCharge * ionicCharge / (getLennardJonesMolecularDiameter() * 1e-10);
-    }
+    // Solbraa (2002), equation (C.10): the Born diameter is the characteristic
+    // Stokes/Pauling diameter, not the covolume-derived hard-sphere diameter.
+    XBorni = ionicCharge != 0 && getIonicDiameter() > 0 ? ionicCharge * ionicCharge / (getIonicDiameter() * 1e-10)
+        : 0.0;
     super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, initType);
   }
 
