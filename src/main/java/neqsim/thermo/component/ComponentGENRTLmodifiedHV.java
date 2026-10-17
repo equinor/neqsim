@@ -272,6 +272,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
           gij = -2.0 * Math.sqrt(comp_Array[l].getb() * comp_Array[j].getb())
               / (comp_Array[l].getb() + comp_Array[j].getb()) * Math.sqrt(gii * gjj) * (1.0 - intparam[l][j]);
           tau = (gij - gjj) / (R * temperature);
+          // Classic pairs have zero nonrandomness at every initialization level.
+          alpha = 0.0;
 
           if (phase.getInitType() > 1) {
             double dgjjdt = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
@@ -288,8 +290,6 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
                     * 0.5 * -0.5)
                     + (1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[l][j])
                         * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt) * 0.5));
-            alpha = 0.0;
-
             dtaudt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
                 - gij / (R * temperature * temperature);
             dtaudtdt = -dgjjdtdt / (R * temperature) + dgjjdt / (R * temperature * temperature)
