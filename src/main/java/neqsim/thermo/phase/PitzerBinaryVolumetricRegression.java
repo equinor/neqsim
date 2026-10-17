@@ -1,5 +1,7 @@
 package neqsim.thermo.phase;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -234,14 +236,6 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     }
   }
 
-  private static double[][] copyMatrix(double[][] source) {
-    double[][] copy = new double[source.length][];
-    for (int row = 0; row < source.length; row++) {
-      copy[row] = source[row].clone();
-    }
-    return copy;
-  }
-
   /** One caller-supplied apparent-molar-volume observation. */
   public static final class Observation implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -317,7 +311,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
       this.limitingApparentMolarVolume = limitingApparentMolarVolume;
       this.stateParameters = stateParameters;
       this.parameterStandardUncertainties = parameterStandardUncertainties.clone();
-      this.parameterCovariance = copyMatrix(parameterCovariance);
+      this.parameterCovariance = copyMatrixArray(parameterCovariance);
       this.observationCount = observationCount;
       this.degreesOfFreedom = degreesOfFreedom;
       this.chiSquare = chiSquare;
@@ -351,7 +345,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
      * @return defensive covariance copy in the same parameter order as the uncertainties
      */
     public double[][] getParameterCovariance() {
-      return copyMatrix(parameterCovariance);
+      return copyMatrixArray(parameterCovariance);
     }
 
     /** @return number of fitted observations */

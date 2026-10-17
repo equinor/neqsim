@@ -1,9 +1,11 @@
 package neqsim.statistics.parameterfitting;
 
+import static neqsim.util.util.ArrayUtils.copyArray;
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.util.Random;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult;
-import neqsim.util.util.ArrayUtils;
 
 /**
  * High-level workflow for fitting model parameters to experimental data sets.
@@ -139,7 +141,7 @@ public class ParameterFittingStudy {
    */
   public ParameterFittingStudy setParameterBounds(double[][] bounds) {
     validateBounds(bounds);
-    function.setBounds(ArrayUtils.copyMatrixArray(bounds));
+    function.setBounds(copyMatrixArray(bounds));
     return this;
   }
 
@@ -731,30 +733,6 @@ public class ParameterFittingStudy {
       names[i] = "p" + i;
     }
     return names;
-  }
-
-  /**
-   * Copies a double array.
-   *
-   * @param values values to copy
-   * @return copied array
-   */
-  private static double[] copyArray(double[] values) {
-    double[] copy = new double[values.length];
-    System.arraycopy(values, 0, copy, 0, values.length);
-    return copy;
-  }
-
-  /**
-   * Copies a string array.
-   *
-   * @param values values to copy
-   * @return copied array
-   */
-  private static String[] copyArray(String[] values) {
-    String[] copy = new String[values.length];
-    System.arraycopy(values, 0, copy, 0, values.length);
-    return copy;
   }
 
   /**
