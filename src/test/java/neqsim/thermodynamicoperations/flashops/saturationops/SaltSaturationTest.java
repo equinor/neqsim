@@ -165,6 +165,20 @@ class SaltSaturationTest {
   }
 
   /**
+   * Verifies iron carbonate saturation is independent of the molar basis of the pure-water feed.
+   *
+   * @throws Exception if the thermodynamic operation fails
+   */
+  @Test
+  void calcIronCarbonateSaturationIsIndependentOfFeedScale() throws Exception {
+    for (double waterMoles : new double[] {0.01, 0.1, 1.0, 10.0, 100.0}) {
+      SystemInterface system = createWaterSystem();
+      system.addComponent("water", waterMoles - 1.0);
+      assertSaltSaturatesToUnitScalePotential("FeCO3", system, Arrays.asList("aqueous"));
+    }
+  }
+
+  /**
    * Creates the user-requested mixed chloride brine as dissociated ions.
    *
    * @return initialized electrolyte CPA system
@@ -285,6 +299,10 @@ class SaltSaturationTest {
             + result.getAbsoluteSaturationRatioResidual() + ", bracket iterations=" + result.getBracketIterations()
             + ", solve iterations=" + result.getSolveIterations() + ", iteration limit reached="
             + result.isIterationLimitReached());
+    double reactionResidual = system.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual();
+    assertTrue(reactionResidual <= 2.0e-6,
+        saltName + " saturated state is not at chemical equilibrium: reaction residual=" + reactionResidual
+            + ", water moles=" + system.getComponent("water").getNumberOfmoles());
     operations.TPflash();
     system.initProperties();
 
@@ -295,7 +313,10 @@ class SaltSaturationTest {
     operations.checkScalePotential(getAqueousOrWaterPhaseNumber(system));
     double saturationRatio = getSaltSaturationRatio(operations.getResultTable(), saltName);
     assertEquals(1.0, saturationRatio, SATURATION_RATIO_TOLERANCE,
-        saltName + " saturation ratio should be unity after calcSaltSaturation");
+        saltName + " saturation ratio should be unity after calcSaltSaturation, water moles="
+            + system.getComponent("water").getNumberOfmoles() + ", reaction residual before reflash=" + reactionResidual
+            + ", reaction residual after reflash="
+            + system.getChemicalReactionOperations().getMaximumAbsoluteReactionLogResidual());
   }
 
   /**

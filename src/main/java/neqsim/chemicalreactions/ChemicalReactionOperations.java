@@ -620,6 +620,12 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     nVector = calcNVector();
     bVector = calcBVector();
 
+    if (getMaximumAbsoluteReactionLogResidual() <= REACTION_LOG_RESIDUAL_TOLERANCE
+        && Math.abs(getReactivePhaseChargeMoles()) <= REACTIVE_PHASE_CHARGE_TOLERANCE_MOLES
+        && getMaximumAbsoluteElementBalanceResidual() <= ELEMENT_BALANCE_RESIDUAL_TOLERANCE_MOLES) {
+      return true;
+    }
+
     if (firsttime || type == 0) {
       try {
         calcInertMoles(phaseNum);
