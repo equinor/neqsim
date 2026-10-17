@@ -21,7 +21,6 @@ import org.apache.commons.math3.optim.linear.SimplexSolver;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -264,22 +263,15 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
    * return nEts; }
    */
 
-  /**
-   * calcx.
-   *
-   * @param atemp a {@link Jama.Matrix} object
-   * @param lagrangeTemp a {@link Jama.Matrix} object
+  /*
+   * public void calcx(Matrix atemp, Matrix lagrangeTemp) { xEts = new double[atemp.getColumnDimension()]; for(int
+   * k=0;k<atemp.getColumnDimension();k++){ xEts[k] = Math.exp(-chemRefPot[k]/(R*system.getTemperature())); for(int
+   * i=0;i<Amatrix.length;i++) { xEts[k] = xEts[k]*Math.pow(Math.exp(lagrangeTemp.get(i,0)),atemp.get(i,k)); }
+   * System.out.println("x check: " + xEts[k]); /* if(xEts[k]>200) { this.changePrimaryComponents(); return
+   * this.generateInitialEstimates(system, bVector, inertMoles); } } xEts = new double[Amatrix[0].length]; for(int
+   * i=0;i<Amatrix.length;i++) { xEts[i] = 1.0; } }
    */
-  @Deprecated
-  public void calcx(Matrix atemp, Matrix lagrangeTemp) {
-    /*
-     * xEts = new double[atemp.getColumnDimension()]; for(int k=0;k<atemp.getColumnDimension();k++){ xEts[k] =
-     * Math.exp(-chemRefPot[k]/(R*system.getTemperature())); for(int i=0;i<Amatrix.length;i++) { xEts[k] =
-     * xEts[k]*Math.pow(Math.exp(lagrangeTemp.get(i,0)),atemp.get(i,k)); } System.out.println("x check: " + xEts[k]); /*
-     * if(xEts[k]>200) { this.changePrimaryComponents(); return this.generateInitialEstimates(system, bVector,
-     * inertMoles); } } xEts = new double[Amatrix[0].length]; for(int i=0;i<Amatrix.length;i++) { xEts[i] = 1.0; }
-     */
-  }
+
   // Method added by Neeraj
   /*
    * public double[] generateInitialEstimates(SystemInterface system, double[] bVector, double inertMoles, int

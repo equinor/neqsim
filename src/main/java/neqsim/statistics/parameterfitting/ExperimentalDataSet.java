@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import neqsim.util.util.ArrayUtils;
 
 /**
  * Metadata-aware collection of experimental data points for parameter fitting.
@@ -40,8 +41,8 @@ public final class ExperimentalDataSet implements Serializable {
     this.name = defaultString(name, "experimental data set");
     this.responseName = defaultString(responseName, "response");
     this.responseUnit = defaultString(responseUnit, "");
-    this.dependentVariableNames = copyArray(dependentVariableNames);
-    this.dependentVariableUnits = copyArray(dependentVariableUnits);
+    this.dependentVariableNames = ArrayUtils.copyArray(dependentVariableNames);
+    this.dependentVariableUnits = ArrayUtils.copyArray(dependentVariableUnits);
   }
 
   /**
@@ -181,7 +182,7 @@ public final class ExperimentalDataSet implements Serializable {
    * @return copy of independent variable names
    */
   public String[] getDependentVariableNames() {
-    return copyArray(dependentVariableNames);
+    return ArrayUtils.copyArray(dependentVariableNames);
   }
 
   /**
@@ -190,7 +191,7 @@ public final class ExperimentalDataSet implements Serializable {
    * @return copy of independent variable units
    */
   public String[] getDependentVariableUnits() {
-    return copyArray(dependentVariableUnits);
+    return ArrayUtils.copyArray(dependentVariableUnits);
   }
 
   /**
@@ -360,15 +361,4 @@ public final class ExperimentalDataSet implements Serializable {
     return value == null ? defaultValue : value;
   }
 
-  /**
-   * Copies a string array.
-   *
-   * @param values values to copy
-   * @return copied string array
-   */
-  private static String[] copyArray(String[] values) {
-    String[] copy = new String[values.length];
-    System.arraycopy(values, 0, copy, 0, values.length);
-    return copy;
-  }
 }

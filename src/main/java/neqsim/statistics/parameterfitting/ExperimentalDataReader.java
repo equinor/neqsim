@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import neqsim.util.unit.PressureUnit;
 import neqsim.util.unit.TemperatureUnit;
+import neqsim.util.util.ArrayUtils;
 
 /**
  * Reader utilities for metadata-rich experimental parameter fitting data sets.
@@ -502,9 +503,9 @@ public final class ExperimentalDataReader {
       this.responseName = responseName;
       this.responseUnit = responseUnit;
       this.sourceResponseUnit = responseUnit;
-      this.dependentVariableNames = copyArray(dependentVariableNames);
-      this.dependentVariableUnits = copyArray(dependentVariableUnits);
-      this.sourceDependentVariableUnits = copyArray(dependentVariableUnits);
+      this.dependentVariableNames = ArrayUtils.copyArray(dependentVariableNames);
+      this.dependentVariableUnits = ArrayUtils.copyArray(dependentVariableUnits);
+      this.sourceDependentVariableUnits = ArrayUtils.copyArray(dependentVariableUnits);
     }
 
     /**
@@ -519,7 +520,7 @@ public final class ExperimentalDataReader {
       }
       if (sourceDependentVariableUnits == null
           || sourceDependentVariableUnits.length != dependentVariableNames.length) {
-        sourceDependentVariableUnits = copyArray(dependentVariableUnits);
+        sourceDependentVariableUnits = ArrayUtils.copyArray(dependentVariableUnits);
       }
       if (dependentVariableColumns != null && dependentVariableColumns.length != dependentVariableNames.length) {
         throw new IllegalArgumentException("dependentVariableColumns length must match names");
@@ -682,7 +683,7 @@ public final class ExperimentalDataReader {
      * @return independent variable names
      */
     public String[] getDependentVariableNames() {
-      return copyArray(dependentVariableNames);
+      return ArrayUtils.copyArray(dependentVariableNames);
     }
 
     /**
@@ -691,7 +692,7 @@ public final class ExperimentalDataReader {
      * @param dependentVariableNames independent variable names
      */
     public void setDependentVariableNames(String[] dependentVariableNames) {
-      this.dependentVariableNames = copyArray(dependentVariableNames);
+      this.dependentVariableNames = ArrayUtils.copyArray(dependentVariableNames);
     }
 
     /**
@@ -700,7 +701,7 @@ public final class ExperimentalDataReader {
      * @return target independent variable units
      */
     public String[] getDependentVariableUnits() {
-      return copyArray(dependentVariableUnits);
+      return ArrayUtils.copyArray(dependentVariableUnits);
     }
 
     /**
@@ -709,7 +710,7 @@ public final class ExperimentalDataReader {
      * @param dependentVariableUnits target independent variable units
      */
     public void setDependentVariableUnits(String[] dependentVariableUnits) {
-      this.dependentVariableUnits = copyArray(dependentVariableUnits);
+      this.dependentVariableUnits = ArrayUtils.copyArray(dependentVariableUnits);
     }
 
     /**
@@ -718,7 +719,7 @@ public final class ExperimentalDataReader {
      * @return source independent variable units
      */
     public String[] getSourceDependentVariableUnits() {
-      return copyArray(sourceDependentVariableUnits);
+      return ArrayUtils.copyArray(sourceDependentVariableUnits);
     }
 
     /**
@@ -727,7 +728,7 @@ public final class ExperimentalDataReader {
      * @param sourceDependentVariableUnits source independent variable units
      */
     public void setSourceDependentVariableUnits(String[] sourceDependentVariableUnits) {
-      this.sourceDependentVariableUnits = copyArray(sourceDependentVariableUnits);
+      this.sourceDependentVariableUnits = ArrayUtils.copyArray(sourceDependentVariableUnits);
     }
 
     /**
@@ -736,7 +737,7 @@ public final class ExperimentalDataReader {
      * @return independent variable column names
      */
     public String[] getDependentVariableColumns() {
-      return copyArray(dependentVariableColumns);
+      return ArrayUtils.copyArray(dependentVariableColumns);
     }
 
     /**
@@ -745,7 +746,7 @@ public final class ExperimentalDataReader {
      * @param dependentVariableColumns independent variable column names
      */
     public void setDependentVariableColumns(String[] dependentVariableColumns) {
-      this.dependentVariableColumns = copyArray(dependentVariableColumns);
+      this.dependentVariableColumns = ArrayUtils.copyArray(dependentVariableColumns);
     }
 
     /**
@@ -784,19 +785,5 @@ public final class ExperimentalDataReader {
       this.descriptionColumn = descriptionColumn;
     }
 
-    /**
-     * Copies a string array.
-     *
-     * @param values values to copy
-     * @return copied values, or null if values is null
-     */
-    private static String[] copyArray(String[] values) {
-      if (values == null) {
-        return null;
-      }
-      String[] copy = new String[values.length];
-      System.arraycopy(values, 0, copy, 0, values.length);
-      return copy;
-    }
   }
 }
