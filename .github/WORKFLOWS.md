@@ -43,7 +43,7 @@ files; do not rewrite tags or use a publishing dispatch as a migration smoke tes
 |---|---|---|---|
 | [ai-devtools-python-tests.yml](workflows/ai-devtools-python-tests.yml) | [AI] Devtools Python Tests | PR, push | Python toolkit, hermetic agent installation/discovery, production guard, and ledger tests. |
 | [ai-skills-and-agents-lint.yml](workflows/ai-skills-and-agents-lint.yml) | [AI] Skills and Agents Lint | PR, push | Agent/skill structure, API references, and mapping consistency. |
-| [ai-engineering-capability-coverage.yml](workflows/ai-engineering-capability-coverage.yml) | [AI] Engineering Capability Coverage | PR, push | Engineering capability inventory and routing evidence checks. |
+| [ai-engineering-capability-coverage.yml](workflows/ai-engineering-capability-coverage.yml) | [AI] Engineering Capability Coverage | PR, push | Rebuilds and validates the engineering capability inventory. A conditional step in the coverage job commits changed inventory to same-repository PR branches or master; fork PRs remain validation-only. |
 | [ai-mcp-protocol-qualification.yml](workflows/ai-mcp-protocol-qualification.yml) | [AI] MCP Protocol Qualification | PR, push | Packaged MCP protocol and capability contracts. |
 | [ai-agent-install-smoke-test.yml](workflows/ai-agent-install-smoke-test.yml) | [AI] Agent Install Smoke Test | PR, push, schedule, manual | Community agent installer smoke tests. |
 | [ai-task-quality-gate.yml](workflows/ai-task-quality-gate.yml) | [AI] Task Quality Gate | PR | Changed task result schemas and consistency checks. |
