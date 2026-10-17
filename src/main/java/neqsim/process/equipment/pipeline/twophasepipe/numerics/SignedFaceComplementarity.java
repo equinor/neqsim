@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 
 /**
@@ -164,14 +166,14 @@ final class SignedFaceComplementarity implements Serializable {
 
     /** Store defensive results from one auxiliary evaluation. */
     private Evaluation(double[][] conservativeRates, double[] residual, DirectionalPhaseFaceFlux[][] solvedFaces) {
-      this.conservativeRates = copy(conservativeRates);
+      this.conservativeRates = copyMatrixArray(conservativeRates);
       this.residual = residual.clone();
-      this.solvedFaces = copyFaces(solvedFaces);
+      this.solvedFaces = copyMatrixArray(solvedFaces);
     }
 
     /** @return defensive corrected conservative rates */
     double[][] getConservativeRates() {
-      return copy(conservativeRates);
+      return copyMatrixArray(conservativeRates);
     }
 
     /** @return defensive scaled auxiliary residual */
@@ -181,7 +183,7 @@ final class SignedFaceComplementarity implements Serializable {
 
     /** @return defensive solved face ledgers */
     DirectionalPhaseFaceFlux[][] getSolvedFaces() {
-      return copyFaces(solvedFaces);
+      return copyMatrixArray(solvedFaces);
     }
   }
 
@@ -272,7 +274,7 @@ final class SignedFaceComplementarity implements Serializable {
         || solvedFaces.length != freeFaces.length) {
       throw new IllegalArgumentException("Solved internal transport dimensions must match the finite-volume grid");
     }
-    double[][] corrected = copy(rates);
+    double[][] corrected = copyMatrixArray(rates);
     for (int face = 0; face < freeFaces.length; face++) {
       if (freeFaces[face] == null || solvedFaces[face] == null || freeFaces[face].length != PHASE_COUNT
           || solvedFaces[face].length != PHASE_COUNT) {
@@ -404,21 +406,4 @@ final class SignedFaceComplementarity implements Serializable {
     return lengths;
   }
 
-  /** Copy a rectangular primitive array. */
-  private static double[][] copy(double[][] values) {
-    double[][] result = new double[values.length][];
-    for (int row = 0; row < values.length; row++) {
-      result[row] = values[row].clone();
-    }
-    return result;
-  }
-
-  /** Copy an immutable face array structure. */
-  private static DirectionalPhaseFaceFlux[][] copyFaces(DirectionalPhaseFaceFlux[][] values) {
-    DirectionalPhaseFaceFlux[][] result = new DirectionalPhaseFaceFlux[values.length][];
-    for (int face = 0; face < values.length; face++) {
-      result[face] = values[face].clone();
-    }
-    return result;
-  }
 }

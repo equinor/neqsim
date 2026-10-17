@@ -170,11 +170,12 @@ public final class UnsplitTransientSolver implements Serializable {
       if (conservativeRates == null || phaseDensities == null) {
         throw new IllegalArgumentException("Model evaluation arrays cannot be null");
       }
-      this.conservativeRates = copy(conservativeRates);
-      this.phaseDensities = copy(phaseDensities);
+      this.conservativeRates = copyMatrixArray(conservativeRates);
+      this.phaseDensities = copyMatrixArray(phaseDensities);
       this.directionalPhaseFaceFluxes = copyMatrixArray(directionalPhaseFaceFluxes);
       this.cellLengthsM = cellLengthsM == null ? null : cellLengthsM.clone();
-      this.phaseMassSourcesPerLength = phaseMassSourcesPerLength == null ? null : copy(phaseMassSourcesPerLength);
+      this.phaseMassSourcesPerLength = phaseMassSourcesPerLength == null ? null
+          : copyMatrixArray(phaseMassSourcesPerLength);
     }
 
     private void validate(int cellCount) {
@@ -261,12 +262,12 @@ public final class UnsplitTransientSolver implements Serializable {
      * @return defensive phase mass sources in kg/(m s), or null when the model did not provide source diagnostics
      */
     public double[][] getPhaseMassSourcesPerLength() {
-      return phaseMassSourcesPerLength == null ? null : copy(phaseMassSourcesPerLength);
+      return phaseMassSourcesPerLength == null ? null : copyMatrixArray(phaseMassSourcesPerLength);
     }
 
     /** @return defensive conservative rates for an internal augmented residual */
     double[][] copyConservativeRates() {
-      return copy(conservativeRates);
+      return copyMatrixArray(conservativeRates);
     }
   }
 
@@ -307,7 +308,7 @@ public final class UnsplitTransientSolver implements Serializable {
         double maximumScaledResidual, double minimumAcceptedStepLength, boolean activeSetStable, boolean converged,
         TerminationReason terminationReason, double timeIntegrationWeight,
         DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes) {
-      this.state = copy(state);
+      this.state = copyMatrixArray(state);
       this.pressure = pressure.clone();
       this.iterations = iterations;
       this.modelEvaluations = modelEvaluations;
@@ -322,7 +323,7 @@ public final class UnsplitTransientSolver implements Serializable {
 
     /** @return defensive copy of the conservative state */
     public double[][] getState() {
-      return copy(state);
+      return copyMatrixArray(state);
     }
 
     /** @return defensive copy of cell pressure in Pa */
@@ -472,7 +473,7 @@ public final class UnsplitTransientSolver implements Serializable {
     private Linearization(Model model, ResidualEvaluation base) {
       this.model = model;
       try {
-        model.beginLinearization(copy(base.midpointState), base.midpointPressure.clone());
+        model.beginLinearization(copyMatrixArray(base.midpointState), base.midpointPressure.clone());
       } catch (RuntimeException | Error failure) {
         try {
           model.endLinearization();
@@ -513,7 +514,7 @@ public final class UnsplitTransientSolver implements Serializable {
           outletPressureFixed, model);
     }
     double timeWeight = getTimeIntegrationMethod().weight;
-    double[][] state = copy(previousState);
+    double[][] state = copyMatrixArray(previousState);
     double[] pressure = previousPressure.clone();
     double[] variableScale = createVariableScale(previousState, previousPressure);
     CountingModel countedModel = new CountingModel(model);
@@ -563,7 +564,7 @@ public final class UnsplitTransientSolver implements Serializable {
       double[][] trialState = state;
       double[] trialPressure = pressure;
       for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
-        trialState = copy(state);
+        trialState = copyMatrixArray(state);
         trialPressure = pressure.clone();
         applyUpdate(trialState, trialPressure, variableScale, normalizedUpdate, stepLength);
         trial = evaluateResidual(previousState, previousPressure, trialState, trialPressure, cellAreas, timeStep,
@@ -607,7 +608,7 @@ public final class UnsplitTransientSolver implements Serializable {
   private Result solveDirectional(double[][] previousState, double[] previousPressure, double[] cellAreas,
       double timeStep, double startTime, double outletPressure, boolean outletPressureFixed, Model model) {
     double timeWeight = getTimeIntegrationMethod().weight;
-    double[][] state = copy(previousState);
+    double[][] state = copyMatrixArray(previousState);
     double[] pressure = previousPressure.clone();
     CountingModel countedModel = new CountingModel(model);
     Evaluation initialEvaluation = evaluateModel(previousState, previousPressure, state, pressure, startTime,
@@ -668,7 +669,7 @@ public final class UnsplitTransientSolver implements Serializable {
       double[] trialAuxiliary = auxiliary;
       SignedFaceComplementarity.State trialFaceState = faceState;
       for (int lineSearch = 0; lineSearch < maximumLineSearchSteps && stepLength > 0.0; lineSearch++) {
-        trialState = copy(state);
+        trialState = copyMatrixArray(state);
         trialPressure = pressure.clone();
         trialAuxiliary = auxiliary.clone();
         trialFaceState = faceState.copy();
@@ -723,7 +724,7 @@ public final class UnsplitTransientSolver implements Serializable {
       double[] candidatePressure, double startTime, double outletPressure, boolean outletPressureFixed, Model model,
       double timeWeight, double timeStep) {
     int cellCount = previousState.length;
-    double[][] selectedState = copy(previousState);
+    double[][] selectedState = copyMatrixArray(previousState);
     double[] selectedPressure = new double[cellCount];
     for (int cell = 0; cell < cellCount; cell++) {
       for (int variable = 0; variable < CONSERVATIVE_VARIABLE_COUNT; variable++) {
@@ -733,8 +734,9 @@ public final class UnsplitTransientSolver implements Serializable {
       selectedPressure[cell] = timeWeight == 1.0 ? candidatePressure[cell]
           : 0.5 * (previousPressure[cell] + candidatePressure[cell]);
     }
-    Evaluation evaluation = model.evaluate(copy(selectedState), selectedPressure.clone(), copy(candidateState),
-        candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure, outletPressureFixed);
+    Evaluation evaluation = model.evaluate(copyMatrixArray(selectedState), selectedPressure.clone(),
+        copyMatrixArray(candidateState), candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure,
+        outletPressureFixed);
     if (evaluation == null) {
       throw new IllegalArgumentException("Model evaluation cannot be null");
     }
@@ -748,7 +750,7 @@ public final class UnsplitTransientSolver implements Serializable {
       SignedFaceComplementarity.State faceState, double[] cellAreas, double timeStep, double startTime,
       double outletPressure, boolean outletPressureFixed, Model model, double timeWeight) {
     int cellCount = previousState.length;
-    double[][] midpointState = copy(previousState);
+    double[][] midpointState = copyMatrixArray(previousState);
     double[] midpointPressure = new double[cellCount];
     for (int cell = 0; cell < cellCount; cell++) {
       for (int variable = 0; variable < CONSERVATIVE_VARIABLE_COUNT; variable++) {
@@ -758,8 +760,9 @@ public final class UnsplitTransientSolver implements Serializable {
       midpointPressure[cell] = timeWeight == 1.0 ? candidatePressure[cell]
           : 0.5 * (previousPressure[cell] + candidatePressure[cell]);
     }
-    Evaluation evaluation = model.evaluate(copy(midpointState), midpointPressure.clone(), copy(candidateState),
-        candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure, outletPressureFixed);
+    Evaluation evaluation = model.evaluate(copyMatrixArray(midpointState), midpointPressure.clone(),
+        copyMatrixArray(candidateState), candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure,
+        outletPressureFixed);
     if (evaluation == null) {
       throw new IllegalArgumentException("Model evaluation cannot be null");
     }
@@ -795,7 +798,7 @@ public final class UnsplitTransientSolver implements Serializable {
       double outletPressure, boolean outletPressureFixed, Model model, DirectionalResidualEvaluation current,
       double timeWeight) {
     for (int update = 0; update < getMaximumActiveSetUpdates(); update++) {
-      boolean changed = model.updateActiveSet(copy(current.midpointState), current.midpointPressure.clone());
+      boolean changed = model.updateActiveSet(copyMatrixArray(current.midpointState), current.midpointPressure.clone());
       changed |= SignedFaceComplementarity.refreshActiveSet(current.modelEvaluation, candidateState, faceState);
       if (!changed) {
         return true;
@@ -827,7 +830,7 @@ public final class UnsplitTransientSolver implements Serializable {
     int dimension = SignedFaceComplementarity.dimension(cellCount);
     double[][] jacobian = new double[dimension][dimension];
     for (int color = 0; color < SignedFaceComplementarity.TOTAL_COLOR_COUNT; color++) {
-      double[][] perturbedState = copy(candidateState);
+      double[][] perturbedState = copyMatrixArray(candidateState);
       double[] perturbedPressure = candidatePressure.clone();
       double[] perturbedAuxiliary = auxiliary.clone();
       double[] increments = new double[dimension];
@@ -1018,7 +1021,7 @@ public final class UnsplitTransientSolver implements Serializable {
   /** Apply one augmented Newton update. */
   private static void applyDirectionalUpdate(double[][] state, double[] pressure, double[] auxiliary,
       double[] variableScale, double[] normalizedUpdate, double stepLength) {
-    double[][] originalState = copy(state);
+    double[][] originalState = copyMatrixArray(state);
     double[] originalAuxiliary = auxiliary.clone();
     applyUpdate(state, pressure, variableScale, normalizedUpdate, stepLength);
     int offset = state.length * BLOCK_SIZE;
@@ -1123,7 +1126,7 @@ public final class UnsplitTransientSolver implements Serializable {
       double[][] candidateState, double[] candidatePressure, double[] cellAreas, double timeStep, double startTime,
       double outletPressure, boolean outletPressureFixed, Model model, ResidualEvaluation current, double timeWeight) {
     for (int update = 0; update < getMaximumActiveSetUpdates(); update++) {
-      if (!model.updateActiveSet(copy(current.midpointState), current.midpointPressure.clone())) {
+      if (!model.updateActiveSet(copyMatrixArray(current.midpointState), current.midpointPressure.clone())) {
         return new ActiveSetEvaluation(current, true);
       }
       // Even the last permitted switch invalidates the old residual. Keep the
@@ -1138,7 +1141,7 @@ public final class UnsplitTransientSolver implements Serializable {
       double[][] candidateState, double[] candidatePressure, double[] cellAreas, double timeStep, double startTime,
       double outletPressure, boolean outletPressureFixed, Model model, double timeWeight) {
     int cellCount = previousState.length;
-    double[][] midpointState = copy(previousState);
+    double[][] midpointState = copyMatrixArray(previousState);
     double[] midpointPressure = new double[cellCount];
     for (int cell = 0; cell < cellCount; cell++) {
       for (int variable = 0; variable < CONSERVATIVE_VARIABLE_COUNT; variable++) {
@@ -1148,8 +1151,9 @@ public final class UnsplitTransientSolver implements Serializable {
       midpointPressure[cell] = timeWeight == 1.0 ? candidatePressure[cell]
           : 0.5 * (previousPressure[cell] + candidatePressure[cell]);
     }
-    Evaluation evaluation = model.evaluate(copy(midpointState), midpointPressure.clone(), copy(candidateState),
-        candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure, outletPressureFixed);
+    Evaluation evaluation = model.evaluate(copyMatrixArray(midpointState), midpointPressure.clone(),
+        copyMatrixArray(candidateState), candidatePressure.clone(), startTime + timeWeight * timeStep, outletPressure,
+        outletPressureFixed);
     if (evaluation == null) {
       throw new IllegalArgumentException("Model evaluation cannot be null");
     }
@@ -1183,7 +1187,7 @@ public final class UnsplitTransientSolver implements Serializable {
 
     for (int variable = 0; variable < BLOCK_SIZE; variable++) {
       for (int color = 0; color < activeColorCount; color++) {
-        double[][] perturbedState = copy(candidateState);
+        double[][] perturbedState = copyMatrixArray(candidateState);
         double[] perturbedPressure = candidatePressure.clone();
         double[] increments = new double[cellCount];
         for (int cell = color; cell < cellCount; cell += colorCount) {
@@ -1386,7 +1390,7 @@ public final class UnsplitTransientSolver implements Serializable {
 
   private static double[] solveDenseDirect(double[][] matrix, double[] rightHandSide) {
     int dimension = rightHandSide.length;
-    double[][] coefficients = copy(matrix);
+    double[][] coefficients = copyMatrixArray(matrix);
     double[] result = rightHandSide.clone();
     for (int pivot = 0; pivot < dimension; pivot++) {
       int pivotRow = pivot;
@@ -1483,17 +1487,6 @@ public final class UnsplitTransientSolver implements Serializable {
       maximum = Math.max(maximum, Math.abs(value));
     }
     return maximum;
-  }
-
-  private static double[][] copy(double[][] values) {
-    if (values == null) {
-      return null;
-    }
-    double[][] result = new double[values.length][];
-    for (int row = 0; row < values.length; row++) {
-      result[row] = values[row] == null ? null : values[row].clone();
-    }
-    return result;
   }
 
   /**

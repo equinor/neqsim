@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import static neqsim.util.util.ArrayUtils.copyArray;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,7 +99,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
    * @return immutable slice result
    */
   public SliceResult evaluateOneDimensional(String actionId, double[] values, double[] anchorValues) {
-    return evaluate(new String[] {actionId}, new double[][] {copy(values)}, anchorValues);
+    return evaluate(new String[] {actionId}, new double[][] {copyArray(values)}, anchorValues);
   }
 
   /**
@@ -131,7 +133,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
   public SliceResult evaluateTwoDimensional(String firstActionId, double[] firstValues, String secondActionId,
       double[] secondValues, double[] anchorValues) {
     return evaluate(new String[] {firstActionId, secondActionId},
-        new double[][] {copy(firstValues), copy(secondValues)}, anchorValues);
+        new double[][] {copyArray(firstValues), copyArray(secondValues)}, anchorValues);
   }
 
   /**
@@ -794,16 +796,6 @@ public final class ProcessModelOperatingEnvelopeStudy {
       }
     }
     return (int) count;
-  }
-
-  /**
-   * Copies an input vector.
-   *
-   * @param values source values
-   * @return defensive copy or null
-   */
-  private static double[] copy(double[] values) {
-    return values == null ? null : Arrays.copyOf(values, values.length);
   }
 
   /** Converts finite doubles to an immutable JSON-friendly list. */
