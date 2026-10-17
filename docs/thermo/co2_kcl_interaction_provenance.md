@@ -3,8 +3,6 @@ title: "CO2–KCl interaction provenance"
 description: "Source basis, model semantics, holdout diagnostics, and limitations for the electrolyte-CPA carbon-dioxide–potassium interaction."
 ---
 
-# CO2–KCl interaction provenance
-
 `SystemElectrolyteCPAstatoil` uses the source-defined Born ion diameter and a
 potassium-specific CO2 short-range interaction to reproduce the sign and
 magnitude of KCl salting-out near the single calibration state. The change
