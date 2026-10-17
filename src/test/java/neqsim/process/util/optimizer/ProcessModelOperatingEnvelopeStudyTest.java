@@ -407,13 +407,19 @@ class ProcessModelOperatingEnvelopeStudyTest {
         early.study.getAcceptedPointBottleneck(early.search).getQualifiedConstraintName());
     assertEquals("gathering::gathering sink/shared gathering rate",
         late.study.getAcceptedPointBottleneck(late.search).getQualifiedConstraintName());
+    SliceResult earlyComparable = early.study.evaluateOneDimensional("producer-a-rate", new double[] {500.0, 700.0},
+        early.search);
+    SliceResult lateComparable = late.study.evaluateOneDimensional("producer-a-rate", new double[] {500.0, 700.0},
+        late.search);
+    assertTrue(earlyComparable.isComplete());
+    assertTrue(lateComparable.isComplete());
 
     ProcessModelOperatingEnvelopeLifecycleStudy lifecycle = new ProcessModelOperatingEnvelopeLifecycleStudy(
         "two-period-field", "Two-period field envelope", "synthetic changing facility limits", "year")
         .addPeriod("early-life", "Early life", 0.0, "producer-A operating limit governs", early.study, early.search,
-            early.slice)
+            earlyComparable)
         .addPeriod("late-life", "Late life", 5.0, "shared gathering limit governs", late.study, late.search,
-            late.slice);
+            lateComparable);
 
     assertEquals(2, lifecycle.getPeriods().size());
     assertEquals(1, lifecycle.getBottleneckTransitions().size());
@@ -425,7 +431,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getToConstraint());
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("cycle-lifecycle-1");
-    assertEquals(Integer.valueOf(1), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(2), evidence.get("schema_version"));
     assertEquals("cycle-lifecycle-1", evidence.get("cycle_id"));
     assertEquals(Integer.valueOf(2), evidence.get("period_count"));
     assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), evidence.get("accepted_action_ids"));
@@ -435,6 +441,24 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertTrue(Double.isFinite(((Double) evidence.get("envelope_runtime_seconds")).doubleValue()));
     assertEquals(2, ((List<?>) evidence.get("periods")).size());
     assertEquals(1, ((List<?>) evidence.get("bottleneck_transitions")).size());
+    List<?> periodChanges = (List<?>) evidence.get("period_change_diagnostics");
+    assertEquals(1, periodChanges.size());
+    Map<?, ?> periodChange = (Map<?, ?>) periodChanges.get(0);
+    assertEquals("early-life", periodChange.get("from_period_id"));
+    assertEquals("late-life", periodChange.get("to_period_id"));
+    assertEquals(Integer.valueOf(2), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
+    assertEquals(Integer.valueOf(1), periodChange.get("comparable_slice_count"));
+    assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
+    assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
+    Map<?, ?> sliceChange = (Map<?, ?>) ((List<?>) periodChange.get("slice_changes")).get(0);
+    assertEquals(Arrays.asList("producer-a-rate"), sliceChange.get("axis_action_ids"));
+    assertEquals(Integer.valueOf(2), sliceChange.get("from_requested_point_count"));
+    assertEquals(Integer.valueOf(2), sliceChange.get("to_requested_point_count"));
+    assertEquals(Boolean.TRUE, sliceChange.get("grid_identical"));
+    assertEquals(Integer.valueOf(2), sliceChange.get("comparable_point_count"));
+    assertEquals(Integer.valueOf(1), sliceChange.get("became_feasible_count"));
+    assertEquals(Integer.valueOf(0), sliceChange.get("became_infeasible_count"));
+    assertEquals(Boolean.TRUE, periodChange.get("advisory"));
     assertThrows(UnsupportedOperationException.class, () -> evidence.put("period_count", Integer.valueOf(0)));
 
     assertEquals(600.0, early.fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
@@ -461,6 +485,26 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertThrows(IllegalArgumentException.class, () -> lifecycle.addPeriod("same-time", "Same time", 0.0,
         "non-increasing time", early.study, early.search, early.slice));
     assertEquals(1, lifecycle.getPeriods().size());
+  }
+
+  /** Verifies period diagnostics expose added and removed slice axes without inventing interpolation. */
+  @Test
+  void lifecycleEvidenceReportsIncomparableSliceAxes() {
+    AcceptedPeriod early = createAcceptedPeriod("early-life", 650.0, 2000.0);
+    AcceptedPeriod late = createAcceptedPeriod("late-life", 1500.0, 1200.0);
+    SliceResult lateProducerB = late.study.evaluateOneDimensional("producer-b-rate", new double[] {300.0, 400.0},
+        late.search);
+
+    ProcessModelOperatingEnvelopeLifecycleStudy lifecycle = new ProcessModelOperatingEnvelopeLifecycleStudy(
+        "changed-slices", "Changed lifecycle slices", "synthetic slice-comparability check", "year")
+        .addPeriod("early-life", "Early life", 0.0, "producer-A slice", early.study, early.search, early.slice)
+        .addPeriod("late-life", "Late life", 5.0, "producer-B slice", late.study, late.search, lateProducerB);
+
+    Map<String, Object> diagnostic = lifecycle.getPeriodChangeDiagnostics().get(0);
+    assertEquals(Integer.valueOf(0), diagnostic.get("comparable_slice_count"));
+    assertEquals(Arrays.asList(Arrays.asList("producer-a-rate")), diagnostic.get("removed_slice_axes"));
+    assertEquals(Arrays.asList(Arrays.asList("producer-b-rate")), diagnostic.get("added_slice_axes"));
+    assertTrue(((List<?>) diagnostic.get("slice_changes")).isEmpty());
   }
 
   /**
