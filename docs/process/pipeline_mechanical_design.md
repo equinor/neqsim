@@ -203,7 +203,21 @@ $$t_{nom} = \frac{t_{min} + t_{corr}}{f_{fab}}$$
 
 Where:
 - $t_{corr}$ = corrosion allowance (typically 3mm)
-- $f_{fab}$ = fabrication tolerance (0.875 for seamless pipe)
+- $f_{fab}$ = remaining-wall factor (0.875 when the specified negative mill tolerance is 12.5%)
+
+Database `FabricationTolerance` / `fabricationTolerance` records use the negative
+wall-tolerance fraction: 0.125 means a 12.5% reduction from nominal wall. The
+`UNIT` value `negative_wall_tolerance_fraction` records this convention. The
+pipeline data source converts the fraction to the remaining-wall factor once,
+for both company data and design-standard overrides. It also accepts explicit
+`remaining_wall_factor` and `%` units; legacy `-` rows mean negative tolerance
+fractions. Invalid units or fractions raise `IllegalArgumentException` rather
+than entering a pressure-containment calculation. The calculator's
+`setFabricationTolerance(double)` API continues to take a remaining-wall factor.
+For example, a required pressure wall of 11.8 mm plus a 3 mm corrosion allowance
+requires `(11.8 + 3) / 0.875 = 16.91 mm` nominal wall at 12.5% tolerance.
+These are database and API conventions, not a statement that one tolerance
+applies to every material, product specification, or purchase order.
 
 ---
 

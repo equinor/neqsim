@@ -27,7 +27,7 @@
 "API-5L","46th Ed","Pipeline","MinYieldStrength",175.00,555.00,"MPa","Yield strength range (Grade B to X80)"
 "API-5L","46th Ed","Pipeline","JointEfficiency",1.00,1.00,"-","Seamless pipe"
 "API-5L","46th Ed","Pipe","MinYieldStrength",175.00,555.00,"MPa","Yield strength range"
-"API-5L","46th Ed","Pipeline","FabricationTolerance",0.10,0.125,"-","Wall thickness tolerance 10-12.5%"
+"API-5L","46th Ed","Pipeline","FabricationTolerance",0.10,0.125,"negative_wall_tolerance_fraction","Wall thickness tolerance 10-12.5%"
 "API-5L","46th Ed","Pipeline","GradeB_SMYS",241.00,241.00,"MPa","Grade B minimum yield (35000 psi)"
 "API-5L","46th Ed","Pipeline","X42_SMYS",290.00,290.00,"MPa","Grade X42 minimum yield (42000 psi)"
 "API-5L","46th Ed","Pipeline","X46_SMYS",317.00,317.00,"MPa","Grade X46 minimum yield (46000 psi)"

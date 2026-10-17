@@ -755,31 +755,72 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Setter for the field <code>pipeSpecification</code>.
+   * Select a populated pipe-size/specification cell from {@code PIPEDATA.csv}.
    *
-   * @param nominalDiameter a double in inch
-   * @param pipeSec a {@link java.lang.String} object
+   * <p>
+   * Blank cells mean that the specification is unavailable for that nominal size. Invalid or unavailable selections
+   * leave all previously configured geometry unchanged.
+   * </p>
+   *
+   * @param nominalDiameter nominal pipe size in inches
+   * @param pipeSec specification column name, for example {@code LD201}
+   * @throws IllegalArgumentException if the size/specification is invalid or unavailable
+   * @throws IllegalStateException if the database cannot be read or contains invalid dimensions
    */
   @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
-    this.pipeSpecification = pipeSec;
-    this.nominalDiameter = nominalDiameter;
-    this.PipeSpecSet = true;
-
-    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
-      try {
-        if (dataSet.next()) {
-          this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
-          this.insideDiameter = (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
+    if (!Double.isFinite(nominalDiameter) || nominalDiameter <= 0.0) {
+      throw new IllegalArgumentException("Nominal pipe diameter must be finite and positive: " + nominalDiameter);
+    }
+    if (pipeSec == null || pipeSec.trim().isEmpty()) {
+      throw new IllegalArgumentException("Pipe specification must be provided for nominal diameter " + nominalDiameter);
+    }
+    String selectedSpecification = pipeSec.trim();
+    String selection = selectedSpecification + " at nominal diameter " + nominalDiameter + " inch";
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database
+            .getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'")) {
+      java.sql.ResultSetMetaData metadata = dataSet.getMetaData();
+      boolean knownSpecification = false;
+      for (int column = 1; column <= metadata.getColumnCount(); column++) {
+        String columnName = metadata.getColumnLabel(column);
+        if (!"ID".equalsIgnoreCase(columnName) && !"Size".equalsIgnoreCase(columnName)
+            && !"OD".equalsIgnoreCase(columnName) && selectedSpecification.equalsIgnoreCase(columnName)) {
+          selectedSpecification = columnName;
+          knownSpecification = true;
+          break;
         }
-      } catch (NumberFormatException e) {
-        logger.error(e.getMessage());
-      } catch (SQLException e) {
-        logger.error(e.getMessage());
       }
+      if (!knownSpecification) {
+        throw new IllegalArgumentException("Unknown pipe specification " + selection);
+      }
+      if (!dataSet.next()) {
+        throw new IllegalArgumentException("No pipe data for " + selection);
+      }
+      String wallValue = dataSet.getString(selectedSpecification);
+      if (wallValue == null || wallValue.trim().isEmpty()) {
+        throw new IllegalArgumentException("Pipe specification is not available: " + selection);
+      }
+      double selectedWall = Double.parseDouble(wallValue.trim()) / 1000.0;
+      double selectedOD = dataSet.getDouble("OD") / 1000.0;
+      if (dataSet.wasNull() || !Double.isFinite(selectedWall) || !Double.isFinite(selectedOD) || selectedWall <= 0.0
+          || selectedOD <= 2.0 * selectedWall) {
+        throw new IllegalStateException("Invalid pipe dimensions for " + selection);
+      }
+      this.pipeSpecification = selectedSpecification;
+      this.nominalDiameter = nominalDiameter;
+      this.pipeThickness = selectedWall;
+      this.insideDiameter = selectedOD - 2.0 * selectedWall;
+      this.PipeSpecSet = true;
+    } catch (NumberFormatException e) {
+      throw new IllegalStateException("Invalid pipe dimensions for " + selection, e);
     } catch (SQLException e) {
-      logger.error(e.getMessage());
+      throw new IllegalStateException("Cannot load pipe specification " + selection, e);
+    } catch (RuntimeException e) {
+      if (e instanceof IllegalArgumentException || e instanceof IllegalStateException) {
+        throw e;
+      }
+      throw new IllegalStateException("Cannot load pipe specification " + selection, e);
     }
   }
 
