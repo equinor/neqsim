@@ -48,7 +48,7 @@ class ReactiveCO2BrineHydrateOrderTest {
     assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
       SystemInterface fluid = brine(0, 50.0, 1.0, true);
       solveAndVerify(fluid);
-      assertEquals(280.65013, fluid.getTemperature(), 2.0e-4);
+      assertEquals(280.5970651, fluid.getTemperature(), 2.0e-4);
     });
   }
 
@@ -59,7 +59,7 @@ class ReactiveCO2BrineHydrateOrderTest {
     assertTimeoutPreemptively(Duration.ofSeconds(30), () -> {
       SystemInterface fluid = brine(order, 50.0, 1.0, true);
       solveAndVerify(fluid);
-      assertEquals(280.65013, fluid.getTemperature(), 2.0e-4);
+      assertEquals(280.5970651, fluid.getTemperature(), 2.0e-4);
     });
   }
 
@@ -101,7 +101,10 @@ class ReactiveCO2BrineHydrateOrderTest {
       SystemInterface second = brine(1, 50.0, 1.0, false);
       new ThermodynamicOperations(first).hydrateFormationTemperature();
       new ThermodynamicOperations(second).hydrateFormationTemperature();
-      assertEquals(280.6780331, first.getTemperature(), 2.0e-4);
+      // This is a deterministic model regression, not an experimental acceptance
+      // target. The CO2/K+ calibration changes its center while retaining the
+      // original strict tolerance and permutation-invariance requirement.
+      assertEquals(280.6252491, first.getTemperature(), 2.0e-4);
       assertEquivalent(first, second);
     });
   }
