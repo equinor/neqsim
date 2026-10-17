@@ -580,8 +580,10 @@ class FilmCorrectionInvariantTest {
   void arrayPrimaryApiRetainsDeprecatedMatrixEntryPoints() throws NoSuchMethodException {
     assertEquals(double[][][].class,
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").getReturnType());
+    assertFalse(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").isDefault());
     assertEquals(Matrix[].class,
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").getReturnType());
+    assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").isDefault());
     assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix")
         .isAnnotationPresent(Deprecated.class));
     assertTrue(KrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)

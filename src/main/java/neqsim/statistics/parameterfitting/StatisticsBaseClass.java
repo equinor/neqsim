@@ -16,7 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.statistics.montecarlosimulation.MonteCarloSimulation;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -33,7 +33,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
   static Logger logger = LogManager.getLogger(StatisticsBaseClass.class);
 
   /** Dense linear algebra used for the covariance inversion. */
-  protected static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  protected static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   protected SampleSet sampleSet = new SampleSet();
   protected double chiSquare = 0;

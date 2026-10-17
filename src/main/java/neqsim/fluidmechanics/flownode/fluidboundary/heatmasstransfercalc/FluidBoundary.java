@@ -358,7 +358,13 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     }
   }
 
-  /** Adopts replacements made through the legacy live Matrix array without copying numerical data. */
+  /**
+   * Adopts replacements made through the legacy live Matrix array without copying numerical data.
+   *
+   * <p>
+   * This compatibility adapter should be removed with {@link #massTransferCoefficientMatrix} and
+   * {@link #getMassTransferCoefficientMatrix()}.
+   */
   private void synchronizeMassTransferCoefficientArray() {
     if (massTransferCoefficientMatrix != null) {
       for (int phase = 0; phase < massTransferCoefficientArray.length; phase++) {
@@ -368,7 +374,13 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     }
   }
 
-  /** Recreates transient compatibility views after deserialization. */
+  /**
+   * Recreates transient views for the deprecated Matrix compatibility API after deserialization.
+   *
+   * <p>
+   * This compatibility adapter should be removed with {@link #massTransferCoefficientMatrix} and
+   * {@link #getMassTransferCoefficientMatrix()}.
+   */
   private void ensureMassTransferCoefficientViews() {
     if (massTransferCoefficientMatrix == null) {
       massTransferCoefficientMatrix = new Matrix[massTransferCoefficientArray.length];

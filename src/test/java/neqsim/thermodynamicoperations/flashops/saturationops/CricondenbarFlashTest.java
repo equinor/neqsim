@@ -12,7 +12,7 @@ import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import Jama.Matrix;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraException;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -164,7 +164,7 @@ class CricondenbarFlashTest {
 
     flash.setfvec();
     flash.setJac();
-    double[] step = new JamaLinearAlgebra().solve(flash.Jac, flash.fvec);
+    double[] step = new EjmlLinearAlgebra().solve(flash.Jac, flash.fvec);
 
     assertArrayEquals(new double[] {0.10371631234839603, -0.10371631234839604, -0.5241645555543996}, step, 0.0);
   }

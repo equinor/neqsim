@@ -1,9 +1,7 @@
 package neqsim.chemicalreactions.chemicalreaction;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
@@ -80,9 +78,8 @@ class ChemicalReactionListReferencePotentialTest {
   /**
    * Verifies the reaction-rate column combines every reaction and follows the supplied component ordering.
    */
-  @SuppressWarnings("deprecation")
   @Test
-  void reactionRatesReturnArrayAndDeprecatedJamaBridgeMatches() {
+  void reactionRatesFollowComponentOrderingAndStoichiometry() {
     SystemInterface system = createSystem(new String[] {"CO2", "water"}, new double[] {0.1, 10.0});
     system.initProperties();
     PhaseInterface phase = system.getPhase(0);
@@ -97,10 +94,6 @@ class ChemicalReactionListReferencePotentialTest {
     double[] rates = list.calcReationRates(phase, components);
 
     assertEquals(components.length, rates.length);
-    Matrix legacyRates = list.calcReacRates(phase, components);
-    assertEquals(components.length, legacyRates.getRowDimension());
-    assertEquals(1, legacyRates.getColumnDimension());
-    assertArrayEquals(rates, legacyRates.getColumnPackedCopy(), 0.0);
     double[][] stoichiometry = list.getReactionMatrix();
     double concentrationFactor = phase.getDensity() / phase.getMolarMass();
     for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
