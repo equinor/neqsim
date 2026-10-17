@@ -375,6 +375,53 @@ class FieldWellNetworkProcessUnitTest {
    */
   @Test
   void conservesSharedReservoirAcrossProductionInjectionPeriods() {
+    runSharedReservoirPeriods(new double[] {60.0, 120.0, 240.0});
+  }
+
+  /** Compare independently initialized, uniformly refined explicit reservoir steps at common physical times. */
+  @Test
+  void refinesSharedReservoirAcceptedStepsAtCommonTimes() {
+    double[][][] histories = new double[4][][];
+    for (int level = 0; level < histories.length; level++) {
+      int steps = 4 << level;
+      double[] durations = new double[steps];
+      Arrays.fill(durations, 86400.0 / steps);
+      histories[level] = runSharedReservoirPeriods(durations);
+    }
+    // No extrapolation: each comparison uses actual accepted states at 6, 12, 18 and 24 hours.
+    double previousDifference = Double.NaN;
+    for (int level = 0; level < histories.length - 1; level++) {
+      double difference = 0.0;
+      for (int checkpoint = 1; checkpoint <= 4; checkpoint++) {
+        double[] coarse = histories[level][(checkpoint << level) - 1];
+        double[] fine = histories[level + 1][(checkpoint << (level + 1)) - 1];
+        assertEquals(coarse[0], fine[0], 0.0);
+        for (int quantity = 1; quantity < coarse.length; quantity++) {
+          assertTrue(Double.isFinite(coarse[quantity]) && coarse[quantity] > 0.0 && Double.isFinite(fine[quantity])
+              && fine[quantity] > 0.0);
+          difference = Math.max(difference, Math.abs(coarse[quantity] - fine[quantity]) / Math.abs(fine[quantity]));
+        }
+      }
+      assertTrue(difference > 1.0e-10, "Refinement must resolve an error above roundoff");
+      logger.info("Shared reservoir refinement level {}: maximum relative common-time difference={}", level,
+          difference);
+      if (level > 0) {
+        assertTrue(difference < previousDifference * 0.75,
+            "Halving accepted-step duration must contract the common-time discrepancy");
+      }
+      previousDifference = difference;
+    }
+    assertTrue(previousDifference < 1.0e-3, "Finest pair must agree within 0.1% at all common times");
+  }
+
+  /**
+   * Execute the same canonical shared-reservoir fixture with a prescribed explicit step partition.
+   *
+   * @param stepDurationsSeconds positive accepted-step durations in seconds
+   * @return accepted samples: time (s), pressure (bara), production/injection (kg/s), power (kW), cumulative
+   * production/injection (kg), then component inventories (mol)
+   */
+  private double[][] runSharedReservoirPeriods(double[] stepDurationsSeconds) {
     SystemInterface inventory = gas(150.0);
     inventory.addComponent("water", 0.1);
     inventory.setMixingRule("classic");
@@ -446,7 +493,14 @@ class FieldWellNetworkProcessUnitTest {
     Object pumpChart = injection.getHydraulicNetwork().getPipe("injection pump").getPumpModel().getPumpChart();
     Object compressorChart = compressor.getCompressorChart();
     double elapsedSeconds = 0.0;
-    for (double stepSeconds : new double[] {60.0, 120.0, 240.0}) {
+    double cumulativeProductionKg = 0.0;
+    double cumulativeInjectionKg = 0.0;
+    double[] initialMoles = componentMoles(reservoir.getReservoirFluid());
+    double[] cumulativeNetMoles = new double[initialMoles.length];
+    double[][] history = new double[stepDurationsSeconds.length][7 + initialMoles.length];
+    int stepIndex = 0;
+    for (double stepSeconds : stepDurationsSeconds) {
+      assertTrue(Double.isFinite(stepSeconds) && stepSeconds > 0.0);
       double previousPressure = reservoir.getReservoirFluid().getPressure("bara");
       double[] before = componentMoles(reservoir.getReservoirFluid());
       EvaluationResult accepted = evaluator.evaluate(new double[0]);
@@ -495,6 +549,8 @@ class FieldWellNetworkProcessUnitTest {
           Arrays.asList(injected.getFluid().getComponentNames()));
       double[] productionMolesPerSecond = componentMoles(produced.getFluid());
       double[] injectionMolesPerSecond = componentMoles(injected.getFluid());
+      cumulativeProductionKg += stepSeconds * produced.getFlowRate("kg/sec");
+      cumulativeInjectionKg += stepSeconds * injected.getFlowRate("kg/sec");
       reservoir.runTransient(stepSeconds, UUID.randomUUID());
       elapsedSeconds += stepSeconds;
       assertEquals(elapsedSeconds, reservoir.getTime(), 0.0);
@@ -504,6 +560,10 @@ class FieldWellNetworkProcessUnitTest {
             + stepSeconds * (injectionMolesPerSecond[component] - productionMolesPerSecond[component]);
         assertTrue(expected > 0.0);
         assertEquals(expected, after[component], Math.max(1.0e-8, Math.abs(expected) * 1.0e-10));
+        cumulativeNetMoles[component] += stepSeconds
+            * (injectionMolesPerSecond[component] - productionMolesPerSecond[component]);
+        double cumulativeExpected = initialMoles[component] + cumulativeNetMoles[component];
+        assertEquals(cumulativeExpected, after[component], Math.max(1.0e-8, Math.abs(cumulativeExpected) * 1.0e-10));
       }
       double pressure = reservoir.getReservoirFluid().getPressure("bara");
       assertTrue(Double.isFinite(pressure) && pressure > 50.0 && pressure < 190.0);
@@ -532,7 +592,17 @@ class FieldWellNetworkProcessUnitTest {
       assertEquals(0, injection.getRouteConfigurationSelection("injector route"));
       assertTrue(pumpChart == injection.getHydraulicNetwork().getPipe("injection pump").getPumpModel().getPumpChart());
       assertTrue(compressorChart == compressor.getCompressorChart());
+      double[] sample = history[stepIndex++];
+      sample[0] = elapsedSeconds;
+      sample[1] = pressure;
+      sample[2] = updatedProduction;
+      sample[3] = updatedInjection;
+      sample[4] = model.getPower("kW");
+      sample[5] = cumulativeProductionKg;
+      sample[6] = cumulativeInjectionKg;
+      System.arraycopy(after, 0, sample, 7, after.length);
     }
+    return history;
   }
 
   /**

@@ -5,6 +5,17 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 # Task Log
 
+### 2026-10-17 — Shared-reservoir accepted-step refinement
+**Type:** E (Feature)
+**Keywords:** SURF, timestep refinement, reservoir, production, injection, component conservation
+**Solution:** Reuse the existing shared-reservoir network acceptance fixture across independent
+one-day 4/8/16/32-step runs; compare pressure, well rates, power, cumulative throughputs and
+component inventory at common physical times. Require contracting differences and cumulative
+component closure while retaining steady rejection/recovery without reservoir advancement.
+**Notes:** No runtime solver or adaptive policy changes. Synthetic smooth-trajectory evidence only,
+including inherited below-minimum-flow pump-chart extrapolation;
+map/injectivity qualification, discontinuous events and lifecycle persistence remain separate gates.
+
 ### 2026-10-16 — Shared-reservoir production and injection acceptance
 **Type:** E (Feature)
 **Keywords:** SURF, production, injection, reservoir inventory, shared power, accepted period
