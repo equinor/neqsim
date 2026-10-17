@@ -40,7 +40,7 @@ class KClGasInteractionQualificationTest {
     for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
       ElectrolyteMixingRulesInterface rule = ((PhaseModifiedFurstElectrolyteEos) fluid.getPhase(phase))
           .getElectrolyteMixingRule();
-      assertEquals(-2.31476480642442e-4, rule.getWijParameter(0, 2), 0.0);
+      assertEquals(-2.2981e-4, rule.getWijParameter(0, 2), 0.0);
       rule.setWijParameter(0, 2, 2.0e-4);
       rule.setWijT1Parameter(0, 2, 3.0e-4);
       rule.setWijT2Parameter(0, 2, 4.0e-4);

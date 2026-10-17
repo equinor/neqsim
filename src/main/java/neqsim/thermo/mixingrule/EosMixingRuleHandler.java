@@ -3545,7 +3545,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   // Onda et al. (1970), DOI 10.1252/jcej.3.18, Table 3: the
                   // CO2/KCl salt coefficient is 0.0777 L/mol at 298.15 K. The
                   // existing chloride coefficient is retained as the fixed gauge.
-                  wij[0][i][j] = -2.31476480642442e-4;
+                  wij[0][i][j] = -2.2981e-4;
                   wij[1][i][j] = 0.0;
                   wij[2][i][j] = 0.0;
                 }

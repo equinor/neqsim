@@ -3,23 +3,24 @@ title: "CO2–KCl interaction provenance"
 description: "Source basis, model semantics, holdout diagnostics, and limitations for the electrolyte-CPA carbon-dioxide–potassium interaction."
 ---
 
-`SystemElectrolyteCPAstatoil` uses the source-defined Born ion diameter and a
-potassium-specific CO2 short-range interaction to reproduce the sign and
-magnitude of KCl salting-out near the single calibration state. The change
-corrects the previous strong salting-in response. It is not an empirical
-hydrate-temperature offset and does not alter the hydrate model,
-phase-equilibrium tolerances, or experimental fixtures.
+`SystemElectrolyteCPAstatoil` uses a potassium-specific CO2 short-range
+interaction to reproduce the sign and magnitude of KCl salting-out near the
+single calibration state. The change corrects the previous strong salting-in
+response. It is not an empirical hydrate-temperature offset and does not alter
+the hydrate model, phase-equilibrium tolerances, or experimental fixtures.
 
 ## Parameter and model semantics
 
-Solbraa (2002), Appendix C, equation (C.10), defines the Born charge-size term
-with the characteristic Stokes diameter for cations and Pauling diameter for
-anions. These are distinct from the covolume-derived hard-sphere diameter used
-by the MSA and packing terms. Both the phase energy and component chemical
-potential now use that same source-defined diameter.
+The existing electrolyte-CPA Born-diameter convention is retained. An attempted
+global change to the Solbraa (2002) Appendix C characteristic diameters was
+rejected because exact-base controls showed that it changed NaCl reactive-state
+conservation and methane/NaCl high-salinity hydrate behavior, systems outside
+this KCl-specific scope. The Onda calibration below therefore applies to the
+current NeqSim model convention and must not be transferred to a different Born
+formulation without refitting and independent validation.
 
 The symmetric CO2/K+ coefficients are
-`W0 = -2.31476480642442e-4 m3/mol`, `W1 = 0 m3 K/mol`, and
+`W0 = -2.2981e-4 m3/mol`, `W1 = 0 m3 K/mol`, and
 `W2 = 0 m3/mol`. The mixing rule evaluates
 
 $$
@@ -82,16 +83,16 @@ them into a relaxed acceptance tolerance.
 On the implementation head, the six 273.15 K He–Morse states decrease
 monotonically with KCl and have 29.38% absolute relative deviation on the
 reported molality basis. All seven Yasunishi–Yoshida concentrations are matched;
-their Ostwald coefficients decrease monotonically and have 17.64% absolute
+their Ostwald coefficients decrease monotonically and have 17.69% absolute
 relative deviation. The eight Dholabhai hydrate holdouts give K10 RMSE 0.179 K
-(maximum absolute error 0.298 K) and K15 RMSE 0.246 K (maximum absolute error
+(maximum absolute error 0.298 K) and K15 RMSE 0.247 K (maximum absolute error
 0.348 K). These figures describe this exact model head; they are not acceptance
 tolerances and remain subject to independent review.
 
 The salt-only KCl water-activity diagnostic remains distinct from the dissolved
 CO2 correction. At 273.15 K it differs from the Archer reference by −0.00215 for
 K10 and −0.00467 for K15 before CO2 is added. The saturated Burgass NaCl control
-retains five points within 1 K and a sixth error of −1.131 K at 194.77 bara.
+retains five points within 1 K and a sixth error of −1.121 K at 194.77 bara.
 
 ## Qualification boundary
 
