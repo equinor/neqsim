@@ -21,6 +21,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBo
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarynonreactive.FluidBoundarySystemNonReactive;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveKrishnaStandartFilmModel;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
@@ -29,6 +30,134 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class FilmCorrectionInvariantTest {
+  /** Checks that reactive working state exists when the film constructor dispatches to its state initializer. */
+  @Test
+  void reactiveBoundaryConstructsFromTheExistingFluidFixture() {
+    StratifiedFlowNode node = new StratifiedFlowNode(fluid(), new PipeData(0.1, 0.00025));
+    node.initFlowCalc();
+    ReactiveNewtonProbe boundary = new ReactiveNewtonProbe(node);
+    boundary.assertWorkingArrays();
+    new ReactiveNewtonProbe(fluid()).assertWorkingArrays();
+    assertEquals(node.getBulkSystem().getNumberOfComponents(), boundary.calcFluxes().length);
+  }
+
+  /**
+   * Compares actual reactive array equations and damping against the existing film/Jama references.
+   *
+   * @throws IOException if working arrays cannot be serialized
+   * @throws ClassNotFoundException if working arrays cannot be restored
+   */
+  @Test
+  void reactiveArrayNewtonStepMatchesTheExistingFilmEquations() throws IOException, ClassNotFoundException {
+    StratifiedFlowNode node = new StratifiedFlowNode(fluid(), new PipeData(0.1, 0.00025));
+    node.initFlowCalc();
+    ReactiveNewtonProbe reactive = new ReactiveNewtonProbe(node);
+    reactive.setHeatTransferCalc(false);
+    reactive.init();
+    reactive.setuMassTrans();
+    reactive.setfvecMassTrans2();
+    reactive.setJacMassTrans2();
+
+    NewtonFilmProbe reference = new NewtonFilmProbe(node);
+    reference.setHeatTransferCalc(false);
+    reference.init();
+    reference.setuMassTrans();
+    reference.setfvecMassTrans2();
+    reference.setJacMassTrans2();
+    reactive.assertAssemblyAndStep(reference.expectedJacobian, reference.expectedResidual);
+  }
+
+  /**
+   * Exposes the legacy reactive solver on the existing real-fluid fixture.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  private static final class ReactiveNewtonProbe extends ReactiveFluidBoundary {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Creates the reactive boundary for a configured flow node.
+     *
+     * @param node real stratified flow node
+     */
+    private ReactiveNewtonProbe(FlowNodeInterface node) {
+      super(node);
+    }
+
+    /**
+     * Creates the reactive boundary directly from the existing fluid fixture.
+     *
+     * @param system real thermodynamic fluid
+     */
+    private ReactiveNewtonProbe(SystemInterface system) {
+      super(system);
+    }
+
+    /** Checks the dimensions and ownership of all primitive reactive working arrays. */
+    private void assertWorkingArrays() {
+      assertEquals(neq, Jac.length);
+      assertEquals(neq, Jac[0].length);
+      assertEquals(neq, fvec.length);
+      assertEquals(neq, dx.length);
+      assertEquals(neq, uMassTrans.length);
+      assertEquals(neq, Xgij.length);
+      assertEquals(4, Xgij[0].length);
+      assertNotSame(uMassTrans, uMassTransold);
+      assertArrayEquals(uMassTrans, uMassTransold, 0.0);
+    }
+
+    /**
+     * Compares the assembled equations, direct solve and fixed damping before round-tripping array state.
+     *
+     * @param referenceJacobian Jacobian assembled by the established nonreactive film on the same fixture
+     * @param referenceResidual residual assembled by the established nonreactive film
+     * @throws IOException if writing arrays fails
+     * @throws ClassNotFoundException if reading arrays fails
+     */
+    private void assertAssemblyAndStep(Matrix referenceJacobian, Matrix referenceResidual)
+        throws IOException, ClassNotFoundException {
+      for (int row = 0; row < neq; row++) {
+        assertEquals(referenceResidual.get(row, 0), fvec[row],
+            Math.max(1.0e-12, Math.abs(referenceResidual.get(row, 0)) * 1.0e-12));
+        for (int column = 0; column < neq; column++) {
+          double expected = referenceJacobian.get(row, column);
+          assertEquals(expected, Jac[row][column], Math.max(1.0e-12, Math.abs(expected) * 1.0e-12));
+        }
+      }
+
+      Matrix initialJacobian = new Matrix(Jac).copy();
+      double[] initialResidual = fvec.clone();
+      Matrix expectedStep = new Matrix(Jac).solve(new Matrix(fvec, fvec.length));
+      Matrix expectedState = new Matrix(uMassTrans, uMassTrans.length).minus(expectedStep.times(0.1));
+      dx = solveReactiveJacobianStep();
+      for (double value : dx) {
+        assertTrue(Double.isFinite(value), "The real-fluid reactive Newton step must be finite");
+      }
+      assertArrayEquals(expectedStep.getColumnPackedCopy(), dx, 0.0);
+      assertMatrix(initialJacobian, new Matrix(Jac));
+      assertArrayEquals(initialResidual, fvec, 0.0);
+      applyReactiveNewtonStep(dx);
+      assertArrayEquals(expectedState.getColumnPackedCopy(), uMassTrans, 0.0);
+
+      Object[] state = {Jac, fvec, dx, uMassTrans, uMassTransold, Xgij};
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+      try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+        output.writeObject(state);
+      }
+      Object[] restored;
+      try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+        restored = (Object[]) input.readObject();
+      }
+      assertMatrix(new Matrix(Jac), new Matrix((double[][]) restored[0]));
+      assertMatrix(new Matrix(Xgij), new Matrix((double[][]) restored[5]));
+      for (int index = 1; index < 5; index++) {
+        assertNotSame(state[index], restored[index]);
+        assertArrayEquals((double[]) state[index], (double[]) restored[index], 0.0);
+      }
+    }
+  }
+
   /**
    * Compares Newton steps and damping on the existing fluid fixture without replacing the production solver.
    *
