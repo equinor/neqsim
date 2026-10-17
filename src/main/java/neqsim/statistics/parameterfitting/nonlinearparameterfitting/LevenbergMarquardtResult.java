@@ -2,6 +2,7 @@ package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 import java.io.Serializable;
 import Jama.Matrix;
+import neqsim.util.util.ArrayUtils;
 
 /**
  * Immutable result from a Levenberg-Marquardt parameter fitting run.
@@ -73,9 +74,9 @@ public final class LevenbergMarquardtResult implements Serializable {
     this.iterations = iterations;
     this.finalChiSquare = finalChiSquare;
     this.gradientNorm = gradientNorm;
-    this.covarianceMatrix = copyMatrixArray(covarianceMatrix);
-    this.correlationMatrix = copyMatrixArray(correlationMatrix);
-    this.parameterStandardErrors = copyArray(parameterStandardErrors);
+    this.covarianceMatrix = ArrayUtils.copyMatrixArray(covarianceMatrix);
+    this.correlationMatrix = ArrayUtils.copyMatrixArray(correlationMatrix);
+    this.parameterStandardErrors = ArrayUtils.copyArray(parameterStandardErrors);
   }
 
   /**
@@ -140,7 +141,7 @@ public final class LevenbergMarquardtResult implements Serializable {
    */
   @Deprecated
   public Matrix getCovarianceMatrix() {
-    return covarianceMatrix == null ? null : new Matrix(copyMatrixArray(covarianceMatrix));
+    return covarianceMatrix == null ? null : new Matrix(ArrayUtils.copyMatrixArray(covarianceMatrix));
   }
 
   /**
@@ -151,7 +152,7 @@ public final class LevenbergMarquardtResult implements Serializable {
    */
   @Deprecated
   public Matrix getCorrelationMatrix() {
-    return correlationMatrix == null ? null : new Matrix(copyMatrixArray(correlationMatrix));
+    return correlationMatrix == null ? null : new Matrix(ArrayUtils.copyMatrixArray(correlationMatrix));
   }
 
   /**
@@ -160,7 +161,7 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @return covariance matrix values, or null if unavailable
    */
   public double[][] getCovarianceMatrixArray() {
-    return copyMatrixArray(covarianceMatrix);
+    return ArrayUtils.copyMatrixArray(covarianceMatrix);
   }
 
   /**
@@ -169,7 +170,7 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @return correlation matrix values, or null if unavailable
    */
   public double[][] getCorrelationMatrixArray() {
-    return copyMatrixArray(correlationMatrix);
+    return ArrayUtils.copyMatrixArray(correlationMatrix);
   }
 
   /**
@@ -178,38 +179,6 @@ public final class LevenbergMarquardtResult implements Serializable {
    * @return parameter standard errors, or null if unavailable
    */
   public double[] getParameterStandardErrors() {
-    return copyArray(parameterStandardErrors);
-  }
-
-  /**
-   * Copies a matrix array.
-   *
-   * @param matrix matrix array to copy
-   * @return copied matrix array, or null if matrix is null
-   */
-  private static double[][] copyMatrixArray(double[][] matrix) {
-    if (matrix == null) {
-      return null;
-    }
-    double[][] copy = new double[matrix.length][];
-    for (int i = 0; i < matrix.length; i++) {
-      copy[i] = copyArray(matrix[i]);
-    }
-    return copy;
-  }
-
-  /**
-   * Copies an array.
-   *
-   * @param values values to copy
-   * @return copied values, or null if values is null
-   */
-  private static double[] copyArray(double[] values) {
-    if (values == null) {
-      return null;
-    }
-    double[] copy = new double[values.length];
-    System.arraycopy(values, 0, copy, 0, values.length);
-    return copy;
+    return ArrayUtils.copyArray(parameterStandardErrors);
   }
 }
