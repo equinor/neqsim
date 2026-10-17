@@ -231,6 +231,11 @@ public class AcceleratedCPASolverTest {
     // Anderson should match standard (same algorithm family: nested)
     assertEquals(densityStd, densityAnd, Math.abs(densityStd) * REL_TOL,
         "Anderson water-methanol density should match standard nested");
+
+    logPhaseState("standard", standard);
+    logPhaseState("implicit", implicit);
+    logPhaseState("broyden", broyden);
+    logPhaseState("anderson", anderson);
   }
 
   /**
@@ -471,31 +476,27 @@ public class AcceleratedCPASolverTest {
   }
 
   /**
-   * Diagnostic test: compare fugacity coefficients and molar volumes for water-methanol at 350K, 1 bar across all
-   * solvers.
+   * Logs phase diagnostics from the already-solved water-methanol comparison.
+   *
+   * @param type solver label
+   * @param system solved fluid
    */
-  @Test
-  public void testDiagnosticWaterMethanol() {
-    String[] types = {"standard", "implicit", "broyden", "anderson"};
-    for (String type : types) {
-      SystemInterface sys = createWaterMethanolSystem(type);
-      ThermodynamicOperations ops = new ThermodynamicOperations(sys);
-      ops.TPflash();
-      sys.initProperties();
-      double density = sys.getDensity("kg/m3");
-      int numPhases = sys.getNumberOfPhases();
-      logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s: density=%.6f nPhases=%d%n", type, density, numPhases);
-      for (int p = 0; p < numPhases; p++) {
-        double molarVol = sys.getPhase(p).getMolarVolume();
-        double phaseFrac = sys.getPhase(p).getBeta();
-        logger.printf(org.apache.logging.log4j.Level.INFO, "  Phase[%d] type=%s beta=%.6f molarVol=%.6f%n", p,
-            sys.getPhase(p).getType(), phaseFrac, molarVol);
-        for (int c = 0; c < sys.getPhase(p).getNumberOfComponents(); c++) {
-          double fugCoeff = sys.getPhase(p).getComponent(c).getFugacityCoefficient();
-          double z = sys.getPhase(p).getComponent(c).getz();
-          logger.printf(org.apache.logging.log4j.Level.INFO, "    comp[%d] %s z=%.6f fugCoeff=%.8f%n", c,
-              sys.getPhase(p).getComponent(c).getComponentName(), z, fugCoeff);
-        }
+  private void logPhaseState(String type, SystemInterface system) {
+    double density = system.getDensity("kg/m3");
+    int phaseCount = system.getNumberOfPhases();
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%-12s: density=%.6f nPhases=%d%n", type, density, phaseCount);
+    for (int phaseIndex = 0; phaseIndex < phaseCount; phaseIndex++) {
+      double molarVolume = system.getPhase(phaseIndex).getMolarVolume();
+      double phaseFraction = system.getPhase(phaseIndex).getBeta();
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Phase[%d] type=%s beta=%.6f molarVol=%.6f%n", phaseIndex,
+          system.getPhase(phaseIndex).getType(), phaseFraction, molarVolume);
+      for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double fugacityCoefficient = system.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient();
+        double moleFraction = system.getPhase(phaseIndex).getComponent(componentIndex).getz();
+        logger.printf(org.apache.logging.log4j.Level.INFO, "    comp[%d] %s z=%.6f fugCoeff=%.8f%n", componentIndex,
+            system.getPhase(phaseIndex).getComponent(componentIndex).getComponentName(), moleFraction,
+            fugacityCoefficient);
       }
     }
   }

@@ -571,6 +571,11 @@ public class CoolingDutyProductionAnalysisTest {
       OptimizationResult result = optimizer.optimize(process, inletStream, config,
           Collections.singletonList(throughputObjective), Collections.emptyList());
 
+      assertTrue(
+          Double.isFinite(result.getOptimalRate()) && result.getOptimalRate() >= originalFlow * 0.9
+              && result.getOptimalRate() <= originalFlow * 1.15,
+          "Optimized rate must stay within the requested search bounds at pressure drop " + dP);
+
       pressureDrops.add(dP);
       optimalFlows.add(result.getOptimalRate());
       bottlenecks.add(result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A");
@@ -1058,205 +1063,23 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * Tests pressure drop effect with identical compressor curves for compressor 1 and 2.
-   */
-  @Test
-  public void testPressureDropWithIdenticalCompressors() {
-    logger.info("\n" + StringUtils.repeat("=", 100));
-    logger.info("PRESSURE DROP EFFECT - COMPRESSOR 2 SAME AS COMPRESSOR 1 (NO COOLING)");
-    logger.info(StringUtils.repeat("=", 100));
-
-    double gasStdDensity = 0.73;
-
-    List<Double> pressureDrops = new ArrayList<>();
-    List<Double> optimalFlows = new ArrayList<>();
-    List<String> bottlenecks = new ArrayList<>();
-
-    for (double dP = 0.0; dP <= 1.05; dP += 0.1) {
-      ProcessSystem process = buildProcessWithIdenticalCompressorsAndPressureDrop(0.0, dP);
-      Stream inletStream = (Stream) process.getUnit("Inlet Stream");
-      double originalFlow = inletStream.getFlowRate("kg/hr");
-
-      ProductionOptimizer optimizer = new ProductionOptimizer();
-      OptimizationConfig config = new OptimizationConfig(originalFlow * 0.9, originalFlow * 1.15).rateUnit("kg/hr")
-          .tolerance(originalFlow * 0.002).maxIterations(15).defaultUtilizationLimit(1.0)
-          .searchMode(SearchMode.BINARY_FEASIBILITY).rejectInvalidSimulations(true);
-
-      OptimizationObjective throughputObjective = new OptimizationObjective("throughput",
-          proc -> ((Stream) proc.getUnit("Inlet Stream")).getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
-
-      OptimizationResult result = optimizer.optimize(process, inletStream, config,
-          Collections.singletonList(throughputObjective), Collections.emptyList());
-
-      pressureDrops.add(dP);
-      optimalFlows.add(result.getOptimalRate());
-      bottlenecks.add(result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A");
-
-      double flowMSm3Day = result.getOptimalRate() / gasStdDensity * 24.0 / 1e6;
-      System.out.println(
-          String.format("dP=%.1f bar: Optimal=%.0f kg/hr (%.2f MSm3/d), Bottleneck=%s", dP, result.getOptimalRate(),
-              flowMSm3Day, result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
-    }
-
-    double baselineFlow = optimalFlows.get(0);
-    double baselineMSm3Day = baselineFlow / gasStdDensity * 24.0 / 1e6;
-
-    logger.info("\n" + StringUtils.repeat("=", 100));
-    logger.info("RESULTS SUMMARY - PRESSURE DROP (Identical Compressor Curves)");
-    logger.info(StringUtils.repeat("=", 100));
-    logger.info(String.format("%-10s %-14s %-16s %-16s %-12s %s", "dP(bar)", "Flow(MSm3/d)", "Flow(kg/hr)",
-        "Loss(kg/hr)", "Loss(%)", "Bottleneck"));
-    logger.info(StringUtils.repeat("-", 100));
-
-    for (int i = 0; i < pressureDrops.size(); i++) {
-      double dP = pressureDrops.get(i);
-      double flow = optimalFlows.get(i);
-      double flowMSm3Day = flow / gasStdDensity * 24.0 / 1e6;
-      double loss = baselineFlow - flow;
-      double lossPercent = (loss / baselineFlow) * 100;
-      logger.info(String.format("%-10.1f %-14.2f %-16.0f %-16.0f %-12.2f %s", dP, flowMSm3Day, flow, loss, lossPercent,
-          bottlenecks.get(i)));
-    }
-
-    // Print summary
-    double maxDpFlow = optimalFlows.get(optimalFlows.size() - 1);
-    double maxDpMSm3Day = maxDpFlow / gasStdDensity * 24.0 / 1e6;
-    double totalLoss = baselineFlow - maxDpFlow;
-    double totalLossPercent = (totalLoss / baselineFlow) * 100;
-
-    logger.info("\n" + StringUtils.repeat("-", 100));
-    logger.info("SUMMARY (Identical Compressor Curves):");
-    logger.info(String.format("  Baseline (0 bar dP):    %.0f kg/hr = %.2f MSm3/day", baselineFlow, baselineMSm3Day));
-    logger.info(String.format("  At 1.0 bar dP:          %.0f kg/hr = %.2f MSm3/day", maxDpFlow, maxDpMSm3Day));
-    logger.info(String.format("  Total production loss:  %.0f kg/hr (%.2f%%)", totalLoss, totalLossPercent));
-  }
-
-  /**
    * Builds process with identical compressor curves and specified pressure drop.
+   *
+   * @param coolingDeltaT cooler temperature drop
+   * @param pressureDrop cooler pressure drop in bar
+   * @return configured process
    */
   private ProcessSystem buildProcessWithIdenticalCompressorsAndPressureDrop(double coolingDeltaT, double pressureDrop) {
-    SystemInterface testSystem = createTestFluid();
-    ProcessSystem processSystem = new ProcessSystem();
-
-    Stream inletStream = new Stream("Inlet Stream", testSystem);
-    inletStream.setFlowRate(2097870.58288790, "kg/hr");
-    inletStream.setTemperature(48.5, "C");
-    inletStream.setPressure(37.16, "bara");
-    inletStream.run();
-    processSystem.add(inletStream);
-
-    StreamSaturatorUtil saturator = new StreamSaturatorUtil("Water Saturator", inletStream);
-    saturator.run();
-    processSystem.add(saturator);
-
-    Stream saturatedStream = new Stream("Saturated Stream", saturator.getOutletStream());
-    saturatedStream.run();
-    processSystem.add(saturatedStream);
-
-    Splitter splitter = new Splitter("Test Splitter", saturatedStream);
-    splitter.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
-    splitter.run();
-    processSystem.add(splitter);
-
-    PipeBeggsAndBrills train1Outlet = createProcessingTrain("Train1", splitter.getSplitStream(0), processSystem);
-    PipeBeggsAndBrills train2Outlet = createProcessingTrain("Train2", splitter.getSplitStream(1), processSystem);
-    PipeBeggsAndBrills train3Outlet = createProcessingTrain("Train3", splitter.getSplitStream(2), processSystem);
-    PipeBeggsAndBrills train4Outlet = createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
-
-    ThreePhaseSeparator finalSeparator = new ThreePhaseSeparator("Final Separator");
-    finalSeparator.addStream(train1Outlet.getOutletStream());
-    finalSeparator.addStream(train2Outlet.getOutletStream());
-    finalSeparator.addStream(train3Outlet.getOutletStream());
-    finalSeparator.addStream(train4Outlet.getOutletStream());
-    finalSeparator.setInternalDiameter(3.0);
-    finalSeparator.run();
-    processSystem.add(finalSeparator);
-
-    StreamInterface feedToSplitter2;
-
-    if (coolingDeltaT > 0 || pressureDrop > 0) {
-      Heater gasCooler = new Heater("Gas Cooler", finalSeparator.getGasOutStream());
-      double inletTemp = finalSeparator.getGasOutStream().getTemperature("C");
-      double inletPressure = finalSeparator.getGasOutStream().getPressure("bara");
-
-      gasCooler.setOutTemperature(inletTemp - coolingDeltaT, "C");
-      if (pressureDrop > 0) {
-        gasCooler.setOutPressure(inletPressure - pressureDrop, "bara");
-      }
-      gasCooler.run();
-      processSystem.add(gasCooler);
-
-      if (coolingDeltaT > 0) {
-        Separator coolerSeparator = new Separator("Cooler Separator", gasCooler.getOutletStream());
-        coolerSeparator.run();
-        processSystem.add(coolerSeparator);
-        feedToSplitter2 = coolerSeparator.getGasOutStream();
-      } else {
-        feedToSplitter2 = gasCooler.getOutletStream();
-      }
-    } else {
-      feedToSplitter2 = finalSeparator.getGasOutStream();
-    }
-
-    Splitter splitter2 = new Splitter("Test Splitter2", feedToSplitter2);
-    splitter2.setSplitFactors(new double[] {0.95 / 3.0, 1.0 / 3.0, 1.05 / 3.0});
-    splitter2.run();
-    processSystem.add(splitter2);
-
-    StreamInterface ups1Outlet = createUpstreamCompressors("ups1", splitter2.getSplitStream(0), processSystem);
-    StreamInterface ups2Outlet = createUpstreamCompressors("ups2", splitter2.getSplitStream(1), processSystem);
-    StreamInterface ups3Outlet = createUpstreamCompressors("ups3", splitter2.getSplitStream(2), processSystem);
-
-    Manifold manifold = new Manifold("Compressor Outlet Manifold");
-    manifold.addStream(ups1Outlet);
-    manifold.addStream(ups2Outlet);
-    manifold.addStream(ups3Outlet);
-    manifold.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
-    manifold.setCapacityAnalysisEnabled(false);
-    manifold.run();
-    processSystem.add(manifold);
-
-    processSystem.run();
-
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
-      if (equipment instanceof Separator) {
-        ((Separator) equipment).autoSize();
-      } else if (equipment instanceof Compressor) {
-        ((Compressor) equipment).autoSize();
-      } else if (equipment instanceof Manifold) {
-        ((Manifold) equipment).autoSize();
-      }
-    }
-
-    // Configure compressors - ups2 uses SAME curve as ups1
-    Compressor ups1Comp = (Compressor) processSystem.getUnit("ups1 Compressor");
-    Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
-    Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
-
-    configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
-    configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0); // SAME as
-    // ups1!
-    configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
-
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
-      if (equipment instanceof PipeBeggsAndBrills) {
-        PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) equipment;
-        pipe.initMechanicalDesign();
-        pipe.getMechanicalDesign().setMaxDesignVelocity(20.0);
-      }
-    }
-
-    processSystem.run();
-    return processSystem;
+    return buildProcessWithPressureDrop(coolingDeltaT, pressureDrop);
   }
 
   /**
-   * 2027 SCENARIO: Troll A with only 2 compressor trains (A & B Series). Compressor 3 stopped. Flow approximately 40
-   * MSmÂ³/day from Troll East. Both compressors A and B use identical curves.
+   * 2027 SCENARIO: Troll A with only 2 compressor trains (A &amp; B Series). Compressor 3 stopped. Flow approximately
+   * 40 MSmÂ³/day from Troll East. Both compressors A and B use identical curves.
    *
    * <p>
    * Based on Troll A production forecast: - Total gas rate declining from ~60 MSmÂ³/day in 2027 - Troll East (TE)
-   * contributing ~40 MSmÂ³/day - 2-stage compression with A&B series only
+   * contributing ~40 MSmÂ³/day - 2-stage compression with A&amp;B series only
    * </p>
    */
   @Test
@@ -1343,7 +1166,7 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * 2027 SCENARIO AT MAX CAPACITY: Analyzes effect of cooling when 2 compressor trains (A & B) are running at full
+   * 2027 SCENARIO AT MAX CAPACITY: Analyzes effect of cooling when 2 compressor trains (A &amp; B) are running at full
    * capacity. This shows the cooling benefit when compressors are the bottleneck.
    *
    * <p>
@@ -1752,7 +1575,7 @@ public class CoolingDutyProductionAnalysisTest {
 
   /**
    * PRESSURE DROP ANALYSIS: Studies effect of increased pressure drop (0-1 bar) without cooling. Uses 2027 scenario
-   * with 2 compressor trains (A & B) and smooth VFD motor power curve.
+   * with 2 compressor trains (A &amp; B) and smooth VFD motor power curve.
    *
    * <p>
    * This test isolates the effect of pressure drop on production capacity when there is no temperature change (0Â°C
@@ -1967,8 +1790,8 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * Builds process for 2027 scenario with only 2 compressor trains (A & B). Flow rate set to approximately 40 MSmÂ³/day
-   * (Troll East).
+   * Builds process for 2027 scenario with only 2 compressor trains (A &amp; B). Flow rate set to approximately 40
+   * MSmÂ³/day (Troll East).
    */
   private ProcessSystem buildProcess2027Scenario(double coolingDeltaT) {
     SystemInterface testSystem = createTestFluid();
@@ -2089,46 +1912,14 @@ public class CoolingDutyProductionAnalysisTest {
 
   /**
    * Creates a compressor train for 2027 scenario.
+   *
+   * @param trainName equipment name prefix
+   * @param inlet inlet stream
+   * @param process process receiving the train
+   * @return train outlet stream
    */
   private StreamInterface createCompressorTrain2027(String trainName, StreamInterface inlet, ProcessSystem process) {
-    PipeBeggsAndBrills inletPipe = new PipeBeggsAndBrills(trainName + " ups Pipe", inlet);
-    inletPipe.setLength(100);
-    inletPipe.setDiameter(0.75);
-    inletPipe.setPipeWallRoughness(15e-6);
-    inletPipe.setElevation(0);
-    inletPipe.run();
-    process.add(inletPipe);
-
-    Separator separator = new Separator(trainName + " ups Separator", inletPipe.getOutletStream());
-    separator.run();
-    process.add(separator);
-
-    PipeBeggsAndBrills outletPipe = new PipeBeggsAndBrills(trainName + " ups Outlet Pipe", separator.getGasOutStream());
-    outletPipe.setLength(50.0);
-    outletPipe.setDiameter(0.75);
-    outletPipe.setPipeWallRoughness(15e-6);
-    outletPipe.setElevation(0);
-    outletPipe.run();
-    process.add(outletPipe);
-
-    Compressor compressor = new Compressor(trainName + " Compressor", outletPipe.getOutletStream());
-    compressor.setOutletPressure(110.0, "bara");
-    compressor.setUsePolytropicCalc(true);
-    compressor.setPolytropicEfficiency(0.85);
-    compressor.setSpeed(8000);
-    compressor.run();
-    process.add(compressor);
-
-    PipeBeggsAndBrills outletPipe2 = new PipeBeggsAndBrills(trainName + " ups Outlet Pipe2",
-        compressor.getOutletStream());
-    outletPipe2.setLength(50.0);
-    outletPipe2.setDiameter(0.75);
-    outletPipe2.setPipeWallRoughness(15e-6);
-    outletPipe2.setElevation(0);
-    outletPipe2.run();
-    process.add(outletPipe2);
-
-    return outletPipe2.getOutletStream();
+    return createUpstreamCompressors(trainName, inlet, process);
   }
 
   /**
@@ -3552,7 +3343,7 @@ public class CoolingDutyProductionAnalysisTest {
    * cooler vs no-cooler scenarios to quantify production benefit.
    *
    * <p>
-   * Configuration: 2 compressors (A & B) with identical RB71-6 bundles + inlet cooler
+   * Configuration: 2 compressors (A &amp; B) with identical RB71-6 bundles + inlet cooler
    * </p>
    */
   @Test

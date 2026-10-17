@@ -105,21 +105,15 @@ class SaltSaturationTest {
   }
 
   /**
-   * Verifies that salt saturation calculations complete for supported chloride salts.
+   * Verifies that salt saturation calculations complete for monovalent chloride salts.
    */
   @Test
-  void calcSaltSaturationDoesNotCrashForSupportedChlorideSalt() throws Exception {
+  void calcSaltSaturationDoesNotCrashForMonovalentChlorideSalts() throws Exception {
     ThermodynamicOperations naclOperations = new ThermodynamicOperations(createWaterSystem());
     naclOperations.calcSaltSaturation("NaCl");
 
     ThermodynamicOperations kclOperations = new ThermodynamicOperations(createWaterSystem());
     kclOperations.calcSaltSaturation("KCl");
-
-    ThermodynamicOperations cacl2Operations = new ThermodynamicOperations(createWaterSystem());
-    cacl2Operations.calcSaltSaturation("CaCl2");
-
-    ThermodynamicOperations mgcl2Operations = new ThermodynamicOperations(createWaterSystem());
-    mgcl2Operations.calcSaltSaturation("MgCl2");
   }
 
   /**

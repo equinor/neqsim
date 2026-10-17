@@ -13,9 +13,10 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Diagnostic that bypasses the {@link ColumnSolverFactory} fallback wrapper and calls each accelerator's inner solve
  * method directly on the 5-tray deethanizer benchmark, then dumps the pre-fallback convergence state. Used to
- * investigate why accelerators silently fall back to damped substitution on small heavy-rich columns.
+ * investigate why accelerators silently fall back to damped substitution on small heavy-rich columns. This opt-in
+ * benchmark records failures for investigation; it is not a convergence acceptance test.
  */
-@Tag("slow")
+@Tag("benchmark")
 public class DistillationAcceleratorDiagnosticTest {
   private static final Logger logger = LogManager.getLogger(DistillationAcceleratorDiagnosticTest.class);
 

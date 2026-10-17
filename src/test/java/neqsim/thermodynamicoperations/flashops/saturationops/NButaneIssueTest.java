@@ -1,260 +1,131 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.DisplayName;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Test to investigate n-butane performance issue in electrolyte systems.
+ * Regression tests for the n-butane electrolyte phase-behavior and hydrate cases.
  *
  * @author ESOL
+ * @version 1.0
  */
 @Tag("slow")
 public class NButaneIssueTest {
-  private static final Logger logger = LogManager.getLogger(NButaneIssueTest.class);
+  /**
+   * Checks each original TP-flash state once, including the no-n-butane comparison.
+   *
+   * @param temperature temperature in kelvin
+   * @param includeNButane whether the feed contains n-butane
+   */
+  @ParameterizedTest(name = "TP flash at {0} K, n-butane={1}")
+  @CsvSource({"283.15, true", "268.15, true", "263.15, true", "258.15, true", "263.15, false"})
+  void testTPflashPhaseStates(double temperature, boolean includeNButane) {
+    SystemInterface fluid = createFluid(temperature, includeNButane);
+    new ThermodynamicOperations(fluid).TPflash();
+
+    assertEquals(temperature, fluid.getTemperature(), 1.0e-10, "TP flash must preserve temperature");
+    assertEquals(includeNButane, fluid.getPhase(0).hasComponent("n-butane"));
+    assertValidPhaseState(fluid);
+  }
 
   /**
-   * Test with n-butane - the problematic case.
+   * Checks hydrate formation for both original feeds at 50 bara.
+   *
+   * @param includeNButane whether the feed contains n-butane
+   * @throws Exception if the hydrate calculation fails
    */
-  @Test
-  @DisplayName("Test WITH n-butane")
-  public void testWithNButane() throws Exception {
-    logger.info("=== Test WITH n-butane ===\n");
-
-    SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
-
-    fluid.addComponent("water", 0.494505);
-    fluid.addComponent("MEG", 0.164835);
-    fluid.addComponent("methane", 0.247253);
-    fluid.addComponent("ethane", 0.0164835);
-    fluid.addComponent("propane", 0.010989);
-    fluid.addComponent("i-butane", 0.00549451);
-    fluid.addComponent("n-butane", 0.00549451); // n-butane included
-    fluid.addComponent("Na+", 0.0274725);
-    fluid.addComponent("Cl-", 0.0274725);
-
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
+  @ParameterizedTest(name = "Hydrate formation with n-butane={0}")
+  @ValueSource(booleans = {true, false})
+  void testHydrateFormationTemperature(boolean includeNButane) throws Exception {
+    SystemInterface fluid = createFluid(283.15, includeNButane);
     fluid.setHydrateCheck(true);
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.hydrateFormationTemperature();
 
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-    long start = System.currentTimeMillis();
-    ops.hydrateFormationTemperature();
-    long end = System.currentTimeMillis();
-
-    double hydrateTemp = fluid.getTemperature() - 273.15;
-    logger.info("With n-butane:");
-    logger.info("  Hydrate temp: " + hydrateTemp + " °C");
-    logger.info("  Time: " + (end - start) + " ms");
-    logger.info("  Phases: " + fluid.getNumberOfPhases());
+    HydrateFormationTemperatureFlash flash = (HydrateFormationTemperatureFlash) operations.getOperation();
+    assertTrue(flash.isConverged(), "Hydrate flash must converge; water fugacity residual=" + flash.getLastResidual());
+    double hydrateTemperatureC = fluid.getTemperature() - 273.15;
+    assertTrue(Double.isFinite(hydrateTemperatureC), "Hydrate temperature must be finite");
+    assertTrue(hydrateTemperatureC > -30.0 && hydrateTemperatureC < 15.0,
+        "Hydrate temperature with MEG and brine at 50 bara must be between -30 and 15 C, got " + hydrateTemperatureC);
+    assertEquals(50.0, fluid.getPressure(), 1.0e-10, "Hydrate calculation must preserve pressure");
   }
 
-  /**
-   * Test WITHOUT n-butane - to see if it's faster.
-   */
+  /** Verifies finite physical properties and neutral charge for the original n-butane component check. */
   @Test
-  @DisplayName("Test WITHOUT n-butane")
-  public void testWithoutNButane() throws Exception {
-    logger.info("=== Test WITHOUT n-butane ===\n");
-
-    SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 50.0);
-
-    fluid.addComponent("water", 0.494505);
-    fluid.addComponent("MEG", 0.164835);
-    fluid.addComponent("methane", 0.247253);
-    fluid.addComponent("ethane", 0.0164835);
-    fluid.addComponent("propane", 0.010989);
-    fluid.addComponent("i-butane", 0.00549451);
-    // No n-butane
-    fluid.addComponent("Na+", 0.0274725);
-    fluid.addComponent("Cl-", 0.0274725);
-
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
-    fluid.setHydrateCheck(true);
-
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-    long start = System.currentTimeMillis();
-    ops.hydrateFormationTemperature();
-    long end = System.currentTimeMillis();
-
-    double hydrateTemp = fluid.getTemperature() - 273.15;
-    logger.info("Without n-butane:");
-    logger.info("  Hydrate temp: " + hydrateTemp + " °C");
-    logger.info("  Time: " + (end - start) + " ms");
-    logger.info("  Phases: " + fluid.getNumberOfPhases());
-  }
-
-  /**
-   * Test n-butane in TPflash to see phase behavior.
-   */
-  @Test
-  @DisplayName("Test TPflash with n-butane at different temperatures")
-  public void testTPflashWithNButane() {
-    logger.info("=== TPflash with n-butane at different temperatures ===\n");
-
-    double[] temps = {273.15 + 10, 273.15 - 5, 273.15 - 10, 273.15 - 15};
-
-    for (double temp : temps) {
-      SystemInterface fluid = new SystemElectrolyteCPAstatoil(temp, 50.0);
-
-      fluid.addComponent("water", 0.494505);
-      fluid.addComponent("MEG", 0.164835);
-      fluid.addComponent("methane", 0.247253);
-      fluid.addComponent("ethane", 0.0164835);
-      fluid.addComponent("propane", 0.010989);
-      fluid.addComponent("i-butane", 0.00549451);
-      fluid.addComponent("n-butane", 0.00549451);
-      fluid.addComponent("Na+", 0.0274725);
-      fluid.addComponent("Cl-", 0.0274725);
-
-      fluid.setMixingRule(10);
-      fluid.setMultiPhaseCheck(true);
-
-      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-      long start = System.currentTimeMillis();
-      ops.TPflash();
-      long end = System.currentTimeMillis();
-
-      logger.info("T = " + (temp - 273.15) + " °C:");
-      logger.info("  Time: " + (end - start) + " ms");
-      logger.info("  Phases: " + fluid.getNumberOfPhases());
-      for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        logger.info("    Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName() + " beta="
-            + String.format("%.4f", fluid.getBeta(i)));
-      }
-
-    }
-  }
-
-  /**
-   * Check if n-butane causes 3-phase behavior which triggers more stability analysis.
-   */
-  @Test
-  @DisplayName("Compare phase count with and without n-butane")
-  public void testPhaseCountComparison() {
-    logger.info("=== Phase count comparison ===\n");
-
-    // WITH n-butane
-    SystemInterface fluid1 = new SystemElectrolyteCPAstatoil(273.15 - 10.0, 50.0);
-    fluid1.addComponent("water", 0.494505);
-    fluid1.addComponent("MEG", 0.164835);
-    fluid1.addComponent("methane", 0.247253);
-    fluid1.addComponent("ethane", 0.0164835);
-    fluid1.addComponent("propane", 0.010989);
-    fluid1.addComponent("i-butane", 0.00549451);
-    fluid1.addComponent("n-butane", 0.00549451);
-    fluid1.addComponent("Na+", 0.0274725);
-    fluid1.addComponent("Cl-", 0.0274725);
-    fluid1.setMixingRule(10);
-    fluid1.setMultiPhaseCheck(true);
-
-    ThermodynamicOperations ops1 = new ThermodynamicOperations(fluid1);
-    ops1.TPflash();
-
-    logger.info("WITH n-butane at -10°C:");
-    logger.info("  Phases: " + fluid1.getNumberOfPhases());
-    for (int i = 0; i < fluid1.getNumberOfPhases(); i++) {
-      logger.info("    Phase " + i + ": " + fluid1.getPhase(i).getPhaseTypeName());
-      if (fluid1.getPhase(i).hasComponent("n-butane")) {
-        System.out.println("      n-butane x = " + fluid1.getPhase(i).getComponent("n-butane").getx());
-      }
-    }
-
-    // WITHOUT n-butane
-    SystemInterface fluid2 = new SystemElectrolyteCPAstatoil(273.15 - 10.0, 50.0);
-    fluid2.addComponent("water", 0.494505);
-    fluid2.addComponent("MEG", 0.164835);
-    fluid2.addComponent("methane", 0.247253);
-    fluid2.addComponent("ethane", 0.0164835);
-    fluid2.addComponent("propane", 0.010989);
-    fluid2.addComponent("i-butane", 0.00549451);
-    // No n-butane
-    fluid2.addComponent("Na+", 0.0274725);
-    fluid2.addComponent("Cl-", 0.0274725);
-    fluid2.setMixingRule(10);
-    fluid2.setMultiPhaseCheck(true);
-
-    ThermodynamicOperations ops2 = new ThermodynamicOperations(fluid2);
-    ops2.TPflash();
-
-    logger.info("\nWITHOUT n-butane at -10°C:");
-    logger.info("  Phases: " + fluid2.getNumberOfPhases());
-    for (int i = 0; i < fluid2.getNumberOfPhases(); i++) {
-      logger.info("    Phase " + i + ": " + fluid2.getPhase(i).getPhaseTypeName());
-    }
-  }
-
-  /**
-   * Test if n-butane has missing or problematic parameters.
-   */
-  @Test
-  @DisplayName("Check n-butane component properties")
-  public void testNButaneProperties() {
-    logger.info("=== n-butane component properties ===\n");
-
+  void testNButaneProperties() {
     SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15, 50.0);
     fluid.addComponent("n-butane", 1.0);
     fluid.setMixingRule(10);
-
     fluid.init(0);
 
-    logger.info("n-butane properties:");
-    logger.info("  TC = " + fluid.getPhase(0).getComponent("n-butane").getTC() + " K");
-    logger.info("  PC = " + fluid.getPhase(0).getComponent("n-butane").getPC() + " bar");
-    System.out.println("  Acentric = " + fluid.getPhase(0).getComponent("n-butane").getAcentricFactor());
-    logger.info("  Molar mass = " + fluid.getPhase(0).getComponent("n-butane").getMolarMass() + " kg/mol");
-    logger.info("  Is hydrate former: " + fluid.getPhase(0).getComponent("n-butane").isHydrateFormer());
-    System.out.println("  Ionic charge: " + fluid.getPhase(0).getComponent("n-butane").getIonicCharge());
+    ComponentInterface component = fluid.getPhase(0).getComponent("n-butane");
+    assertTrue(Double.isFinite(component.getTC()) && component.getTC() > 0.0);
+    assertTrue(Double.isFinite(component.getPC()) && component.getPC() > 0.0);
+    assertTrue(Double.isFinite(component.getAcentricFactor()));
+    assertTrue(Double.isFinite(component.getMolarMass()) && component.getMolarMass() > 0.0);
+    assertEquals(0.0, component.getIonicCharge(), 0.0);
   }
 
   /**
-   * Test stability analysis iterations with n-butane.
+   * Creates the existing MEG/brine feed with or without its original n-butane amount.
+   *
+   * @param temperature temperature in kelvin
+   * @param includeNButane whether to add n-butane
+   * @return configured electrolyte CPA fluid
    */
-  @Test
-  @DisplayName("Profile stability analysis with n-butane")
-  public void testStabilityAnalysisWithNButane() {
-    logger.info("=== Stability analysis timing ===\n");
-
-    // At low temperature where stability analysis is most expensive
-    SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 - 10.0, 50.0);
-
+  private SystemInterface createFluid(double temperature, boolean includeNButane) {
+    SystemInterface fluid = new SystemElectrolyteCPAstatoil(temperature, 50.0);
     fluid.addComponent("water", 0.494505);
     fluid.addComponent("MEG", 0.164835);
     fluid.addComponent("methane", 0.247253);
     fluid.addComponent("ethane", 0.0164835);
     fluid.addComponent("propane", 0.010989);
     fluid.addComponent("i-butane", 0.00549451);
-    fluid.addComponent("n-butane", 0.00549451);
+    if (includeNButane) {
+      fluid.addComponent("n-butane", 0.00549451);
+    }
     fluid.addComponent("Na+", 0.0274725);
     fluid.addComponent("Cl-", 0.0274725);
-
     fluid.setMixingRule(10);
     fluid.setMultiPhaseCheck(true);
+    return fluid;
+  }
 
-    logger.info("Number of components: " + fluid.getNumberOfComponents());
-    logger.info("Components:");
-    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
-      logger.info("  " + i + ": " + fluid.getComponent(i).getName() + " (ionic charge: "
-          + fluid.getComponent(i).getIonicCharge() + ")");
+  /**
+   * Checks finite, nonnegative and normalized phase fractions and compositions after a TP flash.
+   *
+   * @param fluid flashed fluid
+   */
+  private void assertValidPhaseState(SystemInterface fluid) {
+    assertEquals(50.0, fluid.getPressure(), 1.0e-10, "TP flash must preserve pressure");
+    assertTrue(fluid.getNumberOfPhases() > 0, "A flashed fluid must contain a phase");
+    double phaseFractionSum = 0.0;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      double phaseFraction = fluid.getBeta(phaseIndex);
+      assertTrue(Double.isFinite(phaseFraction) && phaseFraction >= 0.0 && phaseFraction <= 1.0,
+          "Invalid fraction for phase " + phaseIndex);
+      phaseFractionSum += phaseFraction;
+      PhaseInterface phase = fluid.getPhase(phaseIndex);
+      double compositionSum = 0.0;
+      for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+        double moleFraction = phase.getComponent(componentIndex).getx();
+        assertTrue(Double.isFinite(moleFraction) && moleFraction >= 0.0 && moleFraction <= 1.0,
+            "Invalid mole fraction in phase " + phaseIndex + ", component " + componentIndex);
+        compositionSum += moleFraction;
+      }
+      assertEquals(1.0, compositionSum, 1.0e-8, "Phase composition must be normalized");
     }
-
-    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-
-    // Time just the flash
-    long start = System.currentTimeMillis();
-    ops.TPflash();
-    long end = System.currentTimeMillis();
-
-    logger.info("\nTPflash time: " + (end - start) + " ms");
-    logger.info("Final phases: " + fluid.getNumberOfPhases());
+    assertEquals(1.0, phaseFractionSum, 1.0e-8, "Phase fractions must be normalized");
   }
 }
