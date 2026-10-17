@@ -13,7 +13,7 @@ public class nmVOCTest extends neqsim.NeqSimTest {
   static NMVOCAnalyser vocanalyser1;
 
   /**
-   * @throws java.lang.Exception
+   * Creates the shared process and NMVOC analyser used by the tests.
    */
   @BeforeAll
   static void setUpBeforeClass() {

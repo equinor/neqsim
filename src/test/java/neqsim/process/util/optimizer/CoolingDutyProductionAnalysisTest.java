@@ -1063,23 +1063,12 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * Builds process with identical compressor curves and specified pressure drop.
-   *
-   * @param coolingDeltaT cooler temperature drop
-   * @param pressureDrop cooler pressure drop in bar
-   * @return configured process
-   */
-  private ProcessSystem buildProcessWithIdenticalCompressorsAndPressureDrop(double coolingDeltaT, double pressureDrop) {
-    return buildProcessWithPressureDrop(coolingDeltaT, pressureDrop);
-  }
-
-  /**
-   * 2027 SCENARIO: Troll A with only 2 compressor trains (A &amp; B Series). Compressor 3 stopped. Flow approximately
-   * 40 MSmÂ³/day from Troll East. Both compressors A and B use identical curves.
+   * 2027 SCENARIO: Troll A with only 2 compressor trains (A & B Series). Compressor 3 stopped. Flow approximately 40
+   * MSmÂ³/day from Troll East. Both compressors A and B use identical curves.
    *
    * <p>
    * Based on Troll A production forecast: - Total gas rate declining from ~60 MSmÂ³/day in 2027 - Troll East (TE)
-   * contributing ~40 MSmÂ³/day - 2-stage compression with A&amp;B series only
+   * contributing ~40 MSmÂ³/day - 2-stage compression with A&B series only
    * </p>
    */
   @Test
@@ -1166,7 +1155,7 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * 2027 SCENARIO AT MAX CAPACITY: Analyzes effect of cooling when 2 compressor trains (A &amp; B) are running at full
+   * 2027 SCENARIO AT MAX CAPACITY: Analyzes effect of cooling when 2 compressor trains (A & B) are running at full
    * capacity. This shows the cooling benefit when compressors are the bottleneck.
    *
    * <p>
@@ -1575,7 +1564,7 @@ public class CoolingDutyProductionAnalysisTest {
 
   /**
    * PRESSURE DROP ANALYSIS: Studies effect of increased pressure drop (0-1 bar) without cooling. Uses 2027 scenario
-   * with 2 compressor trains (A &amp; B) and smooth VFD motor power curve.
+   * with 2 compressor trains (A & B) and smooth VFD motor power curve.
    *
    * <p>
    * This test isolates the effect of pressure drop on production capacity when there is no temperature change (0Â°C
@@ -1790,8 +1779,8 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * Builds process for 2027 scenario with only 2 compressor trains (A &amp; B). Flow rate set to approximately 40
-   * MSmÂ³/day (Troll East).
+   * Builds process for 2027 scenario with only 2 compressor trains (A & B). Flow rate set to approximately 40 MSmÂ³/day
+   * (Troll East).
    */
   private ProcessSystem buildProcess2027Scenario(double coolingDeltaT) {
     SystemInterface testSystem = createTestFluid();
@@ -2644,7 +2633,7 @@ public class CoolingDutyProductionAnalysisTest {
     List<double[]> results = new ArrayList<>();
 
     // Get baseline (no pressure drop) first
-    ProcessSystem baselineProcess = buildProcessWithIdenticalCompressorsAndPressureDrop(0.0, 0.0);
+    ProcessSystem baselineProcess = buildProcessWithPressureDrop(0.0, 0.0);
     Stream baselineInletStream = (Stream) baselineProcess.getUnit("Inlet Stream");
     double originalFlow = baselineInletStream.getFlowRate("kg/hr");
 
@@ -2674,7 +2663,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Sweep pressure drop from 0 to 1 bar in 0.1 bar increments
     for (double dP = 0.0; dP <= 1.05; dP += 0.1) {
-      ProcessSystem process = buildProcessWithIdenticalCompressorsAndPressureDrop(0.0, dP);
+      ProcessSystem process = buildProcessWithPressureDrop(0.0, dP);
       Stream inletStream = (Stream) process.getUnit("Inlet Stream");
 
       ProductionOptimizer optimizer = new ProductionOptimizer();
@@ -3343,7 +3332,7 @@ public class CoolingDutyProductionAnalysisTest {
    * cooler vs no-cooler scenarios to quantify production benefit.
    *
    * <p>
-   * Configuration: 2 compressors (A &amp; B) with identical RB71-6 bundles + inlet cooler
+   * Configuration: 2 compressors (A & B) with identical RB71-6 bundles + inlet cooler
    * </p>
    */
   @Test
