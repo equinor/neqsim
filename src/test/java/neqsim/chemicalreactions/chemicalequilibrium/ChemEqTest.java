@@ -3,11 +3,12 @@ package neqsim.chemicalreactions.chemicalequilibrium;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Arrays;
+import org.ejml.data.DMatrixRMaj;
 import org.junit.jupiter.api.Test;
 import neqsim.mathlib.linearalgebra.LinearAlgebraException;
 
 /**
- * Unit tests for {@link ChemEq}, using the H/N/O equilibrium problem of White, Johnson and Dantzig (1958).
+ * Chemical-equilibrium solver tests, including the H/N/O reference problem and rank-deficient SVD fallback.
  *
  * @author asmf
  * @version 1.0
@@ -65,5 +66,18 @@ class ChemEqTest {
         new double[] {2.0, 1.0, 1.0});
 
     assertThrows(LinearAlgebraException.class, equilibrium::solve);
+  }
+
+  /**
+   * Verifies the ChemicalEquilibrium pseudoinverse retains its relative singular-value cutoff and multiple RHS support.
+   */
+  @Test
+  void chemicalEquilibriumSvdFallbackRetainsRelativeCutoffAndMultipleRightHandSides() {
+    DMatrixRMaj coefficients = new DMatrixRMaj(new double[][] {{1.0, 0.0}, {0.0, 1e-14}});
+    DMatrixRMaj rightHandSides = new DMatrixRMaj(new double[][] {{2.0, 4.0}, {3.0, 5.0}});
+
+    DMatrixRMaj solution = ChemicalEquilibrium.solveLeastSquares(coefficients, rightHandSides);
+
+    assertArrayEquals(new double[] {2.0, 4.0, 0.0, 0.0}, solution.getData(), 1e-12);
   }
 }

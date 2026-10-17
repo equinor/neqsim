@@ -54,7 +54,7 @@ public class EquilibriumFluidBoundary
     for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
       nFlux.set(i, 0, 0);
     }
-    return nFlux.getArray()[0];
+    return new double[] {nFlux.get(0, 0)};
   }
 
   /**

@@ -3,6 +3,9 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.CommonOps_DDRM;
+import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.linsol.LinearSolverDense;
 import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
@@ -134,6 +137,7 @@ public class KrishnaStandartFilmModel extends
    */
   public double calcMassTransferCoefficients(int phaseNum) {
     int n = getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1;
+    DMatrixRMaj resistanceMatrix = new DMatrixRMaj(n, n);
 
     for (int i = 0; i < getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
       double tempVar = 0;
@@ -143,19 +147,34 @@ public class KrishnaStandartFilmModel extends
               / binaryMassTransferCoefficient[phaseNum][i][j];
         }
         if (j < n) {
-          massTransferCoefficientMatrix[phaseNum].set(i, j,
+          resistanceMatrix.set(i, j,
               -getBulkSystem().getPhase(phaseNum).getComponent(i).getx()
                   * (1.0 / binaryMassTransferCoefficient[phaseNum][i][j]
                       - 1.0 / binaryMassTransferCoefficient[phaseNum][i][n]));
         }
       }
-      massTransferCoefficientMatrix[phaseNum].set(i, i, tempVar
+      resistanceMatrix.set(i, i, tempVar
           + getBulkSystem().getPhase(phaseNum).getComponent(i).getx() / binaryMassTransferCoefficient[phaseNum][i][n]);
     }
-    massTransferCoefficientMatrix[phaseNum] = massTransferCoefficientMatrix[phaseNum].inverse();
-    if (hasNaN(massTransferCoefficientMatrix[phaseNum])) {
+    LinearSolverDense<DMatrixRMaj> linearSolver = LinearSolverFactory_DDRM.lu(n);
+    if (!linearSolver.setA(resistanceMatrix)) {
+      throw new IllegalStateException("Mass-transfer resistance matrix is singular for phase " + phaseNum);
+    }
+    DMatrixRMaj inverseMatrix = new DMatrixRMaj(n, n);
+    linearSolver.invert(inverseMatrix);
+    boolean invalidInverse = false;
+    for (int row = 0; row < n; row++) {
+      for (int column = 0; column < n; column++) {
+        if (Double.isNaN(inverseMatrix.get(row, column)) || Double.isInfinite(inverseMatrix.get(row, column))) {
+          invalidInverse = true;
+        }
+      }
+    }
+    if (invalidInverse) {
       int dim = getBulkSystem().getPhase(phaseNum).getNumberOfComponents() - 1;
       massTransferCoefficientMatrix[phaseNum] = Matrix.identity(dim, dim);
+    } else {
+      massTransferCoefficientMatrix[phaseNum] = toJama(inverseMatrix);
     }
     return 1;
   }
@@ -243,14 +262,33 @@ public class KrishnaStandartFilmModel extends
    * @param phase a int
    */
   public void calcTotalMassTransferCoefficientMatrix(int phase) {
-    Matrix corrected = massTransferCoefficientMatrix[phase].copy();
+    DMatrixRMaj corrected = new DMatrixRMaj(massTransferCoefficientMatrix[phase].getArrayCopy());
     if (useThermodynamicCorrections(phase)) {
-      corrected = corrected.times(nonIdealCorrections[phase]);
+      DMatrixRMaj product = new DMatrixRMaj(corrected.getNumRows(), nonIdealCorrections[phase].getNumCols());
+      CommonOps_DDRM.mult(corrected, nonIdealCorrections[phase], product);
+      corrected = product;
     }
     if (useFiniteFluxCorrection(phase)) {
-      corrected = rateCorrectionMatrix[phase].times(corrected);
+      DMatrixRMaj rateCorrection = new DMatrixRMaj(rateCorrectionMatrix[phase].getArrayCopy());
+      DMatrixRMaj product = new DMatrixRMaj(rateCorrection.getNumRows(), corrected.getNumCols());
+      CommonOps_DDRM.mult(rateCorrection, corrected, product);
+      corrected = product;
     }
-    totalMassTransferCoefficientMatrix[phase] = corrected;
+    totalMassTransferCoefficientMatrix[phase] = toJama(corrected);
+  }
+
+  /**
+   * Copies an EJML matrix to the canonical Jama coefficient-matrix representation.
+   *
+   * @param matrix EJML coefficient matrix
+   * @return independent Jama matrix
+   */
+  private static Matrix toJama(DMatrixRMaj matrix) {
+    double[][] values = new double[matrix.getNumRows()][matrix.getNumCols()];
+    for (int row = 0; row < matrix.getNumRows(); row++) {
+      System.arraycopy(matrix.getData(), row * matrix.getNumCols(), values[row], 0, matrix.getNumCols());
+    }
+    return new Matrix(values);
   }
 
   /**
