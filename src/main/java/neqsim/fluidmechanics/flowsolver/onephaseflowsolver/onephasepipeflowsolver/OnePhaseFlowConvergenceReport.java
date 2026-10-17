@@ -1,7 +1,8 @@
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+
 import java.io.Serializable;
-import java.util.Arrays;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonPrimitive;
@@ -172,12 +173,12 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
     this.thermodynamicMassResidualKg = thermodynamicMassResidualKg;
     this.relativeFiniteVolumeMassResidual = relativeFiniteVolumeMassResidual;
     this.relativeThermodynamicMassResidual = relativeThermodynamicMassResidual;
-    this.nonlinearUpdateHistory = copy(nonlinearUpdateHistory);
-    this.densityResidualHistory = copy(densityResidualHistory);
+    this.nonlinearUpdateHistory = copyArrayOrEmpty(nonlinearUpdateHistory);
+    this.densityResidualHistory = copyArrayOrEmpty(densityResidualHistory);
     this.maximumScaledMassEquationResidual = maximumScaledMassEquationResidual;
     this.maximumScaledMomentumEquationResidual = maximumScaledMomentumEquationResidual;
-    this.scaledMassEquationResidualHistory = copy(scaledMassEquationResidualHistory);
-    this.scaledMomentumEquationResidualHistory = copy(scaledMomentumEquationResidualHistory);
+    this.scaledMassEquationResidualHistory = copyArrayOrEmpty(scaledMassEquationResidualHistory);
+    this.scaledMomentumEquationResidualHistory = copyArrayOrEmpty(scaledMomentumEquationResidualHistory);
     this.message = message;
   }
 
@@ -303,7 +304,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * iteration
    */
   public double[] getNonlinearUpdateHistory() {
-    return copy(nonlinearUpdateHistory);
+    return copyArrayOrEmpty(nonlinearUpdateHistory);
   }
 
   /**
@@ -311,7 +312,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * {@link #getNonlinearUpdateHistory()}
    */
   public double[] getDensityResidualHistory() {
-    return copy(densityResidualHistory);
+    return copyArrayOrEmpty(densityResidualHistory);
   }
 
   /**
@@ -335,7 +336,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * {@link #getNonlinearUpdateHistory()}; empty for staged legacy paths
    */
   public double[] getScaledMassEquationResidualHistory() {
-    return copy(scaledMassEquationResidualHistory);
+    return copyArrayOrEmpty(scaledMassEquationResidualHistory);
   }
 
   /**
@@ -343,7 +344,7 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
    * {@link #getNonlinearUpdateHistory()}; empty for staged legacy paths
    */
   public double[] getScaledMomentumEquationResidualHistory() {
-    return copy(scaledMomentumEquationResidualHistory);
+    return copyArrayOrEmpty(scaledMomentumEquationResidualHistory);
   }
 
   /** @return diagnostic summary */
@@ -364,7 +365,4 @@ public final class OnePhaseFlowConvergenceReport implements Serializable {
         .toJson(this);
   }
 
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
-  }
 }

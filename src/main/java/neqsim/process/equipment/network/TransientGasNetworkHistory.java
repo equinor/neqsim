@@ -1,8 +1,10 @@
 package neqsim.process.equipment.network;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+import static neqsim.util.util.ArrayUtils.copyMatrixArrayOrEmpty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,8 +39,8 @@ public final class TransientGasNetworkHistory implements Serializable {
       Map<String, List<TransientSpeciesConservationReport>> edgeSpeciesReports,
       Map<String, List<TransientSpeciesConservationReport>> junctionSpeciesReports,
       List<TransientSpeciesConservationReport> networkSpeciesReports) {
-    this.elapsedTimeSeconds = copy(elapsedTimeSeconds);
-    this.componentNames = copy(componentNames);
+    this.elapsedTimeSeconds = copyArrayOrEmpty(elapsedTimeSeconds);
+    this.componentNames = copyArrayOrEmpty(componentNames);
     this.nodePressureBaraHistory = copySeries(nodePressureBaraHistory);
     this.nodeMassFractionHistory = copyProfiles(nodeMassFractionHistory);
     this.edgeInletMassFlowKgSHistory = copySeries(edgeInletMassFlowKgSHistory);
@@ -69,12 +71,12 @@ public final class TransientGasNetworkHistory implements Serializable {
 
   /** @return accepted step-end times in s */
   public double[] getElapsedTimeSeconds() {
-    return copy(elapsedTimeSeconds);
+    return copyArrayOrEmpty(elapsedTimeSeconds);
   }
 
   /** @return deterministic component-name order used by composition arrays */
   public String[] getComponentNames() {
-    return copy(componentNames);
+    return copyArrayOrEmpty(componentNames);
   }
 
   /**
@@ -108,7 +110,7 @@ public final class TransientGasNetworkHistory implements Serializable {
     if (values == null) {
       throw new IllegalArgumentException("No composition history exists for node '" + nodeName + "'");
     }
-    return copy(values);
+    return copyMatrixArrayOrEmpty(values);
   }
 
   /**
@@ -241,7 +243,7 @@ public final class TransientGasNetworkHistory implements Serializable {
     if (values == null) {
       throw new IllegalArgumentException("No " + kind + " history exists for '" + name + "'");
     }
-    return copy(values);
+    return copyArrayOrEmpty(values);
   }
 
   private static TransientSpeciesConservationReport[] reportArray(
@@ -256,7 +258,7 @@ public final class TransientGasNetworkHistory implements Serializable {
   private static Map<String, double[]> copySeries(Map<String, double[]> histories) {
     Map<String, double[]> result = new LinkedHashMap<String, double[]>();
     for (Map.Entry<String, double[]> entry : histories.entrySet()) {
-      result.put(entry.getKey(), copy(entry.getValue()));
+      result.put(entry.getKey(), copyArrayOrEmpty(entry.getValue()));
     }
     return Collections.unmodifiableMap(result);
   }
@@ -264,7 +266,7 @@ public final class TransientGasNetworkHistory implements Serializable {
   private static Map<String, double[][]> copyProfiles(Map<String, double[][]> profiles) {
     Map<String, double[][]> result = new LinkedHashMap<String, double[][]>();
     for (Map.Entry<String, double[][]> entry : profiles.entrySet()) {
-      result.put(entry.getKey(), copy(entry.getValue()));
+      result.put(entry.getKey(), copyMatrixArrayOrEmpty(entry.getValue()));
     }
     return Collections.unmodifiableMap(result);
   }
@@ -279,22 +281,4 @@ public final class TransientGasNetworkHistory implements Serializable {
     return Collections.unmodifiableMap(result);
   }
 
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static String[] copy(String[] values) {
-    return values == null ? new String[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static double[][] copy(double[][] values) {
-    if (values == null) {
-      return new double[0][0];
-    }
-    double[][] result = new double[values.length][];
-    for (int index = 0; index < values.length; index++) {
-      result[index] = copy(values[index]);
-    }
-    return result;
-  }
 }
