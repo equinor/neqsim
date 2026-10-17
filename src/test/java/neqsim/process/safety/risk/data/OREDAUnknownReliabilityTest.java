@@ -22,6 +22,55 @@ class OREDAUnknownReliabilityTest {
   Path directory;
 
   /**
+   * Keeps the record and its valid measurements when one numeric field is malformed.
+   *
+   * @throws IOException if the synthetic input cannot be written or loaded
+   */
+  @Test
+  void malformedFieldsDoNotDiscardRecords() throws IOException {
+    String csv = "EquipmentType,EquipmentClass,FailureMode,FailureRate,MTBF_hours,MTTR_hours,DataSource,Confidence\n"
+        + "Mixed,BadRate,All modes,N/A,10000,10,Synthetic,Low\n"
+        + "Mixed,BadMtbf,All modes,1e-4,invalid,10,Synthetic,Low\n"
+        + "Mixed,BadMttr,All modes,1e-4,10000,1e-,Synthetic,Low\n"
+        + "Known,AfterMalformed,All modes, 1e-4 , 10000 , 0 ,Synthetic,High\n";
+    Path file = directory.resolve("malformed.csv");
+    Files.write(file, csv.getBytes(StandardCharsets.UTF_8));
+    OREDADataImporter importer = new OREDADataImporter();
+    importer.loadFromFile(file);
+
+    assertEquals(4, importer.getRecordCount());
+    OREDADataImporter.ReliabilityRecord badRate = importer.getRecord("Mixed", "BadRate");
+    assertNotNull(badRate);
+    assertTrue(Double.isNaN(badRate.getFailureRate()));
+    assertTrue(Double.isNaN(badRate.getFailureRatePerYear()));
+    assertNull(badRate.toMap().get("failureRate_perHour"));
+    assertEquals(10000.0, badRate.getMtbfHours());
+    assertEquals(10.0, badRate.getMttrHours());
+    assertEquals(10000.0 / 10010.0, badRate.getAvailability(), 1e-12);
+
+    OREDADataImporter.ReliabilityRecord badMtbf = importer.getRecord("Mixed", "BadMtbf");
+    assertNotNull(badMtbf);
+    assertEquals(1e-4, badMtbf.getFailureRate());
+    assertTrue(Double.isNaN(badMtbf.getMtbfHours()));
+    assertEquals(10.0, badMtbf.getMttrHours());
+    assertNull(badMtbf.toMap().get("availability"));
+
+    OREDADataImporter.ReliabilityRecord badMttr = importer.getRecord("Mixed", "BadMttr");
+    assertNotNull(badMttr);
+    assertEquals(1e-4, badMttr.getFailureRate());
+    assertEquals(10000.0, badMttr.getMtbfHours());
+    assertTrue(Double.isNaN(badMttr.getMttrHours()));
+    assertNull(badMttr.toMap().get("availability"));
+
+    OREDADataImporter.ReliabilityRecord valid = importer.getRecord("Known", "AfterMalformed");
+    assertNotNull(valid);
+    assertEquals(1e-4, valid.getFailureRate());
+    assertEquals(10000.0, valid.getMtbfHours());
+    assertEquals(0.0, valid.getMttrHours());
+    assertEquals(1.0, valid.getAvailability());
+  }
+
+  /**
    * Preserves unavailable fields through the public CSV import and record accessors.
    *
    * @throws IOException if the synthetic input cannot be written or loaded

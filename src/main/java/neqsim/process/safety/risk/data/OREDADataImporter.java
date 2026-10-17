@@ -368,13 +368,22 @@ public class OREDADataImporter implements Serializable {
    * Parses a double value, handling scientific notation and unavailable measurements.
    *
    * @param value string value
-   * @return parsed double, or {@link Double#NaN} for a blank, null or dash
+   * @return parsed double, or {@link Double#NaN} for a blank, null, dash or malformed number
    */
   private double parseDouble(String value) {
-    if (value == null || value.trim().isEmpty() || value.trim().equals("-")) {
+    if (value == null) {
       return Double.NaN;
     }
-    return Double.parseDouble(value.trim());
+    String trimmed = value.trim();
+    if (trimmed.isEmpty() || trimmed.equals("-")) {
+      return Double.NaN;
+    }
+    try {
+      return Double.parseDouble(trimmed);
+    } catch (NumberFormatException e) {
+      logger.warn("Invalid reliability measurement '{}'; preserving as unknown", trimmed);
+      return Double.NaN;
+    }
   }
 
   /**

@@ -116,7 +116,9 @@ Compressor,Reciprocating,Critical,5.71e-5,17513,120,IEEE493-2007,High
 
 `OREDADataImporter` preserves an empty numeric cell or `-` as an unavailable
 measurement (`Double.NaN`), rather than a measured zero. Failure-rate and time
-accessors propagate that value. `ReliabilityRecord.getAvailability()` returns
+accessors propagate that value. Malformed numeric cells also become `NaN` and
+produce a warning; the record and its other valid measurements are retained.
+`ReliabilityRecord.getAvailability()` returns
 `NaN` when MTBF or MTTR is unavailable, nonfinite or negative, or when both are
 zero. A measured MTTR of zero with a positive finite MTBF still gives availability
 of 1.0; a measured zero failure rate remains zero.
