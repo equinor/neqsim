@@ -24,7 +24,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author benchmarking
  * @version 1.0
  */
-@Tag("slow")
 class TPFlashBenchmarkTest {
   private static final Logger logger = LogManager.getLogger(TPFlashBenchmarkTest.class);
 
@@ -104,6 +103,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: Measure cost of init(0), init(1), init(2), init(3) individually.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkInitLevels() {
     SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
     sys.init(0);
@@ -160,6 +160,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: Measure init(1) cost for a single phase vs all phases.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkInitSinglePhaseVsAll() {
     SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
     sys.init(0);
@@ -203,6 +204,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: Full TPflash for two-phase case - Simple gas at 25C, 50bar.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkTPflashTwoPhaseSimple() {
     int N = 2000;
     int warmup = 100;
@@ -232,6 +234,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: TPflash for single-phase case (all gas, no stability check needed).
    */
   @Test
+  @Tag("benchmark")
   void benchmarkTPflashSinglePhase() {
     int N = 2000;
     int warmup = 100;
@@ -261,6 +264,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: TPflash for a two-phase 10-component mixture.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkTPflashTwoPhaseMedium() {
     int N = 1000;
     int warmup = 50;
@@ -290,6 +294,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: TPflash for a 20-component well fluid.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkTPflashWellFluid() {
     int N = 500;
     int warmup = 25;
@@ -318,6 +323,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: Component count scaling - measure how TPflash time scales with number of components.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkComponentCountScaling() {
     int N = 500;
 
@@ -366,6 +372,7 @@ class TPFlashBenchmarkTest {
    * to force stability analysis.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkStabilityAnalysis() {
     int N = 1000;
     int warmup = 50;
@@ -397,6 +404,7 @@ class TPFlashBenchmarkTest {
    * instrumented timing.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkTPflashDetailed() {
     // Two-phase case: 10-component at 25C, 50bar
     SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
@@ -443,6 +451,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: Measure molarVolume solver convergence (major part of init(1)).
    */
   @Test
+  @Tag("benchmark")
   void benchmarkMolarVolumeSolver() {
     SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
     sys.init(0);
@@ -468,6 +477,7 @@ class TPFlashBenchmarkTest {
    * Benchmark: Compare PR vs SRK EOS performance.
    */
   @Test
+  @Tag("benchmark")
   void benchmarkPRvsSRK() {
     int N = 1000;
 
@@ -514,6 +524,7 @@ class TPFlashBenchmarkTest {
    * @throws Exception if file write errors occur
    */
   @Test
+  @Tag("benchmark")
   void runAllBenchmarksToFile() throws Exception {
     StringBuilder sb = new StringBuilder();
     sb.append("=== NeqSim TPflash Performance Benchmark Report ===\n\n");
@@ -785,6 +796,7 @@ class TPFlashBenchmarkTest {
    * * Counts init calls during a TPflash by comparing system state. This test verifies correctness is maintained.
    */
   @Test
+  @Tag("slow")
   void verifyTPflashResultsConsistency() {
     SystemInterface sys = createMediumGas(273.15 + 25.0, 50.0);
     ThermodynamicOperations ops = new ThermodynamicOperations(sys);
