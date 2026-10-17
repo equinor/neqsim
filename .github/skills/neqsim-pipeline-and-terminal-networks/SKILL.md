@@ -97,6 +97,11 @@ failure must remain infeasible rather than falling through to simplified polytro
 Recheck chart availability and the equipment's `solved()` contract for every mapped
 calculation. Finite forward results from a failed pressure-target speed search are not
 accepted operating points; rejected results must invalidate power and clear stored thermal state.
+For curve-backed pump edges, require the registered model and enabled chart on every
+positive-flow evaluation; a missing runtime binding must not create a fixed-pressure
+replacement. Invalid pump results must clear head, NPSH, limit residuals and thermal state
+as well as power. Exercise rejection and recovery on the same graph. This acceptance
+guard does not qualify extrapolated curves or replace operating-region constraints.
 For repeated quasi-steady field-to-host studies, reuse the live model and evaluator but
 sample constraints again after each reservoir boundary or host-limit update. The ten-well
 `FieldToFacilityOptimizationAcceptanceTest` exercises moving separator, scrubber and
