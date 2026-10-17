@@ -99,3 +99,12 @@ Branch and path filters remain authoritative in each linked YAML file. The event
 columns are summaries, not a promise that every change triggers every workflow.
 Workflow consolidation and extracting the agent jobs from the core Java build are
 separate changes, not part of this naming migration.
+
+## Validation of stacked pull requests
+
+The core build/test/Javadoc, pre-commit, CodeQL and documentation-search workflows
+run for pull requests targeting any branch, including feature branches used for
+stacked changes. Push-triggered publication and master coverage remain restricted
+to their existing targets. Required check names and permissions are unchanged.
+A green auxiliary workflow does not substitute for the complete applicable matrix
+on the current head.
