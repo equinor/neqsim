@@ -1,5 +1,6 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
 
+import Jama.Matrix;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -14,7 +15,6 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
@@ -25,9 +25,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Abstract FluidBoundary class.
  *
  * <p>
- * Nonideal-correction, flux-type correction and interphase-flux state use EJML and primitive arrays. Serialized
- * instances containing the former Jama correction and flux fields are not compatible; the exported mass-transfer
- * coefficient array remains live Jama storage for API compatibility.
+ * Coefficient and correction data use primitive arrays. Deprecated transient Jama views preserve the live legacy
+ * coefficient API without owning separate numerical data. Interphase-flux working state uses EJML. Serialized instances
+ * containing the former Jama coefficient, correction or flux fields are not compatible with this layout.
  * </p>
  *
  * @author asmund
@@ -56,12 +56,19 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   protected EnhancementFactor enhancementFactor;
   // protected double[][][] massTransferCoefficient;
   protected double totalFlux = 0;
-  protected DMatrixRMaj[] nonIdealCorrections;
+  protected double[][][] nonIdealCorrections;
   protected double[][] fluxTypeCorrectionMatrix;
-  protected Matrix[] rateCorrectionMatrix;
+  protected double[][][] rateCorrectionMatrix;
   protected double[][] fluxTypeCorrectionMatrixV;
-  protected Matrix[] totalMassTransferCoefficientMatrix;
-  protected Matrix[] massTransferCoefficientMatrix;
+  protected double[][][] totalMassTransferCoefficientMatrix;
+  private double[][][] massTransferCoefficientArray;
+  /**
+   * Legacy views sharing the primitive coefficient arrays.
+   *
+   * @deprecated Use the array accessors instead of accessing these compatibility views.
+   */
+  @Deprecated
+  protected transient Matrix[] massTransferCoefficientMatrix;
   protected double[][][] binarySchmidtNumber;
   public double[][][] binaryMassTransferCoefficient;
   public double[] heatTransferCoefficient;
@@ -77,12 +84,12 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   public FluidBoundary(SystemInterface system) {
     this.bulkSystem = system;
     bulkSystemOps = new ThermodynamicOperations(bulkSystem);
-    nonIdealCorrections = new DMatrixRMaj[2];
+    nonIdealCorrections = new double[2][][];
     fluxTypeCorrectionMatrix = new double[2][];
     fluxTypeCorrectionMatrixV = new double[2][];
-    rateCorrectionMatrix = new Matrix[2];
-    totalMassTransferCoefficientMatrix = new Matrix[2];
-    massTransferCoefficientMatrix = new Matrix[2];
+    rateCorrectionMatrix = new double[2][][];
+    totalMassTransferCoefficientMatrix = new double[2][][];
+    massTransferCoefficientArray = new double[2][][];
     jFlux = new DMatrixRMaj(system.getPhases()[0].getNumberOfComponents() - 1, 1);
     nFlux = new DMatrixRMaj(system.getPhases()[0].getNumberOfComponents(), 1);
     heatTransferCoefficient = new double[2];
@@ -141,6 +148,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   /** {@inheritDoc} */
   @Override
   public FluidBoundary clone() {
+    ensureMassTransferCoefficientViews();
+    synchronizeMassTransferCoefficientArray();
     FluidBoundary clonedSystem = null;
 
     try {
@@ -270,16 +279,15 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * @param phaseNum a int
    */
   public void calcNonIdealCorrections(int phaseNum) {
-    nonIdealCorrections[phaseNum] = new DMatrixRMaj(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1,
-        bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1);
+    nonIdealCorrections[phaseNum] = new double[bulkSystem.getPhase(phaseNum).getNumberOfComponents()
+        - 1][bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1];
     double temp = 0;
     for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
       for (int j = 0; j < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; j++) {
         temp = (i == j) ? 1.0 : 0.0;
-        nonIdealCorrections[phaseNum].set(i, j,
-            temp + bulkSystem.getPhase(phaseNum).getComponent(i).getx()
-                * bulkSystem.getPhase(phaseNum).getComponent(i).getdfugdn(j)
-                * bulkSystem.getPhase(phaseNum).getNumberOfMolesInPhase());
+        nonIdealCorrections[phaseNum][i][j] = temp + bulkSystem.getPhase(phaseNum).getComponent(i).getx()
+            * bulkSystem.getPhase(phaseNum).getComponent(i).getdfugdn(j)
+            * bulkSystem.getPhase(phaseNum).getNumberOfMolesInPhase();
         // her må det fylles inn
       }
     }
@@ -311,7 +319,86 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
 
   /** {@inheritDoc} */
   @Override
+  public double[][][] getMassTransferCoefficientArray() {
+    synchronizeMassTransferCoefficientArray();
+    double[][][] snapshot = new double[massTransferCoefficientArray.length][][];
+    for (int phase = 0; phase < snapshot.length; phase++) {
+      double[][] coefficients = massTransferCoefficientArray[phase];
+      if (coefficients != null) {
+        snapshot[phase] = new double[coefficients.length][];
+        for (int row = 0; row < coefficients.length; row++) {
+          snapshot[phase][row] = coefficients[row].clone();
+        }
+      }
+    }
+    return snapshot;
+  }
+
+  /**
+   * Returns the live coefficient arrays for internal calculations.
+   *
+   * @param phase phase index
+   * @return coefficient data indexed by row and column
+   */
+  protected final double[][] getMassTransferCoefficientArray(int phase) {
+    synchronizeMassTransferCoefficientArray();
+    return massTransferCoefficientArray[phase];
+  }
+
+  /**
+   * Replaces a phase's canonical coefficient data and refreshes any legacy view.
+   *
+   * @param phase phase index
+   * @param coefficients coefficient data indexed by row and column
+   */
+  protected final void setMassTransferCoefficientArray(int phase, double[][] coefficients) {
+    massTransferCoefficientArray[phase] = coefficients;
+    if (massTransferCoefficientMatrix != null) {
+      massTransferCoefficientMatrix[phase] = coefficients == null ? null : new Matrix(coefficients);
+    }
+  }
+
+  /** Adopts replacements made through the legacy live Matrix array without copying numerical data. */
+  private void synchronizeMassTransferCoefficientArray() {
+    if (massTransferCoefficientMatrix != null) {
+      for (int phase = 0; phase < massTransferCoefficientArray.length; phase++) {
+        Matrix view = massTransferCoefficientMatrix[phase];
+        massTransferCoefficientArray[phase] = view == null ? null : view.getArray();
+      }
+    }
+  }
+
+  /** Recreates transient compatibility views after deserialization. */
+  private void ensureMassTransferCoefficientViews() {
+    if (massTransferCoefficientMatrix == null) {
+      massTransferCoefficientMatrix = new Matrix[massTransferCoefficientArray.length];
+      for (int phase = 0; phase < massTransferCoefficientArray.length; phase++) {
+        double[][] coefficients = massTransferCoefficientArray[phase];
+        massTransferCoefficientMatrix[phase] = coefficients == null ? null : new Matrix(coefficients);
+      }
+    }
+  }
+
+  /**
+   * Serializes canonical arrays, including pending replacements through deprecated views.
+   *
+   * @param output serialization stream
+   * @throws java.io.IOException if coefficient state cannot be written
+   */
+  private void writeObject(java.io.ObjectOutputStream output) throws java.io.IOException {
+    synchronizeMassTransferCoefficientArray();
+    output.defaultWriteObject();
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @deprecated Use {@link #getMassTransferCoefficientArray()} for array-based access.
+   */
+  @Deprecated
+  @Override
   public Matrix[] getMassTransferCoefficientMatrix() {
+    ensureMassTransferCoefficientViews();
     return massTransferCoefficientMatrix;
   }
 

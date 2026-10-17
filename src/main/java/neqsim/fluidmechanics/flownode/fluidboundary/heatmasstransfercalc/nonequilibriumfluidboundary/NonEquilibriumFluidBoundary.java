@@ -1,11 +1,11 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary;
 
+import Jama.Matrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Newton working matrices use EJML storage. Subclasses using these protected fields must use {@link DMatrixRMaj};
  * serialized instances containing the former Jama working matrices are not compatible with this representation.
- * Exported mass-transfer coefficient matrices retain their live Jama storage.
+ * Coefficient data use primitive arrays; deprecated exported Jama views retain their live behavior.
  *
  * @author asmund
  * @version $Id: $Id
@@ -47,14 +47,11 @@ public abstract class NonEquilibriumFluidBoundary
     neq = 3 * bulkSystem.getPhases()[0].getNumberOfComponents();
     Jac = new DMatrixRMaj(neq, neq);
     fvec = new DMatrixRMaj(neq, 1);
-    massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
+    int independentComponents = getBulkSystem().getPhases()[0].getNumberOfComponents() - 1;
+    setMassTransferCoefficientArray(0, new double[independentComponents][independentComponents]);
+    setMassTransferCoefficientArray(1, new double[independentComponents][independentComponents]);
+    totalMassTransferCoefficientMatrix[0] = new double[independentComponents][independentComponents];
+    totalMassTransferCoefficientMatrix[1] = new double[independentComponents][independentComponents];
     molFractionDifference = new double[2][getBulkSystem().getPhases()[0].getNumberOfComponents() - 1];
     // interphaseSystem = bulkSystem.clone();
     // interphaseOps = new ThermodynamicOperations(interphaseSystem);
@@ -72,14 +69,11 @@ public abstract class NonEquilibriumFluidBoundary
     neq = 3 * bulkSystem.getPhases()[0].getNumberOfComponents();
     Jac = new DMatrixRMaj(neq, neq);
     fvec = new DMatrixRMaj(neq, 1);
-    massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-    totalMassTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
-        getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
+    int independentComponents = getBulkSystem().getPhases()[0].getNumberOfComponents() - 1;
+    setMassTransferCoefficientArray(0, new double[independentComponents][independentComponents]);
+    setMassTransferCoefficientArray(1, new double[independentComponents][independentComponents]);
+    totalMassTransferCoefficientMatrix[0] = new double[independentComponents][independentComponents];
+    totalMassTransferCoefficientMatrix[1] = new double[independentComponents][independentComponents];
     // interphaseSystem = bulkSystem.clone();
     molFractionDifference = new double[2][getBulkSystem().getPhases()[0].getNumberOfComponents() - 1];
     // interphaseOps = new ThermodynamicOperations(interphaseSystem);
@@ -121,21 +115,19 @@ public abstract class NonEquilibriumFluidBoundary
 
     for (int i = bulkSystem.getPhases()[0].getNumberOfComponents() + 1; i < (2
         * bulkSystem.getPhases()[0].getNumberOfComponents()); i++) {
-      fvec.set(i, 0,
-          (totalMassTransferCoefficientMatrix[1].get(
-              i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1),
-              i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1))
-              * (bulkSystem.getPhases()[0].getComponents()[i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+      fvec.set(i, 0, (totalMassTransferCoefficientMatrix[1][i
+          - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)][i
+              - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+          * (bulkSystem.getPhases()[0].getComponents()[i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+              .getx()
+              - interphaseSystem.getPhases()[0].getComponents()[i
+                  - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx())
+          + (totalMassTransferCoefficientMatrix[0][i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)][i
+              - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
+              * (bulkSystem.getPhases()[1].getComponents()[i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)]
                   .getx()
-                  - interphaseSystem.getPhases()[0].getComponents()[i
-                      - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx())
-              + (totalMassTransferCoefficientMatrix[0].get(
-                  i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1),
-                  i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1))
-                  * (bulkSystem.getPhases()[1].getComponents()[i
-                      - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx()
-                      - interphaseSystem.getPhases()[1].getComponents()[i
-                          - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx()))));
+                  - interphaseSystem.getPhases()[1].getComponents()[i
+                      - (bulkSystem.getPhases()[0].getNumberOfComponents() + 1)].getx()))));
     }
   }
 
@@ -173,8 +165,8 @@ public abstract class NonEquilibriumFluidBoundary
             - interphaseSystem.getPhases()[1].getComponent(differenceIndex).getx();
         double dy = bulkSystem.getPhases()[0].getComponent(differenceIndex).getx()
             - interphaseSystem.getPhases()[0].getComponent(differenceIndex).getx();
-        fluxX += totalMassTransferCoefficientMatrix[1].get(componentIndex, differenceIndex) * dx;
-        fluxY += totalMassTransferCoefficientMatrix[0].get(componentIndex, differenceIndex) * dy;
+        fluxX += totalMassTransferCoefficientMatrix[1][componentIndex][differenceIndex] * dx;
+        fluxY += totalMassTransferCoefficientMatrix[0][componentIndex][differenceIndex] * dy;
       }
       fluxX *= densityX;
       fluxY *= densityY;
@@ -232,8 +224,8 @@ public abstract class NonEquilibriumFluidBoundary
         * bulkSystem.getPhases()[0].getNumberOfComponents() - 1; i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         dij = i == (j + bulkSystem.getPhases()[0].getNumberOfComponents()) ? 1.0 : 0.0;
-        tempJ = -dij * (totalMassTransferCoefficientMatrix[1].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(),
-            i - bulkSystem.getPhases()[0].getNumberOfComponents()));
+        tempJ = -dij * totalMassTransferCoefficientMatrix[1][i - bulkSystem.getPhases()[0].getNumberOfComponents()][i
+            - bulkSystem.getPhases()[0].getNumberOfComponents()];
         Jac.set(i + 1, j, tempJ);
       }
     }
@@ -243,8 +235,8 @@ public abstract class NonEquilibriumFluidBoundary
       for (int j = bulkSystem.getPhases()[0].getNumberOfComponents(); j < 2
           * bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
         dij = i == j ? 1.0 : 0.0;
-        tempJ = -dij * (totalMassTransferCoefficientMatrix[0].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(),
-            i - bulkSystem.getPhases()[0].getNumberOfComponents()));
+        tempJ = -dij * totalMassTransferCoefficientMatrix[0][i - bulkSystem.getPhases()[0].getNumberOfComponents()][i
+            - bulkSystem.getPhases()[0].getNumberOfComponents()];
         Jac.set(i + 1, j, tempJ);
       }
     }
@@ -300,7 +292,7 @@ public abstract class NonEquilibriumFluidBoundary
         // interphaseSystem.getPhases()[0].getComponents()[i-bulkSystem.getPhases()[0].getNumberOfComponents()].getx());
         if (j != bulkSystem.getPhases()[0].getNumberOfComponents() - 1) {
           Jac.set(i + 2, j + bulkSystem.getPhases()[0].getNumberOfComponents(),
-              -totalMassTransferCoefficientMatrix[1].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(), j)
+              -totalMassTransferCoefficientMatrix[1][i - bulkSystem.getPhases()[0].getNumberOfComponents()][j]
                   * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                   / bulkSystem.getPhases()[1].getMolarMass()); // tempJ);
         }
@@ -322,8 +314,8 @@ public abstract class NonEquilibriumFluidBoundary
         if (j != 2 * bulkSystem.getPhases()[0].getNumberOfComponents() - 1) {
           Jac.set(i + 1 + bulkSystem.getPhases()[0].getNumberOfComponents(),
               j - bulkSystem.getPhases()[0].getNumberOfComponents(),
-              totalMassTransferCoefficientMatrix[0].get(i - bulkSystem.getPhases()[0].getNumberOfComponents(),
-                  j - bulkSystem.getPhases()[0].getNumberOfComponents())
+              totalMassTransferCoefficientMatrix[0][i - bulkSystem.getPhases()[0].getNumberOfComponents()][j
+                  - bulkSystem.getPhases()[0].getNumberOfComponents()]
                   * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
                   / bulkSystem.getPhases()[0].getMolarMass()); // tempJ);
         }

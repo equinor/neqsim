@@ -1,8 +1,8 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel;
 
+import Jama.Matrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel;
 import neqsim.thermo.system.SystemInterface;
@@ -110,16 +110,15 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     for (int i = bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1; i < (2
         * bulkSystem.getPhases()[0].getNumberOfMolecularComponents()); i++) {
       fvec.set(i, 0,
-          (totalMassTransferCoefficientMatrix[1].get(
-              i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1),
-              i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1))
+          (totalMassTransferCoefficientMatrix[1][i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)][i
+              - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)]
               * (bulkSystem.getPhases()[0].getComponents()[i
                   - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)].getx()
                   - interphaseSystem.getPhases()[0].getComponents()[i
                       - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)].getx())
-              + (totalMassTransferCoefficientMatrix[0].get(
-                  i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1),
-                  i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1))
+              + (totalMassTransferCoefficientMatrix[0][i
+                  - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)][i
+                      - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)]
                   * (bulkSystem.getPhases()[1].getComponents()[i
                       - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)].getx()
                       - interphaseSystem.getPhases()[1].getComponents()[i
@@ -160,8 +159,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
             - interphaseSystem.getPhases()[1].getComponent(differenceIndex).getx();
         double dy = bulkSystem.getPhases()[0].getComponent(differenceIndex).getx()
             - interphaseSystem.getPhases()[0].getComponent(differenceIndex).getx();
-        fluxX += totalMassTransferCoefficientMatrix[1].get(componentIndex, differenceIndex) * dx;
-        fluxY += totalMassTransferCoefficientMatrix[0].get(componentIndex, differenceIndex) * dy;
+        fluxX += totalMassTransferCoefficientMatrix[1][componentIndex][differenceIndex] * dx;
+        fluxY += totalMassTransferCoefficientMatrix[0][componentIndex][differenceIndex] * dy;
       }
       fluxX *= densityX;
       fluxY *= densityY;
@@ -223,8 +222,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); j++) {
         dij = i == (j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents()) ? 1.0 : 0.0;
         tempJ = -dij
-            * (totalMassTransferCoefficientMatrix[1].get(i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
-                i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()));
+            * totalMassTransferCoefficientMatrix[1][i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()][i
+                - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()];
         Jac.set(i + 1, j, tempJ);
       }
     }
@@ -235,8 +234,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
           * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); j++) {
         dij = i == j ? 1.0 : 0.0;
         tempJ = -dij
-            * (totalMassTransferCoefficientMatrix[0].get(i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
-                i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()));
+            * totalMassTransferCoefficientMatrix[0][i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()][i
+                - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()];
         Jac.set(i + 1, j, tempJ);
       }
     }
@@ -292,8 +291,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // interphaseSystem.getPhases()[0].getComponents()[i-bulkSystem.getPhases()[0].getNumberOfMolecularComponents()].getx());
         if (j != bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1) {
           Jac.set(i + 2, j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
-              -totalMassTransferCoefficientMatrix[1].get(i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
-                  j) * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+              -totalMassTransferCoefficientMatrix[1][i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()][j]
+                  * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                   / bulkSystem.getPhases()[1].getMolarMass()); // tempJ);
         }
         Jac.set(i + 2, j + 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), dij
@@ -315,8 +314,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         if (j != 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1) {
           Jac.set(i + 1 + bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
               j - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
-              totalMassTransferCoefficientMatrix[0].get(i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
-                  j - bulkSystem.getPhases()[0].getNumberOfMolecularComponents())
+              totalMassTransferCoefficientMatrix[0][i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()][j
+                  - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()]
                   * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
                   / bulkSystem.getPhases()[0].getMolarMass()); // tempJ);
         }

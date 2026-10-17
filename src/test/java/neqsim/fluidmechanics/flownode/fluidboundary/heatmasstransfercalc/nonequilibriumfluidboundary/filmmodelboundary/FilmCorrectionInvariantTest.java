@@ -2,9 +2,11 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import Jama.Matrix;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,8 +16,8 @@ import java.util.Arrays;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarynonreactive.FluidBoundarySystemNonReactive;
@@ -84,6 +86,7 @@ class FilmCorrectionInvariantTest {
     /**
      * Checks state shape, independent initial copies and the live public coefficient-array contract.
      */
+    @SuppressWarnings("deprecation")
     private void checkWorkingStateOwnership() {
       assertEquals(neq, uMassTrans.getNumRows());
       assertEquals(1, uMassTrans.getNumCols());
@@ -104,6 +107,14 @@ class FilmCorrectionInvariantTest {
       Matrix replacement = exported[0].copy();
       exported[0] = replacement;
       assertSame(replacement, massTransferCoefficientMatrix[0]);
+      double original = replacement.get(0, 0);
+      double[][][] snapshot = getMassTransferCoefficientArray();
+      assertNotSame(replacement.getArray(), snapshot[0]);
+      snapshot[0][0][0] = original + 1.0;
+      assertEquals(original, getMassTransferCoefficientArray()[0][0][0], 0.0);
+      replacement.set(0, 0, original + 1.0);
+      assertEquals(original + 1.0, getMassTransferCoefficientArray()[0][0][0], 0.0);
+      replacement.set(0, 0, original);
     }
 
     /**
@@ -149,9 +160,9 @@ class FilmCorrectionInvariantTest {
         x.set(0, component, bulkSystem.getPhases()[1].getComponent(component).getx());
         y.set(0, component, bulkSystem.getPhases()[0].getComponent(component).getx());
       }
-      Matrix fluxX = totalMassTransferCoefficientMatrix[1].times(dx.transpose()).times(
+      Matrix fluxX = new Matrix(totalMassTransferCoefficientMatrix[1]).times(dx.transpose()).times(
           bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[1].getMolarMass());
-      Matrix fluxY = totalMassTransferCoefficientMatrix[0].times(dy.transpose()).times(
+      Matrix fluxY = new Matrix(totalMassTransferCoefficientMatrix[0]).times(dy.transpose()).times(
           bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[0].getMolarMass());
       Matrix nFluxJama = asJama(nFlux);
       Matrix errX = nFluxJama.getMatrix(0, componentCount - 2, 0, 0).plus(fluxX).minus(x.transpose().times(totalFlux));
@@ -325,9 +336,9 @@ class FilmCorrectionInvariantTest {
 
     Film() {
       super(fluid());
-      massTransferCoefficientMatrix[1] = new Matrix(new double[][] {{2.0, 0.0}, {0.0, 3.0}});
-      nonIdealCorrections[1] = new DMatrixRMaj(new double[][] {{1.5, 0.1}, {0.2, 1.2}});
-      rateCorrectionMatrix[1] = Matrix.identity(2, 2);
+      setMassTransferCoefficientArray(1, new double[][] {{2.0, 0.0}, {0.0, 3.0}});
+      nonIdealCorrections[1] = new double[][] {{1.5, 0.1}, {0.2, 1.2}};
+      rateCorrectionMatrix[1] = Matrix.identity(2, 2).getArray();
       for (double[] row : binaryMassTransferCoefficient[1]) {
         Arrays.fill(row, 0.01);
       }
@@ -337,29 +348,112 @@ class FilmCorrectionInvariantTest {
       totalFlux = flux;
       useThermodynamicCorrections(thermo, 1);
       useFiniteFluxCorrection(finite, 1);
-      calcTotalMassTransferCoefficientMatrix(1);
-      return totalMassTransferCoefficientMatrix[1];
+      calcTotalMassTransferCoefficientArray(1);
+      return new Matrix(totalMassTransferCoefficientMatrix[1]);
     }
 
     Matrix calculateMassTransferCoefficients(int phase) {
       calcMassTransferCoefficients(phase);
-      return massTransferCoefficientMatrix[phase];
+      return new Matrix(getMassTransferCoefficientArray(phase));
     }
 
     Matrix correctedFlux(double[] flux) {
       nFlux = new DMatrixRMaj(flux.length, 1, true, flux);
       initCorrections(1);
-      return rateCorrectionMatrix[1];
+      return new Matrix(rateCorrectionMatrix[1]);
     }
 
     void setRate(Matrix correction) {
-      rateCorrectionMatrix[1] = correction;
+      rateCorrectionMatrix[1] = correction.getArrayCopy();
     }
 
     double[] calculateFluxTypeCorrection(int phase, int component) {
       calcFluxTypeCorrectionMatrix(phase, component);
       return fluxTypeCorrectionMatrix[phase].clone();
     }
+
+    /**
+     * Reports whether compatibility views have been materialized.
+     *
+     * @return true if a legacy Matrix array exists
+     */
+    @SuppressWarnings("deprecation")
+    boolean hasLegacyCoefficientViews() {
+      return massTransferCoefficientMatrix != null;
+    }
+  }
+
+  /** Verifies array-primary calculations do not allocate legacy Matrix coefficient views. */
+  @Test
+  void arrayCalculationsDoNotMaterializeLegacyMatrices() {
+    Film film = new Film();
+    assertFalse(film.hasLegacyCoefficientViews());
+    film.evaluate(0.0, true, false);
+    film.calculateMassTransferCoefficients(1);
+    assertFalse(film.hasLegacyCoefficientViews());
+  }
+
+  /**
+   * Checks that array access is primary while public Matrix signatures remain explicitly deprecated.
+   *
+   * @throws NoSuchMethodException if a compatibility or array entry point has been removed
+   */
+  @Test
+  void arrayPrimaryApiRetainsDeprecatedMatrixEntryPoints() throws NoSuchMethodException {
+    assertEquals(double[][][].class,
+        FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").getReturnType());
+    assertEquals(Matrix[].class,
+        FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").getReturnType());
+    assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix")
+        .isAnnotationPresent(Deprecated.class));
+    assertTrue(KrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)
+        .isAnnotationPresent(Deprecated.class));
+    assertTrue(ReactiveKrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)
+        .isAnnotationPresent(Deprecated.class));
+  }
+
+  /**
+   * Verifies the deprecated live view remains connected to canonical arrays and survives serialization.
+   *
+   * @throws IOException if the real-fluid boundary cannot be serialized
+   * @throws ClassNotFoundException if the boundary class cannot be restored
+   */
+  @SuppressWarnings("deprecation")
+  @Test
+  void arrayCoefficientStoragePreservesLiveViewsAndSerialization() throws IOException, ClassNotFoundException {
+    Film film = new Film();
+    Matrix[] exported = film.getMassTransferCoefficientMatrix();
+    assertSame(exported, film.getMassTransferCoefficientMatrix());
+    exported[1].set(0, 1, 0.5);
+    assertMatrix(exported[1], film.evaluate(0.0, false, false));
+    exported[1] = exported[1].times(2.0);
+    assertMatrix(exported[1], film.evaluate(0.0, false, false));
+
+    Matrix recomputed = film.calculateMassTransferCoefficients(1).copy();
+    assertSame(exported, film.getMassTransferCoefficientMatrix());
+    assertMatrix(recomputed, exported[1]);
+
+    Film cloned = (Film) film.clone();
+    assertSame(exported, cloned.getMassTransferCoefficientMatrix());
+
+    Matrix pendingReplacement = exported[1].times(2.0);
+    exported[1] = pendingReplacement;
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+      output.writeObject(film);
+    }
+    Film restored;
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+      restored = (Film) input.readObject();
+    }
+    assertMatrix(pendingReplacement, new Matrix(restored.getMassTransferCoefficientArray()[1]));
+    Matrix[] restoredViews = restored.getMassTransferCoefficientMatrix();
+    assertNotSame(exported, restoredViews);
+    assertMatrix(pendingReplacement, restoredViews[1]);
+    double changedValue = restoredViews[1].get(0, 0) + 1.0;
+    restoredViews[1].set(0, 0, changedValue);
+    assertEquals(changedValue, restored.getMassTransferCoefficientArray()[1][0][0], 0.0);
+    assertMatrix(restoredViews[1], restored.evaluate(0.0, false, false));
   }
 
   @Test
@@ -438,12 +532,12 @@ class FilmCorrectionInvariantTest {
   @Test
   void eigenvalueFunctionHasContinuousZeroLimitAndFiniteLargeArguments() {
     Film film = new Film();
-    film.redCorrectionMatrix = new Matrix(2, 1);
+    film.redCorrectionMatrix = new double[2];
     for (double z : new double[] {0.0, 1e-12, -1e-12, 1e-7, -1e-7, 1.0, -1.0, 1000.0, -1000.0}) {
-      film.redPhiMatrix = new Matrix(new double[][] {{z, z}});
+      film.redPhiMatrix = new double[] {z, z};
       film.calcRedCorrectionMatrix(1);
       double expected = z == 0.0 ? 1.0 : z > 0.0 ? z / -Math.expm1(-z) : z * Math.exp(z) / Math.expm1(z);
-      assertEquals(expected, film.redCorrectionMatrix.get(0, 0), 1e-12);
+      assertEquals(expected, film.redCorrectionMatrix[0], 1e-12);
     }
   }
 
@@ -452,9 +546,9 @@ class FilmCorrectionInvariantTest {
 
     ReactiveFilm() {
       super(fluid());
-      massTransferCoefficientMatrix[1] = new Matrix(new double[][] {{2.0, 0.4}, {0.5, 3.0}});
-      nonIdealCorrections[1] = new DMatrixRMaj(new double[][] {{1.0, 0.0}, {0.0, 1.0}});
-      rateCorrectionMatrix[1] = Matrix.identity(2, 2);
+      setMassTransferCoefficientArray(1, new double[][] {{2.0, 0.4}, {0.5, 3.0}});
+      nonIdealCorrections[1] = new double[][] {{1.0, 0.0}, {0.0, 1.0}};
+      rateCorrectionMatrix[1] = Matrix.identity(2, 2).getArray();
       enhancementFactor = new EnhancementFactor(this) {
         @Override
         public void calcEnhancementVec(int phase) {
@@ -463,19 +557,20 @@ class FilmCorrectionInvariantTest {
       };
     }
 
+    @SuppressWarnings("deprecation")
     void checkRepeatedCalculation(boolean thermo, boolean finite, double flux) {
       useThermodynamicCorrections(thermo, 1);
       useFiniteFluxCorrection(finite, 1);
       totalFlux = flux;
-      Matrix base = massTransferCoefficientMatrix[1].copy();
-      calcTotalMassTransferCoefficientMatrix(1);
-      assertNotSame(massTransferCoefficientMatrix[1], totalMassTransferCoefficientMatrix[1]);
-      assertMatrix(base, massTransferCoefficientMatrix[1]);
+      Matrix base = new Matrix(getMassTransferCoefficientArray(1)).copy();
+      calcTotalMassTransferCoefficientArray(1);
+      assertNotSame(getMassTransferCoefficientArray(1), totalMassTransferCoefficientMatrix[1]);
+      assertMatrix(base, new Matrix(getMassTransferCoefficientArray(1)));
       Matrix expected = new Matrix(new double[][] {{4.0, 0.8}, {0.5, 3.0}});
-      assertMatrix(expected, totalMassTransferCoefficientMatrix[1]);
+      assertMatrix(expected, new Matrix(totalMassTransferCoefficientMatrix[1]));
       calcTotalMassTransferCoefficientMatrix(1);
-      assertMatrix(base, massTransferCoefficientMatrix[1]);
-      assertMatrix(expected, totalMassTransferCoefficientMatrix[1]);
+      assertMatrix(base, new Matrix(getMassTransferCoefficientArray(1)));
+      assertMatrix(expected, new Matrix(totalMassTransferCoefficientMatrix[1]));
     }
   }
 
