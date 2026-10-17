@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -894,18 +896,18 @@ public class TwoFluidConservationEquations implements Serializable {
     private TransactionalEvaluation(double[][] rates, MassBalanceRate massBalanceRate, double[][] phaseMassFaceFluxes,
         DirectionalPhaseFaceFlux[][] directionalPhaseFaceFluxes, double[][] phaseMassSourcesPerLength,
         double[][] momentumSourceForcesPerLength, boolean outletBackflowClamped) {
-      this.rates = copyMatrix(rates);
+      this.rates = copyMatrixArray(rates);
       this.massBalanceRate = massBalanceRate;
-      this.phaseMassFaceFluxes = copyMatrix(phaseMassFaceFluxes);
-      this.directionalPhaseFaceFluxes = copyDirectionalFluxes(directionalPhaseFaceFluxes);
-      this.phaseMassSourcesPerLength = copyMatrix(phaseMassSourcesPerLength);
-      this.momentumSourceForcesPerLength = copyMatrix(momentumSourceForcesPerLength);
+      this.phaseMassFaceFluxes = copyMatrixArray(phaseMassFaceFluxes);
+      this.directionalPhaseFaceFluxes = copyMatrixArray(directionalPhaseFaceFluxes);
+      this.phaseMassSourcesPerLength = copyMatrixArray(phaseMassSourcesPerLength);
+      this.momentumSourceForcesPerLength = copyMatrixArray(momentumSourceForcesPerLength);
       this.outletBackflowClamped = outletBackflowClamped;
     }
 
     /** @return conservative time derivatives, with seven columns per cell */
     public double[][] getRates() {
-      return copyMatrix(rates);
+      return copyMatrixArray(rates);
     }
 
     /** @return immutable external boundary and domain source rates in kg/s */
@@ -915,7 +917,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
     /** @return defensive face mass fluxes in kg/s, shape [cellCount + 1][3] */
     public double[][] getPhaseMassFaceFluxes() {
-      return copyMatrix(phaseMassFaceFluxes);
+      return copyMatrixArray(phaseMassFaceFluxes);
     }
 
     /**
@@ -929,12 +931,12 @@ public class TwoFluidConservationEquations implements Serializable {
      * @return defensive outer copy of immutable directional face ledgers
      */
     public DirectionalPhaseFaceFlux[][] getDirectionalPhaseFaceFluxes() {
-      return copyDirectionalFluxes(directionalPhaseFaceFluxes);
+      return copyMatrixArray(directionalPhaseFaceFluxes);
     }
 
     /** @return defensive phase mass sources in kg/(m s), shape [cellCount][3] */
     public double[][] getPhaseMassSourcesPerLength() {
-      return copyMatrix(phaseMassSourcesPerLength);
+      return copyMatrixArray(phaseMassSourcesPerLength);
     }
 
     /**
@@ -942,7 +944,7 @@ public class TwoFluidConservationEquations implements Serializable {
      * matches {@link TwoFluidConservationEquations#getLastMomentumSourceForcesPerLength()}
      */
     public double[][] getMomentumSourceForcesPerLength() {
-      return copyMatrix(momentumSourceForcesPerLength);
+      return copyMatrixArray(momentumSourceForcesPerLength);
     }
 
     /** @return whether this trial clamped a reversed outlet phase */
@@ -956,16 +958,15 @@ public class TwoFluidConservationEquations implements Serializable {
     private final double[] savedGasHoldup = interfaceGasHoldup.clone();
     private final double[] savedLiquidHoldup = interfaceLiquidHoldup.clone();
     private final double[] savedPressure = interfacePressure.clone();
-    private final double[][] savedPhaseHoldup = copyMatrix(interfacePhaseHoldup);
-    private final double[][] savedPhasePressure = copyMatrix(interfacePhasePressure);
+    private final double[][] savedPhaseHoldup = copyMatrixArray(interfacePhaseHoldup);
+    private final double[][] savedPhasePressure = copyMatrixArray(interfacePhasePressure);
     private final TwoFluidSection savedOutlet = reconstructedOutlet;
     private final boolean savedBackflow = outletBackflowClamped;
     private final MassBalanceRate savedBalance = lastMassBalanceRate;
-    private final double[][] savedFaces = copyMatrix(lastPhaseMassFaceFluxes);
-    private final DirectionalPhaseFaceFlux[][] savedDirectionalFaces = copyDirectionalFluxes(
-        lastDirectionalPhaseFaceFluxes);
-    private final double[][] savedSources = copyMatrix(lastPhaseMassSourcesPerLength);
-    private final double[][] savedForces = copyMatrix(lastMomentumSourceForcesPerLength);
+    private final double[][] savedFaces = copyMatrixArray(lastPhaseMassFaceFluxes);
+    private final DirectionalPhaseFaceFlux[][] savedDirectionalFaces = copyMatrixArray(lastDirectionalPhaseFaceFluxes);
+    private final double[][] savedSources = copyMatrixArray(lastPhaseMassSourcesPerLength);
+    private final double[][] savedForces = copyMatrixArray(lastMomentumSourceForcesPerLength);
 
     private void restore() {
       interfaceGasHoldup = savedGasHoldup;
@@ -981,29 +982,6 @@ public class TwoFluidConservationEquations implements Serializable {
       lastPhaseMassSourcesPerLength = savedSources;
       lastMomentumSourceForcesPerLength = savedForces;
     }
-  }
-
-  private static double[][] copyMatrix(double[][] source) {
-    if (source == null) {
-      return null;
-    }
-    double[][] copy = new double[source.length][];
-    for (int row = 0; row < source.length; row++) {
-      copy[row] = source[row] == null ? null : source[row].clone();
-    }
-    return copy;
-  }
-
-  /** Copy the array structure; each directional flux value is immutable. */
-  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] source) {
-    if (source == null) {
-      return null;
-    }
-    DirectionalPhaseFaceFlux[][] copy = new DirectionalPhaseFaceFlux[source.length][];
-    for (int face = 0; face < source.length; face++) {
-      copy[face] = source[face] == null ? null : source[face].clone();
-    }
-    return copy;
   }
 
   /**

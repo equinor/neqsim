@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.TransactionalEvaluation;
@@ -379,7 +381,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         double maximumScaledResidual, double timeIntegrationWeight, double pressureInterpolationTimeScale) {
       endpointSections = cloneSections(endpoint);
       midpointEvaluation = evaluation;
-      this.solvedDirectionalPhaseFaceFluxes = copyDirectionalFluxes(solvedDirectionalPhaseFaceFluxes);
+      this.solvedDirectionalPhaseFaceFluxes = copyMatrixArray(solvedDirectionalPhaseFaceFluxes);
       this.timeStep = timeStep;
       this.startTime = startTime;
       this.maximumScaledResidual = maximumScaledResidual;
@@ -429,7 +431,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
      * @return defensive solved gas/oil/water face ledgers, or null for a cell-only candidate
      */
     public DirectionalPhaseFaceFlux[][] getSolvedDirectionalPhaseFaceFluxes() {
-      return copyDirectionalFluxes(solvedDirectionalPhaseFaceFluxes);
+      return copyMatrixArray(solvedDirectionalPhaseFaceFluxes);
     }
 
     /** @return immutable end-state weight: 0.5 for midpoint or 1.0 for backward Euler */
@@ -555,15 +557,4 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     return result;
   }
 
-  /** Copy array ownership while retaining immutable face-ledger values. */
-  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] values) {
-    if (values == null) {
-      return null;
-    }
-    DirectionalPhaseFaceFlux[][] result = new DirectionalPhaseFaceFlux[values.length][];
-    for (int face = 0; face < values.length; face++) {
-      result[face] = values[face] == null ? null : values[face].clone();
-    }
-    return result;
-  }
 }
