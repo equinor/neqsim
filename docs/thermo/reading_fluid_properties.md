@@ -99,7 +99,28 @@ double viscosity = fluid.getPhase("gas").getViscosity("cP");          // Returns
 double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK"); // Returns 0.0!
 ```
 
-> **Note:** When using `ProcessSystem.run()` for process simulations, `initProperties()` is called internally by each equipment's `run()` method, so you do not need to call it separately on streams obtained from process equipment.
+### Properties on process streams
+
+A stream normally uses `Stream.PropertyInitLevel.FULL`: after its flash,
+`Stream.run()` initializes thermodynamic and physical properties. This is not
+an unconditional guarantee for every equipment outlet. In `DENSITY_ONLY` mode,
+the stream initializes thermodynamic properties and mass density, but skips
+viscosity, thermal conductivity and diffusion calculations. Transport getters
+can therefore expose zero or stale values; a successful process run alone does
+not qualify those values for use.
+
+Before consuming transport properties, initialize the **current stream fluid**
+explicitly with `stream.getFluid().initProperties()`. Retrieve that fluid after
+the run: a stream run can replace its internal fluid with a clone. Initialization
+does not perform a new equilibrium calculation; run the appropriate flash or
+equipment calculation first if the thermodynamic state has changed.
+
+For subsequent runs, select `FULL` at the controlling stream or flowsheet level.
+Changing the mode does not itself recalculate properties already stored on the
+fluid. A configured `ProcessSystem` override is reapplied at execution, so it
+can supersede a stream-level selection. See
+[physical-property initialization levels](../process/processmodel/process_system.md#physical-property-initialization-level)
+for flowsheet override and reset behavior.
 
 ---
 
