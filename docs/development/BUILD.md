@@ -396,12 +396,10 @@ as `slow-test-reports-<zero-based shard>` even after failure, when reports are
 available. A runner terminated by the job timeout may not reach artifact upload;
 the selected-class list and test progress remain in its log.
 
-Four small compatibility gates preserve the historical `Assert slow tests (1/4)`
-through `(4/4)` check names. Each requires all eight numerical shards to succeed;
-failure, cancellation, or unexpected skipping cannot pass. They skip only when
-change detection succeeds and no Java build is required, matching the existing
-path-filter behavior. Keep these contexts until repository administrators confirm
-that branch-protection rules have migrated to the new shard checks.
+The `Assert all slow tests with Java 21 on Ubuntu` gate requires the complete
+eight-shard matrix to succeed; failure, cancellation, or unexpected skipping
+cannot pass. It skips only when change detection succeeds and no Java build is
+required, matching the existing path-filter behavior.
 
 ### CI Configuration Files
 - **Azure Pipelines**: `azure-pipelines.yml`
