@@ -426,6 +426,42 @@ def _valid_lifecycle_evidence(current_envelope):
     }
 
 
+def _valid_state_lifecycle_evidence(current_envelope):
+    """Extend valid schema-v2 evidence with exact accepted physical-state metrics."""
+    evidence = _valid_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 3
+    evidence["accepted_state_metric_ids"] = [
+        "reservoir-pressure", "production-rate", "injection-rate", "shared-power"
+    ]
+    values = [
+        [150.0, 0.0178, 0.0142, 3.02],
+        [148.25, 0.0173, 0.0147, 2.99],
+    ]
+    units = ["bara", "kg/s", "kg/s", "kW"]
+    names = [
+        "Shared reservoir pressure", "Accepted production rate",
+        "Accepted injection rate", "Accepted shared power",
+    ]
+    for period, period_values in zip(evidence["periods"], values):
+        period["accepted_state_metrics"] = [{
+            "metric_id": metric_id,
+            "metric_name": name,
+            "value": value,
+            "unit": unit,
+            "provenance": "canonical accepted shared-reservoir step",
+        } for metric_id, name, value, unit in zip(
+            evidence["accepted_state_metric_ids"], names, period_values, units)]
+    evidence["period_change_diagnostics"][0]["accepted_state_changes"] = [{
+        "metric_id": metric_id,
+        "unit": unit,
+        "from_value": before,
+        "to_value": after,
+        "delta": after - before,
+    } for metric_id, unit, before, after in zip(
+        evidence["accepted_state_metric_ids"], units, values[0], values[1])]
+    return evidence
+
+
 def test_cycle_keeps_only_safe_proposals(tmp_path):
     task = _task(tmp_path)
     manifest = run_cycle(task, no_agent=True)
@@ -1026,6 +1062,62 @@ def test_guard_persists_complete_lifecycle_envelope(tmp_path):
     assert lifecycle["period_count"] == 2
     assert lifecycle["periods"][0]["period_id"] == "C-1"
     assert lifecycle["periods"][1]["period_id"] == "future-period"
+
+
+def test_guard_persists_schema3_accepted_physical_state_changes(tmp_path):
+    proposal = _valid_proposal()
+    proposal["lifecycle_envelope_evidence"] = _valid_state_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    lifecycle = ctx.proposals[0]["lifecycle_envelope_evidence"]
+    assert lifecycle["schema_version"] == 3
+    assert lifecycle["periods"][1]["accepted_state_metrics"][0]["value"] == 148.25
+    changes = lifecycle["period_change_diagnostics"][0]["accepted_state_changes"]
+    assert changes[0] == {
+        "metric_id": "reservoir-pressure",
+        "unit": "bara",
+        "from_value": 150.0,
+        "to_value": 148.25,
+        "delta": -1.75,
+    }
+
+
+def test_guard_rejects_invalid_schema3_accepted_physical_state(tmp_path):
+    variants = []
+    for title, mutate in [
+        ("non-finite accepted state",
+         lambda evidence: evidence["periods"][1]["accepted_state_metrics"][0].update(
+             value=math.nan)),
+        ("changed accepted state unit",
+         lambda evidence: evidence["periods"][1]["accepted_state_metrics"][0].update(
+             unit="kPa")),
+        ("changed accepted state delta",
+         lambda evidence: evidence["period_change_diagnostics"][0][
+             "accepted_state_changes"][0].update(delta=-1.0)),
+    ]:
+        proposal = _valid_proposal()
+        proposal["title"] = title
+        proposal["lifecycle_envelope_evidence"] = _valid_state_lifecycle_evidence(
+            proposal["accepted_point_envelope_evidence"])
+        mutate(proposal["lifecycle_envelope_evidence"])
+        variants.append(proposal)
+
+    ctx = _guard_context(tmp_path, variants[0])
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    ctx.proposals.extend(variants[1:])
+    production.guard(ctx, {})
+    assert ctx.proposals == []
+    reasons = {row["title"]: row["reasons"]
+               for row in json.loads((tmp_path / "guard.json").read_text())["withheld"]}
+    assert "lifecycle_period_1_invalid_accepted_state_metrics" in reasons[
+        "non-finite accepted state"]
+    assert "lifecycle_period_1_accepted_state_metric_unit_mismatch" in reasons[
+        "changed accepted state unit"]
+    assert "lifecycle_period_change_diagnostics_mismatch" in reasons[
+        "changed accepted state delta"]
 
 
 def test_guard_accepts_legacy_lifecycle_schema_without_period_diagnostics(tmp_path):

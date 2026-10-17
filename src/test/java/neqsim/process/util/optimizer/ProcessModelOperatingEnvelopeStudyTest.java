@@ -469,6 +469,59 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertTrue(late.fixture.model.isModelConverged());
   }
 
+  /** Verifies accepted physical states are retained with units and compared exactly across periods. */
+  @Test
+  void lifecycleEvidenceTracksAcceptedPhysicalStateChanges() {
+    AcceptedPeriod early = createAcceptedPeriod("early-life", 650.0, 2000.0);
+    AcceptedPeriod late = createAcceptedPeriod("late-life", 1500.0, 1200.0);
+    List<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric> earlyState = Arrays.asList(
+        new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("reservoir-pressure",
+            "Shared reservoir pressure", 150.0, "bara", "accepted shared-reservoir period early-life"),
+        new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("production-rate",
+            "Accepted production rate", 0.0178, "kg/s", "accepted shared-reservoir period early-life"),
+        new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("injection-rate", "Accepted injection rate",
+            0.0142, "kg/s", "accepted shared-reservoir period early-life"));
+    List<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric> lateState = Arrays.asList(
+        new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("reservoir-pressure",
+            "Shared reservoir pressure", 148.25, "bara", "accepted shared-reservoir period late-life"),
+        new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("production-rate",
+            "Accepted production rate", 0.0173, "kg/s", "accepted shared-reservoir period late-life"),
+        new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("injection-rate", "Accepted injection rate",
+            0.0147, "kg/s", "accepted shared-reservoir period late-life"));
+
+    ProcessModelOperatingEnvelopeLifecycleStudy lifecycle = new ProcessModelOperatingEnvelopeLifecycleStudy(
+        "shared-reservoir-lifecycle", "Shared-reservoir lifecycle envelope",
+        "accepted production/injection states from the canonical shared-reservoir fixture", "day")
+        .addPeriod("early-life", "Early life", 0.0, "accepted initial shared-reservoir state", earlyState, early.study,
+            early.search, early.slice)
+        .addPeriod("late-life", "Late life", 1.0, "accepted one-day shared-reservoir state", lateState, late.study,
+            late.search, late.slice);
+
+    Map<String, Object> evidence = lifecycle.toEvidenceMap("shared-reservoir-cycle");
+    assertEquals(Integer.valueOf(3), evidence.get("schema_version"));
+    assertEquals(Arrays.asList("reservoir-pressure", "production-rate", "injection-rate"),
+        evidence.get("accepted_state_metric_ids"));
+    Map<?, ?> firstPeriod = (Map<?, ?>) ((List<?>) evidence.get("periods")).get(0);
+    assertEquals(earlyState.get(0).toEvidenceMap(), ((List<?>) firstPeriod.get("accepted_state_metrics")).get(0));
+    Map<?, ?> change = (Map<?, ?>) ((List<?>) evidence.get("period_change_diagnostics")).get(0);
+    List<?> stateChanges = (List<?>) change.get("accepted_state_changes");
+    assertEquals(3, stateChanges.size());
+    Map<?, ?> pressureChange = (Map<?, ?>) stateChanges.get(0);
+    assertEquals("reservoir-pressure", pressureChange.get("metric_id"));
+    assertEquals("bara", pressureChange.get("unit"));
+    assertEquals(-1.75, ((Double) pressureChange.get("delta")).doubleValue(), 0.0);
+
+    assertThrows(IllegalArgumentException.class,
+        () -> new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("pressure", "Pressure", Double.NaN,
+            "bara", "invalid non-finite state"));
+    List<ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric> changedUnit = Arrays
+        .asList(new ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric("reservoir-pressure",
+            "Shared reservoir pressure", 14825.0, "kPa", "incompatible unit"), lateState.get(1), lateState.get(2));
+    assertThrows(IllegalStateException.class, () -> lifecycle.addPeriod("incompatible", "Incompatible", 2.0,
+        "changed unit", changedUnit, late.study, late.search, late.slice));
+    assertEquals(2, lifecycle.getPeriods().size());
+  }
+
   /** Verifies malformed lifecycle ordering is rejected before accepting another period. */
   @Test
   void lifecycleEvidenceRejectsDuplicateOrNonIncreasingPeriods() {

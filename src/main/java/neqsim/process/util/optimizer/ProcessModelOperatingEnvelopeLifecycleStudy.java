@@ -39,6 +39,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
   private final String timeUnit;
   private final List<PeriodEvidence> periods = new ArrayList<PeriodEvidence>();
   private List<String> acceptedActionIds;
+  private List<String> acceptedStateMetricIds;
+  private List<String> acceptedStateMetricUnits;
 
   /**
    * Creates an ordered lifecycle study.
@@ -97,6 +99,33 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
   public ProcessModelOperatingEnvelopeLifecycleStudy addPeriod(String periodId, String periodName, double elapsedTime,
       String configurationProvenance, ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search,
       SliceResult... slices) {
+    return addPeriod(periodId, periodName, elapsedTime, configurationProvenance,
+        Collections.<AcceptedStateMetric>emptyList(), study, search, slices);
+  }
+
+  /**
+   * Adds one completely validated period together with accepted physical-state evidence.
+   *
+   * <p>
+   * State metrics describe the independently accepted reservoir, network, host, or shared-resource state used to define
+   * this period. Metric identifiers, ordering, and units must remain identical across every period. Values must be
+   * finite. This method does not rerun or qualify the source physical model; callers must supply only values from an
+   * already accepted state and retain that source in each metric's provenance.
+   * </p>
+   *
+   * @param periodId unique stable period identifier
+   * @param periodName human-readable period name
+   * @param elapsedTime non-negative elapsed time from the lifecycle origin
+   * @param configurationProvenance period-specific reservoir, availability and operating-limit basis
+   * @param acceptedStateMetrics ordered accepted physical-state metrics
+   * @param study exact runtime envelope study
+   * @param search accepted mixed operating-point search from the same evaluator
+   * @param slices one or more complete accepted-point slices from the same study
+   * @return this study
+   */
+  public ProcessModelOperatingEnvelopeLifecycleStudy addPeriod(String periodId, String periodName, double elapsedTime,
+      String configurationProvenance, List<AcceptedStateMetric> acceptedStateMetrics,
+      ProcessModelOperatingEnvelopeStudy study, OperatingPointSearchResult search, SliceResult... slices) {
     String validatedId = requireText(periodId, "Lifecycle period identifier");
     String validatedName = requireText(periodName, "Lifecycle period name");
     String validatedConfiguration = requireText(configurationProvenance, "Lifecycle period configuration provenance");
@@ -114,19 +143,21 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     if (study == null) {
       throw new IllegalArgumentException("Lifecycle period study must not be null");
     }
-
     Map<String, Object> envelopeEvidence = study.getAcceptedPointEnvelopeEvidence(validatedId, search, slices);
     LeadingConstraintEvidence bottleneck = study.getAcceptedPointBottleneck(search);
     List<String> actionIds = stringList(envelopeEvidence.get("accepted_action_ids"), "accepted action identifiers");
+    if (acceptedActionIds != null && !acceptedActionIds.equals(actionIds)) {
+      throw new IllegalStateException("Lifecycle periods must retain identical ordered action identifiers");
+    }
+    Map<String, Object> frozenEnvelopeEvidence = freezeMap(envelopeEvidence);
+    List<AcceptedStateMetric> stateMetrics = validateStateMetrics(acceptedStateMetrics);
     if (acceptedActionIds == null) {
       acceptedActionIds = actionIds;
-    } else if (!acceptedActionIds.equals(actionIds)) {
-      throw new IllegalStateException("Lifecycle periods must retain identical ordered action identifiers");
     }
 
     PeriodEvidence period = new PeriodEvidence(validatedId, validatedName, elapsedTime, timeUnit,
         validatedConfiguration, study.getId(), study.getCandidateEvaluator().getId(), bottleneck,
-        freezeMap(envelopeEvidence), search.getAcceptedCandidateValues(), slices);
+        frozenEnvelopeEvidence, search.getAcceptedCandidateValues(), stateMetrics, slices);
     periods.add(period);
     return this;
   }
@@ -212,7 +243,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       transitionMaps.add(transition.toEvidenceMap());
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
-    evidence.put("schema_version", Integer.valueOf(2));
+    boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
+    evidence.put("schema_version", Integer.valueOf(hasStateMetrics ? 3 : 2));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -220,6 +252,10 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     evidence.put("time_unit", timeUnit);
     evidence.put("period_count", Integer.valueOf(periods.size()));
     evidence.put("accepted_action_ids", Collections.unmodifiableList(new ArrayList<String>(acceptedActionIds)));
+    if (hasStateMetrics) {
+      evidence.put("accepted_state_metric_ids",
+          Collections.unmodifiableList(new ArrayList<String>(acceptedStateMetricIds)));
+    }
     evidence.put("requested_point_count", Integer.valueOf(requestedPointCount));
     evidence.put("completed_point_count", Integer.valueOf(completedPointCount));
     evidence.put("total_evaluation_count", Long.valueOf(evaluationCount));
@@ -231,6 +267,72 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     evidence.put("interpretation",
         "Independent sampled lifecycle periods; not a continuous forecast, equipment qualification, shadow price, or operating approval");
     return Collections.unmodifiableMap(evidence);
+  }
+
+  /** Immutable accepted physical-state metric for one lifecycle period. */
+  public static final class AcceptedStateMetric implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final String id;
+    private final String name;
+    private final double value;
+    private final String unit;
+    private final String provenance;
+
+    /**
+     * Creates one accepted physical-state metric.
+     *
+     * @param id stable metric identifier retained across periods
+     * @param name human-readable metric name
+     * @param value finite accepted-state value
+     * @param unit explicit engineering unit
+     * @param provenance accepted calculation, fixture, or evidence source
+     */
+    public AcceptedStateMetric(String id, String name, double value, String unit, String provenance) {
+      this.id = requireText(id, "Accepted-state metric identifier");
+      this.name = requireText(name, "Accepted-state metric name");
+      if (!Double.isFinite(value)) {
+        throw new IllegalArgumentException("Accepted-state metric value must be finite");
+      }
+      this.value = value;
+      this.unit = requireText(unit, "Accepted-state metric unit");
+      this.provenance = requireText(provenance, "Accepted-state metric provenance");
+    }
+
+    /** @return stable metric identifier */
+    public String getId() {
+      return id;
+    }
+
+    /** @return human-readable metric name */
+    public String getName() {
+      return name;
+    }
+
+    /** @return finite accepted-state value */
+    public double getValue() {
+      return value;
+    }
+
+    /** @return explicit engineering unit */
+    public String getUnit() {
+      return unit;
+    }
+
+    /** @return accepted calculation, fixture, or evidence source */
+    public String getProvenance() {
+      return provenance;
+    }
+
+    /** @return immutable JSON-friendly metric evidence */
+    public Map<String, Object> toEvidenceMap() {
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("metric_id", id);
+      evidence.put("metric_name", name);
+      evidence.put("value", Double.valueOf(value));
+      evidence.put("unit", unit);
+      evidence.put("provenance", provenance);
+      return Collections.unmodifiableMap(evidence);
+    }
   }
 
   /** Immutable accepted-period evidence. */
@@ -246,12 +348,13 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     private final LeadingConstraintEvidence acceptedBottleneck;
     private final Map<String, Object> envelopeEvidence;
     private final double[] acceptedCandidateValues;
+    private final List<AcceptedStateMetric> acceptedStateMetrics;
     private final List<SliceResult> slices;
 
     private PeriodEvidence(String periodId, String periodName, double elapsedTime, String timeUnit,
         String configurationProvenance, String envelopeStudyId, String candidateEvaluatorId,
         LeadingConstraintEvidence acceptedBottleneck, Map<String, Object> envelopeEvidence,
-        double[] acceptedCandidateValues, SliceResult[] slices) {
+        double[] acceptedCandidateValues, List<AcceptedStateMetric> acceptedStateMetrics, SliceResult[] slices) {
       this.periodId = periodId;
       this.periodName = periodName;
       this.elapsedTime = elapsedTime;
@@ -262,6 +365,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       this.acceptedBottleneck = acceptedBottleneck;
       this.envelopeEvidence = envelopeEvidence;
       this.acceptedCandidateValues = Arrays.copyOf(acceptedCandidateValues, acceptedCandidateValues.length);
+      this.acceptedStateMetrics = Collections
+          .unmodifiableList(new ArrayList<AcceptedStateMetric>(acceptedStateMetrics));
       this.slices = Collections.unmodifiableList(new ArrayList<SliceResult>(Arrays.asList(slices)));
     }
 
@@ -315,6 +420,11 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       return envelopeEvidence;
     }
 
+    /** @return immutable accepted physical-state metrics */
+    public List<AcceptedStateMetric> getAcceptedStateMetrics() {
+      return acceptedStateMetrics;
+    }
+
     /** @return defensive accepted action-value vector */
     private double[] getAcceptedCandidateValues() {
       return Arrays.copyOf(acceptedCandidateValues, acceptedCandidateValues.length);
@@ -337,6 +447,13 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       evidence.put("candidate_evaluator_id", candidateEvaluatorId);
       evidence.put("accepted_bottleneck",
           acceptedBottleneck == null ? null : freezeMap(acceptedBottleneck.toEvidenceMap()));
+      if (!acceptedStateMetrics.isEmpty()) {
+        List<Map<String, Object>> metrics = new ArrayList<Map<String, Object>>();
+        for (AcceptedStateMetric metric : acceptedStateMetrics) {
+          metrics.add(metric.toEvidenceMap());
+        }
+        evidence.put("accepted_state_metrics", Collections.unmodifiableList(metrics));
+      }
       evidence.put("envelope_evidence", envelopeEvidence);
       return Collections.unmodifiableMap(evidence);
     }
@@ -380,12 +497,34 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     diagnostic.put("to_elapsed_time", Double.valueOf(to.getElapsedTime()));
     diagnostic.put("time_unit", timeUnit);
     diagnostic.put("accepted_action_changes", Collections.unmodifiableList(actionChanges));
+    if (!from.getAcceptedStateMetrics().isEmpty()) {
+      diagnostic.put("accepted_state_changes", acceptedStateChanges(from, to));
+    }
     diagnostic.put("comparable_slice_count", Integer.valueOf(sliceChanges.size()));
     diagnostic.put("removed_slice_axes", Collections.unmodifiableList(removedAxes));
     diagnostic.put("added_slice_axes", Collections.unmodifiableList(addedAxes));
     diagnostic.put("slice_changes", Collections.unmodifiableList(sliceChanges));
     diagnostic.put("advisory", Boolean.TRUE);
     return Collections.unmodifiableMap(diagnostic);
+  }
+
+  /** Builds exact accepted physical-state deltas for one adjacent period pair. */
+  private static List<Map<String, Object>> acceptedStateChanges(PeriodEvidence from, PeriodEvidence to) {
+    List<Map<String, Object>> changes = new ArrayList<Map<String, Object>>();
+    List<AcceptedStateMetric> fromMetrics = from.getAcceptedStateMetrics();
+    List<AcceptedStateMetric> toMetrics = to.getAcceptedStateMetrics();
+    for (int index = 0; index < fromMetrics.size(); index++) {
+      AcceptedStateMetric fromMetric = fromMetrics.get(index);
+      AcceptedStateMetric toMetric = toMetrics.get(index);
+      Map<String, Object> change = new LinkedHashMap<String, Object>();
+      change.put("metric_id", fromMetric.getId());
+      change.put("unit", fromMetric.getUnit());
+      change.put("from_value", Double.valueOf(fromMetric.getValue()));
+      change.put("to_value", Double.valueOf(toMetric.getValue()));
+      change.put("delta", Double.valueOf(toMetric.getValue() - fromMetric.getValue()));
+      changes.add(Collections.unmodifiableMap(change));
+    }
+    return Collections.unmodifiableList(changes);
   }
 
   /** Builds one exact sampled-grid comparison for matching slice axes. */
@@ -545,6 +684,35 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       evidence.put("to_constraint", toConstraint);
       return Collections.unmodifiableMap(evidence);
     }
+  }
+
+  /** Validates metric identity, ordering, units, and uniqueness across lifecycle periods. */
+  private List<AcceptedStateMetric> validateStateMetrics(List<AcceptedStateMetric> metrics) {
+    if (metrics == null) {
+      throw new IllegalArgumentException("Accepted-state metrics must not be null");
+    }
+    List<AcceptedStateMetric> copy = new ArrayList<AcceptedStateMetric>();
+    List<String> ids = new ArrayList<String>();
+    List<String> units = new ArrayList<String>();
+    for (AcceptedStateMetric metric : metrics) {
+      if (metric == null) {
+        throw new IllegalArgumentException("Accepted-state metrics must not contain null entries");
+      }
+      if (ids.contains(metric.getId())) {
+        throw new IllegalArgumentException("Duplicate accepted-state metric identifier: " + metric.getId());
+      }
+      ids.add(metric.getId());
+      units.add(metric.getUnit());
+      copy.add(metric);
+    }
+    if (acceptedStateMetricIds == null) {
+      acceptedStateMetricIds = Collections.unmodifiableList(new ArrayList<String>(ids));
+      acceptedStateMetricUnits = Collections.unmodifiableList(new ArrayList<String>(units));
+    } else if (!acceptedStateMetricIds.equals(ids) || !acceptedStateMetricUnits.equals(units)) {
+      throw new IllegalStateException(
+          "Lifecycle periods must retain identical ordered accepted-state metric identifiers and units");
+    }
+    return Collections.unmodifiableList(copy);
   }
 
   /** Deep-freezes a JSON-friendly map and rejects non-finite numeric values. */
