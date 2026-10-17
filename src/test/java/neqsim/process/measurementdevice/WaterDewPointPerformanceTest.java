@@ -16,7 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  * @version 1.0
  */
-@Tag("slow")
+@Tag("benchmark")
 public class WaterDewPointPerformanceTest {
   private static final Logger logger = LogManager.getLogger(WaterDewPointPerformanceTest.class);
 
