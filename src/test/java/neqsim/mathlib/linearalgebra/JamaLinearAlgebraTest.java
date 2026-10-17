@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
  * Behaviour specific to the JAMA backend. The shared behaviour is verified by
  * {@link LinearAlgebraOperationsContractTest}.
  */
-class EjmlLinearAlgebraTest {
-  private final LinearAlgebraOperations algebra = new EjmlLinearAlgebra();
+class JamaLinearAlgebraTest {
+  private final LinearAlgebraOperations algebra = new JamaLinearAlgebra();
 
   @Test
   void reportsBackendName() {
