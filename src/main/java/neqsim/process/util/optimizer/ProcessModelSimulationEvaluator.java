@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1244,7 +1246,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
         EvaluationResult baseResult) {
       this.objectiveIndex = objectiveIndex;
       this.objectiveGradient = Arrays.copyOf(objectiveGradient, objectiveGradient.length);
-      this.constraintJacobian = copyMatrix(constraintJacobian);
+      this.constraintJacobian = copyMatrixArray(constraintJacobian);
       this.parameterQuality = Collections
           .unmodifiableList(new ArrayList<ParameterSensitivityQuality>(parameterQuality));
       List<SensitivityParameterSnapshot> capturedParameters = new ArrayList<SensitivityParameterSnapshot>();
@@ -1291,7 +1293,7 @@ public class ProcessModelSimulationEvaluator implements Serializable {
      * @return defensive matrix with constraints as rows and parameters as columns
      */
     public double[][] getConstraintJacobian() {
-      return copyMatrix(constraintJacobian);
+      return copyMatrixArray(constraintJacobian);
     }
 
     /**
@@ -1519,14 +1521,6 @@ public class ProcessModelSimulationEvaluator implements Serializable {
       return baseErrorMessage;
     }
 
-    /** Returns a defensive rectangular or ragged matrix copy. */
-    private static double[][] copyMatrix(double[][] matrix) {
-      double[][] copy = new double[matrix.length][];
-      for (int row = 0; row < matrix.length; row++) {
-        copy[row] = Arrays.copyOf(matrix[row], matrix[row].length);
-      }
-      return copy;
-    }
   }
 
   /** Process model evaluated by this instance. */

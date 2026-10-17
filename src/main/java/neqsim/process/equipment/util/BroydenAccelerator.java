@@ -1,5 +1,8 @@
 package neqsim.process.equipment.util;
 
+import static neqsim.util.util.ArrayUtils.copyArray;
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
@@ -391,7 +394,7 @@ public class BroydenAccelerator implements Serializable {
    * @return immutable, defensively copied accelerator state
    */
   public Snapshot captureState() {
-    return new Snapshot(dimension, copyMatrix(inverseJacobian), copyVector(previousX), copyVector(previousF),
+    return new Snapshot(dimension, copyMatrixArray(inverseJacobian), copyArray(previousX), copyArray(previousF),
         iterationCount, delayIterations, relaxationFactor, maxStepSize);
   }
 
@@ -404,40 +407,13 @@ public class BroydenAccelerator implements Serializable {
   public void restoreState(Snapshot snapshot) {
     Objects.requireNonNull(snapshot, "snapshot cannot be null");
     dimension = snapshot.dimension;
-    inverseJacobian = copyMatrix(snapshot.inverseJacobian);
-    previousX = copyVector(snapshot.previousX);
-    previousF = copyVector(snapshot.previousF);
+    inverseJacobian = copyMatrixArray(snapshot.inverseJacobian);
+    previousX = copyArray(snapshot.previousX);
+    previousF = copyArray(snapshot.previousF);
     iterationCount = snapshot.iterationCount;
     delayIterations = snapshot.delayIterations;
     relaxationFactor = snapshot.relaxationFactor;
     maxStepSize = snapshot.maxStepSize;
-  }
-
-  /**
-   * Copies one vector while retaining a null marker.
-   *
-   * @param vector source vector
-   * @return defensive copy, or null
-   */
-  private static double[] copyVector(double[] vector) {
-    return vector == null ? null : vector.clone();
-  }
-
-  /**
-   * Copies a possibly null rectangular matrix.
-   *
-   * @param matrix source matrix
-   * @return deep defensive copy, or null
-   */
-  private static double[][] copyMatrix(double[][] matrix) {
-    if (matrix == null) {
-      return null;
-    }
-    double[][] copy = new double[matrix.length][];
-    for (int i = 0; i < matrix.length; i++) {
-      copy[i] = matrix[i] == null ? null : matrix[i].clone();
-    }
-    return copy;
   }
 
   /** Immutable serializable Broyden continuation state. */

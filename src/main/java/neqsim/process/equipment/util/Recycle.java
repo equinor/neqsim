@@ -1,5 +1,7 @@
 package neqsim.process.equipment.util;
 
+import static neqsim.util.util.ArrayUtils.copyArray;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1539,9 +1541,9 @@ public class Recycle extends ProcessEquipmentBaseClass
     wegsteinQMin = snapshot.wegsteinQMin;
     wegsteinQMax = snapshot.wegsteinQMax;
     wegsteinDelayIterations = snapshot.wegsteinDelayIterations;
-    previousInputValues = copyTransientArray(snapshot.previousInputValues);
-    previousOutputValues = copyTransientArray(snapshot.previousOutputValues);
-    wegsteinQFactors = copyTransientArray(snapshot.wegsteinQFactors);
+    previousInputValues = copyArray(snapshot.previousInputValues);
+    previousOutputValues = copyArray(snapshot.previousOutputValues);
+    wegsteinQFactors = copyArray(snapshot.wegsteinQFactors);
     if (snapshot.broydenState == null) {
       broydenAccelerator = null;
     } else {
@@ -1550,10 +1552,6 @@ public class Recycle extends ProcessEquipmentBaseClass
       }
       broydenAccelerator.restoreState(snapshot.broydenState);
     }
-  }
-
-  private static double[] copyTransientArray(double[] source) {
-    return source == null ? null : source.clone();
   }
 
   private static ArrayList<StreamTransientState> captureStreamStates(Recycle source) {
@@ -1658,9 +1656,9 @@ public class Recycle extends ProcessEquipmentBaseClass
       wegsteinQMin = source.wegsteinQMin;
       wegsteinQMax = source.wegsteinQMax;
       wegsteinDelayIterations = source.wegsteinDelayIterations;
-      previousInputValues = copyTransientArray(source.previousInputValues);
-      previousOutputValues = copyTransientArray(source.previousOutputValues);
-      wegsteinQFactors = copyTransientArray(source.wegsteinQFactors);
+      previousInputValues = copyArray(source.previousInputValues);
+      previousOutputValues = copyArray(source.previousOutputValues);
+      wegsteinQFactors = copyArray(source.wegsteinQFactors);
       broydenState = source.broydenAccelerator == null ? null : source.broydenAccelerator.captureState();
     }
   }
