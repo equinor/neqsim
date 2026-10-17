@@ -66,22 +66,9 @@ Run `uv run --project devtools --locked devtools/build_engineering_coverage.py` 
 relevant source/agent/skill changes. Commit the generated resource at
 `src/main/resources/neqsim/mcp/engineering-coverage.json`.
 
-The inventory is a derived snapshot, not hand-maintained source data. If it has a
-merge conflict, resolve the source and registry conflicts first, rerun the command
-above, and stage the regenerated file. Never combine branch copies or resolve its
-JSON conflicts by hand: the result must describe the merged sources.
-
-CI rebuilds the inventory before running its contract tests instead of failing on
-stale generated output. The `coverage` job checks out the source-branch commit and
-has `contents: write` permission. After validation, a conditional step reuses that
-checkout and pushes only the changed inventory to same-repository PR branches or
-`master`, without starting another runner or regenerating again. It skips unchanged output and branches
-that have advanced. Fork and Dependabot PRs remain validation-only. Repository
-policy and branch protection must permit the bot push; this workflow does not
-bypass either. Commits made with `GITHUB_TOKEN` do not trigger another workflow run.
-The optional local `--check` mode still detects stale output, including changes
-inside an existing Java type. Generation rejects unknown API/tool/skill/agent/test references
-and duplicate IDs. The catalog digest is the SHA-256 of the packaged inventory file, so it binds the generated inventory and source-type digests;
+`--check` fails on stale output, including changes inside an existing Java type.
+The generator rejects unknown API/tool/skill/agent/test references and duplicate
+IDs. The catalog digest is the SHA-256 of the packaged inventory file, so it binds the generated inventory and source-type digests;
 it is not an execution receipt or a digest of every repository file. The summary counts and
 the digest are computed when `EngineeringCoverageCatalog` loads the resource and are not committed:
 a global hash and aggregate counters change in every PR and would conflict between any two PRs.
@@ -100,7 +87,7 @@ A `supported` operation means only the recorded static signature is supported on
 
 | Package | Deliverable and exit gate |
 |---|---|
-| 1. Baseline | Source inventory, paginated MCP access, agent links, rebuild-and-validate CI and explicit unreviewed entries |
+| 1. Baseline | Source inventory, paginated MCP access, agent links, freshness CI and explicit unreviewed entries |
 | 2. Operation contracts | Classify supported operations versus internal/experimental/deprecated APIs; record exact signatures, units, applicability and examples using existing schemas/API inspection |
 | 3. Stateful exposure | Qualify model construction, mutation, cloning, revision, serialization and replay; map supported properties and connections |
 | 4. Domain completion | Cohesive PRs combining missing adapters, schemas, skills, examples, positive/negative tests and documentation |

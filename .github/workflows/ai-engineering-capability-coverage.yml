@@ -29,43 +29,13 @@ permissions:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: astral-sh/setup-uv@v10.3.0
         with:
           python-version: "3.13"
           enable-cache: true
           cache-dependency-glob: devtools/uv.lock
       - run: uv sync --project devtools --locked --group test
-      - name: Rebuild and validate engineering inventory
-        run: uv run --project devtools --locked devtools/build_engineering_coverage.py
       - run: uv run --project devtools --locked --group test python -m pytest devtools/test_engineering_coverage.py -q
-      - name: Commit and push regenerated inventory
-        if: >-
-          github.actor != 'dependabot[bot]' &&
-          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
-        env:
-          TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
-          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          inventory_path=src/main/resources/neqsim/mcp/engineering-coverage.json
-          git add -- "$inventory_path"
-          if git diff --cached --quiet; then
-            echo "Engineering inventory is already current."
-            exit 0
-          fi
-
-          git fetch --no-tags origin "refs/heads/$TARGET_BRANCH"
-          if [ "$(git rev-parse FETCH_HEAD)" != "$EXPECTED_SHA" ]; then
-            echo "Source branch has advanced; leaving regeneration to its newer workflow run."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: regenerate engineering coverage inventory"
-          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+      - run: uv run --project devtools --locked devtools/build_engineering_coverage.py --check
