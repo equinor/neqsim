@@ -468,9 +468,13 @@ precedence, and the existing temperature-dependent coefficients are unchanged.
 This corrects parameter selection; it does not validate the TEG estimates
 against experimental data.
 
-## Gas-Ion Interaction Parameters (Salting-Out Effect)
+## Gas-Ion Interaction Parameters
 
-The electrolyte CPA model includes gas-ion interaction parameters to correctly predict the salting-out effect. The salting-out coefficient (k_s) determines how much dissolved gas solubility decreases with salt concentration.
+The electrolyte CPA model includes legacy gas-ion short-range interaction
+parameters. They are model coefficients in m3/mol, not measured Setschenow
+coefficients, and the original generic parameter provenance has not been
+independently reconstructed. Gas-ion behavior therefore requires a
+source-specific check rather than relying on the generic labels alone.
 
 ### Setschenow Equation
 
@@ -482,19 +486,11 @@ Where:
 - $k_s$ = Setschenow (salting-out) coefficient (L/mol)
 - $c_{salt}$ = salt concentration (mol/L)
 
-### Fitted Gas-Ion Parameters
-
-| Gas | k_s (L/mol) | W_cation | W_anion | Notes |
-|-----|-------------|----------|---------|-------|
-| CO₂ | 0.10 | 1.05e-4 | 1.05e-4 | Polar, acidic gas |
-| CH₄ | 0.12 | 1.10e-4 | 1.10e-4 | Reference hydrocarbon |
-| C₂H₆ | 0.13 | 1.13e-4 | 1.13e-4 | Slightly larger |
-| C₃H₈ | 0.14 | 1.15e-4 | 1.15e-4 | Larger hydrocarbon |
-| C₄ (butanes) | 0.15 | 1.20e-4 | 1.20e-4 | Heavier hydrocarbon |
-| C₅+ | 0.16 | 1.25e-4 | 1.25e-4 | Heaviest fractions |
-| N₂ | 0.10-0.12 | 1.05e-4 | 1.05e-4 | Similar to CH₄ |
-| H₂S | 0.06-0.08 | 1.10e-4 | 1.10e-4 | Polar, acidic |
-| H₂ | 0.10 | 1.30e-4 | 1.30e-4 | Very small molecule |
+`SystemElectrolyteCPAstatoil` has one source-reconstructed specialization: its
+default CO2/K+ coefficient reproduces the Onda et al. (1970) KCl ion-contribution
+correlation at 298.15 K. The calibration, coefficient units, override priority,
+independent holdouts, and unqualified regions are documented in
+[CO2–KCl interaction provenance](./co2_kcl_interaction_provenance.md).
 
 **Usage Example - Methane Solubility with Salt:**
 ```java

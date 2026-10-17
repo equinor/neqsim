@@ -48,6 +48,7 @@ class KClCO2OstwaldReferenceAssessmentTest {
         + "temperature_uncertainty_K,aqueous_co2_mol_per_L,gas_co2_mol_per_L," + "aqueous_water_mass_kg,fluid_phases");
 
     double previousExperimentalOstwald = Double.POSITIVE_INFINITY;
+    double previousModelOstwald = Double.POSITIVE_INFINITY;
     int matchedStates = 0;
     for (Reference reference : references) {
       Result result = calculate(reference);
@@ -60,12 +61,15 @@ class KClCO2OstwaldReferenceAssessmentTest {
       }
       assertTrue(Double.isFinite(result.modelOstwald) && result.modelOstwald > 0.0,
           reference.pointId + " model Ostwald coefficient must be finite and positive");
+      assertTrue(result.modelOstwald < previousModelOstwald,
+          reference.pointId + " must retain the corrected model salting-out sequence");
       assertTrue(result.aqueousCo2ConcentrationMolPerL > 0.0,
           reference.pointId + " aqueous CO2 concentration must be positive");
       assertTrue(result.gasCo2ConcentrationMolPerL > 0.0,
           reference.pointId + " gas CO2 concentration must be positive");
       report.add(result.toCsv(reference));
       previousExperimentalOstwald = reference.experimentalOstwald;
+      previousModelOstwald = result.modelOstwald;
     }
 
     assertTrue(matchedStates >= 6, "at least six independent source states must be constructed exactly");

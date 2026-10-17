@@ -65,7 +65,43 @@ For transition flow ($2300 < Re < 4000$): Linear interpolation between laminar a
 
 ## Standard L/D Values
 
-The following L/D values are from **Crane Technical Paper 410** (TP-410), the industry standard reference for flow of fluids through valves, fittings, and pipe.
+The following values are **NeqSim equivalent-length defaults**. The built-in catalogue mixes
+traditional fitting ratios and engineering approximations; it is not a verified transcription
+of a particular Crane TP-410 edition or table. Radius alone does not specify a fitting's
+connection type, bore, or manufacturing geometry. Use a documented project or manufacturer
+value for the actual fitting when those details matter.
+
+The built-in identifiers and `src/main/resources/designdata/Fittings.csv` are separate catalogues.
+Their overlapping, radius-qualified elbows use the same defaults:
+
+| Database name | Built-in identifier | L/D |
+|---|---|---:|
+| `Standard elbow (R=1.5D), 90deg` | `elbow_90_long_radius` | 16 |
+| `Standard elbow (R=1D), 90deg` | `elbow_90_standard` | 30 |
+| `Standard elbow (R=1.5D), 45deg` | `elbow_45_long_radius` | 10 |
+| `Standard elbow (R=1D), 45deg` | `elbow_45_standard` | 16 |
+
+The CSV also retains handbook-attributed size-, bore-, and opening-specific valve entries.
+These are not aliases for every built-in valve. For example, the database full-bore,
+half-open gate valve has L/D = 400, while the generic built-in half-open gate valve is 160.
+Choose the appropriate catalogue explicitly.
+
+**Compatibility note (#4376):** the CSV R=1.5D elbow entries previously contained 30
+(90 degrees) and 16 (45 degrees). They now return 16 and 10, respectively, matching the
+built-in defaults. The R=1D names are now present in the CSV. The revised elbow rows are
+identified as NeqSim defaults rather than attributed to an unverified handbook entry.
+Reassess calculations that used those database names. To retain a previous project assumption,
+supply an explicit L/D of 30 or 16 with `addFitting(name, LdivD)`.
+Lookups now initialize the process-design database that owns the fittings table. Previously,
+a clean runtime could return L/D = 1 even for valid names because only the thermodynamic
+database had been initialized. Correct database values can therefore increase losses in
+models that previously hit that fallback.
+
+Database lookups require the exact stored name, including case. Unknown names now throw
+`IllegalArgumentException` without adding a fitting; database failures throw
+`IllegalStateException`. There is no L/D = 1 fallback. Built-in identifiers are accepted
+case-insensitively by both lookup routes; `addStandardFitting` still returns `false` for an
+unknown built-in identifier.
 
 ### Elbows and Bends
 
@@ -95,11 +131,18 @@ The following L/D values are from **Crane Technical Paper 410** (TP-410), the in
 | Gate valve, 1/4 open | 900 | |
 | Globe valve, fully open | 340 | High resistance |
 | Ball valve, fully open | 3 | Very low resistance |
-| Butterfly valve, fully open | 45 | |
+| Butterfly valve, fully open | 45 | Generic approximation; use manufacturer Cv data |
 | Check valve, swing | 100 | |
 | Check valve, lift | 600 | |
 
 ### Other Fittings
+
+The entrance, exit, reducer, and expander entries below are fixed equivalent-length
+approximations. Their implied reference K values (0.5, 0.2, 1.0, 0.6, 1.0, 0.2, and 0.4 for
+sharp entrance, rounded entrance, exit, sudden reducer, sudden expander, gradual reducer, and
+gradual expander) correspond to a reference Darcy friction factor of 0.02. They do not
+preserve those K values at other friction factors and are not tabulated Crane L/D data.
+Reducers and expanders require actual area ratios and angles for a geometry-specific loss.
 
 | Fitting Type | L/D | Notes |
 |--------------|-----|-------|
@@ -296,7 +339,7 @@ pipe.addFitting("tee_through", 20.0);
 pipe.addFitting("tee_through", 20.0);
 pipe.addFitting("gate_valve", 8.0);
 pipe.addFitting("gate_valve", 8.0);
-pipe.addFittingFromDatabase("Globe valve, fully open");  // From database
+pipe.addFittingFromDatabase("Globe Valve, full bore, full open");  // From database
 
 // Elevation change (pump suction from tank)
 pipe.setInletElevation(0);
@@ -354,6 +397,23 @@ For laminar flow or complex geometries, the K-factor method may be more accurate
 
 ### Relationship Between L/D and K-Factor
 
+For NeqSim's equivalent-length pressure-loss path, $K = f_D (L/D)$, where $f_D$ is the
+Darcy friction factor used by that pipe model. `Fitting.getKFactor(darcyFrictionFactor)`
+computes this value from the current L/D and requires a finite, positive Darcy factor.
+For L/D = 16, the resulting K is 0.32 at $f_D = 0.02$ and 0.432 at $f_D = 0.027$.
+A Fanning factor must be multiplied by four before being supplied to this method.
+
+Crane resistance correlations expressed as $K = f_T (L/D)$ instead require the applicable
+fully turbulent reference Darcy factor $f_T$. The overload can multiply by a supplied
+$f_T$, but it does not determine that factor or turn the catalogue into a Crane correlation.
+The pipe solvers continue to use their calculated flow-dependent friction factor.
+
+The no-argument `Fitting.getKFactor()` and `setKFactor(double)` are deprecated metadata
+accessors retained for compatibility. An unset metadata value is now `NaN`, rather than a
+misleading zero. Setting this metadata does not change L/D or pipe pressure loss. Use the
+explicit-friction-factor overload for an equivalent K. For a specified design K, convert it
+to L/D with the Darcy factor appropriate to the calculation before adding the fitting.
+
 For turbulent flow with typical friction factor $f \approx 0.02$:
 
 $$K \approx 0.02 \times (L/D)$$
@@ -392,22 +452,10 @@ For multiphase flow (e.g., PipeBeggsAndBrills):
 
 ## Database Schema
 
-The `fittings` table in the NeqSim database contains standard fitting L/D values:
+The bundled `fittings` table is populated from
+`src/main/resources/designdata/Fittings.csv`, with columns `ID`, `Type`, `Name`, `LtoD`,
+and `Reference`. The exact `Name` is used by `addFittingFromDatabase`.
 
-```sql
-CREATE TABLE fittings (
-    name VARCHAR(255) PRIMARY KEY,
-    LtoD DOUBLE NOT NULL,
-    description TEXT
-);
-
--- Example data
-INSERT INTO fittings VALUES 
-('Standard elbow (R=1.5D), 90deg', 16.0, 'Long radius 90-degree elbow'),
-('Standard elbow (R=1D), 90deg', 30.0, 'Standard radius 90-degree elbow'),
-('Gate valve, fully open', 8.0, 'Gate valve in fully open position'),
-('Globe valve, fully open', 340.0, 'Globe valve in fully open position'),
-('Ball valve, fully open', 3.0, 'Ball valve in fully open position');
-```
-
-To add custom fittings to the database, use SQL INSERT statements or the `addFitting(name, LdivD)` method for one-off calculations.
+Use `addFitting(name, LdivD)` for project-specific values without modifying the bundled
+catalogue. The name in that explicit-value API is descriptive and need not exist in the
+database.
