@@ -106,6 +106,15 @@ utility is not a live injector, and prescribed pressure steps are not a reservoi
 Use `FieldWellNetworkProcessUnitTest` for the separate live two-zone injection period
 case: synchronized layer/stream pressure updates, allocation and fracture checks, fresh
 shared-power rejection/recovery, and original-boundary rate/power restoration.
+Its shared-reservoir acceptance case also composes production and live injection with
+one `SimpleReservoir`. Keep reservoir advancement outside steady candidate evaluations:
+sample current host limits first, transfer the converged well rates (not the production
+inlet placeholder rate) to the reservoir streams, and advance inventory once per accepted
+period. Preserve identical ordered component slates for the reservoir's component-wise
+balance, and synchronize injection-layer pressures with the reservoir owner afterward.
+Do not also advance the same reservoir through a second network forecast. The example
+is a synthetic explicit quasi-steady conservation check, not a qualified forecast or
+liquid-injectivity law; persisted lifecycle revalidation remains owned by #4188/#3154.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 

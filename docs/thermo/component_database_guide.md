@@ -440,6 +440,19 @@ formation data explicitly before using those fractions in this reference mode.
 | `DeshMatIonicDiameter` | Debye-Hückel diameter | Å | Electrolyte models |
 | `calcActivity` | Activity calculation flag | - | 0 or 1 |
 
+`MEGPVTsim18` and `MEGPVTsim19` use the same dielectric coefficients as canonical
+`MEG`: `[-18.46, 16744.0, 0, 0, 0]`, evaluated as $-18.46+16744/T$ with $T$ in
+kelvin. This corrects malformed alias data while retaining the existing canonical
+MEG correlation and its first two temperature derivatives. It is an alias
+consistency repair, not a new experimental fit or a wider validity claim.
+
+The standard database and the historical test fixture contain the repaired alias
+fields. The supported extended-database loader synchronizes these neutral-component
+properties from the standard database; the raw `COMP_EXT.csv` artifact still has
+legacy alias coefficients and must not be treated as a corrected direct-import
+source. Other malformed dielectric records and broader property qualification
+remain tracked in [issue #4334](https://github.com/equinor/neqsim/issues/4334).
+
 ### Henry's Law Parameters
 
 | Column | Description | Unit |

@@ -7,16 +7,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.automation.ProcessAutomation;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.FlowDirection;
 import neqsim.process.equipment.network.FieldNetworkTopology.NodeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.Service;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.PlantConstraintDefinition;
@@ -37,6 +42,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class FieldWellNetworkProcessUnitTest {
+  private static final Logger logger = LogManager.getLogger(FieldWellNetworkProcessUnitTest.class);
+
   /** Execute the canonical coupled graph before downstream process equipment and expose reversible network actions. */
   @Test
   void runsInsideProcessModelAndExposesNetworkAutomation() {
@@ -360,6 +367,186 @@ class FieldWellNetworkProcessUnitTest {
     assertEquals(originalRate, unit.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS(),
         originalRate * 1.0e-4);
     assertEquals(originalPower, model.getPower("kW"), originalPower * 1.0e-4);
+  }
+
+  /**
+   * Advance one shared reservoir only after accepted production and injection network rates are available. Steady
+   * host-limit trials must not advance inventory or time, and both services must consume the resulting pressure.
+   */
+  @Test
+  void conservesSharedReservoirAcrossProductionInjectionPeriods() {
+    SystemInterface inventory = gas(150.0);
+    inventory.addComponent("water", 0.1);
+    inventory.setMixingRule("classic");
+    inventory.setMultiPhaseCheck(true);
+    SimpleReservoir reservoir = new SimpleReservoir("shared production injection inventory");
+    reservoir.setReservoirFluid(inventory, 1000.0, 0.0, 100.0);
+    StreamInterface produced = reservoir.addGasProducer("live producer");
+    StreamInterface injected = reservoir.addWaterInjector("live injector");
+    // Keep the common component order required by SimpleReservoir, but inject pure water rather than saturated brine.
+    double[] injectionComposition = new double[injected.getFluid().getNumberOfComponents()];
+    injectionComposition[Arrays.asList(injected.getFluid().getComponentNames()).indexOf("water")] = 1.0;
+    injected.getFluid().setMolarComposition(injectionComposition);
+    injected.setTemperature(298.15, "K");
+
+    FieldWellNetworkProcessUnit production = createConfiguredUnit();
+    WellFlow producer = (WellFlow) production.getTopology().getBoundEquipment("producer");
+    producer.setInletStream(produced);
+    production.getHydraulicNetwork().setFluidTemplate(produced.getFluid().clone());
+    WellFlow injector = new WellFlow("shared reservoir injector");
+    injector.setInletStream(new Stream("injection supply", injected.getFluid().clone()));
+    injector.addInjectionZone("target", new Stream("target zone", injected.getFluid().clone()), 150.0, 7.0e-8, 205.0);
+    injector.addInjectionZone("secondary", new Stream("secondary zone", injected.getFluid().clone()), 150.0, 3.0e-8,
+        200.0);
+    injector.setTargetZone("target");
+    FieldWellNetworkProcessUnit injection = createConfiguredInjectionUnit(injector);
+    injection.getHydraulicNetwork().setFluidTemplate(injected.getFluid().clone());
+    // Begin above the receiving pressure: the original fixture's 145 bara guess would initially shut this well in.
+    injection.getHydraulicNetwork().getNode("injector").setPressure(180.0e5);
+
+    production.run();
+    assertTrue(production.solved(), couplingDiagnostic(production));
+    Separator separator = new Separator("shared host separator", production.getOutletStream("host"));
+    separator.run();
+    Compressor compressor = new Compressor("shared host compressor", separator.getGasOutStream());
+    compressor.setOutletPressure(100.0, "bara");
+    compressor.setPolytropicEfficiency(0.75);
+    compressor.setUsePolytropicCalc(true);
+    compressor.run();
+    compressor.generateCompressorChart("normal curves", 5);
+    compressor.getCompressorChart().setUseCompressorChart(true);
+    compressor.reinitializeCapacityConstraints();
+    ProcessSystem productionArea = new ProcessSystem("production and host");
+    productionArea.add(production);
+    productionArea.add(separator);
+    productionArea.add(compressor);
+    ProcessSystem injectionArea = new ProcessSystem("water injection");
+    injectionArea.add(injection);
+    ProcessModel model = new ProcessModel();
+    model.add("Production", productionArea);
+    model.add("Injection", injectionArea);
+    model.run();
+    assertTrue(model.isModelConverged(), couplingDiagnostic(injection));
+    final double[] budget = {model.getPower("kW") * 2.0};
+    PlantConstraintDefinition power = PlantConstraintDefinition
+        .builder("combined-shaft-power", PlantConstraintScope.sharedResource("Host", "shared power"))
+        .aggregationPolicy(PlantConstraintDefinition.AggregationPolicy.SHARED_BUDGET)
+        .limitDirection(PlantConstraintDefinition.LimitDirection.MAXIMUM)
+        .category(PlantConstraintDefinition.Category.OPERATING).severity(ConstraintSeverity.HARD).unit("kW")
+        .basis("compressor and pump shaft power").provenance("synthetic shared-reservoir acceptance")
+        .participant(PlantConstraintParticipant.direct("Production", "kW", "compressor and pump shaft power"))
+        .participant(PlantConstraintParticipant.direct("Injection", "kW", "compressor and pump shaft power")).build();
+    ProcessModelSimulationEvaluator evaluator = new ProcessModelSimulationEvaluator(model);
+    evaluator.setIncludeStrategyCapacityConstraints(false);
+    evaluator.addPlantConstraint(power,
+        (process,
+            calculationId) -> PlantSharedResourceEvidence.fromProcessModelShaftPower(power, calculationId, budget[0],
+                process, process.isModelConverged(), "synthetic shared-reservoir acceptance")
+                .toPlantConstraintSample());
+    Object pumpChart = injection.getHydraulicNetwork().getPipe("injection pump").getPumpModel().getPumpChart();
+    Object compressorChart = compressor.getCompressorChart();
+    double elapsedSeconds = 0.0;
+    for (double stepSeconds : new double[] {60.0, 120.0, 240.0}) {
+      double previousPressure = reservoir.getReservoirFluid().getPressure("bara");
+      double[] before = componentMoles(reservoir.getReservoirFluid());
+      EvaluationResult accepted = evaluator.evaluate(new double[0]);
+      assertTrue(accepted.isFeasible(), couplingDiagnostic(injection));
+      double productionRate = production.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+      double injectionRate = injection.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+      assertTrue(productionRate > 0.0 && injectionRate > 0.0,
+          "production=" + productionRate + ", injection=" + injectionRate + ", pressure=" + previousPressure);
+      assertEquals(0.0, production.getLastCouplingResult().getMassBalanceResidualKgS(), 1.0e-8);
+      assertEquals(0.0, injection.getLastCouplingResult().getMassBalanceResidualKgS(), 1.0e-8);
+      double demand = model.getPower("kW");
+      assertTrue(compressor.getPower("kW") > 0.0 && injection.getPower("kW") > 0.0);
+      assertEquals(compressor.getPower("kW") + injection.getPower("kW"), demand, 1.0e-8);
+      PlantConstraintEvidence historical = accepted.getPlantConstraintEvidence().get(0);
+      assertEquals(demand, historical.getSample().getSampledValue(), 1.0e-8);
+      double originalBudget = budget[0];
+      budget[0] = demand * 0.95;
+      EvaluationResult rejected = evaluator.evaluate(new double[0]);
+      assertTrue(rejected.isSimulationConverged());
+      assertFalse(rejected.isFeasible());
+      PlantConstraintEvidence restricted = rejected.getPlantConstraintEvidence().get(0);
+      assertFalse(restricted.isFeasible(), "The current shared-power limit must cause the rejection");
+      assertEquals(budget[0], restricted.getSample().getApplicableLimit(), 0.0);
+      assertFalse(historical.getSample().getCalculationId()
+          .equals(rejected.getPlantConstraintEvidence().get(0).getSample().getCalculationId()));
+      assertTrue(historical.isFeasible());
+      budget[0] = originalBudget;
+      EvaluationResult recovered = evaluator.evaluate(new double[0]);
+      assertTrue(recovered.isFeasible());
+      assertEquals(originalBudget, recovered.getPlantConstraintEvidence().get(0).getSample().getApplicableLimit(), 0.0);
+      assertFalse(restricted.getSample().getCalculationId()
+          .equals(recovered.getPlantConstraintEvidence().get(0).getSample().getCalculationId()));
+      assertEquals(elapsedSeconds, reservoir.getTime(), 0.0);
+      for (int component = 0; component < before.length; component++) {
+        assertEquals(before[component], componentMoles(reservoir.getReservoirFluid())[component], 0.0,
+            "Steady candidate evaluation must not advance reservoir inventory");
+      }
+
+      // Material balance receives the converged rates, not the WellFlow inlet's initial placeholder rate.
+      produced.setFlowRate(production.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS(), "kg/sec");
+      injected.setFluid(injector.getOutletStream().getFluid().clone());
+      injected.setFlowRate(injection.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS(), "kg/sec");
+      assertEquals(Arrays.asList(reservoir.getReservoirFluid().getComponentNames()),
+          Arrays.asList(produced.getFluid().getComponentNames()));
+      assertEquals(Arrays.asList(reservoir.getReservoirFluid().getComponentNames()),
+          Arrays.asList(injected.getFluid().getComponentNames()));
+      double[] productionMolesPerSecond = componentMoles(produced.getFluid());
+      double[] injectionMolesPerSecond = componentMoles(injected.getFluid());
+      reservoir.runTransient(stepSeconds, UUID.randomUUID());
+      elapsedSeconds += stepSeconds;
+      assertEquals(elapsedSeconds, reservoir.getTime(), 0.0);
+      double[] after = componentMoles(reservoir.getReservoirFluid());
+      for (int component = 0; component < before.length; component++) {
+        double expected = before[component]
+            + stepSeconds * (injectionMolesPerSecond[component] - productionMolesPerSecond[component]);
+        assertTrue(expected > 0.0);
+        assertEquals(expected, after[component], Math.max(1.0e-8, Math.abs(expected) * 1.0e-10));
+      }
+      double pressure = reservoir.getReservoirFluid().getPressure("bara");
+      assertTrue(Double.isFinite(pressure) && pressure > 50.0 && pressure < 190.0);
+      assertEquals(pressure, produced.getPressure("bara"), 0.0);
+      for (int zone = 0; zone < 2; zone++) {
+        injector.getLayer(zone).setReservoirPressure(pressure, "bara");
+      }
+      assertTrue(evaluator.evaluate(new double[0]).isFeasible(), couplingDiagnostic(injection));
+      double updatedProduction = production.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+      double updatedInjection = injection.getLastCouplingResult().getWellResults().get(0).getAppliedRateKgS();
+      assertTrue(Math.abs(pressure - previousPressure) > 1.0e-7, "The committed material balance must change pressure");
+      assertTrue((updatedProduction - productionRate) * (pressure - previousPressure) > 0.0,
+          "Production deliverability must follow reservoir pressure");
+      assertTrue((updatedInjection - injectionRate) * (pressure - previousPressure) < 0.0,
+          "Injection acceptance must oppose reservoir pressure");
+      assertEquals(elapsedSeconds, reservoir.getTime(), 0.0);
+      for (int component = 0; component < after.length; component++) {
+        assertEquals(after[component], componentMoles(reservoir.getReservoirFluid())[component], 0.0);
+      }
+      logger.info("Shared reservoir at {} s: pressure={} bara, production={} kg/s, injection={} kg/s, power={} kW",
+          elapsedSeconds, pressure, updatedProduction, updatedInjection, model.getPower("kW"));
+      assertEquals(1.0, injector.getZoneAllocationFractions()[0] + injector.getZoneAllocationFractions()[1], 1.0e-12);
+      assertFalse(injector.getZoneFractureRisk()[0]);
+      assertFalse(injector.getZoneFractureRisk()[1]);
+      assertEquals(0, production.getRouteConfigurationSelection("host route"));
+      assertEquals(0, injection.getRouteConfigurationSelection("injector route"));
+      assertTrue(pumpChart == injection.getHydraulicNetwork().getPipe("injection pump").getPumpModel().getPumpChart());
+      assertTrue(compressorChart == compressor.getCompressorChart());
+    }
+  }
+
+  /**
+   * Snapshot component inventory (mol) or stream component molar rate (mol/s).
+   *
+   * @param fluid inventory or stream fluid with the common reservoir component slate
+   * @return component amounts in canonical order
+   */
+  private double[] componentMoles(SystemInterface fluid) {
+    double[] amounts = new double[fluid.getNumberOfComponents()];
+    for (int index = 0; index < amounts.length; index++) {
+      amounts[index] = fluid.getComponent(index).getNumberOfmoles();
+    }
+    return amounts;
   }
 
   /** Build a compact failure diagnostic for coupled acceptance assertions. */

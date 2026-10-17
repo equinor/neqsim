@@ -87,6 +87,27 @@ fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
 fluid.setMixingRule("WS", "NRTL");
 ```
 
+### 2.5 Component changes after configuration
+
+Configure interaction-based mixing rules after the final component set is known.
+In reactive systems, `chemicalReactionInit()` can add species, so call it before
+`createDatabase(true)` and `setMixingRule(...)`. For Fürst/electrolyte-CPA phases,
+adding or removing components after configuration makes the ionic interaction
+matrices stale. Initialization rejects this state with an `IllegalStateException`
+that reports both component counts and the recovery steps.
+Rebuild the database and reapply the rule, then restore any custom interaction
+parameters and call `init(0)` before further calculations. Same-count replacements
+or renaming also require rebuilding, although the count check cannot detect them.
+
+Changing only the amounts of existing components does not require a rebuild.
+This diagnostic is local to the electrolyte phase family and direct ionic
+interaction recalculation. Ordinary cubic-EOS initialization retains its existing
+behavior, including component preparation with `init(0)` before rebuilding the
+rule. The ordinary zero-interaction `NO` rule is also unchanged. These paths do
+not acquire automatic parameter repair or a new general topology guarantee. See the
+[electrolyte CPA initialization guidance](ElectrolyteCPAModel.md#reaction-species-and-mixing-rule-initialization-order)
+for the reaction-specific ordering and regression coverage.
+
 ---
 
 ## 3. Classic Mixing Rules
@@ -192,6 +213,12 @@ interleaving against isolated SRK and PR calculations for all three sums.
 ## 4. Huron-Vidal Mixing Rules
 
 Huron-Vidal (HV) mixing rules combine cubic EoS with activity coefficient models (like NRTL or UNIFAC) for improved liquid-phase behavior.
+
+For mixed HV/classic pairs, the modified NRTL calculation resets the classic
+pair's nonrandomness parameter to zero at every initialization level. Property-only
+initialization (`init(1)`) must not inherit this parameter from a preceding HV pair.
+`ComponentGENRTLmodifiedHVInitializationTest` checks the zero-interaction invariant
+at initialization levels 1, 2 and 3.
 
 ### 4.1 Mathematical Framework
 

@@ -339,7 +339,9 @@ def _invalidate_changed_evidence(ctx):
             if item.get("cycle") == ctx.cycle_id:
                 # Resuming after ledger publication must retain this cycle's fresh evidence.
                 continue
-            if not item.get("optimizer_evidence") and not item.get("accepted_point_envelope_evidence"):
+            if (not item.get("optimizer_evidence")
+                    and not item.get("accepted_point_envelope_evidence")
+                    and not item.get("lifecycle_envelope_evidence")):
                 continue
             if key not in invalidated:
                 invalidated.append(key)
@@ -360,7 +362,9 @@ def ledger(ctx, spec):
     invalidates, invalidated = _invalidate_changed_evidence(ctx)
     optimizer_proposals = [proposal for proposal in ctx.proposals
                            if isinstance(proposal, dict) and (
-                               "optimizer_evidence" in proposal or "accepted_point_envelope_evidence" in proposal)]
+                               "optimizer_evidence" in proposal
+                               or "accepted_point_envelope_evidence" in proposal
+                               or "lifecycle_envelope_evidence" in proposal)]
     guard_result = ctx.stage_results.get("guard")
     if optimizer_proposals or (ctx.proposals and guard_result is not None):
         from .production import _proposal_snapshot
@@ -397,7 +401,9 @@ def ledger(ctx, spec):
         created.append(proposal.get("title"))
         if not ctx.dry_run:
             fields = {k: v for k, v in proposal.items() if k not in ("title", "category")}
-            if proposal.get("optimizer_evidence") or proposal.get("accepted_point_envelope_evidence"):
+            if (proposal.get("optimizer_evidence")
+                    or proposal.get("accepted_point_envelope_evidence")
+                    or proposal.get("lifecycle_envelope_evidence")):
                 fields["evidence_current"] = True
             if lineage:
                 fields["revalidation_of"] = lineage[0]

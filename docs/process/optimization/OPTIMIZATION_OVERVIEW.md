@@ -812,6 +812,14 @@ or action-incompatible period is rejected instead of producing a partial lifecyc
 are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
 operating approval.
 
+Long-lived Task Solver studies can persist this map as `lifecycle_envelope_evidence` beside the current
+`accepted_point_envelope_evidence`. Enable both `production.require_envelope_evidence` and
+`production.require_lifecycle_envelope_evidence`; assign the current lifecycle period the task cycle ID and reuse
+that period's exact accepted-point envelope as the current proposal evidence. The production guard revalidates all
+periods and aggregate/transition closure from persisted JSON, then invalidates and supersedes the lifecycle advice
+when mapped reservoir state, availability, routing, operating limits, or other evidence changes. This reuses the
+existing #4187 ledger and revalidation path rather than introducing another lifecycle state store.
+
 ### Trace-qualified bottleneck-relief evidence
 
 `ProcessModelAllocationBottleneckAnalyzer` reads a completed
