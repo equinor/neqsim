@@ -654,6 +654,54 @@ production/injection physics must not also be advanced through a second network 
 Persistent period acceptance and changed-input revalidation remain owned by #4188/#3154
 and their existing ledger, including #4359.
 
+### Shared-reservoir accepted-step refinement
+
+`FieldWellNetworkProcessUnitTest.refinesSharedReservoirAcceptedStepsAtCommonTimes`
+reuses that same fixture and accepted-step sequence over one day. Four independently
+initialized runs use 4, 8, 16 and 32 equal steps (21,600, 10,800, 5,400 and 2,700 s).
+Only the time partition changes: reservoir volumes, thermodynamics, topology, route
+selection, well laws, synthetic maps, physical limits and solver tolerances are identical.
+Every step retains the earlier convergence, shared-power rejection/recovery, unchanged
+trial inventory, per-component balance and pressure-response assertions. A second balance
+check accumulates component inflow minus outflow from the initial inventory, avoiding
+reliance solely on a succession of locally closed steps.
+
+The four common checkpoints are 6, 12, 18 and 24 hours. Actual accepted states are compared
+without interpolation or Richardson extrapolation. The dimensionless discrepancy is the
+maximum relative difference between adjacent resolutions over pressure, both well rates,
+shared shaft power, cumulative production/injection mass and every component inventory,
+at every checkpoint. The finer value is the denominator; all quantities are positive in
+this fixture. Each halving must reduce this maximum discrepancy by at least 25%, and the
+finest pair must differ by less than 0.1%. Differences must remain above 1e-10 so a
+roundoff-level comparison cannot be presented as resolved refinement evidence.
+
+On baseline `f5487f2cb13295fb20d30024b8d63697df927997`, Linux OpenJDK 17.0.20 with
+`pomJava8.xml` produced these observations (not replacement hard-coded targets):
+
+| Compared step counts | Maximum common-time relative difference | As percent |
+| --- | --- | --- |
+| 4 / 8 | 0.002058959 | 0.205896% |
+| 8 / 16 | 0.001023590 | 0.102359% |
+| 16 / 32 | 0.000510329 | 0.051033% |
+
+At 24 hours, reservoir pressures were 148.240896, 148.244626, 148.246482 and
+148.247408 bara respectively. The finest run ended at 0.017270646 kg/s production,
+0.014731784 kg/s injection and 2.987162 kW shared shaft power. The roughly twofold
+discrepancy reduction is consistent with the explicit first-order coupling in this
+case; it is not a proof of order or an error bound against an exact physical solution.
+
+This checks the explicit reservoir/network coupling for this smooth synthetic trajectory,
+not universal step-size suitability, adaptive local-error control, reservoir forecast
+accuracy, two-fluid pipe transients, or transient energy closure. The fixture tests its
+declared shared-power constraint; it does not qualify the complete operating envelope of
+the synthetic compressor/pump maps or a liquid injectivity law. In particular, the inherited
+pump fixture emits below-minimum-tabulated-flow warnings: its curve is extrapolated and
+strategy capacity constraints are disabled. Passing refinement does not establish a feasible
+pump operating region. Preserve this limitation when reusing the numerical evidence.
+Keep #2911's adaptive
+state/physical-step-identity policy and #3298's failed transient qualification gate separate.
+Lifecycle period-change reporting remains in the #4188/#3154 lane, including #4370.
+
 ## Dependency-ordered continuation
 
 1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
@@ -666,9 +714,11 @@ and their existing ledger, including #4359.
    Ten-well production and separate live two-zone injection periods now have synthetic
    moving separator, scrubber and shared-power acceptance coverage. A shared-reservoir
    production/live-injection case now checks component inventory and accepted-step ownership.
-   Next qualify the maps and injectivity laws, add timestep-refinement evidence and
-   map-region/driver-limit migration, and connect this case to the existing lifecycle
-   and persisted-candidate contracts rather than a second scheduler or optimizer.
+   The one-day shared-reservoir test additionally checks common-time timestep refinement
+   for its smooth synthetic trajectory. Next qualify the maps and injectivity laws, add
+   map-region/driver-limit migration and discontinuous-event refinement, and connect this
+   case to the existing lifecycle and persisted-candidate contracts rather than a second
+   scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic
