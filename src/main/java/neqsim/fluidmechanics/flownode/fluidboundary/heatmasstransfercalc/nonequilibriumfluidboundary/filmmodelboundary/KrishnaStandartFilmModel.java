@@ -222,7 +222,42 @@ public class KrishnaStandartFilmModel extends
    * @param phase a int
    */
   public void calcRedPhiMatrix(int phase) {
-    redPhiMatrix = new EigenDecomposition(new Array2DRowRealMatrix(phiMatrix, true)).getRealEigenvalues();
+    double scale = phiMatrixScale();
+    redPhiMatrix = decomposePhiMatrix(scale).getRealEigenvalues();
+    for (int component = 0; component < redPhiMatrix.length; component++) {
+      redPhiMatrix[component] *= scale;
+    }
+  }
+
+  /**
+   * Finds a nonzero scale for the finite-flux eigensystem.
+   *
+   * @return largest absolute entry, or one for the zero matrix
+   */
+  private double phiMatrixScale() {
+    double scale = 0.0;
+    for (double[] row : phiMatrix) {
+      for (double value : row) {
+        scale = Math.max(scale, Math.abs(value));
+      }
+    }
+    return scale == 0.0 ? 1.0 : scale;
+  }
+
+  /**
+   * Decomposes a scaled copy to keep the Schur calculation independent of the flux magnitude.
+   *
+   * @param scale largest absolute finite-flux matrix entry, or one for the zero matrix
+   * @return eigensystem of the normalized matrix
+   */
+  private EigenDecomposition decomposePhiMatrix(double scale) {
+    double[][] normalized = new double[phiMatrix.length][phiMatrix.length];
+    for (int row = 0; row < phiMatrix.length; row++) {
+      for (int column = 0; column < phiMatrix.length; column++) {
+        normalized[row][column] = phiMatrix[row][column] / scale;
+      }
+    }
+    return new EigenDecomposition(new Array2DRowRealMatrix(normalized, false));
   }
 
   /**
@@ -252,7 +287,7 @@ public class KrishnaStandartFilmModel extends
    * @param phaseNum a int
    */
   public void calcCorrectionMatrix(int phaseNum) {
-    EigenDecomposition eigen = new EigenDecomposition(new Array2DRowRealMatrix(phiMatrix, true));
+    EigenDecomposition eigen = decomposePhiMatrix(phiMatrixScale());
     DMatrixRMaj modalPhiMatrix = new DMatrixRMaj(eigen.getV().getData());
     int dimension = modalPhiMatrix.getNumRows();
     DMatrixRMaj diagonalCorrection = new DMatrixRMaj(dimension, dimension);

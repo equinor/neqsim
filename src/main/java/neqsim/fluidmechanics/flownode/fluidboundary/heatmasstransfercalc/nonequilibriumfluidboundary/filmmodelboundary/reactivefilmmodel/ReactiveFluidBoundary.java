@@ -3,7 +3,6 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel;
 import neqsim.thermo.system.SystemInterface;
@@ -12,8 +11,9 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract ReactiveFluidBoundary class.
  *
  * <p>
- * Reactive Newton state uses primitive arrays. Temporary Jama adapters retain the legacy linear-solve and vector-norm
- * behavior. Serialized instances containing the former Jama working fields are not compatible with this layout.
+ * Reactive Newton state uses primitive arrays. EJML factors and column-ordered triangular updates retain the
+ * established linear-solve behavior. Serialized instances containing the former Jama working fields are not compatible
+ * with this layout.
  *
  * @author asmund
  * @version $Id: $Id
@@ -494,7 +494,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   }
 
   /**
-   * Solves the array-backed reactive Jacobian using the existing numerical backend.
+   * Solves the array-backed reactive Jacobian using the shared film LU implementation.
    *
    * @return independent Newton update vector
    */
@@ -514,13 +514,20 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   }
 
   /**
-   * Evaluates the legacy column-vector norm without retaining Matrix storage.
+   * Evaluates a column-vector norm without matrix allocation or overflow-prone sums of squares.
    *
    * @param values vector values
-   * @return Euclidean norm calculated by the legacy backend
+   * @return Euclidean norm, or NaN if any vector entry is NaN
    */
-  private static double reactiveVectorNorm(double[] values) {
-    return new Matrix(values, values.length).norm2();
+  protected static double reactiveVectorNorm(double[] values) {
+    double norm = 0.0;
+    for (double value : values) {
+      if (Double.isNaN(value)) {
+        return Double.NaN;
+      }
+      norm = Math.hypot(norm, value);
+    }
+    return norm;
   }
 
   /** {@inheritDoc} */

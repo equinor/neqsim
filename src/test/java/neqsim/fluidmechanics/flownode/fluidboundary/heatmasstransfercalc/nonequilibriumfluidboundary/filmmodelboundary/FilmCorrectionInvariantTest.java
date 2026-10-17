@@ -140,6 +140,18 @@ class FilmCorrectionInvariantTest {
       applyReactiveNewtonStep(dx);
       assertArrayEquals(expectedState.getColumnPackedCopy(), uMassTrans, 0.0);
 
+      for (double[] values : new double[][] {dx, fvec, uMassTrans, uMassTransold}) {
+        for (double scale : new double[] {1.0e-100, 1.0, 1.0e100}) {
+          double[] scaled = values.clone();
+          for (int component = 0; component < scaled.length; component++) {
+            scaled[component] *= scale;
+          }
+          double referenceNorm = new Matrix(scaled, scaled.length).norm2();
+          assertEquals(referenceNorm, reactiveVectorNorm(scaled),
+              Math.max(1.0e-300, Math.abs(referenceNorm) * 1.0e-12));
+        }
+      }
+
       Object[] state = {Jac, fvec, dx, uMassTrans, uMassTransold, Xgij};
       ByteArrayOutputStream bytes = new ByteArrayOutputStream();
       try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
@@ -213,27 +225,39 @@ class FilmCorrectionInvariantTest {
       super(node);
     }
 
-    /** Compares both actual phase correction matrices against the previous complete Jama modal expression. */
+    /** Compares both phase corrections across scaled real fluxes against the previous complete Jama expression. */
     private void assertSpectralCorrectionMatchesJama() {
-      for (int phase = 0; phase < 2; phase++) {
-        calcPhiMatrix(phase);
-        Jama.EigenvalueDecomposition reference = new Matrix(phiMatrix).eig();
-        double[] eigenvalues = reference.getRealEigenvalues();
-        Matrix diagonal = new Matrix(eigenvalues.length, eigenvalues.length);
-        for (int index = 0; index < eigenvalues.length; index++) {
-          double value = eigenvalues[index];
-          double correction = Math.abs(value) < 1.0e-6 ? 1.0 + value / 2.0 + value * value / 12.0
-              : value > 0.0 ? value / -Math.expm1(-value) : value * Math.exp(value) / Math.expm1(value);
-          diagonal.set(index, index, correction);
+      double[] solvedFlux = nFlux.getData().clone();
+      for (double scale : new double[] {0.0, 1.0e-12, 1.0, -1.0, 1000.0}) {
+        for (int component = 0; component < solvedFlux.length; component++) {
+          nFlux.set(component, 0, solvedFlux[component] * scale);
         }
-        Matrix vectors = reference.getV();
-        Matrix expected = vectors.times(diagonal.times(vectors.inverse()));
-        calcRedPhiMatrix(phase);
-        calcRedCorrectionMatrix(phase);
-        calcCorrectionMatrix(phase);
-        double residual = expected.minus(new Matrix(rateCorrectionMatrix[phase])).normF();
-        assertTrue(residual <= 1.0e-10 * Math.max(1.0, expected.normF()),
-            "Finite-flux correction must match the complete Jama reference for phase " + phase + ": " + residual);
+        for (int phase = 0; phase < 2; phase++) {
+          calcPhiMatrix(phase);
+          Jama.EigenvalueDecomposition reference = new Matrix(phiMatrix).eig();
+          double[] eigenvalues = reference.getRealEigenvalues();
+          Matrix diagonal = new Matrix(eigenvalues.length, eigenvalues.length);
+          for (int index = 0; index < eigenvalues.length; index++) {
+            double value = eigenvalues[index];
+            double correction = Math.abs(value) < 1.0e-6 ? 1.0 + value / 2.0 + value * value / 12.0
+                : value > 0.0 ? value / -Math.expm1(-value) : value * Math.exp(value) / Math.expm1(value);
+            diagonal.set(index, index, correction);
+          }
+          Matrix vectors = reference.getV();
+          Matrix expected = vectors.times(diagonal.times(vectors.inverse()));
+          calcRedPhiMatrix(phase);
+          calcRedCorrectionMatrix(phase);
+          calcCorrectionMatrix(phase);
+          double residual = expected.minus(new Matrix(rateCorrectionMatrix[phase])).normF();
+          assertTrue(residual <= 1.0e-10 * Math.max(1.0, expected.normF()),
+              "Finite-flux correction must match Jama for phase " + phase + ", flux scale " + scale + ": " + residual
+                  + ", reference norm " + expected.normF() + ", reference eigenvalues "
+                  + java.util.Arrays.toString(eigenvalues) + ", actual eigenvalues "
+                  + java.util.Arrays.toString(redPhiMatrix) + ", phi " + java.util.Arrays.deepToString(phiMatrix));
+        }
+      }
+      for (int component = 0; component < solvedFlux.length; component++) {
+        nFlux.set(component, 0, solvedFlux[component]);
       }
     }
 
