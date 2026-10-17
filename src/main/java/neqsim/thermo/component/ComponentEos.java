@@ -144,6 +144,11 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       clonedComponent.setAttractiveParameter(clonedAttractiveTerm);
     }
 
+    // A clone can be initialized without overwriting the source's composition curvature.
+    clonedComponent.Aij = Aij.clone();
+    clonedComponent.Bij = Bij.clone();
+    clonedComponent.dAdndn = dAdndn.clone();
+    clonedComponent.dBdndn = dBdndn.clone();
     return clonedComponent;
   }
 
