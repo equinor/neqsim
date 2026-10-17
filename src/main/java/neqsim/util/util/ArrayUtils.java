@@ -35,6 +35,41 @@ public final class ArrayUtils {
   }
 
   /**
+   * Copies a primitive double array, returning an empty array for null.
+   *
+   * @param values source values
+   * @return an independent copy, or an empty array if values is null
+   */
+  public static double[] copyArrayOrEmpty(double[] values) {
+    return values == null ? new double[0] : copyArray(values);
+  }
+
+  /**
+   * Creates a primitive double array filled with one value.
+   *
+   * @param length array length
+   * @param value value to fill
+   * @return a new array of the requested length, filled with value
+   */
+  public static double[] filledArray(int length, double value) {
+    double[] values = new double[length];
+    for (int index = 0; index < length; index++) {
+      values[index] = value;
+    }
+    return values;
+  }
+
+  /**
+   * Copies a string array, returning an empty array for null.
+   *
+   * @param values source values
+   * @return an independent copy, or an empty array if values is null
+   */
+  public static String[] copyArrayOrEmpty(String[] values) {
+    return values == null ? new String[0] : copyArray(values);
+  }
+
+  /**
    * Copies a primitive double matrix, including each row.
    *
    * @param values source matrix
@@ -47,6 +82,25 @@ public final class ArrayUtils {
     double[][] copy = values.clone();
     for (int row = 0; row < values.length; row++) {
       copy[row] = copyArray(values[row]);
+    }
+    return copy;
+  }
+
+  /**
+   * Copies a primitive double matrix, replacing null input and rows with empty arrays.
+   *
+   * @param values source matrix
+   * @return an independent copy, or an empty matrix if values is null
+   */
+  public static double[][] copyMatrixArrayOrEmpty(double[][] values) {
+    if (values == null) {
+      return new double[0][0];
+    }
+    double[][] copy = copyMatrixArray(values);
+    for (int row = 0; row < copy.length; row++) {
+      if (copy[row] == null) {
+        copy[row] = new double[0];
+      }
     }
     return copy;
   }

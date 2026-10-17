@@ -1,7 +1,9 @@
 package neqsim.process.equipment.pipeline;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+import static neqsim.util.util.ArrayUtils.copyMatrixArrayOrEmpty;
+
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import com.google.gson.GsonBuilder;
@@ -120,37 +122,37 @@ public final class TwoFluidComponentConservationReport implements Serializable {
 
   /** @return deterministic component order */
   public String[] getComponentNames() {
-    return copy(componentNames);
+    return copyArrayOrEmpty(componentNames);
   }
 
   /** @return total initial component inventories in kg */
   public double[] getInitialInventoryKg() {
-    return copy(initialInventoryKg);
+    return copyArrayOrEmpty(initialInventoryKg);
   }
 
   /** @return total final component inventories in kg */
   public double[] getFinalInventoryKg() {
-    return copy(finalInventoryKg);
+    return copyArrayOrEmpty(finalInventoryKg);
   }
 
   /** @return integrated inlet component masses in kg */
   public double[] getInletBoundaryMassKg() {
-    return copy(inletBoundaryMassKg);
+    return copyArrayOrEmpty(inletBoundaryMassKg);
   }
 
   /** @return integrated outlet component masses in kg */
   public double[] getOutletBoundaryMassKg() {
-    return copy(outletBoundaryMassKg);
+    return copyArrayOrEmpty(outletBoundaryMassKg);
   }
 
   /** @return total component residuals {@code final - initial - inlet + outlet} in kg */
   public double[] getInventoryResidualKg() {
-    return copy(inventoryResidualKg);
+    return copyArrayOrEmpty(inventoryResidualKg);
   }
 
   /** @return defensive relative component-residual array */
   public double[] getRelativeInventoryResidual() {
-    return copy(relativeInventoryResidual);
+    return copyArrayOrEmpty(relativeInventoryResidual);
   }
 
   /** @return maximum absolute relative total-component residual */
@@ -197,7 +199,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
    * @return defensive component-by-cell profile
    */
   public double[][] getPhaseMassFractionProfile(Phase phase) {
-    return copy(phaseMassFractionProfile[phase.index]);
+    return copyMatrixArrayOrEmpty(phaseMassFractionProfile[phase.index]);
   }
 
   /**
@@ -208,7 +210,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
    * @return defensive cell mass-fraction profile
    */
   public double[] getPhaseMassFractionProfile(Phase phase, String componentName) {
-    return copy(phaseMassFractionProfile[phase.index][componentIndex(componentName)]);
+    return copyArrayOrEmpty(phaseMassFractionProfile[phase.index][componentIndex(componentName)]);
   }
 
   /** @return minimum non-empty-phase component mass fraction */
@@ -277,30 +279,11 @@ public final class TwoFluidComponentConservationReport implements Serializable {
     throw new IllegalArgumentException("Component '" + componentName + "' is not present in this report");
   }
 
-  private static String[] copy(String[] values) {
-    return values == null ? new String[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static double[] copy(double[] values) {
-    return values == null ? new double[0] : Arrays.copyOf(values, values.length);
-  }
-
-  private static double[][] copy(double[][] values) {
-    if (values == null) {
-      return new double[0][0];
-    }
-    double[][] result = new double[values.length][];
-    for (int index = 0; index < values.length; index++) {
-      result[index] = copy(values[index]);
-    }
-    return result;
-  }
-
   private static String[] requireComponentNames(String[] values) {
     if (values == null || values.length == 0) {
       throw new IllegalArgumentException("componentNames must contain at least one name");
     }
-    String[] result = copy(values);
+    String[] result = copyArrayOrEmpty(values);
     Set<String> uniqueNames = new HashSet<String>();
     for (String value : result) {
       if (value == null || value.trim().isEmpty()) {
@@ -317,7 +300,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
     if (values == null || values.length != componentCount) {
       throw new IllegalArgumentException(name + " must contain one value per component");
     }
-    double[] result = copy(values);
+    double[] result = copyArrayOrEmpty(values);
     for (double value : result) {
       requireFinite(value, name);
     }
@@ -356,7 +339,7 @@ public final class TwoFluidComponentConservationReport implements Serializable {
         } else if (profile.length != cellCount) {
           throw new IllegalArgumentException("phaseMassFractionProfile must use one common cell count");
         }
-        result[phase][component] = copy(profile);
+        result[phase][component] = copyArrayOrEmpty(profile);
         for (double value : result[phase][component]) {
           requireFinite(value, "phaseMassFractionProfile");
         }

@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 
 class UnsplitTransientSolverTest {
   private static final double GAS_DENSITY = 10.0;
@@ -163,9 +164,9 @@ class UnsplitTransientSolverTest {
     for (int index = 0; index < direction.length; index++) {
       direction[index] = Math.sin(index + 1.0);
     }
-    double[] matrixProduct = multiply(jacobian, direction);
+    double[] matrixProduct = new EjmlLinearAlgebra().multiply(jacobian, direction);
     double epsilon = 1.0e-5;
-    double[][] perturbedState = copy(state);
+    double[][] perturbedState = neqsim.util.util.ArrayUtils.copyMatrixArray(state);
     double[] perturbedPressure = pressure.clone();
     for (int cell = 0; cell < cellCount; cell++) {
       int offset = cell * UnsplitTransientSolver.BLOCK_SIZE;
@@ -269,7 +270,7 @@ class UnsplitTransientSolverTest {
         assertFalse(frozen[0]);
         frozen[0] = true;
         expectingBase[0] = true;
-        frozenState[0] = copy(midpointState);
+        frozenState[0] = neqsim.util.util.ArrayUtils.copyMatrixArray(midpointState);
         selectedRate[0] = 2.0;
       }
 
@@ -809,21 +810,4 @@ class UnsplitTransientSolverTest {
     }
   }
 
-  private static double[] multiply(double[][] matrix, double[] vector) {
-    double[] result = new double[vector.length];
-    for (int row = 0; row < result.length; row++) {
-      for (int column = 0; column < vector.length; column++) {
-        result[row] += matrix[row][column] * vector[column];
-      }
-    }
-    return result;
-  }
-
-  private static double[][] copy(double[][] values) {
-    double[][] result = new double[values.length][];
-    for (int row = 0; row < values.length; row++) {
-      result[row] = values[row].clone();
-    }
-    return result;
-  }
 }

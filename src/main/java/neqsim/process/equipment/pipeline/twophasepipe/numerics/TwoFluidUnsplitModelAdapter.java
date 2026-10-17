@@ -179,7 +179,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized void beginLinearization(double[][] state, double[] pressure) {
     validateShape(state, pressure, "linearization");
-    activeSetController.beginLinearization(copy(state), pressure.clone());
+    activeSetController.beginLinearization(copyMatrixArray(state), pressure.clone());
   }
 
   @Override
@@ -190,7 +190,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized boolean updateActiveSet(double[][] state, double[] pressure) {
     validateShape(state, pressure, "active-set");
-    return activeSetController.update(copy(state), pressure.clone());
+    return activeSetController.update(copyMatrixArray(state), pressure.clone());
   }
 
   @Override
@@ -547,14 +547,6 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
       copy[cell] = sections[cell].clone();
     }
     return copy;
-  }
-
-  private static double[][] copy(double[][] values) {
-    double[][] result = new double[values.length][];
-    for (int row = 0; row < values.length; row++) {
-      result[row] = values[row].clone();
-    }
-    return result;
   }
 
 }

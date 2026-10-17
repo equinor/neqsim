@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+import static neqsim.util.util.ArrayUtils.filledArray;
 
 import java.util.Arrays;
 import org.junit.jupiter.api.Test;
@@ -134,9 +136,9 @@ class CheckerboardPressureCouplingTest {
   void discardedCorrectionCannotModifyInputsOrSubsequentRetry() {
     CoupledPressureMomentumSolver solver = enabledSolver();
     Fixture fixture = checkerboard(new double[] {0.4, 0.3, 0.3}, 16, 100.0);
-    double[][] original = copy(fixture.state);
+    double[][] original = copyMatrixArray(fixture.state);
     double[] initialPressure = fixture.pressure.clone();
-    double[][] initialDensity = copy(fixture.density);
+    double[][] initialDensity = copyMatrixArray(fixture.density);
 
     solve(solver, fixture, 0.1);
     CoupledPressureMomentumSolver.Result retry = solve(solver, fixture, 0.05);
@@ -167,11 +169,11 @@ class CheckerboardPressureCouplingTest {
     Fixture fixture = new Fixture();
     fixture.state = new double[cellCount][7];
     fixture.pressure = new double[cellCount];
-    fixture.area = filled(cellCount, 1.0);
-    fixture.length = filled(cellCount, 1.0);
+    fixture.area = filledArray(cellCount, 1.0);
+    fixture.length = filledArray(cellCount, 1.0);
     fixture.density = new double[3][cellCount];
-    fixture.soundSpeed = new double[][] {filled(cellCount, 300.0), filled(cellCount, 1200.0),
-        filled(cellCount, 1200.0)};
+    fixture.soundSpeed = new double[][] {filledArray(cellCount, 300.0), filledArray(cellCount, 1200.0),
+        filledArray(cellCount, 1200.0)};
     double[] referenceDensity = {10.0, 800.0, 1000.0};
     for (int cell = 0; cell < cellCount; cell++) {
       double perturbation = cell % 2 == 0 ? amplitude : -amplitude;
@@ -223,20 +225,6 @@ class CheckerboardPressureCouplingTest {
     for (int cell = 0; cell < expected.length; cell++) {
       assertArrayEquals(expected[cell], actual[cell], tolerance);
     }
-  }
-
-  private static double[][] copy(double[][] state) {
-    double[][] result = new double[state.length][];
-    for (int cell = 0; cell < state.length; cell++) {
-      result[cell] = state[cell].clone();
-    }
-    return result;
-  }
-
-  private static double[] filled(int count, double value) {
-    double[] result = new double[count];
-    Arrays.fill(result, value);
-    return result;
   }
 
   private static final class Fixture {

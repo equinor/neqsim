@@ -7,13 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import neqsim.util.util.ArrayUtils;
 
 class CoupledPressureMomentumSolverTest {
   @Test
   void feasibleIncomingCorrectionSuppliesThroughFlowInEitherDirection() {
     for (boolean reverse : new boolean[] {false, true}) {
       double[][] state = new double[3][7];
-      double[][] density = {filled(3, 1.0), filled(3, 800.0), filled(3, 1000.0)};
+      double[][] density = {ArrayUtils.filledArray(3, 1.0), ArrayUtils.filledArray(3, 800.0),
+          ArrayUtils.filledArray(3, 1000.0)};
       for (int cell = 0; cell < 3; cell++) {
         state[cell][0] = 1.0;
       }
@@ -24,7 +26,7 @@ class CoupledPressureMomentumSolverTest {
       double[] correction = reverse ? new double[] {0.0, 2.0, 4.0} : new double[] {4.0, 2.0, 0.0};
       double[] initialMass = totalPhaseMass(state);
       CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 1.0, correction,
-          phaseAreas(state, density), filled(3, 1.0), filled(3, 1.0), density, false);
+          phaseAreas(state, density), ArrayUtils.filledArray(3, 1.0), ArrayUtils.filledArray(3, 1.0), density, false);
 
       assertEquals(98.0, state[donor][0], 1e-12);
       assertEquals(1.0, state[1][0], 1e-12,
@@ -39,7 +41,8 @@ class CoupledPressureMomentumSolverTest {
   void reducedIncomingCorrectionPropagatesWithoutOverdrawingDownstreamCells() {
     for (boolean reverse : new boolean[] {false, true}) {
       double[][] state = new double[6][7];
-      double[][] density = {filled(6, 0.1), filled(6, 800.0), filled(6, 1000.0)};
+      double[][] density = {ArrayUtils.filledArray(6, 0.1), ArrayUtils.filledArray(6, 800.0),
+          ArrayUtils.filledArray(6, 1000.0)};
       double[] correction = new double[6];
       double[] lengths = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
       for (int cell = 0; cell < 6; cell++) {
@@ -48,7 +51,7 @@ class CoupledPressureMomentumSolverTest {
       }
       double[] initialMass = weightedPhaseMass(state, lengths);
       CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 1.0, correction,
-          phaseAreas(state, density), filled(6, 1.0), lengths, density, false);
+          phaseAreas(state, density), ArrayUtils.filledArray(6, 1.0), lengths, density, false);
 
       assertNonnegativePhaseMasses(state);
       assertArrayEquals(initialMass, weightedPhaseMass(state, lengths), 1e-12,
@@ -67,11 +70,12 @@ class CoupledPressureMomentumSolverTest {
         solver.setCheckerboardCorrectionEnabled(checkerboard);
         solver.setGasDensityModel(model);
         double[][] state = uniformState();
-        double[] lengths = filled(4, 10.0);
+        double[] lengths = ArrayUtils.filledArray(4, 10.0);
         double[] initialMass = weightedPhaseMass(state, lengths);
-        CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.01, filled(4, 5e6), filled(4, 1.0),
-            lengths, filled(4, 10.0), filled(4, 800.0), filled(4, 1000.0), filled(4, 300.0), filled(4, 1200.0),
-            filled(4, 1200.0), 4.9e6, true);
+        CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.01, ArrayUtils.filledArray(4, 5e6),
+            ArrayUtils.filledArray(4, 1.0), lengths, ArrayUtils.filledArray(4, 10.0), ArrayUtils.filledArray(4, 800.0),
+            ArrayUtils.filledArray(4, 1000.0), ArrayUtils.filledArray(4, 300.0), ArrayUtils.filledArray(4, 1200.0),
+            ArrayUtils.filledArray(4, 1200.0), 4.9e6, true);
 
         assertTrue(result.isConverged(),
             "Changed outlet must converge for " + model + ", checkerboard=" + checkerboard);
@@ -91,9 +95,10 @@ class CoupledPressureMomentumSolverTest {
   void unresolvedOutletPressureCannotBeReportedAsConverged() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     solver.setMaximumIterations(1);
-    CoupledPressureMomentumSolver.Result result = solver.correct(uniformState(), 0.01, filled(4, 5e6), filled(4, 1.0),
-        filled(4, 10.0), filled(4, 10.0), filled(4, 800.0), filled(4, 1000.0), filled(4, 300.0), filled(4, 1200.0),
-        filled(4, 1200.0), 4.9e6, true);
+    CoupledPressureMomentumSolver.Result result = solver.correct(uniformState(), 0.01, ArrayUtils.filledArray(4, 5e6),
+        ArrayUtils.filledArray(4, 1.0), ArrayUtils.filledArray(4, 10.0), ArrayUtils.filledArray(4, 10.0),
+        ArrayUtils.filledArray(4, 800.0), ArrayUtils.filledArray(4, 1000.0), ArrayUtils.filledArray(4, 300.0),
+        ArrayUtils.filledArray(4, 1200.0), ArrayUtils.filledArray(4, 1200.0), 4.9e6, true);
     assertFalse(result.isConverged(), "Volume closure alone cannot certify an unmet Dirichlet boundary");
   }
 
@@ -101,15 +106,15 @@ class CoupledPressureMomentumSolverTest {
   void uniformStateIsInvariant() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     double[][] state = uniformState();
-    double[][] original = copy(state);
-    double[] pressure = filled(4, 5.0e6);
-    double[] area = filled(4, 1.0);
-    double[] length = filled(4, 10.0);
-    double[] gasDensity = filled(4, 10.0);
-    double[] oilDensity = filled(4, 800.0);
-    double[] waterDensity = filled(4, 1000.0);
-    double[] gasSoundSpeed = filled(4, 300.0);
-    double[] liquidSoundSpeed = filled(4, 1200.0);
+    double[][] original = ArrayUtils.copyMatrixArray(state);
+    double[] pressure = ArrayUtils.filledArray(4, 5.0e6);
+    double[] area = ArrayUtils.filledArray(4, 1.0);
+    double[] length = ArrayUtils.filledArray(4, 10.0);
+    double[] gasDensity = ArrayUtils.filledArray(4, 10.0);
+    double[] oilDensity = ArrayUtils.filledArray(4, 800.0);
+    double[] waterDensity = ArrayUtils.filledArray(4, 1000.0);
+    double[] gasSoundSpeed = ArrayUtils.filledArray(4, 300.0);
+    double[] liquidSoundSpeed = ArrayUtils.filledArray(4, 1200.0);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, pressure, area, length, gasDensity,
         oilDensity, waterDensity, gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed, 5.0e6, true);
@@ -132,14 +137,14 @@ class CoupledPressureMomentumSolverTest {
     state[1][0] -= 0.5;
     state[2][0] += 0.5;
     double[] initialPhaseMass = totalPhaseMass(state);
-    double[] pressure = filled(4, 5.0e6);
-    double[] area = filled(4, 1.0);
-    double[] length = filled(4, 10.0);
-    double[] gasDensity = filled(4, 10.0);
-    double[] oilDensity = filled(4, 800.0);
-    double[] waterDensity = filled(4, 1000.0);
-    double[] gasSoundSpeed = filled(4, 300.0);
-    double[] liquidSoundSpeed = filled(4, 1200.0);
+    double[] pressure = ArrayUtils.filledArray(4, 5.0e6);
+    double[] area = ArrayUtils.filledArray(4, 1.0);
+    double[] length = ArrayUtils.filledArray(4, 10.0);
+    double[] gasDensity = ArrayUtils.filledArray(4, 10.0);
+    double[] oilDensity = ArrayUtils.filledArray(4, 800.0);
+    double[] waterDensity = ArrayUtils.filledArray(4, 1000.0);
+    double[] gasSoundSpeed = ArrayUtils.filledArray(4, 300.0);
+    double[] liquidSoundSpeed = ArrayUtils.filledArray(4, 1200.0);
     double initialResidual = 0.05;
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, pressure, area, length, gasDensity,
@@ -158,14 +163,14 @@ class CoupledPressureMomentumSolverTest {
     double[][] state = uniformState();
     state[state.length - 1][0] += 0.5;
     double[] initialPhaseMass = totalPhaseMass(state);
-    double[] pressure = filled(4, 5.0e6);
-    double[] area = filled(4, 1.0);
-    double[] length = filled(4, 10.0);
-    double[] gasDensity = filled(4, 10.0);
-    double[] oilDensity = filled(4, 800.0);
-    double[] waterDensity = filled(4, 1000.0);
-    double[] gasSoundSpeed = filled(4, 300.0);
-    double[] liquidSoundSpeed = filled(4, 1200.0);
+    double[] pressure = ArrayUtils.filledArray(4, 5.0e6);
+    double[] area = ArrayUtils.filledArray(4, 1.0);
+    double[] length = ArrayUtils.filledArray(4, 10.0);
+    double[] gasDensity = ArrayUtils.filledArray(4, 10.0);
+    double[] oilDensity = ArrayUtils.filledArray(4, 800.0);
+    double[] waterDensity = ArrayUtils.filledArray(4, 1000.0);
+    double[] gasSoundSpeed = ArrayUtils.filledArray(4, 300.0);
+    double[] liquidSoundSpeed = ArrayUtils.filledArray(4, 1200.0);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, pressure, area, length, gasDensity,
         oilDensity, waterDensity, gasSoundSpeed, liquidSoundSpeed, liquidSoundSpeed, 5.0e6, true);
@@ -191,9 +196,10 @@ class CoupledPressureMomentumSolverTest {
       double[] initialMass = weightedPhaseMass(state, length);
       double[] correction = {0.0, 0.0};
       correction[donor] = 1000.0;
-      double[][] density = {filled(2, 10.0), filled(2, 800.0), filled(2, 1000.0)};
+      double[][] density = {ArrayUtils.filledArray(2, 10.0), ArrayUtils.filledArray(2, 800.0),
+          ArrayUtils.filledArray(2, 1000.0)};
       double[] outlet = CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.01, correction,
-          phaseAreas(state, density), filled(2, 1.0), length, density, false);
+          phaseAreas(state, density), ArrayUtils.filledArray(2, 1.0), length, density, false);
       assertEquals(0.0, state[donor][0], 0.0);
       assertArrayEquals(initialMass, weightedPhaseMass(state, length), 1e-12);
       assertArrayEquals(new double[3], outlet, 0.0);
@@ -209,9 +215,10 @@ class CoupledPressureMomentumSolverTest {
           {1.0, 720.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
       double[] length = {1.0, 2.0, 3.0};
       double[] initialMass = weightedPhaseMass(state, length);
-      double[][] density = {filled(3, 10.0), filled(3, 800.0), filled(3, 1000.0)};
+      double[][] density = {ArrayUtils.filledArray(3, 10.0), ArrayUtils.filledArray(3, 800.0),
+          ArrayUtils.filledArray(3, 1000.0)};
       CoupledPressureMomentumSolver.applyConservativeMassFluxCorrection(state, 0.1, new double[] {0.0, sign * 1e5, 0.0},
-          phaseAreas(state, density), filled(3, 1.0), length, density, false);
+          phaseAreas(state, density), ArrayUtils.filledArray(3, 1.0), length, density, false);
       assertNonnegativePhaseMasses(state);
       assertArrayEquals(initialMass, weightedPhaseMass(state, length), 1e-10);
       for (double[] cell : state) {
@@ -229,11 +236,12 @@ class CoupledPressureMomentumSolverTest {
         double[][] state = {{4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {4.0, 480.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
         state[donor][0] = 0.0;
         state[donor][1] = 800.08;
-        double[] length = filled(2, 1.0);
+        double[] length = ArrayUtils.filledArray(2, 1.0);
         double[] initialMass = weightedPhaseMass(state, length);
-        CoupledPressureMomentumSolver.Result result = solver.correct(state, 1e-5, filled(2, 5e6), filled(2, 1.0),
-            length, filled(2, 10.0), filled(2, 800.0), filled(2, 1000.0), filled(2, 300.0), filled(2, 1200.0),
-            filled(2, 1200.0), 5e6, outletFixed);
+        CoupledPressureMomentumSolver.Result result = solver.correct(state, 1e-5, ArrayUtils.filledArray(2, 5e6),
+            ArrayUtils.filledArray(2, 1.0), length, ArrayUtils.filledArray(2, 10.0), ArrayUtils.filledArray(2, 800.0),
+            ArrayUtils.filledArray(2, 1000.0), ArrayUtils.filledArray(2, 300.0), ArrayUtils.filledArray(2, 1200.0),
+            ArrayUtils.filledArray(2, 1200.0), 5e6, outletFixed);
         assertTrue(result.isConverged(), "Volume closure must converge at donor=" + donor + ", fixed=" + outletFixed);
         assertTrue(result.getMaximumRelativeVolumeResidual() <= solver.getRelativeVolumeTolerance());
         assertNonnegativePhaseMasses(result.getState());
@@ -259,14 +267,15 @@ class CoupledPressureMomentumSolverTest {
           double[][] state = {{2.1, 256.8, 0.0, 0.0, 0.0, 0.0, 1e6}, {2.1, 256.8, 0.0, 0.0, 0.0, 0.0, 1e6}};
           state[gasFreeCell][0] = 0.0;
           state[gasFreeCell][1] = 856.0 * (1.0 + volumeError);
-          double[] gasDensity = filled(2, 3.0);
+          double[] gasDensity = ArrayUtils.filledArray(2, 3.0);
           gasDensity[gasFreeCell] = 0.04;
-          double[] lengths = filled(2, 1.0);
+          double[] lengths = ArrayUtils.filledArray(2, 1.0);
           double[] initialMass = weightedPhaseMass(state, lengths);
 
-          CoupledPressureMomentumSolver.Result result = solver.correct(state, timeStep, filled(2, 5e6), filled(2, 1.0),
-              lengths, gasDensity, filled(2, 856.0), filled(2, 1000.0), filled(2, 300.0), filled(2, 1200.0),
-              filled(2, 1200.0), 5e6, false);
+          CoupledPressureMomentumSolver.Result result = solver.correct(state, timeStep, ArrayUtils.filledArray(2, 5e6),
+              ArrayUtils.filledArray(2, 1.0), lengths, gasDensity, ArrayUtils.filledArray(2, 856.0),
+              ArrayUtils.filledArray(2, 1000.0), ArrayUtils.filledArray(2, 300.0), ArrayUtils.filledArray(2, 1200.0),
+              ArrayUtils.filledArray(2, 1200.0), 5e6, false);
 
           assertTrue(result.isConverged(), "Volume closure failed for gas-free cell=" + gasFreeCell + ", volume error="
               + volumeError + ", dt=" + timeStep + ", residual=" + result.getMaximumRelativeVolumeResidual());
@@ -293,13 +302,14 @@ class CoupledPressureMomentumSolverTest {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     double[][] state = {{0.0053312, 533.12, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.0, 804.8, 0.0, 0.0, 0.0, 0.0, 1e6},
         {67.599, 218.4, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.50688, 430.08, 0.0, 0.0, 0.0, 0.0, 1e6}};
-    double[] lengths = filled(4, 1.0);
+    double[] lengths = ArrayUtils.filledArray(4, 1.0);
     double[] initialMass = weightedPhaseMass(state, lengths);
 
     CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.0018,
-        new double[] {140000.0, 7600000.0, 136000.0, 1340000.0}, filled(4, 1.0), lengths,
-        new double[] {0.017, 10.0, 87.0, 1.2}, filled(4, 800.0), filled(4, 1000.0), filled(4, 300.0), filled(4, 1200.0),
-        filled(4, 1200.0), 1e5, false);
+        new double[] {140000.0, 7600000.0, 136000.0, 1340000.0}, ArrayUtils.filledArray(4, 1.0), lengths,
+        new double[] {0.017, 10.0, 87.0, 1.2}, ArrayUtils.filledArray(4, 800.0), ArrayUtils.filledArray(4, 1000.0),
+        ArrayUtils.filledArray(4, 300.0), ArrayUtils.filledArray(4, 1200.0), ArrayUtils.filledArray(4, 1200.0), 1e5,
+        false);
 
     assertTrue(result.isConverged(), "Bounded Newton solve stalled at residual "
         + result.getMaximumRelativeVolumeResidual() + " after " + result.getIterations() + " iterations");
@@ -324,11 +334,12 @@ class CoupledPressureMomentumSolverTest {
   void subatmosphericPressureClosesVolumeWithoutAtmosphericFloor() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     double[][] state = {{0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
-    double[] lengths = filled(2, 1.0);
+    double[] lengths = ArrayUtils.filledArray(2, 1.0);
 
-    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 80000.0), filled(2, 1.0),
-        lengths, filled(2, 1.0), filled(2, 800.0), filled(2, 1000.0), filled(2, 300.0), filled(2, 1200.0),
-        filled(2, 1200.0), 80000.0, false);
+    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, ArrayUtils.filledArray(2, 80000.0),
+        ArrayUtils.filledArray(2, 1.0), lengths, ArrayUtils.filledArray(2, 1.0), ArrayUtils.filledArray(2, 800.0),
+        ArrayUtils.filledArray(2, 1000.0), ArrayUtils.filledArray(2, 300.0), ArrayUtils.filledArray(2, 1200.0),
+        ArrayUtils.filledArray(2, 1200.0), 80000.0, false);
 
     assertTrue(result.isConverged(),
         "A positive subatmospheric state must close its volume: residual=" + result.getMaximumRelativeVolumeResidual());
@@ -350,11 +361,12 @@ class CoupledPressureMomentumSolverTest {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     solver.setMinimumPressure(1e5);
     double[][] state = {{0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.99, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
-    double[][] original = copy(state);
+    double[][] original = ArrayUtils.copyMatrixArray(state);
 
-    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 1e5), filled(2, 1.0),
-        filled(2, 1.0), filled(2, 1.0), filled(2, 800.0), filled(2, 1000.0), filled(2, 300.0), filled(2, 1200.0),
-        filled(2, 1200.0), 1e5, false);
+    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, ArrayUtils.filledArray(2, 1e5),
+        ArrayUtils.filledArray(2, 1.0), ArrayUtils.filledArray(2, 1.0), ArrayUtils.filledArray(2, 1.0),
+        ArrayUtils.filledArray(2, 800.0), ArrayUtils.filledArray(2, 1000.0), ArrayUtils.filledArray(2, 300.0),
+        ArrayUtils.filledArray(2, 1200.0), ArrayUtils.filledArray(2, 1200.0), 1e5, false);
 
     for (int cell = 0; cell < state.length; cell++) {
       assertEquals(1e5, result.getPressure()[cell], 0.0);
@@ -395,11 +407,12 @@ class CoupledPressureMomentumSolverTest {
   void densityPositivityDampingPreservesTheActualAcousticPressureResponse() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     double[][] state = {{0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
-    double[] lengths = filled(2, 1.0);
+    double[] lengths = ArrayUtils.filledArray(2, 1.0);
 
-    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 5e6), filled(2, 1.0), lengths,
-        filled(2, 0.01), filled(2, 800.0), filled(2, 1000.0), filled(2, 300.0), filled(2, 1200.0), filled(2, 1200.0),
-        5e6, false);
+    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, ArrayUtils.filledArray(2, 5e6),
+        ArrayUtils.filledArray(2, 1.0), lengths, ArrayUtils.filledArray(2, 0.01), ArrayUtils.filledArray(2, 800.0),
+        ArrayUtils.filledArray(2, 1000.0), ArrayUtils.filledArray(2, 300.0), ArrayUtils.filledArray(2, 1200.0),
+        ArrayUtils.filledArray(2, 1200.0), 5e6, false);
 
     assertTrue(result.isConverged(),
         "Density-guarded correction failed at residual " + result.getMaximumRelativeVolumeResidual());
@@ -427,11 +440,12 @@ class CoupledPressureMomentumSolverTest {
   void absentPhaseDensityDoesNotConstrainSinglePhaseLiquidCorrection() {
     CoupledPressureMomentumSolver solver = new CoupledPressureMomentumSolver();
     double[][] state = {{0.0, 792.0, 0.0, 0.0, 0.0, 0.0, 1e6}, {0.0, 792.0, 0.0, 0.0, 0.0, 0.0, 1e6}};
-    double[] lengths = filled(2, 1.0);
+    double[] lengths = ArrayUtils.filledArray(2, 1.0);
 
-    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, filled(2, 5e7), filled(2, 1.0), lengths,
-        filled(2, 1e-6), filled(2, 800.0), filled(2, 1000.0), filled(2, 300.0), filled(2, 1200.0), filled(2, 1200.0),
-        5e7, false);
+    CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.1, ArrayUtils.filledArray(2, 5e7),
+        ArrayUtils.filledArray(2, 1.0), lengths, ArrayUtils.filledArray(2, 1e-6), ArrayUtils.filledArray(2, 800.0),
+        ArrayUtils.filledArray(2, 1000.0), ArrayUtils.filledArray(2, 300.0), ArrayUtils.filledArray(2, 1200.0),
+        ArrayUtils.filledArray(2, 1200.0), 5e7, false);
 
     assertTrue(result.isConverged(), "An absent phase density must not block liquid volume closure");
     assertArrayEquals(weightedPhaseMass(state, lengths), weightedPhaseMass(result.getState(), lengths), 1e-12);
@@ -454,8 +468,9 @@ class CoupledPressureMomentumSolverTest {
     double soundSpeed = Math.sqrt(exponent * referencePressure / referenceDensity);
     double[][] state = sealedGasState(0.8 * referenceDensity);
 
-    CoupledPressureMomentumSolver.Result result = correctSealedGas(solver, state, filled(2, referencePressure),
-        filled(2, referenceDensity), filled(2, soundSpeed));
+    CoupledPressureMomentumSolver.Result result = correctSealedGas(solver, state,
+        ArrayUtils.filledArray(2, referencePressure), ArrayUtils.filledArray(2, referenceDensity),
+        ArrayUtils.filledArray(2, soundSpeed));
 
     assertTrue(result.isConverged(),
         "Finite-amplitude gas correction residual=" + result.getMaximumRelativeVolumeResidual());
@@ -486,8 +501,9 @@ class CoupledPressureMomentumSolverTest {
     double fractionRemoved = 1e-4;
     double[][] state = sealedGasState(referenceDensity * (1.0 - fractionRemoved));
 
-    CoupledPressureMomentumSolver.Result result = correctSealedGas(solver, state, filled(2, referencePressure),
-        filled(2, referenceDensity), filled(2, soundSpeed));
+    CoupledPressureMomentumSolver.Result result = correctSealedGas(solver, state,
+        ArrayUtils.filledArray(2, referencePressure), ArrayUtils.filledArray(2, referenceDensity),
+        ArrayUtils.filledArray(2, soundSpeed));
 
     assertTrue(result.isConverged());
     double expectedPressure = referencePressure * Math.pow(1.0 - fractionRemoved, exponent);
@@ -509,8 +525,9 @@ class CoupledPressureMomentumSolverTest {
     double exponent = 1.4;
     double soundSpeed = Math.sqrt(exponent * referencePressure / referenceDensity);
     double[][] firstState = sealedGasState(0.9 * referenceDensity);
-    CoupledPressureMomentumSolver.Result first = correctSealedGas(solver, firstState, filled(2, referencePressure),
-        filled(2, referenceDensity), filled(2, soundSpeed));
+    CoupledPressureMomentumSolver.Result first = correctSealedGas(solver, firstState,
+        ArrayUtils.filledArray(2, referencePressure), ArrayUtils.filledArray(2, referenceDensity),
+        ArrayUtils.filledArray(2, soundSpeed));
     assertTrue(first.isConverged());
     double[][] secondState = first.getState();
     for (double[] cell : secondState) {
@@ -543,8 +560,9 @@ class CoupledPressureMomentumSolverTest {
     double soundSpeed = Math.sqrt(exponent * referencePressure / referenceDensity);
     double[][] state = sealedGasState(0.8 * referenceDensity);
 
-    CoupledPressureMomentumSolver.Result result = correctSealedGas(solver, state, filled(2, referencePressure),
-        filled(2, referenceDensity), filled(2, soundSpeed));
+    CoupledPressureMomentumSolver.Result result = correctSealedGas(solver, state,
+        ArrayUtils.filledArray(2, referencePressure), ArrayUtils.filledArray(2, referenceDensity),
+        ArrayUtils.filledArray(2, soundSpeed));
 
     assertTrue(!result.isConverged());
     assertTrue(result.isPressureCorrectionLimited());
@@ -579,9 +597,10 @@ class CoupledPressureMomentumSolverTest {
         state[2][0] += 0.2;
         double[] lengths = {1.0, 2.0, 3.0, 4.0};
 
-        CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.001, filled(4, 5e6), filled(4, 1.0),
-            lengths, filled(4, 10.0), filled(4, 800.0), filled(4, 1000.0), filled(4, 300.0), filled(4, 1200.0),
-            filled(4, 1200.0), 5e6, outletFixed);
+        CoupledPressureMomentumSolver.Result result = solver.correct(state, 0.001, ArrayUtils.filledArray(4, 5e6),
+            ArrayUtils.filledArray(4, 1.0), lengths, ArrayUtils.filledArray(4, 10.0), ArrayUtils.filledArray(4, 800.0),
+            ArrayUtils.filledArray(4, 1000.0), ArrayUtils.filledArray(4, 300.0), ArrayUtils.filledArray(4, 1200.0),
+            ArrayUtils.filledArray(4, 1200.0), 5e6, outletFixed);
 
         assertTrue(result.isConverged(), "Correction ledger fixture failed with interpolation=" + interpolationEnabled
             + ", outletFixed=" + outletFixed + ", residual=" + result.getMaximumRelativeVolumeResidual());
@@ -631,8 +650,9 @@ class CoupledPressureMomentumSolverTest {
    */
   private static CoupledPressureMomentumSolver.Result correctSealedGas(CoupledPressureMomentumSolver solver,
       double[][] state, double[] pressure, double[] density, double[] soundSpeed) {
-    return solver.correct(state, 1e-5, pressure, filled(2, 1.0), filled(2, 1.0), density, filled(2, 800.0),
-        filled(2, 1000.0), soundSpeed, filled(2, 1200.0), filled(2, 1200.0), pressure[0], false);
+    return solver.correct(state, 1e-5, pressure, ArrayUtils.filledArray(2, 1.0), ArrayUtils.filledArray(2, 1.0),
+        density, ArrayUtils.filledArray(2, 800.0), ArrayUtils.filledArray(2, 1000.0), soundSpeed,
+        ArrayUtils.filledArray(2, 1200.0), ArrayUtils.filledArray(2, 1200.0), pressure[0], false);
   }
 
   /**
@@ -707,19 +727,4 @@ class CoupledPressureMomentumSolverTest {
     return result;
   }
 
-  private static double[] filled(int size, double value) {
-    double[] result = new double[size];
-    for (int index = 0; index < size; index++) {
-      result[index] = value;
-    }
-    return result;
-  }
-
-  private static double[][] copy(double[][] state) {
-    double[][] result = new double[state.length][];
-    for (int row = 0; row < state.length; row++) {
-      result[row] = state[row].clone();
-    }
-    return result;
-  }
 }

@@ -46,6 +46,21 @@ class ArrayUtilsTest {
     assertNull(copiedLabelsByGroup[1]);
   }
 
+  /** Tests copy-or-empty operations, including null rows. */
+  @Test
+  void copyOrEmptyOperationsNormalizeNullValues() {
+    assertArrayEquals(new double[0], ArrayUtils.copyArrayOrEmpty((double[]) null), 0.0);
+    assertArrayEquals(new String[0], ArrayUtils.copyArrayOrEmpty((String[]) null));
+    assertEquals(0, ArrayUtils.copyMatrixArrayOrEmpty(null).length);
+    assertArrayEquals(new double[] {2.5, 2.5, 2.5}, ArrayUtils.filledArray(3, 2.5), 0.0);
+    assertArrayEquals(new double[0], ArrayUtils.filledArray(0, 2.5), 0.0);
+
+    double[][] matrix = {{1.0}, null};
+    double[][] copied = ArrayUtils.copyMatrixArrayOrEmpty(matrix);
+    assertArrayEquals(new double[] {1.0}, copied[0], 0.0);
+    assertArrayEquals(new double[0], copied[1], 0.0);
+  }
+
   /** Tests array clearing, column extraction and infinity norm edge cases. */
   @Test
   void providesCommonArrayOperations() {
