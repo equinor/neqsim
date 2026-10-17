@@ -789,7 +789,11 @@ ordered field periods. Build each period from its own converged model/evaluator 
 accepted-point slices, then add it with a non-negative strictly increasing elapsed time and explicit
 configuration provenance. The lifecycle study invokes the same exact-runtime envelope export gate before
 accepting a period, requires identical ordered action identifiers across periods, aggregates evaluation/runtime
-provenance, and reports changes in the accepted leading constraint between adjacent periods. It does not copy
+provenance, and reports changes in the accepted leading constraint between adjacent periods. Schema version 2 also
+exports `period_change_diagnostics`: accepted-action deltas, comparable/added/removed slice axes, exact sampled-point
+overlap, feasible-point changes, and leading-constraint changes for every adjacent period pair. Points are compared
+only when their physical axis-value vectors are exactly equal; changed grids are reported explicitly and are never
+interpolated. It does not copy
 reservoir, separator, compressor-map, shaft, driver, or power-limit physics; those remain in each period's
 canonical model and constraint evidence.
 
@@ -811,6 +815,11 @@ evidence for a later period. A missing, stale, unconverged, non-finite, partiall
 or action-incompatible period is rejected instead of producing a partial lifecycle report. Bottleneck transitions
 are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
 operating approval.
+
+Lifecycle schema version 1 remains readable by the persistent production guard for stored historical evidence.
+New exports use schema version 2, and the guard recomputes every period-change diagnostic from the persisted periods
+before accepting it. A missing or modified count, delta, axis set, feasibility change, or constraint-change count
+therefore fails closed instead of becoming a trusted advisory result.
 
 Long-lived Task Solver studies can persist this map as `lifecycle_envelope_evidence` beside the current
 `accepted_point_envelope_evidence`. Enable both `production.require_envelope_evidence` and

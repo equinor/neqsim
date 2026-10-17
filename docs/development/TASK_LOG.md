@@ -5,6 +5,15 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 # Task Log
 
+### 2026-10-17 — Lifecycle operating-envelope period-change diagnostics
+**Type:** E (Feature)
+**Keywords:** production optimization, lifecycle, operating envelope, sampled slices, bottleneck, persistence
+**Solution:** `ProcessModelOperatingEnvelopeLifecycleStudy` exports schema-v2 adjacent-period diagnostics, and the
+production guard independently reconstructs them before persisting advice.
+**Notes:** Diagnostics cover accepted-action deltas, comparable/added/removed slice axes, exact common sampled
+points, feasibility changes and leading-constraint changes. Differing grids are never interpolated. Historical
+schema-v1 evidence remains readable; stale, malformed or tampered schema-v2 diagnostics fail closed.
+
 ### 2026-10-16 — Shared-reservoir production and injection acceptance
 **Type:** E (Feature)
 **Keywords:** SURF, production, injection, reservoir inventory, shared power, accepted period

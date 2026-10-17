@@ -2,6 +2,7 @@ package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -125,7 +126,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
 
     PeriodEvidence period = new PeriodEvidence(validatedId, validatedName, elapsedTime, timeUnit,
         validatedConfiguration, study.getId(), study.getCandidateEvaluator().getId(), bottleneck,
-        freezeMap(envelopeEvidence));
+        freezeMap(envelopeEvidence), search.getAcceptedCandidateValues(), slices);
     periods.add(period);
     return this;
   }
@@ -152,6 +153,26 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       }
     }
     return Collections.unmodifiableList(transitions);
+  }
+
+  /**
+   * Reports exact sampled changes between each pair of adjacent lifecycle periods.
+   *
+   * <p>
+   * Diagnostics compare accepted action values and slices with identical ordered action axes. Points are comparable
+   * only when their physical axis-value vectors are exactly equal. Added or removed grids remain explicit rather than
+   * being interpolated. The diagnostics therefore describe only the sampled evidence and do not infer a continuous
+   * envelope boundary or causal constraint change.
+   * </p>
+   *
+   * @return deeply immutable ordered period-change diagnostics
+   */
+  public List<Map<String, Object>> getPeriodChangeDiagnostics() {
+    List<Map<String, Object>> diagnostics = new ArrayList<Map<String, Object>>();
+    for (int index = 1; index < periods.size(); index++) {
+      diagnostics.add(periodChange(periods.get(index - 1), periods.get(index)));
+    }
+    return Collections.unmodifiableList(diagnostics);
   }
 
   /**
@@ -191,7 +212,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       transitionMaps.add(transition.toEvidenceMap());
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
-    evidence.put("schema_version", Integer.valueOf(1));
+    evidence.put("schema_version", Integer.valueOf(2));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -205,6 +226,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     evidence.put("envelope_runtime_seconds", Double.valueOf(runtimeSeconds));
     evidence.put("periods", Collections.unmodifiableList(periodMaps));
     evidence.put("bottleneck_transitions", Collections.unmodifiableList(transitionMaps));
+    evidence.put("period_change_diagnostics", getPeriodChangeDiagnostics());
     evidence.put("advisory", Boolean.TRUE);
     evidence.put("interpretation",
         "Independent sampled lifecycle periods; not a continuous forecast, equipment qualification, shadow price, or operating approval");
@@ -223,10 +245,13 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     private final String candidateEvaluatorId;
     private final LeadingConstraintEvidence acceptedBottleneck;
     private final Map<String, Object> envelopeEvidence;
+    private final double[] acceptedCandidateValues;
+    private final List<SliceResult> slices;
 
     private PeriodEvidence(String periodId, String periodName, double elapsedTime, String timeUnit,
         String configurationProvenance, String envelopeStudyId, String candidateEvaluatorId,
-        LeadingConstraintEvidence acceptedBottleneck, Map<String, Object> envelopeEvidence) {
+        LeadingConstraintEvidence acceptedBottleneck, Map<String, Object> envelopeEvidence,
+        double[] acceptedCandidateValues, SliceResult[] slices) {
       this.periodId = periodId;
       this.periodName = periodName;
       this.elapsedTime = elapsedTime;
@@ -236,6 +261,8 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       this.candidateEvaluatorId = candidateEvaluatorId;
       this.acceptedBottleneck = acceptedBottleneck;
       this.envelopeEvidence = envelopeEvidence;
+      this.acceptedCandidateValues = Arrays.copyOf(acceptedCandidateValues, acceptedCandidateValues.length);
+      this.slices = Collections.unmodifiableList(new ArrayList<SliceResult>(Arrays.asList(slices)));
     }
 
     /** @return stable period identifier */
@@ -288,6 +315,16 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       return envelopeEvidence;
     }
 
+    /** @return defensive accepted action-value vector */
+    private double[] getAcceptedCandidateValues() {
+      return Arrays.copyOf(acceptedCandidateValues, acceptedCandidateValues.length);
+    }
+
+    /** @return immutable exact-runtime slice list */
+    private List<SliceResult> getSlices() {
+      return slices;
+    }
+
     /** @return deeply immutable JSON-friendly period evidence */
     public Map<String, Object> toEvidenceMap() {
       Map<String, Object> evidence = new LinkedHashMap<String, Object>();
@@ -303,6 +340,155 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
       evidence.put("envelope_evidence", envelopeEvidence);
       return Collections.unmodifiableMap(evidence);
     }
+  }
+
+  /** Builds one immutable adjacent-period sampled-change diagnostic. */
+  private Map<String, Object> periodChange(PeriodEvidence from, PeriodEvidence to) {
+    List<Map<String, Object>> actionChanges = new ArrayList<Map<String, Object>>();
+    double[] fromValues = from.getAcceptedCandidateValues();
+    double[] toValues = to.getAcceptedCandidateValues();
+    for (int index = 0; index < acceptedActionIds.size(); index++) {
+      Map<String, Object> change = new LinkedHashMap<String, Object>();
+      change.put("action_id", acceptedActionIds.get(index));
+      change.put("from_value", Double.valueOf(fromValues[index]));
+      change.put("to_value", Double.valueOf(toValues[index]));
+      change.put("delta", Double.valueOf(toValues[index] - fromValues[index]));
+      actionChanges.add(Collections.unmodifiableMap(change));
+    }
+
+    List<List<String>> removedAxes = new ArrayList<List<String>>();
+    List<List<String>> addedAxes = new ArrayList<List<String>>();
+    List<Map<String, Object>> sliceChanges = new ArrayList<Map<String, Object>>();
+    for (SliceResult fromSlice : from.getSlices()) {
+      SliceResult toSlice = findSlice(to.getSlices(), fromSlice.getAxisActionIds());
+      if (toSlice == null) {
+        removedAxes.add(axisList(fromSlice.getAxisActionIds()));
+      } else {
+        sliceChanges.add(sliceChange(fromSlice, toSlice));
+      }
+    }
+    for (SliceResult toSlice : to.getSlices()) {
+      if (findSlice(from.getSlices(), toSlice.getAxisActionIds()) == null) {
+        addedAxes.add(axisList(toSlice.getAxisActionIds()));
+      }
+    }
+
+    Map<String, Object> diagnostic = new LinkedHashMap<String, Object>();
+    diagnostic.put("from_period_id", from.getPeriodId());
+    diagnostic.put("to_period_id", to.getPeriodId());
+    diagnostic.put("from_elapsed_time", Double.valueOf(from.getElapsedTime()));
+    diagnostic.put("to_elapsed_time", Double.valueOf(to.getElapsedTime()));
+    diagnostic.put("time_unit", timeUnit);
+    diagnostic.put("accepted_action_changes", Collections.unmodifiableList(actionChanges));
+    diagnostic.put("comparable_slice_count", Integer.valueOf(sliceChanges.size()));
+    diagnostic.put("removed_slice_axes", Collections.unmodifiableList(removedAxes));
+    diagnostic.put("added_slice_axes", Collections.unmodifiableList(addedAxes));
+    diagnostic.put("slice_changes", Collections.unmodifiableList(sliceChanges));
+    diagnostic.put("advisory", Boolean.TRUE);
+    return Collections.unmodifiableMap(diagnostic);
+  }
+
+  /** Builds one exact sampled-grid comparison for matching slice axes. */
+  private static Map<String, Object> sliceChange(SliceResult from, SliceResult to) {
+    int comparable = 0;
+    int becameFeasible = 0;
+    int becameInfeasible = 0;
+    int constraintChanges = 0;
+    List<ProcessModelOperatingEnvelopeStudy.Point> fromPoints = from.getPoints();
+    List<ProcessModelOperatingEnvelopeStudy.Point> toPoints = to.getPoints();
+    for (ProcessModelOperatingEnvelopeStudy.Point fromPoint : fromPoints) {
+      ProcessModelOperatingEnvelopeStudy.Point toPoint = findPoint(toPoints, fromPoint.getAxisValues());
+      if (toPoint == null) {
+        continue;
+      }
+      comparable++;
+      if (!fromPoint.isFeasible() && toPoint.isFeasible()) {
+        becameFeasible++;
+      } else if (fromPoint.isFeasible() && !toPoint.isFeasible()) {
+        becameInfeasible++;
+      }
+      if (!sameText(constraintName(fromPoint), constraintName(toPoint))) {
+        constraintChanges++;
+      }
+    }
+
+    Map<String, Object> change = new LinkedHashMap<String, Object>();
+    change.put("axis_action_ids", axisList(from.getAxisActionIds()));
+    change.put("grid_identical", Boolean.valueOf(sameGrid(from.getAxisValues(), to.getAxisValues())));
+    change.put("from_requested_point_count", Integer.valueOf(from.getRequestedPointCount()));
+    change.put("to_requested_point_count", Integer.valueOf(to.getRequestedPointCount()));
+    int fromFeasible = from.getFeasiblePoints().size();
+    int toFeasible = to.getFeasiblePoints().size();
+    change.put("from_feasible_point_count", Integer.valueOf(fromFeasible));
+    change.put("to_feasible_point_count", Integer.valueOf(toFeasible));
+    change.put("feasible_point_count_delta", Integer.valueOf(toFeasible - fromFeasible));
+    change.put("comparable_point_count", Integer.valueOf(comparable));
+    change.put("from_only_point_count", Integer.valueOf(fromPoints.size() - comparable));
+    change.put("to_only_point_count", Integer.valueOf(toPoints.size() - comparable));
+    change.put("became_feasible_count", Integer.valueOf(becameFeasible));
+    change.put("became_infeasible_count", Integer.valueOf(becameInfeasible));
+    change.put("leading_constraint_change_count", Integer.valueOf(constraintChanges));
+    change.put("from_bottleneck_transition_count", Integer.valueOf(from.getBottleneckTransitions().size()));
+    change.put("to_bottleneck_transition_count", Integer.valueOf(to.getBottleneckTransitions().size()));
+    return Collections.unmodifiableMap(change);
+  }
+
+  /** Finds the slice with one exact ordered action-axis signature. */
+  private static SliceResult findSlice(List<SliceResult> slices, String[] actionIds) {
+    for (SliceResult slice : slices) {
+      if (Arrays.equals(slice.getAxisActionIds(), actionIds)) {
+        return slice;
+      }
+    }
+    return null;
+  }
+
+  /** Finds a sampled point with one exact physical axis-value vector. */
+  private static ProcessModelOperatingEnvelopeStudy.Point findPoint(
+      List<ProcessModelOperatingEnvelopeStudy.Point> points, double[] axisValues) {
+    for (ProcessModelOperatingEnvelopeStudy.Point point : points) {
+      if (sameVector(point.getAxisValues(), axisValues)) {
+        return point;
+      }
+    }
+    return null;
+  }
+
+  /** Returns the sampled leading-constraint identity, or null. */
+  private static String constraintName(ProcessModelOperatingEnvelopeStudy.Point point) {
+    LeadingConstraintEvidence evidence = point.getLeadingConstraint();
+    return evidence == null ? null : evidence.getQualifiedConstraintName();
+  }
+
+  /** Copies one action-axis signature into an immutable list. */
+  private static List<String> axisList(String[] actionIds) {
+    return Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(actionIds)));
+  }
+
+  /** Returns true only when two sampled grids are bitwise identical. */
+  private static boolean sameGrid(double[][] first, double[][] second) {
+    if (first.length != second.length) {
+      return false;
+    }
+    for (int index = 0; index < first.length; index++) {
+      if (!sameVector(first[index], second[index])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /** Returns true only when two finite vectors are bitwise identical. */
+  private static boolean sameVector(double[] first, double[] second) {
+    if (first.length != second.length) {
+      return false;
+    }
+    for (int index = 0; index < first.length; index++) {
+      if (Double.doubleToLongBits(first[index]) != Double.doubleToLongBits(second[index])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /** Immutable adjacent-period bottleneck identity change. */
