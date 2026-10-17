@@ -20,6 +20,7 @@ import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.statistics.montecarlosimulation.MonteCarloSimulation;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.util.ArrayUtils;
 
 /**
  * Abstract StatisticsBaseClass class.
@@ -340,7 +341,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @return covariance matrix values, or null if it has not been calculated
    */
   public double[][] getCoVarianceMatrix() {
-    return copyMatrix(coVarianceMatrix);
+    return ArrayUtils.copyMatrixArray(coVarianceMatrix);
   }
 
   /**
@@ -349,24 +350,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @return correlation matrix values, or null if it has not been calculated
    */
   public double[][] getParameterCorrelationMatrix() {
-    return copyMatrix(parameterCorrelationMatrix);
-  }
-
-  /**
-   * Copy a matrix, preserving null.
-   *
-   * @param matrix matrix to copy, possibly null
-   * @return a deep copy, or null
-   */
-  private static double[][] copyMatrix(double[][] matrix) {
-    if (matrix == null) {
-      return null;
-    }
-    double[][] copy = new double[matrix.length][];
-    for (int row = 0; row < matrix.length; row++) {
-      copy[row] = matrix[row].clone();
-    }
-    return copy;
+    return ArrayUtils.copyMatrixArray(parameterCorrelationMatrix);
   }
 
   /** {@inheritDoc} */
