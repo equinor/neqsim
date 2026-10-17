@@ -1,5 +1,7 @@
 package neqsim.process.fastsimulation;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,7 +105,7 @@ public class KValueUnitProfile implements Serializable {
     this.inletStreams = new ArrayList<StreamInterface>(inletStreams);
     this.outletStreams = new ArrayList<StreamInterface>(outletStreams);
     this.componentNames = componentNames.clone();
-    this.fallbackSplitFactors = copyMatrix(fallbackSplitFactors);
+    this.fallbackSplitFactors = copyMatrixArray(fallbackSplitFactors);
     this.vaporLiquidKValues = vaporLiquidKValues == null ? null : vaporLiquidKValues.clone();
     this.waterLiquidKValues = waterLiquidKValues == null ? null : waterLiquidKValues.clone();
     this.gasOutletIndex = gasOutletIndex;
@@ -576,17 +578,4 @@ public class KValueUnitProfile implements Serializable {
     return total;
   }
 
-  /**
-   * Copies a matrix defensively.
-   *
-   * @param matrix source matrix
-   * @return copied matrix
-   */
-  private static double[][] copyMatrix(double[][] matrix) {
-    double[][] copy = new double[matrix.length][];
-    for (int i = 0; i < matrix.length; i++) {
-      copy[i] = matrix[i].clone();
-    }
-    return copy;
-  }
 }

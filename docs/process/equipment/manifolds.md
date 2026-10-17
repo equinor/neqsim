@@ -137,6 +137,14 @@ The FIV and capacity outputs are screening outputs and are not a vibration quali
 
 `autoSize(double safetyFactor)` selects approximate standard inner diameters from the current simulated volume flow and updates the manifold's screening constraints. Call it only after all feeds and split factors are configured. Treat the selected diameters as an initial screening result; they do not establish pressure containment, schedule availability, erosion allowance, branch reinforcement, fatigue life, or constructability.
 
+The sizing inventory stores matched outside diameters and approximate wall
+thicknesses. Selection and flow-area calculations use `ID = OD - 2 * wall`,
+including entries of 14 inches and larger. The wall values retain the existing
+screening assumptions; confirm the purchased schedule and dimensions separately.
+For example, the inventory's 355.6 mm outside diameter and 11.18 mm wall produce
+a 333.24 mm flow bore, not a 355.6 mm bore. A required bore above 333.24 mm
+therefore advances to the next available inventory entry.
+
 For a separate mechanical-design object, call `initMechanicalDesign()` before `getMechanicalDesign()`. The process manifold and mechanical-design calculations remain distinct validation layers.
 
 ## Integration guidance

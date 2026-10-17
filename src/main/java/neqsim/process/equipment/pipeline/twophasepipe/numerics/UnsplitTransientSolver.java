@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 
 /**
@@ -170,7 +172,7 @@ public final class UnsplitTransientSolver implements Serializable {
       }
       this.conservativeRates = copy(conservativeRates);
       this.phaseDensities = copy(phaseDensities);
-      this.directionalPhaseFaceFluxes = copyDirectionalFluxes(directionalPhaseFaceFluxes);
+      this.directionalPhaseFaceFluxes = copyMatrixArray(directionalPhaseFaceFluxes);
       this.cellLengthsM = cellLengthsM == null ? null : cellLengthsM.clone();
       this.phaseMassSourcesPerLength = phaseMassSourcesPerLength == null ? null : copy(phaseMassSourcesPerLength);
     }
@@ -247,7 +249,7 @@ public final class UnsplitTransientSolver implements Serializable {
      * @return defensive outer copy, or null when the model did not provide a face ledger
      */
     public DirectionalPhaseFaceFlux[][] getDirectionalPhaseFaceFluxes() {
-      return copyDirectionalFluxes(directionalPhaseFaceFluxes);
+      return copyMatrixArray(directionalPhaseFaceFluxes);
     }
 
     /** @return defensive cell lengths in m, or null when the model did not provide geometry diagnostics */
@@ -315,7 +317,7 @@ public final class UnsplitTransientSolver implements Serializable {
       this.converged = converged;
       this.terminationReason = terminationReason;
       this.timeIntegrationWeight = timeIntegrationWeight;
-      this.directionalPhaseFaceFluxes = copyDirectionalFluxes(directionalPhaseFaceFluxes);
+      this.directionalPhaseFaceFluxes = copyMatrixArray(directionalPhaseFaceFluxes);
     }
 
     /** @return defensive copy of the conservative state */
@@ -382,7 +384,7 @@ public final class UnsplitTransientSolver implements Serializable {
      * @return defensive face-ledger array, or null for the legacy cell-only solve
      */
     public DirectionalPhaseFaceFlux[][] getDirectionalPhaseFaceFluxes() {
-      return copyDirectionalFluxes(directionalPhaseFaceFluxes);
+      return copyMatrixArray(directionalPhaseFaceFluxes);
     }
   }
 
@@ -1490,18 +1492,6 @@ public final class UnsplitTransientSolver implements Serializable {
     double[][] result = new double[values.length][];
     for (int row = 0; row < values.length; row++) {
       result[row] = values[row] == null ? null : values[row].clone();
-    }
-    return result;
-  }
-
-  /** Copy array ownership while retaining immutable face-ledger entries. */
-  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] values) {
-    if (values == null) {
-      return null;
-    }
-    DirectionalPhaseFaceFlux[][] result = new DirectionalPhaseFaceFlux[values.length][];
-    for (int face = 0; face < values.length; face++) {
-      result[face] = values[face] == null ? null : values[face].clone();
     }
     return result;
   }

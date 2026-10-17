@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -990,27 +992,11 @@ public class PressureBoundaryOptimizer implements Serializable {
       this.tableName = tableName;
       this.inletPressures = Arrays.copyOf(inletPressures, inletPressures.length);
       this.outletPressures = Arrays.copyOf(outletPressures, outletPressures.length);
-      this.flowRates = copyMatrix(flowRates);
-      this.powers = copyMatrix(powers);
-      this.bottlenecks = copyMatrix(bottlenecks);
+      this.flowRates = copyMatrixArray(flowRates);
+      this.powers = copyMatrixArray(powers);
+      this.bottlenecks = copyMatrixArray(bottlenecks);
       this.pressureUnit = pressureUnit;
       this.rateUnit = rateUnit;
-    }
-
-    private double[][] copyMatrix(double[][] matrix) {
-      double[][] copy = new double[matrix.length][];
-      for (int i = 0; i < matrix.length; i++) {
-        copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
-      }
-      return copy;
-    }
-
-    private String[][] copyMatrix(String[][] matrix) {
-      String[][] copy = new String[matrix.length][];
-      for (int i = 0; i < matrix.length; i++) {
-        copy[i] = Arrays.copyOf(matrix[i], matrix[i].length);
-      }
-      return copy;
     }
 
     /**

@@ -57,6 +57,16 @@ result fields they populate; use the model-specific accessors demonstrated below
 Do not assume unit-string overloads for length, diameter, roughness, or heat
 transfer setters. For example, pass 5000.0 to `setLength` for 5 km.
 
+For `PipeBeggsAndBrills`, `setPipeSpecification(double, String)` selects a nominal
+size in inches and a specification column in `PIPEDATA.csv`. A blank cell means
+that this specification is unavailable at that size; it is not a zero wall and
+is not filled from another specification. Unavailable combinations, unknown
+specification names, and unsupported sizes throw `IllegalArgumentException`
+with the selection in the message. A failed selection preserves the previous
+inside diameter, wall thickness, and specification. Database failures or invalid
+stored dimensions throw `IllegalStateException`. Use explicit diameter and wall
+setters when a project-approved pipe is absent from the table.
+
 ## Pipeline Types
 
 ### PipeBeggsAndBrills
