@@ -390,6 +390,14 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
     assertEquals(1, ((List<?>) lifecycleEvidence.get("bottleneck_transitions")).size());
+    List<?> periodChanges = (List<?>) lifecycleEvidence.get("period_change_diagnostics");
+    assertEquals(1, periodChanges.size());
+    Map<?, ?> periodChange = (Map<?, ?>) periodChanges.get(0);
+    assertEquals(Integer.valueOf(3), periodChange.get("comparable_slice_count"));
+    assertEquals(Integer.valueOf(3), Integer.valueOf(((List<?>) periodChange.get("slice_changes")).size()));
+    assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
+    assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
+    assertEquals(Integer.valueOf(20), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
     assertEquals(earlyConstraint, lifecycle.getBottleneckTransitions().get(0).getFromConstraint());
     assertEquals(lateConstraint, lifecycle.getBottleneckTransitions().get(0).getToConstraint());
     assertTrue(((Long) lifecycleEvidence.get("total_evaluation_count")).longValue() > 12L);

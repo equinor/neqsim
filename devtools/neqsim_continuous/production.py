@@ -370,6 +370,163 @@ def _bottleneck_name(value):
     return value["qualified_constraint_name"]
 
 
+def _sampled_constraint_name(value):
+    """Return one sampled leading-constraint identity, or None when explicitly absent."""
+    if value is None:
+        return None
+    if not isinstance(value, dict) or not _text(value.get("qualified_constraint_name")):
+        return False
+    return value["qualified_constraint_name"]
+
+
+def _exact_vector_key(values, expected_size=None):
+    """Return a bit-preserving finite numeric-vector key, or None."""
+    if (not isinstance(values, list)
+            or (expected_size is not None and len(values) != expected_size)
+            or any(not _number(value) for value in values)):
+        return None
+    return tuple(float(value).hex() for value in values)
+
+
+def _exact_grid_key(values, axis_count):
+    """Return a bit-preserving sampled-grid key, or None."""
+    if not isinstance(values, list) or len(values) != axis_count:
+        return None
+    rows = tuple(_exact_vector_key(row) for row in values)
+    if any(row is None or not row for row in rows):
+        return None
+    return rows
+
+
+def _period_change_diagnostics(periods, action_ids, time_unit):
+    """Derive schema-v2 adjacent-period diagnostics from persisted sampled evidence."""
+    diagnostics = []
+    for from_period, to_period in zip(periods, periods[1:]):
+        from_envelope = from_period.get("envelope_evidence")
+        to_envelope = to_period.get("envelope_evidence")
+        if not isinstance(from_envelope, dict) or not isinstance(to_envelope, dict):
+            return None
+        from_values = from_envelope.get("accepted_candidate_values")
+        to_values = to_envelope.get("accepted_candidate_values")
+        if (not isinstance(from_values, list) or not isinstance(to_values, list)
+                or any(not _number(value) for value in from_values)
+                or any(not _number(value) for value in to_values)
+                or len(from_values) != len(action_ids)
+                or len(to_values) != len(action_ids)):
+            return None
+        action_changes = [{
+            "action_id": action_id,
+            "from_value": from_value,
+            "to_value": to_value,
+            "delta": float(to_value) - float(from_value),
+        } for action_id, from_value, to_value in zip(action_ids, from_values, to_values)]
+
+        from_slices = from_envelope.get("slices")
+        to_slices = to_envelope.get("slices")
+        if not isinstance(from_slices, list) or not isinstance(to_slices, list):
+            return None
+        from_by_axes = {}
+        to_by_axes = {}
+        for row in from_slices:
+            axes = row.get("axis_action_ids") if isinstance(row, dict) else None
+            if not isinstance(axes, list) or not axes or any(not _text(axis) for axis in axes):
+                return None
+            from_by_axes[tuple(axes)] = row
+        for row in to_slices:
+            axes = row.get("axis_action_ids") if isinstance(row, dict) else None
+            if not isinstance(axes, list) or not axes or any(not _text(axis) for axis in axes):
+                return None
+            to_by_axes[tuple(axes)] = row
+        if len(from_by_axes) != len(from_slices) or len(to_by_axes) != len(to_slices):
+            return None
+
+        slice_changes = []
+        for axes, from_slice in from_by_axes.items():
+            to_slice = to_by_axes.get(axes)
+            if to_slice is None:
+                continue
+            from_points = from_slice.get("points")
+            to_points = to_slice.get("points")
+            if not isinstance(from_points, list) or not isinstance(to_points, list):
+                return None
+            from_grid = _exact_grid_key(from_slice.get("axis_values"), len(axes))
+            to_grid = _exact_grid_key(to_slice.get("axis_values"), len(axes))
+            if from_grid is None or to_grid is None:
+                return None
+            from_by_value = {}
+            to_by_value = {}
+            for point in from_points:
+                values = point.get("axis_values") if isinstance(point, dict) else None
+                key = _exact_vector_key(values, len(axes))
+                if key is None:
+                    return None
+                from_by_value[key] = point
+            for point in to_points:
+                values = point.get("axis_values") if isinstance(point, dict) else None
+                key = _exact_vector_key(values, len(axes))
+                if key is None:
+                    return None
+                to_by_value[key] = point
+            if len(from_by_value) != len(from_points) or len(to_by_value) != len(to_points):
+                return None
+            common = [key for key in from_by_value if key in to_by_value]
+            became_feasible = 0
+            became_infeasible = 0
+            constraint_changes = 0
+            for key in common:
+                from_point = from_by_value[key]
+                to_point = to_by_value[key]
+                if not isinstance(from_point.get("feasible"), bool) or not isinstance(to_point.get("feasible"), bool):
+                    return None
+                if not from_point["feasible"] and to_point["feasible"]:
+                    became_feasible += 1
+                elif from_point["feasible"] and not to_point["feasible"]:
+                    became_infeasible += 1
+                from_constraint = _sampled_constraint_name(from_point.get("leading_constraint"))
+                to_constraint = _sampled_constraint_name(to_point.get("leading_constraint"))
+                if from_constraint is False or to_constraint is False:
+                    return None
+                if from_constraint != to_constraint:
+                    constraint_changes += 1
+            from_feasible = sum(point.get("feasible") is True for point in from_points)
+            to_feasible = sum(point.get("feasible") is True for point in to_points)
+            from_transitions = from_slice.get("bottleneck_transitions")
+            to_transitions = to_slice.get("bottleneck_transitions")
+            if not isinstance(from_transitions, list) or not isinstance(to_transitions, list):
+                return None
+            slice_changes.append({
+                "axis_action_ids": list(axes),
+                "grid_identical": from_grid == to_grid,
+                "from_requested_point_count": from_slice.get("requested_point_count"),
+                "to_requested_point_count": to_slice.get("requested_point_count"),
+                "from_feasible_point_count": from_feasible,
+                "to_feasible_point_count": to_feasible,
+                "feasible_point_count_delta": to_feasible - from_feasible,
+                "comparable_point_count": len(common),
+                "from_only_point_count": len(from_points) - len(common),
+                "to_only_point_count": len(to_points) - len(common),
+                "became_feasible_count": became_feasible,
+                "became_infeasible_count": became_infeasible,
+                "leading_constraint_change_count": constraint_changes,
+                "from_bottleneck_transition_count": len(from_transitions),
+                "to_bottleneck_transition_count": len(to_transitions),
+            })
+        diagnostics.append({
+            "from_period_id": from_period.get("period_id"),
+            "to_period_id": to_period.get("period_id"),
+            "from_elapsed_time": from_period.get("elapsed_time"),
+            "to_elapsed_time": to_period.get("elapsed_time"),
+            "time_unit": time_unit,
+            "accepted_action_changes": action_changes,
+            "comparable_slice_count": len(slice_changes),
+            "removed_slice_axes": [list(axes) for axes in from_by_axes if axes not in to_by_axes],
+            "added_slice_axes": [list(axes) for axes in to_by_axes if axes not in from_by_axes],
+            "slice_changes": slice_changes,
+            "advisory": True,
+        })
+    return diagnostics
+
+
 def _lifecycle_evidence_reasons(ctx, proposal, required=False):
     """Validate persisted lifecycle envelopes and bind the current period to the proposal."""
     if "lifecycle_envelope_evidence" not in proposal:
@@ -379,7 +536,8 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         return ["invalid_lifecycle_envelope_evidence"]
 
     reasons = []
-    if evidence.get("schema_version") != 1:
+    schema_version = evidence.get("schema_version")
+    if schema_version not in (1, 2):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -500,6 +658,11 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
+    if schema_version == 2:
+        expected_period_changes = _period_change_diagnostics(periods, action_ids, evidence.get("time_unit"))
+        if (expected_period_changes is None
+                or evidence.get("period_change_diagnostics") != expected_period_changes):
+            reasons.append("lifecycle_period_change_diagnostics_mismatch")
     if evidence.get("advisory") is not True:
         reasons.append("lifecycle_envelope_not_advisory")
     return reasons

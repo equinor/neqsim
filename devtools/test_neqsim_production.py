@@ -298,7 +298,10 @@ def _valid_proposal():
 
 def _valid_envelope_evidence(optimizer_evidence):
     point = {
+        "axis_values": [0.5],
         "candidate_values": [0.5],
+        "feasible": True,
+        "leading_constraint": None,
         "baseline_restored": True,
         "baseline_simulation_converged": True,
     }
@@ -320,6 +323,7 @@ def _valid_envelope_evidence(optimizer_evidence):
             "study_id": "field-envelope",
             "candidate_evaluator_id": "field-actions",
             "axis_action_ids": ["p3_barg"],
+            "axis_values": [[0.5]],
             "anchor_values": [0.5],
             "requested_point_count": 1,
             "completed_point_count": 1,
@@ -327,7 +331,9 @@ def _valid_envelope_evidence(optimizer_evidence):
             "runtime_seconds": 0.1,
             "outcome": "COMPLETE",
             "complete": True,
+            "feasible_point_count": 1,
             "points": [point],
+            "bottleneck_transitions": [],
         }],
         "advisory": True,
     }
@@ -366,8 +372,42 @@ def _valid_lifecycle_evidence(current_envelope):
             "envelope_evidence": future_envelope,
         },
     ]
+    period_change = {
+        "from_period_id": "C-1",
+        "to_period_id": "future-period",
+        "from_elapsed_time": 0.0,
+        "to_elapsed_time": 5.0,
+        "time_unit": "year",
+        "accepted_action_changes": [{
+            "action_id": current_envelope["accepted_action_ids"][0],
+            "from_value": 0.5,
+            "to_value": 0.4,
+            "delta": 0.4 - 0.5,
+        }],
+        "comparable_slice_count": 1,
+        "removed_slice_axes": [],
+        "added_slice_axes": [],
+        "slice_changes": [{
+            "axis_action_ids": current_envelope["slices"][0]["axis_action_ids"],
+            "grid_identical": True,
+            "from_requested_point_count": 1,
+            "to_requested_point_count": 1,
+            "from_feasible_point_count": 1,
+            "to_feasible_point_count": 1,
+            "feasible_point_count_delta": 0,
+            "comparable_point_count": 1,
+            "from_only_point_count": 0,
+            "to_only_point_count": 0,
+            "became_feasible_count": 0,
+            "became_infeasible_count": 0,
+            "leading_constraint_change_count": 0,
+            "from_bottleneck_transition_count": 0,
+            "to_bottleneck_transition_count": 0,
+        }],
+        "advisory": True,
+    }
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "cycle_id": "C-1",
         "lifecycle_study_id": "field-lifecycle",
         "lifecycle_study_name": "Field lifecycle envelope",
@@ -381,6 +421,7 @@ def _valid_lifecycle_evidence(current_envelope):
         "envelope_runtime_seconds": 0.2,
         "periods": periods,
         "bottleneck_transitions": [],
+        "period_change_diagnostics": [period_change],
         "advisory": True,
     }
 
@@ -987,6 +1028,18 @@ def test_guard_persists_complete_lifecycle_envelope(tmp_path):
     assert lifecycle["periods"][1]["period_id"] == "future-period"
 
 
+def test_guard_accepts_legacy_lifecycle_schema_without_period_diagnostics(tmp_path):
+    proposal = _valid_proposal()
+    proposal["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    proposal["lifecycle_envelope_evidence"]["schema_version"] = 1
+    proposal["lifecycle_envelope_evidence"].pop("period_change_diagnostics")
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+
+
 def test_guard_requires_lifecycle_envelope_when_configured(tmp_path):
     proposal = _valid_proposal()
     ctx = _guard_context(tmp_path, proposal)
@@ -1064,6 +1117,14 @@ def test_guard_rejects_stale_or_internally_inconsistent_lifecycle_envelope(tmp_p
     transition["lifecycle_envelope_evidence"]["bottleneck_transitions"] = [{}]
     variants.append(transition)
 
+    period_change = _valid_proposal()
+    period_change["title"] = "period change mismatch"
+    period_change["lifecycle_envelope_evidence"] = _valid_lifecycle_evidence(
+        period_change["accepted_point_envelope_evidence"])
+    period_change["lifecycle_envelope_evidence"]["period_change_diagnostics"][0][
+        "slice_changes"][0]["became_infeasible_count"] = 1
+    variants.append(period_change)
+
     ctx = _guard_context(tmp_path, variants[0])
     ctx.plan["production"]["require_envelope_evidence"] = True
     ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
@@ -1081,6 +1142,7 @@ def test_guard_rejects_stale_or_internally_inconsistent_lifecycle_envelope(tmp_p
     assert "lifecycle_period_1_infeasible_candidate" in reasons["infeasible future period"]
     assert "lifecycle_aggregate_count_mismatch" in reasons["aggregate mismatch"]
     assert "lifecycle_bottleneck_transitions_mismatch" in reasons["transition mismatch"]
+    assert "lifecycle_period_change_diagnostics_mismatch" in reasons["period change mismatch"]
 
 
 @pytest.mark.parametrize("field, value, reason", [

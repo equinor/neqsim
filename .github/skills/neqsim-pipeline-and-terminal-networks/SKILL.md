@@ -115,6 +115,14 @@ balance, and synchronize injection-layer pressures with the reservoir owner afte
 Do not also advance the same reservoir through a second network forecast. The example
 is a synthetic explicit quasi-steady conservation check, not a qualified forecast or
 liquid-injectivity law; persisted lifecycle revalidation remains owned by #4188/#3154.
+For accepted-step refinement, reuse the same fixture with independently initialized
+time partitions and compare actual accepted states at common physical times. Include
+cumulative produced/injected mass and component inventory, not just endpoint pressure;
+retain rejected-trial non-advancement and cumulative component closure at every step.
+The one-day 4/8/16/32-step regression tests a smooth explicit coupling trajectory, not
+adaptive local-error control, complete map operating envelopes or two-fluid transients.
+Its inherited pump curve is extrapolated below the tabulated minimum flow; retain that
+limitation until a separate operating-region qualification replaces the synthetic fixture.
 The dedicated `TwoFluidPipeNetwork` already owns storage-node transients; do not
 replace it. Live well/injection coupling must reuse WellSystem/WellFlow physics.
 
