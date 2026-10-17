@@ -112,6 +112,22 @@ Compressor,Reciprocating,Critical,5.71e-5,17513,120,IEEE493-2007,High
 - Lines starting with `#` are comments
 - The first non-comment line should contain column headers (optional but recommended)
 
+### Unavailable measurements
+
+`OREDADataImporter` preserves an empty numeric cell or `-` as an unavailable
+measurement (`Double.NaN`), rather than a measured zero. Failure-rate and time
+accessors propagate that value. `ReliabilityRecord.getAvailability()` returns
+`NaN` when MTBF or MTTR is unavailable, nonfinite or negative, or when both are
+zero. A measured MTTR of zero with a positive finite MTBF still gives availability
+of 1.0; a measured zero failure rate remains zero.
+
+The record's `toMap()` represents unavailable or nonfinite numeric values as
+`null`, so JSON consumers can distinguish unknown reliability from perfect
+availability. Consumers must check that their required measurements are finite
+before using them in a risk or availability calculation. Earlier versions
+converted blank cells and `-` to zero and reported availability of 1.0 for zero
+MTBF and MTTR; imported results containing those markers should be recalculated.
+
 ### Units
 
 | Parameter | Unit |

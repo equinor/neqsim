@@ -78,9 +78,9 @@ public class OREDADataImporter implements Serializable {
      * @param equipmentType equipment type (e.g., "Compressor")
      * @param equipmentClass equipment class (e.g., "Centrifugal")
      * @param failureMode failure mode (e.g., "All modes", "Critical")
-     * @param failureRate failure rate per hour
-     * @param mtbfHours mean time between failures in hours
-     * @param mttrHours mean time to repair in hours
+     * @param failureRate failure rate per hour, or {@link Double#NaN} when unavailable
+     * @param mtbfHours mean time between failures in hours, or {@link Double#NaN} when unavailable
+     * @param mttrHours mean time to repair in hours, or {@link Double#NaN} when unavailable
      * @param dataSource data source (e.g., "OREDA-2015")
      * @param confidence confidence level (e.g., "High", "Medium", "Low")
      */
@@ -126,7 +126,7 @@ public class OREDADataImporter implements Serializable {
     /**
      * Gets the failure rate per hour.
      *
-     * @return failure rate (failures per hour)
+     * @return failure rate (failures per hour), or {@link Double#NaN} when unavailable
      */
     public double getFailureRate() {
       return failureRate;
@@ -135,7 +135,7 @@ public class OREDADataImporter implements Serializable {
     /**
      * Gets the mean time between failures in hours.
      *
-     * @return MTBF in hours
+     * @return MTBF in hours, or {@link Double#NaN} when unavailable
      */
     public double getMtbfHours() {
       return mtbfHours;
@@ -144,7 +144,7 @@ public class OREDADataImporter implements Serializable {
     /**
      * Gets the mean time to repair in hours.
      *
-     * @return MTTR in hours
+     * @return MTTR in hours, or {@link Double#NaN} when unavailable
      */
     public double getMttrHours() {
       return mttrHours;
@@ -198,19 +198,21 @@ public class OREDADataImporter implements Serializable {
     /**
      * Calculates availability based on MTBF and MTTR.
      *
-     * @return availability as fraction (0-1)
+     * @return availability as fraction (0-1), or {@link Double#NaN} when either input is unavailable, nonfinite or
+     * negative, or both are zero
      */
     public double getAvailability() {
-      if (mtbfHours + mttrHours <= 0) {
-        return 1.0;
+      if (!Double.isFinite(mtbfHours) || !Double.isFinite(mttrHours) || mtbfHours < 0.0 || mttrHours < 0.0
+          || (mtbfHours == 0.0 && mttrHours == 0.0)) {
+        return Double.NaN;
       }
-      return mtbfHours / (mtbfHours + mttrHours);
+      return mtbfHours == 0.0 ? 0.0 : 1.0 / (1.0 + mttrHours / mtbfHours);
     }
 
     /**
      * Gets failure rate per year.
      *
-     * @return failure rate per year
+     * @return failure rate per year, or {@link Double#NaN} when unavailable
      */
     public double getFailureRatePerYear() {
       return failureRate * 8760;
@@ -219,24 +221,34 @@ public class OREDADataImporter implements Serializable {
     /**
      * Converts record to map for JSON serialization.
      *
-     * @return map representation
+     * @return map representation, using {@code null} for unavailable or nonfinite numeric values
      */
     public Map<String, Object> toMap() {
       Map<String, Object> map = new HashMap<>();
       map.put("equipmentType", equipmentType);
       map.put("equipmentClass", equipmentClass);
       map.put("failureMode", failureMode);
-      map.put("failureRate_perHour", failureRate);
-      map.put("failureRate_perYear", getFailureRatePerYear());
-      map.put("mtbf_hours", mtbfHours);
-      map.put("mttr_hours", mttrHours);
-      map.put("availability", getAvailability());
+      map.put("failureRate_perHour", finiteOrNull(failureRate));
+      map.put("failureRate_perYear", finiteOrNull(getFailureRatePerYear()));
+      map.put("mtbf_hours", finiteOrNull(mtbfHours));
+      map.put("mttr_hours", finiteOrNull(mttrHours));
+      map.put("availability", finiteOrNull(getAvailability()));
       map.put("dataSource", dataSource);
       map.put("confidence", confidence);
       if (notes != null) {
         map.put("notes", notes);
       }
       return map;
+    }
+
+    /**
+     * Represents unavailable measurements without non-standard JSON numeric literals.
+     *
+     * @param value numeric measurement
+     * @return the finite value, or {@code null}
+     */
+    private static Double finiteOrNull(double value) {
+      return Double.isFinite(value) ? value : null;
     }
 
     @Override
@@ -353,16 +365,16 @@ public class OREDADataImporter implements Serializable {
   }
 
   /**
-   * Parses a double value, handling scientific notation.
+   * Parses a double value, handling scientific notation and unavailable measurements.
    *
    * @param value string value
-   * @return parsed double
+   * @return parsed double, or {@link Double#NaN} for a blank, null or dash
    */
   private double parseDouble(String value) {
-    if (value == null || value.isEmpty() || value.equals("-")) {
-      return 0.0;
+    if (value == null || value.trim().isEmpty() || value.trim().equals("-")) {
+      return Double.NaN;
     }
-    return Double.parseDouble(value);
+    return Double.parseDouble(value.trim());
   }
 
   /**
