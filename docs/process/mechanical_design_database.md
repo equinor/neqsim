@@ -150,6 +150,12 @@ the application. The example checks a finite pressure limit and an ordered tempe
 Project validation should also check joint efficiency, corrosion allowance, and coverage for
 every equipment type used.
 
+Keep each CSV record on its own line with the same number of fields as its header. Quote
+descriptions containing commas and double any embedded quotation marks. Repository integrity
+tests check the header width of every bundled standards CSV and verify selected specifications
+through both the CSV data source and the process design database. Validate external CSV files
+before loading them; the runtime readers do not provide this structural integrity check.
+
 ## Complete Example
 
 The example logs summaries at INFO level; enable INFO output in your Log4j2 configuration to
