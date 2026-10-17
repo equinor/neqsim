@@ -6,7 +6,6 @@
 
 package neqsim.chemicalreactions.chemicalequilibrium;
 
-import Jama.Matrix;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +21,7 @@ import org.apache.commons.math3.optim.linear.SimplexSolver;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.chemicalreactions.ChemicalReactionOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -270,6 +270,7 @@ public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.Therm
    * @param atemp a {@link Jama.Matrix} object
    * @param lagrangeTemp a {@link Jama.Matrix} object
    */
+  @Deprecated
   public void calcx(Matrix atemp, Matrix lagrangeTemp) {
     /*
      * xEts = new double[atemp.getColumnDimension()]; for(int k=0;k<atemp.getColumnDimension();k++){ xEts[k] =
