@@ -1,11 +1,11 @@
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary;
 
+import Jama.Matrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
-import Jama.Matrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -158,43 +158,31 @@ public abstract class NonEquilibriumFluidBoundary
     fvec.set(bulkSystem.getPhases()[0].getNumberOfComponents(), 0, 1.0 - sumx);
     fvec.set(bulkSystem.getPhases()[0].getNumberOfComponents() + 1, 0, 1.0 - sumy);
 
-    Matrix dx = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-    Matrix dy = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-    Matrix x = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-    Matrix y = new Matrix(1, bulkSystem.getPhases()[0].getNumberOfComponents() - 1);
-
-    for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents() - 1; i++) {
-      dy.set(0, i,
-          (bulkSystem.getPhases()[0].getComponent(i).getx() - interphaseSystem.getPhases()[0].getComponent(i).getx()));
-      dx.set(0, i,
-          (bulkSystem.getPhases()[1].getComponent(i).getx() - interphaseSystem.getPhases()[1].getComponent(i).getx()));
-      y.set(0, i, (bulkSystem.getPhases()[0].getComponent(i).getx()));
-      x.set(0, i, (bulkSystem.getPhases()[1].getComponent(i).getx()));
+    int componentCount = bulkSystem.getPhases()[0].getNumberOfComponents();
+    double densityX = bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[1].getMolarMass();
+    double densityY = bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[0].getMolarMass();
+    for (int componentIndex = 0; componentIndex < componentCount - 1; componentIndex++) {
+      double fluxX = 0.0;
+      double fluxY = 0.0;
+      double x = bulkSystem.getPhases()[1].getComponent(componentIndex).getx();
+      double y = bulkSystem.getPhases()[0].getComponent(componentIndex).getx();
+      for (int differenceIndex = 0; differenceIndex < componentCount - 1; differenceIndex++) {
+        double dx = bulkSystem.getPhases()[1].getComponent(differenceIndex).getx()
+            - interphaseSystem.getPhases()[1].getComponent(differenceIndex).getx();
+        double dy = bulkSystem.getPhases()[0].getComponent(differenceIndex).getx()
+            - interphaseSystem.getPhases()[0].getComponent(differenceIndex).getx();
+        fluxX += totalMassTransferCoefficientMatrix[1].get(componentIndex, differenceIndex) * dx;
+        fluxY += totalMassTransferCoefficientMatrix[0].get(componentIndex, differenceIndex) * dy;
+      }
+      fluxX *= densityX;
+      fluxY *= densityY;
+      double errX = nFlux.get(componentIndex, 0) + fluxX - x * totalFlux;
+      double errY = nFlux.get(componentIndex, 0) - fluxY - y * totalFlux;
+      fvec.set(componentCount + 2 + componentIndex, 0, errX);
+      fvec.set(2 * componentCount + 1 + componentIndex, 0, errY);
     }
-
-    Matrix fluxX = totalMassTransferCoefficientMatrix[1].times(dx.transpose()).times(
-        bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[1].getMolarMass());
-    Matrix fluxY = totalMassTransferCoefficientMatrix[0].times(dy.transpose()).times(
-        bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[0].getMolarMass());
-
-    Matrix errX = nFlux.getMatrix(0, bulkSystem.getPhases()[1].getNumberOfComponents() - 2, 0, 0).plus(fluxX)
-        .minus(x.transpose().times(totalFlux));
-    Matrix errY = nFlux.getMatrix(0, bulkSystem.getPhases()[0].getNumberOfComponents() - 2, 0, 0).minus(fluxY)
-        .minus(y.transpose().times(totalFlux));
-
-    for (int i = bulkSystem.getPhases()[0].getNumberOfComponents()
-        + 2; i < (2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 1); i++) {
-      fvec.set(i, 0, errX.get((i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 2)), 0));
-      fvec.set((i + (bulkSystem.getPhases()[0].getNumberOfComponents() - 1)), 0,
-          errY.get((i - (bulkSystem.getPhases()[0].getNumberOfComponents() + 2)), 0));
-    }
-
-    /*
-     * System.out.println("fvec"); fvec.print(30,30); errX.print(10,10); errY.print(10,10);
-     */
-    // fluxX.print(10,10);
-    // fluxY.print(10,10);
-    // Matrix fluxY = totalMassTransferCoefficientMatrix[1]
   }
 
   /**
@@ -624,7 +612,7 @@ public abstract class NonEquilibriumFluidBoundary
 
     totalFlux = sum; // tot.get(0,0);
     // System.out.println("total flux " + totalFlux);
-    return nFlux.transpose().getArray()[0];
+    return nFlux.getData().clone();
   }
 
   /** {@inheritDoc} */
