@@ -27,8 +27,13 @@
   interpolators) must be `private transient` (SpotBugs SE_BAD_FIELD).
 - **Verify APIs before use:** find the class, read constructor/method signatures, never assume
   convenience overloads, enum locations or getter arguments.
-- **Agent/MCP coverage:** after Java formatting or agent/skill mapping changes, run
-  `uv run --project devtools --locked devtools/build_engineering_coverage.py` and commit the generated inventory.
+- **Agent/MCP coverage:** `src/main/resources/neqsim/mcp/engineering-coverage.json` is a generated snapshot,
+  not a source of truth. After Java formatting or agent/skill mapping changes, regenerate it with
+  `uv run --project devtools --locked devtools/build_engineering_coverage.py` and stage the output.
+  For merge conflicts, resolve source and registry conflicts first, then regenerate and `git add` this file.
+  Never hand-merge its JSON or combine branch copies; neither produces a valid inventory of the merged sources.
+  CI rebuilds and validates the snapshot, then commits changed output back to same-repository PR branches
+  and `master` when permissions and branch protection allow. Fork PRs remain validation-only.
   Register new engineering operations with routes and evidence; source presence is not validation.
 - **AI workflow names:** GitHub Actions workflows for agent, skill, MCP, task, or research
   tooling MUST use `ai-<purpose>.yml` in lowercase kebab-case, directly in `.github/workflows/`.

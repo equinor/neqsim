@@ -3,7 +3,8 @@
 
 Source mentions are discovery evidence, never proof of execution or qualification.
 The denominator is public top-level Java source types, not engineering operations.
-Run with --check in CI; regenerate after changing sources, skills or registrations.
+CI rebuilds the inventory; --check is an optional local freshness check.
+Regenerate after changing sources, skills or registrations, including after merges.
 """
 import argparse
 import hashlib
@@ -203,7 +204,7 @@ def main(argv=None):
     path = ROOT / OUTPUT
     if args.check:
         if not path.exists() or path.read_text() != rendered:
-            print("Engineering coverage is stale; run uv devtools/build_engineering_coverage.py")
+            print("Engineering coverage is stale; run uv run --project devtools --locked devtools/build_engineering_coverage.py")
             return 1
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
