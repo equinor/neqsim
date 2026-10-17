@@ -824,16 +824,16 @@ public class Manifold extends ProcessEquipmentBaseClass
   /** Target branch velocity for sizing (m/s) - slightly higher than header. */
   private static final double TARGET_BRANCH_VELOCITY = 18.0;
 
-  /** Standard pipe inner diameters in meters (Schedule 40 approximate). */
-  private static final double[] STANDARD_PIPE_IDS = {0.0269, // 1"
-      0.0409, // 1.5"
-      0.0525, // 2"
-      0.0779, // 3"
-      0.1023, // 4"
-      0.1541, // 6"
-      0.2027, // 8"
-      0.2540, // 10"
-      0.3048, // 12"
+  /** Pipe outside diameters in meters for the approximate Schedule 40 sizing inventory. */
+  private static final double[] STANDARD_PIPE_ODS = {0.0334, // 1"
+      0.0483, // 1.5"
+      0.0603, // 2"
+      0.0889, // 3"
+      0.1143, // 4"
+      0.1683, // 6"
+      0.2191, // 8"
+      0.2731, // 10"
+      0.3239, // 12"
       0.3556, // 14"
       0.4064, // 16"
       0.4572, // 18"
@@ -973,13 +973,24 @@ public class Manifold extends ProcessEquipmentBaseClass
    * @return selected standard pipe ID in meters
    */
   private double selectStandardPipeID(double requiredID) {
-    for (double standardID : STANDARD_PIPE_IDS) {
+    for (int index = 0; index < STANDARD_PIPE_ODS.length; index++) {
+      double standardID = getStandardPipeID(index);
       if (standardID >= requiredID) {
         return standardID;
       }
     }
     // If larger than all standard sizes, return the largest
-    return STANDARD_PIPE_IDS[STANDARD_PIPE_IDS.length - 1];
+    return getStandardPipeID(STANDARD_PIPE_ODS.length - 1);
+  }
+
+  /**
+   * Calculate the flow bore from one matched outside-diameter/wall-thickness pair.
+   *
+   * @param index position in the approximate pipe inventory
+   * @return inner diameter in meters
+   */
+  private double getStandardPipeID(int index) {
+    return STANDARD_PIPE_ODS[index] - 2.0 * STANDARD_PIPE_WALLS[index];
   }
 
   /**
@@ -989,8 +1000,8 @@ public class Manifold extends ProcessEquipmentBaseClass
    * @return wall thickness in meters
    */
   private double getWallThicknessForID(double pipeID) {
-    for (int i = 0; i < STANDARD_PIPE_IDS.length; i++) {
-      if (Math.abs(STANDARD_PIPE_IDS[i] - pipeID) < 0.001) {
+    for (int i = 0; i < STANDARD_PIPE_ODS.length; i++) {
+      if (Math.abs(getStandardPipeID(i) - pipeID) < 0.001) {
         return STANDARD_PIPE_WALLS[i];
       }
     }

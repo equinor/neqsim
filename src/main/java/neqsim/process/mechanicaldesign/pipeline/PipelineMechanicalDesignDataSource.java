@@ -29,7 +29,7 @@ public class PipelineMechanicalDesignDataSource {
   private static final String MATERIAL_QUERY = "SELECT * FROM MaterialPipeProperties WHERE grade='%s'";
 
   /** Query template for company-specific design factors. */
-  private static final String DESIGN_FACTORS_QUERY = "SELECT SPECIFICATION, MAXVALUE, MINVALUE FROM TechnicalRequirements_Process "
+  private static final String DESIGN_FACTORS_QUERY = "SELECT SPECIFICATION, MAXVALUE, MINVALUE, UNIT FROM TechnicalRequirements_Process "
       + "WHERE EQUIPMENTTYPE='Pipeline' AND Company='%s'";
 
   /** Query template for piping requirements. */
@@ -94,7 +94,7 @@ public class PipelineMechanicalDesignDataSource {
     public double safetyFactor = 1.0;
     /** Design code. */
     public String designCode = "ASME_B31_8";
-    /** Fabrication tolerance. */
+    /** Remaining-wall factor after negative mill tolerance, e.g. 0.875 for a 12.5% tolerance. */
     public double fabricationTolerance = 0.875;
   }
 
@@ -210,13 +210,15 @@ public class PipelineMechanicalDesignDataSource {
           break;
         case "fabricationtolerance":
           if (!Double.isNaN(maxValue)) {
-            factors.fabricationTolerance = maxValue;
+            factors.fabricationTolerance = remainingWallFactor(maxValue, dataSet.getString("UNIT"));
           }
           break;
         default:
           break;
         }
       }
+    } catch (IllegalArgumentException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.warn("Could not load design factors for company: " + companyIdentifier, ex);
     }
@@ -293,8 +295,8 @@ public class PipelineMechanicalDesignDataSource {
     }
 
     String query = String.format(Locale.ROOT,
-        "SELECT SPECIFICATION, MINVALUE, MAXVALUE FROM %s WHERE STANDARD_CODE='%s' AND EQUIPMENTTYPE='%s'", tableName,
-        designCode, equipmentType);
+        "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT FROM %s WHERE STANDARD_CODE='%s' AND EQUIPMENTTYPE='%s'",
+        tableName, designCode, equipmentType);
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet dataSet = database.getResultSet(query)) {
@@ -322,7 +324,7 @@ public class PipelineMechanicalDesignDataSource {
           }
         } else if (specLower.contains("fabricationtolerance")) {
           if (!Double.isNaN(maxValue)) {
-            factors.fabricationTolerance = 1.0 - maxValue; // Convert 0.125 to 0.875
+            factors.fabricationTolerance = remainingWallFactor(maxValue, dataSet.getString("UNIT"));
           }
         } else if (specLower.contains("temperaturederat")) {
           if (!Double.isNaN(maxValue)) {
@@ -330,6 +332,8 @@ public class PipelineMechanicalDesignDataSource {
           }
         }
       }
+    } catch (IllegalArgumentException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.debug("Could not load from standards table " + tableName + ": " + ex.getMessage());
     }
@@ -409,6 +413,39 @@ public class PipelineMechanicalDesignDataSource {
     }
   }
 
+  /**
+   * Convert explicitly tagged database tolerance values to the calculator's remaining-wall factor. Legacy dimensionless
+   * rows ({@code -}) use the negative tolerance fraction convention.
+   *
+   * @param value stored tolerance or factor
+   * @param unit convention identifier from the database UNIT column
+   * @return remaining fraction of nominal wall, in the interval (0, 1]
+   * @throws IllegalArgumentException if the convention or value is invalid
+   */
+  private double remainingWallFactor(double value, String unit) {
+    String convention = unit == null ? "-" : unit.trim().toLowerCase(Locale.ROOT);
+    double factor;
+    if (convention.isEmpty() || "-".equals(convention) || "negative_wall_tolerance_fraction".equals(convention)) {
+      factor = 1.0 - value;
+    } else if ("remaining_wall_factor".equals(convention)) {
+      factor = value;
+    } else if ("%".equals(convention)) {
+      factor = 1.0 - value / 100.0;
+    } else {
+      throw new IllegalArgumentException("Unsupported fabrication tolerance unit: " + unit);
+    }
+    if (!Double.isFinite(factor) || factor <= 0.0 || factor > 1.0) {
+      throw new IllegalArgumentException("Invalid fabrication tolerance " + value + " with unit " + unit);
+    }
+    return factor;
+  }
+
+  /**
+   * Parse an optional numeric database cell.
+   *
+   * @param value cell text
+   * @return numeric value, or NaN when absent or nonnumeric
+   */
   private double parseDouble(String value) {
     if (value == null || value.isEmpty()) {
       return Double.NaN;
