@@ -102,10 +102,29 @@ public interface FluidBoundaryInterface extends Cloneable {
   public double[] calcFluxes();
 
   /**
-   * getMassTransferCoefficientMatrix.
+   * Returns an independent snapshot of the uncorrected mass-transfer coefficients.
+   *
+   * @return coefficient values indexed by phase, row and column; uninitialized phases remain null
+   */
+  public default double[][][] getMassTransferCoefficientArray() {
+    Matrix[] matrices = getMassTransferCoefficientMatrix();
+    if (matrices == null) {
+      return null;
+    }
+    double[][][] values = new double[matrices.length][][];
+    for (int phase = 0; phase < matrices.length; phase++) {
+      values[phase] = matrices[phase] == null ? null : matrices[phase].getArrayCopy();
+    }
+    return values;
+  }
+
+  /**
+   * Returns the legacy live mass-transfer coefficient views.
    *
    * @return an array of {@link Jama.Matrix} objects
+   * @deprecated Use {@link #getMassTransferCoefficientArray()} for array-based access.
    */
+  @Deprecated
   public Matrix[] getMassTransferCoefficientMatrix();
 
   /**
