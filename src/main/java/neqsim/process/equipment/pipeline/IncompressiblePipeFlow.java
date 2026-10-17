@@ -68,7 +68,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * // Add fittings
  * pipe.addFitting("90-degree elbow", 30.0); // L/D = 30
  * pipe.addFitting("90-degree elbow", 30.0); // Another elbow
- * pipe.addFittingFromDatabase("Gate valve, fully open"); // From database
+ * pipe.addFittingFromDatabase("Gate Valve, full bore, full open"); // From database
  *
  * // Set elevation change
  * pipe.setInletElevation(10);
