@@ -398,8 +398,8 @@ def _exact_grid_key(values, axis_count):
     return rows
 
 
-def _period_change_diagnostics(periods, action_ids, time_unit):
-    """Derive schema-v2 adjacent-period diagnostics from persisted sampled evidence."""
+def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=None):
+    """Derive adjacent-period diagnostics from persisted sampled and accepted-state evidence."""
     diagnostics = []
     for from_period, to_period in zip(periods, periods[1:]):
         from_envelope = from_period.get("envelope_evidence")
@@ -420,6 +420,30 @@ def _period_change_diagnostics(periods, action_ids, time_unit):
             "to_value": to_value,
             "delta": float(to_value) - float(from_value),
         } for action_id, from_value, to_value in zip(action_ids, from_values, to_values)]
+        state_changes = None
+        if state_metric_ids is not None:
+            from_metrics = from_period.get("accepted_state_metrics")
+            to_metrics = to_period.get("accepted_state_metrics")
+            if (not isinstance(from_metrics, list) or not isinstance(to_metrics, list)
+                    or len(from_metrics) != len(state_metric_ids)
+                    or len(to_metrics) != len(state_metric_ids)):
+                return None
+            state_changes = []
+            for metric_id, from_metric, to_metric in zip(state_metric_ids, from_metrics, to_metrics):
+                if (not isinstance(from_metric, dict) or not isinstance(to_metric, dict)
+                        or from_metric.get("metric_id") != metric_id
+                        or to_metric.get("metric_id") != metric_id
+                        or from_metric.get("unit") != to_metric.get("unit")
+                        or not _number(from_metric.get("value"))
+                        or not _number(to_metric.get("value"))):
+                    return None
+                state_changes.append({
+                    "metric_id": metric_id,
+                    "unit": from_metric.get("unit"),
+                    "from_value": from_metric.get("value"),
+                    "to_value": to_metric.get("value"),
+                    "delta": float(to_metric.get("value")) - float(from_metric.get("value")),
+                })
 
         from_slices = from_envelope.get("slices")
         to_slices = to_envelope.get("slices")
@@ -511,7 +535,7 @@ def _period_change_diagnostics(periods, action_ids, time_unit):
                 "from_bottleneck_transition_count": len(from_transitions),
                 "to_bottleneck_transition_count": len(to_transitions),
             })
-        diagnostics.append({
+        diagnostic = {
             "from_period_id": from_period.get("period_id"),
             "to_period_id": to_period.get("period_id"),
             "from_elapsed_time": from_period.get("elapsed_time"),
@@ -523,7 +547,10 @@ def _period_change_diagnostics(periods, action_ids, time_unit):
             "added_slice_axes": [list(axes) for axes in to_by_axes if axes not in from_by_axes],
             "slice_changes": slice_changes,
             "advisory": True,
-        })
+        }
+        if state_changes is not None:
+            diagnostic["accepted_state_changes"] = state_changes
+        diagnostics.append(diagnostic)
     return diagnostics
 
 
@@ -537,7 +564,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2):
+    if schema_version not in (1, 2, 3):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -550,6 +577,12 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
     if action_ids is None:
         reasons.append("invalid_lifecycle_action_ids")
         action_ids = []
+    state_metric_ids = None
+    if schema_version == 3:
+        state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
+        if state_metric_ids is None:
+            reasons.append("invalid_lifecycle_state_metric_ids")
+            state_metric_ids = []
     periods = evidence.get("periods")
     period_count = evidence.get("period_count")
     if (not _positive_integer(period_count) or not isinstance(periods, list)
@@ -564,6 +597,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
     seen_period_ids = set()
     previous_elapsed = None
     period_rows = []
+    state_metric_units = None
     current_envelope = None
     for index, row in enumerate(periods):
         prefix = "lifecycle_period_{}".format(index)
@@ -586,6 +620,28 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             previous_elapsed = float(elapsed)
         if row.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + "_time_unit_mismatch")
+        if schema_version == 3:
+            metrics = row.get("accepted_state_metrics")
+            valid_metrics = (isinstance(metrics, list)
+                             and len(metrics) == len(state_metric_ids))
+            metric_units = []
+            if valid_metrics:
+                for metric_id, metric in zip(state_metric_ids, metrics):
+                    if (not isinstance(metric, dict)
+                            or metric.get("metric_id") != metric_id
+                            or not _text(metric.get("metric_name"))
+                            or not _number(metric.get("value"))
+                            or not _text(metric.get("unit"))
+                            or not _text(metric.get("provenance"))):
+                        valid_metrics = False
+                        break
+                    metric_units.append(metric.get("unit"))
+            if not valid_metrics:
+                reasons.append(prefix + "_invalid_accepted_state_metrics")
+            elif state_metric_units is None:
+                state_metric_units = metric_units
+            elif state_metric_units != metric_units:
+                reasons.append(prefix + "_accepted_state_metric_unit_mismatch")
 
         envelope = row.get("envelope_evidence")
         if not isinstance(envelope, dict):
@@ -658,8 +714,9 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version == 2:
-        expected_period_changes = _period_change_diagnostics(periods, action_ids, evidence.get("time_unit"))
+    if schema_version in (2, 3):
+        expected_period_changes = _period_change_diagnostics(
+            periods, action_ids, evidence.get("time_unit"), state_metric_ids if schema_version == 3 else None)
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")

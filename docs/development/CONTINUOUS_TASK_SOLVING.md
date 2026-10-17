@@ -995,12 +995,19 @@ mismatch withholds the proposal. Accepted lifecycle evidence is stored in the sa
 the existing change-driven `evidence_current`, supersession and `revalidation_of` path; it does not create a second
 task-state or optimization architecture.
 
-New lifecycle exports use schema version 2 and include exact sampled `period_change_diagnostics`. For each adjacent
+Lifecycle exports without accepted physical-state metrics use schema version 2 and include exact sampled
+`period_change_diagnostics`. For each adjacent
 period pair these record accepted-action deltas, comparable/added/removed slice axes, common sampled points,
 feasible-to-infeasible changes, infeasible-to-feasible changes, and sampled leading-constraint changes. The guard
 reconstructs the complete diagnostic from the persisted period envelopes and rejects any mismatch. It never
-interpolates changed grids or treats the sampled counts as a continuous boundary. Schema version 1 remains accepted
-for historical ledger evidence, but it does not carry these diagnostics.
+interpolates changed grids or treats the sampled counts as a continuous boundary.
+
+Schema version 3 additionally binds independently accepted physical-state metrics to every period. Each period must
+carry the same ordered metric IDs and units, finite values, and explicit provenance. The guard reconstructs exact
+adjacent-period state deltas and rejects missing, reordered, non-finite, unit-changed, or modified state evidence.
+Use this boundary for accepted shared-reservoir pressure, production/injection rates, cumulative throughput and
+shared-power snapshots; do not populate it from an unconverged, rejected, stale, partially restored, or interpolated
+state. Schema versions 1 and 2 remain accepted for historical ledger evidence.
 
 Map every file that defines routing, constraints, limits, or model inputs to the production `guard`, including
 mapped network pump/compressor power, common-shaft speed and power, driver limits, and shared host-power limits.

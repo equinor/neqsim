@@ -29,6 +29,7 @@ import neqsim.process.util.optimizer.PlantConstraintEvidence;
 import neqsim.process.util.optimizer.PlantConstraintParticipant;
 import neqsim.process.util.optimizer.PlantConstraintScope;
 import neqsim.process.util.optimizer.PlantSharedResourceEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeLifecycleStudy.AcceptedStateMetric;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator;
 import neqsim.process.util.optimizer.ProcessModelSimulationEvaluator.EvaluationResult;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintSeverity;
@@ -412,6 +413,43 @@ class FieldWellNetworkProcessUnitTest {
       previousDifference = difference;
     }
     assertTrue(previousDifference < 1.0e-3, "Finest pair must agree within 0.1% at all common times");
+  }
+
+  /** Map exact accepted shared-reservoir states into the lifecycle metric contract without interpolation. */
+  @Test
+  void mapsAcceptedSharedReservoirPeriodsToLifecycleStateMetrics() {
+    double[][] history = runSharedReservoirPeriods(new double[] {21600.0, 21600.0, 21600.0, 21600.0});
+    for (int index = 0; index < history.length; index++) {
+      double[] sample = history[index];
+      String provenance = "canonical shared-reservoir accepted step " + (index + 1);
+      AcceptedStateMetric pressure = new AcceptedStateMetric("reservoir-pressure", "Shared reservoir pressure",
+          sample[1], "bara", provenance);
+      AcceptedStateMetric production = new AcceptedStateMetric("production-rate", "Accepted production rate", sample[2],
+          "kg/s", provenance);
+      AcceptedStateMetric injection = new AcceptedStateMetric("injection-rate", "Accepted injection rate", sample[3],
+          "kg/s", provenance);
+      AcceptedStateMetric power = new AcceptedStateMetric("shared-power", "Accepted shared shaft power", sample[4],
+          "kW", provenance);
+      AcceptedStateMetric produced = new AcceptedStateMetric("cumulative-production", "Cumulative production",
+          sample[5], "kg", provenance);
+      AcceptedStateMetric injected = new AcceptedStateMetric("cumulative-injection", "Cumulative injection", sample[6],
+          "kg", provenance);
+
+      assertEquals(sample[1], pressure.getValue(), 0.0);
+      assertEquals(sample[2], production.getValue(), 0.0);
+      assertEquals(sample[3], injection.getValue(), 0.0);
+      assertEquals(sample[4], power.getValue(), 0.0);
+      assertEquals(sample[5], produced.getValue(), 0.0);
+      assertEquals(sample[6], injected.getValue(), 0.0);
+      assertEquals(provenance, pressure.getProvenance());
+      assertEquals("bara", pressure.toEvidenceMap().get("unit"));
+      assertTrue(Double.isFinite(power.getValue()) && power.getValue() > 0.0);
+    }
+    assertTrue(history[3][1] < history[0][1]);
+    assertTrue(history[3][2] < history[0][2]);
+    assertTrue(history[3][3] > history[0][3]);
+    assertTrue(history[3][5] > history[0][5]);
+    assertTrue(history[3][6] > history[0][6]);
   }
 
   /**
