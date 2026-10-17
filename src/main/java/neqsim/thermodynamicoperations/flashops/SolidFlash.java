@@ -3,7 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -19,7 +19,7 @@ public class SolidFlash extends TPflash {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SolidFlash.class);
-  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   // SystemInterface clonedSystem;
   boolean multiPhaseTest = false;

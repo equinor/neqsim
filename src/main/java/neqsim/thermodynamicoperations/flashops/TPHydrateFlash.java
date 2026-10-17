@@ -3,7 +3,7 @@ package neqsim.thermodynamicoperations.flashops;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.phase.PhaseHydrate;
@@ -30,7 +30,7 @@ public class TPHydrateFlash extends TPflash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Dense linear algebra used by the Newton fallback. */
-  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   /** Maximum iterations in each bounded solve. */
   private static final int MAX_HYDRATE_ITERATIONS = 100;
   /** Log water-fugacity convergence tolerance. */

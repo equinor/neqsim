@@ -6,7 +6,7 @@
 
 package neqsim.statistics.dataanalysis.datasmoothing;
 
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 
 /**
@@ -16,7 +16,7 @@ import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
  * @version $Id: $Id
  */
 public class DataSmoother {
-  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   double[] nonSmoothedNumbers;
   double[] smoothedNumbers;

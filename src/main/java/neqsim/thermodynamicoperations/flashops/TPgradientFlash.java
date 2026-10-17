@@ -7,7 +7,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import java.util.Arrays;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -20,7 +20,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TPgradientFlash extends Flash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   private SystemInterface system;
   private double temperature;
   private double height;

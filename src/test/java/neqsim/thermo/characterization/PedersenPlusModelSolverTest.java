@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import Jama.Matrix;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -100,7 +100,7 @@ class PedersenPlusModelSolverTest {
     assertArrayEquals(expectedJacobian.getArray()[1], solver.Jac[1], 0.0);
     assertArrayEquals(expectedResidual.getColumnPackedCopy(), solver.fvec, 0.0);
     assertArrayEquals(characterization.getPlusCoefs(), solver.sol, 0.0);
-    assertEquals(expectedResidual.norm2(), new JamaLinearAlgebra().euclideanNorm(solver.fvec), 1.0e-12);
+    assertEquals(expectedResidual.norm2(), new EjmlLinearAlgebra().euclideanNorm(solver.fvec), 1.0e-12);
   }
 
   /**
@@ -128,7 +128,7 @@ class PedersenPlusModelSolverTest {
     Matrix jacobian = new Matrix(solver.Jac);
     Matrix residual = new Matrix(solver.fvec, solver.fvec.length);
     double[] expectedStep = jacobian.solve(residual).getColumnPackedCopy();
-    JamaLinearAlgebra algebra = new JamaLinearAlgebra();
+    EjmlLinearAlgebra algebra = new EjmlLinearAlgebra();
     double[] actualStep = fractionCount == 2 ? algebra.solve(solver.Jac, solver.fvec)
         : algebra.solveLeastSquares(solver.Jac, solver.fvec);
     assertArrayEquals(expectedStep, actualStep, 0.0);
@@ -168,7 +168,7 @@ class PedersenPlusModelSolverTest {
     Matrix jacobian = new Matrix(solver.Jac).copy();
     Matrix residual = new Matrix(solver.fvec, solver.fvec.length);
     double[] expectedStep = jacobian.solve(residual).getColumnPackedCopy();
-    double[] actualStep = new JamaLinearAlgebra().solve(solver.Jac, solver.fvec);
+    double[] actualStep = new EjmlLinearAlgebra().solve(solver.Jac, solver.fvec);
     assertArrayEquals(expectedStep, actualStep, 0.0);
     assertArrayEquals(residual.getColumnPackedCopy(), solver.fvec, 0.0);
     for (int row = 0; row < solver.Jac.length; row++) {
