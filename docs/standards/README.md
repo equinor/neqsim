@@ -63,6 +63,14 @@ are 0, 15, 15.55, 20, and 25°C. Although `checkReferenceCondition()` currently
 accepts 25°C as a volume reference temperature, volume-dependent corrections
 are implemented only for 0, 15, 15.55, and 20°C; use one of those four values.
 
+Both ISO 6976 editions reject unsupported or non-finite reference temperatures with
+`IllegalArgumentException` on `calculate()`, `getValue(...)` or explicit
+`checkReferenceCondition()`. The requested references are preserved on rejection;
+there is no fallback to 15°C/25°C. Roundoff within 1e-9°C is canonicalized to an
+existing table key. The historical `15.55` key approximates 60°F; the exact
+conversion, 15.555555...°C, is rejected and must not be silently rounded by an
+integration. Select the legacy key explicitly if that is the intended convention.
+
 `GCV` and `LCV` are aliases for `SuperiorCalorificValue` and
 `InferiorCalorificValue`. `WI` and `WobbeIndex` are aliases for
 `SuperiorWobbeIndex`. `StandardInterface` declares the generic

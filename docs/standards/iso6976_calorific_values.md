@@ -118,6 +118,19 @@ produce no water upon combustion (e.g. N$_2$, CO$_2$), both values are zero.
 
 The tabulated reference temperatures available in NeqSim are $t_1 \in \{0, 15, 20, 25, 15.55\}$ &deg;C.
 
+For both editions, `calculate()`, `getValue(...)` and `checkReferenceCondition()`
+throw `IllegalArgumentException` for unsupported or non-finite references. Both
+references are validated before either is changed or calculation accumulators are
+reset. A failed request therefore cannot publish a value at substituted defaults;
+set supported references explicitly and calculate again to recover.
+
+Only floating-point roundoff within 1e-9 &deg;C of an existing table key is
+canonicalized. This is not interpolation. The legacy `15.55` key is an approximate
+60 &deg;F convention; the exact converted value 15.555555... &deg;C is outside that
+roundoff tolerance and is rejected. The existing 25 &deg;C volume-reference
+acceptance remains for compatibility, but a 25 &deg;C volume-correction table is
+not implemented. Use 0, 15, 15.55 or 20 &deg;C for volume-dependent corrections.
+
 ### Step 2 - Mixture Compressibility Factor
 
 The compressibility factor of the gas mixture at the volume reference
