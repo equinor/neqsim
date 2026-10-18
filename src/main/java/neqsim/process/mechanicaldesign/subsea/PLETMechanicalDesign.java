@@ -134,8 +134,8 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     double hubSize = plet.getNominalBoreInches() * 25.4; // Convert to mm
     double outerDiameter = hubSize * 1.5; // Approximate OD
 
-    // SMYS for F22 is approximately 414 MPa
-    double smys = 414.0; // MPa
+    // Structural substrate only; the legacy F22 hub name assumes Class 3.
+    double smys = SubseaDesignData.yieldStrength(hubMaterialGrade);
     double designFactor = 0.72;
     double jointFactor = 1.0;
     double tempDeratingFactor = 1.0;
@@ -562,6 +562,18 @@ public class PLETMechanicalDesign extends MechanicalDesign {
    */
   public void setStructureMaterialGrade(String structureMaterialGrade) {
     this.structureMaterialGrade = structureMaterialGrade;
+  }
+
+  /**
+   * Sets the pressure-bearing hub substrate. The default F22-Inconel625 means F22 Class 3 with nonstructural Inconel
+   * cladding; select F22-Class1 explicitly for Class 1 forgings.
+   *
+   * @param materialGrade qualified grade in MaterialProperties_Subsea.csv
+   * @throws IllegalArgumentException if the grade is unknown
+   */
+  public void setHubMaterialGrade(String materialGrade) {
+    SubseaDesignData.yieldStrength(materialGrade);
+    this.hubMaterialGrade = materialGrade;
   }
 
   /**

@@ -696,7 +696,7 @@ exportPLET.initMechanicalDesign();
 PLETMechanicalDesign pletDesign =
     (PLETMechanicalDesign) exportPLET.getMechanicalDesign();
 pletDesign.setMaxOperationPressure(250.0);
-pletDesign.setMaterialGrade("X65");
+pletDesign.setHubMaterialGrade("F22");  // F22 Class 3 pressure-bearing hub
 pletDesign.setDesignStandardCode("DNV-ST-F101");
 pletDesign.calcDesign();
 
@@ -791,6 +791,13 @@ for (SubseaCostEstimator.Region region : regions) {
         String.format("%,.0f", regional.getTotalCost()));
 }
 ```
+
+`SubseaCostEstimator` applies one regional multiplier to all monetary outputs,
+including BOM unit rates and contingency, using GOM as the baseline. Physical
+quantities, durations and manhours remain unchanged. Region setters revalue an
+existing estimate without compounding; the default constructor selects NORWAY.
+These factors and baseline hourly/vessel rates are Java screening assumptions,
+not values read from `SubseaLaborRates.csv` or `SubseaVesselRates.csv`.
 
 ### Integrated Cost Estimation from Mechanical Design
 
