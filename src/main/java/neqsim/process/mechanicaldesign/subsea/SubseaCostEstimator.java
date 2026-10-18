@@ -21,6 +21,13 @@ import com.google.gson.GsonBuilder;
  * <li>Contingency and risk allowances</li>
  * </ul>
  *
+ * <p>
+ * Internally costs and hourly rates use the Gulf of Mexico screening baseline. Reported USD costs and rates are
+ * multiplied by one regional factor; physical quantities and manhours do not change. Region selection is idempotent and
+ * also revalues an existing estimate. The factor is a coarse estimating assumption, not a category-specific labor
+ * database.
+ * </p>
+ *
  * @author ESOL
  * @version 1.0
  */
@@ -147,14 +154,16 @@ public class SubseaCostEstimator {
    * @param region cost region
    */
   public SubseaCostEstimator(Region region) {
-    this.region = region;
-    applyRegionFactor();
+    setRegion(region);
   }
 
   /**
-   * Apply region cost factor.
+   * Gets the uniform cost multiplier relative to the Gulf of Mexico screening baseline. It applies to monetary outputs,
+   * not durations, quantities, or manhours.
+   *
+   * @return regional cost multiplier
    */
-  private void applyRegionFactor() {
+  public double getRegionalCostFactor() {
     double factor = 1.0;
     switch (region) {
     case NORWAY:
@@ -174,9 +183,7 @@ public class SubseaCostEstimator {
       break;
     }
 
-    engineeringRate *= factor;
-    fabricationRate *= factor;
-    installationRate *= factor;
+    return factor;
   }
 
   /**
@@ -225,6 +232,43 @@ public class SubseaCostEstimator {
     projectManagementCost = equipmentCost * projectMgmtPct;
 
     // Calculate totals
+    calculateTotals();
+  }
+
+  /**
+   * Calculates a PLEM estimate using its own slot-based procurement bands. Slots up to two use Small, three to four use
+   * Medium, and five or more use Large. Installation is estimated from weight and depth by the common vessel-duration
+   * model, not the CSV installation allowance.
+   *
+   * @param dryWeightTonnes dry weight in tonnes
+   * @param numberOfSlots number of branch slots, at least one
+   * @param branchSizeInches branch valve size in inches
+   * @param waterDepthM water depth in meters
+   * @param hasBranchIsolationValves whether each branch has an isolation valve
+   * @throws IllegalArgumentException if the slot count is less than one
+   */
+  public void calculatePLEMCost(double dryWeightTonnes, int numberOfSlots, double branchSizeInches, double waterDepthM,
+      boolean hasBranchIsolationValves) {
+    if (numberOfSlots < 1) {
+      throw new IllegalArgumentException("A PLEM requires at least one branch slot");
+    }
+    String band = numberOfSlots <= 2 ? "Small" : numberOfSlots <= 4 ? "Medium" : "Large";
+    String[] selectors = {"EquipmentType", "PLEM", "SizeCategory", band};
+    double baseCost = SubseaDesignData.value("SubseaCostEstimation", "BaseCostUSD", selectors);
+    double materialRate = SubseaDesignData.value("SubseaCostEstimation", "MaterialCostPerTonneUSD", selectors);
+    double fabricationRatePerTonne = SubseaDesignData.value("SubseaCostEstimation", "FabricationCostPerTonneUSD",
+        selectors);
+    engineeringPct = SubseaDesignData.value("SubseaCostEstimation", "EngineeringPct", selectors);
+    projectMgmtPct = SubseaDesignData.value("SubseaCostEstimation", "ProjectMgmtPct", selectors);
+    contingencyPct = SubseaDesignData.value("SubseaCostEstimation", "ContingencyPct", selectors);
+    equipmentCost = baseCost + dryWeightTonnes * materialRate;
+    if (hasBranchIsolationValves) {
+      equipmentCost += numberOfSlots * branchSizeInches * 25000;
+    }
+    fabricationCost = dryWeightTonnes * fabricationRatePerTonne;
+    calculateSubseaInstallation(dryWeightTonnes, waterDepthM, false);
+    engineeringCost = equipmentCost * engineeringPct;
+    projectManagementCost = equipmentCost * projectMgmtPct;
     calculateTotals();
   }
 
@@ -643,29 +687,29 @@ public class SubseaCostEstimator {
     Map<String, Object> costs = new LinkedHashMap<String, Object>();
 
     Map<String, Object> direct = new LinkedHashMap<String, Object>();
-    direct.put("equipmentCostUSD", equipmentCost);
-    direct.put("fabricationCostUSD", fabricationCost);
-    direct.put("installationCostUSD", installationCost);
+    direct.put("equipmentCostUSD", equipmentCost * getRegionalCostFactor());
+    direct.put("fabricationCostUSD", fabricationCost * getRegionalCostFactor());
+    direct.put("installationCostUSD", installationCost * getRegionalCostFactor());
     costs.put("directCosts", direct);
 
     Map<String, Object> indirect = new LinkedHashMap<String, Object>();
-    indirect.put("engineeringCostUSD", engineeringCost);
-    indirect.put("projectManagementCostUSD", projectManagementCost);
+    indirect.put("engineeringCostUSD", engineeringCost * getRegionalCostFactor());
+    indirect.put("projectManagementCostUSD", projectManagementCost * getRegionalCostFactor());
     costs.put("indirectCosts", indirect);
 
     Map<String, Object> install = new LinkedHashMap<String, Object>();
-    install.put("vesselCostUSD", vesselCost);
+    install.put("vesselCostUSD", vesselCost * getRegionalCostFactor());
     install.put("vesselDays", vesselDays);
-    install.put("vesselDayRateUSD", vesselDayRate);
+    install.put("vesselDayRateUSD", vesselDayRate * getRegionalCostFactor());
     install.put("rovHours", rovHours);
     if (divingHours > 0) {
       install.put("divingHours", divingHours);
     }
     costs.put("installationBreakdown", install);
 
-    costs.put("contingencyUSD", contingency);
+    costs.put("contingencyUSD", contingency * getRegionalCostFactor());
     costs.put("contingencyPct", contingencyPct * 100);
-    costs.put("totalCostUSD", totalCost);
+    costs.put("totalCostUSD", totalCost * getRegionalCostFactor());
 
     Map<String, Object> labor = new LinkedHashMap<String, Object>();
     labor.put("engineeringManhours", engineeringManhours);
@@ -675,6 +719,7 @@ public class SubseaCostEstimator {
     costs.put("laborEstimate", labor);
 
     costs.put("region", region.name());
+    costs.put("regionalCostFactor", getRegionalCostFactor());
     costs.put("currency", currency.name());
 
     return costs;
@@ -762,6 +807,7 @@ public class SubseaCostEstimator {
     contItem.put("totalCostUSD", contingency);
     bom.add(contItem);
 
+    applyRegionalCosts(bom);
     return bom;
   }
 
@@ -783,7 +829,7 @@ public class SubseaCostEstimator {
    * @return equipment cost in USD
    */
   public double getEquipmentCost() {
-    return equipmentCost;
+    return equipmentCost * getRegionalCostFactor();
   }
 
   /**
@@ -792,7 +838,7 @@ public class SubseaCostEstimator {
    * @return fabrication cost in USD
    */
   public double getFabricationCost() {
-    return fabricationCost;
+    return fabricationCost * getRegionalCostFactor();
   }
 
   /**
@@ -801,7 +847,7 @@ public class SubseaCostEstimator {
    * @return installation cost in USD
    */
   public double getInstallationCost() {
-    return installationCost;
+    return installationCost * getRegionalCostFactor();
   }
 
   /**
@@ -810,7 +856,7 @@ public class SubseaCostEstimator {
    * @return total cost in USD
    */
   public double getTotalCost() {
-    return totalCost;
+    return totalCost * getRegionalCostFactor();
   }
 
   /**
@@ -841,13 +887,16 @@ public class SubseaCostEstimator {
   }
 
   /**
-   * Set region.
+   * Sets the region for monetary reporting, including an already calculated estimate.
    *
    * @param region region
+   * @throws IllegalArgumentException if region is null
    */
   public void setRegion(Region region) {
+    if (region == null) {
+      throw new IllegalArgumentException("Subsea cost region must not be null");
+    }
     this.region = region;
-    applyRegionFactor();
   }
 
   /**
@@ -975,6 +1024,24 @@ public class SubseaCostEstimator {
     anodes.put("totalCost", anodeCount * 500.0);
     bom.add(anodes);
 
+    applyRegionalCosts(bom);
     return bom;
   }
+
+  /**
+   * Applies the reporting multiplier once to newly created BOM monetary values.
+   *
+   * @param items new bill-of-materials rows
+   */
+  private void applyRegionalCosts(List<Map<String, Object>> items) {
+    for (Map<String, Object> item : items) {
+      for (String key : new String[] {"unitCostUSD", "totalCostUSD", "unitCost", "totalCost"}) {
+        Object value = item.get(key);
+        if (value instanceof Number) {
+          item.put(key, ((Number) value).doubleValue() * getRegionalCostFactor());
+        }
+      }
+    }
+  }
+
 }

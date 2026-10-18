@@ -1158,17 +1158,17 @@ public class MechanicalDesign implements java.io.Serializable {
    * @param companySpecificDesignStandards the companySpecificDesignStandards to set
    */
   public void setCompanySpecificDesignStandards(String companySpecificDesignStandards) {
-    this.companySpecificDesignStandards = companySpecificDesignStandards == null ? "" : companySpecificDesignStandards;
+    this.companySpecificDesignStandards = DesignStandard.normalizeCompanyIdentifier(companySpecificDesignStandards);
 
     if (this.companySpecificDesignStandards.equals("StatoilTR")) {
       getDesignStandard().put("pressure vessel design code",
           new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
       getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("StatoilTR", this));
       getDesignStandard().put("adsorption dehydration process design",
           new AdsorptionDehydrationDesignStandard("", this));
       getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("StatoilTR", this));
       getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("plate Joint Efficiency design codes",
           new JointEfficiencyPlateStandard("Statoil_TR1414", this));
@@ -1183,11 +1183,11 @@ public class MechanicalDesign implements java.io.Serializable {
       getDesignStandard().put("pressure vessel design code",
           new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
       getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("StatoilTR", this));
       getDesignStandard().put("adsorption dehydration process design",
           new AdsorptionDehydrationDesignStandard("", this));
       getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
+      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("StatoilTR", this));
       getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
       getDesignStandard().put("plate Joint Efficiency design codes",
           new JointEfficiencyPlateStandard("Statoil_TR1414", this));

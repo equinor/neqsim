@@ -685,6 +685,12 @@ public class SURFCostEstimator {
   /** PLEM header size in inches. */
   private double plemHeaderSizeInches = 16.0;
 
+  /** Common number of slots per PLEM for the procurement cost band. */
+  private int plemSlots = 4;
+
+  /** Common PLEM branch isolation-valve size in inches. */
+  private double plemBranchSizeInches = 8.0;
+
   /** Number of jumpers (well to manifold). */
   private int numberOfJumpers = 0;
 
@@ -935,7 +941,7 @@ public class SURFCostEstimator {
     // PLEMs
     if (numberOfPLEMs > 0) {
       est = new SubseaCostEstimator(region);
-      est.calculatePLETCost(plemWeightTonnes, plemHeaderSizeInches, waterDepthM, true, true);
+      est.calculatePLEMCost(plemWeightTonnes, plemSlots, plemBranchSizeInches, waterDepthM, true);
       double plemCost = est.getTotalCost();
       double totalPlemCost = plemCost * numberOfPLEMs;
       subseaCostUSD += totalPlemCost;
@@ -1797,12 +1803,39 @@ public class SURFCostEstimator {
   }
 
   /**
-   * Set PLEM header size.
+   * Sets the PLEM header dimensional assumption. Procurement cost bands are selected by PLEM slot count; branch valve
+   * costs use the separate branch-size assumption.
    *
    * @param plemHeaderSizeInches header size in inches
    */
   public void setPlemHeaderSizeInches(double plemHeaderSizeInches) {
     this.plemHeaderSizeInches = plemHeaderSizeInches;
+  }
+
+  /**
+   * Sets the common number of branch slots per PLEM used for procurement costing.
+   *
+   * @param plemSlots number of slots, at least one; default four
+   * @throws IllegalArgumentException if fewer than one slot is specified
+   */
+  public void setPlemSlots(int plemSlots) {
+    if (plemSlots < 1) {
+      throw new IllegalArgumentException("A PLEM requires at least one branch slot");
+    }
+    this.plemSlots = plemSlots;
+  }
+
+  /**
+   * Sets the common PLEM branch isolation-valve size used for procurement costing.
+   *
+   * @param plemBranchSizeInches positive branch size in inches; default eight
+   * @throws IllegalArgumentException if the size is nonpositive or nonfinite
+   */
+  public void setPlemBranchSizeInches(double plemBranchSizeInches) {
+    if (!Double.isFinite(plemBranchSizeInches) || plemBranchSizeInches <= 0) {
+      throw new IllegalArgumentException("PLEM branch size must be finite and positive");
+    }
+    this.plemBranchSizeInches = plemBranchSizeInches;
   }
 
   /**
