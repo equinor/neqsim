@@ -80,6 +80,24 @@ public class DesignStandard implements java.io.Serializable {
   }
 
   /**
+   * Resolves historical names for the bundled Statoil technical requirements.
+   *
+   * @param identifier requested company identifier
+   * @return canonical identifier, or the unchanged identifier for another company
+   */
+  public static String normalizeCompanyIdentifier(String identifier) {
+    if (identifier == null) {
+      return "";
+    }
+    String value = identifier.trim();
+    if ("Statoil".equalsIgnoreCase(value) || "Statoil_TR1414".equalsIgnoreCase(value)
+        || "StatoilTR".equalsIgnoreCase(value)) {
+      return "StatoilTR";
+    }
+    return value;
+  }
+
+  /**
    * Compute the safety margins for the associated equipment.
    *
    * @return margin result or {@link MechanicalDesignMarginResult#EMPTY} if unavailable.

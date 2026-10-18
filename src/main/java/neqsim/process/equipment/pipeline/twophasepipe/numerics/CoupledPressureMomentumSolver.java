@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 
 /**
@@ -93,7 +95,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
 
     /** @return corrected conservative state */
     public double[][] getState() {
-      return copy(state);
+      return copyMatrixArray(state);
     }
 
     /** @return corrected cell pressure in Pa */
@@ -132,7 +134,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
      * @return signed kg indexed by face, then gas/oil/water; positive follows increasing cell index
      */
     public double[][] getPhaseMassCorrectionsKg() {
-      return phaseMassCorrectionsKg == null ? new double[0][0] : copy(phaseMassCorrectionsKg);
+      return phaseMassCorrectionsKg == null ? new double[0][0] : copyMatrixArray(phaseMassCorrectionsKg);
     }
 
     /** @return nonlinear correction iterations used */
@@ -263,7 +265,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         gasSoundSpeed, oilSoundSpeed, waterSoundSpeed);
 
     int cellCount = provisionalState.length;
-    double[][] correctedState = copy(provisionalState);
+    double[][] correctedState = copyMatrixArray(provisionalState);
     double[] correctedPressure = pressure.clone();
     double[][] densities = {gasDensity.clone(), oilDensity.clone(), waterDensity.clone()};
     double[][] soundSpeeds = {gasSoundSpeed.clone(), oilSoundSpeed.clone(), waterSoundSpeed.clone()};
@@ -512,7 +514,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         interpolationFraction += damping * (1.0 - interpolationFraction);
         // Rebuild from the immutable predictor: neither the old-pressure defect
         // nor an inventory-limited transfer is silently accumulated twice.
-        correctedState = copy(provisionalState);
+        correctedState = copyMatrixArray(provisionalState);
         phaseMassCorrectionsKg = new double[cellCount + 1][PHASE_COUNT];
         MassFluxCorrectionResult massFluxCorrection = applyMassFluxCorrection(correctedState, timeStep,
             combinedFaceGradients(totalPressureCorrection, lengths, interpolationDefect, interpolationFraction),
@@ -525,7 +527,7 @@ public final class CoupledPressureMomentumSolver implements Serializable {
 
       maximumResidual = calculateMaximumRelativeVolumeResidual(correctedState, areas, densities);
       if (checkerboardCorrectionEnabled && maximumResidual <= relativeVolumeTolerance && interpolationFraction < 1.0) {
-        double[][] completeState = copy(provisionalState);
+        double[][] completeState = copyMatrixArray(provisionalState);
         double[][] completeTransfers = new double[cellCount + 1][PHASE_COUNT];
         MassFluxCorrectionResult completeCorrection = applyMassFluxCorrection(completeState, timeStep,
             combinedFaceGradients(totalPressureCorrection, lengths, interpolationDefect, 1.0), initialPhaseAreas, areas,
@@ -902,14 +904,6 @@ public final class CoupledPressureMomentumSolver implements Serializable {
         throw new IllegalArgumentException("Cell area and length must be positive");
       }
     }
-  }
-
-  private static double[][] copy(double[][] source) {
-    double[][] result = new double[source.length][];
-    for (int row = 0; row < source.length; row++) {
-      result[row] = source[row].clone();
-    }
-    return result;
   }
 
   /** @return maximum nonlinear correction iterations */

@@ -11,7 +11,7 @@ The NeqSim workflow is generic and industry-standard based. It does not encode o
 
 1. Define the isolated inventory with `TrappedInventoryCalculator` using P&ID, line-list, datasheet, or other traceable evidence.
 2. Select a fire exposure with `FireExposureScenario`, typically API 521 pool-fire heat input or a documented incident heat flux.
-3. Select material strength using `MaterialStrengthCurve`, preferably from verified material records. The built-in API 5L lookup is a screening default.
+3. Select material strength using `MaterialStrengthCurve`, preferably from verified material records. The API 5L lookup is a screening source: it accepts equivalent metric aliases such as `L360` for `X52`, records whether ambient strengths came from the database or an explicit built-in entry, and rejects unsupported grades instead of substituting Grade B.
 4. Run `TrappedLiquidFireRuptureStudy` with pipe geometry, wall thickness, optional flange class, optional relief set pressure, and time controls.
 5. Review event times for relief demand, vapor-pocket indication, pipe rupture, and flange failure.
 6. Convert the result to a passive fire protection demand. For consequence analysis,

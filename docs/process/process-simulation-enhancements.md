@@ -179,9 +179,13 @@ counter-current segment calculations with bidirectional mass transfer.
 
 ### Packing Data Available
 
-Packing data comes from `PackingSpecificationLibrary`, which combines built-in entries with
-`designdata/Packing.csv`. Names are resolved with forgiving aliases such as `pall ring 50`,
-`Mellapak250Y`, and `IMTP 70`.
+Packing data comes from `PackingSpecificationLibrary`. Built-in estimates remain authoritative
+for existing aliases; `designdata/Packing.csv` adds material-qualified entries without replacing
+them. Names are resolved with forgiving aliases such as `pall ring 50`, `Mellapak250Y`, and
+`IMTP 70`. For example, `Pall-Ring-50-metal` and `Pall-Ring-50-plastic` select distinct materials.
+Placeholder CSV rows are excluded, and explicit equipment selection rejects unknown names.
+See [packing data and migration guidance](equipment/absorbers.md#packing-data) for defaults,
+provenance, excluded rows and the separate legacy flow-geometry table.
 
 | Random | Structured |
 |--------|------------|

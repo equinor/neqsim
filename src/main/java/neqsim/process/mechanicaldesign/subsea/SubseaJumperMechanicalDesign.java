@@ -213,25 +213,7 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
    * @return SMYS in MPa
    */
   private double getMaterialSMYS(String materialGrade) {
-    if (materialGrade == null) {
-      return 450.0;
-    }
-
-    if (materialGrade.startsWith("X")) {
-      // API 5L grades
-      try {
-        int grade = Integer.parseInt(materialGrade.substring(1));
-        return grade * 6.895; // Convert ksi to MPa
-      } catch (NumberFormatException e) {
-      }
-    } else if (materialGrade.contains("316")) {
-      return 205.0; // 316L stainless
-    } else if (materialGrade.contains("6Mo")) {
-      return 300.0; // 6Mo super austenitic
-    } else if (materialGrade.contains("Duplex")) {
-    }
-
-    return 450.0; // Default X65 equivalent
+    return SubseaDesignData.yieldStrength(materialGrade);
   }
 
   /**

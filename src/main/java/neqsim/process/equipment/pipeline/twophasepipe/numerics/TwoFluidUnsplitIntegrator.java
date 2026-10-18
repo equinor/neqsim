@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -368,12 +370,12 @@ public final class TwoFluidUnsplitIntegrator {
 
     /** @return defensive signed gas/oil/water mass transfers at each face in kg, integrated over accepted substeps */
     public double[][] getPhaseMassFaceTransferKg() {
-      return copy(phaseMassFaceTransferKg);
+      return copyMatrixArray(phaseMassFaceTransferKg);
     }
 
     /** @return defensive gas/oil/water source transfers per cell in kg, including actual cell lengths */
     public double[][] getPhaseMassSourceTransferKg() {
-      return copy(phaseMassSourceTransferKg);
+      return copyMatrixArray(phaseMassSourceTransferKg);
     }
 
     /** @return gas/oil/water inventory residuals in kg against the exact accepted face and source transfers */
@@ -399,11 +401,4 @@ public final class TwoFluidUnsplitIntegrator {
     return copy;
   }
 
-  private static double[][] copy(double[][] values) {
-    double[][] result = new double[values.length][];
-    for (int row = 0; row < values.length; row++) {
-      result[row] = values[row].clone();
-    }
-    return result;
-  }
 }

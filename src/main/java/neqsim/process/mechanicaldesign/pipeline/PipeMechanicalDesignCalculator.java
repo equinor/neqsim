@@ -1616,16 +1616,18 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return true when the grade has explicit built-in SMYS and SMTS values
    */
   public static boolean isSupportedMaterialGrade(String materialGrade) {
-    return materialGrade != null && API_5L_GRADES.containsKey(materialGrade);
+    return materialGrade != null && !materialGrade.trim().isEmpty()
+        && API_5L_GRADES.containsKey(Api5LGrade.normalize(materialGrade));
   }
 
   /**
-   * Set material grade per API 5L.
+   * Sets the material grade, normalizing case, whitespace, and equivalent ISO metric labels.
    *
-   * @param materialGrade material grade (e.g., "X42", "X52", "X65", "X70", "X80")
+   * @param materialGrade material grade (e.g., "X42", "X52", "L360", "X65", "X70", "X80")
+   * @throws IllegalArgumentException if the grade is null or empty
    */
   public void setMaterialGrade(String materialGrade) {
-    this.materialGrade = materialGrade;
+    this.materialGrade = Api5LGrade.normalize(materialGrade);
     updateMaterialProperties();
   }
 

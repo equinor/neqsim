@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.numerics;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations;
 import neqsim.process.equipment.pipeline.twophasepipe.TwoFluidConservationEquations.TransactionalEvaluation;
@@ -177,7 +179,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized void beginLinearization(double[][] state, double[] pressure) {
     validateShape(state, pressure, "linearization");
-    activeSetController.beginLinearization(copy(state), pressure.clone());
+    activeSetController.beginLinearization(copyMatrixArray(state), pressure.clone());
   }
 
   @Override
@@ -188,7 +190,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
   @Override
   public synchronized boolean updateActiveSet(double[][] state, double[] pressure) {
     validateShape(state, pressure, "active-set");
-    return activeSetController.update(copy(state), pressure.clone());
+    return activeSetController.update(copyMatrixArray(state), pressure.clone());
   }
 
   @Override
@@ -379,7 +381,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
         double maximumScaledResidual, double timeIntegrationWeight, double pressureInterpolationTimeScale) {
       endpointSections = cloneSections(endpoint);
       midpointEvaluation = evaluation;
-      this.solvedDirectionalPhaseFaceFluxes = copyDirectionalFluxes(solvedDirectionalPhaseFaceFluxes);
+      this.solvedDirectionalPhaseFaceFluxes = copyMatrixArray(solvedDirectionalPhaseFaceFluxes);
       this.timeStep = timeStep;
       this.startTime = startTime;
       this.maximumScaledResidual = maximumScaledResidual;
@@ -429,7 +431,7 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
      * @return defensive solved gas/oil/water face ledgers, or null for a cell-only candidate
      */
     public DirectionalPhaseFaceFlux[][] getSolvedDirectionalPhaseFaceFluxes() {
-      return copyDirectionalFluxes(solvedDirectionalPhaseFaceFluxes);
+      return copyMatrixArray(solvedDirectionalPhaseFaceFluxes);
     }
 
     /** @return immutable end-state weight: 0.5 for midpoint or 1.0 for backward Euler */
@@ -547,23 +549,4 @@ public final class TwoFluidUnsplitModelAdapter implements UnsplitTransientSolver
     return copy;
   }
 
-  private static double[][] copy(double[][] values) {
-    double[][] result = new double[values.length][];
-    for (int row = 0; row < values.length; row++) {
-      result[row] = values[row].clone();
-    }
-    return result;
-  }
-
-  /** Copy array ownership while retaining immutable face-ledger values. */
-  private static DirectionalPhaseFaceFlux[][] copyDirectionalFluxes(DirectionalPhaseFaceFlux[][] values) {
-    if (values == null) {
-      return null;
-    }
-    DirectionalPhaseFaceFlux[][] result = new DirectionalPhaseFaceFlux[values.length][];
-    for (int face = 0; face < values.length; face++) {
-      result[face] = values[face] == null ? null : values[face].clone();
-    }
-    return result;
-  }
 }

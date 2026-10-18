@@ -649,10 +649,11 @@ per-area version on multi-area plants.
 
 ### Physical-Property Initialization Level
 
-Every `Stream.run()` ends with `initProperties()`, which evaluates mass density,
-viscosity, thermal conductivity and diffusivity. The transport-property
-correlations dominate that cost, and a flowsheet that only needs mass and energy
-balances never reads them.
+With the default `Stream.PropertyInitLevel.FULL`, an active stream initializes
+thermodynamic and physical properties after its flash. `DENSITY_ONLY` retains
+thermodynamic initialization and mass density but skips viscosity, thermal
+conductivity and diffusivity calculations. Use the reduced mode only when the
+downstream calculations do not consume those transport properties.
 
 `setPropertyInitLevel(Stream.PropertyInitLevel)` selects how much of that work is
 done, for the whole area in one call:
@@ -664,7 +665,7 @@ int streamsUpdated = compressionTrain.setPropertyInitLevel(Stream.PropertyInitLe
 // ...and back to the full set before a flow-assurance or heat-exchanger study
 compressionTrain.setPropertyInitLevel(Stream.PropertyInitLevel.FULL);
 
-// Query the current setting (null = never configured, streams stay on FULL)
+// Query the override (null = per-stream control, not a reset to FULL)
 Stream.PropertyInitLevel level = compressionTrain.getPropertyInitLevel();
 ```
 
@@ -676,17 +677,23 @@ The API deliberately mirrors `setMultiPhaseCheck`:
   the number of distinct streams updated.
 - **Re-applied at the start of every run**, through the same seven entry points
   listed above.
-- The default is **unset** (`getPropertyInitLevel()` returns `null`), which
-  leaves each stream on `PropertyInitLevel.FULL` — the historical behaviour.
-- A single stream can still be overridden with
-  `Stream.setPropertyInitLevel(level)`.
+- The default is **unset** (`getPropertyInitLevel()` returns `null`), leaving
+  each stream's own level in control; new streams default to `FULL`.
+- Passing `null` to `ProcessSystem.setPropertyInitLevel` clears the global
+  override but does not reset existing stream levels. Select `FULL` explicitly
+  to restore full-mode configuration across the flowsheet.
+- A non-null flowsheet setting is re-applied at the start of execution and can
+  supersede `Stream.setPropertyInitLevel(level)`. Clear the global override if
+  individual stream settings must remain in control.
 
-> **Warning:** `DENSITY_ONLY` does **not** throw when a transport property is
-> requested afterwards — `getViscosity()`, `getThermalConductivity()` and the
-> diffusion coefficients return `0.0`. That silently corrupts pipeline pressure
-> drop, heat-exchanger UA, mechanical design and every flow-assurance
-> calculation. Switch back to `FULL` (or call `getFluid().initProperties()` on
-> the stream) before reading transport properties.
+> **Warning:** a mode change does not itself recalculate properties. Under
+> `DENSITY_ONLY`, transport getters can expose zero or stale values without
+> signaling that the correlations were skipped. Do not use those values in
+> pipeline, heat-transfer, mechanical-design or flow-assurance calculations.
+> Initialize the current stream fluid explicitly with
+> `stream.getFluid().initProperties()` before reading transport properties.
+> Configure `FULL` for subsequent runs; merely changing the setting does not
+> establish that an unchanged unit was recalculated by a flowsheet run.
 
 Python:
 

@@ -23,7 +23,7 @@ public class PackingSpecificationLibraryTest {
 
   @Test
   public void testCsvPackingDataLoads() {
-    Assertions.assertTrue(PackingSpecificationLibrary.contains("Mellapak250X"));
+    Assertions.assertTrue(PackingSpecificationLibrary.contains("Pall-Ring-50-plastic"));
     Assertions.assertTrue(PackingSpecificationLibrary.contains("IMTP 70"));
     Assertions.assertTrue(PackingSpecificationLibrary.getPackingNames().size() >= 15);
   }

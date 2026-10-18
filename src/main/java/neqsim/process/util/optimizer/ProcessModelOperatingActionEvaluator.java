@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -664,14 +666,9 @@ public final class ProcessModelOperatingActionEvaluator {
       }
       return new CandidateEvaluationResult(action, baselineValue, candidateValue, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
-          copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), copy(evaluation.getConstraintValues()),
-          copy(evaluation.getConstraintMargins()), hydraulicConstraints,
-          evaluation.getProcessBoundaryConstraintEvidence(), diagnostics);
-    }
-
-    /** Returns a defensive array or an empty array for null. */
-    private static double[] copy(double[] values) {
-      return values == null ? new double[0] : Arrays.copyOf(values, values.length);
+          copyArrayOrEmpty(evaluation.getObjectivesRaw()), copyArrayOrEmpty(evaluation.getObjectives()),
+          copyArrayOrEmpty(evaluation.getConstraintValues()), copyArrayOrEmpty(evaluation.getConstraintMargins()),
+          hydraulicConstraints, evaluation.getProcessBoundaryConstraintEvidence(), diagnostics);
     }
 
     /** @return complete immutable action definition */

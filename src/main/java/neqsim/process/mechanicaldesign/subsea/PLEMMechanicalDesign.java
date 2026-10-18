@@ -107,7 +107,9 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
     double pressureMPa = designPressure / 10.0;
     headerWallThickness = (pressureMPa * outerDiameter) / (2 * smys * designFactor);
     headerWallThickness += 3.0; // Corrosion allowance
-    headerWallThickness = Math.max(headerWallThickness, 12.7);
+    double minimumWall = SubseaDesignData.value("TechnicalRequirements_Subsea", "Value", "Company", "Equinor",
+        "EquipmentType", "PLEM", "ParameterName", "MinHeaderWallThickness");
+    headerWallThickness = Math.max(headerWallThickness, minimumWall);
   }
 
   /**
@@ -173,9 +175,8 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    // Use PLET cost calculation with PLEM parameters
-    costEstimator.calculatePLETCost(plem.getDryWeight(), plem.getHeaderSizeInches(), plem.getWaterDepth(),
-        plem.hasBranchIsolationValves(), plem.getNumberOfSlots() > 2);
+    costEstimator.calculatePLEMCost(plem.getDryWeight(), plem.getNumberOfSlots(), plem.getBranchSizeInches(),
+        plem.getWaterDepth(), plem.hasBranchIsolationValves());
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();

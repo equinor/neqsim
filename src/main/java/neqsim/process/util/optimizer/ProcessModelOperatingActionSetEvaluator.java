@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import static neqsim.util.util.ArrayUtils.copyArrayOrEmpty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -944,10 +946,11 @@ public final class ProcessModelOperatingActionSetEvaluator {
       }
       return new CandidateSetEvaluationResult(id, name, provenance, actions, candidateValues, actionEvidence, outcome,
           evaluation.isSimulationConverged(), evaluation.isFeasible(), baselineRestored, baselineSimulationConverged,
-          copy(evaluation.getObjectivesRaw()), copy(evaluation.getObjectives()), objectiveEvidence,
-          copy(evaluation.getConstraintValues()), copy(evaluation.getConstraintMargins()), constraintEvidence,
-          hydraulicConstraints, evaluation.getInstalledEquipmentCapacityEvidence(),
-          evaluation.getProcessBoundaryConstraintEvidence(), evaluation.getPlantConstraintEvidence(), diagnostics);
+          copyArrayOrEmpty(evaluation.getObjectivesRaw()), copyArrayOrEmpty(evaluation.getObjectives()),
+          objectiveEvidence, copyArrayOrEmpty(evaluation.getConstraintValues()),
+          copyArrayOrEmpty(evaluation.getConstraintMargins()), constraintEvidence, hydraulicConstraints,
+          evaluation.getInstalledEquipmentCapacityEvidence(), evaluation.getProcessBoundaryConstraintEvidence(),
+          evaluation.getPlantConstraintEvidence(), diagnostics);
     }
 
     /** Snapshots objective definitions and sampled values without retaining evaluator callbacks. */
@@ -956,8 +959,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
       if (evaluation == null) {
         return Collections.emptyList();
       }
-      double[] rawValues = copy(evaluation.getObjectivesRaw());
-      double[] minimizerValues = copy(evaluation.getObjectives());
+      double[] rawValues = copyArrayOrEmpty(evaluation.getObjectivesRaw());
+      double[] minimizerValues = copyArrayOrEmpty(evaluation.getObjectives());
       List<CandidateObjectiveEvidence> evidence = new ArrayList<CandidateObjectiveEvidence>();
       for (int index = 0; index < definitions.size(); index++) {
         evidence.add(new CandidateObjectiveEvidence(index, definitions.get(index), valueAt(rawValues, index),
@@ -972,8 +975,8 @@ public final class ProcessModelOperatingActionSetEvaluator {
       if (evaluation == null) {
         return Collections.emptyList();
       }
-      double[] values = copy(evaluation.getConstraintValues());
-      double[] margins = copy(evaluation.getConstraintMargins());
+      double[] values = copyArrayOrEmpty(evaluation.getConstraintValues());
+      double[] margins = copyArrayOrEmpty(evaluation.getConstraintMargins());
       List<CandidateConstraintEvidence> evidence = new ArrayList<CandidateConstraintEvidence>();
       for (int index = 0; index < definitions.size(); index++) {
         evidence.add(new CandidateConstraintEvidence(index, definitions.get(index), valueAt(values, index),
@@ -985,11 +988,6 @@ public final class ProcessModelOperatingActionSetEvaluator {
     /** Returns an indexed scalar or NaN when a result array is shorter than its definition list. */
     private static double valueAt(double[] values, int index) {
       return index < values.length ? values[index] : Double.NaN;
-    }
-
-    /** Returns a defensive array or an empty array for null. */
-    private static double[] copy(double[] values) {
-      return values == null ? new double[0] : Arrays.copyOf(values, values.length);
     }
 
     /** @return stable action-set identifier */

@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,8 +36,8 @@ class TwoFluidVirtualMassTest {
     };
     for (TimeIntegrator.Method method : TimeIntegrator.Method.values()) {
       TimeIntegrator integrator = new TimeIntegrator(method);
-      double[][] integratedFirst = integrator.step(copy(initialState), rhs, 1.0e-4);
-      double[][] integratedSecond = integrator.step(copy(initialState), rhs, 1.0e-4);
+      double[][] integratedFirst = integrator.step(copyMatrixArray(initialState), rhs, 1.0e-4);
+      double[][] integratedSecond = integrator.step(copyMatrixArray(initialState), rhs, 1.0e-4);
       assertMatrixEquals(integratedFirst, integratedSecond, 0.0);
       for (double value : integratedFirst[0]) {
         assertTrue(Double.isFinite(value), method + " returned a non-finite stage result");
@@ -87,11 +89,11 @@ class TwoFluidVirtualMassTest {
     reference[0][TwoFluidConservationEquations.IDX_GAS_MOMENTUM] = 8.0;
     reference[0][TwoFluidConservationEquations.IDX_OIL_MOMENTUM] = -2.0;
 
-    double[][] disabled = copy(reference);
+    double[][] disabled = copyMatrixArray(reference);
     new TwoFluidConservationEquations().applyVirtualMassCoupling(new TwoFluidSection[] {section}, disabled);
     assertMatrixEquals(reference, disabled, 0.0);
 
-    double[][] zeroCoefficient = copy(reference);
+    double[][] zeroCoefficient = copyMatrixArray(reference);
     TwoFluidConservationEquations equations = enabledEquations(0.0);
     equations.applyVirtualMassCoupling(new TwoFluidSection[] {section}, zeroCoefficient);
     assertMatrixEquals(reference, zeroCoefficient, 0.0);
@@ -116,7 +118,7 @@ class TwoFluidVirtualMassTest {
 
     TwoFluidSection gasOnly = createSection(0.0, 1.0);
     double[][] gasOnlyRates = accelerationRates(gasOnly, 100.0, 0.0);
-    double[][] gasOnlyReference = copy(gasOnlyRates);
+    double[][] gasOnlyReference = copyMatrixArray(gasOnlyRates);
     enabledEquations(0.5).applyVirtualMassCoupling(new TwoFluidSection[] {gasOnly}, gasOnlyRates);
     assertMatrixEquals(gasOnlyReference, gasOnlyRates, 0.0);
   }
@@ -140,7 +142,7 @@ class TwoFluidVirtualMassTest {
     assertEquals(0.2, restored.getTimestep(), 0.0);
     TwoFluidSection section = createSection(0.0, 0.5);
     double[][] originalRates = accelerationRates(section, 100.0, -2.0);
-    double[][] restoredRates = copy(originalRates);
+    double[][] restoredRates = copyMatrixArray(originalRates);
     original.applyVirtualMassCoupling(new TwoFluidSection[] {section}, originalRates);
     restored.applyVirtualMassCoupling(new TwoFluidSection[] {section}, restoredRates);
     assertMatrixEquals(originalRates, restoredRates, 0.0);
@@ -222,14 +224,6 @@ class TwoFluidVirtualMassTest {
   private double totalMomentumRate(double[] rates) {
     return rates[TwoFluidConservationEquations.IDX_GAS_MOMENTUM] + rates[TwoFluidConservationEquations.IDX_OIL_MOMENTUM]
         + rates[TwoFluidConservationEquations.IDX_WATER_MOMENTUM];
-  }
-
-  private double[][] copy(double[][] values) {
-    double[][] result = new double[values.length][];
-    for (int i = 0; i < values.length; i++) {
-      result[i] = values[i].clone();
-    }
-    return result;
   }
 
   private void assertMatrixEquals(double[][] expected, double[][] actual, double tolerance) {

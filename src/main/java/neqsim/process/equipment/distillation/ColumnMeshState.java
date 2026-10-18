@@ -1,5 +1,7 @@
 package neqsim.process.equipment.distillation;
 
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+
 import java.io.Serializable;
 import java.util.List;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -59,12 +61,12 @@ final class ColumnMeshState implements Serializable {
     this.trayTemperatures = trayTemperatures.clone();
     this.vaporFlowsMolHr = vaporFlowsMolHr.clone();
     this.liquidFlowsMolHr = liquidFlowsMolHr.clone();
-    this.vaporComponentFlowsMolHr = copy(vaporComponentFlowsMolHr);
-    this.liquidComponentFlowsMolHr = copy(liquidComponentFlowsMolHr);
-    this.feedComponentFlowsMolHr = copy(feedComponentFlowsMolHr);
-    this.externalOutletComponentFlowsMolHr = copy(externalOutletComponentFlowsMolHr);
-    this.vaporMoleFractions = copy(vaporMoleFractions);
-    this.liquidMoleFractions = copy(liquidMoleFractions);
+    this.vaporComponentFlowsMolHr = copyMatrixArray(vaporComponentFlowsMolHr);
+    this.liquidComponentFlowsMolHr = copyMatrixArray(liquidComponentFlowsMolHr);
+    this.feedComponentFlowsMolHr = copyMatrixArray(feedComponentFlowsMolHr);
+    this.externalOutletComponentFlowsMolHr = copyMatrixArray(externalOutletComponentFlowsMolHr);
+    this.vaporMoleFractions = copyMatrixArray(vaporMoleFractions);
+    this.liquidMoleFractions = copyMatrixArray(liquidMoleFractions);
   }
 
   /**
@@ -237,20 +239,6 @@ final class ColumnMeshState implements Serializable {
     } catch (Exception ex) {
       return 0.0;
     }
-  }
-
-  /**
-   * Copy a two-dimensional double array.
-   *
-   * @param values array to copy
-   * @return copied array
-   */
-  private static double[][] copy(double[][] values) {
-    double[][] copied = new double[values.length][];
-    for (int i = 0; i < values.length; i++) {
-      copied[i] = values[i].clone();
-    }
-    return copied;
   }
 
   /**

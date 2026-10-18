@@ -44,7 +44,7 @@ public class PackingHydraulicsCalculator implements Serializable {
   private double specificSurfaceArea = 120.0;
 
   /** Packing void fraction (porosity) [-]. */
-  private double voidFraction = 0.94;
+  private double voidFraction = 0.96;
 
   /** Packing factor Fp [m-1] (used in Eckert GPDC correlation). */
   private double packingFactor = 66.0;
@@ -53,7 +53,7 @@ public class PackingHydraulicsCalculator implements Serializable {
   private double nominalSize = 50.0;
 
   /** Critical surface tension of packing material [N/m] (for Onda). */
-  private double criticalSurfaceTension = 0.061; // Metal ≈ 0.075, ceramic ≈ 0.061, plastic ≈ 0.033
+  private double criticalSurfaceTension = 0.075; // Metal ≈ 0.075, ceramic ≈ 0.061, plastic ≈ 0.033
 
   // ======================== Column geometry ========================
 
@@ -161,6 +161,7 @@ public class PackingHydraulicsCalculator implements Serializable {
    * Default constructor.
    */
   public PackingHydraulicsCalculator() {
+    setPackingSpecification(PackingSpecificationLibrary.require("Pall-Ring-50"));
   }
 
   /**
@@ -537,14 +538,10 @@ public class PackingHydraulicsCalculator implements Serializable {
    * </p>
    *
    * @param preset packing name preset
+   * @throws IllegalArgumentException if the name is not registered
    */
   public void setPackingPreset(String preset) {
-    PackingSpecification specification = PackingSpecificationLibrary.get(preset);
-    if (specification == null) {
-      logger.warn("Unknown packing preset: " + preset + ". Using Pall-Ring-50 defaults.");
-      specification = PackingSpecificationLibrary.getOrDefault("Pall-Ring-50");
-    }
-    setPackingSpecification(specification);
+    setPackingSpecification(PackingSpecificationLibrary.require(preset));
   }
 
   /**
@@ -556,14 +553,10 @@ public class PackingHydraulicsCalculator implements Serializable {
    * </p>
    *
    * @param preset structured packing name preset
+   * @throws IllegalArgumentException if the name is not registered
    */
   public void setStructuredPackingPreset(String preset) {
-    PackingSpecification specification = PackingSpecificationLibrary.get(preset);
-    if (specification == null) {
-      logger.warn("Unknown structured packing preset: " + preset + ". Using Mellapak-250Y defaults.");
-      specification = PackingSpecificationLibrary.getOrDefault("Mellapak-250Y");
-    }
-    setPackingSpecification(specification);
+    setPackingSpecification(PackingSpecificationLibrary.require(preset));
   }
 
   /**

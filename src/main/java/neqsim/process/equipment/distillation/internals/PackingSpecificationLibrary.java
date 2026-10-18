@@ -20,9 +20,11 @@ import org.apache.logging.log4j.Logger;
  * Registry for packed-column packing specifications.
  *
  * <p>
- * The registry combines built-in vendor-style presets with entries loaded from
- * {@code src/main/resources/designdata/Packing.csv}. Names are matched with a forgiving normalized key, so values such
- * as {@code Pall-Ring-50}, {@code pallring 50}, and CSV names all map to the same specification where possible.
+ * Built-in engineering estimates are the reference for existing names. The CSV resource adds material-qualified entries
+ * without replacing those references. For example, {@code Pall-Ring-50} and {@code Pall-Ring-50-metal} select the
+ * built-in metal estimate, while {@code Pall-Ring-50-plastic} selects the distinct CSV plastic row. Names are matched
+ * after removing punctuation and spaces. Rows explicitly marked {@code placeholder} are excluded from engineering
+ * calculations.
  * </p>
  *
  * @author NeqSim
@@ -50,7 +52,7 @@ public final class PackingSpecificationLibrary {
   }
 
   /**
-   * Register a packing specification.
+   * Register a packing specification, explicitly replacing an existing alias if necessary.
    *
    * @param specification specification to register
    * @throws IllegalArgumentException if the specification is null
@@ -91,6 +93,22 @@ public final class PackingSpecificationLibrary {
       return null;
     }
     return PACKINGS.get(normalize(name));
+  }
+
+  /**
+   * Require an explicitly requested packing name to resolve.
+   *
+   * @param name packing name or alias
+   * @return matched packing specification
+   * @throws IllegalArgumentException if the name is not registered
+   */
+  public static PackingSpecification require(String name) {
+    PackingSpecification specification = get(name);
+    if (specification == null) {
+      throw new IllegalArgumentException("Unknown or unqualified packing: " + name
+          + ". Use getPackingNames() to select a registered packing or supply a PackingSpecification.");
+    }
+    return specification;
   }
 
   /**
@@ -196,8 +214,10 @@ public final class PackingSpecificationLibrary {
    */
   private static void registerRandom(String name, String material, double nominalSizeMm, double specificArea,
       double voidFraction, double packingFactor, double billetLiquidConstant, double billetGasConstant, String source) {
-    register(new PackingSpecification(name, "random", material, nominalSizeMm, specificArea, voidFraction,
-        packingFactor, criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant, source));
+    PackingSpecification specification = new PackingSpecification(name, "random", material, nominalSizeMm, specificArea,
+        voidFraction, packingFactor, criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant, source);
+    register(specification);
+    registerAlias(name + "-" + material, specification);
   }
 
   /**
@@ -214,8 +234,10 @@ public final class PackingSpecificationLibrary {
    */
   private static void registerStructured(String name, String material, double specificArea, double voidFraction,
       double packingFactor, double billetLiquidConstant, double billetGasConstant, String source) {
-    register(new PackingSpecification(name, "structured", material, 0.0, specificArea, voidFraction, packingFactor,
-        criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant, source));
+    PackingSpecification specification = new PackingSpecification(name, "structured", material, 0.0, specificArea,
+        voidFraction, packingFactor, criticalSurfaceTension(material), billetLiquidConstant, billetGasConstant, source);
+    register(specification);
+    registerAlias(name + "-" + material, specification);
   }
 
   /**
@@ -233,8 +255,13 @@ public final class PackingSpecificationLibrary {
       String line = reader.readLine();
       while ((line = reader.readLine()) != null) {
         PackingSpecification specification = parseCsvLine(line);
-        if (specification != null) {
+        if (specification != null && !contains(specification.getName())) {
           register(specification);
+          String suffix = "-" + specification.getMaterial();
+          String legacyName = specification.getName().substring(0, specification.getName().length() - suffix.length());
+          if (!contains(legacyName)) {
+            registerAlias(legacyName, specification);
+          }
         }
       }
     } catch (IOException ex) {
@@ -264,7 +291,10 @@ public final class PackingSpecificationLibrary {
     try {
       String rawName = fields.get(1);
       String category = fields.get(2);
-      String material = fields.get(3);
+      String material = fields.get(3).toLowerCase(Locale.ROOT);
+      if (!"random".equalsIgnoreCase(category) && !"structured".equalsIgnoreCase(category)) {
+        return null;
+      }
       double size = parseDouble(fields.get(4), 0.0);
       double specificArea = parseDouble(fields.get(5), 0.0);
       double voidFraction = parseDouble(fields.get(6), 0.0);
@@ -274,7 +304,7 @@ public final class PackingSpecificationLibrary {
       if (specificArea <= 0.0 || voidFraction <= 0.0 || packingFactor <= 0.0) {
         return null;
       }
-      String displayName = displayName(rawName, category, size);
+      String displayName = displayName(rawName, category, size) + "-" + material;
       double billetLiquidConstant = cp > 0.0 ? cp : 1.0;
       double billetGasConstant = ch > 0.0 ? ch / 6.0 : 0.4;
       return new PackingSpecification(displayName, category, material, size, specificArea, voidFraction, packingFactor,

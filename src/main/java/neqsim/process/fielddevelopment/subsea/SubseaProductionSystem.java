@@ -1165,7 +1165,7 @@ public class SubseaProductionSystem implements Serializable {
     result.surfDetailedEstimateResult = surfCostEstimator.getDetailedEstimateResult();
 
     result.subseaTreeCostMusd = sumSurfLineItemsMusd("Christmas Trees");
-    result.manifoldCostMusd = sumSurfLineItemsMusd("Manifold");
+    result.manifoldCostMusd = sumSurfLineItemsMusd("Manifold") + sumSurfLineItemsMusd("PLEMs");
     result.jumperAndPletCostMusd = sumSurfLineItemsMusd("Jumpers") + sumSurfLineItemsMusd("PLETs");
     result.pipelineCostMusd = surfCostEstimator.getFlowlineCostUSD() / 1.0e6;
     result.umbilicalCostMusd = surfCostEstimator.getUmbilicalCostUSD() / 1.0e6;
@@ -2270,7 +2270,7 @@ public class SubseaProductionSystem implements Serializable {
     /**
      * Gets manifold cost.
      *
-     * @return manifold cost in MUSD
+     * @return manifold and PLEM cost in MUSD
      */
     public double getManifoldCostMusd() {
       return manifoldCostMusd;

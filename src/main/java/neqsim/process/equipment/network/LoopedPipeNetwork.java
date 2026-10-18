@@ -5711,6 +5711,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       inlet.run();
 
       Pump pump = pipe.getPumpModel();
+      if (pipe.getPumpOperatingMode() == PumpOperatingMode.CURVE
+          && (pump == null || pump.getPumpChart() == null || !pump.getPumpChart().isUsePumpChart())) {
+        throw new IllegalStateException("Registered pump curve is no longer available or enabled");
+      }
       if (pump == null) {
         pump = new Pump(pipe.getName() + "_pump", inlet);
         pipe.setPumpModel(pump);
@@ -5730,9 +5734,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       pump.run();
 
       SystemInterface outletFluid = pump.getOutletStream().getFluid().clone();
-      double pressureRise = outletFluid.getPressure("Pa") - pumpFluid.getPressure("Pa");
+      double outletPressure = outletFluid.getPressure("Pa");
+      double outletTemperature = outletFluid.getTemperature();
+      double power = pump.getPower("kW");
+      if (!pump.solved() || !Double.isFinite(power) || power < 0.0 || !Double.isFinite(outletPressure)
+          || outletPressure <= 0.0 || !Double.isFinite(outletTemperature) || outletTemperature <= 0.0) {
+        throw new IllegalStateException("Pump returned an unsolved or non-finite operating point");
+      }
+      double pressureRise = outletPressure - pumpFluid.getPressure("Pa");
       double density = inlet.getFluid().getDensity("kg/m3");
-      pipe.pumpPowerKW = pump.getPower("kW");
+      pipe.pumpPowerKW = power;
       pipe.pumpHeadM = pressureRise / (Math.max(density, 1.0e-12) * 9.80665);
       double efficiency = pump.getIsentropicEfficiency();
       pipe.pumpEfficiency = efficiency > 1.0 ? efficiency / 100.0 : efficiency;
@@ -5758,6 +5769,15 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     } catch (Exception ex) {
       pipe.pumpOperatingStatus = "INFEASIBLE";
       pipe.pumpPowerKW = Double.NaN;
+      pipe.pumpHeadM = Double.NaN;
+      pipe.pumpNpshaM = Double.NaN;
+      pipe.pumpNpshrM = Double.NaN;
+      pipe.pumpPowerResidualKW = Double.NaN;
+      pipe.pumpMinimumFlowResidualKgS = Double.NaN;
+      pipe.pumpNpshResidualM = Double.NaN;
+      pipe.setFlowRegime("Pump-INFEASIBLE");
+      pipe.setThermodynamicState(null, null, true);
+      pipe.setOutletTemperature(Double.NaN);
       logger.warn("Pump calculation failed for {}: {}", pipe.getName(), ex.getMessage());
       return 1.0e12;
     }

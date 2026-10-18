@@ -1,6 +1,7 @@
 package neqsim.statistics.parameterfitting;
 
 import java.io.Serializable;
+import neqsim.util.util.ArrayUtils;
 
 /**
  * Immutable experimental data point with measured value, uncertainty and independent variables.
@@ -57,7 +58,7 @@ public final class ExperimentalDataPoint implements Serializable {
     }
     this.measuredValue = measuredValue;
     this.standardDeviation = standardDeviation;
-    this.dependentValues = copyArray(dependentValues);
+    this.dependentValues = ArrayUtils.copyArray(dependentValues);
     this.reference = reference == null ? "unknown" : reference;
     this.description = description == null ? "unknown" : description;
   }
@@ -86,7 +87,7 @@ public final class ExperimentalDataPoint implements Serializable {
    * @return independent variable values
    */
   public double[] getDependentValues() {
-    return copyArray(dependentValues);
+    return ArrayUtils.copyArray(dependentValues);
   }
 
   /**
@@ -149,15 +150,4 @@ public final class ExperimentalDataPoint implements Serializable {
     }
   }
 
-  /**
-   * Copies a double array.
-   *
-   * @param values values to copy
-   * @return copied array
-   */
-  private static double[] copyArray(double[] values) {
-    double[] copy = new double[values.length];
-    System.arraycopy(values, 0, copy, 0, values.length);
-    return copy;
-  }
 }
