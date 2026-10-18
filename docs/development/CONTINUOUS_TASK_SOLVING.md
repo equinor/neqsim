@@ -265,6 +265,17 @@ kpis:
 `agg` is `mean`, `min`, `max`, `last`, `sum` or `count`. KPIs computed by a stage
 script (section 7) need no entry here.
 
+Add `describe` and `unit` to a KPI so the reports can say what the number is:
+
+```yaml
+kpis:
+  polytropic_efficiency: {source: station, column: eff, agg: mean,
+                          describe: "Compressor efficiency, higher is better", unit: "-"}
+```
+
+Both the Living Report and the Final Report show them in a *Meaning* column; without them the
+column is left out of the Final Report summary.
+
 ### 6.3 Drift — when a KPI has really moved
 
 ```yaml
@@ -824,11 +835,31 @@ The agent follows the same rules: it prepares, you decide.
 ### 13.1 Read the living report
 
 `continuous/LIVING_REPORT.md` is the one page to open. It is rebuilt after every
-cycle, solve round, backtest, promotion, reopen and ledger decision, and shows
-the state and stop reason, the goal and baseline, the latest KPIs against the
-baseline, solve rounds, KPI trends (`report/kpi_trends.png`), trigger events,
-the ledger with pending decisions, the baseline history, backtests and the
-**next actions**. Never edit it; rebuild it with `neqsim task-report <task>`.
+cycle, solve round, backtest, promotion, reopen and ledger decision. It starts with
+**In short**: what the task is trying to achieve, the result so far against the first
+baseline, the status in plain words, the triggers of the latest cycle explained in
+sentences, and **what needs your attention**. A short glossary (KPI, baseline, cycle,
+trigger, drift, solve round, ledger, backtest) follows, and every section opens with one
+sentence saying what it shows.
+
+The report is figure-led. Pictures are written to `continuous/report/` and linked from the
+Markdown; a figure with no data is skipped:
+
+| Figure | Shows |
+|--------|-------|
+| `workflow_of_the_living_task.png` | The loop (data, cycle, triggers, solve, review/promote, final report) with real counts and the current position |
+| `how_the_inputs_changed.png` | Rows read per cycle for every data source (database, historian, live feed, files) and when evidence, brief or NeqSim-version changes arrived |
+| `objective_progress_by_solve_round.png` | The objective after each solve round against the first baseline and the target |
+| `baseline_progression.png` | The objective at each reviewed baseline |
+| `change_since_first_baseline.png` | Change of every KPI between the first and the current baseline |
+| `kpi_trends_with_triggers.png` | Each KPI per cycle against the baseline, triggering cycles marked |
+| `monitoring_events_timeline.png` | Which triggers fired, and when |
+| `decision_ledger_status.png` | Improvement proposals by status |
+
+The tables cover the state and stop reason, the inputs and how they changed, the latest KPIs
+against the baseline (with a plain-words reading), solve rounds, events with an explanation
+of each trigger, the ledger with pending decisions, the baseline history and backtests.
+Never edit it; rebuild it with `neqsim task-report <task>`.
 
 For all living tasks in a folder at once:
 
@@ -897,11 +928,23 @@ neqsim task-report <task> --final --reviewer "A. Engineer" --note "Issued for de
 ```
 
 This invokes the canonical Task Solver Word/HTML generator; it does not fork or replace the
-ordinary report architecture. The ordinary current-best outputs stay in `step3_report/`.
-Final delivery revisions are written separately under `step3_report/final/FR-001/`,
+ordinary report architecture. The Final Report is a **separate document**: the task's original
+report in `step3_report/` and the task's own `figures/` folder are not touched. Final delivery
+revisions are written under `step3_report/final/FR-001/`,
 `FR-002/`, and so on. Each revision includes Word and self-contained HTML plus
 `FINAL_REPORT_MANIFEST.json` with task-relative provenance and SHA-256 hashes. Add `--pdf` when
 the configured host has a supported Word/LibreOffice PDF renderer.
+
+A Final Report contains everything the original report contains (it is built from the same
+promoted `results.json`) plus what only a live study can show:
+
+- a section **How the Live Study Developed**: the aim, how the work went (cycles, triggers,
+  solve rounds, baselines, proposals), the first baseline against the final one for every KPI,
+  the **inputs** the study read and how they changed (data sources, evidence files, brief,
+  NeqSim version), the flags raised and how far the monitoring can be trusted (last backtest);
+- up to eight figures from the table in section 13.1, saved in
+  `step3_report/final/FR-xxx/figures/` and numbered with the other figures in the Results
+  section, each with a caption.
 
 The command fails closed if a cycle is interrupted, the promoted cycle is degraded, evidence is
 pending, `results.json` differs from the promoted snapshot, or the final-report schema is newer
