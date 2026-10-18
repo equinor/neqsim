@@ -110,6 +110,11 @@ def test_value_of_information_recommends_and_flags_more_evaluation():
     assert nc.value_of_information(hopeless)["recommended_action"] is None
 
 
+def _read_json(path):
+    with open(path) as handle:
+        return json.load(handle)
+
+
 def _ctx(tmp_path, plan, kpis, dry_run=False, cycle="c1"):
     task = tmp_path / "task"
     (task / "continuous" / "stages").mkdir(parents=True, exist_ok=True)
@@ -139,9 +144,9 @@ def test_calibrate_stage_tracks_parameters_across_cycles(tmp_path):
     assert abs(ctx.kpis["fouling_mean"] - 0.8) < 0.15
     assert abs(ctx.kpis["eta_mean"] - 0.8) < 0.03
     assert ctx.calibrated["eta"] == ctx.kpis["eta_mean"]
-    state = json.load(open(os.path.join(ctx.state_dir, calibrate.STATE_FILE)))
+    state = _read_json(os.path.join(ctx.state_dir, calibrate.STATE_FILE))
     assert state["cycles"] == 1 and len(state["members"]) == 60
-    report = json.load(open(os.path.join(ctx.cycle_dir, "calibration.json")))
+    report = _read_json(os.path.join(ctx.cycle_dir, "calibration.json"))
     assert report["identifiability"]["identifiable"] and "T_meas_resid" in ctx.kpis
     # second cycle continues from the posterior and tightens
     ctx2 = _ctx(tmp_path, PLAN, {"T_meas": 24.0, "P_meas": 40.0})
@@ -185,7 +190,7 @@ def test_calibrate_gates_outlier_and_keeps_other_update(tmp_path):
     assert ctx.kpis["calibration_rejected"] == 1.0 and abs(ctx.kpis["P_meas_z"]) > 4
     assert abs(ctx.kpis["fouling_mean"] - 0.8) < 0.15          # T still used
     assert abs(ctx.kpis["eta_mean"] - 0.7) < 0.02              # eta untouched by the bad P
-    report = json.load(open(os.path.join(ctx.cycle_dir, "calibration.json")))
+    report = _read_json(os.path.join(ctx.cycle_dir, "calibration.json"))
     assert report["rejected"] == ["P_meas"] and report["observations"]["T_meas"]["used"]
     ctx2 = _ctx(tmp_path, PLAN, {"T_meas": 240.0, "P_meas": 400.0})
     assert "calibration:all_rejected" in stage(ctx2, {"name": "calibrate"}).triggers
@@ -302,7 +307,7 @@ def test_calibrate_drops_failed_members_and_replenishes(tmp_path):
     assert result.status == "warn" and "30 failed member(s) replenished" in result.message
     assert ctx.kpis["calibration_failed_members"] == 30
     assert abs(ctx.kpis["fouling_mean"] - 0.8) < 0.15 and abs(ctx.kpis["eta_mean"] - 0.8) < 0.03
-    state = json.load(open(os.path.join(ctx.state_dir, calibrate.STATE_FILE)))
+    state = _read_json(os.path.join(ctx.state_dir, calibrate.STATE_FILE))
     assert len(state["members"]) == 60
     plan["calibration"]["min_members"] = 40
     ctx2 = _ctx(tmp_path / "b", plan, {"T_meas": 24.0, "P_meas": 40.0})
@@ -318,7 +323,7 @@ def test_calibrate_auto_std_from_history_and_pending(tmp_path):
     ctx = _ctx(tmp_path, plan, {"T_meas": 24.0, "P_meas": 40.0})
     result = stage(ctx, {"name": "calibrate"})         # no history yet: P_meas skipped
     assert result.status == "warn" and "1 skipped" in result.message
-    report = json.load(open(os.path.join(ctx.cycle_dir, "calibration.json")))
+    report = _read_json(os.path.join(ctx.cycle_dir, "calibration.json"))
     assert report["skipped_observations"] == {"P_meas": "std_pending"}
     rng = np.random.default_rng(1)
     with open(os.path.join(ctx.state_dir, "kpi_history.csv"), "w", newline="") as f:
@@ -327,7 +332,7 @@ def test_calibrate_auto_std_from_history_and_pending(tmp_path):
             f.write("c{},2026-01-{:02d}T00:00:00+00:00,P_meas,{}\n".format(i, i % 28 + 1, 40.0 + rng.normal(0, 0.4)))
     ctx2 = _ctx(tmp_path, plan, {"T_meas": 24.0, "P_meas": 40.0}, cycle="c2")
     result2 = stage(ctx2, {"name": "calibrate"})
-    report2 = json.load(open(os.path.join(ctx2.cycle_dir, "calibration.json")))
+    report2 = _read_json(os.path.join(ctx2.cycle_dir, "calibration.json"))
     assert report2["observations"]["P_meas"]["std_source"] == "history"
     assert 0.2 < report2["observations"]["P_meas"]["std"] < 0.7
     assert result2.status == "ok"
@@ -349,7 +354,7 @@ def test_calibrate_reinitialises_prior_after_persistent_rejection(tmp_path):
     assert reinit_cycles and reinit_cycles[0] == 3
     assert abs(results[-1][1]["fouling_mean"] - 2.0) < 0.1     # converges after widening
     assert "calibration:all_rejected" not in triggers[-1]
-    state = json.load(open(os.path.join(ctx.state_dir, calibrate.STATE_FILE)))
+    state = _read_json(os.path.join(ctx.state_dir, calibrate.STATE_FILE))
     assert state["reinitialisations"] >= 1 and state["all_rejected_streak"] == 0
 
 
@@ -423,7 +428,7 @@ def test_run_loop_cadence_hook_and_stop(tmp_path, monkeypatch):
     assert summary["cycles"] == 6 and summary["stopped"] == "time budget" and summary["errors"] == 1
     assert len(seen) == 5                                   # cycle 2's hook raised before run_cycle
     assert all((task / "continuous" / ("hook_%d" % i)).exists() for i in range(6))
-    state = json.load(open(task / "continuous" / "loop_state.json"))
+    state = _read_json(task / "continuous" / "loop_state.json")
     assert [c["index"] for c in state["cycles"]] == list(range(6))
     assert state["cycles"][2]["status"] == "error"
     t[0] = datetime(2026, 1, 2, tzinfo=timezone.utc)
