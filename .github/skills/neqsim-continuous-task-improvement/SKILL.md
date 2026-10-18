@@ -1,6 +1,6 @@
 ---
 name: neqsim-continuous-task-improvement
-description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-resume/task-update/task-backtest/task-schedule/task-promote/task-report/task-ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, detect technical-evidence changes and selectively rerun affected calculations, reopen on new data or a changed brief, backtest monitoring and tune drift settings from it, track model parameters with an ensemble (EnKF/EnIF) calibrate stage, rank candidate actions by value of information, or issue a reviewed Final Report."
+description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/cycle/solve/resume/update/backtest/schedule/loop/promote/report/ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, rerun only affected calculations on new evidence, backtest and tune drift settings, track model parameters with an EnKF/EnIF calibrate stage, rank actions by value of information, or issue a reviewed Final Report."
 last_verified: "2026-10-18"
 ---
 
