@@ -224,17 +224,19 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
     requireTypedDnvStF101Path();
     super.readDesignSpecifications();
 
-    // Load from database based on company standards
+    MaterialPipeDesignStandard matStd = (MaterialPipeDesignStandard) getDesignStandard()
+        .get("material pipe design codes");
+    if (matStd != null) {
+      getCalculator().setDesignFactor(matStd.getDesignFactor());
+      getCalculator().setJointFactor(matStd.getEfactor());
+    }
     if (getCompanySpecificDesignStandards() != null && !getCompanySpecificDesignStandards().isEmpty()) {
       loadFromDatabase();
     }
-
-    if (getDesignStandard().containsKey("material pipe design codes")) {
-      MaterialPipeDesignStandard matStd = (MaterialPipeDesignStandard) getDesignStandard()
-          .get("material pipe design codes");
-      matStd.getDesignFactor();
-      // Sync with calculator
+    if (matStd != null && matStd.isDesignFactorExplicitlySet()) {
       getCalculator().setDesignFactor(matStd.getDesignFactor());
+    }
+    if (matStd != null && matStd.isEfactorExplicitlySet()) {
       getCalculator().setJointFactor(matStd.getEfactor());
     }
 

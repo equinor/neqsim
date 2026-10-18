@@ -138,11 +138,16 @@ public class SeparatorDesignStandard extends DesignStandard {
     return safetyMargins;
   }
 
+  /**
+   * Resolves the equipment company or this standard's company key.
+   *
+   * @return canonical company identifier
+   */
   private String resolveCompanyIdentifier() {
     String identifier = equipment != null ? equipment.getCompanySpecificDesignStandards() : null;
     if (identifier == null || identifier.isEmpty()) {
-      return standardName;
+      return normalizeCompanyIdentifier(standardName);
     }
-    return identifier;
+    return normalizeCompanyIdentifier(identifier);
   }
 }

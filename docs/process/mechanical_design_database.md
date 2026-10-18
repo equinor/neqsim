@@ -62,6 +62,38 @@ Use `getDesignLimits(equipmentType, company)`, as demonstrated in the fallback s
 below. An empty result can mean no matching supported specification or a database read failure;
 inspect the application log before treating it as an intentional absence.
 
+## Material and process lookup keys
+
+Equipment-specific material readers use the bundled design tables, independently of the
+`DesignLimitData` interface. A material name must identify its own properties:
+
+| Reader | Selection and failure behavior |
+|--------|--------------------------------|
+| `CompressorCasingDesignCalculator` | All grades in `CompressorCasingMaterials` are available; a missing grade throws before casing sizing. Room-temperature allowables still use the existing approximate temperature derating above 200 °C. |
+| `MaterialPipeDesignStandard` | The default is specification `API5L`, grade `A25`; `Carbon Steel Pipe` is a material name, not a specification number. A failed lookup invalidates the previous strength and throws. The no-argument constructor requires a lookup or an explicit strength before reading yield strength. |
+| `JointEfficiencyPlateStandard` | Joint type and radiographic inspection select `TechnicalRequirements_Mechanical`. Full, spot, and no radiography have distinct factors. An unknown selection invalidates the prior factor and throws. |
+| `MaterialStrengthCurve` | API 5L ambient strengths are loaded by grade with explicit built-in strengths when a supported grade has no database row. Unknown grades throw; they do not become Grade B. The fire-temperature reduction remains a generic screening curve. |
+
+API 5L names are case insensitive and accept surrounding whitespace. Equivalent metric labels
+such as `L360` normalize to `X52` in the pipe calculator and fire-strength reader. Grade alias
+normalization does not establish suitability for a particular material specification or service.
+
+The historical company identifiers `Statoil`, `Statoil_TR1414`, and `StatoilTR` all select the
+bundled `StatoilTR` process rows. They do not rename `Equinor` or another company's requirement
+set. Gas-scrubber clearance lengths remain in mm and never become volumetric flow factors.
+
+When pipeline specifications are read, company-loaded design and joint factors take precedence
+over implicit material-standard defaults. Explicit calls to the material standard's factor
+setters take precedence over the company-loaded factors at this specification-loading stage.
+The calculator's subsequent design-code and location-class rules still apply during sizing.
+
+The separator, compressor, and heat-exchanger `loadProcessDesignParameters()` methods remain
+explicit operations. Call them after choosing the company and before applying project overrides;
+a later loader call can replace matching fields. Automatic activation needs per-property override
+tracking and is not supplied by the lookup-key corrections. Legacy fallback behavior for an
+unrecognized general pipe-calculator material or an unconfigured company remains separate from
+the stricter material readers described above.
+
 ## CSV Data Source
 
 ### Basic CSV Format
