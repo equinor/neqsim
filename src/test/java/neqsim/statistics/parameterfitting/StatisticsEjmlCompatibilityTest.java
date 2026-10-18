@@ -5,27 +5,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtResult.ConvergenceReason;
 
 /**
- * Compatibility coverage for released statistics APIs during the incremental Jama migration.
+ * Regression coverage for EJML matrix accessors, array APIs and migrated statistics extension hooks.
  *
  * @author Even Solbraa
  * @version 1.0
  */
 @SuppressWarnings("deprecation")
-class StatisticsJamaCompatibilityTest {
+class StatisticsEjmlCompatibilityTest {
   /**
-   * Verifies the original constructor descriptor and defensive copying of legacy inputs.
+   * Verifies defensive copying in the migrated EJML matrix constructor.
    */
   @Test
   void legacyMatrixConstructorCopiesInputs() {
-    Matrix covariance = new Matrix(new double[][] {{4.0, 1.0}, {1.0, 9.0}});
-    Matrix correlation = new Matrix(new double[][] {{1.0, 0.2}, {0.2, 1.0}});
+    SimpleMatrix covariance = new SimpleMatrix(new double[][] {{4.0, 1.0}, {1.0, 9.0}});
+    SimpleMatrix correlation = new SimpleMatrix(new double[][] {{1.0, 0.2}, {0.2, 1.0}});
     double[] errors = {2.0, 3.0};
 
     LevenbergMarquardtResult result = new LevenbergMarquardtResult(ConvergenceReason.CHI_SQUARE_TOLERANCE, 2, 0.0, 0.0,
@@ -64,7 +65,7 @@ class StatisticsJamaCompatibilityTest {
   @Test
   void nullMatrixInputsHaveExplicitConstructionPaths() {
     LevenbergMarquardtResult legacy = new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN,
-        (Matrix) null, (Matrix) null, null);
+        (SimpleMatrix) null, (SimpleMatrix) null, null);
     LevenbergMarquardtResult arrays = new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN,
         (double[][]) null, (double[][]) null, null);
     LevenbergMarquardtResult factory = LevenbergMarquardtResult.fromArrays(ConvergenceReason.NOT_RUN, 0, Double.NaN,
@@ -157,7 +158,7 @@ class StatisticsJamaCompatibilityTest {
   }
 
   /**
-   * Represents an external subclass written against the original Matrix hooks.
+   * Represents an external subclass migrated to the EJML matrix hooks.
    *
    * @author Even Solbraa
    * @version 1.0
@@ -169,18 +170,18 @@ class StatisticsJamaCompatibilityTest {
 
     /** {@inheritDoc} */
     @Override
-    public void checkBounds(Matrix parameters) {
+    public void checkBounds(SimpleMatrix parameters) {
       boundCalls++;
-      assertEquals(1, parameters.getRowDimension());
+      assertEquals(1, parameters.numRows());
       super.checkBounds(parameters);
       parameters.set(0, 0, 0.5);
     }
 
     /** {@inheritDoc} */
     @Override
-    public void displayMatrix(Matrix matrix, String name, int digits) {
+    public void displayMatrix(SimpleMatrix matrix, String name, int digits) {
       displayName = name;
-      displayed = matrix.getArrayCopy();
+      displayed = EjmlMatrixUtils.toArray(matrix);
     }
   }
 }

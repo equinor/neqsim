@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.statistics.parameterfitting.NumericalDerivative;
 import neqsim.statistics.parameterfitting.SampleSet;
 import neqsim.statistics.parameterfitting.SampleValue;
@@ -76,23 +76,23 @@ class LevenbergMarquardtRegressionTest {
   }
 
   /**
-   * Verifies the deprecated Jama accessors preserve their column-independent shape and defensive-copy semantics.
+   * Verifies the deprecated Ejml accessors preserve their column-independent shape and defensive-copy semantics.
    */
   @SuppressWarnings("deprecation")
   @Test
-  void legacyJamaMatrixGettersReturnDefensiveCopies() {
+  void legacyEjmlMatrixGettersReturnDefensiveCopies() {
     double[][] covarianceValues = {{4.0, 1.0}, {1.0, 9.0}};
     double[][] correlationValues = {{1.0, 0.25}, {0.25, 1.0}};
     LevenbergMarquardtResult result = LevenbergMarquardtResult.fromArrays(
         LevenbergMarquardtResult.ConvergenceReason.CHI_SQUARE_TOLERANCE, 2, 0.0, 0.0, covarianceValues,
         correlationValues, new double[] {2.0, 3.0});
 
-    Matrix covariance = result.getCovarianceMatrix();
-    Matrix correlation = result.getCorrelationMatrix();
-    assertEquals(2, covariance.getRowDimension());
-    assertEquals(2, covariance.getColumnDimension());
-    assertEquals(2, correlation.getRowDimension());
-    assertEquals(2, correlation.getColumnDimension());
+    SimpleMatrix covariance = result.getCovarianceMatrix();
+    SimpleMatrix correlation = result.getCorrelationMatrix();
+    assertEquals(2, covariance.numRows());
+    assertEquals(2, covariance.numCols());
+    assertEquals(2, correlation.numRows());
+    assertEquals(2, correlation.numCols());
     covariance.set(0, 0, -1.0);
     correlation.set(0, 0, -1.0);
 
