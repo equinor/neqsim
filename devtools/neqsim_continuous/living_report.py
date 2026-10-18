@@ -6,7 +6,10 @@ progress, the KPI trends, the events, the open decisions and the baseline histor
 view, never a source: deleting it loses nothing, and rebuilding it gives the same content.
 
 The formal Word/HTML report (``neqsim report``) can be regenerated as well, controlled by the
-plan's ``report.formal``: ``never`` (default), ``on_promote`` or ``every_cycle``.
+plan's ``report.formal``: ``never`` (default), ``on_promote`` or ``every_cycle``. A plan may
+declare ``report.prepare: step2_analysis/40_write_results.py`` (optionally ``:function``); it
+runs first and turns the latest complete cycle into ``results.json`` and figures, so
+``neqsim task-report <task> --formal`` is a one-command, on-request report of the current state.
 """
 
 import csv
@@ -360,8 +363,41 @@ def update(task_dir, event="cycle"):
         return None
 
 
+def prepare_results(task_dir):
+    """Run the plan's ``report.prepare`` script (task-relative ``file[:function]``) to refresh results.json.
+
+    The script turns the latest complete cycle into ``results.json`` and figures; the formal report is
+    then built from it. Returns ``None`` when no script is declared, else a dict with ``ok`` and a message.
+    """
+    spec = (load_plan(task_dir).get("report") or {}).get("prepare")
+    if not spec:
+        return None
+    path, _, func = str(spec).partition(":")
+    full = path if os.path.isabs(path) else os.path.join(str(task_dir), path)
+    if not os.path.exists(full):
+        return {"ok": False, "message": "report.prepare script not found: {}".format(full)}
+    if func:
+        import importlib.util
+        try:
+            module_spec = importlib.util.spec_from_file_location("neqsim_task_report_prepare", full)
+            module = importlib.util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(module)
+            getattr(module, func)(str(task_dir))
+            return {"ok": True, "message": "{}:{} ran".format(path, func)}
+        except Exception as error:  # noqa: BLE001 - reporting must not raise into a cycle
+            return {"ok": False, "message": "{}: {}".format(type(error).__name__, error)}
+    try:
+        code = subprocess.call([sys.executable, full], cwd=str(task_dir))
+    except OSError as error:
+        return {"ok": False, "message": str(error)}
+    return {"ok": code == 0, "message": "{} exit {}".format(path, code)}
+
+
 def regenerate_formal(task_dir):
-    """Run ``neqsim report`` for the task; return the exit code (never raises)."""
+    """Refresh results.json through ``report.prepare`` (if declared), then run ``neqsim report``; never raises."""
+    prepared = prepare_results(task_dir)
+    if prepared is not None and not prepared["ok"]:
+        logger.warning("report.prepare failed, report built from the existing results.json: %s", prepared["message"])
     cli = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "neqsim_cli.py")
     try:
         return subprocess.call([sys.executable, cli, "report", str(task_dir)])

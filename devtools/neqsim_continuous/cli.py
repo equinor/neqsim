@@ -6,7 +6,9 @@
     neqsim task-resume <task> [--max-rounds N] [--no-agent]
     neqsim task-update <task> [--no-agent] [--dry-run]
     neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--repeat]
+    neqsim task-backtest <task> --tune [--name RUN] [--holdout-from ISO] [--false-alarm-weight 0.5] [--delay-weight 0.25]
     neqsim task-schedule <task> [--daily HH:MM] [--install | --remove | --show]
+    neqsim task-loop <task> --every-minutes 10 --for-hours 3 [--mode monitor|solve] [--hook file.py:func] [--no-agent]
     neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]
     neqsim task-ledger <task> [list | show ID | set ID STATUS --by NAME [--note TEXT] | merge OTHER]
     neqsim task-note <task> [TEXT] [--by NAME] [--expires DATE] [effect options] | --list | --resolve ID
@@ -24,7 +26,7 @@ import json
 import os
 import sys
 
-COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest", "schedule", "promote", "ledger",
+COMMANDS = ("living", "cycle", "solve", "resume", "update", "backtest", "schedule", "loop", "promote", "ledger",
             "status", "report", "reference-case", "note")
 
 
@@ -102,11 +104,16 @@ def main(argv=None):
 
     p = sub.add_parser("backtest", help="replay archived data with a simulated clock")
     p.add_argument("task")
-    p.add_argument("--start", required=True)
-    p.add_argument("--end", required=True)
+    p.add_argument("--start")
+    p.add_argument("--end")
     p.add_argument("--step-hours", type=float, default=24.0)
     p.add_argument("--name", default="backtest")
     p.add_argument("--repeat", action="store_true", help="rerun and report reproducibility")
+    p.add_argument("--tune", action="store_true",
+                   help="replay the finished run's KPI series to choose drift settings against backtest.expected")
+    p.add_argument("--false-alarm-weight", type=float, default=0.5)
+    p.add_argument("--delay-weight", type=float, default=0.25)
+    p.add_argument("--holdout-from", help="tune on expected events before this date, validate on the rest")
 
     p = sub.add_parser("schedule", help="schedule monitor cycles")
     p.add_argument("task")
@@ -121,6 +128,15 @@ def main(argv=None):
     group.add_argument("--install", action="store_true")
     group.add_argument("--remove", action="store_true")
     group.add_argument("--show", action="store_true")
+
+    p = sub.add_parser("loop", help="run cycles at a fixed cadence in one process (warm model, sub-hour periods)")
+    p.add_argument("task")
+    p.add_argument("--every-minutes", type=float, required=True)
+    p.add_argument("--for-hours", type=float, required=True)
+    p.add_argument("--mode", default="monitor", choices=["monitor", "solve"])
+    p.add_argument("--no-agent", action="store_true")
+    p.add_argument("--max-cycles", type=int)
+    p.add_argument("--hook", help="task-relative module.py:function called before each cycle (emulator, test harness)")
 
     p = sub.add_parser("promote", help="promote a complete cycle to the baseline")
     p.add_argument("task")
@@ -223,7 +239,15 @@ def main(argv=None):
                         cycle={key: manifest.get(key) for key in
                                ("cycle_id", "status", "degraded", "selective_rerun")},
                         accepted=not args.dry_run and not manifest.get("degraded")))
+    elif args.command == "backtest" and args.tune:
+        from .backtest import tune_drift
+        out = tune_drift(_task(args.task), run_name=args.name, false_alarm_weight=args.false_alarm_weight,
+                         delay_weight=args.delay_weight, holdout_from=args.holdout_from)
+        _print({k: out[k] for k in ("candidates_evaluated", "current", "best", "recommended_drift_settings",
+                                    "validated", "note")})
     elif args.command == "backtest":
+        if not args.start or not args.end:
+            parser.error("task-backtest needs --start and --end (or --tune on a finished run)")
         from .backtest import run_backtest
         report = run_backtest(_task(args.task), _parse_time(args.start), _parse_time(args.end),
                               step_hours=args.step_hours, run_name=args.name,
@@ -231,6 +255,10 @@ def main(argv=None):
         summary = {k: report[k] for k in ("cycles", "detected", "missed", "false_alarms_per_month",
                                           "expected", "reproducibility") if k in report}
         _print(summary)
+    elif args.command == "loop":
+        from .loop import run_loop
+        _print(run_loop(_task(args.task), args.every_minutes, args.for_hours, mode=args.mode,
+                        no_agent=args.no_agent, hook=args.hook, max_cycles=args.max_cycles))
     elif args.command == "schedule":
         from . import schedule
         spec = schedule.build(_task(args.task), daily=args.daily,
@@ -291,7 +319,8 @@ def main(argv=None):
             path = update(_task(args.task), event="manual")
             print(path or "ERROR: living report not written (is the task living?)")
             if args.formal:
-                regenerate_formal(args.task)
+                code = regenerate_formal(args.task)
+                print("formal report {}".format("written" if code == 0 else "FAILED (exit {})".format(code)))
     elif args.command == "note":
         from . import user_input
         from .living_report import update

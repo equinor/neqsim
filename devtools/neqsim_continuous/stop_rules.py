@@ -92,9 +92,11 @@ def evaluate(goal, history, candidates=None, blockers=None, usage=None, upper_bo
     usage = usage or {}
     for key in ("iterations", "agent_sessions"):
         limit = budget.get(key)
-        if limit is not None and usage.get(key, 0) >= limit:
+        used = usage.get(key, 0)
+        # A zero budget means "none allowed", which is only exhausted once something was actually used.
+        if limit is not None and used > 0 and used >= limit:
             return StopDecision("budget_exhausted", "{} budget used".format(key),
-                                {key: usage.get(key, 0), "limit": limit})
+                                {key: used, "limit": limit})
 
     cost = float(stop.get("expected_improvement_cost", 0.0))
     actionable = [c for c in (candidates or []) if not c.get("needs_person")]
