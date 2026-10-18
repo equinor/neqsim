@@ -3,11 +3,12 @@ package neqsim.thermo.characterization;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import Jama.Matrix;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -16,7 +17,9 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * <p>
  * The expected coefficients were captured from the implementation that used {@code Jama.Matrix} directly, before it was
- * migrated to {@code LinearAlgebraOperations}. Both paths run the same JAMA LU solve, so the values must match exactly.
+ * migrated to {@code LinearAlgebraOperations}. EJML and JAMA may round LU and QR operations differently; compare steps
+ * within 32 ulps and independently verify the least-squares optimality condition. Assembly and input ownership remain
+ * exact contracts.
  * </p>
  *
  * @author asmf
@@ -100,7 +103,7 @@ class PedersenPlusModelSolverTest {
     assertArrayEquals(expectedJacobian.getArray()[1], solver.Jac[1], 0.0);
     assertArrayEquals(expectedResidual.getColumnPackedCopy(), solver.fvec, 0.0);
     assertArrayEquals(characterization.getPlusCoefs(), solver.sol, 0.0);
-    assertEquals(expectedResidual.norm2(), new JamaLinearAlgebra().euclideanNorm(solver.fvec), 1.0e-12);
+    assertEquals(expectedResidual.norm2(), new EjmlLinearAlgebra().euclideanNorm(solver.fvec), 1.0e-12);
   }
 
   /**
@@ -128,10 +131,10 @@ class PedersenPlusModelSolverTest {
     Matrix jacobian = new Matrix(solver.Jac);
     Matrix residual = new Matrix(solver.fvec, solver.fvec.length);
     double[] expectedStep = jacobian.solve(residual).getColumnPackedCopy();
-    JamaLinearAlgebra algebra = new JamaLinearAlgebra();
+    EjmlLinearAlgebra algebra = new EjmlLinearAlgebra();
     double[] actualStep = fractionCount == 2 ? algebra.solve(solver.Jac, solver.fvec)
         : algebra.solveLeastSquares(solver.Jac, solver.fvec);
-    assertArrayEquals(expectedStep, actualStep, 0.0);
+    assertEquivalentStep(solver.Jac, solver.fvec, expectedStep, actualStep);
     double[] initialCoefficients = solver.sol.clone();
     Matrix expectedSolution = new Matrix(initialCoefficients, initialCoefficients.length);
     Matrix expectedDelta;
@@ -168,11 +171,48 @@ class PedersenPlusModelSolverTest {
     Matrix jacobian = new Matrix(solver.Jac).copy();
     Matrix residual = new Matrix(solver.fvec, solver.fvec.length);
     double[] expectedStep = jacobian.solve(residual).getColumnPackedCopy();
-    double[] actualStep = new JamaLinearAlgebra().solve(solver.Jac, solver.fvec);
-    assertArrayEquals(expectedStep, actualStep, 0.0);
+    double[] actualStep = new EjmlLinearAlgebra().solve(solver.Jac, solver.fvec);
+    assertEquivalentStep(solver.Jac, solver.fvec, expectedStep, actualStep);
     assertArrayEquals(residual.getColumnPackedCopy(), solver.fvec, 0.0);
     for (int row = 0; row < solver.Jac.length; row++) {
       assertArrayEquals(jacobian.getArray()[row], solver.Jac[row], 0.0);
+    }
+  }
+
+  /**
+   * Checks backend agreement and the normal-equation residual for square and overdetermined systems.
+   *
+   * @param matrix coefficient matrix
+   * @param rhs right-hand side
+   * @param expected direct JAMA reference step
+   * @param actual EJML step
+   */
+  private static void assertEquivalentStep(double[][] matrix, double[] rhs, double[] expected, double[] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int column = 0; column < expected.length; column++) {
+      assertEquals(expected[column], actual[column], 32.0 * Math.ulp(Math.max(1.0, Math.abs(expected[column]))),
+          "Backend step at column " + column);
+    }
+    double[] residual = new double[rhs.length];
+    double[] scale = new double[rhs.length];
+    for (int row = 0; row < matrix.length; row++) {
+      residual[row] = -rhs[row];
+      scale[row] = Math.abs(rhs[row]);
+      for (int column = 0; column < actual.length; column++) {
+        double term = matrix[row][column] * actual[column];
+        residual[row] += term;
+        scale[row] += Math.abs(term);
+      }
+    }
+    for (int column = 0; column < actual.length; column++) {
+      double gradient = 0.0;
+      double gradientScale = 0.0;
+      for (int row = 0; row < matrix.length; row++) {
+        gradient += matrix[row][column] * residual[row];
+        gradientScale += Math.abs(matrix[row][column]) * scale[row];
+      }
+      assertTrue(Math.abs(gradient) <= 64.0 * Math.ulp(1.0) * Math.max(1.0, gradientScale),
+          "Least-squares optimality at column " + column);
     }
   }
 

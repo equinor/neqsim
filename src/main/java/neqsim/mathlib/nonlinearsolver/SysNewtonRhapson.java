@@ -467,7 +467,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
    *
    * @param rightHandSide right-hand-side vector
    * @param solution destination for the solution vector
-   * @throws IllegalStateException if the Jacobian is singular
+   * @throws IllegalStateException if factorization fails or the solution contains a non-finite value
    */
   private void solveJacobian(DMatrixRMaj rightHandSide, DMatrixRMaj solution) {
     ensureSolversInitialized();
@@ -476,13 +476,14 @@ public class SysNewtonRhapson implements java.io.Serializable {
       throw new IllegalStateException("Phase-envelope Jacobian is singular");
     }
     jacSolver.solve(rightHandSide, solution);
+    requireFiniteSolution(solution, "Phase-envelope Jacobian");
   }
 
   /**
    * Solves the cubic predictor interpolation system for one history row.
    *
    * @param historyRow row in the continuation history matrix
-   * @throws IllegalStateException if the interpolation matrix is singular
+   * @throws IllegalStateException if factorization fails or the solution contains a non-finite value
    */
   private void solvePolynomial(int historyRow) {
     ensureSolversInitialized();
@@ -494,6 +495,22 @@ public class SysNewtonRhapson implements java.io.Serializable {
       throw new IllegalStateException("Phase-envelope predictor interpolation matrix is singular");
     }
     polynomialSolver.solve(xgTranspose, xcoef);
+    requireFiniteSolution(xcoef, "Phase-envelope predictor interpolation matrix");
+  }
+
+  /**
+   * Rejects non-finite linear solutions before updating the continuation state.
+   *
+   * @param solution computed solution vector
+   * @param description matrix description used in the failure message
+   * @throws IllegalStateException if a solution entry is not finite
+   */
+  private static void requireFiniteSolution(DMatrixRMaj solution, String description) {
+    for (int index = 0; index < solution.getNumElements(); index++) {
+      if (!Double.isFinite(solution.get(index))) {
+        throw new IllegalStateException(description + " produced a non-finite solution");
+      }
+    }
   }
 
   /**

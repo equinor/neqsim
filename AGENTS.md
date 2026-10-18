@@ -69,6 +69,8 @@
   `LinearAlgebraOperations` for calculations. Where a public Jama signature must remain, make the array API primary and
   keep Jama as a thin `@Deprecated` compatibility wrapper. Migrate callers and tests to the array API incrementally;
   preserve dimensions, orientation and ownership, and keep the dependency until live compatibility bridges are retired.
+  Preserve existing interface defaults and subclass-hook dispatch; compare APIs against published releases, not PR summaries.
+  EJML LU `setA` can accept a singular matrix: reject non-finite solve results before state updates or existing fallbacks.
 - Always `setMixingRule(...)` (numeric for CPA); `createDatabase(true)` for new components.
   Temperatures in K and pressures in bara by default. `clone()` fluids before branching.
 - After any flash call `fluid.initProperties()` before reading density/viscosity/conductivity;

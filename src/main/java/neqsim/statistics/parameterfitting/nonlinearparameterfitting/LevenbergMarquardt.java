@@ -119,7 +119,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
       init();
     }
     updateParameterStatistics();
-    result = new LevenbergMarquardtResult(convergenceReason, n, chiSquare, getGradientNorm(), coVarianceMatrix,
+    result = LevenbergMarquardtResult.fromArrays(convergenceReason, n, chiSquare, getGradientNorm(), coVarianceMatrix,
         parameterCorrelationMatrix, parameterStandardDeviation);
     solved = result.isConverged();
     logger.info("Levenberg-Marquardt stopped after {} iterations with reason {} and chi-square {}", n,

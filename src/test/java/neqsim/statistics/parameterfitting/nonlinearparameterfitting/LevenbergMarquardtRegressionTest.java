@@ -83,7 +83,7 @@ class LevenbergMarquardtRegressionTest {
   void legacyJamaMatrixGettersReturnDefensiveCopies() {
     double[][] covarianceValues = {{4.0, 1.0}, {1.0, 9.0}};
     double[][] correlationValues = {{1.0, 0.25}, {0.25, 1.0}};
-    LevenbergMarquardtResult result = new LevenbergMarquardtResult(
+    LevenbergMarquardtResult result = LevenbergMarquardtResult.fromArrays(
         LevenbergMarquardtResult.ConvergenceReason.CHI_SQUARE_TOLERANCE, 2, 0.0, 0.0, covarianceValues,
         correlationValues, new double[] {2.0, 3.0});
 

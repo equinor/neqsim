@@ -1163,7 +1163,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     DMatrixRMaj leftVectors = svd.getU(null, false);
     DMatrixRMaj rightVectors = svd.getV(null, false);
     DMatrixRMaj projectedRightHandSide = multiply(transpose(leftVectors), matrixB);
-    return multiply(multiply(rightVectors, inverseSingularValues), projectedRightHandSide);
+    DMatrixRMaj solution = multiply(multiply(rightVectors, inverseSingularValues), projectedRightHandSide);
+    requireFiniteSolution(solution, "SVD least-squares solve");
+    return solution;
   }
 
   /**
@@ -1172,7 +1174,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * @param matrixA square coefficient matrix
    * @param matrixB right-hand side matrix
    * @return the solution matrix
-   * @throws IllegalStateException if EJML reports a singular factorization
+   * @throws IllegalStateException if factorization fails or the solution contains a non-finite value
    */
   private static DMatrixRMaj solveDense(DMatrixRMaj matrixA, DMatrixRMaj matrixB) {
     LinearSolverDense<DMatrixRMaj> solver = LinearSolverFactory_DDRM.lu(matrixA.getNumRows());
@@ -1181,7 +1183,24 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     }
     DMatrixRMaj solution = new DMatrixRMaj(matrixA.getNumCols(), matrixB.getNumCols());
     solver.solve(matrixB, solution);
+    // EJML LU can accept a singular matrix and return infinities. Throw so the existing SVD fallback is used.
+    requireFiniteSolution(solution, "LU solve");
     return solution;
+  }
+
+  /**
+   * Rejects an invalid linear solve before it can contaminate the chemical-potential and mole updates.
+   *
+   * @param solution computed solution matrix
+   * @param operation description of the linear solve
+   * @throws IllegalStateException if a solution entry is not finite
+   */
+  private static void requireFiniteSolution(DMatrixRMaj solution, String operation) {
+    for (int index = 0; index < solution.getNumElements(); index++) {
+      if (!Double.isFinite(solution.get(index))) {
+        throw new IllegalStateException("Chemical-equilibrium " + operation + " produced a non-finite solution");
+      }
+    }
   }
 
   /**

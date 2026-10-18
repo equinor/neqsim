@@ -80,12 +80,51 @@ public final class LevenbergMarquardtResult implements Serializable {
   }
 
   /**
+   * Creates a result from legacy matrix inputs, preserving the original constructor descriptor.
+   *
+   * @param convergenceReason reason why the optimizer stopped
+   * @param iterations number of solver iterations performed
+   * @param finalChiSquare final weighted chi-square value
+   * @param gradientNorm final norm of the weighted gradient vector
+   * @param covarianceMatrix fitted-parameter covariance matrix, or null if unavailable
+   * @param correlationMatrix fitted-parameter correlation matrix, or null if unavailable
+   * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
+   * @deprecated Use {@link #fromArrays(ConvergenceReason, int, double, double, double[][], double[][], double[])}.
+   */
+  @Deprecated
+  public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations, double finalChiSquare,
+      double gradientNorm, Matrix covarianceMatrix, Matrix correlationMatrix, double[] parameterStandardErrors) {
+    this(convergenceReason, iterations, finalChiSquare, gradientNorm,
+        covarianceMatrix == null ? (double[][]) null : covarianceMatrix.getArray(),
+        correlationMatrix == null ? (double[][]) null : correlationMatrix.getArray(), parameterStandardErrors);
+  }
+
+  /**
+   * Creates a result from primitive arrays without ambiguous null matrix arguments.
+   *
+   * @param convergenceReason reason why the optimizer stopped
+   * @param iterations number of solver iterations performed
+   * @param finalChiSquare final weighted chi-square value
+   * @param gradientNorm final norm of the weighted gradient vector
+   * @param covarianceMatrix fitted-parameter covariance matrix, or null if unavailable
+   * @param correlationMatrix fitted-parameter correlation matrix, or null if unavailable
+   * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
+   * @return immutable result with independent copies of the supplied data
+   */
+  public static LevenbergMarquardtResult fromArrays(ConvergenceReason convergenceReason, int iterations,
+      double finalChiSquare, double gradientNorm, double[][] covarianceMatrix, double[][] correlationMatrix,
+      double[] parameterStandardErrors) {
+    return new LevenbergMarquardtResult(convergenceReason, iterations, finalChiSquare, gradientNorm, covarianceMatrix,
+        correlationMatrix, parameterStandardErrors);
+  }
+
+  /**
    * Creates an initial result for an optimizer that has not run.
    *
    * @return a result with {@link ConvergenceReason#NOT_RUN}
    */
   public static LevenbergMarquardtResult notRun() {
-    return new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN, null, null, null);
+    return fromArrays(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN, null, null, null);
   }
 
   /**

@@ -572,7 +572,7 @@ class FilmCorrectionInvariantTest {
   }
 
   /**
-   * Checks that array access is primary while public Matrix signatures remain explicitly deprecated.
+   * Preserves the default array bridge for third-party implementations of the legacy Matrix interface.
    *
    * @throws NoSuchMethodException if a compatibility or array entry point has been removed
    */
@@ -580,8 +580,10 @@ class FilmCorrectionInvariantTest {
   void arrayPrimaryApiRetainsDeprecatedMatrixEntryPoints() throws NoSuchMethodException {
     assertEquals(double[][][].class,
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").getReturnType());
+    assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").isDefault());
     assertEquals(Matrix[].class,
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").getReturnType());
+    assertFalse(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").isDefault());
     assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix")
         .isAnnotationPresent(Deprecated.class));
     assertTrue(KrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)

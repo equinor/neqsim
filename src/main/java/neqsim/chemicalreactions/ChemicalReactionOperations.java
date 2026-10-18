@@ -19,7 +19,7 @@ import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEqu
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReaction;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
 import neqsim.chemicalreactions.kinetics.Kinetics;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -35,7 +35,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Dense linear algebra used by the element-balance calculation. */
-  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalReactionOperations.class);
 

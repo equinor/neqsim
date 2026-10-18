@@ -31,14 +31,20 @@ The stable Java package is `neqsim.statistics.parameterfitting` with the nested 
 - Existing code can still set initial guesses on the function, create samples manually, call `optimizer.setSampleSet(sampleSet)`, and call `optimizer.solve()`.
 - New diagnostics are additive through `optimizer.getResult()` and `ParameterFittingStudy.Result`.
 
-Code that subclasses `StatisticsBaseClass` or builds a `LevenbergMarquardtResult` directly must be updated, because JAMA `Matrix` was replaced by arrays:
+Code that subclasses `StatisticsBaseClass` must account for protected matrix fields that were replaced by arrays:
 
-- Subclasses of `StatisticsBaseClass` are not source compatible: the protected covariance and correlation fields,
-  `checkBounds(double[])` and `displayMatrix(double[][], String, int)` use arrays instead of JAMA `Matrix`.
+- The protected covariance and correlation fields use arrays instead of JAMA `Matrix`. Subclasses that access those
+  fields must be rebuilt and migrated. The deprecated `checkBounds(Matrix)` and `displayMatrix(Matrix, String, int)`
+  methods remain available, and the array-based optimizer preserves dispatch to an overridden legacy bounds hook.
 - `getCoVarianceMatrix()` and `getParameterCorrelationMatrix()` return `double[][]` copies, or `null` before
-  calculation. The `LevenbergMarquardtResult` constructor takes `double[][]` matrices instead of JAMA `Matrix`;
+  calculation. `LevenbergMarquardtResult` retains its public array constructor and the deprecated legacy Matrix
+  constructor. Prefer `LevenbergMarquardtResult.fromArrays(...)`; an untyped `null, null` matrix pair is ambiguous
+  between the constructors when recompiling, so use the factory or typed null arguments.
   `getCovarianceMatrix()` and `getCorrelationMatrix()` still return JAMA `Matrix` copies, and
   `getCovarianceMatrixArray()` and `getCorrelationMatrixArray()` return arrays.
+
+See the [JAMA to EJML migration guide](../development/jama-ejml-migration.md) for the release boundary,
+remaining dependency uses, and removal gates. JAMA remains a production dependency while these bridges are supported.
 
 ## Weighted Least Squares
 

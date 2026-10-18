@@ -3,7 +3,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.mathlib.linearalgebra.JamaLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -17,7 +17,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class CricondenBarTemp1 implements java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  private static final LinearAlgebraOperations ALGEBRA = new JamaLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   private static final Logger logger = LogManager.getLogger(CricondenBarTemp1.class);
 
   int neq = 0;
