@@ -79,7 +79,13 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
     setUnit(unit);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @deprecated Since 3.25.0. Acquire historian samples externally and use
+   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis.
+   */
+  @Deprecated
   @Override
   public OnlineSignal getOnlineSignal() {
     return onlineSignal;
@@ -89,12 +95,22 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * Setter for the field <code>onlineSignal</code>.
    *
    * @param onlineSignal the onlineSignal to set
+   * @deprecated Since 3.25.0. Acquire historian samples externally and use
+   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis. Existing connection behavior remains
+   * available during the deprecation period.
    */
+  @Deprecated
   public void setOnlineSignal(OnlineSignal onlineSignal) {
     this.onlineSignal = onlineSignal;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @deprecated Since 3.25.0. Acquire historian samples externally and use
+   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis.
+   */
+  @Deprecated
   @Override
   public boolean isOnlineSignal() {
     return isOnlineSignal;
@@ -106,7 +122,11 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass implemen
    * @param isOnlineSignal the isOnlineSignal to set
    * @param plantName a {@link java.lang.String} object
    * @param transmitterame a {@link java.lang.String} object
+   * @deprecated Since 3.25.0. Acquire historian samples externally and use
+   * {@link #setOnlineMeasurementValue(double, String)} for condition analysis. Existing connection behavior remains
+   * available during the deprecation period.
    */
+  @Deprecated
   public void setIsOnlineSignal(boolean isOnlineSignal, String plantName, String transmitterame) {
     this.isOnlineSignal = isOnlineSignal;
     onlineSignal = new OnlineSignal(plantName, transmitterame);

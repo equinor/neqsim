@@ -9,11 +9,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * AspenIP21Database class.
+ * Legacy direct Aspen IP.21 JDBC/ODBC integration.
+ *
+ * <p>
+ * Retrieve historian data in the application integration layer and pass explicit values and units to the measurement
+ * device instead. This class is retained for compatibility.
+ *
+ * @deprecated Since 3.25.0. Use an application-managed historian client and
+ * {@link neqsim.process.measurementdevice.MeasurementDeviceBaseClass#setOnlineMeasurementValue(double, String)} for
+ * condition-analysis input. That setter does not replace this class's JDBC query API.
  *
  * @author esol
  * @version $Id: $Id
  */
+@Deprecated
 public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
