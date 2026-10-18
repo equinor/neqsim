@@ -449,3 +449,20 @@ System.out.println("Cost factor: " + tema.getCostFactor());
 - [Heat Exchanger Equipment](../equipment/heat_exchangers)
 - [Process Design Guide](../process_design_guide)
 - [Standards Overview](../../standards/)
+
+## Material lookup and screening flags
+
+`ShellAndTubeDesignCalculator` loads boolean `NACECompliant` flags from the
+bundled tube-material table. True and false values are preserved for both sides.
+The flag is a material screening input; it does not certify a manufactured exchanger
+or replace hardness, environmental and fabrication qualification.
+
+Shell grades first resolve in `HeatExchangerTubeMaterials`, then in
+`CompressorCasingMaterials` for its listed casing-material grades. Tube grades resolve
+in the tube-material table. An unknown grade stops calculation instead of reusing
+carbon-steel or previously loaded properties. Changing a grade invalidates its
+stored stress, screening flag and all derived pressure, geometry, weight and cost
+results until the next successful calculation. Invalid numeric results are NaN;
+derived counts are -1. Reports
+identify the actual loaded grade. The existing temperature derating remains an
+approximation requiring code-specific verification.
