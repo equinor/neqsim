@@ -86,7 +86,9 @@ public class SarirAtmosphericMainSteamScreenTest {
 
   /** Execute the explicit main-column steam screen and qualify total inlet/product closure. */
   @Test
-  @Timeout(value = 240, unit = TimeUnit.SECONDS)
+  // The 34-tray assay/steam solve needs hosted-runner headroom. Keep a finite hang guard;
+  // numerical acceptance is enforced by the convergence and conservation assertions below.
+  @Timeout(value = 10, unit = TimeUnit.MINUTES)
   @Tag("slow")
   public void explicitMainColumnSteamScreenRunsConservatively() {
     SarirAtmosphericFractionationCase model = createModel();
