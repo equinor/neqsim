@@ -2905,7 +2905,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * double onsetP = ops.asphalteneOnsetPressure();
    * </pre>
    *
-   * @return onset pressure in bara, or NaN if no onset found
+   * @return onset pressure in bara, or NaN if the sampled range contains no onset
+   * @throws IllegalArgumentException if characterization or search bounds are invalid
+   * @throws IllegalStateException if the start is precipitated, a flash fails, or the search is exhausted
    */
   public double asphalteneOnsetPressure() {
     AsphalteneOnsetPressureFlash flash = new AsphalteneOnsetPressureFlash(system, system.getPressure(), 1.0);
@@ -2918,7 +2920,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param startPressure starting pressure for search (bara)
    * @param minPressure minimum pressure to search to (bara)
-   * @return onset pressure in bara, or NaN if no onset found
+   * @return onset pressure in bara, or NaN if the sampled range contains no onset
+   * @throws IllegalArgumentException if characterization or search bounds are invalid
+   * @throws IllegalStateException if the start is precipitated, a flash fails, or the search is exhausted
    */
   public double asphalteneOnsetPressure(double startPressure, double minPressure) {
     AsphalteneOnsetPressureFlash flash = new AsphalteneOnsetPressureFlash(system, startPressure, minPressure);
@@ -2929,7 +2933,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /**
    * Calculates the asphaltene onset temperature at the current system pressure.
    *
-   * @return onset temperature in Kelvin, or NaN if no onset found
+   * @return onset temperature in Kelvin, or NaN if the sampled range contains no transition
+   * @throws IllegalArgumentException if characterization or search bounds are invalid
+   * @throws IllegalStateException if a flash fails or the search is exhausted
    */
   public double asphalteneOnsetTemperature() {
     AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(system);
@@ -2943,7 +2949,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @param startTemperature starting temperature for search (K)
    * @param minTemperature minimum temperature to search to (K)
    * @param maxTemperature maximum temperature to search to (K)
-   * @return onset temperature in Kelvin, or NaN if no onset found
+   * @return onset temperature in Kelvin, or NaN if the sampled range contains no transition
+   * @throws IllegalArgumentException if characterization or search bounds are invalid
+   * @throws IllegalStateException if a flash fails or the search is exhausted
    */
   public double asphalteneOnsetTemperature(double startTemperature, double minTemperature, double maxTemperature) {
     AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(system, startTemperature,
