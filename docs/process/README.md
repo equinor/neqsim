@@ -118,6 +118,13 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [electrical-design.md](electrical-design) | **Electrical design framework — motor sizing, VFD, cable, transformer, switchgear, hazardous area, equipment-specific designs, plant-wide load analysis** |
 
+**Key Features:**
+
+- Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
+- `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
+- IEC standards: 60034 (motors), 60502 (cables), 60076 (transformers), 61439 (switchgear)
+- `ProcessSystem.getSystemElectricalDesign()` for one-call plant electrical summary
+
 ### Dynamic Simulation
 
 | Document | Description |
@@ -139,10 +146,11 @@ This documentation is organized into the following sections:
 | [instrument-design.md](instrument-design) | **Instrument design framework — ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
 
 **Key Features:**
-- Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
-- `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
-- IEC standards: 60034 (motors), 60502 (cables), 60076 (transformers), 61439 (switchgear)
-- `ProcessSystem.getSystemElectricalDesign()` for one-call plant electrical summary
+
+- Equipment-specific instrument lists for separators, compressors, heat exchangers, pipelines and valves
+- `SystemInstrumentDesign` for plant-wide I/O aggregation, DCS/SIS cabinet sizing and cost estimates
+- `ProcessSystem.getSystemInstrumentDesign()` returns a calculated instrument-design summary
+- Cabinet counts are preliminary sizing assumptions, not functional-safety certification; see the guide's sizing limits
 
 ### Mechanical Design Documentation
 

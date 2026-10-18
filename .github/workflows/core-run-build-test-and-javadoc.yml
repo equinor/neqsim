@@ -65,8 +65,10 @@ jobs:
       id-token: write
     runs-on: ${{ matrix.os }}
     needs: test_javadoc
-    # The full fast suite with JaCoCo exceeds one hour on hosted Ubuntu runners.
-    timeout-minutes: 90
+    # The full fast suite with JaCoCo reached the former 90-minute limit on Ubuntu
+    # in PR #4421 while still completing tests without failures. Allow headroom
+    # for coverage instrumentation and hosted-runner variation.
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:

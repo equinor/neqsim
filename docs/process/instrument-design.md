@@ -393,8 +393,25 @@ instrDesign.calcDesign();  // now gets ZT + ZC + XV + ZSO + ZSC (5 instruments)
 | System | Channels/Card | Cards/Cabinet | Notes |
 |:---:|:---:|:---:|:---|
 | DCS | 16 | 16 | Process (non-safety) I/O |
-| SIS | 8 | 8 | Safety-related I/O (redundant) |
-| Marshalling | — | — | 1 cabinet per ~200 I/O channels |
+| SIS | 8 | 8 | Counted safety-related I/O |
+| Marshalling | — | — | 200 total I/O channels per cabinet |
+
+These are implementation sizing assumptions, not vendor hardware selection,
+redundancy allocation or functional-safety certification. Card counts and then
+cabinet counts are rounded up. For example, 17 DCS channels need two cards;
+257 DCS channels need 17 cards and two cabinets. Nine SIS channels need two
+cards; 65 SIS channels need nine cards and two cabinets. Marshalling uses total
+I/O, so 201 channels need two cabinets.
+
+The calculation retains a minimum of one DCS and one marshalling cabinet even
+at zero I/O, but returns zero SIS cabinets at zero safety I/O. The system's
+safety-I/O total counts safety-related AI, DI and DO; other counted I/O is
+assigned to DCS. It does not allocate separate cards by signal type, add spare
+capacity or explicitly duplicate hardware for redundancy. Check these assumptions
+against the project I/O schedule and vendor architecture before using the counts
+for procurement. `InstrumentSizingDocumentationTest` checks the zero and
+below/at/above-capacity boundaries against synthetic instrument inventories;
+it does not qualify a safety instrumented system.
 
 ### Cost Estimation Defaults
 
