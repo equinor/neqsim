@@ -1628,11 +1628,11 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   }
 
   /**
-   * Sets the material grade, normalizing case, whitespace, and equivalent ISO metric labels.
+   * Sets the material grade, normalizing case, whitespace, and equivalent ISO metric labels. After rejection,
+   * material-dependent calculations remain unavailable until a supported grade is selected.
    *
    * @param materialGrade material grade (e.g., "X42", "X52", "L360", "X65", "X70", "X80")
-   * @throws IllegalArgumentException if the grade is null, empty, or unsupported; material-dependent calculations
-   * remain unavailable until a supported grade is selected
+   * @throws IllegalArgumentException if the grade is null, empty, or unsupported
    */
   public void setMaterialGrade(String materialGrade) {
     this.materialGrade = null;
