@@ -60,17 +60,17 @@ public interface PumpInterface extends ProcessEquipmentInterface, TwoPortInterfa
   public void setCheckNPSH(boolean checkNPSH);
 
   /**
-   * Get minimum flow rate.
+   * Get the numerical low-flow bypass threshold, not a minimum stable operating limit.
    *
-   * @return minimum flow in kg/sec
+   * @return low-flow bypass threshold in kg/hr
    */
   @Override
   public double getMinimumFlow();
 
   /**
-   * Set minimum flow rate.
+   * Set the numerical low-flow bypass threshold, not a minimum stable operating limit.
    *
-   * @param minimumFlow minimum flow in kg/sec
+   * @param minimumFlow low-flow bypass threshold in kg/hr
    */
   @Override
   public void setMinimumFlow(double minimumFlow);

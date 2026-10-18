@@ -78,6 +78,22 @@ pump.run();
 `setOutTemperature(double)` is deprecated. Use `setOutletTemperature(double)` for kelvin or
 `setOutletTemperature(double, String)` for an explicit unit.
 
+## Numerical bypass versus stable operating flow
+
+`Pump.setMinimumFlow(double)` sets a numerical low-flow bypass threshold in **kg/hr**,
+consistent with the process-equipment base contract. Below that threshold the standalone
+pump is inactive and reports zero shaft work; this is not a physical operating point or
+a minimum-flow recirculation model. The explicit-unit overload inherited from the base
+class may be used when configuring the threshold in another supported mass-flow unit.
+
+In a canonical `LoopedPipeNetwork`, `NetworkPipe.setPumpMinimumFlowKgS` is a separate
+minimum stable operating limit in **kg/s**. It produces an operating-limit residual,
+not a bypass command. Network evaluation preserves the backing pump's numerical
+threshold and rejects bypassed positive-flow results rather than accepting zero-power
+pressure rise. A stable-limit violation requires an explicit operating constraint even
+when the network converges. See the [SURF network guide](../../fielddevelopment/SURF_NETWORK_INTEGRATION.md)
+and `NetworkPumpMinimumFlowTest` for tested limit, bypass and recovery behavior.
+
 ## NPSH screening
 
 `getNPSHAvailable()` returns metres of liquid head. It clones the inlet fluid, calculates its

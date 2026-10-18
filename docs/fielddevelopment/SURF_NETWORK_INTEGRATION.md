@@ -499,7 +499,7 @@ the edge's previous thermal state so later network and shared-power checks canno
 Curve-backed pumps apply the same acceptance boundary on every positive-flow evaluation:
 the registered `Pump` and enabled chart must still be present. A missing model (including
 an unbound replayed curve definition) cannot create a replacement fixed-pressure pump.
-All forward pump modes require `solved()` plus finite non-negative shaft power and positive
+All forward pump modes require an active pump, `solved()`, finite non-negative shaft power and positive
 finite outlet pressure and temperature. Invalid results and exceptions report `INFEASIBLE`
 and `Pump-INFEASIBLE`, invalidate power, head, NPSH and operating-limit residuals, and clear
 the previously accepted inlet/outlet thermal state. Configured limits and map identity are
@@ -513,6 +513,29 @@ test double; these values test the acceptance contract, not a physical pump benc
 `NetworkPumpTest` supplies adjacent real-model curve and fixed-pressure regressions.
 This guard does not prohibit chart extrapolation or establish OEM operating regions,
 NPSH qualification, injectivity validity or a complete pump constraint envelope.
+
+Keep two different minimum-flow settings separate. The canonical edge's
+`setPumpMinimumFlowKgS` records a minimum stable operating flow in **kg/s** and its
+violation residual; it does not shut down the pump or create a recirculation path.
+The backing `Pump.setMinimumFlow` instead configures a numerical low-flow bypass in
+**kg/hr**. The network preserves that configured bypass threshold rather than copying
+or converting the stable operating limit into it. A positive-flow evaluation that
+bypasses the backing pump is rejected as `INFEASIBLE`, with unavailable power and
+thermal evidence, because a zero-work bypass is not a valid pressure-rise calculation.
+Lowering the bypass threshold permits a fresh solve on the same graph.
+
+Convergence is not operating-envelope acceptance: inspect the stable-flow residual
+even when the curve's operating-status label is normal. For an optimization study,
+register the existing `NetworkConstraints.edgeFlow` with the stable lower limit and
+the separately supplied upper limit, both converted to **kg/hr**, alongside convergence
+and other required constraints. `NetworkPumpMinimumFlowTest` exercises below-limit
+fixed-pressure and differential-pressure calculations against standalone pumps,
+mapped-pump limit changes without changing hydraulics, and explicit bypass rejection
+and recovery through shared host-power accounting. The mapped case also checks shaft work
+against mass flow times pressure rise divided by physical density and efficiency; the
+default fixed-pressure mode instead uses the EOS isentropic enthalpy change. These are
+synthetic software and same-model consistency checks, not minimum-continuous-stable-flow, OEM-map, recirculation,
+injectivity or NPSH qualification. No new optimizer or automatic acceptance policy is added.
 
 `LoopedPipeNetwork.getPower(...)` aggregates the solved shaft power of its compressor and
 pump edges. `FieldWellNetworkProcessUnit` exposes that same demand, and normal
