@@ -18,6 +18,7 @@ import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
@@ -273,20 +274,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       logger.info("no pressure vessel code standard specified");
     }
 
-    if (getDesignStandard().containsKey("separator process design")) {
-      logger.info("separator process design: {}",
-          getDesignStandard().get("separator process design").getStandardName());
-      gasLoadFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getGasLoadFactor();
-      Fg = ((SeparatorDesignStandard) getDesignStandard().get("separator process design")).getFg();
-      volumeSafetyFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getVolumetricDesignFactor();
-      retentionTime = 120.0; // ((SeparatorDesignStandard)
-      // getDesignStandard().get("separator process
-      // design")).getLiquidRetentionTime("API12J", this);
-    } else {
-      logger.info("no separator process design specified");
-    }
+    loadProcessDesignParameters();
+
   }
 
   /** {@inheritDoc} */
@@ -383,7 +372,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     maxDesignVolumeFlow = volumeSafetyFactor
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
-    double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+    double maxGasVelocity = Math.min(this.maxGasVelocity,
+        gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity));
     double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
     double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
@@ -394,24 +384,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // This is the design capacity used for capacity utilization calculations
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
     maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
-
-    // tantanLength = innerDiameter * 5.0;
-    retentionTime = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-        .getLiquidRetentionTime("API12J", this);
-
-    tantanLength = Math
-        .sqrt(4.0 * retentionTime * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getLiquidVolume()
-            / 1e5 / (Math.PI * innerDiameter * innerDiameter * liquidAreaFraction));
-    double sepratorLength = tantanLength + innerDiameter;
-
-    if (sepratorLength / innerDiameter > 6 || sepratorLength / innerDiameter < 3) {
-      // System.out
-      // .println("Fg need to be modified ... L/D separator= " + sepratorLength /
-      // innerDiameter);
-      tantanLength = innerDiameter * 5.0;
-      sepratorLength = tantanLength + innerDiameter;
-    }
-    // System.out.println("inner Diameter " + innerDiameter);
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
@@ -424,6 +396,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       innerDiameter = Daim;
       tantanLength = Length2;
     }
+    sizeForLiquidHoldup(separator, liquidAreaFraction);
+    maxDesignGassVolumeFlow = maxGasVelocity * Math.PI * innerDiameter * innerDiameter / 4.0 * gasAreaFraction * 3600.0;
+    maxDesignVolumeFlow = maxDesignGassVolumeFlow;
     updateWallThicknessForSizedDiameter();
     // calculating from standard codes
     // sepLength = innerDiameter * 2.0;
@@ -536,7 +511,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     maxDesignVolumeFlow = volumeSafetyFactor * separator.getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
     // Souders-Brown equation for max gas velocity
-    double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+    double maxGasVelocity = Math.min(this.maxGasVelocity,
+        gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity));
     double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
     double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
@@ -549,23 +525,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
     maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
 
-    // Calculate length based on liquid retention time
-    double liquidVolume = separator.getThermoSystem().getLiquidVolume() / 1e5;
-    if (liquidVolume > 1e-10) {
-      tantanLength = Math.sqrt(4.0 * retentionTime * liquidVolume * volumeSafetyFactor
-          / (Math.PI * innerDiameter * innerDiameter * liquidAreaFraction));
-    } else {
-      // No liquid - use L/D ratio of 4
-      tantanLength = innerDiameter * 4.0;
-    }
-
-    double separatorTotalLength = tantanLength + innerDiameter;
-
-    // Check L/D ratio and adjust if needed
-    if (separatorTotalLength / innerDiameter > 6 || separatorTotalLength / innerDiameter < 3) {
-      tantanLength = innerDiameter * 4.0; // Default to L/D = 5
-    }
-
+    sizeForLiquidHoldup(separator, liquidAreaFraction);
+    maxDesignGassVolumeFlow = maxGasVelocity * Math.PI * innerDiameter * innerDiameter / 4.0 * gasAreaFraction * 3600.0;
+    maxDesignVolumeFlow = maxDesignGassVolumeFlow;
     updateWallThicknessForSizedDiameter();
 
     // Weight calculations
@@ -677,6 +639,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param gasLoadFactor gas load factor [m/s], typically 0.07-0.15 for horizontal separators
    */
   public void setGasLoadFactor(double gasLoadFactor) {
+    overrideProcessDesignParameter("GasLoadFactor");
     this.gasLoadFactor = gasLoadFactor;
   }
 
@@ -695,6 +658,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param volumeSafetyFactor safety factor (typically 1.1-1.3)
    */
   public void setVolumeSafetyFactor(double volumeSafetyFactor) {
+    overrideProcessDesignParameter("VolumetricDesignFactor");
     this.volumeSafetyFactor = volumeSafetyFactor;
   }
 
@@ -713,6 +677,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param fg gas area fraction
    */
   public void setFg(double fg) {
+    overrideProcessDesignParameter("Fg");
     this.Fg = fg;
   }
 
@@ -731,6 +696,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param retentionTime liquid retention time in seconds (typically 60-300s)
    */
   public void setRetentionTime(double retentionTime) {
+    overrideProcessDesignParameter("LiquidRetentionTime");
     this.retentionTime = retentionTime;
   }
 
@@ -1708,6 +1674,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param margin margin factor (e.g., 1.10 for 10%)
    */
   public void setDesignPressureMargin(double margin) {
+    overrideProcessDesignParameter("DesignPressureMargin");
     this.designPressureMargin = margin;
   }
 
@@ -1726,6 +1693,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param marginC temperature margin in Celsius
    */
   public void setDesignTemperatureMarginC(double marginC) {
+    overrideProcessDesignParameter("DesignTemperatureMargin");
     this.designTemperatureMarginC = marginC;
   }
 
@@ -1744,6 +1712,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param tempC minimum design temperature in Celsius
    */
   public void setMinDesignTemperatureC(double tempC) {
+    overrideProcessDesignParameter("MinDesignTemperature");
     this.minDesignTemperatureC = tempC;
   }
 
@@ -1762,6 +1731,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param factor foam allowance factor (typically 1.0-1.5)
    */
   public void setFoamAllowanceFactor(double factor) {
+    overrideProcessDesignParameter("FoamAllowanceFactor");
     this.foamAllowanceFactor = factor;
   }
 
@@ -1780,6 +1750,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param diameterUm droplet diameter in micrometers
    */
   public void setDropletDiameterGasLiquid(double diameterUm) {
+    overrideProcessDesignParameter("DropletDiameterGas");
     this.dropletDiameterGasLiquid = diameterUm;
   }
 
@@ -1798,6 +1769,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param diameterUm droplet diameter in micrometers
    */
   public void setDropletDiameterLiquidLiquid(double diameterUm) {
+    overrideProcessDesignParameter("DropletDiameterLiquid");
     this.dropletDiameterLiquidLiquid = diameterUm;
   }
 
@@ -1816,6 +1788,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param velocity maximum velocity in m/s
    */
   public void setMaxGasVelocityLimit(double velocity) {
+    overrideProcessDesignParameter("MaxGasVelocity");
     this.maxGasVelocity = velocity;
   }
 
@@ -1834,6 +1807,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param velocity maximum velocity in m/s
    */
   public void setMaxLiquidVelocity(double velocity) {
+    overrideProcessDesignParameter("MaxLiquidVelocity");
     this.maxLiquidVelocity = velocity;
   }
 
@@ -1852,6 +1826,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param minutes retention time in minutes
    */
   public void setMinOilRetentionTime(double minutes) {
+    overrideProcessDesignParameter("MinLiquidRetentionOil");
     this.minOilRetentionTime = minutes;
   }
 
@@ -1870,6 +1845,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param minutes retention time in minutes
    */
   public void setMinWaterRetentionTime(double minutes) {
+    overrideProcessDesignParameter("MinLiquidRetentionWater");
     this.minWaterRetentionTime = minutes;
   }
 
@@ -1892,6 +1868,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param pressureDrop pressure drop in mbar
    */
   public void setDemisterPressureDrop(double pressureDrop) {
+    overrideProcessDesignParameter("DemisterDeltaP");
     this.demisterPressureDrop = pressureDrop;
   }
 
@@ -1910,6 +1887,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param voidFraction void fraction (typically 0.97-0.99)
    */
   public void setDemisterVoidFraction(double voidFraction) {
+    overrideProcessDesignParameter("DemisterVoidFraction");
     this.demisterVoidFraction = voidFraction;
   }
 
@@ -1964,6 +1942,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * @param factor K-factor reduction (typically 0.8-1.0)
    */
   public void setInletDeviceKFactor(double factor) {
+    overrideProcessDesignParameter("InletDeviceKFactor");
     this.inletDeviceKFactor = factor;
   }
 
@@ -2580,67 +2559,83 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Preserve the required cylindrical liquid volume when enforcing the preliminary length/diameter envelope. Volume
+   * equals actual liquid flow times retention time times foam and flow margins.
+   *
+   * @param separator simulated separator supplying actual liquid flow
+   * @param liquidAreaFraction available cross-section fraction
+   */
+  private void sizeForLiquidHoldup(Separator separator, double liquidAreaFraction) {
+    if (!isProcessDesignParameterOverridden("LiquidRetentionTime")) {
+      retentionTime = Math.max(retentionTime, minOilRetentionTime * 60.0);
+      if (separator.getThermoSystem().hasPhaseType("aqueous")) {
+        retentionTime = Math.max(retentionTime, minWaterRetentionTime * 60.0);
+      }
+    }
+    double liquidFlow = separator.getThermoSystem().getLiquidVolume() / 1.0e5;
+    double requiredVolume = liquidFlow * retentionTime * foamAllowanceFactor * volumeSafetyFactor;
+    if (!Double.isFinite(requiredVolume) || requiredVolume < 0.0 || !(liquidAreaFraction > 0.0)) {
+      throw new IllegalStateException("Invalid separator liquid-volume design basis");
+    }
+    // At the maximum tangent length of 5D, capacity is 5*pi*D^3*liquidFraction/4.
+    innerDiameter = Math.max(innerDiameter, Math.cbrt(4.0 * requiredVolume / (5.0 * Math.PI * liquidAreaFraction)));
+    double liquidArea = Math.PI * innerDiameter * innerDiameter * liquidAreaFraction / 4.0;
+    tantanLength = Math.max(2.0 * innerDiameter, requiredVolume / liquidArea);
+  }
+
+  /**
    * Loads process design parameters from the TechnicalRequirements_Process database.
    */
   public void loadProcessDesignParameters() {
-    try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-            + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
+    java.util.Map<String, ProcessDesignParameters.Value> parameters = ProcessDesignParameters.load("Separator",
+        getProcessDesignCompanyIdentifier());
+    validateProcessDesignParameters(parameters, "DesignPressureMargin", "DesignTemperatureMargin",
+        "MinDesignTemperature", "FoamAllowanceFactor", "DropletDiameterGas", "DropletDiameterLiquid", "MaxGasVelocity",
+        "MaxLiquidVelocity", "MinLiquidRetentionOil", "MinLiquidRetentionWater", "DemisterDeltaP",
+        "DemisterVoidFraction", "InletDeviceKFactor", "GasLoadFactor", "Fg", "VolumetricDesignFactor");
+    this.designPressureMargin = processDesignParameter(parameters, "DesignPressureMargin", this.designPressureMargin,
+        1.0);
+    this.designTemperatureMarginC = processDesignParameter(parameters, "DesignTemperatureMargin",
+        this.designTemperatureMarginC, 1.0);
+    this.minDesignTemperatureC = processDesignParameter(parameters, "MinDesignTemperature", this.minDesignTemperatureC,
+        1.0);
+    this.foamAllowanceFactor = processDesignParameter(parameters, "FoamAllowanceFactor", this.foamAllowanceFactor, 1.0);
+    this.dropletDiameterGasLiquid = processDesignParameter(parameters, "DropletDiameterGas",
+        this.dropletDiameterGasLiquid, 1.0);
+    this.dropletDiameterLiquidLiquid = processDesignParameter(parameters, "DropletDiameterLiquid",
+        this.dropletDiameterLiquidLiquid, 1.0);
+    this.maxGasVelocity = processDesignParameter(parameters, "MaxGasVelocity", this.maxGasVelocity, 1.0);
+    this.maxLiquidVelocity = processDesignParameter(parameters, "MaxLiquidVelocity", this.maxLiquidVelocity, 1.0);
+    this.minOilRetentionTime = processDesignParameter(parameters, "MinLiquidRetentionOil", this.minOilRetentionTime,
+        1.0);
+    this.minWaterRetentionTime = processDesignParameter(parameters, "MinLiquidRetentionWater",
+        this.minWaterRetentionTime, 1.0);
+    this.demisterPressureDrop = processDesignParameter(parameters, "DemisterDeltaP", this.demisterPressureDrop, 1.0);
+    this.demisterVoidFraction = processDesignParameter(parameters, "DemisterVoidFraction", this.demisterVoidFraction,
+        1.0);
+    this.inletDeviceKFactor = processDesignParameter(parameters, "InletDeviceKFactor", this.inletDeviceKFactor, 1.0);
+    this.gasLoadFactor = processDesignParameter(parameters, "GasLoadFactor", this.gasLoadFactor, 1.0);
+    this.Fg = processDesignParameter(parameters, "Fg", this.Fg, 1.0);
+    this.volumeSafetyFactor = processDesignParameter(parameters, "VolumetricDesignFactor", this.volumeSafetyFactor,
+        1.0);
+    if (parameters.containsKey("LiquidRetentionTime") || isProcessDesignParameterOverridden("LiquidRetentionTime")) {
+      this.retentionTime = processDesignParameter(parameters, "LiquidRetentionTime", this.retentionTime, 60.0);
+    } else {
+      this.retentionTime = minOilRetentionTime * 60.0;
+      recordProcessDesignParameterSource("LiquidRetentionTime", "DERIVED:MinLiquidRetentionOil");
+    }
 
-      while (dataSet.next()) {
-        String spec = dataSet.getString("SPECIFICATION");
-        double minVal = dataSet.getDouble("MINVALUE");
-        double maxVal = dataSet.getDouble("MAXVALUE");
-        double value = (minVal + maxVal) / 2.0;
-
-        switch (spec) {
-        case "DesignPressureMargin":
-          this.designPressureMargin = value;
-          break;
-        case "DesignTemperatureMargin":
-          this.designTemperatureMarginC = value;
-          break;
-        case "MinDesignTemperature":
-          this.minDesignTemperatureC = value;
-          break;
-        case "FoamAllowanceFactor":
-          this.foamAllowanceFactor = value;
-          break;
-        case "DropletDiameterGas":
-          this.dropletDiameterGasLiquid = value;
-          break;
-        case "DropletDiameterLiquid":
-          this.dropletDiameterLiquidLiquid = value;
-          break;
-        case "MaxGasVelocity":
-          this.maxGasVelocity = value;
-          break;
-        case "MaxLiquidVelocity":
-          this.maxLiquidVelocity = value;
-          break;
-        case "MinLiquidRetentionOil":
-          this.minOilRetentionTime = value;
-          break;
-        case "MinLiquidRetentionWater":
-          this.minWaterRetentionTime = value;
-          break;
-        case "DemisterDeltaP":
-          this.demisterPressureDrop = value;
-          break;
-        case "DemisterVoidFraction":
-          this.demisterVoidFraction = value;
-          break;
-        case "InletDeviceKFactor":
-          this.inletDeviceKFactor = value;
-          break;
-        default:
-          // Ignore unknown parameters
-          break;
-        }
+    SeparatorDesignStandard standard = (SeparatorDesignStandard) getDesignStandard().get("separator process design");
+    if (standard != null) {
+      if (standard.isFgExplicitlySet() && !isProcessDesignParameterOverridden("Fg")) {
+        Fg = standard.getFg();
+        recordProcessDesignParameterSource("Fg", "STANDARD_OVERRIDE");
       }
-    } catch (Exception ex) {
-      // Use default values if database lookup fails
+      if (standard.isVolumetricDesignFactorExplicitlySet()
+          && !isProcessDesignParameterOverridden("VolumetricDesignFactor")) {
+        volumeSafetyFactor = standard.getVolumetricDesignFactor();
+        recordProcessDesignParameterSource("VolumetricDesignFactor", "STANDARD_OVERRIDE");
+      }
     }
   }
 
@@ -2896,10 +2891,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   public SeparatorValidationResult validateDesignComprehensive() {
     SeparatorValidationResult result = new SeparatorValidationResult();
 
-    // Calculate actual gas velocity from design
+    // Compare actual gas flow (m3/hr) with the orientation-specific area in m2.
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
-    double gasArea = crossSectionalArea * Fg;
-    double actualGasVelocity = maxDesignVolumeFlow / gasArea;
+    double gasArea = crossSectionalArea
+        * ("horizontal".equals(((Separator) getProcessEquipment()).getOrientation()) ? Fg : 1.0);
+    double actualGasVelocity = getOperatingGasVolumeFlow() / 3600.0 / gasArea;
 
     if (!validateGasVelocity(actualGasVelocity)) {
       result.addIssue("Gas velocity " + String.format("%.2f", actualGasVelocity) + " m/s exceeds maximum "

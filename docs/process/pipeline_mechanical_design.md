@@ -19,6 +19,17 @@ stress, weight, and cost screening.
 > - [Topside Piping Design](topside_piping_design) - Topside/platform piping with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3
 > - [Riser Mechanical Design](riser_mechanical_design) - Riser design with catenary mechanics, VIV analysis, fatigue life per DNV-OS-F201
 
+Company lookup and factor precedence follow the
+[mechanical design database policy](mechanical_design_database). Unknown company names fail;
+select `default` explicitly for generic requirements. A restrictive project factor survives
+company reloads, design-code mapping, repeated sizing and MAOP calculation, subject to the
+code/location ceiling. The factor source is exported by the calculator. Location-class changes
+invalidate cached thickness and pressure ratings.
+
+An explicit pipeline location class also survives company reloads, including when selected on the
+mechanical-design facade before its calculator exists. The calculator's
+`clearLocationClassOverride()` restores the last loaded company class.
+
 ## Table of Contents
 
 - [Overview](#overview)

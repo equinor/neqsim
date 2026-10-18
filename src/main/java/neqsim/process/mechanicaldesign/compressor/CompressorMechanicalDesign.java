@@ -12,6 +12,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorMechanicalLosses;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 import neqsim.process.mechanicaldesign.designstandards.CompressorDesignStandard;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -283,6 +284,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
           .get("compressor design codes");
       compressorFactor = compStandard.getCompressorFactor();
     }
+    loadProcessDesignParameters();
   }
 
   /** {@inheritDoc} */
@@ -1192,6 +1194,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * @param margin surge margin as percentage (typically 10-25%)
    */
   public void setSurgeMarginPercent(double margin) {
+    overrideProcessDesignParameter("SurgeMargin");
     this.surgeMarginPercent = margin;
   }
 
@@ -1210,6 +1213,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * @param margin stonewall margin as percentage
    */
   public void setStonewallMarginPercent(double margin) {
+    overrideProcessDesignParameter("StonewallMargin");
     this.stonewallMarginPercent = margin;
   }
 
@@ -1228,13 +1232,14 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * @param turndown turndown as percentage of design flow (typically 70-100%)
    */
   public void setTurndownPercent(double turndown) {
+    overrideProcessDesignParameter("MinTurndown");
     this.minTurndownPercent = turndown;
   }
 
   /**
    * Gets the target polytropic efficiency.
    *
-   * @return polytropic efficiency as fraction (0-1)
+   * @return polytropic efficiency in percent (0-100)
    */
   public double getTargetPolytropicEfficiency() {
     return targetPolytropicEfficiency;
@@ -1243,7 +1248,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Sets the target polytropic efficiency.
    *
-   * @param efficiency polytropic efficiency as fraction (typically 0.75-0.85)
+   * @param efficiency polytropic efficiency in percent (typically 75-85)
    */
   public void setTargetPolytropicEfficiency(double efficiency) {
     this.targetPolytropicEfficiency = efficiency;
@@ -1252,7 +1257,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Gets the minimum polytropic efficiency.
    *
-   * @return minimum polytropic efficiency as fraction
+   * @return minimum polytropic efficiency in percent
    */
   public double getMinPolytropicEfficiency() {
     return minPolytropicEfficiency;
@@ -1261,9 +1266,10 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Sets the minimum polytropic efficiency.
    *
-   * @param efficiency minimum polytropic efficiency as fraction
+   * @param efficiency minimum polytropic efficiency in percent
    */
   public void setMinPolytropicEfficiency(double efficiency) {
+    overrideProcessDesignParameter("MinPolytropicEfficiency");
     this.minPolytropicEfficiency = efficiency;
   }
 
@@ -1282,6 +1288,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * @param ratio max pressure ratio per stage (typically 2.5-4.0)
    */
   public void setMaxPressureRatioPerStage(double ratio) {
+    overrideProcessDesignParameter("MaxPressureRatioPerStage");
     this.maxPressureRatioPerStage = ratio;
   }
 
@@ -1318,6 +1325,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * @param vibration max vibration in mm/s RMS
    */
   public void setMaxVibrationMmPerSec(double vibration) {
+    overrideProcessDesignParameter("VibrationLimitCasing");
     this.maxVibrationMmPerSec = vibration;
   }
 
@@ -1336,6 +1344,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * @param tempC max discharge temperature in Celsius
    */
   public void setMaxDischargeTemperatureC(double tempC) {
+    overrideProcessDesignParameter("MaxDischargeTemperature");
     this.maxDischargeTemperatureC = tempC;
   }
 
@@ -1493,50 +1502,22 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * Loads compressor design parameters from the database based on company standards.
    */
   public void loadProcessDesignParameters() {
-    try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-            + "EQUIPMENTTYPE='Compressor' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
-
-      while (dataSet.next()) {
-        String spec = dataSet.getString("SPECIFICATION");
-        double minVal = dataSet.getDouble("MINVALUE");
-        double maxVal = dataSet.getDouble("MAXVALUE");
-        double value = (minVal + maxVal) / 2.0;
-
-        switch (spec) {
-        case "SurgeMargin":
-          this.surgeMarginPercent = value;
-          break;
-        case "StonewallMargin":
-          this.stonewallMarginPercent = value;
-          break;
-        case "MinTurndown":
-          this.minTurndownPercent = value;
-          break;
-        case "PolytropicEfficiencyTarget":
-          this.targetPolytropicEfficiency = value / 100.0;
-          break;
-        case "PolytropicEfficiencyMin":
-          this.minPolytropicEfficiency = value / 100.0;
-          break;
-        case "MaxPressureRatioPerStage":
-          this.maxPressureRatioPerStage = value;
-          break;
-        case "MaxVibration":
-          this.maxVibrationMmPerSec = value;
-          break;
-        case "MaxDischargeTemperature":
-          this.maxDischargeTemperatureC = value;
-          break;
-        default:
-          // Ignore unknown parameters
-          break;
-        }
-      }
-    } catch (Exception ex) {
-      // Use default values if database lookup fails
-    }
+    java.util.Map<String, ProcessDesignParameters.Value> parameters = ProcessDesignParameters.load("Compressor",
+        getProcessDesignCompanyIdentifier());
+    validateProcessDesignParameters(parameters, "SurgeMargin", "StonewallMargin", "MinTurndown",
+        "MinPolytropicEfficiency", "MaxPressureRatioPerStage", "VibrationLimitCasing", "MaxDischargeTemperature");
+    this.surgeMarginPercent = processDesignParameter(parameters, "SurgeMargin", this.surgeMarginPercent, 1.0);
+    this.stonewallMarginPercent = processDesignParameter(parameters, "StonewallMargin", this.stonewallMarginPercent,
+        1.0);
+    this.minTurndownPercent = processDesignParameter(parameters, "MinTurndown", this.minTurndownPercent, 100.0);
+    this.minPolytropicEfficiency = processDesignParameter(parameters, "MinPolytropicEfficiency",
+        this.minPolytropicEfficiency, 100.0);
+    this.maxPressureRatioPerStage = processDesignParameter(parameters, "MaxPressureRatioPerStage",
+        this.maxPressureRatioPerStage, 1.0);
+    this.maxVibrationMmPerSec = processDesignParameter(parameters, "VibrationLimitCasing", this.maxVibrationMmPerSec,
+        1.0);
+    this.maxDischargeTemperatureC = processDesignParameter(parameters, "MaxDischargeTemperature",
+        this.maxDischargeTemperatureC, 1.0);
   }
 
   // ============================================================================
@@ -1546,11 +1527,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /**
    * Validates that the actual polytropic efficiency meets minimum requirements.
    *
-   * @param actualEfficiency actual polytropic efficiency (0-1)
+   * @param actualEfficiency actual polytropic efficiency in percent (0-100)
    * @return true if efficiency is acceptable
    */
   public boolean validateEfficiency(double actualEfficiency) {
-    return actualEfficiency >= minPolytropicEfficiency;
+    return Double.isFinite(actualEfficiency) && actualEfficiency >= minPolytropicEfficiency
+        && actualEfficiency <= 100.0;
   }
 
   /**
@@ -1611,9 +1593,9 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     // Validate polytropic efficiency
     double actualEfficiency = compressor.getPolytropicEfficiency();
-    if (actualEfficiency > 0 && !validateEfficiency(actualEfficiency)) {
+    if (actualEfficiency > 0 && !validateEfficiency(actualEfficiency * 100.0)) {
       result.addIssue("Polytropic efficiency " + String.format("%.1f", actualEfficiency * 100) + "% below minimum "
-          + String.format("%.1f", minPolytropicEfficiency * 100) + "%");
+          + String.format("%.1f", minPolytropicEfficiency) + "%");
     }
 
     // Validate pressure ratio per stage

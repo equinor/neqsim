@@ -138,6 +138,8 @@ public class SeparatorMechanicalDesignTest {
   /** Verifies that Fg derates horizontal gas area but does not derate vertical cross-sectional area. */
   @Test
   public void testSizingUsesOrientationSpecificGasArea() {
+    // Isolate the gas-area rule; liquid-inventory sizing is verified separately.
+    mechDesign.setRetentionTime(1.0);
     separator.setOrientation("vertical");
     mechDesign.setFg(0.2);
     mechDesign.performSizingCalculations();

@@ -75,9 +75,13 @@ class SeparatorWallThicknessConsistencyTest extends neqsim.NeqSimTest {
     SeparatorMechanicalDesign design = separator.getMechanicalDesign();
     design.calcDesign();
     assertCoherentDesign(separator);
-    assertEquals(1.440917294605802, design.getInnerDiameter(), 1e-8);
+    // The loaded foam and retention requirements can now control geometry as well as gas flow.
+    double requiredLiquidVolume = separator.getThermoSystem().getLiquidVolume() / 1.0e5 * design.getRetentionTime()
+        * design.getFoamAllowanceFactor() * design.getVolumeSafetyFactor();
+    double requiredLiquidDiameter = Math.cbrt(4.0 * requiredLiquidVolume / (5.0 * Math.PI * (1.0 - design.getFg())));
+    assertEquals(requiredLiquidDiameter, design.getInnerDiameter(), 1e-8);
     // SA-516 grade 55: 13,800 psi = 95.147650602 MPa, not the former unloaded 425 MPa.
-    double expectedThickness = 2.5 * 1.440917294605802 / (2.0 * 95.147650602 - 1.2 * 2.5);
+    double expectedThickness = 2.5 * requiredLiquidDiameter / (2.0 * 95.147650602 - 1.2 * 2.5);
     assertEquals(expectedThickness, design.getWallThickness(), 1e-10);
     double thickness = design.getWallThickness();
     double weight = design.getWeightTotal();
@@ -120,8 +124,13 @@ class SeparatorWallThicknessConsistencyTest extends neqsim.NeqSimTest {
     Separator separator = createSeparator(4.0, false, true);
     SeparatorMechanicalDesign design = separator.getMechanicalDesign();
     design.calcDesign();
-    // The liquid/bubble sizing branch selects L = 4D, rather than the gas branch's fallback L = 5D.
-    assertEquals(4.0 * design.getInnerDiameter(), design.getTantanLength(), 1e-10);
+    // Liquid hold-up must survive the gas/bubble sizing branches and the L/D envelope.
+    double requiredVolume = separator.getThermoSystem().getLiquidVolume() / 1.0e5 * design.getRetentionTime()
+        * design.getFoamAllowanceFactor() * design.getVolumeSafetyFactor();
+    double availableVolume = Math.PI * Math.pow(design.getInnerDiameter(), 2.0) / 4.0 * design.getTantanLength()
+        * (1.0 - design.getFg());
+    assertTrue(availableVolume >= requiredVolume * (1.0 - 1e-12));
+    assertTrue(design.getTantanLength() <= 5.0 * design.getInnerDiameter() + 1e-12);
     assertCoherentDesign(separator);
   }
 

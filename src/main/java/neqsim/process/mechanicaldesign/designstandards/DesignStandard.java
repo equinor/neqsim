@@ -1,8 +1,12 @@
 package neqsim.process.mechanicaldesign.designstandards;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 
 /**
  * DesignStandard class.
@@ -95,6 +99,45 @@ public class DesignStandard implements java.io.Serializable {
       return "StatoilTR";
     }
     return value;
+  }
+
+  /** Actual sources for loaded process requirements. */
+  private Map<String, String> processRequirementSources = new LinkedHashMap<String, String>();
+
+  /**
+   * Load an explicit layered process requirement set.
+   *
+   * @param equipmentType database equipment type
+   * @param company company identifier
+   * @return validated values with provenance
+   */
+  protected Map<String, ProcessDesignParameters.Value> loadProcessRequirements(String equipmentType, String company) {
+    String selectedCompany = company;
+    if (equipment != null && company != null && company.equals(equipment.getCompanySpecificDesignStandards())) {
+      selectedCompany = equipment.getProcessDesignCompanyIdentifier();
+    }
+    for (StandardType type : StandardType.values()) {
+      if (company != null && (company.equals(type.getCode()) || company.startsWith(type.getCode() + " "))) {
+        selectedCompany = equipment == null ? "default" : equipment.getProcessDesignCompanyIdentifier();
+        break;
+      }
+    }
+    Map<String, ProcessDesignParameters.Value> values = ProcessDesignParameters.load(equipmentType, selectedCompany);
+    processRequirementSources = new LinkedHashMap<String, String>();
+    for (Map.Entry<String, ProcessDesignParameters.Value> entry : values.entrySet()) {
+      processRequirementSources.put(entry.getKey(), entry.getValue().source());
+    }
+    return values;
+  }
+
+  /**
+   * Return the actual company and document for loaded process requirements.
+   *
+   * @return immutable provenance snapshot
+   */
+  public Map<String, String> getProcessDesignParameterSources() {
+    return processRequirementSources == null ? Collections.<String, String>emptyMap()
+        : Collections.unmodifiableMap(new LinkedHashMap<String, String>(processRequirementSources));
   }
 
   /**

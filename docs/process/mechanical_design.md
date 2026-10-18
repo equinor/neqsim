@@ -639,13 +639,17 @@ String combined = mecResponse.mergeWithEquipmentJson(processJson);
 
 ## Process Design Parameters
 
-Process design parameters define the sizing basis and validation limits for equipment per industry standards. These parameters can be loaded from the database or set manually.
+Process design parameters define the screening sizing basis and validation limits for equipment.
+The separator, compressor and exchanger specification workflow loads them automatically. Public
+parameter setters preserve project overrides across reloads; see the
+[lookup, provenance and override policy](mechanical_design_database#material-and-process-lookup-keys).
+Unknown company names are rejected; custom companies must be registered in the database or a configured design-limit source.
 
 ### Loading from Database
 
 ```java
 // Load company-specific process design standards
-separator.getMechanicalDesign().setCompanySpecificDesignStandards("MyCompany");
+separator.getMechanicalDesign().setCompanySpecificDesignStandards("default");
 separator.getMechanicalDesign().loadProcessDesignParameters();  // Loads from TechnicalRequirements_Process table
 ```
 

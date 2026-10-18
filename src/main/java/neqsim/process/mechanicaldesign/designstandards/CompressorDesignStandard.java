@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.designstandards;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 
 /**
  * CompressorDesignStandard class.
@@ -27,25 +28,8 @@ public class CompressorDesignStandard extends DesignStandard {
   public CompressorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      try (java.sql.ResultSet dataSet = database
-          .getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
-              + normalizeCompanyIdentifier(standardName) + "'"))) {
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("compressorFactor")) {
-            compressorFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          }
-        }
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      }
-      // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      logger.error(e.getMessage());
-    }
+    java.util.Map<String, ProcessDesignParameters.Value> values = loadProcessRequirements("Compressor", name);
+    compressorFactor = ProcessDesignParameters.require(values, "compressorFactor").maximum;
   }
 
   /**

@@ -26,6 +26,18 @@ For DNV-RP-F109 on-bottom stability, use the typed
 its review-required status and do not claim generalized-table, dynamic-response,
 or conformity coverage.
 
+## Requirement loading and project ownership
+
+Select `default` explicitly or a company registered in `TechnicalRequirements_Process` or a configured design-limit source;
+unknown/null/blank keys fail. Inspect `getProcessDesignParameterSources()` instead of inferring
+that a plausible number was loaded. Separator, compressor and exchanger parameters load through
+`readDesignSpecifications()`/`calcDesign()`. Equipment parameter setters own their property across
+reloads; release with `clearProcessDesignParameterOverride(csvKey)` when appropriate. Compressor
+mechanical-design efficiency and turndown APIs use percent; the simulator efficiency is a fraction.
+Pipeline project/company factors remain bounded by code/location ceilings during wall and MAOP
+calculations. Check `getDesignFactorSource()` and validate actual liquid inventory after separator
+sizing. See `docs/process/mechanical_design_database.md` for data layering and method limitations.
+
 ## Architecture Pattern
 Every piece of process equipment has a `MechanicalDesign` object:
 
@@ -42,7 +54,7 @@ MechanicalDesign design = sep.getMechanicalDesign();
 // 3. Configure design parameters
 design.setMaxOperationPressure(85.0);         // bara
 design.setMaxOperationTemperature(273.15 + 80); // K
-design.setCompanySpecificDesignStandards("OperatorA");
+design.setCompanySpecificDesignStandards("default");
 
 // 4. For equipment-specific designs, cast to subclass
 SeparatorMechanicalDesign sepDesign = (SeparatorMechanicalDesign) design;
