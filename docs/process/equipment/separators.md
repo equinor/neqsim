@@ -6,6 +6,14 @@ keywords: "separator, two-phase, three-phase, gas-oil-water, test separator, scr
 
 Documentation for separator equipment in NeqSim process simulation.
 
+Plate allowables used by `MaterialPlateDesignStandard` are selected by material name,
+specification and grade, then converted from the bundled table's psi to MPa. The
+SA-516 grade 55 division-1 row supplies 95.14765 MPa; it must not be replaced by an
+unloaded field default. Unknown grades, invalid divisions and failed database loads
+stop sizing. A failed reload invalidates the previous allowable until a valid row
+or an explicit positive allowable is supplied. These bundled values are screening
+inputs; they do not replace edition- and temperature-specific code verification.
+
 ## Table of Contents
 
 - [Overview](#overview)
