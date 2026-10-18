@@ -72,6 +72,7 @@ Analyze the request and match it to one or more agents:
 | Optimization, minimize, maximize, "best", trade-off, Pareto, DoE, sensitivity, Monte Carlo, P10/P50/P90, tornado, SQP, Nelder-Mead, particle swarm, parameter sweep, debottleneck | `@optimize` | `@process-model` to build the flowsheet first; `@solve-task` to wrap into report |
 | Literature search, find papers, fetch standards, retrieve internal docs (STID, vendor data sheets), build references manifest | `@literature-scout` | feeds notes.md and references/ inside the task folder; pairs with `@capability-scout` and `@solve-task` |
 | Review my task, audit results.json, is this ready to merge, quality-gate a task folder | `@review` | wraps validate_task_results.py + consistency_checker.py + figure-traceability check |
+| Keep a solved task improving: living task, monitor cycles, backtest, "re-run when new data arrives", goal-driven re-solve, improvement ledger, baseline promotion | `@continuous-improvement` (`continuous-task-improvement-agent` community; `enterprise-continuous-improvement-agent` on Equinor OTS/PDM data) | `@plant-data` for the historian binding, `@solve-task` for the first report |
 
 ## Disambiguating "Solve / Build / Extract" Agents
 
@@ -197,6 +198,10 @@ Some requests need multiple agents in sequence. Detect these patterns:
 ### Pattern 14: Reservoir from Open Data
 **Trigger:** "OPM Flow", "reservoir simulator from open data", "Sodir volumes", "history match", "VFPPROD"
 **Pipeline:** `reservoir-simulator-agent` (screening model, maturity ladder) → `near-well-injectivity-agent` (PI/II, black-oil tables, lift curves) → `reservoir-history-match-agent` (multi-tank match and forecast) → `@process-model` for the host. Enterprise variants add PDM history and OSDU static models.
+
+### Pattern 15: Living Task (Continuous Improvement)
+**Trigger:** "keep improving", "living task", "monitor", "re-run daily", "new data arrived", "backtest", "improvement ledger", "promote baseline"
+**Pipeline:** `@solve-task` (first report and `results.json`) → `@continuous-improvement` (`neqsim task-living`, confirmed goal, `task-cycle` / `task-solve`, `task-backtest`, `task-schedule`) → `@plant-data` or `enterprise-continuous-improvement-agent` for the historian binding → human reviewer for `task-promote`. A living task is never promoted without a named reviewer.
 
 ## Routing Workflow
 
