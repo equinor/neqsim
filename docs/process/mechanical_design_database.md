@@ -208,7 +208,9 @@ maximum column. Unrecognized specification names are available through
 
 Use `setDesignDataSource(source)`, `setDesignDataSources(orderedSources)`, or
 `addDesignDataSource(source)` on the equipment's `MechanicalDesign`. Setting or adding a
-source reloads the limits. The complete example demonstrates two ordered sources.
+source reloads the limits. Register sources before selecting an external-only company so its
+identifier can be validated against those sources. The complete example demonstrates two
+ordered sources.
 
 The first present `DesignLimitData` wins as a whole; fields are not merged across sources.
 Adding a custom source replaces the implicit database-only fallback, so include the database
@@ -311,9 +313,9 @@ public class MechanicalDesignDatabaseExample {
     Stream feed = new Stream("Feed", fluid);
     Separator separator = new Separator("Separator", feed);
     MechanicalDesign design = separator.getMechanicalDesign();
-    design.setCompanySpecificDesignStandards("ExampleCo");
     design.setDesignDataSources(Arrays.<MechanicalDesignDataSource>asList(
         companySource, new DatabaseMechanicalDesignDataSource()));
+    design.setCompanySpecificDesignStandards("ExampleCo");
     if (!design.getDesignLimitData().equals(companyLimits)) {
       throw new IllegalStateException("Company limits were not applied");
     }

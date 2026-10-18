@@ -29,8 +29,9 @@ or conformity coverage.
 ## Requirement loading and project ownership
 
 Select `default` explicitly or a company registered in `TechnicalRequirements_Process` or a configured design-limit source;
-unknown/null/blank keys fail. Inspect `getProcessDesignParameterSources()` instead of inferring
-that a plausible number was loaded. Separator, compressor and exchanger parameters load through
+unknown/null/blank keys fail. Register custom data sources before selecting an external-only
+company; its identifier must already be recognized by a source for this equipment. Inspect
+`getProcessDesignParameterSources()` instead of inferring that a plausible number was loaded. Separator, compressor and exchanger parameters load through
 `readDesignSpecifications()`/`calcDesign()`. Equipment parameter setters own their property across
 reloads; release with `clearProcessDesignParameterOverride(csvKey)` when appropriate. Compressor
 mechanical-design efficiency and turndown APIs use percent; the simulator efficiency is a fraction.

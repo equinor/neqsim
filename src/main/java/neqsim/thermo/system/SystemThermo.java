@@ -2632,34 +2632,27 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface getEmptySystemClone() {
-    int phaseNumber = 0;
-
     SystemInterface newSystem = this.clone();
-
+    double[] scaledMoles = new double[numberOfComponents];
     double totalMolesInSystem = 0.0;
-    double scaleFactor = 1.0e30;
-
-    for (int j = 0; j < getMaxNumberOfPhases(); j++) {
-      phaseNumber = j;
-      double phaseMoles = 0.0;
-      for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-        double scaledMoles = getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / scaleFactor;
-        newSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledMoles);
-        newSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(scaledMoles);
-        phaseMoles += scaledMoles;
-      }
-      totalMolesInSystem += phaseMoles;
+    for (int i = 0; i < numberOfComponents; i++) {
+      scaledMoles[i] = getPhase(0).getComponent(i).getNumberOfmoles() * 1.0e-30;
+      totalMolesInSystem += scaledMoles[i];
     }
 
-    if (totalMolesInSystem <= 0.0) {
-      totalMolesInSystem = 1.0e-50;
+    // init(0) restores the identity phase mapping. A removed phase can leave repeated logical
+    // indices, so iterating getPhase(j) would skip a physical slot and resurrect its full inventory.
+    // Overall component inventories are duplicated in each slot, not summed over phase slots.
+    for (int j = 0; j < getMaxNumberOfPhases(); j++) {
+      PhaseInterface storedPhase = newSystem.getPhases()[j];
+      for (int i = 0; i < storedPhase.getNumberOfComponents(); i++) {
+        storedPhase.getComponent(i).setNumberOfmoles(scaledMoles[i]);
+        storedPhase.getComponent(i).setNumberOfMolesInPhase(scaledMoles[i]);
+      }
     }
 
     ((SystemThermo) newSystem).setTotalNumberOfMolesRaw(totalMolesInSystem);
-    ((SystemThermo) newSystem).isInitialized = false;
-
     newSystem.init(0);
-    // newSystem.init(1);
     return newSystem;
   }
 

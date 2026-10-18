@@ -1110,9 +1110,15 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public double getdVdTpn();
 
   /**
-   * getEmptySystemClone.
+   * Creates a negligible-inventory clone retaining the feed composition and thermodynamic model.
    *
-   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * <p>
+   * Each overall component amount is scaled by 1e-30. All physical phase-storage slots receive the same scaled overall
+   * inventory, including inactive slots, so subsequent initialization cannot restore an unscaled phase. An already
+   * empty source remains empty. This is a template for absent phase outlets, not a phase extraction.
+   * </p>
+   *
+   * @return an independent clone with normalized feed composition and negligible total inventory
    */
   public SystemInterface getEmptySystemClone();
 

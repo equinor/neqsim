@@ -36,6 +36,14 @@ stability analysis, and require fugacity equality for a recovered split. The dry
 SRK/PR condensate regression for issue #4202 is
 `TPflashCondensateEndpointConservationTest`.
 
+When creating an empty clone or extracting a phase, update physical storage slots
+with `getPhases()[slot]`, rather than iterating mapped `getPhase(slot)` values:
+phase removal can leave repeated indices, and `init(0)` restores the identity
+mapping. A skipped inactive slot can then resurrect its unscaled inventory. Keep
+one common overall component inventory in every slot and derive the scalar total
+from that inventory once; phase-specific amounts are a different quantity. The
+phase-removal regression for issue #4427 is `SystemThermoEmptySystemCloneTest`.
+
 For a retained phase outside the active phase count, do not assume a fluid-only flash has synchronized its temperature, pressure, composition, or EOS state. Set the retained phase state explicitly and initialize it at the minimum level required before reading it. This is especially important for inactive solid phases used by freezing or precipitation searches.
 
 For pure phases backed by independent fundamental EOS models, compare molar chemical potentials or Gibbs energies directly at the same temperature and pressure. Do not force the comparison through exponentiated fugacity coefficients when a native Gibbs value is available; large reference offsets can overflow `exp(ln phi)` even though the Gibbs residual is finite. Mixture solid-equilibrium paths may still require logarithmic fugacity or activity expressions.

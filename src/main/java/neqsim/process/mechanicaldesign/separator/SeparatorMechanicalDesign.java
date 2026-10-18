@@ -372,18 +372,18 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     maxDesignVolumeFlow = volumeSafetyFactor
         * ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
-    double maxGasVelocity = Math.min(this.maxGasVelocity,
+    double allowableGasVelocity = Math.min(this.maxGasVelocity,
         gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity));
     double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
     double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
     innerDiameter = Math.sqrt(4.0 * (getMaxDesignVolumeFlow() / 3600.0)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * allowableGasVelocity * gasAreaFraction));
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
-    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
+    maxDesignGassVolumeFlow = allowableGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
@@ -397,7 +397,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       tantanLength = Length2;
     }
     sizeForLiquidHoldup(separator, liquidAreaFraction);
-    maxDesignGassVolumeFlow = maxGasVelocity * Math.PI * innerDiameter * innerDiameter / 4.0 * gasAreaFraction * 3600.0;
+    maxDesignGassVolumeFlow = allowableGasVelocity * Math.PI * innerDiameter * innerDiameter / 4.0 * gasAreaFraction
+        * 3600.0;
     maxDesignVolumeFlow = maxDesignGassVolumeFlow;
     updateWallThicknessForSizedDiameter();
     // calculating from standard codes
@@ -511,22 +512,23 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     maxDesignVolumeFlow = volumeSafetyFactor * separator.getThermoSystem().getPhase(0).getVolume() / 1e5 * 3600.0;
 
     // Souders-Brown equation for max gas velocity
-    double maxGasVelocity = Math.min(this.maxGasVelocity,
+    double allowableGasVelocity = Math.min(this.maxGasVelocity,
         gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity));
     double gasAreaFraction = "horizontal".equals(separator.getOrientation()) ? Fg : 1.0;
     double liquidAreaFraction = "horizontal".equals(separator.getOrientation()) ? 1.0 - Fg : 1.0;
 
     // Calculate diameter based on the orientation-specific gas area.
     innerDiameter = Math.sqrt(4.0 * (maxDesignVolumeFlow / 3600.0)
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * gasAreaFraction));
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * allowableGasVelocity * gasAreaFraction));
 
     // Calculate max allowable gas volume flow based on sized diameter
     // This is the design capacity used for capacity utilization calculations
     double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
-    maxDesignGassVolumeFlow = maxGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
+    maxDesignGassVolumeFlow = allowableGasVelocity * crossSectionalArea * gasAreaFraction * 3600.0;
 
     sizeForLiquidHoldup(separator, liquidAreaFraction);
-    maxDesignGassVolumeFlow = maxGasVelocity * Math.PI * innerDiameter * innerDiameter / 4.0 * gasAreaFraction * 3600.0;
+    maxDesignGassVolumeFlow = allowableGasVelocity * Math.PI * innerDiameter * innerDiameter / 4.0 * gasAreaFraction
+        * 3600.0;
     maxDesignVolumeFlow = maxDesignGassVolumeFlow;
     updateWallThicknessForSizedDiameter();
 
