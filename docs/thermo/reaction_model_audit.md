@@ -7,6 +7,19 @@ NeqSim can use chemical-reaction equilibrium together with electrolyte EOS model
 
 A shared reaction name or stoichiometry is not evidence that its equilibrium constants, activity convention, or validity range transfer between thermodynamic models. Capture the actual initialized state with `ChemicalReactionModelAudit` before changing model-specific reactions.
 
+The name-only `ChemicalReactionFactory` reads the enabled (`USEREACTION=1`) row from
+the STANDARD table, just as the STANDARD reaction-list loader does. Disabled historical
+fits remain in the data for provenance but are excluded from factory name enumeration
+and selection. Model-specific Pitzer and Kent–Eisenberg selection remains with the
+system's typed reaction-data source; the name-only factory does not select those tables.
+
+Element inventories must contain one row per species/element pair. Duplicate pairs are
+rejected when loading a species. The DEA-carbamate inventory is C5H10NO4 with charge -1,
+consistent with DEA + CO2 + water = DEACOO- + H3O+. DEA is C4H11NO2, not MDEA;
+its nitrogen must be present in the element table. Duplicate acetate rows have also
+been removed. This restores the same atom counts to the Newton and linear-programming
+equilibrium consumers; it does not independently qualify amine equilibrium correlations.
+
 ```java
 SystemInterface cpa = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
 cpa.addComponent("CO2", 0.01);

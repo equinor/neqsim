@@ -31,6 +31,7 @@ public class Element implements ThermodynamicConstantsInterface {
    * Constructor for Element.
    *
    * @param name Name of component.
+   * @throws IllegalArgumentException if the component has duplicate element rows
    */
   public Element(String name) {
     this.name = name;
@@ -46,7 +47,11 @@ public class Element implements ThermodynamicConstantsInterface {
       }
 
       do {
-        names.add(dataSet.getString("atomelement").trim());
+        String atom = dataSet.getString("atomelement").trim();
+        if (names.contains(atom)) {
+          throw new IllegalArgumentException("Duplicate element " + atom + " for component " + name);
+        }
+        names.add(atom);
         stocCoef.add(dataSet.getString("number"));
       } while (dataSet.next());
 
@@ -56,6 +61,8 @@ public class Element implements ThermodynamicConstantsInterface {
         coefArray[i] = Double.parseDouble(stocCoef.get(i));
         nameArray[i] = names.get(i);
       }
+    } catch (IllegalArgumentException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
