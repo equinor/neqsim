@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.util.database.NeqSimProcessDesignDataBase;
+import neqsim.process.mechanicaldesign.pipeline.Api5LGrade;
 
 /**
  * Temperature-dependent material strength curve for fire rupture screening.
@@ -89,20 +90,22 @@ public class MaterialStrengthCurve implements Serializable {
    *
    * @param grade API 5L grade, for example B, X52, X65, or X70
    * @return material strength curve using the generic carbon-steel temperature reduction
-   * @throws IllegalArgumentException if the grade is empty
+   * @throws IllegalArgumentException if the grade is empty or unsupported
    */
   public static MaterialStrengthCurve forApi5LPipeGrade(String grade) {
     if (grade == null || grade.trim().isEmpty()) {
       throw new IllegalArgumentException("grade must not be empty");
     }
-    String normalizedGrade = grade.trim();
+    String normalizedGrade = Api5LGrade.normalize(grade);
     double[] strengths = queryApi5LStrengths(normalizedGrade);
+    String ambientDataSource = "MaterialPipeProperties API 5L ambient SMYS/SMTS";
     if (strengths == null) {
       strengths = fallbackApi5LStrengths(normalizedGrade);
+      ambientDataSource = "Explicit built-in API 5L ambient SMYS/SMTS";
     }
     return new MaterialStrengthCurve("API 5L " + normalizedGrade, strengths[0], strengths[1],
         defaultCarbonSteelTemperatures(), defaultCarbonSteelFactors(),
-        "API 5L ambient SMYS/SMTS with generic fire-temperature reduction");
+        ambientDataSource + " with generic fire-temperature reduction");
   }
 
   /**
@@ -220,7 +223,7 @@ public class MaterialStrengthCurve implements Serializable {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {
       String safeGrade = grade.replace("'", "''");
       String query = "SELECT minimumYeildStrength, minimumTensileStrength "
-          + "FROM MaterialPipeProperties WHERE grade='" + safeGrade + "'";
+          + "FROM MaterialPipeProperties WHERE specificationNumber='API5L' AND grade='" + safeGrade + "'";
       try (ResultSet dataSet = database.getResultSet(query)) {
         if (dataSet.next()) {
           double yieldPa = dataSet.getDouble("minimumYeildStrength") * PSI_TO_PA;
@@ -243,7 +246,7 @@ public class MaterialStrengthCurve implements Serializable {
    * @return two-element array with yield and tensile strength in Pa
    */
   private static double[] fallbackApi5LStrengths(String grade) {
-    String key = grade.trim().toUpperCase();
+    String key = Api5LGrade.normalize(grade);
     if ("B".equals(key) || "GRADE B".equals(key)) {
       return psiStrengths(35000.0, 60000.0);
     }
@@ -265,7 +268,28 @@ public class MaterialStrengthCurve implements Serializable {
     if ("X80".equals(key)) {
       return psiStrengths(80000.0, 90000.0);
     }
-    return psiStrengths(35000.0, 60000.0);
+    if ("A25".equals(key)) {
+      return psiStrengths(25000.0, 45000.0);
+    }
+    if ("A".equals(key)) {
+      return psiStrengths(30000.0, 48000.0);
+    }
+    if ("X46".equals(key)) {
+      return psiStrengths(46000.0, 63000.0);
+    }
+    if ("X56".equals(key)) {
+      return psiStrengths(56000.0, 71000.0);
+    }
+    if ("X90".equals(key)) {
+      return new double[] {620.0e6, 695.0e6};
+    }
+    if ("X100".equals(key)) {
+      return psiStrengths(100000.0, 110000.0);
+    }
+    if ("X120".equals(key)) {
+      return psiStrengths(120000.0, 130000.0);
+    }
+    throw new IllegalArgumentException("No API 5L material strength data for grade " + grade);
   }
 
   /**

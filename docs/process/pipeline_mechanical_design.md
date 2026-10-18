@@ -116,6 +116,10 @@ PipelineMechanicalDesign extends MechanicalDesign
 | X100 | 690 | 760 | Ultra high strength |
 | X120 | 827 | 931 | Extreme applications |
 
+The API 5L calculator accepts case and whitespace variations and equivalent ISO metric grade
+labels, for example `L360` selects `X52`. See [material and process lookup keys](mechanical_design_database.md#material-and-process-lookup-keys)
+for material-reader failure behavior and specification-loading precedence.
+
 ### ASME B31.8 Location Classes
 
 | Class | Description | Design Factor (F) |

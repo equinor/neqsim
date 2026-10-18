@@ -31,7 +31,7 @@ public class CompressorDesignStandard extends DesignStandard {
         neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       try (java.sql.ResultSet dataSet = database
           .getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
-              + standardName + "'"))) {
+              + normalizeCompanyIdentifier(standardName) + "'"))) {
         while (dataSet.next()) {
           String specName = dataSet.getString("SPECIFICATION");
           if (specName.equals("compressorFactor")) {
