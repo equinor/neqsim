@@ -184,8 +184,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
    * Constructor for Standard_ISO6976.
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param volumetricReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
-   * @param energyReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
+   * @param volumetricReferenceTemperaturedegC metering reference in degrees Celsius; table keys are 0, 15, 15.55 and 20
+   * (legacy 25 acceptance is retained without a 25-degree correction)
+   * @param energyReferenceTemperaturedegC combustion reference in degrees Celsius: 0, 15, 15.55, 20 or 25
    * @param calculationType a {@link java.lang.String} object
    */
   public Standard_ISO6976(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
@@ -199,6 +200,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   /** {@inheritDoc} */
   @Override
   public void calculate() {
+    checkReferenceCondition();
     Zmix0 = 1.0;
     Zmix15 = 1.0;
     Zmix20 = 1.0;
@@ -369,19 +371,43 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   }
 
   /**
-   * checkReferenceCondition.
+   * Validates both reference temperatures before calculation or result access.
+   *
+   * <p>
+   * The existing table keys are 0, 15, 15.55, 20 and 25 degrees Celsius. Values within 1e-9 degrees Celsius of a key
+   * are canonicalized to that key to accommodate floating-point roundoff. This does not interpolate tables or qualify
+   * nearby reference conditions. In particular, the exact conversion of 60 degrees Fahrenheit is not the legacy 15.55
+   * key. Both inputs are checked before either field is changed. The legacy acceptance of a 25 degree volume reference
+   * is retained; volume corrections remain tabulated only through 20 degrees.
+   *
+   * @throws IllegalArgumentException if either reference is non-finite or unsupported
    */
   public void checkReferenceCondition() {
-    Double[] validvalues = {0.0, 15.0, 15.55, 20.0, 25.0};
+    double checkedEnergy = referenceTableTemperature(energyRefT, "energy");
+    double checkedVolume = referenceTableTemperature(volRefT, "volume");
+    energyRefT = checkedEnergy;
+    volRefT = checkedVolume;
+  }
 
-    if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(energyRefT)::equals)) {
-      energyRefT = 25.0;
-      logger.error("energy reference temperature not in valid range...setting it to 25C");
+  /**
+   * Resolves floating-point roundoff around an existing reference-table key.
+   *
+   * @param temperature requested reference in degrees Celsius
+   * @param reference reference role for the diagnostic
+   * @return the matching table temperature in degrees Celsius
+   * @throws IllegalArgumentException if the temperature is non-finite or not a table key
+   */
+  private static double referenceTableTemperature(double temperature, String reference) {
+    if (Double.isFinite(temperature)) {
+      for (double valid : new double[] {0.0, 15.0, 15.55, 20.0, 25.0}) {
+        if (Math.abs(temperature - valid) <= 1.0e-9) {
+          return valid;
+        }
+      }
     }
-    if (!java.util.Arrays.stream(validvalues).anyMatch(Double.valueOf(volRefT)::equals)) {
-      volRefT = 15.0;
-      logger.error("volume reference temperature not in valid range...setting it to 15C");
-    }
+    throw new IllegalArgumentException("Unsupported ISO 6976 " + reference + " reference temperature: " + temperature
+        + " degC. Select 0, 15, 15.55, 20 or 25 degC explicitly; "
+        + "15.55 is the legacy table key, not the exact conversion of 60 degF.");
   }
 
   /** {@inheritDoc} */
@@ -529,7 +555,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   /**
    * Setter for the field <code>energyRefT</code>.
    *
-   * @param energyRefT the energyRefT to set
+   * @param energyRefT requested reference in degrees Celsius, validated on calculation or result access
    */
   public void setEnergyRefT(double energyRefT) {
     this.energyRefT = energyRefT;
@@ -565,7 +591,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
   /**
    * Setter for the field <code>volRefT</code>.
    *
-   * @param volRefT the volRefT to set
+   * @param volRefT requested reference in degrees Celsius, validated on calculation or result access
    */
   public void setVolRefT(double volRefT) {
     this.volRefT = volRefT;

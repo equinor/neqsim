@@ -186,6 +186,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
   /** {@inheritDoc} */
   @Override
   public void calculate() {
+    checkReferenceCondition();
     Zmix0 = 1.0;
     Zmix15 = 1.0;
     Zmix60F = 1.0;
