@@ -76,7 +76,9 @@ class SeparatorWallThicknessConsistencyTest extends neqsim.NeqSimTest {
     design.calcDesign();
     assertCoherentDesign(separator);
     assertEquals(1.440917294605802, design.getInnerDiameter(), 1e-8);
-    assertEquals(0.004253002640512992, design.getWallThickness(), 1e-10);
+    // SA-516 grade 55: 13,800 psi = 95.147650602 MPa, not the former unloaded 425 MPa.
+    double expectedThickness = 2.5 * 1.440917294605802 / (2.0 * 95.147650602 - 1.2 * 2.5);
+    assertEquals(expectedThickness, design.getWallThickness(), 1e-10);
     double thickness = design.getWallThickness();
     double weight = design.getWeightTotal();
     double length = design.getTantanLength();

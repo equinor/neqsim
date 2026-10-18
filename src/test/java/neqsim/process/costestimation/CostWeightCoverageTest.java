@@ -63,9 +63,11 @@ public class CostWeightCoverageTest {
     md.calculateCostEstimate();
 
     double weight = md.getWeightTotal();
+    double shellWeight = md.getWeigthVesselShell();
     double pec = md.getCostEstimate().getPurchasedEquipmentCost();
 
-    assertTrue(weight > 0.0, "Separator shell weight should be positive");
+    assertTrue(weight > 0.0, "Separator total weight should be positive");
+    assertTrue(shellWeight > 0.0, "Separator vessel-shell weight should be positive");
     assertTrue(pec > 0.0, "Separator purchased equipment cost should be positive");
 
     CostEstimateResult result = md.getCostEstimate().getDetailedEstimateResult();
@@ -76,7 +78,10 @@ public class CostWeightCoverageTest {
     assertTrue(result.getMaterialTakeOff().size() > 0, "Detailed result should include material take-off lines");
     assertTrue(result.getMaterialTakeOff().get(0).getWeightKg() > 0.0, "First MTO item should carry positive weight");
 
-    double costPerKg = pec / weight;
+    // The vessel correlation estimates the purchased vessel, while total weight also
+    // includes downstream piping, structural steel, and E&I allowances. Keep this
+    // sanity check on the shell-weight basis documented below.
+    double costPerKg = pec / shellWeight;
     // Guard against the volume-vs-weight magnitude bug (~$5000-6200/kg). A realistic
     // carbon-steel pressure vessel PEC is roughly $10-1500 per kg of shell weight.
     assertTrue(costPerKg < 2000.0,
