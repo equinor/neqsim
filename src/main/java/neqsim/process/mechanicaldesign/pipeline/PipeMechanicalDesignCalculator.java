@@ -554,6 +554,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return true if von Mises stress is within 90% of SMYS
    */
   public boolean isDesignSafe() {
+    validateMaterialGrade(materialGrade);
     if (vonMisesStress <= 0) {
       calculateVonMisesStress(designPressure, 0, true);
     }
@@ -566,6 +567,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return safety margin (e.g., 0.2 means 20% margin)
    */
   public double calculateSafetyMargin() {
+    validateMaterialGrade(materialGrade);
     if (vonMisesStress <= 0) {
       calculateVonMisesStress(designPressure, 0, true);
     }
@@ -752,6 +754,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return required loop leg length in meters
    */
   public double calculateExpansionLoopLength(double deltaT, String loopType) {
+    validateMaterialGrade(materialGrade);
     // Thermal expansion
     double expansion = thermalExpansion * deltaT * anchorSpacing;
 
@@ -831,6 +834,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return collapse pressure in MPa
    */
   public double calculateCollapsePressure() {
+    validateMaterialGrade(materialGrade);
     double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
     double t = wallThick * fabricationTolerance;
     double dOverT = outerDiameter / t;
@@ -863,6 +867,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return propagation buckling pressure in MPa
    */
   public double calculatePropagationBucklingPressure() {
+    validateMaterialGrade(materialGrade);
     double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
     double t = wallThick * fabricationTolerance;
 
@@ -1306,6 +1311,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Update material properties based on material grade.
    */
   private void updateMaterialProperties() {
+    validateMaterialGrade(materialGrade);
     if (API_5L_GRADES.containsKey(materialGrade)) {
       double[] props = API_5L_GRADES.get(materialGrade);
       smys = props[0];
@@ -1368,6 +1374,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return formatted design summary string
    */
   public String generateDesignReport() {
+    validateMaterialGrade(materialGrade);
     StringBuilder sb = new StringBuilder();
     sb.append("=== Pipeline Mechanical Design Report ===\n");
     sb.append(String.format("Design Code: %s\n", designCode));
@@ -1624,11 +1631,29 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Sets the material grade, normalizing case, whitespace, and equivalent ISO metric labels.
    *
    * @param materialGrade material grade (e.g., "X42", "X52", "L360", "X65", "X70", "X80")
-   * @throws IllegalArgumentException if the grade is null or empty
+   * @throws IllegalArgumentException if the grade is null, empty, or unsupported; material-dependent calculations
+   * remain unavailable until a supported grade is selected
    */
   public void setMaterialGrade(String materialGrade) {
+    this.materialGrade = null;
+    minimumWallThickness = 0.0;
+    maop = 0.0;
+    collapsePressure = 0.0;
     this.materialGrade = Api5LGrade.normalize(materialGrade);
     updateMaterialProperties();
+  }
+
+  /**
+   * Validate a material identity before reading strengths or publishing material-dependent results. Subclasses may
+   * accept additional identities backed by their own material tables.
+   *
+   * @param grade normalized material grade, or null after a rejected empty selection
+   * @throws IllegalArgumentException if the material identity is unsupported
+   */
+  protected void validateMaterialGrade(String grade) {
+    if (!isSupportedMaterialGrade(grade)) {
+      throw new IllegalArgumentException("Unsupported pipe material grade: " + grade);
+    }
   }
 
   /**
@@ -1637,6 +1662,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return SMYS in MPa
    */
   public double getSmys() {
+    validateMaterialGrade(materialGrade);
     return smys;
   }
 
@@ -1655,6 +1681,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return SMTS in MPa
    */
   public double getSmts() {
+    validateMaterialGrade(materialGrade);
     return smts;
   }
 
@@ -1765,6 +1792,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return minimum wall thickness in meters
    */
   public double getMinimumWallThickness() {
+    validateMaterialGrade(materialGrade);
     if (minimumWallThickness <= 0) {
       calculateMinimumWallThickness();
     }
@@ -1777,6 +1805,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return MAOP in MPa
    */
   public double getMaop() {
+    validateMaterialGrade(materialGrade);
     if (maop <= 0) {
       calculateMAOP();
     }
@@ -2348,6 +2377,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return collapse pressure in MPa
    */
   public double getCollapsePressure() {
+    validateMaterialGrade(materialGrade);
     return collapsePressure;
   }
 
@@ -2425,6 +2455,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return Map containing design data
    */
   public Map<String, Object> toMap() {
+    validateMaterialGrade(materialGrade);
     Map<String, Object> result = new java.util.LinkedHashMap<String, Object>();
 
     // Equipment identification
@@ -2612,17 +2643,18 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * </p>
    *
    * @param grade API 5L material grade (e.g., "X52", "X65", "X70")
+   * @throws IllegalArgumentException if the material identity is unsupported
    * @deprecated Use {@link PipelineMechanicalDesign#loadMaterialFromDatabase(String)} instead. The
    * PipelineMechanicalDesign class provides centralized database access via PipelineMechanicalDesignDataSource,
    * following the same pattern as separators.
    */
   @Deprecated
   public void loadMaterialFromDatabase(String grade) {
-    this.materialGrade = grade;
+    setMaterialGrade(grade);
 
     try (
         neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      String query = "SELECT * FROM MaterialPipeProperties WHERE grade='" + grade + "'";
+      String query = "SELECT * FROM MaterialPipeProperties WHERE grade='" + materialGrade + "'";
       try (java.sql.ResultSet dataSet = database.getResultSet(query)) {
         if (dataSet.next()) {
           String smysStr = dataSet.getString("minimumYeildStrength");

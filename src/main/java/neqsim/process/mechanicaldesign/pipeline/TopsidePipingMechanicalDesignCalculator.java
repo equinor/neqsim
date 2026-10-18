@@ -230,6 +230,14 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     setDesignCode(ASME_B31_3);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  protected void validateMaterialGrade(String grade) {
+    if (!ASME_B31_3_ALLOWABLE_STRESSES.containsKey(grade)) {
+      super.validateMaterialGrade(grade);
+    }
+  }
+
   // ============================================================================
   // VELOCITY CALCULATIONS
   // ============================================================================
@@ -552,6 +560,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * @return allowable stress in MPa
    */
   public double calculateAllowableStress() {
+    validateMaterialGrade(getMaterialGrade());
     double[] stresses = ASME_B31_3_ALLOWABLE_STRESSES.get(getMaterialGrade());
     if (stresses == null) {
       stresses = ASME_B31_3_ALLOWABLE_STRESSES.get("A106-B");
@@ -583,6 +592,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * @return sustained stress in MPa
    */
   public double calculateSustainedStress(double supportSpacing) {
+    validateMaterialGrade(getMaterialGrade());
     calculateMomentOfInertia();
     calculateTotalWeight();
 
@@ -609,6 +619,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * @return thermal expansion stress in MPa
    */
   public double calculateThermalExpansionStress(double anchoredLength) {
+    validateMaterialGrade(getMaterialGrade());
     calculateMomentOfInertia();
 
     double E = getYoungsModulus();
@@ -647,6 +658,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * @return occasional stress in MPa
    */
   public double calculateOccasionalStress(double windLoad, double supportSpacing) {
+    validateMaterialGrade(getMaterialGrade());
     calculateMomentOfInertia();
 
     double M = windLoad * supportSpacing * supportSpacing / 8.0;
@@ -983,6 +995,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    */
   @Override
   public double getSupportSpacing() {
+    validateMaterialGrade(getMaterialGrade());
     return calculatedSupportSpacing;
   }
 
@@ -992,6 +1005,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * @return allowable stress in MPa
    */
   public double getAllowableStress() {
+    validateMaterialGrade(getMaterialGrade());
     return allowableStress;
   }
 
@@ -1100,6 +1114,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * @return true if passed
    */
   public boolean isStressCheckPassed() {
+    validateMaterialGrade(getMaterialGrade());
     return stressCheckPassed;
   }
 
