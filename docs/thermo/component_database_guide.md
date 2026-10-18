@@ -892,3 +892,24 @@ rather than PowerShell redirection, which adds a BOM.
 5. Hansen, H. K., Rasmussen, P., Fredenslund, A., Schiller, M., & Gmehling, J. (1991). Vapor-liquid equilibria by UNIFAC group contribution. 5. Revision and extension. Industrial & Engineering Chemistry Research, 30(10), 2352-2355.
 6. Holderbaum, T., & Gmehling, J. (1991). PSRK: A group contribution equation of state based on UNIFAC. Fluid Phase Equilibria, 70(2-3), 251-265.
 7. DDBST GmbH. Published parameters for original UNIFAC. https://www.ddbst.com/published-parameters-unifac.html
+
+## DEA identity correction and remaining property qualification
+
+Neutral DEA is diethanolamine, CAS 111-42-2, formula C4H11NO2, with molar
+mass 105.1356 g/mol, following
+the [NIST Chemistry WebBook](https://webbook.nist.gov/cgi/cbook.cgi?ID=C111422&Mask=4).
+COMP and the legacy test fixture carry these corrected values. The existing
+canonical neutral-component synchronization supplies them when loading the
+extended database as well. The raw COMP_EXT resource is unchanged.
+
+This bounded identity repair does not qualify the remaining DEA EOS or ionic
+records. NIST also reports a 544.2 K normal boiling point, but its adoption is deferred
+with the legacy critical temperature, pressure and acentric factor: they still
+need a coherent source-qualified replacement and held-out pure/aqueous-mixture
+validation. Related DEA+, DEACOO- and MDEA+ formula/mass records, including
+raw extended data, also remain for coordinated repair under #4382. Primary
+critical-property measurements are reported by
+[Bogatishcheva et al. (2025)](https://doi.org/10.1016/j.fluid.2025.114343),
+but the accessible abstract does not expose the numerical property tables.
+Correct identity and mole/mass conversions do not establish validated DEA
+phase behavior. Keep #4382 open.
