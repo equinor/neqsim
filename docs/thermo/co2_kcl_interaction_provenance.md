@@ -94,6 +94,50 @@ CO2 correction. At 273.15 K it differs from the Archer reference by −0.00215 f
 K10 and −0.00467 for K15 before CO2 is added. The saturated Burgass NaCl control
 retains five points within 1 K and a sixth error of −1.121 K at 194.77 bara.
 
+## Retained numerical evidence
+
+The Core Build, Test, and Javadoc workflow retains an
+`electrolyte-assessment-evidence-<shard>` artifact from every Java 21 slow-test
+shard, including after failed test runs. Download the artifacts from the same
+workflow run; the five assessments may be distributed over different shards.
+Surefire reports remain in their existing, separate artifacts.
+
+Each bundle includes a `manifest.json` and only the allowlisted assessment CSVs
+produced by tests selected for that shard:
+
+| Assessment | CSV data rows (excluding header) |
+|---|---:|
+| Dholabhai K10/K15 plus pure-water and cross-salt controls | 28 |
+| Archer salt-only, pressure-only and CO2-addition sequence | 10 |
+| He–Morse dissolved CO2 | 6 |
+| Yasunishi–Yoshida Ostwald coefficients | 7 |
+| Burgass saturated and finite-inventory NaCl controls | 12 |
+
+The manifest records the actual checkout commit separately from the GitHub
+event SHA and (when present) PR head SHA, run/attempt/shard context, selected
+test classes, producer Surefire counts and JVM properties, and SHA-256 hashes of outputs, producer source,
+reference fixture and this provenance page. Archer reference values are inline
+in its producer test, rather than in a separate fixture. Retrieve the referenced
+sources at the recorded checkout commit to inspect the source/access basis.
+
+CSV bytes, headers, units, residuals and intentional `NaN` fields for
+non-measured control states are retained unchanged. Row counts describe the
+existing diagnostic matrix; they introduce no accuracy criterion. A selected
+producer that passed but did not generate its CSV fails evidence packaging.
+Malformed or truncated output is retained with an explicit packaging error.
+Missing, skipped, failed and not-yet-completed producer tests cannot establish
+complete evidence. Outputs from unselected tests and unrelated files under
+`target/` are not collected.
+
+`selected_evidence_complete` applies only to the selected assessments in that
+shard, not the full five-source matrix or the rest of CI. A shard with no selected
+assessment has a count of zero. Check every producer across all shards and the
+original test results before using a combined matrix. Every manifest keeps
+`qualification` as `not_assessed`: artifact retention and structural validation
+do not supply independent thermodynamic review, a causal contribution split,
+agreement within experimental uncertainty, or engineering approval. Artifacts
+remain subject to the repository's GitHub Actions retention policy.
+
 ## Qualification boundary
 
 The correction also affects CO2 with potassium and counterions other than
@@ -112,4 +156,3 @@ compensated here.
 - Yasunishi and Yoshida (1979), *J. Chem. Eng. Data* 24, 11–14,
   [NIST data reproduction](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_227).
 - Dholabhai et al. (1993), [DOI 10.1021/je00012a045](https://doi.org/10.1021/je00012a045).
-

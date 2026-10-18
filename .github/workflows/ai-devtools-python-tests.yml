@@ -46,6 +46,7 @@ jobs:
             devtools/test_generate_work_record.py \
             devtools/test_generate_sources_md.py \
             devtools/test_evidence_sources.py \
+            devtools/test_collect_electrolyte_evidence.py \
             devtools/test_task_corpus.py \
             devtools/test_new_task.py \
             devtools/test_file_neqsim_issue.py \
