@@ -106,30 +106,26 @@ public interface FluidBoundaryInterface extends Cloneable {
    *
    * @return coefficient values indexed by phase, row and column; uninitialized phases remain null
    */
-  public double[][][] getMassTransferCoefficientArray();
+  public default double[][][] getMassTransferCoefficientArray() {
+    Matrix[] matrices = getMassTransferCoefficientMatrix();
+    if (matrices == null) {
+      return null;
+    }
+    double[][][] values = new double[matrices.length][][];
+    for (int phase = 0; phase < matrices.length; phase++) {
+      values[phase] = matrices[phase] == null ? null : matrices[phase].getArrayCopy();
+    }
+    return values;
+  }
 
   /**
-   * Returns legacy Matrix-form mass-transfer coefficients.
-   *
-   * <p>
-   * The default implementation creates independent Matrix copies from the array data. Implementations that provide live
-   * compatibility views may override this method.
+   * Returns the legacy live mass-transfer coefficient views.
    *
    * @return an array of {@link Jama.Matrix} objects
    * @deprecated Use {@link #getMassTransferCoefficientArray()} for array-based access.
    */
   @Deprecated
-  public default Matrix[] getMassTransferCoefficientMatrix() {
-    double[][][] coefficients = getMassTransferCoefficientArray();
-    if (coefficients == null) {
-      return null;
-    }
-    Matrix[] matrices = new Matrix[coefficients.length];
-    for (int phase = 0; phase < coefficients.length; phase++) {
-      matrices[phase] = coefficients[phase] == null ? null : new Matrix(coefficients[phase]).copy();
-    }
-    return matrices;
-  }
+  public Matrix[] getMassTransferCoefficientMatrix();
 
   /**
    * getBinaryMassTransferCoefficient.

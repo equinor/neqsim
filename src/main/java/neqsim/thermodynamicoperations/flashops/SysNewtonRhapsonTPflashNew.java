@@ -191,10 +191,10 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
   }
 
   /**
-   * Solves the current Newton system using direct EJML LU without finite-value validation.
+   * Solves the current Newton system using EJML LU and rejects non-finite steps before updating the fluid.
    *
    * @return Newton step
-   * @throws IllegalStateException if EJML reports the Jacobian as singular
+   * @throws IllegalStateException if factorization fails or the step contains a non-finite value
    */
   DMatrixRMaj solveJacobianStep() {
     LinearSolverDense<DMatrixRMaj> linearSolver = LinearSolverFactory_DDRM.lu(neq);
@@ -203,6 +203,11 @@ public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
     }
     DMatrixRMaj step = new DMatrixRMaj(neq, 1);
     linearSolver.solve(fvec, step);
+    for (int index = 0; index < step.getNumElements(); index++) {
+      if (!Double.isFinite(step.get(index))) {
+        throw new IllegalStateException("TP-flash Newton Jacobian produced a non-finite solution");
+      }
+    }
     return step;
   }
 }

@@ -1205,6 +1205,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Document     | Path                               | Description          |
 | ------------ | ---------------------------------- | -------------------- |
 | Math Library | [docs/mathlib/README.md](mathlib/README.md) | Mathematical library |
+| JAMA to EJML migration | [docs/development/jama-ejml-migration.md](development/jama-ejml-migration.md) | Numerical validation, compatibility and dependency retirement gates |
 
 ### Appendix D: Utilities
 

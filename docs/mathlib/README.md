@@ -10,12 +10,13 @@ of a file and the statements inside a method. The examples are compiled and
 executed directly from this page by `MathAndExpanderDocumentationTest`.
 
 Dense chemical-equilibrium, flash-stability, surface-tension and parameter-fitting
-operations are being routed through `LinearAlgebraOperations`, initially using
-`JamaLinearAlgebra`. This changes the integration boundary; it does not replace the
-JAMA backend or establish a performance improvement. Numerical integration tests allow
-small floating-point differences between CPU architectures, while small linear systems
-with exact solutions, and comparisons against a direct JAMA solve, verify the linear
-systems themselves.
+operations use EJML directly or through `LinearAlgebraOperations`. JAMA remains
+required for the established phase-envelope solver and compatibility APIs.
+The [migration and dependency retirement guide](../development/jama-ejml-migration)
+records the remaining boundaries and release gates. Backend substitution alone
+does not establish a performance improvement. Numerical tests compare physical
+outputs and scaled linear residuals, allowing small floating-point differences
+between implementations while preserving equation assembly and input ownership.
 
 `CricondenbarFlash` and the OLGA water-table generators now store their matrices as
 `double[][]` instead of JAMA `Matrix`, so instances serialized by earlier versions

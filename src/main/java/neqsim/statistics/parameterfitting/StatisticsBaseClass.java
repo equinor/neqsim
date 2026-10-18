@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.statistics.montecarlosimulation.MonteCarloSimulation;
@@ -125,6 +126,29 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @param newParameters parameter values, clamped in place onto the declared bounds
    */
   public void checkBounds(double[] newParameters) {
+    Matrix compatibilityView = new Matrix(new double[][] {newParameters});
+    // Preserve dispatch to existing subclasses that override the legacy Matrix hook.
+    checkBounds(compatibilityView);
+    System.arraycopy(compatibilityView.getArray()[0], 0, newParameters, 0, newParameters.length);
+  }
+
+  /**
+   * Checks the first row of a legacy parameter matrix and updates it in place.
+   *
+   * @param newParameters parameter row, clamped in place onto the declared bounds
+   * @deprecated Use {@link #checkBounds(double[])} for array-based calls. Existing overrides remain supported.
+   */
+  @Deprecated
+  public void checkBounds(Matrix newParameters) {
+    checkBoundsValues(newParameters.getArray()[0]);
+  }
+
+  /**
+   * Applies declared parameter bounds using primitive values.
+   *
+   * @param newParameters parameter values to clamp in place
+   */
+  private void checkBoundsValues(double[] newParameters) {
     String okstring = "";
     int errors = 0;
     if (sampleSet.getSample(0).getFunction().getBounds() != null) {
@@ -601,6 +625,18 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayMatrix(double[][] matrix, String name, int d) {
+    displayMatrix(new Matrix(matrix), name, d);
+  }
+
+  /**
+   * Displays primitive matrix values in a table.
+   *
+   * @param matrix matrix values to display
+   * @param name table title
+   * @param d maximum number of fractional digits
+   */
+  @ExcludeFromJacocoGeneratedReport
+  private void displayMatrixValues(double[][] matrix, String name, int d) {
     int m = matrix.length;
     int n = matrix[0].length;
     DecimalFormat form = new DecimalFormat();
@@ -629,6 +665,20 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     dialogContentPane.add(scrollpane);
     dialog.pack();
     dialog.setVisible(true);
+  }
+
+  /**
+   * Displays a legacy matrix through the array-based implementation.
+   *
+   * @param matrix matrix values to display
+   * @param name table title
+   * @param d maximum number of fractional digits
+   * @deprecated Use {@link #displayMatrix(double[][], String, int)}.
+   */
+  @Deprecated
+  @ExcludeFromJacocoGeneratedReport
+  public void displayMatrix(Matrix matrix, String name, int d) {
+    displayMatrixValues(matrix.getArray(), name, d);
   }
 
   /**
