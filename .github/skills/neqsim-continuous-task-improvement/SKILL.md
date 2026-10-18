@@ -1,7 +1,7 @@
 ---
 name: neqsim-continuous-task-improvement
-description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/task-cycle/task-solve/task-resume/task-update/task-backtest/task-schedule/task-promote/task-report/task-ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, detect technical-evidence changes and selectively rerun affected calculations, reopen on new data or a changed brief, backtest monitoring, or issue a reviewed Final Report."
-last_verified: "2026-10-08"
+description: "Living tasks and continuous task solving with NeqSim (neqsim task-living/cycle/solve/resume/update/backtest/schedule/loop/promote/report/ledger). USE WHEN: a solved task must keep improving daily or on events, resume from persisted state, rerun only affected calculations on new evidence, backtest and tune drift settings, track model parameters with an EnKF/EnIF calibrate stage, rank actions by value of information, or issue a reviewed Final Report."
+last_verified: "2026-10-18"
 ---
 
 # Continuous Task Improvement (Living Tasks)
@@ -20,12 +20,15 @@ calls; agents run only when a trigger fires; people decide.
 | Need | Command |
 |------|---------|
 | Keep a finished task up to date (daily, on a server or on demand) | `task-living` then `task-schedule --install` |
+| Run a live loop at sub-hour cadence with a warm model (10-minute advice, emulator tests) | `task-loop <task> --every-minutes 10 --for-hours 3 [--hook file.py:func]` |
 | Solve until the goal is met, or until improvement is marginal | `task-solve --until goal` / `--until converged` |
 | Resume after closing VS Code, rebooting or changing machine | `task-status <task>` then `task-resume <task>` |
 | Reassess after a datasheet, drawing, standard, measurement or model changes | `task-status <task>` then `task-update <task>` |
 | Issue a reviewed standalone Word/HTML delivery | Promote the validated cycle, then `task-report <task> --final --reviewer NAME` |
 | Start from a Word/Markdown brief | `neqsim new-task "title" --prompt-file brief.docx` then `task-living` |
 | Prove a monitor finds the faults it should (and no others) | `task-backtest --start ... --end ...` |
+| Choose drift settings from that backtest without rerunning NeqSim | `task-backtest --tune --name RUN` |
+| Track fouling, efficiency or meter bias every cycle | `calibrate` stage (`calibration:` plan block) |
 | Try everything without company data | `task-reference-case <folder>` |
 
 All commands run through the shared interpreter:
@@ -94,6 +97,10 @@ A report failure is logged and never fails the cycle.
 The formal Word/HTML report (`neqsim report`) follows the plan's `report.formal`:
 `never` (default), `on_promote` (recommended: the formal report always matches the
 promoted baseline) or `every_cycle`. `task-report <task> --formal` forces it once.
+Declare `report.prepare: step2_analysis/40_write_results.py` (optionally `:function`) and the
+runner runs that script first, so the task-local writer turns the latest complete cycle into
+`results.json` + figures and `neqsim task-report <task> --formal` is the one-command,
+on-request report of the current state (also used by `on_promote` / `every_cycle`).
 
 Do not confuse the four views: `task-status` is the five-second operational summary;
 `continuous/LIVING_REPORT.md` is regenerated history/change detail; `neqsim report` is the
@@ -167,6 +174,90 @@ drift:
 
 Step and criterion triggers (`triggers.kpi_step`, `triggers.criteria: {kpi: "< 0.785"}`)
 fire on **crossing**, so a persistent state raises one trigger, not one per day.
+
+### Tune the drift settings from a backtest
+
+Drift alarms are a pure function of the recorded KPI series, so once a backtest has run
+and `backtest.expected` lists the events it should have found (maintenance, washes, trips,
+known step changes), the settings can be chosen without rerunning NeqSim:
+
+```bash
+neqsim task-backtest <task> --tune --name pilot-365d --holdout-from 2026-06-01 [--false-alarm-weight 0.5] [--delay-weight 0.25]
+```
+
+It replays every `(lambda, L, h, confirm, min_sigma_scale)` combination of a grid over
+`cycles/*/kpis.json`, ranks on the events before `--holdout-from`, scores every candidate on
+the events after it, and writes `continuous/backtests/<run>/drift_tuning.json` with the
+ranking, `validated` (best misses nothing on the holdout and adds no false alarms there) and
+a `recommended_drift_settings` block. Copy that block into `drift.settings` yourself; the plan
+is never edited. Without `--holdout-from` the result is in-sample and says so; on a quiet
+period the tuner favours the most aggressive settings, which is exactly what the holdout
+catches. Without `drift:*` expected events it refuses — a backtest with only unscored
+triggers (the Troll A pilot) has nothing to learn from, so label the events first.
+
+The monitor itself recovers: after `recover` in-control cycles (default `confirm`) an alarmed
+signal resets and can alarm again, while a persistent shift stays one alarm. The CUSUM is
+bounded at `2h` so a long excursion cannot silence a signal for months.
+
+## Learning inside the loop (Bayesian helpers)
+
+The runner stays programmed; the statistical parts are helpers in
+`neqsim_continuous.inference` and the `calibrate` stage, all numpy-only and seeded. The
+pattern is the one proposed for simulation-based inference in industrial agentic AI: an
+agent proposes alternatives, NeqSim evaluates them, Bayesian inference keeps what remains
+plausible, and value of information decides whether to evaluate more or to propose.
+
+- **`calibrate` stage** — ensemble parameter tracking every cycle (fouling, efficiency,
+  meter bias) with `method: enkf` or `method: enif` (information form with a sparse
+  precision matrix: declare `neighbours` per parameter and `depends_on` per observation so
+  a 30–60 member ensemble cannot update a parameter through a spurious sample correlation).
+  Production settings: `walk_std` per moving parameter and `inflation: 1.02` against
+  ensemble collapse, `gate_sigma: 4` innovation gating against frozen tags and wrong units,
+  `mda_steps: 3-4` (ES-MDA) for strongly nonlinear responses, `std: auto` + `min_std` to
+  estimate measurement noise from `kpi_history.csv`, `min_members` so a `None`/NaN member
+  from a failed solve is dropped and replenished instead of failing the cycle, and
+  `reinit_after` so a confidently wrong prior widens itself (trigger
+  `calibration:reinitialised`) instead of rejecting data forever. `depends_on` localises the
+  EnKF gain as well as sparsifying EnIF. Plan block,
+  `predict(ctx, members)` contract, published KPIs (`<p>_mean`, `<p>_std`, `<obs>_resid`,
+  `<obs>_z`, `calibration_rank`, `calibration_rejected`, `calibration_failed_members`),
+  `ctx.calibrated` for later scripts and the triggers `calibration:unidentifiable` (once),
+  `calibration:all_rejected` and `calibration:reinitialised` are documented in
+  `devtools/neqsim_continuous/calibrate.py`.
+  Place it after `kpis` and before the model script; monitor the `_resid` KPIs with `drift`
+  rather than raw measurements so load changes do not alarm. Never raise `gate_sigma` to make
+  a measurement pass — a rejected observation is a tag or model finding. A member that fails
+  at one end of a parameter range is information: set `lo`/`hi` there instead of relying on
+  drop-and-replenish, which narrows the ensemble.
+- **`identifiability(J, names, parameter_scale)`** — SVD rank of the sensitivity Jacobian;
+  fix a parameter or add a measurement before calibrating when `identifiable` is false.
+- **`candidate_from_samples(action, delta_samples, cost)`** — turns posterior predictive
+  samples of a candidate's gain (one NeqSim run per ensemble member, or a surrogate) into the
+  `p_success` / `predicted_delta` that `stop_rules.evaluate` ranks, instead of hand-typed
+  numbers. `p_success = P(gain > cost)`, `predicted_delta = E[gain | success]`.
+- **`value_of_information(samples_by_action, cost, simulation_cost)`** — expected value of
+  perfect information over the candidate set (doing nothing allowed). `evaluate_more` is
+  true when another evaluation is worth more than it costs; otherwise propose
+  `recommended_action`. Use it in a solve stage to decide between "run more simulations"
+  and "raise a proposal", and record the dict as `optimizer_evidence`.
+- Bayesian optimisation over levers (`propose_next` in the community
+  `neqsim-continuous-improvement-toolkit`) pays off above ~5 levers or when each NeqSim run
+  is slow; below that the ±1-step sweep of the production template is adequate.
+- **Expensive simulators change the answer.** The direct-sampling pattern assumes an
+  evaluation of seconds. With OPM Flow (`neqsim-near-well-and-injectivity`) run ES-MDA with a
+  modest ensemble on weekly/event cycles, cache every run by parameter hash under
+  `continuous/data/simulations/`, and fit a surrogate on the ensemble runs for VOI and
+  optimisation between cycles; with CFD/FEM (`neqsim-cfd-coupling`, `neqsim-fem-coupling`)
+  build the surrogate from an offline DoE and let `predict` call it, rerunning the full model
+  only outside the DoE hull. Amortised inference (SBI, learned EnIF maps) is for the same
+  inference repeated many times (field model every cycle, one interpretation across many
+  wells); `graphite-maps`/`sbi`/`torch` are not in the shared environment — report the
+  blocker, do not approximate. Decision rule and table: user guide §18.3.
+
+What is deliberately **not** here: reinforcement learning on the live plant (the loop is
+advisory and the guard fails closed), and any learned model without outcome labels — drive
+ledger items to `implemented` and fill `backtest.expected` first, then the helpers above have
+data to learn from.
 
 ## Production optimisation loop (advisory)
 
@@ -253,6 +344,23 @@ and a **degraded** cycle — never a crash.
 
 ## Gotchas
 
+- `task-schedule` starts a fresh interpreter per cycle (hourly at the fastest). For a live loop use
+  `task-loop`: one process, cycles every N minutes, `continuous/STOP` to end early, `loop.log` /
+  `loop_state.json` for progress. Stage scripts are re-executed every cycle, so cache a simulator on a
+  module imported from `step2_analysis` (e.g. `FieldModel.shared()`), not on the stage module's globals,
+  or every cycle rebuilds the JVM model. The `--hook` module (plant emulator, test harness) is called
+  before each cycle and re-loaded each cycle too.
+- The `file` adapter pulls rows with `since <= t < until` where `until` is the cycle clock: a row stamped
+  exactly at the cycle time is missed. Stamp live rows at the end of their averaging window (e.g. now − 1 min).
+- The ledger de-duplicates proposals by exact title: keep titles stable and put the changing numbers
+  (gain, P10-P90) in a `summary` field, or every cycle creates a new item. Ledger categories are fixed
+  (`operational, maintenance, modification, model, data, tooling`) — an appraisal/VOI proposal is `data`.
+- Measured actuator positions (choke multipliers, valve openings) must be model inputs, or the calibration
+  absorbs an operator move into a parameter (a PI jump) and the outcome stage never sees the realised gain.
+- The utilisation register's surge rows are turndown limits without anti-surge recycle: report them, do not
+  make them hard constraints; the Vigdis GT-train speed row is a constant in the ProcessPilot model.
+- A ProcessPilot run with a foreign tie-in stream mixed in takes 30-250 s (vs 6-10 s for a host-only
+  rescale): one spot check per 30-minute cycle, surrogate for the rest (user guide §18.3).
 - Cycle ids are UTC; a rerun in the same minute gets `-r2`. Use
   `task-resume` for crashed/interrupted work: it keeps the original cycle id across
   later days/hosts, skips completed stages, restores completed side-effect metadata,

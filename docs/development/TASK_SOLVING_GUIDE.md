@@ -1517,9 +1517,14 @@ the new baseline — nothing changes without a named reviewer.
    that run the NeqSim model.
 4. **Backtest** — `neqsim task-backtest <task> --start ... --end ...` replays
    archived data and checks the monitor finds the events it should, with no
-   false alarms.
+   false alarms. With labelled events, `--tune` then picks the drift settings
+   from the recorded KPI series without rerunning NeqSim.
 5. **Run it** — by hand with `neqsim task-cycle <task>` / `neqsim task-solve <task>`,
    or on a schedule with `neqsim task-schedule <task> --daily 05:00 --install`.
+   A `calibrate` stage (ensemble Kalman / information filter) keeps fouling,
+   efficiency and meter-bias parameters current every cycle, and candidate
+   actions are ranked from posterior samples and value of information rather
+   than hand-typed probabilities.
 
 Scheduled living tasks enforce a **Standard-first gate**. The generated schedule
 runs `task-cycle --standard-first`, which checks that the initial task solve has

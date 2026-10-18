@@ -1,6 +1,6 @@
 ---
 title: "Continuous Task Solving (Living Tasks)"
-description: "How to keep a solved NeqSim engineering task improving over time: persist and resume state, detect evidence changes, analyze impact, selectively rerun calculations, backtest monitoring, and maintain living, current-best and final reports."
+description: "How to keep a solved NeqSim engineering task improving over time: persist and resume state, detect evidence changes, analyze impact, selectively rerun calculations, backtest monitoring and tune drift settings from it, track model parameters with an ensemble calibrate stage, rank actions by value of information, and maintain living, current-best and final reports."
 ---
 
 # Continuous Task Solving (Living Tasks)
@@ -26,6 +26,7 @@ folder with a `results.json`.
 8. [Backtest before you trust it](#8-backtest-before-you-trust-it)
    - [Stop today, resume tomorrow](#81-stop-today-resume-tomorrow)
    - [Update when evidence changes](#82-update-when-evidence-changes)
+   - [Tune the drift settings from a backtest](#83-tune-the-drift-settings-from-a-backtest)
 9. [Run cycles by hand](#9-run-cycles-by-hand)
 10. [Make it run by itself](#10-make-it-run-by-itself)
 11. [Standard-first gate for scheduled tasks](#11-standard-first-gate-for-scheduled-tasks)
@@ -34,6 +35,8 @@ folder with a `results.json`.
 14. [Company data sources](#14-company-data-sources)
 15. [Troubleshooting](#15-troubleshooting)
 16. [Command reference](#16-command-reference)
+17. [Production optimisation: advisory loop with engineer input](#17-production-optimisation-advisory-loop-with-engineer-input)
+18. [Learning inside the loop: calibration and value of information](#18-learning-inside-the-loop-calibration-and-value-of-information)
 
 ---
 
@@ -262,6 +265,17 @@ kpis:
 `agg` is `mean`, `min`, `max`, `last`, `sum` or `count`. KPIs computed by a stage
 script (section 7) need no entry here.
 
+Add `describe` and `unit` to a KPI so the reports can say what the number is:
+
+```yaml
+kpis:
+  polytropic_efficiency: {source: station, column: eff, agg: mean,
+                          describe: "Compressor efficiency, higher is better", unit: "-"}
+```
+
+Both the Living Report and the Final Report show them in a *Meaning* column; without them the
+column is left out of the Final Report summary.
+
 ### 6.3 Drift — when a KPI has really moved
 
 ```yaml
@@ -282,6 +296,14 @@ drift:
 Drift uses EWMA plus a two-sided CUSUM. **Always set `min_sigma`**: a 30-cycle
 warm-up underestimates the noise, and without a floor white noise alone raises
 false alarms within months. Choose the smallest shift that is worth a review.
+An alarmed signal **recovers** after `recover` consecutive in-control cycles
+(default: `confirm`) and can alarm again; a shift that persists stays one alarm.
+The CUSUM is bounded at `2h`, so a long excursion does not silence the signal
+for months after the plant returns to normal.
+Once a backtest with labelled events exists, `task-backtest --tune` chooses these
+settings for you (section 8.3). Prefer monitoring model residuals (`<obs>_resid`
+from the `calibrate` stage, section 18) over raw measurements, so a load change
+does not look like degradation.
 
 ### 6.4 Triggers — simple rules
 
@@ -314,6 +336,7 @@ stages: [sense, evidence, refresh, "script:station_model", kpis, drift, goal, di
 | `notify` | Sends the digest to the configured channels |
 | `agent` | Launches a headless agent when a trigger fired (section 11) |
 | `inputs` | Reads the engineers' comments and restrictions (`user_input.yaml`, section 17) |
+| `calibrate` | Updates the ensemble of uncertain model parameters from this cycle's measurements (section 18) |
 | `gates`, `constraints`, `guard`, `outcome` | Production loop: model-validity gates, constraint slack, proposal guard, realised-vs-predicted gain (section 17) |
 
 ### 6.6 Notifications
@@ -350,6 +373,14 @@ report: {formal: on_promote}   # never | on_promote | every_cycle
 `report.formal` controls the Word/HTML report. `on_promote` is recommended: the
 formal report then always matches the promoted baseline. `LIVING_REPORT.md` is
 rewritten after every cycle regardless.
+
+`report.prepare` names a task-local script (`file.py` or `file.py:function`) that
+the runner executes before every formal report. Give it the job of turning the
+latest complete cycle into `results.json` and the figures the report needs; then
+`neqsim task-report <task> --formal` is a one-command report on request, and the
+`on_promote` / `every_cycle` reports are built from current cycle data rather than
+from a stale `results.json`. A failing prepare script is logged and the report is
+built from the existing `results.json`.
 
 ---
 
@@ -428,6 +459,10 @@ For a full flowsheet, load the model once in the script and use
 capacity — both return JSON and never throw, so one bad candidate degrades one
 round, not the loop. Keep the heavy model in the script; keep the plan declarative.
 
+Do not type `p_success` and `predicted_delta` by hand when you can sample them:
+run each candidate once per member of the calibrated ensemble (or through a
+surrogate) and pass the gains to `candidate_from_samples` (section 18).
+
 ---
 
 ## 8. Backtest before you trust it
@@ -448,8 +483,14 @@ neqsim task-backtest <task> --start 2025-10-02 --end 2026-09-30 --repeat
 The report (`continuous/backtests/<run>/backtest_report.md`) gives detected and
 missed events, detection delay, false alarms per month and reproducibility. Tune
 `min_sigma` and `confirm` until every expected event is found within its
-`max_delay_days` and false alarms are close to zero. Record the result in
+`max_delay_days` and false alarms are close to zero — by hand, or with
+`--tune` (section 8.3). Record the result in
 `results.json` `validation`. **Schedule only after a clean backtest.**
+
+A run whose `backtest.expected` list is empty cannot score anything: its
+triggers are reported as `other_triggers` and nothing can be learned from it.
+Label the events first — maintenance and wash dates, trips, known step changes
+— from the maintenance system, the alarm log or the operators.
 
 ---
 
@@ -547,6 +588,46 @@ through the existing canonical report settings (`report.formal`) or `task-report
 
 ---
 
+## 8.3 Tune the drift settings from a backtest
+
+Drift alarms depend only on the KPI values a cycle recorded, so once a backtest
+has run you can try other settings without rerunning NeqSim:
+
+```powershell
+neqsim task-backtest <task> --tune --name pilot-365d --holdout-from 2026-06-01
+```
+
+It replays `continuous/backtests/<run>/cycles/*/kpis.json` through the drift
+monitor for every combination of a grid over `lambda`, `L`, `h`, `confirm` and a
+scale on each signal's `min_sigma`, scores each against the `drift:*` events in
+`backtest.expected`, and writes `drift_tuning.json` with the ranking:
+
+| Field | Meaning |
+|-------|---------|
+| `current` | Detections, misses and false alarms with the settings in the plan |
+| `best` | The best-scoring combination and its detections, misses, false alarms, mean delay |
+| `holdout` (per candidate) | The same score on the events from `--holdout-from` on, which were not used to rank |
+| `validated` | True when the best candidate misses nothing on the held-out events and adds no false alarms there |
+| `recommended_drift_settings` | A ready `drift.settings` block (per-signal `min_sigma` already scaled) |
+| `ranking` | The top ten combinations |
+
+The score is detections minus `--false-alarm-weight` per false alarm (default
+0.5) minus `--delay-weight` per unit of normalised delay (default 0.25). Raise
+the false-alarm weight for a monitor that notifies people; lower it for one that
+only writes a digest. On a period with no noise events the tuner will favour the
+most aggressive settings, because nothing penalises them — that is why the
+holdout exists. **Always give `--holdout-from`** when there are at least two
+labelled events; a result without one is marked in-sample and should be
+confirmed on a later period before it is scheduled.
+
+The plan is **not** edited: copy the recommended block into `cycle_plan.yaml`,
+rerun the backtest to confirm, and record the result in `results.json`
+`validation`. The command refuses to run when `backtest.expected` has no `drift:*`
+events — a monitor that was never told which faults it should have found cannot
+be tuned, only inspected.
+
+---
+
 ## 9. Run cycles by hand
 
 ```powershell
@@ -617,6 +698,30 @@ Server checklist:
 3. Set `NEQSIM_CONTINUOUS_HOST` so cycle ids show which machine ran them.
 4. Set `data_root` in the plan to local disk if the task folder is on a share.
 5. Put notification secrets in the service environment, not in the plan.
+
+### 10.2b Live loops at sub-hour cadence
+
+The scheduler starts a new interpreter per cycle, which is right for daily work
+and wrong for a ten-minute advisory loop: every cycle would pay the JVM and the
+model build again. `task-loop` keeps one process alive and runs cycles at a fixed
+cadence:
+
+```powershell
+neqsim task-loop <task> --every-minutes 10 --for-hours 8 --no-agent
+neqsim task-loop <task> --every-minutes 10 --for-hours 3 --hook continuous/stages/plant_emulator.py:before_cycle
+```
+
+- Progress in `continuous/loop.log` and `loop_state.json` (per cycle: id, status,
+  degraded, triggers, seconds; overruns are flagged). Create `continuous/STOP` to
+  end the loop early; `--max-cycles` bounds a trial run.
+- `--hook module.py:function` is called before every cycle with
+  `(task_dir, index, now)` — the place for a plant emulator or a test harness that
+  injects evidence changes. Hook and stage errors are logged and the loop continues.
+- Stage scripts are re-executed every cycle, so cache a simulator on a module
+  imported from `step2_analysis` (a `shared()` class method), not on the stage
+  module's globals, or each cycle rebuilds it.
+- Run it detached (`Start-Process` with quoted paths, or `nohup` on Linux) so the
+  loop survives the terminal; one loop per task folder (the `LOCK` enforces it).
 
 ### 10.3 Running on more than one machine
 
@@ -730,11 +835,31 @@ The agent follows the same rules: it prepares, you decide.
 ### 13.1 Read the living report
 
 `continuous/LIVING_REPORT.md` is the one page to open. It is rebuilt after every
-cycle, solve round, backtest, promotion, reopen and ledger decision, and shows
-the state and stop reason, the goal and baseline, the latest KPIs against the
-baseline, solve rounds, KPI trends (`report/kpi_trends.png`), trigger events,
-the ledger with pending decisions, the baseline history, backtests and the
-**next actions**. Never edit it; rebuild it with `neqsim task-report <task>`.
+cycle, solve round, backtest, promotion, reopen and ledger decision. It starts with
+**In short**: what the task is trying to achieve, the result so far against the first
+baseline, the status in plain words, the triggers of the latest cycle explained in
+sentences, and **what needs your attention**. A short glossary (KPI, baseline, cycle,
+trigger, drift, solve round, ledger, backtest) follows, and every section opens with one
+sentence saying what it shows.
+
+The report is figure-led. Pictures are written to `continuous/report/` and linked from the
+Markdown; a figure with no data is skipped:
+
+| Figure | Shows |
+|--------|-------|
+| `workflow_of_the_living_task.png` | The loop (data, cycle, triggers, solve, review/promote, final report) with real counts and the current position |
+| `how_the_inputs_changed.png` | Rows read per cycle for every data source (database, historian, live feed, files) and when evidence, brief or NeqSim-version changes arrived |
+| `objective_progress_by_solve_round.png` | The objective after each solve round against the first baseline and the target |
+| `baseline_progression.png` | The objective at each reviewed baseline |
+| `change_since_first_baseline.png` | Change of every KPI between the first and the current baseline |
+| `kpi_trends_with_triggers.png` | Each KPI per cycle against the baseline, triggering cycles marked |
+| `monitoring_events_timeline.png` | Which triggers fired, and when |
+| `decision_ledger_status.png` | Improvement proposals by status |
+
+The tables cover the state and stop reason, the inputs and how they changed, the latest KPIs
+against the baseline (with a plain-words reading), solve rounds, events with an explanation
+of each trigger, the ledger with pending decisions, the baseline history and backtests.
+Never edit it; rebuild it with `neqsim task-report <task>`.
 
 For all living tasks in a folder at once:
 
@@ -803,11 +928,23 @@ neqsim task-report <task> --final --reviewer "A. Engineer" --note "Issued for de
 ```
 
 This invokes the canonical Task Solver Word/HTML generator; it does not fork or replace the
-ordinary report architecture. The ordinary current-best outputs stay in `step3_report/`.
-Final delivery revisions are written separately under `step3_report/final/FR-001/`,
+ordinary report architecture. The Final Report is a **separate document**: the task's original
+report in `step3_report/` and the task's own `figures/` folder are not touched. Final delivery
+revisions are written under `step3_report/final/FR-001/`,
 `FR-002/`, and so on. Each revision includes Word and self-contained HTML plus
 `FINAL_REPORT_MANIFEST.json` with task-relative provenance and SHA-256 hashes. Add `--pdf` when
 the configured host has a supported Word/LibreOffice PDF renderer.
+
+A Final Report contains everything the original report contains (it is built from the same
+promoted `results.json`) plus what only a live study can show:
+
+- a section **How the Live Study Developed**: the aim, how the work went (cycles, triggers,
+  solve rounds, baselines, proposals), the first baseline against the final one for every KPI,
+  the **inputs** the study read and how they changed (data sources, evidence files, brief,
+  NeqSim version), the flags raised and how far the monitoring can be trusted (last backtest);
+- up to eight figures from the table in section 13.1, saved in
+  `step3_report/final/FR-xxx/figures/` and numbered with the other figures in the Results
+  section, each with a caption.
 
 The command fails closed if a cycle is interrupted, the promoted cycle is degraded, evidence is
 pending, `results.json` differs from the promoted snapshot, or the final-report schema is newer
@@ -891,7 +1028,14 @@ Never commit `continuous/data/` or plant data to a public repository.
 | Final report says evidence changed | Files differ from the accepted evidence inventory | Run `task-update`, validate the selected rerun, then promote it |
 | Final report says results differ from baseline | `results.json` was edited or regenerated after promotion | Validate the result and promote its complete cycle before finalizing |
 | `kpis` stage `warn: no data for ...` | The source returned no rows for that column | Check `column` and `source` names in the plan |
-| Too many drift alarms | Engineering floor missing or too small | Set or raise `min_sigma`; raise `confirm`; backtest again |
+| Too many drift alarms | Engineering floor missing or too small | Set or raise `min_sigma`; raise `confirm`; backtest again, or run `task-backtest --tune` (section 8.3) |
+| `--tune` says `backtest.expected has no drift:* events` | The backtest has no labelled events to score against | Add `{trigger: "drift:<signal>", onset: ...}` entries and rerun the backtest |
+| `calibrate` warns `unidentifiable` | The measurements do not determine every parameter | Read `calibration.json` `unidentifiable_directions`; fix one parameter or add a measurement (section 18) |
+| `calibrate` rejects a measurement every cycle | Gross error in the tag, wrong unit, or a model defect | Check `<obs>_z` and the tag; if the model is wrong, widen the prior or fix the model — do not raise `gate_sigma` to make it pass. After `reinit_after` cycles the stage widens the prior itself and raises `calibration:reinitialised` |
+| `calibrate` warns `std_pending` | `std: auto` has fewer than eight history values | Wait, or give an explicit `std` |
+| `calibrate` fails `model solved for only N of M members` | NeqSim did not converge for most of the ensemble | Tighten `lo`/`hi` to the feasible region, check the prior width, or lower `min_members` for a cycle |
+| `<parameter>_std` shrinks to nothing after months | Ensemble collapse | Set `walk_std` on moving parameters and `inflation: 1.02` (section 18.1) |
+| Same drift alarm never fires twice | Expected: a persistent shift is one alarm | If the plant recovered in between, check `recover` and the bounded CUSUM in `validation.json` |
 | Agent `not_installed` | `copilot` is not on `PATH` of the scheduled task | Install and sign in to GitHub Copilot CLI, or set `executable` to its full path |
 | `neqsim` not recognized | CLI not on `PATH` | Use `python devtools\neqsim_cli.py task-...` with the shared interpreter |
 | `PermissionError` on OneDrive | Sync client holds the file | The runner retries; move large data with `data_root` |
@@ -909,11 +1053,13 @@ Never commit `continuous/data/` or plant data to a public repository.
 | `neqsim task-resume <task> [--max-rounds N] [--no-agent]` | Resume interrupted cycle/solve from persisted task state |
 | `neqsim task-update <task> [--no-agent] [--dry-run]` | Detect file-level evidence changes, analyze impact and rerun only mapped stages (full cycle for unmapped changes) |
 | `neqsim task-backtest <task> --start ISO --end ISO [--step-hours 24] [--name N] [--repeat]` | Replay archived data |
+| `neqsim task-backtest <task> --tune [--name N] [--holdout-from ISO] [--false-alarm-weight 0.5] [--delay-weight 0.25]` | Choose drift settings from a finished backtest, validated on held-out events (no NeqSim rerun; plan not edited) |
 | `neqsim task-schedule <task> [--daily HH:MM] [--install\|--remove\|--show]` | Schedule monitor cycles |
+| `neqsim task-loop <task> --every-minutes N --for-hours H [--mode monitor\|solve] [--hook file.py:func] [--no-agent] [--max-cycles N]` | Run cycles at a fixed sub-hour cadence in one process (warm model); `continuous/STOP` ends it early |
 | `neqsim task-promote <task> <cycle-id> --reviewer NAME [--note TEXT]` | Promote a cycle to the baseline |
 | `neqsim task-ledger <task> [list\|show ID\|set ID STATUS --by NAME [--note TEXT]\|merge FILE]` | Improvement ledger |
 | `neqsim task-status [task-or-folder]` | Status of one task, or of all living tasks in a folder (default: the task root) |
-| `neqsim task-report <task> [--formal]` | Rebuild the Living Report (`--formal` also rebuilds the ordinary current-best Word/HTML report) |
+| `neqsim task-report <task> [--formal]` | Rebuild the Living Report (`--formal` also runs `report.prepare` and rebuilds the ordinary current-best Word/HTML report) |
 | `neqsim task-report <task> --final --reviewer NAME [--note TEXT] [--pdf]` | Generate or reuse an immutable reviewed Final Report revision through the canonical report pipeline |
 | `neqsim task-reference-case [parent-folder]` | Create the public reference task (default: in the task root) |
 
@@ -1125,6 +1271,229 @@ model that has drifted from its boundary shows up. Add a `constraint` on a bound
 State these in the task README so the reviewer sees them: well-rate moves assume the wells can deliver; equipment
 limits are checked only where a constraint exists (`needs_equipment_check` otherwise); a calculated product spec
 such as RVP needs the lab bias; and a slow model limits how often the loop can run.
+
+---
+
+## 18. Learning inside the loop: calibration and value of information
+
+The runner stays programmed and makes no LLM calls. Where the loop has to
+*learn* — how far the model has drifted from the plant, how likely a candidate
+action is to pay off, whether one more simulation is worth running — it uses
+Bayesian inference rather than hand-typed numbers. The pattern is the one used
+for simulation-based inference in industrial agentic AI: propose alternatives,
+simulate them with NeqSim, keep the parameter values that remain plausible given
+the measurements, and let the remaining uncertainty decide the next evaluation.
+
+Everything below is numpy-only, seeded, and writes its evidence into the cycle
+folder. None of it changes a setpoint: proposals still pass the guard and the
+reviewer.
+
+### 18.1 The `calibrate` stage: track model parameters every cycle
+
+Fouling factors, stage efficiencies and meter biases move slowly. Instead of
+letting the model drift until a gate fails, declare them as uncertain parameters
+and let each cycle update them from the measurements it already has:
+
+```yaml
+calibration:
+  method: enif            # enkf | enif
+  members: 40
+  seed: 7
+  mda_steps: 1            # >1 = ES-MDA for a nonlinear model (one extra predict per step)
+  gate_sigma: 4.0         # innovation gate: reject a measurement more than 4 sigma from the prior prediction
+  inflation: 1.02         # posterior anomaly inflation against ensemble collapse
+  min_members: 20         # fewest members the model must solve; failed members are dropped and replenished
+  reinit_after: 3         # cycles with every measurement rejected before the prior is re-drawn wider
+  parameters:             # prior mean/std, bounds; walk_std = per-cycle random walk; neighbours (enif)
+    fouling_20A: {initial: 0.0,  std: 0.2,  lo: 0.0, hi: 1.0, walk_std: 0.01, neighbours: [eta_A]}
+    eta_A:       {initial: 0.78, std: 0.02, lo: 0.6, hi: 0.9}
+  observations:           # KPI holding the measurement; depends_on = parameters it responds to
+    T_20A_meas: {std: 0.5, depends_on: [fouling_20A]}
+    power_A_MW: {std: auto, min_std: 0.1, depends_on: [eta_A], measured: power_A_meas_MW}
+  predict: {file: continuous/stages/predict.py, function: predict}
+
+stages: [sense, refresh, kpis, calibrate, "script:station_model", drift, goal, diff, ledger, digest, notify, agent]
+```
+
+`predict(ctx, members)` receives a list of `{parameter: value}` dictionaries and
+returns one `{observation: value}` dictionary per member. Build the NeqSim model
+once and loop over the members inside the function; 40 members of a single-train
+model is seconds. Return `None` (or non-finite values) for a member the solver
+could not converge; the stage drops it for the cycle and refills the ensemble
+from the survivors, as long as `min_members` solved.
+
+```python
+def predict(ctx, members):
+    model = _load_model(ctx)                 # built once, cached on the module
+    out = []
+    for m in members:
+        model.setFouling("20A", m["fouling_20A"])
+        model.setEfficiency("A", m["eta_A"])
+        model.run()
+        out.append({"T_20A_meas": model.outletT("20A"), "power_A_MW": model.power("A")})
+    return out
+```
+
+Each cycle the stage:
+
+- reads the measured values from `ctx.kpis` (the KPI named like the observation,
+  or `measured:`), applies the parameter random walk, runs `predict`, **gates** each
+  measurement on its normalised innovation (a frozen tag, a spike or a wrong unit
+  must not move the parameters) and updates the ensemble with the rest;
+- publishes `<parameter>_mean`, `<parameter>_std`, `<observation>_resid` (measured
+  minus prior prediction), `<observation>_z`, `calibration_rank` and
+  `calibration_rejected` as KPIs — put the `_resid` KPIs under `drift.signals` and
+  consider a criterion trigger on `calibration_rejected`;
+- exposes `ctx.calibrated` (posterior means) so the model script that follows
+  runs on the calibrated parameters;
+- writes `cycles/<id>/calibration.json` (method, seed, MDA steps, gate, per-observation
+  innovation and whether it was used, prior/posterior moments, identifiability) and
+  persists the ensemble in `continuous/calibration_state.json` (not in dry runs);
+- raises `calibration:unidentifiable` **once** when the SVD rank of the
+  sensitivity Jacobian drops below the number of parameters, and
+  `calibration:all_rejected` when every measurement failed the gate; both leave the
+  stage at `warn`.
+
+**Keeping the filter alive.** A plain ensemble update shrinks the spread every
+cycle; after a few months a 40-member ensemble has collapsed and stops
+responding to new data (filter divergence). Two settings prevent that:
+`walk_std` on a parameter adds a random walk before each update — the honest
+statement that fouling or efficiency *moves* — and `inflation` stretches the
+posterior anomalies slightly (1.01–1.05). Use `walk_std` for parameters you expect
+to drift and leave it at zero for constants such as a meter bias.
+
+**Nonlinear models.** One Gaussian update linearises the model around the
+ensemble. When a NeqSim response is strongly nonlinear in a parameter (a
+fouling factor acting on a log-mean temperature difference, a choke opening),
+set `mda_steps: 3` or `4`: the same measurements are assimilated in several
+smaller steps with inflated noise (ES-MDA), re-linearising each time. It costs
+one `predict` call per step.
+
+**Measurement noise you do not know.** `std: auto` estimates it from the KPI's
+own history in `kpi_history.csv` (median absolute deviation of first
+differences, which ignores trends, steps and spikes), floored by `min_std`.
+Until eight values exist the observation is skipped and reported as
+`std_pending`; the stage keeps running on the others. Prefer an explicit `std`
+from the instrument datasheet when you have one.
+
+**When the prior is simply wrong.** A gate protects the parameters from bad
+data, but a confidently wrong prior makes *every* measurement look like bad
+data. After `reinit_after` consecutive cycles with all measurements rejected,
+the stage re-draws the ensemble around its current mean, widened in proportion
+to the largest rejected innovation, raises `calibration:reinitialised`, and
+records it in the state. The engineer sees it in the digest; nothing is hidden.
+
+**`depends_on` does two jobs.** For `enif` it sparsifies the observation
+operator; for `enkf` it localises the Kalman gain, zeroing the entries between
+an observation and the parameters it is declared not to touch. Declare it
+whenever you can — it is the cheapest protection a small ensemble has.
+
+**A failed member is information.** If the solver fails for members at one end
+of a parameter range, that region is infeasible: set `lo`/`hi` there rather
+than relying on the drop-and-replenish, which otherwise narrows the ensemble
+and makes the gate stricter than it should be.
+
+**`enkf` or `enif`?** The ensemble Kalman filter updates every parameter through
+its sample covariance with the predictions. With 30–60 members, two parameters
+that happen to be correlated in the sample will update together even when only
+one is observed. The information-form update (`enif`, after the Ensemble
+Information Filter) estimates a *sparse precision matrix* from the structure you
+declare (`neighbours`, `depends_on`) by node-wise regression, so an unobserved,
+independent parameter stays where it was. Use `enif` whenever you can state which
+parameters affect which measurements; use `enkf` for a handful of parameters that
+are all observed.
+
+Before trusting a calibration, read `identifiability` in `calibration.json`: a
+parameter combination with a singular value at noise level is set by noise, not
+data. Fix one of the parameters or add a measurement.
+
+### 18.2 Candidates from samples, not from guesses
+
+The stop rules rank candidate actions by `p_success · predicted_delta − cost`.
+With a calibrated ensemble you can sample those numbers: run the candidate once
+per member and pass the gains in.
+
+```python
+from neqsim_continuous import candidate_from_samples, value_of_information
+
+gains = {name: [simulate(action, m) - base for m in members] for name, action in actions.items()}
+candidates = [candidate_from_samples(name, g, cost=0.1) for name, g in gains.items()]
+voi = value_of_information(gains, cost=0.1, simulation_cost=0.02)
+```
+
+`candidate_from_samples` sets `p_success = P(gain > cost)` and
+`predicted_delta = E[gain | success]`, plus `p10`, `p90` and `delta_std` for the
+digest. `value_of_information` computes the expected value of perfect information
+over the candidate set (doing nothing is always allowed):
+
+| Field | Meaning |
+|-------|---------|
+| `recommended_action` | Best expected net improvement, or `None` when nothing beats doing nothing |
+| `p_best` | Probability each action is the best one |
+| `evpi` | What knowing the true outcome before choosing would be worth |
+| `evaluate_more` | `evpi > simulation_cost`: run another evaluation before proposing |
+
+In a solve stage, return `candidates` and record `voi` as `optimizer_evidence`;
+when `evaluate_more` is false, raise the proposal. Bayesian optimisation over the
+levers themselves (`propose_next` in the community continuous-improvement
+toolkit) is worth adding above roughly five levers or when a NeqSim run takes
+minutes; below that the ±1-step sweep of the production template is enough.
+
+### 18.3 Expensive simulators: OPM Flow, CFD and when a surrogate pays
+
+Everything above assumes `predict` and each candidate evaluation is a NeqSim run
+of seconds, so sampling the posterior directly (40 members, a few MDA steps) is
+cheaper than training anything. The decision changes with the cost of one
+evaluation, not with the method. Rule of thumb, with `N` the evaluations a cycle
+needs (members × MDA steps + candidate runs) and `c` the wall time of one:
+
+| Simulator | `c` | Per cycle at `N` ≈ 100–200 | Pattern |
+|-----------|-----|----------------------------|---------|
+| NeqSim flowsheet | 1–10 s | minutes | Direct sampling: `calibrate` + `candidate_from_samples` as written |
+| OPM Flow sector / field model | 10 min – hours | days | ES-MDA with a modest ensemble on a cluster or Docker farm, cycles **weekly or on new well data**, not daily; a **surrogate** fitted on the ensemble runs answers the VOI and optimisation questions between cycles |
+| CFD / FEM (OpenFOAM, FEniCSx) | hours – days | infeasible | Offline DoE over the few design/operating parameters → surrogate (GP, polynomial chaos or reduced-order model); the living task's `predict` calls the surrogate, and the full model is rerun only when a cycle leaves the DoE hull |
+
+The runner does not care: `predict(ctx, members)` may launch OPM Flow decks
+(see the `neqsim-near-well-and-injectivity` skill for deck generation and the
+Docker/WSL2 requirement), read back the summary vectors, and cache every run
+under `continuous/data/simulations/` keyed by the parameter hash so a resumed or
+repeated cycle never pays twice. Set `members` and `mda_steps` to what the
+budget allows, prefer `enif` with a declared graph when members are few, and
+let `value_of_information(..., simulation_cost=c)` decide whether another full
+run is worth it — with `c` in the same unit as the gain.
+
+A **surrogate** is justified when the DoE needed to fit it (typically 30–100
+runs for ≤ 6 parameters with a Gaussian process) is smaller than the
+evaluations it will replace over the life of the task, and its validation error
+on held-out runs is below the measurement noise it is asked to explain. Keep
+the surrogate's training set, validation error and domain hull in the cycle
+folder; a prediction outside the hull is an `extrapolation` finding, not a result.
+The community toolkit's `propose_next` already carries a GP on the unit cube
+that can serve as a first surrogate.
+
+**Amortised inference** (training a network once to map observations to a
+posterior, as in simulation-based inference or the Ensemble Information
+Filter's learned sparse maps) pays when the *same* inference is repeated many
+times with the same structure — every cycle of a field model, or the same
+well-test interpretation across dozens of wells. It is the right tool for an
+FMU-scale reservoir workflow where every history-match update is a cluster
+job, which is exactly the subsurface case where a 50 % compute reduction has
+been projected; for a single NeqSim living task it is not. The packages
+(`graphite-maps`, `sbi`, `torch`) are not in the shared environment today;
+report that as a blocker when a task needs them rather than approximating.
+
+### 18.4 What is deliberately not here
+
+- **Reinforcement learning on the live plant.** The loop is advisory and the
+  guard fails closed; a learned policy that explores on a running facility
+  contradicts both. Sequential decisions under uncertainty (when to wash a
+  compressor, when to schedule maintenance) belong in an offline study with
+  NeqSim as the environment, whose output becomes ledger proposals.
+- **Learned models without labels.** `--tune` needs labelled events, the
+  `outcome` stage needs ledger items driven to `implemented`, and a surrogate
+  needs a candidate history. Collect those first; the helpers above then have
+  something to learn from.
+
 ## Related documentation
 
 - [Task Solving Guide](TASK_SOLVING_GUIDE.md) — the one-off task workflow this builds on

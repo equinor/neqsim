@@ -50,7 +50,7 @@ solve: {}
 backtest: {}
 #  expected: [{trigger: "drift:polytropic_efficiency", onset: "2026-02-01", max_delay_days: 30}]
 # continuous/LIVING_REPORT.md is always rewritten; formal also regenerates the Word/HTML report
-report: {formal: never}                 # never | on_promote | every_cycle
+report: {formal: never}                 # never | on_promote | every_cycle; prepare: step2_analysis/40_write_results.py
 """
 
 PRODUCTION_PLAN_TEMPLATE = """# Production-optimisation cycle plan (neqsim_continuous schema 1.0).

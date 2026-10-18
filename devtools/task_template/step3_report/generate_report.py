@@ -2327,6 +2327,21 @@ def _load_final_report_metadata():
     return data
 
 
+def get_live_figures():
+    """Figures a living task's final report adds (kept outside the task's own figures/ folder)."""
+    metadata = _load_final_report_metadata()
+    folder = os.path.join(TASK_DIR, str(metadata.get("figures_dir") or ""))
+    if not metadata.get("figures_dir"):
+        return []
+    return [os.path.join(folder, name) for name in metadata.get("figures") or []
+            if os.path.isfile(os.path.join(folder, name))]
+
+
+def format_live_summary(metadata):
+    """The plain-language live-task summary written by the continuous-task orchestrator."""
+    return str((metadata or {}).get("summary_markdown") or "")
+
+
 def format_final_report_record(metadata):
     """Render the immutable final-delivery identity and audit references as Markdown."""
     if not metadata:
@@ -2336,7 +2351,9 @@ def format_final_report_record(metadata):
     lines = [
         "This standalone deliverable is final-report revision **{}**, generated from "
         "the latest reviewed Task Solver baseline. Transient cycle history is deliberately "
-        "not reproduced here; the task-folder records below remain the authoritative audit trail."
+        "not reproduced here; the task-folder records below remain the authoritative audit trail. "
+        "The task's original report in step3_report/ is not changed by this revision; this is a separate "
+        "document that contains the same engineering content plus the live-study summary and figures."
         .format(metadata.get("revision")),
         "",
         "- Finalized: {}".format(metadata.get("finalized_at") or "-"),
@@ -3804,6 +3821,11 @@ def _add_bold_runs(paragraph, text):
 
 
 def get_figures():
+    """The task's figures followed by the live-task figures of a final report, if any."""
+    return _task_figures() + get_live_figures()
+
+
+def _task_figures():
     """Collect all PNG/SVG figures from the figures/ directory.
 
     Files named without an ordering prefix (``fig01_``, ``01_``) follow the order of
@@ -3834,6 +3856,9 @@ def get_figure_caption(fig_path, results, fig_index):
         captions = results.get("figure_captions", {})
     if fig_name in captions:
         return "{} {}: {}".format(_t("Figure"), fig_index, captions[fig_name])
+    live_captions = _load_final_report_metadata().get("figure_captions") or {}
+    if fig_name in live_captions:
+        return "{} {}: {}".format(_t("Figure"), fig_index, live_captions[fig_name])
     for entry in (results or {}).get("figure_discussion", []) or []:
         if isinstance(entry, dict) and os.path.basename(
                 str(entry.get("figure", ""))) == fig_name:
@@ -5878,6 +5903,15 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
     })
 
     next_section_num = 3
+
+    live_summary = format_live_summary(_load_final_report_metadata())
+    if live_summary:
+        sections.append({
+            "heading": "{}. {}".format(next_section_num, "How the Live Study Developed"),
+            "content": live_summary,
+            "has_markdown": True,
+        })
+        next_section_num += 1
 
     safety_readiness = format_safety_readiness_text(results) if results else ""
     if safety_readiness:

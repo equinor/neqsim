@@ -58,9 +58,17 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
 3. **Plan**: edit `continuous/cycle_plan.yaml` — sources and adapters, task-local
    stage scripts (NeqSim model via `ProcessAutomation.evaluate()`), KPIs, drift
    signals **with engineering floors**, triggers, solve settings, expected events.
+   Declare slowly moving model parameters (fouling, efficiency, meter bias) under
+   `calibration:` with a `predict(ctx, members)` script and add the `calibrate`
+   stage before the model script; monitor its `<obs>_resid` KPIs for drift, and
+   act on a `calibration:unidentifiable` trigger before trusting the calibration.
 4. **Backtest**: `neqsim task-backtest <task> --start ... --end ... --repeat`.
-   Tune floors/`confirm` until expected events are found within their delay and
-   false alarms are ≈ 0; record the result in `results.json` `validation`.
+   Label `backtest.expected` first (maintenance, wash and trip dates); then
+   `neqsim task-backtest <task> --tune --name RUN --holdout-from DATE` ranks drift
+   settings on the earlier events and validates on the later ones from the recorded
+   KPIs, writing `drift_tuning.json`. Only recommend a block whose `validated` is
+   true; copy it into the plan (the tool never edits it), rerun the backtest, and
+   record the result in `results.json` `validation`.
 5. **Run**: `neqsim task-cycle <task>` or `neqsim task-solve <task> --until converged`.
    Schedule with `neqsim task-schedule <task> --daily 05:00 --install`.
 6. **Triage a triggered cycle**: read `cycles/<id>/digest.md`, `triggers.json`,
@@ -70,6 +78,10 @@ Loaded skills: neqsim-continuous-task-improvement, neqsim-professional-reporting
    check that would discriminate between explanations.
 7. **Critic pass** (solve mode, when enabled): challenge the best candidate —
    is the gain inside model uncertainty? was a constraint relaxed? Record it.
+   In solve stages, derive `p_success`/`predicted_delta` with
+   `candidate_from_samples` from per-member NeqSim runs and let
+   `value_of_information` decide between one more evaluation and a proposal
+   (`neqsim_continuous.inference`); never type those probabilities by hand.
 8. **Hand over**: tell the reviewer which cycle to promote and which ledger items
    need a decision (both are listed under "Next actions" in the living report). The
    living report updates itself; set `report.formal: on_promote` in the plan so the

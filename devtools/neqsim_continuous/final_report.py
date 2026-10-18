@@ -21,6 +21,7 @@ _SUPPORTED_SCHEMA = (1, 0)
 _REVISION_PATTERN = re.compile(r"^FR-(\d{3})$")
 _CURRENT_FILE = "final_report.json"
 _HISTORY_DIR = "final_reports"
+FIGURES_SUBDIR = "figures"
 
 
 class FinalReportError(ValueError):
@@ -258,6 +259,72 @@ def _default_runner(task_dir, output_dir, metadata_path, title, pdf):
     return subprocess.call(command)
 
 
+def _live_summary(task_dir, figures_made):
+    """Plain-language summary of what the live task did and how the result improved."""
+    from . import figures as figure_kit
+    from .living_report import _fmt, _kpi_meaning, _reading, _table, _trigger_text
+
+    data = figure_kit.collect(task_dir)
+    objective, plan = data["objective"], data["plan"]
+    baselines, cycles, history = data["baselines"], data["cycles"], data["history"]
+    first = baselines[0]["kpis"] if baselines else {}
+    latest = dict(baselines[-1]["kpis"]) if baselines else {}
+    metric = objective.get("metric")
+    lines = []
+    if metric:
+        lines.append("**Aim.** {} `{}`{}. {}".format(
+            objective.get("direction", "maximize"), metric,
+            " to reach {}".format(_fmt(objective.get("target"))) if objective.get("target") is not None else "",
+            "Meaning of the objective: {}.".format(_kpi_meaning(plan, metric))
+            if _kpi_meaning(plan, metric) != "-" else ""))
+    else:
+        lines.append("**Aim.** Monitor the KPIs below against the reviewed baseline.")
+    triggered = sum(1 for c in cycles if c.get("triggers"))
+    span = [c.get("now", "")[:10] for c in cycles if c.get("now")]
+    lines += ["", "**How the work went.** {} monitoring or solve cycle(s){}, of which {} raised a trigger; "
+              "{} solve round(s); {} reviewed baseline(s); {} improvement proposal(s) in the ledger.".format(
+                  len(cycles), " between {} and {}".format(min(span), max(span)) if span else "",
+                  triggered, len(history), len(baselines), len(data["ledger"]))]
+    rows = []
+    for name in sorted(first):
+        a, b = first.get(name), latest.get(name)
+        if isinstance(a, (int, float)) and isinstance(b, (int, float)):
+            rows.append((name, _kpi_meaning(plan, name), a, b, _reading(b, a, objective, name)))
+    if rows:
+        lines += ["", "**Result.** First reviewed baseline compared with the final one:", ""]
+        if all(r[1] == "-" for r in rows):
+            lines += _table(["KPI", "First baseline", "Final", "Change"], [(r[0], r[2], r[3], r[4]) for r in rows])
+        else:
+            lines += _table(["KPI", "Meaning", "First baseline", "Final", "Change"], rows)
+    sources, input_changes = figure_kit.input_summary(data)
+    if sources or input_changes:
+        lines += ["", "**Inputs.** The task kept reading its inputs while it ran; the results rest on the data "
+                  "available at each cycle. {} data source(s) were read; {} input change(s) were detected "
+                  "(evidence files, brief or NeqSim version).".format(len(sources), len(input_changes))]
+        if sources:
+            lines += [""] + _table(["Source", "Adapter", "Cycles read", "Rows received", "Problem cycles",
+                                    "Newest data"], [(s["source"], s["adapter"], s["cycles"], s["rows"],
+                                                      s["problems"], s["newest_data"] or "-") for s in sources])
+    flags = sorted({t for c in cycles for t in c.get("triggers", [])})
+    if flags:
+        lines += ["", "**Flags raised during the work** (a trigger is a question, not a verdict):", ""]
+        lines += ["- {}".format(_trigger_text(t)) for t in flags[:12]]
+    runs = [read_json(os.path.join(data["cont"], "backtests", n, "backtest_report.json"))
+            for n in sorted(os.listdir(os.path.join(data["cont"], "backtests")))] \
+        if os.path.isdir(os.path.join(data["cont"], "backtests")) else []
+    runs = [r for r in runs if r]
+    if runs:
+        last = runs[-1]
+        lines += ["", "**How far the monitoring can be trusted.** The last backtest caught {} of {} known event(s) "
+                  "with {} false alarm(s) per month.".format(
+                      last.get("detected"), len(last.get("expected", [])), _fmt(last.get("false_alarms_per_month")))]
+    if figures_made:
+        lines += ["", "**Figures.** {} figure(s) in the Results section show the workflow, how the objective improved "
+                  "round by round, how each KPI changed since the first baseline, and what the monitoring flagged."
+                  .format(len(figures_made))]
+    return "\n".join(lines)
+
+
 def finalize(task_dir, reviewer, note="", pdf=False, now=None, runner=None):
     """Generate or reuse an immutable final-report revision.
 
@@ -283,6 +350,11 @@ def finalize(task_dir, reviewer, note="", pdf=False, now=None, runner=None):
     output_dir = os.path.join(task_dir, "step3_report", "final", revision)
     os.makedirs(history_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=False)
+    # The live-task figures belong to this revision only; the task's own figures/ folder and
+    # its ordinary report stay exactly as the original study left them.
+    from . import figures as figure_kit
+    figures_dir = os.path.join(output_dir, FIGURES_SUBDIR)
+    figures_made = figure_kit.build_all(task_dir, figures_dir, final_revision=revision)
     pending_path = os.path.join(history_dir, ".{}.pending.json".format(revision))
     source = {
         "baseline_id": gate["baseline"].get("id"),
@@ -305,6 +377,10 @@ def finalize(task_dir, reviewer, note="", pdf=False, now=None, runner=None):
         "note": str(note or ""),
         "source": source,
         "audit_trail": audit,
+        "summary_markdown": _live_summary(task_dir, figures_made),
+        "figures_dir": os.path.relpath(figures_dir, task_dir).replace(os.sep, "/"),
+        "figures": [name for name, _caption in figures_made],
+        "figure_captions": dict(figures_made),
     }
     write_json(pending_path, pending)
     title = "{} - Final Report".format(_study_title(task_dir))

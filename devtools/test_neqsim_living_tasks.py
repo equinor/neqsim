@@ -200,6 +200,16 @@ def test_multi_day_final_report_uses_canonical_pipeline_and_is_immutable(referen
     assert "Final Report Record" in html
     assert "continuous/LIVING_REPORT.md" in html
     assert "Transient cycle history is deliberately not reproduced here" in html
+    assert "How the Live Study Developed" in html
+    assert "Inputs." in html and "separate" in html
+    assert "<img" in html and "Objective after each solve round" in html
+    figures_dir = os.path.join(task, "step3_report", "final", "FR-001", "figures")
+    assert os.path.isfile(os.path.join(figures_dir, "objective_progress_by_solve_round.png"))
+    assert os.path.isfile(os.path.join(figures_dir, "workflow_of_the_living_task.png"))
+    # The original study's figures and report are not touched by the final report.
+    original_figures = os.path.join(task, "figures")
+    assert not os.path.isdir(original_figures) or not any(
+        name.startswith(("objective_progress", "workflow_of")) for name in os.listdir(original_figures))
     word = docx.Document(paths["docx"])
     word_text = "\n".join(paragraph.text for paragraph in word.paragraphs)
     assert "Final Report Record" in word_text
@@ -235,6 +245,37 @@ def test_multi_day_final_report_uses_canonical_pipeline_and_is_immutable(referen
     assert nc.final_report_status(task)["stale"]
     with pytest.raises(nc.FinalReportError, match="differs from the promoted baseline"):
         nc.finalize_report(task, reviewer="Engineering reviewer")
+
+
+def test_living_report_explains_itself_and_draws_improvement_figures(reference, tmp_path):
+    task = _copy(reference, tmp_path, "readable_report")
+    run_cycle(task, now=datetime(2026, 3, 10, tzinfo=timezone.utc), no_agent=True)
+    solved = nc.solve(task, until="goal", no_agent=True)
+    promote(task, solved["history"][-1]["cycle"], "Reviewer")
+    with open(os.path.join(task, "continuous", "LIVING_REPORT.md"), encoding="utf-8") as handle:
+        text = handle.read()
+    for heading in ("## In short", "### What needs your attention", "### How to read this report",
+                    "## How the task works", "## How the task has improved", "## Inputs and how they changed"):
+        assert heading in text
+    assert "**What is being tried:** maximize `power_reduction_pct`" in text
+    assert "The goal is reached and the result is validated." in text
+    figures = os.path.join(task, "continuous", "report")
+    for name in ("workflow_of_the_living_task.png", "objective_progress_by_solve_round.png",
+                 "change_since_first_baseline.png", "how_the_inputs_changed.png"):
+        assert os.path.getsize(os.path.join(figures, name)) > 1000
+        assert "report/" + name in text
+
+
+def test_trigger_text_is_plain_language():
+    from neqsim_continuous.living_report import _reading, _trigger_text
+
+    assert "moved away from its normal level" in _trigger_text("drift:polytropic_efficiency")
+    assert _trigger_text("constraint_breach:min_temp") == "constraint min_temp is violated"
+    assert _trigger_text("something_new") == "something_new"
+    objective = {"metric": "x", "direction": "minimize"}
+    assert _reading(8.0, 10.0, objective, "x").endswith("better")
+    assert _reading(12.0, 10.0, objective, "x").endswith("worse")
+    assert _reading(10.0, 10.0, objective, "y") == "same as baseline"
 
 
 def test_final_report_future_schema_fails_closed(reference, tmp_path):

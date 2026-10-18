@@ -6,7 +6,10 @@ progress, the KPI trends, the events, the open decisions and the baseline histor
 view, never a source: deleting it loses nothing, and rebuilding it gives the same content.
 
 The formal Word/HTML report (``neqsim report``) can be regenerated as well, controlled by the
-plan's ``report.formal``: ``never`` (default), ``on_promote`` or ``every_cycle``.
+plan's ``report.formal``: ``never`` (default), ``on_promote`` or ``every_cycle``. A plan may
+declare ``report.prepare: step2_analysis/40_write_results.py`` (optionally ``:function``); it
+runs first and turns the latest complete cycle into ``results.json`` and figures, so
+``neqsim task-report <task> --formal`` is a one-command, on-request report of the current state.
 """
 
 import csv
@@ -16,6 +19,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 
+from . import figures as figure_kit
 from . import user_input
 from .ledger import Ledger
 from .plan import continuous_dir, load_baseline, load_goal, load_plan, read_json, replace_file
@@ -23,7 +27,7 @@ from .plan import continuous_dir, load_baseline, load_goal, load_plan, read_json
 logger = logging.getLogger(__name__)
 
 REPORT_FILE = "LIVING_REPORT.md"
-FIGURE_FILE = os.path.join("report", "kpi_trends.png")
+FIGURE_DIR = "report"
 OPEN_STATUSES = ("proposed", "under_review", "accepted", "implemented")
 MAX_EVENTS = 40
 
@@ -46,6 +50,93 @@ def _constraint_text(constraint):
         constraint.get("name") or constraint.get("kpi"), constraint.get("kpi"), constraint.get("op", "<="),
         "NOT SET" if limit is None else _fmt(limit),
         " (hard)" if constraint.get("hard", True) else "")
+
+
+STATE_TEXT = {
+    "goal_met": "The goal is reached and the result is validated.",
+    "converged": "Further solving gives only marginal gains, so the solver has stopped; the result is as good as it gets with the current levers.",
+    "infeasible": "The goal cannot be reached within the stated constraints.",
+    "blocked": "The next useful step needs a person (a decision, data or a confirmation).",
+    "budget_exhausted": "The solver used up its work budget before the goal was reached.",
+}
+
+TRIGGER_TEXT = {
+    "drift": "{} has moved away from its normal level (statistical drift detector)",
+    "kpi_step": "{} moved more than the allowed step compared with the baseline",
+    "criterion": "{} crossed a limit set in the plan",
+    "constraint_breach": "constraint {} is violated",
+    "constraint_margin": "constraint {} is close to its limit",
+    "new_evidence": "input files changed since the last cycle",
+    "brief_changed": "the task brief changed",
+    "neqsim_changed": "the NeqSim version changed",
+    "user_input": "a comment or restriction from a user ({}) took effect",
+    "user_input_expired": "a comment or restriction from a user ({}) expired",
+    "reopen": "the study should be reopened ({})",
+    "calibration": "parameter tracking: {}",
+}
+
+GLOSSARY = [
+    ("KPI", "A number the task tracks every cycle (a measured or calculated value such as an efficiency or a pressure)."),
+    ("Baseline", "The reviewed, accepted reference values. Everything is compared against it."),
+    ("Cycle", "One automatic check: read new data, recompute the KPIs, compare with the baseline, raise triggers."),
+    ("Trigger", "A reason the cycle raised a flag, e.g. a KPI drifted or an input file changed. A trigger is a question, not a verdict."),
+    ("Drift", "A KPI has shifted away from its normal level by more than normal noise would explain."),
+    ("Solve round", "One attempt by the solver to improve the objective; several rounds are run until the goal is met or gains become marginal."),
+    ("Ledger", "The list of proposed improvements and decisions, each with a status and an owner."),
+    ("Backtest", "A replay over past data with known events, used to check that the monitoring would have caught them and how many false alarms it gives."),
+]
+
+
+def _trigger_text(trigger):
+    """Explain a trigger name such as ``drift:efficiency`` in plain language."""
+    kind, _, detail = str(trigger).partition(":")
+    if kind.startswith("outcome_"):
+        return "decision outcome {} for {}".format(kind[len("outcome_"):], detail or "-")
+    if kind in TRIGGER_TEXT:
+        return TRIGGER_TEXT[kind].format(detail) if "{}" in TRIGGER_TEXT[kind] else TRIGGER_TEXT[kind]
+    return str(trigger)
+
+
+def _kpi_meaning(plan, name):
+    """Return the plan's description and unit for a KPI, if it declared them."""
+    info = (plan.get("kpis") or {}).get(name) or {}
+    text = info.get("describe") or info.get("description") or ""
+    if info.get("unit"):
+        text = "{} [{}]".format(text, info["unit"]) if text else "[{}]".format(info["unit"])
+    return text or "-"
+
+
+def _reading(value, ref, objective, name):
+    """Say in words how the latest value compares with the baseline."""
+    if not isinstance(ref, (int, float)):
+        return "no baseline value"
+    delta = value - ref
+    if abs(delta) <= 1e-12 * max(1.0, abs(ref)):
+        return "same as baseline"
+    percent = " ({:+.1f}%)".format(100.0 * delta / abs(ref)) if ref else ""
+    word = "above" if delta > 0 else "below"
+    if objective.get("metric") == name:
+        better = (delta > 0) == (objective.get("direction", "maximize") == "maximize")
+        return "{} baseline{}, {}".format(word, percent, "better" if better else "worse")
+    return "{} baseline{}".format(word, percent)
+
+
+def _actions(goal, state, history, meta, runs, last, evidence_impact, final_report):
+    actions = []
+    if not goal.get("confirmed_by"):
+        actions.append("Confirm the goal: set `confirmed_by` in `continuous/goal.yaml`.")
+    if not runs:
+        actions.append("Backtest the monitoring before relying on it (`neqsim task-backtest`).")
+    if state.get("state") in ("goal_met", "converged") and history and meta.get("source_cycle") != history[-1].get("cycle"):
+        actions.append("Review and promote the solved cycle: `neqsim task-promote <task> {} --reviewer NAME`."
+                       .format(history[-1].get("cycle")))
+    if meta.get("source_cycle") and not evidence_impact.get("changes"):
+        if not final_report.get("available") or final_report.get("stale"):
+            actions.append("Generate the reviewed standalone delivery: "
+                           "`neqsim task-report <task> --final --reviewer NAME`.")
+    if last and last.get("triggers"):
+        actions.append("Triage the triggers of cycle {} (`digest.md`, `triggers.json`).".format(last["cycle_id"]))
+    return actions
 
 
 def _table(headers, rows):
@@ -81,34 +172,11 @@ def _history(cont):
     return series
 
 
-def _trend_figure(cont, series, baseline_kpis):
-    """Draw the KPI trends; return the relative figure path, or None without matplotlib."""
-    if not series:
-        return None
-    try:
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-    except ImportError:
-        return None
-    names = sorted(series)
-    fig, axes = plt.subplots(len(names), 1, figsize=(9, 2.3 * len(names)), squeeze=False)
-    for ax, name in zip(axes[:, 0], names):
-        times = [datetime.fromisoformat(t) for t, _ in series[name]]
-        ax.plot(times, [v for _, v in series[name]], lw=1.0, marker="." if len(times) < 40 else None)
-        if isinstance(baseline_kpis.get(name), (int, float)):
-            ax.axhline(baseline_kpis[name], color="grey", ls="--", lw=0.8, label="baseline")
-            ax.legend(fontsize=7, loc="best")
-        ax.set_ylabel(name, fontsize=8)
-        ax.grid(True, alpha=0.3)
-    axes[0, 0].set_title("KPI per cycle")
-    fig.autofmt_xdate()
-    fig.tight_layout()
-    path = os.path.join(cont, FIGURE_FILE)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    fig.savefig(path, dpi=120, bbox_inches="tight")
-    plt.close(fig)
-    return FIGURE_FILE.replace(os.sep, "/")
+def _image(made, name, alt, note=""):
+    """Markdown for one figure written by ``figures.build_all``, or nothing when it had no data."""
+    if name not in made:
+        return []
+    return ["![{}]({})".format(alt, FIGURE_DIR + "/" + name), "", "*{}*".format(note or made[name]), ""]
 
 
 def _baselines(cont, current):
@@ -154,7 +222,68 @@ def build(task_dir):
     out = ["# Living report: {}".format(os.path.basename(task_dir)), "",
            "Rebuilt {} from the task folder after the latest change. It is regenerated after "
            "every cycle, solve, backtest, promotion and ledger decision; do not edit it.".format(now), ""]
-    out += ["## Where the task stands", ""]
+
+    plan = load_plan(task_dir)
+    runs = _backtests(cont)
+    history = state.get("history") or []
+    series = _history(cont)
+    metric = objective.get("metric")
+    out += ["## In short", ""]
+    if metric:
+        target = objective.get("target")
+        out += ["- **What is being tried:** {} `{}`{}. {}".format(
+            objective.get("direction", "maximize"), metric,
+            " to reach {}".format(_fmt(target)) if target is not None else "",
+            ("It means: " + _kpi_meaning(plan, metric) + ". ") if _kpi_meaning(plan, metric) != "-" else "") +
+            ("Constraints that must hold: " + "; ".join(_constraint_text(c) for c in goal.get("constraints", [])) + "."
+             if goal.get("constraints") else "No constraints are set.")]
+        best = history[-1] if history else None
+        latest = series.get(metric, [None])[-1]
+        first_kpis = (figure_kit.collect(task_dir)["baselines"] or [{"kpis": {}}])[0]["kpis"]
+        start = first_kpis.get(metric)
+        if best and best.get("value") is not None:
+            out += ["- **Result so far:** the solver's latest value is {}{}; the first baseline was {} and the "
+                    "current baseline is {}.".format(
+                        _fmt(best.get("value")), " (validated)" if best.get("validated") else " (not yet validated)",
+                        _fmt(start), _fmt(base_kpis.get(metric)))]
+        elif latest:
+            out += ["- **Result so far:** the latest monitored value is {} ({}).".format(
+                _fmt(latest[1]), _reading(latest[1], base_kpis.get(metric), objective, metric))]
+    else:
+        out += ["- **What is being tried:** no objective is set yet (edit `continuous/goal.yaml`); the task only monitors its KPIs."]
+    out += ["- **Status:** {}".format(STATE_TEXT.get(state.get("state"),
+            "Routine monitoring; no stop condition has been reached." if not state.get("state") or state.get("state") == "monitoring"
+            else "State `{}`.".format(state.get("state"))))]
+    if last and last.get("triggers"):
+        out += ["- **Latest cycle raised {} trigger(s):**".format(len(last["triggers"]))]
+        out += ["  - " + _trigger_text(t) for t in last["triggers"]]
+    elif last:
+        out += ["- **Latest cycle:** no triggers, everything is within the expected range."]
+    actions = _actions(goal, state, history, meta, runs, last, evidence_impact, final_report)
+    out += ["", "### What needs your attention", ""]
+    out += ["- " + a for a in actions] or ["- Nothing; the task is in routine monitoring."]
+    out += ["", "### How to read this report", ""]
+    out += _table(["Term", "Meaning"], GLOSSARY)
+    out += [""]
+    made = dict(figure_kit.build_all(task_dir, os.path.join(cont, FIGURE_DIR)))
+    if "workflow_of_the_living_task.png" in made:
+        out += ["## How the task works", ""]
+        out += _image(made, "workflow_of_the_living_task.png", "Workflow of the living task",
+                      "Each cycle reads new data, computes the KPIs and compares them with the reviewed baseline. "
+                      "Triggers start solve rounds; a reviewer promotes a good result to the new baseline, "
+                      "and the final report is issued from it.")
+    if any(n in made for n in ("objective_progress_by_solve_round.png", "change_since_first_baseline.png",
+                               "baseline_progression.png")):
+        out += ["## How the task has improved", ""]
+        out += _image(made, "objective_progress_by_solve_round.png", "Objective by solve round",
+                      "Objective value after each solve round (filled marker = validated), against the first "
+                      "baseline (dashed) and the target (dotted).")
+        out += _image(made, "change_since_first_baseline.png", "Change since first baseline",
+                      "Relative change of every KPI since the first baseline. The objective is green when it "
+                      "moved in the wanted direction and red when it did not.")
+        out += _image(made, "baseline_progression.png", "Baseline progression",
+                      "The objective at each reviewed baseline; each step was accepted by a named reviewer.")
+    out += ["## Where the task stands", "", "*The current state of the task in one table.*", ""]
     out += _table(["Item", "Value"], [
         ("State / phase", "{} / {}".format(state.get("state"), state.get("phase"))),
         ("Stop reason", state.get("reason", "-")),
@@ -184,6 +313,23 @@ def build(task_dir):
                        " (stale)" if final_report.get("stale") else "")),
     ])
 
+    out += ["", "## Inputs and how they changed", "",
+            "*A live task keeps reading its inputs: data from databases, historians or live feeds, evidence files, "
+            "the brief and the NeqSim version. This shows what was read and what changed, so a result can be "
+            "traced to the inputs it was computed from.*", ""]
+    sources, input_changes = figure_kit.input_summary(figure_kit.collect(task_dir))
+    if sources:
+        out += _table(["Source", "Adapter", "Cycles read", "Rows received", "Problem cycles", "Last status",
+                       "Newest data"], [(s["source"], s["adapter"], s["cycles"], s["rows"], s["problems"],
+                                         s["last_status"], s["newest_data"] or "-") for s in sources])
+        out += [""]
+    else:
+        out += ["No data source is declared in the plan; the task works on the files in its folder.", ""]
+    out += _image(made, "how_the_inputs_changed.png", "Inputs over time")
+    if input_changes:
+        out += _table(["Cycle", "Time", "Input", "Change", "Kind"],
+                      [(c["cycle"], c["time"], c["what"], c["change"], c["kind"]) for c in input_changes[-MAX_EVENTS:]])
+        out += [""]
     out += ["", "## Evidence changes and impact", ""]
     evidence_view = evidence_impact if evidence_impact.get("changes") else ((last or {}).get("evidence") or {})
     changes = evidence_view.get("changes") or []
@@ -215,15 +361,17 @@ def build(task_dir):
 
     series = _history(cont)
     if series:
-        out += ["", "## Latest values against the baseline", ""]
+        out += ["", "## Latest values against the baseline", "",
+                "*Each KPI's most recent value next to the accepted baseline. \"Reading\" says in words whether it is "
+                "above or below the baseline; only the objective is judged better or worse.*", ""]
         rows = []
         for name in sorted(series):
             points = series[name]
             value, ref = points[-1][1], base_kpis.get(name)
             delta = value - ref if isinstance(ref, (int, float)) else None
-            rows.append((name, value, points[-1][0][:19], points[-2][1] if len(points) > 1 else None,
-                         ref, delta))
-        out += _table(["KPI", "Latest", "At", "Previous", "Baseline", "Latest - baseline"], rows)
+            rows.append((name, _kpi_meaning(plan, name), value, points[-1][0][:19],
+                         points[-2][1] if len(points) > 1 else None, ref, delta, _reading(value, ref, objective, name)))
+        out += _table(["KPI", "Meaning", "Latest", "At", "Previous", "Baseline", "Latest - baseline", "Reading"], rows)
     unmeasured = sorted(k for k in base_kpis if k not in series)
     if unmeasured:
         out += ["", "{} baseline value(s) from the study are not yet measured by any cycle: {}.".format(
@@ -236,7 +384,9 @@ def build(task_dir):
 
     history = state.get("history") or []
     if history:
-        out += ["", "## Goal progress (solve rounds)", ""]
+        out += ["", "## Goal progress (solve rounds)", "",
+                "*Each row is one solver attempt to improve the objective. \"Validated\" means the result passed the "
+                "validation checks; \"Action\" is what was changed in that round.*", ""]
         out += _table(["Round", "Cycle", "Value", "Validated", "Confidence", "Action"],
                       [(h.get("round"), h.get("cycle"), h.get("value"), h.get("validated"),
                         h.get("confidence"), h.get("action") or "-") for h in history])
@@ -245,20 +395,23 @@ def build(task_dir):
                                                      " Reachable bound {}.".format(_fmt(details["upper_bound"]))
                                                      if "upper_bound" in details else "")]
 
-    figure = _trend_figure(cont, series, base_kpis)
     if series:
-        out += ["", "## KPI trends", ""]
-        if figure:
-            out += ["![KPI per cycle, with the baseline dashed]({})".format(figure), ""]
+        out += ["", "## KPI trends", "",
+                "*How each KPI developed cycle by cycle (dashed line: baseline). A steady line near the baseline "
+                "means nothing has changed.*", ""]
+        out += _image(made, "kpi_trends_with_triggers.png", "KPI per cycle, with the baseline dashed",
+                      "Dotted red lines mark cycles that raised a trigger.")
         out += _table(["KPI", "Cycles", "First", "Min", "Max", "Last"],
                       [(k, len(v), v[0][1], min(x for _, x in v), max(x for _, x in v), v[-1][1])
                        for k, v in sorted(series.items())])
 
-    events = [(c.get("now", "")[:19], c["cycle_id"], ", ".join(c.get("triggers", [])))
+    events = [(c.get("now", "")[:19], c["cycle_id"], ", ".join(c.get("triggers", [])),
+               "; ".join(_trigger_text(t) for t in c.get("triggers", [])))
               for c in cycles if c.get("triggers")]
-    out += ["", "## Events", ""]
+    out += ["", "## Events", "", "*Cycles that raised a flag, newest first. A trigger asks for a look; it is not a verdict.*", ""]
     if events:
-        out += _table(["Time", "Cycle", "Triggers"], list(reversed(events))[:MAX_EVENTS])
+        out += _image(made, "monitoring_events_timeline.png", "Triggers over time")
+        out += _table(["Time", "Cycle", "Triggers", "What it means"], list(reversed(events))[:MAX_EVENTS])
         if len(events) > MAX_EVENTS:
             out += ["", "{} older events are in the cycle folders.".format(len(events) - MAX_EVENTS)]
     else:
@@ -272,8 +425,10 @@ def build(task_dir):
         out += ["", "Add or resolve with `neqsim task-note <task> ...`; they apply from the next cycle."]
 
     items = Ledger(os.path.join(cont, "ledger", "events.jsonl")).current()
-    out += ["", "## Improvement ledger", ""]
+    out += ["", "## Improvement ledger", "",
+            "*Proposed improvements and the decisions taken on them. \"Proposed\" items are waiting for a person.*", ""]
     if items:
+        out += _image(made, "decision_ledger_status.png", "Ledger status")
         rows = []
         for key, item in sorted(items.items()):
             decided = [h for h in item.get("history", []) if h.get("event") == "status_changed"]
@@ -297,16 +452,19 @@ def build(task_dir):
     else:
         out += ["The ledger is empty."]
 
-    out += ["", "## Baseline history", ""]
+    out += ["", "## Baseline history", "",
+            "*Every reviewed baseline the task has had. A new baseline is only created by a named reviewer.*", ""]
     out += _table(["Baseline", "Promoted by", "When", "Source cycle", "Note"],
                   [("{}{}".format(b.get("id"), " (current)" if b.get("_current") else ""),
                     b.get("promoted_by", "-"), str(b.get("promoted_at", b.get("created", "-")))[:19],
                     b.get("source_cycle", "-"), b.get("note", "") or "-")
                    for b in _baselines(cont, meta)])
 
-    runs = _backtests(cont)
     if runs:
-        out += ["", "## Backtests", ""]
+        out += ["", "## Backtests", "",
+                "*Replays over past data with known events. \"Detected\" counts known events the monitoring caught, "
+                "\"Delays\" is how many days after onset each was caught, and \"False alarms / month\" is how often it "
+                "fired without a real event. Few false alarms and short delays mean the monitoring can be trusted.*", ""]
         out += _table(["Run", "Period", "Cycles", "Detected", "Delays (days)", "False alarms / month",
                        "Unscored triggers", "Reproducibility"],
                       [(r.get("run"), "{} to {}".format(str(r.get("start"))[:10], str(r.get("end"))[:10]),
@@ -320,22 +478,6 @@ def build(task_dir):
                     "alarms; its triggers are counted as unscored (`other_triggers` in the run's "
                     "backtest_report.json)."]
 
-    out += ["", "## Next actions", ""]
-    actions = []
-    if not goal.get("confirmed_by"):
-        actions.append("Confirm the goal: set `confirmed_by` in `continuous/goal.yaml`.")
-    if not runs:
-        actions.append("Backtest the monitoring before relying on it (`neqsim task-backtest`).")
-    if state.get("state") in ("goal_met", "converged") and history and meta.get("source_cycle") != history[-1].get("cycle"):
-        actions.append("Review and promote the solved cycle: `neqsim task-promote <task> {} --reviewer NAME`."
-                       .format(history[-1].get("cycle")))
-    if meta.get("source_cycle") and not evidence_impact.get("changes"):
-        if not final_report.get("available") or final_report.get("stale"):
-            actions.append("Generate the reviewed standalone delivery: "
-                           "`neqsim task-report <task> --final --reviewer NAME`.")
-    if last and last.get("triggers"):
-        actions.append("Triage the triggers of cycle {} (`digest.md`, `triggers.json`).".format(last["cycle_id"]))
-    out += ["- " + a for a in actions] or ["- None; the task is in routine monitoring."]
     return "\n".join(out) + "\n"
 
 
@@ -360,8 +502,41 @@ def update(task_dir, event="cycle"):
         return None
 
 
+def prepare_results(task_dir):
+    """Run the plan's ``report.prepare`` script (task-relative ``file[:function]``) to refresh results.json.
+
+    The script turns the latest complete cycle into ``results.json`` and figures; the formal report is
+    then built from it. Returns ``None`` when no script is declared, else a dict with ``ok`` and a message.
+    """
+    spec = (load_plan(task_dir).get("report") or {}).get("prepare")
+    if not spec:
+        return None
+    path, _, func = str(spec).partition(":")
+    full = path if os.path.isabs(path) else os.path.join(str(task_dir), path)
+    if not os.path.exists(full):
+        return {"ok": False, "message": "report.prepare script not found: {}".format(full)}
+    if func:
+        import importlib.util
+        try:
+            module_spec = importlib.util.spec_from_file_location("neqsim_task_report_prepare", full)
+            module = importlib.util.module_from_spec(module_spec)
+            module_spec.loader.exec_module(module)
+            getattr(module, func)(str(task_dir))
+            return {"ok": True, "message": "{}:{} ran".format(path, func)}
+        except Exception as error:  # noqa: BLE001 - reporting must not raise into a cycle
+            return {"ok": False, "message": "{}: {}".format(type(error).__name__, error)}
+    try:
+        code = subprocess.call([sys.executable, full], cwd=str(task_dir))
+    except OSError as error:
+        return {"ok": False, "message": str(error)}
+    return {"ok": code == 0, "message": "{} exit {}".format(path, code)}
+
+
 def regenerate_formal(task_dir):
-    """Run ``neqsim report`` for the task; return the exit code (never raises)."""
+    """Refresh results.json through ``report.prepare`` (if declared), then run ``neqsim report``; never raises."""
+    prepared = prepare_results(task_dir)
+    if prepared is not None and not prepared["ok"]:
+        logger.warning("report.prepare failed, report built from the existing results.json: %s", prepared["message"])
     cli = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "neqsim_cli.py")
     try:
         return subprocess.call([sys.executable, cli, "report", str(task_dir)])
