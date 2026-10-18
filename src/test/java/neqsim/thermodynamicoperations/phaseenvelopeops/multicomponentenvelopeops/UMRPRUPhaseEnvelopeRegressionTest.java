@@ -8,7 +8,6 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
@@ -145,7 +144,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
       solver.solve(point);
       solver.init();
       solver.setfvec();
-      assertTrue(new EjmlLinearAlgebra().euclideanNorm(solver.fvec) < 1.0e-8, "equilibrium residual at point " + point);
+      assertTrue(solver.fvec.norm2() < 1.0e-8, "equilibrium residual at point " + point);
       for (int component = 0; component < 3; component++) {
         double recovered = fluid.getBeta(0) * fluid.getPhase(0).getComponent(component).getx()
             + fluid.getBeta(1) * fluid.getPhase(1).getComponent(component).getx();
@@ -167,9 +166,9 @@ class UMRPRUPhaseEnvelopeRegressionTest {
       solver.solve(point);
     }
     SystemInterface accepted = fluid.clone();
-    double[] state = solver.u.clone();
+    double[] state = solver.u.getColumnPackedCopy();
     solver.calcCrit();
-    assertArrayEquals(state, solver.u);
+    assertArrayEquals(state, solver.u.getColumnPackedCopy());
     assertEquals(accepted.getTemperature(), fluid.getTemperature(), 0.0);
     assertEquals(accepted.getPressure(), fluid.getPressure(), 0.0);
     for (int phase = 0; phase < 2; phase++) {
@@ -182,8 +181,7 @@ class UMRPRUPhaseEnvelopeRegressionTest {
       }
     }
     solver.setfvec();
-    assertTrue(new EjmlLinearAlgebra().euclideanNorm(solver.fvec) < 1.0e-8,
-        "critical refinement must not contaminate the accepted residual");
+    assertTrue(solver.fvec.norm2() < 1.0e-8, "critical refinement must not contaminate the accepted residual");
   }
 
   @ParameterizedTest
@@ -215,22 +213,19 @@ class UMRPRUPhaseEnvelopeRegressionTest {
 
       @Override
       public void setfvec() {
-        fvec = new double[neq];
-        fvec[0] = 1.0;
+        fvec = new Jama.Matrix(neq, 1);
+        fvec.set(0, 0, 1.0);
       }
 
       @Override
       public void setJac() {
-        Jac = new double[neq][neq];
-        for (int diagonal = 0; diagonal < neq; diagonal++) {
-          Jac[diagonal][diagonal] = 1.0e12;
-        }
+        Jac = Jama.Matrix.identity(neq, neq).times(1.0e12);
       }
     };
-    double[] previous = solver.uold.clone();
+    double[] previous = solver.uold.getColumnPackedCopy();
     solver.calcInc(1);
     assertThrows(IllegalStateException.class, () -> solver.solve(1));
-    assertArrayEquals(previous, solver.uold, "failed point must not enter converged history");
+    assertArrayEquals(previous, solver.uold.getColumnPackedCopy(), "failed point must not enter converged history");
   }
 
   @Test

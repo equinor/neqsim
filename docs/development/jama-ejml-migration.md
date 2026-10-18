@@ -29,23 +29,40 @@ evidence of backward compatibility or a performance improvement.
 | [#4378](https://github.com/equinor/neqsim/pull/4378) | Film coefficient arrays and legacy live views | Preserve orientation, correction order, live-view ownership and serialization handling. |
 | [#4366](https://github.com/equinor/neqsim/pull/4366) | Further EJML backend selection | Preserve the interface default bridge and defer the failing phase-envelope migration. |
 
-## Phase-envelope solver migration
+## Phase-envelope migration is deferred
 
-The solver uses primitive arrays for its working state and EJML for linear
-solves. The continuation equations, step-size rules, damping, retry behavior
-and convergence criteria are preserved. The Jama-backed solver at
-`8b21efc25a222ee65c851def347d562f1e690292` calculated a pure-ethane
-cricondenbar of 50.97305572073197 bara; the EJML snapshot at
-`f15971af6a540c9bc6c7e4e29e2324593c03301c` calculated 50.71696025026392 bara.
-The difference is 0.25609547046805 bara (about 0.5%), and both values satisfy
-the unchanged 42–56 bara regression range.
+The array/EJML conversion in PR #4416 is not qualified for replacement of the
+established solver. At exact head
+`2d18635559c1766669ef9445dedd72eb640acd37`, both Ubuntu and Windows Java 21
+fast-test jobs in [CI run 39130434441](https://github.com/equinor/neqsim/actions/runs/39130434441)
+fail the unchanged `PTPhaseEnvelopeRobustnessTest.testPureEthane`:
+SRK with classic mixing, pure ethane at 200 K and 10 bara calculates a
+cricondenbar of **59.0958176754016 bara**, outside **42–56 bara**. Each job
+reports 17,160 tests with one failure. The earlier review of
+`09da30ef7bec8f6f6f74674394418056ad0532d8` reports the same failure. A passing
+result from a different historical snapshot or runtime does not qualify these
+committed trees; the cause of the differing macOS result remains unresolved.
 
-The previously recorded value of 59.0958176754016 bara could not be reproduced
-from that committed snapshot; its pure-ethane test passes. Do not use that
-unverified value as a migration result or change the acceptance range to fit it.
-The solver serialization UID changed from 1000 to 1001 because its serialized
-working-state fields changed from Jama matrices to primitive arrays; old
-serialized solver instances are not compatible.
+The correction restores `SysNewtonRhapsonPhaseEnvelope` and its
+Matrix-dependent `UMRPRUPhaseEnvelopeRegressionTest` from base
+`ab0c50e5c47387666d65932978e3931999932183`. The solver retains its JAMA Matrix
+working state and serialization UID **1000**, preserving the established
+serialized layout. The proposed UID-1001 array layout is deferred with the
+numerical conversion. No physical acceptance bounds are changed.
+
+With the restored solver and the same remaining source and dependencies,
+OpenJDK 17.0.20 on Linux calculates **50.939222570821975 bara** for the unchanged
+ethane input in all nine calculations across three independent JVMs. The
+unrestored head also reproduces the 59.0958176754016 bara failure locally.
+These results support deferring the conversion; they do not identify the first
+diverging continuation step or establish an EJML library defect.
+
+A future migration needs exact-head continuation/residual diagnostics, pure
+and multicomponent regressions, nearby operating points, cross-runtime
+qualification, and an explicit compatibility decision for old serialized
+solver instances under the [API lifecycle policy](api-lifecycle.md) and
+[governance](../../GOVERNANCE.md). Do not widen the ethane pressure bound or
+substitute the critical pressure for a failed calculated result.
 
 ## Remaining production dependencies
 
@@ -54,6 +71,7 @@ the review fixes. Comments mentioning JAMA are not removal blockers.
 
 | Class | Remaining dependency | Retirement requirement |
 | --- | --- | --- |
+| `SysNewtonRhapsonPhaseEnvelope` | Numerical matrices and serialized solver state | Qualify the replacement and preserve or explicitly migrate old state. |
 | `JamaLinearAlgebra` | Deprecated public reference backend | Retire after the deprecation period, or retain it in a separate optional compatibility artifact. |
 | `ChemicalReactionList` | Deprecated `calcReacRates(...)` result | Migrate callers to `calcReationRates(...)`; preserve the column-vector orientation during the support period. |
 | `FluidBoundaryInterface` | Deprecated Matrix API and default array bridge | Preserve implementations that only implement the legacy Matrix accessor. |
@@ -67,11 +85,12 @@ The interface default array method remains a compatibility bridge for existing
 third-party implementations; making it abstract would break source compilation
 and can cause `AbstractMethodError` for previously compiled implementations.
 
-All remaining production Matrix signatures are compatibility surfaces marked
-`@Deprecated` and have array-based replacements. The JAMA backend is also
-deprecated and retained only for reference tests. Keep the JAMA dependency in
-the current release build files to support those signatures; remove it only
-after the announced support period and API-retirement review.
+`JamaLinearAlgebra` is deprecated as a public reference backend; new backend
+users should select `EjmlLinearAlgebra`. This does not deprecate or replace the
+established phase-envelope solver. JAMA remains necessary for that production
+calculation as well as the compatibility surfaces above. Keep the dependency
+in the current release build files until both numerical qualification and
+API-retirement requirements are satisfied.
 
 Some earlier migrations also changed protected matrix fields and serialized
 working-state layouts in characterization, film/pipe flow and saturation
