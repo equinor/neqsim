@@ -516,9 +516,10 @@ public class RateBasedPackedColumn extends ProcessEquipmentBaseClass {
    * Set the packing by name or alias.
    *
    * @param packingName packing name or alias from {@link PackingSpecificationLibrary}
+   * @throws IllegalArgumentException if the name is not registered
    */
   public void setPackingType(String packingName) {
-    this.packingSpecification = PackingSpecificationLibrary.getOrDefault(packingName);
+    this.packingSpecification = PackingSpecificationLibrary.require(packingName);
   }
 
   /**

@@ -615,6 +615,12 @@ StreamInterface treatedGas = absorber.getGasOutStream();
 String report = absorber.toJson();
 ```
 
+Explicit packing names must resolve in `PackingSpecificationLibrary`; unknown names raise
+`IllegalArgumentException` instead of selecting an unrelated default. Built-in packing aliases
+are preserved, CSV additions include the material, and unqualified placeholder rows are excluded.
+See [packing data and migration guidance](absorbers.md#packing-data).
+
+
 The rate-based model exposes segment profiles, component-transfer totals, pressure-drop and flood
 fraction diagnostics, film/heat-transfer model choices, and equation-oriented residual diagnostics.
 

@@ -857,7 +857,32 @@ Typical absorber practice is about 15-40 L TEG/kg H2O removed, as also noted in 
 
 ### Packing Data
 
-The packing library supports aliases such as `pall ring 50`, `Pall-Ring-50`, `Mellapak250Y`, and `IMTP 70`. It combines built-in data with the `designdata/Packing.csv` table.
+The packing library supports aliases such as `pall ring 50`, `Pall-Ring-50`, `Mellapak250Y`, and `IMTP 70`.
+Built-in engineering estimates are authoritative for these existing names; `designdata/Packing.csv`
+adds entries without replacing them. Material-qualified aliases keep geometries distinct:
+`Pall-Ring-50-metal` selects the same built-in metal estimate as `Pall-Ring-50` (area 120 m²/m³,
+void fraction 0.96, packing factor 66 m⁻¹), while `Pall-Ring-50-plastic` selects the CSV plastic
+row (111.1 m²/m³, 0.919, 180 m⁻¹). These are screening estimates; verify data against the selected
+vendor packing for detailed design.
+
+The four legacy CSV rows named `Mellapak250X`, `PallRingPacking`, `RachigRingPacking`, and
+`BerlSaddlePacking` are marked `placeholder` and excluded from selectable specifications. They
+are not qualified engineering data. Models that previously selected these registry names must
+choose a supported packing from `PackingSpecificationLibrary.getPackingNames()` or provide a
+validated `PackingSpecification`; no replacement for Mellapak250X is assumed.
+
+Explicit packing selection in `RateBasedPackedColumn` and `PackingHydraulicsCalculator` throws
+`IllegalArgumentException` for an unknown or placeholder name and retains the previous selection.
+The library's `getOrDefault` remains an explicit opt-in fallback for compatibility; the equipment
+setters do not use it for user requests.
+
+The legacy fluid-mechanics geometry classes retain their class-name aliases but read actual
+random-packing rows by family, material and nominal size. Their no-argument constructors now
+select metal 50 mm Pall rings and ceramic 25 mm Raschig rings/Berl saddles, replacing the old
+250 mm placeholder geometry. `PallRingPacking("metal", 50)` reads the CSV geometry (size 0.05 m,
+area 112.6 m²/m³, void fraction 0.951); this geometry table is separate from the hydraulic
+registry's built-in reference estimates. Unsupported combinations fail during construction,
+and packing size setters require a finite positive value in metres.
 
 | Random packing examples | Structured packing examples |
 |-------------------------|-----------------------------|
