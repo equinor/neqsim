@@ -1,20 +1,29 @@
 package neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops;
 
+import static neqsim.util.util.ArrayUtils.clearArray;
+import static neqsim.util.util.ArrayUtils.clearMatrixArray;
+import static neqsim.util.util.ArrayUtils.copyArray;
+import static neqsim.util.util.ArrayUtils.copyMatrixArray;
+import static neqsim.util.util.ArrayUtils.extractColumn;
+import static neqsim.util.util.ArrayUtils.infinityNorm;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.mathlib.nonlinearsolver.NewtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * sysNewtonRhapsonPhaseEnvelope class.
+ * Continuation solver for phase-envelope calculations. Working state is stored in primitive arrays and linear systems
+ * are solved with EJML. Serialized state from the former Jama-backed layout is not compatible.
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001L;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(SysNewtonRhapsonPhaseEnvelope.class);
 
@@ -39,28 +48,29 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   int lc = 0;
   int hc = 0;
   double sumlnKvals;
-  Matrix Jac;
-  Matrix fvec;
-  Matrix u;
-  Matrix uold;
-  Matrix uolder;
-  Matrix ucrit;
-  Matrix ucritold;
-  Matrix Xgij;
+  double[][] Jac;
+  double[] fvec;
+  double[] u;
+  double[] uold;
+  double[] uolder;
+  double[] ucrit;
+  double[] ucritold;
+  double[][] Xgij;
   SystemInterface system;
   int numberOfComponents;
   int speceq = 0;
-  Matrix a = new Matrix(4, 4);
-  Matrix dxds = null;
-  Matrix s = new Matrix(1, 4);
-  Matrix xg;
-  Matrix xcoef;
+  double[][] a = new double[4][4];
+  double[] dxds = null;
+  double[] s = new double[4];
+  double[] xg;
+  double[] xcoef;
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   NewtonRhapson solver;
   boolean etterCP = false;
   boolean etterCP2 = false;
   boolean calcCP = false;
   boolean ettercricoT = false;
-  Matrix xcoefOld;
+  double[] xcoefOld;
   double sign = 1.0;
   double dt;
   double dp;
@@ -86,12 +96,12 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     neq = numberOfComponents + 2;
-    Jac = new Matrix(neq, neq); // this is the jacobian of the system of equations
-    fvec = new Matrix(neq, 1); // this is the system of equations
-    u = new Matrix(neq, 1); // this is the vector of variables
-    Xgij = new Matrix(neq, 4);
+    Jac = new double[neq][neq]; // this is the jacobian of the system of equations
+    fvec = new double[neq]; // this is the system of equations
+    u = new double[neq]; // this is the vector of variables
+    Xgij = new double[neq][4];
     setu();
-    uold = u.copy();
+    uold = copyArray(u);
     findSpecEqInit();
     solver = new NewtonRhapson();
     solver.setOrder(3);
@@ -102,18 +112,18 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    */
   public void setfvec22() {
     for (int i = 0; i < numberOfComponents; i++) {
-      fvec.set(i, 0, Math
+      fvec[i] = Math
           .log(system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getComponent(i).getx())
           - Math.log(
-              system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getComponent(i).getx()));
+              system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getComponent(i).getx());
     }
     double fsum = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
       fsum += system.getPhase(0).getComponent(i).getx() - system.getPhase(1).getComponent(i).getx();
     }
-    fvec.set(numberOfComponents, 0, fsum);
-    fvec.set(numberOfComponents, 0, sumy - sumx);
-    fvec.set(numberOfComponents + 1, 0, u.get(speceq, 0) - specVal);
+    fvec[numberOfComponents] = fsum;
+    fvec[numberOfComponents] = sumy - sumx;
+    fvec[numberOfComponents + 1] = u[speceq] - specVal;
   }
 
   /**
@@ -121,11 +131,11 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
-      fvec.set(i, 0, u.get(i, 0) + system.getPhase(0).getComponent(i).getLogFugacityCoefficient()
-          - system.getPhase(1).getComponent(i).getLogFugacityCoefficient());
+      fvec[i] = u[i] + system.getPhase(0).getComponent(i).getLogFugacityCoefficient()
+          - system.getPhase(1).getComponent(i).getLogFugacityCoefficient();
     }
-    fvec.set(numberOfComponents, 0, sumy - sumx);
-    fvec.set(numberOfComponents + 1, 0, u.get(speceq, 0) - specVal);
+    fvec[numberOfComponents] = sumy - sumx;
+    fvec[numberOfComponents + 1] = u[speceq] - specVal;
   }
 
   /**
@@ -145,7 +155,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       }
       if (system.getPhase(0).getComponent(i).getTC() > system.getPhase(0).getComponent(speceq).getTC()) {
         speceq = system.getPhase(0).getComponent(i).getComponentNumber();
-        specVal = u.get(i, 0);
+        specVal = u[i];
         hc = i;
       }
       if (system.getPhase(0).getComponent(i).getTC() < system.getPhase(0).getComponent(speceqmin).getTC()) {
@@ -164,18 +174,18 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     int speceq2 = 0;
 
     for (int i = 0; i < numberOfComponents + 2; i++) {
-      double testVal = Math.abs((Math.exp(u.get(i, 0)) - Math.exp(uold.get(i, 0))) / Math.exp(uold.get(i, 0)));
+      double testVal = Math.abs((Math.exp(u[i]) - Math.exp(uold[i])) / Math.exp(uold[i]));
 
       // the most sensitive variable is calculated not by the difference,
       // but from the sensibility vector in the original Michelsen code
 
       if (testVal > max) {
         speceq = i;
-        specVal = u.get(i, 0);
+        specVal = u[i];
         max = testVal;
       }
 
-      testVal = Math.abs(dxds.get(i, 0));
+      testVal = Math.abs(dxds[i]);
 
       if (testVal > max2) {
         speceq2 = i;
@@ -184,7 +194,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       }
     }
 
-    if (Double.isNaN(dxds.get(1, 0))) {
+    if (Double.isNaN(dxds[1])) {
       speceq2 = numberOfComponents + 3;
     }
 
@@ -200,7 +210,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    */
   public void useAsSpecEq(int i) {
     speceq = i;
-    specVal = u.get(i, 0);
+    specVal = u[i];
     logger.debug("Enforced specification variable {} at {}", speceq, specVal);
   }
 
@@ -228,7 +238,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    * setJac2.
    */
   public void setJac2() {
-    Jac.timesEquals(0.0);
+    clearMatrixArray(Jac);
     double dij = 0.0;
     double[] dxidlnk = new double[numberOfComponents];
     double[] dyidlnk = new double[numberOfComponents];
@@ -247,24 +257,24 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       for (int j = 0; j < numberOfComponents; j++) {
         dij = i == j ? 1.0 : 0.0; // Kroneckers deltaget
         tempJ = -dij + dij * dlnydlnK - dij * dlnxdlnK;
-        Jac.set(i, j, tempJ);
+        Jac[i][j] = tempJ;
       }
       tempJ = system.getTemperature()
           * (system.getPhase(0).getComponent(i).getdfugdt() - system.getPhase(1).getComponent(i).getdfugdt());
-      Jac.set(i, numberOfComponents, tempJ);
+      Jac[i][numberOfComponents] = tempJ;
       tempJ = system.getPressure()
           * (system.getPhase(0).getComponent(i).getdfugdp() - system.getPhase(1).getComponent(i).getdfugdp());
-      Jac.set(i, numberOfComponents + 1, tempJ);
-      Jac.set(numberOfComponents, i, dyidlnk[i] - dxidlnk[i]);
+      Jac[i][numberOfComponents + 1] = tempJ;
+      Jac[numberOfComponents][i] = dyidlnk[i] - dxidlnk[i];
     }
-    Jac.set(numberOfComponents + 1, speceq, 1.0);
+    Jac[numberOfComponents + 1][speceq] = 1.0;
   }
 
   /**
    * setJac.
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
+    clearMatrixArray(Jac);
     double dij = 0.0;
     double[] dxidlnk = new double[numberOfComponents];
     double[] dyidlnk = new double[numberOfComponents];
@@ -285,18 +295,18 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         dij = i == j ? 1.0 : 0.0; // Kroneckers delta
         tempJ = dij + system.getPhase(0).getComponent(i).getdfugdx(j) * dyidlnk[j]
             - system.getPhase(1).getComponent(i).getdfugdx(j) * dxidlnk[j];
-        Jac.set(i, j, tempJ);
+        Jac[i][j] = tempJ;
       }
       tempJ = system.getTemperature()
           * (system.getPhase(0).getComponent(i).getdfugdt() - system.getPhase(1).getComponent(i).getdfugdt());
-      Jac.set(i, numberOfComponents, tempJ);
+      Jac[i][numberOfComponents] = tempJ;
       tempJ = system.getPressure()
           * (system.getPhase(0).getComponent(i).getdfugdp() - system.getPhase(1).getComponent(i).getdfugdp());
-      Jac.set(i, numberOfComponents + 1, tempJ);
-      Jac.set(numberOfComponents, i, dyidlnk[i] - dxidlnk[i]);
-      Jac.set(numberOfComponents + 1, i, 0.0);
+      Jac[i][numberOfComponents + 1] = tempJ;
+      Jac[numberOfComponents][i] = dyidlnk[i] - dxidlnk[i];
+      Jac[numberOfComponents + 1][i] = 0.0;
     }
-    Jac.set(numberOfComponents + 1, speceq, 1.0);
+    Jac[numberOfComponents + 1][speceq] = 1.0;
   }
 
   /**
@@ -304,10 +314,10 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
-      u.set(i, 0, Math.log(system.getPhase(0).getComponent(i).getK()));
+      u[i] = Math.log(system.getPhase(0).getComponent(i).getK());
     }
-    u.set(numberOfComponents, 0, Math.log(system.getTemperature()));
-    u.set(numberOfComponents + 1, 0, Math.log(system.getPressure()));
+    u[numberOfComponents] = Math.log(system.getTemperature());
+    u[numberOfComponents + 1] = Math.log(system.getPressure());
   }
 
   /**
@@ -315,11 +325,11 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    */
   public void init() {
     for (int i = 0; i < numberOfComponents; i++) {
-      system.getPhase(0).getComponent(i).setK(Math.exp(u.get(i, 0)));
-      system.getPhase(1).getComponent(i).setK(Math.exp(u.get(i, 0)));
+      system.getPhase(0).getComponent(i).setK(Math.exp(u[i]));
+      system.getPhase(1).getComponent(i).setK(Math.exp(u[i]));
     }
-    system.setTemperature(Math.exp(u.get(numberOfComponents, 0)));
-    system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0)));
+    system.setTemperature(Math.exp(u[numberOfComponents]));
+    system.setPressure(Math.exp(u[numberOfComponents + 1]));
 
     calc_x_y();
     system.calc_x_y();
@@ -343,17 +353,19 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
       setu();
       speceq = numberOfComponents + 1;
-      specVal = u.get(speceq, 0);
+      specVal = u[speceq];
       setJac();
-      fvec.timesEquals(0.0);
-      fvec.set(speceq, 0, 1.0);
-      dxds = Jac.solve(fvec);
+      clearArray(fvec);
+      fvec[speceq] = 1.0;
+      dxds = ALGEBRA.solve(Jac, fvec);
       double dp = 0.1;
-      ds = dp / dxds.get(numberOfComponents + 1, 0);
+      ds = dp / dxds[numberOfComponents + 1];
 
-      Xgij.setMatrix(0, numberOfComponents + 1, np - 1, np - 1, u.copy());
-      u.plusEquals(dxds.times(ds));
-      specVal = u.get(speceq, 0);
+      for (int row = 0; row < neq; row++) {
+        Xgij[row][np - 1] = u[row];
+      }
+      u = ALGEBRA.add(u, ALGEBRA.scale(dxds, ds));
+      specVal = u[speceq];
     } else {
       // for the rest of the points use as spec eq the most sensitive variable
       int speceqOld = speceq;
@@ -362,17 +374,17 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         speceq = speceqOld;
       }
 
-      int intsign = Math.round(Math.round(dxds.get(speceq, 0) * 100000000));
+      int intsign = Math.round(Math.round(dxds[speceq] * 100000000));
       int sign1 = Integer.signum(intsign);
       ds = sign1 * ds;
 
       setfvec();
       setJac();
-      fvec.timesEquals(0.0);
-      fvec.set(numberOfComponents + 1, 0, 1.0);
+      clearArray(fvec);
+      fvec[numberOfComponents + 1] = 1.0;
 
       // calculate the dxds of the system
-      dxds = Jac.solve(fvec);
+      dxds = ALGEBRA.solve(Jac, fvec);
 
       // manipulate stepsize according to the number of iterations of the previous
       // point
@@ -397,26 +409,27 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
       intsign = Math.round(Math.round(ds * 100000000));
       int sign2 = Integer.signum(intsign);
 
-      if ((1 + dTmax / system.getTemperature()) < Math.exp(dxds.get(numberOfComponents, 0) * ds)) {
+      if ((1 + dTmax / system.getTemperature()) < Math.exp(dxds[numberOfComponents] * ds)) {
         // logger.info("too high dT");
-        ds = Math.log(1 + dTmax / system.getTemperature()) / dxds.get(numberOfComponents, 0);
-      } else if ((1 - dTmax / system.getTemperature()) > Math.exp(dxds.get(numberOfComponents, 0) * ds)) {
+        ds = Math.log(1 + dTmax / system.getTemperature()) / dxds[numberOfComponents];
+      } else if ((1 - dTmax / system.getTemperature()) > Math.exp(dxds[numberOfComponents] * ds)) {
         // logger.info("too low dT");
-        ds = Math.log(1 - dTmax / system.getTemperature()) / dxds.get(numberOfComponents, 0);
-      } else if ((1 + dPmax / system.getPressure()) < Math.exp(dxds.get(numberOfComponents + 1, 0) * ds)) {
+        ds = Math.log(1 - dTmax / system.getTemperature()) / dxds[numberOfComponents];
+      } else if ((1 + dPmax / system.getPressure()) < Math.exp(dxds[numberOfComponents + 1] * ds)) {
         // logger.info("too low dP");
-        ds = Math.log(1 + dPmax / system.getPressure()) / dxds.get(numberOfComponents + 1, 0);
-      } else if ((1 - dPmax / system.getPressure()) > Math.exp(dxds.get(numberOfComponents + 1, 0) * ds)) {
+        ds = Math.log(1 + dPmax / system.getPressure()) / dxds[numberOfComponents + 1];
+      } else if ((1 - dPmax / system.getPressure()) > Math.exp(dxds[numberOfComponents + 1] * ds)) {
         // logger.info("too low dP");
-        ds = Math.log(1 - dPmax / system.getPressure()) / dxds.get(numberOfComponents + 1, 0);
+        ds = Math.log(1 - dPmax / system.getPressure()) / dxds[numberOfComponents + 1];
       }
       ds = sign2 * Math.abs(ds);
 
       // store the values of the solution for the last 5 iterations
-      Xgij.setMatrix(0, numberOfComponents + 1, 0, 2, Xgij.getMatrix(0, numberOfComponents + 1, 1, 3));
-      Xgij.setMatrix(0, numberOfComponents + 1, 3, 3, u.copy());
-
-      s.setMatrix(0, 0, 0, 3, Xgij.getMatrix(speceq, speceq, 0, 3));
+      for (int row = 0; row < neq; row++) {
+        System.arraycopy(Xgij[row], 1, Xgij[row], 0, 3);
+        Xgij[row][3] = u[row];
+      }
+      System.arraycopy(Xgij[speceq], 0, s, 0, 4);
 
       // calculate next u
       calcInc2(np);
@@ -435,34 +448,34 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   public void calcInc2(int np) {
     // Here we calcualte the estimate of the next point from the polynomial.
     for (int i = 0; i < 4; i++) {
-      a.set(i, 0, 1.0);
-      a.set(i, 1, s.get(0, i));
-      a.set(i, 2, s.get(0, i) * s.get(0, i));
-      a.set(i, 3, a.get(i, 2) * s.get(0, i));
+      a[i][0] = 1.0;
+      a[i][1] = s[i];
+      a[i][2] = s[i] * s[i];
+      a[i][3] = a[i][2] * s[i];
     }
 
     // finds the estimate of the next point of the envelope that corresponds
     // to the most specified equation
     double sny;
-    sny = ds * dxds.get(speceq, 0) + s.get(0, 3);
+    sny = ds * dxds[speceq] + s[3];
     specVal = sny;
 
     // finds the estimate of the next point of the envelope that corresponds
     // to all the equations
     for (int j = 0; j < neq; j++) {
-      xg = Xgij.getMatrix(j, j, 0, 3);
+      xg = copyArray(Xgij[j]);
       try {
-        xcoef = a.solve(xg.transpose());
+        xcoef = ALGEBRA.solve(a, xg);
       } catch (Exception ex) {
         // Repeated specification values can make the cubic history singular. The local tangent remains a valid
         // predictor and does not borrow another variable's polynomial coefficients.
-        u = Xgij.getMatrix(0, neq - 1, 3, 3).plus(dxds.times(ds));
-        specVal = u.get(speceq, 0);
+        u = ALGEBRA.add(extractColumn(Xgij, 3), ALGEBRA.scale(dxds, ds));
+        specVal = u[speceq];
         return;
       }
-      u.set(j, 0, xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
+      u[j] = xcoef[0] + sny * (xcoef[1] + sny * (xcoef[2] + sny * xcoef[3]));
     }
-    xcoefOld = xcoef.copy();
+    xcoefOld = copyArray(xcoef);
   }
 
   /**
@@ -500,42 +513,42 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
   /** Refine on a private system so trial critical states cannot contaminate the accepted continuation point. */
   private void refineCriticalPoint() {
     // Save all state that will be modified during refinement
-    Matrix aa = a.copy();
-    Matrix ss = s.copy();
-    Matrix xx = Xgij.copy();
-    Matrix uu = u.copy();
+    double[][] aa = copyMatrixArray(a);
+    double[] ss = copyArray(s);
+    double[][] xx = copyMatrixArray(Xgij);
+    double[] uu = copyArray(u);
     int savedSpeceq = speceq;
     double savedSpecVal = specVal;
 
     // Step 1: Polynomial interpolation at s = 0 (K-values = 1)
     for (int i = 0; i < 4; i++) {
-      a.set(i, 0, 1.0);
-      a.set(i, 1, s.get(0, i));
-      a.set(i, 2, s.get(0, i) * s.get(0, i));
-      a.set(i, 3, a.get(i, 2) * s.get(0, i));
+      a[i][0] = 1.0;
+      a[i][1] = s[i];
+      a[i][2] = s[i] * s[i];
+      a[i][3] = a[i][2] * s[i];
     }
 
     double sny = 0.0;
     try {
       for (int j = 0; j < neq; j++) {
-        xg = Xgij.getMatrix(j, j, 0, 3);
+        xg = copyArray(Xgij[j]);
         try {
-          xcoef = a.solve(xg.transpose());
+          xcoef = ALGEBRA.solve(a, xg);
         } catch (Exception ex) {
-          xcoef = xcoefOld.copy();
+          xcoef = copyArray(xcoefOld);
         }
-        u.set(j, 0, xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
+        u[j] = xcoef[0] + sny * (xcoef[1] + sny * (xcoef[2] + sny * xcoef[3]));
       }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
 
     // Store polynomial estimate as baseline
-    double bestTC = Math.exp(u.get(numberOfComponents, 0));
-    double bestPC = Math.exp(u.get(numberOfComponents + 1, 0));
+    double bestTC = Math.exp(u[numberOfComponents]);
+    double bestPC = Math.exp(u[numberOfComponents + 1]);
     double bestSumLnK2 = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      bestSumLnK2 += u.get(i, 0) * u.get(i, 0);
+      bestSumLnK2 += u[i] * u[i];
     }
 
     // Step 2: Newton refinement on augmented system (multicomponent only).
@@ -548,32 +561,32 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         for (int critIter = 0; critIter < 10; critIter++) {
           // Update system state from current u
           for (int i = 0; i < numberOfComponents; i++) {
-            system.getPhase(0).getComponent(i).setK(Math.exp(u.get(i, 0)));
-            system.getPhase(1).getComponent(i).setK(Math.exp(u.get(i, 0)));
+            system.getPhase(0).getComponent(i).setK(Math.exp(u[i]));
+            system.getPhase(1).getComponent(i).setK(Math.exp(u[i]));
           }
-          system.setTemperature(Math.exp(u.get(numberOfComponents, 0)));
-          system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0)));
+          system.setTemperature(Math.exp(u[numberOfComponents]));
+          system.setPressure(Math.exp(u[numberOfComponents + 1]));
           calc_x_y();
           system.calc_x_y();
           system.init(3);
 
           // Build residual vector
           for (int i = 0; i < numberOfComponents; i++) {
-            fvec.set(i, 0, u.get(i, 0) + system.getPhase(0).getComponent(i).getLogFugacityCoefficient()
-                - system.getPhase(1).getComponent(i).getLogFugacityCoefficient());
+            fvec[i] = u[i] + system.getPhase(0).getComponent(i).getLogFugacityCoefficient()
+                - system.getPhase(1).getComponent(i).getLogFugacityCoefficient();
           }
-          fvec.set(numberOfComponents, 0, sumy - sumx);
+          fvec[numberOfComponents] = sumy - sumx;
 
           double sumLnK2 = 0.0;
           for (int i = 0; i < numberOfComponents; i++) {
-            sumLnK2 += u.get(i, 0) * u.get(i, 0);
+            sumLnK2 += u[i] * u[i];
           }
-          fvec.set(numberOfComponents + 1, 0, sumLnK2);
+          fvec[numberOfComponents + 1] = sumLnK2;
 
           // Check convergence
-          if (fvec.norm2() < 1e-10) {
-            bestTC = Math.exp(u.get(numberOfComponents, 0));
-            bestPC = Math.exp(u.get(numberOfComponents + 1, 0));
+          if (ALGEBRA.euclideanNorm(fvec) < 1e-10) {
+            bestTC = Math.exp(u[numberOfComponents]);
+            bestPC = Math.exp(u[numberOfComponents + 1]);
             break;
           }
 
@@ -581,22 +594,23 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
           setJac();
           // Override last row: d(sum(ln Ki)^2)/d(ln Kj) = 2*ln(Kj)
           for (int j = 0; j < numberOfComponents; j++) {
-            Jac.set(numberOfComponents + 1, j, 2.0 * u.get(j, 0));
+            Jac[numberOfComponents + 1][j] = 2.0 * u[j];
           }
-          Jac.set(numberOfComponents + 1, numberOfComponents, 0.0);
-          Jac.set(numberOfComponents + 1, numberOfComponents + 1, 0.0);
+          Jac[numberOfComponents + 1][numberOfComponents] = 0.0;
+          Jac[numberOfComponents + 1][numberOfComponents + 1] = 0.0;
 
           // Solve Newton step
-          Matrix dx = Jac.solve(fvec);
+          double[] dx = ALGEBRA.solve(Jac, fvec);
 
           // Guard against divergence: per-component check prevents large jumps
           // that could satisfy sum(ln Ki)^2 while moving T/P far from the true CP
-          if (Double.isNaN(dx.norm2())) {
+          double dxNorm = ALGEBRA.euclideanNorm(dx);
+          if (Double.isNaN(dxNorm)) {
             break;
           }
           boolean anyComponentTooLarge = false;
           for (int j = 0; j < neq; j++) {
-            if (Math.abs(dx.get(j, 0)) > 0.5) {
+            if (Math.abs(dx[j]) > 0.5) {
               anyComponentTooLarge = true;
               break;
             }
@@ -605,16 +619,16 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             break;
           }
 
-          u.minusEquals(dx);
+          u = ALGEBRA.subtract(u, dx);
 
           // Track best estimate: accept only if closer to criticality AND
           // T/P remain within 10% of the polynomial estimate (sanity check)
           double newSumLnK2 = 0.0;
           for (int i = 0; i < numberOfComponents; i++) {
-            newSumLnK2 += u.get(i, 0) * u.get(i, 0);
+            newSumLnK2 += u[i] * u[i];
           }
-          double newTC = Math.exp(u.get(numberOfComponents, 0));
-          double newPC = Math.exp(u.get(numberOfComponents + 1, 0));
+          double newTC = Math.exp(u[numberOfComponents]);
+          double newPC = Math.exp(u[numberOfComponents + 1]);
           double tDeviation = Math.abs(newTC - polyTC) / polyTC;
           double pDeviation = Math.abs(newPC - polyPC) / polyPC;
 
@@ -624,7 +638,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             bestSumLnK2 = newSumLnK2;
           }
 
-          if (dx.norm2() < 1e-10) {
+          if (dxNorm < 1e-10) {
             break;
           }
         }
@@ -637,10 +651,10 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     system.setPC(bestPC);
 
     // Restore all state
-    a = aa.copy();
-    s = ss.copy();
-    Xgij = xx.copy();
-    u = uu.copy();
+    a = copyMatrixArray(aa);
+    s = copyArray(ss);
+    Xgij = copyMatrixArray(xx);
+    u = copyArray(uu);
     speceq = savedSpeceq;
     specVal = savedSpecVal;
   }
@@ -675,17 +689,17 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
    * @throws IllegalStateException if no finite, nontrivial equilibrium point converges after 15 step reductions
    */
   public void solve(int np) {
-    Matrix previous = Xgij.getMatrix(0, neq - 1, Math.min(np - 1, 3), Math.min(np - 1, 3));
+    double[] previous = extractColumn(Xgij, Math.min(np - 1, 3));
     for (int retry = 0; retry <= 15; retry++) {
       if (retry > 0) {
         ds *= 0.5;
-        u = previous.plus(dxds.times(ds));
-        specVal = u.get(speceq, 0);
+        u = ALGEBRA.add(previous, ALGEBRA.scale(dxds, ds));
+        specVal = u[speceq];
         if (np >= 5) {
           calcInc2(np);
         }
       }
-      if (!Double.isFinite(specVal) || Math.abs(specVal - previous.get(speceq, 0)) < 1.0e-12) {
+      if (!Double.isFinite(specVal) || Math.abs(specVal - previous[speceq]) < 1.0e-12) {
         break;
       }
       iter = 0;
@@ -695,22 +709,22 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         for (int localIter = 0; localIter < 50; localIter++) {
           iter++;
           setJac();
-          Matrix correction = Jac.solve(fvec);
-          double correctionNorm = correction.norm2();
-          double residualNorm = fvec.norm2();
+          double[] correction = ALGEBRA.solve(Jac, fvec);
+          double correctionNorm = ALGEBRA.euclideanNorm(correction);
+          double residualNorm = ALGEBRA.euclideanNorm(fvec);
           if (!Double.isFinite(correctionNorm) || !Double.isFinite(residualNorm)) {
             break;
           }
           // Limit each logarithmic correction before retrying an overly ambitious continuation step.
-          double damping = Math.min(1.0, 1.0 / Math.max(1.0, correction.normInf()));
-          u.minusEquals(correction.times(damping));
+          double damping = Math.min(1.0, 1.0 / Math.max(1.0, infinityNorm(correction)));
+          u = ALGEBRA.subtract(u, ALGEBRA.scale(correction, damping));
           init();
           setfvec();
-          if (correctionNorm < 1.0e-5 && fvec.norm2() < 1.0e-8 && isPhysicalPoint() && (np == 1 || Math
-              .abs(system.getTemperature() - Math.exp(previous.get(numberOfComponents, 0))) <= 3.0 * dTmax
-              && Math.abs(system.getPressure() - Math.exp(previous.get(numberOfComponents + 1, 0))) <= 3.0 * dPmax)) {
+          if (correctionNorm < 1.0e-5 && ALGEBRA.euclideanNorm(fvec) < 1.0e-8 && isPhysicalPoint()
+              && (np == 1 || Math.abs(system.getTemperature() - Math.exp(previous[numberOfComponents])) <= 3.0 * dTmax
+                  && Math.abs(system.getPressure() - Math.exp(previous[numberOfComponents + 1])) <= 3.0 * dPmax)) {
             norm = correctionNorm;
-            uold = u.copy();
+            uold = copyArray(u);
             return;
           }
         }
@@ -718,7 +732,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         logger.debug("Envelope point {} retry {} failed: {}", np, retry, ex.getMessage());
       }
     }
-    u = previous.copy();
+    u = copyArray(previous);
     init();
     throw new IllegalStateException("Phase envelope point " + np + " did not converge after 15 step reductions");
   }
@@ -736,7 +750,7 @@ public class SysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     }
     double largestLogK = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      largestLogK = Math.max(largestLogK, Math.abs(u.get(i, 0)));
+      largestLogK = Math.max(largestLogK, Math.abs(u[i]));
     }
     if (numberOfComponents == 1) {
       double firstVolume = system.getPhase(0).getMolarVolume();

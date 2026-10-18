@@ -5,13 +5,11 @@ import Jama.QRDecomposition;
 import Jama.SingularValueDecomposition;
 
 /**
- * {@link LinearAlgebraOperations} backed by JAMA.
+ * {@link LinearAlgebraOperations} backed by JAMA for legacy numerical comparisons.
  *
  * <p>
- * JAMA is the backend most NeqSim code already uses directly, through {@code Jama.Matrix} in the flash solvers, the
- * chemical-equilibrium routines and the parameter-fitting classes. This implementation exists so that code can move to
- * the backend-independent interface without changing which library does the arithmetic, and so a benchmark can compare
- * JAMA against the other backends on identical input.
+ * This implementation is retained to compare legacy JAMA results against supported array-based backends. New
+ * calculations should use {@link EjmlLinearAlgebra} or another supported backend.
  * </p>
  *
  * <p>
@@ -26,7 +24,9 @@ import Jama.SingularValueDecomposition;
  *
  * @author Even Solbraa
  * @version $Id: $Id
+ * @deprecated Retained only as a legacy reference backend; use {@link EjmlLinearAlgebra} for new calculations.
  */
+@Deprecated
 public final class JamaLinearAlgebra implements LinearAlgebraOperations {
   /** Backend name reported by {@link #getName()}. */
   public static final String NAME = "JAMA";

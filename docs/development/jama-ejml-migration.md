@@ -29,23 +29,23 @@ evidence of backward compatibility or a performance improvement.
 | [#4378](https://github.com/equinor/neqsim/pull/4378) | Film coefficient arrays and legacy live views | Preserve orientation, correction order, live-view ownership and serialization handling. |
 | [#4366](https://github.com/equinor/neqsim/pull/4366) | Further EJML backend selection | Preserve the interface default bridge and defer the failing phase-envelope migration. |
 
-## Phase-envelope migration is deferred
+## Phase-envelope solver migration
 
-At PR head `f15971af6a540c9bc6c7e4e29e2324593c03301c`, the existing pure-ethane
-regression reports a cricondenbar of 59.0958176754016 bara, outside its unchanged
-physical acceptance range. Restoring only `SysNewtonRhapsonPhaseEnvelope` and
-its storage-dependent regression fixture from base
-`19788082b5f0eaf87f3d5c82c4b669eef190f71e` passes the phase-envelope robustness
-and UMR-PRU regression suites while the other backend selections remain EJML.
-This isolates the regression to that migration; it does not identify an EJML
-library defect or establish which continuation operation first diverges.
+The solver uses primitive arrays for its working state and EJML for linear
+solves. The continuation equations, step-size rules, damping, retry behavior
+and convergence criteria are preserved. The Jama-backed solver at
+`8b21efc25a222ee65c851def347d562f1e690292` calculated a pure-ethane
+cricondenbar of 50.97305572073197 bara; the EJML snapshot at
+`f15971af6a540c9bc6c7e4e29e2324593c03301c` calculated 50.71696025026392 bara.
+The difference is 0.25609547046805 bara (about 0.5%), and both values satisfy
+the unchanged 42–56 bara regression range.
 
-Keep the established JAMA phase-envelope implementation and its serialization
-identifier until a separate migration satisfies physical regression checks.
-Do not widen the ethane pressure bound or substitute the critical pressure for
-a failed calculated result. A future change needs continuation/residual
-diagnostics, pure and multicomponent cases, nearby operating points, and an
-explicit decision about old serialized solver instances.
+The previously recorded value of 59.0958176754016 bara could not be reproduced
+from that committed snapshot; its pure-ethane test passes. Do not use that
+unverified value as a migration result or change the acceptance range to fit it.
+The solver serialization UID changed from 1000 to 1001 because its serialized
+working-state fields changed from Jama matrices to primitive arrays; old
+serialized solver instances are not compatible.
 
 ## Remaining production dependencies
 
@@ -54,8 +54,7 @@ the review fixes. Comments mentioning JAMA are not removal blockers.
 
 | Class | Remaining dependency | Retirement requirement |
 | --- | --- | --- |
-| `SysNewtonRhapsonPhaseEnvelope` | Numerical matrices and serialized solver state | Qualify the replacement and preserve or explicitly migrate old state. |
-| `JamaLinearAlgebra` | Public reference backend | Retire under the API policy, or retain it in a separate optional compatibility artifact. |
+| `JamaLinearAlgebra` | Deprecated public reference backend | Retire after the deprecation period, or retain it in a separate optional compatibility artifact. |
 | `ChemicalReactionList` | Deprecated `calcReacRates(...)` result | Migrate callers to `calcReationRates(...)`; preserve the column-vector orientation during the support period. |
 | `FluidBoundaryInterface` | Deprecated Matrix API and default array bridge | Preserve implementations that only implement the legacy Matrix accessor. |
 | `FluidBoundary` | Deprecated live Matrix coefficient views | Preserve live mutation and replacement semantics until the API is retired. |
@@ -67,6 +66,12 @@ compute from arrays and materialize legacy Matrix views only when requested.
 The interface default array method remains a compatibility bridge for existing
 third-party implementations; making it abstract would break source compilation
 and can cause `AbstractMethodError` for previously compiled implementations.
+
+All remaining production Matrix signatures are compatibility surfaces marked
+`@Deprecated` and have array-based replacements. The JAMA backend is also
+deprecated and retained only for reference tests. Keep the JAMA dependency in
+the current release build files to support those signatures; remove it only
+after the announced support period and API-retirement review.
 
 Some earlier migrations also changed protected matrix fields and serialized
 working-state layouts in characterization, film/pipe flow and saturation
