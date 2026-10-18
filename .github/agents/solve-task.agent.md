@@ -255,6 +255,14 @@ Before starting, determine and state:
 3. Deliverable mode (answer-first, notebook-first, or report-first)
 4. Evidence level proportionate to that decision
 
+### Living Task Hand-off
+
+When the user wants the result kept current (new data, scheduled re-runs, goal
+tracking, "keep improving"), finish the first report, then hand the task folder to
+`@continuous-improvement` (`neqsim task-living <task>`). Pass the absolute task
+path. On Equinor data use `enterprise-continuous-improvement-agent`. Do not build
+monitoring or scheduling inside the one-shot task folder.
+
 ### Continuous Improvement Rule (always-on default)
 
 Improving the agents and skills you use — their cooperation — **and the NeqSim
