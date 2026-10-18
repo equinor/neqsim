@@ -70,6 +70,7 @@ Equipment-specific material readers use the bundled design tables, independently
 | Reader | Selection and failure behavior |
 |--------|--------------------------------|
 | `CompressorCasingDesignCalculator` | All grades in `CompressorCasingMaterials` are available; a missing grade throws before casing sizing. Room-temperature allowables still use the existing approximate temperature derating above 200 °C. |
+| `PipeMechanicalDesignCalculator` | Unknown, blank, or null material selections throw. Strength access, material-dependent sizing, cached wall/MAOP results, and reports remain unavailable until a supported grade is selected. The deprecated database loader validates the identity too. API/ISO aliases retain their canonical grade. |
 | `MaterialPipeDesignStandard` | The default is specification `API5L`, grade `A25`; `Carbon Steel Pipe` is a material name, not a specification number. A failed lookup invalidates the previous strength and throws. The no-argument constructor requires a lookup or an explicit strength before reading yield strength. |
 | `JointEfficiencyPlateStandard` | Joint type and radiographic inspection select `TechnicalRequirements_Mechanical`. Full, spot, and no radiography have distinct factors. An unknown selection invalidates the prior factor and throws. |
 | `MaterialStrengthCurve` | API 5L ambient strengths are loaded by grade with explicit built-in strengths when a supported grade has no database row. Unknown grades throw; they do not become Grade B. The fire-temperature reduction remains a generic screening curve. |
@@ -77,6 +78,15 @@ Equipment-specific material readers use the bundled design tables, independently
 API 5L names are case insensitive and accept surrounding whitespace. Equivalent metric labels
 such as `L360` normalize to `X52` in the pipe calculator and fire-strength reader. Grade alias
 normalization does not establish suitability for a particular material specification or service.
+
+`TopsidePipingMechanicalDesignCalculator` additionally accepts the ten named materials in its
+existing allowable-stress table (including `A106-B` and `A312-TP316L`). A rejected material
+also blocks topside allowable-stress calculations and stress-check results. Select a supported
+grade before retrying; catching the selection exception alone does not restore a usable result.
+This guard does not replace the legacy topside sizing formulas or reconcile their inherited
+SMYS-based wall calculation with the separate allowable-stress table. Those formulas and the
+existing fallback for supported API grades in topside allowable-stress screening are unchanged;
+they are not qualified by the lookup correction.
 
 The historical company identifiers `Statoil`, `Statoil_TR1414`, and `StatoilTR` all select the
 bundled `StatoilTR` process rows. They do not rename `Equinor` or another company's requirement
@@ -91,8 +101,7 @@ The separator, compressor, and heat-exchanger `loadProcessDesignParameters()` me
 explicit operations. Call them after choosing the company and before applying project overrides;
 a later loader call can replace matching fields. Automatic activation needs per-property override
 tracking and is not supplied by the lookup-key corrections. Legacy fallback behavior for an
-unrecognized general pipe-calculator material or an unconfigured company remains separate from
-the stricter material readers described above.
+unconfigured company remains separate from the stricter material readers described above.
 
 ## CSV Data Source
 

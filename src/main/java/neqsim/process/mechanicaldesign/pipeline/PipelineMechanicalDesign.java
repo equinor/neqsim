@@ -146,7 +146,7 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
    */
   public PipeMechanicalDesignCalculator getCalculator() {
     if (calculator == null) {
-      calculator = new PipeMechanicalDesignCalculator();
+      calculator = createCalculator();
       // Initialize from current settings
       calculator.setOuterDiameter(outerDiameter > 0 ? outerDiameter : innerDiameter + 0.02);
       calculator.setDesignPressure(getMaxOperationPressure() * 0.1); // bar to MPa
@@ -155,6 +155,15 @@ public class PipelineMechanicalDesign extends MechanicalDesign {
       calculator.setLocationClass(locationClass);
     }
     return calculator;
+  }
+
+  /**
+   * Create the calculator used by the inherited pipeline design workflow.
+   *
+   * @return calculator supporting this equipment's material identities
+   */
+  protected PipeMechanicalDesignCalculator createCalculator() {
+    return new PipeMechanicalDesignCalculator();
   }
 
   /**

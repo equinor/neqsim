@@ -111,6 +111,12 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
     dataSource = new TopsidePipingMechanicalDesignDataSource();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  protected PipeMechanicalDesignCalculator createCalculator() {
+    return new TopsidePipingMechanicalDesignCalculator();
+  }
+
   /**
    * Initialize parameters from the connected equipment.
    */
