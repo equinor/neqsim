@@ -354,6 +354,7 @@ public class MaterialLayer implements java.io.Serializable {
    * <p>
    * R = ln(r_outer/r_inner) / (2π * k * L)
    * </p>
+   *
    * <p>
    * Per unit length: R' = ln(r_outer/r_inner) / (2π * k) [K·m/W]
    * </p>
