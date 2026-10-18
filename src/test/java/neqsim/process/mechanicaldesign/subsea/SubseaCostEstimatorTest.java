@@ -134,7 +134,7 @@ public class SubseaCostEstimatorTest {
 
   @Test
   public void testRegionalCostVariation() {
-    // Create fresh estimators for each region - note they calculate rates at construction
+    // Create fresh estimators for identical equipment in each region.
     SubseaCostEstimator norwayEstimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
     norwayEstimator.calculatePLETCost(25.0, 12.0, 350.0, false, false);
     double norwayTotal = norwayEstimator.getTotalCost();
@@ -146,7 +146,7 @@ public class SubseaCostEstimatorTest {
     // Both should have valid costs
     assertTrue(norwayTotal > 0, "Norway total should be positive");
     assertTrue(gomTotal > 0, "GOM total should be positive");
-    // Region factor affects labor rates, not base equipment cost, so difference is in labor portion
+    assertEquals(gomTotal * 1.35, norwayTotal, 1e-7, "Norway uses the uniform regional factor");
   }
 
   @Test

@@ -142,9 +142,9 @@ public class SubseaProductionSystemTest {
     double expectedTotal = result.getSubseaTreeCostMusd() + result.getManifoldCostMusd() + result.getPipelineCostMusd()
         + result.getUmbilicalCostMusd() + result.getJumperAndPletCostMusd() + result.getRiserCostMusd();
 
-    assertEquals(expectedTotal, result.getTotalSubseaCapexMusd(), 5.0);
+    assertEquals(expectedTotal, result.getTotalSubseaCapexMusd(), 1.0e-8);
     assertEquals(result.getTotalSubseaCapexMusd() + result.getWellCostMusd() + result.getReservoirCostMusd(),
-        result.getTotalDevelopmentCapexMusd(), 5.0);
+        result.getTotalDevelopmentCapexMusd(), 1.0e-8);
 
     // Verify reasonable cost ranges (4 wells, 25km tieback)
     assertTrue(result.getSubseaTreeCostMusd() > 100.0); // depth-adjusted wet trees

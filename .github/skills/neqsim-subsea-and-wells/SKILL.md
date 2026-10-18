@@ -201,13 +201,21 @@ the result against `getCostBreakdown()` / `getLineItems()`, where the reported
 
 ### Regional Cost Factors
 
+`SubseaCostEstimator` applies these factors once to all reported monetary costs
+and BOM rates relative to GOM. Region changes revalue an existing estimate and
+preserve quantities, vessel days and manhours; repeated setters do not compound.
+The default constructor selects NORWAY. The factors and baseline labor/vessel
+rates are Java screening assumptions; `SubseaLaborRates.csv` and
+`SubseaVesselRates.csv` are reference tables, not consumed data sources.
+
+
 | Region | Factor | Basis |
 |--------|--------|-------|
-| Norway (NCS) | 1.0 | Reference |
-| UK (UKCS) | 0.85-0.95 | Lower labor cost |
-| Gulf of Mexico | 0.80-0.90 | Established supply chain |
-| Brazil (pre-salt) | 1.10-1.30 | Deep water, local content |
-| West Africa | 1.05-1.20 | Logistics premium |
+| Norway (NCS) | 1.35 | Uniform screening cost factor |
+| UK (UKCS) | 1.25 | Uniform screening cost factor |
+| Gulf of Mexico | 1.00 | Reference |
+| Brazil (pre-salt) | 0.85 | Uniform screening cost factor |
+| West Africa | 1.10 | Uniform screening cost factor |
 
 ---
 
@@ -693,6 +701,7 @@ For a deep HPHT gas/condensate discovery the pressure rating, not the hydraulics
 
 | Pitfall | Impact | Prevention |
 |---------|--------|------------|
+| Inferring F22 forging strength without its class, or silently falling back for an unknown alloy | Underestimated tree/hub/jumper wall | Use the table-backed material setters; generic F22 assumes Class 3 (310 MPa), F22-Class1 is 205 MPa; cladding has no structural credit. See `docs/process/SURF_SUBSEA_EQUIPMENT.md` |
 | Ignoring hydrate sub-cooling margin | Hydrate blockage | Design for 3-6°C subcooling below hydrate T |
 | Undersized flowline (low rate sensitivity) | Cannot achieve design rate | Size for peak + 20% surge capacity |
 | Missing umbilical in cost estimate | 10-15% CAPEX underestimate | Always include umbilical with routing factor 1.1× |

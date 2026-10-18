@@ -447,9 +447,45 @@ The `SubseaCostEstimator` calculates:
 - **Engineering Costs** - Design engineering and project management
 - **Contingency** - Risk-based contingency allowances
 
+The tree body, PLET hub, and rigid-jumper screening calculations read yield strength
+from `MaterialProperties_Subsea.csv`, rather than keeping separate copies in Java.
+The legacy `F22` and `F22-Inconel625` hub names assume **F22 Class 3** (310 MPa yield,
+515 MPa tensile); `F22-Class1` explicitly selects 205/415 MPa. Cladding receives no
+structural strength credit. `316L` uses 170/485 MPa and `316` uses 205/515 MPa;
+Duplex-2205 and SuperDuplex-2507 remain distinct table grades. Unknown grades raise
+an exception instead of silently using X65. These are room-temperature screening
+properties; the material specification, product form, heat treatment and design-code
+allowables still require project-specific verification.
+
+PLEM headers use the bundled `TechnicalRequirements_Subsea.csv` PLEM floor of
+**19.05 mm**, distinct from the 12.7 mm PLET hub floor. This is the bundled
+Equinor screening requirement, not a universal minimum prescribed by DNV.
+`calculatePLEMCost` reads the PLEM procurement, material, fabrication, engineering,
+project-management and contingency columns of `SubseaCostEstimation.csv`. Base
+procurement is USD 800,000 for up to two slots, USD 1,500,000 for three to four,
+and USD 2,500,000 for five or more. Each installed branch isolation valve adds
+`branchSizeInches * 25000` USD; slot count no longer implies a pigging facility.
+Installation still uses the common weight/depth vessel-duration model rather than
+the CSV installation allowance. Header sizing, foundation screening, and structural
+weight remain simplified calculations; the weight model does not yet include a
+detailed wall-dependent header material takeoff. The field-level `SURFCostEstimator`
+also uses the PLEM method. Its common per-PLEM assumptions default to four slots and
+8 in branch valves, configurable with `setPlemSlots` and `setPlemBranchSizeInches`;
+header diameter no longer selects the procurement band. `SubseaProductionSystem`
+includes PLEMs in its manifold cost category so the component breakdown reconciles
+exactly to the SURF total.
+
 ### Regional Cost Factors
 
-Costs are adjusted based on installation region:
+All reported monetary costs and rates use one uniform regional factor relative to
+the Gulf of Mexico baseline. This includes equipment, fabrication, installation,
+engineering, project management, contingency, and BOM unit costs. Vessel days,
+ROV hours, quantities and estimated manhours are unchanged. A region change revalues
+an existing estimate immediately, and repeated setters do not compound the factor.
+The default constructor is identical to explicit `NORWAY` selection.
+
+This is a coarse screening assumption; the factors are implemented in Java and are
+not derived from the category-specific `SubseaLaborRates.csv` table:
 
 | Region | Factor | Description |
 |--------|--------|-------------|
@@ -502,9 +538,13 @@ System.out.println("Total Manhours: " + totalManhours);
 The `SubseaCostEstimator` provides methods for each equipment type:
 
 ```java
-// PLET/PLEM cost
+// PLET cost
 estimator.calculatePLETCost(dryWeightTonnes, hubSizeInches, waterDepthM,
     hasIsolationValve, hasPiggingFacility);
+
+// PLEM cost: procurement band is selected by branch-slot count
+estimator.calculatePLEMCost(dryWeightTonnes, numberOfSlots, branchSizeInches,
+    waterDepthM, hasBranchIsolationValves);
 
 // Subsea Tree cost
 estimator.calculateTreeCost(pressureRatingPsi, boreSizeInches, waterDepthM,
@@ -673,22 +713,25 @@ for (int i = 0; i < regions.length; i++) {
 
 Example output:
 ```
-NORWAY: $3,450,000
-UK: $3,210,000
-GOM: $2,570,000
-BRAZIL: $2,180,000
-WEST_AFRICA: $2,820,000
+NORWAY: $4,568,231
+UK: $4,229,844
+GOM: $3,383,875
+BRAZIL: $2,876,294
+WEST_AFRICA: $3,722,263
 ```
 
 ### Cost Data Sources
 
-Cost estimation uses data from CSV tables in `src/main/resources/designdata/`:
+`SubseaCostEstimator` currently combines hardcoded screening correlations with the
+following bundled reference data in `src/main/resources/designdata/`. These are
+engineering cost estimates, not current vendor quotations. Table availability does
+not imply every estimator reads it:
 
 | File | Description |
 |------|-------------|
-| `SubseaCostEstimation.csv` | Base equipment costs, material costs per tonne |
-| `SubseaLaborRates.csv` | Labor categories with hourly rates by region |
-| `SubseaVesselRates.csv` | Vessel day rates, mob/demob costs |
+| `SubseaCostEstimation.csv` | PLEM method reads procurement/material/fabrication and percentage columns; other methods retain Java correlations; CSV installation allowances are not consumed |
+| `SubseaLaborRates.csv` | Reference only; not consumed by this estimator. Uniform regional factors and baseline hourly rates are implemented in Java |
+| `SubseaVesselRates.csv` | Reference only; not consumed by this estimator. Vessel selection, rates and durations are Java screening correlations |
 
 ### JSON Cost Output
 
