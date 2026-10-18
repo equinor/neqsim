@@ -496,6 +496,24 @@ outlet pressure and temperature. A pressure-target speed search that returns a f
 forward state but misses its target therefore remains infeasible. Rejected results clear
 the edge's previous thermal state so later network and shared-power checks cannot reuse it.
 
+Curve-backed pumps apply the same acceptance boundary on every positive-flow evaluation:
+the registered `Pump` and enabled chart must still be present. A missing model (including
+an unbound replayed curve definition) cannot create a replacement fixed-pressure pump.
+All forward pump modes require `solved()` plus finite non-negative shaft power and positive
+finite outlet pressure and temperature. Invalid results and exceptions report `INFEASIBLE`
+and `Pump-INFEASIBLE`, invalidate power, head, NPSH and operating-limit residuals, and clear
+the previously accepted inlet/outlet thermal state. Configured limits and map identity are
+retained so a corrected input can recover through the normal network solve. The explicit
+reverse-flow/check-valve and stopped-edge policies remain unchanged.
+
+`MappedPumpAcceptanceTest` exercises accepted, rejected and recovered solves on the same
+graph for disabled charts, missing models, unsolved finite results, invalid power/outlet
+values and thrown calculations. Recovered demand is 1 kg/s with 1 kW from a controlled
+test double; these values test the acceptance contract, not a physical pump benchmark.
+`NetworkPumpTest` supplies adjacent real-model curve and fixed-pressure regressions.
+This guard does not prohibit chart extrapolation or establish OEM operating regions,
+NPSH qualification, injectivity validity or a complete pump constraint envelope.
+
 `LoopedPipeNetwork.getPower(...)` aggregates the solved shaft power of its compressor and
 pump edges. `FieldWellNetworkProcessUnit` exposes that same demand, and normal
 `ProcessSystem` / `ProcessModel` power aggregation includes both standalone canonical
