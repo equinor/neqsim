@@ -1850,7 +1850,16 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       return pumpRatedPowerKW;
     }
 
-    /** @param minimumFlowKgS minimum stable mass flow in kg/s */
+    /**
+     * Set the stable operating-flow limit used by the pump violation residual.
+     *
+     * <p>
+     * This is not the backing pump's numerical bypass threshold (kg/hr). A violation does not change the calculated
+     * pressure rise or shaft work; callers must include the operating limit in their acceptance constraints.
+     * </p>
+     *
+     * @param minimumFlowKgS minimum stable mass flow in kg/s
+     */
     public void setPumpMinimumFlowKgS(double minimumFlowKgS) {
       pumpMinimumFlowKgS = minimumFlowKgS;
     }
@@ -5722,7 +5731,8 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
         pump.setInletStream(inlet);
       }
       pump.setSpeed(pipe.getPumpSpeed());
-      pump.setMinimumFlow(pipe.getPumpMinimumFlowKgS());
+      // Preserve the model's numerical bypass threshold (kg/hr). The edge's stable-flow
+      // limit (kg/s) is an operating constraint, not a command to bypass pump physics.
       pump.setIsentropicEfficiency(pipe.getPumpEfficiency());
       pump.setCheckNPSH(true);
 
@@ -5737,9 +5747,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
       double outletPressure = outletFluid.getPressure("Pa");
       double outletTemperature = outletFluid.getTemperature();
       double power = pump.getPower("kW");
-      if (!pump.solved() || !Double.isFinite(power) || power < 0.0 || !Double.isFinite(outletPressure)
-          || outletPressure <= 0.0 || !Double.isFinite(outletTemperature) || outletTemperature <= 0.0) {
-        throw new IllegalStateException("Pump returned an unsolved or non-finite operating point");
+      if (!pump.isActive() || !pump.solved() || !Double.isFinite(power) || power < 0.0
+          || !Double.isFinite(outletPressure) || outletPressure <= 0.0 || !Double.isFinite(outletTemperature)
+          || outletTemperature <= 0.0) {
+        throw new IllegalStateException("Pump returned a bypassed, unsolved or non-finite operating point");
       }
       double pressureRise = outletPressure - pumpFluid.getPressure("Pa");
       double density = inlet.getFluid().getDensity("kg/m3");

@@ -44,6 +44,14 @@ NPSHA/NPSHR data are available. Reverse-flow behavior is explicit:
 `CHECK_VALVE` blocks a nonphysical pressure rise; `BYPASS` permits passive
 reverse flow without pump work.
 
+The minimum-flow setting above is a stable operating limit in kg/s, not a pump
+shutdown or numerical bypass command. A converged network can still violate it;
+inspect the residual and register the appropriate flow constraint for optimization.
+The backing `Pump` separately owns its numerical bypass threshold in kg/hr. The
+network preserves that threshold and rejects bypassed positive-flow results instead
+of accepting zero-work pressure rise. See the [SURF integration guide](../fielddevelopment/SURF_NETWORK_INTEGRATION.md)
+for the tested limit/bypass separation and qualification boundary.
+
 Curve inputs must document flow unit, head unit, reference density, speed, and
 efficiency basis. A chart-backed pump must be reattached after JSON restoration.
 

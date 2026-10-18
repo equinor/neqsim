@@ -102,6 +102,13 @@ positive-flow evaluation; a missing runtime binding must not create a fixed-pres
 replacement. Invalid pump results must clear head, NPSH, limit residuals and thermal state
 as well as power. Exercise rejection and recovery on the same graph. This acceptance
 guard does not qualify extrapolated curves or replace operating-region constraints.
+Keep `NetworkPipe.setPumpMinimumFlowKgS` (stable operating limit in kg/s) separate
+from the backing `Pump.setMinimumFlow` (numerical bypass threshold in kg/hr). Never
+copy or convert the stable limit into the bypass setting. Preserve the configured
+bypass; a bypassed positive-flow pump must not contribute accepted zero-power pumping
+evidence. Converged flow below the stable limit is still an operating violation:
+inspect its residual and use the existing `NetworkConstraints.edgeFlow` with explicit
+kg/hr bounds in an optimization study. A chart status alone does not check that limit.
 For repeated quasi-steady field-to-host studies, reuse the live model and evaluator but
 sample constraints again after each reservoir boundary or host-limit update. The ten-well
 `FieldToFacilityOptimizationAcceptanceTest` exercises moving separator, scrubber and
