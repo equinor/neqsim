@@ -115,6 +115,22 @@ StreamInterface condensate = scrubber.getLiquidOutStream();
 
 The `ThreePhaseSeparator` extends `Separator` and separates a multiphase feed into three outlet streams: gas, oil, and water (aqueous). During `run()`, it temporarily enables the thermodynamic multiphase check for its internal flash and restores the cloned fluid setting afterward. Calling `setMultiPhaseCheck(true)` on the feed is therefore not a separator prerequisite; use it when the upstream feed itself must be initialized or inspected as multiphase. Distinct oil and aqueous phases still depend on the selected thermodynamic model, composition, temperature, and pressure.
 
+Absent product phases use a negligible-inventory fluid template. Its component
+amounts are scaled from the conserved feed inventory, including inactive physical
+phase slots; reinitialization must never restore the original feed into an absent
+gas, oil, or water outlet. This matters after phase disappearance and repeated
+calculations on water-rich placeholder streams such as a 1 kg/hr feed. Check total
+mass and each component's molar flow across all outlets when diagnosing such cases.
+
+The public PR78 regression `WaterRichSmallFeedTest` checks the mixer/heater/separator
+sequence at 12.53 barg and 20.75 °C against a fresh TP flash at several feed sizes.
+`SystemThermoEmptySystemCloneTest` checks the non-identity phase mapping left by
+gas removal. These are numerical regression fluids; they do not establish a PVT
+match for a proprietary E300 reservoir fluid. Issue
+[#4427](https://github.com/equinor/neqsim/issues/4427) was reported with version
+3.18.0, so reproduce against the current version before attributing a remaining
+heater phase-selection difference to the same defect.
+
 ### Creating a Three-Phase Separator
 
 ```java
