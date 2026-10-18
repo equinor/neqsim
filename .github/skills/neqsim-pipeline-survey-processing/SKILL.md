@@ -1,5 +1,6 @@
 ---
 name: neqsim-pipeline-survey-processing
+calculation_basis: "hybrid"
 version: "0.1.0"
 description: "Educational as-built pipeline survey processing: raw KP/depth/seabed/coordinate rows to a cleaned, sign-normalised pipeline profile with flagged points, free-span and cover candidates, repeat-survey comparison, processing log and a NeqSim-ready elevation profile. USE WHEN: a task needs a screening-level pipeline profile from survey or inspection data before DNV-RP-F105, F109, F114 or NeqSim thermal-hydraulic analysis."
 last_verified: "2026-08-10"
