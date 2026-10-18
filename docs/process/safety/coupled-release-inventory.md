@@ -227,6 +227,23 @@ models must be deterministic and must not mutate themselves or the process durin
 
 ## Validation and applicability
 
+`ReleaseInventoryCpaIsolationTest` exercises ordinary SRK-CPA methane/water inventories
+(90/10 mol%, mixing rule 10, 60 bara, 298.15 and 308.15 K, 0.02 m3) after the phase-workspace
+clone repairs. A test-only prescribed 0.001 kg/s flux isolates inventory bookkeeping from
+physical discharge-rate prediction. Gas and aqueous withdrawal must retain named-component,
+internal-energy/outgoing-enthalpy and fixed-volume closure. The checks compare caller state,
+phase compositions and fugacity derivatives before and after successful withdrawal, an exported
+copy's reflash, and rejection after a completed VU substep. A retry must reproduce a fresh control.
+
+Native sessions exercise both process containers and emit four additional schema fixtures.
+The retained `target/source-term-benchmarks/cpa-inventory-refinement.csv` records three substep
+sizes (0.4, 0.2 and 0.1 s) over 2 s for both withdrawal phases at both temperatures.
+This is numerical/conservation evidence for persistent gas/aqueous phases, not experimental
+CPA or release-rate qualification. It does not resolve the remove/add physical-slot lifecycle
+tracked in [#4310](https://github.com/equinor/neqsim/issues/4310), prove phase disappearance or
+reappearance, or implement finite-rate inventory heat/mass transfer. Those boundaries remain
+required before broader inventory claims in [#3860](https://github.com/equinor/neqsim/issues/3860).
+
 `ReleaseInventoryTest` checks multicomponent gas depletion, phase-selected gas-over-liquid and
 liquid withdrawal using the homogeneous-equilibrium release model. A controlled deterministic
 release model isolates explicit gas-to-liquid exhaustion transition, conservation and timestep/

@@ -6,7 +6,7 @@ description: Delivered capabilities, evidence boundaries and remaining acceptanc
 # Source-term platform implementation status
 
 Tracking issue: [#3860](https://github.com/equinor/neqsim/issues/3860).
-Implementation scope as of 2026-09-27; this does not confer qualification or replace domain review.
+Implementation scope and consumer validation as of 2026-10-18; this does not confer qualification or replace domain review.
 
 ## Delivered foundations
 
@@ -71,6 +71,11 @@ The current implementation includes:
   timestep-refinement evidence and schema-validated frames from both process containers. The
   compatibility API remains single-gas; an explicit phase-selected API supports equilibrium
   gas, oil, generic-liquid and aqueous withdrawal without inferring entrainment or phase fallback.
+- CPA inventory consumer regressions add gas/aqueous withdrawal, caller/export isolation,
+  rejected-substep rollback and replay, nearby-temperature timestep refinement, and both native
+  process-container paths. A prescribed test flux isolates bookkeeping; it does not qualify
+  discharge rates or phase disappearance/reappearance. The physical-slot lifecycle in
+  [#4310](https://github.com/equinor/neqsim/issues/4310) remains an explicit dependency.
 - Analytical gas limits, dense-fluid conservation and flashing, multicomponent, lifecycle
   and contract regressions in focused CI.
 - Guarded same-EOS continuation for the previously unresolved propane/butane entropy root,
