@@ -2423,32 +2423,6 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Seeds a hydrocarbon vapour phase when a water-rich feed has converged to a liquid-only split.
-   *
-   * <p>
-   * This is the vapour-side counterpart of {@link #seedHydrocarbonLiquidFromFeed()}. When the ordinary two-phase flash
-   * has already converged to OIL + AQUEOUS, the multiphase stability analysis starts from that endpoint and builds its
-   * Wilson trial compositions from the overall feed. For a water-dominated feed the hydrocarbons are a small minority
-   * of that feed, the vapour-like stationary point is missed, and the flash returns OIL + AQUEOUS even though the
-   * water-free hydrocarbon sub-mixture is unambiguously two-phase at the flash temperature and pressure. The reported
-   * endpoint then has a higher extensive Gibbs energy than the correct GAS + OIL + AQUEOUS split, and the gas phase
-   * disappears from an otherwise ordinary wellstream once the water cut becomes high enough.
-   * </p>
-   *
-   * <p>
-   * The trigger is a Rachford-Rice bracketing screen evaluated on the water-free, ion-free sub-composition instead of
-   * on the overall feed: {@code sum(K_i z_i) > 1} together with {@code sum(z_i / K_i) > 1} places the volatile
-   * sub-mixture between its bubble and dew point, so a vapour phase must coexist with the aqueous phase. Applying the
-   * same screen to the overall feed fails, because dilution by water drives {@code sum(K_i z_i)} below unity. The
-   * screen is pure arithmetic on critical constants and adds no equation-of-state evaluation. When it fires, a
-   * vapour-like trial phase is seeded from the Wilson K-values and the subsequent phase-fraction solve decides its
-   * fate: a spurious seed collapses below {@link #phaseFractionMinimumLimit} and is removed by the existing cleanup,
-   * exactly as for the liquid seeder.
-   * </p>
-   *
-   * @return {@code true} when a gas phase was seeded, otherwise {@code false}
-   */
-  /**
    * Screens whether a converged OIL + AQUEOUS endpoint is missing a hydrocarbon vapour phase.
    *
    * <p>

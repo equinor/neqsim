@@ -179,7 +179,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     axialDispersionModel = model;
   }
 
-  /** @return selected non-null physical axial-dispersion model */
+  /**
+   * Get the currently selected non-null physical axial-dispersion model.
+   *
+   * @return selected non-null physical axial-dispersion model
+   */
   public AxialDispersionModel getAxialDispersionModel() {
     return axialDispersionModel;
   }

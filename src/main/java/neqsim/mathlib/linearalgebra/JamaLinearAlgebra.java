@@ -146,16 +146,6 @@ public final class JamaLinearAlgebra implements LinearAlgebraOperations {
 
   /** {@inheritDoc} */
   @Override
-  public double[][] subtract(double[][] matrixA, double[][] matrixB) {
-    LinearAlgebraValidation.requireMatrix(matrixA, "Left operand");
-    LinearAlgebraValidation.requireMatrix(matrixB, "Right operand");
-    LinearAlgebraValidation.requireSameShape(matrixA, matrixB, "Subtraction");
-
-    return toMatrix(matrixA).minus(toMatrix(matrixB)).getArray();
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double[] add(double[] vectorA, double[] vectorB) {
     LinearAlgebraValidation.requireVector(vectorA, "Left operand");
     LinearAlgebraValidation.requireVector(vectorB, "Right operand");
@@ -163,6 +153,16 @@ public final class JamaLinearAlgebra implements LinearAlgebraOperations {
         "Operands of an addition must have the same length");
 
     return toColumn(vectorA).plus(toColumn(vectorB)).getColumnPackedCopy();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] subtract(double[][] matrixA, double[][] matrixB) {
+    LinearAlgebraValidation.requireMatrix(matrixA, "Left operand");
+    LinearAlgebraValidation.requireMatrix(matrixB, "Right operand");
+    LinearAlgebraValidation.requireSameShape(matrixA, matrixB, "Subtraction");
+
+    return toMatrix(matrixA).minus(toMatrix(matrixB)).getArray();
   }
 
   /** {@inheritDoc} */
