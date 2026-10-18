@@ -75,3 +75,30 @@ signatures or serialized state. Follow the
 [JAMA to EJML migration and dependency retirement guide](jama-ejml-migration.md)
 before removing the dependency. Its release gates apply independently to each
 deprecated public contract.
+
+## Legacy Aspen IP.21 historian integration
+
+Since NeqSim 3.25.0, `AspenIP21Database`, `OnlineSignal`, and the measurement-device
+methods that expose or configure the legacy signal are deprecated (issue
+[#4186](https://github.com/equinor/neqsim/issues/4186)). Constructors, method
+signatures, serialized field layouts and `serialVersionUID` values are retained.
+Existing connection attempts and read/failure behavior are unchanged. Deprecation
+does not certify the legacy JDBC/ODBC path on current JVMs or provide a new
+historian connector.
+
+Move historian acquisition, authentication, tag mapping, sample quality and
+freshness checks into the application integration layer using a supported client
+for the chosen historian. For NeqSim condition analysis, pass the checked numeric
+sample and engineering unit to
+`MeasurementDeviceBaseClass.setOnlineMeasurementValue(double, String)` and read it
+with `getOnlineMeasurementValue()`. This input does not populate `OnlineSignal`,
+implement its timestamp/connection behavior, or change the legacy `getOnlineValue()`
+method. Applications using that method must migrate their acquisition/read path
+explicitly. Offline calculated measurements remain available through
+`getMeasuredValue(...)`.
+
+No replacement JDBC query API or automatic sample adapter is introduced. Retain
+existing integrations during migration and qualify the application's sample
+mapping separately. Deleting these public types or methods requires the release
+period and breaking-change process above; this deprecation does not schedule
+removal in a patch release.

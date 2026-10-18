@@ -15,6 +15,18 @@ Measurement devices in NeqSim fall into several categories:
 - **Performance Monitors** - Vibration analysis, compressor monitoring
 - **Quality Analysers** - Hydrocarbon dew point, water content, molar mass
 
+## Historian measurements and legacy online signals
+
+Since 3.25.0, `AspenIP21Database`, `OnlineSignal` and the legacy signal access/configuration
+methods are deprecated. Existing calls remain available. Retrieve historian samples with an
+application-managed client, validate timestamps, quality and units externally, then supply
+condition-analysis input through `setOnlineMeasurementValue(double, String)` on
+`MeasurementDeviceBaseClass`. Read that supplied value with `getOnlineMeasurementValue()`.
+This input is separate from the deprecated `getOnlineValue()`/`OnlineSignal` read path and
+does not provide automatic historian connectivity or timestamp/quality handling.
+See the [API lifecycle and migration guidance](../../development/api-lifecycle.md#legacy-aspen-ip21-historian-integration)
+for the compatibility and removal policy.
+
 ## Fluid Composition Analysers
 
 ### CombustionEmissionsCalculator

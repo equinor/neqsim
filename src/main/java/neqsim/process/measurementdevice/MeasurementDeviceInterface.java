@@ -40,7 +40,12 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * getOnlineSignal.
    *
    * @return a {@link neqsim.process.measurementdevice.online.OnlineSignal} object
+   * @deprecated Since 3.25.0. Acquire historian samples in the application integration layer. Implementations based on
+   * {@link MeasurementDeviceBaseClass} can receive condition-analysis values through
+   * {@link MeasurementDeviceBaseClass#setOnlineMeasurementValue(double, String)}. That input is separate from the
+   * legacy online-signal getter.
    */
+  @Deprecated
   public OnlineSignal getOnlineSignal();
 
   /**
@@ -110,7 +115,12 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * getOnlineValue.
    *
    * @return a double
+   * @deprecated Since 3.25.0. Acquire historian samples in the application integration layer. Implementations based on
+   * {@link MeasurementDeviceBaseClass} can receive condition-analysis values through
+   * {@link MeasurementDeviceBaseClass#setOnlineMeasurementValue(double, String)}. That input is separate from the
+   * legacy online-signal getter.
    */
+  @Deprecated
   public default double getOnlineValue() {
     return getOnlineSignal().getValue();
   }
@@ -119,7 +129,12 @@ public interface MeasurementDeviceInterface extends ProcessElementInterface {
    * isOnlineSignal.
    *
    * @return a boolean
+   * @deprecated Since 3.25.0. Acquire historian samples in the application integration layer. Implementations based on
+   * {@link MeasurementDeviceBaseClass} can receive condition-analysis values through
+   * {@link MeasurementDeviceBaseClass#setOnlineMeasurementValue(double, String)}. That input is separate from the
+   * legacy online-signal getter.
    */
+  @Deprecated
   public boolean isOnlineSignal();
 
   /**
