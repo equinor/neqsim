@@ -12,7 +12,8 @@ executed directly from this page by `MathAndExpanderDocumentationTest`.
 Dense chemical-equilibrium, flash-stability, surface-tension and parameter-fitting
 operations, including phase-envelope continuation, use EJML directly or through
 `LinearAlgebraOperations`. That interface has both EJML and Apache Commons Math
-implementations; EJML remains the backend used by existing production call sites.
+implementations; existing EJML calculations remain on EJML, while the former direct
+Commons Math matrix operations use `ApacheCommonsMathLinearAlgebra`.
 The shared backend contract tests both implementations. JAMA is absent from both
 production and test dependencies.
 The [migration and dependency retirement guide](../development/jama-ejml-migration)
@@ -224,6 +225,36 @@ SimpleMatrix rhs = new SimpleMatrix(rhsData);
 SimpleMatrix solution = matrix.solve(rhs); // [0.0, 0.5]
 double residual = matrix.mult(solution).minus(rhs).normF();
 ```
+
+### Decomposition results
+
+Both backends implement the following array-based operations:
+
+- `eigenDecomposition` returns a `RealEigenDecomposition`. Eigenvalues remain
+  paired with eigenvector columns in backend order; no cross-backend ordering,
+  sign or normalization is promised. The result satisfies
+  $A V = V \operatorname{diag}(\lambda)$.
+- `singularValueDecomposition` returns a `SingularValueDecompositionResult` with
+  compact $U$ and $V$ matrices and descending singular values. For an $m$ by $n$
+  input, both vector matrices have $k = \min(m,n)$ columns and
+  $A = U \operatorname{diag}(s) V^T$.
+- Result constructors copy their inputs, and getters return independent copies.
+  No Commons Math or EJML type crosses the interface boundary.
+
+The real eigen API rejects complex spectra with `LinearAlgebraException`.
+This is an intentional change from the film model's former direct call, which
+read only the real parts without checking the imaginary parts. A complex spectrum
+is not a valid real modal basis; it must not silently enter that correction.
+Defective real matrices can still produce dependent eigenvectors, so a real
+spectrum alone does not guarantee an invertible modal basis.
+
+The film model and acoustic covariance checks now use the paired eigen API.
+Volumetric Pitzer regression retains its application-specific singular-value
+threshold and SVD-based covariance calculation using the new compact result.
+Direct `org.apache.commons.math3.linear` references are confined to the Commons
+Math backend, including in tests. Commons Math interpolation, fitting and linear
+programming remain separate and unchanged. External implementations of
+`LinearAlgebraOperations` must implement the two new decomposition methods.
 
 ## Usage Examples
 

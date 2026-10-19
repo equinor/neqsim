@@ -1,9 +1,11 @@
 package neqsim.mathlib.linearalgebra;
 
+import org.apache.commons.math3.exception.MathArithmeticException;
 import org.apache.commons.math3.exception.MaxCountExceededException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.EigenDecomposition;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.QRDecomposition;
@@ -278,6 +280,36 @@ public final class ApacheCommonsMathLinearAlgebra implements LinearAlgebraOperat
     LinearAlgebraValidation.requireMatrix(matrix, "Matrix");
 
     return singularValues(matrix)[0];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public RealEigenDecomposition eigenDecomposition(double[][] matrix) {
+    LinearAlgebraValidation.requireSquareMatrix(matrix, "Matrix");
+    try {
+      EigenDecomposition decomposition = new EigenDecomposition(toMatrix(matrix));
+      if (decomposition.hasComplexEigenvalues()) {
+        throw new LinearAlgebraException("Real eigendecomposition requires a real spectrum.");
+      }
+      return new RealEigenDecomposition(decomposition.getRealEigenvalues(), decomposition.getV().getData());
+    } catch (MaxCountExceededException exception) {
+      throw new LinearAlgebraException("Eigenvalue decomposition did not converge.", exception);
+    } catch (MathArithmeticException exception) {
+      throw new LinearAlgebraException("Eigenvalue decomposition failed to compute an eigensystem.", exception);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SingularValueDecompositionResult singularValueDecomposition(double[][] matrix) {
+    LinearAlgebraValidation.requireMatrix(matrix, "Matrix");
+    try {
+      SingularValueDecomposition decomposition = new SingularValueDecomposition(toMatrix(matrix));
+      return new SingularValueDecompositionResult(decomposition.getSingularValues(), decomposition.getU().getData(),
+          decomposition.getV().getData());
+    } catch (MaxCountExceededException exception) {
+      throw new LinearAlgebraException("Singular value decomposition did not converge.", exception);
+    }
   }
 
   /** {@inheritDoc} */
