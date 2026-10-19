@@ -4,8 +4,6 @@ description: "Guide to defining controlled NeqSim engineering cases, metrics, ac
 keywords: "engineering design cases, governing envelope, design basis, maximum production, turndown, engineering metrics"
 ---
 
-# Engineering Design Cases and Governing Envelopes
-
 An engineering result is meaningful only when its governing condition is known. NeqSim design cases bind controlled
 input changes to isolated process simulations, evaluate declared metrics, and retain the case that governs each value.
 
@@ -114,6 +112,8 @@ public final class DesignCaseEnvelopeExample {
 The documentation regression compiles this exact fence with `-source 8 -target 8` and executes it with assertions
 enabled. The example uses pressure only to make isolation and governing-case selection explicit; a real design basis
 normally includes flow, composition, ambient, utilities, equipment limits, and credible accidental scenarios.
+The exact example and the policy boundaries below are covered by
+[EngineeringCaseRunnerTest](../../src/test/java/neqsim/process/engineering/designcase/EngineeringCaseRunnerTest.java).
 
 ## Minimum controlled case definition
 
@@ -129,6 +129,12 @@ Every case should retain:
 
 Use the configurator only for the declared case change. The runner applies it to an isolated `ProcessSystem.copy()`;
 it should not access or mutate the controlled source process through another reference.
+
+The runner records `required` and approval metadata, but does not enforce them as execution or acceptance
+gates. Priority controls case ordering, as described below. The example's `REVIEW_REQUIRED` cases can produce
+`isAccepted() == true`: this is metric-limit
+acceptance, not engineering approval. Review required-case coverage and approval separately before using an envelope
+as a controlled design basis.
 
 ## Define metrics before running cases
 
@@ -160,19 +166,27 @@ retains all available evidence. `THROW_WITH_PARTIAL_RESULT` raises an `Engineeri
 `getPartialReport()` preserves the same auditable case and metric findings. The report retains definition and result
 fingerprints so a case-set change can be distinguished from a result change.
 
+Convergence is required by default. With `requireConvergence(false)`, the runner deliberately admits evaluated values
+even when `ProcessSystem.solved()` is false. In that mode, `DesignCaseResult.isConverged()` records satisfaction of the
+configured policy, not independent evidence of physical convergence; a fully evaluated case can be `CALCULATED` and
+its envelope can be accepted. Do not use this bypass to qualify an unsolved process for engineering design.
+
 Case status remains explicit:
 
 | Status | Meaning |
 | --- | --- |
-| `CALCULATED` | Process converged and all declared metrics were evaluated |
-| `CALCULATED_WITH_METRIC_FAILURES` | Process ran but at least one metric could not be evaluated |
-| `CALCULATED_NOT_CONVERGED` | A result exists but convergence requirements were not satisfied |
-| `FAILED` | Case configuration or simulation failed |
-| `SKIPPED` | Case was disabled or intentionally excluded |
+| `CALCULATED` | The configured convergence policy is satisfied and all declared metrics were evaluated |
+| `CALCULATED_WITH_METRIC_FAILURES` | The convergence policy is satisfied, but only some metrics were evaluated |
+| `CALCULATED_NOT_CONVERGED` | At least one metric value exists, but required process convergence was not reported |
+| `FAILED` | Case execution failed, or all metric evaluations failed |
+| `SKIPPED` | Case was disabled; its configurator and metrics were not executed |
 
 Successful metrics from a partial case may still identify a candidate governing value, but the envelope remains
 explicitly incomplete. Failed/non-converged cases and metrics with no governing value remain visible and must be
 resolved before a complete report can be required.
+
+The failure policy responds to an incomplete report, not to every omission or engineering-review concern.
+`THROW_WITH_PARTIAL_RESULT` does not reject a complete but limit-violating report; check `isAccepted()` separately.
 
 ## Interpret the governing envelope
 
@@ -188,10 +202,21 @@ direction and retains:
 The envelope is a selection result, not an approval. Review it for physical discontinuities, phase changes,
 extrapolation, unexpected governing cases, and missing coverage.
 
+Equal governing candidates retain the first case in `EngineeringCaseSet.getCases()` order: ascending numeric
+priority, then lexicographic case ID, not insertion order or approval status. This also applies to equal absolute
+magnitudes under `MAXIMUM_ABSOLUTE`. Sequential and parallel runs preserve the same selection order. Priority only
+breaks equal-value ties; it does not override a more extreme metric value.
+
 `isComplete()` means every configured metric has a governing value and no case is failed or partial. It does not mean
 limits pass. `isAccepted()` is deliberately stricter: the envelope must be complete, every governing metric must have
 at least one configured acceptance limit, and no evaluated case may violate a limit. Therefore an otherwise successful
 envelope with unconfigured limits remains review-required rather than reporting a false acceptance.
+
+A disabled required case is `SKIPPED`, not failed or partial. If another enabled case supplies every metric, that
+omission does not prevent completeness or acceptance. If all cases are disabled, configured metrics have no governing
+values and the report is incomplete. Conversely, an enabled case marked `required=false` still contributes failures
+and limit violations: optional metadata does not remove it from the calculation. Check the required/enabled case
+matrix separately; `isComplete()` alone is not a case-coverage certificate.
 
 ## Connect cases to the closed design loop
 
@@ -219,7 +244,7 @@ Use a case matrix to review equipment and metric coverage:
 | Review question | Required evidence |
 | --- | --- |
 | Are all required cases present? | Case IDs, types, required/enabled state, and controlled basis |
-| Did every required case converge? | Per-case process and unit run status |
+| Did every required case converge? | Per-case process and unit run status, with convergence checking enabled |
 | Did every metric evaluate? | Per-case metric status and units |
 | Is the envelope complete? | No failed/partial case and no missing governing metric ID |
 | Is the governing direction correct? | Engineering rationale for maximum/minimum/absolute selection |
@@ -234,13 +259,14 @@ Use a case matrix to review equipment and metric coverage:
 - Calling a steady-state perturbation startup, fire, trip, or blowdown.
 - Selecting all governing quantities by maximum value.
 - Ignoring failed cases when publishing a clean envelope.
+- Treating skipped required cases, a convergence bypass, or unreviewed approval metadata as design approval.
 - Applying selected dimensions to the controlled source model rather than an isolated design copy.
 - Reusing an envelope after a geometry, method, composition, or design-basis revision.
 
 ## Related documentation
 
-- [Engineering Guide](guide)
-- [Engineering Simulator Foundations](../integration/engineering-simulator-foundations)
-- [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator)
-- [Numerical Health and Engineering Closure](../integration/numerical-health-and-engineering-closure)
-- [Complete Offshore Engineering Study](../integration/complete-offshore-process-engineering-study)
+- [Engineering Guide](guide.md)
+- [Engineering Simulator Foundations](../integration/engineering-simulator-foundations.md)
+- [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator.md)
+- [Numerical Health and Engineering Closure](../integration/numerical-health-and-engineering-closure.md)
+- [Complete Offshore Engineering Study](../integration/complete-offshore-process-engineering-study.md)
