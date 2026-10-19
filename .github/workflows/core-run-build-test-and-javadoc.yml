@@ -37,6 +37,8 @@ jobs:
               - 'src/main/resources/data/**'
               - 'src/test/resources/**'
               - '.github/workflows/core-run-build-test-and-javadoc.yml'
+              - 'devtools/collect_electrolyte_evidence.py'
+              - 'devtools/test_collect_electrolyte_evidence.py'
 
   test_javadoc:
     name: Assert javadoc with Java 21 on Ubuntu
@@ -281,6 +283,7 @@ jobs:
           fi
           printf 'Slow-test shard %s/%s: %s classes\n' "$((SHARD_INDEX + 1))" "$SHARD_COUNT" "${#selected[@]}"
           printf '  %s\n' "${selected[@]}"
+          printf '%s\n' "${selected[@]}" > "$RUNNER_TEMP/slow-selected-tests.txt"
           test_pattern=$(IFS=,; echo "${selected[*]}")
           mvn -B test -ntp -Dtest="$test_pattern" -Dgroups=slow \
             "-DexcludedTestGroups=" "-Djacoco.skip=true"
@@ -291,6 +294,22 @@ jobs:
           name: slow-test-reports-${{ matrix.shard }}
           path: target/surefire-reports/
           if-no-files-found: warn
+      - name: Collect electrolyte assessment evidence
+        if: always()
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          NEQSIM_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: >-
+          python3 devtools/collect_electrolyte_evidence.py
+          --selected-tests "$RUNNER_TEMP/slow-selected-tests.txt"
+          --shard "$SHARD_INDEX"
+      - name: Retain electrolyte assessment evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: electrolyte-assessment-evidence-${{ matrix.shard }}
+          path: target/electrolyte-evidence/
+          if-no-files-found: error
 
   test_java_slow_required:
     name: Assert all slow tests with Java 21 on Ubuntu
