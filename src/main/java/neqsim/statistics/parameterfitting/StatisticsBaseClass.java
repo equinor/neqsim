@@ -16,7 +16,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.statistics.montecarlosimulation.MonteCarloSimulation;
@@ -126,10 +127,10 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @param newParameters parameter values, clamped in place onto the declared bounds
    */
   public void checkBounds(double[] newParameters) {
-    Matrix compatibilityView = new Matrix(new double[][] {newParameters});
-    // Preserve dispatch to existing subclasses that override the legacy Matrix hook.
+    SimpleMatrix compatibilityView = new SimpleMatrix(new double[][] {newParameters});
+    // Preserve dispatch to existing subclasses that override the legacy SimpleMatrix hook.
     checkBounds(compatibilityView);
-    System.arraycopy(compatibilityView.getArray()[0], 0, newParameters, 0, newParameters.length);
+    System.arraycopy(EjmlMatrixUtils.toArray(compatibilityView)[0], 0, newParameters, 0, newParameters.length);
   }
 
   /**
@@ -139,8 +140,12 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    * @deprecated Use {@link #checkBounds(double[])} for array-based calls. Existing overrides remain supported.
    */
   @Deprecated
-  public void checkBounds(Matrix newParameters) {
-    checkBoundsValues(newParameters.getArray()[0]);
+  public void checkBounds(SimpleMatrix newParameters) {
+    double[] values = EjmlMatrixUtils.toArray(newParameters)[0];
+    checkBoundsValues(values);
+    for (int column = 0; column < values.length; column++) {
+      newParameters.set(0, column, values[column]);
+    }
   }
 
   /**
@@ -607,7 +612,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     dialogContentPane.add(scrollpane);
     dialog.pack();
     dialog.setVisible(true);
-    // Matrix te = parameterStdDevMatrix.copy();
+    // SimpleMatrix te = parameterStdDevMatrix.copy();
     // te.display("Std. Deviation" ,5);
     // coVarianceMatrix.display("CoVariance",5);
     // parameterCorrelationMatrix.display("Correlation",5);
@@ -625,7 +630,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   @ExcludeFromJacocoGeneratedReport
   public void displayMatrix(double[][] matrix, String name, int d) {
-    displayMatrix(new Matrix(matrix), name, d);
+    displayMatrix(new SimpleMatrix(matrix), name, d);
   }
 
   /**
@@ -677,8 +682,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
    */
   @Deprecated
   @ExcludeFromJacocoGeneratedReport
-  public void displayMatrix(Matrix matrix, String name, int d) {
-    displayMatrixValues(matrix.getArray(), name, d);
+  public void displayMatrix(SimpleMatrix matrix, String name, int d) {
+    displayMatrixValues(EjmlMatrixUtils.toArray(matrix), name, d);
   }
 
   /**
@@ -695,12 +700,12 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
 
     logger.debug("Calculating parameter uncertainty");
     calcParameterUncertainty();
-    // parameterUncertaintyMatrix = new Matrix(parameterUncertainty,1);
+    // parameterUncertaintyMatrix = new SimpleMatrix(parameterUncertainty,1);
     // parameterUncertaintyMatrix.print(2,10);
 
     logger.debug("Calculating parameter standard deviation");
     calcParameterStandardDeviation();
-    // parameterStdDevMatrix = new Matrix(parameterStandardDeviation,1);
+    // parameterStdDevMatrix = new SimpleMatrix(parameterStandardDeviation,1);
     // parameterStdDevMatrix.print(2,10);
     calcCorrelationMatrix();
 

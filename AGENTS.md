@@ -65,12 +65,12 @@
 
 ## Physics and API gotchas
 
-- **Incremental Jama migration:** New numerical APIs should use primitive arrays for data and EJML or
-  `LinearAlgebraOperations` for calculations. Where a public Jama signature must remain, make the array API primary and
-  keep Jama as a thin `@Deprecated` compatibility wrapper. Migrate callers and tests to the array API incrementally;
-  preserve dimensions, orientation and ownership, and keep the dependency until live compatibility bridges are retired.
-  Preserve existing interface defaults and subclass-hook dispatch; compare APIs against published releases, not PR summaries.
-  EJML LU `setA` can accept a singular matrix: reject non-finite solve results before state updates or existing fallbacks.
+- **EJML-only numerical code:** Use primitive arrays at public numerical boundaries and EJML or
+  `LinearAlgebraOperations` for calculations. Do not restore a JAMA dependency or reference backend.
+  Former matrix-specific hooks and accessors now use EJML `SimpleMatrix`; downstream callers must migrate.
+  Preserve dimensions, orientation, ownership and subclass-hook dispatch. EJML LU `setA` can accept a singular
+  matrix: reject non-finite results. Pure-component phase-envelope points must satisfy the EOS pressure equation
+  for both volume roots as well as fugacity equilibrium; a spinodal-stalled volume is not a saturation root.
 - Always `setMixingRule(...)` (numeric for CPA); `createDatabase(true)` for new components.
   Temperatures in K and pressures in bara by default. `clone()` fluids before branching.
 - After any flash call `fluid.initProperties()` before reading density/viscosity/conductivity;

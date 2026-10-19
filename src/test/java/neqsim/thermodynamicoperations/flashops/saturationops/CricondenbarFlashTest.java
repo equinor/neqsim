@@ -11,7 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraException;
 import neqsim.thermo.system.SystemInterface;
@@ -22,8 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Regression tests for {@link CricondenbarFlash}.
  *
  * <p>
- * The expected values were captured from the implementation that used {@code Jama.Matrix} directly, before it was
- * migrated to {@code LinearAlgebraOperations}. Both paths run the same JAMA LU solve, so the values must match exactly.
+ * The expected values were captured from the implementation that used {@code SimpleMatrix} directly, before it was
+ * migrated to {@code LinearAlgebraOperations}. Both paths run the same EJML LU solve, so the values must match exactly.
  * </p>
  *
  * @author asmf
@@ -74,10 +74,10 @@ class CricondenbarFlashTest {
   }
 
   /**
-   * Compares the legacy cricondenbar update and convergence norm against the original Jama operations.
+   * Compares the legacy cricondenbar update and convergence norm against the original Ejml operations.
    */
   @Test
-  void legacyTemperatureStepMatchesJama() {
+  void legacyTemperatureStepMatchesEjml() {
     SystemInterface system = createFluid();
     new ThermodynamicOperations(system).TPflash();
     assertEquals(2, system.getNumberOfPhases());
@@ -85,15 +85,16 @@ class CricondenbarFlashTest {
     solver.init();
     solver.setfvec();
     solver.setJac();
-    Matrix expectedStep = new Matrix(solver.Jac).solve(new Matrix(solver.fvec, solver.fvec.length));
-    Matrix expectedState = new Matrix(solver.u, solver.u.length).minus(expectedStep);
+    SimpleMatrix expectedStep = new SimpleMatrix(solver.Jac)
+        .solve(new SimpleMatrix(solver.fvec.length, 1, true, solver.fvec));
+    SimpleMatrix expectedState = new SimpleMatrix(solver.u.length, 1, true, solver.u).minus(expectedStep);
     double[] oldState = solver.uold.clone();
 
     double convergence = solver.solve();
 
-    assertArrayEquals(expectedStep.getColumnPackedCopy(), solver.dx, 1.0e-14);
-    assertArrayEquals(expectedState.getColumnPackedCopy(), solver.u, 1.0e-14);
-    assertEquals(expectedStep.norm2() / expectedState.norm2(), convergence, 1.0e-14);
+    assertArrayEquals(expectedStep.transpose().getDDRM().getData().clone(), solver.dx, 1.0e-14);
+    assertArrayEquals(expectedState.transpose().getDDRM().getData().clone(), solver.u, 1.0e-14);
+    assertEquals(expectedStep.normF() / expectedState.normF(), convergence, 1.0e-14);
     assertArrayEquals(oldState, solver.uold, 0.0);
     assertNotSame(solver.u, solver.uold);
   }
@@ -110,8 +111,8 @@ class CricondenbarFlashTest {
     solver.init();
     solver.setfvec();
     solver.setJac();
-    Matrix jacobian = new Matrix(solver.Jac);
-    Matrix residual = new Matrix(solver.fvec, solver.fvec.length);
+    SimpleMatrix jacobian = new SimpleMatrix(solver.Jac);
+    SimpleMatrix residual = new SimpleMatrix(solver.fvec.length, 1, true, solver.fvec);
     assertThrows(RuntimeException.class, () -> jacobian.solve(residual));
     double[] oldState = solver.u.clone();
 

@@ -1,7 +1,8 @@
 package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 import java.io.Serializable;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.util.util.ArrayUtils;
 
 /**
@@ -93,10 +94,12 @@ public final class LevenbergMarquardtResult implements Serializable {
    */
   @Deprecated
   public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations, double finalChiSquare,
-      double gradientNorm, Matrix covarianceMatrix, Matrix correlationMatrix, double[] parameterStandardErrors) {
+      double gradientNorm, SimpleMatrix covarianceMatrix, SimpleMatrix correlationMatrix,
+      double[] parameterStandardErrors) {
     this(convergenceReason, iterations, finalChiSquare, gradientNorm,
-        covarianceMatrix == null ? (double[][]) null : covarianceMatrix.getArray(),
-        correlationMatrix == null ? (double[][]) null : correlationMatrix.getArray(), parameterStandardErrors);
+        covarianceMatrix == null ? (double[][]) null : EjmlMatrixUtils.toArray(covarianceMatrix),
+        correlationMatrix == null ? (double[][]) null : EjmlMatrixUtils.toArray(correlationMatrix),
+        parameterStandardErrors);
   }
 
   /**
@@ -173,25 +176,25 @@ public final class LevenbergMarquardtResult implements Serializable {
   }
 
   /**
-   * Returns the fitted-parameter covariance matrix as a Jama compatibility copy.
+   * Returns the fitted-parameter covariance matrix as a Ejml compatibility copy.
    *
    * @return covariance matrix, or null if unavailable
    * @deprecated Use {@link #getCovarianceMatrixArray()}.
    */
   @Deprecated
-  public Matrix getCovarianceMatrix() {
-    return covarianceMatrix == null ? null : new Matrix(ArrayUtils.copyMatrixArray(covarianceMatrix));
+  public SimpleMatrix getCovarianceMatrix() {
+    return covarianceMatrix == null ? null : new SimpleMatrix(ArrayUtils.copyMatrixArray(covarianceMatrix));
   }
 
   /**
-   * Returns the fitted-parameter correlation matrix as a Jama compatibility copy.
+   * Returns the fitted-parameter correlation matrix as a Ejml compatibility copy.
    *
    * @return correlation matrix, or null if unavailable
    * @deprecated Use {@link #getCorrelationMatrixArray()}.
    */
   @Deprecated
-  public Matrix getCorrelationMatrix() {
-    return correlationMatrix == null ? null : new Matrix(ArrayUtils.copyMatrixArray(correlationMatrix));
+  public SimpleMatrix getCorrelationMatrix() {
+    return correlationMatrix == null ? null : new SimpleMatrix(ArrayUtils.copyMatrixArray(correlationMatrix));
   }
 
   /**
