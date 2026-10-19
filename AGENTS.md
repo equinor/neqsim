@@ -45,6 +45,10 @@
 - **Notebooks must be executed** end to end (NeqSim Runner by default); unexecuted = incomplete.
 - **Linux-only engines** (FluidMagic, OpenFOAM, OPM Flow) need Docker Desktop/WSL2 on Windows;
   report a missing runtime as a blocker, never skip silently.
+- **FluidMagic is Equinor-internal, not on PyPI** (enterprise agents/skills only): running it needs the
+  private repo `equinor/FluidMagic` (own GitHub SSO; `gh repo clone equinor/FluidMagic`,
+  `pip install -e FluidMagic/fluidmagic`). Never `pip install fluidmagic`; if `import fluidmagic`
+  fails, tell the user how to get it and fall back to the offline hand-off.
 
 ## Running calculations
 

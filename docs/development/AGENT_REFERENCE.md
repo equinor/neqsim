@@ -28,6 +28,15 @@ still be built and written without it, but nothing executes locally until a
 Linux runtime is available. Report the missing Docker/WSL2 environment as a
 blocker instead of silently skipping the calculation.
 
+**FluidMagic is also not a public pip package.** It is the Equinor-internal
+repository [`equinor/FluidMagic`](https://github.com/equinor/FluidMagic), used only
+through the enterprise agents/skills; `pip install fluidmagic` does not work. The
+user needs access to the `equinor` GitHub organization (SSO authorised), then
+`gh repo clone equinor/FluidMagic` and `pip install -e FluidMagic/fluidmagic`
+(inside Docker/WSL2 on Windows). When `import fluidmagic` fails, tell the user
+this and continue with the offline hand-off; never present FluidMagic results that
+were not computed.
+
 ### Critical Constraint: Java 8
 
 **All code MUST compile with Java 8.** Never use:
@@ -1586,6 +1595,17 @@ be installed** before one of these is actually run — the request/case/hand-off
 can still be built and written without it, but nothing executes locally until a
 Linux runtime is available. Report a missing Docker/WSL2 environment as a
 blocker rather than silently skipping the calculation.
+
+**FluidMagic is also not a public pip package.** It is an Equinor-internal
+repository, [`equinor/FluidMagic`](https://github.com/equinor/FluidMagic), used
+only through the enterprise agents/skills. `pip install fluidmagic` does not work.
+The user needs access to the `equinor` GitHub organization (SSO authorised), then
+`gh repo clone equinor/FluidMagic` and `pip install -e FluidMagic/fluidmagic`
+(inside Docker/WSL2 on Windows). When `import fluidmagic` fails, tell the user
+this and continue with the offline hand-off; never present FluidMagic results
+that were not computed. Install steps live in the enterprise
+`enterprise-fluidmagic-characterization` skill and the enterprise
+`installation-guide.md`.
 
 ### WARNING: CRITICAL: Java 8 Compatibility (READ FIRST)
 

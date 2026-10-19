@@ -673,6 +673,12 @@ public class Compressor extends TwoPortEquipment
     double dfunkdPoly = 100.0;
     double dPoly = 100.0;
     double oldPoly = polytropicEfficiency;
+    // Bracket of the root: the outlet temperature decreases with efficiency, so an efficiency at which the
+    // outlet is too hot is a lower bound and one at which it is too cold is an upper bound. The secant step is
+    // only accepted inside the bracket, otherwise the bracket is bisected (a plain secant step overshoots to the
+    // efficiency limits when the target needs an efficiency far from the starting value).
+    double effLow = MIN_EFFICIENCY;
+    double effHigh = MAX_EFFICIENCY;
     useOutTemperature = false;
     run();
     useOutTemperature = true;
@@ -683,6 +689,13 @@ public class Compressor extends TwoPortEquipment
     do {
       iter++;
       funk = getThermoSystem().getTemperature() - outTemperature;
+      if (Double.isFinite(funk)) {
+        if (funk > 0.0) {
+          effLow = Math.max(effLow, polytropicEfficiency);
+        } else {
+          effHigh = Math.min(effHigh, polytropicEfficiency);
+        }
+      }
       if (Math.abs(dPoly) > 1.0e-12 && Double.isFinite(dPoly) && Double.isFinite(funk) && Double.isFinite(funkOld)) {
         dfunkdPoly = (funk - funkOld) / dPoly;
       } else {
@@ -702,6 +715,9 @@ public class Compressor extends TwoPortEquipment
 
       if (!Double.isFinite(newPoly)) {
         newPoly = polytropicEfficiency + (funk > 0.0 ? 0.01 : -0.01);
+      }
+      if (effLow < effHigh && (newPoly <= effLow || newPoly >= effHigh)) {
+        newPoly = 0.5 * (effLow + effHigh);
       }
       oldPoly = polytropicEfficiency;
       setPolytropicEfficiency(newPoly);
