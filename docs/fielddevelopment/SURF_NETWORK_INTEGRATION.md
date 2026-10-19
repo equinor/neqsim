@@ -768,11 +768,12 @@ Lifecycle period-change reporting remains in the #4188/#3154 lane, including #43
    production/live-injection case now checks component inventory and accepted-step ownership.
    The one-day shared-reservoir test additionally checks common-time timestep refinement
    for its smooth synthetic trajectory. Its exact accepted pressure, production/injection,
-   shared-power and cumulative-throughput samples now map into schema-v3 lifecycle state
-   metrics with stable IDs, units and provenance; the persistent guard reconstructs every
-   adjacent-period delta. Next qualify the maps and injectivity laws and add
-   map-region/driver-limit migration and discontinuous-event refinement without creating a
-   second scheduler or optimizer.
+   shared-power and cumulative-throughput samples now map into lifecycle state metrics with
+   stable IDs, units and provenance; the persistent guard reconstructs every adjacent-period
+   delta. Schema-v4 diagnostics also retain exact added/removed operating-region events across
+   periods without interpolating discrete topology. Next qualify the maps and injectivity laws
+   and feed their accepted map-region/driver-limit migrations into these diagnostics without
+   creating a second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic
