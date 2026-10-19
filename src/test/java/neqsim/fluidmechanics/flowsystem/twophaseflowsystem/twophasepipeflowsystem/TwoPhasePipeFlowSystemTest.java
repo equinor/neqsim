@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
@@ -39,7 +39,7 @@ public class TwoPhasePipeFlowSystemTest {
    * Verifies independent phase/component columns and both legacy norm definitions on the existing stratified pipe.
    */
   @Test
-  void phaseAndComponentColumnsPreserveJamaStorageSemantics() {
+  void phaseAndComponentColumnsPreserveEjmlStorageSemantics() {
     testCreateSystemWithStratifiedFlow();
     pipe.init();
     MatrixStorageProbe solver = new MatrixStorageProbe(pipe);
@@ -49,12 +49,12 @@ public class TwoPhasePipeFlowSystemTest {
       DMatrixRMaj vector = vectors.get(vectorIndex);
       assertEquals(pipe.getTotalNumberOfNodes(), vector.getNumRows());
       assertEquals(1, vector.getNumCols());
-      Matrix jama = new Matrix(vector.getData(), vector.getNumRows());
-      assertEquals(jama.norm1(), NormOps_DDRM.normP1(vector), 0.0);
-      assertEquals(jama.norm2(), NormOps_DDRM.normP2(vector), Math.max(1.0, jama.norm2()) * 1.0e-14);
+      SimpleMatrix ejml = new SimpleMatrix(vector);
+      assertEquals(NormOps_DDRM.normP1(ejml.getDDRM()), NormOps_DDRM.normP1(vector), 0.0);
+      assertEquals(ejml.normF(), NormOps_DDRM.normP2(vector), Math.max(1.0, ejml.normF()) * 1.0e-14);
       DMatrixRMaj copy = vector.copy();
       copy.zero();
-      assertArrayEquals(jama.getColumnPackedCopy(), vector.getData(), 0.0);
+      assertArrayEquals(ejml.transpose().getDDRM().getData().clone(), vector.getData(), 0.0);
       assertNotSame(copy.getData(), vector.getData());
       for (int previous = 0; previous < vectorIndex; previous++) {
         assertNotSame(vectors.get(previous).getData(), vector.getData());

@@ -7,7 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -16,10 +17,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * Regression tests for {@link PedersenPlusModelSolver}.
  *
  * <p>
- * The expected coefficients were captured from the implementation that used {@code Jama.Matrix} directly, before it was
- * migrated to {@code LinearAlgebraOperations}. EJML and JAMA may round LU and QR operations differently; compare steps
- * within 32 ulps and independently verify the least-squares optimality condition. Assembly and input ownership remain
- * exact contracts.
+ * The expected coefficients were captured from the implementation that used {@code SimpleMatrix} directly, before it
+ * was migrated to {@code LinearAlgebraOperations}. EJML and EJML may round LU and QR operations differently; compare
+ * steps within 32 ulps and independently verify the least-squares optimality condition. Assembly and input ownership
+ * remain exact contracts.
  * </p>
  *
  * @author asmf
@@ -70,7 +71,7 @@ class PedersenPlusModelSolverTest {
    * Verifies that the legacy AB solver assembles the original residual and Jacobian on the regression fluid.
    */
   @Test
-  void legacyAbAssemblyMatchesJama() {
+  void legacyAbAssemblyMatchesEjml() {
     SystemInterface system = createFluid(11.0, 0.290, 0.82);
     TBPCharacterize characterization = new TBPCharacterize(system);
     NewtonSolveAB solver = new NewtonSolveAB(system, characterization);
@@ -94,16 +95,17 @@ class PedersenPlusModelSolverTest {
       secondResidual += Math.exp(characterization.getPlusCoefs(0) + characterization.getPlusCoefs(1) * carbon)
           * (14.0 * carbon - 4.0);
     }
-    Matrix expectedJacobian = new Matrix(new double[][] {{firstSum, massSum}, {secondSum, massDerivativeSum}});
-    Matrix expectedResidual = new Matrix(new double[] {firstResidual, secondResidual}, 2);
+    SimpleMatrix expectedJacobian = new SimpleMatrix(
+        new double[][] {{firstSum, massSum}, {secondSum, massDerivativeSum}});
+    SimpleMatrix expectedResidual = new SimpleMatrix(2, 1, true, new double[] {firstResidual, secondResidual});
 
     solver.setJac();
     solver.setfvec();
-    assertArrayEquals(expectedJacobian.getArray()[0], solver.Jac[0], 0.0);
-    assertArrayEquals(expectedJacobian.getArray()[1], solver.Jac[1], 0.0);
-    assertArrayEquals(expectedResidual.getColumnPackedCopy(), solver.fvec, 0.0);
+    assertArrayEquals(EjmlMatrixUtils.toArray(expectedJacobian)[0], solver.Jac[0], 0.0);
+    assertArrayEquals(EjmlMatrixUtils.toArray(expectedJacobian)[1], solver.Jac[1], 0.0);
+    assertArrayEquals(expectedResidual.transpose().getDDRM().getData().clone(), solver.fvec, 0.0);
     assertArrayEquals(characterization.getPlusCoefs(), solver.sol, 0.0);
-    assertEquals(expectedResidual.norm2(), new EjmlLinearAlgebra().euclideanNorm(solver.fvec), 1.0e-12);
+    assertEquals(expectedResidual.normF(), new EjmlLinearAlgebra().euclideanNorm(solver.fvec), 1.0e-12);
   }
 
   /**
@@ -113,7 +115,7 @@ class PedersenPlusModelSolverTest {
    */
   @ParameterizedTest
   @ValueSource(ints = {2, 4})
-  void legacyAbcdStepMatchesJama(int fractionCount) {
+  void legacyAbcdStepMatchesEjml(int fractionCount) {
     SystemInterface system = createFluid(11.0, 0.290, 0.82);
     system.init(0);
     TBPCharacterize characterization = new TBPCharacterize(system);
@@ -128,32 +130,32 @@ class PedersenPlusModelSolverTest {
     NewtonSolveABCD solver = new NewtonSolveABCD(system, characterization);
     solver.setJac();
     solver.setfvec();
-    Matrix jacobian = new Matrix(solver.Jac);
-    Matrix residual = new Matrix(solver.fvec, solver.fvec.length);
-    double[] expectedStep = jacobian.solve(residual).getColumnPackedCopy();
+    SimpleMatrix jacobian = new SimpleMatrix(solver.Jac);
+    SimpleMatrix residual = new SimpleMatrix(solver.fvec.length, 1, true, solver.fvec);
+    double[] expectedStep = jacobian.solve(residual).transpose().getDDRM().getData().clone();
     EjmlLinearAlgebra algebra = new EjmlLinearAlgebra();
     double[] actualStep = fractionCount == 2 ? algebra.solve(solver.Jac, solver.fvec)
         : algebra.solveLeastSquares(solver.Jac, solver.fvec);
     assertEquivalentStep(solver.Jac, solver.fvec, expectedStep, actualStep);
     double[] initialCoefficients = solver.sol.clone();
-    Matrix expectedSolution = new Matrix(initialCoefficients, initialCoefficients.length);
-    Matrix expectedDelta;
+    SimpleMatrix expectedSolution = new SimpleMatrix(initialCoefficients.length, 1, true, initialCoefficients);
+    SimpleMatrix expectedDelta;
     int expectedIterations = 0;
     do {
       expectedIterations++;
       solver.setJac();
       solver.setfvec();
-      expectedDelta = new Matrix(solver.Jac).solve(new Matrix(solver.fvec, solver.fvec.length));
-      expectedSolution.minusEquals(expectedDelta.times(0.5));
-      characterization.setCoefs(expectedSolution.getColumnPackedCopy());
-    } while ((expectedDelta.norm2() / expectedSolution.norm2() < 1.0e-6 || expectedIterations < 15)
+      expectedDelta = new SimpleMatrix(solver.Jac).solve(new SimpleMatrix(solver.fvec.length, 1, true, solver.fvec));
+      expectedSolution = expectedSolution.minus(expectedDelta.scale(0.5));
+      characterization.setCoefs(expectedSolution.transpose().getDDRM().getData().clone());
+    } while ((expectedDelta.normF() / expectedSolution.normF() < 1.0e-6 || expectedIterations < 15)
         && expectedIterations < 50);
 
     characterization.setCoefs(initialCoefficients);
     NewtonSolveABCD migratedSolver = new NewtonSolveABCD(system, characterization);
     migratedSolver.solve();
     assertEquals(expectedIterations, migratedSolver.iter);
-    assertArrayEquals(expectedSolution.getColumnPackedCopy(), migratedSolver.sol, 1.0e-14);
+    assertArrayEquals(expectedSolution.transpose().getDDRM().getData().clone(), migratedSolver.sol, 1.0e-14);
     assertArrayEquals(migratedSolver.sol, characterization.coefs, 0.0);
     assertNotSame(migratedSolver.sol, characterization.coefs);
   }
@@ -162,20 +164,20 @@ class PedersenPlusModelSolverTest {
    * Verifies that the legacy CD-plus step uses the same square LU system and does not mutate its inputs.
    */
   @Test
-  void legacyCdPlusStepMatchesJama() {
+  void legacyCdPlusStepMatchesEjml() {
     SystemInterface system = createFluid(11.0, 0.290, 0.82);
     TBPCharacterize characterization = new TBPCharacterize(system);
     NewtonSolveCDplus solver = new NewtonSolveCDplus(system, characterization);
     solver.setJac();
     solver.setfvec();
-    Matrix jacobian = new Matrix(solver.Jac).copy();
-    Matrix residual = new Matrix(solver.fvec, solver.fvec.length);
-    double[] expectedStep = jacobian.solve(residual).getColumnPackedCopy();
+    SimpleMatrix jacobian = new SimpleMatrix(solver.Jac).copy();
+    SimpleMatrix residual = new SimpleMatrix(solver.fvec.length, 1, true, solver.fvec);
+    double[] expectedStep = jacobian.solve(residual).transpose().getDDRM().getData().clone();
     double[] actualStep = new EjmlLinearAlgebra().solve(solver.Jac, solver.fvec);
     assertEquivalentStep(solver.Jac, solver.fvec, expectedStep, actualStep);
-    assertArrayEquals(residual.getColumnPackedCopy(), solver.fvec, 0.0);
+    assertArrayEquals(residual.transpose().getDDRM().getData().clone(), solver.fvec, 0.0);
     for (int row = 0; row < solver.Jac.length; row++) {
-      assertArrayEquals(jacobian.getArray()[row], solver.Jac[row], 0.0);
+      assertArrayEquals(EjmlMatrixUtils.toArray(jacobian)[row], solver.Jac[row], 0.0);
     }
   }
 
@@ -184,7 +186,7 @@ class PedersenPlusModelSolverTest {
    *
    * @param matrix coefficient matrix
    * @param rhs right-hand side
-   * @param expected direct JAMA reference step
+   * @param expected direct EJML reference step
    * @param actual EJML step
    */
   private static void assertEquivalentStep(double[][] matrix, double[] rhs, double[] expected, double[] actual) {

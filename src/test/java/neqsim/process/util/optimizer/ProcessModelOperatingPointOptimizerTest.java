@@ -150,6 +150,31 @@ class ProcessModelOperatingPointOptimizerTest {
     assertArrayEquals(new double[] {500.0, 500.0}, result.getAcceptedCandidateValues(), 0.0);
   }
 
+  /** Verifies an infeasible continuous step is refined only through complete fail-closed evaluations. */
+  @Test
+  void refinesRecoveredContinuousConstraintBoundary() {
+    Fixture fixture = createFixture();
+    OperatingPointSearchResult result = createOptimizer(fixture).setInitialStepFraction(0.5)
+        .setRelativeStepTolerance(0.01).setMaximumBoundaryRefinementEvaluations(6).setMaximumEvaluations(30).optimize();
+
+    assertTrue(result.isAcceptedPointReplayed(), result.getOutcome() + ": " + result.getDiagnostics());
+    assertTrue(result.getBoundaryRefinementEvaluationCount() > 0);
+    assertEquals(6, result.getMaximumBoundaryRefinementEvaluations());
+    assertTrue(result.getCandidates().stream()
+        .anyMatch(record -> record.isBoundaryRefinement() && record.getEvaluation().isFeasible()));
+    assertTrue(result.getCandidates().stream().anyMatch(record -> !record.isBoundaryRefinement()
+        && record.getCandidateValues()[0] == 800.0 && !record.getEvaluation().isFeasible()));
+    assertTrue(result.getAcceptedCandidateValues()[0] <= 700.0);
+    assertTrue(result.getAcceptedCandidateValues()[0] >= 690.0);
+    assertEquals(500.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(500.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
+
+    Map<String, Object> evidence = result.getOptimizerEvidence("boundary-cycle");
+    assertEquals(Integer.valueOf(result.getBoundaryRefinementEvaluationCount()),
+        evidence.get("boundary_refinement_evaluation_count"));
+    assertEquals(Integer.valueOf(6), evidence.get("maximum_boundary_refinement_evaluations"));
+  }
+
   /** Verifies fail-fast validation of discrete values, budgets and step configuration. */
   @Test
   void rejectsInvalidSearchDefinitions() {
@@ -161,6 +186,7 @@ class ProcessModelOperatingPointOptimizerTest {
     assertThrows(IllegalArgumentException.class, () -> optimizer.setInitialStepFraction(0.0));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setRelativeStepTolerance(Double.NaN));
     assertThrows(IllegalArgumentException.class, () -> optimizer.setObjectiveImprovementTolerance(-1.0, "invalid"));
+    assertThrows(IllegalArgumentException.class, () -> optimizer.setMaximumBoundaryRefinementEvaluations(-1));
     assertThrows(IllegalStateException.class, () -> createOptimizer(fixture).setRelativeStepTolerance(0.25).optimize());
   }
 }

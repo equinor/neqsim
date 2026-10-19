@@ -14,6 +14,7 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.UtilityStreamSpecification;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TEMAClass;
 
 /**
@@ -186,6 +187,13 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
   @Override
   public HeatExchangerMechanicalDesignResponse getResponse() {
     return new HeatExchangerMechanicalDesignResponse(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void readDesignSpecifications() {
+    super.readDesignSpecifications();
+    loadProcessDesignParameters();
   }
 
   /** {@inheritDoc} */
@@ -555,6 +563,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param margin margin factor (e.g., 1.10 for 10%)
    */
   public void setDesignPressureMargin(double margin) {
+    overrideProcessDesignParameter("DesignPressureMargin");
     this.designPressureMargin = margin;
   }
 
@@ -573,6 +582,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param marginC temperature margin in Celsius
    */
   public void setDesignTemperatureMarginC(double marginC) {
+    overrideProcessDesignParameter("DesignTemperatureMargin");
     this.designTemperatureMarginC = marginC;
   }
 
@@ -591,6 +601,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param tempC minimum approach temperature in Celsius
    */
   public void setMinApproachTemperatureC(double tempC) {
+    overrideProcessDesignParameter("MinApproachTemperature");
     this.minApproachTemperatureC = tempC;
   }
 
@@ -627,6 +638,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param margin area margin factor
    */
   public void setAreaMarginFactor(double margin) {
+    overrideProcessDesignParameter("AreaMargin");
     this.areaMargin = margin;
   }
 
@@ -649,6 +661,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param resistance fouling resistance in m²K/W
    */
   public void setFoulingResistanceShellWater(double resistance) {
+    overrideProcessDesignParameter("FoulingResistanceShellWater");
     this.foulingResistanceShellWater = resistance;
   }
 
@@ -667,6 +680,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param resistance fouling resistance in m²K/W
    */
   public void setFoulingResistanceShellHC(double resistance) {
+    overrideProcessDesignParameter("FoulingResistanceShellHC");
     this.foulingResistanceShellHC = resistance;
   }
 
@@ -685,6 +699,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param resistance fouling resistance in m²K/W
    */
   public void setFoulingResistanceTubeWater(double resistance) {
+    overrideProcessDesignParameter("FoulingResistanceTubeWater");
     this.foulingResistanceTubeWater = resistance;
   }
 
@@ -703,6 +718,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param resistance fouling resistance in m²K/W
    */
   public void setFoulingResistanceTubeHC(double resistance) {
+    overrideProcessDesignParameter("FoulingResistanceTubeHC");
     this.foulingResistanceTubeHC = resistance;
   }
 
@@ -738,6 +754,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param velocity maximum velocity in m/s
    */
   public void setMaxTubeVelocity(double velocity) {
+    overrideProcessDesignParameter("MaxTubeVelocity");
     this.maxTubeVelocity = velocity;
   }
 
@@ -756,6 +773,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param velocity minimum velocity in m/s
    */
   public void setMinTubeVelocity(double velocity) {
+    overrideProcessDesignParameter("MinTubeVelocity");
     this.minTubeVelocity = velocity;
   }
 
@@ -774,6 +792,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param velocity maximum velocity in m/s
    */
   public void setMaxShellVelocity(double velocity) {
+    overrideProcessDesignParameter("MaxShellVelocity");
     this.maxShellVelocity = velocity;
   }
 
@@ -899,6 +918,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param thicknessMm tube wall thickness in mm
    */
   public void setTubeWallThicknessMm(double thicknessMm) {
+    overrideProcessDesignParameter("TubeWallThickness");
     this.tubeWallThicknessMm = thicknessMm;
   }
 
@@ -917,6 +937,7 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * @param lengthM maximum tube length in m
    */
   public void setMaxTubeLengthM(double lengthM) {
+    overrideProcessDesignParameter("MaxTubeLength");
     this.maxTubeLengthM = lengthM;
   }
 
@@ -1243,62 +1264,32 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
    * Loads heat exchanger design parameters from the database.
    */
   public void loadProcessDesignParameters() {
-    try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-            + "EQUIPMENTTYPE='HeatExchanger' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
-
-      while (dataSet.next()) {
-        String spec = dataSet.getString("SPECIFICATION");
-        double minVal = dataSet.getDouble("MINVALUE");
-        double maxVal = dataSet.getDouble("MAXVALUE");
-        double value = (minVal + maxVal) / 2.0;
-
-        switch (spec) {
-        case "DesignPressureMargin":
-          this.designPressureMargin = value;
-          break;
-        case "DesignTemperatureMargin":
-          this.designTemperatureMarginC = value;
-          break;
-        case "MinApproachTemperature":
-          this.minApproachTemperatureC = value;
-          break;
-        case "FoulingResistanceShellWater":
-          this.foulingResistanceShellWater = value;
-          break;
-        case "FoulingResistanceShellHC":
-          this.foulingResistanceShellHC = value;
-          break;
-        case "FoulingResistanceTubeWater":
-          this.foulingResistanceTubeWater = value;
-          break;
-        case "FoulingResistanceTubeHC":
-          this.foulingResistanceTubeHC = value;
-          break;
-        case "MaxTubeVelocity":
-          this.maxTubeVelocity = value;
-          break;
-        case "MinTubeVelocity":
-          this.minTubeVelocity = value;
-          break;
-        case "MaxShellVelocity":
-          this.maxShellVelocity = value;
-          break;
-        case "MaxTubeLength":
-          this.maxTubeLengthM = value;
-          break;
-        case "AreaMargin":
-          this.areaMargin = value;
-          break;
-        default:
-          // Ignore unknown parameters
-          break;
-        }
-      }
-    } catch (Exception ex) {
-      // Use default values if database lookup fails
-    }
+    java.util.Map<String, ProcessDesignParameters.Value> parameters = ProcessDesignParameters.load("HeatExchanger",
+        getProcessDesignCompanyIdentifier());
+    validateProcessDesignParameters(parameters, "DesignPressureMargin", "DesignTemperatureMargin",
+        "MinApproachTemperature", "FoulingResistanceShellWater", "FoulingResistanceShellHC",
+        "FoulingResistanceTubeWater", "FoulingResistanceTubeHC", "MaxTubeVelocity", "MinTubeVelocity",
+        "MaxShellVelocity", "MaxTubeLength", "AreaMargin", "TubeWallThickness");
+    this.designPressureMargin = processDesignParameter(parameters, "DesignPressureMargin", this.designPressureMargin,
+        1.0);
+    this.designTemperatureMarginC = processDesignParameter(parameters, "DesignTemperatureMargin",
+        this.designTemperatureMarginC, 1.0);
+    this.minApproachTemperatureC = processDesignParameter(parameters, "MinApproachTemperature",
+        this.minApproachTemperatureC, 1.0);
+    this.foulingResistanceShellWater = processDesignParameter(parameters, "FoulingResistanceShellWater",
+        this.foulingResistanceShellWater, 1.0);
+    this.foulingResistanceShellHC = processDesignParameter(parameters, "FoulingResistanceShellHC",
+        this.foulingResistanceShellHC, 1.0);
+    this.foulingResistanceTubeWater = processDesignParameter(parameters, "FoulingResistanceTubeWater",
+        this.foulingResistanceTubeWater, 1.0);
+    this.foulingResistanceTubeHC = processDesignParameter(parameters, "FoulingResistanceTubeHC",
+        this.foulingResistanceTubeHC, 1.0);
+    this.maxTubeVelocity = processDesignParameter(parameters, "MaxTubeVelocity", this.maxTubeVelocity, 1.0);
+    this.minTubeVelocity = processDesignParameter(parameters, "MinTubeVelocity", this.minTubeVelocity, 1.0);
+    this.maxShellVelocity = processDesignParameter(parameters, "MaxShellVelocity", this.maxShellVelocity, 1.0);
+    this.maxTubeLengthM = processDesignParameter(parameters, "MaxTubeLength", this.maxTubeLengthM, 1.0);
+    this.areaMargin = processDesignParameter(parameters, "AreaMargin", this.areaMargin, 1.0);
+    this.tubeWallThicknessMm = processDesignParameter(parameters, "TubeWallThickness", this.tubeWallThicknessMm, 1.0);
   }
 
   // ============================================================================

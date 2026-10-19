@@ -62,6 +62,19 @@ pump.run();
 Do not use `setHeadCurve`, `setEfficiencyCurve`, or `setNPSHRequiredCurve`; those convenience
 methods are not part of the current `Pump` API.
 
+The default `PumpChart` evaluates operating status in the same reduced-flow coordinate
+($Q/N$) as its head and efficiency curves. The positive-head-slope check, high-flow
+boundary and best-efficiency-point comparison therefore follow the requested speed,
+not the reference-speed absolute flow. `checkSurge1(flow, head)` retains its legacy
+reference-speed interpretation; use `checkSurge2(flow, speed)` for a speed-specific check.
+These are curve-based diagnostics: the `SURGE` and `STONEWALL` labels are heuristics,
+not measured stability limits or an OEM-approved operating envelope. They neither
+prohibit speed extrapolation nor replace minimum stable flow, NPSH or driver constraints.
+This reduced-curve behavior does not change the alternative spline-map implementation.
+`PumpOperatingStatusTest` checks synthetic speed similarity, and
+`NetworkPumpOperatingStatusTest` exercises migration and restoration on one canonical
+network with mass balance, head, power and host-power checks.
+
 ### Specified discharge temperature
 
 Calling `setOutletTemperature(...)` selects the fixed-temperature mode. NeqSim performs a TP

@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.separator.SeparatorInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
@@ -34,10 +35,15 @@ public class SeparatorDesignStandard extends DesignStandard {
    */
   public void setFg(double Fg) {
     this.Fg = Fg;
+    fgExplicitlySet = true;
   }
 
   double gasLoadFactor = 0.11;
   private double Fg = 0.8;
+  /** Whether the project explicitly selected the gas area fraction. */
+  private boolean fgExplicitlySet;
+  /** Whether the project explicitly selected the flow margin. */
+  private boolean volumeFactorExplicitlySet;
   private double volumetricDesignFactor = 1.0;
   private final MechanicalDesignMarginResult safetyMargins;
 
@@ -50,29 +56,10 @@ public class SeparatorDesignStandard extends DesignStandard {
   public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
     safetyMargins = computeSafetyMargins();
-    try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet = database
-            .getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
-                + resolveCompanyIdentifier() + "'"))) {
-      while (dataSet.next()) {
-        String specName = dataSet.getString("SPECIFICATION");
-        if (specName.equals("GasLoadFactor")) {
-          gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-        }
-        if (specName.equals("Fg")) {
-          Fg = (Double.parseDouble(dataSet.getString("MAXVALUE")) + Double.parseDouble(dataSet.getString("MINVALUE")))
-              / 2.0;
-        }
-        if (specName.equals("VolumetricDesignFactor")) {
-          volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
-              + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
-        }
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
+    java.util.Map<String, ProcessDesignParameters.Value> values = loadProcessRequirements("Separator", name);
+    gasLoadFactor = ProcessDesignParameters.require(values, "GasLoadFactor").midpoint();
+    Fg = ProcessDesignParameters.require(values, "Fg").midpoint();
+    volumetricDesignFactor = ProcessDesignParameters.require(values, "VolumetricDesignFactor").midpoint();
   }
 
   /**
@@ -108,6 +95,25 @@ public class SeparatorDesignStandard extends DesignStandard {
    */
   public void setVolumetricDesignFactor(double volumetricDesignFactor) {
     this.volumetricDesignFactor = volumetricDesignFactor;
+    volumeFactorExplicitlySet = true;
+  }
+
+  /**
+   * Check ownership of the gas-area fraction.
+   *
+   * @return true after an explicit setter call
+   */
+  public boolean isFgExplicitlySet() {
+    return fgExplicitlySet;
+  }
+
+  /**
+   * Check ownership of the volumetric flow margin.
+   *
+   * @return true after an explicit setter call
+   */
+  public boolean isVolumetricDesignFactorExplicitlySet() {
+    return volumeFactorExplicitlySet;
   }
 
   /**

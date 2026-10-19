@@ -14,7 +14,8 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
@@ -25,9 +26,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Abstract FluidBoundary class.
  *
  * <p>
- * Coefficient and correction data use primitive arrays. Deprecated transient Jama views preserve the live legacy
- * coefficient API without owning separate numerical data. Interphase-flux working state uses EJML. Serialized instances
- * containing the former Jama coefficient, correction or flux fields are not compatible with this layout.
+ * Coefficient and correction data use primitive arrays. Deprecated transient EJML views preserve live matrix mutation
+ * and replacement through synchronization with the canonical coefficient arrays. Interphase-flux working state uses
+ * EJML. Serialized instances containing the former JAMA coefficient, correction or flux fields are not compatible with
+ * this layout.
  * </p>
  *
  * @author asmund
@@ -68,7 +70,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * @deprecated Use the array accessors instead of accessing these compatibility views.
    */
   @Deprecated
-  protected transient Matrix[] massTransferCoefficientMatrix;
+  protected transient SimpleMatrix[] massTransferCoefficientMatrix;
   protected double[][][] binarySchmidtNumber;
   public double[][][] binaryMassTransferCoefficient;
   public double[] heatTransferCoefficient;
@@ -354,12 +356,12 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   protected final void setMassTransferCoefficientArray(int phase, double[][] coefficients) {
     massTransferCoefficientArray[phase] = coefficients;
     if (massTransferCoefficientMatrix != null) {
-      massTransferCoefficientMatrix[phase] = coefficients == null ? null : new Matrix(coefficients);
+      massTransferCoefficientMatrix[phase] = coefficients == null ? null : new SimpleMatrix(coefficients);
     }
   }
 
   /**
-   * Adopts replacements made through the legacy live Matrix array without copying numerical data.
+   * Copies pending mutations and replacements from live EJML views into the canonical coefficient arrays.
    *
    * <p>
    * This compatibility adapter should be removed with {@link #massTransferCoefficientMatrix} and
@@ -368,14 +370,14 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   private void synchronizeMassTransferCoefficientArray() {
     if (massTransferCoefficientMatrix != null) {
       for (int phase = 0; phase < massTransferCoefficientArray.length; phase++) {
-        Matrix view = massTransferCoefficientMatrix[phase];
-        massTransferCoefficientArray[phase] = view == null ? null : view.getArray();
+        SimpleMatrix view = massTransferCoefficientMatrix[phase];
+        massTransferCoefficientArray[phase] = view == null ? null : EjmlMatrixUtils.toArray(view);
       }
     }
   }
 
   /**
-   * Recreates transient views for the deprecated Matrix compatibility API after deserialization.
+   * Recreates transient views for the deprecated SimpleMatrix compatibility API after deserialization.
    *
    * <p>
    * This compatibility adapter should be removed with {@link #massTransferCoefficientMatrix} and
@@ -383,10 +385,10 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    */
   private void ensureMassTransferCoefficientViews() {
     if (massTransferCoefficientMatrix == null) {
-      massTransferCoefficientMatrix = new Matrix[massTransferCoefficientArray.length];
+      massTransferCoefficientMatrix = new SimpleMatrix[massTransferCoefficientArray.length];
       for (int phase = 0; phase < massTransferCoefficientArray.length; phase++) {
         double[][] coefficients = massTransferCoefficientArray[phase];
-        massTransferCoefficientMatrix[phase] = coefficients == null ? null : new Matrix(coefficients);
+        massTransferCoefficientMatrix[phase] = coefficients == null ? null : new SimpleMatrix(coefficients);
       }
     }
   }
@@ -409,7 +411,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    */
   @Deprecated
   @Override
-  public Matrix[] getMassTransferCoefficientMatrix() {
+  public SimpleMatrix[] getMassTransferCoefficientMatrix() {
     ensureMassTransferCoefficientViews();
     return massTransferCoefficientMatrix;
   }

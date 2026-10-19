@@ -228,16 +228,11 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         RealMatrix ans2 = null;
         RealMatrix bRealMatrix = new Array2DRowRealMatrix(bmatrix);
         if (localSystem.getPhase(0).getNumberOfComponents() > 1) {
-          // BigMatrixImpl fmatrixJama = new BigMatrixImpl(fmatrix);
-          RealMatrix fmatrixJama = new Array2DRowRealMatrix(fmatrix);
-          // Matrix fmatrixJama = new Matrix(fmatrix);
-          // BigMatrixImpl bmatrixJama = new BigMatrixImpl(bmatrix);
-          // Matrix bmatrixJama = new Matrix(bmatrix,
+          RealMatrix coefficientMatrix = new Array2DRowRealMatrix(fmatrix);
           // localSystem.getPhase(0).getNumberOfComponents() - 1);
           try {
-            // ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
-            // ans2 = new BigMatrixImpl(fmatrixJama.solve(bmatrix));
-            DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
+            DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(coefficientMatrix)
+                .getSolver();
             ans2 = solver1.solve(bRealMatrix);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);

@@ -6,7 +6,8 @@
 
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
 
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -107,13 +108,13 @@ public interface FluidBoundaryInterface extends Cloneable {
    * @return coefficient values indexed by phase, row and column; uninitialized phases remain null
    */
   public default double[][][] getMassTransferCoefficientArray() {
-    Matrix[] matrices = getMassTransferCoefficientMatrix();
+    SimpleMatrix[] matrices = getMassTransferCoefficientMatrix();
     if (matrices == null) {
       return null;
     }
     double[][][] values = new double[matrices.length][][];
     for (int phase = 0; phase < matrices.length; phase++) {
-      values[phase] = matrices[phase] == null ? null : matrices[phase].getArrayCopy();
+      values[phase] = matrices[phase] == null ? null : EjmlMatrixUtils.toArray(matrices[phase]);
     }
     return values;
   }
@@ -121,11 +122,11 @@ public interface FluidBoundaryInterface extends Cloneable {
   /**
    * Returns the legacy live mass-transfer coefficient views.
    *
-   * @return an array of {@link Jama.Matrix} objects
+   * @return an array of {@link SimpleMatrix} objects
    * @deprecated Use {@link #getMassTransferCoefficientArray()} for array-based access.
    */
   @Deprecated
-  public Matrix[] getMassTransferCoefficientMatrix();
+  public SimpleMatrix[] getMassTransferCoefficientMatrix();
 
   /**
    * getBinaryMassTransferCoefficient.

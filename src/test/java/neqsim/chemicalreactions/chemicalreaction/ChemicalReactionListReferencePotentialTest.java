@@ -92,6 +92,12 @@ class ChemicalReactionListReferencePotentialTest {
     list.createReactionMatrix(phase, components);
 
     double[] rates = list.calcReationRates(phase, components);
+    org.ejml.simple.SimpleMatrix rateColumn = list.calcReacRates(phase, components);
+    assertEquals(components.length, rateColumn.numRows());
+    assertEquals(1, rateColumn.numCols());
+    for (int component = 0; component < components.length; component++) {
+      assertEquals(rates[component], rateColumn.get(component, 0), 0.0);
+    }
 
     assertEquals(components.length, rates.length);
     double[][] stoichiometry = list.getReactionMatrix();

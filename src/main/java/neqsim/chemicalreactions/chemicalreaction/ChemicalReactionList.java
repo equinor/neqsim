@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -562,16 +562,16 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * Calculates reaction rates and returns them as a Jama column for legacy callers.
+   * Calculates reaction rates and returns them as an EJML column for legacy callers.
    *
    * @param phase thermodynamic phase used to evaluate the reaction rates
    * @param components reactive components in the expected output order
-   * @return component rates as a Jama column
+   * @return component rates as an EJML column
    * @deprecated Use {@link #calcReationRates(PhaseInterface, ComponentInterface[])} which returns a primitive array.
    */
   @Deprecated
-  public Matrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
-    return new Matrix(calcReationRates(phase, components), components.length);
+  public SimpleMatrix calcReacRates(PhaseInterface phase, ComponentInterface[] components) {
+    return new SimpleMatrix(components.length, 1, true, calcReationRates(phase, components));
   }
 
   /**
