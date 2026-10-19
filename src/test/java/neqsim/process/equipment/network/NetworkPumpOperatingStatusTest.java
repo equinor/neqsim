@@ -19,6 +19,57 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class NetworkPumpOperatingStatusTest extends NeqSimTest {
+  /** Absolute-flow spline diagnostics migrate without rebuilding the pump, topology or host. */
+  @Test
+  void alternativeMapMigrationRetainsItsOwnInterpolationAndHostIdentity() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    Stream reference = new Stream("alternative suction reference", fluid);
+    reference.run();
+    reference.getFluid().initProperties();
+    double kgSPerM3Hr = reference.getFluid().getDensity("kg/m3") / 3600.0;
+    LoopedPipeNetwork network = new LoopedPipeNetwork("alternative injection pump migration");
+    network.setFluidTemplate(fluid);
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setMaxIterations(20);
+    network.addSourceNode("suction", 5.0, 0.0);
+    network.addSinkNode("delivery", 40.0 * kgSPerM3Hr * 3600.0);
+    Pump pump = new Pump("existing alternative mapped pump");
+    pump.setPumpChartType("interpolate and extrapolate");
+    pump.getPumpChart().setCurves(new double[0], new double[] {1000.0, 2000.0},
+        new double[][] {{0, 20, 40, 60, 80, 100}, {0, 20, 40, 60, 80, 100}},
+        new double[][] {{200, 180, 160, 140, 120, 100}, {400, 380, 360, 340, 320, 300}},
+        new double[][] {{64, 76, 80, 76, 64, 44}, {44, 64, 76, 80, 76, 64}});
+    pump.getPumpChart().setUsePumpChart(true);
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.setSpeed(1000.0);
+    Object chart = pump.getPumpChart();
+    LoopedPipeNetwork.NetworkPipe edge = network.addPumpWithCurve("suction", "delivery", "pump", pump);
+    ProcessSystem area = new ProcessSystem();
+    area.add(network);
+    ProcessModel host = new ProcessModel();
+    host.add("injection", area);
+    network.run();
+    assertState(network, edge, pump, host, 40.0 * kgSPerM3Hr, "OPTIMAL");
+    double originalPressure = network.getNodePressure("delivery");
+    double originalPower = host.getPower("kW");
+
+    double[][] points = {{2000.0, 40.0, 360.0}, {2000.0, 60.0, 340.0}, {1500.0, 50.0, 250.0}, {1000.0, 40.0, 160.0}};
+    for (int index = 0; index < points.length; index++) {
+      edge.setPumpSpeed(points[index][0]);
+      network.getNode("delivery").setDemand(points[index][1] * kgSPerM3Hr);
+      network.run();
+      assertState(network, edge, pump, host, points[index][1] * kgSPerM3Hr, index == 0 ? "NORMAL" : "OPTIMAL");
+      assertEquals(points[index][2], edge.getPumpHeadM(), 1e-6,
+          "Linear head curves interpolate at absolute flow, not affinity-scaled flow");
+      assertSame(chart, pump.getPumpChart());
+      assertSame(edge, network.getPipe("pump"));
+    }
+    assertEquals(originalPressure, network.getNodePressure("delivery"), 1e-7);
+    assertEquals(originalPower, host.getPower("kW"), 1e-8);
+  }
+
   /** Status follows speed/demand changes while canonical identity and hydraulic similarity survive. */
   @Test
   void speedMigrationAndRestorationUseTheExistingPumpAndHost() {

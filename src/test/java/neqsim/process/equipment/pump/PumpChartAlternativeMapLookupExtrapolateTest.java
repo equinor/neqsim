@@ -5,12 +5,99 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.apache.commons.lang3.SerializationUtils;
 
 /**
  * Tests for PumpChartAlternativeMapLookupExtrapolate covering BEP, specific speed, NPSH, density/viscosity corrections,
  * and operating status.
  */
 class PumpChartAlternativeMapLookupExtrapolateTest {
+  /** Requested-speed BEP must follow absolute-flow interpolation, not reduced-flow affinity. */
+  @Test
+  void requestedSpeedBepFollowsTheEvaluatedEfficiencySurface() {
+    PumpChartAlternativeMapLookupExtrapolate map = migratingMap();
+    for (double requestedSpeed : new double[] {500.0, 1000.0, 1500.0, 2000.0, 2500.0}) {
+      double expectedFlow = requestedSpeed <= 1000.0 ? 40.0 : requestedSpeed >= 2000.0 ? 60.0 : 50.0;
+      double bep = map.getBestEfficiencyFlowRate(requestedSpeed);
+      assertEquals(expectedFlow, bep, 2.0, "BEP at " + requestedSpeed + " rpm");
+      assertTrue(map.getEfficiency(bep, requestedSpeed) >= map.getEfficiency(expectedFlow, requestedSpeed) - 0.05);
+    }
+  }
+
+  /** Status must compare with the BEP on the same speed slice. */
+  @Test
+  void optimalStatusMigratesWithTheAbsoluteFlowEfficiencyPeak() {
+    PumpChartAlternativeMapLookupExtrapolate map = migratingMap();
+    assertEquals("OPTIMAL", map.getOperatingStatus(40.0, 1000.0));
+    assertEquals("OPTIMAL", map.getOperatingStatus(50.0, 1500.0));
+    assertEquals("OPTIMAL", map.getOperatingStatus(60.0, 2000.0));
+    assertEquals("NORMAL", map.getOperatingStatus(40.0, 2000.0));
+  }
+
+  /** Replacing curves must not reuse the first map's cached BEP. */
+  @Test
+  void replacingMapRefreshesReferenceAndRequestedSpeedBep() {
+    PumpChartAlternativeMapLookupExtrapolate map = migratingMap();
+    assertEquals(40.0, map.getBestEfficiencyFlowRate(), 2.0);
+    map.setCurves(new double[0], new double[] {1000.0}, new double[][] {{20.0, 60.0, 100.0}},
+        new double[][] {{180.0, 140.0, 100.0}}, new double[][] {{60.0, 80.0, 60.0}});
+    assertEquals(60.0, map.getBestEfficiencyFlowRate(), 1e-12);
+    assertEquals(60.0, map.getBestEfficiencyFlowRate(2000.0), 1e-12);
+  }
+
+  /** The existing mutable curve access must not leave stale diagnostic evidence. */
+  @Test
+  void mutableCurveUpdateRefreshesBepWithoutRebuildingTheChart() {
+    PumpChartAlternativeMapLookupExtrapolate map = migratingMap();
+    assertEquals(40.0, map.getBestEfficiencyFlowRate(), 2.0);
+    map.getChartValues().get(0).polytropicEfficiency = new double[] {44, 64, 76, 80, 76, 64};
+    assertEquals(60.0, map.getBestEfficiencyFlowRate(), 2.0);
+  }
+
+  /**
+   * Build two synthetic non-affine speed curves with peaks near 40 and 60 actual m3/hr.
+   *
+   * @return configured spline map
+   */
+  private PumpChartAlternativeMapLookupExtrapolate migratingMap() {
+    PumpChartAlternativeMapLookupExtrapolate map = new PumpChartAlternativeMapLookupExtrapolate();
+    map.setCurves(new double[0], new double[] {1000.0, 2000.0},
+        new double[][] {{0, 20, 40, 60, 80, 100}, {0, 20, 40, 60, 80, 100}},
+        new double[][] {{200, 180, 160, 140, 120, 100}, {400, 380, 360, 340, 320, 300}},
+        new double[][] {{64, 76, 80, 76, 64, 44}, {44, 64, 76, 80, 76, 64}});
+    return map;
+  }
+
+  /** Added curves and serialization retain fresh requested-speed diagnostics and independent ownership. */
+  @Test
+  void addedCurveAndSerializedCopyUseCurrentMapData() {
+    PumpChartAlternativeMapLookupExtrapolate map = migratingMap();
+    assertEquals(60.0, map.getBestEfficiencyFlowRate(3000.0), 2.0);
+    map.addCurve(3000.0, new double[] {0, 20, 40, 60, 80, 100}, new double[] {600, 580, 560, 540, 520, 500},
+        new double[] {16, 44, 64, 76, 80, 76});
+    assertEquals(80.0, map.getBestEfficiencyFlowRate(3000.0), 2.0);
+    PumpChartAlternativeMapLookupExtrapolate copy = SerializationUtils.clone(map);
+    assertEquals(map.getBestEfficiencyFlowRate(3000.0), copy.getBestEfficiencyFlowRate(3000.0), 0.0);
+    copy.getChartValues().get(0).polytropicEfficiency = new double[] {44, 64, 76, 80, 76, 64};
+    assertEquals(60.0, copy.getBestEfficiencyFlowRate(), 2.0);
+    assertEquals(40.0, map.getBestEfficiencyFlowRate(), 2.0);
+  }
+
+  /** A bounded repeated diagnostic workload must not become an unbounded optimization search. */
+  @Test
+  @Timeout(10)
+  void repeatedSpeedSlicesRemainBoundedAndDeterministic() {
+    PumpChartAlternativeMapLookupExtrapolate map = migratingMap();
+    for (int iteration = 0; iteration < 200; iteration++) {
+      assertEquals("OPTIMAL", map.getOperatingStatus(50.0, 1500.0));
+      assertEquals(40.0, map.getBestEfficiencyFlowRate(), 2.0);
+    }
+    assertEquals(0.0, map.getBestEfficiencyFlowRate(0.0), 0.0);
+    assertEquals(0.0, map.getBestEfficiencyFlowRate(Double.NaN), 0.0);
+    assertEquals(0.0, new PumpChartAlternativeMapLookupExtrapolate().getBestEfficiencyFlowRate(), 0.0);
+  }
+
   /** Shared chart instance loaded with typical pump curves. */
   private static PumpChartAlternativeMapLookupExtrapolate chart;
   private static double[] speed;
