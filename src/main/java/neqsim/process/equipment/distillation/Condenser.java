@@ -373,7 +373,7 @@ public class Condenser extends SimpleTray {
     // System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " +
     // mixedStream.getThermoSystem().getTemperature());
-    duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
+    duty = getMaterialOutletEnthalpy() - calcMixStreamEnthalpy0();
     getEnergyPort("heatDuty").setDuty(duty);
     // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
 

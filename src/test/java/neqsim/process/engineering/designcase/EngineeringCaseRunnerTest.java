@@ -159,6 +159,161 @@ class EngineeringCaseRunnerTest {
     }
   }
 
+  @Test
+  void convergenceBypassIsPolicyAcceptanceNotPhysicalConvergence() {
+    ProcessSystem unsolved = new UnsolvedProcess();
+    EngineeringMetric metric = new EngineeringMetric("fixed.pressure", "fixed", "Policy fixture", "bara",
+        EngineeringMetric.GoverningDirection.MAXIMUM, new EngineeringMetric.Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            assertFalse(process.solved());
+            return 50.0;
+          }
+        }).setAcceptanceRange(null, Double.valueOf(90.0));
+    EngineeringDesignCase designCase = new EngineeringDesignCase("unsolved", "Unsolved policy fixture",
+        EngineeringDesignCase.Type.CUSTOM, new EngineeringDesignCase.Configurator() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public void configure(ProcessSystem process) {
+            assertFalse(process.solved());
+          }
+        });
+    EngineeringCaseSet cases = new EngineeringCaseSet("convergence-policy").addCase(designCase).addMetric(metric);
+
+    EngineeringCaseRunReport strict = EngineeringCaseRunner.run(unsolved, cases,
+        EngineeringCaseRunOptions.sequential());
+    assertFalse(strict.isComplete());
+    assertFalse(strict.isAccepted());
+    assertFalse(strict.getEnvelope().getCaseResults().get(0).isConverged());
+    assertEquals("CALCULATED_NOT_CONVERGED", strict.getEnvelope().getCaseResults().get(0).getStatus());
+    assertEquals(1, strict.getEnvelope().getMissingGoverningMetricIds().size());
+
+    EngineeringCaseRunReport bypass = EngineeringCaseRunner.run(unsolved, cases,
+        EngineeringCaseRunOptions.builder().requireConvergence(false).build());
+    assertFalse(unsolved.solved());
+    assertTrue(bypass.isComplete());
+    assertTrue(bypass.isAccepted());
+    assertTrue(bypass.getEnvelope().getCaseResults().get(0).isConverged());
+    assertEquals("CALCULATED", bypass.getEnvelope().getCaseResults().get(0).getStatus());
+    assertEquals(50.0, bypass.getEnvelope().getGoverningValues().get("fixed.pressure").getValue(), 1.0e-10);
+  }
+
+  @Test
+  void disabledRequiredCaseDoesNotBlockAnOtherwiseAcceptedEnvelope() {
+    EngineeringDesignCase disabled = caseAtPressure("disabled-required", 120.0, 1).setRequired(true).setEnabled(false);
+    EngineeringDesignCase enabled = caseAtPressure("enabled", 50.0, 100);
+    EngineeringCaseSet cases = new EngineeringCaseSet("skipped-coverage").addCase(disabled).addCase(enabled)
+        .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(90.0)));
+    EngineeringCaseRunOptions options = EngineeringCaseRunOptions.builder()
+        .failurePolicy(EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT).build();
+
+    EngineeringCaseRunReport report = EngineeringCaseRunner.run(process(), cases, options);
+    assertEquals("SKIPPED", report.getEnvelope().getCaseResults().get(0).getStatus());
+    assertTrue(report.getEnvelope().getCaseResults().get(0).getValues().isEmpty());
+    assertEquals(1, report.getEnvelope().getSkippedCaseCount());
+    assertEquals(0, report.getEnvelope().getLimitViolationCount());
+    assertTrue(report.isComplete());
+    assertTrue(report.isAccepted());
+
+    enabled.setEnabled(false);
+    EngineeringCaseRunReport allDisabled = EngineeringCaseRunner.run(process(), cases,
+        EngineeringCaseRunOptions.sequential());
+    assertEquals(2, allDisabled.getEnvelope().getSkippedCaseCount());
+    assertFalse(allDisabled.isComplete());
+    assertFalse(allDisabled.isAccepted());
+    assertEquals("FEED.pressure", allDisabled.getEnvelope().getMissingGoverningMetricIds().get(0));
+    assertThrows(EngineeringCaseExecutionException.class, () -> EngineeringCaseRunner.run(process(), cases, options));
+  }
+
+  @Test
+  void optionalCaseFailuresStillMakeTheEnvelopeIncomplete() {
+    EngineeringDesignCase failing = new EngineeringDesignCase("optional", "Optional failing case",
+        EngineeringDesignCase.Type.CUSTOM, new EngineeringDesignCase.Configurator() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public void configure(ProcessSystem process) {
+            throw new IllegalStateException("Intentional optional-case failure");
+          }
+        }).setRequired(false);
+    EngineeringCaseSet cases = new EngineeringCaseSet("optional-failure").addCase(caseAtPressure("normal", 50.0, 10))
+        .addCase(failing)
+        .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(90.0)));
+
+    EngineeringCaseRunReport report = EngineeringCaseRunner.run(process(), cases,
+        EngineeringCaseRunOptions.sequential());
+    assertEquals(1, report.getEnvelope().getFailedCaseCount());
+    assertTrue(report.getEnvelope().getMissingGoverningMetricIds().isEmpty());
+    assertFalse(report.isComplete());
+    assertFalse(report.isAccepted());
+  }
+
+  @Test
+  void governingTiesUsePriorityThenIdNotInsertionOrApproval() {
+    for (EngineeringMetric.GoverningDirection direction : EngineeringMetric.GoverningDirection.values()) {
+      EngineeringMetric metric = new EngineeringMetric("FEED.tie", "FEED", "Equal pressure", "bara", direction,
+          new EngineeringMetric.Extractor() {
+            private static final long serialVersionUID = 1000L;
+
+            @Override
+            public double extract(ProcessSystem process) {
+              return ((Stream) process.getUnit("FEED")).getPressure("bara");
+            }
+          }).setAcceptanceRange(null, Double.valueOf(90.0));
+      EngineeringDesignCase first = caseAtPressure("first-approved", 50.0, 100).setApprovalStatus("APPROVED");
+      EngineeringDesignCase second = caseAtPressure("second-unreviewed", 50.0, 1).setApprovalStatus("REVIEW_REQUIRED");
+      EngineeringCaseSet cases = new EngineeringCaseSet("ties").addCase(first).addCase(second).addMetric(metric);
+      for (int parallelism : new int[] {1, 2}) {
+        EngineeringCaseRunReport report = EngineeringCaseRunner.run(process(), cases,
+            EngineeringCaseRunOptions.builder().parallelism(parallelism).build());
+        assertEquals("second-unreviewed", report.getEnvelope().getGoverningValues().get("FEED.tie").getDesignCaseId());
+        assertTrue(report.isAccepted());
+
+        EngineeringCaseSet samePriority = new EngineeringCaseSet("id-ties").addCase(caseAtPressure("z-first", 50.0, 10))
+            .addCase(caseAtPressure("a-second", 50.0, 10)).addMetric(metric);
+        EngineeringCaseRunReport idTie = EngineeringCaseRunner.run(process(), samePriority,
+            EngineeringCaseRunOptions.builder().parallelism(parallelism).build());
+        assertEquals("a-second", idTie.getEnvelope().getGoverningValues().get("FEED.tie").getDesignCaseId());
+      }
+    }
+  }
+
+  @Test
+  void optionalLimitViolationDoesNotTriggerIncompleteResultFailurePolicy() {
+    EngineeringCaseSet cases = new EngineeringCaseSet("optional-limit").addCase(caseAtPressure("normal", 50.0, 10))
+        .addCase(caseAtPressure("optional-high-pressure", 100.0, 20).setRequired(false))
+        .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(90.0)));
+    EngineeringCaseRunReport report = EngineeringCaseRunner.run(process(), cases, EngineeringCaseRunOptions.builder()
+        .failurePolicy(EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT).build());
+
+    assertTrue(report.isComplete());
+    assertFalse(report.isAccepted());
+    assertEquals(1, report.getEnvelope().getLimitViolationCount());
+  }
+
+  /** Deterministic software-policy fixture, not a physical simulation benchmark. */
+  private static final class UnsolvedProcess extends ProcessSystem {
+    private static final long serialVersionUID = 1000L;
+
+    @Override
+    public synchronized ProcessSystem copy() {
+      return new UnsolvedProcess();
+    }
+
+    @Override
+    public void run() {
+      // Deliberately retain an unsolved state for convergence-policy assertions.
+    }
+
+    @Override
+    public boolean solved() {
+      return false;
+    }
+  }
+
   private EngineeringDesignCase caseAtPressure(String id, final double pressureBara, int priority) {
     return new EngineeringDesignCase(id, id, EngineeringDesignCase.Type.CUSTOM,
         new EngineeringDesignCase.Configurator() {

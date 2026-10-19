@@ -8,6 +8,7 @@ import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
@@ -144,13 +145,44 @@ class UMRPRUPhaseEnvelopeRegressionTest {
       solver.solve(point);
       solver.init();
       solver.setfvec();
-      assertTrue(solver.fvec.norm2() < 1.0e-8, "equilibrium residual at point " + point);
+      assertTrue(new EjmlLinearAlgebra().euclideanNorm(solver.fvec) < 1.0e-8, "equilibrium residual at point " + point);
       for (int component = 0; component < 3; component++) {
         double recovered = fluid.getBeta(0) * fluid.getPhase(0).getComponent(component).getx()
             + fluid.getBeta(1) * fluid.getPhase(1).getComponent(component).getx();
         assertEquals(fluid.getComponent(component).getz(), recovered, 1.0e-10);
       }
     }
+  }
+
+  /**
+   * A small fugacity residual cannot qualify a volume stalled at a spinodal instead of an EOS pressure root.
+   *
+   * @throws Exception if the initial saturation calculation fails
+   */
+  @Test
+  void pureEthaneContinuationRetainsOnlyEosPressureRoots() throws Exception {
+    SystemInterface fluid = new SystemSrkEos(200.0, 1.0);
+    fluid.addComponent("ethane", 1.0);
+    fluid.setMixingRule("classic");
+    new ThermodynamicOperations(fluid).dewPointTemperatureFlash();
+    fluid.setBeta(1.0 - 1.0e-10);
+    SysNewtonRhapsonPhaseEnvelope solver = new SysNewtonRhapsonPhaseEnvelope(fluid, 2, 1);
+    int acceptedPoints = 0;
+    for (int point = 1; point <= 50; point++) {
+      try {
+        solver.calcInc(point);
+        solver.solve(point);
+      } catch (IllegalStateException endOfBranch) {
+        break;
+      }
+      acceptedPoints++;
+      for (int phase = 0; phase < 2; phase++) {
+        double pressureFromVolume = ((neqsim.thermo.phase.PhaseEosInterface) fluid.getPhase(phase)).calcPressure();
+        assertEquals(fluid.getPressure(), pressureFromVolume, 1.0e-6 * fluid.getPressure(),
+            "accepted point " + point + ", phase " + phase + " must satisfy the EOS pressure equation");
+      }
+    }
+    assertTrue(acceptedPoints >= 20, "must trace the saturation branch into the region of the former failure");
   }
 
   @Test
@@ -166,9 +198,9 @@ class UMRPRUPhaseEnvelopeRegressionTest {
       solver.solve(point);
     }
     SystemInterface accepted = fluid.clone();
-    double[] state = solver.u.getColumnPackedCopy();
+    double[] state = solver.u.clone();
     solver.calcCrit();
-    assertArrayEquals(state, solver.u.getColumnPackedCopy());
+    assertArrayEquals(state, solver.u);
     assertEquals(accepted.getTemperature(), fluid.getTemperature(), 0.0);
     assertEquals(accepted.getPressure(), fluid.getPressure(), 0.0);
     for (int phase = 0; phase < 2; phase++) {
@@ -181,7 +213,8 @@ class UMRPRUPhaseEnvelopeRegressionTest {
       }
     }
     solver.setfvec();
-    assertTrue(solver.fvec.norm2() < 1.0e-8, "critical refinement must not contaminate the accepted residual");
+    assertTrue(new EjmlLinearAlgebra().euclideanNorm(solver.fvec) < 1.0e-8,
+        "critical refinement must not contaminate the accepted residual");
   }
 
   @ParameterizedTest
@@ -213,19 +246,22 @@ class UMRPRUPhaseEnvelopeRegressionTest {
 
       @Override
       public void setfvec() {
-        fvec = new Jama.Matrix(neq, 1);
-        fvec.set(0, 0, 1.0);
+        fvec = new double[neq];
+        fvec[0] = 1.0;
       }
 
       @Override
       public void setJac() {
-        Jac = Jama.Matrix.identity(neq, neq).times(1.0e12);
+        Jac = new double[neq][neq];
+        for (int diagonal = 0; diagonal < neq; diagonal++) {
+          Jac[diagonal][diagonal] = 1.0e12;
+        }
       }
     };
-    double[] previous = solver.uold.getColumnPackedCopy();
+    double[] previous = solver.uold.clone();
     solver.calcInc(1);
     assertThrows(IllegalStateException.class, () -> solver.solve(1));
-    assertArrayEquals(previous, solver.uold.getColumnPackedCopy(), "failed point must not enter converged history");
+    assertArrayEquals(previous, solver.uold, "failed point must not enter converged history");
   }
 
   @Test

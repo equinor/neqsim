@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Newton working matrices use EJML storage. Subclasses using these protected fields must use {@link DMatrixRMaj};
  * serialized instances containing the former Jama working matrices are not compatible with this representation.
- * Coefficient data use primitive arrays; deprecated exported Jama views retain their live behavior.
+ * Coefficient data use primitive arrays; deprecated exported EJML views retain their live behavior.
  *
  * @author asmund
  * @version $Id: $Id

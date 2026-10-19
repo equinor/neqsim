@@ -417,6 +417,66 @@ class FieldToFacilityOptimizationAcceptanceTest {
     }
   }
 
+  /**
+   * Verify the live field search refines a recovered driver-power rejection and replays the final feasible choke point.
+   */
+  @Test
+  void refinesCommonShaftDriverLimitInLiveFieldSearch() {
+    Fixture fixture = createFixture();
+    configureLifecycleCapacityLimits(fixture, 10.0);
+    double baselineDriverPower = fixture.commonShaftEvidence("driver-baseline").getGearboxInputPowerKw();
+    fixture.networkUnit.getHydraulicNetwork().getPipe("choke A").setChokeOpening(95.0);
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    double highDriverPower = fixture.commonShaftEvidence("driver-high-rate").getGearboxInputPowerKw();
+    fixture.networkUnit.getHydraulicNetwork().getPipe("choke A").setChokeOpening(70.0);
+    fixture.model.run();
+    assertTrue(fixture.model.isModelConverged());
+    assertTrue(highDriverPower > baselineDriverPower);
+
+    double driverLimitKw = 0.5 * (baselineDriverPower + highDriverPower);
+    fixture.driver.setMaxPower(driverLimitKw);
+    ProcessModelSimulationEvaluator simulation = createSimulationEvaluator(fixture, fixture.sharedPowerLimitKw * 10.0);
+    ProcessModelOperatingAction chokeA = ProcessModelOperatingAction.continuous("driver-limited-choke-a",
+        "Driver-limited producer A choke", "Field::field network.choke.choke A.opening", 70.0, 95.0, "%",
+        "synthetic common-shaft driver boundary");
+    ProcessModelOperatingActionSetEvaluator candidates = new ProcessModelOperatingActionSetEvaluator(
+        "driver-limited-field-actions", "Driver-limited field actions", "synthetic live field driver refinement",
+        simulation, Arrays.asList(chokeA))
+        .requireHydraulicConstraint(HydraulicLimitRole.WELL_INFLOW_OUTFLOW, "Field", "field network",
+            "producer A deliverability", "synthetic well deliverability")
+        .requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS, "Field", "field network",
+            "A HP route capacity", "synthetic per-line operating limit");
+    CandidateSetEvaluationResult seedEvaluation = candidates.evaluate(new double[] {70.0});
+    assertTrue(seedEvaluation.isBaselineRestored(), seedEvaluation.getDiagnostics().toString());
+    assertTrue(seedEvaluation.isBaselineSimulationConverged(), seedEvaluation.getDiagnostics().toString());
+    OperatingPointSearchResult result = new ProcessModelOperatingPointOptimizer("driver-limited-field-search",
+        "Driver-limited field search", "synthetic qualified common-shaft driver boundary", candidates)
+        .setInitialCandidate(new double[] {70.0}).setInitialStepFraction(1.0).setRelativeStepTolerance(0.01)
+        .setMaximumBoundaryRefinementEvaluations(8).setMaximumEvaluations(24)
+        .setObjectiveImprovementTolerance(1.0e-6, "synthetic export-rate comparison tolerance").optimize();
+
+    assertTrue(result.isAcceptedPointReplayed(), result.getOutcome() + ": " + result.getDiagnostics());
+    assertTrue(result.getBoundaryRefinementEvaluationCount() > 0);
+    assertTrue(result.getAcceptedCandidateValues()[0] > 70.0);
+    assertTrue(result.getAcceptedCandidateValues()[0] < 95.0);
+    assertTrue(result.getCandidates().stream()
+        .anyMatch(record -> !record.getEvaluation().isFeasible() && record.getEvaluation().getPlantConstraintEvidence()
+            .stream().anyMatch(evidence -> evidence.getQualifiedConstraintId().endsWith("#driver-maximum-power")
+                && evidence.hasAvailableEvidence() && !evidence.isFeasible())));
+    assertTrue(result.getCandidates().stream().filter(record -> record.isBoundaryRefinement())
+        .anyMatch(record -> record.getEvaluation().isFeasible() && record.getEvaluation().getPlantConstraintEvidence()
+            .stream().anyMatch(evidence -> evidence.getQualifiedConstraintId().endsWith("#driver-maximum-power")
+                && evidence.hasAvailableEvidence() && evidence.isFeasible())));
+    PlantConstraintEvidence acceptedDriver = result.getAcceptedPointReplay().getEvaluation()
+        .getPlantConstraintEvidence().stream()
+        .filter(evidence -> evidence.getQualifiedConstraintId().endsWith("#driver-maximum-power")).findFirst()
+        .orElseThrow(() -> new AssertionError("Missing accepted driver-power evidence"));
+    assertTrue(acceptedDriver.isFeasible());
+    assertEquals(driverLimitKw, acceptedDriver.getSample().getApplicableLimit(), 0.0);
+    assertBaselineRestored(fixture);
+  }
+
   /** Evaluate one independent ten-well accepted point and its choke, route and host-power slices. */
   private LifecyclePeriod evaluateLifecyclePeriod(String periodId, Fixture fixture, double sharedPowerLimitKw) {
     ProcessModelSimulationEvaluator simulation = createSimulationEvaluator(fixture, sharedPowerLimitKw);

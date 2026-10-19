@@ -106,7 +106,7 @@ acetone,67-64-1,imported_local_temperature_expression,? C L M Q R T V X
 HS-,15035-72-0,ionic_not_a_neutral_Henry_solute,
 S--,18496-25-8,ionic_not_a_neutral_Henry_solute,
 ethanol,64-17-5,imported_local_temperature_expression,? L M Q T V X
-DEA,0-0-0-0,no_exact_CAS_match_in_source_archive,
+DEA,111-42-2,held_reactive_amine_joint_model_requalification,M Q V
 DEA+,0-0-0-0,ionic_not_a_neutral_Henry_solute,
 DEACOO-,0-0-0-0,ionic_not_a_neutral_Henry_solute,
 Piperazine++,0-0-0-0,ionic_not_a_neutral_Henry_solute,

@@ -10,8 +10,8 @@ of a file and the statements inside a method. The examples are compiled and
 executed directly from this page by `MathAndExpanderDocumentationTest`.
 
 Dense chemical-equilibrium, flash-stability, surface-tension and parameter-fitting
-operations use EJML directly or through `LinearAlgebraOperations`. JAMA remains
-required for the established phase-envelope solver and compatibility APIs.
+operations, including phase-envelope continuation, use EJML directly or through
+`LinearAlgebraOperations`. JAMA is absent from both production and test dependencies.
 The [migration and dependency retirement guide](../development/jama-ejml-migration)
 records the remaining boundaries and release gates. Backend substitution alone
 does not establish a performance improvement. Numerical tests compare physical
@@ -199,7 +199,7 @@ a modeling error.
 
 ## Matrix Operations
 
-NeqSim uses EJML, Apache Commons Math, and JAMA. For example, solve `A x = b`
+NeqSim uses EJML and Apache Commons Math for dense matrix calculations. For example, solve `A x = b`
 with EJML:
 
 <!-- doc-test: math-matrix -->

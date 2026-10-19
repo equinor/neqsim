@@ -4,12 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.Container;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.DoubleSupplier;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -22,6 +24,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.data.DatabaseMechanicalDesignDataSource;
 import neqsim.process.mechanicaldesign.data.MechanicalDesignDataSource;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 import neqsim.process.mechanicaldesign.designstandards.AdsorptionDehydrationDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.CompressorDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.DesignStandard;
@@ -528,7 +531,9 @@ public class MechanicalDesign implements java.io.Serializable {
     return Double.NaN;
   }
 
-  private String companySpecificDesignStandards = "Statoil";
+  private String companySpecificDesignStandards = "default";
+  /** Database process supplement, distinct from an externally supplied design-limit company. */
+  private String processDesignCompanyIdentifier = "default";
   private ProcessEquipmentInterface processEquipment = null;
   // private String pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
   // private String pipingDesignStandard="Statoil";
@@ -859,6 +864,114 @@ public class MechanicalDesign implements java.io.Serializable {
     return new PressureUnit(getMinDesignPressure(), "bara").getValue(unit);
   }
 
+  /** Project-owned process parameters; independent of their numerical value. */
+  private Set<String> processParameterOverrides = new HashSet<String>();
+
+  /** Actual sources of the most recently applied process parameters. */
+  private Map<String, String> processParameterSources = new LinkedHashMap<String, String>();
+
+  /**
+   * Record an explicit project override, including values equal to the built-in default.
+   *
+   * @param specification database parameter name
+   */
+  protected void overrideProcessDesignParameter(String specification) {
+    if (processParameterOverrides == null) {
+      processParameterOverrides = new HashSet<String>();
+    }
+    if (processParameterSources == null) {
+      processParameterSources = new LinkedHashMap<String, String>();
+    }
+    processParameterOverrides.add(specification);
+    processParameterSources.put(specification, "USER_OVERRIDE");
+  }
+
+  /**
+   * Check whether a process property is explicitly owned by the project.
+   *
+   * @param specification database parameter name
+   * @return true when a setter has selected a project value
+   */
+  public boolean isProcessDesignParameterOverridden(String specification) {
+    return processParameterOverrides != null && processParameterOverrides.contains(specification);
+  }
+
+  /**
+   * Return ownership to the database on the next specification read or explicit reload.
+   *
+   * @param specification database parameter name
+   */
+  public void clearProcessDesignParameterOverride(String specification) {
+    if (processParameterOverrides != null) {
+      processParameterOverrides.remove(specification);
+    }
+    if (processParameterSources != null) {
+      processParameterSources.remove(specification);
+    }
+  }
+
+  /**
+   * Return the actual source of each applied parameter. Built-in values and project overrides are explicit.
+   *
+   * @return immutable source snapshot keyed by database specification
+   */
+  public Map<String, String> getProcessDesignParameterSources() {
+    return processParameterSources == null ? Collections.<String, String>emptyMap()
+        : Collections.unmodifiableMap(new LinkedHashMap<String, String>(processParameterSources));
+  }
+
+  /**
+   * Record a source when a derived equipment standard supplies a value.
+   *
+   * @param specification database parameter name
+   * @param source actual source identifier
+   */
+  protected void recordProcessDesignParameterSource(String specification, String source) {
+    if (processParameterSources == null) {
+      processParameterSources = new LinkedHashMap<String, String>();
+    }
+    processParameterSources.put(specification, source);
+  }
+
+  /**
+   * Validate the whole set before assigning any process property.
+   *
+   * @param parameters loaded snapshot
+   * @param specifications required database keys
+   * @throws IllegalStateException if an unoverridden property is missing
+   */
+  protected void validateProcessDesignParameters(Map<String, ProcessDesignParameters.Value> parameters,
+      String... specifications) {
+    for (String key : specifications) {
+      if (!isProcessDesignParameterOverridden(key)) {
+        ProcessDesignParameters.require(parameters, key);
+      }
+    }
+  }
+
+  /**
+   * Apply a loaded midpoint unless the project explicitly owns the property.
+   *
+   * @param parameters complete validated database snapshot
+   * @param specification database key
+   * @param current existing project value retained only for an explicit override
+   * @param scale conversion from database units to the public API units
+   * @return value to assign
+   */
+  protected double processDesignParameter(Map<String, ProcessDesignParameters.Value> parameters, String specification,
+      double current, double scale) {
+    if (processParameterSources == null) {
+      processParameterSources = new LinkedHashMap<String, String>();
+    }
+    if (processParameterOverrides != null && processParameterOverrides.contains(specification)) {
+      processParameterSources.put(specification, "USER_OVERRIDE");
+      return current;
+    }
+    ProcessDesignParameters.Value parameter = ProcessDesignParameters.require(parameters, specification);
+    processParameterSources.put(specification, parameter.source());
+    return parameter.midpoint() * scale;
+  }
+
   /**
    * readDesignSpecifications.
    */
@@ -1153,46 +1266,76 @@ public class MechanicalDesign implements java.io.Serializable {
   }
 
   /**
+   * Return the database process supplement actually selected for this equipment.
+   *
+   * @return canonical database company; default for a company verified by an external limits source
+   */
+  public String getProcessDesignCompanyIdentifier() {
+    return processDesignCompanyIdentifier == null ? resolveProcessDesignCompany(companySpecificDesignStandards)
+        : processDesignCompanyIdentifier;
+  }
+
+  /**
+   * Resolve database companies or verify an explicitly configured design-limit source.
+   *
+   * @param identifier requested company
+   * @return canonical database company supplying process requirements
+   * @throws IllegalArgumentException if no configured source recognizes the company
+   */
+  private String resolveProcessDesignCompany(String identifier) {
+    try {
+      return ProcessDesignParameters.resolveCompany(identifier);
+    } catch (IllegalArgumentException missing) {
+      String normalized = DesignStandard.normalizeCompanyIdentifier(identifier);
+      if (!normalized.isEmpty()) {
+        for (MechanicalDesignDataSource source : getActiveDesignDataSources()) {
+          if (source.getDesignLimits(resolveEquipmentType(), normalized).isPresent()) {
+            return "default";
+          }
+        }
+      }
+      throw missing;
+    }
+  }
+
+  /**
    * Setter for the field <code>companySpecificDesignStandards</code>.
    *
    * @param companySpecificDesignStandards the companySpecificDesignStandards to set
    */
   public void setCompanySpecificDesignStandards(String companySpecificDesignStandards) {
-    this.companySpecificDesignStandards = DesignStandard.normalizeCompanyIdentifier(companySpecificDesignStandards);
-
-    if (this.companySpecificDesignStandards.equals("StatoilTR")) {
-      getDesignStandard().put("pressure vessel design code",
-          new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
-      getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("StatoilTR", this));
-      getDesignStandard().put("adsorption dehydration process design",
-          new AdsorptionDehydrationDesignStandard("", this));
-      getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("plate Joint Efficiency design codes",
-          new JointEfficiencyPlateStandard("Statoil_TR1414", this));
-      getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
-
-      // pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
-      // setPipingDesignStandard("TR1945_Statoil");
-      // setValveDesignStandard("TR1903_Statoil");
-    } else {
-      logger.debug("using default mechanical design standards...no design standard {}",
-          this.companySpecificDesignStandards);
-      getDesignStandard().put("pressure vessel design code",
-          new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
-      getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("StatoilTR", this));
-      getDesignStandard().put("adsorption dehydration process design",
-          new AdsorptionDehydrationDesignStandard("", this));
-      getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("compressor design codes", new CompressorDesignStandard("StatoilTR", this));
-      getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
-      getDesignStandard().put("plate Joint Efficiency design codes",
-          new JointEfficiencyPlateStandard("Statoil_TR1414", this));
-      getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
+    String processCompany = resolveProcessDesignCompany(companySpecificDesignStandards);
+    String company = "default".equals(processCompany)
+        ? DesignStandard.normalizeCompanyIdentifier(companySpecificDesignStandards)
+        : processCompany;
+    if ("default".equalsIgnoreCase(company)) {
+      company = "default";
     }
+    String previousCompany = this.companySpecificDesignStandards;
+    String previousProcessCompany = processDesignCompanyIdentifier;
+    Hashtable<String, DesignStandard> selected = new Hashtable<String, DesignStandard>(getDesignStandard());
+    this.companySpecificDesignStandards = company;
+    processDesignCompanyIdentifier = processCompany;
+    try {
+
+      selected.put("pressure vessel design code",
+          new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
+      selected.put("separator process design", new SeparatorDesignStandard(this.companySpecificDesignStandards, this));
+      selected.put("gas scrubber process design",
+          new GasScrubberDesignStandard(this.companySpecificDesignStandards, this));
+      selected.put("adsorption dehydration process design", new AdsorptionDehydrationDesignStandard("", this));
+      selected.put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
+      selected.put("compressor design codes", new CompressorDesignStandard(this.companySpecificDesignStandards, this));
+      selected.put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
+      selected.put("plate Joint Efficiency design codes", new JointEfficiencyPlateStandard("Statoil_TR1414", this));
+      selected.put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
+
+    } catch (RuntimeException failure) {
+      this.companySpecificDesignStandards = previousCompany;
+      processDesignCompanyIdentifier = previousProcessCompany;
+      throw failure;
+    }
+    designStandard = selected;
     hasSetCompanySpecificDesignStandards = true;
     initMechanicalDesign();
   }

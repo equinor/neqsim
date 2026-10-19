@@ -75,6 +75,8 @@ public final class ProcessModelOperatingPointOptimizer {
   private double replayRelativeTolerance = 1.0e-9;
   /** Source of the replay tolerance. */
   private String replayToleranceProvenance = "deterministic simulator replay tolerance";
+  /** Maximum bisection evaluations after one recovered continuous-action rejection. */
+  private int maximumBoundaryRefinementEvaluations;
 
   /**
    * Creates a mixed operating-point optimizer.
@@ -219,6 +221,29 @@ public final class ProcessModelOperatingPointOptimizer {
   }
 
   /**
+   * Sets the maximum number of fail-closed bisection evaluations used to refine one continuous-action feasibility
+   * boundary.
+   *
+   * <p>
+   * Refinement is disabled by default. When enabled, it starts only from an eligible feasible reference and a fully
+   * restored, converged, but infeasible trial on the same continuous coordinate. Every midpoint uses the complete
+   * candidate evaluator and consumes the normal evaluation budget. Discrete actions are never interpolated. A midpoint
+   * can become an incumbent only when it independently satisfies every normal feasibility, finiteness, restoration and
+   * replay requirement.
+   * </p>
+   *
+   * @param maximumEvaluations non-negative maximum midpoint evaluations per rejected direction
+   * @return this optimizer
+   */
+  public ProcessModelOperatingPointOptimizer setMaximumBoundaryRefinementEvaluations(int maximumEvaluations) {
+    if (maximumEvaluations < 0) {
+      throw new IllegalArgumentException("Maximum boundary-refinement evaluations must be non-negative");
+    }
+    this.maximumBoundaryRefinementEvaluations = maximumEvaluations;
+    return this;
+  }
+
+  /**
    * Executes a deterministic mixed coordinate search and final selected-point replay.
    *
    * @return immutable search trace, acceptance evidence, and performance provenance
@@ -231,7 +256,7 @@ public final class ProcessModelOperatingPointOptimizer {
     double[] seed = initialCandidate == null ? captureInitialCandidate() : initialCandidate.clone();
     List<CandidateRecord> records = new ArrayList<CandidateRecord>();
     List<String> diagnostics = new ArrayList<String>();
-    CandidateRecord incumbent = evaluate(seed, objective, records, false, false);
+    CandidateRecord incumbent = evaluate(seed, objective, records, false, false, false);
     if (unsafeRecovery(incumbent)) {
       diagnostics.add("Search stopped because the seed did not restore and reconverge the process model");
       return result(objective, seed, SearchOutcome.MODEL_RECOVERY_FAILED, records, null, initialStepFraction, false,
@@ -258,12 +283,26 @@ public final class ProcessModelOperatingPointOptimizer {
           }
           double[] trial = reference.clone();
           trial[actionIndex] = trialValue;
-          CandidateRecord candidate = evaluate(trial, objective, records, false, false);
+          CandidateRecord candidate = evaluate(trial, objective, records, false, false, false);
           if (unsafeRecovery(candidate)) {
             diagnostics.add("Search stopped after candidate " + candidate.getSequenceIndex()
                 + " because complete baseline recovery failed");
             recoveryFailed = true;
             break;
+          }
+          if (!actions.get(actionIndex).isDiscrete() && incumbent != null && eligible(incumbent)
+              && isRefinableRejection(candidate) && maximumBoundaryRefinementEvaluations > 0) {
+            BoundaryRefinementResult refinement = refineBoundary(incumbent, candidate, actionIndex, objective, records);
+            if (refinement.isRecoveryFailed()) {
+              diagnostics.add("Search stopped during continuous constraint-boundary refinement after complete "
+                  + "baseline recovery failed");
+              recoveryFailed = true;
+              break;
+            }
+            CandidateRecord refined = refinement.getBestFeasible();
+            if (refined != null && (bestMove == null || better(refined, bestMove, objective, 0.0))) {
+              bestMove = refined;
+            }
           }
           if (eligible(candidate) && (bestMove == null || better(candidate, bestMove, objective, 0.0))) {
             bestMove = candidate;
@@ -299,7 +338,7 @@ public final class ProcessModelOperatingPointOptimizer {
       return result(objective, seed, outcome, records, null, stepFraction, converged, startedNanos, diagnostics);
     }
 
-    CandidateRecord replay = evaluate(incumbent.getCandidateValues(), objective, records, true, true);
+    CandidateRecord replay = evaluate(incumbent.getCandidateValues(), objective, records, true, true, false);
     if (unsafeRecovery(replay)) {
       diagnostics.add("Accepted-point replay did not restore and reconverge the baseline");
       return result(objective, seed, SearchOutcome.MODEL_RECOVERY_FAILED, records, null, stepFraction, false,
@@ -318,10 +357,51 @@ public final class ProcessModelOperatingPointOptimizer {
 
   /** Creates one candidate record and appends it to the trace. */
   private CandidateRecord evaluate(double[] candidate, ObjectiveSnapshot objective, List<CandidateRecord> records,
-      boolean accepted, boolean replay) {
+      boolean accepted, boolean replay, boolean boundaryRefinement) {
     CandidateSetEvaluationResult evaluation = candidateEvaluator.evaluate(candidate);
     double rawObjective = valueAt(evaluation.getRawObjectives(), objective.getIndex());
-    return append(records, new CandidateRecord(records.size(), candidate, rawObjective, accepted, replay, evaluation));
+    return append(records,
+        new CandidateRecord(records.size(), candidate, rawObjective, accepted, replay, boundaryRefinement, evaluation));
+  }
+
+  /** Refines one recovered continuous-action feasibility bracket without relaxing candidate acceptance. */
+  private BoundaryRefinementResult refineBoundary(CandidateRecord feasible, CandidateRecord rejected, int actionIndex,
+      ObjectiveSnapshot objective, List<CandidateRecord> records) {
+    CandidateRecord feasibleEdge = feasible;
+    CandidateRecord rejectedEdge = rejected;
+    CandidateRecord bestFeasible = null;
+    ProcessModelOperatingAction action = candidateEvaluator.getActions().get(actionIndex);
+    double range = action.getUpperBound() - action.getLowerBound();
+    for (int iteration = 0; iteration < maximumBoundaryRefinementEvaluations
+        && records.size() < maximumEvaluations - 1; iteration++) {
+      double feasibleValue = feasibleEdge.getCandidateValues()[actionIndex];
+      double rejectedValue = rejectedEdge.getCandidateValues()[actionIndex];
+      if (Math.abs(rejectedValue - feasibleValue) <= relativeStepTolerance * range) {
+        break;
+      }
+      double midpoint = feasibleValue + 0.5 * (rejectedValue - feasibleValue);
+      if (Double.compare(midpoint, feasibleValue) == 0 || Double.compare(midpoint, rejectedValue) == 0) {
+        break;
+      }
+      double[] candidateValues = feasibleEdge.getCandidateValues();
+      candidateValues[actionIndex] = midpoint;
+      CandidateRecord midpointRecord = evaluate(candidateValues, objective, records, false, false, true);
+      if (unsafeRecovery(midpointRecord)) {
+        return new BoundaryRefinementResult(bestFeasible, true);
+      }
+      if (eligible(midpointRecord)) {
+        feasibleEdge = midpointRecord;
+        if (bestFeasible == null || better(midpointRecord, bestFeasible, objective, 0.0)) {
+          bestFeasible = midpointRecord;
+        }
+      } else {
+        if (!isRefinableRejection(midpointRecord)) {
+          break;
+        }
+        rejectedEdge = midpointRecord;
+      }
+    }
+    return new BoundaryRefinementResult(bestFeasible, false);
   }
 
   /** Appends and returns one immutable record. */
@@ -337,8 +417,9 @@ public final class ProcessModelOperatingPointOptimizer {
     double runtimeSeconds = Math.max(0.0, (System.nanoTime() - startedNanos) / 1.0e9);
     return new OperatingPointSearchResult(id, name, provenance, candidateEvaluator, candidateEvaluator.getId(),
         objective, seed, maximumEvaluations, initialStepFraction, relativeStepTolerance, objectiveImprovementTolerance,
-        objectiveToleranceProvenance, replayRelativeTolerance, replayToleranceProvenance, outcome, records,
-        acceptedReplay, finalStepFraction, converged, runtimeSeconds, diagnostics);
+        objectiveToleranceProvenance, replayRelativeTolerance, replayToleranceProvenance,
+        maximumBoundaryRefinementEvaluations, outcome, records, acceptedReplay, finalStepFraction, converged,
+        runtimeSeconds, diagnostics);
   }
 
   /** Returns deterministic trial values for one action at one reference point. */
@@ -412,6 +493,48 @@ public final class ProcessModelOperatingPointOptimizer {
   /** Returns true when further evaluation would risk stale model state. */
   private static boolean unsafeRecovery(CandidateRecord record) {
     return !record.getEvaluation().isBaselineRestored() || !record.getEvaluation().isBaselineSimulationConverged();
+  }
+
+  /** Returns true only for a converged physical rejection suitable for a feasibility bracket. */
+  private static boolean isRefinableRejection(CandidateRecord record) {
+    if (record == null || !record.getEvaluation().isCandidateSimulationConverged()
+        || record.getEvaluation().isFeasible() || !record.getEvaluation().isBaselineRestored()
+        || !record.getEvaluation().isBaselineSimulationConverged()) {
+      return false;
+    }
+    ProcessModelOperatingActionSetEvaluator.Outcome outcome = record.getEvaluation().getOutcome();
+    return outcome == ProcessModelOperatingActionSetEvaluator.Outcome.HYDRAULIC_CONSTRAINT_VIOLATED
+        || outcome == ProcessModelOperatingActionSetEvaluator.Outcome.OTHER_MODEL_CONSTRAINT_VIOLATED
+        || outcome == ProcessModelOperatingActionSetEvaluator.Outcome.EVIDENCE_OUTSIDE_VALIDITY_RANGE;
+  }
+
+  /**
+   * Internal result from one continuous feasibility-boundary refinement.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  private static final class BoundaryRefinementResult {
+    /** Best eligible midpoint found, or null. */
+    private final CandidateRecord bestFeasible;
+    /** Whether a midpoint failed complete recovery. */
+    private final boolean recoveryFailed;
+
+    /** Creates one refinement result. */
+    private BoundaryRefinementResult(CandidateRecord bestFeasible, boolean recoveryFailed) {
+      this.bestFeasible = bestFeasible;
+      this.recoveryFailed = recoveryFailed;
+    }
+
+    /** @return best eligible midpoint, or null */
+    private CandidateRecord getBestFeasible() {
+      return bestFeasible;
+    }
+
+    /** @return true when the mutable baseline was not safely recovered */
+    private boolean isRecoveryFailed() {
+      return recoveryFailed;
+    }
   }
 
   /** Compares raw objectives using frozen direction metadata. */
@@ -506,24 +629,28 @@ public final class ProcessModelOperatingPointOptimizer {
     private final boolean acceptedAsIncumbent;
     /** Whether the row is the mandatory terminal replay. */
     private final boolean acceptedPointReplay;
+    /** Whether the row was evaluated while refining a recovered constraint boundary. */
+    private final boolean boundaryRefinement;
     /** Complete candidate evidence. */
     private final CandidateSetEvaluationResult evaluation;
 
     /** Creates one trace row. */
     private CandidateRecord(int sequenceIndex, double[] candidateValues, double rawObjective,
-        boolean acceptedAsIncumbent, boolean acceptedPointReplay, CandidateSetEvaluationResult evaluation) {
+        boolean acceptedAsIncumbent, boolean acceptedPointReplay, boolean boundaryRefinement,
+        CandidateSetEvaluationResult evaluation) {
       this.sequenceIndex = sequenceIndex;
       this.candidateValues = candidateValues.clone();
       this.rawObjective = rawObjective;
       this.acceptedAsIncumbent = acceptedAsIncumbent;
       this.acceptedPointReplay = acceptedPointReplay;
+      this.boundaryRefinement = boundaryRefinement;
       this.evaluation = evaluation;
     }
 
     /** Creates the same row marked as an accepted incumbent. */
     private CandidateRecord withAcceptedAsIncumbent(boolean accepted) {
       return new CandidateRecord(sequenceIndex, candidateValues, rawObjective, accepted, acceptedPointReplay,
-          evaluation);
+          boundaryRefinement, evaluation);
     }
 
     /** @return zero-based evaluation sequence */
@@ -549,6 +676,11 @@ public final class ProcessModelOperatingPointOptimizer {
     /** @return true when this row is the terminal accepted-point replay */
     public boolean isAcceptedPointReplay() {
       return acceptedPointReplay;
+    }
+
+    /** @return true when this row refined a continuous feasibility boundary */
+    public boolean isBoundaryRefinement() {
+      return boundaryRefinement;
     }
 
     /** @return complete fail-closed candidate evaluation */
@@ -589,6 +721,8 @@ public final class ProcessModelOperatingPointOptimizer {
     private final double replayRelativeTolerance;
     /** Source of the replay tolerance. */
     private final String replayToleranceProvenance;
+    /** Maximum midpoint evaluations per recovered continuous-action rejection. */
+    private final int maximumBoundaryRefinementEvaluations;
     /** Terminal search classification. */
     private final SearchOutcome outcome;
     /** Complete candidate trace. */
@@ -609,9 +743,9 @@ public final class ProcessModelOperatingPointOptimizer {
         ProcessModelOperatingActionSetEvaluator sourceEvaluator, String actionSetId, ObjectiveSnapshot objective,
         double[] initialCandidate, int maximumEvaluations, double initialStepFraction, double relativeStepTolerance,
         double objectiveImprovementTolerance, String objectiveToleranceProvenance, double replayRelativeTolerance,
-        String replayToleranceProvenance, SearchOutcome outcome, List<CandidateRecord> candidates,
-        CandidateRecord acceptedPointReplay, double finalStepFraction, boolean converged, double runtimeSeconds,
-        List<String> diagnostics) {
+        String replayToleranceProvenance, int maximumBoundaryRefinementEvaluations, SearchOutcome outcome,
+        List<CandidateRecord> candidates, CandidateRecord acceptedPointReplay, double finalStepFraction,
+        boolean converged, double runtimeSeconds, List<String> diagnostics) {
       this.id = id;
       this.sourceEvaluator = sourceEvaluator;
       this.name = name;
@@ -626,6 +760,7 @@ public final class ProcessModelOperatingPointOptimizer {
       this.objectiveToleranceProvenance = objectiveToleranceProvenance;
       this.replayRelativeTolerance = replayRelativeTolerance;
       this.replayToleranceProvenance = replayToleranceProvenance;
+      this.maximumBoundaryRefinementEvaluations = maximumBoundaryRefinementEvaluations;
       this.outcome = outcome;
       this.candidates = Collections.unmodifiableList(new ArrayList<CandidateRecord>(candidates));
       this.acceptedPointReplay = acceptedPointReplay;
@@ -713,6 +848,22 @@ public final class ProcessModelOperatingPointOptimizer {
     /** @return replay tolerance provenance */
     public String getReplayToleranceProvenance() {
       return replayToleranceProvenance;
+    }
+
+    /** @return maximum midpoint evaluations per recovered continuous-action rejection */
+    public int getMaximumBoundaryRefinementEvaluations() {
+      return maximumBoundaryRefinementEvaluations;
+    }
+
+    /** @return number of complete midpoint evaluations performed */
+    public int getBoundaryRefinementEvaluationCount() {
+      int count = 0;
+      for (CandidateRecord candidate : candidates) {
+        if (candidate.isBoundaryRefinement()) {
+          count++;
+        }
+      }
+      return count;
     }
 
     /** @return terminal search classification */
@@ -836,6 +987,8 @@ public final class ProcessModelOperatingPointOptimizer {
       evidence.put("accepted_point_replayed", isAcceptedPointReplayed());
       evidence.put("actions_complete", isActionsComplete());
       evidence.put("evaluation_count", getEvaluationCount());
+      evidence.put("boundary_refinement_evaluation_count", getBoundaryRefinementEvaluationCount());
+      evidence.put("maximum_boundary_refinement_evaluations", maximumBoundaryRefinementEvaluations);
       evidence.put("runtime_seconds", runtimeSeconds);
       return Collections.unmodifiableMap(evidence);
     }

@@ -25,12 +25,18 @@ public class BubblePointPressureFlashDer extends ConstantDutyPressureFlash {
     super(system);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a non-SAFT pure component is at or above its critical temperature
+   */
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
-      // throw new IllegalStateException("System is supercritical");
+        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()
+        && (system.getModelName() == null || !system.getModelName().contains("SAFT"))) {
+      throw new IllegalStateException(
+          "No pure-component saturation pressure exists at or above the critical temperature");
     }
     int iterations = 0;
     int maxNumberOfIterations = 500;

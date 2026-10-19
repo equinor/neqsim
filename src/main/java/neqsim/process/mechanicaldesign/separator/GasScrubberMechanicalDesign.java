@@ -126,10 +126,18 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (getDesignStandard().containsKey("gas scrubber process design")) {
       logger.info("gas scrubber process design: {}",
           getDesignStandard().get("gas scrubber process design").getStandardName());
-      gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getGasLoadFactor();
-      volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-          .getVolumetricDesignFactor();
+      GasScrubberDesignStandard standard = (GasScrubberDesignStandard) getDesignStandard()
+          .get("gas scrubber process design");
+      if (!isProcessDesignParameterOverridden("GasLoadFactor")) {
+        gasLoadFactor = standard.getGasLoadFactor();
+        recordProcessDesignParameterSource("GasLoadFactor",
+            standard.getProcessDesignParameterSources().get("GasLoadFactor"));
+      }
+      if (!isProcessDesignParameterOverridden("VolumetricDesignFactor")) {
+        volumeSafetyFactor = standard.getVolumetricDesignFactor();
+        recordProcessDesignParameterSource("VolumetricDesignFactor",
+            standard.getProcessDesignParameterSources().get("FlowDesignFactor"));
+      }
     } else {
       logger.info("no gas scrubber process design specified");
     }

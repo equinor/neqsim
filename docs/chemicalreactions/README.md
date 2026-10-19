@@ -50,6 +50,13 @@ thermodynamic operation. Do not construct the low-level equilibrium or linear-pr
 as standalone solvers; their constructors require internal matrices, components, reference
 potentials, and phase context.
 
+Linear-programming initial estimates belong to the current reactive phase and
+initialization attempt. Changing the reactive phase or starting a new LP attempt
+invalidates the previous estimate. If the initializer is unavailable or fails,
+the existing Newton fallback starts from the current phase inventory; an earlier
+estimate must not be written back into that state. This lifecycle safeguard does
+not change the Newton Jacobian, phase-selection policy, or convergence limits.
+
 ## Complete Java example
 
 The build-verified

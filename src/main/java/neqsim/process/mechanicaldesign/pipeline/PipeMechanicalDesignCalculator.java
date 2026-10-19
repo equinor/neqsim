@@ -41,6 +41,24 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Whether the project explicitly selected a location class. */
+  private boolean locationClassExplicitlySet;
+
+  /** Last company location class, used after releasing a project override. */
+  private int companyLocationClass = 1;
+
+  /** Explicit project factor, independent of the company factor. */
+  private Double projectDesignFactor;
+
+  /** Company factor used when the project has not selected its own restriction. */
+  private Double companyDesignFactor;
+
+  /** Actual database source of the company factor. */
+  private String companyDesignFactorSource;
+
+  /** Provenance of the effective factor after applying the code/location ceiling. */
+  private String effectiveDesignFactorSource = "CODE_LOCATION";
+
   // ============ Design Codes ============
   /** ASME B31.3 - Process Piping. */
   public static final String ASME_B31_3 = "ASME_B31_3";
@@ -1366,6 +1384,13 @@ public class PipeMechanicalDesignCalculator implements Serializable {
       // Usage factor based on safety class
       designFactor = 0.77; // Medium safety class
     }
+    Double requested = projectDesignFactor != null ? projectDesignFactor : companyDesignFactor;
+    effectiveDesignFactorSource = "CODE_LOCATION";
+    if (requested != null && requested <= designFactor) {
+      designFactor = requested;
+      effectiveDesignFactorSource = projectDesignFactor != null ? "USER_OVERRIDE" : companyDesignFactorSource;
+    }
+
   }
 
   /**
@@ -1378,6 +1403,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Pipeline Mechanical Design Report ===\n");
     sb.append(String.format("Design Code: %s\n", designCode));
+    sb.append(String.format("Design Factor Source: %s\n", getDesignFactorSource()));
     sb.append(String.format("Material Grade: %s (API 5L)\n", materialGrade));
     sb.append("\n--- Design Parameters ---\n");
     sb.append(String.format("Design Pressure: %.2f MPa (%.1f bar)\n", designPressure, designPressure * 10));
@@ -1710,6 +1736,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    */
   public void setDesignCode(String designCode) {
     this.designCode = designCode;
+    minimumWallThickness = 0.0;
+    maop = 0.0;
     updateDesignFactors();
   }
 
@@ -1728,8 +1756,32 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @param locationClass location class 1-4
    */
   public void setLocationClass(int locationClass) {
+    locationClassExplicitlySet = true;
     this.locationClass = Math.max(1, Math.min(4, locationClass));
+    minimumWallThickness = 0.0;
+    maop = 0.0;
     updateDesignFactors();
+  }
+
+  /**
+   * Load a location class without discarding an explicit project selection.
+   *
+   * @param locationClass database location class 1-4
+   */
+  public void setCompanyLocationClass(int locationClass) {
+    companyLocationClass = Math.max(1, Math.min(4, locationClass));
+    if (!locationClassExplicitlySet) {
+      this.locationClass = companyLocationClass;
+      minimumWallThickness = 0.0;
+      maop = 0.0;
+      updateDesignFactors();
+    }
+  }
+
+  /** Restore the last company location class after a project override. */
+  public void clearLocationClassOverride() {
+    locationClassExplicitlySet = false;
+    setCompanyLocationClass(companyLocationClass);
   }
 
   /**
@@ -1742,12 +1794,63 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   }
 
   /**
-   * Set design factor (overrides automatic calculation).
+   * Set a project design-factor restriction. The applicable code/location ceiling still applies.
    *
    * @param designFactor design factor
    */
   public void setDesignFactor(double designFactor) {
-    this.designFactor = designFactor;
+    validateDesignFactor(designFactor);
+    projectDesignFactor = designFactor;
+    minimumWallThickness = 0.0;
+    maop = 0.0;
+    updateDesignFactors();
+  }
+
+  /**
+   * Set a company requirement without taking ownership from an explicit project override.
+   *
+   * @param factor loaded factor in the interval (0, 1]
+   * @param source actual database source or explicit baseline description
+   * @throws IllegalArgumentException if the factor is invalid
+   */
+  public void setCompanyDesignFactor(double factor, String source) {
+    validateDesignFactor(factor);
+    companyDesignFactor = factor;
+    companyDesignFactorSource = source;
+    minimumWallThickness = 0.0;
+    maop = 0.0;
+    updateDesignFactors();
+  }
+
+  /**
+   * Restore company/code selection after a project override.
+   */
+  public void clearDesignFactorOverride() {
+    projectDesignFactor = null;
+    minimumWallThickness = 0.0;
+    maop = 0.0;
+    updateDesignFactors();
+  }
+
+  /**
+   * Return the actual source after applying the design-code/location ceiling.
+   *
+   * @return source identifier
+   */
+  public String getDesignFactorSource() {
+    return effectiveDesignFactorSource;
+  }
+
+  /**
+   * Reject invalid multiplicative factors before changing the design state.
+   *
+   * @param factor requested factor
+   * @throws IllegalArgumentException if the factor is not finite or outside (0, 1]
+   */
+  private void validateDesignFactor(double factor) {
+    if (!Double.isFinite(factor) || factor <= 0.0 || factor > 1.0) {
+      throw new IllegalArgumentException("Design factor must be finite and in (0, 1]");
+    }
   }
 
   /**
@@ -2696,32 +2799,12 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    */
   @Deprecated
   public void loadDesignFactorsFromDatabase(String company) {
-    try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      String query = "SELECT * FROM TechnicalRequirements_Process WHERE EQUIPMENTTYPE='Pipeline'" + " AND Company='"
-          + company + "'";
-      try (java.sql.ResultSet dataSet = database.getResultSet(query)) {
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          String maxValue = dataSet.getString("MAXVALUE");
-          if (specName != null && maxValue != null) {
-            if ("designFactor".equalsIgnoreCase(specName)) {
-              this.designFactor = Double.parseDouble(maxValue);
-            } else if ("jointFactor".equalsIgnoreCase(specName)) {
-              this.jointFactor = Double.parseDouble(maxValue);
-            } else if ("corrosionAllowance".equalsIgnoreCase(specName)) {
-              this.corrosionAllowance = Double.parseDouble(maxValue) / 1000.0; // mm
-                                                                               // to
-                                                                               // m
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      // Fall back to defaults, log warning
-      org.apache.logging.log4j.LogManager.getLogger(PipeMechanicalDesignCalculator.class)
-          .warn("Could not load design factors from database for company: " + company, e);
-    }
+    PipelineMechanicalDesignDataSource.PipeDesignFactors factors = new PipelineMechanicalDesignDataSource()
+        .loadDesignFactors(company);
+    setCompanyDesignFactor(factors.designFactor, factors.getSources().get("designfactor"));
+    setJointFactor(factors.jointFactor);
+    setCorrosionAllowance(factors.corrosionAllowance / 1000.0);
+    setFabricationTolerance(factors.fabricationTolerance);
   }
 
   /**

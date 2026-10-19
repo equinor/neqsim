@@ -13,7 +13,7 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.fluidmechanics.flowsolver.onephaseflowsolver.onephasepipeflowsolver.OnePhaseFixedStaggeredGrid;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -22,13 +22,13 @@ import neqsim.thermo.system.SystemInterface;
 
 public class PipeFlowSystemTest extends neqsim.NeqSimTest {
   /**
-   * Verifies EJML column orientation, Jama-equivalent norms and independent serialized storage on the existing pipe.
+   * Verifies EJML column orientation, Ejml-equivalent norms and independent serialized storage on the existing pipe.
    *
    * @throws IOException if vector serialization fails
    * @throws ClassNotFoundException if a serialized matrix class cannot be resolved
    */
   @Test
-  void solutionColumnsPreserveJamaStorageSemantics() throws IOException, ClassNotFoundException {
+  void solutionColumnsPreserveEjmlStorageSemantics() throws IOException, ClassNotFoundException {
     testInit();
     MatrixStorageProbe solver = new MatrixStorageProbe((PipeFlowSystem) pipe);
     solver.initMatrix();
@@ -37,12 +37,12 @@ public class PipeFlowSystemTest extends neqsim.NeqSimTest {
       DMatrixRMaj vector = vectors[vectorIndex];
       assertEquals(pipe.getTotalNumberOfNodes(), vector.getNumRows());
       assertEquals(1, vector.getNumCols());
-      Matrix jama = new Matrix(vector.getData(), vector.getNumRows());
-      assertEquals(jama.norm1(), NormOps_DDRM.normP1(vector), 0.0);
-      assertEquals(jama.norm2(), NormOps_DDRM.normP2(vector), Math.max(1.0, jama.norm2()) * 1.0e-14);
+      SimpleMatrix ejml = new SimpleMatrix(vector);
+      assertEquals(NormOps_DDRM.normP1(ejml.getDDRM()), NormOps_DDRM.normP1(vector), 0.0);
+      assertEquals(ejml.normF(), NormOps_DDRM.normP2(vector), Math.max(1.0, ejml.normF()) * 1.0e-14);
       DMatrixRMaj copy = vector.copy();
       copy.zero();
-      assertArrayEquals(jama.getColumnPackedCopy(), vector.getData(), 0.0);
+      assertArrayEquals(ejml.transpose().getDDRM().getData().clone(), vector.getData(), 0.0);
       assertNotSame(copy.getData(), vector.getData());
       for (int previous = 0; previous < vectorIndex; previous++) {
         assertNotSame(vectors[previous].getData(), vector.getData());

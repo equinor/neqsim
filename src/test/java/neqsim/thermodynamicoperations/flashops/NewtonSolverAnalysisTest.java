@@ -2,7 +2,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import Jama.Matrix;
+import org.ejml.simple.SimpleMatrix;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +19,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Analysis tests for Newton solver improvements.
  *
  * <p>
- * Benchmarks JAMA vs EJML linear solve, init level costs, and measures the overhead of T/P derivatives vs
+ * Benchmarks SimpleMatrix vs EJML linear solve, init level costs, and measures the overhead of T/P derivatives vs
  * composition-only derivatives.
  * </p>
  *
@@ -30,23 +30,22 @@ class NewtonSolverAnalysisTest {
   private static final Logger logger = LogManager.getLogger(NewtonSolverAnalysisTest.class);
 
   /**
-   * Benchmark JAMA vs EJML dense linear solve (Ax = b) for typical flash sizes.
+   * Benchmark SimpleMatrix vs EJML dense linear solve (Ax = b) for typical flash sizes.
    *
    * <p>
-   * JAMA uses full LU decomposition via double[][] arrays. EJML uses optimized row-major storage with native-tuned
-   * operations.
+   * Both APIs use EJML dense storage; the lower-level API allows reuse of solver and result buffers.
    * </p>
    */
   @Disabled
   @Test
-  void benchmarkJAMAvsEJML() {
+  void benchmarkSimpleMatrixvsEJML() {
     int[] sizes = {3, 5, 10, 15, 20, 30};
     int warmup = 2000;
     int N = 20000;
     Random rng = new Random(42);
 
-    logger.info("=== JAMA vs EJML Dense Linear Solve Benchmark ===");
-    logger.info(String.format("%-6s %-12s %-12s %-10s", "Size", "JAMA(ns)", "EJML(ns)", "Speedup"));
+    logger.info("=== SimpleMatrix vs EJML Dense Linear Solve Benchmark ===");
+    logger.info(String.format("%-6s %-12s %-12s %-10s", "Size", "SimpleMatrix(ns)", "EJML(ns)", "Speedup"));
 
     for (int n : sizes) {
       // Create random SPD matrix (typical Jacobian is SPD)
@@ -60,14 +59,14 @@ class NewtonSolverAnalysisTest {
         aData[i][i] += n; // Make diagonally dominant
       }
 
-      // JAMA warmup
-      Matrix jamaMat = new Matrix(aData);
-      Matrix jamab = new Matrix(n, 1);
+      // SimpleMatrix warmup
+      SimpleMatrix simpleMat = new SimpleMatrix(aData);
+      SimpleMatrix simpleb = new SimpleMatrix(n, 1);
       for (int i = 0; i < n; i++) {
-        jamab.set(i, 0, bData[i]);
+        simpleb.set(i, 0, bData[i]);
       }
       for (int w = 0; w < warmup; w++) {
-        jamaMat.solve(jamab);
+        simpleMat.solve(simpleb);
       }
 
       // EJML warmup
@@ -83,12 +82,12 @@ class NewtonSolverAnalysisTest {
         solver.solve(ejmlb, ejmlx);
       }
 
-      // JAMA benchmark
+      // SimpleMatrix benchmark
       long start = System.nanoTime();
       for (int iter = 0; iter < N; iter++) {
-        jamaMat.solve(jamab);
+        simpleMat.solve(simpleb);
       }
-      long jamaTime = System.nanoTime() - start;
+      long simpleTime = System.nanoTime() - start;
 
       // EJML benchmark
       start = System.nanoTime();
@@ -98,14 +97,14 @@ class NewtonSolverAnalysisTest {
       }
       long ejmlTime = System.nanoTime() - start;
 
-      double jamaPerCall = (double) jamaTime / N;
+      double simplePerCall = (double) simpleTime / N;
       double ejmlPerCall = (double) ejmlTime / N;
-      double speedup = jamaPerCall / ejmlPerCall;
+      double speedup = simplePerCall / ejmlPerCall;
 
-      logger.info(String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, jamaPerCall, ejmlPerCall, speedup));
+      logger.info(String.format("%-6d %-12.0f %-12.0f %-10.2fx", n, simplePerCall, ejmlPerCall, speedup));
 
       // Just verify both return reasonable values
-      assertTrue(jamaPerCall > 0);
+      assertTrue(simplePerCall > 0);
       assertTrue(ejmlPerCall > 0);
     }
 
@@ -299,7 +298,8 @@ class NewtonSolverAnalysisTest {
   }
 
   /**
-   * Measure allocation overhead: JAMA creates new Matrix objects each solve. EJML can reuse pre-allocated buffers.
+   * Measure allocation overhead: SimpleMatrix creates new SimpleMatrix objects each solve. EJML can reuse pre-allocated
+   * buffers.
    */
   @Disabled
   @Test
@@ -318,23 +318,23 @@ class NewtonSolverAnalysisTest {
       aData[i][i] += n;
     }
 
-    // JAMA: each solve allocates new LU decomposition + result matrix
-    Matrix jamaMat = new Matrix(aData);
-    Matrix jamab = new Matrix(n, 1);
+    // SimpleMatrix: each solve allocates new LU decomposition + result matrix
+    SimpleMatrix simpleMat = new SimpleMatrix(aData);
+    SimpleMatrix simpleb = new SimpleMatrix(n, 1);
     for (int i = 0; i < n; i++) {
-      jamab.set(i, 0, bData[i]);
+      simpleb.set(i, 0, bData[i]);
     }
 
     // Warmup
     for (int w = 0; w < 5000; w++) {
-      jamaMat.solve(jamab);
+      simpleMat.solve(simpleb);
     }
 
     long start = System.nanoTime();
     for (int iter = 0; iter < N; iter++) {
-      Matrix result = jamaMat.solve(jamab);
+      SimpleMatrix result = simpleMat.solve(simpleb);
     }
-    long jamaTime = System.nanoTime() - start;
+    long simpleTime = System.nanoTime() - start;
 
     // EJML: pre-allocated solver and output buffer
     DMatrixRMaj ejmlMat = new DMatrixRMaj(aData);
@@ -362,17 +362,17 @@ class NewtonSolverAnalysisTest {
     long ejmlTime = System.nanoTime() - start;
 
     logger.info("=== Allocation Overhead (n=10, " + N + " solves) ===");
-    logger.info(String.format("JAMA (new alloc each): %.0f ns/call", (double) jamaTime / N));
+    logger.info(String.format("SimpleMatrix (new alloc each): %.0f ns/call", (double) simpleTime / N));
     logger.info(String.format("EJML (pre-allocated):  %.0f ns/call", (double) ejmlTime / N));
-    logger.info(String.format("Speedup:               %.2fx", (double) jamaTime / ejmlTime));
+    logger.info(String.format("Speedup:               %.2fx", (double) simpleTime / ejmlTime));
   }
 
   /**
-   * Compares the direct EJML step with raw Jama on the existing two-phase medium-gas fixture.
+   * Compares the direct EJML step with raw Simple on the existing two-phase medium-gas fixture.
    */
   @SuppressWarnings("deprecation")
   @Test
-  void deprecatedTpFlashNewtonStepMatchesJamaOnMediumGas() {
+  void deprecatedTpFlashNewtonStepMatchesSimpleOnMediumGas() {
     SystemInterface system = createMediumGas();
     new ThermodynamicOperations(system).TPflash();
     SysNewtonRhapsonTPflashNew flash = new SysNewtonRhapsonTPflashNew(system, system.getNumberOfPhases(),
@@ -381,7 +381,7 @@ class NewtonSolverAnalysisTest {
     flash.setfvec();
     flash.setJac();
 
-    Matrix expected = copyToJama(flash.Jac).solve(copyToJama(flash.fvec));
+    SimpleMatrix expected = copyToSimple(flash.Jac).solve(copyToSimple(flash.fvec));
     DMatrixRMaj actual = flash.solveJacobianStep();
 
     for (int row = 0; row < actual.getNumRows(); row++) {
@@ -392,19 +392,19 @@ class NewtonSolverAnalysisTest {
   }
 
   /**
-   * Copies an EJML matrix to Jama for a numerical reference check.
+   * Copies an EJML matrix to Simple for a numerical reference check.
    *
    * @param matrix EJML matrix
-   * @return copied Jama matrix
+   * @return copied Simple matrix
    */
-  private static Matrix copyToJama(DMatrixRMaj matrix) {
+  private static SimpleMatrix copyToSimple(DMatrixRMaj matrix) {
     double[][] values = new double[matrix.getNumRows()][matrix.getNumCols()];
     for (int row = 0; row < matrix.getNumRows(); row++) {
       for (int column = 0; column < matrix.getNumCols(); column++) {
         values[row][column] = matrix.get(row, column);
       }
     }
-    return new Matrix(values);
+    return new SimpleMatrix(values);
   }
 
   /**
