@@ -380,6 +380,12 @@ line selects the coupled pressure-momentum solve unless
 `setEnableCoupledPressureMomentum(...)` was explicitly set. Recheck phase and
 energy balances when either option is changed for a specific application.
 
+Set spatial ambient temperatures with `setSurfaceTemperatureProfile(profile, "C")`
+or `setSurfaceTemperatureProfile(profile, "K")`. The single-argument setter and
+profile getter use absolute Kelvin. A 5–8 °C seawater boundary is 278.15–281.15 K;
+passing 5–8 to the legacy setter represents a cryogenic boundary and warns below
+100 K. See [profile units and the wet-gas riser regression](../wiki/two_fluid_model.md#surface-temperature-profile-units).
+
 ## Flow Regime Detection
 
 ### Gas-Liquid Flow Regimes

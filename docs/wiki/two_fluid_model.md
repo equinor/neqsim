@@ -208,6 +208,38 @@ pipe.setSoilThermalResistance(0.5);  // m²·K/W
 // Effective U = 1 / (1/U + R_soil)
 ```
 
+### Surface Temperature Profile Units
+
+Use `setSurfaceTemperatureProfile(profile, "C")` for a seawater profile expressed in
+degrees Celsius, or specify `"K"` for absolute temperatures. The input array is copied
+and stored in Kelvin for both steady and transient heat transfer. The existing
+single-argument setter and `getSurfaceTemperatureProfile()` use **Kelvin**.
+
+For example, a profile from 5 to 8 °C must contain 278.15 to 281.15 K when using the
+single-argument setter. Passing bare values from 5 to 8 to that setter specifies a
+cryogenic ambient near −267 °C. Those values can cause severe wall cooling even when
+Joule–Thomson cooling is disabled; a heat-capacity floor would hide the boundary-input
+error. The legacy setter warns once per call when an entry is below 100 K, while
+retaining its Kelvin interpretation. Neither overload guesses units from magnitudes.
+Both reject non-finite temperatures and temperatures at or below absolute zero before
+replacing the configured profile. A null profile clears the spatial override; shorter
+profiles retain the constant surface temperature in the remaining sections.
+
+Issue [#4450](https://github.com/equinor/neqsim/issues/4450) motivated a public regression
+using SRK with classic mixing, methane/propane/n-heptane/water at 85/6/8/1 molar parts,
+35.8 bara, 10.5 °C and 12.8 t/h. For a 470 m riser with 375 m rise, 0.2286 m ID,
+20 sections and U = 4.8 W/(m² K), a 5–8 K boundary produces about −37 °C without
+Joule–Thomson cooling. The correctly converted 5–8 °C boundary gives about 8.4 °C
+without Joule–Thomson cooling and 5.2 °C with it. The tests also cover a nearby rate
+and a 9 kg/s case, compare explicit Celsius with legacy Kelvin results, and check the
+wall-duty/potential-energy balance against a PH flash. This is synthetic numerical
+validation; the unavailable internal fluid from the issue has not been reproduced.
+
+Wall exchange alone approaches the ambient temperature. Gravity and real expansion
+can lower the fluid below ambient, so the model does not clamp the final temperature
+to the seawater temperature. If extreme cooling remains with a verified Kelvin
+boundary, inspect phase stability and equilibrium enthalpy derivatives separately.
+
 ### Joule-Thomson Effect
 
 Temperature change from pressure drop (enabled by default):
