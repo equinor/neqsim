@@ -3762,10 +3762,12 @@ public class TPmultiflash extends TPflash {
    *
    * <p>
    * Replacing gas with an aqueous seed can lose the vapour stationary point and return the original supersaturated
-   * gas/oil endpoint. Instead, test liquid-water fugacity on an unused phase slot of a clone. Only supersaturation
-   * admits a third-phase trial. Withdraw its seed water proportionally from the existing phase inventories, preserving
-   * every component and both hydrocarbon phases before solving. Accept only a feasible aqueous equilibrium with a lower
-   * molar Gibbs energy; using an intensive acceptance tolerance avoids dependence on total flow.
+   * gas/oil endpoint. Instead, test liquid-water fugacity on one unused phase. Usually undersaturated feeds need only a
+   * detached phase; likely supersaturated feeds reuse the eventual full candidate clone. Only EOS supersaturation
+   * admits a third-phase solve, Gibbs evaluation and equilibrium-residual scan. Withdraw seed water proportionally from
+   * the existing phase inventories, preserving every component and both hydrocarbon phases before solving. Accept only
+   * a feasible aqueous equilibrium with a lower molar Gibbs energy; using an intensive acceptance tolerance avoids
+   * dependence on total flow.
    * </p>
    *
    * @return true when a qualified aqueous equilibrium was adopted
@@ -3782,39 +3784,52 @@ public class TPmultiflash extends TPflash {
       return false;
     }
     try {
-      final double referenceMolarGibbs = system.getGibbsEnergy() / totalMoles;
-      final boolean validReference = isFeasiblePhaseEquilibrium(system);
-      SystemInterface candidate = system.clone();
-      int aqueous = candidate.getNumberOfPhases();
-      int freeSlot = 0;
-      while (freeSlot == candidate.getPhaseIndex(0) || freeSlot == candidate.getPhaseIndex(1)) {
-        freeSlot++;
-      }
-      // A removed phase can leave an inactive logical index pointing at either active phase.
-      candidate.setPhaseIndex(aqueous, freeSlot);
-      candidate.addPhase();
-      candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
-      int water = candidate.getComponent("water").getComponentNumber();
-      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
-        candidate.getPhase(aqueous).getComponent(component).setx(component == water ? 1.0 : 0.0);
-      }
-      candidate.setBeta(aqueous, 1.0e-3);
-      candidate.init(1, aqueous);
-      double liquidWaterLogFugacity = candidate.getPhase(aqueous).getComponent(water).getLogFugacityCoefficient();
+      int water = system.getComponent("water").getComponentNumber();
       ComponentInterface gasWater = system.getPhase("gas").getComponent(water);
       double gasWaterLogFugacity = Math.log(gasWater.getx()) + gasWater.getLogFugacityCoefficient();
-      if (!Double.isFinite(liquidWaterLogFugacity) || !Double.isFinite(gasWaterLogFugacity)
-          || gasWaterLogFugacity <= liquidWaterLogFugacity + 1.0e-8) {
+      if (!Double.isFinite(gasWaterLogFugacity)) {
+        return false;
+      }
+      int freeSlot = 0;
+      while (freeSlot == system.getPhaseIndex(0) || freeSlot == system.getPhaseIndex(1)) {
+        freeSlot++;
+      }
+      // Prefer the eventual full clone when condensation is likely; otherwise screen on one phase.
+      // This selects allocation strategy only. The exact EOS fugacity screen below always decides.
+      SystemInterface candidate = preferFullSystemAqueousTrial(gasWater) ? system.clone() : null;
+      PhaseInterface liquidWaterTrial = candidate == null ? system.getPhases()[freeSlot].clone()
+          : candidate.getPhases()[freeSlot];
+      liquidWaterTrial.setTemperature(system.getTemperature());
+      liquidWaterTrial.setPressure(system.getPressure());
+      for (int component = 0; component < system.getNumberOfComponents(); component++) {
+        liquidWaterTrial.getComponent(component).setx(component == water ? 1.0 : 0.0);
+      }
+      liquidWaterTrial.init(totalMoles, system.getNumberOfComponents(), 1, PhaseType.AQUEOUS, 1.0e-3);
+      // Phase.init prepares all component derivatives; the screen consumes only water's coefficient.
+      liquidWaterTrial.getComponent(water).fugcoef(liquidWaterTrial);
+      double liquidWaterLogFugacity = liquidWaterTrial.getComponent(water).getLogFugacityCoefficient();
+      if (!Double.isFinite(liquidWaterLogFugacity) || gasWaterLogFugacity <= liquidWaterLogFugacity + 1.0e-8) {
         return false;
       }
 
       double waterInventory = 0.0;
-      for (int phase = 0; phase < aqueous; phase++) {
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         waterInventory += system.getBeta(phase) * system.getPhase(phase).getComponent(water).getx();
       }
       if (!(waterInventory > 0.0) || !Double.isFinite(waterInventory)) {
         return false;
       }
+      final double referenceMolarGibbs = system.getGibbsEnergy() / totalMoles;
+      final boolean validReference = isFeasiblePhaseEquilibrium(system);
+      if (candidate == null) {
+        candidate = system.clone();
+      }
+      int aqueous = candidate.getNumberOfPhases();
+      // A removed phase can leave an inactive logical index pointing at either active phase.
+      candidate.setPhaseIndex(aqueous, freeSlot);
+      candidate.addPhase();
+      candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
+      candidate.getPhases()[freeSlot] = liquidWaterTrial;
       double aqueousSeed = Math.min(0.05, 0.5 * Math.min(waterInventory, system.getComponent(water).getz()));
       for (int phase = 0; phase < aqueous; phase++) {
         double oldBeta = system.getBeta(phase);
@@ -3861,6 +3876,29 @@ public class TPmultiflash extends TPflash {
       logger.debug("Gas/oil aqueous active-set trial failed: {}", ex.getMessage());
     }
     return false;
+  }
+
+  /**
+   * Choose allocation strategy without changing the exact water-fugacity acceptance test.
+   *
+   * <p>
+   * A conservative vapour-pressure predictor avoids cloning one phase and then immediately cloning the whole system for
+   * a likely supersaturated endpoint. Clearly undersaturated feeds typically use only a detached phase. Invalid or
+   * unavailable vapour pressures retain the detached-phase route; the predictor never rejects or accepts a phase split.
+   * </p>
+   *
+   * @param gasWater water component in the incumbent gas phase
+   * @return true when a full candidate clone is likely to be needed
+   */
+  private boolean preferFullSystemAqueousTrial(ComponentInterface gasWater) {
+    try {
+      double saturationPressure = gasWater.getAntoineVaporPressure(system.getTemperature());
+      double waterFugacity = gasWater.getx() * gasWater.getFugacityCoefficient() * system.getPressure();
+      return Double.isFinite(saturationPressure) && saturationPressure > 0.0
+          && waterFugacity >= 0.8 * saturationPressure;
+    } catch (Exception ex) {
+      return false;
+    }
   }
 
   /**

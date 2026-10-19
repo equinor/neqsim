@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -106,6 +107,61 @@ class TPflashWetCondensateAqueousRecoveryTest {
         assertEquals(reference.getGibbsEnergy(), actual.getGibbsEnergy(), 0.0);
         assertEquivalentSplit(reference, actual);
       }
+    }
+  }
+
+  /** Verify the inexpensive negative screen avoids cloning the system or evaluating its Gibbs energy. */
+  @Test
+  void undersaturatedScreenAvoidsSystemCloneAndGibbsEvaluation() {
+    CountingSystem actual = new CountingSystem();
+    actual.addComponent("methane", 0.9);
+    actual.addComponent("n-decane", 0.1);
+    actual.addComponent("water", 0.001);
+    actual.setMixingRule(2);
+    actual.setMultiPhaseCheck(false);
+    new ThermodynamicOperations(actual).TPflash();
+    actual.setMultiPhaseCheck(true);
+    assertTrue(actual.hasPhaseType(PhaseType.GAS));
+    assertTrue(actual.hasPhaseType(PhaseType.OIL));
+    actual.systemClones = 0;
+    actual.gibbsEvaluations = 0;
+
+    new TPmultiflash(actual, false).rescueMetastableOilMissingAqueous();
+
+    assertEquals(0, actual.systemClones);
+    assertEquals(0, actual.gibbsEvaluations);
+    assertEquals(2, actual.getNumberOfPhases());
+    assertFalse(actual.hasPhaseType(PhaseType.AQUEOUS));
+  }
+
+  /**
+   * Count expensive operations at the public system boundary without introducing production instrumentation.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class CountingSystem extends SystemPrEos {
+    private static final long serialVersionUID = 1L;
+    private int systemClones;
+    private int gibbsEvaluations;
+
+    /** Construct a PR fluid at the standard conditions used by the wet-condensate regressions. */
+    private CountingSystem() {
+      super(288.15, 1.01325);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public CountingSystem clone() {
+      systemClones++;
+      return (CountingSystem) super.clone();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public double getGibbsEnergy() {
+      gibbsEvaluations++;
+      return super.getGibbsEnergy();
     }
   }
 
