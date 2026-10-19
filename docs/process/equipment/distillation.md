@@ -249,6 +249,14 @@ The simultaneous solver enforces partial-condenser `L - R D = 0` and reboiler
 active ratio is an initialization seed; the solved duty follows from the material-stream enthalpy
 balance. Both full residual evaluation and finite-difference Jacobian evaluation use the same
 boundary equations.
+
+Standalone condenser and reboiler runs also calculate duty as the sum of published material
+outlet enthalpy rates minus the material inlet enthalpy rates. This includes reflux, distillate,
+bottoms and any separate liquid product or side draw. Duties are in W, positive for heat added
+to the fluid and negative for heat removed. Flowing products receive caloric initialization
+before the balance is evaluated; zero-flow phase templates contribute zero energy. This avoids
+using stale residual enthalpy from the internal mixed fluid when a ratio reaches zero.
+
 Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
 sequential ratio correction preserves the current tray state instead of replacing it with a
 bubble-point seed. Both paths retain the terminal specifications and physical acceptance gates.
