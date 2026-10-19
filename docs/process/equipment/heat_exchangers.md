@@ -98,6 +98,25 @@ Other supported modes are:
 The most recently selected temperature, duty, or energy-stream mode controls the calculation.
 After `run()`, read `getDuty()` in W or `getDuty(unit)` in a supported power unit such as `"kW"`.
 
+### Repeated steady-state execution
+
+For `Heater` and the inherited steady-state `Cooler` calculation, optimized execution tracks
+local specification selection, temperature difference and temperature/pressure units as well as
+the existing inlet and numeric setpoint checks. Changing 300 K to 300 C, or 40 bara to 40 barg,
+requires recalculation even though the stored numeric value is unchanged. Repeating an unchanged
+local specification can retain the accepted result.
+
+Connected energy specifications (including `EnergyBus`) and the `"out stream"` specification are
+conservatively recalculated: their mutable external inputs are not represented by the cached
+result duty. Disconnecting an accepted energy specification also invalidates acceptance.
+The local acceptance metadata is transient, so a deserialized or deep-copied unit must complete
+a calculation before it can be considered clean. A failed calculation does not accept new inputs.
+
+This is an input-invalidation correction, not a general fluid-state cache or a performance
+qualification. It does not alter flash equations, unit conversion, duty signs, low-flow threshold
+ownership, ProcessModel convergence, or transient cooler physics. In particular, it does not
+authorize suppressing ProcessModel's automatic-threshold reset/reapply behavior.
+
 ## Recuperators and cold-separator feedback
 
 A gas–gas exchanger whose cold inlet comes from a downstream chiller and separator forms a
