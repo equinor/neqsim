@@ -165,10 +165,19 @@ public class AsphalteneMethodComparison {
     report.append("┌────────────────────────────────────────────────────────────────┐\n");
     report.append("│ METHOD 2: CPA THERMODYNAMIC (Physics-Based)                    │\n");
     report.append("├────────────────────────────────────────────────────────────────┤\n");
-    cpaOnsetPressure = cpaAnalyzer.calculateOnsetPressure(reservoirTemperature);
+    cpaOnsetPressure = Double.NaN;
+    String onsetFailure = null;
+    try {
+      cpaOnsetPressure = cpaAnalyzer.calculateOnsetPressure(reservoirTemperature);
+    } catch (IllegalArgumentException | IllegalStateException failure) {
+      onsetFailure = failure.getMessage();
+    }
     AsphalteneStabilityAnalyzer.AsphalteneRisk cpaRisk = cpaAnalyzer.evaluateSARAStability();
 
-    if (!Double.isNaN(cpaOnsetPressure)) {
+    if (onsetFailure != null) {
+      report.append("│ Onset Pressure: Unavailable: ").append(onsetFailure).append("\n");
+      report.append("│ Status: Thermodynamic onset calculation unavailable           │\n");
+    } else if (!Double.isNaN(cpaOnsetPressure)) {
       report.append(
           String.format("│ Onset Pressure: %.1f bara                                     │%n", cpaOnsetPressure));
       double margin = reservoirPressure - cpaOnsetPressure;

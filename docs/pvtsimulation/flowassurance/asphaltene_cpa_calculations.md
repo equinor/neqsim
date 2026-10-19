@@ -45,85 +45,87 @@ $$
 
 ### ThermodynamicOperations Methods
 
+The onset search requires a named, characterized asphaltene component with positive
+inventory. A heavy `C20` TBP fraction alone is insufficient. Missing or zero asphaltene
+inventory and invalid ranges/steps raise `IllegalArgumentException`; no generic fraction
+is invented. The pressure search requires an initially undersaturated fluid. An already
+precipitated pressure start, failed TP flash, unconverged bracket or exhausted search
+raises `IllegalStateException`. These failures must not be interpreted as no precipitation.
+
+A completed scan without a sampled transition returns `NaN` with `isOnsetFound() == false`.
+Every run clears its previous result. Both searches include the range endpoint and
+allow at most 100 coarse steps; use a step large enough to cover the requested range.
+A coarse scan can miss a narrow precipitation interval, so a no-onset result applies
+only to the sampled states. The existing refinement widths are 0.1 bara and 0.5 K.
+
+These examples use a **synthetic SRK solid-equilibrium fixture** to demonstrate the
+numerical API. They are exercised by `AsphalteneOnsetFlashTest`; their finite onsets do
+not establish empirical crude-oil accuracy or qualify CPA association parameters.
+Project fluids require characterized properties and independent onset data.
+
 ```java
-import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-// Create CPA fluid system
-SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(373.15, 250.0);
-fluid.addComponent("methane", 0.40);
-fluid.addComponent("propane", 0.10);
-fluid.addComponent("n-heptane", 0.45);
+SystemSrkEos fluid = new SystemSrkEos(450.0, 500.0);
+fluid.addComponent("methane", 0.30);
+fluid.addComponent("n-heptane", 0.65);
 fluid.addComponent("asphaltene", 0.05);
 fluid.setMixingRule("classic");
-
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+double onsetP = ops.asphalteneOnsetPressure(500.0, 200.0);
 
-// Calculate asphaltene onset pressure
-// Searches from current pressure down to find precipitation
-ops.asphalteneOnsetPressure();
-double onsetP = fluid.getPressure();
-
-// Calculate asphaltene onset temperature at fixed pressure
-fluid.setPressure(200.0);
-ops.asphalteneOnsetTemperature();
-double onsetT = fluid.getTemperature();
+fluid.setPressure(500.0);
+fluid.setTemperature(500.0);
+double onsetT = ops.asphalteneOnsetTemperature(500.0, 350.0, 550.0);
 ```
+
+Read the returned value or the operation getter. On success, the supplied fluid is
+flashed at that same reported onset coordinate. The pressure operation's precipitated
+fraction describes that final state, rather than a state arbitrarily 1 bar below it.
+A scan with no transition leaves the fluid at its sampled range limit. After a failed
+calculation the supplied fluid may remain at a trial state; do not reuse it as an
+accepted equilibrium result without a successful flash.
 
 ### AsphalteneOnsetPressureFlash
 
-Direct flash operation for onset pressure calculation:
+Configure the start and lower bound in the constructor, in bara:
 
 ```java
 import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetPressureFlash;
 
-// Create flash operation
-AsphalteneOnsetPressureFlash flash = new AsphalteneOnsetPressureFlash(fluid);
-
-// Configure search range
-flash.setMaxPressure(400.0);  // Start pressure [bar]
-flash.setMinPressure(1.0);    // End pressure [bar]
-flash.setPressureStep(10.0);  // Coarse search step [bar]
-flash.setTolerance(0.1);      // Bisection tolerance [bar]
-
-// Run calculation
-flash.run();
-
-// Get results
-if (flash.isOnsetFound()) {
-    double onsetPressure = flash.getOnsetPressure();
-    System.out.println("Onset Pressure: " + onsetPressure + " bar");
-} else {
-    System.out.println("No onset found in search range");
-}
+fluid.setTemperature(450.0);
+AsphalteneOnsetPressureFlash pressure = new AsphalteneOnsetPressureFlash(fluid, 500.0, 200.0);
+pressure.setPressureStep(25.0);
+pressure.run();
+double onsetPressure = pressure.getOnsetPressure();
+boolean pressureOnsetFound = pressure.isOnsetFound();
 ```
 
 ### AsphalteneOnsetTemperatureFlash
 
-Temperature-based onset calculation:
+The temperature search detects precipitation or dissolution when the sampled states
+change classification. Bounds and start are in kelvin; `setSearchDecreasing(false)`
+selects increasing temperature.
 
 ```java
 import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemperatureFlash;
 
-// Create flash operation at fixed pressure
-AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(fluid);
-
-// Configure search range
-flash.setMinTemperature(273.15);  // 0°C
-flash.setMaxTemperature(473.15);  // 200°C
-flash.setTemperatureStep(5.0);    // Search step [K]
-flash.setTolerance(0.1);          // Tolerance [K]
-
-// Run calculation
-flash.run();
-
-if (flash.isOnsetFound()) {
-    double onsetTemp = flash.getOnsetTemperature();
-    System.out.println("Onset Temperature: " + (onsetTemp - 273.15) + " °C");
-}
+fluid.setPressure(500.0);
+AsphalteneOnsetTemperatureFlash temperature =
+    new AsphalteneOnsetTemperatureFlash(fluid, 500.0, 350.0, 550.0);
+temperature.setTemperatureStep(25.0);
+temperature.run();
+double onsetTemperature = temperature.getOnsetTemperature();
+boolean temperatureOnsetFound = temperature.isOnsetFound();
 ```
 
 ### AsphalteneStabilityAnalyzer
+
+The direct onset methods propagate the same explicit characterization/search errors.
+`comprehensiveAssessment` and `AsphalteneMethodComparison` retain available empirical/SARA
+screening and report a failed onset
+calculation as `Unavailable`, with its cause, rather than claiming no onset was found.
 
 High-level API combining multiple analysis methods:
 
