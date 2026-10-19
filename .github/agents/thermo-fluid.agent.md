@@ -44,6 +44,13 @@ sweep, custom logic, or MCP cannot do the job. See `neqsim-api-patterns` skill Â
 5. Optionally: `createDatabase(true)` for custom or unusual components
 
 ## Oil Characterization
+**Precharacterized library first.** For a named Norwegian well or field, check the
+precharacterized well-fluid library (if one is provided, e.g. per-sample compositions with fitted
+Uleberg universal P/A split factors per sample, E300 output) before characterizing anything. A
+sample-level hit is the default fluid; do the full characterization below only when the
+well/field is not in the library or the library is not installed. Never reuse another well's
+fluid for one that is missing.
+
 For crude oils with C7+ fractions:
 ```java
 fluid.addTBPfraction("C7", 0.05, 92.0 / 1000, 0.727);  // name, moleFrac, molarMass_kg/mol, density
