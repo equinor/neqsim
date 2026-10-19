@@ -28,7 +28,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
   double Zair0 = 0.999419;
   double Zair15 = 0.999595;
-  double Zair60F = 999601;
+  /** Dry-air compression factor at 101.325 kPa, ISO 6976:2016 clause 10.5 (Table A.4). */
+  double Zair60F = 0.999601;
   double Zair20 = 0.999645;
 
   double[] Z0;

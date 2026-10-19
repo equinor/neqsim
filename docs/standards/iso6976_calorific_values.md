@@ -227,6 +227,33 @@ The air compressibility factors used are:
 
 \* The 1995 edition uses the 15 &deg;C value as approximation for 60 &deg;F.
 
+The 2016 values above are specified in **ISO 6976:2016, clause 10.5**, with
+the dry-air constants discussed in Annex A.3, Table A.4. The
+[ISO standard preview](https://www.theiteh.com/catalog/standards/iso/9821b7d9-88f2-4c8c-a3d2-20f7baa61351/iso-6976-2016)
+explicitly gives **0.999601 at 15.55 &deg;C and 101.325 kPa**. This is also
+corroborated by the ISO 6976-2016 calculation settings in
+[Agilent's PROstation for 990 Micro GC user manual](https://www.agilent.com/cs/library/usermanuals/public/PROstation_for_990_Micro_GC_User_Manual.pdf).
+
+**Correction of issue [#4458](https://github.com/equinor/neqsim/issues/4458):**
+`Standard_ISO6976_2016` previously assigned `Zair60F = 999601`; the correct
+value is `0.999601`. At the **15.55 &deg;C volume reference**, this reduces
+real relative density by 10^6 and increases both superior and inferior Wobbe
+indices by 1000. Calorific values and mixture compression factors are unchanged.
+Using 15.55 &deg;C only as the combustion reference, ideal-state calculations,
+neighboring volume references and the 1995 edition are unaffected.
+
+For the normalized four-component amounts from the worked example, at real
+15.55/15.55 &deg;C (volume/combustion) and 101.325 kPa, the corrected 2016
+calculation gives relative density **0.586922167**, superior Wobbe index
+**48898.787628 kJ/m³**, and inferior Wobbe index **44061.641560 kJ/m³**.
+`ISO6976AirFactorTest` checks both Wobbe indices and relative density against
+independent arithmetic using explicit component-table constants across all four
+implemented volume tables, all five combustion keys, both reference states and
+both editions. These regressions qualify this correction; they do not certify
+every ISO 6976 calculation route. The accepted temperature keys remain unchanged,
+including rejection of the exact 60 &deg;F conversion in place of the legacy
+15.55 &deg;C key.
+
 ### Step 6 - Wobbe Index
 
 The Wobbe index measures the interchangeability of fuel gases. A burner with a
