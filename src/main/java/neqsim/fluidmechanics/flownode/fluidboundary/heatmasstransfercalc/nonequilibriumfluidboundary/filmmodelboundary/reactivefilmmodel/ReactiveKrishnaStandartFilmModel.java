@@ -79,17 +79,6 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
   }
 
   /**
-   * {@inheritDoc}
-   *
-   * @deprecated Use {@link #calcTotalMassTransferCoefficientArray(int)}.
-   */
-  @Deprecated
-  @Override
-  public void calcTotalMassTransferCoefficientMatrix(int phase) {
-    calcTotalMassTransferCoefficientArray(phase);
-  }
-
-  /**
    * Selects the supported algebraic reactive enhancement model.
    *
    * @param type enhancement type; only 1 (algebraic) is implemented

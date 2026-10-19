@@ -14,9 +14,8 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.NormOps_DDRM;
-import org.junit.jupiter.api.Test;
 import org.ejml.simple.SimpleMatrix;
-import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
+import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver;
@@ -27,6 +26,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequi
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -617,10 +617,10 @@ class FilmCorrectionInvariantTest {
   /**
    * Verifies the primitive array API is primary and the deprecated matrix API is a default wrapper.
    *
-   * @throws NoSuchMethodException if a compatibility or array entry point has been removed
+   * @throws NoSuchMethodException if an accessor entry point has been removed
    */
   @Test
-  void arrayPrimaryApiRetainsDeprecatedMatrixEntryPoints() throws NoSuchMethodException {
+  void arrayPrimaryApiKeepsDeprecatedMatrixAccessor() throws NoSuchMethodException {
     assertEquals(double[][][].class,
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").getReturnType());
     assertFalse(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").isDefault());
@@ -628,10 +628,6 @@ class FilmCorrectionInvariantTest {
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").getReturnType());
     assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").isDefault());
     assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix")
-        .isAnnotationPresent(Deprecated.class));
-    assertTrue(KrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)
-        .isAnnotationPresent(Deprecated.class));
-    assertTrue(ReactiveKrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)
         .isAnnotationPresent(Deprecated.class));
   }
 
@@ -776,7 +772,13 @@ class FilmCorrectionInvariantTest {
       };
     }
 
-    @SuppressWarnings("deprecation")
+    /**
+     * Checks repeated array calculations preserve the base coefficients and reactive enhancement.
+     *
+     * @param thermo whether thermodynamic corrections are enabled
+     * @param finite whether finite-flux corrections are enabled
+     * @param flux the imposed total flux
+     */
     void checkRepeatedCalculation(boolean thermo, boolean finite, double flux) {
       useThermodynamicCorrections(thermo, 1);
       useFiniteFluxCorrection(finite, 1);
@@ -787,12 +789,13 @@ class FilmCorrectionInvariantTest {
       assertMatrix(base, new SimpleMatrix(getMassTransferCoefficientArray(1)));
       SimpleMatrix expected = new SimpleMatrix(new double[][] {{4.0, 0.8}, {0.5, 3.0}});
       assertMatrix(expected, new SimpleMatrix(totalMassTransferCoefficientMatrix[1]));
-      calcTotalMassTransferCoefficientMatrix(1);
+      calcTotalMassTransferCoefficientArray(1);
       assertMatrix(base, new SimpleMatrix(getMassTransferCoefficientArray(1)));
       assertMatrix(expected, new SimpleMatrix(totalMassTransferCoefficientMatrix[1]));
     }
   }
 
+  /** Checks repeated reactive enhancement does not mutate or compound the base coefficients. */
   @Test
   void enhancementDoesNotMutateOrCompoundAcrossCorrectionSwitches() {
     for (boolean thermo : new boolean[] {false, true}) {

@@ -336,17 +336,6 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * Retains the legacy correction-calculation entry point and subclass dispatch.
-   *
-   * @param phase phase index
-   * @deprecated Use {@link #calcTotalMassTransferCoefficientArray(int)}.
-   */
-  @Deprecated
-  public void calcTotalMassTransferCoefficientMatrix(int phase) {
-    calcTotalMassTransferCoefficientArray(phase);
-  }
-
-  /**
    * Copies an EJML matrix to primitive row-major coefficient arrays.
    *
    * @param matrix EJML coefficient matrix
@@ -408,7 +397,7 @@ public class KrishnaStandartFilmModel extends
       this.initCorrections(phaseNum);
       this.calcNonIdealCorrections(phaseNum);
       // this.calcFluxTypeCorrectionMatrix(phase,0);
-      this.calcTotalMassTransferCoefficientMatrix(phaseNum);
+      this.calcTotalMassTransferCoefficientArray(phaseNum);
     }
   }
 
