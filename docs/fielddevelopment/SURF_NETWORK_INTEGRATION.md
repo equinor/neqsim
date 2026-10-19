@@ -524,6 +524,17 @@ bypasses the backing pump is rejected as `INFEASIBLE`, with unavailable power an
 thermal evidence, because a zero-work bypass is not a valid pressure-rise calculation.
 Lowering the bypass threshold permits a fresh solve on the same graph.
 
+For the default reduced-curve `PumpChart`, speed-changing studies must evaluate the
+positive-head-slope diagnostic, high-flow boundary and BEP comparison at the requested
+speed. `PumpOperatingStatusTest` verifies their reduced-flow similarity, and
+`NetworkPumpOperatingStatusTest` checks speed/demand migration, status propagation and
+restoration using one canonical edge and its existing pump. It also checks mass closure,
+head/power affinity scaling and canonical host-power aggregation. This is synthetic
+integration evidence, not an independently qualified operating envelope; the inherited
+shared-reservoir fixture's below-map limitation remains unchanged. The alternative
+spline-map implementation and optimization boundary refinement (#4188/#3154) remain
+separate workstreams.
+
 Convergence is not operating-envelope acceptance: inspect the stable-flow residual
 even when the curve's operating-status label is normal. For an optimization study,
 register the existing `NetworkConstraints.edgeFlow` with the stable lower limit and

@@ -449,7 +449,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * checkSurge1.
+   * Check the head-curve slope at reference speed (legacy overload).
    *
    * @param flow a double
    * @param head a double
@@ -468,14 +468,19 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   }
 
   /**
-   * checkSurge2.
+   * Check for a positive head-curve slope at the requested speed.
    *
-   * @param flow a double
-   * @param speed a double
-   * @return a boolean
+   * <p>
+   * This reduced-curve diagnostic is not a measured surge boundary. Normalizes flow to reference speed before
+   * delegating to the legacy slope-check hook.
+   * </p>
+   *
+   * @param flow actual volumetric flow in m3/hr
+   * @param speed pump speed in rpm
+   * @return true if the fitted head increases with flow
    */
   public boolean checkSurge2(double flow, double speed) {
-    return checkSurge1(flow, getHead(flow, speed));
+    return checkSurge1(flow / speed * referenceSpeed, getHead(flow, speed));
   }
 
   /**
@@ -486,8 +491,9 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    * @return a boolean
    */
   public boolean checkStoneWall(double flow, double speed) {
-    if (flow > maxFlow) {
-      logger.warn("Stonewall condition detected at flow {} m³/hr (max: {} m³/hr)", flow, maxFlow);
+    double maximumFlowAtSpeed = maxReducedFlow * speed;
+    if (flow > maximumFlowAtSpeed) {
+      logger.warn("Stonewall condition detected at flow {} m³/hr (max: {} m³/hr)", flow, maximumFlowAtSpeed);
       return true;
     }
     // Also check if efficiency drops too low at high flow
@@ -564,6 +570,11 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   /**
    * Check operating status of pump at given flow and speed.
    *
+   * <p>
+   * Uses requested-speed reduced-flow diagnostics, not an OEM-qualified operating envelope. Does not enforce speed
+   * limits or minimum stable flow.
+   * </p>
+   *
    * @param flow flow rate in m³/hr
    * @param speed pump speed in rpm
    * @return operating status string
@@ -577,7 +588,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
       return "STONEWALL";
     }
     double efficiency = getEfficiency(flow, speed);
-    double bepFlow = getBestEfficiencyFlowRate();
+    double bepFlow = getBestEfficiencyFlowRate(speed);
     double bepEfficiency = getEfficiency(bepFlow, speed);
 
     if (efficiency < 0.7 * bepEfficiency) {

@@ -109,6 +109,12 @@ bypass; a bypassed positive-flow pump must not contribute accepted zero-power pu
 evidence. Converged flow below the stable limit is still an operating violation:
 inspect its residual and use the existing `NetworkConstraints.edgeFlow` with explicit
 kg/hr bounds in an optimization study. A chart status alone does not check that limit.
+Default `PumpChart` status follows the requested-speed reduced flow: use
+`checkSurge2(flow, speed)` rather than the legacy reference-speed `checkSurge1`.
+Its slope/high-flow/BEP diagnostics are curve heuristics, not an approved operating
+envelope or speed-extrapolation guard. `NetworkPumpOperatingStatusTest` covers
+same-edge speed/demand migration and restoration with affinity and host-power checks;
+it does not qualify the alternative spline map or the extrapolated lifecycle fixture.
 For repeated quasi-steady field-to-host studies, reuse the live model and evaluator but
 sample constraints again after each reservoir boundary or host-limit update. The ten-well
 `FieldToFacilityOptimizationAcceptanceTest` exercises moving separator, scrubber and
