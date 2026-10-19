@@ -254,7 +254,7 @@ Use `ProcessModelThroughputOptimizer` for large fixed-equipment studies such as 
 
 Use `ProcessModelSimulationEvaluator` directly when you need a lower-level black-box bridge to SciPy, NLopt, SQP, Pyomo, or another external optimizer.
 
-Use `ProcessModelOperatingEnvelopeStudy` when the engineering question is a sampled one- or two-dimensional operating envelope over already-declared `ProcessModelOperatingAction` controls. The study reuses `ProcessModelOperatingActionSetEvaluator` for every grid point, so failed or infeasible points retain the same constraint and restoration evidence and sampling stops immediately if the mutable baseline cannot be restored and reconverged. At feasible points, the leading row is selected from finite normalized installed-equipment and typed plant/shared/coupled evidence; raw kW, velocity, rate, surge margin, and other unlike physical quantities are never compared. Infeasible points use the exact fail-closed rejection source: the first applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated hard model constraint in declaration order. A sampled slice is not proof of a continuous feasible boundary or optimizer active set.
+Use `ProcessModelOperatingEnvelopeStudy` when the engineering question is a sampled one- or two-dimensional operating envelope over already-declared `ProcessModelOperatingAction` controls. The study reuses `ProcessModelOperatingActionSetEvaluator` for every grid point, so failed or infeasible points retain the same constraint and restoration evidence and sampling stops immediately if the mutable baseline cannot be restored and reconverged. At feasible points, the leading row is selected from finite normalized installed-equipment and typed plant/shared/coupled evidence; raw kW, velocity, rate, surge margin, and other unlike physical quantities are never compared. Infeasible points use the exact fail-closed rejection source: the first applicable required hydraulic binding, then typed plant/shared/coupled evidence, then the first violated hard model constraint in declaration order. Each adjacent grid edge also reports an `OperatingRegionTransition` when feasibility, the exact evaluator outcome, or the leading constraint/evidence layer changes. The record preserves both endpoint outcomes, action semantics, interval width, and constraint identities. It always states that the event is sampled and not interpolated; this is especially important for discrete route or line-up actions. A sampled slice is not proof of a continuous feasible boundary or optimizer active set.
 
 For a live field network, add `FieldWellNetworkProcessUnit` to the normal process area
 and address its canonical choke and edge controls through `ProcessAutomation`. This
@@ -788,12 +788,20 @@ attribution, a shadow price, a continuous feasible boundary, or operating approv
 For a persistent engineering cycle, call
 `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` after all requested slices complete.
 The compact immutable map combines the existing optimizer guard block, the accepted-point
-bottleneck, every sampled point and bottleneck transition, and per-slice plus aggregate evaluation
+bottleneck, every sampled point, bottleneck transition, explicit operating-region transition, and per-slice plus aggregate evaluation
 counts and wall-clock runtimes. Every slice must come from the exact runtime study, share the
 accepted candidate anchor, and have complete restoration/reconvergence. A foreign, deserialized,
 duplicate-axis, partial-recovery, or stale slice is rejected before export. Non-finite optional
 numerical fields are emitted as JSON `null`; they are never promoted to accepted evidence. Runtime
 is provenance for #2939 coordination, not a generic performance claim.
+
+`getOperatingRegionTransitions()` is the diagnostic handoff for map, injectivity, driver, capacity,
+and routing event studies. `BECAME_FEASIBLE` and `BECAME_INFEASIBLE` identify sampled feasibility
+changes; `EVALUATION_OUTCOME_CHANGED` preserves changes between exact fail-closed rejection classes;
+and `LEADING_CONSTRAINT_CHANGED` records a changed evidence identity or layer without comparing unlike
+physical units. A continuous edge may be passed to a separately configured optimizer refinement, but
+the envelope study itself never bisects it. A discrete edge is two evaluated line-ups only and must
+never be interpreted as an intermediate route fraction or topology.
 
 Use `ProcessModelOperatingEnvelopeLifecycleStudy` when the accepted envelope must be compared across
 ordered field periods. Build each period from its own converged model/evaluator definition, search, and

@@ -25,6 +25,7 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Outcome;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Transition;
@@ -235,6 +236,23 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getFromConstraint());
     assertEquals("gathering::gathering sink/producer A rate", transition.getToConstraint());
 
+    assertEquals(2, result.getOperatingRegionTransitions().size());
+    OperatingRegionTransition bottleneckChange = result.getOperatingRegionTransitions().get(0);
+    assertEquals(OperatingRegionTransition.Kind.LEADING_CONSTRAINT_CHANGED, bottleneckChange.getKind());
+    assertEquals(ProcessModelOperatingAction.ValueSemantics.CONTINUOUS, bottleneckChange.getActionValueSemantics());
+    OperatingRegionTransition feasibilityChange = result.getOperatingRegionTransitions().get(1);
+    assertEquals(OperatingRegionTransition.Kind.BECAME_INFEASIBLE, feasibilityChange.getKind());
+    assertTrue(feasibilityChange.isFromFeasible());
+    assertFalse(feasibilityChange.isToFeasible());
+    assertEquals(ProcessModelOperatingActionSetEvaluator.Outcome.FEASIBLE, feasibilityChange.getFromOutcome());
+    assertEquals(ProcessModelOperatingActionSetEvaluator.Outcome.HYDRAULIC_CONSTRAINT_VIOLATED,
+        feasibilityChange.getToOutcome());
+    assertEquals(200.0, feasibilityChange.getSampledIntervalWidth(), 0.0);
+    assertFalse(feasibilityChange.isDiscreteAction());
+    Map<String, Object> feasibilityEvidence = feasibilityChange.toEvidenceMap();
+    assertEquals(Boolean.FALSE, feasibilityEvidence.get("interpolated"));
+    assertEquals(Boolean.TRUE, feasibilityEvidence.get("sampled_event_only"));
+
     assertArrayEquals(new double[] {900.0, 300.0}, result.getPoints().get(3).getCandidateValues(), 0.0);
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
@@ -254,8 +272,45 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(result.getCompletedPointCount(), restored.getCompletedPointCount());
     assertEquals(result.getBottleneckTransitions().get(0).getToConstraint(),
         restored.getBottleneckTransitions().get(0).getToConstraint());
+    assertEquals(OperatingRegionTransition.Kind.BECAME_INFEASIBLE,
+        restored.getOperatingRegionTransitions().get(1).getKind());
     assertNotSame(restored.getPoints(), restored.getPoints());
     assertThrows(UnsupportedOperationException.class, () -> restored.getPoints().clear());
+  }
+
+  /** Verifies sampled discrete line-up changes are labelled explicitly and never presented as interpolation. */
+  @Test
+  void discreteSliceReportsFeasibilityChangeWithoutInterpolation() {
+    Fixture fixture = createFixture();
+    ProcessModelSimulationEvaluator simulation = new ProcessModelSimulationEvaluator(fixture.model);
+    simulation.setIncludeStrategyCapacityConstraints(false);
+    simulation.addObjective("total production",
+        model -> fixture.producerA.getFlowRate("kg/hr") + fixture.producerB.getFlowRate("kg/hr"),
+        ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    ProcessModelOperatingAction lineUp = ProcessModelOperatingAction.discrete("producer-a-line-up",
+        "Producer A line-up", "wells::producer A.flowRate", new double[] {300.0, 900.0}, "kg/hr",
+        "synthetic enumerated line-up");
+    ProcessModelOperatingAction producerB = ProcessModelOperatingAction.continuous("producer-b-rate", "Producer B rate",
+        "wells::producer B.flowRate", 200.0, 1000.0, "kg/hr", "synthetic producer B operating envelope");
+    ProcessModelOperatingActionSetEvaluator evaluator = new ProcessModelOperatingActionSetEvaluator(
+        "discrete-field-actions", "Discrete field actions", "synthetic discrete transition basis", simulation,
+        Arrays.asList(lineUp, producerB)).requireHydraulicConstraint(HydraulicLimitRole.GATHERING_HYDRAULICS,
+            "gathering", "gathering sink", "producer A rate", "synthetic producer choke envelope");
+    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("discrete-line-up-slice",
+        "Discrete line-up slice", "synthetic enumerated line-up transition", evaluator);
+
+    SliceResult result = study.evaluateOneDimensional(lineUp.getId(), new double[] {300.0, 900.0},
+        new double[] {300.0, 300.0});
+
+    assertTrue(result.isComplete(), result.getDiagnostics().toString());
+    assertEquals(1, result.getOperatingRegionTransitions().size());
+    OperatingRegionTransition transition = result.getOperatingRegionTransitions().get(0);
+    assertEquals(OperatingRegionTransition.Kind.BECAME_INFEASIBLE, transition.getKind());
+    assertTrue(transition.isDiscreteAction());
+    assertEquals(ProcessModelOperatingAction.ValueSemantics.DISCRETE, transition.getActionValueSemantics());
+    assertEquals(Boolean.FALSE, transition.toEvidenceMap().get("interpolated"));
+    assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }
 
   /**
