@@ -92,16 +92,73 @@ The historical company identifiers `Statoil`, `Statoil_TR1414`, and `StatoilTR` 
 bundled `StatoilTR` process rows. They do not rename `Equinor` or another company's requirement
 set. Gas-scrubber clearance lengths remain in mm and never become volumetric flow factors.
 
-When pipeline specifications are read, company-loaded design and joint factors take precedence
-over implicit material-standard defaults. Explicit calls to the material standard's factor
-setters take precedence over the company-loaded factors at this specification-loading stage.
-The calculator's subsequent design-code and location-class rules still apply during sizing.
+Company identifiers are resolved against `TechnicalRequirements_Process` before use. Matching is
+case insensitive and trims surrounding whitespace; historical Statoil aliases remain accepted.
+Unknown, null, and blank identifiers throw `IllegalArgumentException`. Use the literal `default`
+for generic requirements. A rejected unknown-company setter leaves the previous company selected.
+Custom companies must be recognized either by database rows or by a configured
+`MechanicalDesignDataSource` supplying design limits for that company and equipment. For an
+external-only company, `getProcessDesignCompanyIdentifier()` explicitly returns `default`:
+external design limits retain their company identity, while the process supplement is separately
+traceable to its generic/legacy sources. A CSV-source match must be present; merely attaching a
+source does not make misspelled companies valid.
 
-The separator, compressor, and heat-exchanger `loadProcessDesignParameters()` methods remain
-explicit operations. Call them after choosing the company and before applying project overrides;
-a later loader call can replace matching fields. Automatic activation needs per-property override
-tracking and is not supplied by the lookup-key corrections. Legacy fallback behavior for an
-unconfigured company remains separate from the stricter material readers described above.
+Process requirements use one explicit layering policy: historical `StatoilTR` baseline rows,
+then generic `default` rows, then the selected company's rows. This retains historical legacy
+K-factor/clearance inputs where the generic table has no such row, while applying supplemental
+process limits consistently. It does **not** mean that an Equinor or default calculation is
+compliant with Statoil requirements. `ProcessDesignParameters.load()` returns immutable ranges,
+original units, supplying company and document per property; `require()` rejects an absent key.
+Non-numeric descriptive rows are excluded. Database errors, malformed numeric ranges and missing
+mapped properties stop the load before any process parameters are assigned. Explicit project
+values can supply a property absent from the table.
+
+The separator, compressor and heat-exchanger loaders now run automatically through
+`readDesignSpecifications()` and consequently `calcDesign()`. The existing explicit
+`loadProcessDesignParameters()` entry points remain available. Public equipment setters record
+per-property project ownership, including a value equal to the old default. Reloading requirements,
+rerunning calculations or changing company preserves these overrides. Direct separator-standard
+area/flow setters are also retained, with equipment setters taking precedence.
+`clearProcessDesignParameterOverride(specification)` returns an equipment property to the data
+source on the next read/reload. Use the exact CSV specification name, for example
+`FoamAllowanceFactor` or `MinPolytropicEfficiency`.
+
+`getProcessDesignParameterSources()` on equipment and legacy process standards exposes the actual
+source for each applied/loaded property. Equipment sources distinguish `USER_OVERRIDE`,
+`STANDARD_OVERRIDE`, derived retention inputs, and
+`TechnicalRequirements_Process:<company>:<document>`.
+An unlisted equipment property has not been loaded by that reader. A database source is input
+provenance, not validation of a design method or qualification against a standard edition.
+
+The existing process loaders use range midpoints as screening inputs; both endpoints remain
+available from `ProcessDesignParameters`. In the generic rows this gives separator foam factor
+1.35, liquid-liquid droplet diameter 350 μm, gas-velocity limit 2 m/s and minimum oil retention
+2.5 min; exchanger approach 7.5 °C and maximum tube velocity 2.75 m/s. Compressor
+`MinPolytropicEfficiency` and `MinTurndown` rows store fractions, converted once to the existing
+percent-based mechanical-design API (80% and 75%). The actual casing-vibration key is
+`VibrationLimitCasing`. Efficiency setters/getters and `validateEfficiency()` use percent;
+`validateDesign()` converts the compressor's fractional efficiency before checking it.
+Midpoints do not establish a conservative project basis: choose project overrides when the
+requirement requires a particular endpoint or another documented value.
+
+Pipeline factors retain separate project, company and code/location ownership. The effective
+factor is the smaller of the project factor (or company factor when no project override exists)
+and the applicable code/location ceiling. A project factor of 0.60 survives repeated wall and
+MAOP calculations; location class 4 still limits it to 0.40. Database reloads do not erase the
+project restriction. Explicit material-standard factor setters remain project overrides.
+`clearDesignFactorOverride()` restores company/code selection. Invalid factors are rejected;
+`getDesignFactorSource()` and pipeline calculator exports identify the effective source.
+Changing a factor, code or class invalidates cached wall/MAOP results. Factor precedence does
+not qualify the legacy B31.3 or DNV-OS-F101 formulas; the separate topside material-model
+limitation above still applies.
+
+An explicit pipeline location class also survives company reloads, including when selected on the
+mechanical-design facade before its calculator exists. The calculator's
+`clearLocationClassOverride()` restores the last loaded company class.
+
+The regressions in `ProcessDesignLookupTest` and `ProcessDesignProvenanceTest` exercise these
+entry points, repeated loading, factor serialization, factory compatibility and independent
+flow-times-retention separator liquid-volume checks.
 
 ## CSV Data Source
 
@@ -151,7 +208,9 @@ maximum column. Unrecognized specification names are available through
 
 Use `setDesignDataSource(source)`, `setDesignDataSources(orderedSources)`, or
 `addDesignDataSource(source)` on the equipment's `MechanicalDesign`. Setting or adding a
-source reloads the limits. The complete example demonstrates two ordered sources.
+source reloads the limits. Register sources before selecting an external-only company so its
+identifier can be validated against those sources. The complete example demonstrates two
+ordered sources.
 
 The first present `DesignLimitData` wins as a whole; fields are not merged across sources.
 Adding a custom source replaces the implicit database-only fallback, so include the database
@@ -254,9 +313,9 @@ public class MechanicalDesignDatabaseExample {
     Stream feed = new Stream("Feed", fluid);
     Separator separator = new Separator("Separator", feed);
     MechanicalDesign design = separator.getMechanicalDesign();
-    design.setCompanySpecificDesignStandards("ExampleCo");
     design.setDesignDataSources(Arrays.<MechanicalDesignDataSource>asList(
         companySource, new DatabaseMechanicalDesignDataSource()));
+    design.setCompanySpecificDesignStandards("ExampleCo");
     if (!design.getDesignLimitData().equals(companyLimits)) {
       throw new IllegalStateException("Company limits were not applied");
     }

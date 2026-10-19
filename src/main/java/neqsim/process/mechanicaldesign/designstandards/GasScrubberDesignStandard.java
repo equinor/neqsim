@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.designstandards;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.data.ProcessDesignParameters;
 
 /**
  * GasScrubberDesignStandard class.
@@ -31,28 +32,13 @@ public class GasScrubberDesignStandard extends DesignStandard {
   public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet(
-            ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
-                + normalizeCompanyIdentifier(standardName) + "'"))) {
-      while (dataSet.next()) {
-        String specName = dataSet.getString("SPECIFICATION");
-        if (specName.equals("GasLoadFactor")) {
-          gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-        } else if (specName.equals("FlowDesignFactor")) {
-          designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
-        } else if (specName.equals("LengthGasInletToMeshpad")) {
-          lengthGasInletToMeshpad = Double.parseDouble(dataSet.getString("MINVALUE"));
-        } else if (specName.equals("LengthGasInletToHHLL") || specName.equals("LengthGasInetToHHLL")) {
-          lengthGasInetToHHLL = Double.parseDouble(dataSet.getString("MINVALUE"));
-        } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
-          lengthMeshPadToDemistingCyclone = Double.parseDouble(dataSet.getString("MINVALUE"));
-        }
-      }
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
+    java.util.Map<String, ProcessDesignParameters.Value> values = loadProcessRequirements("Gas scrubber", name);
+    gasLoadFactor = ProcessDesignParameters.require(values, "GasLoadFactor").maximum;
+    designFactorVolumeFlow = ProcessDesignParameters.require(values, "FlowDesignFactor").maximum;
+    lengthGasInletToMeshpad = ProcessDesignParameters.require(values, "LengthGasInletToMeshpad").minimum;
+    lengthGasInetToHHLL = ProcessDesignParameters.require(values, "LengthGasInletToHHLL").minimum;
+    lengthMeshPadToDemistingCyclone = ProcessDesignParameters.require(values,
+        "LengthMeshPadToDemistingCyclone").minimum;
   }
 
   /**

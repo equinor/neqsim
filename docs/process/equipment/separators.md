@@ -14,6 +14,26 @@ stop sizing. A failed reload invalidates the previous allowable until a valid ro
 or an explicit positive allowable is supplied. These bundled values are screening
 inputs; they do not replace edition- and temperature-specific code verification.
 
+Mechanical sizing automatically loads the layered process requirements described in
+[Mechanical design database](../mechanical_design_database). Project parameter setters retain
+ownership across reloads. Foam allowance and flow margin multiply the required liquid inventory:
+
+$$V_{req}=Q_L t_R f_{foam} f_{flow}$$
+
+Here $Q_L$ is actual total liquid flow in m³/s, $t_R$ is retention time in seconds, and the two
+$f$ factors are dimensionless. The cylindrical tangent section must supply this inventory in its
+available liquid cross section. The screening length is $L=V_{req}/A_L$, without a square root.
+If the required tangent length exceeds $5D$, sizing increases the diameter; it never truncates
+the required liquid inventory to force the length/diameter envelope. The minimum tangent length
+is $2D$. Both `calcDesign()` and `performSizingCalculations()` apply this check after the gas
+and settling diameter requirements. The gas-velocity limit also caps the Souders–Brown value.
+Both exported design-flow capacities are recomputed from the final diameter in m³/hr, so an
+inventory-driven increase in diameter is reflected in capacity utilization. Comprehensive
+validation converts actual gas flow to m³/s and uses the orientation-specific gas area.
+Without an explicit retention-time setter, sizing enforces the loaded oil retention minimum,
+and the water minimum when an aqueous phase is present. These are preliminary cylindrical-volume
+checks; detailed level geometry and separation performance still require their dedicated methods.
+
 ## Table of Contents
 
 - [Overview](#overview)
