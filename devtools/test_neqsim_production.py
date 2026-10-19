@@ -426,10 +426,40 @@ def _valid_lifecycle_evidence(current_envelope):
     }
 
 
-def _valid_state_lifecycle_evidence(current_envelope):
-    """Extend valid schema-v2 evidence with exact accepted physical-state metrics."""
+def _add_empty_operating_region_evidence(envelope):
+    """Add valid one-point sampled operating-region evidence to a test envelope."""
+    for envelope_slice in envelope["slices"]:
+        envelope_slice["axis_action_semantics"] = [
+            "CONTINUOUS" for _ in envelope_slice["axis_action_ids"]
+        ]
+        envelope_slice["operating_region_transitions"] = []
+        for sequence, point in enumerate(envelope_slice["points"]):
+            point["grid_indexes"] = [0 for _ in envelope_slice["axis_action_ids"]]
+            point["sequence_index"] = sequence
+            point["outcome"] = "FEASIBLE"
+
+
+def _valid_region_lifecycle_evidence(current_envelope):
+    """Extend valid lifecycle evidence with exact sampled operating-region migration fields."""
     evidence = _valid_lifecycle_evidence(current_envelope)
-    evidence["schema_version"] = 3
+    evidence["schema_version"] = 4
+    for period in evidence["periods"]:
+        _add_empty_operating_region_evidence(period["envelope_evidence"])
+    for change in evidence["period_change_diagnostics"]:
+        for slice_change in change["slice_changes"]:
+            slice_change.update({
+                "from_operating_region_transition_count": 0,
+                "to_operating_region_transition_count": 0,
+                "retained_operating_region_transition_count": 0,
+                "removed_operating_region_transitions": [],
+                "added_operating_region_transitions": [],
+            })
+    return evidence
+
+
+def _valid_state_lifecycle_evidence(current_envelope):
+    """Extend valid schema-v4 evidence with exact accepted physical-state metrics."""
+    evidence = _valid_region_lifecycle_evidence(current_envelope)
     evidence["accepted_state_metric_ids"] = [
         "reservoir-pressure", "production-rate", "injection-rate", "shared-power"
     ]
@@ -1093,8 +1123,26 @@ def test_guard_persists_complete_lifecycle_envelope(tmp_path):
     assert lifecycle["periods"][1]["period_id"] == "future-period"
 
 
-def test_guard_persists_schema3_accepted_physical_state_changes(tmp_path):
+def test_guard_persists_schema4_operating_region_migration_evidence(tmp_path):
     proposal = _valid_proposal()
+    _add_empty_operating_region_evidence(proposal["accepted_point_envelope_evidence"])
+    proposal["lifecycle_envelope_evidence"] = _valid_region_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    lifecycle = ctx.proposals[0]["lifecycle_envelope_evidence"]
+    assert lifecycle["schema_version"] == 4
+    slice_change = lifecycle["period_change_diagnostics"][0]["slice_changes"][0]
+    assert slice_change["retained_operating_region_transition_count"] == 0
+    assert slice_change["removed_operating_region_transitions"] == []
+    assert slice_change["added_operating_region_transitions"] == []
+
+
+def test_guard_persists_schema4_accepted_physical_state_changes(tmp_path):
+    proposal = _valid_proposal()
+    _add_empty_operating_region_evidence(proposal["accepted_point_envelope_evidence"])
     proposal["lifecycle_envelope_evidence"] = _valid_state_lifecycle_evidence(
         proposal["accepted_point_envelope_evidence"])
     ctx = _guard_context(tmp_path, proposal)
@@ -1102,7 +1150,7 @@ def test_guard_persists_schema3_accepted_physical_state_changes(tmp_path):
     production.guard(ctx, {})
     assert [row["title"] for row in ctx.proposals] == ["candidate"]
     lifecycle = ctx.proposals[0]["lifecycle_envelope_evidence"]
-    assert lifecycle["schema_version"] == 3
+    assert lifecycle["schema_version"] == 4
     assert lifecycle["periods"][1]["accepted_state_metrics"][0]["value"] == 148.25
     changes = lifecycle["period_change_diagnostics"][0]["accepted_state_changes"]
     assert changes[0] == {
@@ -1114,7 +1162,19 @@ def test_guard_persists_schema3_accepted_physical_state_changes(tmp_path):
     }
 
 
-def test_guard_rejects_invalid_schema3_accepted_physical_state(tmp_path):
+def test_guard_accepts_legacy_schema3_state_evidence(tmp_path):
+    proposal = _valid_proposal()
+    _add_empty_operating_region_evidence(proposal["accepted_point_envelope_evidence"])
+    proposal["lifecycle_envelope_evidence"] = _valid_state_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    proposal["lifecycle_envelope_evidence"]["schema_version"] = 3
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+
+
+def test_guard_rejects_invalid_schema4_accepted_physical_state(tmp_path):
     variants = []
     for title, mutate in [
         ("non-finite accepted state",
@@ -1129,6 +1189,7 @@ def test_guard_rejects_invalid_schema3_accepted_physical_state(tmp_path):
     ]:
         proposal = _valid_proposal()
         proposal["title"] = title
+        _add_empty_operating_region_evidence(proposal["accepted_point_envelope_evidence"])
         proposal["lifecycle_envelope_evidence"] = _valid_state_lifecycle_evidence(
             proposal["accepted_point_envelope_evidence"])
         mutate(proposal["lifecycle_envelope_evidence"])
@@ -1246,6 +1307,18 @@ def test_guard_rejects_stale_or_internally_inconsistent_lifecycle_envelope(tmp_p
         "slice_changes"][0]["became_infeasible_count"] = 1
     variants.append(period_change)
 
+    operating_region_change = _valid_proposal()
+    operating_region_change["title"] = "operating region migration mismatch"
+    _add_empty_operating_region_evidence(
+        operating_region_change["accepted_point_envelope_evidence"])
+    operating_region_change["lifecycle_envelope_evidence"] = _valid_region_lifecycle_evidence(
+        operating_region_change["accepted_point_envelope_evidence"])
+    operating_region_change["lifecycle_envelope_evidence"]["period_change_diagnostics"][0][
+        "slice_changes"][0]["added_operating_region_transitions"].append({
+            "kind": "BECAME_INFEASIBLE"
+        })
+    variants.append(operating_region_change)
+
     ctx = _guard_context(tmp_path, variants[0])
     ctx.plan["production"]["require_envelope_evidence"] = True
     ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
@@ -1264,6 +1337,8 @@ def test_guard_rejects_stale_or_internally_inconsistent_lifecycle_envelope(tmp_p
     assert "lifecycle_aggregate_count_mismatch" in reasons["aggregate mismatch"]
     assert "lifecycle_bottleneck_transitions_mismatch" in reasons["transition mismatch"]
     assert "lifecycle_period_change_diagnostics_mismatch" in reasons["period change mismatch"]
+    assert "lifecycle_period_change_diagnostics_mismatch" in reasons[
+        "operating region migration mismatch"]
 
 
 @pytest.mark.parametrize("field, value, reason", [

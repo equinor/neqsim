@@ -10940,16 +10940,61 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Set surface temperature profile along the pipe.
+   * Set surface temperature profile along the pipe in Kelvin.
    *
    * <p>
-   * Allows different ambient temperatures at different positions (e.g., varying seabed depth).
+   * Values are absolute temperatures, not Celsius. For example, a seawater profile from 5 to 8 degrees Celsius must be
+   * supplied as 278.15 to 281.15 K, or through {@link #setSurfaceTemperatureProfile(double[], String)} with unit
+   * {@code "C"}. Values below 100 K are accepted for compatibility but produce a warning because Celsius values passed
+   * here can cause extreme cooling.
    * </p>
    *
-   * @param profile Array of surface temperatures [K], one per section
+   * @param profile array of surface temperatures in K, one per section; null clears the profile
+   * @throws IllegalArgumentException if a temperature is non-finite or not above absolute zero
    */
   public void setSurfaceTemperatureProfile(double[] profile) {
-    this.surfaceTemperatureProfile = profile;
+    setSurfaceTemperatureProfile(profile, "K");
+    if (profile != null) {
+      for (int i = 0; i < profile.length; i++) {
+        if (profile[i] < 100.0) {
+          logger.warn("Surface temperature profile entry {} is {} K. The single-argument setter uses absolute "
+              + "Kelvin; use setSurfaceTemperatureProfile(profile, \"C\") for Celsius input.", i, profile[i]);
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * Set surface temperature profile along the pipe with explicit temperature units.
+   *
+   * <p>
+   * The input is copied and converted to Kelvin for both steady and transient heat transfer. A shorter profile retains
+   * the constant surface temperature for sections beyond the array, as in the Kelvin-only setter.
+   * </p>
+   *
+   * @param profile array of surface temperatures, one per section; null clears the profile
+   * @param unit temperature unit ("K" or "C")
+   * @throws IllegalArgumentException if the unit is unsupported or a converted temperature is non-finite or not above
+   * absolute zero
+   */
+  public void setSurfaceTemperatureProfile(double[] profile, String unit) {
+    if (!"K".equals(unit) && !"C".equals(unit)) {
+      throw new IllegalArgumentException("Unsupported temperature unit: " + unit + ". Use 'K' or 'C'.");
+    }
+    double[] kelvinProfile = profile == null ? null : profile.clone();
+    if (kelvinProfile != null) {
+      for (int i = 0; i < kelvinProfile.length; i++) {
+        if ("C".equals(unit)) {
+          kelvinProfile[i] += 273.15;
+        }
+        if (!Double.isFinite(kelvinProfile[i]) || kelvinProfile[i] <= 0.0) {
+          throw new IllegalArgumentException("Surface temperature profile entry " + i
+              + " must be finite and above absolute zero after conversion to Kelvin.");
+        }
+      }
+    }
+    this.surfaceTemperatureProfile = kelvinProfile;
     if (profile != null && profile.length > 0) {
       this.enableHeatTransfer = true;
       this.includeEnergyEquation = true;
@@ -10959,7 +11004,7 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get the surface temperature profile.
    *
-   * @return Array of surface temperatures or null if constant
+   * @return array of surface temperatures in Kelvin, or null if constant
    */
   public double[] getSurfaceTemperatureProfile() {
     return surfaceTemperatureProfile;

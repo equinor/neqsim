@@ -39,6 +39,9 @@ ASSESSMENTS = (
     ("CO2BrineHydrateReferenceAssessmentTest",
      "co2-brine-hydrate-reference-assessment.csv", 12,
      "co2_brine_hydrate_phase_state_burgass2023.csv"),
+    ("CO2WaterBaselineReferenceAssessmentTest",
+     "co2-water-baseline-carroll1991-assessment.csv", 18,
+     "co2_water_carroll1991_evaluation.csv"),
 )
 PROVENANCE = "docs/thermo/co2_kcl_interaction_provenance.md"
 

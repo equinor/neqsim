@@ -1,0 +1,18 @@
+# Carroll, Slupsky and Mather (1991), J. Phys. Chem. Ref. Data 20, 1201-1209.
+# DOI: https://doi.org/10.1063/1.555900
+# IUPAC-NIST SRD 106, system 62_1, Table 1, x1 (Model) column.
+# Source: https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_1
+# Evaluators: Carroll and Mather, October 1991, updated November 1994.
+# Six factual evaluated values, not raw experimental measurements or a fitted NeqSim parameter set.
+# CO2 PARTIAL pressure 101.325 kPa = 1.01325 bara; not total pressure or CO2 fugacity.
+# Primary Table 4 (p.1208) independently checked at the overlapping temperatures.
+# The displayed web Eq.(1) normalization is inconsistent with the adjacent table and is not used.
+# No pointwise combined uncertainty is supplied; none is invented.
+# Access: public NIST evaluation; only six factual values/citations retained. Article and figures not redistributed.
+point_id,temperature_K,co2_partial_pressure_bara,evaluated_model_x_co2
+CSM273,273.15,1.01325,0.001355
+CSM278,278.15,1.01325,0.001136
+CSM283,283.15,1.01325,0.000963
+CSM288,288.15,1.01325,0.000825
+CSM293,293.15,1.01325,0.000713
+CSM298,298.15,1.01325,0.000622

@@ -244,7 +244,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
-    evidence.put("schema_version", Integer.valueOf(hasStateMetrics ? 3 : 2));
+    evidence.put("schema_version", Integer.valueOf(4));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -569,7 +569,47 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     change.put("leading_constraint_change_count", Integer.valueOf(constraintChanges));
     change.put("from_bottleneck_transition_count", Integer.valueOf(from.getBottleneckTransitions().size()));
     change.put("to_bottleneck_transition_count", Integer.valueOf(to.getBottleneckTransitions().size()));
+    List<Map<String, Object>> fromOperatingTransitions = operatingTransitionEvidence(from);
+    List<Map<String, Object>> toOperatingTransitions = operatingTransitionEvidence(to);
+    List<Map<String, Object>> removedOperatingTransitions = exactDifference(fromOperatingTransitions,
+        toOperatingTransitions);
+    List<Map<String, Object>> addedOperatingTransitions = exactDifference(toOperatingTransitions,
+        fromOperatingTransitions);
+    change.put("from_operating_region_transition_count", Integer.valueOf(fromOperatingTransitions.size()));
+    change.put("to_operating_region_transition_count", Integer.valueOf(toOperatingTransitions.size()));
+    change.put("retained_operating_region_transition_count",
+        Integer.valueOf(fromOperatingTransitions.size() - removedOperatingTransitions.size()));
+    change.put("removed_operating_region_transitions", removedOperatingTransitions);
+    change.put("added_operating_region_transitions", addedOperatingTransitions);
     return Collections.unmodifiableMap(change);
+  }
+
+  /** Converts sampled operating-region events to exact immutable evidence rows. */
+  private static List<Map<String, Object>> operatingTransitionEvidence(SliceResult slice) {
+    List<Map<String, Object>> evidence = new ArrayList<Map<String, Object>>();
+    for (ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition transition : slice
+        .getOperatingRegionTransitions()) {
+      evidence.add(transition.toEvidenceMap());
+    }
+    return Collections.unmodifiableList(evidence);
+  }
+
+  /**
+   * Returns exact ordered rows present in {@code first} but not in {@code second}, preserving multiplicity.
+   */
+  private static List<Map<String, Object>> exactDifference(List<Map<String, Object>> first,
+      List<Map<String, Object>> second) {
+    List<Map<String, Object>> remaining = new ArrayList<Map<String, Object>>(second);
+    List<Map<String, Object>> difference = new ArrayList<Map<String, Object>>();
+    for (Map<String, Object> row : first) {
+      int match = remaining.indexOf(row);
+      if (match >= 0) {
+        remaining.remove(match);
+      } else {
+        difference.add(row);
+      }
+    }
+    return Collections.unmodifiableList(difference);
   }
 
   /** Finds the slice with one exact ordered action-axis signature. */

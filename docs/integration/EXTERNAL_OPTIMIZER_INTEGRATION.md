@@ -1110,6 +1110,10 @@ qualified compressor maps, shaft/driver limits, and shared-power budget. Do not 
 search into a revised period: rebuild, converge, optimize, replay, and sample that period independently. The lifecycle
 map is rejected rather than partially emitted if a period is stale, unconverged, non-finite, incompletely restored, or
 action-incompatible. Its transitions remain sampled advisory evidence, not a continuous forecast or operating approval.
+Schema-v4 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
+They report exact retained, removed, and added sampled events; event identity includes action semantics, endpoints,
+outcomes, feasibility, and constraint layers. External integrations must preserve these rows verbatim and must not
+interpolate a discrete route event or infer an unsampled continuous boundary.
 
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set
