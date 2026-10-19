@@ -278,7 +278,6 @@ class FilmCorrectionInvariantTest {
     /**
      * Checks state shape, independent initial copies and the live public coefficient-array contract.
      */
-    @SuppressWarnings("deprecation")
     private void checkWorkingStateOwnership() {
       assertEquals(neq, uMassTrans.getNumRows());
       assertEquals(1, uMassTrans.getNumCols());
@@ -294,19 +293,10 @@ class FilmCorrectionInvariantTest {
       assertSame(Xgij, cloned.Xgij);
       assertNotSame(nFlux, cloned.nFlux);
       assertArrayEquals(nFlux.getData(), cloned.nFlux.getData(), 0.0);
-      SimpleMatrix[] exported = getMassTransferCoefficientMatrix();
-      assertSame(massTransferCoefficientMatrix, exported);
-      SimpleMatrix replacement = exported[0].copy();
-      exported[0] = replacement;
-      assertSame(replacement, massTransferCoefficientMatrix[0]);
-      double original = replacement.get(0, 0);
       double[][][] snapshot = getMassTransferCoefficientArray();
-      assertNotSame(EjmlMatrixUtils.toArray(replacement), snapshot[0]);
+      double original = snapshot[0][0][0];
       snapshot[0][0][0] = original + 1.0;
       assertEquals(original, getMassTransferCoefficientArray()[0][0][0], 0.0);
-      replacement.set(0, 0, original + 1.0);
-      assertEquals(original + 1.0, getMassTransferCoefficientArray()[0][0][0], 0.0);
-      replacement.set(0, 0, original);
     }
 
     /**
@@ -610,29 +600,22 @@ class FilmCorrectionInvariantTest {
       return fluxTypeCorrectionMatrix[phase].clone();
     }
 
-    /**
-     * Reports whether compatibility views have been materialized.
-     *
-     * @return true if a legacy SimpleMatrix array exists
-     */
-    @SuppressWarnings("deprecation")
-    boolean hasLegacyCoefficientViews() {
-      return massTransferCoefficientMatrix != null;
-    }
   }
 
-  /** Verifies array-primary calculations do not allocate legacy SimpleMatrix coefficient views. */
+  /** Verifies coefficient calculations use the array-based API. */
   @Test
-  void arrayCalculationsDoNotMaterializeLegacyMatrices() {
+  void arrayCalculationsPreserveCoefficientSnapshots() {
     Film film = new Film();
-    assertFalse(film.hasLegacyCoefficientViews());
     film.evaluate(0.0, true, false);
     film.calculateMassTransferCoefficients(1);
-    assertFalse(film.hasLegacyCoefficientViews());
+    double[][][] snapshot = film.getMassTransferCoefficientArray();
+    double original = snapshot[1][0][0];
+    snapshot[1][0][0] = original + 1.0;
+    assertEquals(original, film.getMassTransferCoefficientArray()[1][0][0], 0.0);
   }
 
   /**
-   * Preserves the default array bridge for third-party implementations of the legacy SimpleMatrix interface.
+   * Verifies the primitive array API is primary and the deprecated matrix API is a default wrapper.
    *
    * @throws NoSuchMethodException if a compatibility or array entry point has been removed
    */
@@ -640,10 +623,10 @@ class FilmCorrectionInvariantTest {
   void arrayPrimaryApiRetainsDeprecatedMatrixEntryPoints() throws NoSuchMethodException {
     assertEquals(double[][][].class,
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").getReturnType());
-    assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").isDefault());
+    assertFalse(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").isDefault());
     assertEquals(SimpleMatrix[].class,
         FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").getReturnType());
-    assertFalse(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").isDefault());
+    assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").isDefault());
     assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix")
         .isAnnotationPresent(Deprecated.class));
     assertTrue(KrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)
@@ -653,31 +636,28 @@ class FilmCorrectionInvariantTest {
   }
 
   /**
-   * Verifies the deprecated live view remains connected to canonical arrays and survives serialization.
+   * Verifies the deprecated matrix wrapper returns independent copies and array state survives serialization.
    *
    * @throws IOException if the real-fluid boundary cannot be serialized
    * @throws ClassNotFoundException if the boundary class cannot be restored
    */
   @SuppressWarnings("deprecation")
   @Test
-  void arrayCoefficientStoragePreservesLiveViewsAndSerialization() throws IOException, ClassNotFoundException {
+  void matrixWrapperReturnsCopiesAndArrayStorageSurvivesSerialization() throws IOException, ClassNotFoundException {
     Film film = new Film();
     SimpleMatrix[] exported = film.getMassTransferCoefficientMatrix();
-    assertSame(exported, film.getMassTransferCoefficientMatrix());
-    exported[1].set(0, 1, 0.5);
-    assertMatrix(exported[1], film.evaluate(0.0, false, false));
-    exported[1] = exported[1].scale(2.0);
-    assertMatrix(exported[1], film.evaluate(0.0, false, false));
+    assertNotSame(exported, film.getMassTransferCoefficientMatrix());
+    assertNotSame(exported[1], film.getMassTransferCoefficientMatrix()[1]);
+    assertMatrix(new SimpleMatrix(film.getMassTransferCoefficientArray()[1]), exported[1]);
+    double original = film.getMassTransferCoefficientArray()[1][0][1];
+    exported[1].set(0, 1, original + 0.5);
+    assertEquals(original, film.getMassTransferCoefficientArray()[1][0][1], 0.0);
 
     SimpleMatrix recomputed = film.calculateMassTransferCoefficients(1).copy();
-    assertSame(exported, film.getMassTransferCoefficientMatrix());
-    assertMatrix(recomputed, exported[1]);
+    assertMatrix(recomputed, film.getMassTransferCoefficientMatrix()[1]);
 
     Film cloned = (Film) film.clone();
-    assertSame(exported, cloned.getMassTransferCoefficientMatrix());
-
-    SimpleMatrix pendingReplacement = exported[1].scale(2.0);
-    exported[1] = pendingReplacement;
+    assertMatrix(recomputed, cloned.getMassTransferCoefficientMatrix()[1]);
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
       output.writeObject(film);
@@ -686,14 +666,13 @@ class FilmCorrectionInvariantTest {
     try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
       restored = (Film) input.readObject();
     }
-    assertMatrix(pendingReplacement, new SimpleMatrix(restored.getMassTransferCoefficientArray()[1]));
+    assertMatrix(recomputed, new SimpleMatrix(restored.getMassTransferCoefficientArray()[1]));
     SimpleMatrix[] restoredViews = restored.getMassTransferCoefficientMatrix();
     assertNotSame(exported, restoredViews);
-    assertMatrix(pendingReplacement, restoredViews[1]);
+    assertMatrix(recomputed, restoredViews[1]);
     double changedValue = restoredViews[1].get(0, 0) + 1.0;
     restoredViews[1].set(0, 0, changedValue);
-    assertEquals(changedValue, restored.getMassTransferCoefficientArray()[1][0][0], 0.0);
-    assertMatrix(restoredViews[1], restored.evaluate(0.0, false, false));
+    assertEquals(recomputed.get(0, 0), restored.getMassTransferCoefficientArray()[1][0][0], 0.0);
   }
 
   @Test
