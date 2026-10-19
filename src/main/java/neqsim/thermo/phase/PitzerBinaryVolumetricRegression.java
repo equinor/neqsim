@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
+import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 
 /**
  * Weighted linear regression for one-state binary-electrolyte volumetric Pitzer parameters.
@@ -35,6 +35,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
   private static final int PARAMETER_COUNT = 4;
   private static final double RELATIVE_RANK_TOLERANCE = 1.0e-12;
   private static final double MAXIMUM_CONDITION_NUMBER = 1.0e10;
+  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
 
   private final PitzerBinaryVolumetricModel model;
 
@@ -137,10 +138,10 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
           "Volumetric Pitzer regression design is ill-conditioned: scaled condition number " + conditionNumber);
     }
 
-    RealVector scaledSolution = decomposition.getSolver().solve(new ArrayRealVector(weightedResponse, false));
+    double[] scaledSolution = ALGEBRA.solveLeastSquares(scaledDesign, weightedResponse);
     double[] coefficients = new double[PARAMETER_COUNT];
     for (int index = 0; index < PARAMETER_COUNT; index++) {
-      coefficients[index] = scaledSolution.getEntry(index) / columnNorms[index];
+      coefficients[index] = scaledSolution[index] / columnNorms[index];
       requireFinite(coefficients[index], "Fitted volumetric Pitzer coefficient");
     }
 

@@ -24,7 +24,7 @@ class LinearAlgebraOperationsContractTest {
    * @return one instance per {@link LinearAlgebraOperations} implementation
    */
   static Stream<LinearAlgebraOperations> backends() {
-    return Stream.of(new EjmlLinearAlgebra());
+    return Stream.of(new EjmlLinearAlgebra(), new ApacheCommonsMathLinearAlgebra());
   }
 
   @ParameterizedTest

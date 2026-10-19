@@ -1,10 +1,9 @@
 package neqsim.standards.gasquality;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -18,6 +17,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(UKspecifications_ICF_SI.class);
+  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
 
   String componentName = "";
   String unit = "-";
@@ -90,19 +90,16 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     double[] bmatrix = {(thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()),
         avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts())};
 
-    RealMatrix fmatrixJama = new Array2DRowRealMatrix(Amatrix);
-    DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
-    RealMatrix ans2 = solver1.solve(new Array2DRowRealMatrix(bmatrix));
+    double[] ans2 = ALGEBRA.solve(Amatrix, bmatrix);
 
     double nitrogenCalc = calcWithNitrogenAsInert();
     System.out.println("nitrogen content pn " + nitrogenCalc);
-    System.out.println("methane content pn " + ans2.getEntry(0, 0));
+    System.out.println("methane content pn " + ans2[0]);
 
-    System.out.println("propane content pn " + ans2.getEntry(1, 0));
+    System.out.println("propane content pn " + ans2[1]);
     try {
-      System.out.println(
-          "propane number " + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
-      return nitrogenCalc + ans2.getEntry(1, 0);
+      System.out.println("propane number " + (nitrogenCalc + ans2[1]) / thermoSystem.getTotalNumberOfMoles() * 100.0);
+      return nitrogenCalc + ans2[1];
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

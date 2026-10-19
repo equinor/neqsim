@@ -2,14 +2,15 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.ejml.simple.SimpleMatrix;
 import java.util.Random;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
 import org.ejml.interfaces.linsol.LinearSolverDense;
+import org.ejml.simple.SimpleMatrix;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -26,6 +27,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author benchmarking
  * @version 1.0
  */
+@Tag("benchmark")
 class NewtonSolverAnalysisTest {
   private static final Logger logger = LogManager.getLogger(NewtonSolverAnalysisTest.class);
 
@@ -36,7 +38,6 @@ class NewtonSolverAnalysisTest {
    * Both APIs use EJML dense storage; the lower-level API allows reuse of solver and result buffers.
    * </p>
    */
-  @Disabled
   @Test
   void benchmarkSimpleMatrixvsEJML() {
     int[] sizes = {3, 5, 10, 15, 20, 30};
