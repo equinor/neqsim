@@ -740,6 +740,14 @@ action. It accepts the best feasible finite-objective move from each complete ne
 evaluation budget includes a reserved final evaluation: the selected point must replay from the
 restored baseline with the same objective before it is exposed as accepted.
 
+For a qualified continuous control that crosses a sharp map, driver, capacity, or other hard
+constraint, boundary refinement can be enabled explicitly. The optimizer bisects only between an
+eligible feasible point and a fully restored, converged rejection on that same continuous
+coordinate. Every midpoint consumes the normal evaluation budget and passes through the complete
+simulator, constraint snapshot, restoration, and replay contract; discrete routes are never
+interpolated. This is a sampled feasibility-boundary refinement, not permission to weaken a limit or
+accept an unconverged point.
+
 ```java
 ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOptimizer(
     "field-operating-point", "Field operating point",
@@ -748,6 +756,7 @@ ProcessModelOperatingPointOptimizer optimizer = new ProcessModelOperatingPointOp
         .setObjectiveIndex(0)
         .setInitialStepFraction(0.25)
         .setRelativeStepTolerance(1.0e-3)
+        .setMaximumBoundaryRefinementEvaluations(8)
         .setMaximumEvaluations(100);
 
 ProcessModelOperatingPointOptimizer.OperatingPointSearchResult search = optimizer.optimize();
@@ -761,7 +770,9 @@ double[] acceptedChokesAndRoutes = search.getAcceptedCandidateValues();
 `getOptimizerEvidence(cycleId)` emits the exact fail-closed fields used by the living-task production
 guard: current cycle identity, candidate convergence/feasibility/finiteness, complete constraint and
 action evidence, complete state restoration, accepted-point replay, evaluation count, and measured
-runtime. A `true` evidence block qualifies only the configured steady-state model and limits. It is
+runtime. When boundary refinement is enabled, it also records the configured per-direction maximum
+and the number of midpoint evaluations actually performed. A `true` evidence block qualifies only
+the configured steady-state model and limits. It is
 not a global-optimality claim, a dynamic/safety study, or permission to write to a control system.
 
 Pass the completed search to the overloads on `ProcessModelOperatingEnvelopeStudy` to use the
