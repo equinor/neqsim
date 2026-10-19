@@ -387,6 +387,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
             late.study, late.search, late.slices);
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
 
+    assertEquals(Integer.valueOf(4), lifecycleEvidence.get("schema_version"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
@@ -399,6 +400,25 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
     assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
     assertEquals(Integer.valueOf(20), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
+    for (Object value : (List<?>) periodChange.get("slice_changes")) {
+      Map<?, ?> sliceChange = (Map<?, ?>) value;
+      int fromTransitionCount = ((Integer) sliceChange.get("from_operating_region_transition_count")).intValue();
+      int toTransitionCount = ((Integer) sliceChange.get("to_operating_region_transition_count")).intValue();
+      int retainedTransitionCount = ((Integer) sliceChange.get("retained_operating_region_transition_count"))
+          .intValue();
+      List<?> removedTransitions = (List<?>) sliceChange.get("removed_operating_region_transitions");
+      List<?> addedTransitions = (List<?>) sliceChange.get("added_operating_region_transitions");
+      assertEquals(fromTransitionCount, retainedTransitionCount + removedTransitions.size());
+      assertEquals(toTransitionCount, retainedTransitionCount + addedTransitions.size());
+      for (Object transition : removedTransitions) {
+        assertEquals(Boolean.FALSE, ((Map<?, ?>) transition).get("interpolated"));
+        assertEquals(Boolean.TRUE, ((Map<?, ?>) transition).get("sampled_event_only"));
+      }
+      for (Object transition : addedTransitions) {
+        assertEquals(Boolean.FALSE, ((Map<?, ?>) transition).get("interpolated"));
+        assertEquals(Boolean.TRUE, ((Map<?, ?>) transition).get("sampled_event_only"));
+      }
+    }
     assertEquals(earlyConstraint, lifecycle.getBottleneckTransitions().get(0).getFromConstraint());
     assertEquals(lateConstraint, lifecycle.getBottleneckTransitions().get(0).getToConstraint());
     assertTrue(((Long) lifecycleEvidence.get("total_evaluation_count")).longValue() > 12L);

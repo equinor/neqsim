@@ -528,7 +528,22 @@ def _exact_grid_key(values, axis_count):
     return rows
 
 
-def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=None):
+def _exact_list_difference(first, second):
+    """Return ordered exact rows in first but not second, preserving multiplicity."""
+    remaining = list(second)
+    difference = []
+    for row in first:
+        try:
+            index = remaining.index(row)
+        except ValueError:
+            difference.append(row)
+        else:
+            remaining.pop(index)
+    return difference
+
+
+def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=None,
+                               require_operating_transitions=False):
     """Derive adjacent-period diagnostics from persisted sampled and accepted-state evidence."""
     diagnostics = []
     for from_period, to_period in zip(periods, periods[1:]):
@@ -648,7 +663,7 @@ def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=
             to_transitions = to_slice.get("bottleneck_transitions")
             if not isinstance(from_transitions, list) or not isinstance(to_transitions, list):
                 return None
-            slice_changes.append({
+            slice_change = {
                 "axis_action_ids": list(axes),
                 "grid_identical": from_grid == to_grid,
                 "from_requested_point_count": from_slice.get("requested_point_count"),
@@ -664,7 +679,27 @@ def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=
                 "leading_constraint_change_count": constraint_changes,
                 "from_bottleneck_transition_count": len(from_transitions),
                 "to_bottleneck_transition_count": len(to_transitions),
-            })
+            }
+            from_operating_transitions = from_slice.get("operating_region_transitions")
+            to_operating_transitions = to_slice.get("operating_region_transitions")
+            if (require_operating_transitions
+                    and (from_operating_transitions is None or to_operating_transitions is None)):
+                return None
+            if from_operating_transitions is not None or to_operating_transitions is not None:
+                if (not isinstance(from_operating_transitions, list)
+                        or not isinstance(to_operating_transitions, list)):
+                    return None
+                removed = _exact_list_difference(from_operating_transitions, to_operating_transitions)
+                added = _exact_list_difference(to_operating_transitions, from_operating_transitions)
+                slice_change.update({
+                    "from_operating_region_transition_count": len(from_operating_transitions),
+                    "to_operating_region_transition_count": len(to_operating_transitions),
+                    "retained_operating_region_transition_count": (
+                        len(from_operating_transitions) - len(removed)),
+                    "removed_operating_region_transitions": removed,
+                    "added_operating_region_transitions": added,
+                })
+            slice_changes.append(slice_change)
         diagnostic = {
             "from_period_id": from_period.get("period_id"),
             "to_period_id": to_period.get("period_id"),
@@ -694,7 +729,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3):
+    if schema_version not in (1, 2, 3, 4):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -708,7 +743,8 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         reasons.append("invalid_lifecycle_action_ids")
         action_ids = []
     state_metric_ids = None
-    if schema_version == 3:
+    if (schema_version == 3
+            or (schema_version == 4 and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
             reasons.append("invalid_lifecycle_state_metric_ids")
@@ -750,7 +786,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             previous_elapsed = float(elapsed)
         if row.get("time_unit") != evidence.get("time_unit"):
             reasons.append(prefix + "_time_unit_mismatch")
-        if schema_version == 3:
+        if state_metric_ids is not None:
             metrics = row.get("accepted_state_metrics")
             valid_metrics = (isinstance(metrics, list)
                              and len(metrics) == len(state_metric_ids))
@@ -782,6 +818,14 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
+        if schema_version == 4:
+            slices = envelope.get("slices")
+            if (not isinstance(slices, list)
+                    or any(not isinstance(envelope_slice, dict)
+                           or "axis_action_semantics" not in envelope_slice
+                           or "operating_region_transitions" not in envelope_slice
+                           for envelope_slice in slices)):
+                reasons.append(prefix + "_missing_operating_region_transition_evidence")
 
         accepted = envelope.get("accepted_candidate_values")
         optimizer = envelope.get("optimizer_evidence")
@@ -844,9 +888,10 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3):
+    if schema_version in (2, 3, 4):
         expected_period_changes = _period_change_diagnostics(
-            periods, action_ids, evidence.get("time_unit"), state_metric_ids if schema_version == 3 else None)
+            periods, action_ids, evidence.get("time_unit"), state_metric_ids,
+            require_operating_transitions=schema_version == 4)
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")
