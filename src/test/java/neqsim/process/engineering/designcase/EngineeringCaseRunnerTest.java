@@ -299,7 +299,7 @@ class EngineeringCaseRunnerTest {
     private static final long serialVersionUID = 1000L;
 
     @Override
-    public ProcessSystem copy() {
+    public synchronized ProcessSystem copy() {
       return new UnsolvedProcess();
     }
 
