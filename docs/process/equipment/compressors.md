@@ -98,6 +98,27 @@ double polytropicHead = compressor.getPolytropicHead("kJ/kg");
 double polytropicExponent = compressor.getPolytropicExponent();
 ```
 
+### Efficiency from Measured Discharge Temperature
+
+`solveEfficiency(targetTemperatureK)` fits the efficiency selected by
+`setUsePolytropicCalc(...)` while keeping the inlet and outlet pressure fixed.
+It uses a safeguarded secant step and bisects when a trial leaves the feasible
+efficiency interval. A successful solve matches the discharge temperature within
+`setEfficiencySolveTolerance(...)` (default 0.01 K), including targets far from the
+initial efficiency. A target already within tolerance is accepted immediately.
+
+The fitted efficiency and calculated outlet remain available for later `run()`
+calls. The method preserves whether temperature-specified mode was enabled;
+on success it records the supplied target for that mode. Invalid temperatures or
+tolerances raise `IllegalArgumentException`. A non-finite calculation or failure
+to reach the target within 50 evaluations raises `IllegalStateException` instead
+of returning an unconverged efficiency. In particular, a discharge temperature
+below that attainable at unity efficiency cannot be fitted at fixed pressure.
+
+Treat a fitted value as an effective efficiency when composition uncertainty or
+anti-surge recycle heating is included in the measurement. Check the resulting
+power against an independent measurement before using it for calibration.
+
 ### Power Specified
 
 ```java

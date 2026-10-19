@@ -658,86 +658,70 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Calculates polytropic or isentropic efficiency by iteratively matching the specified outlet temperature. The
-   * iteration continues until the temperature difference is within the tolerance set by
-   * {@link #setEfficiencySolveTolerance(double)} (default 0.01 K) or the maximum iteration count is reached.
+   * Calculates polytropic or isentropic efficiency by matching the specified outlet temperature with a safeguarded
+   * secant iteration. The outlet temperature must match within {@link #setEfficiencySolveTolerance(double)} (default
+   * 0.01 K) in at most 50 evaluations. Efficiency remains within its physical bounds. The configured temperature mode
+   * is restored even if the calculation fails; a successful solve also records the target for temperature mode.
    *
-   * @param outTemperature the target outlet temperature in Kelvin
+   * @param outTemperature the finite, positive target outlet temperature in Kelvin
    * @return the calculated efficiency (polytropic or isentropic depending on configuration)
+   * @throws IllegalArgumentException if the target or solve tolerance is non-finite or non-positive
+   * @throws IllegalStateException if the outlet temperature is non-finite or the target cannot be matched
    * @see #setEfficiencySolveTolerance(double)
    */
   public double solveEfficiency(double outTemperature) {
-    double funk = 0.0;
-    double funkOld = 0.0;
-    double newPoly;
-    double dfunkdPoly = 100.0;
-    double dPoly = 100.0;
-    double oldPoly = polytropicEfficiency;
-    // Bracket of the root: the outlet temperature decreases with efficiency, so an efficiency at which the
-    // outlet is too hot is a lower bound and one at which it is too cold is an upper bound. The secant step is
-    // only accepted inside the bracket, otherwise the bracket is bisected (a plain secant step overshoots to the
-    // efficiency limits when the target needs an efficiency far from the starting value).
+    if (!Double.isFinite(outTemperature) || outTemperature <= 0.0) {
+      throw new IllegalArgumentException("Compressor efficiency target temperature must be finite and positive");
+    }
+    if (!Double.isFinite(efficiencySolveTolerance) || efficiencySolveTolerance <= 0.0) {
+      throw new IllegalArgumentException("Compressor efficiency solve tolerance must be finite and positive");
+    }
     double effLow = MIN_EFFICIENCY;
     double effHigh = MAX_EFFICIENCY;
+    double previousEfficiency = Double.NaN;
+    double previousResidual = Double.NaN;
+    boolean previousUseOutTemperature = useOutTemperature;
     useOutTemperature = false;
-    run();
-    useOutTemperature = true;
-    int iter = 0;
-    boolean useOld = usePolytropicCalc;
-    // usePolytropicCalc = true;
-    // System.out.println("use polytropic " + usePolytropicCalc);
-    do {
-      iter++;
-      funk = getThermoSystem().getTemperature() - outTemperature;
-      if (Double.isFinite(funk)) {
-        if (funk > 0.0) {
-          effLow = Math.max(effLow, polytropicEfficiency);
-        } else {
-          effHigh = Math.min(effHigh, polytropicEfficiency);
+    try {
+      for (int iter = 0; iter < 50; iter++) {
+        run();
+        double efficiency = usePolytropicCalc ? polytropicEfficiency : isentropicEfficiency;
+        double residual = getThermoSystem().getTemperature() - outTemperature;
+        if (!Double.isFinite(residual)) {
+          throw new IllegalStateException("Compressor efficiency solve produced a non-finite outlet temperature");
         }
+        if (Math.abs(residual) <= efficiencySolveTolerance) {
+          this.outTemperature = outTemperature;
+          return efficiency;
+        }
+        // For compression, a hotter outlet requires a higher efficiency. Keep all subsequent trials inside
+        // the feasible interval instead of clipping a secant overshoot to an efficiency limit.
+        if (residual > 0.0) {
+          effLow = Math.max(effLow, efficiency);
+        } else {
+          effHigh = Math.min(effHigh, efficiency);
+        }
+        double nextEfficiency = efficiency + 0.01;
+        if (Double.isFinite(previousResidual) && residual != previousResidual) {
+          nextEfficiency = efficiency - residual * (efficiency - previousEfficiency) / (residual - previousResidual);
+        }
+        if (!Double.isFinite(nextEfficiency) || nextEfficiency <= effLow || nextEfficiency >= effHigh) {
+          nextEfficiency = 0.5 * (effLow + effHigh);
+        }
+        if (nextEfficiency == efficiency || iter == 49) {
+          break;
+        }
+        previousEfficiency = efficiency;
+        previousResidual = residual;
+        setPolytropicEfficiency(nextEfficiency);
+        setIsentropicEfficiency(nextEfficiency);
       }
-      if (Math.abs(dPoly) > 1.0e-12 && Double.isFinite(dPoly) && Double.isFinite(funk) && Double.isFinite(funkOld)) {
-        dfunkdPoly = (funk - funkOld) / dPoly;
-      } else {
-        dfunkdPoly = Double.NaN;
-      }
-
-      if (!Double.isFinite(dfunkdPoly) || Math.abs(dfunkdPoly) < 1.0e-12) {
-        // Fallback directional step when secant slope is singular after bounded updates.
-        newPoly = polytropicEfficiency + (funk > 0.0 ? 0.01 : -0.01);
-      } else {
-        newPoly = polytropicEfficiency - funk / dfunkdPoly;
-      }
-
-      if (iter <= 1) {
-        newPoly = polytropicEfficiency + 0.01;
-      }
-
-      if (!Double.isFinite(newPoly)) {
-        newPoly = polytropicEfficiency + (funk > 0.0 ? 0.01 : -0.01);
-      }
-      if (effLow < effHigh && (newPoly <= effLow || newPoly >= effHigh)) {
-        newPoly = 0.5 * (effLow + effHigh);
-      }
-      oldPoly = polytropicEfficiency;
-      setPolytropicEfficiency(newPoly);
-      setIsentropicEfficiency(newPoly);
-      dPoly = polytropicEfficiency - oldPoly;
-      if (Math.abs(dPoly) < 1.0e-12) {
-        // Avoid zero secant denominator on the next iteration while keeping the bounded value.
-        dPoly = funk > 0.0 ? 1.0e-12 : -1.0e-12;
-      }
-      funkOld = funk;
-      useOutTemperature = false;
-      run();
-      useOutTemperature = true;
-      // System.out.println("temperature compressor " +
-      // getThermoSystem().getTemperature() + " funk " + funk + " polytropic " +
-      // polytropicEfficiency);
-    } while ((Math.abs((getThermoSystem().getTemperature() - outTemperature)) > efficiencySolveTolerance || iter < 3)
-        && (iter < 50));
-    usePolytropicCalc = useOld;
-    return polytropicEfficiency;
+      throw new IllegalStateException("Compressor efficiency solve could not match target " + outTemperature
+          + " K within " + efficiencySolveTolerance + " K; last outlet temperature was "
+          + getThermoSystem().getTemperature() + " K");
+    } finally {
+      useOutTemperature = previousUseOutTemperature;
+    }
   }
 
   /**
