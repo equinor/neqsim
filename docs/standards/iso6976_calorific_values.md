@@ -145,8 +145,11 @@ where $\sqrt{b_i(t_2)}$ is the **summation factor** (square root of the
 normalised second virial coefficient) for pure component $i$ at temperature
 $t_2$, tabulated in the standard.
 
-This is evaluated at five reference temperatures: 0, 15, 20, 25, and
-15.55 &deg;C (60 &deg;F). The simplification arises from expressing the second
+The 1995 implementation has three volume-temperature tables: 0, 15 and
+20 &deg;C; its 15.55 &deg;C route reuses the 15 &deg;C correction.
+The 2016 implementation has four volume-temperature tables: 0, 15, 15.55 and
+20 &deg;C. Neither implements a 25 &deg;C volume-correction table; supported
+combustion-temperature keys are a separate matter. The simplification arises from expressing the second
 virial cross-coefficient $B_{ij}$ as a geometric mean:
 
 $$
@@ -208,7 +211,8 @@ $$
 d^{\text{ideal}} = \frac{M_{\text{mix}}}{M_{\text{air}}}
 $$
 
-where $M_{\text{air}} = 28.9626$ g/mol.
+where the NeqSim implementation uses $M_{\text{air}} = 28.96546$ g/mol
+from `ThermodynamicConstantsInterface.molarMassAir`.
 
 **Real gas relative density** at volume reference temperature $t_2$:
 
@@ -223,9 +227,20 @@ The air compressibility factors used are:
 | 0 &deg;C | 0.99941 | 0.999419 |
 | 15 &deg;C | 0.99958 | 0.999595 |
 | 20 &deg;C | 0.99963 | 0.999645 |
-| 60 &deg;F (15.55 &deg;C) | 0.99958* | 0.999601 |
+| 60 &deg;F (15.55 &deg;C) | 0.99958* | implementation defect; see warning below |
 
 \* The 1995 edition uses the 15 &deg;C value as approximation for 60 &deg;F.
+
+**Known implementation limitation:** the current `Standard_ISO6976_2016`
+source assigns `Zair60F = 999601`, not a near-unity air factor. Consequently,
+its **real relative density** and **Wobbe indices** at volume reference
+**15.55 &deg;C** are invalid. Do not use those outputs for engineering or
+contract decisions until the runtime defect is corrected and qualified. This
+warning does not apply when 15.55 &deg;C is only the combustion reference and
+the volume reference is 0, 15 or 20 &deg;C. Do not silently change a required
+contractual reference temperature or switch to the ideal state to mask the defect.
+Track correction and qualification in [issue #4458](https://github.com/equinor/neqsim/issues/4458).
+The numerical worked example below uses the 1995 implementation at 15/15.
 
 ### Step 6 - Wobbe Index
 
@@ -734,62 +749,69 @@ if (!unknowns.isEmpty()) {
 
 ## Worked Numerical Example
 
-Consider a simple gas with the following dry molar composition:
+Use the **1995 implementation**, real-gas volume basis, **15/15 &deg;C**
+(combustion/volume) and **1.01325 bara**. The four inputs below are relative
+molar amounts, **not already normalized mole fractions**. Their sum is
+0.983163; no missing component is inferred or silently filled with methane.
 
-| Component | $x_i$ | $M_i$ [g/mol] | $H_{s,i}^{\circ}(15)$ [kJ/mol] | $\sqrt{b_i}(15)$ |
-|-----------|--------|----------------|-------------------------------|-------------------|
-| methane | 0.931819 | 16.043 | 891.56 | 0.0447 |
-| ethane | 0.025618 | 30.070 | 1562.14 | 0.0922 |
-| nitrogen | 0.010335 | 28.0135 | 0.0 | 0.0173 |
-| CO$_2$ | 0.015391 | 44.010 | 0.0 | 0.0748 |
+$$n_{\mathrm{tot}} = 0.931819 + 0.025618 + 0.010335 + 0.015391 = 0.983163$$
 
-**Molar mass:**
+$$x_i = n_i / n_{\mathrm{tot}}, \qquad \sum_i x_i = 1$$
 
-$$
-M_{\text{mix}} = 0.931819 \times 16.043 + 0.025618 \times 30.070 + 0.010335 \times 28.0135 + 0.015391 \times 44.010 = 17.478 \text{ g/mol}
-$$
+The component constants are from the repository's
+[ISO6976constants.csv](../../src/main/resources/data/ISO6976constants.csv)
+columns MolarMass, Hsupmolar15 and srtb15. Fractions are displayed rounded;
+use the original amounts divided by their total for calculation.
 
-**Ideal molar GCV at 15 &deg;C:**
+| Component | Relative amount $n_i$ | Normalized $x_i$ | $M_i$ [g/mol] | $H_{s,i}^{\circ}(15)$ [kJ/mol] | $\sqrt{b_i}(15)$ |
+| --- | --- | --- | --- | --- | --- |
+| methane | 0.931819 | 0.947776717 | 16.043 | 891.56 | 0.0447 |
+| ethane | 0.025618 | 0.026056717 | 30.070 | 1562.14 | 0.0922 |
+| nitrogen | 0.010335 | 0.010511990 | 28.0135 | 0.0 | 0.0173 |
+| CO2 | 0.015391 | 0.015654576 | 44.010 | 0.0 | 0.0748 |
 
-$$
-H_s^{\text{id}} = 0.931819 \times 891.56 + 0.025618 \times 1562.14 + 0 + 0 = 870.93 \text{ kJ/mol}
-$$
+Apply the earlier equations in order, without mixing fixtures or reference
+temperatures. With $R = 8.314510$ J/(mol K), $T_2 = 288.15$ K,
+$M_{\mathrm{air}} = 28.96546$ g/mol (the implementation's shared air-mass
+constant) and $Z_{\mathrm{air}}(15) = 0.99958$:
 
-**Mixture compressibility at 15 &deg;C:**
+$$M_{\mathrm{mix}} = \sum_i x_i M_i,\qquad H_s^{\mathrm{id}} = \sum_i x_i H_{s,i}^{\circ}(15)$$
 
-$$
-\sum x_i \sqrt{b_i} = 0.931819 \times 0.0447 + 0.025618 \times 0.0922 + 0.010335 \times 0.0173 + 0.015391 \times 0.0748 = 0.04530
-$$
+$$B = \sum_i x_i \sqrt{b_i}(15),\qquad Z = 1-B^2,\qquad c = \frac{101325}{R T_2 Z}$$
 
-$$
-Z_{\text{mix}}(15) = 1 - (0.04530)^2 = 0.99795
-$$
+$$H_s^{\mathrm{vol}} = H_s^{\mathrm{id}}c,\qquad d = \frac{M_{\mathrm{mix}}}{M_{\mathrm{air}}}\frac{Z_{\mathrm{air}}}{Z}$$
 
-**Volumetric GCV (real gas, 15/15):**
+$$W_s = \frac{H_s^{\mathrm{vol}}}{\sqrt{d}},\qquad \rho = \frac{M_{\mathrm{mix}}}{1000}c$$
 
-$$
-H_s^{\text{vol}} = 870.93 \times \frac{101325}{8.31451 \times 288.15 \times 0.99795} = 870.93 \times 42.361 = 36896 \text{ kJ/m}^3
-$$
+Here $B$ is the dimensionless mixture summation factor, $c$ is real molar density
+in mol/m³, $d$ is relative density and $\rho$ is mass density in kg/m³.
+The extra digits below support arithmetic reproduction, not measurement accuracy.
 
-$$
-\approx 38959 \text{ kJ/m}^3
-$$
+| Quantity | Value | Unit |
+| --- | ---: | --- |
+| Molar mass | 16.972143 | g/mol |
+| Ideal molar GCV | 885.704049 | kJ/mol |
+| Summation factor | 0.046120868 | dimensionless |
+| Compression factor | 0.997872866 | dimensionless |
+| Real molar density | 42.382456 | mol/m³ |
+| Real volumetric GCV | 37538.312497 | kJ/m³ |
+| Real relative density | 0.586946604 | dimensionless |
+| Superior Wobbe index | 48997.672257 | kJ/m³ |
+| Real gas density | 0.719321091 | kg/m³ |
 
-(The precise value depends on the exact tabulated constants used.)
+Thus this fixture gives approximately **37.54 MJ/m³ GCV** and
+**49.00 MJ/m³ superior Wobbe index**, both on the stated real 15/15 basis.
+The executable regression
+[Iso6976NumericalDocumentationTest](../../src/test/java/neqsim/standards/gasquality/Iso6976NumericalDocumentationTest.java)
+compares the Java calculator with this formula chain and checks that multiplying
+every input amount by the same positive factor leaves the quality unchanged.
+The Python documentation contract recalculates the published table from the CSV.
 
-**Relative density (real gas, 15 &deg;C):**
-
-$$
-d = \frac{17.478}{28.9626} \times \frac{0.99958}{0.99795} = 0.6034 \times 1.00163 = 0.6044
-$$
-
-**Superior Wobbe Index:**
-
-$$
-W_s = \frac{38959}{\sqrt{0.6044}} = \frac{38959}{0.7775} = 50107 \text{ kJ/m}^3
-$$
-
-These values match the NeqSim test suite assertions (see `Standard_ISO6976Test.testCalculate3`).
+This is implementation/arithmetic consistency, **not independent laboratory validation**
+or fiscal certification. The **eight-component** fixture in Validation Data below
+is a different gas: its results must not be substituted into this four-component
+calculation. Likewise, the standards landing-page quick start uses these four
+amounts at **0/15.55 &deg;C** (volume/combustion), not this example's 15/15 basis.
 
 ---
 
@@ -802,7 +824,7 @@ These values match the NeqSim test suite assertions (see `Standard_ISO6976Test.t
 | 0 &deg;C | 0.99941 | 0.999419 |
 | 15 &deg;C | 0.99958 | 0.999595 |
 | 20 &deg;C | 0.99963 | 0.999645 |
-| 60 &deg;F (15.55 &deg;C) | ~0.99958 | 0.999601 |
+| 60 &deg;F (15.55 &deg;C) | ~0.99958 | invalid current implementation; see Step 5 |
 
 ### Test Case Results (from NeqSim test suite)
 
