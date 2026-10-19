@@ -196,6 +196,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | TBP Fractions            | [docs/wiki/tbp_fraction_models.md](wiki/tbp_fraction_models.md)                                                                 | TBP fraction modeling                               |
 | PVT Characterization     | [docs/thermo/pvt_fluid_characterization.md](thermo/pvt_fluid_characterization.md)                                               | PVT fluid characterization with lumping             |
 | Characterization Package | [docs/thermo/characterization/README.md](thermo/characterization/README.md)                                                           | Characterization module                             |
+| Catalytic Reforming Balance | [docs/thermo/characterization/refinery_catalytic_reforming_stoichiometric_balance.md](thermo/characterization/refinery_catalytic_reforming_stoichiometric_balance.md) | Stoichiometric naphthene/paraffin conversion and hydrogen receipt |
 | Combining Methods        | [docs/thermo/characterization/fluid_characterization_combining.md](thermo/characterization/fluid_characterization_combining.md) | Fluid combining methods                             |
 | Char Mathematics         | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md)                 | Characterization mathematics with lumping equations |
 
