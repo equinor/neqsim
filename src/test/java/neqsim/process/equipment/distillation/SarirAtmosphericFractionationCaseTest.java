@@ -25,6 +25,11 @@ public class SarirAtmosphericFractionationCaseTest {
       0.334647647989, 0.384225077321, 0.421408149319, 0.458591221318, 0.495774293317, 0.545351722649, 0.743661439976};
   private static final double BALANCE_TOLERANCE = 5.0e-2;
   private static final double MATERIAL_FLOW_FRACTION = 1.0e-8;
+  private static final double[] AUDIT_MASS_FLOW_KG_PER_HOUR = {20580.3161, 2782.9681, 4057.3717, 26999.3442};
+  private static final double[] AUDIT_PLANT_ERROR_PERCENT = {136.3855, 192.3030, 77.0888, 0.2296};
+  private static final double[] AUDIT_MEAN_BOILING_POINT_CELSIUS = {174.1320, 319.2992, 338.1923, 467.4137};
+  private static final double[][] AUDIT_BOILING_QUANTILES_CELSIUS = {{93.0789, 165.8523, 282.0965},
+      {282.0965, 333.4095, 333.4095}, {282.0965, 360.7343, 360.7343}, {360.7343, 438.2205, 605.7733}};
 
   /** Require explicit inputs to build a conservative, ordered, non-fallback column solve. */
   @Test
@@ -89,6 +94,12 @@ public class SarirAtmosphericFractionationCaseTest {
       assertTrue(Double.isFinite(rows[i].getCalculatedMassFractionOfFeed()));
       assertTrue(Double.isFinite(rows[i].getPlantMassFlowKgPerHour()));
       assertTrue(Double.isFinite(rows[i].getAbsoluteRelativeErrorPercentAgainstPlant()));
+      assertEquals(AUDIT_MASS_FLOW_KG_PER_HOUR[i], rows[i].getCalculatedMassFlowKgPerHour(), 0.1);
+      assertEquals(AUDIT_PLANT_ERROR_PERCENT[i], rows[i].getAbsoluteRelativeErrorPercentAgainstPlant(), 0.01);
+      assertEquals(AUDIT_MEAN_BOILING_POINT_CELSIUS[i], rows[i].getMeanNormalBoilingPointCelsius(), 0.01);
+      assertEquals(AUDIT_BOILING_QUANTILES_CELSIUS[i][0], rows[i].getNormalBoilingPointQuantileCelsius(0.10), 0.01);
+      assertEquals(AUDIT_BOILING_QUANTILES_CELSIUS[i][1], rows[i].getNormalBoilingPointQuantileCelsius(0.50), 0.01);
+      assertEquals(AUDIT_BOILING_QUANTILES_CELSIUS[i][2], rows[i].getNormalBoilingPointQuantileCelsius(0.90), 0.01);
       calculatedMassFlow += rows[i].getCalculatedMassFlowKgPerHour();
       calculatedFraction += rows[i].getCalculatedMassFractionOfFeed();
       if (Double.isFinite(rows[i].getMeanNormalBoilingPointKelvin())) {
