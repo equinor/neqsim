@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
 import org.ejml.simple.SimpleMatrix;
+import org.junit.jupiter.api.Test;
 import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardt;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
@@ -20,26 +20,6 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
  */
 @SuppressWarnings("deprecation")
 class StatisticsEjmlCompatibilityTest {
-  /**
-   * Verifies defensive copying in the migrated EJML matrix constructor.
-   */
-  @Test
-  void legacyMatrixConstructorCopiesInputs() {
-    SimpleMatrix covariance = new SimpleMatrix(new double[][] {{4.0, 1.0}, {1.0, 9.0}});
-    SimpleMatrix correlation = new SimpleMatrix(new double[][] {{1.0, 0.2}, {0.2, 1.0}});
-    double[] errors = {2.0, 3.0};
-
-    LevenbergMarquardtResult result = new LevenbergMarquardtResult(ConvergenceReason.CHI_SQUARE_TOLERANCE, 2, 0.0, 0.0,
-        covariance, correlation, errors);
-    covariance.set(0, 0, -1.0);
-    correlation.set(0, 0, -1.0);
-    errors[0] = -1.0;
-
-    assertEquals(4.0, result.getCovarianceMatrixArray()[0][0], 0.0);
-    assertEquals(1.0, result.getCorrelationMatrixArray()[0][0], 0.0);
-    assertArrayEquals(new double[] {2.0, 3.0}, result.getParameterStandardErrors());
-  }
-
   /**
    * Retains the already released array constructor together with the named factory.
    */
@@ -64,14 +44,12 @@ class StatisticsEjmlCompatibilityTest {
    */
   @Test
   void nullMatrixInputsHaveExplicitConstructionPaths() {
-    LevenbergMarquardtResult legacy = new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN,
-        (SimpleMatrix) null, (SimpleMatrix) null, null);
     LevenbergMarquardtResult arrays = new LevenbergMarquardtResult(ConvergenceReason.NOT_RUN, 0, Double.NaN, Double.NaN,
         (double[][]) null, (double[][]) null, null);
     LevenbergMarquardtResult factory = LevenbergMarquardtResult.fromArrays(ConvergenceReason.NOT_RUN, 0, Double.NaN,
         Double.NaN, null, null, null);
 
-    for (LevenbergMarquardtResult result : new LevenbergMarquardtResult[] {legacy, arrays, factory}) {
+    for (LevenbergMarquardtResult result : new LevenbergMarquardtResult[] {arrays, factory}) {
       assertNull(result.getCovarianceMatrixArray());
       assertNull(result.getCorrelationMatrixArray());
       assertNull(result.getParameterStandardErrors());

@@ -1,8 +1,6 @@
 package neqsim.statistics.parameterfitting.nonlinearparameterfitting;
 
 import java.io.Serializable;
-import org.ejml.simple.SimpleMatrix;
-import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.util.util.ArrayUtils;
 
 /**
@@ -81,28 +79,6 @@ public final class LevenbergMarquardtResult implements Serializable {
   }
 
   /**
-   * Creates a result from legacy matrix inputs, preserving the original constructor descriptor.
-   *
-   * @param convergenceReason reason why the optimizer stopped
-   * @param iterations number of solver iterations performed
-   * @param finalChiSquare final weighted chi-square value
-   * @param gradientNorm final norm of the weighted gradient vector
-   * @param covarianceMatrix fitted-parameter covariance matrix, or null if unavailable
-   * @param correlationMatrix fitted-parameter correlation matrix, or null if unavailable
-   * @param parameterStandardErrors fitted-parameter standard errors, or null if unavailable
-   * @deprecated Use {@link #fromArrays(ConvergenceReason, int, double, double, double[][], double[][], double[])}.
-   */
-  @Deprecated
-  public LevenbergMarquardtResult(ConvergenceReason convergenceReason, int iterations, double finalChiSquare,
-      double gradientNorm, SimpleMatrix covarianceMatrix, SimpleMatrix correlationMatrix,
-      double[] parameterStandardErrors) {
-    this(convergenceReason, iterations, finalChiSquare, gradientNorm,
-        covarianceMatrix == null ? (double[][]) null : EjmlMatrixUtils.toArray(covarianceMatrix),
-        correlationMatrix == null ? (double[][]) null : EjmlMatrixUtils.toArray(correlationMatrix),
-        parameterStandardErrors);
-  }
-
-  /**
    * Creates a result from primitive arrays without ambiguous null matrix arguments.
    *
    * @param convergenceReason reason why the optimizer stopped
@@ -173,28 +149,6 @@ public final class LevenbergMarquardtResult implements Serializable {
    */
   public double getGradientNorm() {
     return gradientNorm;
-  }
-
-  /**
-   * Returns the fitted-parameter covariance matrix as a Ejml compatibility copy.
-   *
-   * @return covariance matrix, or null if unavailable
-   * @deprecated Use {@link #getCovarianceMatrixArray()}.
-   */
-  @Deprecated
-  public SimpleMatrix getCovarianceMatrix() {
-    return covarianceMatrix == null ? null : new SimpleMatrix(ArrayUtils.copyMatrixArray(covarianceMatrix));
-  }
-
-  /**
-   * Returns the fitted-parameter correlation matrix as a Ejml compatibility copy.
-   *
-   * @return correlation matrix, or null if unavailable
-   * @deprecated Use {@link #getCorrelationMatrixArray()}.
-   */
-  @Deprecated
-  public SimpleMatrix getCorrelationMatrix() {
-    return correlationMatrix == null ? null : new SimpleMatrix(ArrayUtils.copyMatrixArray(correlationMatrix));
   }
 
   /**

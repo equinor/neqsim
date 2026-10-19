@@ -23,7 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public abstract class NonEquilibriumFluidBoundary
     extends neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundary {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NonEquilibriumFluidBoundary.class);
 

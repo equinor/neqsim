@@ -14,8 +14,6 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
-import org.ejml.simple.SimpleMatrix;
-import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
@@ -26,10 +24,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Abstract FluidBoundary class.
  *
  * <p>
- * Coefficient and correction data use primitive arrays. Deprecated transient EJML views preserve live matrix mutation
- * and replacement through synchronization with the canonical coefficient arrays. Interphase-flux working state uses
- * EJML. Serialized instances containing the former JAMA coefficient, correction or flux fields are not compatible with
- * this layout.
+ * Coefficient and correction data use primitive arrays. Interphase-flux working state uses EJML. Serialized instances
+ * containing the former JAMA coefficient, correction or flux fields are not compatible with this layout.
  * </p>
  *
  * @author asmund
@@ -37,7 +33,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.Serializable {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FluidBoundary.class);
 
@@ -64,13 +60,6 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   protected double[][] fluxTypeCorrectionMatrixV;
   protected double[][][] totalMassTransferCoefficientMatrix;
   private double[][][] massTransferCoefficientArray;
-  /**
-   * Legacy views sharing the primitive coefficient arrays.
-   *
-   * @deprecated Use the array accessors instead of accessing these compatibility views.
-   */
-  @Deprecated
-  protected transient SimpleMatrix[] massTransferCoefficientMatrix;
   protected double[][][] binarySchmidtNumber;
   public double[][][] binaryMassTransferCoefficient;
   public double[] heatTransferCoefficient;
@@ -150,8 +139,6 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   /** {@inheritDoc} */
   @Override
   public FluidBoundary clone() {
-    ensureMassTransferCoefficientViews();
-    synchronizeMassTransferCoefficientArray();
     FluidBoundary clonedSystem = null;
 
     try {
@@ -322,7 +309,6 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   /** {@inheritDoc} */
   @Override
   public double[][][] getMassTransferCoefficientArray() {
-    synchronizeMassTransferCoefficientArray();
     double[][][] snapshot = new double[massTransferCoefficientArray.length][][];
     for (int phase = 0; phase < snapshot.length; phase++) {
       double[][] coefficients = massTransferCoefficientArray[phase];
@@ -343,77 +329,17 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
    * @return coefficient data indexed by row and column
    */
   protected final double[][] getMassTransferCoefficientArray(int phase) {
-    synchronizeMassTransferCoefficientArray();
     return massTransferCoefficientArray[phase];
   }
 
   /**
-   * Replaces a phase's canonical coefficient data and refreshes any legacy view.
+   * Replaces a phase's canonical coefficient data.
    *
    * @param phase phase index
    * @param coefficients coefficient data indexed by row and column
    */
   protected final void setMassTransferCoefficientArray(int phase, double[][] coefficients) {
     massTransferCoefficientArray[phase] = coefficients;
-    if (massTransferCoefficientMatrix != null) {
-      massTransferCoefficientMatrix[phase] = coefficients == null ? null : new SimpleMatrix(coefficients);
-    }
-  }
-
-  /**
-   * Copies pending mutations and replacements from live EJML views into the canonical coefficient arrays.
-   *
-   * <p>
-   * This compatibility adapter should be removed with {@link #massTransferCoefficientMatrix} and
-   * {@link #getMassTransferCoefficientMatrix()}.
-   */
-  private void synchronizeMassTransferCoefficientArray() {
-    if (massTransferCoefficientMatrix != null) {
-      for (int phase = 0; phase < massTransferCoefficientArray.length; phase++) {
-        SimpleMatrix view = massTransferCoefficientMatrix[phase];
-        massTransferCoefficientArray[phase] = view == null ? null : EjmlMatrixUtils.toArray(view);
-      }
-    }
-  }
-
-  /**
-   * Recreates transient views for the deprecated SimpleMatrix compatibility API after deserialization.
-   *
-   * <p>
-   * This compatibility adapter should be removed with {@link #massTransferCoefficientMatrix} and
-   * {@link #getMassTransferCoefficientMatrix()}.
-   */
-  private void ensureMassTransferCoefficientViews() {
-    if (massTransferCoefficientMatrix == null) {
-      massTransferCoefficientMatrix = new SimpleMatrix[massTransferCoefficientArray.length];
-      for (int phase = 0; phase < massTransferCoefficientArray.length; phase++) {
-        double[][] coefficients = massTransferCoefficientArray[phase];
-        massTransferCoefficientMatrix[phase] = coefficients == null ? null : new SimpleMatrix(coefficients);
-      }
-    }
-  }
-
-  /**
-   * Serializes canonical arrays, including pending replacements through deprecated views.
-   *
-   * @param output serialization stream
-   * @throws java.io.IOException if coefficient state cannot be written
-   */
-  private void writeObject(java.io.ObjectOutputStream output) throws java.io.IOException {
-    synchronizeMassTransferCoefficientArray();
-    output.defaultWriteObject();
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @deprecated Use {@link #getMassTransferCoefficientArray()} for array-based access.
-   */
-  @Deprecated
-  @Override
-  public SimpleMatrix[] getMassTransferCoefficientMatrix() {
-    ensureMassTransferCoefficientViews();
-    return massTransferCoefficientMatrix;
   }
 
   /** {@inheritDoc} */

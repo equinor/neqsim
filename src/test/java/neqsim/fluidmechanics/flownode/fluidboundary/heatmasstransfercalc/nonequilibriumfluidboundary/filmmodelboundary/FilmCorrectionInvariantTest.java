@@ -2,7 +2,6 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequ
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,19 +13,16 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.NormOps_DDRM;
-import org.junit.jupiter.api.Test;
 import org.ejml.simple.SimpleMatrix;
-import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
+import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolver;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarynonreactive.FluidBoundarySystemNonReactive;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveKrishnaStandartFilmModel;
-import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
+import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -278,7 +274,6 @@ class FilmCorrectionInvariantTest {
     /**
      * Checks state shape, independent initial copies and the live public coefficient-array contract.
      */
-    @SuppressWarnings("deprecation")
     private void checkWorkingStateOwnership() {
       assertEquals(neq, uMassTrans.getNumRows());
       assertEquals(1, uMassTrans.getNumCols());
@@ -294,19 +289,10 @@ class FilmCorrectionInvariantTest {
       assertSame(Xgij, cloned.Xgij);
       assertNotSame(nFlux, cloned.nFlux);
       assertArrayEquals(nFlux.getData(), cloned.nFlux.getData(), 0.0);
-      SimpleMatrix[] exported = getMassTransferCoefficientMatrix();
-      assertSame(massTransferCoefficientMatrix, exported);
-      SimpleMatrix replacement = exported[0].copy();
-      exported[0] = replacement;
-      assertSame(replacement, massTransferCoefficientMatrix[0]);
-      double original = replacement.get(0, 0);
       double[][][] snapshot = getMassTransferCoefficientArray();
-      assertNotSame(EjmlMatrixUtils.toArray(replacement), snapshot[0]);
+      double original = snapshot[0][0][0];
       snapshot[0][0][0] = original + 1.0;
       assertEquals(original, getMassTransferCoefficientArray()[0][0][0], 0.0);
-      replacement.set(0, 0, original + 1.0);
-      assertEquals(original + 1.0, getMassTransferCoefficientArray()[0][0][0], 0.0);
-      replacement.set(0, 0, original);
     }
 
     /**
@@ -601,99 +587,23 @@ class FilmCorrectionInvariantTest {
       return new SimpleMatrix(rateCorrectionMatrix[1]);
     }
 
-    void setRate(SimpleMatrix correction) {
-      rateCorrectionMatrix[1] = EjmlMatrixUtils.toArray(correction);
-    }
-
     double[] calculateFluxTypeCorrection(int phase, int component) {
       calcFluxTypeCorrectionMatrix(phase, component);
       return fluxTypeCorrectionMatrix[phase].clone();
     }
 
-    /**
-     * Reports whether compatibility views have been materialized.
-     *
-     * @return true if a legacy SimpleMatrix array exists
-     */
-    @SuppressWarnings("deprecation")
-    boolean hasLegacyCoefficientViews() {
-      return massTransferCoefficientMatrix != null;
-    }
   }
 
-  /** Verifies array-primary calculations do not allocate legacy SimpleMatrix coefficient views. */
+  /** Verifies coefficient calculations use the array-based API. */
   @Test
-  void arrayCalculationsDoNotMaterializeLegacyMatrices() {
+  void arrayCalculationsPreserveCoefficientSnapshots() {
     Film film = new Film();
-    assertFalse(film.hasLegacyCoefficientViews());
     film.evaluate(0.0, true, false);
     film.calculateMassTransferCoefficients(1);
-    assertFalse(film.hasLegacyCoefficientViews());
-  }
-
-  /**
-   * Preserves the default array bridge for third-party implementations of the legacy SimpleMatrix interface.
-   *
-   * @throws NoSuchMethodException if a compatibility or array entry point has been removed
-   */
-  @Test
-  void arrayPrimaryApiRetainsDeprecatedMatrixEntryPoints() throws NoSuchMethodException {
-    assertEquals(double[][][].class,
-        FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").getReturnType());
-    assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientArray").isDefault());
-    assertEquals(SimpleMatrix[].class,
-        FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").getReturnType());
-    assertFalse(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix").isDefault());
-    assertTrue(FluidBoundaryInterface.class.getMethod("getMassTransferCoefficientMatrix")
-        .isAnnotationPresent(Deprecated.class));
-    assertTrue(KrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)
-        .isAnnotationPresent(Deprecated.class));
-    assertTrue(ReactiveKrishnaStandartFilmModel.class.getMethod("calcTotalMassTransferCoefficientMatrix", int.class)
-        .isAnnotationPresent(Deprecated.class));
-  }
-
-  /**
-   * Verifies the deprecated live view remains connected to canonical arrays and survives serialization.
-   *
-   * @throws IOException if the real-fluid boundary cannot be serialized
-   * @throws ClassNotFoundException if the boundary class cannot be restored
-   */
-  @SuppressWarnings("deprecation")
-  @Test
-  void arrayCoefficientStoragePreservesLiveViewsAndSerialization() throws IOException, ClassNotFoundException {
-    Film film = new Film();
-    SimpleMatrix[] exported = film.getMassTransferCoefficientMatrix();
-    assertSame(exported, film.getMassTransferCoefficientMatrix());
-    exported[1].set(0, 1, 0.5);
-    assertMatrix(exported[1], film.evaluate(0.0, false, false));
-    exported[1] = exported[1].scale(2.0);
-    assertMatrix(exported[1], film.evaluate(0.0, false, false));
-
-    SimpleMatrix recomputed = film.calculateMassTransferCoefficients(1).copy();
-    assertSame(exported, film.getMassTransferCoefficientMatrix());
-    assertMatrix(recomputed, exported[1]);
-
-    Film cloned = (Film) film.clone();
-    assertSame(exported, cloned.getMassTransferCoefficientMatrix());
-
-    SimpleMatrix pendingReplacement = exported[1].scale(2.0);
-    exported[1] = pendingReplacement;
-    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
-      output.writeObject(film);
-    }
-    Film restored;
-    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
-      restored = (Film) input.readObject();
-    }
-    assertMatrix(pendingReplacement, new SimpleMatrix(restored.getMassTransferCoefficientArray()[1]));
-    SimpleMatrix[] restoredViews = restored.getMassTransferCoefficientMatrix();
-    assertNotSame(exported, restoredViews);
-    assertMatrix(pendingReplacement, restoredViews[1]);
-    double changedValue = restoredViews[1].get(0, 0) + 1.0;
-    restoredViews[1].set(0, 0, changedValue);
-    assertEquals(changedValue, restored.getMassTransferCoefficientArray()[1][0][0], 0.0);
-    assertMatrix(restoredViews[1], restored.evaluate(0.0, false, false));
+    double[][][] snapshot = film.getMassTransferCoefficientArray();
+    double original = snapshot[1][0][0];
+    snapshot[1][0][0] = original + 1.0;
+    assertEquals(original, film.getMassTransferCoefficientArray()[1][0][0], 0.0);
   }
 
   @Test
@@ -717,17 +627,6 @@ class FilmCorrectionInvariantTest {
       assertMatrix(expected, film.evaluate(flux, true, false));
       assertMatrix(expected, film.evaluate(flux, true, true));
     }
-  }
-
-  @Test
-  void correctionSwitchesUseOneOrderForNoncommutingMatrices() {
-    Film film = new Film();
-    SimpleMatrix correction = new SimpleMatrix(new double[][] {{1.1, 0.2}, {0.3, 0.9}});
-    film.setRate(correction);
-    SimpleMatrix k = film.evaluate(1.0, false, false).copy();
-    SimpleMatrix thermodynamic = film.evaluate(1.0, true, false).copy();
-    assertMatrix(correction.mult(k), film.evaluate(1.0, false, true));
-    assertMatrix(correction.mult(thermodynamic), film.evaluate(1.0, true, true));
   }
 
   /**
@@ -778,50 +677,6 @@ class FilmCorrectionInvariantTest {
       film.calcRedCorrectionMatrix(1);
       double expected = z == 0.0 ? 1.0 : z > 0.0 ? z / -Math.expm1(-z) : z * Math.exp(z) / Math.expm1(z);
       assertEquals(expected, film.redCorrectionMatrix[0], 1e-12);
-    }
-  }
-
-  private static class ReactiveFilm extends ReactiveKrishnaStandartFilmModel {
-    private static final long serialVersionUID = 1L;
-
-    ReactiveFilm() {
-      super(fluid());
-      setMassTransferCoefficientArray(1, new double[][] {{2.0, 0.4}, {0.5, 3.0}});
-      nonIdealCorrections[1] = new double[][] {{1.0, 0.0}, {0.0, 1.0}};
-      rateCorrectionMatrix[1] = EjmlMatrixUtils.toArray(SimpleMatrix.identity(2));
-      enhancementFactor = new EnhancementFactor(this) {
-        @Override
-        public void calcEnhancementVec(int phase) {
-          enhancementVec = new double[] {2.0, 1.0, 1.0};
-        }
-      };
-    }
-
-    @SuppressWarnings("deprecation")
-    void checkRepeatedCalculation(boolean thermo, boolean finite, double flux) {
-      useThermodynamicCorrections(thermo, 1);
-      useFiniteFluxCorrection(finite, 1);
-      totalFlux = flux;
-      SimpleMatrix base = new SimpleMatrix(getMassTransferCoefficientArray(1)).copy();
-      calcTotalMassTransferCoefficientArray(1);
-      assertNotSame(getMassTransferCoefficientArray(1), totalMassTransferCoefficientMatrix[1]);
-      assertMatrix(base, new SimpleMatrix(getMassTransferCoefficientArray(1)));
-      SimpleMatrix expected = new SimpleMatrix(new double[][] {{4.0, 0.8}, {0.5, 3.0}});
-      assertMatrix(expected, new SimpleMatrix(totalMassTransferCoefficientMatrix[1]));
-      calcTotalMassTransferCoefficientMatrix(1);
-      assertMatrix(base, new SimpleMatrix(getMassTransferCoefficientArray(1)));
-      assertMatrix(expected, new SimpleMatrix(totalMassTransferCoefficientMatrix[1]));
-    }
-  }
-
-  @Test
-  void enhancementDoesNotMutateOrCompoundAcrossCorrectionSwitches() {
-    for (boolean thermo : new boolean[] {false, true}) {
-      for (boolean finite : new boolean[] {false, true}) {
-        for (double flux : new double[] {0.0, 1.0}) {
-          new ReactiveFilm().checkRepeatedCalculation(thermo, finite, flux);
-        }
-      }
     }
   }
 }

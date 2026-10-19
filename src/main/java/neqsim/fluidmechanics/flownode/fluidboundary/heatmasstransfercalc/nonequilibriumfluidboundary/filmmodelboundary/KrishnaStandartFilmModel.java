@@ -31,7 +31,7 @@ public class KrishnaStandartFilmModel extends
     neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary
     implements ThermodynamicConstantsInterface {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
   double[][] phiMatrix;
@@ -135,7 +135,11 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * calcMassTransferCoefficients.
+   * Calculates the mass transfer coefficients for the specified phase.
+   *
+   * <p>
+   * Coefficients are calculated based on the binary mass transfer coefficients and the composition of the phase.
+   * </p>
    *
    * @param phaseNum a int
    * @return a double
@@ -332,17 +336,6 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * Retains the legacy correction-calculation entry point and subclass dispatch.
-   *
-   * @param phase phase index
-   * @deprecated Use {@link #calcTotalMassTransferCoefficientArray(int)}.
-   */
-  @Deprecated
-  public void calcTotalMassTransferCoefficientMatrix(int phase) {
-    calcTotalMassTransferCoefficientArray(phase);
-  }
-
-  /**
    * Copies an EJML matrix to primitive row-major coefficient arrays.
    *
    * @param matrix EJML coefficient matrix
@@ -404,7 +397,7 @@ public class KrishnaStandartFilmModel extends
       this.initCorrections(phaseNum);
       this.calcNonIdealCorrections(phaseNum);
       // this.calcFluxTypeCorrectionMatrix(phase,0);
-      this.calcTotalMassTransferCoefficientMatrix(phaseNum);
+      this.calcTotalMassTransferCoefficientArray(phaseNum);
     }
   }
 
