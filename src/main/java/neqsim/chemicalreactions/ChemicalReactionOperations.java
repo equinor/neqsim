@@ -63,6 +63,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
   double[] bVector;
   int phase = 1;
   double[] chemRefPot;
+  /** LP estimate from the current initialization attempt; never reusable across phases or failed attempts. */
   double[] newMoles;
   double inertMoles = 0.0;
   ChemicalEquilibrium solver;
@@ -142,6 +143,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     chemRefPot = calcChemRefPot(phaseNum);
     elements = getAllElements();
     initCalc = null;
+    newMoles = null;
     Amatrix = null;
     try {
       initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
@@ -627,6 +629,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     }
 
     if (firsttime || type == 0) {
+      newMoles = null;
       try {
         calcInertMoles(phaseNum);
         if (initCalc != null) {
