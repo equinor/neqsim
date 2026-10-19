@@ -6,7 +6,6 @@
 
 package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
 
-import org.ejml.simple.SimpleMatrix;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.enhancementfactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -107,25 +106,6 @@ public interface FluidBoundaryInterface extends Cloneable {
    * @return coefficient values indexed by phase, row and column; uninitialized phases remain null
    */
   public double[][][] getMassTransferCoefficientArray();
-
-  /**
-   * Returns matrix copies of the mass-transfer coefficients.
-   *
-   * @return an array of {@link SimpleMatrix} objects converted from the coefficient arrays
-   * @deprecated Use {@link #getMassTransferCoefficientArray()} for array-based access.
-   */
-  @Deprecated
-  public default SimpleMatrix[] getMassTransferCoefficientMatrix() {
-    double[][][] coefficients = getMassTransferCoefficientArray();
-    if (coefficients == null) {
-      return null;
-    }
-    SimpleMatrix[] matrices = new SimpleMatrix[coefficients.length];
-    for (int phase = 0; phase < coefficients.length; phase++) {
-      matrices[phase] = coefficients[phase] == null ? null : new SimpleMatrix(coefficients[phase]);
-    }
-    return matrices;
-  }
 
   /**
    * getBinaryMassTransferCoefficient.
