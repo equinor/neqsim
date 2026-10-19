@@ -3668,13 +3668,14 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Tests a water-rich OIL or GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
+   * Tests a wet OIL or GAS/OIL endpoint against a seeded aqueous active set at the same T and P.
    *
    * <p>
    * Stability trials or phase cleanup can lose the water-rich minimum after the hydrocarbon split has converged,
    * including collapse to a single oil phase near the bubble point. The incumbent may satisfy gas/oil fugacity equality
    * yet have a much higher Gibbs energy than OIL/AQUEOUS. Start a material-balanced oil/aqueous active set on a clone
-   * and replace the incumbent only after solving equilibrium and checking component conservation and fugacities. Never
+   * and replace the incumbent only after solving equilibrium and checking component conservation and fugacities. A
+   * supersaturated GAS/OIL endpoint first tries adding aqueous water without replacing either hydrocarbon phase. Never
    * accept the raw aqueous seed itself.
    * </p>
    */
@@ -3682,6 +3683,9 @@ public class TPmultiflash extends TPflash {
     boolean singleOil = system.getNumberOfPhases() == 1 && system.hasPhaseType(PhaseType.OIL);
     boolean gasOil = system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)
         && system.hasPhaseType(PhaseType.OIL);
+    if (gasOil && rescueSupersaturatedGasOilMissingAqueous()) {
+      return;
+    }
     if (!system.doMultiPhaseCheck() || (!singleOil && !gasOil) || system.getMaxNumberOfPhases() < 3
         || !system.allowPhaseShift() || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck()
         || system.isMultiphaseWaxCheck() || !system.hasComponent("water")
@@ -3751,6 +3755,112 @@ public class TPmultiflash extends TPflash {
     } catch (Exception ex) {
       logger.debug("Aqueous active-set trial failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Recover a missing aqueous phase while retaining the existing gas and condensate as the initial active set.
+   *
+   * <p>
+   * Replacing gas with an aqueous seed can lose the vapour stationary point and return the original supersaturated
+   * gas/oil endpoint. Instead, test liquid-water fugacity on an unused phase slot of a clone. Only supersaturation
+   * admits a third-phase trial. Withdraw its seed water proportionally from the existing phase inventories, preserving
+   * every component and both hydrocarbon phases before solving. Accept only a feasible aqueous equilibrium with a lower
+   * molar Gibbs energy; using an intensive acceptance tolerance avoids dependence on total flow.
+   * </p>
+   *
+   * @return true when a qualified aqueous equilibrium was adopted
+   */
+  private boolean rescueSupersaturatedGasOilMissingAqueous() {
+    if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.GAS)
+        || !system.hasPhaseType(PhaseType.OIL) || system.getMaxNumberOfPhases() < 3 || !system.allowPhaseShift()
+        || system.isChemicalSystem() || system.hasIons() || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()
+        || !system.hasComponent("water") || system.getComponent("water").getz() <= 1.0e-6) {
+      return false;
+    }
+    double totalMoles = system.getTotalNumberOfMoles();
+    if (!(totalMoles > 0.0) || !Double.isFinite(totalMoles)) {
+      return false;
+    }
+    try {
+      final double referenceMolarGibbs = system.getGibbsEnergy() / totalMoles;
+      final boolean validReference = isFeasiblePhaseEquilibrium(system);
+      SystemInterface candidate = system.clone();
+      int aqueous = candidate.getNumberOfPhases();
+      int freeSlot = 0;
+      while (freeSlot == candidate.getPhaseIndex(0) || freeSlot == candidate.getPhaseIndex(1)) {
+        freeSlot++;
+      }
+      // A removed phase can leave an inactive logical index pointing at either active phase.
+      candidate.setPhaseIndex(aqueous, freeSlot);
+      candidate.addPhase();
+      candidate.setPhaseType(aqueous, PhaseType.AQUEOUS);
+      int water = candidate.getComponent("water").getComponentNumber();
+      for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+        candidate.getPhase(aqueous).getComponent(component).setx(component == water ? 1.0 : 0.0);
+      }
+      candidate.setBeta(aqueous, 1.0e-3);
+      candidate.init(1, aqueous);
+      double liquidWaterLogFugacity = candidate.getPhase(aqueous).getComponent(water).getLogFugacityCoefficient();
+      ComponentInterface gasWater = system.getPhase("gas").getComponent(water);
+      double gasWaterLogFugacity = Math.log(gasWater.getx()) + gasWater.getLogFugacityCoefficient();
+      if (!Double.isFinite(liquidWaterLogFugacity) || !Double.isFinite(gasWaterLogFugacity)
+          || gasWaterLogFugacity <= liquidWaterLogFugacity + 1.0e-8) {
+        return false;
+      }
+
+      double waterInventory = 0.0;
+      for (int phase = 0; phase < aqueous; phase++) {
+        waterInventory += system.getBeta(phase) * system.getPhase(phase).getComponent(water).getx();
+      }
+      if (!(waterInventory > 0.0) || !Double.isFinite(waterInventory)) {
+        return false;
+      }
+      double aqueousSeed = Math.min(0.05, 0.5 * Math.min(waterInventory, system.getComponent(water).getz()));
+      for (int phase = 0; phase < aqueous; phase++) {
+        double oldBeta = system.getBeta(phase);
+        double removedWater = aqueousSeed * oldBeta * system.getPhase(phase).getComponent(water).getx()
+            / waterInventory;
+        double newBeta = oldBeta - removedWater;
+        candidate.setBeta(phase, newBeta);
+        for (int component = 0; component < candidate.getNumberOfComponents(); component++) {
+          double inventory = oldBeta * system.getPhase(phase).getComponent(component).getx();
+          candidate.getPhase(phase).getComponent(component)
+              .setx((inventory - (component == water ? removedWater : 0.0)) / newBeta);
+        }
+      }
+      candidate.setBeta(aqueous, aqueousSeed);
+      candidate.init(1);
+
+      TPmultiflash solver = new TPmultiflash(candidate, false);
+      solver.doStabilityAnalysis = false;
+      solver.multiPhaseTest = true;
+      solver.aqueousPhaseSeedAttempted = true;
+      solver.postFlashStabilityChecked = true;
+      solver.secondTime = true;
+      solver.run();
+      candidate.init(1);
+      double gibbsTolerance = Math.max(1.0e-8, Math.abs(referenceMolarGibbs) * 1.0e-10);
+      if (!candidate.hasPhaseType(PhaseType.AQUEOUS) || !isFeasiblePhaseEquilibrium(candidate)
+          || (validReference && !(candidate.getGibbsEnergy() / totalMoles < referenceMolarGibbs - gibbsTolerance))) {
+        return false;
+      }
+
+      PhaseSplitSnapshot original = new PhaseSplitSnapshot(system);
+      try {
+        restorePhaseSplit(new PhaseSplitSnapshot(candidate));
+        if (system.hasPhaseType(PhaseType.AQUEOUS) && isFeasiblePhaseEquilibrium(system)
+            && (!validReference || system.getGibbsEnergy() / totalMoles < referenceMolarGibbs - gibbsTolerance)) {
+          return true;
+        }
+        restorePhaseSplit(original);
+      } catch (Exception ex) {
+        restorePhaseSplit(original);
+        logger.debug("Gas/oil aqueous active-set adoption failed: {}", ex.getMessage());
+      }
+    } catch (Exception ex) {
+      logger.debug("Gas/oil aqueous active-set trial failed: {}", ex.getMessage());
+    }
+    return false;
   }
 
   /**
