@@ -9,8 +9,8 @@ CAS identity, source solubility constant, temperature slope and reference number
 The matching bibliography is `HenryWaterReferences.bib` in the same directory.
 `HenryWaterCoverage.csv` inventories all 389 rows: 83 imported correlations
 (79 distinct database identities plus four exact-identity aliases), 35 qualified
-reference-temperature-only points, 22 remaining literature candidates,
-140 estimated/other-source candidates, 59 ionic rows, 49 without an exact CAS
+reference-temperature-only points, 23 remaining literature candidates,
+140 estimated/other-source candidates, 59 ionic rows, 48 without an exact CAS
 match in the archive, and water itself. A candidate match is a research lead,
 not validated data. Rows without a dispatched correlation contain zero
 coefficients and represent **unavailable correlation data**.
@@ -143,7 +143,7 @@ zero slope.
 ## Fail-closed candidate dispositions
 
 `HenryWaterCandidateDispositions.json` records the component-specific decision for
-all 22 exact-CAS literature candidates that are not admitted as correlations or
+all 23 exact-CAS literature candidates that are not admitted as correlations or
 reference points. The file records water as solvent, source record and type
 inventory, identity assessment, Henry-definition risk, original-source rights
 boundary and the evidence required before admission. It contains no coefficient,
@@ -151,7 +151,7 @@ reference value, fitted slope, pressure assumption or uncertainty estimate.
 
 The dispositions are deliberately more specific than a generic candidate label:
 
-- three reactive amines (`MDEA`, `MEA` and `Piperazine`) require joint
+- four reactive amines (`MDEA`, `DEA`, `MEA` and `Piperazine`) require joint
   neutral-species Henry and reaction-standard-state qualification with unchanged
   reactive-VLE benchmarks;
 - five acid/base species require intrinsic neutral-solute separation from
@@ -176,10 +176,20 @@ The Sander v5.0.0 compilation is the CC BY 4.0 identity and source-inventory
 basis. Underlying publications retain their own rights and must be reviewed for
 species definition, units, pressure, temperature range and uncertainty before
 numerical facts are adopted. Every disposition remains fail-closed:
-`COMP.csv`, `HenryWaterSource.json`, `HenryWaterReferencePoints.json` and
-all model dispatch are unchanged. The audit checks that all 22 rows remain
+`COMP.csv` Henry coefficients, `HenryWaterSource.json`,
+`HenryWaterReferencePoints.json` and model dispatch remain unchanged. The audit checks that all 23 rows remain
 outside both correlation and reference-point catalogs and that the two MEG
 aliases provide no independent evidence.
+
+The sourced DEA identity correction uses CAS 111-42-2, C4H11NO2 and
+InChIKey ZBCBWPMODOFKDW-UHFFFAOYSA-N. Repeating the exact-CAS source lookup
+finds Sander entries of types M, Q and V, including Nguyen (2013) measurements
+extrapolated from high temperature. DEA therefore belongs with the held
+reactive-amine candidates, rather than the unmatched-identity inventory.
+No DEA Henry coefficient or reference point is admitted by this correction;
+joint neutral-species/reaction qualification remains required. The checker
+compares every coverage CAS with COMP and can verify candidate source-type
+inventories against the original Fortran archive.
 
 ## Fail-closed estimate and other-source dispositions
 
@@ -222,7 +232,7 @@ unchanged by these dispositions.
 
 ## Fail-closed unmatched-identity dispositions
 
-`HenryWaterUnmatchedDispositions.json` records all 49 rows for which the
+`HenryWaterUnmatchedDispositions.json` records all 48 rows for which the
 reviewed Sander v5.0.0 source archive has no exact-CAS record. No source
 publication or numerical value is selected for these rows. The manifest carries
 the database identity, component role, exact archive-search result and the
@@ -237,8 +247,8 @@ The inventory separates materially different reasons for staying fail-closed:
   not neutral molecular solutes in water;
 - `default`, two placeholder-CAS cyclic components and `asphaltene` lack a
   unique molecular identity suitable for a molecular Henry coefficient;
-- `DEA` and `H+PZCOO-` cross the reactive-amine/model-species boundary and
-  require joint species and reaction-standard-state qualification;
+- `H+PZCOO-` is a reaction-model aggregate requiring joint species and
+  reaction-standard-state qualification;
 - seven salts or reactive inorganic rows require electrolyte, dissociation,
   solubility or solid-equilibrium treatment rather than a neutral formula-unit
   Henry constant; and
@@ -256,7 +266,7 @@ existing reference-temperature-only semantics; a temperature correlation
 requires suitable independent data, residuals and validation.
 
 The manifest contains no coefficient, fitted slope, reference value, pressure
-assumption or validity range. The audit requires all 49 rows to remain outside
+assumption or validity range. The audit requires all 48 rows to remain outside
 the correlation, reference-point and prior disposition catalogs, to match
 `COMP.csv` and the coverage inventory exactly, and to preserve their explicit
 component-role boundary. `COMP.csv`, IAPWS paths, GE/Pitzer dispatch and

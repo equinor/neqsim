@@ -21,6 +21,17 @@
       "required_evidence": "Joint Henry/reaction-standard-state qualification with primary VLE conditions, uncertainty, finite range, and unchanged Desmukh-Mather or Kent-Eisenberg benchmarks."
     },
     {
+      "name": "DEA",
+      "cas": "111-42-2",
+      "source_record_url": "https://www.henrys-law.org/henry/casrn/111-42-2",
+      "source_types": "M Q V",
+      "boundary": "reactive_amine_absorption",
+      "coverage_status": "held_reactive_amine_joint_model_requalification",
+      "identity_basis": "Exact CAS, formula C4H11NO2 and InChIKey ZBCBWPMODOFKDW-UHFFFAOYSA-N identify neutral diethanolamine after the database identity repair; protonated and carbamate species remain distinct.",
+      "definition_assessment": "Sander v5.0.0 contains measured amine-volatility data from Nguyen (2013), extrapolated from high temperature, and VP/AS and QSPR estimates. These are exact-identity research leads, not a qualified intrinsic constant for the coupled reactive model.",
+      "required_evidence": "Joint Henry/reaction-standard-state qualification with primary VLE conditions, neutral versus total species definition, uncertainty, finite temperature range and unchanged reactive-absorption benchmarks."
+    },
+    {
       "name": "MEA",
       "cas": "141-43-5",
       "source_record_url": "https://www.henrys-law.org/henry/casrn/141-43-5",

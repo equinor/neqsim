@@ -89,9 +89,13 @@ def main():
                        and match[3] == provenance["reference"] for match in matches), name
     assert found == set(selected), "Manifest contains absent database components"
     component_rows = {row["NAME"]: row for row in rows}
+    assert set(coverage) == set(component_rows), "Coverage component inventory mismatch"
+    for name, component in component_rows.items():
+        assert coverage[name]["CAS"] == component["CASnumber"], (
+            f"Coverage identity mismatch: {name}")
     expected_disposition_groups = {
         "held_reactive_amine_joint_model_requalification": {
-            "MDEA", "MEA", "Piperazine",
+            "MDEA", "DEA", "MEA", "Piperazine",
         },
         "held_acid_base_intrinsic_definition_review": {
             "acetic acid", "formic acid", "ammonia", "HNO2", "HCN",
@@ -135,6 +139,12 @@ def main():
                 + disposition["cas"]), name
             assert disposition["source_types"] == (
                 coverage[name]["Sander_source_types"]), name
+            if source_lines is not None:
+                cas = disposition["cas"].replace("-", "_")
+                pattern = re.compile(r"Hsbp_+" + cas + r"\s*=.*type: (\S+),")
+                source_types = {match[1] for line in source_lines
+                                for match in [pattern.match(line)] if match}
+                assert " ".join(sorted(source_types)) == disposition["source_types"], name
             for field in (
                     "boundary", "identity_basis", "definition_assessment",
                     "required_evidence"):
@@ -215,6 +225,12 @@ def main():
                 + disposition["cas"]), name
             assert disposition["source_types"] == (
                 coverage[name]["Sander_source_types"]), name
+            if source_lines is not None:
+                cas = disposition["cas"].replace("-", "_")
+                pattern = re.compile(r"Hsbp_+" + cas + r"\s*=.*type: (\S+),")
+                source_types = {match[1] for line in source_lines
+                                for match in [pattern.match(line)] if match}
+                assert " ".join(sorted(source_types)) == disposition["source_types"], name
             assert not forbidden_estimate_fields.intersection(disposition), (
                 f"Numerical estimate field admitted: {name}")
 
@@ -246,7 +262,7 @@ def main():
         name for name, row in coverage.items()
         if row["status"] == "no_exact_CAS_match_in_source_archive"
     }
-    assert len(unmatched_names) == 49, "Unmatched-identity coverage count changed"
+    assert len(unmatched_names) == 48, "Unmatched-identity coverage count changed"
     assert set(unmatched_dispositions) == unmatched_names, (
         "Unmatched-identity disposition inventory mismatch")
     assert unmatched_manifest["status"] == (
@@ -264,7 +280,7 @@ def main():
         "placeholder_or_undefined_pseudocomponent": {
             "default", "1.3-dDM-cyC5", "nC17-cy-C5", "asphaltene",
         },
-        "reactive_amine_or_model_species": {"DEA", "H+PZCOO-"},
+        "reactive_amine_or_model_species": {"H+PZCOO-"},
         "salt_or_reactive_inorganic_not_neutral_molecular_solute": {
             "CaCO3", "NaCl", "CaCl2", "NH4NO3", "NH4HSO4",
             "NH2SO3H", "NaHSO4",
@@ -280,7 +296,7 @@ def main():
         "identified_hydrocarbon_no_archive_record": 32,
         "water_phase_or_mixture_not_solute": 2,
         "placeholder_or_undefined_pseudocomponent": 4,
-        "reactive_amine_or_model_species": 2,
+        "reactive_amine_or_model_species": 1,
         "salt_or_reactive_inorganic_not_neutral_molecular_solute": 7,
         "sulfur_allotrope_condensed_species": 2,
     }
@@ -312,6 +328,11 @@ def main():
                 "no_exact_CAS_match_in_source_archive"), name
             assert disposition["archive_lookup"] == (
                 "no_exact_CAS_match_in_source_archive"), name
+            if source_lines is not None:
+                cas = disposition["cas"].replace("-", "_")
+                pattern = re.compile(r"Hsbp_+" + re.escape(cas) + r"\s*=")
+                assert not any(pattern.match(line) for line in source_lines), (
+                    f"Exact-CAS source record incorrectly classified as unmatched: {name}")
             assert disposition["boundary"] == boundary, name
             assert disposition["cas"] == component["CASnumber"], name
             assert disposition["formula"] == component["FORMULA"], name
@@ -336,7 +357,6 @@ def main():
     for name in {"default", "1.3-dDM-cyC5", "nC17-cy-C5"}:
         assert component_rows[name]["CASnumber"] == "0-0-0-0", name
     assert unmatched_dispositions["asphaltene"]["identity_assessment"].strip()
-    assert unmatched_dispositions["DEA"]["identity_assessment"].strip()
     assert unmatched_dispositions["H+PZCOO-"]["identity_assessment"].strip()
     assert unmatched_dispositions["NH2SO3H"]["identity_assessment"].strip()
     assert component_rows["sulfur(S8)"]["CASnumber"] == (
