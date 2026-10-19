@@ -196,6 +196,7 @@ checks before writing Step 1 content:
    | Live instrument data / operating point (P, T, flow, speed, valve %, current recycle) | `@plant-data` / `plant-data-agent` + `neqsim-plant-data` (tagreader PI/IP.21) or `@seeq.connect` / `enterprise-seeq-connect` | Resolve historian tag from STID tag; prefer `/PRIM` channel; check units |
    | Measured production volumes (well/field) | `rigga-production-agent` + `enterprise-rigga-production` | Measured production as feed / validation basis |
    | Equipment / maintenance / failure history | `@maintenance` / `maintenance-agent` + `enterprise-maintenance-api` | Read-only work orders, notifications |
+   | Picture of real equipment: location, layout, access, 3D view of a named tag | `enterprise-echo-3d-agent` + `enterprise-echo-3d` (Equinor Echo digital twin, via `prd-ai-skills` echo-toolkit) | Report figures into `figures/`; the user names the Echo 3D project; "not modelled" is not "not installed"; indicative, not a measurement |
    | Fluid composition / gas-sample molweight | STID/lab report via `@stid.reader`; else record as an explicit gap | A wrong MW mis-places compressor maps — always try to obtain it |
    | Public literature / standards | `@literature-scout` | See step 6 |
 
@@ -1602,6 +1603,17 @@ Document the independent check in `step2_analysis/notes.md` under a
       rendered after the references as Appendix A, B, ...
     - Prefer `results.json` `conclusions` over hand-written numbers
     - Ensure all figures from `figures/` will be embedded, **including benchmark plots**
+    - **Equipment pictures (Echo, enterprise).** When the study concerns named
+      equipment, capture Echo views with `enterprise-echo-3d-agent` during Step 1
+      (or here, if the need appears late) so they are in `figures/` before the
+      report run. Each Echo figure needs a `figure_captions` entry (project, tag,
+      capture date, "Equinor internal"), a `figure_discussion` entry (what the
+      picture shows about layout, access or neighbours, and what that means for the
+      finding), and a reference from `approach` or an appendix such as "Equipment
+      layout". Copy the evidence record's `assumptions` and `data_gaps` into
+      `results.json`; write "not modelled in Echo project X", never "not found" or
+      "not installed". A figure that cannot be obtained is a data gap, not a blocker.
+      Screenshots stay in the task folder and are never committed to a code repo.
     - The Scope/Standards, Results, Discussion, and Validation sections auto-populate from data files
     - **Discussion section** auto-populates from `results.json["figure_discussion"]` —
       renders each figure's observation, mechanism, implication, and recommendation
@@ -1991,6 +2003,7 @@ EMV model was hand-coded in four sibling tasks. Rules:
 | Flow assurance, hydraulics, hydrate/wax | `flow-assurance` | `olga-simulation-agent` for transients |
 | Safety: blowdown, PSV, source terms | `safety-depressuring` | `consequence-analysis`, `standards-review` |
 | Document / image reading | `technical-reader` (`technical-document-intelligence-agent`) | `enterprise-stid-reader-agent` |
+| Study that names real equipment (debottlenecking, tie-in, root cause, layout, noise, relief) and benefits from a picture | the family's lead agent | `enterprise-echo-3d-agent` (Echo views as report figures; enterprise only) |
 
 For **Type G (Workflow)** tasks you will need several of these in sequence;
 coordinate them through `task_spec.md` and the hand-off schemas in
@@ -2030,6 +2043,7 @@ Without a plugin, use the public fallback for the evidence type:
 | export gas specification | `gas-quality` |
 | utilisation, bottleneck | `neqsim-capacity-and-utilization-analysis` |
 | vendor datasheet, product limits (demister, inlet device, internals) | `neqsim-column-internals-and-rate-based`, supplied vendor documents via `technical-reader` |
+| picture, 3D view or layout of real equipment | supplied general-arrangement drawing or photo via `technical-reader`; otherwise a declared schematic and a data gap (the enterprise plugin supplies `enterprise-echo-3d-agent`) |
 
 File retrieved documents under `references/<source>/`; the source-index generator
 (`generate_sources_md.py`) accepts the folder or manifest source alias. Explicit source

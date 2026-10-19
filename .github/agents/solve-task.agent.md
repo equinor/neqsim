@@ -148,6 +148,8 @@ helper written a second time is promoted to its skill package in the same sessio
 
 **Evidence-source agents are checked, not ranked.** Data-source agents provided by an installed plugin describe systems, so similarity ranking never surfaces them - an audit of 156 tasks found them applicable far more often than used. Check the cue table published by the plugin's router agent (see `neqsim-task-workflow` §5) against the task text and record every applicable source in `agent_workflow_plan.evidence_sources` (`used` | `not_applicable` | `no_access` | `not_registered` + reason); without a plugin, use the public fallbacks listed there.
 
+**Equipment visuals (Equinor Echo digital twin).** When a study names real equipment (separator, compressor, valve, instrument, layout or tie-in) and the enterprise plugin is installed, delegate to `enterprise-echo-3d-agent` to capture 3D/tag-page views into `figures/` with provenance captions, then give each picture a `figure_discussion` entry and cite it in the report (`neqsim-task-workflow` Phase 3). The user names the Echo 3D project; "not modelled" is never reported as "not installed"; pictures are indicative, internal, and never committed. Without access, record `no_access` in `evidence_sources` and a data gap - the study proceeds.
+
 ### Core Purpose
 
 This agent's value comes from two things — and both depend on NeqSim:
