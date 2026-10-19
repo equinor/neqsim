@@ -91,19 +91,6 @@
       "identity_assessment": "Defined cyclooctasulfur identity, but the condensed allotrope/aqueous species boundary is not a gas-water intrinsic Henry definition."
     },
     {
-      "name": "DEA",
-      "cas": "0-0-0-0",
-      "formula": "DEA",
-      "inchikey": "DFWFIQKMSFGDCQ-UHFFFAOYSA-N",
-      "component_type": "amine",
-      "ionic_charge": 0,
-      "coverage_status": "no_exact_CAS_match_in_source_archive",
-      "source_types": "",
-      "archive_lookup": "no_exact_CAS_match_in_source_archive",
-      "boundary": "reactive_amine_or_model_species",
-      "identity_assessment": "Reactive amine row has placeholder CAS; no exact-CAS source match or species-resolved intrinsic Henry definition is established."
-    },
-    {
       "name": "CaCO3",
       "cas": "0-0-0-0",
       "formula": "CaCO3",
