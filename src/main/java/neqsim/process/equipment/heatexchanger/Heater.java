@@ -9,6 +9,7 @@ package neqsim.process.equipment.heatexchanger;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,6 +85,25 @@ public class Heater extends TwoPortEquipment
   protected double lastDuty = 0.0;
   protected double lastPressureDrop = 0.0;
   protected double[] lastComposition = null;
+
+  /** Whether the local specification snapshot belongs to a completed run in this instance. */
+  private transient boolean acceptedSpecificationValid;
+  /** Accepted temperature-difference specification. */
+  private transient double acceptedDeltaTemperature;
+  /** Accepted temperature-specification selection. */
+  private transient boolean acceptedSetTemperature;
+  /** Accepted pressure-specification selection. */
+  private transient boolean acceptedSetOutPressure;
+  /** Accepted duty-specification selection. */
+  private transient boolean acceptedSetEnergyInput;
+  /** Whether the accepted run used an external energy specification. */
+  private transient boolean acceptedExternalEnergy;
+  /** Accepted temperature unit, including its use in the temperature-difference path. */
+  private transient String acceptedTemperatureUnit;
+  /** Accepted pressure unit. */
+  private transient String acceptedPressureUnit;
+  /** Accepted specification selector. */
+  private transient String acceptedSpecification;
 
   protected transient HeatExchangerMechanicalDesign mechanicalDesign;
   HeatExchangerElectricalDesign electricalDesign;
@@ -397,6 +417,16 @@ public class Heater extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    // External streams/buses and outlet specifications can mutate without a local setter.
+    // Keep them conservative instead of treating a cached result duty as an input version.
+    if (!acceptedSpecificationValid || isSetEnergyStream() || "out stream".equals(getSpecification())
+        || acceptedExternalEnergy != isSetEnergyStream() || acceptedDeltaTemperature != dT
+        || acceptedSetTemperature != setTemperature || acceptedSetOutPressure != setOutPressure
+        || acceptedSetEnergyInput != setEnergyInput || !Objects.equals(acceptedTemperatureUnit, temperatureUnit)
+        || !Objects.equals(acceptedPressureUnit, pressureUnit)
+        || !Objects.equals(acceptedSpecification, getSpecification())) {
+      return true;
+    }
     if (inStream == null || inStream.getFluid() == null || lastComposition == null) {
       return true;
     }
@@ -425,9 +455,23 @@ public class Heater extends TwoPortEquipment
     return false;
   }
 
+  /** Records local specification inputs only after a successful calculation or low-flow bypass. */
+  private void acceptSpecification() {
+    acceptedDeltaTemperature = dT;
+    acceptedSetTemperature = setTemperature;
+    acceptedSetOutPressure = setOutPressure;
+    acceptedSetEnergyInput = setEnergyInput;
+    acceptedExternalEnergy = isSetEnergyStream();
+    acceptedTemperatureUnit = temperatureUnit;
+    acceptedPressureUnit = pressureUnit;
+    acceptedSpecification = getSpecification();
+    acceptedSpecificationValid = true;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    acceptedSpecificationValid = false;
     system = inStream.getThermoSystem().clone();
     isActive(true);
 
@@ -443,6 +487,7 @@ public class Heater extends TwoPortEquipment
       lastPressureDrop = pressureDrop;
       lastComposition = inStream.getFluid().getMolarComposition().clone();
       setCalculationIdentifier(id);
+      acceptSpecification();
       return;
     }
     // Use init(2) instead of init(3) - only need enthalpy (from init level 2), not composition
@@ -496,6 +541,7 @@ public class Heater extends TwoPortEquipment
     lastPressureDrop = pressureDrop;
     lastComposition = inStream.getFluid().getMolarComposition().clone();
     setCalculationIdentifier(id);
+    acceptSpecification();
   }
 
   /** {@inheritDoc} */
