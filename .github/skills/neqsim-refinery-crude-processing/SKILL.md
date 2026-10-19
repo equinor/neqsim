@@ -1,6 +1,6 @@
 ---
 name: neqsim-refinery-crude-processing
-description: "Assay characterization, crude-blend planning, crude-column reference cases, ASTM D86, hydrotreating, and catalytic-reforming balance receipts (OilAssayCharacterisation, RefineryAssayBlend, RefineryLinearBlendOptimizer, RefineryHydrotreatingSulfurNitrogenBalance, RefineryCatalyticReformingStoichiometricBalance, Standard_ASTM_D86). USE WHEN: asked to characterize a crude assay, blend refinery feeds, screen sulfur or nitrogen removal, screen reforming stoichiometry, estimate hydrogen/utility/economics receipts or compare crude fractionation products."
+description: "NeqSim refinery assay, crude blending, fractionation, ASTM D86, hydrotreating, and catalytic-reforming workflows. Covers OilAssayCharacterisation, RefineryAssayBlend, RefineryLinearBlendOptimizer, hydrotreating receipts, RefineryCatalyticReformingStoichiometricBalance, and Standard_ASTM_D86. USE WHEN: characterizing assays, blending feeds, screening contaminant removal or reforming stoichiometry, estimating hydrogen, utility, or economics receipts, or comparing fractionation products."
 last_verified: "2026-10-19"
 ---
 
