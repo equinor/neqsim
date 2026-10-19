@@ -411,6 +411,45 @@ where `w_i` is the resolved mass fraction and `SG_i` is the cut specific gravity
 
 These methods are screening calculations at the density reference condition represented by the inputs. They assume ideal additive liquid volumes and do not apply temperature correction, excess-volume, or blend-contraction models. They are not custody-transfer or certified blend-design calculations. The public validation and numerical error boundary are documented in [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation).
 
+## Complete TBP table blending
+
+`TbpCutTable.blendByMass(...)` combines two or more complete source TBP tables before
+recharacterization. The source masses must share one mass basis. For source `s`, the complete-table
+specific gravity is
+
+$$SG_s=\frac{1}{100}\sum_i \Delta V_{s,i}SG_{s,i}$$
+
+and its ideal additive liquid-volume contribution is proportional to `m_s / SG_s`. The output grid
+is the ordered union of all source boiling boundaries. At each boundary, NeqSim volume-weights the
+source cumulative recoveries; below a source initial boiling point its recovery is zero, and above
+its final boiling point its recovery is 100%. Output interval specific gravity is reconstructed from
+the source overlap volumes and their interval SG60/60 values.
+
+```java
+OilAssayCharacterisation.TbpCutTable blended =
+    OilAssayCharacterisation.TbpCutTable.blendByMass(
+        new OilAssayCharacterisation.TbpCutTable[] {lightTable, heavyTable},
+        new double[] {6000.0, 4000.0});
+
+OilAssayCharacterisation blendedAssay =
+    targetSystem.getOilAssayCharacterisation();
+blendedAssay.setTotalAssayMass(10000.0);
+blendedAssay.addTBPCutTable("Blend", blended);
+blendedAssay.apply();
+```
+
+The analytical regression uses two offset, two-cut curves with uniform source SG values 0.80 and
+1.00 at equal source mass. Their ideal source-volume fractions are 5/9 and 4/9. The union grid is
+300, 350, 400, 450, 500, and 550 K; the blended whole-assay SG is 8/9 and cumulative ideal-mass
+recovery at 450 K is 62.5%. The implementation closes liquid volume to 100% and ideal-additive
+mass to the bulk relation $SG_{blend}=\sum_s m_s/\sum_s(m_s/SG_s)$.
+
+This is a deterministic bookkeeping blend of caller-supplied TBP and SG60/60 evidence. It adds no
+external coefficient or dataset. It does not assert measured multi-crude distillation behavior,
+apply density-temperature correction or blend contraction, predict interactions or compatibility,
+or establish phase-equivalence after pseudo-component recharacterization. Those require separate
+experimental or thermodynamic validation.
+
 ## Whole-assay blend screening
 
 `RefineryAssayBlend` combines already-resolved whole-assay properties on one explicit mass basis.
@@ -905,7 +944,7 @@ These tests establish software/bookkeeping correctness, qualify ideal-additive-v
 | Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API, per-cut Watson and linear sulfur/nitrogen bookkeeping qualified over frozen public matrices; broader stream properties remain open |
 | Rigorous distillation columns | `DistillationColumn`, `SimpleTray`, Naphtali-Sandholm solver, side-draw support | Existing foundation; broad-boiling atmospheric/vacuum refinery benchmark remains open |
 | Crude preheat/fired heater | General heater/heat-exchanger process equipment | Refinery workflow and fuel/emission integration remain open |
-| Whole-assay bulk blend screening | `RefineryAssayBlend` | Qualified for ideal-volume SG/API and mass-linear sulfur/nitrogen bookkeeping; nonlinear properties and optimization remain open |
+| Crude-assay and TBP blend screening | `RefineryAssayBlend`, `RefineryViscosityBlend`, `RefineryLinearBlendOptimizer`, `TbpCutTable.blendByMass` | Ideal-volume SG/API, mass-linear sulfur/nitrogen, Refutas viscosity, linear cost optimization, receipts, and complete-table TBP blending are available within their documented screening boundaries |
 | ASTM D86/D1160 to TBP conversion | No qualified refinery conversion API in this increment | Open; requires public correlation provenance and validation |
 | Atmospheric crude-unit benchmark | No campaign benchmark yet | Next high-value validation milestone |
 | Vacuum tower benchmark | No campaign benchmark yet | Open after atmospheric case |
