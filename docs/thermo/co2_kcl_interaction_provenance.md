@@ -94,12 +94,58 @@ CO2 correction. At 273.15 K it differs from the Archer reference by −0.00215 f
 K10 and −0.00467 for K15 before CO2 is added. The saturated Burgass NaCl control
 retains five points within 1 K and a sixth error of −1.121 K at 194.77 bara.
 
+## Salt-free CO2 baseline discriminator
+
+`CO2WaterBaselineReferenceAssessmentTest` compares six evaluated liquid CO2 mole
+fractions from the [IUPAC–NIST CO2/water evaluation, system 62_1](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_1),
+Table 1 **Model** column, at 273.15–298.15 K and **101.325 kPa CO2 partial
+pressure**. These are evaluated model values, not raw measurements. The fixture
+`co2_water_carroll1991_evaluation.csv` records the source, units and reuse basis;
+only six factual values are retained, not an article or figure. Carroll,
+Slupsky and Mather (1991), [DOI 10.1063/1.555900](https://doi.org/10.1063/1.555900),
+primary Table 4 was checked at overlapping temperatures. The displayed web
+Eq. (1) has a normalization inconsistency with its table and is not used.
+
+The nonreactive electrolyte-CPA calculation uses 1 kg water, 10 mol CO2,
+explicit zero K+/Cl-, mixing rule 10 and multiphase checking. Total pressure
+is iterated until `y_CO2 * P = 1.01325 bara`; total pressure and guest fugacity
+are reported separately. Three constructions per temperature retain baseline,
+explicit database reset and reversed component insertion order: **18 calculated
+records from six independent reference states**, not 18 independent observations.
+`apparent_f_over_x_bara` is a finite-composition endpoint ratio, not a newly
+qualified infinite-dilution Henry constant.
+
+Frozen numerical gates are molecular log-fugacity residual <= 1e-8, original
+component balance <= 1e-12 (relative for molecular components; absolute mol for
+zero-ion inputs), phase-fraction/composition normalization <= 1e-12, charge
+residual <= 1e-12 mol, partial-pressure mismatch <= 1e-7 bara and identical-repeat
+CO2 mole-fraction difference <= 1e-10. Returned phases must be GAS+AQUEOUS.
+All completed records are written before the final numerical assertion. The
+test supplies **no physical-accuracy pass band**; signed relative reference
+residuals are retained even when numerical gates pass.
+
+The initial exact-master assessment retains a -27.30% to -19.25% salt-free
+solubility residual. Runtime diagnostics identify rule `ClassicSRKT2`, CO2
+2A/two sites and water 4C/four sites, cross beta 0.075 and cross energy
+8327.5 J/mol. Stored zero cross energy selects the combining rule; it does not
+disable association. The default binary coefficients give
+`k(T) = -0.27686 + 0.001121 * T[K]`. These are observed legacy values, not a
+source-authenticated recommendation. Complete joint parameter provenance and
+independent scientific review remain required before changing this model.
+
+The explicit-zero-ion construction is deliberate. The separate 21-record
+ion-omitted/ordinary-CPA [precision diagnostic](https://github.com/equinor/neqsim/issues/4234#issuecomment-6262818833)
+retains ten component-balance failures at the same 1e-12 gate. This passing
+subset neither erases those failures nor qualifies other constructions.
+The full 110-measurement Dholabhai family and independent review of #4367 remain
+open; no legacy parameter, hydrate equation or tolerance is changed here.
+
 ## Retained numerical evidence
 
 The Core Build, Test, and Javadoc workflow retains an
 `electrolyte-assessment-evidence-<shard>` artifact from every Java 21 slow-test
 shard, including after failed test runs. Download the artifacts from the same
-workflow run; the five assessments may be distributed over different shards.
+workflow run; the six assessments may be distributed over different shards.
 Surefire reports remain in their existing, separate artifacts.
 
 Each bundle includes a `manifest.json` and only the allowlisted assessment CSVs
@@ -112,6 +158,7 @@ produced by tests selected for that shard:
 | He–Morse dissolved CO2 | 6 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
+| Carroll evaluated salt-free CO2, three setup constructions | 18 |
 
 The manifest records the actual checkout commit separately from the GitHub
 event SHA and (when present) PR head SHA, run/attempt/shard context, selected
@@ -130,7 +177,7 @@ complete evidence. Outputs from unselected tests and unrelated files under
 `target/` are not collected.
 
 `selected_evidence_complete` applies only to the selected assessments in that
-shard, not the full five-source matrix or the rest of CI. A shard with no selected
+shard, not the full six-assessment matrix or the rest of CI. A shard with no selected
 assessment has a count of zero. Check every producer across all shards and the
 original test results before using a combined matrix. Every manifest keeps
 `qualification` as `not_assessed`: artifact retention and structural validation
