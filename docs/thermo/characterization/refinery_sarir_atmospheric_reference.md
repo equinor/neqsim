@@ -342,6 +342,34 @@ measurements, specification-compliance results, or evidence that NeqSim reproduc
 yields. The cut density and molar-mass profiles and unreported column controls remain explicit
 engineering inputs.
 
+## Untuned fractionation audit baseline
+
+The focused integration test freezes one reproducible result from the explicit engineering input
+set: 1.20 bara top pressure, 2.33 bara bottom pressure, 700 K reboiler temperature, reflux ratio
+1.0, a 0.08 liquid side draw on internal tray 24, and a 0.15 liquid side draw on internal tray 15.
+The constrained 18-cut density and molar-mass arrays are recorded in
+`SarirAtmosphericFractionationCaseTest`. None of these source-unreported inputs was fitted to the
+published product rates.
+
+| Product | Calculated (kg/h) | Plant (kg/h) | Absolute rate error (%) | Mean NBP (degC) | Discrete T10/T50/T90 (degC) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Total Naphtha | 20,580.3161 | 8,706.2500 | 136.3855 | 174.1320 | 93.0789 / 165.8523 / 282.0965 |
+| Kerosene | 2,782.9681 | 952.0833 | 192.3030 | 319.2992 | 282.0965 / 333.4095 / 333.4095 |
+| Diesel | 4,057.3717 | 17,709.0833 | 77.0888 | 338.1923 | 282.0965 / 360.7343 / 360.7343 |
+| Residual | 26,999.3442 | 26,937.5000 | 0.2296 | 467.4137 | 360.7343 / 438.2205 / 605.7733 |
+
+The solve closes 54,420 kg/h of feed to products with a relative closure error below `1e-12` and
+uses the non-fallback MESH-residual path. The focused regression allows 0.1 kg/h for calculated
+rates, 0.01 percentage points for comparison errors, and 0.01 degC for boiling diagnostics so that
+material numerical drift is reviewed instead of silently changing the evidence.
+
+The large naphtha, kerosene, and diesel discrepancies are retained deliberately. No published rate
+is a pass threshold or a tuning target, and close residual agreement alone does not validate the
+flowsheet. The quantiles are discrete cumulative-mole pseudo-component diagnostics, not ASTM D86,
+ASTM D1160, simulated-distillation, or TBP temperatures. This audit therefore establishes a
+reproducible software baseline and makes the current model-to-plant differences visible; it does
+not establish refinery yield prediction, product compliance, or plant agreement.
+
 ## Scientific boundary
 
 The source-derived volumes, boiling boundaries, and product-specification rows are reproducible,
