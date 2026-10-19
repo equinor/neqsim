@@ -1026,6 +1026,35 @@ def test_guard_rejects_stale_or_internally_inconsistent_envelope(tmp_path):
     assert "duplicate_envelope_axes" in reasons["duplicate axes"]
 
 
+def test_guard_recomputes_optional_operating_region_transitions(tmp_path):
+    valid = _valid_proposal()
+    valid["title"] = "valid sampled transitions"
+    valid_slice = valid["accepted_point_envelope_evidence"]["slices"][0]
+    valid_slice["axis_action_semantics"] = ["CONTINUOUS"]
+    valid_slice["operating_region_transitions"] = []
+    valid_slice["points"][0].update({
+        "sequence_index": 0,
+        "grid_indexes": [0],
+        "outcome": "FEASIBLE",
+    })
+
+    tampered = copy.deepcopy(valid)
+    tampered["title"] = "tampered sampled transitions"
+    tampered["accepted_point_envelope_evidence"]["slices"][0][
+        "operating_region_transitions"].append({"kind": "BECAME_INFEASIBLE"})
+
+    ctx = _guard_context(tmp_path, valid)
+    ctx.plan["production"]["require_envelope_evidence"] = True
+    ctx.proposals.append(tampered)
+    production.guard(ctx, {})
+
+    assert [row["title"] for row in ctx.proposals] == ["valid sampled transitions"]
+    withheld = json.loads((tmp_path / "guard.json").read_text())["withheld"]
+    assert withheld[0]["reasons"] == [
+        "envelope_slice_0_operating_region_transition_mismatch"
+    ]
+
+
 def test_guard_fails_closed_for_malformed_envelope_types(tmp_path):
     malformed = _valid_proposal()
     malformed["title"] = "malformed envelope"

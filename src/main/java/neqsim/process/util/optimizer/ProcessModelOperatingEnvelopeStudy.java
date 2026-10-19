@@ -514,10 +514,15 @@ public final class ProcessModelOperatingEnvelopeStudy {
     List<ProcessModelOperatingAction> actions = evaluator.getActions();
     double[] anchor = validateAnchor(actions, anchorValues);
     int[] actionIndexes = validateAxes(actions, axisIds, axes);
+    ProcessModelOperatingAction.ValueSemantics[] axisActionSemantics = new ProcessModelOperatingAction.ValueSemantics[axisIds.length];
+    for (int axis = 0; axis < axisIds.length; axis++) {
+      axisActionSemantics[axis] = actions.get(actionIndexes[axis]).getValueSemantics();
+    }
     int evaluationCountBefore = evaluator.getSimulationEvaluator().getEvaluationCount();
     long startedNanos = System.nanoTime();
     List<Point> points = new ArrayList<Point>();
     List<Transition> transitions = new ArrayList<Transition>();
+    List<OperatingRegionTransition> operatingRegionTransitions = new ArrayList<OperatingRegionTransition>();
     List<String> diagnostics = new ArrayList<String>();
     Outcome outcome = Outcome.COMPLETE;
 
@@ -527,6 +532,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
         points.add(point);
         if (i > 0) {
           transition(transitions, axisIds[0], points.get(i - 1), point, 0);
+          operatingRegionTransition(operatingRegionTransitions, actions.get(actionIndexes[0]), points.get(i - 1), point,
+              0);
         }
         if (!safeRecovery(point)) {
           outcome = Outcome.MODEL_RECOVERY_FAILED;
@@ -544,9 +551,13 @@ public final class ProcessModelOperatingEnvelopeStudy {
           points.add(point);
           if (j > 0) {
             transition(transitions, axisIds[1], points.get(points.size() - 2), point, 1);
+            operatingRegionTransition(operatingRegionTransitions, actions.get(actionIndexes[1]),
+                points.get(points.size() - 2), point, 1);
           }
           if (i > 0) {
             transition(transitions, axisIds[0], points.get((i - 1) * secondCount + j), point, 0);
+            operatingRegionTransition(operatingRegionTransitions, actions.get(actionIndexes[0]),
+                points.get((i - 1) * secondCount + j), point, 0);
           }
           if (!safeRecovery(point)) {
             outcome = Outcome.MODEL_RECOVERY_FAILED;
@@ -564,10 +575,13 @@ public final class ProcessModelOperatingEnvelopeStudy {
     }
     diagnostics.add(
         "Transitions use unit-safe installed evidence at feasible points and exact fail-closed rejection identity at infeasible points");
+    diagnostics.add(
+        "Operating-region transitions are sampled adjacent-edge diagnostics; discrete actions are never interpolated");
     int evaluationCount = evaluator.getSimulationEvaluator().getEvaluationCount() - evaluationCountBefore;
     double runtimeSeconds = Math.max(0.0, (System.nanoTime() - startedNanos) / 1.0e9);
-    return new SliceResult(id, name, provenance, evaluator.getId(), axisIds, axes, anchor, pointCount(axes), outcome,
-        points, transitions, diagnostics, evaluationCount, runtimeSeconds, this);
+    return new SliceResult(id, name, provenance, evaluator.getId(), axisIds, axisActionSemantics, axes, anchor,
+        pointCount(axes), outcome, points, transitions, operatingRegionTransitions, diagnostics, evaluationCount,
+        runtimeSeconds, this);
   }
 
   /**
@@ -711,6 +725,44 @@ public final class ProcessModelOperatingEnvelopeStudy {
             to.getAxisValues()[axisPosition], first.getQualifiedConstraintName(), second.getQualifiedConstraintName()));
   }
 
+  /** Records a sampled operating-region change across one adjacent grid edge. */
+  private static void operatingRegionTransition(List<OperatingRegionTransition> transitions,
+      ProcessModelOperatingAction action, Point from, Point to, int axisPosition) {
+    LeadingConstraintEvidence first = from.getLeadingConstraint();
+    LeadingConstraintEvidence second = to.getLeadingConstraint();
+    String firstConstraint = first == null ? null : first.getQualifiedConstraintName();
+    String secondConstraint = second == null ? null : second.getQualifiedConstraintName();
+    ProcessModelOperatingActionSetEvaluator.Outcome firstOutcome = from.getEvaluation().getOutcome();
+    ProcessModelOperatingActionSetEvaluator.Outcome secondOutcome = to.getEvaluation().getOutcome();
+    OperatingRegionTransition.Kind kind;
+    if (from.isFeasible() && !to.isFeasible()) {
+      kind = OperatingRegionTransition.Kind.BECAME_INFEASIBLE;
+    } else if (!from.isFeasible() && to.isFeasible()) {
+      kind = OperatingRegionTransition.Kind.BECAME_FEASIBLE;
+    } else if (firstOutcome != secondOutcome) {
+      kind = OperatingRegionTransition.Kind.EVALUATION_OUTCOME_CHANGED;
+    } else if (!sameNullableText(firstConstraint, secondConstraint) || !sameConstraintSource(first, second)) {
+      kind = OperatingRegionTransition.Kind.LEADING_CONSTRAINT_CHANGED;
+    } else {
+      return;
+    }
+    transitions
+        .add(new OperatingRegionTransition(action.getId(), action.getValueSemantics(), kind, from.getSequenceIndex(),
+            to.getSequenceIndex(), from.getAxisValues()[axisPosition], to.getAxisValues()[axisPosition],
+            from.isFeasible(), to.isFeasible(), firstOutcome, secondOutcome, first == null ? null : first.getSource(),
+            second == null ? null : second.getSource(), firstConstraint, secondConstraint));
+  }
+
+  /** Returns true when nullable constraint identities are equal. */
+  private static boolean sameNullableText(String first, String second) {
+    return first == null ? second == null : first.equals(second);
+  }
+
+  /** Returns true when nullable leading-constraint sources are equal. */
+  private static boolean sameConstraintSource(LeadingConstraintEvidence first, LeadingConstraintEvidence second) {
+    return first == null ? second == null : second != null && first.getSource() == second.getSource();
+  }
+
   /**
    * Validates and copies the full action anchor.
    *
@@ -828,6 +880,15 @@ public final class ProcessModelOperatingEnvelopeStudy {
   /** Copies text values to an immutable JSON-friendly list. */
   private static List<String> toStringList(String[] values) {
     return Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(values)));
+  }
+
+  /** Converts action semantics to an immutable JSON-friendly name list. */
+  private static List<String> toStringList(ProcessModelOperatingAction.ValueSemantics[] values) {
+    List<String> result = new ArrayList<String>();
+    for (ProcessModelOperatingAction.ValueSemantics value : values) {
+      result.add(value.name());
+    }
+    return Collections.unmodifiableList(result);
   }
 
   /** Returns a JSON-safe finite number or null for unavailable numerical evidence. */
@@ -1245,6 +1306,184 @@ public final class ProcessModelOperatingEnvelopeStudy {
   }
 
   /**
+   * Immutable sampled operating-region change across one adjacent grid edge.
+   *
+   * <p>
+   * This diagnostic preserves the exact endpoint outcomes and leading-constraint identities. It does not locate a
+   * continuous boundary. In particular, an edge traversing a discrete action records two evaluated line-ups and never
+   * authorizes interpolation between them.
+   * </p>
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static final class OperatingRegionTransition implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Sampled change classification. */
+    public enum Kind {
+      /** The destination point is infeasible while the source point is feasible. */
+      BECAME_INFEASIBLE,
+      /** The destination point is feasible while the source point is infeasible. */
+      BECAME_FEASIBLE,
+      /** Both endpoints share feasibility, but the exact evaluator outcome changed. */
+      EVALUATION_OUTCOME_CHANGED,
+      /** Feasibility and outcome are unchanged, but the selected evidence identity or layer changed. */
+      LEADING_CONSTRAINT_CHANGED
+    }
+
+    private final String axisActionId;
+    private final ProcessModelOperatingAction.ValueSemantics actionValueSemantics;
+    private final Kind kind;
+    private final int fromSequenceIndex;
+    private final int toSequenceIndex;
+    private final double fromAxisValue;
+    private final double toAxisValue;
+    private final boolean fromFeasible;
+    private final boolean toFeasible;
+    private final ProcessModelOperatingActionSetEvaluator.Outcome fromOutcome;
+    private final ProcessModelOperatingActionSetEvaluator.Outcome toOutcome;
+    private final LeadingConstraintEvidence.Source fromConstraintSource;
+    private final LeadingConstraintEvidence.Source toConstraintSource;
+    private final String fromConstraint;
+    private final String toConstraint;
+
+    /** Creates one immutable adjacent-edge diagnostic. */
+    private OperatingRegionTransition(String axisActionId,
+        ProcessModelOperatingAction.ValueSemantics actionValueSemantics, Kind kind, int fromSequenceIndex,
+        int toSequenceIndex, double fromAxisValue, double toAxisValue, boolean fromFeasible, boolean toFeasible,
+        ProcessModelOperatingActionSetEvaluator.Outcome fromOutcome,
+        ProcessModelOperatingActionSetEvaluator.Outcome toOutcome,
+        LeadingConstraintEvidence.Source fromConstraintSource, LeadingConstraintEvidence.Source toConstraintSource,
+        String fromConstraint, String toConstraint) {
+      this.axisActionId = axisActionId;
+      this.actionValueSemantics = actionValueSemantics;
+      this.kind = kind;
+      this.fromSequenceIndex = fromSequenceIndex;
+      this.toSequenceIndex = toSequenceIndex;
+      this.fromAxisValue = fromAxisValue;
+      this.toAxisValue = toAxisValue;
+      this.fromFeasible = fromFeasible;
+      this.toFeasible = toFeasible;
+      this.fromOutcome = fromOutcome;
+      this.toOutcome = toOutcome;
+      this.fromConstraintSource = fromConstraintSource;
+      this.toConstraintSource = toConstraintSource;
+      this.fromConstraint = fromConstraint;
+      this.toConstraint = toConstraint;
+    }
+
+    /** @return traversed action identifier */
+    public String getAxisActionId() {
+      return axisActionId;
+    }
+
+    /** @return continuous or discrete action semantics */
+    public ProcessModelOperatingAction.ValueSemantics getActionValueSemantics() {
+      return actionValueSemantics;
+    }
+
+    /** @return sampled change classification */
+    public Kind getKind() {
+      return kind;
+    }
+
+    /** @return source point sequence index */
+    public int getFromSequenceIndex() {
+      return fromSequenceIndex;
+    }
+
+    /** @return destination point sequence index */
+    public int getToSequenceIndex() {
+      return toSequenceIndex;
+    }
+
+    /** @return source action value */
+    public double getFromAxisValue() {
+      return fromAxisValue;
+    }
+
+    /** @return destination action value */
+    public double getToAxisValue() {
+      return toAxisValue;
+    }
+
+    /** @return absolute sampled interval width in the action unit */
+    public double getSampledIntervalWidth() {
+      return Math.abs(toAxisValue - fromAxisValue);
+    }
+
+    /** @return source feasibility */
+    public boolean isFromFeasible() {
+      return fromFeasible;
+    }
+
+    /** @return destination feasibility */
+    public boolean isToFeasible() {
+      return toFeasible;
+    }
+
+    /** @return exact source evaluator outcome */
+    public ProcessModelOperatingActionSetEvaluator.Outcome getFromOutcome() {
+      return fromOutcome;
+    }
+
+    /** @return exact destination evaluator outcome */
+    public ProcessModelOperatingActionSetEvaluator.Outcome getToOutcome() {
+      return toOutcome;
+    }
+
+    /** @return source evidence layer, or null when no leading row exists */
+    public LeadingConstraintEvidence.Source getFromConstraintSource() {
+      return fromConstraintSource;
+    }
+
+    /** @return destination evidence layer, or null when no leading row exists */
+    public LeadingConstraintEvidence.Source getToConstraintSource() {
+      return toConstraintSource;
+    }
+
+    /** @return source constraint identity, or null */
+    public String getFromConstraint() {
+      return fromConstraint;
+    }
+
+    /** @return destination constraint identity, or null */
+    public String getToConstraint() {
+      return toConstraint;
+    }
+
+    /** @return true for a discrete line-up edge that must not be interpolated */
+    public boolean isDiscreteAction() {
+      return actionValueSemantics == ProcessModelOperatingAction.ValueSemantics.DISCRETE;
+    }
+
+    /** Converts this sampled change to a compact JSON-friendly map. */
+    public Map<String, Object> toEvidenceMap() {
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("axis_action_id", axisActionId);
+      evidence.put("action_value_semantics", actionValueSemantics.name());
+      evidence.put("kind", kind.name());
+      evidence.put("from_sequence_index", Integer.valueOf(fromSequenceIndex));
+      evidence.put("to_sequence_index", Integer.valueOf(toSequenceIndex));
+      evidence.put("from_axis_value", finiteOrNull(fromAxisValue));
+      evidence.put("to_axis_value", finiteOrNull(toAxisValue));
+      evidence.put("sampled_interval_width", finiteOrNull(getSampledIntervalWidth()));
+      evidence.put("from_feasible", Boolean.valueOf(fromFeasible));
+      evidence.put("to_feasible", Boolean.valueOf(toFeasible));
+      evidence.put("from_outcome", fromOutcome.name());
+      evidence.put("to_outcome", toOutcome.name());
+      evidence.put("from_constraint_source", fromConstraintSource == null ? null : fromConstraintSource.name());
+      evidence.put("to_constraint_source", toConstraintSource == null ? null : toConstraintSource.name());
+      evidence.put("from_constraint", fromConstraint);
+      evidence.put("to_constraint", toConstraint);
+      evidence.put("interpolated", Boolean.FALSE);
+      evidence.put("sampled_event_only", Boolean.TRUE);
+      return Collections.unmodifiableMap(evidence);
+    }
+  }
+
+  /**
    * Immutable serializable result for an operating-envelope slice.
    *
    * @author NeqSim Development Team
@@ -1257,12 +1496,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final String provenance;
     private final String candidateEvaluatorId;
     private final String[] axisActionIds;
+    private final ProcessModelOperatingAction.ValueSemantics[] axisActionSemantics;
     private final double[][] axisValues;
     private final double[] anchorValues;
     private final int requestedPointCount;
     private final Outcome outcome;
     private final List<Point> points;
     private final List<Transition> transitions;
+    private final List<OperatingRegionTransition> operatingRegionTransitions;
     private final List<String> diagnostics;
     private final int evaluationCount;
     private final double runtimeSeconds;
@@ -1276,32 +1517,38 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param provenance study provenance
      * @param candidateEvaluatorId evaluator identifier
      * @param axisActionIds axis action identifiers
+     * @param axisActionSemantics axis action value semantics
      * @param axisValues requested grids
      * @param anchorValues complete anchor vector
      * @param requestedPointCount requested point count
      * @param outcome terminal outcome
      * @param points completed points
      * @param transitions sampled transitions
+     * @param operatingRegionTransitions sampled feasibility/outcome/evidence transitions
      * @param diagnostics study diagnostics
      * @param evaluationCount simulator evaluations used by this slice
      * @param runtimeSeconds measured wall-clock runtime
      * @param sourceStudy exact runtime study that produced this result
      */
     private SliceResult(String id, String name, String provenance, String candidateEvaluatorId, String[] axisActionIds,
-        double[][] axisValues, double[] anchorValues, int requestedPointCount, Outcome outcome, List<Point> points,
-        List<Transition> transitions, List<String> diagnostics, int evaluationCount, double runtimeSeconds,
-        ProcessModelOperatingEnvelopeStudy sourceStudy) {
+        ProcessModelOperatingAction.ValueSemantics[] axisActionSemantics, double[][] axisValues, double[] anchorValues,
+        int requestedPointCount, Outcome outcome, List<Point> points, List<Transition> transitions,
+        List<OperatingRegionTransition> operatingRegionTransitions, List<String> diagnostics, int evaluationCount,
+        double runtimeSeconds, ProcessModelOperatingEnvelopeStudy sourceStudy) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
       this.candidateEvaluatorId = candidateEvaluatorId;
       this.axisActionIds = Arrays.copyOf(axisActionIds, axisActionIds.length);
+      this.axisActionSemantics = Arrays.copyOf(axisActionSemantics, axisActionSemantics.length);
       this.axisValues = deepCopy(axisValues);
       this.anchorValues = Arrays.copyOf(anchorValues, anchorValues.length);
       this.requestedPointCount = requestedPointCount;
       this.outcome = outcome;
       this.points = Collections.unmodifiableList(new ArrayList<Point>(points));
       this.transitions = Collections.unmodifiableList(new ArrayList<Transition>(transitions));
+      this.operatingRegionTransitions = Collections
+          .unmodifiableList(new ArrayList<OperatingRegionTransition>(operatingRegionTransitions));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
       this.evaluationCount = evaluationCount;
       this.runtimeSeconds = runtimeSeconds;
@@ -1331,6 +1578,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
     /** @return defensive axis action identifiers */
     public String[] getAxisActionIds() {
       return Arrays.copyOf(axisActionIds, axisActionIds.length);
+    }
+
+    /** @return defensive axis action value semantics */
+    public ProcessModelOperatingAction.ValueSemantics[] getAxisActionSemantics() {
+      if (axisActionSemantics == null) {
+        return new ProcessModelOperatingAction.ValueSemantics[0];
+      }
+      return Arrays.copyOf(axisActionSemantics, axisActionSemantics.length);
     }
 
     /** @return defensive requested axis grids */
@@ -1384,6 +1639,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return Collections.unmodifiableList(new ArrayList<Transition>(transitions));
     }
 
+    /** @return fresh immutable sampled operating-region transition list */
+    public List<OperatingRegionTransition> getOperatingRegionTransitions() {
+      if (operatingRegionTransitions == null) {
+        return Collections.emptyList();
+      }
+      return Collections.unmodifiableList(new ArrayList<OperatingRegionTransition>(operatingRegionTransitions));
+    }
+
     /** @return fresh immutable study diagnostics */
     public List<String> getDiagnostics() {
       return Collections.unmodifiableList(new ArrayList<String>(diagnostics));
@@ -1423,12 +1686,17 @@ public final class ProcessModelOperatingEnvelopeStudy {
       for (Transition transition : transitions) {
         transitionEvidence.add(transition.toEvidenceMap());
       }
+      List<Map<String, Object>> operatingTransitionEvidence = new ArrayList<Map<String, Object>>();
+      for (OperatingRegionTransition transition : getOperatingRegionTransitions()) {
+        operatingTransitionEvidence.add(transition.toEvidenceMap());
+      }
       Map<String, Object> evidence = new LinkedHashMap<String, Object>();
       evidence.put("study_id", id);
       evidence.put("study_name", name);
       evidence.put("study_provenance", provenance);
       evidence.put("candidate_evaluator_id", candidateEvaluatorId);
       evidence.put("axis_action_ids", toStringList(axisActionIds));
+      evidence.put("axis_action_semantics", toStringList(getAxisActionSemantics()));
       evidence.put("axis_values", toFiniteDoubleLists(axisValues));
       evidence.put("anchor_values", toFiniteDoubleList(anchorValues));
       evidence.put("requested_point_count", Integer.valueOf(requestedPointCount));
@@ -1440,6 +1708,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
       evidence.put("complete", Boolean.valueOf(isComplete()));
       evidence.put("points", Collections.unmodifiableList(pointEvidence));
       evidence.put("bottleneck_transitions", Collections.unmodifiableList(transitionEvidence));
+      evidence.put("operating_region_transitions", Collections.unmodifiableList(operatingTransitionEvidence));
       evidence.put("diagnostics", Collections.unmodifiableList(new ArrayList<String>(diagnostics)));
       return Collections.unmodifiableMap(evidence);
     }

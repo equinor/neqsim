@@ -1088,11 +1088,19 @@ mutation. Rerun optimization after such a change; never reuse a stale accepted p
 After one or more accepted-point slices complete, use
 `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` to obtain a compact JSON-friendly
 multi-slice block. It includes the optimizer guard evidence, accepted-point bottleneck, axes,
-sampled points, exact rejection identities, bottleneck transitions, diagnostics, and measured
+sampled points, exact rejection identities, bottleneck transitions, sampled operating-region
+transitions, diagnostics, and measured
 search/envelope evaluation counts and runtimes. The call is read-only and requires the exact runtime
 study plus complete, uniquely addressed slices anchored at the accepted candidate. It rejects
 foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
 rather than combining it into a current cycle.
+
+Every `operating_region_transitions` row retains the traversed action's `CONTINUOUS` or `DISCRETE`
+semantics, exact endpoint outcomes and feasibility, constraint identities/evidence layers, and the
+sampled interval width. The row is explicitly marked `interpolated: false` and
+`sampled_event_only: true`. External tools must not infer a continuous boundary from a discrete
+route/line-up edge, and must not treat a continuous sampled edge as an approved set point without a
+separate qualified refinement and replay.
 
 For ordered reservoir/facility periods, add each independently completed search and slice set to
 `ProcessModelOperatingEnvelopeLifecycleStudy`. The lifecycle layer reuses the exact-runtime envelope export gate,

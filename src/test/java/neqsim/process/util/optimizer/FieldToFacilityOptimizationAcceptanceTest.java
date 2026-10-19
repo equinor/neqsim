@@ -49,6 +49,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.Hydrau
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.Outcome;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.OperatingPointSearchResult;
 import neqsim.thermo.system.SystemInterface;
@@ -474,6 +475,21 @@ class FieldToFacilityOptimizationAcceptanceTest {
         .orElseThrow(() -> new AssertionError("Missing accepted driver-power evidence"));
     assertTrue(acceptedDriver.isFeasible());
     assertEquals(driverLimitKw, acceptedDriver.getSample().getApplicableLimit(), 0.0);
+
+    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("driver-limited-field-envelope",
+        "Driver-limited field envelope", "synthetic common-shaft driver transition diagnostics", candidates);
+    SliceResult driverSlice = study.evaluateOneDimensional(chokeA.getId(), new double[] {70.0, 95.0}, result);
+    assertTrue(driverSlice.isComplete(), driverSlice.getDiagnostics().toString());
+    assertEquals(1, driverSlice.getOperatingRegionTransitions().size());
+    OperatingRegionTransition driverTransition = driverSlice.getOperatingRegionTransitions().get(0);
+    assertEquals(OperatingRegionTransition.Kind.BECAME_INFEASIBLE, driverTransition.getKind());
+    assertEquals(Outcome.FEASIBLE, driverTransition.getFromOutcome());
+    assertEquals(Outcome.OTHER_MODEL_CONSTRAINT_VIOLATED, driverTransition.getToOutcome());
+    assertEquals(ProcessModelOperatingAction.ValueSemantics.CONTINUOUS, driverTransition.getActionValueSemantics());
+    assertTrue(driverTransition.getToConstraint().endsWith("#driver-maximum-power"),
+        driverTransition.getToConstraint());
+    assertFalse(driverTransition.isDiscreteAction());
+    assertEquals(Boolean.FALSE, driverTransition.toEvidenceMap().get("interpolated"));
     assertBaselineRestored(fixture);
   }
 

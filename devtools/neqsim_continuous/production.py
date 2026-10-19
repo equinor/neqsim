@@ -313,6 +313,9 @@ def _validate_envelope_evidence(evidence, optimizer_evidence, setpoints, expecte
                         or any(not _number(value) for value in point["candidate_values"])):
                     reasons.append(prefix + "_invalid_point_candidate")
                     break
+        if ("axis_action_semantics" in row or "operating_region_transitions" in row):
+            if not _valid_operating_region_transitions(row, axes, points):
+                reasons.append(prefix + "_operating_region_transition_mismatch")
 
     if (evidence.get("requested_point_count") != requested_total
             or evidence.get("completed_point_count") != completed_total
@@ -377,6 +380,133 @@ def _sampled_constraint_name(value):
     if not isinstance(value, dict) or not _text(value.get("qualified_constraint_name")):
         return False
     return value["qualified_constraint_name"]
+
+
+def _sampled_constraint_endpoint(value):
+    """Return an exact sampled constraint (source, identity), or None when absent."""
+    if value is None:
+        return None
+    if (not isinstance(value, dict)
+            or value.get("source") not in (
+                "INSTALLED_EQUIPMENT", "REQUIRED_HYDRAULIC", "PLANT_CONSTRAINT",
+                "REGISTERED_MODEL_CONSTRAINT")
+            or not _text(value.get("qualified_constraint_name"))):
+        return False
+    return value["source"], value["qualified_constraint_name"]
+
+
+def _expected_operating_region_transition(axis_id, semantics, previous, current):
+    """Derive one Java-compatible sampled-edge event, or None when nothing changed."""
+    previous_constraint = _sampled_constraint_endpoint(previous.get("leading_constraint"))
+    current_constraint = _sampled_constraint_endpoint(current.get("leading_constraint"))
+    if previous_constraint is False or current_constraint is False:
+        return False
+    if (not isinstance(previous.get("feasible"), bool)
+            or not isinstance(current.get("feasible"), bool)
+            or not _text(previous.get("outcome")) or not _text(current.get("outcome"))):
+        return False
+    if previous["feasible"] and not current["feasible"]:
+        kind = "BECAME_INFEASIBLE"
+    elif not previous["feasible"] and current["feasible"]:
+        kind = "BECAME_FEASIBLE"
+    elif previous["outcome"] != current["outcome"]:
+        kind = "EVALUATION_OUTCOME_CHANGED"
+    elif previous_constraint != current_constraint:
+        kind = "LEADING_CONSTRAINT_CHANGED"
+    else:
+        return None
+    previous_value = previous["axis_values"]
+    current_value = current["axis_values"]
+    return {
+        "axis_action_id": axis_id,
+        "action_value_semantics": semantics,
+        "kind": kind,
+        "from_sequence_index": previous["sequence_index"],
+        "to_sequence_index": current["sequence_index"],
+        "from_axis_value": previous_value,
+        "to_axis_value": current_value,
+        "sampled_interval_width": abs(float(current_value) - float(previous_value)),
+        "from_feasible": previous["feasible"],
+        "to_feasible": current["feasible"],
+        "from_outcome": previous["outcome"],
+        "to_outcome": current["outcome"],
+        "from_constraint_source": None if previous_constraint is None else previous_constraint[0],
+        "to_constraint_source": None if current_constraint is None else current_constraint[0],
+        "from_constraint": None if previous_constraint is None else previous_constraint[1],
+        "to_constraint": None if current_constraint is None else current_constraint[1],
+        "interpolated": False,
+        "sampled_event_only": True,
+    }
+
+
+def _valid_operating_region_transitions(row, axes, points):
+    """Recompute optional sampled operating-region evidence and reject tampering."""
+    semantics = row.get("axis_action_semantics")
+    transitions = row.get("operating_region_transitions")
+    grids = row.get("axis_values")
+    if (not isinstance(axes, list) or len(axes) not in (1, 2)
+            or not isinstance(semantics, list) or len(semantics) != len(axes)
+            or any(value not in ("CONTINUOUS", "DISCRETE") for value in semantics)
+            or not isinstance(transitions, list) or not isinstance(points, list)
+            or not isinstance(grids, list) or len(grids) != len(axes)
+            or any(not isinstance(grid, list) or not grid for grid in grids)):
+        return False
+    requested_points = math.prod(len(grid) for grid in grids)
+    if len(points) != requested_points:
+        return False
+
+    by_grid = {}
+    ordered = []
+    for point in points:
+        if not isinstance(point, dict):
+            return False
+        indexes = point.get("grid_indexes")
+        values = point.get("axis_values")
+        sequence = point.get("sequence_index")
+        if (not isinstance(indexes, list) or len(indexes) != len(axes)
+                or any(not _non_negative_integer(value) for value in indexes)
+                or not isinstance(values, list) or len(values) != len(axes)
+                or any(not _number(value) for value in values)
+                or not _non_negative_integer(sequence)):
+            return False
+        key = tuple(int(value) for value in indexes)
+        if key in by_grid or any(key[axis] >= len(grids[axis]) for axis in range(len(axes))):
+            return False
+        sampled_values = [grids[axis][key[axis]] for axis in range(len(axes))]
+        if (any(not _number(value) for value in sampled_values)
+                or any(float(sampled_values[axis]) != float(values[axis])
+                       for axis in range(len(axes)))):
+            return False
+        by_grid[key] = point
+        ordered.append(point)
+    ordered.sort(key=lambda point: int(point["sequence_index"]))
+    if [int(point["sequence_index"]) for point in ordered] != list(range(len(ordered))):
+        return False
+
+    expected = []
+    for current in ordered:
+        indexes = tuple(int(value) for value in current["grid_indexes"])
+        adjacent = []
+        if len(axes) == 1 and indexes[0] > 0:
+            adjacent.append((0, (indexes[0] - 1,)))
+        elif len(axes) == 2:
+            if indexes[1] > 0:
+                adjacent.append((1, (indexes[0], indexes[1] - 1)))
+            if indexes[0] > 0:
+                adjacent.append((0, (indexes[0] - 1, indexes[1])))
+        for axis, previous_key in adjacent:
+            previous = by_grid.get(previous_key)
+            if previous is None:
+                return False
+            previous_edge = dict(previous, axis_values=previous["axis_values"][axis])
+            current_edge = dict(current, axis_values=current["axis_values"][axis])
+            transition = _expected_operating_region_transition(
+                axes[axis], semantics[axis], previous_edge, current_edge)
+            if transition is False:
+                return False
+            if transition is not None:
+                expected.append(transition)
+    return transitions == expected
 
 
 def _exact_vector_key(values, expected_size=None):
