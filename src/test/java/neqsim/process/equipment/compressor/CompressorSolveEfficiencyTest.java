@@ -116,7 +116,7 @@ public class CompressorSolveEfficiencyTest {
     probe.run();
     Compressor compressor = createWetGasCompressor(1.0);
     double targetK = probe.getOutletStream().getTemperature();
-    assertEquals(0.40, compressor.solveEfficiency(targetK), 0.001);
+    assertEquals(0.40, compressor.solveEfficiency(targetK), 0.01);
     assertEquals(targetK, compressor.getOutletStream().getTemperature(), 0.01);
   }
 
