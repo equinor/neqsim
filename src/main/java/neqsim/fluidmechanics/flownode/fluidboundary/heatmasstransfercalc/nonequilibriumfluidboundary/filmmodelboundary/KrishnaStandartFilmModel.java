@@ -31,7 +31,7 @@ public class KrishnaStandartFilmModel extends
     neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.NonEquilibriumFluidBoundary
     implements ThermodynamicConstantsInterface {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
   double[][] phiMatrix;
@@ -135,7 +135,11 @@ public class KrishnaStandartFilmModel extends
   }
 
   /**
-   * calcMassTransferCoefficients.
+   * Calculates the mass transfer coefficients for the specified phase.
+   *
+   * <p>
+   * Coefficients are calculated based on the binary mass transfer coefficients and the composition of the phase.
+   * </p>
    *
    * @param phaseNum a int
    * @return a double

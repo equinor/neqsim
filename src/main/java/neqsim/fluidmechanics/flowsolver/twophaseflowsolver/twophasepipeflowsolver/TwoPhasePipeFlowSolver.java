@@ -18,7 +18,7 @@ import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
  */
 public class TwoPhasePipeFlowSolver extends neqsim.fluidmechanics.flowsolver.onephaseflowsolver.OnePhaseFlowSolver {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TwoPhasePipeFlowSolver.class);
 

@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class NewtonSolveCDplus implements java.io.Serializable {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 

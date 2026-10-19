@@ -22,7 +22,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ReactiveFluidBoundary.class);
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
 
   protected int neq = 0;
   protected double[] dx;

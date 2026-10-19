@@ -16,7 +16,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class CricondenBarTemp1 implements java.io.Serializable {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
   private static final Logger logger = LogManager.getLogger(CricondenBarTemp1.class);
 

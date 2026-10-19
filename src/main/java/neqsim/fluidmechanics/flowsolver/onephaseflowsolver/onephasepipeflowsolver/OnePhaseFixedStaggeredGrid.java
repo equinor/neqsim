@@ -27,7 +27,7 @@ import neqsim.fluidmechanics.flowsolver.NoAxialDispersion;
 public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     implements neqsim.thermo.ThermodynamicConstantsInterface {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(OnePhaseFixedStaggeredGrid.class);
 

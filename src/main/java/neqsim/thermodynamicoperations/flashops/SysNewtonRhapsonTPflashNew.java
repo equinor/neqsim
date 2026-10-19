@@ -27,7 +27,7 @@ import neqsim.thermo.system.SystemInterface;
 @Deprecated
 public class SysNewtonRhapsonTPflashNew implements java.io.Serializable {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
+  private static final long serialVersionUID = 1001;
   int neq = 0;
   int iter = 0;
   int ic02p = -100;
