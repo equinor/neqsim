@@ -920,6 +920,136 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
     }
 
     /**
+     * Blend two or more complete TBP cut tables on a source-mass basis.
+     *
+     * <p>
+     * Each source table is treated as a piecewise-linear cumulative liquid-volume distribution with constant SG60/60
+     * inside each source interval. Source masses are converted to ideal additive liquid volumes using the complete
+     * table SG, and the output grid is the ordered union of all source boiling boundaries. A source contributes zero
+     * recovery below its first boundary and complete recovery above its last boundary; no distillation curve is
+     * extrapolated. Output interval SG is the liquid-volume-weighted value from every overlapping source interval.
+     * </p>
+     *
+     * <p>
+     * This is transparent assay bookkeeping. It does not model blend contraction, temperature correction, molecular
+     * interactions, measured multi-crude distillation behavior, or pseudo-component phase-equivalence.
+     * </p>
+     *
+     * @param sourceTables complete source TBP tables
+     * @param sourceMasses finite positive source masses on one common basis
+     * @return immutable blended TBP table on the union source-boundary grid
+     * @throws IllegalArgumentException if fewer than two complete sources are supplied or a mass is invalid
+     * @throws IllegalStateException if the blended table fails liquid-volume or ideal-mass closure
+     */
+    public static TbpCutTable blendByMass(TbpCutTable[] sourceTables, double[] sourceMasses) {
+      if (sourceTables == null || sourceMasses == null || sourceTables.length < 2
+          || sourceTables.length != sourceMasses.length) {
+        throw new IllegalArgumentException("At least two TBP source tables and matching source masses are required");
+      }
+
+      double totalSourceMass = 0.0;
+      double totalIdealVolume = 0.0;
+      double[] sourceIdealVolumes = new double[sourceTables.length];
+      List<Double> unionBoundaries = new ArrayList<Double>();
+      for (int sourceIndex = 0; sourceIndex < sourceTables.length; sourceIndex++) {
+        TbpCutTable sourceTable = sourceTables[sourceIndex];
+        double sourceMass = sourceMasses[sourceIndex];
+        if (sourceTable == null) {
+          throw new IllegalArgumentException("TBP source tables cannot contain null entries");
+        }
+        if (!Double.isFinite(sourceMass) || !(sourceMass > 0.0)) {
+          throw new IllegalArgumentException("TBP source masses must be finite and positive");
+        }
+        double sourceWholeAssaySpecificGravity = sourceTable.getTotalSpecificGravityWeightedLiquidVolumePercent()
+            / 100.0;
+        if (!Double.isFinite(sourceWholeAssaySpecificGravity) || !(sourceWholeAssaySpecificGravity > 0.0)) {
+          throw new IllegalStateException("TBP source table has an invalid whole-assay specific gravity");
+        }
+        sourceIdealVolumes[sourceIndex] = sourceMass / sourceWholeAssaySpecificGravity;
+        totalSourceMass += sourceMass;
+        totalIdealVolume += sourceIdealVolumes[sourceIndex];
+        for (double boundary : sourceTable.boilingPointKelvin) {
+          unionBoundaries.add(boundary);
+        }
+      }
+      if (!Double.isFinite(totalSourceMass) || !Double.isFinite(totalIdealVolume) || !(totalIdealVolume > 0.0)) {
+        throw new IllegalArgumentException("TBP source masses exceed the supported finite calculation range");
+      }
+
+      Collections.sort(unionBoundaries);
+      List<Double> uniqueBoundaries = new ArrayList<Double>();
+      for (Double boundary : unionBoundaries) {
+        if (uniqueBoundaries.isEmpty() || Math
+            .abs(boundary - uniqueBoundaries.get(uniqueBoundaries.size() - 1)) > BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+          uniqueBoundaries.add(boundary);
+        }
+      }
+
+      double[] blendedBoundaries = new double[uniqueBoundaries.size()];
+      double[] blendedCumulativeVolumePercent = new double[uniqueBoundaries.size()];
+      for (int boundaryIndex = 0; boundaryIndex < uniqueBoundaries.size(); boundaryIndex++) {
+        blendedBoundaries[boundaryIndex] = uniqueBoundaries.get(boundaryIndex);
+        double cumulativeVolumePercent = 0.0;
+        for (int sourceIndex = 0; sourceIndex < sourceTables.length; sourceIndex++) {
+          double sourceVolumeFraction = sourceIdealVolumes[sourceIndex] / totalIdealVolume;
+          cumulativeVolumePercent += sourceVolumeFraction
+              * sourceTables[sourceIndex].getExtendedCumulativeVolumePercent(blendedBoundaries[boundaryIndex]);
+        }
+        blendedCumulativeVolumePercent[boundaryIndex] = cumulativeVolumePercent;
+      }
+      blendedCumulativeVolumePercent[0] = 0.0;
+      blendedCumulativeVolumePercent[blendedCumulativeVolumePercent.length - 1] = 100.0;
+
+      double[] blendedSpecificGravity = new double[blendedBoundaries.length - 1];
+      for (int intervalIndex = 0; intervalIndex < blendedSpecificGravity.length; intervalIndex++) {
+        double lowerBoundary = blendedBoundaries[intervalIndex];
+        double upperBoundary = blendedBoundaries[intervalIndex + 1];
+        double intervalVolumeFraction = 0.0;
+        double intervalMassPerTotalIdealVolume = 0.0;
+        for (int sourceIndex = 0; sourceIndex < sourceTables.length; sourceIndex++) {
+          TbpCutTable sourceTable = sourceTables[sourceIndex];
+          double overlapLower = Math.max(lowerBoundary, sourceTable.boilingPointKelvin[0]);
+          double overlapUpper = Math.min(upperBoundary,
+              sourceTable.boilingPointKelvin[sourceTable.boilingPointKelvin.length - 1]);
+          if (overlapUpper > overlapLower + BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+            TbpBoilingRangeProperties sourceRange = sourceTable.getBoilingRangePropertiesKelvin(overlapLower,
+                overlapUpper);
+            double sourceVolumeFraction = sourceIdealVolumes[sourceIndex] / totalIdealVolume;
+            double sourceIntervalVolumeFraction = sourceVolumeFraction * sourceRange.getLiquidVolumePercent() / 100.0;
+            intervalVolumeFraction += sourceIntervalVolumeFraction;
+            intervalMassPerTotalIdealVolume += sourceIntervalVolumeFraction * sourceRange.getAverageSpecificGravity();
+          }
+        }
+        if (!Double.isFinite(intervalVolumeFraction) || !(intervalVolumeFraction > 0.0)
+            || !Double.isFinite(intervalMassPerTotalIdealVolume)) {
+          throw new IllegalStateException("Blended TBP table contains an empty or invalid boiling interval");
+        }
+        blendedSpecificGravity[intervalIndex] = intervalMassPerTotalIdealVolume / intervalVolumeFraction;
+      }
+
+      TbpCutTable blendedTable = new TbpCutTable(blendedCumulativeVolumePercent, blendedBoundaries,
+          blendedSpecificGravity);
+      double expectedBlendSpecificGravity = totalSourceMass / totalIdealVolume;
+      double actualBlendSpecificGravity = blendedTable.getTotalSpecificGravityWeightedLiquidVolumePercent() / 100.0;
+      double closureTolerance = 1.0e-12 * Math.max(1.0, expectedBlendSpecificGravity);
+      if (Math.abs(actualBlendSpecificGravity - expectedBlendSpecificGravity) > closureTolerance) {
+        throw new IllegalStateException("Blended TBP table failed ideal-additive-volume mass closure");
+      }
+      return blendedTable;
+    }
+
+    private double getExtendedCumulativeVolumePercent(double boilingPointKelvinValue) {
+      if (boilingPointKelvinValue <= boilingPointKelvin[0] + BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+        return 0.0;
+      }
+      if (boilingPointKelvinValue >= boilingPointKelvin[boilingPointKelvin.length - 1]
+          - BOILING_POINT_BOUNDARY_TOLERANCE_K) {
+        return 100.0;
+      }
+      return getCumulativeVolumePercentAtBoilingPointKelvin(boilingPointKelvinValue);
+    }
+
+    /**
      * Return cumulative liquid-volume recovery at a TBP boiling point in K.
      *
      * <p>
