@@ -843,7 +843,32 @@ Note the sign conventions used in NeqSim for thermodynamic derivatives:
 Calculate the bubble point (onset of vaporization) at a given temperature or pressure.
 
 Saturation calculations throw `IsNaNException` when no valid finite, positive solution is
-obtained or the solver reports a supercritical outcome. A warm starting state can make
+obtained or the solver reports a supercritical outcome. Pure-component domain checks can
+instead throw `IllegalStateException` before iteration: pressure saturation requires
+temperature below the component's critical temperature, and temperature saturation requires
+pressure below its critical pressure. Equality is rejected because a critical point is not
+a distinct vapor/liquid saturation pair. The derivative bubble-pressure, hydrocarbon
+dew-pressure and non-derivative bubble-temperature operations perform these checks before
+changing the fluid. The boolean bubble-pressure facade wraps the cause in `IsNaNException`;
+the hydrocarbon dew-pressure and bubble-temperature facades propagate `IllegalStateException`.
+Facade initialization can still change phase bookkeeping before a direct-operation check.
+These checks do not impose a pure-component threshold on mixtures. The three operations
+retain the existing bubble-pressure solver's SAFT exemption because database critical
+constants can differ from the selected SAFT model's critical point; this exemption is not
+a qualification of SAFT saturation or iterative supercritical-result handling.
+
+For a non-SAFT pure fluid, hydrocarbon dew pressure uses the same saturation-pressure
+solve as ordinary dew pressure and bubble pressure, then restores the dew-point phase
+fractions. This avoids a separate pure-fluid HC iteration returning an unconverged result.
+
+The domain checks do not qualify the iterative result below the critical limit. A current-master
+methane probe starting at 150 K and 99% of its critical pressure returned identical vapor and
+liquid volume roots; equal fugacity coefficients from that identical root do not establish
+saturation. Near-critical root recovery and post-iteration acceptance remain tracked in
+[#4076](https://github.com/equinor/neqsim/issues/4076). An exception leaves an unsolved in-place
+fluid, which must not be consumed as a valid result.
+
+A warm starting state can make
 the bubble-temperature iteration collapse to equal vapor and liquid compositions. For a
 nonreactive mixture with valid critical properties, the solver then tries one bounded
 restart from a Wilson bubble-temperature estimate. Wilson values only initialize the

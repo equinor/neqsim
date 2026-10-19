@@ -25,12 +25,29 @@ public class HCdewPointPressureFlash extends ConstantDutyTemperatureFlash {
     super(system);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * @throws IllegalStateException if a non-SAFT pure component is at or above its critical temperature
+   */
   @Override
   public void run() {
     if (system.getPhase(0).getNumberOfComponents() == 1
-        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()) {
-      // throw new IllegalStateException("System is supercritical");
+        && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()
+        && (system.getModelName() == null || !system.getModelName().contains("SAFT"))) {
+      throw new IllegalStateException(
+          "No pure-component saturation pressure exists at or above the critical temperature");
+    }
+    if (system.getPhase(0).getNumberOfComponents() == 1
+        && (system.getModelName() == null || !system.getModelName().contains("SAFT"))) {
+      // Pure-component dew and bubble pressures coincide. Reuse the same
+      // saturation solve as DewPointPressureFlash, then restore the dew fractions.
+      BubblePointPressureFlash bubble = new BubblePointPressureFlash(system);
+      bubble.run();
+      setSuperCritical(bubble.isSuperCritical());
+      system.setBeta(0, 1.0 - 1.0e-10);
+      system.setBeta(1, 1.0e-10);
+      return;
     }
 
     int iterations = 0;
