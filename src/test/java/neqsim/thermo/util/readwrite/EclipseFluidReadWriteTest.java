@@ -1428,4 +1428,44 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
       java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
     }
   }
+
+  /**
+   * VCRIT must be written in E300 units (m3/kmol), ZCRIT must be dimensionless, and the critical volume must round-trip
+   * in NeqSim units (cm3/mol).
+   *
+   * @throws IOException if writing or reading the file fails
+   */
+  @Test
+  void testVcritAndZcritWrittenInE300Units() throws IOException {
+    SystemInterface fluid = new neqsim.thermo.system.SystemPrEos(373.15, 200.0);
+    fluid.addComponent("methane", 80.0);
+    fluid.addComponent("n-butane", 15.0);
+    fluid.addTBPfraction("C7", 5.0, 0.092, 0.732);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    String outputFile = file.getAbsolutePath() + "/vcrit_units_test.e300";
+    EclipseFluidReadWrite.write(fluid, outputFile, 100.0);
+
+    java.util.List<String> lines = Files.readAllLines(java.nio.file.Paths.get(outputFile));
+    int vcritIdx = lines.indexOf("VCRIT");
+    int zcritIdx = lines.indexOf("ZCRIT");
+    Assertions.assertTrue(vcritIdx >= 0 && zcritIdx >= 0, "VCRIT and ZCRIT sections must be written");
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      double vcrit = Double.parseDouble(lines.get(vcritIdx + 1 + i).trim());
+      double zcrit = Double.parseDouble(lines.get(zcritIdx + 1 + i).trim());
+      assertEquals(fluid.getComponent(i).getCriticalVolume() / 1000.0, vcrit, 1e-5, "VCRIT must be in m3/kmol");
+      Assertions.assertTrue(vcrit > 0.008 && vcrit < 24.0, "VCRIT must be in the PVTsim range");
+      Assertions.assertTrue(zcrit > 0.1 && zcrit < 0.5, "ZCRIT must be dimensionless, got " + zcrit);
+    }
+
+    EclipseFluidReadWrite.pseudoName = "";
+    SystemInterface imported = EclipseFluidReadWrite.read(outputFile);
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      assertEquals(fluid.getComponent(i).getCriticalVolume(), imported.getComponent(i).getCriticalVolume(),
+          fluid.getComponent(i).getCriticalVolume() * 1e-4, "Critical volume must round-trip in cm3/mol");
+    }
+
+    Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
+  }
 }

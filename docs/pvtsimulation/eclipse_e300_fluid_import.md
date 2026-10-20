@@ -53,6 +53,25 @@ The table below lists all keywords supported by NeqSim's E300 reader:
 | `OMEGAA`   | EOS OmegaA parameter                                             | —             | Optional |
 | `OMEGAB`   | EOS OmegaB parameter                                             | —             | Optional |
 
+### Critical-Volume Units and Older NeqSim Files
+
+The writer exports `VCRIT` in m³/kmol and dimensionless `ZCRIT`. NeqSim stores
+critical volume internally in cm³/mol: 0.0986 m³/kmol in a metric E300 file
+therefore becomes 98.6 cm³/mol after import. Both the ordinary reader and the
+reader that replicates components with fluid-name suffixes perform this conversion.
+
+Older NeqSim writers exported cm³/mol values under the m³/kmol label and
+overstated `ZCRIT` by a factor of 1000. For compatibility, the reader treats the
+entire `VCRIT` block as legacy cm³/mol when its largest absolute value is at
+least 20; otherwise it converts from m³/kmol. This magnitude-based detection
+assumes ordinary fluid critical volumes and cannot distinguish a standard file
+containing unusually large values from a legacy file. Mixed units within one
+block are unsupported.
+
+Regenerate files written by older NeqSim versions with the corrected writer
+before importing them into PVTsim or Eclipse. Reading an old file in NeqSim
+does not repair the file on disk.
+
 ### Example E300 File
 
 Below is a complete example file for a 22-component oil with Peng-Robinson EOS:

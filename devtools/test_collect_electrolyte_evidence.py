@@ -86,11 +86,27 @@ class ElectrolyteEvidenceTest(unittest.TestCase):
         manifest, errors = self.collect(selected)
         self.assertEqual(errors, [])
         self.assertTrue(manifest["selected_evidence_complete"])
-        self.assertEqual(manifest["selected_assessment_count"], 6)
+        self.assertEqual(manifest["selected_assessment_count"], 7)
         self.assertEqual([item["data_rows"] for item in manifest["assessments"]],
-                         [28, 10, 6, 7, 12, 18])
+                         [28, 10, 6, 7, 12, 18, 110])
         self.assertEqual(manifest["assessments"][1]["fixture"]["basis"],
                          "inline reference values")
+
+    def test_full_family_numerical_failure_retains_all_110_rows(self):
+        producer, filename, rows, fixture = evidence.ASSESSMENTS[-1]
+        self.assertEqual(rows, 110)
+        self.report(producer=producer, tests=1, failures=1)
+        source = self.csv(filename=filename, rows=rows)
+        manifest, errors = self.collect({evidence.PACKAGE + producer})
+        self.assertEqual(errors, [])
+        self.assertFalse(manifest["selected_evidence_complete"])
+        self.assertEqual(manifest["qualification"], "not_assessed")
+        item = manifest["assessments"][-1]
+        self.assertEqual(item["producer_result"]["status"], "failed")
+        self.assertEqual(item["data_rows"], 110)
+        self.assertEqual((self.output / filename).read_bytes(), source.read_bytes())
+        self.assertEqual(item["fixture"]["sha256"],
+                         evidence.digest(self.root / evidence.FIXTURE_DIR / fixture))
 
     def test_unselected_leftovers_and_unrelated_files_are_not_uploaded(self):
         self.csv()

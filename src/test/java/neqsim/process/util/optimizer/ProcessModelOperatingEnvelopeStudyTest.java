@@ -486,7 +486,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getToConstraint());
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("cycle-lifecycle-1");
-    assertEquals(Integer.valueOf(2), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(4), evidence.get("schema_version"));
     assertEquals("cycle-lifecycle-1", evidence.get("cycle_id"));
     assertEquals(Integer.valueOf(2), evidence.get("period_count"));
     assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), evidence.get("accepted_action_ids"));
@@ -513,6 +513,15 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(Integer.valueOf(2), sliceChange.get("comparable_point_count"));
     assertEquals(Integer.valueOf(1), sliceChange.get("became_feasible_count"));
     assertEquals(Integer.valueOf(0), sliceChange.get("became_infeasible_count"));
+    assertEquals(Integer.valueOf(1), sliceChange.get("from_operating_region_transition_count"));
+    assertEquals(Integer.valueOf(0), sliceChange.get("to_operating_region_transition_count"));
+    assertEquals(Integer.valueOf(0), sliceChange.get("retained_operating_region_transition_count"));
+    List<?> removedOperatingTransitions = (List<?>) sliceChange.get("removed_operating_region_transitions");
+    List<?> addedOperatingTransitions = (List<?>) sliceChange.get("added_operating_region_transitions");
+    assertEquals(1, removedOperatingTransitions.size());
+    assertTrue(addedOperatingTransitions.isEmpty());
+    assertEquals(Boolean.FALSE, ((Map<?, ?>) removedOperatingTransitions.get(0)).get("interpolated"));
+    assertEquals(Boolean.TRUE, ((Map<?, ?>) removedOperatingTransitions.get(0)).get("sampled_event_only"));
     assertEquals(Boolean.TRUE, periodChange.get("advisory"));
     assertThrows(UnsupportedOperationException.class, () -> evidence.put("period_count", Integer.valueOf(0)));
 
@@ -553,7 +562,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
             late.search, late.slice);
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("shared-reservoir-cycle");
-    assertEquals(Integer.valueOf(3), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(4), evidence.get("schema_version"));
     assertEquals(Arrays.asList("reservoir-pressure", "production-rate", "injection-rate"),
         evidence.get("accepted_state_metric_ids"));
     Map<?, ?> firstPeriod = (Map<?, ?>) ((List<?>) evidence.get("periods")).get(0);

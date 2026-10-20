@@ -196,7 +196,7 @@ checks before writing Step 1 content:
    | Live instrument data / operating point (P, T, flow, speed, valve %, current recycle) | `@plant-data` / `plant-data-agent` + `neqsim-plant-data` (tagreader PI/IP.21) or `@seeq.connect` / `enterprise-seeq-connect` | Resolve historian tag from STID tag; prefer `/PRIM` channel; check units |
    | Measured production volumes (well/field) | `rigga-production-agent` + `enterprise-rigga-production` | Measured production as feed / validation basis |
    | Equipment / maintenance / failure history | `@maintenance` / `maintenance-agent` + `enterprise-maintenance-api` | Read-only work orders, notifications |
-   | Picture of real equipment: location, layout, access, a vessel with its valves and instruments, a proposed modification against the As-Built model | `enterprise-stid-agent` (tags, valves, instruments, nozzle schedule, GA drawing) **together with** `enterprise-echo-3d-agent` + `enterprise-echo-3d` (Equinor Echo digital twin) | Write `step1_scope_and_research/echo_plan.json`, run `echo-3d task --task <task>`; the user names the Echo 3D project(s); "not modelled" is not "not installed"; indicative, not a measurement |
+   | Picture of real equipment: location, layout, access, a vessel with its valves and instruments, a proposed modification against the As-Built model | `enterprise-stid-agent` (tags, valves, instruments, nozzle schedule, GA drawing) **together with** `enterprise-echo-3d-agent` + `enterprise-echo-3d` (Equinor Echo digital twin, via `prd-ai-skills` echo-toolkit) | Write `step1_scope_and_research/echo_plan.json`, run `echo-3d task --task <task>`; the user names the Echo 3D project(s); "not modelled" is not "not installed"; indicative, not a measurement |
    | Fluid composition / gas-sample molweight | STID/lab report via `@stid.reader`; else record as an explicit gap | A wrong MW mis-places compressor maps — always try to obtain it |
    | Public literature / standards | `@literature-scout` | See step 6 |
 
@@ -1613,7 +1613,10 @@ Document the independent check in `step2_analysis/notes.md` under a
       `tag`, `label`, `purpose`, `detail: "auto"`) and run
       `echo-3d task --task <task>`. It merges figures, `figure_captions`, a tag
       table, `assumptions`, `data_gaps`, the `evidence_sources` entry and an
-      "Equipment visualisation (Echo)" appendix into the task. **You still write**
+      "Equipment visualisation (Echo)" appendix into the task. Check each
+      `figure_captions` entry includes the project, tag, capture date and
+      "Equinor internal" provenance; preserve the evidence record's `assumptions`
+      and `data_gaps` in `results.json`. **You still write**
       a `figure_discussion` entry per Echo figure (what the picture shows about
       layout, access, neighbouring equipment or the modification, and what that
       means for the finding) and cite the figures in `approach` or `conclusions`.

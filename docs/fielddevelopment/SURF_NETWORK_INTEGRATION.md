@@ -756,6 +756,18 @@ Lifecycle period-change reporting remains in the #4188/#3154 lane, including #43
 
 ## Dependency-ordered continuation
 
+The alternative spline-map pump's BEP/status prerequisite is checked separately from the
+default reduced-curve implementation: its efficiency interpolation is at absolute flow,
+not constant Q/N. Speed-aware BEP/status now sample that existing efficiency surface and
+refresh after map changes. The reference-speed method still uses the first supplied curve,
+and the existing 51-point/global-flow scan and extrapolation limitations remain explicit.
+Same-network tests cover reference/intermediate speed migration and restoration, physical
+work, mass balance and host power with synthetic maps. This diagnostic consistency does
+not qualify the inherited shared-reservoir fixture's extrapolated operating region.
+Consume the sampled-region transitions merged in #4447 and lifecycle work owned by #4188/#3154
+when map and injectivity constraints have an explicit engineering basis; do not create a
+second transition detector or interpret a heuristic `OPTIMAL` status as operating approval.
+
 1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and
    controlled reservoir-pressure updates without duplicating reservoir ownership.
@@ -768,11 +780,12 @@ Lifecycle period-change reporting remains in the #4188/#3154 lane, including #43
    production/live-injection case now checks component inventory and accepted-step ownership.
    The one-day shared-reservoir test additionally checks common-time timestep refinement
    for its smooth synthetic trajectory. Its exact accepted pressure, production/injection,
-   shared-power and cumulative-throughput samples now map into schema-v3 lifecycle state
-   metrics with stable IDs, units and provenance; the persistent guard reconstructs every
-   adjacent-period delta. Next qualify the maps and injectivity laws and add
-   map-region/driver-limit migration and discontinuous-event refinement without creating a
-   second scheduler or optimizer.
+   shared-power and cumulative-throughput samples now map into lifecycle state metrics with
+   stable IDs, units and provenance; the persistent guard reconstructs every adjacent-period
+   delta. Schema-v4 diagnostics also retain exact added/removed operating-region events across
+   periods without interpolating discrete topology. Next qualify the maps and injectivity laws
+   and feed their accepted map-region/driver-limit migrations into these diagnostics without
+   creating a second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic

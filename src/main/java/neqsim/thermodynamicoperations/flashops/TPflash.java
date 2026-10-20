@@ -4746,11 +4746,11 @@ public class TPflash extends Flash {
     return true;
   }
 
-  /** Rechecks water-rich oil endpoints after the other TP refinements have finished. */
+  /** Rechecks wet oil and gas/oil endpoints after the other TP refinements have finished. */
   private void rescueWaterRichMissingAqueousPhase() {
     if (system.doMultiPhaseCheck() && system.hasPhaseType(PhaseType.OIL)
         && (system.getNumberOfPhases() == 1 || (system.getNumberOfPhases() == 2 && system.hasPhaseType(PhaseType.GAS)))
-        && system.hasComponent("water") && system.getComponent("water").getz() >= 0.05) {
+        && system.hasComponent("water") && system.getComponent("water").getz() > 1.0e-6) {
       new TPmultiflash(system, false).rescueMetastableOilMissingAqueous();
     }
   }

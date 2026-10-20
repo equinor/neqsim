@@ -75,6 +75,37 @@ This reduced-curve behavior does not change the alternative spline-map implement
 `NetworkPumpOperatingStatusTest` exercises migration and restoration on one canonical
 network with mass balance, head, power and host-power checks.
 
+The alternative `PumpChartAlternativeMapLookupExtrapolate` uses a different formalism:
+efficiency is interpolated between speed curves at the **same absolute flow**, and outside
+the supplied speed range it uses the nearest curve's efficiency without flow scaling.
+Its speed-aware BEP and `OPTIMAL` diagnostic therefore scan that requested-speed efficiency
+surface, not an affinity-scaled first-curve BEP. The no-speed BEP remains the first supplied
+curve's reference diagnostic. Both use the existing bounded 51-point scan over the global
+tabulated flow range; the result is approximate and can include extrapolation from individual
+curves with narrower ranges. It is not an exact maximum or a qualified operating boundary.
+The scan is recomputed so replacing curves, adding curves or editing the existing mutable
+curve data cannot reuse a stale BEP. Head/efficiency interpolation, viscosity/NPSH formulas
+and the existing global-flow `SURGE`/`STONEWALL` heuristics are unchanged.
+`PumpChartAlternativeMapLookupExtrapolateTest` covers non-affine speed slices and curve
+updates; `NetworkPumpOperatingStatusTest` checks same-graph migration and restoration for
+both chart formalisms. Neither test establishes vendor-map or speed-range qualification.
+
+The alternative-map network regression uses pure water (SRK, classic mixing, 298.15 K,
+5 bara suction) and two synthetic speed curves with linear head and non-affine efficiency
+peaks. These asserted points retain the same pump and host; returning to the first point
+restores pressure and shaft power. Head is in metres and flow is actual inlet volume.
+
+| Speed (rpm) | Flow (m3/hr) | Head (m) | Diagnostic |
+| --- | --- | --- | --- |
+| 1000 | 40 | 160 | OPTIMAL |
+| 2000 | 40 | 360 | NORMAL |
+| 2000 | 60 | 340 | OPTIMAL |
+| 1500 | 50 | 250 | OPTIMAL |
+
+The test also checks mass balance, positive pressure/work, finite outlet temperature,
+hydraulic work divided by efficiency, and equality of edge demand and host shaft power.
+These are analytical/same-model consistency checks, not independent pump performance data.
+
 ### Specified discharge temperature
 
 Calling `setOutletTemperature(...)` selects the fixed-temperature mode. NeqSim performs a TP

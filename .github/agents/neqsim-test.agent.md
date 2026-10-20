@@ -24,6 +24,8 @@ AI-generated Java is NOT auto-formatted; CI runs `spotless:check` and fails the 
 single unformatted file. Use `./mvnw` (or `mvnw.cmd`), never bare `mvn`, and never
 `git commit --no-verify`.
 
+When a change also touches `pom.xml` dependency or plugin versions or the project version,
+load `neqsim-maven-version-maintenance` and `neqsim-version-bump-decision` on demand (not preloaded).
 ## Test Conventions
 - **Base class**: Extend `neqsim.NeqSimTest`
 - **Framework**: JUnit 5 — `@Test`, `@BeforeEach`, `@DisplayName`, `@Disabled`
