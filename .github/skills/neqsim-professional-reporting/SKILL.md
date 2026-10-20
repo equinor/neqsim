@@ -386,6 +386,17 @@ invalid for the fluid (for example a gas "CME" that stays at 1.0 because it was 
 on separator liquid) is listed under `exclusions`, never fitted. Reference example:
 the Troll A task (2026-10-06).
 
+## Principle 9c — Operating-data benchmark with hold-out windows (any plant model)
+
+A plant model is reported against measured data in a **benchmark** section next to the fluid-tuning section (both are standard). Required: (1) the windows
+(dates, role = calibration / hold-out, regime: line-up, rate level, season) and why each was chosen; (2) every compared quantity with its **class**:
+`by_construction` (an input, or closed by the allocation: export gas, produced water, anti-surge inlet flows), `calibrated` (a scalar fitted on the calibration window; name it and its value),
+`independent` (in no fit), `excluded` (a meter proved inconsistent with two others; give the evidence); (3) the tolerance of each quantity, set **before** the runs;
+(4) error per window in a quantity x window table, calibration vs hold-out, pass/fail, and the pass rate of the independent hold-out rows only; (5) mass and energy balance closure per window;
+(6) failing rows explained (cause hypothesis, evidence, what would discriminate), never hidden by a looser tolerance. Machine-readable: `benchmark_validation` in `results.json` with
+`windows`, `comparisons` (parameter, benchmark, neqsim, deviation_pct, class, window, tolerance, pass), `max_deviation_pct`, `all_within_tolerance`, `independent_holdout_pass_rate`.
+The `tables` array carries the quantity x window table; the parity / bar figure goes to `figure_captions`. Reference example: a platform well-to-export task (2026-10-19, private task folder).
+
 ## Principle 9b — Evidence Matrix for Safety Studies
 
 For safety-critical studies, especially trapped-liquid fire rupture, relief,
