@@ -94,18 +94,18 @@ Where:
 
 #### Mixing Rule
 
-Uses mixing rule 10 with electrolyte correction for saline produced water (NaCl content).
+The field model uses mixing rule 10 with a saline-water-specific calibration. The convenience `ProducedWaterDegassingSystem` builder uses database defaults; its salinity setter stores metadata only. See the [supported-model guide](../process/equipment/util/produced_water_degassing.md).
 
 #### Binary Interaction Parameters (kij)
 
-Tuned parameters from laboratory validation (Kristiansen et al., 2023):
+Historical saline-water fit reported by Kristiansen et al. (2023), Appendix A, Eq. (6) and Table 2: $k_{ij}=k_{ij,0}+k_{ij,T}(T-288.15)$, with $T$ in kelvin. The fit represents about 10–11 wt% NaCl and is not a default parameter set or an implemented tuning option in `ProducedWaterDegassingSystem`. No general validity range is claimed here; consult the paper and reconcile the complete model before reuse.
 
-| System | kij Formula | Temperature Range |
+| System | Historical kij formula | Salinity basis |
 |--------|-------------|-------------------|
-| Water-CO₂ | kij = -0.24 + 0.001121 × T(°C) | 50-100°C |
-| Water-CH₄ | kij = -0.72 + 0.002605 × T(°C) | 50-100°C |
-| Water-C₂H₆ | kij = 0.11 (fixed) | All |
-| Water-C₃H₈ | kij = 0.205 (fixed) | All |
+| Water-CO₂ | kij = -0.24 + 0.001121 × (T[K] - 288.15) | 10–11 wt% NaCl |
+| Water-CH₄ | kij = -0.72 + 0.002605 × (T[K] - 288.15) | 10–11 wt% NaCl |
+| Water-C₂H₆ | kij = 0.11 (fixed) | 10–11 wt% NaCl |
+| Water-C₃H₈ | kij = 0.205 (fixed) | 10–11 wt% NaCl |
 
 #### Implementation in NeqSim
 

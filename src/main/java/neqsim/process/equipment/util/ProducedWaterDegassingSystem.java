@@ -19,25 +19,20 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * from Produced Water Using an Online Process Simulator" (GFMW 2023).
  * </p>
  *
- * <h2>Norwegian Regulatory Context</h2>
- * <p>
- * This implementation supports compliance with:
- * </p>
- * <ul>
- * <li>Aktivitetsforskriften Section 70: Measurement and calculation requirements</li>
- * <li>Norwegian offshore emission handbook: Replaces conventional solubility factor method</li>
- * <li>Norwegian Environment Agency annual emission reporting</li>
- * </ul>
+ * <h2>Thermodynamic Model and Scope</h2>
  *
- * <h2>Thermodynamic Model</h2>
  * <p>
- * Uses SRK-CPA (Cubic Plus Association) equation of state with:
+ * Uses SRK-CPA with mixing rule 10 and the current database interaction parameters. The inlet loading is an assumed 95
+ * mol% water and 5 mol% gas, not a fit to lab GWR. Salinity is reporting metadata only; no salt is added to the fluid.
+ * This screening builder does not reproduce the paper's field-calibrated model or establish its reported uncertainty or
+ * regulatory suitability. Independent case-specific validation is required.
  * </p>
- * <ul>
- * <li>Tuned binary interaction parameters (kij) for water-gas systems</li>
- * <li>Electrolyte handling for saline produced water</li>
- * <li>Validated uncertainty: +/-3.6% for total gas, +/-1% for CO2/CH4 composition</li>
- * </ul>
+ *
+ * <p>
+ * Optional interaction tuning is unsupported: {@link #setTunedInteractionParameters(boolean)} rejects true before
+ * changing model state. Use the default false setting. The paper's saline-water fit cannot be transferred without
+ * reconciling the EOS, association, temperature reference, and salinity conventions.
+ * </p>
  *
  * <h2>Typical Process</h2>
  *
@@ -47,39 +42,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  *                         Gas to Flare         Gas to Vent     Gas to Atmosphere
  * </pre>
  *
- * <h2>Usage Example</h2>
- *
- * <pre>
- * {@code
- * // Quick setup for a typical 3-stage system
- * ProducedWaterDegassingSystem system = new ProducedWaterDegassingSystem("Platform PW");
- * system.setWaterFlowRate(100.0, "m3/hr");
- * system.setWaterTemperature(80.0, "C");
- * system.setInletPressure(30.0, "bara");
- *
- * // Set degassing stage pressures
- * system.setDegasserPressure(4.0, "bara");
- * system.setCFUPressure(1.0, "bara");
- *
- * // Set dissolved gas composition (from PVT analysis)
- * system.setDissolvedGasComposition(new String[] {"CO2", "methane", "ethane", "propane"},
- *     new double[] {0.51, 0.44, 0.04, 0.01} // mole fractions
- * );
- *
- * // Optional: Apply tuned kij parameters from lab calibration
- * system.setTunedInteractionParameters(true);
- *
- * // Run and get emissions
- * system.run();
- * System.out.println(system.getEmissionsReport());
- *
- * // Compare with conventional handbook method
- * System.out.println(system.getMethodComparisonReport());
- * }
- * </pre>
- *
  * @author ESOL
- * @version 1.1
+ * @version 1.2
  * @see EmissionsCalculator
  * @see <a href="https://lovdata.no/dokument/SF/forskrift/2010-04-29-613">Aktivitetsforskriften</a>
  */
@@ -103,22 +67,51 @@ public class ProducedWaterDegassingSystem implements Serializable {
   // Dissolved gas composition (mole fractions in flash gas)
   private Map<String, Double> dissolvedGasComposition = new HashMap<>();
 
-  // Tuned binary interaction parameters (from Kristiansen et al. 2023)
-  // These were calibrated against produced water samples from high-CO2 reservoirs
+  // Retained for serialization compatibility with models that accepted the formerly inert option.
+  // All build/run entry points reject a legacy true value before using a cached process.
   private boolean useTunedKijParameters = false;
 
-  // Default kij parameters for water-gas systems (tuned values)
-  /** Water-CO2 kij base parameter (tuned). */
+  /**
+   * Legacy water-CO2 reference value; never applied by this builder.
+   *
+   * @deprecated no supported tuned model is defined; use the database model with tuning disabled
+   */
+  @Deprecated
   public static final double KIJ_WATER_CO2_BASE = -0.24;
-  /** Water-CO2 kij temperature coefficient. */
+  /**
+   * Legacy water-CO2 temperature coefficient; never applied by this builder.
+   *
+   * @deprecated no supported tuned model is defined; use the database model with tuning disabled
+   */
+  @Deprecated
   public static final double KIJ_WATER_CO2_TEMP = 0.001121;
-  /** Water-methane kij base parameter (tuned). */
+  /**
+   * Legacy water-methane reference value; never applied by this builder.
+   *
+   * @deprecated no supported tuned model is defined; use the database model with tuning disabled
+   */
+  @Deprecated
   public static final double KIJ_WATER_CH4_BASE = -0.72;
-  /** Water-methane kij temperature coefficient. */
+  /**
+   * Legacy water-methane temperature coefficient; never applied by this builder.
+   *
+   * @deprecated no supported tuned model is defined; use the database model with tuning disabled
+   */
+  @Deprecated
   public static final double KIJ_WATER_CH4_TEMP = 0.002605;
-  /** Water-ethane kij parameter. */
+  /**
+   * Legacy water-ethane value; never applied by this builder.
+   *
+   * @deprecated no supported tuned model is defined; use the database model with tuning disabled
+   */
+  @Deprecated
   public static final double KIJ_WATER_C2H6 = 0.11;
-  /** Water-propane kij parameter. */
+  /**
+   * Legacy water-propane value; never applied by this builder.
+   *
+   * @deprecated no supported tuned model is defined; use the database model with tuning disabled
+   */
+  @Deprecated
   public static final double KIJ_WATER_C3H8 = 0.205;
 
   // Lab validation data for calibration
@@ -152,6 +145,7 @@ public class ProducedWaterDegassingSystem implements Serializable {
     initializeDefaultComposition();
   }
 
+  /** Initializes the illustrative dissolved-gas composition. */
   private void initializeDefaultComposition() {
     // Default composition based on Gudrun data
     dissolvedGasComposition.put("CO2", 0.51);
@@ -257,7 +251,10 @@ public class ProducedWaterDegassingSystem implements Serializable {
   }
 
   /**
-   * Set water salinity.
+   * Set water salinity as reporting metadata.
+   *
+   * <p>
+   * This does not add NaCl or change the thermodynamic model or gas loading.
    *
    * @param salinity salinity value
    * @param unit "wt%", "ppm", "molal"
@@ -313,22 +310,19 @@ public class ProducedWaterDegassingSystem implements Serializable {
   // ============================================================================
 
   /**
-   * Enable or disable tuned binary interaction parameters.
+   * Select the supported default interaction parameters.
    *
    * <p>
-   * When enabled, uses kij parameters calibrated for high-salinity produced water systems per Kristiansen et al.
-   * (2023). These parameters improve prediction accuracy for:
+   * True is unsupported and throws before changing configuration or an existing process. Older versions silently
+   * accepted true without applying coefficients. No optional model tuple or validity range has been validated for this
+   * builder; the published saline-water calibration must not be substituted into the database model.
    * </p>
-   * <ul>
-   * <li>Water-CO2 interactions (kij = -0.24 + 0.001121×T)</li>
-   * <li>Water-CH4 interactions (kij = -0.72 + 0.002605×T)</li>
-   * <li>Water-C2H6 interactions (kij = 0.11)</li>
-   * <li>Water-C3H8 interactions (kij = 0.205)</li>
-   * </ul>
    *
-   * @param useTuned true to use tuned parameters, false for defaults
+   * @param useTuned false to retain the current database model; true is rejected
+   * @throws UnsupportedOperationException if useTuned is true
    */
   public void setTunedInteractionParameters(boolean useTuned) {
+    validateTunedInteractionParameters(useTuned);
     this.useTunedKijParameters = useTuned;
     hasRun = false;
   }
@@ -372,7 +366,8 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * <li>Component compositions: absolute deviation in mol%</li>
    * </ul>
    * <p>
-   * Per Norwegian handbook, acceptable uncertainty is +/-7.5% for regulatory reporting.
+   * The legacy passesRegulatoryCriteria key compares GWR deviation to a fixed 7.5% threshold only. This is not a
+   * complete uncertainty assessment or evidence of regulatory compliance. Lab inputs do not tune the model.
    * </p>
    *
    * @return map of validation metrics, or null if no lab data provided
@@ -470,9 +465,12 @@ public class ProducedWaterDegassingSystem implements Serializable {
   // ============================================================================
 
   /**
-   * Build the process model.
+   * Build the process model from current configuration.
+   *
+   * @throws UnsupportedOperationException if a legacy serialized model has tuning enabled
    */
   public void build() {
+    validateTunedInteractionParameters(useTunedKijParameters);
     // Create fluid for inlet water
     SystemSrkCPAstatoil waterFluid = new SystemSrkCPAstatoil(waterTemperature_K, inletPressure_bara);
 
@@ -488,11 +486,6 @@ public class ProducedWaterDegassingSystem implements Serializable {
 
     waterFluid.setMixingRule(10); // CPA mixing rule
     waterFluid.setMultiPhaseCheck(true);
-
-    // Apply tuned binary interaction parameters if enabled
-    if (useTunedKijParameters) {
-      applyTunedKijParameters(waterFluid);
-    }
 
     // Create inlet stream
     waterInletStream = new Stream(name + "_Inlet", waterFluid);
@@ -535,9 +528,12 @@ public class ProducedWaterDegassingSystem implements Serializable {
   }
 
   /**
-   * Run the simulation.
+   * Run the simulation, building the process if absent.
+   *
+   * @throws UnsupportedOperationException if a legacy serialized model has tuning enabled
    */
   public void run() {
+    validateTunedInteractionParameters(useTunedKijParameters);
     if (process == null) {
       build();
     }
@@ -556,8 +552,10 @@ public class ProducedWaterDegassingSystem implements Serializable {
    * Run the simulation with a specific UUID.
    *
    * @param id calculation UUID
+   * @throws UnsupportedOperationException if a legacy serialized model has tuning enabled
    */
   public void run(UUID id) {
+    validateTunedInteractionParameters(useTunedKijParameters);
     if (process == null) {
       build();
     }
@@ -804,9 +802,9 @@ public class ProducedWaterDegassingSystem implements Serializable {
     }
 
     sb.append("\n  REGULATORY NOTE:\n");
-    sb.append("    Per Aktivitetsforskriften §70, thermodynamic calculations\n");
-    sb.append("    provide more accurate emission quantification than empirical\n");
-    sb.append("    solubility factors. Uncertainty: ±3.6% vs ±50%+ conventional.\n");
+    sb.append("    Aktivitetsforskriften §70 reporting requires case-specific\n");
+    sb.append("    validation and uncertainty assessment. This screening model\n");
+    sb.append("    does not establish regulatory compliance or field accuracy.\n");
 
     sb.append("\n╚════════════════════════════════════════════════════════════════╝\n");
 
@@ -871,37 +869,38 @@ public class ProducedWaterDegassingSystem implements Serializable {
   // ============================================================================
 
   /**
-   * Apply tuned binary interaction parameters to the fluid.
+   * Reject unsupported tuning before model construction or execution.
    *
-   * @param fluid the fluid system
+   * @param useTuned requested or deserialized tuning flag
+   * @throws UnsupportedOperationException if useTuned is true
    */
-  private void applyTunedKijParameters(SystemSrkCPAstatoil fluid) {
-    // Temperature in Kelvin for temperature-dependent kij
-    double T = waterTemperature_K;
-
-    // Apply water-CO2 kij with temperature dependence
-    // kij(T) = kij_base + kij_T * T
-    if (fluid.hasComponent("CO2") && fluid.hasComponent("water")) {
-      double kijCO2 = KIJ_WATER_CO2_BASE + KIJ_WATER_CO2_TEMP * (T - 273.15);
-      // Note: NeqSim kij setting depends on specific API
-      // This may need adjustment based on actual NeqSim version
+  private static void validateTunedInteractionParameters(boolean useTuned) {
+    if (useTuned) {
+      throw new UnsupportedOperationException("Produced-water interaction tuning has no validated model; "
+          + "use setTunedInteractionParameters(false) for the default database model.");
     }
-
-    // Apply water-methane kij with temperature dependence
-    if (fluid.hasComponent("methane") && fluid.hasComponent("water")) {
-      double kijCH4 = KIJ_WATER_CH4_BASE + KIJ_WATER_CH4_TEMP * (T - 273.15);
-    }
-
-    // Apply fixed kij values for C2-C4
-    // These can be set through NeqSim's characterization methods if available
   }
 
+  /**
+   * Require an executed model before accessing results.
+   *
+   * @throws UnsupportedOperationException if a legacy model has tuning enabled
+   * @throws IllegalStateException if the model has not run
+   */
   private void checkRun() {
+    validateTunedInteractionParameters(useTunedKijParameters);
     if (!hasRun) {
       throw new IllegalStateException("Must call run() before getting results");
     }
   }
 
+  /**
+   * Convert an inlet or stage pressure to absolute bar.
+   *
+   * @param pressure pressure value
+   * @param unit pressure unit
+   * @return pressure in bara
+   */
   private double convertPressure(double pressure, String unit) {
     switch (unit.toLowerCase()) {
     case "bara":
