@@ -2,6 +2,9 @@ package neqsim.process.equipment.reservoir;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -196,15 +199,45 @@ public class WellFlow extends TwoPortEquipment {
   double[] inflowTableRate = new double[0];
 
   // Multi-layer support
-  private transient List<ReservoirLayer> layers = new ArrayList<>();
+  private List<ReservoirLayer> layers = new ArrayList<>();
   private boolean isMultiLayer = false;
   private FlowMode flowMode = FlowMode.PRODUCTION;
   private String targetZoneName = null;
 
   /**
-   * Represents a single reservoir layer for commingled well production or injection.
+   * Restore persisted layer definitions, with an explicit diagnostic for old streams that omitted them.
+   *
+   * @param input serialized well input
+   * @throws IOException if the stream cannot be read or a layered definition is missing
+   * @throws ClassNotFoundException if a serialized class is unavailable
    */
-  public static class ReservoirLayer {
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (isMultiLayer && (layers == null || layers.isEmpty())) {
+      throw new InvalidObjectException(
+          "Layered WellFlow has no persisted zones. Rebuild from the original model inputs; "
+              + "older serialized wells omitted the layer definitions.");
+    }
+    if (layers == null) {
+      layers = new ArrayList<>();
+    }
+  }
+
+  /**
+   * Represents a single reservoir layer for commingled well production or injection.
+   *
+   * <p>
+   * Layer definitions and calculated rates participate in the enclosing well's serialization-based deep copy. Stream
+   * aliases are preserved within that serialized object graph; copied fluids are independent of the source.
+   * </p>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public static class ReservoirLayer implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+
     /** Layer name. */
     public String name;
     /** Stream from this layer. */

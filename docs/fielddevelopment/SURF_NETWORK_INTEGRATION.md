@@ -448,6 +448,23 @@ available under the process-unit name. A copied unit rebuilds the topology defin
 copies the bound `WellSystem`/`WellFlow` objects and rebinds them before execution;
 accepted runtime state is not shared with the source unit.
 
+Layered `WellFlow` definitions now survive the serialization-based well copy used by
+this adapter: ordered zones, streams, pressure/index inputs, target/fracture/barrier
+metadata and stored zone rates belong to the independent copied well. A live-injector
+copy regression re-solves the same canonical hydraulic definition, changes only the
+copy's reservoir boundary, restores its rate and checks fracture-limit rejection and
+mass conservation. Whole-process serialization also preserves internal stream aliases;
+independently copied wells do not imply one shared copied reservoir owner. Rebind
+external mapped equipment after definition-only JSON copying as before.
+
+Old serialized layered wells omitted their zones entirely. They now fail on reading
+with an explicit rebuild-from-inputs diagnostic; non-layered legacy wells retain an
+empty extensible list. This repair does not qualify a liquid injectivity law: the
+current multi-zone path still applies squared-pressure differences to every fluid
+and sets the total in gas-standard MSm3/day, despite its older liquid-law descriptions.
+An explicit law/rate-basis migration remains necessary before water-injectivity
+qualification; do not silently reinterpret existing coefficients or layer-rate getters.
+
 For a well that can be routed to mutually exclusive separator pressure levels, register
 the existing alternative network edges with
 `FieldWellNetworkProcessUnit.registerExclusiveRouteSelector(...)`. Automation then
@@ -581,6 +598,14 @@ model or introducing a separate optimizer. The lower
 pressure route must reduce well backpressure and increase deliverability. A route
 rejected by compressor or other hard evidence remains rejected; the test does not relax
 physical limits to obtain a feasible optimizer result.
+
+The common-shaft driver-limited slice also enables fail-closed continuous-boundary
+refinement between 70% and 95% choke opening. Every bisection midpoint reuses the same
+live wells, routes, separators, scrubbers, mapped compressors, common shaft, driver and
+shared-power evaluator. Only converged, finite, fully restored feasible points or explicit
+hard/validity rejections tighten the final bracket. The receipt is an advisory bracket,
+not an interpolated choke target, compressor-map qualification or operating approval;
+discrete HP/LP routing is never bisected.
 
 ### Repeated production periods and moving host limits
 
@@ -755,6 +780,18 @@ state/physical-step-identity policy and #3298's failed transient qualification g
 Lifecycle period-change reporting remains in the #4188/#3154 lane, including #4370.
 
 ## Dependency-ordered continuation
+
+The alternative spline-map pump's BEP/status prerequisite is checked separately from the
+default reduced-curve implementation: its efficiency interpolation is at absolute flow,
+not constant Q/N. Speed-aware BEP/status now sample that existing efficiency surface and
+refresh after map changes. The reference-speed method still uses the first supplied curve,
+and the existing 51-point/global-flow scan and extrapolation limitations remain explicit.
+Same-network tests cover reference/intermediate speed migration and restoration, physical
+work, mass balance and host power with synthetic maps. This diagnostic consistency does
+not qualify the inherited shared-reservoir fixture's extrapolated operating region.
+Consume the sampled-region transitions merged in #4447 and lifecycle work owned by #4188/#3154
+when map and injectivity constraints have an explicit engineering basis; do not create a
+second transition detector or interpret a heuristic `OPTIMAL` status as operating approval.
 
 1. Extend the field-scale cases to live `WellSystem`/`WellFlow` production and injection
    boundaries, qualified pump/compressor maps, shared host power/capacity constraints and

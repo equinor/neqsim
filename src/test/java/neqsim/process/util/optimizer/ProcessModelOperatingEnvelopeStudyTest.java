@@ -25,6 +25,7 @@ import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionBoundaryRefinement;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.Outcome;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
@@ -278,6 +279,50 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertThrows(UnsupportedOperationException.class, () -> restored.getPoints().clear());
   }
 
+  /** Verifies opt-in continuous feasibility refinement uses complete evaluations and returns an exact bracket. */
+  @Test
+  void refinesContinuousFeasibilityTransitionFailClosed() {
+    Fixture fixture = createFixture();
+    ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("well-a-refined-slice",
+        "Refined well A operating envelope", "synthetic fail-closed boundary refinement", createEvaluator(fixture))
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(0.01, "synthetic one-percent action-range tolerance");
+
+    SliceResult result = study.evaluateOneDimensional("producer-a-rate", new double[] {700.0, 900.0},
+        new double[] {600.0, 300.0});
+
+    assertTrue(result.isComplete(), result.getDiagnostics().toString());
+    assertEquals(1, result.getBoundaryRefinements().size());
+    OperatingRegionBoundaryRefinement refinement = result.getBoundaryRefinements().get(0);
+    assertEquals(OperatingRegionBoundaryRefinement.Status.CONVERGED, refinement.getStatus());
+    assertTrue(refinement.isConverged());
+    assertEquals("producer-a-rate", refinement.getAxisActionId());
+    assertEquals(0, refinement.getFromSequenceIndex());
+    assertEquals(1, refinement.getToSequenceIndex());
+    assertTrue(refinement.getFeasibleAxisValue() <= 800.0);
+    assertTrue(refinement.getFeasibleAxisValue() >= 792.0);
+    assertTrue(refinement.getInfeasibleAxisValue() >= 800.0);
+    assertTrue(refinement.getInfeasibleAxisValue() <= 808.0);
+    assertTrue(refinement.getBracketWidth() <= refinement.getAbsoluteTolerance());
+    assertEquals(8.0, refinement.getAbsoluteTolerance(), 0.0);
+    assertTrue(refinement.getSteps().size() > 0);
+    assertEquals(2 + refinement.getSteps().size(), result.getEvaluationCount());
+    for (OperatingRegionBoundaryRefinement.Step step : refinement.getSteps()) {
+      assertTrue(step.isCandidateSimulationConverged());
+      assertTrue(step.isBaselineRestored());
+      assertTrue(step.isBaselineSimulationConverged());
+      assertTrue(Double.isFinite(step.getAxisValue()));
+      assertTrue(Arrays.stream(step.getCandidateValues()).allMatch(Double::isFinite));
+    }
+    Map<String, Object> evidence = refinement.toEvidenceMap();
+    assertEquals(Boolean.FALSE, evidence.get("interpolated"));
+    assertEquals(Boolean.TRUE, evidence.get("advisory"));
+    assertEquals(Boolean.TRUE, evidence.get("converged"));
+    assertEquals(Integer.valueOf(refinement.getSteps().size()), evidence.get("evaluation_count"));
+    assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
+    assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
+  }
+
   /** Verifies sampled discrete line-up changes are labelled explicitly and never presented as interpolation. */
   @Test
   void discreteSliceReportsFeasibilityChangeWithoutInterpolation() {
@@ -309,6 +354,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertTrue(transition.isDiscreteAction());
     assertEquals(ProcessModelOperatingAction.ValueSemantics.DISCRETE, transition.getActionValueSemantics());
     assertEquals(Boolean.FALSE, transition.toEvidenceMap().get("interpolated"));
+    assertTrue(result.getBoundaryRefinements().isEmpty());
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }
@@ -486,7 +532,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getToConstraint());
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("cycle-lifecycle-1");
-    assertEquals(Integer.valueOf(4), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(5), evidence.get("schema_version"));
     assertEquals("cycle-lifecycle-1", evidence.get("cycle_id"));
     assertEquals(Integer.valueOf(2), evidence.get("period_count"));
     assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), evidence.get("accepted_action_ids"));
@@ -562,7 +608,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
             late.search, late.slice);
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("shared-reservoir-cycle");
-    assertEquals(Integer.valueOf(4), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(5), evidence.get("schema_version"));
     assertEquals(Arrays.asList("reservoir-pressure", "production-rate", "injection-rate"),
         evidence.get("accepted_state_metric_ids"));
     Map<?, ?> firstPeriod = (Map<?, ?>) ((List<?>) evidence.get("periods")).get(0);

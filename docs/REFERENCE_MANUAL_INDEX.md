@@ -196,6 +196,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | TBP Fractions            | [docs/wiki/tbp_fraction_models.md](wiki/tbp_fraction_models.md)                                                                 | TBP fraction modeling                               |
 | PVT Characterization     | [docs/thermo/pvt_fluid_characterization.md](thermo/pvt_fluid_characterization.md)                                               | PVT fluid characterization with lumping             |
 | Characterization Package | [docs/thermo/characterization/README.md](thermo/characterization/README.md)                                                           | Characterization module                             |
+| Catalytic Reforming Balance | [docs/thermo/characterization/refinery_catalytic_reforming_stoichiometric_balance.md](thermo/characterization/refinery_catalytic_reforming_stoichiometric_balance.md) | Single- and multi-cut naphthene/paraffin conversion, reformate, and hydrogen receipts |
 | Combining Methods        | [docs/thermo/characterization/fluid_characterization_combining.md](thermo/characterization/fluid_characterization_combining.md) | Fluid combining methods                             |
 | Char Mathematics         | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md)                 | Characterization mathematics with lumping equations |
 
@@ -1104,6 +1105,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Document                           | Path                                                                                             | Description                                                                           |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | Development Overview               | [docs/development/README.md](development/README.md)                                                       | Development overview                                                                  |
+| NeqSim 3.26.0 release notes          | [docs/development/release-notes-3.26.0.md](development/release-notes-3.26.0.md)                         | Release candidate, highlights, migration requirements, distributions, and publication gates |
 | Contributing Structure             | [docs/development/contributing-structure.md](development/contributing-structure.md)                 | Contributing guidelines                                                               |
 | Developer Setup                    | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md)                               | Developer setup                                                                       |
 | **Extending Process Equipment**    | [docs/development/extending_process_equipment.md](development/extending_process_equipment.md)       | **Add custom equipment, stream introspection, MultiPortEquipment base class**         |

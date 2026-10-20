@@ -457,6 +457,34 @@ def _valid_region_lifecycle_evidence(current_envelope):
     return evidence
 
 
+def _add_empty_boundary_refinement_evidence(envelope):
+    """Add a disabled but complete boundary-refinement contract to a test envelope."""
+    for envelope_slice in envelope["slices"]:
+        envelope_slice["maximum_boundary_refinement_evaluations"] = 0
+        envelope_slice["boundary_refinement_relative_tolerance"] = 1.0e-3
+        envelope_slice["boundary_refinement_tolerance_provenance"] = (
+            "diagnostic continuous-action range fraction")
+        envelope_slice["operating_region_boundary_refinements"] = []
+
+
+def _valid_boundary_lifecycle_evidence(current_envelope):
+    """Extend valid schema-v4 evidence with fail-closed continuous-boundary receipts."""
+    evidence = _valid_region_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 5
+    for period in evidence["periods"]:
+        _add_empty_boundary_refinement_evidence(period["envelope_evidence"])
+    for change in evidence["period_change_diagnostics"]:
+        for slice_change in change["slice_changes"]:
+            slice_change.update({
+                "from_operating_region_boundary_refinement_count": 0,
+                "to_operating_region_boundary_refinement_count": 0,
+                "retained_operating_region_boundary_refinement_count": 0,
+                "removed_operating_region_boundary_refinements": [],
+                "added_operating_region_boundary_refinements": [],
+            })
+    return evidence
+
+
 def _valid_state_lifecycle_evidence(current_envelope):
     """Extend valid schema-v4 evidence with exact accepted physical-state metrics."""
     evidence = _valid_region_lifecycle_evidence(current_envelope)
@@ -1138,6 +1166,104 @@ def test_guard_persists_schema4_operating_region_migration_evidence(tmp_path):
     assert slice_change["retained_operating_region_transition_count"] == 0
     assert slice_change["removed_operating_region_transitions"] == []
     assert slice_change["added_operating_region_transitions"] == []
+
+
+def test_guard_persists_schema5_boundary_refinement_migration_evidence(tmp_path):
+    proposal = _valid_proposal()
+    _add_empty_operating_region_evidence(proposal["accepted_point_envelope_evidence"])
+    _add_empty_boundary_refinement_evidence(proposal["accepted_point_envelope_evidence"])
+    proposal["lifecycle_envelope_evidence"] = _valid_boundary_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    lifecycle = ctx.proposals[0]["lifecycle_envelope_evidence"]
+    assert lifecycle["schema_version"] == 5
+    slice_change = lifecycle["period_change_diagnostics"][0]["slice_changes"][0]
+    assert slice_change["retained_operating_region_boundary_refinement_count"] == 0
+    assert slice_change["removed_operating_region_boundary_refinements"] == []
+    assert slice_change["added_operating_region_boundary_refinements"] == []
+
+
+def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
+    transition = {
+        "axis_action_id": "choke-a",
+        "action_value_semantics": "CONTINUOUS",
+        "kind": "BECAME_INFEASIBLE",
+        "from_sequence_index": 0,
+        "to_sequence_index": 1,
+        "from_axis_value": 700.0,
+        "to_axis_value": 900.0,
+        "from_feasible": True,
+        "to_feasible": False,
+        "from_outcome": "FEASIBLE",
+        "to_outcome": "OTHER_MODEL_CONSTRAINT_VIOLATED",
+    }
+    steps = [
+        {
+            "sequence_index": 0,
+            "axis_value": 800.0,
+            "candidate_values": [800.0, 400.0],
+            "outcome": "FEASIBLE",
+            "feasible": True,
+            "candidate_simulation_converged": True,
+            "candidate_evaluator_feasible": True,
+            "baseline_restored": True,
+            "baseline_simulation_converged": True,
+            "leading_constraint": None,
+        },
+        {
+            "sequence_index": 1,
+            "axis_value": 850.0,
+            "candidate_values": [850.0, 400.0],
+            "outcome": "OTHER_MODEL_CONSTRAINT_VIOLATED",
+            "feasible": False,
+            "candidate_simulation_converged": True,
+            "candidate_evaluator_feasible": False,
+            "baseline_restored": True,
+            "baseline_simulation_converged": True,
+            "leading_constraint": None,
+        },
+    ]
+    receipt = {
+        "axis_action_id": "choke-a",
+        "action_value_semantics": "CONTINUOUS",
+        "from_sequence_index": 0,
+        "to_sequence_index": 1,
+        "sampled_from_axis_value": 700.0,
+        "sampled_to_axis_value": 900.0,
+        "action_lower_bound": 500.0,
+        "action_upper_bound": 1000.0,
+        "relative_tolerance": 0.01,
+        "absolute_tolerance": 5.0,
+        "tolerance_provenance": "synthetic choke tolerance",
+        "maximum_evaluations": 2,
+        "evaluation_count": 2,
+        "feasible_axis_value": 800.0,
+        "infeasible_axis_value": 850.0,
+        "bracket_width": 50.0,
+        "status": "MAXIMUM_EVALUATIONS_REACHED",
+        "converged": False,
+        "steps": steps,
+        "interpolated": False,
+        "advisory": True,
+    }
+    row = {
+        "operating_region_transitions": [transition],
+        "maximum_boundary_refinement_evaluations": 2,
+        "boundary_refinement_relative_tolerance": 0.01,
+        "boundary_refinement_tolerance_provenance": "synthetic choke tolerance",
+        "operating_region_boundary_refinements": [receipt],
+    }
+    assert production._valid_operating_region_boundary_refinements(row)
+
+    changed_midpoint = copy.deepcopy(row)
+    changed_midpoint["operating_region_boundary_refinements"][0]["steps"][0]["axis_value"] = 801.0
+    assert not production._valid_operating_region_boundary_refinements(changed_midpoint)
+    partial_recovery = copy.deepcopy(row)
+    partial_recovery["operating_region_boundary_refinements"][0]["steps"][1]["baseline_restored"] = False
+    assert not production._valid_operating_region_boundary_refinements(partial_recovery)
 
 
 def test_guard_persists_schema4_accepted_physical_state_changes(tmp_path):

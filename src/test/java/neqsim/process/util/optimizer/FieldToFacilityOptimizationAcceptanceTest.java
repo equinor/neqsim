@@ -49,6 +49,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.Hydrau
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.CandidateSetEvaluationResult;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionSetEvaluator.Outcome;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionBoundaryRefinement;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.SliceResult;
 import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.OperatingPointSearchResult;
@@ -387,7 +388,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
             late.study, late.search, late.slices);
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
 
-    assertEquals(Integer.valueOf(4), lifecycleEvidence.get("schema_version"));
+    assertEquals(Integer.valueOf(5), lifecycleEvidence.get("schema_version"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
@@ -418,6 +419,15 @@ class FieldToFacilityOptimizationAcceptanceTest {
         assertEquals(Boolean.FALSE, ((Map<?, ?>) transition).get("interpolated"));
         assertEquals(Boolean.TRUE, ((Map<?, ?>) transition).get("sampled_event_only"));
       }
+      int fromRefinementCount = ((Integer) sliceChange.get("from_operating_region_boundary_refinement_count"))
+          .intValue();
+      int toRefinementCount = ((Integer) sliceChange.get("to_operating_region_boundary_refinement_count")).intValue();
+      int retainedRefinementCount = ((Integer) sliceChange.get("retained_operating_region_boundary_refinement_count"))
+          .intValue();
+      List<?> removedRefinements = (List<?>) sliceChange.get("removed_operating_region_boundary_refinements");
+      List<?> addedRefinements = (List<?>) sliceChange.get("added_operating_region_boundary_refinements");
+      assertEquals(fromRefinementCount, retainedRefinementCount + removedRefinements.size());
+      assertEquals(toRefinementCount, retainedRefinementCount + addedRefinements.size());
     }
     assertEquals(earlyConstraint, lifecycle.getBottleneckTransitions().get(0).getFromConstraint());
     assertEquals(lateConstraint, lifecycle.getBottleneckTransitions().get(0).getToConstraint());
@@ -497,7 +507,9 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertEquals(driverLimitKw, acceptedDriver.getSample().getApplicableLimit(), 0.0);
 
     ProcessModelOperatingEnvelopeStudy study = new ProcessModelOperatingEnvelopeStudy("driver-limited-field-envelope",
-        "Driver-limited field envelope", "synthetic common-shaft driver transition diagnostics", candidates);
+        "Driver-limited field envelope", "synthetic common-shaft driver transition diagnostics", candidates)
+        .setMaximumBoundaryRefinementEvaluations(8)
+        .setBoundaryRefinementRelativeTolerance(0.01, "synthetic one-percent choke-range tolerance");
     SliceResult driverSlice = study.evaluateOneDimensional(chokeA.getId(), new double[] {70.0, 95.0}, result);
     assertTrue(driverSlice.isComplete(), driverSlice.getDiagnostics().toString());
     assertEquals(1, driverSlice.getOperatingRegionTransitions().size());
@@ -510,6 +522,16 @@ class FieldToFacilityOptimizationAcceptanceTest {
         driverTransition.getToConstraint());
     assertFalse(driverTransition.isDiscreteAction());
     assertEquals(Boolean.FALSE, driverTransition.toEvidenceMap().get("interpolated"));
+    assertEquals(1, driverSlice.getBoundaryRefinements().size());
+    OperatingRegionBoundaryRefinement driverBoundary = driverSlice.getBoundaryRefinements().get(0);
+    assertTrue(driverBoundary.isConverged(), driverBoundary.getStatus().name());
+    assertTrue(driverBoundary.getFeasibleAxisValue() < driverBoundary.getInfeasibleAxisValue());
+    assertTrue(driverBoundary.getBracketWidth() <= driverBoundary.getAbsoluteTolerance());
+    assertTrue(driverBoundary.getSteps().stream().allMatch(step -> step.isCandidateSimulationConverged()
+        && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
+    assertTrue(driverBoundary.getSteps().stream().filter(step -> !step.isFeasible())
+        .allMatch(step -> step.getLeadingConstraint() != null
+            && step.getLeadingConstraint().getQualifiedConstraintName().endsWith("#driver-maximum-power")));
     assertBaselineRestored(fixture);
   }
 

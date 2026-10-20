@@ -2338,5 +2338,23 @@
  ],
  "lng voyage": [
   "neqsim-lng-liquefaction"
+ ],
+ "maven dependency update": [
+  "neqsim-maven-version-maintenance"
+ ],
+ "pomJava8.xml": [
+  "neqsim-maven-version-maintenance"
+ ],
+ "maven plugin version": [
+  "neqsim-maven-version-maintenance"
+ ],
+ "version bump": [
+  "neqsim-version-bump-decision"
+ ],
+ "patch or minor release": [
+  "neqsim-version-bump-decision"
+ ],
+ "serialVersionUID compatibility": [
+  "neqsim-version-bump-decision"
  ]
 }

@@ -142,7 +142,7 @@ public final class NeqSimQuickStart {
 <dependency>
     <groupId>com.equinor.neqsim</groupId>
     <artifactId>neqsim</artifactId>
-    <version>3.25.0</version>
+    <version>3.26.0</version>
 </dependency>
 ```
 

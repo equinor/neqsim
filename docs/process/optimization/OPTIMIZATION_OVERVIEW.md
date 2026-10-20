@@ -788,8 +788,9 @@ attribution, a shadow price, a continuous feasible boundary, or operating approv
 For a persistent engineering cycle, call
 `getAcceptedPointEnvelopeEvidence(cycleId, search, slices...)` after all requested slices complete.
 The compact immutable map combines the existing optimizer guard block, the accepted-point
-bottleneck, every sampled point, bottleneck transition, explicit operating-region transition, and per-slice plus aggregate evaluation
-counts and wall-clock runtimes. Every slice must come from the exact runtime study, share the
+bottleneck, every sampled point, bottleneck transition, explicit operating-region transition,
+optional fail-closed continuous-boundary receipt, and per-slice plus aggregate evaluation counts
+and wall-clock runtimes. Every slice must come from the exact runtime study, share the
 accepted candidate anchor, and have complete restoration/reconvergence. A foreign, deserialized,
 duplicate-axis, partial-recovery, or stale slice is rejected before export. Non-finite optional
 numerical fields are emitted as JSON `null`; they are never promoted to accepted evidence. Runtime
@@ -799,29 +800,35 @@ is provenance for #2939 coordination, not a generic performance claim.
 and routing event studies. `BECAME_FEASIBLE` and `BECAME_INFEASIBLE` identify sampled feasibility
 changes; `EVALUATION_OUTCOME_CHANGED` preserves changes between exact fail-closed rejection classes;
 and `LEADING_CONSTRAINT_CHANGED` records a changed evidence identity or layer without comparing unlike
-physical units. A continuous edge may be passed to a separately configured optimizer refinement, but
-the envelope study itself never bisects it. A discrete edge is two evaluated line-ups only and must
-never be interpreted as an intermediate route fraction or topology.
+physical units. Opt in with `setMaximumBoundaryRefinementEvaluations(...)` and record a positive
+range-relative tolerance plus provenance to bisect only `BECAME_FEASIBLE` or `BECAME_INFEASIBLE`
+edges on continuous actions. Every midpoint uses the unchanged complete transactional evaluator;
+only finite, converged, fully restored feasible or explicit hard/validity-rejected points may tighten
+the bracket. The receipt retains every midpoint and both final independently evaluated sides. It is
+not interpolation, an accepted set point, or operating approval. A discrete edge is two evaluated
+line-ups only and is never refined into a route fraction or topology.
 
 Use `ProcessModelOperatingEnvelopeLifecycleStudy` when the accepted envelope must be compared across
 ordered field periods. Build each period from its own converged model/evaluator definition, search, and
 accepted-point slices, then add it with a non-negative strictly increasing elapsed time and explicit
 configuration provenance. The lifecycle study invokes the same exact-runtime envelope export gate before
 accepting a period, requires identical ordered action identifiers across periods, aggregates evaluation/runtime
-provenance, and reports changes in the accepted leading constraint between adjacent periods. Current schema version 4
+provenance, and reports changes in the accepted leading constraint between adjacent periods. Current schema version 5
 also exports `period_change_diagnostics`: accepted-action deltas, comparable/added/removed slice axes, exact
 sampled-point overlap, feasible-point changes, and leading-constraint changes for every adjacent period pair. For
 matching axes it compares the complete sampled `operating_region_transitions` rows and reports exact retained,
 removed, and added events. Points and events are compared only when their physical evidence is exactly equal;
-changed grids are reported explicitly and are never interpolated.
+changed grids are reported explicitly and are never interpolated. Schema v5 also compares complete
+`operating_region_boundary_refinements` receipts exactly, including tolerance provenance, every midpoint,
+terminal bracket and status.
 
 When a period is driven by an independently accepted reservoir/network state, use the `addPeriod` overload that
 accepts ordered `AcceptedStateMetric` values. Each metric carries a stable ID, name, finite value, explicit unit, and
-source provenance. Metric IDs, order, and units must remain identical across periods. Schema version 4 retains the
+source provenance. Metric IDs, order, and units must remain identical across periods. Schema versions 4 and 5 retain the
 exact accepted state under each period when supplied and adds exact `accepted_state_changes` to the adjacent
 period diagnostics. This is the handoff for accepted reservoir pressure, production/injection rates, cumulative
 throughput, common-shaft power, or other already-qualified state; it does not make an independently calculated or
-forecast value accepted. State metrics remain optional in schema v4. It does not copy
+forecast value accepted. State metrics remain optional in schema v5 and remain readable in schema v4. It does not copy
 reservoir, separator, compressor-map, shaft, driver, or power-limit physics; those remain in each period's
 canonical model and constraint evidence.
 
@@ -844,8 +851,8 @@ or action-incompatible period is rejected instead of producing a partial lifecyc
 are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
 operating approval.
 
-Lifecycle schema versions 1 through 3 remain readable by the persistent production guard for stored historical
-evidence. Current exports use schema version 4 with optional accepted-state metrics. The guard recomputes every
+Lifecycle schema versions 1 through 4 remain readable by the persistent production guard for stored historical
+evidence. Current exports use schema version 5 with optional accepted-state metrics. The guard recomputes every
 period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
 migration and, when present, state-metric identity, units, finite values, and exact deltas. A missing or modified
 count, event, delta, axis set, feasibility change, state metric, or constraint-change count therefore fails closed
