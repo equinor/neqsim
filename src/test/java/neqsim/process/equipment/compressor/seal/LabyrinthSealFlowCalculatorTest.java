@@ -186,7 +186,7 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
         }
         compared++;
         double relativeError = Math.abs(flows.get(method) - expected) / expected;
-        if (relativeError > WORKBOOK_TOLERANCE) {
+        if (!(relativeError <= WORKBOOK_TOLERANCE)) {
           failures.add(testCase.get("id").getAsString() + "/" + method + " rel.err=" + relativeError);
         }
       }
@@ -360,5 +360,117 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     assertEquals("EGLI", json.get("method").getAsString());
     assertEquals(calc.getMassFlowRate("kg/hr"), json.get("massFlowRate_kg_hr").getAsDouble(), 1.0e-9);
     assertFalse(json.get("choked").getAsBoolean());
+    assertTrue(json.get("withinValidityRange").getAsBoolean());
+    assertEquals(0, json.getAsJsonArray("validityViolations").size());
+  }
+
+  /**
+   * Builds a worked-case calculator with a modified tip width and radial clearance (mm).
+   *
+   * @param tipWidthMm tip width in mm
+   * @param clearanceMm radial clearance in mm
+   * @param method flow method
+   * @return configured calculator (not yet run)
+   */
+  private static LabyrinthSealFlowCalculator workedCaseWith(double tipWidthMm, double clearanceMm,
+      LabyrinthFlowMethod method) {
+    JsonObject worked = referenceCase("worked_case");
+    LabyrinthSealGeometry geometry = geometry(worked);
+    geometry.setTipWidth(tipWidthMm, "mm");
+    geometry.setRadialClearance(clearanceMm, "mm");
+    LabyrinthSealFlowCalculator calc = calculator(worked, gergFluid(worked), method);
+    calc.setGeometry(geometry);
+    return calc;
+  }
+
+  /** Changing the caller's geometry after calculate() cannot alter or mix the stored result (review finding 1). */
+  @Test
+  void geometryIsCopiedAtEveryBoundary() {
+    JsonObject worked = referenceCase("worked_case");
+    LabyrinthSealGeometry geometry = geometry(worked);
+    LabyrinthSealFlowCalculator calc = new LabyrinthSealFlowCalculator(gergFluid(worked), geometry);
+    calc.setInletPressure(2.765, "barg");
+    calc.setInletTemperature(86.12, "C");
+    calc.setOutletPressure(1.5417, "barg");
+    calc.calculate();
+    double velocity = calc.getClearanceVelocity("m/s");
+    double area = calc.getGeometry().getClearanceArea();
+
+    geometry.setRadialClearance(1.0, "mm");
+    assertEquals(velocity, calc.getClearanceVelocity("m/s"), 1.0e-12);
+    assertEquals(0.2286, calc.getGeometry().getRadialClearance("mm"), 1.0e-12);
+
+    calc.getGeometry().setRadialClearance(1.0, "mm");
+    assertEquals(area, calc.getGeometry().getClearanceArea(), 1.0e-18);
+    assertTrue(calc.toJson().contains("0.2286"));
+
+    LabyrinthSealGeometry replacement = geometry(worked);
+    calc.setGeometry(replacement);
+    replacement.setRadialClearance(1.0, "mm");
+    assertEquals(0.2286, calc.getGeometry().getRadialClearance("mm"), 1.0e-12);
+  }
+
+  /** Egli's carry-over coefficient turns negative at large c/t: no negative leakage is published (finding 2). */
+  @Test
+  void egliOutsideCorrelationRangeGivesNaNAndViolation() {
+    LabyrinthSealFlowCalculator calc = workedCaseWith(0.3, 1.0, LabyrinthFlowMethod.EGLI);
+    calc.calculate();
+    assertTrue(Double.isNaN(calc.getMassFlowRate("kg/sec")));
+    assertFalse(calc.isWithinValidityRange());
+    assertEquals(1, calc.getValidityViolations().size());
+    assertTrue(calc.getValidityViolations().get(0).startsWith("EGLI"), calc.getValidityViolations().toString());
+    assertTrue(calc.getValidityViolations().get(0).contains("carry-over"));
+
+    Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
+    assertTrue(Double.isNaN(all.get(LabyrinthFlowMethod.EGLI)));
+    for (LabyrinthFlowMethod other : new LabyrinthFlowMethod[] {LabyrinthFlowMethod.STODOLA,
+        LabyrinthFlowMethod.VERMES, LabyrinthFlowMethod.KEARTON}) {
+      assertTrue(all.get(other) > 0.0 && !Double.isInfinite(all.get(other)), other.name());
+    }
+  }
+
+  /** Vermes' residual-energy factor reaches 1 when the tip width approaches the pitch (finding 3). */
+  @Test
+  void vermesOutsideCorrelationRangeGivesNaNAndViolation() {
+    LabyrinthSealFlowCalculator calc = workedCaseWith(1.8, 0.2286, LabyrinthFlowMethod.VERMES);
+    calc.calculate();
+    assertTrue(Double.isNaN(calc.getMassFlowRate("kg/sec")));
+    assertFalse(calc.isChoked());
+    assertFalse(calc.isWithinValidityRange());
+    assertTrue(calc.getValidityViolations().get(0).startsWith("VERMES"), calc.getValidityViolations().toString());
+    assertTrue(calc.getValidityViolations().get(0).contains("residual-energy"));
+
+    Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
+    assertTrue(Double.isNaN(all.get(LabyrinthFlowMethod.VERMES)));
+    assertTrue(all.get(LabyrinthFlowMethod.KEARTON) > 0.0);
+    assertEquals(1, calc.getValidityViolations().size(), calc.getValidityViolations().toString());
+  }
+
+  /** JSON is strict (no bare NaN) when tooth height is unset or a method is undefined (finding 4). */
+  @Test
+  void jsonIsStrictWithoutToothHeightAndWithUndefinedMethod() {
+    JsonObject worked = referenceCase("worked_case");
+    LabyrinthSealGeometry geometry = new LabyrinthSealGeometry();
+    geometry.setShaftDiameter(108.566, "mm");
+    geometry.setToothPitch(2.0, "mm");
+    geometry.setTipWidth(0.3, "mm");
+    geometry.setRadialClearance(0.2286, "mm");
+    geometry.setNumberOfTeeth(5);
+    LabyrinthSealFlowCalculator calc = new LabyrinthSealFlowCalculator(gergFluid(worked), geometry);
+    calc.setInletPressure(2.765, "barg");
+    calc.setInletTemperature(86.12, "C");
+    calc.setOutletPressure(1.5417, "barg");
+    calc.calculate();
+    String json = calc.toJson();
+    assertFalse(json.contains("NaN"), json);
+    assertFalse(json.contains("toothHeight"), json);
+
+    LabyrinthSealFlowCalculator undefined = workedCaseWith(1.8, 0.2286, LabyrinthFlowMethod.VERMES);
+    undefined.calculate();
+    String undefinedJson = undefined.toJson();
+    assertFalse(undefinedJson.contains("NaN"), undefinedJson);
+    JsonObject parsed = JsonParser.parseString(undefinedJson).getAsJsonObject();
+    assertTrue(parsed.get("massFlowRate_kg_s").isJsonNull());
+    assertFalse(parsed.get("withinValidityRange").getAsBoolean());
   }
 }
