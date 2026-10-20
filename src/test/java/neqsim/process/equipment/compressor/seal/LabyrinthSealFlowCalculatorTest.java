@@ -44,6 +44,12 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
    * database molar masses, which differ from the GERG-2008 molar masses used by the workbook by about 3e-5 (relative).
    */
   private static final double WORKBOOK_TOLERANCE = 5.0e-5;
+  /**
+   * Relative tolerance of the Neumann method against the workbook. NeqSim solves the tooth-by-tooth model exactly (PH
+   * flash at constant inlet enthalpy, converged flow), whereas the workbook uses a 0.05 % secant temperature search,
+   * lets the reference enthalpy drift and stops its spline iteration after 11 passes.
+   */
+  private static final double NEUMANN_TOLERANCE = 5.0e-3;
 
   /**
    * Loads the workbook reference cases.
@@ -180,7 +186,7 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     for (JsonElement element : REFERENCE.getAsJsonArray("cases")) {
       JsonObject testCase = element.getAsJsonObject();
       LabyrinthSealFlowCalculator calc = calculator(testCase, gergFluid(testCase), LabyrinthFlowMethod.KEARTON);
-      Map<LabyrinthFlowMethod, Double> flows = calc.calculateAllMethods();
+      calc.calculate();
       if (calc.hasLiquidAtInlet()) {
         continue;
       }
@@ -194,14 +200,16 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
         if (Double.isNaN(expected)) {
           continue;
         }
+        calc.setMethod(method);
+        calc.calculate();
         compared++;
         if (method == LabyrinthFlowMethod.KEARTON && belowKeartonPeak) {
           keartonChokedCases.add(testCase.get("id").getAsString());
           assertTrue(calc.isChoked(), testCase.get("id").getAsString());
-          assertTrue(flows.get(method) > expected, testCase.get("id").getAsString());
+          assertTrue(calc.getMassFlowRate("kg/sec") > expected, testCase.get("id").getAsString());
           continue;
         }
-        double relativeError = Math.abs(flows.get(method) - expected) / expected;
+        double relativeError = Math.abs(calc.getMassFlowRate("kg/sec") - expected) / expected;
         if (!(relativeError <= WORKBOOK_TOLERANCE)) {
           failures.add(testCase.get("id").getAsString() + "/" + method + " rel.err=" + relativeError);
         }
@@ -303,14 +311,14 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
   @Test
   void cubicEquationsOfStateGiveCloseResult() {
     JsonObject worked = referenceCase("worked_case");
-    SystemInterface[] fluids = {fillComposition(worked, new SystemSrkEos(288.15, 1.01325)),
-        fillComposition(worked, new SystemPrEos(288.15, 1.01325))};
+    SystemInterface[] fluids = {srkFluid(worked), fillComposition(worked, new SystemPrEos(288.15, 1.01325))};
     for (SystemInterface fluid : fluids) {
       LabyrinthSealFlowCalculator calc = calculator(worked, fluid, LabyrinthFlowMethod.KEARTON);
       Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
-      for (LabyrinthFlowMethod method : CLOSED_FORM) {
+      for (LabyrinthFlowMethod method : LabyrinthFlowMethod.values()) {
         double expected = excelFlow(worked, method);
-        assertEquals(expected, all.get(method), 5.0e-3 * expected, method + " " + fluid.getModelName());
+        double tolerance = method == LabyrinthFlowMethod.NEUMANN ? NEUMANN_TOLERANCE : 5.0e-3;
+        assertEquals(expected, all.get(method), tolerance * expected, method + " " + fluid.getModelName());
       }
     }
   }
@@ -325,16 +333,32 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     assertTrue(calc.getMassFlowRate("kg/sec") > 0.0);
   }
 
-  /** calculateAllMethods returns the same values as running each method separately. */
+  /** calculateAllMethods returns, for every method including Neumann, the value of an individual run. */
   @Test
   void calculateAllMethodsMatchesIndividualRuns() {
     JsonObject worked = referenceCase("worked_case");
-    LabyrinthSealFlowCalculator calc = calculator(worked, gergFluid(worked), LabyrinthFlowMethod.KEARTON);
+    LabyrinthSealFlowCalculator calc = calculator(worked, srkFluid(worked), LabyrinthFlowMethod.NEUMANN);
     Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
-    for (LabyrinthFlowMethod method : CLOSED_FORM) {
+    assertEquals(LabyrinthFlowMethod.values().length, all.size());
+    assertEquals(all.get(LabyrinthFlowMethod.NEUMANN), calc.getMassFlowRate("kg/sec"), 1.0e-15);
+    assertEquals(worked.get("inputs").getAsJsonObject().get("number_of_teeth").getAsInt() + 1,
+        calc.getToothPressures("bara").length, "selected method profile is kept after calculateAllMethods");
+    for (LabyrinthFlowMethod method : LabyrinthFlowMethod.values()) {
       assertNotNull(all.get(method), method.name());
-      assertEquals(excelFlow(worked, method), all.get(method), WORKBOOK_TOLERANCE * excelFlow(worked, method));
+      LabyrinthSealFlowCalculator single = calculator(worked, srkFluid(worked), method);
+      single.calculate();
+      assertEquals(single.getMassFlowRate("kg/sec"), all.get(method), 1.0e-9 * all.get(method), method.name());
     }
+  }
+
+  /**
+   * Builds an SRK fluid for a reference case (fast; used where GERG-2008 parity is not the point of the test).
+   *
+   * @param testCase reference case
+   * @return SRK fluid
+   */
+  private static SystemInterface srkFluid(JsonObject testCase) {
+    return fillComposition(testCase, new SystemSrkEos(288.15, 1.01325));
   }
 
   /** The caller's fluid is cloned, never flashed in place. */
@@ -395,7 +419,7 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     LabyrinthSealGeometry geometry = geometry(worked);
     geometry.setTipWidth(tipWidthMm, "mm");
     geometry.setRadialClearance(clearanceMm, "mm");
-    LabyrinthSealFlowCalculator calc = calculator(worked, gergFluid(worked), method);
+    LabyrinthSealFlowCalculator calc = calculator(worked, srkFluid(worked), method);
     calc.setGeometry(geometry);
     return calc;
   }
