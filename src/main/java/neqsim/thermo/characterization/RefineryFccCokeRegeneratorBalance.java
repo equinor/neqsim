@@ -131,8 +131,8 @@ public final class RefineryFccCokeRegeneratorBalance implements Serializable {
     double carbonBalanceResidual = cokeCarbonMassFlow
         - (carbonDioxideKmol + carbonMonoxideKmol) * CARBON_MOLAR_MASS_KG_PER_KMOL - remainingCarbonMassFlow;
     double oxygenBalanceResidual = suppliedOxygenKmol - carbonDioxideKmol - 0.5 * carbonMonoxideKmol - excessOxygenKmol;
-    double dryGasMolarBalanceResidual = dryAirKmol + burnedCarbonKmol - carbonDioxideKmol - carbonMonoxideKmol
-        - excessOxygenKmol - nitrogenKmol;
+    double dryGasMolarBalanceResidual = dryAirKmol + 0.5 * carbonMonoxideKmol - carbonDioxideKmol
+        - carbonMonoxideKmol - excessOxygenKmol - nitrogenKmol;
 
     if (!allFiniteNonNegative(cokeCarbonMassFlow, nonCarbonCokeMassFlow, burnedCarbonMassFlow, remainingCarbonMassFlow,
         carbonDioxideKmol, carbonMonoxideKmol, stoichiometricOxygenDemandKmol, suppliedOxygenKmol, dryAirKmol,
@@ -296,7 +296,7 @@ public final class RefineryFccCokeRegeneratorBalance implements Serializable {
     return oxygenBalanceResidualKmolPerHour;
   }
 
-  /** @return dry air plus burned carbon minus represented dry flue gas in kmol/h */
+  /** @return dry air plus CO-formation gas expansion minus represented dry flue gas in kmol/h */
   public double getDryGasMolarBalanceResidualKmolPerHour() {
     return dryGasMolarBalanceResidualKmolPerHour;
   }
