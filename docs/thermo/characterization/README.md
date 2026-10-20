@@ -63,6 +63,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - stoichiometric hydrotreating sulfur/hydrogen screening receipts with explicit H2/S assumptions;
 - single- and multi-cut catalytic-reforming naphthene/paraffin-to-aromatic receipts with explicit hydrogen-recovery allocation;
 - caller-defined hydrocracking conversion/product-lump receipts with reformer-hydrogen supply allocation;
+- caller-defined FCC conversion/product-lump receipts with coke-carbon, dry-air, CO/CO2, and dry-flue-gas closure;
 - stoichiometric hydrotreating nitrogen/hydrogen/ammonia receipts with explicit H2/N assumptions;\n- coupled hydrotreating sulfur/nitrogen receipts solved on one liquid-product mass basis;\n- unit-explicit coupled sulfur/nitrogen throughput receipts in kg/h;\n- coupled sulfur/nitrogen makeup- and outlet-gas receipts with H2, H2S, NH3, and non-H2 closure;
 - coupled sulfur/nitrogen recycle/purge receipts with explicit H2, H2S, NH3, and non-H2 recovery;
 - unit-explicit coupled recycle-throughput receipts in kg/h and kmol/h;
@@ -195,6 +196,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Hydrotreating sulfur and hydrogen balance](refinery_hydrotreating_sulfur_balance)
 - [Catalytic reforming stoichiometric balance](refinery_catalytic_reforming_stoichiometric_balance)
 - [Hydrocracking yield and hydrogen-supply balance](refinery_hydrocracking_yield_balance)
+- [FCC yield and coke-regenerator screening balance](refinery_fcc_yield_regenerator_balance)
 - [Hydrotreating nitrogen and ammonia balance](refinery_hydrotreating_nitrogen_balance)\n- [Coupled hydrotreating sulfur and nitrogen balance](refinery_hydrotreating_sulfur_nitrogen_balance)\n- [Coupled hydrotreating sulfur/nitrogen throughput balance](refinery_hydrotreating_sulfur_nitrogen_throughput_balance)\n- [Coupled sulfur/nitrogen hydrotreating hydrogen supply](refinery_hydrotreating_sulfur_nitrogen_hydrogen_supply_balance)
 - [Coupled sulfur/nitrogen hydrotreating hydrogen recycle and purge](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_balance)
 - [Coupled sulfur/nitrogen recycle-throughput balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_throughput_balance)
