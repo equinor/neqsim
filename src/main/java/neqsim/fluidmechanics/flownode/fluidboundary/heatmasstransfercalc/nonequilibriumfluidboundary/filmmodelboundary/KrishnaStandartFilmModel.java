@@ -10,8 +10,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
-import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
-import neqsim.mathlib.linearalgebra.RealEigenDecomposition;
+import neqsim.mathlib.linearalgebra.RealBlockEigenDecomposition;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -35,7 +34,8 @@ public class KrishnaStandartFilmModel extends
   private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
-  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
+  private static final ApacheCommonsMathLinearAlgebra ALGEBRA = new ApacheCommonsMathLinearAlgebra();
+  private transient boolean complexSpectrumWarningLogged;
   double[][] phiMatrix;
   double[] redPhiMatrix;
   double[] redCorrectionMatrix;
@@ -229,7 +229,7 @@ public class KrishnaStandartFilmModel extends
    */
   public void calcRedPhiMatrix(int phase) {
     double scale = phiMatrixScale();
-    redPhiMatrix = decomposePhiMatrix(scale).getEigenvalues();
+    redPhiMatrix = decomposePhiMatrix(scale).getRealParts();
     for (int component = 0; component < redPhiMatrix.length; component++) {
       redPhiMatrix[component] *= scale;
     }
@@ -253,17 +253,27 @@ public class KrishnaStandartFilmModel extends
   /**
    * Decomposes a scaled copy to keep the Schur calculation independent of the flux magnitude.
    *
+   * <p>
+   * The historical film correlation applies its scalar correction to real eigenvalue parts in the real block basis.
+   * Preserve that approximation for conjugate pairs; this is not the full complex matrix function.
+   *
    * @param scale largest absolute finite-flux matrix entry, or one for the zero matrix
    * @return eigensystem of the normalized matrix
    */
-  private RealEigenDecomposition decomposePhiMatrix(double scale) {
+  private RealBlockEigenDecomposition decomposePhiMatrix(double scale) {
     double[][] normalized = new double[phiMatrix.length][phiMatrix.length];
     for (int row = 0; row < phiMatrix.length; row++) {
       for (int column = 0; column < phiMatrix.length; column++) {
         normalized[row][column] = phiMatrix[row][column] / scale;
       }
     }
-    return ALGEBRA.eigenDecomposition(normalized);
+    RealBlockEigenDecomposition result = ALGEBRA.realBlockEigenDecomposition(normalized);
+    if (result.hasComplexEigenvalues() && !complexSpectrumWarningLogged) {
+      logger.warn("Finite-flux matrix has complex conjugate eigenvalues; retaining the historical real-part "
+          + "film-correction approximation (not a full complex matrix function).");
+      complexSpectrumWarningLogged = true;
+    }
+    return result;
   }
 
   /**
@@ -293,8 +303,8 @@ public class KrishnaStandartFilmModel extends
    * @param phaseNum a int
    */
   public void calcCorrectionMatrix(int phaseNum) {
-    RealEigenDecomposition eigen = decomposePhiMatrix(phiMatrixScale());
-    DMatrixRMaj modalPhiMatrix = new DMatrixRMaj(eigen.getEigenvectors());
+    RealBlockEigenDecomposition eigen = decomposePhiMatrix(phiMatrixScale());
+    DMatrixRMaj modalPhiMatrix = new DMatrixRMaj(eigen.getVectors());
     int dimension = modalPhiMatrix.getNumRows();
     DMatrixRMaj diagonalCorrection = new DMatrixRMaj(dimension, dimension);
     for (int component = 0; component < dimension; component++) {

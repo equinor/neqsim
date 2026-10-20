@@ -242,13 +242,19 @@ Both backends implement the following array-based operations:
   No Commons Math or EJML type crosses the interface boundary.
 
 The real eigen API rejects complex spectra with `LinearAlgebraException`.
-This is an intentional change from the film model's former direct call, which
-read only the real parts without checking the imaginary parts. A complex spectrum
-is not a valid real modal basis; it must not silently enter that correction.
+The Commons Math backend additionally exposes `realBlockEigenDecomposition`,
+which retains real and imaginary parts and a real block basis satisfying
+$A V = V D$, including two-by-two blocks for conjugate eigenpairs.
+This backend-specific extension does not weaken the strict real-spectrum API.
 Defective real matrices can still produce dependent eigenvectors, so a real
 spectrum alone does not guarantee an invertible modal basis.
 
-The film model and acoustic covariance checks now use the paired eigen API.
+Acoustic covariance checks use the strict real eigen API. The film model uses
+the real block extension and explicitly retains its historical approximation:
+apply the scalar correction to the eigenvalues' real parts in the real block
+basis. It logs a warning once per model instance when complex pairs occur.
+This preserves pre-adapter wall-film behavior; it is not an evaluation of the
+full complex matrix function and does not validate that approximation physically.
 Volumetric Pitzer regression retains its application-specific singular-value
 threshold and SVD-based covariance calculation using the new compact result.
 Direct `org.apache.commons.math3.linear` references are confined to the Commons

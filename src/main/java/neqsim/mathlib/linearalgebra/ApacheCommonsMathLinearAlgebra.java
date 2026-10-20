@@ -285,13 +285,31 @@ public final class ApacheCommonsMathLinearAlgebra implements LinearAlgebraOperat
   /** {@inheritDoc} */
   @Override
   public RealEigenDecomposition eigenDecomposition(double[][] matrix) {
+    RealBlockEigenDecomposition decomposition = realBlockEigenDecomposition(matrix);
+    if (decomposition.hasComplexEigenvalues()) {
+      throw new LinearAlgebraException("Real eigendecomposition requires a real spectrum.");
+    }
+    return new RealEigenDecomposition(decomposition.getRealParts(), decomposition.getVectors());
+  }
+
+  /**
+   * Compute the real block representation of a real matrix with a real or complex spectrum.
+   *
+   * <p>
+   * This Commons Math extension retains imaginary parts and the associated real block basis. Unlike the strict
+   * {@link #eigenDecomposition(double[][])} operation, it supports conjugate eigenpairs. Callers must explicitly decide
+   * how to use the two-by-two blocks; the basis columns are not individual real eigenvectors for such pairs.
+   *
+   * @param matrix finite square matrix
+   * @return immutable real and imaginary eigenvalue parts and real block basis satisfying {@code A V = V D}
+   * @throws LinearAlgebraException if input is invalid or decomposition fails
+   */
+  public RealBlockEigenDecomposition realBlockEigenDecomposition(double[][] matrix) {
     LinearAlgebraValidation.requireSquareMatrix(matrix, "Matrix");
     try {
       EigenDecomposition decomposition = new EigenDecomposition(toMatrix(matrix));
-      if (decomposition.hasComplexEigenvalues()) {
-        throw new LinearAlgebraException("Real eigendecomposition requires a real spectrum.");
-      }
-      return new RealEigenDecomposition(decomposition.getRealEigenvalues(), decomposition.getV().getData());
+      return new RealBlockEigenDecomposition(decomposition.getRealEigenvalues(), decomposition.getImagEigenvalues(),
+          decomposition.getV().getData());
     } catch (MaxCountExceededException exception) {
       throw new LinearAlgebraException("Eigenvalue decomposition did not converge.", exception);
     } catch (MathArithmeticException exception) {

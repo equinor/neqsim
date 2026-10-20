@@ -603,6 +603,33 @@ class FilmCorrectionInvariantTest {
       return fluxTypeCorrectionMatrix[phase].clone();
     }
 
+    /**
+     * Evaluate the historical scalar modal correction for a prescribed finite-flux matrix.
+     *
+     * @param matrix finite-flux matrix in the independent-component basis
+     * @return the phase-one correction matrix
+     */
+    SimpleMatrix correctedMatrix(double[][] matrix) {
+      phiMatrix = matrix;
+      calcRedPhiMatrix(1);
+      calcRedCorrectionMatrix(1);
+      calcCorrectionMatrix(1);
+      return new SimpleMatrix(rateCorrectionMatrix[1]);
+    }
+
+  }
+
+  /**
+   * Preserve the pre-adapter real-part film correlation when conjugate eigenpairs occur.
+   */
+  @Test
+  void complexConjugateSpectrumPreservesHistoricalRealPartCorrection() {
+    Film film = new Film();
+    double[][] matrix = {{2.0, -2.0}, {0.5, 2.0}};
+    double expected = 2.0 / -Math.expm1(-2.0);
+    assertMatrix(SimpleMatrix.identity(2).scale(expected), film.correctedMatrix(matrix));
+    assertArrayEquals(new double[] {2.0, 2.0}, film.redPhiMatrix, 1.0e-12);
+    assertMatrix(SimpleMatrix.identity(2).scale(expected), film.correctedMatrix(matrix));
   }
 
   /** Verifies coefficient calculations use the array-based API. */
