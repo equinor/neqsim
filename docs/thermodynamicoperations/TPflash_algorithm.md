@@ -347,6 +347,7 @@ The following flowchart shows the complete two-phase flash algorithm as implemen
 | Post-removal aqueous recovery | `1e-8` in `max abs(Delta z_i)` and `max abs(Delta ln(f_i))` | Restore a balanced neutral two-phase aqueous reference only when a rejected third-phase trial leaves the same two-phase topology infeasible; a valid GAS↔OIL root transition, genuine three-phase result, or already feasible endpoint is retained |
 | Final aqueous active-set refinement | water feed `>= 0.01`, or an active aqueous split with `max abs(Delta z_i) > 1e-8`; at most 3 beta refinements; `1e-8` in phase normalization, `max abs(Delta z_i)`, and `max abs(Delta ln(f_i))` | Preserve the selected neutral two-phase active set while correcting stale beta/compositions after phase cleanup or root selection. Trace-water bypass does not run phase search. Roll back unless the result is feasible; also require no Gibbs increase when the reference material balance was valid. |
 | Missing aqueous phase after oil-endpoint cleanup | Explicit multiphase, neutral OIL or GAS+OIL endpoint, water feed `>= 0.05`, phase shifting allowed, no solid/wax check | On both the normal and stable-single-phase return paths, solve a balanced OIL+AQUEOUS trial on a clone. Rebuild inactive phase indices before adding a phase to a single-oil endpoint so the aqueous trial cannot alias the oil object. Adopt only an aqueous equilibrium with positive normalized phases, component balance and log-fugacity residuals within `1e-8`, and a Gibbs decrease exceeding `max(1e-6 J, 1e-8 abs(G))` relative to a valid incumbent; otherwise retain the original state. This is bounded active-set recovery, not a global stability certificate. |
+| Missing aqueous phase in wet gas-condensate (#4451) | Explicit multiphase, neutral GAS+OIL endpoint, water feed `> 1e-6`, phase shifting allowed, no solid/wax check | Before replacing a hydrocarbon phase, test pure liquid-water fugacity using one detached phase for usually undersaturated feeds, or reuse the full candidate clone when condensation is likely. Only water's fugacity coefficient is needed for this screen; Gibbs evaluation and equilibrium-residual scans are deferred. A vapour-pressure predictor selects allocation strategy only: the exact EOS log-fugacity excess above `1e-8` always determines whether to admit a balanced GAS+OIL+AQUEOUS seed. Rebuild its unused storage index, withdraw seed water from the existing phase inventories, and solve phase equilibrium. Adopt only a normalized, positive aqueous equilibrium with component balance and log-fugacity residuals below `1e-8`, and a molar Gibbs decrease exceeding `max(1e-8 J/mol, 1e-10 abs(G/n))` relative to a valid incumbent. The intensive tolerance avoids total-flow dependence; an unsuccessful trial leaves the existing oil/aqueous fallback available. |
 | Final neutral gas/oil equilibrium refinement | `1e-8 <= max abs(Delta ln(f_i)) <= 1e-5`; at most 8 SSI updates | Repair only balanced, near-converged vapor-liquid endpoints after post-convergence root handling. Preserve both phase types and roll back unless phase fractions, compositions, material balance, fugacity equality, and Gibbs energy pass the strict acceptance checks. |
 | Stalled three-phase active-set fallback | `1e-8` in phase normalization, material balance, and `max abs(Delta ln(f_i))` | For neutral non-reactive fluid phases only, evaluate each two-phase active set after a non-converged three-phase endpoint and accept the lowest-Gibbs feasible equilibrium only when it also lowers Gibbs energy relative to the stalled state. A pending solid check is preserved and runs after fluid recovery; active solid phases are excluded. |
 | Water-bearing single-phase-collapse screen | water feed `>= 0.01`, stored water `K < 1e-2`, and a non-water `K > 10` | Run one bounded ordinary-flash retry only after multiphase cleanup returns one phase with strong retained phase-preference evidence; accept only a balanced, distinct two-phase state that lowers extensive Gibbs energy beyond `max(1e-6 J, 1e-8 abs(G))` |
@@ -1803,6 +1804,28 @@ The Wilson K-based trials (Stage 1) run with only 50 iterations and catch the ma
 
 ---
 
+### 5.5 Wet-condensate aqueous-recovery cost
+
+The final aqueous-recovery screen for issue #4451 evaluates only water's fugacity coefficient on a
+single trial phase. It defers the incumbent Gibbs-energy evaluation, component-equilibrium residual
+scan and three-phase solve until the exact EOS water-fugacity test indicates supersaturation.
+Clearly undersaturated feeds usually need only one detached phase instead of a full system clone.
+When condensation is likely, the screen reuses the eventual candidate clone to avoid an additional
+phase copy. A conservative vapour-pressure predictor chooses this allocation strategy only; it
+never decides phase stability, and unavailable predictor data retain the detached-phase route.
+
+`TPflashWetCondensateAqueousRecoveryTest` checks that an undersaturated gas/oil endpoint needs no
+full-system clone or Gibbs evaluation and retains the original phase split. Normalization, component
+balance, fugacity equality and lower-Gibbs acceptance still qualify every recovered aqueous split.
+
+The manual `TPflashWetCondensateRecoveryBenchmark` compares dry and undersaturated screens,
+near-saturation and water-rich recovery, and the complete public TP flash. Run the same benchmark
+in separate JVMs with the before and after production classes first on the classpath. It reports
+median runtime and allocated bytes per operation, excludes fixture setup/restoration, checks the
+expected phase count, and accepts warmup, iteration and round counts through the `benchmark.warmup`,
+`benchmark.iterations` and `benchmark.rounds` system properties. Timing results are local
+measurements, not CI thresholds or guaranteed speedups for other fluids and machines.
+
 ## 6. State-of-the-Art Comparison and Recommendations
 
 ### 6.1 Current Position
@@ -1953,6 +1976,7 @@ Recommended regression coverage should include both numerical convergence and ph
 | CPA aqueous appearance | Ordinary and explicit-multiphase flashes above and below the water-fugacity screen, including aqueous fractions near `1e-6` | Same stable phase set, beta, phase compositions, properties, material balance, fugacity equality, and deterministic repeatability |
 | Multiphase cleanup | Cases with small beta phases and duplicate aqueous candidates | Removed phases preserve total composition and final mass balance |
 | Missing aqueous phase near a bubble point (#3955) | Public-API 23-component SRK/classic pump inlet; all 81 temperature/pressure cells from 11–31 °C and 1.8–5.0 bara; warm starts, repeats, aliased inactive phase slots, and phase-role lock | Retain AQUEOUS with normalized phases, `1e-8` component/fugacity closure, lower Gibbs energy on recovery, and positive pump work with less than 1 K temperature rise; preserve locked states |
+| Missing water in wet gas-condensate (#4451) | Public 26-component P/A PR78 E300 template plus water, water/HC ratios `0.02`, `50.6/237` and `97.95/237.04`, and HC flows from `1e-6` to `2.37e6 mol/s` at 15 °C and 1.01325 bara | Recover GAS+OIL+AQUEOUS from a supersaturated GAS+OIL endpoint, conserve each component within `1e-10`, close interphase log fugacity within `1e-8`, and agree with the cold public flash independently of total flow. Preserve dry/undersaturated controls, locked phase roles, and distinct active storage slots. |
 | Documentation drift | Algorithm doc parameter table versus source constants | Stale thresholds are detected during review |
 
 #### 6.4.1 Hydrogen-Rich Cubic-EOS Qualification
