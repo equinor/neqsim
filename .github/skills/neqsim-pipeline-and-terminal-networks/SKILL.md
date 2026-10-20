@@ -115,6 +115,12 @@ Its slope/high-flow/BEP diagnostics are curve heuristics, not an approved operat
 envelope or speed-extrapolation guard. `NetworkPumpOperatingStatusTest` covers
 same-edge speed/demand migration and restoration with affinity and host-power checks;
 it does not qualify the alternative spline map or the extrapolated lifecycle fixture.
+For `PumpChartAlternativeMapLookupExtrapolate`, BEP/status use the requested-speed
+absolute-flow efficiency surface, not default-chart Q/N scaling. The bounded 51-point
+global-flow scan is approximate and may extrapolate narrower individual curves; it is
+recomputed after mutable map updates. Keep its global-flow low/high heuristics separate
+from explicit qualified operating constraints. Same-graph regression evidence for this
+formalism does not qualify the lifecycle fixture, vendor maps or injectivity laws.
 For repeated quasi-steady field-to-host studies, reuse the live model and evaluator but
 sample constraints again after each reservoir boundary or host-limit update. The ten-well
 `FieldToFacilityOptimizationAcceptanceTest` exercises moving separator, scrubber and
