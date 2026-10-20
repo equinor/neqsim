@@ -217,12 +217,78 @@ Full-family experimental qualification and independent review of #4367 remain
 open despite the expanded diagnostic coverage; no legacy parameter, hydrate
 equation or tolerance is changed here.
 
+## Matched-temperature water and guest fugacity partition
+
+`CO2BrineHydrateMeasuredStateAssessmentTest` reuses the same source-audited
+110-point fixture without adding measurements or changing any recipe. At each
+original measured temperature and absolute pressure it independently calculates
+the actual brine and a salt-free CO2/water comparator, both with 1 kg water and
+10 mol CO2. The nonreactive electrolyte-CPA, mixing-rule-10 and native GF hydrate
+conventions are unchanged. The comparator contains dissolved CO2; it is not a
+CO2-free pure-liquid reference.
+
+Let `faq` and `fhyd` denote aqueous and hydrate water fugacity in bara. The
+dimensionless quantities are:
+
+- `R_brine = ln(faq_brine / fhyd_brine)`;
+- `R_water = ln(faq_water / fhyd_water)`;
+- `A = ln(faq_brine / faq_water)`;
+- `G = -ln(fhyd_brine / fhyd_water)`;
+- `R_brine = R_water + A + G`.
+
+At common T/P and hydrate structure the GF empty-lattice and pressure prefactor
+is shared, so G isolates the model's guest-fugacity/occupancy contrast. Structure
+indices are retained rather than silently assuming a common structure. A is a
+model aqueous-water fugacity contrast, not an independently measured salt-only
+water activity. R_water still combines neutral CO2/water and hydrate-reference
+limitations; this algebra does not uniquely identify a physically incorrect
+parameter or validate the shared hydrate reference. No residual is converted
+into an empirical temperature offset.
+
+The assessment also independently cold-repeats every brine and calculates its
+own native hydrate root from a 278.15 K search guess. It then cold-checks the
+fixed-state calculation at that root. This gives 440 fixed-state fluid checks
+plus 110 native root searches; no CSV from another producer is an input. The
+native `setFug()` reference initialization is followed by unit hydrate-water
+composition, matching the production temperature operation. A regression test
+deliberately substitutes the feed water fraction and verifies that the same
+root-consistency gate rejects that finite but invalid reference.
+
+The CSV retains all 110 pairs, the original measured T/P, independently
+calculated root temperature, raw water and CO2 guest fugacities, dissolved CO2
+mole fractions, selected structures, phase identity, original-feed/total and
+reconstructed closure, charge, molecular fugacity, normalization, ion leakage,
+phase trial distances, root residual, repeat difference and disposition. CO2
+mole fraction is not molality. Known measured inputs and any raw root
+temperature remain in full-width failed records. All outcomes are written
+before the final numerical assertion; an exception or numerical rejection
+cannot become accepted physical evidence.
+
+Frozen gates remain GAS+AQUEOUS, finite non-negative normalized fluid states,
+original-feed/total/reconstructed fractional closure <= 1e-10, charge <= 1e-10,
+molecular log-fugacity <= 1e-8, beta normalization <= 1e-12, composition
+normalization <= 1e-9 and nonaqueous ion fraction <= 1e-40. Identity closure and
+the independent cold repeat are <= 1e-12; native-root `1 - fhyd/faq` is <= 1e-6.
+Hydrate equality is intentionally not required at measured temperature: that
+residual is the diagnostic observable. No experimental-error pass band or
+small-G assertion is introduced.
+
+The prior [executed investigation](https://github.com/equinor/neqsim/issues/4234#issuecomment-6284035457)
+on master `9d6366f3af86ac79522a533b6c7da3696fc4b310` found structure I for
+all paired states, maximum absolute G about 6.65e-6 and maximum `abs(G/A)`
+about 7.68e-5 across 106 saline points. These are observed model-only contrasts,
+not physical qualification or frozen fitting targets. Na7K10/Na15K5 residuals
+remain negative and Ca20 positive. Independent mixed-brine activity/solubility
+evidence, complete joint neutral-parameter provenance and independent #4367
+review remain necessary before a physical correction. Existing seawater,
+ice/precipitation, kinetics and commercial-fluid exclusions still apply.
+
 ## Retained numerical evidence
 
 The Core Build, Test, and Javadoc workflow retains an
 `electrolyte-assessment-evidence-<shard>` artifact from every Java 21 slow-test
 shard, including after failed test runs. Download the artifacts from the same
-workflow run; the seven assessments may be distributed over different shards.
+workflow run; the eight assessments may be distributed over different shards.
 Surefire reports remain in their existing, separate artifacts.
 
 Each bundle includes a `manifest.json` and only the allowlisted assessment CSVs
@@ -237,6 +303,10 @@ produced by tests selected for that shard:
 | Burgass saturated and finite-inventory NaCl controls | 12 |
 | Carroll evaluated salt-free CO2, three setup constructions | 18 |
 | Full Dholabhai family, all supported measured recipes | 110 |
+| Matched measured-state aqueous/guest partition, same Dholabhai recipes | 110 |
+
+The combined bundle has 301 diagnostic rows, not 301 independent measurements.
+The two 110-row assessments deliberately use the same 110 measured endpoints.
 
 The manifest records the actual checkout commit separately from the GitHub
 event SHA and (when present) PR head SHA, run/attempt/shard context, selected
@@ -255,7 +325,7 @@ complete evidence. Outputs from unselected tests and unrelated files under
 `target/` are not collected.
 
 `selected_evidence_complete` applies only to the selected assessments in that
-shard, not the full seven-assessment matrix or the rest of CI. A shard with no selected
+shard, not the full eight-assessment matrix or the rest of CI. A shard with no selected
 assessment has a count of zero. Check every producer across all shards and the
 original test results before using a combined matrix. Every manifest keeps
 `qualification` as `not_assessed`: artifact retention and structural validation
