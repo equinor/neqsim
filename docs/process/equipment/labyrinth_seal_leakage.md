@@ -1,6 +1,6 @@
 ---
 title: Labyrinth Seal Leakage
-description: "Gas leakage through straight-through labyrinth seals with the Stodola, Egli, Vermes and Kearton correlations, using any NeqSim fluid."
+description: "Gas leakage through straight-through labyrinth seals with the Stodola, Egli, Vermes, Kearton and tooth-by-tooth Neumann methods, using any NeqSim fluid."
 ---
 
 # Labyrinth seal leakage
@@ -34,7 +34,7 @@ The leakage area is the annulus $A = \pi c (D + c)$.
 ## Methods
 
 The equations below use pressure in kPa. $p_0$ is the upstream pressure, $p_n$ the downstream pressure and
-$r = p_n/p_0$.
+$r = p_n/p_0$. The tooth-by-tooth `NEUMANN` method is described in its own section below.
 
 | `LabyrinthFlowMethod` | Mass flow |
 |---|---|
@@ -51,7 +51,7 @@ The Egli coefficients are:
 
 Egli is not defined near $n = 4.3$, where $C_t$ is singular.
 
-Each result is capped at the critical flow of the clearance:
+Each closed-form result is capped at the critical flow of the clearance:
 
 $$
 \dot m_{crit} = A\sqrt{1000\,\rho_0 p_0\,\kappa\left(\frac{2}{\kappa+1}\right)^{(\kappa+1)/(\kappa-1)}}
@@ -64,6 +64,50 @@ The Kearton equation peaks at a pressure ratio $r^*(n)$ that depends only on the
 as the backpressure falls. Physically, the last tooth is choked there, so lowering the backpressure further cannot
 change the flow. NeqSim therefore holds Kearton at its peak value below $r^*$ and reports `isChoked()`. For Kearton,
 the critical flow is the lower of the clearance limit above and this peak.
+
+## Neumann (tooth by tooth)
+
+`NEUMANN` is the modified Neumann method for teeth on the stator. It solves the pressure after each tooth instead of
+using one closed-form expression. For a trial flow $\dot m$ (pressures in Pa):
+
+$$
+p_{i+1}^2 = p_i^2 - \left(\frac{\dot m}{C_{f,i}\,\mu_i A}\right)^2 \frac{p_i}{\rho_i}
+$$
+
+$$
+C_{f,i} = \frac{\pi}{\pi + 2 - 5\beta_i + 2\beta_i^2}, \qquad
+\beta_i = \max\left[\left(\frac{p_i}{p_{i+1}}\right)^{(\kappa_i-1)/\kappa_i} - 1,\ 0\right]
+$$
+
+$$
+\mu_0 = 1, \qquad \mu_{i>0} = \sqrt{\frac{n}{n(1-\alpha)+\alpha}}, \qquad \alpha = 1 - \frac{1}{(1 + 16.6\,c/t)^2}
+$$
+
+- $C_{f,i}$ depends on $p_{i+1}$, so each tooth is solved by fixed-point iteration.
+- After each tooth, the gas is flashed at constant inlet enthalpy (PH flash). This gives $T_{i+1}$, $\rho_{i+1}$ and
+  $\kappa_{i+1}$ for the next tooth.
+- The leakage is the flow for which the pressure after the last tooth equals the outlet pressure. It is found with a
+  Brent root search, seeded with the Kearton flow.
+- A tooth chokes when $p_{i+1}$ would fall below $p_i\,(2/(\kappa_i+1))^{\kappa_i/(\kappa_i-1)}$. If the outlet
+  pressure cannot be reached without a tooth choking, the leakage is the largest flow at which no tooth chokes, and
+  `isChoked()` is true.
+
+The tooth profile is available after the calculation:
+
+- `getToothPressures(unit)`: $n+1$ pressures, from the inlet to after the last tooth.
+- `getToothTemperatures(unit)`: the matching temperatures.
+- `getToothDensities()`: the matching gas densities in kg/m3.
+
+These arrays are empty for the other methods.
+
+Choose the fluid with run time in mind. Each Neumann calculation needs roughly $8n$ to $10n$ PH flashes. With a cubic
+EOS a calculation takes well under a second. For GERG-2008 fluids with a single-phase inlet, the calculator uses
+NeqSim's dedicated `PHflashGERG2008`, and a five-tooth seal takes about half a minute with a 14-component gas. If liquid
+is present at the inlet, the gas phase alone is expanded.
+
+For Neumann, `getCriticalMassFlowRate(unit)` is the largest flow at which no tooth chokes. When the leakage is not
+choked, this value is found by a separate search on the first request (including from `toJson()`), which costs more
+flashes.
 
 ## Validity range
 
@@ -110,13 +154,19 @@ double standardFlow = calc.getStandardVolumeFlowRate("Sm3/hr");
 boolean choked = calc.isChoked();
 boolean inRange = calc.isWithinValidityRange();   // reasons in calc.getValidityViolations()
 Map<LabyrinthFlowMethod, Double> allMethodsKgPerSec = calc.calculateAllMethods();
+
+calc.setMethod(LabyrinthFlowMethod.NEUMANN);
+calc.calculate();
+double neumannKgPerHour = calc.getMassFlowRate("kg/hr");
+double[] toothPressuresBarg = calc.getToothPressures("barg");   // inlet, after tooth 1, ..., after tooth 5
+double[] toothTemperaturesC = calc.getToothTemperatures("C");
 ```
 
 Other outputs:
 
 - `getActualVolumeFlowRate(unit)`: volume flow at inlet conditions.
 - `getClearanceVelocity(unit)`: mean velocity in the clearance, based on inlet density.
-- `getCriticalMassFlowRate(unit)`: the critical-flow cap.
+- `getCriticalMassFlowRate(unit)`: the critical-flow cap; for Neumann, the largest non-choking flow.
 - `hasLiquidAtInlet()`: true when the inlet flash finds liquid; gas-phase properties are then used.
 - `toJson()`: summary of inputs and results.
 
@@ -134,20 +184,34 @@ Twenty-two reference cases from a GERG-2008 VBA leakage workbook cover:
 - pressures up to 50 barg
 - pure methane and pure nitrogen
 
-With a `SystemGERG2008Eos` fluid, every single-phase case agrees within $2\times10^{-5}$ relative. The remaining
-offset comes from the component molar masses used by the NeqSim GERG-2008 phase. SRK and PR fluids agree within
-0.1 % for a lean gas at low pressure.
+With a `SystemGERG2008Eos` fluid, the four closed-form methods agree within $2\times10^{-5}$ relative for every
+single-phase case. The remaining offset comes from the component molar masses used by the NeqSim GERG-2008 phase. SRK
+and PR fluids agree within 0.1 % for a lean gas at low pressure.
 
 There is one deliberate exception. Two cases are below the Kearton peak ratio: two teeth vented to atmosphere, and
 three teeth at a pressure ratio of 0.03. The workbook keeps the falling Kearton equation there. NeqSim holds the choked
 peak and is 3.1 % and 9.3 % higher, respectively.
+
+The Neumann method agrees within 0.021 % for every single-phase case with an SRK fluid, and within 0.005 % for the
+worked case with GERG-2008. The workbook finds the temperature after each tooth with a 0.05 % secant tolerance, lets
+the reference enthalpy drift, and stops its flow iteration after 11 passes. NeqSim uses exact PH flashes and a
+converged root.
+
+The workbook returns errors in two situations where NeqSim gives a result:
+
+- choked cases, where NeqSim reports the choked flow;
+- Vermes when $n + \ln r \le 0$.
+
+When water condenses at the inlet, NeqSim uses only the gas phase, while the workbook treats the fluid as single-phase
+gas. Neumann leakage is then 2 to 5 % lower.
 
 ## Limitations
 
 - These are empirical correlations for straight-through labyrinths with teeth on the stator. Expect a
   spread of tens of percent between methods; use the spread as a measure of model uncertainty.
 - Rotation, eccentricity, stepped or interlocking geometry and honeycomb lands are not modelled.
-- Properties are evaluated at the inlet only.
+- Properties for the closed-form methods are evaluated at the inlet only. Neumann follows the isenthalpic expansion
+  tooth by tooth.
 
 ## Related
 
