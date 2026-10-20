@@ -1,6 +1,6 @@
 ---
 name: neqsim-version-bump-decision
-description: "Use when deciding whether a NeqSim project version request should be a patch or minor release. Classifies fixes, refactors, and additive features; checks Java serialization compatibility. Major-version decisions remain manual."
+description: "USE WHEN: deciding whether a NeqSim project version request should be a patch or minor release. Classifies fixes, refactors, and additive features; checks Java serialization compatibility. Major-version decisions remain manual."
 ---
 
 # NeqSim Version Bump Decision
