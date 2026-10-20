@@ -167,10 +167,15 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     assertFalse(calc.hasLiquidAtInlet());
   }
 
-  /** The four closed-form methods reproduce the workbook over the whole single-phase sweep. */
+  /**
+   * The four closed-form methods reproduce the workbook over the whole single-phase sweep. Below the Kearton peak
+   * pressure ratio the workbook keeps falling while NeqSim holds the choked peak, so those Kearton cases must be higher
+   * than the workbook instead.
+   */
   @Test
   void closedFormMethodsMatchWorkbookAcrossSweep() {
     List<String> failures = new ArrayList<String>();
+    List<String> keartonChokedCases = new ArrayList<String>();
     int compared = 0;
     for (JsonElement element : REFERENCE.getAsJsonArray("cases")) {
       JsonObject testCase = element.getAsJsonObject();
@@ -179,12 +184,23 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
       if (calc.hasLiquidAtInlet()) {
         continue;
       }
+      JsonObject in = testCase.getAsJsonObject("inputs");
+      double ratio = (in.get("outlet_pressure_barg").getAsDouble() + 1.01325)
+          / (in.get("inlet_pressure_barg").getAsDouble() + 1.01325);
+      boolean belowKeartonPeak = ratio < LabyrinthSealFlowCalculator
+          .keartonCriticalPressureRatio(in.get("number_of_teeth").getAsInt());
       for (LabyrinthFlowMethod method : CLOSED_FORM) {
         double expected = excelFlow(testCase, method);
         if (Double.isNaN(expected)) {
           continue;
         }
         compared++;
+        if (method == LabyrinthFlowMethod.KEARTON && belowKeartonPeak) {
+          keartonChokedCases.add(testCase.get("id").getAsString());
+          assertTrue(calc.isChoked(), testCase.get("id").getAsString());
+          assertTrue(flows.get(method) > expected, testCase.get("id").getAsString());
+          continue;
+        }
         double relativeError = Math.abs(flows.get(method) - expected) / expected;
         if (!(relativeError <= WORKBOOK_TOLERANCE)) {
           failures.add(testCase.get("id").getAsString() + "/" + method + " rel.err=" + relativeError);
@@ -193,6 +209,7 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     }
     assertTrue(failures.isEmpty(), "Workbook mismatches: " + failures);
     assertTrue(compared >= 4 * 15, "Too few single-phase cases compared: " + compared);
+    assertEquals(2, keartonChokedCases.size(), "Kearton cases below the peak ratio: " + keartonChokedCases);
   }
 
   /** Vermes chokes for two teeth vented to atmosphere; the result is then the critical flow. */
@@ -472,5 +489,113 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     JsonObject parsed = JsonParser.parseString(undefinedJson).getAsJsonObject();
     assertTrue(parsed.get("massFlowRate_kg_s").isJsonNull());
     assertFalse(parsed.get("withinValidityRange").getAsBoolean());
+  }
+
+  /**
+   * Builds the reviewer's methane case: SRK, inlet 3.77825 bara and 86.12 C, worked geometry with n teeth.
+   *
+   * @param teeth number of teeth
+   * @param pressureRatio outlet to inlet absolute pressure ratio
+   * @param method flow method
+   * @return configured calculator (not yet run)
+   */
+  private static LabyrinthSealFlowCalculator methaneCase(int teeth, double pressureRatio, LabyrinthFlowMethod method) {
+    SystemInterface methane = new SystemSrkEos(288.15, 1.01325);
+    methane.addComponent("methane", 1.0);
+    methane.setMixingRule("classic");
+    LabyrinthSealGeometry geometry = geometry(referenceCase("worked_case"));
+    geometry.setNumberOfTeeth(teeth);
+    LabyrinthSealFlowCalculator calc = new LabyrinthSealFlowCalculator(methane, geometry);
+    calc.setInletPressure(3.77825, "bara");
+    calc.setInletTemperature(86.12, "C");
+    calc.setOutletPressure(3.77825 * pressureRatio, "bara");
+    calc.setMethod(method);
+    return calc;
+  }
+
+  /** The Kearton peak pressure ratio depends only on the number of teeth and falls as teeth are added. */
+  @Test
+  void keartonPeakPressureRatioDependsOnTeeth() {
+    assertEquals(1.0 / Math.sqrt(3.0), LabyrinthSealFlowCalculator.keartonCriticalPressureRatio(1), 1.0e-6);
+    assertEquals(0.4262, LabyrinthSealFlowCalculator.keartonCriticalPressureRatio(2), 1.0e-4);
+    assertEquals(0.2637, LabyrinthSealFlowCalculator.keartonCriticalPressureRatio(5), 1.0e-4);
+    assertEquals(0.1233, LabyrinthSealFlowCalculator.keartonCriticalPressureRatio(20), 1.0e-4);
+  }
+
+  /**
+   * Leakage never falls as backpressure falls, for every method, with two and five teeth (review: Kearton turnover).
+   * Below the Kearton peak ratio Kearton reports choked flow equal to the peak value.
+   */
+  @Test
+  void leakageIsMonotonicInBackpressureAcrossTurnover() {
+    double[] ratios = {0.9, 0.7, 0.5, 0.43, 0.4, 0.3, 0.26, 0.2, 0.1, 0.05};
+    List<String> failures = new ArrayList<String>();
+    for (int teeth : new int[] {2, 5}) {
+      double peakRatio = LabyrinthSealFlowCalculator.keartonCriticalPressureRatio(teeth);
+      LabyrinthSealFlowCalculator atPeak = methaneCase(teeth, peakRatio, LabyrinthFlowMethod.KEARTON);
+      atPeak.calculate();
+      double peakFlow = atPeak.getMassFlowRate("kg/sec");
+      for (LabyrinthFlowMethod method : LabyrinthFlowMethod.values()) {
+        double previous = 0.0;
+        for (double ratio : ratios) {
+          LabyrinthSealFlowCalculator calc = methaneCase(teeth, ratio, method);
+          calc.calculate();
+          double flow = calc.getMassFlowRate("kg/sec");
+          String id = method + " n=" + teeth + " r=" + ratio;
+          if (!(flow >= previous * (1.0 - 1.0e-9))) {
+            failures.add(id + " flow " + flow + " < previous " + previous);
+          }
+          if (!calc.isWithinValidityRange()) {
+            failures.add(id + " " + calc.getValidityViolations());
+          }
+          if (method == LabyrinthFlowMethod.KEARTON && ratio < peakRatio) {
+            if (!calc.isChoked()) {
+              failures.add(id + " below the peak ratio but not choked");
+            }
+            if (Math.abs(flow - Math.min(peakFlow, calc.getCriticalMassFlowRate("kg/sec"))) > 1.0e-12) {
+              failures.add(id + " flow " + flow + " differs from peak " + peakFlow);
+            }
+          }
+          previous = flow;
+        }
+      }
+    }
+    assertTrue(failures.isEmpty(), failures.toString());
+  }
+
+  /** Reviewer's reproduction: two teeth, pn/p0 0.3 to 0.1 must not reduce Kearton leakage. */
+  @Test
+  void keartonDoesNotFallWithBackpressureForReviewerCase() {
+    LabyrinthSealFlowCalculator higher = methaneCase(2, 0.3, LabyrinthFlowMethod.KEARTON);
+    higher.calculate();
+    LabyrinthSealFlowCalculator lower = methaneCase(2, 0.1, LabyrinthFlowMethod.KEARTON);
+    lower.calculate();
+    assertTrue(higher.isChoked());
+    assertTrue(lower.isChoked());
+    assertEquals(higher.getMassFlowRate("kg/sec"), lower.getMassFlowRate("kg/sec"), 1.0e-12);
+    assertTrue(lower.getMassFlowRate("kg/sec") > 0.0353487483);
+  }
+
+  /** Invalid standard conditions are rejected and leave the previous standard conditions unchanged (review). */
+  @Test
+  void invalidStandardConditionsAreRejectedAtomically() {
+    LabyrinthSealFlowCalculator calc = methaneCase(5, 0.5, LabyrinthFlowMethod.KEARTON);
+    calc.calculate();
+    double reference = calc.getStandardVolumeFlowRate("Sm3/hr");
+    assertTrue(Double.isFinite(reference) && reference > 0.0);
+
+    Object[][] rejected = {{15.0, "C", 0.0, "bara"}, {15.0, "C", -1.0, "bara"}, {15.0, "C", Double.NaN, "bara"},
+        {15.0, "C", Double.POSITIVE_INFINITY, "bara"}, {-273.15, "C", 1.01325, "bara"}, {-10.0, "K", 1.01325, "bara"},
+        {Double.NaN, "C", 1.01325, "bara"}, {Double.POSITIVE_INFINITY, "C", 1.01325, "bara"},
+        {0.0, "C", 1.0, "invalid"}, {0.0, "invalid", 1.0, "bara"}};
+    for (Object[] args : rejected) {
+      assertThrows(IllegalArgumentException.class,
+          () -> calc.setStandardConditions((Double) args[0], (String) args[1], (Double) args[2], (String) args[3]),
+          java.util.Arrays.toString(args));
+      assertEquals(reference, calc.getStandardVolumeFlowRate("Sm3/hr"), 1.0e-12, java.util.Arrays.toString(args));
+    }
+
+    calc.setStandardConditions(0.0, "C", 1.01325, "bara");
+    assertEquals(reference * 273.15 / 288.15, calc.getStandardVolumeFlowRate("Sm3/hr"), 1.0e-9 * reference);
   }
 }
