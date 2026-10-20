@@ -42,13 +42,15 @@ import neqsim.util.unit.TemperatureUnit;
  * {@code u = sqrt(1/(1 - alpha))}, {@code alpha = 8.52/((t - b)/c + 7.23)}</li>
  * <li>Kearton: {@code m = Ck 0.71 A sqrt(1000 p0 rho) sqrt(F (1 - r^2)/n)} with
  * {@code Ck = 1 + 3.27 (1 - exp(-0.4 n)) (c/t)^(2/3)} and F the mean tooth pressure ratio of the profile
- * {@code p_i = sqrt(p0^2 - (i/n)(p0^2 - pn^2))}</li>
+ * {@code p_i = sqrt(p0^2 - (i/n)(p0^2 - pn^2))}. The equation peaks at a pressure ratio r*(n) that depends only on the
+ * number of teeth (0.43 for two teeth, 0.26 for five); below r* the last tooth is choked and the leakage is held at the
+ * peak instead of falling with the backpressure</li>
  * </ul>
  *
  * <p>
  * Each result is limited to the critical flow of the clearance, {@code m_crit = A sqrt(1000 rho p0 k phi)} with
- * {@code phi = (2/(k+1))^((k+1)/(k-1))} (Egli uses the equivalent form {@code A rho sqrt(1000 R T/M) sqrt(k phi)}).
- * {@link #isChoked()} reports when the cap is active.
+ * {@code phi = (2/(k+1))^((k+1)/(k-1))} (Egli uses the equivalent form {@code A rho sqrt(1000 R T/M) sqrt(k phi)}); for
+ * Kearton the limit is the lower of this and the Kearton peak. {@link #isChoked()} reports when a limit is active.
  * </p>
  *
  * <p>
@@ -217,16 +219,29 @@ public class LabyrinthSealFlowCalculator implements Serializable {
 
   /**
    * Sets the standard conditions used by {@link #getStandardVolumeFlowRate(String)}. The default is 15 C and 1.01325
-   * bara.
+   * bara. Both values are validated before either is stored, so a rejected call leaves the previous conditions
+   * unchanged.
    *
    * @param temperature standard temperature
    * @param temperatureUnit temperature unit
    * @param pressure standard pressure
    * @param pressureUnit pressure unit
+   * @throws IllegalArgumentException for an unsupported unit, or a temperature or absolute pressure that is not finite
+   * and positive
    */
   public void setStandardConditions(double temperature, String temperatureUnit, double pressure, String pressureUnit) {
-    standardTemperatureK = new TemperatureUnit(temperature, temperatureUnit).getValue("K");
-    standardPressureBara = new PressureUnit(pressure, pressureUnit).getValue("bara");
+    double temperatureK = new TemperatureUnit(temperature, temperatureUnit).getValue("K");
+    double pressureBara = new PressureUnit(pressure, pressureUnit).getValue("bara");
+    if (!isPositiveFinite(temperatureK)) {
+      throw new IllegalArgumentException(
+          "Standard temperature must be finite and above 0 K, got " + temperature + " " + temperatureUnit);
+    }
+    if (!isPositiveFinite(pressureBara)) {
+      throw new IllegalArgumentException(
+          "Standard pressure must be finite and above 0 bara, got " + pressure + " " + pressureUnit);
+    }
+    standardTemperatureK = temperatureK;
+    standardPressureBara = pressureBara;
   }
 
   /**
@@ -332,7 +347,8 @@ public class LabyrinthSealFlowCalculator implements Serializable {
    *
    * @param flowMethod flow method
    * @param violations list receiving validity violations, each prefixed with the method name
-   * @return array {uncapped mass flow, critical mass flow} in kg/s
+   * @return array {uncapped mass flow, critical mass flow} in kg/s, with an optional third element above zero when the
+   * method itself has detected choking (Kearton below its peak pressure ratio)
    */
   private double[] computeFlows(LabyrinthFlowMethod flowMethod, List<String> violations) {
     double p0 = inletPressureBara * 100.0;
@@ -396,18 +412,15 @@ public class LabyrinthSealFlowCalculator implements Serializable {
       return new double[] {m, orificeCriticalFlow};
     }
     case KEARTON: {
-      double previous = p0;
-      double sumRatio = 0.0;
-      for (int i = 1; i <= n; i++) {
-        double current = Math.sqrt(p0 * p0 - ((double) i / n) * (p0 * p0 - pn * pn));
-        sumRatio += current / previous;
-        previous = current;
+      double prefix = CARRY_OVER_COEFFICIENT * area * Math.sqrt(1000.0 * p0 * inletDensity)
+          * (1.0 + 3.27 * (1.0 - Math.exp(-0.4 * n)) * Math.pow(clearance / pitch, 2.0 / 3.0));
+      double peakRatio = keartonCriticalPressureRatio(n);
+      double peakFlow = prefix * keartonPressureFactor(peakRatio, n);
+      double critical = Math.min(orificeCriticalFlow, peakFlow);
+      if (ratio < peakRatio) {
+        return new double[] {peakFlow, critical, 1.0};
       }
-      double meanRatio = sumRatio / n;
-      double kearton = 1.0 + 3.27 * (1.0 - Math.exp(-0.4 * n)) * Math.pow(clearance / pitch, 2.0 / 3.0);
-      double m = kearton * CARRY_OVER_COEFFICIENT * area * Math.sqrt(1000.0 * p0 * inletDensity)
-          * Math.sqrt(meanRatio * (1.0 - ratio * ratio) / n);
-      return new double[] {m, orificeCriticalFlow};
+      return new double[] {prefix * keartonPressureFactor(ratio, n), critical};
     }
     default:
       throw new IllegalStateException("Unsupported labyrinth flow method " + flowMethod);
@@ -442,6 +455,50 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   }
 
   /**
+   * Kearton pressure factor {@code sqrt(F (1 - r^2) / n)}, where F is the mean tooth pressure ratio of the profile
+   * {@code p_i/p_0 = sqrt(1 - (i/n)(1 - r^2))}.
+   *
+   * @param ratio outlet to inlet absolute pressure ratio
+   * @param n number of teeth
+   * @return pressure factor
+   */
+  private static double keartonPressureFactor(double ratio, int n) {
+    double previous = 1.0;
+    double sumRatio = 0.0;
+    for (int i = 1; i <= n; i++) {
+      double current = Math.sqrt(1.0 - ((double) i / n) * (1.0 - ratio * ratio));
+      sumRatio += current / previous;
+      previous = current;
+    }
+    return Math.sqrt(sumRatio / n * (1.0 - ratio * ratio) / n);
+  }
+
+  /**
+   * Returns the pressure ratio at which the Kearton equation has its maximum leakage. Below this ratio the equation
+   * would predict less leakage as the backpressure falls; physically the last tooth is choked and the leakage stays at
+   * the peak, which is how {@link LabyrinthFlowMethod#KEARTON} is evaluated. The ratio depends only on the number of
+   * teeth (for one tooth it is 1/sqrt(3)).
+   *
+   * @param n number of teeth, at least 1
+   * @return peak outlet to inlet absolute pressure ratio
+   */
+  static double keartonCriticalPressureRatio(int n) {
+    double lower = 0.0;
+    double upper = 1.0;
+    double inverseGolden = (Math.sqrt(5.0) - 1.0) / 2.0;
+    while (upper - lower > 1.0e-12) {
+      double left = upper - inverseGolden * (upper - lower);
+      double right = lower + inverseGolden * (upper - lower);
+      if (keartonPressureFactor(left, n) < keartonPressureFactor(right, n)) {
+        lower = left;
+      } else {
+        upper = right;
+      }
+    }
+    return 0.5 * (lower + upper);
+  }
+
+  /**
    * Stores the capped result of a method. A negative or NaN uncapped flow is never published.
    *
    * @param flowMethod flow method
@@ -457,9 +514,10 @@ public class LabyrinthSealFlowCalculator implements Serializable {
       }
       uncapped = Double.NaN;
     }
+    boolean chokedByMethod = flows.length > 2 && flows[2] > 0.0;
     criticalMassFlowKgPerSec = flows[1];
-    choked = uncapped > flows[1];
-    massFlowKgPerSec = choked ? flows[1] : uncapped;
+    choked = chokedByMethod || uncapped > flows[1];
+    massFlowKgPerSec = choked ? Math.min(uncapped, flows[1]) : uncapped;
     calculated = true;
   }
 

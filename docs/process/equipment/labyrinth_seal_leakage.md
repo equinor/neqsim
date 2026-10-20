@@ -59,6 +59,12 @@ $$
 
 `isChoked()` reports when the cap is active. For Vermes, the flow is also treated as choked when $n + \ln r \le 0$.
 
+The Kearton equation peaks at a pressure ratio $r^*(n)$ that depends only on the number of teeth: 0.58 for one tooth
+($1/\sqrt{3}$), 0.43 for two, 0.26 for five and 0.12 for twenty. Below $r^*$ the equation would predict less leakage
+as the backpressure falls. Physically, the last tooth is choked there, so lowering the backpressure further cannot
+change the flow. NeqSim therefore holds Kearton at its peak value below $r^*$ and reports `isChoked()`. For Kearton,
+the critical flow is the lower of the clearance limit above and this peak.
+
 ## Validity range
 
 Range problems never throw; this is the same convention the differential-pressure flow meters use. Some
@@ -115,7 +121,8 @@ Other outputs:
 - `toJson()`: summary of inputs and results.
 
 Standard volumes are ideal-gas volumes at 15 °C and 1.01325 bara by default. Change them with
-`setStandardConditions(...)`.
+`setStandardConditions(...)`. That method requires a finite, positive absolute temperature and pressure. It checks both
+before storing either, so a rejected call leaves the previous conditions unchanged.
 
 ## Validation
 
@@ -130,6 +137,10 @@ Twenty-two reference cases from a GERG-2008 VBA leakage workbook cover:
 With a `SystemGERG2008Eos` fluid, every single-phase case agrees within $2\times10^{-5}$ relative. The remaining
 offset comes from the component molar masses used by the NeqSim GERG-2008 phase. SRK and PR fluids agree within
 0.1 % for a lean gas at low pressure.
+
+There is one deliberate exception. Two cases are below the Kearton peak ratio: two teeth vented to atmosphere, and
+three teeth at a pressure ratio of 0.03. The workbook keeps the falling Kearton equation there. NeqSim holds the choked
+peak and is 3.1 % and 9.3 % higher, respectively.
 
 ## Limitations
 
