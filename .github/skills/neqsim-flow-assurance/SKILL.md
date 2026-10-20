@@ -747,6 +747,15 @@ for (double qgMSm3d : gasRates) {
 > intuitive reading. Full OLGA-side workflow in the community
 > `neqsim-olga-multiphase-simulator` skill.
 >
+> **Check three-phase PVT keyword semantics.** Use `RS = gas mass/(gas + oil
+> mass)`, excluding the separate aqueous phase. At standard conditions, use
+> `GLR = gas volume/(oil + water volume)` and `WC = water volume/(oil + water
+> volume)`; never copy GOR into GLR for a wet fluid. Omit optional multicomponent
+> bubble headers rather than exporting failed or inappropriate wet-fluid roots.
+> Regenerate older tables after the issue #4478 corrections; see
+> `docs/integration/olga_pvt_table_generation.md` for the no-liquid conventions
+> and required pure-component saturation validation.
+>
 > **Never build a volumetric phase fraction from `phase.getVolume()`.** With a
 > Peneloux volume shift active it disagrees with `getDensity()` by the shift —
 > +16.6% for oil and +31.7% for water on a typical SRK three-phase system, while
