@@ -1,8 +1,11 @@
 package neqsim.process.equipment.compressor.seal;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,6 +52,14 @@ import neqsim.util.unit.TemperatureUnit;
  * </p>
  *
  * <p>
+ * Range problems follow the convention of the differential-pressure flow meters: they never throw. When a correlation
+ * is mathematically undefined for the geometry (a non-positive Egli coefficient, or a Vermes residual-energy factor of
+ * one or more), that method returns NaN and the reason is listed by {@link #getValidityViolations()};
+ * {@link #isWithinValidityRange()} is then false. Invalid inputs (missing values, outlet pressure not below inlet
+ * pressure) still throw.
+ * </p>
+ *
+ * <p>
  * Typical use:
  * </p>
  *
@@ -92,6 +103,7 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   private double inletKappa = Double.NaN;
   private double inletCompressibility = Double.NaN;
   private boolean liquidAtInlet = false;
+  private final List<String> validityViolations = new ArrayList<String>();
 
   /**
    * Creates a calculator.
@@ -108,11 +120,11 @@ public class LabyrinthSealFlowCalculator implements Serializable {
       throw new IllegalArgumentException("A LabyrinthSealGeometry is required");
     }
     this.fluid = fluid.clone();
-    this.geometry = geometry;
+    this.geometry = new LabyrinthSealGeometry(geometry);
   }
 
   /**
-   * Replaces the seal geometry.
+   * Replaces the seal geometry. The geometry is copied, so later changes to the argument do not affect the calculator.
    *
    * @param geometry seal geometry
    * @throws IllegalArgumentException if the geometry is null
@@ -121,17 +133,17 @@ public class LabyrinthSealFlowCalculator implements Serializable {
     if (geometry == null) {
       throw new IllegalArgumentException("A LabyrinthSealGeometry is required");
     }
-    this.geometry = geometry;
+    this.geometry = new LabyrinthSealGeometry(geometry);
     calculated = false;
   }
 
   /**
-   * Returns the seal geometry.
+   * Returns a copy of the seal geometry. Change the geometry with {@link #setGeometry(LabyrinthSealGeometry)}.
    *
-   * @return seal geometry
+   * @return copy of the seal geometry
    */
   public LabyrinthSealGeometry getGeometry() {
-    return geometry;
+    return new LabyrinthSealGeometry(geometry);
   }
 
   /**
@@ -313,10 +325,16 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   /**
    * Computes the uncapped mass flow and the critical mass flow for a method from the stored inlet properties.
    *
+   * <p>
+   * When the correlation is mathematically undefined for the geometry (a non-positive Egli coefficient or a Vermes
+   * residual-energy factor of one or more), the uncapped flow is NaN and a message is added to {@code violations}.
+   * </p>
+   *
    * @param flowMethod flow method
+   * @param violations list receiving validity violations, each prefixed with the method name
    * @return array {uncapped mass flow, critical mass flow} in kg/s
    */
-  private double[] computeFlows(LabyrinthFlowMethod flowMethod) {
+  private double[] computeFlows(LabyrinthFlowMethod flowMethod, List<String> violations) {
     double p0 = inletPressureBara * 100.0;
     double pn = resolvedOutletPressureBara() * 100.0;
     double ratio = pn / p0;
@@ -348,12 +366,25 @@ public class LabyrinthSealFlowCalculator implements Serializable {
       }
       double carryOver = 1.0 + x1 * (clearance / pitch - x2 * Math.log(1.0 + clearance / pitch)) / (1.0 - x2);
       double velocityScale = Math.sqrt(1000.0 * ThermodynamicConstantsInterface.R * inletTemperatureK / inletMolarMass);
-      double m = area * contraction * throttling * carryOver * inletDensity * velocityScale;
       double critical = area * inletDensity * velocityScale * criticalFactor;
+      if (!isPositiveFinite(contraction) || !isPositiveFinite(throttling) || !isPositiveFinite(carryOver)) {
+        violations.add(String.format(Locale.ROOT,
+            "EGLI: coefficients outside correlation range (contraction %.4g, throttling %.4g, carry-over %.4g; "
+                + "c/t = %.4g, c/b = %.4g, n = %d); no leakage reported",
+            contraction, throttling, carryOver, clearance / pitch, clearance / tip, n));
+        return new double[] {Double.NaN, critical};
+      }
+      double m = area * contraction * throttling * carryOver * inletDensity * velocityScale;
       return new double[] {m, critical};
     }
     case VERMES: {
       double alpha = 8.52 / ((pitch - tip) / clearance + 7.23);
+      if (!(alpha > 0.0 && alpha < 1.0)) {
+        violations.add(String.format(Locale.ROOT,
+            "VERMES: residual-energy factor alpha = %.4g outside 0 to 1 ((t - b)/c = %.4g); no leakage reported", alpha,
+            (pitch - tip) / clearance));
+        return new double[] {Double.NaN, orificeCriticalFlow};
+      }
       double carryOver = Math.sqrt(1.0 / (1.0 - alpha));
       double denominator = n + Math.log(ratio);
       if (denominator <= 0.0) {
@@ -386,29 +417,59 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   /**
    * Runs the selected method.
    *
+   * <p>
+   * Range problems do not throw: when the method is undefined for the geometry the mass flow is NaN and the reason is
+   * available from {@link #getValidityViolations()}.
+   * </p>
+   *
    * @throws IllegalStateException if inputs are missing or inconsistent, or there is no gas at the inlet
    */
   public void calculate() {
     validateInputs();
     evaluateInletProperties();
-    applyMethod(method);
+    validityViolations.clear();
+    applyMethod(method, validityViolations);
   }
 
   /**
-   * Stores the capped result of a method.
+   * Returns true when the value is finite and above zero.
+   *
+   * @param value value to check
+   * @return true for a finite positive value
+   */
+  private static boolean isPositiveFinite(double value) {
+    return value > 0.0 && !Double.isInfinite(value);
+  }
+
+  /**
+   * Stores the capped result of a method. A negative or NaN uncapped flow is never published.
    *
    * @param flowMethod flow method
+   * @param violations list receiving validity violations
    */
-  private void applyMethod(LabyrinthFlowMethod flowMethod) {
-    double[] flows = computeFlows(flowMethod);
+  private void applyMethod(LabyrinthFlowMethod flowMethod, List<String> violations) {
+    int before = violations.size();
+    double[] flows = computeFlows(flowMethod, violations);
+    double uncapped = flows[0];
+    if (!(uncapped >= 0.0)) {
+      if (violations.size() == before) {
+        violations.add(flowMethod.name() + ": correlation returned " + uncapped + "; no leakage reported");
+      }
+      uncapped = Double.NaN;
+    }
     criticalMassFlowKgPerSec = flows[1];
-    choked = flows[0] > flows[1];
-    massFlowKgPerSec = choked ? flows[1] : flows[0];
+    choked = uncapped > flows[1];
+    massFlowKgPerSec = choked ? flows[1] : uncapped;
     calculated = true;
   }
 
   /**
    * Runs every method on the same inlet state. The calculator keeps the results of the selected method afterwards.
+   *
+   * <p>
+   * Every method has a key in the map. A method that is undefined for the geometry maps to NaN and its reason is listed
+   * by {@link #getValidityViolations()}, which after this call covers all methods.
+   * </p>
    *
    * @return mass flow in kg/s for each method
    * @throws IllegalStateException if inputs are missing or inconsistent, or there is no gas at the inlet
@@ -416,13 +477,34 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   public Map<LabyrinthFlowMethod, Double> calculateAllMethods() {
     validateInputs();
     evaluateInletProperties();
+    validityViolations.clear();
     Map<LabyrinthFlowMethod, Double> flows = new EnumMap<LabyrinthFlowMethod, Double>(LabyrinthFlowMethod.class);
     for (LabyrinthFlowMethod candidate : LabyrinthFlowMethod.values()) {
-      applyMethod(candidate);
+      applyMethod(candidate, validityViolations);
       flows.put(candidate, massFlowKgPerSec);
     }
-    applyMethod(method);
+    applyMethod(method, new ArrayList<String>());
     return flows;
+  }
+
+  /**
+   * Lists why methods evaluated by the last {@link #calculate()} or {@link #calculateAllMethods()} call are outside
+   * their correlation range. Each entry starts with the method name.
+   *
+   * @return copy of the list of violations, empty when every evaluated method is within range
+   */
+  public List<String> getValidityViolations() {
+    requireResult();
+    return new ArrayList<String>(validityViolations);
+  }
+
+  /**
+   * Returns whether every method evaluated by the last calculation is within its correlation range.
+   *
+   * @return true when {@link #getValidityViolations()} is empty
+   */
+  public boolean isWithinValidityRange() {
+    return getValidityViolations().isEmpty();
   }
 
   /**
@@ -619,7 +701,7 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   }
 
   /**
-   * Returns the inputs and results as a JSON object.
+   * Returns the inputs and results as a strict JSON object. Undefined (NaN or infinite) numbers are written as null.
    *
    * @return JSON string
    */
@@ -627,24 +709,36 @@ public class LabyrinthSealFlowCalculator implements Serializable {
     requireResult();
     Map<String, Object> map = new LinkedHashMap<String, Object>();
     map.put("method", method.name());
-    map.put("massFlowRate_kg_s", massFlowKgPerSec);
-    map.put("massFlowRate_kg_hr", getMassFlowRate("kg/hr"));
-    map.put("criticalMassFlowRate_kg_s", criticalMassFlowKgPerSec);
+    map.put("massFlowRate_kg_s", finiteOrNull(massFlowKgPerSec));
+    map.put("massFlowRate_kg_hr", finiteOrNull(getMassFlowRate("kg/hr")));
+    map.put("criticalMassFlowRate_kg_s", finiteOrNull(criticalMassFlowKgPerSec));
     map.put("choked", choked);
-    map.put("actualVolumeFlowRate_m3_hr", getActualVolumeFlowRate("m3/hr"));
-    map.put("standardVolumeFlowRate_Sm3_hr", getStandardVolumeFlowRate("Sm3/hr"));
-    map.put("clearanceVelocity_m_s", getClearanceVelocity("m/s"));
-    map.put("inletPressure_bara", inletPressureBara);
-    map.put("inletTemperature_C", inletTemperatureK - 273.15);
-    map.put("outletPressure_bara", resolvedOutletPressureBara());
-    map.put("pressureDrop_bar", getPressureDrop("bar"));
-    map.put("inletDensity_kg_m3", inletDensity);
-    map.put("inletMolarMass_kg_kmol", inletMolarMass);
-    map.put("inletIsentropicExponent", inletKappa);
-    map.put("inletCompressibility", inletCompressibility);
+    map.put("withinValidityRange", validityViolations.isEmpty());
+    map.put("validityViolations", new ArrayList<String>(validityViolations));
+    map.put("actualVolumeFlowRate_m3_hr", finiteOrNull(getActualVolumeFlowRate("m3/hr")));
+    map.put("standardVolumeFlowRate_Sm3_hr", finiteOrNull(getStandardVolumeFlowRate("Sm3/hr")));
+    map.put("clearanceVelocity_m_s", finiteOrNull(getClearanceVelocity("m/s")));
+    map.put("inletPressure_bara", finiteOrNull(inletPressureBara));
+    map.put("inletTemperature_C", finiteOrNull(inletTemperatureK - 273.15));
+    map.put("outletPressure_bara", finiteOrNull(resolvedOutletPressureBara()));
+    map.put("pressureDrop_bar", finiteOrNull(getPressureDrop("bar")));
+    map.put("inletDensity_kg_m3", finiteOrNull(inletDensity));
+    map.put("inletMolarMass_kg_kmol", finiteOrNull(inletMolarMass));
+    map.put("inletIsentropicExponent", finiteOrNull(inletKappa));
+    map.put("inletCompressibility", finiteOrNull(inletCompressibility));
     map.put("liquidAtInlet", liquidAtInlet);
     map.put("eos", fluid.getModelName());
     map.put("geometry", geometry.toMap());
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(map);
+    return new GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(map);
+  }
+
+  /**
+   * Boxes a finite value, or returns null for NaN and infinity so the JSON stays strict.
+   *
+   * @param value value to box
+   * @return boxed value, or null when not finite
+   */
+  private static Double finiteOrNull(double value) {
+    return Double.isNaN(value) || Double.isInfinite(value) ? null : Double.valueOf(value);
   }
 }

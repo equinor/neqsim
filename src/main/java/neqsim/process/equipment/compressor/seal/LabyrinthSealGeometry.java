@@ -41,6 +41,24 @@ public class LabyrinthSealGeometry implements Serializable {
   }
 
   /**
+   * Creates an independent copy of another geometry.
+   *
+   * @param other geometry to copy
+   * @throws IllegalArgumentException if other is null
+   */
+  public LabyrinthSealGeometry(LabyrinthSealGeometry other) {
+    if (other == null) {
+      throw new IllegalArgumentException("Geometry to copy must not be null");
+    }
+    this.shaftDiameter = other.shaftDiameter;
+    this.toothHeight = other.toothHeight;
+    this.toothPitch = other.toothPitch;
+    this.tipWidth = other.tipWidth;
+    this.radialClearance = other.radialClearance;
+    this.numberOfTeeth = other.numberOfTeeth;
+  }
+
+  /**
    * Converts a positive length to metres.
    *
    * @param value length value
@@ -270,18 +288,31 @@ public class LabyrinthSealGeometry implements Serializable {
   }
 
   /**
-   * Returns the geometry as an ordered map in millimetres for reporting.
+   * Returns the geometry as an ordered map in millimetres for reporting. Unset dimensions are omitted.
    *
    * @return map of dimension name to value
    */
   public Map<String, Object> toMap() {
     Map<String, Object> map = new LinkedHashMap<String, Object>();
-    map.put("shaftDiameter_mm", shaftDiameter * 1000.0);
-    map.put("toothHeight_mm", toothHeight * 1000.0);
-    map.put("toothPitch_mm", toothPitch * 1000.0);
-    map.put("tipWidth_mm", tipWidth * 1000.0);
-    map.put("radialClearance_mm", radialClearance * 1000.0);
+    putIfSet(map, "shaftDiameter_mm", shaftDiameter);
+    putIfSet(map, "toothHeight_mm", toothHeight);
+    putIfSet(map, "toothPitch_mm", toothPitch);
+    putIfSet(map, "tipWidth_mm", tipWidth);
+    putIfSet(map, "radialClearance_mm", radialClearance);
     map.put("numberOfTeeth", numberOfTeeth);
     return map;
+  }
+
+  /**
+   * Adds a dimension in millimetres to the map when it is set.
+   *
+   * @param map target map
+   * @param key map key
+   * @param metres dimension in metres, NaN when unset
+   */
+  private static void putIfSet(Map<String, Object> map, String key, double metres) {
+    if (!Double.isNaN(metres)) {
+      map.put(key, metres * 1000.0);
+    }
   }
 }

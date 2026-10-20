@@ -59,6 +59,22 @@ $$
 
 `isChoked()` reports when the cap is active. For Vermes, the flow is also treated as choked when $n + \ln r \le 0$.
 
+## Validity range
+
+Range problems never throw; this is the same convention the differential-pressure flow meters use. Some
+geometries are outside a correlation's mathematical range:
+
+- Egli with a contraction, throttling or carry-over coefficient that is not positive (for example $c/t = 0.5$ with
+  five teeth).
+- Vermes with a residual-energy factor $\alpha \ge 1$ (tip width close to the pitch).
+
+For these, the method returns `NaN` instead of a negative or meaningless leakage. `getValidityViolations()` lists the
+reason, prefixed by the method name, and `isWithinValidityRange()` returns `false`. `calculateAllMethods()` still
+returns every method, with `NaN` for the undefined ones. `toJson()` writes undefined numbers as `null`.
+
+Invalid inputs still throw. These include missing values, an outlet pressure that is not below the inlet pressure,
+and non-positive dimensions.
+
 ## Example
 
 ```java
@@ -86,6 +102,7 @@ calc.calculate();
 double leakageKgPerHour = calc.getMassFlowRate("kg/hr");
 double standardFlow = calc.getStandardVolumeFlowRate("Sm3/hr");
 boolean choked = calc.isChoked();
+boolean inRange = calc.isWithinValidityRange();   // reasons in calc.getValidityViolations()
 Map<LabyrinthFlowMethod, Double> allMethodsKgPerSec = calc.calculateAllMethods();
 ```
 

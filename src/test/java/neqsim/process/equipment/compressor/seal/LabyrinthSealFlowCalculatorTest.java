@@ -423,8 +423,8 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
 
     Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
     assertTrue(Double.isNaN(all.get(LabyrinthFlowMethod.EGLI)));
-    for (LabyrinthFlowMethod other : new LabyrinthFlowMethod[] {LabyrinthFlowMethod.STODOLA,
-        LabyrinthFlowMethod.VERMES, LabyrinthFlowMethod.KEARTON}) {
+    for (LabyrinthFlowMethod other : new LabyrinthFlowMethod[] {LabyrinthFlowMethod.STODOLA, LabyrinthFlowMethod.VERMES,
+        LabyrinthFlowMethod.KEARTON}) {
       assertTrue(all.get(other) > 0.0 && !Double.isInfinite(all.get(other)), other.name());
     }
   }

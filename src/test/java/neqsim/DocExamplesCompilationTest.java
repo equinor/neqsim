@@ -2362,8 +2362,10 @@ public class DocExamplesCompilationTest {
     double leakageKgPerHour = calc.getMassFlowRate("kg/hr");
     double standardFlow = calc.getStandardVolumeFlowRate("Sm3/hr");
     boolean choked = calc.isChoked();
+    boolean inRange = calc.isWithinValidityRange();
     Map<LabyrinthFlowMethod, Double> allMethodsKgPerSec = calc.calculateAllMethods();
 
+    assertTrue(inRange, calc.getValidityViolations().toString());
     assertTrue(leakageKgPerHour > 50.0 && leakageKgPerHour < 150.0, "leakage " + leakageKgPerHour);
     assertTrue(standardFlow > 0.0);
     assertFalse(choked);
