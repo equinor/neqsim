@@ -50,6 +50,17 @@ Supplied oxygen is the demand multiplied by one plus the caller-supplied excess-
 Dry-air flow follows from the supplied dry-air oxygen mole fraction; nitrogen is inert in this
 screening receipt.
 
+The dry-flue-gas molar closure accounts for the gas-phase mole change of partial carbon oxidation:
+
+\[
+n_{\mathrm{dry\ flue}} = n_{\mathrm{dry\ air}} + \frac{1}{2}n_{CO}
+= n_{CO_2} + n_{CO} + n_{O_2,\mathrm{excess}} + n_{N_2}.
+\]
+
+Solid carbon is not added directly to a gas-phase molar balance. Complete oxidation to carbon
+dioxide replaces one mole of oxygen with one mole of carbon dioxide, while carbon-monoxide
+formation consumes half a mole of oxygen and creates one mole of carbon monoxide.
+
 ## Java example
 
 ```java
