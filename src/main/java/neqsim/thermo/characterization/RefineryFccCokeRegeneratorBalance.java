@@ -7,10 +7,9 @@ import java.util.Objects;
  * Immutable screening-level FCC coke-regenerator carbon and dry-flue-gas balance.
  *
  * <p>
- * The calculation applies caller-owned coke carbon, burn, carbon-dioxide selectivity, dry-air
- * oxygen, and excess-oxygen assumptions to a qualified FCC yield receipt. It is a stoichiometric
- * allocation, not a regenerator heat balance, catalyst model, emissions compliance calculation,
- * or flue-gas property model.
+ * The calculation applies caller-owned coke carbon, burn, carbon-dioxide selectivity, dry-air oxygen, and excess-oxygen
+ * assumptions to a qualified FCC yield receipt. It is a stoichiometric allocation, not a regenerator heat balance,
+ * catalyst model, emissions compliance calculation, or flue-gas property model.
  *
  * @author esolbr1
  * @version 1.0
@@ -48,17 +47,14 @@ public final class RefineryFccCokeRegeneratorBalance implements Serializable {
   private final double oxygenBalanceResidualKmolPerHour;
   private final double dryGasMolarBalanceResidualKmolPerHour;
 
-  private RefineryFccCokeRegeneratorBalance(RefineryFccYieldBalance fccYieldBalance,
-      double cokeCarbonMassFraction, double cokeBurnFraction,
-      double burnedCarbonToCarbonDioxideFraction, double dryAirOxygenMoleFraction,
-      double excessOxygenFraction, double cokeCarbonMassFlowKgPerHour,
-      double nonCarbonCokeMassFlowKgPerHour, double burnedCarbonMassFlowKgPerHour,
-      double remainingCarbonMassFlowKgPerHour, double carbonDioxideMolarFlowKmolPerHour,
-      double carbonMonoxideMolarFlowKmolPerHour,
-      double stoichiometricOxygenDemandKmolPerHour, double suppliedOxygenKmolPerHour,
-      double dryAirMolarFlowKmolPerHour, double nitrogenMolarFlowKmolPerHour,
-      double excessOxygenMolarFlowKmolPerHour, double carbonDioxideMassFlowKgPerHour,
-      double carbonMonoxideMassFlowKgPerHour, double dryAirMassFlowKgPerHour,
+  private RefineryFccCokeRegeneratorBalance(RefineryFccYieldBalance fccYieldBalance, double cokeCarbonMassFraction,
+      double cokeBurnFraction, double burnedCarbonToCarbonDioxideFraction, double dryAirOxygenMoleFraction,
+      double excessOxygenFraction, double cokeCarbonMassFlowKgPerHour, double nonCarbonCokeMassFlowKgPerHour,
+      double burnedCarbonMassFlowKgPerHour, double remainingCarbonMassFlowKgPerHour,
+      double carbonDioxideMolarFlowKmolPerHour, double carbonMonoxideMolarFlowKmolPerHour,
+      double stoichiometricOxygenDemandKmolPerHour, double suppliedOxygenKmolPerHour, double dryAirMolarFlowKmolPerHour,
+      double nitrogenMolarFlowKmolPerHour, double excessOxygenMolarFlowKmolPerHour,
+      double carbonDioxideMassFlowKgPerHour, double carbonMonoxideMassFlowKgPerHour, double dryAirMassFlowKgPerHour,
       double dryFlueGasMassFlowKgPerHour, double carbonBalanceResidualKgPerHour,
       double oxygenBalanceResidualKmolPerHour, double dryGasMolarBalanceResidualKmolPerHour) {
     this.fccYieldBalance = fccYieldBalance;
@@ -95,27 +91,22 @@ public final class RefineryFccCokeRegeneratorBalance implements Serializable {
    * @param cokeBurnFraction fraction of coke carbon burned, in [0, 1]
    * @param burnedCarbonToCarbonDioxideFraction fraction of burned carbon forming CO2, in [0, 1]
    * @param dryAirOxygenMoleFraction oxygen mole fraction in dry air, in (0, 1)
-   * @param excessOxygenFraction supplied oxygen above stoichiometric demand as a fraction of
-   *        demand
+   * @param excessOxygenFraction supplied oxygen above stoichiometric demand as a fraction of demand
    * @return immutable FCC coke-regenerator receipt
    */
-  public static RefineryFccCokeRegeneratorBalance calculate(
-      RefineryFccYieldBalance fccYieldBalance, double cokeCarbonMassFraction,
-      double cokeBurnFraction, double burnedCarbonToCarbonDioxideFraction,
+  public static RefineryFccCokeRegeneratorBalance calculate(RefineryFccYieldBalance fccYieldBalance,
+      double cokeCarbonMassFraction, double cokeBurnFraction, double burnedCarbonToCarbonDioxideFraction,
       double dryAirOxygenMoleFraction, double excessOxygenFraction) {
     Objects.requireNonNull(fccYieldBalance, "fccYieldBalance");
     requireUnitFraction(cokeCarbonMassFraction, "cokeCarbonMassFraction");
     requireUnitFraction(cokeBurnFraction, "cokeBurnFraction");
-    requireUnitFraction(burnedCarbonToCarbonDioxideFraction,
-        "burnedCarbonToCarbonDioxideFraction");
+    requireUnitFraction(burnedCarbonToCarbonDioxideFraction, "burnedCarbonToCarbonDioxideFraction");
     if (!Double.isFinite(dryAirOxygenMoleFraction) || dryAirOxygenMoleFraction <= 0.0
         || dryAirOxygenMoleFraction >= 1.0) {
-      throw new IllegalArgumentException(
-          "dryAirOxygenMoleFraction must be finite and in (0, 1)");
+      throw new IllegalArgumentException("dryAirOxygenMoleFraction must be finite and in (0, 1)");
     }
     if (!Double.isFinite(excessOxygenFraction) || excessOxygenFraction < 0.0) {
-      throw new IllegalArgumentException(
-          "excessOxygenFraction must be finite and non-negative");
+      throw new IllegalArgumentException("excessOxygenFraction must be finite and non-negative");
     }
 
     double cokeMassFlow = fccYieldBalance.getCokeMassFlowKgPerHour();
@@ -125,54 +116,42 @@ public final class RefineryFccCokeRegeneratorBalance implements Serializable {
     double remainingCarbonMassFlow = cokeCarbonMassFlow - burnedCarbonMassFlow;
     double burnedCarbonKmol = burnedCarbonMassFlow / CARBON_MOLAR_MASS_KG_PER_KMOL;
     double carbonDioxideKmol = burnedCarbonKmol * burnedCarbonToCarbonDioxideFraction;
-    double carbonMonoxideKmol =
-        burnedCarbonKmol - carbonDioxideKmol;
-    double stoichiometricOxygenDemandKmol =
-        carbonDioxideKmol + 0.5 * carbonMonoxideKmol;
-    double suppliedOxygenKmol =
-        stoichiometricOxygenDemandKmol * (1.0 + excessOxygenFraction);
+    double carbonMonoxideKmol = burnedCarbonKmol - carbonDioxideKmol;
+    double stoichiometricOxygenDemandKmol = carbonDioxideKmol + 0.5 * carbonMonoxideKmol;
+    double suppliedOxygenKmol = stoichiometricOxygenDemandKmol * (1.0 + excessOxygenFraction);
     double dryAirKmol = suppliedOxygenKmol / dryAirOxygenMoleFraction;
     double nitrogenKmol = dryAirKmol - suppliedOxygenKmol;
     double excessOxygenKmol = suppliedOxygenKmol - stoichiometricOxygenDemandKmol;
-    double carbonDioxideMassFlow =
-        carbonDioxideKmol * CARBON_DIOXIDE_MOLAR_MASS_KG_PER_KMOL;
-    double carbonMonoxideMassFlow =
-        carbonMonoxideKmol * CARBON_MONOXIDE_MOLAR_MASS_KG_PER_KMOL;
+    double carbonDioxideMassFlow = carbonDioxideKmol * CARBON_DIOXIDE_MOLAR_MASS_KG_PER_KMOL;
+    double carbonMonoxideMassFlow = carbonMonoxideKmol * CARBON_MONOXIDE_MOLAR_MASS_KG_PER_KMOL;
     double dryAirMassFlow = suppliedOxygenKmol * OXYGEN_MOLAR_MASS_KG_PER_KMOL
         + nitrogenKmol * NITROGEN_MOLAR_MASS_KG_PER_KMOL;
     double dryFlueGasMassFlow = carbonDioxideMassFlow + carbonMonoxideMassFlow
-        + excessOxygenKmol * OXYGEN_MOLAR_MASS_KG_PER_KMOL
-        + nitrogenKmol * NITROGEN_MOLAR_MASS_KG_PER_KMOL;
+        + excessOxygenKmol * OXYGEN_MOLAR_MASS_KG_PER_KMOL + nitrogenKmol * NITROGEN_MOLAR_MASS_KG_PER_KMOL;
     double carbonBalanceResidual = cokeCarbonMassFlow
-        - (carbonDioxideKmol + carbonMonoxideKmol) * CARBON_MOLAR_MASS_KG_PER_KMOL
-        - remainingCarbonMassFlow;
-    double oxygenBalanceResidual = suppliedOxygenKmol - carbonDioxideKmol
-        - 0.5 * carbonMonoxideKmol - excessOxygenKmol;
-    double dryGasMolarBalanceResidual = dryAirKmol + burnedCarbonKmol
-        - carbonDioxideKmol - carbonMonoxideKmol - excessOxygenKmol - nitrogenKmol;
+        - (carbonDioxideKmol + carbonMonoxideKmol) * CARBON_MOLAR_MASS_KG_PER_KMOL - remainingCarbonMassFlow;
+    double oxygenBalanceResidual = suppliedOxygenKmol - carbonDioxideKmol - 0.5 * carbonMonoxideKmol - excessOxygenKmol;
+    double dryGasMolarBalanceResidual = dryAirKmol + burnedCarbonKmol - carbonDioxideKmol - carbonMonoxideKmol
+        - excessOxygenKmol - nitrogenKmol;
 
-    if (!allFiniteNonNegative(cokeCarbonMassFlow, nonCarbonCokeMassFlow,
-        burnedCarbonMassFlow, remainingCarbonMassFlow, carbonDioxideKmol,
-        carbonMonoxideKmol, stoichiometricOxygenDemandKmol, suppliedOxygenKmol,
-        dryAirKmol, nitrogenKmol, excessOxygenKmol, carbonDioxideMassFlow,
-        carbonMonoxideMassFlow, dryAirMassFlow, dryFlueGasMassFlow)) {
+    if (!allFiniteNonNegative(cokeCarbonMassFlow, nonCarbonCokeMassFlow, burnedCarbonMassFlow, remainingCarbonMassFlow,
+        carbonDioxideKmol, carbonMonoxideKmol, stoichiometricOxygenDemandKmol, suppliedOxygenKmol, dryAirKmol,
+        nitrogenKmol, excessOxygenKmol, carbonDioxideMassFlow, carbonMonoxideMassFlow, dryAirMassFlow,
+        dryFlueGasMassFlow)) {
       throw new IllegalArgumentException("inputs do not define a finite FCC regenerator balance");
     }
     double tolerance = 1.0e-12 * Math.max(1.0, cokeMassFlow);
-    if (Math.abs(carbonBalanceResidual) > tolerance
-        || Math.abs(oxygenBalanceResidual) > tolerance
+    if (Math.abs(carbonBalanceResidual) > tolerance || Math.abs(oxygenBalanceResidual) > tolerance
         || Math.abs(dryGasMolarBalanceResidual) > tolerance) {
       throw new IllegalArgumentException("FCC regenerator balance does not close");
     }
 
-    return new RefineryFccCokeRegeneratorBalance(fccYieldBalance, cokeCarbonMassFraction,
-        cokeBurnFraction, burnedCarbonToCarbonDioxideFraction, dryAirOxygenMoleFraction,
-        excessOxygenFraction, cokeCarbonMassFlow, nonCarbonCokeMassFlow,
-        burnedCarbonMassFlow, remainingCarbonMassFlow, carbonDioxideKmol,
-        carbonMonoxideKmol, stoichiometricOxygenDemandKmol, suppliedOxygenKmol,
-        dryAirKmol, nitrogenKmol, excessOxygenKmol, carbonDioxideMassFlow,
-        carbonMonoxideMassFlow, dryAirMassFlow, dryFlueGasMassFlow,
-        carbonBalanceResidual, oxygenBalanceResidual, dryGasMolarBalanceResidual);
+    return new RefineryFccCokeRegeneratorBalance(fccYieldBalance, cokeCarbonMassFraction, cokeBurnFraction,
+        burnedCarbonToCarbonDioxideFraction, dryAirOxygenMoleFraction, excessOxygenFraction, cokeCarbonMassFlow,
+        nonCarbonCokeMassFlow, burnedCarbonMassFlow, remainingCarbonMassFlow, carbonDioxideKmol, carbonMonoxideKmol,
+        stoichiometricOxygenDemandKmol, suppliedOxygenKmol, dryAirKmol, nitrogenKmol, excessOxygenKmol,
+        carbonDioxideMassFlow, carbonMonoxideMassFlow, dryAirMassFlow, dryFlueGasMassFlow, carbonBalanceResidual,
+        oxygenBalanceResidual, dryGasMolarBalanceResidual);
   }
 
   /**

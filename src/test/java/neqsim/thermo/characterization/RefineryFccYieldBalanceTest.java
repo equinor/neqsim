@@ -11,8 +11,7 @@ class RefineryFccYieldBalanceTest {
 
   @Test
   void calculatesFiveLumpYieldAndUnconvertedOilBalance() {
-    RefineryFccYieldBalance result =
-        RefineryFccYieldBalance.calculate(1000.0, 0.75, 0.05, 0.15, 0.50, 0.20, 0.10);
+    RefineryFccYieldBalance result = RefineryFccYieldBalance.calculate(1000.0, 0.75, 0.05, 0.15, 0.50, 0.20, 0.10);
 
     assertEquals(750.0, result.getConvertedFeedMassFlowKgPerHour(), TOLERANCE);
     assertEquals(250.0, result.getUnconvertedOilMassFlowKgPerHour(), TOLERANCE);
@@ -29,10 +28,10 @@ class RefineryFccYieldBalanceTest {
 
   @Test
   void acceptsLimitingConversionCases() {
-    RefineryFccYieldBalance zeroConversion =
-        RefineryFccYieldBalance.calculate(100.0, 0.0, 0.05, 0.15, 0.50, 0.20, 0.10);
-    RefineryFccYieldBalance fullConversion =
-        RefineryFccYieldBalance.calculate(100.0, 1.0, 0.05, 0.15, 0.50, 0.20, 0.10);
+    RefineryFccYieldBalance zeroConversion = RefineryFccYieldBalance.calculate(100.0, 0.0, 0.05, 0.15, 0.50, 0.20,
+        0.10);
+    RefineryFccYieldBalance fullConversion = RefineryFccYieldBalance.calculate(100.0, 1.0, 0.05, 0.15, 0.50, 0.20,
+        0.10);
 
     assertEquals(100.0, zeroConversion.getUnconvertedOilMassFlowKgPerHour(), TOLERANCE);
     assertEquals(0.0, zeroConversion.getCokeMassFlowKgPerHour(), TOLERANCE);
@@ -45,10 +44,8 @@ class RefineryFccYieldBalanceTest {
     assertThrows(IllegalArgumentException.class,
         () -> RefineryFccYieldBalance.calculate(0.0, 0.75, 0.05, 0.15, 0.50, 0.20, 0.10));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryFccYieldBalance.calculate(1000.0, 1.01, 0.05, 0.15, 0.50, 0.20,
-            0.10));
+        () -> RefineryFccYieldBalance.calculate(1000.0, 1.01, 0.05, 0.15, 0.50, 0.20, 0.10));
     assertThrows(IllegalArgumentException.class,
-        () -> RefineryFccYieldBalance.calculate(1000.0, 0.75, 0.05, 0.15, 0.50, 0.20,
-            0.09));
+        () -> RefineryFccYieldBalance.calculate(1000.0, 0.75, 0.05, 0.15, 0.50, 0.20, 0.09));
   }
 }

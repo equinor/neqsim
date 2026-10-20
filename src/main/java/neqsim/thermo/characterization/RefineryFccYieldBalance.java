@@ -6,10 +6,9 @@ import java.io.Serializable;
  * Immutable screening-level fluid catalytic cracking product-yield balance.
  *
  * <p>
- * The calculation converts a caller-selected fraction of a hydrocarbon feed and allocates the
- * converted feed among dry gas, liquefied petroleum gas, gasoline, light cycle oil, and coke. It
- * is an algebraic scenario receipt, not a kinetic, riser, catalyst, deactivation, fractionation,
- * or product-property model.
+ * The calculation converts a caller-selected fraction of a hydrocarbon feed and allocates the converted feed among dry
+ * gas, liquefied petroleum gas, gasoline, light cycle oil, and coke. It is an algebraic scenario receipt, not a
+ * kinetic, riser, catalyst, deactivation, fractionation, or product-property model.
  *
  * @author esolbr1
  * @version 1.0
@@ -38,22 +37,18 @@ public final class RefineryFccYieldBalance implements Serializable {
   private final double overallMassBalanceResidualKgPerHour;
 
   private RefineryFccYieldBalance(double feedMassFlowKgPerHour, double conversionFraction,
-      double dryGasMassFractionOfConvertedFeed,
-      double liquefiedPetroleumGasMassFractionOfConvertedFeed,
-      double gasolineMassFractionOfConvertedFeed,
-      double lightCycleOilMassFractionOfConvertedFeed, double cokeMassFractionOfConvertedFeed,
-      double convertedFeedMassFlowKgPerHour, double unconvertedOilMassFlowKgPerHour,
-      double dryGasMassFlowKgPerHour, double liquefiedPetroleumGasMassFlowKgPerHour,
-      double gasolineMassFlowKgPerHour, double lightCycleOilMassFlowKgPerHour,
-      double cokeMassFlowKgPerHour, double totalProductMassFlowKgPerHour,
-      double feedConversionBalanceResidualKgPerHour,
-      double convertedProductMassBalanceResidualKgPerHour,
+      double dryGasMassFractionOfConvertedFeed, double liquefiedPetroleumGasMassFractionOfConvertedFeed,
+      double gasolineMassFractionOfConvertedFeed, double lightCycleOilMassFractionOfConvertedFeed,
+      double cokeMassFractionOfConvertedFeed, double convertedFeedMassFlowKgPerHour,
+      double unconvertedOilMassFlowKgPerHour, double dryGasMassFlowKgPerHour,
+      double liquefiedPetroleumGasMassFlowKgPerHour, double gasolineMassFlowKgPerHour,
+      double lightCycleOilMassFlowKgPerHour, double cokeMassFlowKgPerHour, double totalProductMassFlowKgPerHour,
+      double feedConversionBalanceResidualKgPerHour, double convertedProductMassBalanceResidualKgPerHour,
       double overallMassBalanceResidualKgPerHour) {
     this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
     this.conversionFraction = conversionFraction;
     this.dryGasMassFractionOfConvertedFeed = dryGasMassFractionOfConvertedFeed;
-    this.liquefiedPetroleumGasMassFractionOfConvertedFeed =
-        liquefiedPetroleumGasMassFractionOfConvertedFeed;
+    this.liquefiedPetroleumGasMassFractionOfConvertedFeed = liquefiedPetroleumGasMassFractionOfConvertedFeed;
     this.gasolineMassFractionOfConvertedFeed = gasolineMassFractionOfConvertedFeed;
     this.lightCycleOilMassFractionOfConvertedFeed = lightCycleOilMassFractionOfConvertedFeed;
     this.cokeMassFractionOfConvertedFeed = cokeMassFractionOfConvertedFeed;
@@ -66,8 +61,7 @@ public final class RefineryFccYieldBalance implements Serializable {
     this.cokeMassFlowKgPerHour = cokeMassFlowKgPerHour;
     this.totalProductMassFlowKgPerHour = totalProductMassFlowKgPerHour;
     this.feedConversionBalanceResidualKgPerHour = feedConversionBalanceResidualKgPerHour;
-    this.convertedProductMassBalanceResidualKgPerHour =
-        convertedProductMassBalanceResidualKgPerHour;
+    this.convertedProductMassBalanceResidualKgPerHour = convertedProductMassBalanceResidualKgPerHour;
     this.overallMassBalanceResidualKgPerHour = overallMassBalanceResidualKgPerHour;
   }
 
@@ -83,28 +77,22 @@ public final class RefineryFccYieldBalance implements Serializable {
    * @param cokeMassFractionOfConvertedFeed coke fraction of converted feed
    * @return immutable FCC yield receipt
    */
-  public static RefineryFccYieldBalance calculate(double feedMassFlowKgPerHour,
-      double conversionFraction, double dryGasMassFractionOfConvertedFeed,
-      double liquefiedPetroleumGasMassFractionOfConvertedFeed,
-      double gasolineMassFractionOfConvertedFeed,
-      double lightCycleOilMassFractionOfConvertedFeed,
+  public static RefineryFccYieldBalance calculate(double feedMassFlowKgPerHour, double conversionFraction,
+      double dryGasMassFractionOfConvertedFeed, double liquefiedPetroleumGasMassFractionOfConvertedFeed,
+      double gasolineMassFractionOfConvertedFeed, double lightCycleOilMassFractionOfConvertedFeed,
       double cokeMassFractionOfConvertedFeed) {
     if (!Double.isFinite(feedMassFlowKgPerHour) || feedMassFlowKgPerHour <= 0.0) {
       throw new IllegalArgumentException("feedMassFlowKgPerHour must be finite and positive");
     }
-    if (!Double.isFinite(conversionFraction) || conversionFraction < 0.0
-        || conversionFraction > 1.0) {
+    if (!Double.isFinite(conversionFraction) || conversionFraction < 0.0 || conversionFraction > 1.0) {
       throw new IllegalArgumentException("conversionFraction must be finite and in [0, 1]");
     }
-    if (!allFiniteNonNegative(dryGasMassFractionOfConvertedFeed,
-        liquefiedPetroleumGasMassFractionOfConvertedFeed,
+    if (!allFiniteNonNegative(dryGasMassFractionOfConvertedFeed, liquefiedPetroleumGasMassFractionOfConvertedFeed,
         gasolineMassFractionOfConvertedFeed, lightCycleOilMassFractionOfConvertedFeed,
         cokeMassFractionOfConvertedFeed)) {
-      throw new IllegalArgumentException(
-          "converted-feed product fractions must be finite and non-negative");
+      throw new IllegalArgumentException("converted-feed product fractions must be finite and non-negative");
     }
-    double fractionSum = dryGasMassFractionOfConvertedFeed
-        + liquefiedPetroleumGasMassFractionOfConvertedFeed
+    double fractionSum = dryGasMassFractionOfConvertedFeed + liquefiedPetroleumGasMassFractionOfConvertedFeed
         + gasolineMassFractionOfConvertedFeed + lightCycleOilMassFractionOfConvertedFeed
         + cokeMassFractionOfConvertedFeed;
     if (Math.abs(fractionSum - 1.0) > FRACTION_TOLERANCE) {
@@ -112,39 +100,29 @@ public final class RefineryFccYieldBalance implements Serializable {
     }
 
     double convertedFeedMassFlowKgPerHour = feedMassFlowKgPerHour * conversionFraction;
-    double unconvertedOilMassFlowKgPerHour =
-        feedMassFlowKgPerHour - convertedFeedMassFlowKgPerHour;
-    double dryGasMassFlowKgPerHour =
-        convertedFeedMassFlowKgPerHour * dryGasMassFractionOfConvertedFeed;
+    double unconvertedOilMassFlowKgPerHour = feedMassFlowKgPerHour - convertedFeedMassFlowKgPerHour;
+    double dryGasMassFlowKgPerHour = convertedFeedMassFlowKgPerHour * dryGasMassFractionOfConvertedFeed;
     double liquefiedPetroleumGasMassFlowKgPerHour = convertedFeedMassFlowKgPerHour
         * liquefiedPetroleumGasMassFractionOfConvertedFeed;
-    double gasolineMassFlowKgPerHour =
-        convertedFeedMassFlowKgPerHour * gasolineMassFractionOfConvertedFeed;
-    double lightCycleOilMassFlowKgPerHour =
-        convertedFeedMassFlowKgPerHour * lightCycleOilMassFractionOfConvertedFeed;
-    double cokeMassFlowKgPerHour =
-        convertedFeedMassFlowKgPerHour * cokeMassFractionOfConvertedFeed;
-    double convertedProductsMassFlowKgPerHour = dryGasMassFlowKgPerHour
-        + liquefiedPetroleumGasMassFlowKgPerHour + gasolineMassFlowKgPerHour
-        + lightCycleOilMassFlowKgPerHour + cokeMassFlowKgPerHour;
-    double totalProductMassFlowKgPerHour =
-        unconvertedOilMassFlowKgPerHour + convertedProductsMassFlowKgPerHour;
-    double feedConversionBalanceResidualKgPerHour = feedMassFlowKgPerHour
-        - convertedFeedMassFlowKgPerHour - unconvertedOilMassFlowKgPerHour;
-    double convertedProductMassBalanceResidualKgPerHour =
-        convertedFeedMassFlowKgPerHour - convertedProductsMassFlowKgPerHour;
-    double overallMassBalanceResidualKgPerHour =
-        feedMassFlowKgPerHour - totalProductMassFlowKgPerHour;
+    double gasolineMassFlowKgPerHour = convertedFeedMassFlowKgPerHour * gasolineMassFractionOfConvertedFeed;
+    double lightCycleOilMassFlowKgPerHour = convertedFeedMassFlowKgPerHour * lightCycleOilMassFractionOfConvertedFeed;
+    double cokeMassFlowKgPerHour = convertedFeedMassFlowKgPerHour * cokeMassFractionOfConvertedFeed;
+    double convertedProductsMassFlowKgPerHour = dryGasMassFlowKgPerHour + liquefiedPetroleumGasMassFlowKgPerHour
+        + gasolineMassFlowKgPerHour + lightCycleOilMassFlowKgPerHour + cokeMassFlowKgPerHour;
+    double totalProductMassFlowKgPerHour = unconvertedOilMassFlowKgPerHour + convertedProductsMassFlowKgPerHour;
+    double feedConversionBalanceResidualKgPerHour = feedMassFlowKgPerHour - convertedFeedMassFlowKgPerHour
+        - unconvertedOilMassFlowKgPerHour;
+    double convertedProductMassBalanceResidualKgPerHour = convertedFeedMassFlowKgPerHour
+        - convertedProductsMassFlowKgPerHour;
+    double overallMassBalanceResidualKgPerHour = feedMassFlowKgPerHour - totalProductMassFlowKgPerHour;
 
-    return new RefineryFccYieldBalance(feedMassFlowKgPerHour, conversionFraction,
-        dryGasMassFractionOfConvertedFeed, liquefiedPetroleumGasMassFractionOfConvertedFeed,
-        gasolineMassFractionOfConvertedFeed, lightCycleOilMassFractionOfConvertedFeed,
-        cokeMassFractionOfConvertedFeed, convertedFeedMassFlowKgPerHour,
-        unconvertedOilMassFlowKgPerHour, dryGasMassFlowKgPerHour,
-        liquefiedPetroleumGasMassFlowKgPerHour, gasolineMassFlowKgPerHour,
-        lightCycleOilMassFlowKgPerHour, cokeMassFlowKgPerHour,
-        totalProductMassFlowKgPerHour, feedConversionBalanceResidualKgPerHour,
-        convertedProductMassBalanceResidualKgPerHour, overallMassBalanceResidualKgPerHour);
+    return new RefineryFccYieldBalance(feedMassFlowKgPerHour, conversionFraction, dryGasMassFractionOfConvertedFeed,
+        liquefiedPetroleumGasMassFractionOfConvertedFeed, gasolineMassFractionOfConvertedFeed,
+        lightCycleOilMassFractionOfConvertedFeed, cokeMassFractionOfConvertedFeed, convertedFeedMassFlowKgPerHour,
+        unconvertedOilMassFlowKgPerHour, dryGasMassFlowKgPerHour, liquefiedPetroleumGasMassFlowKgPerHour,
+        gasolineMassFlowKgPerHour, lightCycleOilMassFlowKgPerHour, cokeMassFlowKgPerHour, totalProductMassFlowKgPerHour,
+        feedConversionBalanceResidualKgPerHour, convertedProductMassBalanceResidualKgPerHour,
+        overallMassBalanceResidualKgPerHour);
   }
 
   /**
