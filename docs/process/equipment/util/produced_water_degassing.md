@@ -28,7 +28,7 @@ separately characterized fluid, assemble `Stream`, `Heater`, and
 `setTunedInteractionParameters(true)` throws `UnsupportedOperationException`
 before changing model state. Previously it silently retained default coefficients.
 Omit the call, or explicitly use `false`, to select the unchanged database model.
-The same rejection applies at `build()` and both `run()` entry points to protect
+The same rejection applies at `build()`, both `run()` entry points, and result access to protect
 older serialized models that retained a true flag. A rejected setter call leaves
 an existing process and its results intact. For an older model, explicitly select
 `false` and rebuild before running.

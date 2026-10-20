@@ -884,9 +884,11 @@ public class ProducedWaterDegassingSystem implements Serializable {
   /**
    * Require an executed model before accessing results.
    *
+   * @throws UnsupportedOperationException if a legacy model has tuning enabled
    * @throws IllegalStateException if the model has not run
    */
   private void checkRun() {
+    validateTunedInteractionParameters(useTunedKijParameters);
     if (!hasRun) {
       throw new IllegalStateException("Must call run() before getting results");
     }

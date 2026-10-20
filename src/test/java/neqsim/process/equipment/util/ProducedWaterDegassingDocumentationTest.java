@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -66,6 +67,12 @@ class ProducedWaterDegassingDocumentationTest {
       org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
           () -> model.setTunedInteractionParameters(true));
       assertEquals(co2, model.getTotalCO2EmissionRate("kg/hr"), 0.0);
+      // A historical true flag must not relabel already cached default-model results as tuned.
+      Field legacyFlag = ProducedWaterDegassingSystem.class.getDeclaredField("useTunedKijParameters");
+      legacyFlag.setAccessible(true);
+      legacyFlag.setBoolean(model, true);
+      org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class, model::getEmissionsReport);
+      org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class, model::toMap);
     }
   }
 }
