@@ -22,7 +22,10 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitev
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
+import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
 import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
+import neqsim.mathlib.linearalgebra.RealEigenDecomposition;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -240,9 +243,9 @@ class FilmCorrectionInvariantTest {
           if (spectralScale == 0.0) {
             spectralScale = 1.0;
           }
-          org.apache.commons.math3.linear.EigenDecomposition reference = new org.apache.commons.math3.linear.EigenDecomposition(
-              new org.apache.commons.math3.linear.Array2DRowRealMatrix(phiMatrix).scalarMultiply(1.0 / spectralScale));
-          double[] eigenvalues = reference.getRealEigenvalues();
+          LinearAlgebraOperations algebra = new ApacheCommonsMathLinearAlgebra();
+          RealEigenDecomposition reference = algebra.eigenDecomposition(algebra.scale(phiMatrix, 1.0 / spectralScale));
+          double[] eigenvalues = reference.getEigenvalues();
           for (int index = 0; index < eigenvalues.length; index++) {
             eigenvalues[index] *= spectralScale;
           }
@@ -253,7 +256,7 @@ class FilmCorrectionInvariantTest {
                 : value > 0.0 ? value / -Math.expm1(-value) : value * Math.exp(value) / Math.expm1(value);
             diagonal.set(index, index, correction);
           }
-          SimpleMatrix vectors = new SimpleMatrix(reference.getV().getData());
+          SimpleMatrix vectors = new SimpleMatrix(reference.getEigenvectors());
           SimpleMatrix expected = vectors.mult(diagonal.mult(vectors.invert()));
           calcRedPhiMatrix(phase);
           calcRedCorrectionMatrix(phase);
@@ -543,12 +546,20 @@ class FilmCorrectionInvariantTest {
    * @return reference solution
    */
   private static SimpleMatrix referenceSolve(SimpleMatrix coefficients, SimpleMatrix rhs) {
-    org.apache.commons.math3.linear.RealMatrix matrix = new org.apache.commons.math3.linear.Array2DRowRealMatrix(
-        EjmlMatrixUtils.toArray(coefficients));
-    org.apache.commons.math3.linear.RealMatrix values = new org.apache.commons.math3.linear.Array2DRowRealMatrix(
-        EjmlMatrixUtils.toArray(rhs));
-    return new SimpleMatrix(new org.apache.commons.math3.linear.LUDecomposition(matrix, Double.MIN_VALUE).getSolver()
-        .solve(values).getData());
+    LinearAlgebraOperations algebra = new ApacheCommonsMathLinearAlgebra();
+    double[][] matrix = EjmlMatrixUtils.toArray(coefficients);
+    SimpleMatrix result = new SimpleMatrix(coefficients.numCols(), rhs.numCols());
+    for (int column = 0; column < rhs.numCols(); column++) {
+      double[] values = new double[rhs.numRows()];
+      for (int row = 0; row < rhs.numRows(); row++) {
+        values[row] = rhs.get(row, column);
+      }
+      double[] solution = algebra.solve(matrix, values);
+      for (int row = 0; row < solution.length; row++) {
+        result.set(row, column, solution[row]);
+      }
+    }
+    return result;
   }
 
   private static void assertMatrix(SimpleMatrix expected, SimpleMatrix actual) {
@@ -592,6 +603,33 @@ class FilmCorrectionInvariantTest {
       return fluxTypeCorrectionMatrix[phase].clone();
     }
 
+    /**
+     * Evaluate the historical scalar modal correction for a prescribed finite-flux matrix.
+     *
+     * @param matrix finite-flux matrix in the independent-component basis
+     * @return the phase-one correction matrix
+     */
+    SimpleMatrix correctedMatrix(double[][] matrix) {
+      phiMatrix = matrix;
+      calcRedPhiMatrix(1);
+      calcRedCorrectionMatrix(1);
+      calcCorrectionMatrix(1);
+      return new SimpleMatrix(rateCorrectionMatrix[1]);
+    }
+
+  }
+
+  /**
+   * Preserve the pre-adapter real-part film correlation when conjugate eigenpairs occur.
+   */
+  @Test
+  void complexConjugateSpectrumPreservesHistoricalRealPartCorrection() {
+    Film film = new Film();
+    double[][] matrix = {{2.0, -2.0}, {0.5, 2.0}};
+    double expected = 2.0 / -Math.expm1(-2.0);
+    assertMatrix(SimpleMatrix.identity(2).scale(expected), film.correctedMatrix(matrix));
+    assertArrayEquals(new double[] {2.0, 2.0}, film.redPhiMatrix, 1.0e-12);
+    assertMatrix(SimpleMatrix.identity(2).scale(expected), film.correctedMatrix(matrix));
   }
 
   /** Verifies coefficient calculations use the array-based API. */
