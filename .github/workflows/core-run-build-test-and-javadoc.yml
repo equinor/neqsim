@@ -98,6 +98,13 @@ jobs:
         run: mvn -B test -ntp -DskipITs
       - name: Run fast tests, do not generate JaCoCo report
         if: ${{ !matrix.verify_jacoco }}
+        # PR #4484: Temurin 21.0.12.1 on Windows crashed with an access violation
+        # in the C2-compiled EJML LU solve during PTPhaseEnvelopeReferenceEosTest.
+        # Interpret only this method; retain the solver, assertions and full suite.
+        # JAVA_TOOL_OPTIONS also reaches the forked Surefire JVM.
+        env:
+          JAVA_TOOL_OPTIONS: >-
+            -XX:CompileCommand=exclude,org.ejml.dense.row.linsol.lu.LinearSolverLu_DDRM::solve
         run: mvn -B test -ntp -DskipITs "-Djacoco.skip=true"
       - name: Retain fast-test reports
         if: always()
@@ -106,6 +113,15 @@ jobs:
           name: fast-test-reports-${{ matrix.platform }}
           path: target/surefire-reports/
           if-no-files-found: warn
+      - name: Retain JVM crash logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jvm-crash-logs-${{ matrix.platform }}
+          path: |
+            hs_err_pid*.log
+            replay_pid*.log
+          if-no-files-found: ignore
       - name: Verify JaCoCo report exists
         if: matrix.verify_jacoco && github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |

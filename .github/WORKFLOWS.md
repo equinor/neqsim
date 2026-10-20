@@ -22,6 +22,24 @@ that a workflow invokes an LLM.
 | [core-safety-source-term-contract.yml](workflows/core-safety-source-term-contract.yml) | [Core] Safety Source-Term Contract | PR, manual | Java and Python release-source-term contract validation. |
 | [core-engineering-diagram-performance.yml](workflows/core-engineering-diagram-performance.yml) | [Core] Engineering Diagram Performance | PR, manual | Java diagram benchmark and Python performance-budget validation. |
 
+### Windows JVM crash workaround
+
+The Windows fast-test step sets `JAVA_TOOL_OPTIONS` to exclude only
+`org.ejml.dense.row.linsol.lu.LinearSolverLu_DDRM::solve` from JIT compilation.
+PR [#4484](https://github.com/equinor/neqsim/pull/4484) exposed a fatal
+`EXCEPTION_ACCESS_VIOLATION` in that method's C2-compiled code on Temurin
+21.0.12.1 while running `PTPhaseEnvelopeReferenceEosTest`. The method still runs
+through the interpreter; EJML remains the numerical backend and every test stays
+enabled. The setting reaches the forked Surefire JVM and is limited to the
+Windows step. Ubuntu coverage and production JVM options are unchanged.
+
+Both fast-test platforms retain HotSpot `hs_err_pid*.log` and `replay_pid*.log`
+files in a separate `jvm-crash-logs-<platform>` artifact when present. Existing
+Surefire report artifact names and layouts are preserved. Inspect the fatal
+error and problematic frame before changing numerical code or test tolerances.
+Remove the workaround only after the Windows full suite passes on a replacement
+JDK without the exclusion; a passing Linux run alone is insufficient evidence.
+
 ## Publishing and Distribution
 
 | Workflow | Actions Display Name | Events | Responsibility and Side Effects |
