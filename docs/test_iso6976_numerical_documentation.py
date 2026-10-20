@@ -101,8 +101,12 @@ class Iso6976NumericalDocumentationTest(unittest.TestCase):
     def test_reference_boundaries_are_visible_at_both_entry_points(self):
         landing = (ROOT / "docs/standards/README.md").read_text(encoding="utf-8")
         for text in (self.doc, landing):
-            for phrase in ("999601", "15.55", "real relative density", "Wobbe"):
+            for phrase in ("0.999601", "15.55", "real relative density", "Wobbe"):
                 self.assertIn(phrase, text)
+            for stale in ("2016-edition limitation", "Known implementation limitation",
+                          "implementation defect; see warning below",
+                          "invalid current implementation"):
+                self.assertNotIn(stale, text)
         self.assertIn("three volume-temperature tables", self.doc)
         self.assertIn("four volume-temperature tables", self.doc)
         self.assertNotIn("This is evaluated at five reference temperatures", self.doc)
