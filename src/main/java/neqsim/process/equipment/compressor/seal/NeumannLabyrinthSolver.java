@@ -61,9 +61,6 @@ final class NeumannLabyrinthSolver {
   private static final int MAX_ROOT_EVALUATIONS = 200;
   private static final int MAX_CACHED_MARCHES = 2000;
 
-  private final SystemInterface inletGas;
-  private final double inletEnthalpy;
-  private final boolean useGergFlash;
   private final double inletPressurePa;
   private final double inletTemperatureK;
   private final double inletDensity;
@@ -71,6 +68,7 @@ final class NeumannLabyrinthSolver {
   private final double area;
   private final int teeth;
   private final double carryOverRest;
+  private final IsenthalpicFlash flash;
   private final Map<Double, March> cache = new LinkedHashMap<Double, March>(64, 0.75f, true) {
     private static final long serialVersionUID = 1L;
 
@@ -82,7 +80,7 @@ final class NeumannLabyrinthSolver {
   private int marchCount = 0;
 
   /**
-   * Creates a solver for one inlet state and geometry.
+   * Creates a solver for one inlet state and geometry, with exact PH flashes of the inlet gas.
    *
    * @param inletGas single-phase gas system flashed at the inlet conditions; it is not modified
    * @param inletDensity inlet gas density in kg/m3
@@ -91,9 +89,21 @@ final class NeumannLabyrinthSolver {
    */
   NeumannLabyrinthSolver(SystemInterface inletGas, double inletDensity, double inletKappa,
       LabyrinthSealGeometry geometry) {
-    this.inletGas = inletGas;
-    this.inletEnthalpy = inletGas.getEnthalpy();
-    this.useGergFlash = inletGas instanceof SystemGERG2008Eos && inletGas.getNumberOfPhases() == 1;
+    this(inletGas, inletDensity, inletKappa, geometry, defaultIsenthalpicFlash(inletGas));
+  }
+
+  /**
+   * Creates a solver for one inlet state and geometry with a given isenthalpic-state function.
+   *
+   * @param inletGas single-phase gas system flashed at the inlet conditions; it is not modified
+   * @param inletDensity inlet gas density in kg/m3
+   * @param inletKappa inlet real-gas isentropic exponent
+   * @param geometry seal geometry (validated)
+   * @param flash isenthalpic-state function at the inlet enthalpy
+   */
+  NeumannLabyrinthSolver(SystemInterface inletGas, double inletDensity, double inletKappa,
+      LabyrinthSealGeometry geometry, IsenthalpicFlash flash) {
+    this.flash = flash;
     this.inletPressurePa = inletGas.getPressure() * 1.0e5;
     this.inletTemperatureK = inletGas.getTemperature();
     this.inletDensity = inletDensity;
@@ -103,6 +113,37 @@ final class NeumannLabyrinthSolver {
     double ratio = 1.0 + 16.6 * geometry.getRadialClearance() / geometry.getToothPitch();
     double alpha = 1.0 - 1.0 / (ratio * ratio);
     this.carryOverRest = Math.sqrt(teeth / (teeth * (1.0 - alpha) + alpha));
+  }
+
+  /** State of the gas after an isenthalpic expansion from the inlet. */
+  interface IsenthalpicFlash {
+    /**
+     * Returns the gas state at a pressure and the inlet enthalpy.
+     *
+     * @param pressurePa pressure in Pa
+     * @param warmStartK initial temperature guess in K
+     * @return {temperature K, gas density kg/m3, gas real-gas isentropic exponent}
+     * @throws RuntimeException when the state cannot be determined
+     */
+    double[] state(double pressurePa, double warmStartK);
+  }
+
+  /**
+   * Returns the isenthalpic-state function used by default: an exact PH flash of the inlet gas at the inlet enthalpy.
+   *
+   * @param inletGas single-phase gas system flashed at the inlet conditions; it is not modified
+   * @return isenthalpic-state function
+   */
+  static IsenthalpicFlash defaultIsenthalpicFlash(SystemInterface inletGas) {
+    final SystemInterface gasTemplate = inletGas;
+    final double enthalpy = inletGas.getEnthalpy();
+    final boolean useGergFlash = inletGas instanceof SystemGERG2008Eos && inletGas.getNumberOfPhases() == 1;
+    return new IsenthalpicFlash() {
+      @Override
+      public double[] state(double pressurePa, double warmStartK) {
+        return isenthalpicState(gasTemplate, enthalpy, useGergFlash, pressurePa, warmStartK);
+      }
+    };
   }
 
   /** Pressure, temperature and property profile of one march at a trial flow. */
@@ -236,7 +277,7 @@ final class NeumannLabyrinthSolver {
         return m;
       }
       try {
-        double[] state = isenthalpicState(downstream, m.temperatureK[i]);
+        double[] state = flash.state(downstream, m.temperatureK[i]);
         m.temperatureK[i + 1] = state[0];
         m.density[i + 1] = state[1];
         m.kappa[i + 1] = state[2];
@@ -253,12 +294,16 @@ final class NeumannLabyrinthSolver {
   /**
    * Flashes the inlet gas to a pressure at the inlet enthalpy.
    *
+   * @param inletGas inlet gas template; it is cloned
+   * @param inletEnthalpy inlet enthalpy in J (total for the system)
+   * @param useGergFlash true to use the dedicated GERG-2008 PH flash
    * @param pressurePa pressure in Pa
    * @param warmStartK initial temperature guess in K
    * @return {temperature K, gas density kg/m3, gas real-gas isentropic exponent}
    * @throws IllegalStateException if no gas phase remains
    */
-  private double[] isenthalpicState(double pressurePa, double warmStartK) {
+  private static double[] isenthalpicState(SystemInterface inletGas, double inletEnthalpy, boolean useGergFlash,
+      double pressurePa, double warmStartK) {
     SystemInterface state = inletGas.clone();
     state.setPressure(pressurePa * 1.0e-5);
     state.setTemperature(warmStartK);

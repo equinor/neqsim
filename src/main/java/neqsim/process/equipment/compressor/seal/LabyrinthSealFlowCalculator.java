@@ -388,6 +388,17 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   }
 
   /**
+   * Replaces the Neumann solver for the current inlet state and geometry. Package-private seam for tests that inject an
+   * isenthalpic-state function; it stays in use until the inlet state or the geometry changes.
+   *
+   * @param solver Neumann solver to use
+   */
+  void useNeumannSolver(NeumannLabyrinthSolver solver) {
+    neumannSolver = solver;
+    calculated = false;
+  }
+
+  /**
    * Computes the uncapped mass flow and the critical mass flow for a method from the stored inlet properties.
    *
    * <p>
