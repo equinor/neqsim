@@ -1102,6 +1102,12 @@ sampled interval width. The row is explicitly marked `interpolated: false` and
 route/line-up edge, and must not treat a continuous sampled edge as an approved set point without a
 separate qualified refinement and replay.
 
+When opt-in refinement is enabled, `operating_region_boundary_refinements` retains the action bounds,
+relative and absolute tolerances with provenance, every exact midpoint candidate/outcome/recovery gate,
+and the final independently evaluated feasible/infeasible bracket. A `CONVERGED` receipt means only that
+the bracket width met its configured diagnostic tolerance. Consumers must not convert either side or its
+midpoint into an accepted control target without the normal optimizer acceptance and terminal replay.
+
 For ordered reservoir/facility periods, add each independently completed search and slice set to
 `ProcessModelOperatingEnvelopeLifecycleStudy`. The lifecycle layer reuses the exact-runtime envelope export gate,
 requires stable ordered action identifiers, and records adjacent-period changes in the accepted leading constraint.
@@ -1110,10 +1116,12 @@ qualified compressor maps, shaft/driver limits, and shared-power budget. Do not 
 search into a revised period: rebuild, converge, optimize, replay, and sample that period independently. The lifecycle
 map is rejected rather than partially emitted if a period is stale, unconverged, non-finite, incompletely restored, or
 action-incompatible. Its transitions remain sampled advisory evidence, not a continuous forecast or operating approval.
-Schema-v4 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
+Schema-v5 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
 They report exact retained, removed, and added sampled events; event identity includes action semantics, endpoints,
 outcomes, feasibility, and constraint layers. External integrations must preserve these rows verbatim and must not
 interpolate a discrete route event or infer an unsampled continuous boundary.
+They also compare complete boundary-refinement receipts; changing a tolerance, midpoint, recovery flag,
+terminal bracket, or status is an evidence change rather than a numerically equivalent migration.
 
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set

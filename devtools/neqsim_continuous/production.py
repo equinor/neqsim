@@ -316,6 +316,10 @@ def _validate_envelope_evidence(evidence, optimizer_evidence, setpoints, expecte
         if ("axis_action_semantics" in row or "operating_region_transitions" in row):
             if not _valid_operating_region_transitions(row, axes, points):
                 reasons.append(prefix + "_operating_region_transition_mismatch")
+        if ("operating_region_boundary_refinements" in row
+                or "maximum_boundary_refinement_evaluations" in row):
+            if not _valid_operating_region_boundary_refinements(row):
+                reasons.append(prefix + "_operating_region_boundary_refinement_mismatch")
 
     if (evidence.get("requested_point_count") != requested_total
             or evidence.get("completed_point_count") != completed_total
@@ -509,6 +513,128 @@ def _valid_operating_region_transitions(row, axes, points):
     return transitions == expected
 
 
+def _valid_operating_region_boundary_refinements(row):
+    """Recompute fail-closed continuous bisection receipts from persisted midpoint evidence."""
+    transitions = row.get("operating_region_transitions")
+    refinements = row.get("operating_region_boundary_refinements")
+    maximum = row.get("maximum_boundary_refinement_evaluations")
+    relative_tolerance = row.get("boundary_refinement_relative_tolerance")
+    provenance = row.get("boundary_refinement_tolerance_provenance")
+    if (not isinstance(transitions, list) or not isinstance(refinements, list)
+            or not _non_negative_integer(maximum)
+            or not _number(relative_tolerance) or relative_tolerance <= 0
+            or not _text(provenance)):
+        return False
+
+    allowed_rejections = {
+        "HYDRAULIC_CONSTRAINT_VIOLATED",
+        "OTHER_MODEL_CONSTRAINT_VIOLATED",
+        "EVIDENCE_OUTSIDE_VALIDITY_RANGE",
+    }
+    eligible = [transition for transition in transitions
+                if isinstance(transition, dict)
+                and transition.get("action_value_semantics") == "CONTINUOUS"
+                and transition.get("kind") in ("BECAME_FEASIBLE", "BECAME_INFEASIBLE")]
+    eligible = [transition for transition in eligible
+                if ((transition.get("from_feasible") is True
+                     and transition.get("from_outcome") == "FEASIBLE"
+                     and transition.get("to_outcome") in allowed_rejections)
+                    or (transition.get("to_feasible") is True
+                        and transition.get("to_outcome") == "FEASIBLE"
+                        and transition.get("from_outcome") in allowed_rejections))]
+    if (int(maximum) == 0 and refinements):
+        return False
+    if int(maximum) > 0 and len(refinements) != len(eligible):
+        return False
+
+    for receipt, transition in zip(refinements, eligible):
+        if not isinstance(receipt, dict):
+            return False
+        identity_fields = (
+            ("axis_action_id", "axis_action_id"),
+            ("from_sequence_index", "from_sequence_index"),
+            ("to_sequence_index", "to_sequence_index"),
+        )
+        if any(receipt.get(left) != transition.get(right) for left, right in identity_fields):
+            return False
+        if (receipt.get("action_value_semantics") != "CONTINUOUS"
+                or receipt.get("sampled_from_axis_value") != transition.get("from_axis_value")
+                or receipt.get("sampled_to_axis_value") != transition.get("to_axis_value")
+                or receipt.get("maximum_evaluations") != maximum
+                or receipt.get("relative_tolerance") != relative_tolerance
+                or receipt.get("tolerance_provenance") != provenance
+                or receipt.get("interpolated") is not False
+                or receipt.get("advisory") is not True):
+            return False
+        lower = receipt.get("action_lower_bound")
+        upper = receipt.get("action_upper_bound")
+        absolute_tolerance = receipt.get("absolute_tolerance")
+        if (not _number(lower) or not _number(upper) or upper <= lower
+                or not _number(absolute_tolerance) or absolute_tolerance <= 0
+                or not math.isclose(float(absolute_tolerance),
+                                    float(relative_tolerance) * (float(upper) - float(lower)),
+                                    rel_tol=1.0e-12, abs_tol=0.0)):
+            return False
+        from_value = transition.get("from_axis_value")
+        to_value = transition.get("to_axis_value")
+        if (not _number(from_value) or not _number(to_value)
+                or not (float(lower) <= float(from_value) <= float(upper))
+                or not (float(lower) <= float(to_value) <= float(upper))):
+            return False
+        if transition.get("from_feasible") is True:
+            feasible_value, infeasible_value = float(from_value), float(to_value)
+        elif transition.get("to_feasible") is True:
+            feasible_value, infeasible_value = float(to_value), float(from_value)
+        else:
+            return False
+
+        steps = receipt.get("steps")
+        if (not isinstance(steps, list) or len(steps) > int(maximum)
+                or receipt.get("evaluation_count") != len(steps)):
+            return False
+        derived_status = None
+        for sequence, step in enumerate(steps):
+            if not isinstance(step, dict) or step.get("sequence_index") != sequence:
+                return False
+            midpoint = feasible_value + 0.5 * (infeasible_value - feasible_value)
+            if (not _number(step.get("axis_value"))
+                    or float(step["axis_value"]) != midpoint
+                    or not isinstance(step.get("candidate_values"), list)
+                    or any(not _number(value) for value in step["candidate_values"])
+                    or step.get("baseline_restored") is not True
+                    or step.get("baseline_simulation_converged") is not True):
+                return False
+            if step.get("feasible") is True:
+                if (step.get("outcome") != "FEASIBLE"
+                        or step.get("candidate_simulation_converged") is not True
+                        or step.get("candidate_evaluator_feasible") is not True):
+                    return False
+                feasible_value = midpoint
+            elif (step.get("candidate_simulation_converged") is True
+                  and step.get("outcome") in allowed_rejections):
+                infeasible_value = midpoint
+            else:
+                derived_status = "INELIGIBLE_EVALUATION"
+                if sequence != len(steps) - 1:
+                    return False
+        width = abs(infeasible_value - feasible_value)
+        if (receipt.get("feasible_axis_value") != feasible_value
+                or receipt.get("infeasible_axis_value") != infeasible_value
+                or receipt.get("bracket_width") != width):
+            return False
+        if derived_status is None:
+            if width <= float(absolute_tolerance):
+                derived_status = "CONVERGED"
+            elif len(steps) == int(maximum):
+                derived_status = "MAXIMUM_EVALUATIONS_REACHED"
+            else:
+                derived_status = "NUMERICAL_STAGNATION"
+        if (receipt.get("status") != derived_status
+                or receipt.get("converged") != (derived_status == "CONVERGED")):
+            return False
+    return True
+
+
 def _exact_vector_key(values, expected_size=None):
     """Return a bit-preserving finite numeric-vector key, or None."""
     if (not isinstance(values, list)
@@ -543,7 +669,8 @@ def _exact_list_difference(first, second):
 
 
 def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=None,
-                               require_operating_transitions=False):
+                               require_operating_transitions=False,
+                               require_boundary_refinements=False):
     """Derive adjacent-period diagnostics from persisted sampled and accepted-state evidence."""
     diagnostics = []
     for from_period, to_period in zip(periods, periods[1:]):
@@ -699,6 +826,24 @@ def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=
                     "removed_operating_region_transitions": removed,
                     "added_operating_region_transitions": added,
                 })
+            from_refinements = from_slice.get("operating_region_boundary_refinements")
+            to_refinements = to_slice.get("operating_region_boundary_refinements")
+            if (require_boundary_refinements
+                    and (from_refinements is None or to_refinements is None)):
+                return None
+            if from_refinements is not None or to_refinements is not None:
+                if not isinstance(from_refinements, list) or not isinstance(to_refinements, list):
+                    return None
+                removed = _exact_list_difference(from_refinements, to_refinements)
+                added = _exact_list_difference(to_refinements, from_refinements)
+                slice_change.update({
+                    "from_operating_region_boundary_refinement_count": len(from_refinements),
+                    "to_operating_region_boundary_refinement_count": len(to_refinements),
+                    "retained_operating_region_boundary_refinement_count": (
+                        len(from_refinements) - len(removed)),
+                    "removed_operating_region_boundary_refinements": removed,
+                    "added_operating_region_boundary_refinements": added,
+                })
             slice_changes.append(slice_change)
         diagnostic = {
             "from_period_id": from_period.get("period_id"),
@@ -729,7 +874,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3, 4):
+    if schema_version not in (1, 2, 3, 4, 5):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -744,7 +889,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         action_ids = []
     state_metric_ids = None
     if (schema_version == 3
-            or (schema_version == 4 and "accepted_state_metric_ids" in evidence)):
+            or (schema_version in (4, 5) and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
             reasons.append("invalid_lifecycle_state_metric_ids")
@@ -818,7 +963,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
-        if schema_version == 4:
+        if schema_version in (4, 5):
             slices = envelope.get("slices")
             if (not isinstance(slices, list)
                     or any(not isinstance(envelope_slice, dict)
@@ -826,6 +971,13 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
                            or "operating_region_transitions" not in envelope_slice
                            for envelope_slice in slices)):
                 reasons.append(prefix + "_missing_operating_region_transition_evidence")
+            if (schema_version == 5
+                    and (not isinstance(slices, list)
+                         or any(not isinstance(envelope_slice, dict)
+                                or "operating_region_boundary_refinements" not in envelope_slice
+                                or "maximum_boundary_refinement_evaluations" not in envelope_slice
+                                for envelope_slice in slices))):
+                reasons.append(prefix + "_missing_operating_region_boundary_refinement_evidence")
 
         accepted = envelope.get("accepted_candidate_values")
         optimizer = envelope.get("optimizer_evidence")
@@ -888,10 +1040,11 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3, 4):
+    if schema_version in (2, 3, 4, 5):
         expected_period_changes = _period_change_diagnostics(
             periods, action_ids, evidence.get("time_unit"), state_metric_ids,
-            require_operating_transitions=schema_version == 4)
+            require_operating_transitions=schema_version in (4, 5),
+            require_boundary_refinements=schema_version == 5)
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")
