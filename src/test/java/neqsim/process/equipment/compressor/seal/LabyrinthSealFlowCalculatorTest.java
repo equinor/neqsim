@@ -44,12 +44,6 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
    * database molar masses, which differ from the GERG-2008 molar masses used by the workbook by about 3e-5 (relative).
    */
   private static final double WORKBOOK_TOLERANCE = 5.0e-5;
-  /**
-   * Relative tolerance of the Neumann method against the workbook. NeqSim solves the tooth-by-tooth model exactly (PH
-   * flash at constant inlet enthalpy, converged flow), whereas the workbook uses a 0.05 % secant temperature search,
-   * lets the reference enthalpy drift and stops its spline iteration after 11 passes.
-   */
-  private static final double NEUMANN_TOLERANCE = 5.0e-3;
 
   /**
    * Loads the workbook reference cases.
@@ -317,8 +311,7 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
       Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
       for (LabyrinthFlowMethod method : LabyrinthFlowMethod.values()) {
         double expected = excelFlow(worked, method);
-        double tolerance = method == LabyrinthFlowMethod.NEUMANN ? NEUMANN_TOLERANCE : 5.0e-3;
-        assertEquals(expected, all.get(method), tolerance * expected, method + " " + fluid.getModelName());
+        assertEquals(expected, all.get(method), 5.0e-3 * expected, method + " " + fluid.getModelName());
       }
     }
   }

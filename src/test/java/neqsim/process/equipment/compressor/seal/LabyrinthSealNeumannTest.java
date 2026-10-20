@@ -35,11 +35,12 @@ public class LabyrinthSealNeumannTest extends neqsim.NeqSimTest {
   private static final String FIXTURE = "/neqsim/process/equipment/compressor/seal/labyrinth_excel_reference.json";
   private static final JsonObject REFERENCE = loadReference();
   /**
-   * Relative tolerance against the workbook. NeqSim solves the tooth-by-tooth model exactly (PH flash at constant inlet
-   * enthalpy, converged flow), whereas the workbook uses a 0.05 % secant temperature search, lets the reference enthalpy
-   * drift and stops its spline iteration after 11 passes.
+   * Relative tolerance against the workbook, about twice the largest deviation found (0.021 % at 20 teeth). NeqSim
+   * solves the tooth-by-tooth model exactly (PH flash at constant inlet enthalpy, converged flow), whereas the workbook
+   * uses a 0.05 % secant temperature search, lets the reference enthalpy drift and stops its spline iteration after 11
+   * passes.
    */
-  private static final double NEUMANN_TOLERANCE = 5.0e-3;
+  private static final double NEUMANN_TOLERANCE = 5.0e-4;
 
   /**
    * Loads the workbook reference cases.
@@ -154,7 +155,8 @@ public class LabyrinthSealNeumannTest extends neqsim.NeqSimTest {
       compared++;
       double relativeError = Math.abs(calc.getMassFlowRate("kg/sec") - expected) / expected;
       if (!(relativeError <= NEUMANN_TOLERANCE) || !calc.isWithinValidityRange()) {
-        failures.add(testCase.get("id").getAsString() + " rel.err=" + relativeError + " " + calc.getValidityViolations());
+        failures
+            .add(testCase.get("id").getAsString() + " rel.err=" + relativeError + " " + calc.getValidityViolations());
       }
     }
     assertTrue(failures.isEmpty(), "Workbook mismatches: " + failures);
@@ -252,6 +254,18 @@ public class LabyrinthSealNeumannTest extends neqsim.NeqSimTest {
     assertEquals(0, calc.getToothPressures("bara").length);
     assertEquals(0, calc.getToothTemperatures("K").length);
     assertEquals(0, calc.getToothDensities().length);
+  }
+
+  /** With water condensed at the inlet, Neumann marches the gas phase only and still returns a leakage. */
+  @Test
+  void liquidAtInletUsesGasPhase() {
+    LabyrinthSealFlowCalculator calc = srkNeumann("cold_20C");
+    calc.calculate();
+    assertTrue(calc.hasLiquidAtInlet());
+    assertTrue(calc.isWithinValidityRange(), calc.getValidityViolations().toString());
+    double flow = calc.getMassFlowRate("kg/sec");
+    assertTrue(flow > 0.0 && !Double.isInfinite(flow));
+    assertEquals(1.5417 + 1.01325, calc.getToothPressures("bara")[5], 1.0e-6 * 2.555);
   }
 
   /** The JSON summary carries the tooth profile for Neumann. */

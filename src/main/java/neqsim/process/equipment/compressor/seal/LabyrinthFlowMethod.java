@@ -19,5 +19,10 @@ public enum LabyrinthFlowMethod {
   /** Vermes equation with a residual-energy (carry-over) factor from tooth pitch, tip width and clearance. */
   VERMES,
   /** Kearton equation with the Kearton clearance correction and a Fanno-type pressure profile. */
-  KEARTON
+  KEARTON,
+  /**
+   * Modified Neumann method: tooth-by-tooth pressure solution with a pressure-ratio dependent flow coefficient, kinetic
+   * carry-over after the first tooth, isenthalpic expansion (PH flash) at each tooth and choking at any tooth.
+   */
+  NEUMANN
 }
