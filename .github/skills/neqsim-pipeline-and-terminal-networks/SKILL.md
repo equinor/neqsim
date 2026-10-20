@@ -86,6 +86,13 @@ The same selector works for live `WellFlow` injection networks. Update a zone's
 lifecycle boundary through `WellFlow.ReservoirLayer.setReservoirPressure(...)` so
 the layer pressure and its reservoir stream remain synchronized; do not change the
 public pressure field alone in a repeated coupled calculation.
+Layered `WellFlow.copy()` retains independent zones and fluids. Whole-process copying
+preserves internal stream aliases, but independently copied wells do not establish
+shared reservoir ownership. Old serialized layered wells omitted their zones and
+must be rebuilt from inputs; do not infer missing zones from a stored outlet stream.
+The legacy multi-zone injection calculation uses squared-pressure differences and
+gas-standard MSm3/day for every fluid, not a qualified linear liquid-injectivity law.
+Keep that rate-basis migration separate from copy/replay validation.
 Register configured rotating-equipment maps with
 `FieldNetworkTopology.addPumpWithCurve(...)` and `addCompressorWithChart(...)` so the
 existing `Pump`/`Compressor` remains the chart owner under the canonical edge identity.
