@@ -2,6 +2,7 @@ package neqsim.process.equipment.network;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -211,6 +212,9 @@ class FieldWellNetworkCouplerTest {
     FieldWellNetworkCoupler coupler = new FieldWellNetworkCoupler(topology);
     coupler.setRelaxationFactor(0.6);
     coupler.bindInjectionWell("injector", well);
+    // Resolve this small synthetic water rate before comparing cold/restarted operating points.
+    coupler.setTolerances(1.0e-10, 1.0e-6);
+    coupler.setMaximumIterations(100);
     CouplingResult result = coupler.run();
 
     assertTrue(result.isConverged(), result.getMessage());
@@ -222,6 +226,34 @@ class FieldWellNetworkCouplerTest {
     assertEquals(result.getWellResults().get(0).getAppliedRateKgS(), network.getPipe("injection-line").getFlowRate(),
         1.0e-8);
     assertEquals(0.0, result.getMassBalanceResidualKgS(), 1.0e-8);
+
+    // The process adapter delegates to coupler.copy(), which must retain the injection definition.
+    FieldWellNetworkProcessUnit original = new FieldWellNetworkProcessUnit("live injector", coupler);
+    FieldWellNetworkProcessUnit copy = (FieldWellNetworkProcessUnit) original.copy();
+    WellFlow copiedWell = (WellFlow) copy.getTopology().getBoundEquipment("injector");
+    assertEquals(2, copiedWell.getNumberOfLayers());
+    assertNotSame(well, copiedWell);
+    assertNotSame(well.getLayer(0).stream, copiedWell.getLayer(0).stream);
+    assertEquals(topology.getEdge("injection-line").getEquipmentTag(),
+        copy.getTopology().getEdge("injection-line").getEquipmentTag());
+    copy.run();
+    assertTrue(copy.solved(), copy.getLastCouplingResult().getMessage());
+    double copiedBaseline = copy.getHydraulicNetwork().getPipe("injection-line").getFlowRate();
+    assertEquals(network.getPipe("injection-line").getFlowRate(), copiedBaseline, 1.0e-6);
+    assertEquals(0.0, copy.getLastCouplingResult().getMassBalanceResidualKgS(), 1.0e-8);
+    copiedWell.getLayer(0).setReservoirPressure(120.0, "bara");
+    copy.run();
+    assertTrue(copy.solved(), copy.getLastCouplingResult().getMessage());
+    assertTrue(copy.getHydraulicNetwork().getPipe("injection-line").getFlowRate() < copiedBaseline);
+    assertEquals(100.0, well.getLayer(0).getReservoirPressure("bara"), 0.0);
+    copiedWell.getLayer(0).setReservoirPressure(100.0, "bara");
+    copy.run();
+    assertTrue(copy.solved(), copy.getLastCouplingResult().getMessage());
+    assertEquals(copiedBaseline, copy.getHydraulicNetwork().getPipe("injection-line").getFlowRate(), 1.0e-6);
+    copiedWell.getLayer(0).setFracturePressure(140.0, "bara");
+    copy.run();
+    assertFalse(copy.solved(), "A copied injector must retain its fracture-limit acceptance path");
+    assertFalse(well.getZoneFractureRisk()[0]);
   }
 
   /** Fail the coupled acceptance result when injection pressure exceeds a zone fracture limit. */

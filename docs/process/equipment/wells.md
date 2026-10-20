@@ -47,6 +47,35 @@ exist. Choose the equipment above or an explicit well-network model instead.
 
 ## IPR Curves
 
+### Layered-well copying and saved definitions
+
+`WellFlow.copy()` and a containing `ProcessSystem.copy()` preserve the ordered
+production layers or injection zones, including their streams, pressures, indices,
+calculated rates, target flags, fracture pressures and barrier stress contrasts.
+The copy owns independent mutable layers and fluids. Stream aliases within a single
+serialized process graph are preserved; for example, a reservoir stream that is also
+a layer stream remains the same object inside that copied process, not the original.
+Separately copying individual wells does not preserve shared reservoir ownership across
+those independent copies. Keep the reservoir owner explicit in lifecycle studies.
+
+Older saved objects did not contain the transient layer list. Non-layered legacy
+objects can be read with an empty, extensible list. A legacy layered object cannot
+recover omitted zones: reading it now fails with a rebuild-from-inputs diagnostic
+instead of returning a well whose layer list is null. Recreate those definitions
+from the original model inputs and save them again. The existing `serialVersionUID`
+is retained; this is not a general cross-release serialization guarantee.
+
+`WellFlowCopyTest` checks pre-run and post-run copies, analytical legacy gas rates,
+zone allocation, fracture flags, stream aliasing and independent pressure changes.
+The canonical field-network acceptance suite additionally re-solves a copied live
+injector, checks mass closure and restored flow, and rejects a lowered fracture limit.
+These are software/replay checks, not qualification of injectivity or fracture physics.
+The legacy multi-zone injection path still uses squared-pressure differences for all
+fluids and assigns total flow in MSm3/day. Copying does not implement a linear liquid
+law, correct its existing rate-getter unit inconsistency, or validate that basis for water.
+
+### Single-layer gas inflow
+
 For the single-layer gas production-index model:
 
 $$q = PI\left(P_r^2-P_{wf}^2\right)$$
