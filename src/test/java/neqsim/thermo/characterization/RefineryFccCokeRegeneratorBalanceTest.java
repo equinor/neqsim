@@ -50,10 +50,10 @@ class RefineryFccCokeRegeneratorBalanceTest {
   @Test
   void closesDryGasMolesAtCarbonOxideSelectivityLimits() {
     RefineryFccYieldBalance yield = RefineryFccYieldBalance.calculate(1000.0, 0.75, 0.05, 0.15, 0.50, 0.20, 0.10);
-    RefineryFccCokeRegeneratorBalance allCarbonDioxide = RefineryFccCokeRegeneratorBalance.calculate(yield, 0.90,
-        0.96, 1.0, 0.2095, 0.10);
-    RefineryFccCokeRegeneratorBalance allCarbonMonoxide = RefineryFccCokeRegeneratorBalance.calculate(yield, 0.90,
-        0.96, 0.0, 0.2095, 0.10);
+    RefineryFccCokeRegeneratorBalance allCarbonDioxide = RefineryFccCokeRegeneratorBalance.calculate(yield, 0.90, 0.96,
+        1.0, 0.2095, 0.10);
+    RefineryFccCokeRegeneratorBalance allCarbonMonoxide = RefineryFccCokeRegeneratorBalance.calculate(yield, 0.90, 0.96,
+        0.0, 0.2095, 0.10);
 
     assertEquals(0.0, allCarbonDioxide.getDryGasMolarBalanceResidualKmolPerHour(), TOLERANCE);
     assertEquals(0.0, allCarbonMonoxide.getDryGasMolarBalanceResidualKmolPerHour(), TOLERANCE);
