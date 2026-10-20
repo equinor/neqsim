@@ -71,6 +71,15 @@ existing table key. The historical `15.55` key approximates 60°F; the exact
 conversion, 15.555555...°C, is rejected and must not be silently rounded by an
 integration. Select the legacy key explicitly if that is the intended convention.
 
+**2016-edition limitation:** `Standard_ISO6976_2016` currently assigns the
+60°F air factor as `999601`. Its real relative density and Wobbe indices at
+**15.55°C volume reference** are invalid; do not use those outputs until the
+runtime defect is corrected and qualified. This is distinct from using 15.55°C
+only as the combustion reference, as in the 0°C-volume quick start above.
+Do not silently substitute contractual reference conditions to bypass the defect.
+See the [ISO 6976 implementation boundaries](iso6976_calorific_values#step-5---relative-density).
+The runtime correction is tracked in [issue #4458](https://github.com/equinor/neqsim/issues/4458).
+
 `GCV` and `LCV` are aliases for `SuperiorCalorificValue` and
 `InferiorCalorificValue`. `WI` and `WobbeIndex` are aliases for
 `SuperiorWobbeIndex`. `StandardInterface` declares the generic
