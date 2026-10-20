@@ -653,3 +653,4 @@ curve, wax appearance).
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — citation lookup
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — risk-register schema
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — evidence matrix, rupture/PFP results, and source-term handoff reporting
+- [process-study-report](../process-study-report/SKILL.md) — complete process-study report package for a solved NeqSim model: engineering basis, all-stream tables per case, balances, BFD/PFD sheets, standards register and a fail-closed validation report (use it when the deliverable is a stream-table/PFD study rather than a narrative task report)

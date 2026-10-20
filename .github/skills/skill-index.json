@@ -946,7 +946,8 @@
   "neqsim-field-development"
  ],
  "pfd": [
-  "neqsim-process-extraction"
+  "neqsim-process-extraction",
+  "process-study-report"
  ],
  "pfr)": [
   "neqsim-reaction-engineering"
@@ -1267,8 +1268,8 @@
   "neqsim-depressurization-mdmt"
  ],
  "api 521": [
-  "neqsim-depressurization-mdmt",
-  "neqsim-relief-flare-network"
+  "neqsim-relief-flare-network",
+  "neqsim-process-safety"
  ],
  "low temperature embrittlement": [
   "neqsim-depressurization-mdmt"
@@ -1354,10 +1355,6 @@
   "neqsim-relief-flare-network"
  ],
  "fire case relief": [
-  "neqsim-relief-flare-network",
-  "neqsim-process-safety"
- ],
- "api 521": [
   "neqsim-relief-flare-network",
   "neqsim-process-safety"
  ],
@@ -2356,5 +2353,50 @@
  ],
  "serialVersionUID compatibility": [
   "neqsim-version-bump-decision"
+ ],
+ "process study report": [
+  "process-study-report"
+ ],
+ "process study": [
+  "process-study-report"
+ ],
+ "stream table": [
+  "process-study-report"
+ ],
+ "stream tables": [
+  "process-study-report"
+ ],
+ "heat and material balance": [
+  "process-study-report"
+ ],
+ "hmb": [
+  "process-study-report"
+ ],
+ "bfd": [
+  "process-study-report"
+ ],
+ "process flow diagram": [
+  "process-study-report"
+ ],
+ "block flow diagram": [
+  "process-study-report"
+ ],
+ "design basis report": [
+  "process-study-report"
+ ],
+ "iso 10628": [
+  "process-study-report"
+ ],
+ "standards register": [
+  "process-study-report"
+ ],
+ "model documentation report": [
+  "process-study-report"
+ ],
+ "validation report": [
+  "process-study-report"
+ ],
+ "mass and energy balance report": [
+  "process-study-report"
  ]
 }
