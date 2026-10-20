@@ -2372,6 +2372,21 @@ public class DocExamplesCompilationTest {
     assertEquals(LabyrinthFlowMethod.values().length, allMethodsKgPerSec.size());
     assertEquals(leakageKgPerHour / 3600.0, allMethodsKgPerSec.get(LabyrinthFlowMethod.KEARTON), 1.0e-12);
 
+    calc.setMethod(LabyrinthFlowMethod.NEUMANN);
+    calc.calculate();
+    double neumannKgPerHour = calc.getMassFlowRate("kg/hr");
+    double[] toothPressuresBarg = calc.getToothPressures("barg");
+    double[] toothTemperaturesC = calc.getToothTemperatures("C");
+    assertEquals(allMethodsKgPerSec.get(LabyrinthFlowMethod.NEUMANN) * 3600.0, neumannKgPerHour,
+        1.0e-9 * neumannKgPerHour);
+    assertTrue(neumannKgPerHour < leakageKgPerHour, "Neumann below Kearton for this seal");
+    assertEquals(6, toothPressuresBarg.length);
+    assertEquals(2.765, toothPressuresBarg[0], 1.0e-9);
+    assertEquals(1.5417, toothPressuresBarg[5], 1.0e-5);
+    assertEquals(86.12, toothTemperaturesC[0], 1.0e-9);
+    calc.setMethod(LabyrinthFlowMethod.KEARTON);
+    calc.calculate();
+
     LabyrinthSealFlowCalculator byDrop = new LabyrinthSealFlowCalculator(gas, geometry);
     byDrop.setInletPressure(2.765, "barg");
     byDrop.setInletTemperature(86.12, "C");

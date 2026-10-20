@@ -45,12 +45,18 @@ import neqsim.util.unit.TemperatureUnit;
  * {@code p_i = sqrt(p0^2 - (i/n)(p0^2 - pn^2))}. The equation peaks at a pressure ratio r*(n) that depends only on the
  * number of teeth (0.43 for two teeth, 0.26 for five); below r* the last tooth is choked and the leakage is held at the
  * peak instead of falling with the backpressure</li>
+ * <li>Neumann (modified, teeth on stator): tooth-by-tooth solution of {@code p_{i+1}^2 = p_i^2 - (m/(Cf_i u_i A))^2
+ * p_i/rho_i} with a flow coefficient that depends on the tooth pressure ratio, a kinetic carry-over factor after the
+ * first tooth and an exact PH flash at the inlet enthalpy after every tooth; see {@link #getToothPressures(String)}. A
+ * tooth chokes when its pressure ratio reaches the critical ratio, and the choked leakage is the largest flow at which
+ * no tooth chokes.</li>
  * </ul>
  *
  * <p>
- * Each result is limited to the critical flow of the clearance, {@code m_crit = A sqrt(1000 rho p0 k phi)} with
- * {@code phi = (2/(k+1))^((k+1)/(k-1))} (Egli uses the equivalent form {@code A rho sqrt(1000 R T/M) sqrt(k phi)}); for
- * Kearton the limit is the lower of this and the Kearton peak. {@link #isChoked()} reports when a limit is active.
+ * Each closed-form result is limited to the critical flow of the clearance, {@code m_crit = A sqrt(1000 rho p0 k phi)}
+ * with {@code phi = (2/(k+1))^((k+1)/(k-1))} (Egli uses the equivalent form
+ * {@code A rho sqrt(1000 R T/M) sqrt(k phi)}); for Kearton the limit is the lower of this and the Kearton peak.
+ * {@link #isChoked()} reports when a limit is active.
  * </p>
  *
  * <p>
@@ -106,6 +112,13 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   private double inletCompressibility = Double.NaN;
   private boolean liquidAtInlet = false;
   private final List<String> validityViolations = new ArrayList<String>();
+  private boolean inletEvaluated = false;
+  private SystemInterface inletGasState;
+  private transient NeumannLabyrinthSolver neumannSolver;
+  private double[] toothPressuresBara = new double[0];
+  private double[] toothTemperaturesK = new double[0];
+  private double[] toothDensities = new double[0];
+  private boolean criticalFlowSearched = false;
 
   /**
    * Creates a calculator.
@@ -136,6 +149,7 @@ public class LabyrinthSealFlowCalculator implements Serializable {
       throw new IllegalArgumentException("A LabyrinthSealGeometry is required");
     }
     this.geometry = new LabyrinthSealGeometry(geometry);
+    neumannSolver = null;
     calculated = false;
   }
 
@@ -179,7 +193,7 @@ public class LabyrinthSealFlowCalculator implements Serializable {
    */
   public void setInletPressure(double pressure, String unit) {
     inletPressureBara = new PressureUnit(pressure, unit).getValue("bara");
-    calculated = false;
+    invalidateInlet();
   }
 
   /**
@@ -190,6 +204,15 @@ public class LabyrinthSealFlowCalculator implements Serializable {
    */
   public void setInletTemperature(double temperature, String unit) {
     inletTemperatureK = new TemperatureUnit(temperature, unit).getValue("K");
+    invalidateInlet();
+  }
+
+  /**
+   * Discards the cached inlet state and results after an inlet change.
+   */
+  private void invalidateInlet() {
+    inletEvaluated = false;
+    neumannSolver = null;
     calculated = false;
   }
 
@@ -311,11 +334,15 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   }
 
   /**
-   * Flashes a clone of the fluid at the inlet conditions and stores the gas-phase properties.
+   * Flashes a clone of the fluid at the inlet conditions and stores the gas-phase properties. The result is cached
+   * until the inlet pressure or temperature changes.
    *
    * @throws IllegalStateException if there is no gas phase at the inlet
    */
   private void evaluateInletProperties() {
+    if (inletEvaluated) {
+      return;
+    }
     SystemInterface inlet = fluid.clone();
     inlet.setTemperature(inletTemperatureK);
     inlet.setPressure(inletPressureBara);
@@ -335,6 +362,41 @@ public class LabyrinthSealFlowCalculator implements Serializable {
     inletMolarMass = gas.getMolarMass() * 1000.0;
     inletKappa = gas.getKappa();
     inletCompressibility = gas.getZ();
+    if (liquidAtInlet) {
+      inletGasState = inlet.phaseToSystem("gas");
+      inletGasState.setTemperature(inletTemperatureK);
+      inletGasState.setPressure(inletPressureBara);
+      new ThermodynamicOperations(inletGasState).TPflash();
+      inletGasState.initProperties();
+    } else {
+      inletGasState = inlet;
+    }
+    neumannSolver = null;
+    inletEvaluated = true;
+  }
+
+  /**
+   * Returns the Neumann solver for the current inlet state and geometry, creating it when needed.
+   *
+   * @return Neumann solver
+   */
+  private NeumannLabyrinthSolver neumannSolver() {
+    if (neumannSolver == null) {
+      evaluateInletProperties();
+      neumannSolver = new NeumannLabyrinthSolver(inletGasState, inletDensity, inletKappa, geometry);
+    }
+    return neumannSolver;
+  }
+
+  /**
+   * Replaces the Neumann solver for the current inlet state and geometry. Package-private seam for tests that inject an
+   * isenthalpic-state function; it stays in use until the inlet state or the geometry changes.
+   *
+   * @param solver Neumann solver to use
+   */
+  void useNeumannSolver(NeumannLabyrinthSolver solver) {
+    neumannSolver = solver;
+    calculated = false;
   }
 
   /**
@@ -505,6 +567,10 @@ public class LabyrinthSealFlowCalculator implements Serializable {
    * @param violations list receiving validity violations
    */
   private void applyMethod(LabyrinthFlowMethod flowMethod, List<String> violations) {
+    if (flowMethod == LabyrinthFlowMethod.NEUMANN) {
+      applyNeumann(violations);
+      return;
+    }
     int before = violations.size();
     double[] flows = computeFlows(flowMethod, violations);
     double uncapped = flows[0];
@@ -518,6 +584,38 @@ public class LabyrinthSealFlowCalculator implements Serializable {
     criticalMassFlowKgPerSec = flows[1];
     choked = chokedByMethod || uncapped > flows[1];
     massFlowKgPerSec = choked ? Math.min(uncapped, flows[1]) : uncapped;
+    toothPressuresBara = new double[0];
+    toothTemperaturesK = new double[0];
+    toothDensities = new double[0];
+    calculated = true;
+  }
+
+  /**
+   * Runs the Neumann solver, seeded with the Kearton flow, and stores its result and tooth profile.
+   *
+   * @param violations list receiving validity violations
+   */
+  private void applyNeumann(List<String> violations) {
+    double seed = computeFlows(LabyrinthFlowMethod.KEARTON, new ArrayList<String>())[0];
+    NeumannLabyrinthSolver.Result result = neumannSolver().solve(resolvedOutletPressureBara() * 1.0e5, seed);
+    violations.addAll(result.violations);
+    massFlowKgPerSec = result.massFlow;
+    choked = result.choked;
+    criticalMassFlowKgPerSec = result.choked ? result.massFlow : Double.NaN;
+    criticalFlowSearched = false;
+    if (result.profile != null) {
+      int points = result.profile.pressurePa.length;
+      toothPressuresBara = new double[points];
+      for (int i = 0; i < points; i++) {
+        toothPressuresBara[i] = result.profile.pressurePa[i] * 1.0e-5;
+      }
+      toothTemperaturesK = result.profile.temperatureK.clone();
+      toothDensities = result.profile.density.clone();
+    } else {
+      toothPressuresBara = new double[0];
+      toothTemperaturesK = new double[0];
+      toothDensities = new double[0];
+    }
     calculated = true;
   }
 
@@ -547,7 +645,8 @@ public class LabyrinthSealFlowCalculator implements Serializable {
 
   /**
    * Lists why methods evaluated by the last {@link #calculate()} or {@link #calculateAllMethods()} call are outside
-   * their correlation range. Each entry starts with the method name.
+   * their correlation range. Each entry starts with the method name. For NEUMANN, a failure of the lazy critical-flow
+   * search is added when {@link #getCriticalMassFlowRate(String)} (also called by {@link #toJson()}) runs it.
    *
    * @return copy of the list of violations, empty when every evaluated method is within range
    */
@@ -637,12 +736,65 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   /**
    * Returns the critical (choked) mass flow of the clearance for the selected method.
    *
+   * <p>
+   * For {@link LabyrinthFlowMethod#NEUMANN} this is the largest flow at which no tooth chokes. When the leakage is not
+   * choked it is found by a separate search on the first request, which costs additional PH flashes. If that search
+   * fails, the result is NaN and the reason is added to {@link #getValidityViolations()}.
+   * </p>
+   *
    * @param unit mass flow unit, see {@link #getMassFlowRate(String)}
-   * @return critical mass flow
+   * @return critical mass flow, NaN when it cannot be determined
    */
   public double getCriticalMassFlowRate(String unit) {
     requireResult();
+    if (method == LabyrinthFlowMethod.NEUMANN && !criticalFlowSearched && Double.isNaN(criticalMassFlowKgPerSec)
+        && massFlowKgPerSec > 0.0) {
+      criticalFlowSearched = true;
+      NeumannLabyrinthSolver.Result critical = neumannSolver().chokedFlow(massFlowKgPerSec);
+      criticalMassFlowKgPerSec = critical.massFlow;
+      validityViolations.addAll(critical.violations);
+    }
     return convertMassFlow(criticalMassFlowKgPerSec, unit);
+  }
+
+  /**
+   * Returns the pressure at the inlet and after each tooth from the last Neumann calculation.
+   *
+   * @param unit pressure unit supported by {@link PressureUnit}, for example "bara" or "barg"
+   * @return n + 1 pressures, empty when the selected method is not NEUMANN or the calculation failed
+   */
+  public double[] getToothPressures(String unit) {
+    requireResult();
+    double[] values = new double[toothPressuresBara.length];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = new PressureUnit(toothPressuresBara[i], "bara").getValue(unit);
+    }
+    return values;
+  }
+
+  /**
+   * Returns the gas temperature at the inlet and after each tooth from the last Neumann calculation.
+   *
+   * @param unit temperature unit, for example "C" or "K"
+   * @return n + 1 temperatures, empty when the selected method is not NEUMANN or the calculation failed
+   */
+  public double[] getToothTemperatures(String unit) {
+    requireResult();
+    double[] values = new double[toothTemperaturesK.length];
+    for (int i = 0; i < values.length; i++) {
+      values[i] = new TemperatureUnit(toothTemperaturesK[i], "K").getValue(unit);
+    }
+    return values;
+  }
+
+  /**
+   * Returns the gas density at the inlet and after each tooth from the last Neumann calculation.
+   *
+   * @return n + 1 densities in kg/m3, empty when the selected method is not NEUMANN or the calculation failed
+   */
+  public double[] getToothDensities() {
+    requireResult();
+    return toothDensities.clone();
   }
 
   /**
@@ -769,7 +921,7 @@ public class LabyrinthSealFlowCalculator implements Serializable {
     map.put("method", method.name());
     map.put("massFlowRate_kg_s", finiteOrNull(massFlowKgPerSec));
     map.put("massFlowRate_kg_hr", finiteOrNull(getMassFlowRate("kg/hr")));
-    map.put("criticalMassFlowRate_kg_s", finiteOrNull(criticalMassFlowKgPerSec));
+    map.put("criticalMassFlowRate_kg_s", finiteOrNull(getCriticalMassFlowRate("kg/sec")));
     map.put("choked", choked);
     map.put("withinValidityRange", validityViolations.isEmpty());
     map.put("validityViolations", new ArrayList<String>(validityViolations));
@@ -787,7 +939,27 @@ public class LabyrinthSealFlowCalculator implements Serializable {
     map.put("liquidAtInlet", liquidAtInlet);
     map.put("eos", fluid.getModelName());
     map.put("geometry", geometry.toMap());
+    if (toothPressuresBara.length > 0) {
+      map.put("toothPressures_bara", finiteList(toothPressuresBara, 0.0));
+      map.put("toothTemperatures_C", finiteList(toothTemperaturesK, -273.15));
+      map.put("toothDensities_kg_m3", finiteList(toothDensities, 0.0));
+    }
     return new GsonBuilder().serializeNulls().setPrettyPrinting().create().toJson(map);
+  }
+
+  /**
+   * Converts an array to a list of boxed values with an offset, writing null for non-finite entries.
+   *
+   * @param values values to convert
+   * @param offset offset added to each value
+   * @return list of boxed values
+   */
+  private static List<Double> finiteList(double[] values, double offset) {
+    List<Double> list = new ArrayList<Double>(values.length);
+    for (double value : values) {
+      list.add(finiteOrNull(value + offset));
+    }
+    return list;
   }
 
   /**
