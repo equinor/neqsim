@@ -51,6 +51,8 @@ Analyze the request and match it to one or more agents:
 | LNG tank ageing, rollover, boil-off, LNG ship voyage | `@lng-value-chain` | `@process-model` for BOG handling flowsheet |
 | Electrolyte, brine, produced water, scale, MEG, ions, pH | `@thermo-fluid` | loads `neqsim-electrolyte-systems` skill |
 | JUnit test, unit test, regression test | `@neqsim-test` | — |
+| Add or fix `runTransient` / dynamic behaviour in a NeqSim equipment class (Java), inventory volume, controller state, transient regression test | `@dynamic-equipment` | `@neqsim-test` for extra tests; `@control-system` to use the equipment in a controlled flowsheet |
+| Scientific paper, manuscript, journal submission, book chapter, textbook, reproducibility package, reviewer response | `@paperlab` | `@notebook-example` for reproducible figures; `@literature-scout` for references |
 | Jupyter notebook, example, demonstration | `@notebook-example` | — |
 | Documentation, guide, tutorial, cookbook, markdown | `@documentation` | — |
 | Field development, NPV, economics, concept selection, multi-discipline | `@field-development` | `@solve-task` for formal report, specialists as needed |
