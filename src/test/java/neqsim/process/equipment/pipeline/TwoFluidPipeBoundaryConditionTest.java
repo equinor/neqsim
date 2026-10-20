@@ -611,7 +611,14 @@ class TwoFluidPipeBoundaryConditionTest {
       handoffPipe.setElevationProfile(new double[] {0.0, 0.1, 0.2, 0.3, 0.4, 0.5});
     }
     handoffPipe.setThermodynamicUpdateInterval(Integer.MAX_VALUE);
+    // A one-second wall-clock guard truncates initialization on slower CI runners. The
+    // handoff must start from the same completed iteration sequence on every platform.
+    handoffPipe.setSteadyStateMaxWallClockTime(60.0);
     handoffPipe.run();
+    assertFalse(handoffPipe.isSteadyStateWallClockLimited(),
+        name + " handoff initialization must finish before the wall-clock guard");
+    assertTrue(handoffPipe.isSteadyStateConverged(),
+        name + " handoff must start from a converged steady-state profile");
 
     double[] pressureBefore = handoffPipe.getPressureProfile();
     double[] liquidHoldupBefore = handoffPipe.getLiquidHoldupProfile();

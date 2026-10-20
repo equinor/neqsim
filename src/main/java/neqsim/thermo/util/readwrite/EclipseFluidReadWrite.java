@@ -65,6 +65,40 @@ public class EclipseFluidReadWrite {
   /** Default number of parsed E300 fluids retained by the cache. */
   public static final int DEFAULT_MAX_CACHE_SIZE = 64;
 
+  /** Conversion between NeqSim critical volume (cm3/mol) and the E300 VCRIT unit (m3/kmol). */
+  private static final double CM3_PER_MOL_PER_M3_PER_KMOL = 1000.0;
+
+  /**
+   * Largest VCRIT value (m3/kmol) that is still interpreted as being in E300 units. The lightest real component has Vc
+   * of about 50 cm3/mol (0.05 m3/kmol) and even very heavy pseudo-components stay below about 5 m3/kmol, whereas legacy
+   * NeqSim-written files hold cm3/mol values of 56 or more.
+   */
+  private static final double MAX_VCRIT_M3_PER_KMOL = 20.0;
+
+  /**
+   * Converts the VCRIT section read from an E300 file to NeqSim critical volume (cm3/mol).
+   *
+   * <p>
+   * Standard E300 files (Eclipse, PVTsim) hold VCRIT in m3/kmol and are scaled by 1000. Files written by earlier NeqSim
+   * versions stored cm3/mol under the same keyword and are returned unchanged.
+   * </p>
+   *
+   * @param vcrit values read from the VCRIT section
+   * @return critical volumes in cm3/mol, same order as the input
+   */
+  private static ArrayList<Double> vcritToCm3PerMol(List<Double> vcrit) {
+    double max = 0.0;
+    for (Double v : vcrit) {
+      max = Math.max(max, Math.abs(v));
+    }
+    ArrayList<Double> converted = new ArrayList<Double>(vcrit.size());
+    double factor = max < MAX_VCRIT_M3_PER_KMOL ? CM3_PER_MOL_PER_M3_PER_KMOL : 1.0;
+    for (Double v : vcrit) {
+      converted.add(v * factor);
+    }
+    return converted;
+  }
+
   /** Upper bound on the number of parsed E300 fluids retained by the cache. */
   private static volatile int maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
 
@@ -754,6 +788,7 @@ public class EclipseFluidReadWrite {
           }
         }
       }
+      VCRIT = vcritToCm3PerMol(VCRIT);
       for (int counter = 0; counter < names.size(); counter++) {
         String name = mapE300ComponentName(names.get(counter));
         if (name != null) {
@@ -1308,6 +1343,7 @@ public class EclipseFluidReadWrite {
         }
       }
 
+      VCRIT = vcritToCm3PerMol(VCRIT);
       for (String fluidName : fluidNames) {
         for (int counter = 0; counter < names.size(); counter++) {
           String name = mapE300ComponentName(names.get(counter));
@@ -1750,11 +1786,12 @@ public class EclipseFluidReadWrite {
     }
     writer.write("/\n");
 
-    // Critical volumes (m3/kmol)
+    // Critical volumes (m3/kmol). NeqSim stores critical volume in cm3/mol, so divide by 1000.
     writer.write("-- Critical Volume (m3/kmol)\n");
     writer.write("VCRIT\n");
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "   %.6f\n", fluid.getComponent(i).getCriticalVolume()));
+      writer.write(String.format(java.util.Locale.US, "   %.6f\n",
+          fluid.getComponent(i).getCriticalVolume() / CM3_PER_MOL_PER_M3_PER_KMOL));
     }
     writer.write("/\n");
 
@@ -1762,9 +1799,9 @@ public class EclipseFluidReadWrite {
     writer.write("-- Critical Z-factors\n");
     writer.write("ZCRIT\n");
     for (int i = 0; i < nComps; i++) {
-      // Zcrit = Pc * Vc / (R * Tc) where R = 8.314 J/(mol·K)
+      // Zcrit = Pc * Vc / (R * Tc) with Pc in Pa, Vc in m3/mol (cm3/mol * 1e-6), R = 8.314 J/(mol K)
       double pc = fluid.getComponent(i).getPC() * 1e5; // bar to Pa
-      double vc = fluid.getComponent(i).getCriticalVolume() / 1000.0; // m3/kmol to m3/mol
+      double vc = fluid.getComponent(i).getCriticalVolume() * 1.0e-6; // cm3/mol to m3/mol
       double tc = fluid.getComponent(i).getTC();
       double zcrit = pc * vc / (8.314 * tc);
       writer.write(String.format(java.util.Locale.US, "   %.5f\n", zcrit));
