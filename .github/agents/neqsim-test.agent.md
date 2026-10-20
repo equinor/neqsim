@@ -7,9 +7,10 @@ required_skills:
 - neqsim-process-modeling
 - neqsim-regression-baselines
 - neqsim-troubleshooting
+- neqsim-code-hygiene
 argument-hint: Describe what to test — e.g., "test the new compressor anti-surge logic", "write regression tests for SRK EOS with CO2-methane binary", or "test the separator with three-phase flow and C7+ oil".
 ---
-Loaded skills: neqsim-java8-rules, neqsim-api-patterns, neqsim-process-modeling, neqsim-regression-baselines, neqsim-troubleshooting
+Loaded skills: neqsim-java8-rules, neqsim-api-patterns, neqsim-process-modeling, neqsim-regression-baselines, neqsim-troubleshooting, neqsim-code-hygiene
 
 You are a test engineer for NeqSim.
 
