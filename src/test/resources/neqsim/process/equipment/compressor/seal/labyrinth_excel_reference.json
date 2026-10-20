@@ -1,0 +1,1155 @@
+{
+ "description": "Reference labyrinth seal gas flows computed by a VBA workbook (GERG-2008 v1.7 properties, methods Stodola, Egli (Aungier coefficients), Vermes, Kearton and modified Neumann for teeth on stator). Null Neumann values are cases where the workbook returned an error (choked flow).",
+ "units": "pressure barg, temperature C, lengths mm, mass flow kg/s",
+ "cases": [
+  {
+   "id": "worked_case",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.019169952243703856,
+     "EGLI": 0.0386617238464338,
+     "VERMES": 0.04344131277211835,
+     "KEARTON": 0.030712755093175274,
+     "NEUMANN": 0.02538001192217076
+    }
+   }
+  },
+  {
+   "id": "dp_small",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 2.6,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 86.05643871398644,
+     "density_kg_m3": 2.7842897486362683,
+     "kappa": 1.200920404738977
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.0076059103876214874,
+     "EGLI": 0.01674240256992047,
+     "VERMES": 0.016622207131678335,
+     "KEARTON": 0.012614434429186014,
+     "NEUMANN": 0.009929893336503957
+    }
+   }
+  },
+  {
+   "id": "dp_medium",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 2.2,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.8882836393094,
+     "density_kg_m3": 2.4753817979649972,
+     "kappa": 1.201078848590268
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.013688389247611923,
+     "EGLI": 0.028072945364916797,
+     "VERMES": 0.030275612481446015,
+     "KEARTON": 0.02243750324184634,
+     "NEUMANN": 0.01796123794784263
+    }
+   }
+  },
+  {
+   "id": "dp_large",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 0.8,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.29795400958392,
+     "density_kg_m3": 1.3955142571095192,
+     "kappa": 1.2016634574687433
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.022829078607986955,
+     "EGLI": 0.04574861288594222,
+     "VERMES": 0.053162169520208816,
+     "KEARTON": 0.03537250648407766,
+     "NEUMANN": 0.030577227700317053
+    }
+   }
+  },
+  {
+   "id": "dp_to_atm",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 0.0,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 84.95938109067475,
+     "density_kg_m3": 0.7793791101965475,
+     "kappa": 1.2020184247087502
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.02506837920706771,
+     "EGLI": 0.04987004588408489,
+     "VERMES": 0.05316216952020881,
+     "KEARTON": 0.0369372077532719,
+     "NEUMANN": 0.034141120618691206
+    }
+   }
+  },
+  {
+   "id": "n2_to_atm_choked",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 0.0,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 2,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 84.95938109067475,
+     "density_kg_m3": 0.7793791101965475,
+     "kappa": 1.2020184247087502
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.03963658777156986,
+     "EGLI": 0.052394183666560123,
+     "VERMES": 0.053162169520208816,
+     "KEARTON": 0.041831667427221136,
+     "NEUMANN": null
+    }
+   }
+  },
+  {
+   "id": "n3",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 3,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.02474830192915218,
+     "EGLI": 0.04063582767584053,
+     "VERMES": 0.05316216952020881,
+     "KEARTON": 0.035671353791944214,
+     "NEUMANN": 0.027957867197302824
+    }
+   }
+  },
+  {
+   "id": "n4",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 4,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.021432658171173218,
+     "EGLI": 0.040096890957301325,
+     "VERMES": 0.04909257748610167,
+     "KEARTON": 0.03295863842149782,
+     "NEUMANN": 0.026465076163506136
+    }
+   }
+  },
+  {
+   "id": "n8",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 8,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.01515517793168985,
+     "EGLI": 0.03406518563298344,
+     "VERMES": 0.033809462172293955,
+     "KEARTON": 0.02571551711926612,
+     "NEUMANN": 0.023109520180558573
+    }
+   }
+  },
+  {
+   "id": "n12",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 12,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.01237415096457609,
+     "EGLI": 0.028734375317793968,
+     "VERMES": 0.027371739862776294,
+     "KEARTON": 0.02147313785746532,
+     "NEUMANN": 0.02105213393481601
+    }
+   }
+  },
+  {
+   "id": "n13",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 13,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.011888699693178044,
+     "EGLI": 0.02764527316251739,
+     "VERMES": 0.026263895905757884,
+     "KEARTON": 0.020681039473152574,
+     "NEUMANN": 0.020631447930737866
+    }
+   }
+  },
+  {
+   "id": "n20",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 20,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.009584976121851928,
+     "EGLI": 0.022204462678029013,
+     "VERMES": 0.021060580813284338,
+     "KEARTON": 0.01679939248017835,
+     "NEUMANN": 0.018300037900656558
+    }
+   }
+  },
+  {
+   "id": "clearance_min",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.1524,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.012771017041972635,
+     "EGLI": 0.025258278684626583,
+     "VERMES": 0.025576686740980695,
+     "KEARTON": 0.018523603432512647,
+     "NEUMANN": 0.016019100704721616
+    }
+   }
+  },
+  {
+   "id": "clearance_2xmax",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.4572,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.03842046457187718,
+     "EGLI": 0.07344496221309688,
+     "VERMES": 0.10654774851023176,
+     "KEARTON": 0.07600782896430168,
+     "NEUMANN": 0.054058560467491704
+    }
+   }
+  },
+  {
+   "id": "pitch_4mm",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 4.0,
+    "tip_width_mm": 0.5,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9929310198893057,
+     "density_kg_m3": 2.911809804036185,
+     "enthalpy_kJ_kg": 122.66227928521583,
+     "cp_kJ_kgK": 2.1835304236671,
+     "cv_kJ_kgK": 1.8054846966441032,
+     "sound_speed_m_s": 394.7387101539455,
+     "kappa": 1.2008582562454757
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.6110477240789,
+     "density_kg_m3": 1.96735686492683,
+     "kappa": 1.2013479262860642
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.019169952243703856,
+     "EGLI": 0.03601618302531435,
+     "VERMES": 0.03565780481292055,
+     "KEARTON": 0.026169811948226405,
+     "NEUMANN": 0.023010906781497573
+    }
+   }
+  },
+  {
+   "id": "cold_20C",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 20.0,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9855867009330039,
+     "density_kg_m3": 3.5951606639884406,
+     "enthalpy_kJ_kg": -14.842704009231497,
+     "cp_kJ_kgK": 1.9845579092778816,
+     "cv_kJ_kgK": 1.5961685061574238,
+     "sound_speed_m_s": 358.84671299961985,
+     "kappa": 1.2253088133122492
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 19.168421180044106,
+     "density_kg_m3": 2.4267488055308846,
+     "kappa": 1.2267661009703625
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.02130093566305666,
+     "EGLI": 0.043119228927185345,
+     "VERMES": 0.0482703658681013,
+     "KEARTON": 0.034126867503794116,
+     "NEUMANN": 0.028243004827200813
+    }
+   }
+  },
+  {
+   "id": "hot_150C",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 150.0,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.9963894368218262,
+     "density_kg_m3": 2.4636532166063447,
+     "enthalpy_kJ_kg": 269.2332271871872,
+     "cp_kJ_kgK": 2.4081190583445,
+     "cv_kJ_kgK": 2.034943576019487,
+     "sound_speed_m_s": 425.2444640611064,
+     "kappa": 1.17914230914828
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 149.6536380702267,
+     "density_kg_m3": 1.665421571003726,
+     "kappa": 1.1791648735221225
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.017633126261174886,
+     "EGLI": 0.03550050104740435,
+     "VERMES": 0.03995868864584874,
+     "KEARTON": 0.028250560121471934,
+     "NEUMANN": 0.023313941560699675
+    }
+   }
+  },
+  {
+   "id": "hp_20_15barg",
+   "inputs": {
+    "inlet_pressure_barg": 20.0,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 15.0,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.961192189492634,
+     "density_kg_m3": 16.72916966954522,
+     "enthalpy_kJ_kg": 106.6351817618397,
+     "cp_kJ_kgK": 2.2728001865726273,
+     "cv_kJ_kgK": 1.8222558658020123,
+     "sound_speed_m_s": 388.1940725788291,
+     "kappa": 1.1997174007578075
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 84.03414951316739,
+     "density_kg_m3": 12.711443363831087,
+     "kappa": 1.2000190047441843
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.09524423484104215,
+     "EGLI": 0.19615665397153548,
+     "VERMES": 0.21308966101324014,
+     "KEARTON": 0.15441901095200514,
+     "NEUMANN": 0.12547388378223043
+    }
+   }
+  },
+  {
+   "id": "hp_50_10barg_n8",
+   "inputs": {
+    "inlet_pressure_barg": 50.0,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 10.0,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 8,
+    "composition_mole_fraction": {
+     "methane": 0.8317,
+     "nitrogen": 0.0101,
+     "CO2": 0.0137,
+     "ethane": 0.0079,
+     "propane": 0.012,
+     "i-butane": 0.0108,
+     "n-butane": 0.0259,
+     "i-pentane": 0.0131,
+     "n-pentane": 0.016,
+     "n-hexane": 0.015,
+     "n-heptane": 0.0107,
+     "n-octane": 0.0057,
+     "n-nonane": 0.0011,
+     "water": 0.0263
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 22.858462761999988,
+     "Z": 0.909122366000902,
+     "density_kg_m3": 42.93901147736251,
+     "enthalpy_kJ_kg": 77.94934036481014,
+     "cp_kJ_kgK": 2.458265468543152,
+     "cv_kJ_kgK": 1.8517995142015156,
+     "sound_speed_m_s": 380.02667020442385,
+     "kappa": 1.2156182234921706
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 68.78092344549543,
+     "density_kg_m3": 9.079041076211757,
+     "kappa": 1.2051664811568839
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.2834326986664208,
+     "EGLI": 0.655607234168503,
+     "VERMES": 0.6858553985035465,
+     "KEARTON": 0.45103421729187,
+     "NEUMANN": 0.4412542521476231
+    }
+   }
+  },
+  {
+   "id": "methane_worked_geometry",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "methane": 1.0
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 16.04246,
+     "Z": 0.9969622658482451,
+     "density_kg_m3": 2.035294720635066,
+     "enthalpy_kJ_kg": 138.31996786236516,
+     "cp_kJ_kgK": 2.4088114218472416,
+     "cv_kJ_kgK": 1.8789913955491024,
+     "sound_speed_m_s": 487.0963573547245,
+     "kappa": 1.2781045433860798
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.7708068944674,
+     "density_kg_m3": 1.3763194646457522,
+     "kappa": 1.2776178849357078
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.016027034877247746,
+     "EGLI": 0.032257710820500246,
+     "VERMES": 0.03631910116734063,
+     "KEARTON": 0.02567739297401521,
+     "NEUMANN": 0.021325492096079375
+    }
+   }
+  },
+  {
+   "id": "nitrogen_worked_geometry",
+   "inputs": {
+    "inlet_pressure_barg": 2.765,
+    "inlet_temperature_C": 86.12,
+    "outlet_pressure_barg": 1.5417,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 5,
+    "composition_mole_fraction": {
+     "nitrogen": 1.0
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 28.0134,
+     "Z": 1.0006141077222763,
+     "density_kg_m3": 3.5410679678077495,
+     "enthalpy_kJ_kg": 63.05069775325585,
+     "cp_kJ_kgK": 1.0455138987058223,
+     "cv_kJ_kgK": 0.7453398225167462,
+     "sound_speed_m_s": 386.99331715851065,
+     "kappa": 1.4036230857838763
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 85.97023591677026,
+     "density_kg_m3": 2.3960496688099555,
+     "kappa": 1.4019707540974082
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.021140081649615824,
+     "EGLI": 0.04247105725334671,
+     "VERMES": 0.047905852205276246,
+     "KEARTON": 0.03386915846739392,
+     "NEUMANN": 0.028320897913166734
+    }
+   }
+  },
+  {
+   "id": "methane_hp_choked_n3",
+   "inputs": {
+    "inlet_pressure_barg": 30.0,
+    "inlet_temperature_C": 40.0,
+    "outlet_pressure_barg": 0.0,
+    "shaft_diameter_mm": 108.566,
+    "tooth_height_mm": 2,
+    "tooth_pitch_mm": 2,
+    "tip_width_mm": 0.3,
+    "radial_clearance_mm": 0.2286,
+    "number_of_teeth": 3,
+    "composition_mole_fraction": {
+     "methane": 1.0
+    }
+   },
+   "excel": {
+    "inlet": {
+     "molar_mass_kg_kmol": 16.04246,
+     "Z": 0.9569352952221828,
+     "density_kg_m3": 19.968644289857348,
+     "enthalpy_kJ_kg": 5.593578773882422,
+     "cp_kJ_kgK": 2.4362533272774787,
+     "cv_kJ_kgK": 1.7714133524953053,
+     "sound_speed_m_s": 452.5215617671284,
+     "kappa": 1.3184991536802024
+    },
+    "outlet_isenthalpic": {
+     "temperature_C": 27.945645616667832,
+     "density_kg_m3": 0.6504016067936335,
+     "kappa": 1.3026817747340853
+    },
+    "mass_flow_kg_s": {
+     "STODOLA": 0.2519110263924793,
+     "EGLI": 0.4132061200373303,
+     "VERMES": null,
+     "KEARTON": 0.28128762548413155,
+     "NEUMANN": null
+    }
+   }
+  }
+ ]
+}
