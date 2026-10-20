@@ -1,364 +1,136 @@
 ---
 title: Produced Water Degassing System
-description: Documentation for multi-stage produced water degassing with emission calculations per Norwegian regulations.
+description: Three-stage produced-water gas-release screening, supported defaults, and tuning limitations.
 ---
 
-High-level model for produced water degassing with greenhouse gas emission calculations.
+`neqsim.process.equipment.util.ProducedWaterDegassingSystem` builds an inlet,
+three pressure-reduction heaters, and three separators (degasser, CFU, caisson).
+It calculates gas release and component emission rates with `EmissionsCalculator`.
+Use it for screening with an explicit calculation basis and independent validation.
 
-## Table of Contents
-- [Overview](#overview)
-- [Regulatory Context](#regulatory-context)
-- [Thermodynamic Model](#thermodynamic-model)
-- [Process Description](#process-description)
-- [Usage Examples](#usage-examples)
-- [Emission Calculations](#emission-calculations)
-- [Calibration and Validation](#calibration-and-validation)
-- [API Reference](#api-reference)
+## Thermodynamic model and limitations
 
----
+The builder uses `SystemSrkCPAstatoil`, mixing rule 10, multiphase checking, and the
+current NeqSim database interaction parameters. Water is initially 95 mol%; the
+specified gas fractions distribute the remaining 5 mol%. This is an assumed
+loading, not a fit to a measured gas-water ratio (GWR). Flow in m3/hr is converted
+to mass using an assumed water density of 1000 kg/m3.
 
-## Overview
+`setSalinity` currently stores reporting metadata only: it does not add NaCl,
+change interaction parameters, or implement salting out. The gas composition,
+water flow, temperature, and stage pressures remain separate inputs. This
+convenience builder does not accept or modify a caller-owned fluid. For a
+separately characterized fluid, assemble `Stream`, `Heater`, and
+`ThreePhaseSeparator` equipment directly and validate that model independently.
 
-**Location:** `neqsim.process.equipment.util.ProducedWaterDegassingSystem`
+### Optional tuning is unsupported
 
-The `ProducedWaterDegassingSystem` class models multi-stage degassing for produced water treatment, automatically calculating greenhouse gas emissions at each stage. This is based on the methodology from the GFMW 2023 paper "Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator".
+`setTunedInteractionParameters(true)` throws `UnsupportedOperationException`
+before changing model state. Previously it silently retained default coefficients.
+Omit the call, or explicitly use `false`, to select the unchanged database model.
+The same rejection applies at `build()` and both `run()` entry points to protect
+older serialized models that retained a true flag. A rejected setter call leaves
+an existing process and its results intact. For an older model, explicitly select
+`false` and rebuild before running.
 
-### Key Features
+There is no supported optional tuned model or claimed validity range in this
+builder. Its legacy `KIJ_WATER_*` constants remain available for source
+compatibility, are deprecated, and are not applied to any fluid.
 
-- Multi-stage degassing (Degasser → CFU → Caisson)
-- Automatic GHG emission calculation at each stage
-- Supports CPA equation of state for accurate water-gas equilibria
-- Tunable binary interaction parameters from lab calibration
-- Comparison with conventional handbook methods
-- Norwegian regulatory compliance support
+The [Kristiansen et al. workshop paper (2023)](https://nfogm.no/wp-content/uploads/2025/08/05-Virtual-Measurement-of-Emissions-from-Produced-Water-Using-an-Online-Process-Simulator_-Equinor_Olav-Kristiansen.pdf)
+is background for a separate field-calibrated model. Appendix A, Eq. (6), defines
+$k_{ij}=k_{ij,0}+k_{ij,T}(T-288.15)$ with temperature $T$ in kelvin and
+$k_{ij,T}$ in inverse kelvin. Its Table 2 was fitted to water containing about
+10–11 wt% NaCl. These coefficients are not default neutral/electrolyte parameters.
+Applying them requires reconciliation of the full EOS, association, mixing-rule,
+temperature-reference, and salinity conventions, followed by validation against
+independent public data. Combining a salt-specific fit with an explicit salt
+correction can double-count salinity. See [issue #4483](https://github.com/equinor/neqsim/issues/4483)
+and the broader provenance work in [#4234](https://github.com/equinor/neqsim/issues/4234).
 
----
+The paper's field uncertainty and reporting qualifications do not establish the
+accuracy or regulatory suitability of this screening builder. Results require a
+case-specific uncertainty assessment and applicable reporting review.
 
-## Regulatory Context
+## Executable Java example
 
-This implementation supports compliance with:
-
-| Regulation | Description |
-|------------|-------------|
-| **Aktivitetsforskriften §70** | Measurement and calculation requirements |
-| **Norwegian Offshore Emission Handbook** | Replaces conventional solubility factor method |
-| **Norwegian Environment Agency** | Annual emission reporting |
-
-### Comparison: Virtual vs Conventional Methods
-
-| Aspect | Conventional Method | Virtual Measurement |
-|--------|---------------------|---------------------|
-| Gas solubility | Fixed factors (ppmv/bar) | CPA-EoS calculation |
-| Composition | Assumed (often 100% CH₄) | Component-by-component |
-| Accuracy | ±30-50% typical | ±3.6% total gas |
-| Calibration | None | Lab-tuned kij parameters |
-
----
-
-## Thermodynamic Model
-
-### CPA Equation of State
-
-Uses SRK-CPA (Cubic Plus Association) with:
-- Water self-association
-- Water-hydrocarbon solvation
-- Tuned binary interaction parameters
-
-### Binary Interaction Parameters (Tuned)
-
-| Pair | kij Base | kij Temp Coeff | Source |
-|------|----------|----------------|--------|
-| Water-CO₂ | -0.24 | 0.001121 | Kristiansen 2023 |
-| Water-CH₄ | -0.72 | 0.002605 | Kristiansen 2023 |
-| Water-C₂H₆ | 0.11 | - | Literature |
-| Water-C₃H₈ | 0.205 | - | Literature |
-
-### Model Validation
-
-Validated against produced water samples from high-CO₂ reservoirs:
-- Total gas: ±3.6% uncertainty
-- CO₂/CH₄ composition: ±1% uncertainty
-
----
-
-## Process Description
-
-### Typical 3-Stage System
-
-```
-Water from ────►  Degasser  ────►    CFU    ────►  Caisson  ────► Sea
-Separator        (3-5 barg)       (1 barg)        (atm)
-                     │                │               │
-                     ▼                ▼               ▼
-               Gas to Flare    Gas to Vent    Gas to Atmosphere
-```
-
-### Stage Details
-
-| Stage | Pressure | Temperature | Emissions Destination |
-|-------|----------|-------------|----------------------|
-| **Degasser** | 3-5 barg | 60-80°C | Flare/fuel gas |
-| **CFU** | 1.0 barg | 40-60°C | Atmospheric vent |
-| **Caisson** | 1.01 bara | Ambient | Direct to atmosphere |
-
----
-
-## Usage Examples
-
-### Java Example - Basic Setup
+This example uses the supported default model, synthetic conditions, and absolute
+pressures. `ProducedWaterDegassingDocumentationTest` compiles and executes this
+exact code fence against the current source.
 
 ```java
+import java.util.Map;
 import neqsim.process.equipment.util.ProducedWaterDegassingSystem;
 
-// Create produced water degassing system
-ProducedWaterDegassingSystem system = new ProducedWaterDegassingSystem("Platform PW");
-
-// Set water flow conditions
-system.setWaterFlowRate(100.0, "m3/hr");      // Produced water rate
-system.setWaterTemperature(80.0, "C");        // From separator
-system.setInletPressure(30.0, "bara");        // Upstream pressure
-
-// Set stage pressures
-system.setDegasserPressure(4.0, "bara");
-system.setCFUPressure(1.0, "bara");
-// Caisson is atmospheric by default
-
-// Set dissolved gas composition (from PVT analysis)
-system.setDissolvedGasComposition(
-    new String[]{"CO2", "methane", "ethane", "propane"},
-    new double[]{0.51, 0.44, 0.04, 0.01}  // Mole fractions
-);
-
-// Optional: Use tuned kij parameters from lab calibration
-system.setTunedInteractionParameters(true);
-
-// Set salinity if known
-system.setSalinity(10.0, "wt%");  // 10 wt% NaCl
-
-// Run calculation
-system.run();
-
-// Get emissions report
-System.out.println(system.getEmissionsReport());
+public class ProducedWaterDegassingExample {
+  /**
+   * Runs a synthetic screening case with the default database model.
+   *
+   * @return the executed model for inspection or integration
+   */
+  public static ProducedWaterDegassingSystem runExample() {
+    ProducedWaterDegassingSystem system = new ProducedWaterDegassingSystem("Screening PW");
+    system.setWaterFlowRate(100.0, "m3/hr");
+    system.setWaterTemperature(80.0, "C");
+    system.setInletPressure(30.0, "bara");
+    system.setDegasserPressure(4.0, "bara");
+    system.setCFUPressure(1.2, "bara");
+    system.setCaissonPressure(1.01325, "bara");
+    system.setDissolvedGasComposition(
+        new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.51, 0.44, 0.04, 0.01});
+    system.setTunedInteractionParameters(false);
+    system.setLabGWR(0.85);
+    system.run();
+    Map<String, Object> comparison = system.getValidationResults();
+    if (comparison == null || !comparison.containsKey("GWR")) {
+      throw new IllegalStateException("Missing lab comparison");
+    }
+    return system;
+  }
+}
 ```
 
-### Python Example
-
-```python
-from neqsim import jneqsim
-
-ProducedWaterDegassingSystem = jneqsim.process.equipment.util.ProducedWaterDegassingSystem
-
-# Create degassing system
-system = ProducedWaterDegassingSystem("Platform PW")
-
-# Configure
-system.setWaterFlowRate(100.0, "m3/hr")
-system.setWaterTemperature(80.0, "C")
-system.setInletPressure(30.0, "bara")
-
-# Set stage pressures
-system.setDegasserPressure(4.0, "bara")
-system.setCFUPressure(1.0, "bara")
-
-# Set dissolved gas (typical Gudrun composition)
-components = ["CO2", "methane", "ethane", "propane"]
-fractions = [0.51, 0.44, 0.04, 0.01]
-for comp, frac in zip(components, fractions):
-    system.addDissolvedComponent(comp, frac)
-
-# Use tuned parameters
-system.setTunedInteractionParameters(True)
-
-# Run
-system.run()
-
-# Get results
-print(system.getEmissionsReport())
-print(f"\nTotal emissions: {system.getTotalEmissionsTonnesCO2eq():.2f} tonnes CO2eq/year")
-```
-
-### Detailed Emission Results
-
-```java
-// Get emissions by stage
-double degasserCH4 = system.getDegasserEmissions().getCH4("kg/hr");
-double degasserCO2 = system.getDegasserEmissions().getCO2("kg/hr");
-
-double cfuCH4 = system.getCFUEmissions().getCH4("kg/hr");
-double cfuCO2 = system.getCFUEmissions().getCO2("kg/hr");
-
-double caissonCH4 = system.getCaissonEmissions().getCH4("kg/hr");
-double caissonCO2 = system.getCaissonEmissions().getCO2("kg/hr");
-
-// Total GWP (Global Warming Potential)
-double totalCO2eq = system.getTotalEmissionsTonnesCO2eq();  // tonnes/year
-
-System.out.println("Stage Emissions (kg/hr):");
-System.out.printf("  Degasser: CH4=%.2f, CO2=%.2f%n", degasserCH4, degasserCO2);
-System.out.printf("  CFU:      CH4=%.2f, CO2=%.2f%n", cfuCH4, cfuCO2);
-System.out.printf("  Caisson:  CH4=%.2f, CO2=%.2f%n", caissonCH4, caissonCO2);
-System.out.printf("Total GHG: %.1f tonnes CO2eq/year%n", totalCO2eq);
-```
-
----
-
-## Emission Calculations
-
-### Gas Water Ratio (GWR)
-
-The model calculates the Gas Water Ratio at each stage:
-
-$$GWR = \frac{V_{gas}}{V_{water}}$$
-
-Where:
-- $V_{gas}$ = Volume of liberated gas at standard conditions (Sm³)
-- $V_{water}$ = Volume of produced water (m³)
-
-### CO₂ Equivalent Emissions
-
-Total emissions in CO₂ equivalent:
-
-$$E_{CO_2eq} = E_{CO_2} + GWP_{CH_4} \times E_{CH_4} + GWP_{NMVOC} \times E_{NMVOC}$$
-
-Where:
-- $GWP_{CH_4}$ = 25 (IPCC AR4) or 28 (AR5)
-- $GWP_{NMVOC}$ = 11 (weighted average for C2-C5)
-
-### Comparison with Handbook Method
-
-```java
-// Get method comparison
-String comparison = system.getMethodComparisonReport();
-System.out.println(comparison);
-
-// Typical output:
-// Method Comparison (kg CH4/hr):
-//   Virtual measurement: 12.5
-//   Handbook method:     18.2
-//   Difference:          -31%
-```
-
----
-
-## Calibration and Validation
-
-### Lab Calibration
-
-For improved accuracy, calibrate against lab measurements:
-
-```java
-// Set lab-measured Gas Water Ratio for calibration
-system.setLabGWR(0.15, "Sm3/m3");  // Measured at lab conditions
-
-// Set lab gas composition (mole fractions)
-system.setLabGasComposition(new String[]{"CO2", "methane"},
-                            new double[]{0.52, 0.45});
-
-// Enable tuned parameters
-system.setTunedInteractionParameters(true);
-
-// Run and compare
-system.run();
-
-double modelGWR = system.getCalculatedGWR();
-double labGWR = system.getLabGWR();
-double deviation = Math.abs((modelGWR - labGWR) / labGWR * 100);
-
-System.out.printf("Model vs Lab: %.1f%% deviation%n", deviation);
-```
-
-### Online Calibration
-
-For real-time virtual metering:
-
-```java
-// Update with process measurements
-system.setActualWaterFlowRate(measuredFlow);
-system.setActualTemperature(measuredTemp);
-system.setActualPressures(degasserP, cfuP);
-
-// Recalculate
-system.run();
-
-// Get updated emissions
-double currentEmissions = system.getCurrentEmissionsRate("kg/hr");
-```
-
----
-
-## API Reference
-
-### Constructors
-
-| Constructor | Description |
-|-------------|-------------|
-| `ProducedWaterDegassingSystem(String name)` | Create system with name |
-
-### Configuration - Flow Conditions
-
-| Method | Description |
-|--------|-------------|
-| `setWaterFlowRate(double, String)` | Set water flow (kg/hr, m3/hr, bbl/day) |
-| `setWaterTemperature(double, String)` | Set temperature (C, K, F) |
-| `setInletPressure(double, String)` | Set upstream pressure (bara, barg) |
-| `setSalinity(double, String)` | Set water salinity (wt%) |
-
-### Configuration - Stage Pressures
-
-| Method | Description |
-|--------|-------------|
-| `setDegasserPressure(double, String)` | Set degasser pressure |
-| `setCFUPressure(double, String)` | Set CFU pressure |
-| `setCaissonPressure(double, String)` | Set caisson pressure (default atmospheric) |
-
-### Configuration - Composition
-
-| Method | Description |
-|--------|-------------|
-| `setDissolvedGasComposition(String[], double[])` | Set gas composition |
-| `addDissolvedComponent(String, double)` | Add single component |
-| `clearDissolvedComponents()` | Clear composition |
-
-### Configuration - Model
-
-| Method | Description |
-|--------|-------------|
-| `setTunedInteractionParameters(boolean)` | Use tuned kij values |
-| `setLabGWR(double, String)` | Set lab-measured GWR |
-| `setLabGasComposition(String[], double[])` | Set lab gas composition |
-
-### Results - Emissions
-
-| Method | Description |
-|--------|-------------|
-| `getDegasserEmissions()` | Get EmissionsCalculator for degasser |
-| `getCFUEmissions()` | Get EmissionsCalculator for CFU |
-| `getCaissonEmissions()` | Get EmissionsCalculator for caisson |
-| `getTotalEmissionsTonnesCO2eq()` | Get total GHG (tonnes CO2eq/year) |
-| `getEmissionsReport()` | Get formatted emissions report |
-
-### Results - Gas Data
-
-| Method | Description |
-|--------|-------------|
-| `getCalculatedGWR()` | Get calculated Gas Water Ratio |
-| `getTotalGasLiberated()` | Get total gas volume (Sm³/hr) |
-| `getMethodComparisonReport()` | Compare virtual vs handbook methods |
-
-### Results - Process
-
-| Method | Description |
-|--------|-------------|
-| `getDegasserOutlet()` | Get degasser water outlet stream |
-| `getCFUOutlet()` | Get CFU water outlet stream |
-| `toJson()` | Get full results as JSON |
-
----
-
-## Related Documentation
-
-- [Emissions Calculator](../measurement_devices#emissionscalculator) - Component emission calculations
-- [Offshore Emission Reporting](../../../emissions/OFFSHORE_EMISSION_REPORTING) - Norwegian regulations
-- [Norwegian Emission Methods Comparison](../../../examples/NorwegianEmissionMethods_Comparison) - Method comparison example
-- [H2S Distribution Guide](../../../thermo/H2S_distribution_guide) - Gas-liquid equilibria
+The lab value above is synthetic and demonstrates comparison reporting; it is not
+an independent physical validation. Inspect `getValidationResults()` and
+`getMethodComparisonReport()` together with the model basis. Setting lab data
+only computes deviations; it never calibrates coefficients or inlet loading.
+The legacy `passesRegulatoryCriteria` map key tests a fixed 7.5% GWR threshold,
+not regulatory compliance or a complete uncertainty budget.
+
+## API reference
+
+| Method | Supported behavior |
+|--------|--------------------|
+| `setWaterFlowRate(double, String)` | kg/hr, m3/hr, bbl/day; volume conversion assumes 1000 kg/m3 |
+| `setWaterTemperature(double, String)` | C, K, F |
+| `setInletPressure(double, String)` | bara, barg, psia, psig |
+| `setDegasserPressure(double, String)` | First-stage pressure |
+| `setCFUPressure(double, String)` | Second-stage pressure |
+| `setCaissonPressure(double, String)` | Third-stage pressure |
+| `setDissolvedGasComposition(String[], double[])` | Gas component names and mole fractions |
+| `setDissolvedGasComposition(Map<String, Double>)` | Copies the supplied gas composition |
+| `setSalinity(double, String)` | Stores metadata in wt%, ppm, or molal; no thermodynamic salt effect |
+| `setTunedInteractionParameters(boolean)` | `false`: database model; `true`: throws |
+| `setLabGWR(double)` | Comparison GWR in Sm3 gas per Sm3 water |
+| `setLabGasComposition(Map<String, Double>)` | Copies lab gas mole fractions for comparison |
+| `build()` | Builds or explicitly rebuilds the process from current configuration |
+| `run()` / `run(UUID)` | Executes the process; builds it if absent |
+| `getProcessSystem()` | Exposes the composed process |
+| `getDegasserEmissions()` / `getCFUEmissions()` / `getCaissonEmissions()` | Stage calculators |
+| `getTotalCO2EmissionRate(String)` / `getTotalMethaneEmissionRate(String)` / `getTotalNMVOCEmissionRate(String)` | Total component mass rates, e.g. kg/hr or tonnes/year |
+| `getTotalCO2Equivalents(String)` | CO2 equivalents; built-in factors CH4=28 and nmVOC=2.2 |
+| `getEmissionsReport()` / `getMethodComparisonReport()` | Text reports after running |
+| `getValidationResults()` / `toMap()` | Comparison metrics / results suitable for JSON serialization |
+
+After changing configuration on a previously built model, call `build()` again
+before `run()`; the convenience runner only builds when the process is absent.
+Stage temperatures follow the heater/flash calculations; inlet temperature is
+not an independent temperature setpoint for every stage.
+
+## Related documentation
+
+- [Emissions calculator](../measurement_devices.md#emissionscalculator)
+- [Offshore emission reporting background](../../../emissions/OFFSHORE_EMISSION_REPORTING.md)
+- [Method comparison background](../../../examples/NorwegianEmissionMethods_Comparison.md)
+- [H2S distribution guide](../../../thermo/H2S_distribution_guide.md)
