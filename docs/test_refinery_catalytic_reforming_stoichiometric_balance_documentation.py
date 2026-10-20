@@ -18,10 +18,14 @@ class CatalyticReformingStoichiometricBalanceDocumentationTest(unittest.TestCase
 
         for phrase in (
             "RefineryCatalyticReformingStoichiometricBalance",
+            "RefineryCatalyticReformingFeedBalance",
             "naphthene dehydrogenation",
             "paraffin dehydrocyclization",
             "3.5 kmol/h hydrogen",
             "27.505461656 kg/t feed",
+            "780.29702 kg/h idealized reformate",
+            "52.621900454 kg/t feed",
+            "not a calibrated naphtha-reformer yield slate",
             "carbon-atom",
             "hydrogen-atom",
             "does not predict kinetics",

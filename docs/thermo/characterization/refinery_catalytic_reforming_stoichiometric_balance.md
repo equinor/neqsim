@@ -6,7 +6,8 @@ description: Build an auditable naphthene/paraffin-to-aromatic and hydrogen scre
 # Catalytic reforming stoichiometric balance
 
 `RefineryCatalyticReformingStoichiometricBalance` creates an immutable material-balance
-receipt for the first, deliberately narrow catalytic-reforming screen in NeqSim. It represents
+receipt for one carbon number. `RefineryCatalyticReformingFeedBalance` composes those receipts
+across a carbon-number distribution while preserving every cut result. Both represent
 same-carbon-number naphthene dehydrogenation and paraffin dehydrocyclization to an aromatic
 product and hydrogen.
 
@@ -51,6 +52,35 @@ The case converts 0.5 kmol/h from each feed family, produces 1.0 kmol/h aromatic
 total product flows both equal 256.5156 kg/h. The hydrogen result is 7.05558 kg/h, or
 27.505461656 kg/t feed; total-mass and atom residuals are numerically zero.
 
+## Multi-cut feed aggregation
+
+The feed-level receipt accepts aligned arrays of unique carbon numbers, naphthene and paraffin
+flows, and independently justified conversions. It retains one immutable cut receipt per row and
+reports total feed, idealized reformate, aromatics, hydrogen, kg/t-feed intensities, and mass and
+atom closure. Returned arrays are defensive copies. Empty, mismatched, duplicated, non-finite,
+negative, or zero-total rows fail closed.
+
+```java
+RefineryCatalyticReformingFeedBalance feedReceipt =
+    RefineryCatalyticReformingFeedBalance.calculate(
+        new int[] {6, 8},
+        new double[] {1.0, 2.0},
+        new double[] {2.0, 3.0},
+        new double[] {0.50, 1.00},
+        new double[] {0.25, 1.00});
+
+double reformateKgPerHour = feedReceipt.getReformateMassFlowKgPerHour();
+double reformateYield = feedReceipt.getReformateMassYieldFraction();
+double aromaticMassFraction = feedReceipt.getAromaticMassFractionOfReformate();
+double hydrogenKgPerTonne = feedReceipt.getHydrogenProductKgPerTonneFeed();
+```
+
+This analytical two-cut case closes 823.63844 kg/h of feed and total products. It reports
+780.29702 kg/h idealized reformate, 608.95064 kg/h aromatics, and 43.34142 kg/h hydrogen.
+The reformate mass yield is 0.9473780995, its aromatic mass fraction is 0.7804087731, and
+hydrogen production is 52.621900454 kg/t feed. These results are sums of the represented
+reactions, not a calibrated naphtha-reformer yield slate.
+
 ## Provenance and engineering boundary
 
 - The US Department of Energy Office of Science report
@@ -62,7 +92,9 @@ total product flows both equal 256.5156 kg/h. The hydrogen result is 7.05558 kg/
   distinguishes naphthene dehydrogenation and paraffin dehydrocyclization from isomerization and
   hydrocracking and notes hydrogen release from the represented reactions.
 
-The two conversions are scenario inputs and must be selected and documented by the engineer.
+A single-cut or multi-cut conversion vector is a scenario input and must be selected and
+documented by the engineer. Each multi-cut row must map to a defensible feed-family carbon-number
+inventory; the aggregator does not infer that inventory from TBP data or pseudo-components.
 A design, yield, octane, energy, emissions, or product-quality claim requires separately validated
 feed-family characterization, competing-reaction network, thermodynamics and kinetics, catalyst
 and deactivation model, operating envelope, heat balance, separator/recycle system, and independent
