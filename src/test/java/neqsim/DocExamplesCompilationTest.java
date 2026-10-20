@@ -24,6 +24,9 @@ import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFl
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.seal.LabyrinthFlowMethod;
+import neqsim.process.equipment.compressor.seal.LabyrinthSealFlowCalculator;
+import neqsim.process.equipment.compressor.seal.LabyrinthSealGeometry;
 import neqsim.process.equipment.distillation.ColumnSpecification;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.distillation.RateBasedPackedColumn;
@@ -2328,6 +2331,59 @@ public class DocExamplesCompilationTest {
 
     ReconciliationResult grossErrorResult = recon.reconcileWithGrossErrorElimination(1);
     assertTrue(grossErrorResult.isConverged());
+  }
+
+  /**
+   * Labyrinth seal leakage example from docs/process/equipment/labyrinth_seal_leakage.md.
+   */
+  @Test
+  void testLabyrinthSealLeakageExample() {
+    SystemInterface gas = new SystemSrkEos(288.15, 1.01325);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.07);
+    gas.addComponent("propane", 0.03);
+    gas.setMixingRule("classic");
+
+    LabyrinthSealGeometry geometry = new LabyrinthSealGeometry();
+    geometry.setShaftDiameter(108.566, "mm");
+    geometry.setToothHeight(2.0, "mm");
+    geometry.setToothPitch(2.0, "mm");
+    geometry.setTipWidth(0.3, "mm");
+    geometry.setRadialClearance(0.2286, "mm");
+    geometry.setNumberOfTeeth(5);
+
+    LabyrinthSealFlowCalculator calc = new LabyrinthSealFlowCalculator(gas, geometry);
+    calc.setInletPressure(2.765, "barg");
+    calc.setInletTemperature(86.12, "C");
+    calc.setOutletPressure(1.5417, "barg");
+    calc.setMethod(LabyrinthFlowMethod.KEARTON);
+    calc.calculate();
+
+    double leakageKgPerHour = calc.getMassFlowRate("kg/hr");
+    double standardFlow = calc.getStandardVolumeFlowRate("Sm3/hr");
+    boolean choked = calc.isChoked();
+    Map<LabyrinthFlowMethod, Double> allMethodsKgPerSec = calc.calculateAllMethods();
+
+    assertTrue(leakageKgPerHour > 50.0 && leakageKgPerHour < 150.0, "leakage " + leakageKgPerHour);
+    assertTrue(standardFlow > 0.0);
+    assertFalse(choked);
+    assertEquals(LabyrinthFlowMethod.values().length, allMethodsKgPerSec.size());
+    assertEquals(leakageKgPerHour / 3600.0, allMethodsKgPerSec.get(LabyrinthFlowMethod.KEARTON), 1.0e-12);
+
+    LabyrinthSealFlowCalculator byDrop = new LabyrinthSealFlowCalculator(gas, geometry);
+    byDrop.setInletPressure(2.765, "barg");
+    byDrop.setInletTemperature(86.12, "C");
+    byDrop.setPressureDrop(1223.3, "mbar");
+    byDrop.calculate();
+    assertEquals(leakageKgPerHour, byDrop.getMassFlowRate("kg/hr"), 1.0e-9);
+
+    assertTrue(Double.isFinite(calc.getActualVolumeFlowRate("m3/hr")));
+    assertTrue(calc.getClearanceVelocity("m/s") > 0.0);
+    assertTrue(calc.getCriticalMassFlowRate("kg/hr") > leakageKgPerHour);
+    assertFalse(calc.hasLiquidAtInlet());
+    assertTrue(calc.toJson().contains("KEARTON"));
+    calc.setStandardConditions(0.0, "C", 1.01325, "bara");
+    assertTrue(calc.getStandardVolumeFlowRate("Sm3/hr") < standardFlow);
   }
 
 }
