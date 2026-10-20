@@ -81,6 +81,28 @@ The reformate mass yield is 0.9473780995, its aromatic mass fraction is 0.780408
 hydrogen production is 52.621900454 kg/t feed. These results are sums of the represented
 reactions, not a calibrated naphtha-reformer yield slate.
 
+## Hydrogen recovery allocation
+
+`RefineryCatalyticReformingHydrogenRecoveryBalance` partitions the feed receipt's produced
+hydrogen into recovered and unrecovered amounts with one explicit caller-owned recovery fraction.
+It reports molar and mass flows, kg/t-feed intensities, hydrogen-allocation residuals, and the
+overall feed-to-reformate-plus-hydrogen mass residual.
+
+```java
+RefineryCatalyticReformingHydrogenRecoveryBalance hydrogenRecovery =
+    RefineryCatalyticReformingHydrogenRecoveryBalance.calculate(feedReceipt, 0.80);
+
+double recoveredHydrogenKgPerHour =
+    hydrogenRecovery.getRecoveredHydrogenMassFlowKgPerHour();
+double recoveredHydrogenKgPerTonne =
+    hydrogenRecovery.getRecoveredHydrogenKgPerTonneFeed();
+```
+
+For the analytical C6/C8 feed receipt, an assumed 80% recovery allocates the produced
+43.34142 kg/h hydrogen into 34.673136 kg/h recovered and 8.668284 kg/h unrecovered hydrogen.
+The recovered intensity is 42.097520363 kg/t feed, and hydrogen molar, hydrogen mass, and overall
+mass residuals are numerically zero.
+
 ## Provenance and engineering boundary
 
 - The US Department of Energy Office of Science report
@@ -95,6 +117,9 @@ reactions, not a calibrated naphtha-reformer yield slate.
 A single-cut or multi-cut conversion vector is a scenario input and must be selected and
 documented by the engineer. Each multi-cut row must map to a defensible feed-family carbon-number
 inventory; the aggregator does not infer that inventory from TBP data or pseudo-components.
+A hydrogen recovery fraction is likewise a caller-owned allocation assumption. The recovery
+receipt does not predict separator performance, product purity, compression, fuel use, hydrogen
+network allocation, or losses other than the explicit unrecovered amount.
 A design, yield, octane, energy, emissions, or product-quality claim requires separately validated
 feed-family characterization, competing-reaction network, thermodynamics and kinetics, catalyst
 and deactivation model, operating envelope, heat balance, separator/recycle system, and independent
