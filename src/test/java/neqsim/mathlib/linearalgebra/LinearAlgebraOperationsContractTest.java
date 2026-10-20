@@ -3,7 +3,9 @@ package neqsim.mathlib.linearalgebra;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -24,7 +26,155 @@ class LinearAlgebraOperationsContractTest {
    * @return one instance per {@link LinearAlgebraOperations} implementation
    */
   static Stream<LinearAlgebraOperations> backends() {
-    return Stream.of(new EjmlLinearAlgebra());
+    return Stream.of(new EjmlLinearAlgebra(), new ApacheCommonsMathLinearAlgebra());
+  }
+
+  /**
+   * Verify that decomposition result constructors do not retain mutable caller storage.
+   */
+  @Test
+  void decompositionResultsCopyConstructorArguments() {
+    double[] values = {2.0, 1.0};
+    double[][] vectors = {{1.0, 0.0}, {0.0, 1.0}};
+    RealEigenDecomposition eigen = new RealEigenDecomposition(values, vectors);
+    SingularValueDecompositionResult svd = new SingularValueDecompositionResult(values, vectors, vectors);
+    values[0] = Double.NaN;
+    vectors[0][0] = Double.NaN;
+    assertEquals(2.0, eigen.getEigenvalues()[0]);
+    assertEquals(1.0, eigen.getEigenvectors()[0][0]);
+    assertEquals(2.0, svd.getSingularValues()[0]);
+    assertEquals(1.0, svd.getLeftSingularVectors()[0][0]);
+    assertEquals(1.0, svd.getRightSingularVectors()[0][0]);
+  }
+
+  /**
+   * Verify invalid result shapes and singular-value ordering cannot enter the public result objects.
+   */
+  @Test
+  void decompositionResultsRejectInconsistentShapes() {
+    double[][] identity = {{1.0, 0.0}, {0.0, 1.0}};
+    assertThrows(LinearAlgebraException.class, () -> new RealEigenDecomposition(new double[] {1.0}, identity));
+    assertThrows(LinearAlgebraException.class,
+        () -> new SingularValueDecompositionResult(new double[] {1.0}, identity, identity));
+    assertThrows(LinearAlgebraException.class,
+        () -> new SingularValueDecompositionResult(new double[] {1.0, 2.0}, identity, identity));
+    assertThrows(LinearAlgebraException.class,
+        () -> new SingularValueDecompositionResult(new double[] {1.0, -1.0}, identity, identity));
+  }
+
+  /**
+   * Verify that decomposition does not modify its input arrays.
+   *
+   * @param algebra backend under test
+   */
+  @ParameterizedTest
+  @MethodSource("backends")
+  void decompositionsLeaveArgumentsUnmodified(LinearAlgebraOperations algebra) {
+    double[][] matrix = {{2.0, 1.0}, {1.0, 3.0}};
+    algebra.eigenDecomposition(matrix);
+    algebra.singularValueDecomposition(matrix);
+    assertArrayEquals(new double[] {2.0, 1.0}, matrix[0], 0.0);
+    assertArrayEquals(new double[] {1.0, 3.0}, matrix[1], 0.0);
+  }
+
+  /**
+   * Verify eigenpair residuals without relying on backend ordering or eigenvector signs.
+   *
+   * @param algebra backend under test
+   */
+  @ParameterizedTest
+  @MethodSource("backends")
+  void exposesPairedRealEigenvectors(LinearAlgebraOperations algebra) {
+    for (double[][] matrix : new double[][][] {{{2.0, 1.0}, {1.0, 2.0}}, {{1.0, 2.0}, {0.0, 3.0}},
+        {{0.0, 0.0}, {0.0, 0.0}}, {{4.0}}}) {
+      RealEigenDecomposition result = algebra.eigenDecomposition(matrix);
+      double[] values = result.getEigenvalues();
+      double[][] vectors = result.getEigenvectors();
+      assertEquals(matrix.length, values.length);
+      assertEquals(matrix.length, vectors.length);
+      assertEquals(matrix.length, vectors[0].length);
+      double[][] product = algebra.multiply(matrix, vectors);
+      for (int column = 0; column < values.length; column++) {
+        double norm = 0.0;
+        for (int row = 0; row < matrix.length; row++) {
+          norm = Math.hypot(norm, vectors[row][column]);
+          assertEquals(vectors[row][column] * values[column], product[row][column], 1.0e-12);
+        }
+        assertTrue(norm > 0.0, "Eigenvectors must not be zero");
+      }
+      values[0] = Double.NaN;
+      vectors[0][0] = Double.NaN;
+      assertTrue(Double.isFinite(result.getEigenvalues()[0]));
+      assertTrue(Double.isFinite(result.getEigenvectors()[0][0]));
+    }
+  }
+
+  /**
+   * Verify compact dimensions, ordering, orthogonality and reconstruction for every matrix shape.
+   *
+   * @param algebra backend under test
+   */
+  @ParameterizedTest
+  @MethodSource("backends")
+  void exposesPairedCompactSingularVectors(LinearAlgebraOperations algebra) {
+    for (double[][] matrix : new double[][][] {{{1.0, 2.0}, {3.0, 4.0}, {5.0, 6.0}}, {{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}},
+        {{1.0, 2.0}, {2.0, 4.0}}, {{0.0, 0.0}, {0.0, 0.0}}, {{3.0}}, {{2.0, 0.0}, {0.0, 2.0}}}) {
+      SingularValueDecompositionResult result = algebra.singularValueDecomposition(matrix);
+      double[] values = result.getSingularValues();
+      double[][] left = result.getLeftSingularVectors();
+      double[][] right = result.getRightSingularVectors();
+      int count = Math.min(matrix.length, matrix[0].length);
+      assertEquals(count, values.length);
+      assertEquals(matrix.length, left.length);
+      assertEquals(matrix[0].length, right.length);
+      assertEquals(count, left[0].length);
+      assertEquals(count, right[0].length);
+      double[][] diagonal = new double[count][count];
+      for (int index = 0; index < count; index++) {
+        assertTrue(values[index] >= 0.0);
+        if (index > 0) {
+          assertTrue(values[index] <= values[index - 1]);
+        }
+        diagonal[index][index] = values[index];
+      }
+      double[][] reconstructed = algebra.multiply(algebra.multiply(left, diagonal), algebra.transpose(right));
+      for (int row = 0; row < matrix.length; row++) {
+        assertArrayEquals(matrix[row], reconstructed[row], 1.0e-12);
+      }
+      double[][] leftGram = algebra.multiply(algebra.transpose(left), left);
+      double[][] rightGram = algebra.multiply(algebra.transpose(right), right);
+      for (int row = 0; row < count; row++) {
+        assertArrayEquals(algebra.identity(count)[row], leftGram[row], 1.0e-12);
+        assertArrayEquals(algebra.identity(count)[row], rightGram[row], 1.0e-12);
+      }
+      values[0] = Double.NaN;
+      left[0][0] = Double.NaN;
+      right[0][0] = Double.NaN;
+      assertTrue(Double.isFinite(result.getSingularValues()[0]));
+      assertTrue(Double.isFinite(result.getLeftSingularVectors()[0][0]));
+      assertTrue(Double.isFinite(result.getRightSingularVectors()[0][0]));
+    }
+  }
+
+  /**
+   * Verify rejection of invalid decomposition inputs and complex spectra.
+   *
+   * @param algebra backend under test
+   */
+  @ParameterizedTest
+  @MethodSource("backends")
+  void rejectsInvalidDecompositionInputs(LinearAlgebraOperations algebra) {
+    assertThrows(LinearAlgebraException.class, () -> algebra.eigenDecomposition(null));
+    assertThrows(LinearAlgebraException.class, () -> algebra.eigenDecomposition(new double[][] {{1.0, 2.0}}));
+    assertThrows(LinearAlgebraException.class,
+        () -> algebra.eigenDecomposition(new double[][] {{0.0, -1.0}, {1.0, 0.0}}));
+    assertThrows(LinearAlgebraException.class, () -> algebra.eigenDecomposition(new double[][] {{Double.NaN}}));
+    assertThrows(LinearAlgebraException.class, () -> algebra.singularValueDecomposition(null));
+    assertThrows(LinearAlgebraException.class, () -> algebra.singularValueDecomposition(new double[0][]));
+    assertThrows(LinearAlgebraException.class,
+        () -> algebra.singularValueDecomposition(new double[][] {{1.0}, {1.0, 2.0}}));
+    assertThrows(LinearAlgebraException.class,
+        () -> algebra.singularValueDecomposition(new double[][] {{Double.POSITIVE_INFINITY}}));
   }
 
   @ParameterizedTest

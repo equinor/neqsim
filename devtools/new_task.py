@@ -33,7 +33,8 @@ Usage:
     neqsim new-task --reset-document-root
 
 Destination precedence: --task-root, NEQSIM_TASK_ROOT, saved user default,
-then <repository>/task_solve. Settings: ~/.neqsim/task_defaults.json.
+then <repository>/task_solve (source checkout) or ~/neqsim_tasks (pip or plugin install).
+Settings: ~/.neqsim/task_defaults.json.
 The short top-level equivalents are `neqsim --set-task-root PATH`,
 `neqsim --show-task-root`, and `neqsim --reset-task-root`.
 
@@ -61,7 +62,23 @@ from datetime import date
 # ── Paths ────────────────────────────────────────────────
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-TASK_SOLVE_DIR = os.path.join(PROJECT_ROOT, "task_solve")
+
+
+def default_task_solve_dir(project_root=None):
+    """Return the task root used when none is configured.
+
+    A source checkout keeps tasks in <repo>/task_solve. A pip or agent-plugin
+    install has no repository: PROJECT_ROOT is then the interpreter's Lib folder,
+    which is lost with the venv and may not be writable, so tasks go to
+    ~/neqsim_tasks instead.
+    """
+    root = project_root or PROJECT_ROOT
+    if os.path.isfile(os.path.join(root, "pom.xml")):
+        return os.path.join(root, "task_solve")
+    return os.path.join(os.path.expanduser("~"), "neqsim_tasks")
+
+
+TASK_SOLVE_DIR = default_task_solve_dir()
 TEMPLATE_DIR = os.path.join(TASK_SOLVE_DIR, "TASK_TEMPLATE")
 CWD_TASK_ROOT = "."
 CWD_ALIASES = ("cwd", "here", ".")

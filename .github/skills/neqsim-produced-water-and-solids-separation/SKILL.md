@@ -107,6 +107,8 @@ For a mechanistic hydrocyclone case, use the water-treatment class with an inlet
 
 ## Gotchas
 
+- `ProducedWaterDegassingSystem.setTunedInteractionParameters(true)` throws before changing state. Use defaults (`false`); legacy serialized true flags also fail at `build()` and both `run()` entry points. The old constants were never applied and do not define a validated model. `setSalinity` stores metadata only. Do not claim field accuracy, salt effects, or reporting qualification for this screening builder. See [the supported-model guide](../../../docs/process/equipment/util/produced_water_degassing.md) and `ProducedWaterDegassingTuningTest` / `ProducedWaterDegassingDocumentationTest`.
+
 - The stage train computes sequential remaining concentration as `Cout = Cin * (1 - efficiency)` and expects each efficiency in **0-1**, not percent. It uses a default oil density of 850 kg/m3 for recovered-oil estimates.
 - The train's `getOverallEfficiency()` divides by inlet OiW. A zero inlet concentration can yield `NaN`; set a positive, measured inlet basis and guard zero before reporting efficiency.
 - When an inlet stream is supplied, the train reads aqueous volume and oil mass for its calculation but creates outlet streams by cloning the inlet fluid. Those streams are not a component-by-component physical separation result; do not use them to claim a closed process mass balance.

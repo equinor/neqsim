@@ -85,8 +85,39 @@ tend to bite:
    section leaves the tabulated range. Size the grid against the *expected*
    solution, not the boundary conditions: a long line with Joule-Thomson cooling
    arrives far colder than its inlet.
-4. **`BUBBLEPRESSURES` and `BUBBLETEMPERATURES` must be the same length.** They
-   are written as a paired array: one bubble-point pressure per grid temperature.
+4. **`BUBBLEPRESSURES` and `BUBBLETEMPERATURES` must describe matching saturation
+   points.** The three-phase generator omits these optional headers for
+   multicomponent fluids: a bubble flash of a feed containing free water can
+   follow an inappropriate liquid branch. For a pure component, it writes only
+   validated subcritical pressure/temperature pairs. Failed points are omitted,
+   never replaced by zero. If no valid pure-component point is available, writing
+   fails explicitly; include subcritical temperatures in the grid.
+
+## Three-phase fractions and standard ratios
+
+`OLGApropertyTableGeneratorWaterKeywordFormat` uses these definitions:
+
+| Keyword | Definition |
+| --- | --- |
+| `RS` | Gas mass divided by gas plus oil phase mass at the grid state; the separate aqueous phase is excluded |
+| `RSW` | Water mass fraction within the gas phase |
+| `GOR` | Standard gas volume divided by standard oil volume |
+| `GLR` | Standard gas volume divided by standard oil plus aqueous volume |
+| `WC` | Standard aqueous volume divided by standard oil plus aqueous volume, as a fraction from 0 to 1 |
+
+The standard flash uses the written `STDPRESSURE` (1 atm) and `STDTEMPERATURE`
+(288.15 K). Volumes are calculated from phase mass and physical density, including
+any volume correction. `GOR` is `-999` when there is no standard oil, and `GLR` is
+`-999` when there is no standard liquid. `WC` is zero when there is no standard
+liquid. A gas/water state with no oil has `RS = 1`; a state with no gas has
+`RS = 0`, including an aqueous-only state. These fractions are independent of the
+placeholder properties used for absent phases.
+
+This corrects earlier three-phase exports that included aqueous mass in `RS`,
+copied `GOR` into `GLR`, omitted `WC`, and could write invalid bubble curves.
+Regenerate affected `.tab` files before reusing them in OLGA. The regression
+coverage checks the reported SRK-CPA wet-condensate case and standard-condition
+phase volumes; a full OLGA pipeline run remains a separate validation step.
 
 ## Absent phases and how they are filled
 

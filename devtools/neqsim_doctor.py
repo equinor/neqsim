@@ -873,7 +873,7 @@ def check_task_root():
     elif os.path.exists(new_task.task_defaults_path()):
         source = "saved in ~/.neqsim/task_defaults.json"
     else:
-        source = "repository default - change with: neqsim --set-task-root \"PATH\""
+        source = "default - change with: neqsim --set-task-root \"PATH\""
     _check("New tasks are created in", True,
            "{root} ({source})".format(root=resolved, source=source))
 

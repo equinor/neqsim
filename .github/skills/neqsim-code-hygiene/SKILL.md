@@ -237,6 +237,27 @@ Rules and cautions:
 - After migrating, re-run `./mvnw -q compile` and confirm the `[deprecation]` warning for
   that member is gone, then run the full verify loop.
 
+## Fatal JVM failures during CI
+
+A Surefire "forked VM terminated" error with zero reported assertion failures
+needs crash evidence before changing application code. Download the failing
+platform's Surefire reports and inspect `*.dumpstream`; inspect the separate
+`jvm-crash-logs-<platform>` artifact for HotSpot `hs_err_pid*.log` and compiler
+replay logs when available. Record the JVM build, native exception, problematic
+frame, test class and exact commit. A log that ends during a test is not proof
+that the test's assertions failed.
+
+In PR #4484, Windows Temurin 21.0.12.1 failed with
+`EXCEPTION_ACCESS_VIOLATION` in C2-compiled
+`org.ejml.dense.row.linsol.lu.LinearSolverLu_DDRM.solve`. The core workflow uses a
+Windows-step-only `JAVA_TOOL_OPTIONS` exclusion for that method, inherited by the
+Surefire fork. Keep EJML and the complete test suite enabled; do not restore
+JAMA, skip the phase-envelope tests or loosen tolerances to hide a native crash.
+See [the workflow catalog](../../WORKFLOWS.md#windows-jvm-crash-workaround) for the
+workaround scope and removal evidence. Validate the JVM option and focused
+numerical tests locally, then require the Windows full-suite CI result; another
+platform cannot reproduce or certify a Windows-specific native failure.
+
 ## Common Mistakes
 
 | Mistake | Fix |

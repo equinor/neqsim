@@ -11,7 +11,11 @@ executed directly from this page by `MathAndExpanderDocumentationTest`.
 
 Dense chemical-equilibrium, flash-stability, surface-tension and parameter-fitting
 operations, including phase-envelope continuation, use EJML directly or through
-`LinearAlgebraOperations`. JAMA is absent from both production and test dependencies.
+`LinearAlgebraOperations`. That interface has both EJML and Apache Commons Math
+implementations; existing EJML calculations remain on EJML, while the former direct
+Commons Math matrix operations use `ApacheCommonsMathLinearAlgebra`.
+The shared backend contract tests both implementations. JAMA is absent from both
+production and test dependencies.
 The [migration and dependency retirement guide](../development/jama-ejml-migration)
 records the remaining boundaries and release gates. Backend substitution alone
 does not establish a performance improvement. Numerical tests compare physical
@@ -199,8 +203,10 @@ a modeling error.
 
 ## Matrix Operations
 
-NeqSim uses EJML and Apache Commons Math for dense matrix calculations. For example, solve `A x = b`
-with EJML:
+Dense array-based operations are exposed through `LinearAlgebraOperations`, with
+EJML and Apache Commons Math backends. Existing code selects the backend it needs;
+backend substitution should be validated against the shared contract and
+representative numerical workloads. For example, solve `A x = b` with EJML:
 
 <!-- doc-test: math-matrix -->
 ```java
@@ -219,6 +225,42 @@ SimpleMatrix rhs = new SimpleMatrix(rhsData);
 SimpleMatrix solution = matrix.solve(rhs); // [0.0, 0.5]
 double residual = matrix.mult(solution).minus(rhs).normF();
 ```
+
+### Decomposition results
+
+Both backends implement the following array-based operations:
+
+- `eigenDecomposition` returns a `RealEigenDecomposition`. Eigenvalues remain
+  paired with eigenvector columns in backend order; no cross-backend ordering,
+  sign or normalization is promised. The result satisfies
+  $A V = V \operatorname{diag}(\lambda)$.
+- `singularValueDecomposition` returns a `SingularValueDecompositionResult` with
+  compact $U$ and $V$ matrices and descending singular values. For an $m$ by $n$
+  input, both vector matrices have $k = \min(m,n)$ columns and
+  $A = U \operatorname{diag}(s) V^T$.
+- Result constructors copy their inputs, and getters return independent copies.
+  No Commons Math or EJML type crosses the interface boundary.
+
+The real eigen API rejects complex spectra with `LinearAlgebraException`.
+The Commons Math backend additionally exposes `realBlockEigenDecomposition`,
+which retains real and imaginary parts and a real block basis satisfying
+$A V = V D$, including two-by-two blocks for conjugate eigenpairs.
+This backend-specific extension does not weaken the strict real-spectrum API.
+Defective real matrices can still produce dependent eigenvectors, so a real
+spectrum alone does not guarantee an invertible modal basis.
+
+Acoustic covariance checks use the strict real eigen API. The film model uses
+the real block extension and explicitly retains its historical approximation:
+apply the scalar correction to the eigenvalues' real parts in the real block
+basis. It logs a warning once per model instance when complex pairs occur.
+This preserves pre-adapter wall-film behavior; it is not an evaluation of the
+full complex matrix function and does not validate that approximation physically.
+Volumetric Pitzer regression retains its application-specific singular-value
+threshold and SVD-based covariance calculation using the new compact result.
+Direct `org.apache.commons.math3.linear` references are confined to the Commons
+Math backend, including in tests. Commons Math interpolation, fitting and linear
+programming remain separate and unchanged. External implementations of
+`LinearAlgebraOperations` must implement the two new decomposition methods.
 
 ## Usage Examples
 

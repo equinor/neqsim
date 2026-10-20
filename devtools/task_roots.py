@@ -11,7 +11,7 @@ Resolution order, most specific first:
   1. explicit roots passed by the caller (``--task-root``) — exclusive
   2. NEQSIM_TASK_ROOT (may list several roots separated by os.pathsep)
   3. ``task_root`` and ``task_roots`` in ~/.neqsim/task_defaults.json
-  4. <repository>/task_solve
+  4. <repository>/task_solve (source checkout) or ~/neqsim_tasks (pip / plugin install)
 
 An explicit root replaces the others so a write command only touches the folder
 it was pointed at. Otherwise every configured root is kept, so a corpus split
@@ -77,7 +77,10 @@ def resolve_task_roots(explicit=None, include_repo=True):
         candidates.extend(_split(settings.get("task_root")))
         candidates.extend(_split(settings.get("task_roots")))
         if include_repo:
-            candidates.append(str(REPO_ROOT / "task_solve"))
+            if (REPO_ROOT / "pom.xml").is_file():
+                candidates.append(str(REPO_ROOT / "task_solve"))
+            else:
+                candidates.append(str(Path.home() / "neqsim_tasks"))
 
     roots = []
     seen = set()
@@ -156,7 +159,7 @@ def add_task_root_argument(parser):
         metavar="PATH",
         help="Folder holding task folders (repeatable). Defaults to "
              "NEQSIM_TASK_ROOT, the saved neqsim --set-task-root value, "
-             "then <repo>/task_solve.",
+             "             then <repo>/task_solve (source checkout) or ~/neqsim_tasks.",
     )
     return parser
 

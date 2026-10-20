@@ -296,6 +296,19 @@ class BuildPluginTest(unittest.TestCase):
             encoding="utf-8")
         self.assertIn("PREFETCH_MCP = False", hook_py)
 
+    def test_hook_children_never_open_console_windows(self):
+        # A console-less (DETACHED_PROCESS) worker makes Windows pop up a window for every
+        # pip/python/java child; the worker needs a hidden console and children CREATE_NO_WINDOW.
+        self._build()
+        hook_py = (self.out / "demo" / "scripts" / "install_skill_packages.py").read_text(
+            encoding="utf-8")
+        self.assertIn("NO_WINDOW = 0x08000000", hook_py)
+        self.assertNotIn("0x00000008", hook_py)
+        runs = re.findall(r"subprocess\.run\((?:[^()]|\([^()]*\))*\)", hook_py, re.S)
+        self.assertTrue(runs)
+        for call in runs:
+            self.assertIn("creationflags=NO_WINDOW", call)
+
 
 class HookJavaResolutionTest(unittest.TestCase):
     """The hook must find a JDK 21+ even when an old ``java`` is first on PATH.

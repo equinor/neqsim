@@ -5,6 +5,7 @@ import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+import org.ejml.interfaces.decomposition.EigenDecomposition_F64;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 import org.ejml.interfaces.linsol.LinearSolverDense;
 
@@ -281,6 +282,81 @@ public final class EjmlLinearAlgebra implements LinearAlgebraOperations {
     LinearAlgebraValidation.requireMatrix(matrix, "Matrix");
 
     return maximum(singularValues(matrix));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public RealEigenDecomposition eigenDecomposition(double[][] matrix) {
+    LinearAlgebraValidation.requireSquareMatrix(matrix, "Matrix");
+    int size = matrix.length;
+    EigenDecomposition_F64<DMatrixRMaj> decomposition = DecompositionFactory_DDRM.eig(size, true);
+    if (!decomposition.decompose(toDense(matrix))) {
+      throw new LinearAlgebraException("Eigenvalue decomposition did not converge.");
+    }
+    double[] values = new double[size];
+    double[][] vectors = new double[size][size];
+    for (int column = 0; column < size; column++) {
+      if (decomposition.getEigenvalue(column).getImaginary() != 0.0) {
+        throw new LinearAlgebraException("Real eigendecomposition requires a real spectrum.");
+      }
+      values[column] = decomposition.getEigenvalue(column).getReal();
+      DMatrixRMaj vector = decomposition.getEigenVector(column);
+      if (vector == null) {
+        throw new LinearAlgebraException("Eigenvalue decomposition did not produce a real eigenvector.");
+      }
+      for (int row = 0; row < size; row++) {
+        vectors[row][column] = vector.get(row, 0);
+      }
+    }
+    return new RealEigenDecomposition(values, vectors);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SingularValueDecompositionResult singularValueDecomposition(double[][] matrix) {
+    LinearAlgebraValidation.requireMatrix(matrix, "Matrix");
+    int rows = matrix.length;
+    int columns = matrix[0].length;
+    SingularValueDecomposition_F64<DMatrixRMaj> decomposition = DecompositionFactory_DDRM.svd(rows, columns, true, true,
+        true);
+    if (!decomposition.decompose(toDense(matrix))) {
+      throw new LinearAlgebraException("Singular value decomposition did not converge.");
+    }
+    int count = decomposition.numberOfSingularValues();
+    double[] values = new double[count];
+    System.arraycopy(decomposition.getSingularValues(), 0, values, 0, count);
+    double[][] left = toArray(decomposition.getU(null, false));
+    double[][] right = toArray(decomposition.getV(null, false));
+    // EJML does not guarantee ordering. Move the paired columns with each singular value.
+    for (int first = 0; first < count; first++) {
+      int largest = first;
+      for (int index = first + 1; index < count; index++) {
+        if (values[index] > values[largest]) {
+          largest = index;
+        }
+      }
+      double value = values[first];
+      values[first] = values[largest];
+      values[largest] = value;
+      swapColumns(left, first, largest);
+      swapColumns(right, first, largest);
+    }
+    return new SingularValueDecompositionResult(values, left, right);
+  }
+
+  /**
+   * Exchange paired singular-vector columns.
+   *
+   * @param matrix singular-vector matrix
+   * @param first first column
+   * @param second second column
+   */
+  private void swapColumns(double[][] matrix, int first, int second) {
+    for (double[] row : matrix) {
+      double value = row[first];
+      row[first] = row[second];
+      row[second] = value;
+    }
   }
 
   /** {@inheritDoc} */
