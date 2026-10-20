@@ -582,6 +582,14 @@ pressure route must reduce well backpressure and increase deliverability. A rout
 rejected by compressor or other hard evidence remains rejected; the test does not relax
 physical limits to obtain a feasible optimizer result.
 
+The common-shaft driver-limited slice also enables fail-closed continuous-boundary
+refinement between 70% and 95% choke opening. Every bisection midpoint reuses the same
+live wells, routes, separators, scrubbers, mapped compressors, common shaft, driver and
+shared-power evaluator. Only converged, finite, fully restored feasible points or explicit
+hard/validity rejections tighten the final bracket. The receipt is an advisory bracket,
+not an interpolated choke target, compressor-map qualification or operating approval;
+discrete HP/LP routing is never bisected.
+
 ### Repeated production periods and moving host limits
 
 `FieldToFacilityOptimizationAcceptanceTest.replaysLifecyclePeriodsWithMovingHostLimits`

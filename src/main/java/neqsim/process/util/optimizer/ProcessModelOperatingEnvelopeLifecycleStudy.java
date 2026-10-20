@@ -244,7 +244,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
-    evidence.put("schema_version", Integer.valueOf(4));
+    evidence.put("schema_version", Integer.valueOf(5));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -581,6 +581,18 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
         Integer.valueOf(fromOperatingTransitions.size() - removedOperatingTransitions.size()));
     change.put("removed_operating_region_transitions", removedOperatingTransitions);
     change.put("added_operating_region_transitions", addedOperatingTransitions);
+    List<Map<String, Object>> fromBoundaryRefinements = boundaryRefinementEvidence(from);
+    List<Map<String, Object>> toBoundaryRefinements = boundaryRefinementEvidence(to);
+    List<Map<String, Object>> removedBoundaryRefinements = exactDifference(fromBoundaryRefinements,
+        toBoundaryRefinements);
+    List<Map<String, Object>> addedBoundaryRefinements = exactDifference(toBoundaryRefinements,
+        fromBoundaryRefinements);
+    change.put("from_operating_region_boundary_refinement_count", Integer.valueOf(fromBoundaryRefinements.size()));
+    change.put("to_operating_region_boundary_refinement_count", Integer.valueOf(toBoundaryRefinements.size()));
+    change.put("retained_operating_region_boundary_refinement_count",
+        Integer.valueOf(fromBoundaryRefinements.size() - removedBoundaryRefinements.size()));
+    change.put("removed_operating_region_boundary_refinements", removedBoundaryRefinements);
+    change.put("added_operating_region_boundary_refinements", addedBoundaryRefinements);
     return Collections.unmodifiableMap(change);
   }
 
@@ -590,6 +602,16 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     for (ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition transition : slice
         .getOperatingRegionTransitions()) {
       evidence.add(transition.toEvidenceMap());
+    }
+    return Collections.unmodifiableList(evidence);
+  }
+
+  /** Converts fail-closed continuous-boundary receipts to exact immutable evidence rows. */
+  private static List<Map<String, Object>> boundaryRefinementEvidence(SliceResult slice) {
+    List<Map<String, Object>> evidence = new ArrayList<Map<String, Object>>();
+    for (ProcessModelOperatingEnvelopeStudy.OperatingRegionBoundaryRefinement refinement : slice
+        .getBoundaryRefinements()) {
+      evidence.add(refinement.toEvidenceMap());
     }
     return Collections.unmodifiableList(evidence);
   }

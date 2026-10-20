@@ -50,6 +50,12 @@ public final class ProcessModelOperatingEnvelopeStudy {
   private final String name;
   private final String provenance;
   private final ProcessModelOperatingActionSetEvaluator evaluator;
+  /** Maximum fail-closed midpoint evaluations for each eligible continuous transition. */
+  private int maximumBoundaryRefinementEvaluations;
+  /** Final refined bracket width relative to the continuous action range. */
+  private double boundaryRefinementRelativeTolerance = 1.0e-3;
+  /** Engineering source of the refinement tolerance. */
+  private String boundaryRefinementToleranceProvenance = "diagnostic continuous-action range fraction";
 
   /**
    * Creates a study around an existing transactional evaluator.
@@ -88,6 +94,45 @@ public final class ProcessModelOperatingEnvelopeStudy {
   /** @return configured transactional evaluator */
   public ProcessModelOperatingActionSetEvaluator getCandidateEvaluator() {
     return evaluator;
+  }
+
+  /**
+   * Enables fail-closed bisection of eligible continuous feasibility transitions.
+   *
+   * <p>
+   * Refinement is disabled by default. Each midpoint runs through the complete transactional candidate evaluator and is
+   * retained only when candidate convergence, feasibility classification, finite candidate values, baseline
+   * restoration, and restored-baseline convergence are explicit. Discrete actions and non-feasibility transition kinds
+   * are never refined.
+   * </p>
+   *
+   * @param maximumEvaluations non-negative maximum midpoint evaluations per eligible transition
+   * @return this study
+   */
+  public ProcessModelOperatingEnvelopeStudy setMaximumBoundaryRefinementEvaluations(int maximumEvaluations) {
+    if (maximumEvaluations < 0) {
+      throw new IllegalArgumentException("Maximum boundary-refinement evaluations must be non-negative");
+    }
+    this.maximumBoundaryRefinementEvaluations = maximumEvaluations;
+    return this;
+  }
+
+  /**
+   * Sets the terminal refined bracket width relative to the traversed continuous action range.
+   *
+   * @param relativeTolerance finite positive range fraction
+   * @param toleranceProvenance engineering source of the tolerance
+   * @return this study
+   */
+  public ProcessModelOperatingEnvelopeStudy setBoundaryRefinementRelativeTolerance(double relativeTolerance,
+      String toleranceProvenance) {
+    if (!Double.isFinite(relativeTolerance) || relativeTolerance <= 0.0) {
+      throw new IllegalArgumentException("Boundary-refinement relative tolerance must be finite and positive");
+    }
+    this.boundaryRefinementRelativeTolerance = relativeTolerance;
+    this.boundaryRefinementToleranceProvenance = requireText(toleranceProvenance,
+        "Boundary-refinement tolerance provenance");
+    return this;
   }
 
   /**
@@ -523,6 +568,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
     List<Point> points = new ArrayList<Point>();
     List<Transition> transitions = new ArrayList<Transition>();
     List<OperatingRegionTransition> operatingRegionTransitions = new ArrayList<OperatingRegionTransition>();
+    List<OperatingRegionBoundaryRefinement> boundaryRefinements = new ArrayList<OperatingRegionBoundaryRefinement>();
     List<String> diagnostics = new ArrayList<String>();
     Outcome outcome = Outcome.COMPLETE;
 
@@ -570,6 +616,24 @@ public final class ProcessModelOperatingEnvelopeStudy {
       }
     }
 
+    if (outcome == Outcome.COMPLETE && maximumBoundaryRefinementEvaluations > 0) {
+      for (OperatingRegionTransition transition : operatingRegionTransitions) {
+        if (!eligibleForBoundaryRefinement(transition)) {
+          continue;
+        }
+        int actionIndex = findAction(actions, transition.getAxisActionId());
+        OperatingRegionBoundaryRefinement refinement = refineBoundary(actions.get(actionIndex), actionIndex, transition,
+            points.get(transition.getFromSequenceIndex()), points.get(transition.getToSequenceIndex()));
+        boundaryRefinements.add(refinement);
+        if (refinement.getStatus() == OperatingRegionBoundaryRefinement.Status.MODEL_RECOVERY_FAILED) {
+          outcome = Outcome.MODEL_RECOVERY_FAILED;
+          diagnostics.add("Stopped during continuous operating-region boundary refinement because baseline "
+              + "restoration or reconvergence failed");
+          break;
+        }
+      }
+    }
+
     if (outcome == Outcome.COMPLETE) {
       diagnostics.add("All requested points completed with safe baseline recovery");
     }
@@ -577,11 +641,130 @@ public final class ProcessModelOperatingEnvelopeStudy {
         "Transitions use unit-safe installed evidence at feasible points and exact fail-closed rejection identity at infeasible points");
     diagnostics.add(
         "Operating-region transitions are sampled adjacent-edge diagnostics; discrete actions are never interpolated");
+    if (maximumBoundaryRefinementEvaluations > 0) {
+      diagnostics.add("Eligible continuous feasibility transitions use fail-closed midpoint refinement; refined "
+          + "brackets remain advisory and require a separately accepted operating-point replay");
+    }
     int evaluationCount = evaluator.getSimulationEvaluator().getEvaluationCount() - evaluationCountBefore;
     double runtimeSeconds = Math.max(0.0, (System.nanoTime() - startedNanos) / 1.0e9);
     return new SliceResult(id, name, provenance, evaluator.getId(), axisIds, axisActionSemantics, axes, anchor,
-        pointCount(axes), outcome, points, transitions, operatingRegionTransitions, diagnostics, evaluationCount,
-        runtimeSeconds, this);
+        pointCount(axes), outcome, points, transitions, operatingRegionTransitions, boundaryRefinements, diagnostics,
+        evaluationCount, runtimeSeconds, maximumBoundaryRefinementEvaluations, boundaryRefinementRelativeTolerance,
+        boundaryRefinementToleranceProvenance, this);
+  }
+
+  /** Returns true only for a continuous sampled feasibility transition eligible for bisection. */
+  private static boolean eligibleForBoundaryRefinement(OperatingRegionTransition transition) {
+    ProcessModelOperatingActionSetEvaluator.Outcome infeasibleOutcome = transition.isFromFeasible()
+        ? transition.getToOutcome()
+        : transition.getFromOutcome();
+    ProcessModelOperatingActionSetEvaluator.Outcome feasibleOutcome = transition.isFromFeasible()
+        ? transition.getFromOutcome()
+        : transition.getToOutcome();
+    return !transition.isDiscreteAction() && feasibleOutcome == ProcessModelOperatingActionSetEvaluator.Outcome.FEASIBLE
+        && refinableOutcome(infeasibleOutcome)
+        && (transition.getKind() == OperatingRegionTransition.Kind.BECAME_FEASIBLE
+            || transition.getKind() == OperatingRegionTransition.Kind.BECAME_INFEASIBLE);
+  }
+
+  /**
+   * Refines one continuous feasible/infeasible bracket without changing any physical acceptance rule.
+   *
+   * @param action traversed continuous action
+   * @param actionIndex action position in the complete candidate vector
+   * @param transition sampled transition being refined
+   * @param from sampled source point
+   * @param to sampled destination point
+   * @return immutable refinement receipt
+   */
+  private OperatingRegionBoundaryRefinement refineBoundary(ProcessModelOperatingAction action, int actionIndex,
+      OperatingRegionTransition transition, Point from, Point to) {
+    Point feasible = from.isFeasible() ? from : to;
+    Point infeasible = from.isFeasible() ? to : from;
+    double actionRange = action.getUpperBound() - action.getLowerBound();
+    if (!Double.isFinite(actionRange) || actionRange <= 0.0) {
+      throw new IllegalStateException("Continuous action range must be finite and positive for boundary refinement");
+    }
+    double absoluteTolerance = boundaryRefinementRelativeTolerance * actionRange;
+    List<OperatingRegionBoundaryRefinement.Step> steps = new ArrayList<OperatingRegionBoundaryRefinement.Step>();
+    OperatingRegionBoundaryRefinement.Status status = null;
+
+    for (int iteration = 0; iteration < maximumBoundaryRefinementEvaluations; iteration++) {
+      double feasibleValue = feasible.getCandidateValues()[actionIndex];
+      double infeasibleValue = infeasible.getCandidateValues()[actionIndex];
+      if (Math.abs(infeasibleValue - feasibleValue) <= absoluteTolerance) {
+        status = OperatingRegionBoundaryRefinement.Status.CONVERGED;
+        break;
+      }
+      double midpoint = feasibleValue + 0.5 * (infeasibleValue - feasibleValue);
+      if (!Double.isFinite(midpoint) || Double.compare(midpoint, feasibleValue) == 0
+          || Double.compare(midpoint, infeasibleValue) == 0) {
+        status = OperatingRegionBoundaryRefinement.Status.NUMERICAL_STAGNATION;
+        break;
+      }
+      double[] candidate = feasible.getCandidateValues();
+      candidate[actionIndex] = midpoint;
+      CandidateSetEvaluationResult evaluation = evaluator.evaluate(candidate);
+      InstalledEquipmentCapacityEvidence installed = leadingInstalled(evaluation);
+      Point evaluated = new Point(iteration, new int[0], new double[] {midpoint}, candidate, evaluation,
+          leading(evaluation, installed), installed);
+      steps.add(OperatingRegionBoundaryRefinement.Step.fromPoint(iteration, evaluated));
+      if (!safeRecovery(evaluated)) {
+        status = OperatingRegionBoundaryRefinement.Status.MODEL_RECOVERY_FAILED;
+        break;
+      }
+      if (eligibleRefinementFeasible(evaluated)) {
+        feasible = evaluated;
+      } else if (refinableRejection(evaluated)) {
+        infeasible = evaluated;
+      } else {
+        status = OperatingRegionBoundaryRefinement.Status.INELIGIBLE_EVALUATION;
+        break;
+      }
+    }
+    if (status == null) {
+      double width = Math
+          .abs(infeasible.getCandidateValues()[actionIndex] - feasible.getCandidateValues()[actionIndex]);
+      status = width <= absoluteTolerance ? OperatingRegionBoundaryRefinement.Status.CONVERGED
+          : OperatingRegionBoundaryRefinement.Status.MAXIMUM_EVALUATIONS_REACHED;
+    }
+    return new OperatingRegionBoundaryRefinement(transition, action.getLowerBound(), action.getUpperBound(),
+        boundaryRefinementRelativeTolerance, absoluteTolerance, boundaryRefinementToleranceProvenance,
+        maximumBoundaryRefinementEvaluations, feasible.getCandidateValues()[actionIndex],
+        infeasible.getCandidateValues()[actionIndex], status, steps);
+  }
+
+  /** Returns true only for a finite, converged, feasible midpoint with complete recovery. */
+  private static boolean eligibleRefinementFeasible(Point point) {
+    return finiteVector(point.getCandidateValues()) && point.getEvaluation().isCandidateSimulationConverged()
+        && point.getEvaluation().isCandidateEvaluatorFeasible() && point.getEvaluation().isFeasible()
+        && safeRecovery(point);
+  }
+
+  /** Returns true only for an explicit hard/validity rejection suitable for a physical feasibility bracket. */
+  private static boolean refinableRejection(Point point) {
+    if (!finiteVector(point.getCandidateValues()) || !point.getEvaluation().isCandidateSimulationConverged()
+        || point.getEvaluation().isFeasible() || !safeRecovery(point)) {
+      return false;
+    }
+    return refinableOutcome(point.getEvaluation().getOutcome());
+  }
+
+  /** Returns true only for a hard physical/validity rejection accepted by the shared refinement policy. */
+  private static boolean refinableOutcome(ProcessModelOperatingActionSetEvaluator.Outcome pointOutcome) {
+    return pointOutcome == ProcessModelOperatingActionSetEvaluator.Outcome.HYDRAULIC_CONSTRAINT_VIOLATED
+        || pointOutcome == ProcessModelOperatingActionSetEvaluator.Outcome.OTHER_MODEL_CONSTRAINT_VIOLATED
+        || pointOutcome == ProcessModelOperatingActionSetEvaluator.Outcome.EVIDENCE_OUTSIDE_VALIDITY_RANGE;
+  }
+
+  /** Returns true when every vector value is finite. */
+  private static boolean finiteVector(double[] values) {
+    for (double value : values) {
+      if (!Double.isFinite(value)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
@@ -1484,6 +1667,300 @@ public final class ProcessModelOperatingEnvelopeStudy {
   }
 
   /**
+   * Immutable fail-closed bisection receipt for one continuous sampled feasibility transition.
+   *
+   * <p>
+   * The result is a bracket between independently evaluated feasible and infeasible action values. It is diagnostic
+   * evidence, not an interpolated set point or accepted operating point.
+   * </p>
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static final class OperatingRegionBoundaryRefinement implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Terminal refinement classification. */
+    public enum Status {
+      /** The independently evaluated bracket met the configured width tolerance. */
+      CONVERGED,
+      /** The configured midpoint budget ended before tolerance was met. */
+      MAXIMUM_EVALUATIONS_REACHED,
+      /** A recovered midpoint did not provide eligible feasible or hard-rejection evidence. */
+      INELIGIBLE_EVALUATION,
+      /** Floating-point resolution prevented another distinct midpoint. */
+      NUMERICAL_STAGNATION,
+      /** A midpoint failed complete baseline restoration or restored-baseline convergence. */
+      MODEL_RECOVERY_FAILED
+    }
+
+    private final String axisActionId;
+    private final int fromSequenceIndex;
+    private final int toSequenceIndex;
+    private final double sampledFromAxisValue;
+    private final double sampledToAxisValue;
+    private final double actionLowerBound;
+    private final double actionUpperBound;
+    private final double relativeTolerance;
+    private final double absoluteTolerance;
+    private final String toleranceProvenance;
+    private final int maximumEvaluations;
+    private final double feasibleAxisValue;
+    private final double infeasibleAxisValue;
+    private final Status status;
+    private final List<Step> steps;
+
+    /** Creates one immutable refinement receipt. */
+    private OperatingRegionBoundaryRefinement(OperatingRegionTransition transition, double actionLowerBound,
+        double actionUpperBound, double relativeTolerance, double absoluteTolerance, String toleranceProvenance,
+        int maximumEvaluations, double feasibleAxisValue, double infeasibleAxisValue, Status status, List<Step> steps) {
+      this.axisActionId = transition.getAxisActionId();
+      this.fromSequenceIndex = transition.getFromSequenceIndex();
+      this.toSequenceIndex = transition.getToSequenceIndex();
+      this.sampledFromAxisValue = transition.getFromAxisValue();
+      this.sampledToAxisValue = transition.getToAxisValue();
+      this.actionLowerBound = actionLowerBound;
+      this.actionUpperBound = actionUpperBound;
+      this.relativeTolerance = relativeTolerance;
+      this.absoluteTolerance = absoluteTolerance;
+      this.toleranceProvenance = toleranceProvenance;
+      this.maximumEvaluations = maximumEvaluations;
+      this.feasibleAxisValue = feasibleAxisValue;
+      this.infeasibleAxisValue = infeasibleAxisValue;
+      this.status = status;
+      this.steps = Collections.unmodifiableList(new ArrayList<Step>(steps));
+    }
+
+    /** @return traversed continuous action identifier */
+    public String getAxisActionId() {
+      return axisActionId;
+    }
+
+    /** @return sampled source point sequence */
+    public int getFromSequenceIndex() {
+      return fromSequenceIndex;
+    }
+
+    /** @return sampled destination point sequence */
+    public int getToSequenceIndex() {
+      return toSequenceIndex;
+    }
+
+    /** @return sampled source action value */
+    public double getSampledFromAxisValue() {
+      return sampledFromAxisValue;
+    }
+
+    /** @return sampled destination action value */
+    public double getSampledToAxisValue() {
+      return sampledToAxisValue;
+    }
+
+    /** @return configured continuous action lower bound */
+    public double getActionLowerBound() {
+      return actionLowerBound;
+    }
+
+    /** @return configured continuous action upper bound */
+    public double getActionUpperBound() {
+      return actionUpperBound;
+    }
+
+    /** @return terminal relative range tolerance */
+    public double getRelativeTolerance() {
+      return relativeTolerance;
+    }
+
+    /** @return terminal absolute tolerance in the action unit */
+    public double getAbsoluteTolerance() {
+      return absoluteTolerance;
+    }
+
+    /** @return engineering source of the tolerance */
+    public String getToleranceProvenance() {
+      return toleranceProvenance;
+    }
+
+    /** @return configured maximum midpoint evaluations */
+    public int getMaximumEvaluations() {
+      return maximumEvaluations;
+    }
+
+    /** @return final independently evaluated feasible action value */
+    public double getFeasibleAxisValue() {
+      return feasibleAxisValue;
+    }
+
+    /** @return final independently evaluated infeasible action value */
+    public double getInfeasibleAxisValue() {
+      return infeasibleAxisValue;
+    }
+
+    /** @return final bracket width in the action unit */
+    public double getBracketWidth() {
+      return Math.abs(infeasibleAxisValue - feasibleAxisValue);
+    }
+
+    /** @return terminal refinement status */
+    public Status getStatus() {
+      return status;
+    }
+
+    /** @return fresh immutable midpoint-evaluation list */
+    public List<Step> getSteps() {
+      return Collections.unmodifiableList(new ArrayList<Step>(steps));
+    }
+
+    /** @return true only when the independently evaluated bracket met tolerance */
+    public boolean isConverged() {
+      return status == Status.CONVERGED && getBracketWidth() <= absoluteTolerance;
+    }
+
+    /** Converts this refinement receipt to a compact JSON-friendly map. */
+    public Map<String, Object> toEvidenceMap() {
+      List<Map<String, Object>> stepEvidence = new ArrayList<Map<String, Object>>();
+      for (Step step : steps) {
+        stepEvidence.add(step.toEvidenceMap());
+      }
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("axis_action_id", axisActionId);
+      evidence.put("action_value_semantics", ProcessModelOperatingAction.ValueSemantics.CONTINUOUS.name());
+      evidence.put("from_sequence_index", Integer.valueOf(fromSequenceIndex));
+      evidence.put("to_sequence_index", Integer.valueOf(toSequenceIndex));
+      evidence.put("sampled_from_axis_value", finiteOrNull(sampledFromAxisValue));
+      evidence.put("sampled_to_axis_value", finiteOrNull(sampledToAxisValue));
+      evidence.put("action_lower_bound", finiteOrNull(actionLowerBound));
+      evidence.put("action_upper_bound", finiteOrNull(actionUpperBound));
+      evidence.put("relative_tolerance", finiteOrNull(relativeTolerance));
+      evidence.put("absolute_tolerance", finiteOrNull(absoluteTolerance));
+      evidence.put("tolerance_provenance", toleranceProvenance);
+      evidence.put("maximum_evaluations", Integer.valueOf(maximumEvaluations));
+      evidence.put("evaluation_count", Integer.valueOf(steps.size()));
+      evidence.put("feasible_axis_value", finiteOrNull(feasibleAxisValue));
+      evidence.put("infeasible_axis_value", finiteOrNull(infeasibleAxisValue));
+      evidence.put("bracket_width", finiteOrNull(getBracketWidth()));
+      evidence.put("status", status.name());
+      evidence.put("converged", Boolean.valueOf(isConverged()));
+      evidence.put("steps", Collections.unmodifiableList(stepEvidence));
+      evidence.put("interpolated", Boolean.FALSE);
+      evidence.put("advisory", Boolean.TRUE);
+      return Collections.unmodifiableMap(evidence);
+    }
+
+    /**
+     * Immutable complete midpoint evaluation used by one refinement receipt.
+     *
+     * @author NeqSim Development Team
+     * @version 1.0
+     */
+    public static final class Step implements Serializable {
+      private static final long serialVersionUID = 1L;
+      private final int sequenceIndex;
+      private final double axisValue;
+      private final double[] candidateValues;
+      private final ProcessModelOperatingActionSetEvaluator.Outcome outcome;
+      private final boolean feasible;
+      private final boolean candidateSimulationConverged;
+      private final boolean candidateEvaluatorFeasible;
+      private final boolean baselineRestored;
+      private final boolean baselineSimulationConverged;
+      private final LeadingConstraintEvidence leadingConstraint;
+
+      /** Creates one immutable midpoint evaluation from a complete evaluated point. */
+      private Step(int sequenceIndex, double axisValue, double[] candidateValues,
+          ProcessModelOperatingActionSetEvaluator.Outcome outcome, boolean feasible,
+          boolean candidateSimulationConverged, boolean candidateEvaluatorFeasible, boolean baselineRestored,
+          boolean baselineSimulationConverged, LeadingConstraintEvidence leadingConstraint) {
+        this.sequenceIndex = sequenceIndex;
+        this.axisValue = axisValue;
+        this.candidateValues = Arrays.copyOf(candidateValues, candidateValues.length);
+        this.outcome = outcome;
+        this.feasible = feasible;
+        this.candidateSimulationConverged = candidateSimulationConverged;
+        this.candidateEvaluatorFeasible = candidateEvaluatorFeasible;
+        this.baselineRestored = baselineRestored;
+        this.baselineSimulationConverged = baselineSimulationConverged;
+        this.leadingConstraint = leadingConstraint;
+      }
+
+      /** Creates one step from a complete runtime point. */
+      private static Step fromPoint(int sequenceIndex, Point point) {
+        CandidateSetEvaluationResult evaluation = point.getEvaluation();
+        return new Step(sequenceIndex, point.getAxisValues()[0], point.getCandidateValues(), evaluation.getOutcome(),
+            evaluation.isFeasible(), evaluation.isCandidateSimulationConverged(),
+            evaluation.isCandidateEvaluatorFeasible(), evaluation.isBaselineRestored(),
+            evaluation.isBaselineSimulationConverged(), point.getLeadingConstraint());
+      }
+
+      /** @return zero-based midpoint sequence */
+      public int getSequenceIndex() {
+        return sequenceIndex;
+      }
+
+      /** @return independently evaluated action value */
+      public double getAxisValue() {
+        return axisValue;
+      }
+
+      /** @return defensive complete candidate vector */
+      public double[] getCandidateValues() {
+        return Arrays.copyOf(candidateValues, candidateValues.length);
+      }
+
+      /** @return exact evaluator outcome */
+      public ProcessModelOperatingActionSetEvaluator.Outcome getOutcome() {
+        return outcome;
+      }
+
+      /** @return full evaluator feasibility */
+      public boolean isFeasible() {
+        return feasible;
+      }
+
+      /** @return candidate-process convergence */
+      public boolean isCandidateSimulationConverged() {
+        return candidateSimulationConverged;
+      }
+
+      /** @return candidate-evaluator feasibility */
+      public boolean isCandidateEvaluatorFeasible() {
+        return candidateEvaluatorFeasible;
+      }
+
+      /** @return baseline restoration success */
+      public boolean isBaselineRestored() {
+        return baselineRestored;
+      }
+
+      /** @return restored-baseline convergence */
+      public boolean isBaselineSimulationConverged() {
+        return baselineSimulationConverged;
+      }
+
+      /** @return unit-safe leading or rejecting evidence, or null */
+      public LeadingConstraintEvidence getLeadingConstraint() {
+        return leadingConstraint;
+      }
+
+      /** Converts this midpoint evaluation to a compact JSON-friendly map. */
+      public Map<String, Object> toEvidenceMap() {
+        Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+        evidence.put("sequence_index", Integer.valueOf(sequenceIndex));
+        evidence.put("axis_value", finiteOrNull(axisValue));
+        evidence.put("candidate_values", toFiniteDoubleList(candidateValues));
+        evidence.put("outcome", outcome.name());
+        evidence.put("feasible", Boolean.valueOf(feasible));
+        evidence.put("candidate_simulation_converged", Boolean.valueOf(candidateSimulationConverged));
+        evidence.put("candidate_evaluator_feasible", Boolean.valueOf(candidateEvaluatorFeasible));
+        evidence.put("baseline_restored", Boolean.valueOf(baselineRestored));
+        evidence.put("baseline_simulation_converged", Boolean.valueOf(baselineSimulationConverged));
+        evidence.put("leading_constraint", leadingConstraint == null ? null : leadingConstraint.toEvidenceMap());
+        return Collections.unmodifiableMap(evidence);
+      }
+    }
+  }
+
+  /**
    * Immutable serializable result for an operating-envelope slice.
    *
    * @author NeqSim Development Team
@@ -1504,9 +1981,13 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final List<Point> points;
     private final List<Transition> transitions;
     private final List<OperatingRegionTransition> operatingRegionTransitions;
+    private final List<OperatingRegionBoundaryRefinement> boundaryRefinements;
     private final List<String> diagnostics;
     private final int evaluationCount;
     private final double runtimeSeconds;
+    private final int maximumBoundaryRefinementEvaluations;
+    private final double boundaryRefinementRelativeTolerance;
+    private final String boundaryRefinementToleranceProvenance;
     private final transient ProcessModelOperatingEnvelopeStudy sourceStudy;
 
     /**
@@ -1525,16 +2006,22 @@ public final class ProcessModelOperatingEnvelopeStudy {
      * @param points completed points
      * @param transitions sampled transitions
      * @param operatingRegionTransitions sampled feasibility/outcome/evidence transitions
+     * @param boundaryRefinements fail-closed continuous feasibility-boundary receipts
      * @param diagnostics study diagnostics
      * @param evaluationCount simulator evaluations used by this slice
      * @param runtimeSeconds measured wall-clock runtime
+     * @param maximumBoundaryRefinementEvaluations maximum midpoint evaluations per eligible transition
+     * @param boundaryRefinementRelativeTolerance terminal bracket tolerance relative to the action range
+     * @param boundaryRefinementToleranceProvenance engineering source of the tolerance
      * @param sourceStudy exact runtime study that produced this result
      */
     private SliceResult(String id, String name, String provenance, String candidateEvaluatorId, String[] axisActionIds,
         ProcessModelOperatingAction.ValueSemantics[] axisActionSemantics, double[][] axisValues, double[] anchorValues,
         int requestedPointCount, Outcome outcome, List<Point> points, List<Transition> transitions,
-        List<OperatingRegionTransition> operatingRegionTransitions, List<String> diagnostics, int evaluationCount,
-        double runtimeSeconds, ProcessModelOperatingEnvelopeStudy sourceStudy) {
+        List<OperatingRegionTransition> operatingRegionTransitions,
+        List<OperatingRegionBoundaryRefinement> boundaryRefinements, List<String> diagnostics, int evaluationCount,
+        double runtimeSeconds, int maximumBoundaryRefinementEvaluations, double boundaryRefinementRelativeTolerance,
+        String boundaryRefinementToleranceProvenance, ProcessModelOperatingEnvelopeStudy sourceStudy) {
       this.id = id;
       this.name = name;
       this.provenance = provenance;
@@ -1549,9 +2036,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
       this.transitions = Collections.unmodifiableList(new ArrayList<Transition>(transitions));
       this.operatingRegionTransitions = Collections
           .unmodifiableList(new ArrayList<OperatingRegionTransition>(operatingRegionTransitions));
+      this.boundaryRefinements = Collections
+          .unmodifiableList(new ArrayList<OperatingRegionBoundaryRefinement>(boundaryRefinements));
       this.diagnostics = Collections.unmodifiableList(new ArrayList<String>(diagnostics));
       this.evaluationCount = evaluationCount;
       this.runtimeSeconds = runtimeSeconds;
+      this.maximumBoundaryRefinementEvaluations = maximumBoundaryRefinementEvaluations;
+      this.boundaryRefinementRelativeTolerance = boundaryRefinementRelativeTolerance;
+      this.boundaryRefinementToleranceProvenance = boundaryRefinementToleranceProvenance;
       this.sourceStudy = sourceStudy;
     }
 
@@ -1647,6 +2139,14 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return Collections.unmodifiableList(new ArrayList<OperatingRegionTransition>(operatingRegionTransitions));
     }
 
+    /** @return fresh immutable fail-closed continuous-boundary refinement list */
+    public List<OperatingRegionBoundaryRefinement> getBoundaryRefinements() {
+      if (boundaryRefinements == null) {
+        return Collections.emptyList();
+      }
+      return Collections.unmodifiableList(new ArrayList<OperatingRegionBoundaryRefinement>(boundaryRefinements));
+    }
+
     /** @return fresh immutable study diagnostics */
     public List<String> getDiagnostics() {
       return Collections.unmodifiableList(new ArrayList<String>(diagnostics));
@@ -1660,6 +2160,21 @@ public final class ProcessModelOperatingEnvelopeStudy {
     /** @return measured wall-clock runtime in seconds */
     public double getRuntimeSeconds() {
       return runtimeSeconds;
+    }
+
+    /** @return maximum midpoint evaluations per eligible transition */
+    public int getMaximumBoundaryRefinementEvaluations() {
+      return maximumBoundaryRefinementEvaluations;
+    }
+
+    /** @return terminal bracket tolerance relative to the continuous action range */
+    public double getBoundaryRefinementRelativeTolerance() {
+      return boundaryRefinementRelativeTolerance;
+    }
+
+    /** @return engineering source of the terminal bracket tolerance */
+    public String getBoundaryRefinementToleranceProvenance() {
+      return boundaryRefinementToleranceProvenance;
     }
 
     /** Returns true only for the exact runtime study that produced this result. */
@@ -1690,6 +2205,10 @@ public final class ProcessModelOperatingEnvelopeStudy {
       for (OperatingRegionTransition transition : getOperatingRegionTransitions()) {
         operatingTransitionEvidence.add(transition.toEvidenceMap());
       }
+      List<Map<String, Object>> boundaryRefinementEvidence = new ArrayList<Map<String, Object>>();
+      for (OperatingRegionBoundaryRefinement refinement : getBoundaryRefinements()) {
+        boundaryRefinementEvidence.add(refinement.toEvidenceMap());
+      }
       Map<String, Object> evidence = new LinkedHashMap<String, Object>();
       evidence.put("study_id", id);
       evidence.put("study_name", name);
@@ -1709,6 +2228,10 @@ public final class ProcessModelOperatingEnvelopeStudy {
       evidence.put("points", Collections.unmodifiableList(pointEvidence));
       evidence.put("bottleneck_transitions", Collections.unmodifiableList(transitionEvidence));
       evidence.put("operating_region_transitions", Collections.unmodifiableList(operatingTransitionEvidence));
+      evidence.put("maximum_boundary_refinement_evaluations", Integer.valueOf(maximumBoundaryRefinementEvaluations));
+      evidence.put("boundary_refinement_relative_tolerance", finiteOrNull(boundaryRefinementRelativeTolerance));
+      evidence.put("boundary_refinement_tolerance_provenance", boundaryRefinementToleranceProvenance);
+      evidence.put("operating_region_boundary_refinements", Collections.unmodifiableList(boundaryRefinementEvidence));
       evidence.put("diagnostics", Collections.unmodifiableList(new ArrayList<String>(diagnostics)));
       return Collections.unmodifiableMap(evidence);
     }

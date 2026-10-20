@@ -1173,7 +1173,7 @@ mismatch withholds the proposal. Accepted lifecycle evidence is stored in the sa
 the existing change-driven `evidence_current`, supersession and `revalidation_of` path; it does not create a second
 task-state or optimization architecture.
 
-Current lifecycle exports use schema version 4 and include exact sampled `period_change_diagnostics`. For each
+Current lifecycle exports use schema version 5 and include exact sampled `period_change_diagnostics`. For each
 adjacent period pair these record accepted-action deltas, comparable/added/removed slice axes, common sampled
 points, feasible-to-infeasible changes, infeasible-to-feasible changes, and sampled leading-constraint changes.
 They also compare the exact `operating_region_transitions` rows emitted by each matching slice, retaining counts
@@ -1181,12 +1181,18 @@ and the ordered events added or removed between periods. The guard reconstructs 
 persisted period envelopes and rejects any mismatch. It never interpolates changed grids, matches a discrete
 line-up event to an intermediate state, or treats sampled counts as a continuous boundary.
 
-Schema version 4 may additionally bind independently accepted physical-state metrics to every period. Each period must
+Schema v5 additionally validates and compares `operating_region_boundary_refinements`. The guard
+replays the midpoint arithmetic from the persisted trace, requires finite candidates plus complete
+baseline restoration, accepts bracket updates only from converged feasible or explicit hard/validity
+rejections, and checks terminal tolerance/status closure. Missing or edited refinement configuration,
+midpoints, outcomes, recovery flags, brackets, or lifecycle migration rows fail closed.
+
+Schema versions 4 and 5 may additionally bind independently accepted physical-state metrics to every period. Each period must
 carry the same ordered metric IDs and units, finite values, and explicit provenance. The guard reconstructs exact
 adjacent-period state deltas and rejects missing, reordered, non-finite, unit-changed, or modified state evidence.
 Use this boundary for accepted shared-reservoir pressure, production/injection rates, cumulative throughput and
 shared-power snapshots; do not populate it from an unconverged, rejected, stale, partially restored, or interpolated
-state. Schema versions 1 through 3 remain accepted for historical ledger evidence.
+state. Schema versions 1 through 4 remain accepted for historical ledger evidence.
 
 Map every file that defines routing, constraints, limits, or model inputs to the production `guard`, including
 mapped network pump/compressor power, common-shaft speed and power, driver limits, and shared host-power limits.
