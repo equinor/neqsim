@@ -6,10 +6,9 @@ import java.io.Serializable;
  * Immutable screening-level delayed-coking product-yield balance.
  *
  * <p>
- * The calculation converts a caller-selected fraction of a residue feed and allocates the converted
- * feed among gas, naphtha, light coker gas oil, heavy coker gas oil, and petroleum coke. It is an
- * algebraic scenario receipt, not a kinetic, furnace, coke-drum, cycle-time, fractionation, or
- * product-property model.
+ * The calculation converts a caller-selected fraction of a residue feed and allocates the converted feed among gas,
+ * naphtha, light coker gas oil, heavy coker gas oil, and petroleum coke. It is an algebraic scenario receipt, not a
+ * kinetic, furnace, coke-drum, cycle-time, fractionation, or product-property model.
  *
  * @author esolbr1
  * @version 1.0
@@ -36,26 +35,20 @@ public final class RefineryDelayedCokingYieldBalance implements Serializable {
   private final double convertedProductMassBalanceResidualKgPerHour;
   private final double overallMassBalanceResidualKgPerHour;
 
-  private RefineryDelayedCokingYieldBalance(double feedMassFlowKgPerHour,
-      double conversionFraction, double gasMassFractionOfConvertedFeed,
-      double naphthaMassFractionOfConvertedFeed,
-      double lightCokerGasOilMassFractionOfConvertedFeed,
-      double heavyCokerGasOilMassFractionOfConvertedFeed,
+  private RefineryDelayedCokingYieldBalance(double feedMassFlowKgPerHour, double conversionFraction,
+      double gasMassFractionOfConvertedFeed, double naphthaMassFractionOfConvertedFeed,
+      double lightCokerGasOilMassFractionOfConvertedFeed, double heavyCokerGasOilMassFractionOfConvertedFeed,
       double cokeMassFractionOfConvertedFeed, double convertedFeedMassFlowKgPerHour,
-      double unconvertedResidueMassFlowKgPerHour, double gasMassFlowKgPerHour,
-      double naphthaMassFlowKgPerHour, double lightCokerGasOilMassFlowKgPerHour,
-      double heavyCokerGasOilMassFlowKgPerHour, double cokeMassFlowKgPerHour,
-      double totalProductMassFlowKgPerHour,
-      double convertedProductMassBalanceResidualKgPerHour,
+      double unconvertedResidueMassFlowKgPerHour, double gasMassFlowKgPerHour, double naphthaMassFlowKgPerHour,
+      double lightCokerGasOilMassFlowKgPerHour, double heavyCokerGasOilMassFlowKgPerHour, double cokeMassFlowKgPerHour,
+      double totalProductMassFlowKgPerHour, double convertedProductMassBalanceResidualKgPerHour,
       double overallMassBalanceResidualKgPerHour) {
     this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
     this.conversionFraction = conversionFraction;
     this.gasMassFractionOfConvertedFeed = gasMassFractionOfConvertedFeed;
     this.naphthaMassFractionOfConvertedFeed = naphthaMassFractionOfConvertedFeed;
-    this.lightCokerGasOilMassFractionOfConvertedFeed =
-        lightCokerGasOilMassFractionOfConvertedFeed;
-    this.heavyCokerGasOilMassFractionOfConvertedFeed =
-        heavyCokerGasOilMassFractionOfConvertedFeed;
+    this.lightCokerGasOilMassFractionOfConvertedFeed = lightCokerGasOilMassFractionOfConvertedFeed;
+    this.heavyCokerGasOilMassFractionOfConvertedFeed = heavyCokerGasOilMassFractionOfConvertedFeed;
     this.cokeMassFractionOfConvertedFeed = cokeMassFractionOfConvertedFeed;
     this.convertedFeedMassFlowKgPerHour = convertedFeedMassFlowKgPerHour;
     this.unconvertedResidueMassFlowKgPerHour = unconvertedResidueMassFlowKgPerHour;
@@ -65,8 +58,7 @@ public final class RefineryDelayedCokingYieldBalance implements Serializable {
     this.heavyCokerGasOilMassFlowKgPerHour = heavyCokerGasOilMassFlowKgPerHour;
     this.cokeMassFlowKgPerHour = cokeMassFlowKgPerHour;
     this.totalProductMassFlowKgPerHour = totalProductMassFlowKgPerHour;
-    this.convertedProductMassBalanceResidualKgPerHour =
-        convertedProductMassBalanceResidualKgPerHour;
+    this.convertedProductMassBalanceResidualKgPerHour = convertedProductMassBalanceResidualKgPerHour;
     this.overallMassBalanceResidualKgPerHour = overallMassBalanceResidualKgPerHour;
   }
 
@@ -82,28 +74,24 @@ public final class RefineryDelayedCokingYieldBalance implements Serializable {
    * @param cokeMassFractionOfConvertedFeed petroleum-coke fraction of converted feed
    * @return immutable delayed-coking yield receipt
    */
-  public static RefineryDelayedCokingYieldBalance calculate(double feedMassFlowKgPerHour,
-      double conversionFraction, double gasMassFractionOfConvertedFeed,
-      double naphthaMassFractionOfConvertedFeed,
-      double lightCokerGasOilMassFractionOfConvertedFeed,
-      double heavyCokerGasOilMassFractionOfConvertedFeed,
+  public static RefineryDelayedCokingYieldBalance calculate(double feedMassFlowKgPerHour, double conversionFraction,
+      double gasMassFractionOfConvertedFeed, double naphthaMassFractionOfConvertedFeed,
+      double lightCokerGasOilMassFractionOfConvertedFeed, double heavyCokerGasOilMassFractionOfConvertedFeed,
       double cokeMassFractionOfConvertedFeed) {
     if (!Double.isFinite(feedMassFlowKgPerHour) || feedMassFlowKgPerHour <= 0.0) {
       throw new IllegalArgumentException("feedMassFlowKgPerHour must be finite and positive");
     }
-    if (!Double.isFinite(conversionFraction) || conversionFraction < 0.0
-        || conversionFraction > 1.0) {
+    if (!Double.isFinite(conversionFraction) || conversionFraction < 0.0 || conversionFraction > 1.0) {
       throw new IllegalArgumentException("conversionFraction must be finite and in [0, 1]");
     }
-    if (!allFiniteNonNegative(gasMassFractionOfConvertedFeed,
-        naphthaMassFractionOfConvertedFeed, lightCokerGasOilMassFractionOfConvertedFeed,
-        heavyCokerGasOilMassFractionOfConvertedFeed, cokeMassFractionOfConvertedFeed)) {
-      throw new IllegalArgumentException(
-          "converted-feed product fractions must be finite and non-negative");
+    if (!allFiniteNonNegative(gasMassFractionOfConvertedFeed, naphthaMassFractionOfConvertedFeed,
+        lightCokerGasOilMassFractionOfConvertedFeed, heavyCokerGasOilMassFractionOfConvertedFeed,
+        cokeMassFractionOfConvertedFeed)) {
+      throw new IllegalArgumentException("converted-feed product fractions must be finite and non-negative");
     }
     double fractionSum = gasMassFractionOfConvertedFeed + naphthaMassFractionOfConvertedFeed
-        + lightCokerGasOilMassFractionOfConvertedFeed
-        + heavyCokerGasOilMassFractionOfConvertedFeed + cokeMassFractionOfConvertedFeed;
+        + lightCokerGasOilMassFractionOfConvertedFeed + heavyCokerGasOilMassFractionOfConvertedFeed
+        + cokeMassFractionOfConvertedFeed;
     if (Math.abs(fractionSum - 1.0) > FRACTION_TOLERANCE) {
       throw new IllegalArgumentException("converted-feed product fractions must sum to one");
     }
@@ -119,11 +107,10 @@ public final class RefineryDelayedCokingYieldBalance implements Serializable {
     double totalProducts = unconvertedResidue + convertedProducts;
 
     return new RefineryDelayedCokingYieldBalance(feedMassFlowKgPerHour, conversionFraction,
-        gasMassFractionOfConvertedFeed, naphthaMassFractionOfConvertedFeed,
-        lightCokerGasOilMassFractionOfConvertedFeed,
-        heavyCokerGasOilMassFractionOfConvertedFeed, cokeMassFractionOfConvertedFeed,
-        convertedFeed, unconvertedResidue, gas, naphtha, lightCokerGasOil, heavyCokerGasOil, coke,
-        totalProducts, convertedFeed - convertedProducts, feedMassFlowKgPerHour - totalProducts);
+        gasMassFractionOfConvertedFeed, naphthaMassFractionOfConvertedFeed, lightCokerGasOilMassFractionOfConvertedFeed,
+        heavyCokerGasOilMassFractionOfConvertedFeed, cokeMassFractionOfConvertedFeed, convertedFeed, unconvertedResidue,
+        gas, naphtha, lightCokerGasOil, heavyCokerGasOil, coke, totalProducts, convertedFeed - convertedProducts,
+        feedMassFlowKgPerHour - totalProducts);
   }
 
   private static boolean allFiniteNonNegative(double... values) {

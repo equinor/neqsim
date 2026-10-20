@@ -11,10 +11,10 @@ class RefineryDelayedCokingUtilityBalanceTest {
 
   @Test
   void calculatesFeedBasisFuelAndSteamDemand() {
-    RefineryDelayedCokingYieldBalance yield = RefineryDelayedCokingYieldBalance.calculate(
-        1000.0, 0.70, 0.08, 0.18, 0.32, 0.22, 0.20);
-    RefineryDelayedCokingUtilityBalance result = RefineryDelayedCokingUtilityBalance.calculate(
-        yield, 2.0, 0.85, 45.0, 50.0);
+    RefineryDelayedCokingYieldBalance yield = RefineryDelayedCokingYieldBalance.calculate(1000.0, 0.70, 0.08, 0.18,
+        0.32, 0.22, 0.20);
+    RefineryDelayedCokingUtilityBalance result = RefineryDelayedCokingUtilityBalance.calculate(yield, 2.0, 0.85, 45.0,
+        50.0);
 
     assertEquals(0.5555555555555556, result.getProcessDutyMegaWatt(), TOLERANCE);
     assertEquals(2352.9411764705883, result.getFuelEnergyInputMegaJoulePerHour(), TOLERANCE);
@@ -25,8 +25,8 @@ class RefineryDelayedCokingUtilityBalanceTest {
 
   @Test
   void rejectsInvalidUtilityAssumptions() {
-    RefineryDelayedCokingYieldBalance yield = RefineryDelayedCokingYieldBalance.calculate(
-        1000.0, 0.70, 0.08, 0.18, 0.32, 0.22, 0.20);
+    RefineryDelayedCokingYieldBalance yield = RefineryDelayedCokingYieldBalance.calculate(1000.0, 0.70, 0.08, 0.18,
+        0.32, 0.22, 0.20);
     assertThrows(NullPointerException.class,
         () -> RefineryDelayedCokingUtilityBalance.calculate(null, 2.0, 0.85, 45.0, 50.0));
     assertThrows(IllegalArgumentException.class,

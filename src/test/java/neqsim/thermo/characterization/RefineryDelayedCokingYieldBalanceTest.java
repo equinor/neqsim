@@ -11,8 +11,8 @@ class RefineryDelayedCokingYieldBalanceTest {
 
   @Test
   void calculatesFiveLumpYieldAndUnconvertedResidueBalance() {
-    RefineryDelayedCokingYieldBalance result = RefineryDelayedCokingYieldBalance.calculate(
-        1000.0, 0.70, 0.08, 0.18, 0.32, 0.22, 0.20);
+    RefineryDelayedCokingYieldBalance result = RefineryDelayedCokingYieldBalance.calculate(1000.0, 0.70, 0.08, 0.18,
+        0.32, 0.22, 0.20);
 
     assertEquals(700.0, result.getConvertedFeedMassFlowKgPerHour(), TOLERANCE);
     assertEquals(300.0, result.getUnconvertedResidueMassFlowKgPerHour(), TOLERANCE);

@@ -12,9 +12,8 @@ public final class RefineryDelayedCokingUtilityBalance implements Serializable {
   private final double steamMassFlowKgPerHour;
   private final double energyBalanceResidualMegaJoulePerHour;
 
-  private RefineryDelayedCokingUtilityBalance(double processDutyMegaWatt,
-      double fuelEnergyInputMegaJoulePerHour, double fuelMassFlowKgPerHour,
-      double steamMassFlowKgPerHour, double energyBalanceResidualMegaJoulePerHour) {
+  private RefineryDelayedCokingUtilityBalance(double processDutyMegaWatt, double fuelEnergyInputMegaJoulePerHour,
+      double fuelMassFlowKgPerHour, double steamMassFlowKgPerHour, double energyBalanceResidualMegaJoulePerHour) {
     this.processDutyMegaWatt = processDutyMegaWatt;
     this.fuelEnergyInputMegaJoulePerHour = fuelEnergyInputMegaJoulePerHour;
     this.fuelMassFlowKgPerHour = fuelMassFlowKgPerHour;
@@ -32,24 +31,18 @@ public final class RefineryDelayedCokingUtilityBalance implements Serializable {
    * @param steamKgPerTonneFeed steam demand in kg/t fresh feed
    * @return immutable utility receipt
    */
-  public static RefineryDelayedCokingUtilityBalance calculate(
-      RefineryDelayedCokingYieldBalance yieldBalance,
+  public static RefineryDelayedCokingUtilityBalance calculate(RefineryDelayedCokingYieldBalance yieldBalance,
       double specificProcessDutyMegaJoulePerKgFeed, double furnaceEfficiency,
       double fuelLowerHeatingValueMegaJoulePerKg, double steamKgPerTonneFeed) {
     Objects.requireNonNull(yieldBalance, "yieldBalance");
-    if (!Double.isFinite(specificProcessDutyMegaJoulePerKgFeed)
-        || specificProcessDutyMegaJoulePerKgFeed < 0.0) {
-      throw new IllegalArgumentException(
-          "specificProcessDutyMegaJoulePerKgFeed must be finite and non-negative");
+    if (!Double.isFinite(specificProcessDutyMegaJoulePerKgFeed) || specificProcessDutyMegaJoulePerKgFeed < 0.0) {
+      throw new IllegalArgumentException("specificProcessDutyMegaJoulePerKgFeed must be finite and non-negative");
     }
-    if (!Double.isFinite(furnaceEfficiency) || furnaceEfficiency <= 0.0
-        || furnaceEfficiency > 1.0) {
+    if (!Double.isFinite(furnaceEfficiency) || furnaceEfficiency <= 0.0 || furnaceEfficiency > 1.0) {
       throw new IllegalArgumentException("furnaceEfficiency must be finite and in (0, 1]");
     }
-    if (!Double.isFinite(fuelLowerHeatingValueMegaJoulePerKg)
-        || fuelLowerHeatingValueMegaJoulePerKg <= 0.0) {
-      throw new IllegalArgumentException(
-          "fuelLowerHeatingValueMegaJoulePerKg must be finite and positive");
+    if (!Double.isFinite(fuelLowerHeatingValueMegaJoulePerKg) || fuelLowerHeatingValueMegaJoulePerKg <= 0.0) {
+      throw new IllegalArgumentException("fuelLowerHeatingValueMegaJoulePerKg must be finite and positive");
     }
     if (!Double.isFinite(steamKgPerTonneFeed) || steamKgPerTonneFeed < 0.0) {
       throw new IllegalArgumentException("steamKgPerTonneFeed must be finite and non-negative");
@@ -61,8 +54,8 @@ public final class RefineryDelayedCokingUtilityBalance implements Serializable {
     double fuelMassFlow = fuelEnergyInput / fuelLowerHeatingValueMegaJoulePerKg;
     double steamMassFlow = yieldBalance.getFeedMassFlowKgPerHour() * steamKgPerTonneFeed / 1000.0;
     double energyResidual = fuelEnergyInput * furnaceEfficiency - processDutyMegaJoulePerHour;
-    return new RefineryDelayedCokingUtilityBalance(processDutyMegaJoulePerHour / 3600.0,
-        fuelEnergyInput, fuelMassFlow, steamMassFlow, energyResidual);
+    return new RefineryDelayedCokingUtilityBalance(processDutyMegaJoulePerHour / 3600.0, fuelEnergyInput, fuelMassFlow,
+        steamMassFlow, energyResidual);
   }
 
   /** @return useful process duty in MW */
