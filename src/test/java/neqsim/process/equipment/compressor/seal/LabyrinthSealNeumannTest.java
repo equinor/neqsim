@@ -279,4 +279,180 @@ public class LabyrinthSealNeumannTest extends neqsim.NeqSimTest {
     assertEquals(6, json.getAsJsonArray("toothTemperatures_C").size());
     assertFalse(calc.toJson().contains("NaN"));
   }
+
+  /**
+   * Builds the worked-case geometry with a given number of teeth.
+   *
+   * @param teeth number of teeth
+   * @return geometry
+   */
+  private static LabyrinthSealGeometry workedGeometry(int teeth) {
+    LabyrinthSealGeometry geometry = new LabyrinthSealGeometry();
+    geometry.setShaftDiameter(108.566, "mm");
+    geometry.setToothPitch(2.0, "mm");
+    geometry.setTipWidth(0.3, "mm");
+    geometry.setRadialClearance(0.2286, "mm");
+    geometry.setNumberOfTeeth(teeth);
+    return geometry;
+  }
+
+  /**
+   * Flashes a fluid at a state and initializes its properties.
+   *
+   * @param fluid fluid to flash in place
+   * @param temperatureK temperature in K
+   * @param pressureBara pressure in bara
+   * @return the flashed fluid
+   */
+  private static SystemInterface flashed(SystemInterface fluid, double temperatureK, double pressureBara) {
+    fluid.setTemperature(temperatureK);
+    fluid.setPressure(pressureBara);
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    return fluid;
+  }
+
+  /**
+   * Returns the relative residual of the tooth equation p_{i+1}^2 = p_i^2 - (m/(Cf u A))^2 p_i/rho_i for one tooth.
+   *
+   * @param march march to check
+   * @param tooth tooth index, 0 for the first tooth
+   * @param massFlow mass flow in kg/s
+   * @param geometry seal geometry
+   * @return |residual| / p_i^2
+   */
+  private static double toothResidual(NeumannLabyrinthSolver.March march, int tooth, double massFlow,
+      LabyrinthSealGeometry geometry) {
+    int n = geometry.getNumberOfTeeth();
+    double ratio = 1.0 + 16.6 * geometry.getRadialClearance() / geometry.getToothPitch();
+    double alpha = 1.0 - 1.0 / (ratio * ratio);
+    double carryOver = tooth == 0 ? 1.0 : Math.sqrt(n / (n * (1.0 - alpha) + alpha));
+    double upstream = march.pressurePa[tooth];
+    double downstream = march.pressurePa[tooth + 1];
+    double k = march.kappa[tooth];
+    double beta = Math.max(Math.pow(upstream / downstream, (k - 1.0) / k) - 1.0, 0.0);
+    double flowCoefficient = Math.PI / (Math.PI + 2.0 - 5.0 * beta + 2.0 * beta * beta);
+    double flux = massFlow / (flowCoefficient * carryOver * geometry.getClearanceArea());
+    double residual = downstream * downstream - upstream * upstream + flux * flux * upstream / march.density[tooth];
+    return Math.abs(residual) / (upstream * upstream);
+  }
+
+  /**
+   * High isentropic exponent (argon, kappa about 5/3): the tooth pressure solves the tooth equation exactly. A plain
+   * fixed-point iteration oscillates between the choke pressure and about 0.62 p_i when the exact ratio is 0.55 (review
+   * finding on #4491).
+   */
+  @Test
+  void toothPressureSolvesToothEquationForHighKappa() {
+    SystemInterface argon = new SystemSrkEos(300.0, 3.0);
+    argon.addComponent("argon", 1.0);
+    argon.setMixingRule("classic");
+    flashed(argon, 300.0, 3.0);
+    double density = argon.getPhase(0).getDensity("kg/m3");
+    double kappa = argon.getPhase(0).getKappa();
+    assertTrue(kappa > 1.6, "argon kappa " + kappa);
+    LabyrinthSealGeometry geometry = workedGeometry(3);
+    NeumannLabyrinthSolver solver = new NeumannLabyrinthSolver(argon, density, kappa, geometry);
+
+    double p0 = 3.0e5;
+    for (double targetRatio : new double[] {0.55, 0.53, 0.6, 0.7, 0.9}) {
+      double beta = Math.pow(targetRatio, -(kappa - 1.0) / kappa) - 1.0;
+      double flowCoefficient = Math.PI / (Math.PI + 2.0 - 5.0 * beta + 2.0 * beta * beta);
+      double massFlow = flowCoefficient * geometry.getClearanceArea()
+          * Math.sqrt((p0 * p0 - targetRatio * targetRatio * p0 * p0) * density / p0);
+      NeumannLabyrinthSolver.March march = solver.march(massFlow);
+      assertEquals(null, march.failure, "ratio " + targetRatio);
+      assertFalse(march.choked, "first tooth must not choke at ratio " + targetRatio);
+      assertEquals(targetRatio, march.pressurePa[1] / p0, 1.0e-9, "first-tooth ratio");
+      for (int tooth = 0; tooth < geometry.getNumberOfTeeth() && !march.choked; tooth++) {
+        if (march.pressurePa[tooth + 1] > 0.0) {
+          assertTrue(toothResidual(march, tooth, massFlow, geometry) < 1.0e-10,
+              "tooth " + tooth + " at ratio " + targetRatio);
+        }
+      }
+    }
+
+    LabyrinthSealFlowCalculator calc = new LabyrinthSealFlowCalculator(argon, geometry);
+    calc.setInletPressure(3.0, "bara");
+    calc.setInletTemperature(300.0, "K");
+    calc.setOutletPressure(1.01325, "bara");
+    calc.setMethod(LabyrinthFlowMethod.NEUMANN);
+    calc.calculate();
+    assertTrue(calc.isWithinValidityRange(), calc.getValidityViolations().toString());
+    assertTrue(calc.getMassFlowRate("kg/sec") > 0.0);
+  }
+
+  /**
+   * A flash failure during the lazy critical-flow search is reported as a validity violation, also in toJson (review
+   * finding on #4491).
+   */
+  @Test
+  void criticalFlowSearchFailureIsReported() {
+    JsonObject worked = referenceCase("worked_case");
+    SystemInterface fluid = fill(worked, new SystemSrkEos(288.15, 1.01325));
+    LabyrinthSealFlowCalculator calc = neumann(worked, fluid);
+    calc.setOutletPressure(2.6, "barg");
+    calc.calculate();
+    assertTrue(calc.isWithinValidityRange(), calc.getValidityViolations().toString());
+
+    SystemInterface inlet = flashed(fluid.clone(), 86.12 + 273.15, 2.765 + 1.01325);
+    final NeumannLabyrinthSolver.IsenthalpicFlash exact = NeumannLabyrinthSolver.defaultIsenthalpicFlash(inlet);
+    final double failBelowPa = 1.5e5;
+    NeumannLabyrinthSolver.IsenthalpicFlash failingAtLowPressure = new NeumannLabyrinthSolver.IsenthalpicFlash() {
+      @Override
+      public double[] state(double pressurePa, double warmStartK) {
+        if (pressurePa < failBelowPa) {
+          throw new IllegalStateException("injected flash failure");
+        }
+        return exact.state(pressurePa, warmStartK);
+      }
+    };
+    calc.useNeumannSolver(new NeumannLabyrinthSolver(inlet, calc.getInletDensity(), calc.getInletIsentropicExponent(),
+        calc.getGeometry(), failingAtLowPressure));
+    calc.calculate();
+    assertTrue(calc.isWithinValidityRange(), "the leakage solve stays above the injected failure pressure");
+    double leakage = calc.getMassFlowRate("kg/sec");
+    assertTrue(leakage > 0.0);
+
+    JsonObject json = JsonParser.parseString(calc.toJson()).getAsJsonObject();
+    assertTrue(json.get("criticalMassFlowRate_kg_s").isJsonNull());
+    assertFalse(json.get("withinValidityRange").getAsBoolean(), json.toString());
+    assertTrue(Double.isNaN(calc.getCriticalMassFlowRate("kg/sec")));
+    assertFalse(calc.isWithinValidityRange());
+    String violation = calc.getValidityViolations().get(0);
+    assertTrue(violation.startsWith("NEUMANN") && violation.contains("critical"), violation);
+    assertTrue(violation.contains("injected flash failure"), violation);
+    assertEquals(leakage, calc.getMassFlowRate("kg/sec"), 0.0, "leakage result is unchanged");
+  }
+
+  /**
+   * A single-phase GERG-2008 inlet can become two-phase after an expansion; the dedicated GERG PH flash then stops
+   * after its TP flash, so the state must come from the general PH flash (review finding on #4491).
+   */
+  @Test
+  void gergExpansionIntoTwoPhaseIsIsenthalpic() {
+    SystemInterface gas = new SystemGERG2008Eos(300.0, 60.0);
+    gas.addComponent("methane", 0.97);
+    gas.addComponent("n-pentane", 0.03);
+    gas.setMixingRule("classic");
+    double inletTemperatureK = 273.15 + 26.5;
+    flashed(gas, inletTemperatureK, 60.0);
+    assertEquals(1, gas.getNumberOfPhases(), "inlet must be single-phase gas");
+    double inletEnthalpy = gas.getEnthalpy();
+
+    NeumannLabyrinthSolver.IsenthalpicFlash flash = NeumannLabyrinthSolver.defaultIsenthalpicFlash(gas);
+    double[] state = flash.state(48.0e5, inletTemperatureK);
+
+    SystemInterface reference = gas.clone();
+    reference.setPressure(48.0);
+    reference.setTemperature(inletTemperatureK);
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        reference);
+    ops.PHflash(inletEnthalpy);
+    reference.initProperties();
+    assertEquals(2, reference.getNumberOfPhases(), "test premise: the expanded state is two-phase");
+    assertEquals(reference.getTemperature(), state[0], 1.0e-3, "isenthalpic temperature");
+    assertEquals(reference.getPhase("gas").getDensity("kg/m3"), state[1], 1.0e-6 * state[1], "gas density");
+    assertTrue(state[0] < inletTemperatureK - 2.0, "expansion into the two-phase region cools the gas");
+  }
 }
