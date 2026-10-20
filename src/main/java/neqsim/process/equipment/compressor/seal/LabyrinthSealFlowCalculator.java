@@ -118,6 +118,7 @@ public class LabyrinthSealFlowCalculator implements Serializable {
   private double[] toothPressuresBara = new double[0];
   private double[] toothTemperaturesK = new double[0];
   private double[] toothDensities = new double[0];
+  private boolean criticalFlowSearched = false;
 
   /**
    * Creates a calculator.
@@ -601,6 +602,7 @@ public class LabyrinthSealFlowCalculator implements Serializable {
     massFlowKgPerSec = result.massFlow;
     choked = result.choked;
     criticalMassFlowKgPerSec = result.choked ? result.massFlow : Double.NaN;
+    criticalFlowSearched = false;
     if (result.profile != null) {
       int points = result.profile.pressurePa.length;
       toothPressuresBara = new double[points];
@@ -643,7 +645,8 @@ public class LabyrinthSealFlowCalculator implements Serializable {
 
   /**
    * Lists why methods evaluated by the last {@link #calculate()} or {@link #calculateAllMethods()} call are outside
-   * their correlation range. Each entry starts with the method name.
+   * their correlation range. Each entry starts with the method name. For NEUMANN, a failure of the lazy critical-flow
+   * search is added when {@link #getCriticalMassFlowRate(String)} (also called by {@link #toJson()}) runs it.
    *
    * @return copy of the list of violations, empty when every evaluated method is within range
    */
@@ -735,7 +738,8 @@ public class LabyrinthSealFlowCalculator implements Serializable {
    *
    * <p>
    * For {@link LabyrinthFlowMethod#NEUMANN} this is the largest flow at which no tooth chokes. When the leakage is not
-   * choked it is found by a separate search on the first request, which costs additional PH flashes.
+   * choked it is found by a separate search on the first request, which costs additional PH flashes. If that search
+   * fails, the result is NaN and the reason is added to {@link #getValidityViolations()}.
    * </p>
    *
    * @param unit mass flow unit, see {@link #getMassFlowRate(String)}
@@ -743,8 +747,12 @@ public class LabyrinthSealFlowCalculator implements Serializable {
    */
   public double getCriticalMassFlowRate(String unit) {
     requireResult();
-    if (method == LabyrinthFlowMethod.NEUMANN && Double.isNaN(criticalMassFlowKgPerSec) && massFlowKgPerSec > 0.0) {
-      criticalMassFlowKgPerSec = neumannSolver().chokedFlow(massFlowKgPerSec);
+    if (method == LabyrinthFlowMethod.NEUMANN && !criticalFlowSearched && Double.isNaN(criticalMassFlowKgPerSec)
+        && massFlowKgPerSec > 0.0) {
+      criticalFlowSearched = true;
+      NeumannLabyrinthSolver.Result critical = neumannSolver().chokedFlow(massFlowKgPerSec);
+      criticalMassFlowKgPerSec = critical.massFlow;
+      validityViolations.addAll(critical.violations);
     }
     return convertMassFlow(criticalMassFlowKgPerSec, unit);
   }

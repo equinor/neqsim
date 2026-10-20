@@ -83,7 +83,10 @@ $$
 \mu_0 = 1, \qquad \mu_{i>0} = \sqrt{\frac{n}{n(1-\alpha)+\alpha}}, \qquad \alpha = 1 - \frac{1}{(1 + 16.6\,c/t)^2}
 $$
 
-- $C_{f,i}$ depends on $p_{i+1}$, so each tooth is solved by fixed-point iteration.
+- $C_{f,i}$ depends on $p_{i+1}$. Each tooth is therefore solved for its pressure ratio with a bracketed Brent search
+  between the critical ratio and 1. The residual rises steadily over that interval, so the root is unique. A plain
+  fixed-point iteration can oscillate between the choke pressure and a wrong value for high $\kappa$ (for example
+  argon, $\kappa \approx 5/3$).
 - After each tooth, the gas is flashed at constant inlet enthalpy (PH flash). This gives $T_{i+1}$, $\rho_{i+1}$ and
   $\kappa_{i+1}$ for the next tooth.
 - The leakage is the flow for which the pressure after the last tooth equals the outlet pressure. It is found with a
@@ -101,13 +104,15 @@ The tooth profile is available after the calculation:
 These arrays are empty for the other methods.
 
 Choose the fluid with run time in mind. Each Neumann calculation needs roughly $8n$ to $10n$ PH flashes. With a cubic
-EOS a calculation takes well under a second. For GERG-2008 fluids with a single-phase inlet, the calculator uses
-NeqSim's dedicated `PHflashGERG2008`, and a five-tooth seal takes about half a minute with a 14-component gas. If liquid
-is present at the inlet, the gas phase alone is expanded.
+EOS a calculation takes well under a second. For GERG-2008 fluids with a single-phase inlet, the calculator first tries
+NeqSim's dedicated `PHflashGERG2008`, and a five-tooth seal takes about 45 s with a 14-component gas, including a TP flash that confirms each expanded state is stable. That flash
+only handles single-phase gas. When an expanded state turns two-phase or misses the inlet enthalpy, the general
+`PHflash` is used instead. Every state is checked against the inlet enthalpy. If liquid is present at the inlet, the
+gas phase alone is expanded.
 
 For Neumann, `getCriticalMassFlowRate(unit)` is the largest flow at which no tooth chokes. When the leakage is not
 choked, this value is found by a separate search on the first request (including from `toJson()`), which costs more
-flashes.
+flashes. If that search fails, the critical flow is `NaN` and the reason is added to `getValidityViolations()`.
 
 ## Validity range
 

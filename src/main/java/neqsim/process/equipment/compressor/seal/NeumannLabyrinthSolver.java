@@ -31,7 +31,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <p>
- * The flow coefficient depends on {@code p_{i+1}}, so each tooth is a fixed-point iteration. The state after each tooth
+ * The flow coefficient depends on {@code p_{i+1}}, so each tooth is solved for its pressure ratio with a bracketed
+ * Brent search between the critical ratio and 1, where the residual increases monotonically. The state after each tooth
  * is an exact PH flash of the inlet gas at the inlet enthalpy. A tooth chokes when {@code p_{i+1}} would fall below
  * {@code p_i (2/(k_i + 1))^(k_i/(k_i - 1))}. The leakage is the flow for which the pressure after the last tooth equals
  * the outlet pressure (Brent root search). When that pressure cannot be reached without a tooth choking, the leakage is
@@ -40,8 +41,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * The march does not depend on the outlet pressure, so marches are cached per trial flow and reused across outlet
- * pressures. GERG-2008 fluids with a single-phase gas inlet use the dedicated {@code PHflashGERG2008}; every other
- * fluid uses the general {@code PHflash}.
+ * pressures. GERG-2008 fluids with a single-phase gas inlet first try the dedicated {@code PHflashGERG2008} and fall
+ * back to the general {@code PHflash} when the expanded state is multiphase or misses the inlet enthalpy; every other
+ * fluid uses the general {@code PHflash}. Every state is checked against the inlet enthalpy.
  * </p>
  *
  * @author neqsim
@@ -54,9 +56,11 @@ final class NeumannLabyrinthSolver {
   private static final double FLOW_RELATIVE_TOLERANCE = 1.0e-10;
   /** Relative width of the bracket that locates the choked flow. */
   private static final double CHOKE_RELATIVE_TOLERANCE = 1.0e-8;
-  /** Relative accuracy of the per-tooth flow-coefficient iteration. */
-  private static final double TOOTH_RELATIVE_TOLERANCE = 1.0e-12;
-  private static final int MAX_TOOTH_ITERATIONS = 100;
+  /** Absolute accuracy of the dimensionless tooth pressure ratio. */
+  private static final double TOOTH_RATIO_ACCURACY = 1.0e-14;
+  private static final int MAX_TOOTH_EVALUATIONS = 200;
+  /** Largest accepted enthalpy error of an isenthalpic state, expressed as a temperature error in K. */
+  private static final double ENTHALPY_TOLERANCE_K = 1.0e-3;
   private static final int MAX_BRACKET_STEPS = 200;
   private static final int MAX_ROOT_EVALUATIONS = 200;
   private static final int MAX_CACHED_MARCHES = 2000;
@@ -158,9 +162,7 @@ final class NeumannLabyrinthSolver {
     final double[] kappa;
     /** True when a tooth chokes at this flow; the profile then stops at that tooth. */
     boolean choked;
-    /** First tooth whose flow-coefficient iteration did not converge, -1 when all converged. */
-    int unconvergedTooth = -1;
-    /** Failure message when a flash failed, null otherwise. */
+    /** Failure message when a tooth solve or a flash failed, null otherwise. */
     String failure;
 
     /**
@@ -249,33 +251,23 @@ final class NeumannLabyrinthSolver {
       double carryOver = i == 0 ? 1.0 : carryOverRest;
       double upstream = m.pressurePa[i];
       double k = m.kappa[i];
-      double chokePressure = upstream * Math.pow(2.0 / (k + 1.0), k / (k - 1.0));
       double flux = massFlow / (carryOver * area);
-      double drop = flux * flux * upstream / m.density[i];
-      double downstream = upstream;
-      boolean converged = false;
-      boolean choked = false;
-      for (int iteration = 0; iteration < MAX_TOOTH_ITERATIONS; iteration++) {
-        double beta = Math.max(Math.pow(upstream / downstream, (k - 1.0) / k) - 1.0, 0.0);
-        double flowCoefficient = Math.PI / (Math.PI + 2.0 - 5.0 * beta + 2.0 * beta * beta);
-        double square = upstream * upstream - drop / (flowCoefficient * flowCoefficient);
-        choked = !(square > chokePressure * chokePressure);
-        double next = choked ? chokePressure : Math.sqrt(square);
-        if (Math.abs(next - downstream) <= TOOTH_RELATIVE_TOLERANCE * next) {
-          downstream = next;
-          converged = true;
-          break;
-        }
-        downstream = next;
+      double ratio;
+      try {
+        ratio = toothPressureRatio(k, flux * flux / (upstream * m.density[i]));
+      } catch (RuntimeException ex) {
+        logger.debug("Tooth pressure solve failed at tooth {}", i + 1, ex);
+        m.failure = String.format(Locale.ROOT, "NEUMANN: tooth pressure solve failed at tooth %d (%s)", i + 1,
+            ex.getMessage());
+        return m;
       }
-      if (!converged && m.unconvergedTooth < 0) {
-        m.unconvergedTooth = i + 1;
-      }
-      m.pressurePa[i + 1] = downstream;
-      if (choked) {
+      if (Double.isNaN(ratio)) {
+        m.pressurePa[i + 1] = upstream * criticalPressureRatio(k);
         m.choked = true;
         return m;
       }
+      double downstream = ratio * upstream;
+      m.pressurePa[i + 1] = downstream;
       try {
         double[] state = flash.state(downstream, m.temperatureK[i]);
         m.temperatureK[i + 1] = state[0];
@@ -292,15 +284,62 @@ final class NeumannLabyrinthSolver {
   }
 
   /**
+   * Returns the critical pressure ratio of a tooth, (2/(k+1))^(k/(k-1)).
+   *
+   * @param k real-gas isentropic exponent upstream of the tooth
+   * @return critical (choking) pressure ratio
+   */
+  private static double criticalPressureRatio(double k) {
+    return Math.pow(2.0 / (k + 1.0), k / (k - 1.0));
+  }
+
+  /**
+   * Solves the dimensionless tooth equation y^2 = 1 - d / Cf(y)^2 for the pressure ratio y = p_{i+1}/p_i, with Cf(y) =
+   * pi/(pi + 2 - 5 beta + 2 beta^2) and beta = max(y^(-(k-1)/k) - 1, 0).
+   *
+   * <p>
+   * The residual y^2 - 1 + d/Cf(y)^2 increases monotonically between the critical ratio and 1 and is positive at 1, so
+   * the tooth chokes exactly when the residual at the critical ratio is not negative; otherwise the single root is
+   * found with a bracketed Brent search. A plain fixed-point iteration on this equation can oscillate for high k.
+   * </p>
+   *
+   * @param k real-gas isentropic exponent upstream of the tooth
+   * @param d dimensionless drop flux^2 / (p_i rho_i), with flux = m / (u_i A)
+   * @return pressure ratio y, or NaN when the tooth chokes
+   */
+  private static double toothPressureRatio(final double k, final double d) {
+    final double exponent = (k - 1.0) / k;
+    UnivariateFunction residual = new UnivariateFunction() {
+      @Override
+      public double value(double y) {
+        double beta = Math.max(Math.pow(y, -exponent) - 1.0, 0.0);
+        double flowCoefficient = Math.PI / (Math.PI + 2.0 - 5.0 * beta + 2.0 * beta * beta);
+        return y * y - 1.0 + d / (flowCoefficient * flowCoefficient);
+      }
+    };
+    double critical = criticalPressureRatio(k);
+    if (!(residual.value(critical) < 0.0)) {
+      return Double.NaN;
+    }
+    return new BrentSolver(TOOTH_RATIO_ACCURACY).solve(MAX_TOOTH_EVALUATIONS, residual, critical, 1.0);
+  }
+
+  /**
    * Flashes the inlet gas to a pressure at the inlet enthalpy.
+   *
+   * <p>
+   * The dedicated GERG-2008 PH flash only handles single-phase gas and returns after its TP flash otherwise, so when it
+   * finds more than one phase or misses the inlet enthalpy the general PH flash is used instead. Every state is checked
+   * against the inlet enthalpy.
+   * </p>
    *
    * @param inletGas inlet gas template; it is cloned
    * @param inletEnthalpy inlet enthalpy in J (total for the system)
-   * @param useGergFlash true to use the dedicated GERG-2008 PH flash
+   * @param useGergFlash true to try the dedicated GERG-2008 PH flash first
    * @param pressurePa pressure in Pa
    * @param warmStartK initial temperature guess in K
    * @return {temperature K, gas density kg/m3, gas real-gas isentropic exponent}
-   * @throws IllegalStateException if no gas phase remains
+   * @throws IllegalStateException if the inlet enthalpy is not reached or no gas phase remains
    */
   private static double[] isenthalpicState(SystemInterface inletGas, double inletEnthalpy, boolean useGergFlash,
       double pressurePa, double warmStartK) {
@@ -308,12 +347,26 @@ final class NeumannLabyrinthSolver {
     state.setPressure(pressurePa * 1.0e-5);
     state.setTemperature(warmStartK);
     ThermodynamicOperations ops = new ThermodynamicOperations(state);
+    boolean solved = false;
     if (useGergFlash) {
       ops.PHflashGERG2008(inletEnthalpy);
-    } else {
-      ops.PHflash(inletEnthalpy);
+      // The dedicated flash only checks phase stability at the warm-start temperature; confirm at the result.
+      ops.TPflash();
+      state.initProperties();
+      solved = state.getNumberOfPhases() == 1 && enthalpyReached(state, inletEnthalpy);
+      if (!solved) {
+        state.setTemperature(warmStartK);
+      }
     }
-    state.initProperties();
+    if (!solved) {
+      ops.PHflash(inletEnthalpy);
+      state.initProperties();
+      if (!enthalpyReached(state, inletEnthalpy)) {
+        throw new IllegalStateException(
+            String.format(Locale.ROOT, "PH flash missed the inlet enthalpy by %.3g J at %.6g bara",
+                state.getEnthalpy() - inletEnthalpy, pressurePa * 1.0e-5));
+      }
+    }
     if (!state.hasPhaseType("gas")) {
       throw new IllegalStateException("no gas phase after isenthalpic expansion");
     }
@@ -325,6 +378,19 @@ final class NeumannLabyrinthSolver {
       }
     }
     return result;
+  }
+
+  /**
+   * Returns whether a flashed state has the inlet enthalpy within {@link #ENTHALPY_TOLERANCE_K} times its heat
+   * capacity.
+   *
+   * @param state flashed state with initialized properties
+   * @param inletEnthalpy inlet enthalpy in J
+   * @return true when the enthalpy matches
+   */
+  private static boolean enthalpyReached(SystemInterface state, double inletEnthalpy) {
+    double tolerance = ENTHALPY_TOLERANCE_K * Math.abs(state.getCp());
+    return Math.abs(state.getEnthalpy() - inletEnthalpy) <= tolerance;
   }
 
   /**
@@ -384,7 +450,6 @@ final class NeumannLabyrinthSolver {
       result.massFlow = lower;
       result.choked = true;
       result.profile = march(lower);
-      addConvergenceViolation(result);
       return result;
     }
     final double target = outletPressurePa;
@@ -403,7 +468,6 @@ final class NeumannLabyrinthSolver {
           .solve(MAX_ROOT_EVALUATIONS, residual, lower, upper);
       result.massFlow = flow;
       result.profile = march(flow);
-      addConvergenceViolation(result);
     } catch (RuntimeException ex) {
       // Brent throws MathIllegalStateException/MathIllegalArgumentException; the residual throws IllegalStateException.
       logger.debug("Neumann flow search failed", ex);
@@ -413,30 +477,21 @@ final class NeumannLabyrinthSolver {
   }
 
   /**
-   * Adds a violation when a tooth flow-coefficient iteration did not converge at the solution.
-   *
-   * @param result result to update
-   */
-  private static void addConvergenceViolation(Result result) {
-    if (result.profile != null && result.profile.unconvergedTooth >= 0) {
-      result.violations.add("NEUMANN: flow-coefficient iteration did not converge at tooth "
-          + result.profile.unconvergedTooth + "; result may be inaccurate");
-    }
-  }
-
-  /**
    * Finds the choked (largest non-choking) flow, starting from a flow at which no tooth chokes.
    *
    * @param start non-choking flow in kg/s
-   * @return choked flow in kg/s, NaN when a flash failed
+   * @return result with the choked flow and its profile, or NaN flow and a NEUMANN violation when a march failed
    */
-  double chokedFlow(double start) {
+  Result chokedFlow(double start) {
+    Result result = new Result();
+    result.choked = true;
     double lower = start;
     double upper = 1.5 * start;
     for (int step = 0; step < MAX_BRACKET_STEPS; step++) {
       March trial = march(upper);
       if (trial.failure != null) {
-        return Double.NaN;
+        result.violations.add(criticalSearchFailure(trial.failure));
+        return result;
       }
       if (trial.choked) {
         break;
@@ -448,7 +503,8 @@ final class NeumannLabyrinthSolver {
       double middle = 0.5 * (lower + upper);
       March trial = march(middle);
       if (trial.failure != null) {
-        return Double.NaN;
+        result.violations.add(criticalSearchFailure(trial.failure));
+        return result;
       }
       if (trial.choked) {
         upper = middle;
@@ -456,6 +512,19 @@ final class NeumannLabyrinthSolver {
         lower = middle;
       }
     }
-    return lower;
+    result.massFlow = lower;
+    result.profile = march(lower);
+    return result;
+  }
+
+  /**
+   * Builds the violation for a failed critical-flow search from a march failure.
+   *
+   * @param marchFailure failure message of the march, prefixed with NEUMANN
+   * @return violation message
+   */
+  private static String criticalSearchFailure(String marchFailure) {
+    String detail = marchFailure.startsWith("NEUMANN: ") ? marchFailure.substring("NEUMANN: ".length()) : marchFailure;
+    return "NEUMANN: critical-flow search failed (" + detail + "); no critical flow reported";
   }
 }

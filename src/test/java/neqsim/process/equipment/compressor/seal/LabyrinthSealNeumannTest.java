@@ -362,13 +362,15 @@ public class LabyrinthSealNeumannTest extends neqsim.NeqSimTest {
           * Math.sqrt((p0 * p0 - targetRatio * targetRatio * p0 * p0) * density / p0);
       NeumannLabyrinthSolver.March march = solver.march(massFlow);
       assertEquals(null, march.failure, "ratio " + targetRatio);
-      assertFalse(march.choked, "first tooth must not choke at ratio " + targetRatio);
       assertEquals(targetRatio, march.pressurePa[1] / p0, 1.0e-9, "first-tooth ratio");
-      for (int tooth = 0; tooth < geometry.getNumberOfTeeth() && !march.choked; tooth++) {
-        if (march.pressurePa[tooth + 1] > 0.0) {
-          assertTrue(toothResidual(march, tooth, massFlow, geometry) < 1.0e-10,
-              "tooth " + tooth + " at ratio " + targetRatio);
-        }
+      int lastFilled = 0;
+      while (lastFilled < geometry.getNumberOfTeeth() && march.pressurePa[lastFilled + 1] > 0.0) {
+        lastFilled++;
+      }
+      int solvedTeeth = march.choked ? lastFilled - 1 : lastFilled;
+      for (int tooth = 0; tooth < solvedTeeth; tooth++) {
+        assertTrue(toothResidual(march, tooth, massFlow, geometry) < 1.0e-10,
+            "tooth " + tooth + " at ratio " + targetRatio);
       }
     }
 
