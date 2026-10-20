@@ -1,10 +1,8 @@
 package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
@@ -21,6 +19,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GTSurfaceTensionSimple.class);
   private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
+  private static final LinearAlgebraOperations COMMONS_MATH = new ApacheCommonsMathLinearAlgebra();
 
   int ite_step = 200;
   SystemInterface localSystem = null;
@@ -225,26 +224,17 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
           }
           ii++;
         }
-        RealMatrix ans2 = null;
-        RealMatrix bRealMatrix = new Array2DRowRealMatrix(bmatrix);
+        double[] ans2 = null;
         if (localSystem.getPhase(0).getNumberOfComponents() > 1) {
-          RealMatrix coefficientMatrix = new Array2DRowRealMatrix(fmatrix);
-          // localSystem.getPhase(0).getNumberOfComponents() - 1);
-          try {
-            DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(coefficientMatrix)
-                .getSolver();
-            ans2 = solver1.solve(bRealMatrix);
-          } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-          }
+          ans2 = COMMONS_MATH.solve(fmatrix, bmatrix);
         }
 
         pp = 0;
         err = 0.0;
         for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
           if (i != referenceComponentNumber) {
-            err += Math.abs(ans2.getEntry(pp, 0) * 1e5) / totalDens;
-            del_den_interface[i] += 1e5 * ans2.getEntry(pp, 0);
+            err += Math.abs(ans2[pp] * 1e5) / totalDens;
+            del_den_interface[i] += 1e5 * ans2[pp];
             // * (iterations) / (10.0 + iterations);
             pp++;
           }

@@ -288,6 +288,28 @@ public interface LinearAlgebraOperations {
   double spectralNorm(double[][] matrix);
 
   /**
+   * Compute paired real eigenvalues and column eigenvectors without imposing an ordering.
+   *
+   * <p>
+   * This operation is restricted to real spectra. Complex eigenvalues must not be silently projected onto the real
+   * axis. Eigenvectors need not form an invertible basis for a defective matrix.
+   *
+   * @param matrix finite square matrix
+   * @return independent paired eigenvalue and eigenvector arrays satisfying {@code A V = V diag(lambda)}
+   * @throws LinearAlgebraException if input is invalid, the spectrum is complex or decomposition fails
+   */
+  RealEigenDecomposition eigenDecomposition(double[][] matrix);
+
+  /**
+   * Compute a compact SVD satisfying {@code A = U diag(s) V^T}.
+   *
+   * @param matrix finite rectangular matrix with dimensions m by n
+   * @return independent compact U and V matrices, with k columns for k = min(m, n), and descending singular values
+   * @throws LinearAlgebraException if input is invalid or decomposition fails
+   */
+  SingularValueDecompositionResult singularValueDecomposition(double[][] matrix);
+
+  /**
    * Extract a rectangular block of a matrix.
    *
    * <p>

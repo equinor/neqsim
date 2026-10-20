@@ -45,6 +45,9 @@ ASSESSMENTS = (
     ("CO2BrineHydrateFullFamilyAssessmentTest",
      "co2-brine-hydrate-dholabhai1993-full-assessment.csv", 110,
      "co2_brine_hydrate_dholabhai1993_full.csv"),
+    ("CO2BrineHydrateMeasuredStateAssessmentTest",
+     "co2-brine-hydrate-measured-state-assessment.csv", 110,
+     "co2_brine_hydrate_dholabhai1993_full.csv"),
 )
 PROVENANCE = "docs/thermo/co2_kcl_interaction_provenance.md"
 

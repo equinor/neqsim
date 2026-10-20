@@ -1,8 +1,8 @@
 package neqsim.thermo.phase;
 
 import java.io.Serializable;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.EigenDecomposition;
+import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 
 /**
  * Parameter-neutral conversion of acoustic measurements to volumetric compressibility.
@@ -29,6 +29,7 @@ public final class PitzerBinaryVolumetricAcousticConversion {
 
   private static final double COVARIANCE_SYMMETRY_TOLERANCE = 1.0e-12;
   private static final double CORRELATION_EIGENVALUE_TOLERANCE = 1.0e-10;
+  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
 
   private PitzerBinaryVolumetricAcousticConversion() {
   }
@@ -208,7 +209,7 @@ public final class PitzerBinaryVolumetricAcousticConversion {
       correlationRow++;
     }
 
-    double[] eigenvalues = new EigenDecomposition(new Array2DRowRealMatrix(correlation, false)).getRealEigenvalues();
+    double[] eigenvalues = ALGEBRA.eigenDecomposition(correlation).getEigenvalues();
     for (double eigenvalue : eigenvalues) {
       if (!Double.isFinite(eigenvalue) || eigenvalue < -CORRELATION_EIGENVALUE_TOLERANCE) {
         throw new IllegalArgumentException("Acoustic input covariance must be positive semidefinite");

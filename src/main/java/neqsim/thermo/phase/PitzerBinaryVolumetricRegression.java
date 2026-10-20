@@ -8,11 +8,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.linear.SingularValueDecomposition;
+import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
+import neqsim.mathlib.linearalgebra.SingularValueDecompositionResult;
 
 /**
  * Weighted linear regression for one-state binary-electrolyte volumetric Pitzer parameters.
@@ -35,6 +33,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
   private static final int PARAMETER_COUNT = 4;
   private static final double RELATIVE_RANK_TOLERANCE = 1.0e-12;
   private static final double MAXIMUM_CONDITION_NUMBER = 1.0e10;
+  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
 
   private final PitzerBinaryVolumetricModel model;
 
@@ -113,8 +112,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
       }
     }
 
-    RealMatrix designMatrix = new Array2DRowRealMatrix(scaledDesign, false);
-    SingularValueDecomposition decomposition = new SingularValueDecomposition(designMatrix);
+    SingularValueDecompositionResult decomposition = ALGEBRA.singularValueDecomposition(scaledDesign);
     double[] singularValues = decomposition.getSingularValues();
     double largestSingularValue = singularValues[0];
     double rankTolerance = RELATIVE_RANK_TOLERANCE * largestSingularValue;
@@ -137,10 +135,10 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
           "Volumetric Pitzer regression design is ill-conditioned: scaled condition number " + conditionNumber);
     }
 
-    RealVector scaledSolution = decomposition.getSolver().solve(new ArrayRealVector(weightedResponse, false));
+    double[] scaledSolution = ALGEBRA.solveLeastSquares(scaledDesign, weightedResponse);
     double[] coefficients = new double[PARAMETER_COUNT];
     for (int index = 0; index < PARAMETER_COUNT; index++) {
-      coefficients[index] = scaledSolution.getEntry(index) / columnNorms[index];
+      coefficients[index] = scaledSolution[index] / columnNorms[index];
       requireFinite(coefficients[index], "Fitted volumetric Pitzer coefficient");
     }
 
@@ -206,15 +204,15 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
     return norms;
   }
 
-  private static double[][] calculateCovariance(SingularValueDecomposition decomposition, double[] singularValues,
+  private static double[][] calculateCovariance(SingularValueDecompositionResult decomposition, double[] singularValues,
       double[] columnNorms) {
-    RealMatrix rightSingularVectors = decomposition.getV();
+    double[][] rightSingularVectors = decomposition.getRightSingularVectors();
     double[][] covariance = new double[PARAMETER_COUNT][PARAMETER_COUNT];
     for (int row = 0; row < PARAMETER_COUNT; row++) {
       for (int column = 0; column < PARAMETER_COUNT; column++) {
         double scaledCovariance = 0.0;
         for (int mode = 0; mode < PARAMETER_COUNT; mode++) {
-          scaledCovariance += rightSingularVectors.getEntry(row, mode) * rightSingularVectors.getEntry(column, mode)
+          scaledCovariance += rightSingularVectors[row][mode] * rightSingularVectors[column][mode]
               / (singularValues[mode] * singularValues[mode]);
         }
         covariance[row][column] = scaledCovariance / (columnNorms[row] * columnNorms[column]);
