@@ -158,7 +158,10 @@ class WorkerProcess:
                 stderr=log_stderr,
             )
             if sys.platform == "win32":
-                popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+                # NO_WINDOW: a runner job must never open its own console window
+                popen_kwargs["creationflags"] = (
+                    subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+                )
             else:
                 popen_kwargs["start_new_session"] = True
 

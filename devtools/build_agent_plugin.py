@@ -285,13 +285,20 @@ mcp_data = Path(os.environ.get("PLUGIN_DATA") or Path.home() / ".neqsim" / "mcp-
 mcp_log = state / "mcp-prefetch.log"
 
 
+# CREATE_NO_WINDOW: every console child (python, pip, java) must get a hidden console.
+# Without it, a parent that has no console makes Windows pop up one window per child.
+NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+
+
 def detached(cmd, out=None):
     """Start ``cmd`` fully detached from the hook process (no window, survives exit)."""
     kwargs = dict(stdin=subprocess.DEVNULL, stdout=out or subprocess.DEVNULL,
                   stderr=out or subprocess.DEVNULL, close_fds=True)
     if os.name == "nt":
-        # detached + new process group + no window; try to leave the caller's job object too
-        flags = 0x00000008 | 0x00000200 | 0x08000000
+        # new process group + hidden console; no DETACHED_PROCESS, because a console-less worker
+        # would open a visible window for every pip/python child it starts. Try to leave the
+        # caller's job object too.
+        flags = 0x00000200 | NO_WINDOW
         try:
             subprocess.Popen(cmd, creationflags=flags | 0x01000000, **kwargs)
             return
@@ -342,7 +349,8 @@ def java_major(java):
     except OSError:
         pass
     try:
-        r = subprocess.run([str(java), "-version"], capture_output=True, text=True, timeout=20)
+        r = subprocess.run([str(java), "-version"], capture_output=True, text=True, timeout=20,
+                           creationflags=NO_WINDOW)
         m = re.search(r'version "([^"]+)"', (r.stderr or "") + (r.stdout or ""))
         if m:
             return parse(m.group(1))
@@ -689,14 +697,16 @@ def pip_install(python, req, out):
             if m:
                 target = m.group(1)
         rc = subprocess.run([python, "-m", "pip", "install", "--no-index", "--find-links",
-                             str(wheels), target], stdout=out, stderr=out, check=False).returncode
+                             str(wheels), target], stdout=out, stderr=out, check=False,
+                            creationflags=NO_WINDOW).returncode
         if rc == 0:
             return True
         out.write("== wheelhouse install failed (rc={{}}); retrying against the package index\\n"
                   .format(rc))
         out.flush()
     return subprocess.run([python, "-m", "pip", "install", req],
-                          stdout=out, stderr=out, check=False).returncode == 0
+                          stdout=out, stderr=out, check=False,
+                          creationflags=NO_WINDOW).returncode == 0
 
 
 def install_live_requirements(python, out):
@@ -726,19 +736,22 @@ def install_live_requirements(python, out):
     wheels = root / "wheels"
     if wheels.is_dir() and any(wheels.glob("*.whl")):
         if subprocess.run(base + ["--no-index", "--find-links", str(wheels), "-r", str(req_file)],
-                          stdout=out, stderr=out, check=False).returncode == 0:
+                          stdout=out, stderr=out, check=False,
+                          creationflags=NO_WINDOW).returncode == 0:
             out.write("== live dependencies: all {{}} installed from the bundled wheelhouse\\n".format(len(reqs)))
             return []
         out.write("== wheelhouse install of live dependencies failed; retrying against the package index\\n")
         out.flush()
-    if subprocess.run(base + ["-r", str(req_file)], stdout=out, stderr=out, check=False).returncode == 0:
+    if subprocess.run(base + ["-r", str(req_file)], stdout=out, stderr=out, check=False,
+                      creationflags=NO_WINDOW).returncode == 0:
         out.write("== live dependencies: all {{}} installed\\n".format(len(reqs)))
         return []
     out.write("== bulk install failed; installing live dependencies one by one\\n")
     out.flush()
     failed = []
     for req in reqs:
-        if subprocess.run(base + [req], stdout=out, stderr=out, check=False).returncode != 0:
+        if subprocess.run(base + [req], stdout=out, stderr=out, check=False,
+                          creationflags=NO_WINDOW).returncode != 0:
             failed.append(req)
     out.write("== live dependencies: {{}} installed, {{}} failed{{}}\\n".format(
         len(reqs) - len(failed), len(failed), ": " + ", ".join(failed) if failed else ""))
@@ -782,7 +795,8 @@ def import_check(python, out):
     out.write("== {{}} import check of {{}} skill packages\\n".format(
         time.strftime("%Y-%m-%d %H:%M:%S"), len(pkgs)))
     out.flush()
-    subprocess.run([python, "-c", code] + pkgs, stdout=out, stderr=out, check=False)
+    subprocess.run([python, "-c", code] + pkgs, stdout=out, stderr=out, check=False,
+                   creationflags=NO_WINDOW)
 
 
 def run_install(python):
@@ -794,7 +808,8 @@ def run_install(python):
         ok = True
         if EDITABLE_SELF:
             ok &= subprocess.run([python, "-m", "pip", "install", "-e", str(root), "--no-deps"],
-                                 stdout=out, stderr=out, check=False).returncode == 0
+                                 stdout=out, stderr=out, check=False,
+                                 creationflags=NO_WINDOW).returncode == 0
         for req in targets():
             ok &= pip_install(python, req, out)
         failed_live = install_live_requirements(python, out) if ok else []

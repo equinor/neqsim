@@ -33,6 +33,13 @@ def test_task_root_precedence(defaults, tmp_path, monkeypatch):
     assert new_task.resolve_task_root(str(tmp_path / "explicit")) == str(tmp_path / "explicit")
 
 
+def test_default_task_root_outside_checkout(tmp_path):
+    assert new_task.default_task_solve_dir(str(tmp_path)) == os.path.join(
+        os.path.expanduser("~"), "neqsim_tasks")
+    (tmp_path / "pom.xml").write_text("<project/>")
+    assert new_task.default_task_solve_dir(str(tmp_path)) == str(tmp_path / "task_solve")
+
+
 def test_create_and_list_external_task(defaults, tmp_path, capsys):
     root = new_task.save_default_task_root(str(tmp_path / "external tasks"))
     task = Path(new_task.create_task("External destination", prompt="Original request"))
