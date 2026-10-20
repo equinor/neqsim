@@ -977,6 +977,38 @@ The synthetic compressor reference case and deterministic devtools tests exercis
 including Word/HTML generation, audit references, idempotent re-issue, stale-report detection and
 fail-closed newer-schema handling.
 
+#### Software acceptance coverage
+
+The acceptance scope of [#4187](https://github.com/equinor/neqsim/issues/4187) is
+the persistent Task Solver workflow. The checks below exercise the existing
+implementation; they do not qualify a production model, equipment limits or an
+external agent's engineering judgment.
+
+| Acceptance criterion | Executable evidence |
+| --- | --- |
+| Five-second status, conclusions, attempts, rejected hypotheses, blockers and next action | `test_five_second_status_and_resume_cli` checks the complete status contract |
+| Stop/resume without chat history | `test_cycle_resumes_same_id_on_another_day` and `test_solve_adopts_completed_uncheckpointed_cycle` retain cycle and solve identity |
+| Agent/machine portability with version handling | `test_relocated_task_resumes_updates_and_finalizes_in_fresh_processes` moves and renames the whole task, removes each old location and uses four fresh interpreters with different host labels; `test_state_schema_migrates_and_future_schema_fails_closed` verifies migration and rejection |
+| Interrupted-run recovery | The relocation test preserves the completed solver value and exactly three distinct attempts; the side-effect recovery test preserves notification and agent metadata |
+| Evidence-change detection | `test_evidence_inventory_detects_added_modified_and_removed_files` checks relative paths and hashes; the relocation test detects a revised brief after handoff |
+| Impact analysis and retention of unaffected results | `test_task_update_selectively_reruns_mapped_impact_and_retains_kpis` checks the selected stages and retained KPIs; unmapped and degraded updates have separate rejection tests |
+| Result provenance | The selective-update tests check evidence hashes, affected conclusions and the accepted cycle; final-report tests check the promoted baseline and source record |
+| Living Report | `test_living_report_follows_every_change` checks updates after solve, cycle, promotion and ledger changes |
+| Current-best report | The relocation test generates ordinary Word/HTML reports through the canonical CLI, then verifies their bytes and output metadata survive finalization |
+| Final report | `test_multi_day_final_report_uses_canonical_pipeline_and_is_immutable` checks Word/HTML content, figures, audit links, idempotence and stale results; the relocation test checks output hashes and re-issue after a second move |
+| CLI ergonomics | Status/resume, update and final-report dispatch tests exercise the public CLI; commands and examples are documented in this guide |
+| Focused validation | State, evidence, interrupted work, report-schema rejection, selective updates and production-evidence guards run in the devtools suites |
+
+These tests are in
+[`devtools/test_neqsim_living_tasks.py`](../../devtools/test_neqsim_living_tasks.py),
+with related foundation, production and canonical-report suites alongside it.
+The relocation test starts each interpreter outside the task and source checkout.
+It disables external agents and uses the public synthetic compressor calculation;
+it does not require an LLM, historian connection or JVM. Host labels model handoff
+provenance, not distinct operating systems. Compatible Python dependencies, task
+scripts and separately configured external adapters are still required on a new
+machine. An active task lock continues to prevent concurrent writers.
+
 ### 13.6 When the task reopens
 
 A monitoring task reopens when the objective drops more than `regress_margin`
