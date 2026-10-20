@@ -196,7 +196,7 @@ checks before writing Step 1 content:
    | Live instrument data / operating point (P, T, flow, speed, valve %, current recycle) | `@plant-data` / `plant-data-agent` + `neqsim-plant-data` (tagreader PI/IP.21) or `@seeq.connect` / `enterprise-seeq-connect` | Resolve historian tag from STID tag; prefer `/PRIM` channel; check units |
    | Measured production volumes (well/field) | `rigga-production-agent` + `enterprise-rigga-production` | Measured production as feed / validation basis |
    | Equipment / maintenance / failure history | `@maintenance` / `maintenance-agent` + `enterprise-maintenance-api` | Read-only work orders, notifications |
-   | Picture of real equipment: location, layout, access, 3D view of a named tag | `enterprise-echo-3d-agent` + `enterprise-echo-3d` (Equinor Echo digital twin, via `prd-ai-skills` echo-toolkit) | Report figures into `figures/`; the user names the Echo 3D project; "not modelled" is not "not installed"; indicative, not a measurement |
+   | Picture of real equipment: location, layout, access, a vessel with its valves and instruments, a proposed modification against the As-Built model | `enterprise-stid-agent` (tags, valves, instruments, nozzle schedule, GA drawing) **together with** `enterprise-echo-3d-agent` + `enterprise-echo-3d` (Equinor Echo digital twin) | Write `step1_scope_and_research/echo_plan.json`, run `echo-3d task --task <task>`; the user names the Echo 3D project(s); "not modelled" is not "not installed"; indicative, not a measurement |
    | Fluid composition / gas-sample molweight | STID/lab report via `@stid.reader`; else record as an explicit gap | A wrong MW mis-places compressor maps — always try to obtain it |
    | Public literature / standards | `@literature-scout` | See step 6 |
 
@@ -1604,15 +1604,23 @@ Document the independent check in `step2_analysis/notes.md` under a
     - Prefer `results.json` `conclusions` over hand-written numbers
     - Ensure all figures from `figures/` will be embedded, **including benchmark plots**
     - **Equipment pictures (Echo, enterprise).** When the study concerns named
-      equipment, capture Echo views with `enterprise-echo-3d-agent` during Step 1
-      (or here, if the need appears late) so they are in `figures/` before the
-      report run. Each Echo figure needs a `figure_captions` entry (project, tag,
-      capture date, "Equinor internal"), a `figure_discussion` entry (what the
-      picture shows about layout, access or neighbours, and what that means for the
-      finding), and a reference from `approach` or an appendix such as "Equipment
-      layout". Copy the evidence record's `assumptions` and `data_gaps` into
-      `results.json`; write "not modelled in Echo project X", never "not found" or
-      "not installed". A figure that cannot be obtained is a data gap, not a blocker.
+      equipment, run the Echo step in Step 1 (or here, if the need appears late) so
+      the figures are in `figures/` before the report run: STID agents resolve the
+      installation code, the parent tag, its valves and instruments and the datasheet
+      (nozzle schedule, GA drawing); `enterprise-echo-3d-agent` shows them. Write
+      `step1_scope_and_research/echo_plan.json` (`inst_code`, `project`,
+      `compare_projects` for a before/after of a modification, `equipment[]` with
+      `tag`, `label`, `purpose`, `detail: "auto"`) and run
+      `echo-3d task --task <task>`. It merges figures, `figure_captions`, a tag
+      table, `assumptions`, `data_gaps`, the `evidence_sources` entry and an
+      "Equipment visualisation (Echo)" appendix into the task. **You still write**
+      a `figure_discussion` entry per Echo figure (what the picture shows about
+      layout, access, neighbouring equipment or the modification, and what that
+      means for the finding) and cite the figures in `approach` or `conclusions`.
+      For a before/after pair identify the modification yourself: the project model
+      is a separate mesh and no automatic difference is produced. Write "not
+      modelled in Echo project X" or "not labelled in this view", never "not
+      installed". A figure that cannot be obtained is a data gap, not a blocker.
       Screenshots stay in the task folder and are never committed to a code repo.
     - The Scope/Standards, Results, Discussion, and Validation sections auto-populate from data files
     - **Discussion section** auto-populates from `results.json["figure_discussion"]` —
@@ -2003,7 +2011,7 @@ EMV model was hand-coded in four sibling tasks. Rules:
 | Flow assurance, hydraulics, hydrate/wax | `flow-assurance` | `olga-simulation-agent` for transients |
 | Safety: blowdown, PSV, source terms | `safety-depressuring` | `consequence-analysis`, `standards-review` |
 | Document / image reading | `technical-reader` (`technical-document-intelligence-agent`) | `enterprise-stid-reader-agent` |
-| Study that names real equipment (debottlenecking, tie-in, root cause, layout, noise, relief) and benefits from a picture | the family's lead agent | `enterprise-echo-3d-agent` (Echo views as report figures; enterprise only) |
+| Study that names real equipment (debottlenecking, tie-in, root cause, layout, noise, relief) and benefits from a picture | the family's lead agent | `enterprise-stid-agent` (tags, valves, instruments, nozzle schedule) with `enterprise-echo-3d-agent` (Echo views, before/after of a modification, as report figures; enterprise only) |
 
 For **Type G (Workflow)** tasks you will need several of these in sequence;
 coordinate them through `task_spec.md` and the hand-off schemas in
