@@ -808,19 +808,20 @@ ordered field periods. Build each period from its own converged model/evaluator 
 accepted-point slices, then add it with a non-negative strictly increasing elapsed time and explicit
 configuration provenance. The lifecycle study invokes the same exact-runtime envelope export gate before
 accepting a period, requires identical ordered action identifiers across periods, aggregates evaluation/runtime
-provenance, and reports changes in the accepted leading constraint between adjacent periods. Schema version 2 also
-exports `period_change_diagnostics`: accepted-action deltas, comparable/added/removed slice axes, exact sampled-point
-overlap, feasible-point changes, and leading-constraint changes for every adjacent period pair. Points are compared
-only when their physical axis-value vectors are exactly equal; changed grids are reported explicitly and are never
-interpolated.
+provenance, and reports changes in the accepted leading constraint between adjacent periods. Current schema version 4
+also exports `period_change_diagnostics`: accepted-action deltas, comparable/added/removed slice axes, exact
+sampled-point overlap, feasible-point changes, and leading-constraint changes for every adjacent period pair. For
+matching axes it compares the complete sampled `operating_region_transitions` rows and reports exact retained,
+removed, and added events. Points and events are compared only when their physical evidence is exactly equal;
+changed grids are reported explicitly and are never interpolated.
 
 When a period is driven by an independently accepted reservoir/network state, use the `addPeriod` overload that
 accepts ordered `AcceptedStateMetric` values. Each metric carries a stable ID, name, finite value, explicit unit, and
-source provenance. Metric IDs, order, and units must remain identical across periods. These periods export schema
-version 3, retain the exact accepted state under each period, and add exact `accepted_state_changes` to the adjacent
+source provenance. Metric IDs, order, and units must remain identical across periods. Schema version 4 retains the
+exact accepted state under each period when supplied and adds exact `accepted_state_changes` to the adjacent
 period diagnostics. This is the handoff for accepted reservoir pressure, production/injection rates, cumulative
 throughput, common-shaft power, or other already-qualified state; it does not make an independently calculated or
-forecast value accepted. Schema-v2 export remains unchanged when no state metrics are supplied. It does not copy
+forecast value accepted. State metrics remain optional in schema v4. It does not copy
 reservoir, separator, compressor-map, shaft, driver, or power-limit physics; those remain in each period's
 canonical model and constraint evidence.
 
@@ -843,12 +844,12 @@ or action-incompatible period is rejected instead of producing a partial lifecyc
 are sampled identities, not a continuous forecast, causal attribution, shadow price, equipment qualification, or
 operating approval.
 
-Lifecycle schema versions 1 and 2 remain readable by the persistent production guard for stored historical evidence.
-Exports without accepted-state metrics use schema version 2; exports with them use schema version 3. The guard
-recomputes every period-change diagnostic from the persisted periods before accepting it, including state-metric
-identity, units, finite values, and exact deltas for schema 3. A missing or modified count, delta, axis set,
-feasibility change, state metric, or constraint-change count therefore fails closed instead of becoming a trusted
-advisory result.
+Lifecycle schema versions 1 through 3 remain readable by the persistent production guard for stored historical
+evidence. Current exports use schema version 4 with optional accepted-state metrics. The guard recomputes every
+period-change diagnostic from the persisted periods before accepting it, including exact operating-region event
+migration and, when present, state-metric identity, units, finite values, and exact deltas. A missing or modified
+count, event, delta, axis set, feasibility change, state metric, or constraint-change count therefore fails closed
+instead of becoming a trusted advisory result.
 
 Long-lived Task Solver studies can persist this map as `lifecycle_envelope_evidence` beside the current
 `accepted_point_envelope_evidence`. Enable both `production.require_envelope_evidence` and

@@ -1,6 +1,6 @@
 ---
 name: neqsim-maven-version-maintenance
-description: "Use when updating or reviewing dependency or Maven plugin versions in NeqSim. Keeps pom.xml and pomJava8.xml coordinated, preserves Java 8-compatible pins, and verifies both Maven configurations."
+description: "USE WHEN: updating or reviewing dependency or Maven plugin versions in NeqSim. Keeps pom.xml and pomJava8.xml coordinated, preserves Java 8-compatible pins, and verifies both Maven configurations."
 ---
 
 # NeqSim Maven Version Maintenance

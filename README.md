@@ -65,14 +65,17 @@ See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.25.0</version>
+  <version>3.26.0</version>
 </dependency>
 ```
 
 Verify availability on Maven Central before using a newly announced version.
-Release publishing uses the pinned Maven 3.9.16 wrapper because Maven 3.10.0
-adds local metadata that Sonatype publishing plugin 0.11.0 does not remove
-from its bundle. The publishing job waits for Sonatype to report `PUBLISHED`;
+Read the [3.26.0 release and migration notes](docs/development/release-notes-3.26.0.md)
+before upgrading, especially if you use matrix APIs or saved numerical solvers.
+Release publishing retains the Maven 3.9.16 wrapper qualified for 3.25.0: the
+Java 8 release profile still uses Sonatype publishing plugin 0.11.0, whose
+bundles include local metadata with Maven 3.10.0. The standard release profile
+uses plugin 0.12.0. Both profiles wait for Sonatype to report `PUBLISHED`;
 a successful build alone does not establish publication.
 
 The program below is complete Java 8-compatible source. Run it with assertions enabled
@@ -369,7 +372,7 @@ See [VISION_AGENTS.md](VISION_AGENTS.md) and the [Where Does This Go? guide](htt
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.25.0</version>
+  <version>3.26.0</version>
 </dependency>
 ```
 
@@ -781,7 +784,7 @@ If NeqSim contributes to a publication, report, or product, please cite it. The 
 
 **APA-style citation** (software):
 
-> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.25.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
+> Solbraa, E., & NeqSim Contributors. (2026). *NeqSim: A library for thermodynamic and process simulation* (Version 3.26.0) [Computer software]. Equinor. https://github.com/equinor/neqsim
 
 **BibTeX:**
 
@@ -790,7 +793,7 @@ If NeqSim contributes to a publication, report, or product, please cite it. The 
   author       = {Solbraa, Even and {NeqSim Contributors}},
   title        = {NeqSim: A library for thermodynamic and process simulation},
   year         = {2026},
-  version      = {3.25.0},
+  version      = {3.26.0},
   publisher    = {Equinor},
   url          = {https://github.com/equinor/neqsim},
   license      = {Apache-2.0}

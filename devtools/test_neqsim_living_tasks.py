@@ -6,6 +6,9 @@ nor enterprise access.
 import json
 import os
 import shutil
+import subprocess
+import sys
+import textwrap
 from datetime import datetime, timezone
 
 import pytest
@@ -29,6 +32,19 @@ def _copy(task, tmp_path, name):
     target = str(tmp_path / name)
     shutil.copytree(task, target)
     return target
+
+
+def _fresh_task_process(task, workdir, host, source):
+    """Exercise persisted task state without a shared interpreter or task working directory."""
+    environment = dict(os.environ)
+    environment["PYTHONPATH"] = os.path.dirname(os.path.abspath(__file__))
+    environment["NEQSIM_CONTINUOUS_HOST"] = host
+    program = "import json, os, sys\ntask = sys.argv[1]\n" + textwrap.dedent(source)
+    completed = subprocess.run(
+        [sys.executable, "-c", program, str(task)], cwd=str(workdir), env=environment,
+        capture_output=True, text=True, timeout=120)
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    return json.loads(completed.stdout.strip().splitlines()[-1])
 
 
 def test_drift_monitor_detects_step_and_ignores_noise():
@@ -245,6 +261,149 @@ def test_multi_day_final_report_uses_canonical_pipeline_and_is_immutable(referen
     assert nc.final_report_status(task)["stale"]
     with pytest.raises(nc.FinalReportError, match="differs from the promoted baseline"):
         nc.finalize_report(task, reviewer="Engineering reviewer")
+
+
+def test_relocated_task_resumes_updates_and_finalizes_in_fresh_processes(tmp_path):
+    """Qualify the #4187 handoff using only copied task files and supported public commands."""
+    first_root = tmp_path / "first host"
+    first_root.mkdir()
+    original = first_root / "study"
+    started = _fresh_task_process(original, first_root, "host-a", """
+        from datetime import datetime, timedelta, timezone
+        import yaml
+        from neqsim_continuous.cycle import run_cycle
+        from neqsim_continuous.plan import load_plan, write_json
+        from neqsim_continuous.reference_case import create_reference_task
+        from neqsim_continuous.state import write_state
+
+        now = datetime.now(timezone.utc)
+        create_reference_task(os.path.dirname(task), name=os.path.basename(task),
+                              start=now - timedelta(days=1), days=3)
+        plan = load_plan(task)
+        plan["evidence"]["rules"] = [{
+            "name": "brief", "match": "**/brief.md", "stages": ["diff"],
+            "conclusions": ["power-reduction conclusion"],
+        }]
+        with open(os.path.join(task, "continuous", "cycle_plan.yaml"), "w") as handle:
+            yaml.safe_dump(plan, handle)
+        # Fault injection at a persisted stage boundary: the process exits before
+        # the solve history is checkpointed, while its solver state is already durable.
+        cycle = run_cycle(task, mode="solve", now=now,
+                          stages=plan["solve"]["stages"][:3], no_agent=True)
+        cycle["status"] = "running"
+        cycle.pop("finished_at", None)
+        write_json(os.path.join(task, "continuous", "cycles", cycle["cycle_id"],
+                                "cycle.json"), cycle)
+        write_state(task, {
+            "state": "solving", "phase": "solving", "history": [], "agent_sessions": 0,
+            "solve_session": {"id": "S-portable", "status": "running", "until": "goal",
+                              "started_at": cycle["started_at"]},
+        })
+        print(json.dumps({"cycle": cycle["cycle_id"], "value": cycle["solve"]["value"]}))
+    """)
+
+    second_root = tmp_path / "second host"
+    second_root.mkdir()
+    relocated = second_root / "renamed study"
+    shutil.move(str(original), str(relocated))
+    assert not original.exists()
+    resumed = _fresh_task_process(relocated, second_root, "host-b", """
+        import neqsim_continuous as nc
+        from neqsim_continuous.plan import read_json
+
+        before = nc.status(task)
+        assert before["resume"]["available"]
+        assert before["evidence"]["inventory_status"] == "unchanged"
+        result = nc.resume(task, no_agent=True)
+        state = result["state"]
+        assert result["resumed"] and state["state"] == "goal_met"
+        assert state["solve_session"]["id"] == "S-portable"
+        assert state["last_writer"]["host"] == "host-b"
+        assert len(state["history"]) == 3
+        first = state["history"][0]
+        cycle = read_json(os.path.join(task, "continuous", "cycles", first["cycle"],
+                                       "cycle.json"))
+        assert cycle["resume_count"] == 1
+        assert cycle["recovery"]["previous_host"] == "host-a"
+        assert cycle["recovery"]["resumed_host"] == "host-b"
+        assert len({row["cycle"] for row in state["history"]}) == 3
+        nc.promote(task, state["history"][-1]["cycle"], "Test reviewer")
+        print(json.dumps({"cycle": first["cycle"], "value": first["value"],
+                          "schema": state["schema_version"]}))
+    """)
+    assert resumed["cycle"] == started["cycle"]
+    assert resumed["value"] == started["value"]  # completed solver was not executed twice
+    assert resumed["schema"] == "1.1"
+
+    final = _fresh_task_process(relocated, second_root, "host-c", """
+        import contextlib
+        import hashlib
+        import io
+        import subprocess
+        import neqsim_continuous as nc
+        from neqsim_continuous import cli
+
+        brief = os.path.join(task, "step1_scope_and_research", "references", "manual", "brief.md")
+        with open(brief, "a", encoding="utf-8") as handle:
+            handle.write("\\nRevision B: clarify the public calculation basis.\\n")
+        view = nc.status(task)
+        assert view["evidence"]["changed_files"] == 1
+        assert view["evidence"]["affected_conclusions"] == ["power-reduction conclusion"]
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            assert cli.main(["update", task, "--no-agent"]) == 0
+        updated = json.loads(output.getvalue())
+        assert updated["accepted"] and not updated["full_rerun"]
+        assert "script:station_model" not in updated["selected_stages"]
+        assert "refresh" not in updated["selected_stages"]
+        assert updated["provenance"][0]["evidence"][0]["sha256"]
+        nc.promote(task, updated["cycle"]["cycle_id"], "Test reviewer")
+
+        # Generate an ordinary current-best report with the real canonical CLI,
+        # then prove issuing the final revision preserves its files byte for byte.
+        canonical = os.path.join(os.path.dirname(cli.__file__), "..", "neqsim_cli.py")
+        generated = subprocess.run([sys.executable, canonical, "report", task],
+                                   capture_output=True, text=True, timeout=120)
+        assert generated.returncode == 0, generated.stdout + generated.stderr
+        report_dir = os.path.join(task, "step3_report")
+        current = {}
+        for name in os.listdir(report_dir):
+            path = os.path.join(report_dir, name)
+            if os.path.isfile(path) and name.endswith((".docx", ".html", ".json")):
+                with open(path, "rb") as handle:
+                    current[name] = hashlib.sha256(handle.read()).hexdigest()
+        assert any(name.endswith(".docx") for name in current)
+        assert any(name.endswith(".html") for name in current)
+        issued = nc.finalize_report(task, reviewer="Test reviewer")
+        assert issued["revision"] == "FR-001" and issued["status"] == "complete"
+        for name, expected in current.items():
+            with open(os.path.join(report_dir, name), "rb") as handle:
+                assert hashlib.sha256(handle.read()).hexdigest() == expected
+        assert {row["format"] for row in issued["outputs"]} == {"docx", "html"}
+        assert not nc.final_report_status(task)["stale"]
+        print(json.dumps({"revision": issued["revision"], "outputs": issued["outputs"]}))
+    """)
+    assert final["revision"] == "FR-001"
+
+    third_root = tmp_path / "third host"
+    third_root.mkdir()
+    delivered = third_root / "delivered study"
+    shutil.move(str(relocated), str(delivered))
+    assert not relocated.exists()
+    checked = _fresh_task_process(delivered, third_root, "host-d", """
+        import neqsim_continuous as nc
+
+        view = nc.status(task)
+        assert view["evidence"]["inventory_status"] == "unchanged"
+        assert view["final_report"]["available"]
+        assert view["final_report"]["outputs_valid"]
+        assert not view["final_report"]["stale"]
+        repeated = nc.finalize_report(task, reviewer="Test reviewer")
+        assert repeated["reused"] and repeated["revision"] == "FR-001"
+        assert all(not os.path.isabs(item["path"]) for item in repeated["outputs"])
+        print(json.dumps({"outputs": repeated["outputs"]}))
+    """)
+    assert checked["outputs"] == final["outputs"]
 
 
 def test_living_report_explains_itself_and_draws_improvement_figures(reference, tmp_path):
