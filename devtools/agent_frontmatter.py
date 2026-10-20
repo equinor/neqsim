@@ -238,8 +238,11 @@ def set_frontmatter_list(text: str, key: str, values: List[str]) -> str:
                     insert_at += 1
                 break
         out[insert_at:insert_at] = rendered
-    newline = "\r\n" if "\r\n" in text[: len(text) - len(body)] else "\n"
-    return "---" + newline + newline.join(out) + newline + "---" + newline + body
+    head = text[: len(text) - len(body)]
+    newline = "\r\n" if "\r\n" in head else "\n"
+    # keep the blank line(s) that separate the closing fence from the body
+    separator = head[len(head.rstrip()):] or newline
+    return "---" + newline + newline.join(out) + newline + "---" + separator + body
 
 
 def read_agent(path: Union[str, Path]) -> Dict[str, object]:
