@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.thermo.system.SystemGERG2008Eos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -38,6 +39,11 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
   private static final JsonObject REFERENCE = loadReference();
   private static final LabyrinthFlowMethod[] CLOSED_FORM = {LabyrinthFlowMethod.STODOLA, LabyrinthFlowMethod.EGLI,
       LabyrinthFlowMethod.VERMES, LabyrinthFlowMethod.KEARTON};
+  /**
+   * Relative tolerance against the workbook. The NeqSim GERG-2008 phase converts the GERG molar density with the NeqSim
+   * database molar masses, which differ from the GERG-2008 molar masses used by the workbook by about 3e-5 (relative).
+   */
+  private static final double WORKBOOK_TOLERANCE = 5.0e-5;
 
   /**
    * Loads the workbook reference cases.
@@ -142,7 +148,8 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
    * @return mass flow in kg/s
    */
   private static double excelFlow(JsonObject testCase, LabyrinthFlowMethod method) {
-    return testCase.getAsJsonObject("excel").getAsJsonObject("mass_flow_kg_s").get(method.name()).getAsDouble();
+    JsonElement value = testCase.getAsJsonObject("excel").getAsJsonObject("mass_flow_kg_s").get(method.name());
+    return value == null || value.isJsonNull() ? Double.NaN : value.getAsDouble();
   }
 
   /** NeqSim GERG-2008 reproduces the workbook inlet properties used by every method. */
@@ -153,9 +160,10 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     LabyrinthSealFlowCalculator calc = calculator(worked, gergFluid(worked), LabyrinthFlowMethod.KEARTON);
     calc.calculate();
 
-    assertEquals(excel.get("density_kg_m3").getAsDouble(), calc.getInletDensity(), 1.0e-6 * 2.9118);
-    assertEquals(excel.get("molar_mass_kg_kmol").getAsDouble(), calc.getInletMolarMass(), 1.0e-6 * 22.858);
-    assertEquals(excel.get("kappa").getAsDouble(), calc.getInletIsentropicExponent(), 1.0e-6 * 1.2009);
+    assertEquals(excel.get("density_kg_m3").getAsDouble(), calc.getInletDensity(), 5.0e-5 * 2.9118);
+    assertEquals(excel.get("molar_mass_kg_kmol").getAsDouble(), calc.getInletMolarMass(), 5.0e-5 * 22.858);
+    assertEquals(excel.get("kappa").getAsDouble(), calc.getInletIsentropicExponent(), 1.0e-5 * 1.2009);
+    assertEquals(excel.get("Z").getAsDouble(), calc.getInletCompressibility(), 1.0e-5);
     assertFalse(calc.hasLiquidAtInlet());
   }
 
@@ -166,16 +174,19 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     int compared = 0;
     for (JsonElement element : REFERENCE.getAsJsonArray("cases")) {
       JsonObject testCase = element.getAsJsonObject();
+      LabyrinthSealFlowCalculator calc = calculator(testCase, gergFluid(testCase), LabyrinthFlowMethod.KEARTON);
+      Map<LabyrinthFlowMethod, Double> flows = calc.calculateAllMethods();
+      if (calc.hasLiquidAtInlet()) {
+        continue;
+      }
       for (LabyrinthFlowMethod method : CLOSED_FORM) {
-        LabyrinthSealFlowCalculator calc = calculator(testCase, gergFluid(testCase), method);
-        calc.calculate();
-        if (calc.hasLiquidAtInlet()) {
+        double expected = excelFlow(testCase, method);
+        if (Double.isNaN(expected)) {
           continue;
         }
         compared++;
-        double expected = excelFlow(testCase, method);
-        double relativeError = Math.abs(calc.getMassFlowRate("kg/sec") - expected) / expected;
-        if (relativeError > 1.0e-6) {
+        double relativeError = Math.abs(flows.get(method) - expected) / expected;
+        if (relativeError > WORKBOOK_TOLERANCE) {
           failures.add(testCase.get("id").getAsString() + "/" + method + " rel.err=" + relativeError);
         }
       }
@@ -192,6 +203,14 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     calc.calculate();
     assertTrue(calc.isChoked());
     assertEquals(calc.getCriticalMassFlowRate("kg/sec"), calc.getMassFlowRate("kg/sec"), 1.0e-15);
+
+    // n + ln(pn/p0) < 0: the workbook returns an error, NeqSim reports the critical flow.
+    JsonObject deep = referenceCase("methane_hp_choked_n3");
+    LabyrinthSealFlowCalculator vermes = calculator(deep, gergFluid(deep), LabyrinthFlowMethod.VERMES);
+    vermes.calculate();
+    assertTrue(vermes.isChoked());
+    assertTrue(vermes.getMassFlowRate("kg/sec") > 0.0 && !Double.isInfinite(vermes.getMassFlowRate("kg/sec")));
+    assertEquals(vermes.getCriticalMassFlowRate("kg/sec"), vermes.getMassFlowRate("kg/sec"), 1.0e-15);
 
     JsonObject worked = referenceCase("worked_case");
     LabyrinthSealFlowCalculator unchoked = calculator(worked, gergFluid(worked), LabyrinthFlowMethod.KEARTON);
@@ -263,17 +282,30 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     }
   }
 
-  /** The calculator works with any NeqSim equation of state, not only GERG-2008. */
+  /** SRK and PR fluids give results close to the GERG-2008 workbook for a light gas at low pressure. */
   @Test
-  void cubicEquationOfStateGivesCloseResult() {
+  void cubicEquationsOfStateGiveCloseResult() {
     JsonObject worked = referenceCase("worked_case");
-    for (LabyrinthFlowMethod method : CLOSED_FORM) {
-      LabyrinthSealFlowCalculator calc =
-          calculator(worked, fillComposition(worked, new SystemSrkEos(288.15, 1.01325)), method);
-      calc.calculate();
-      double expected = excelFlow(worked, method);
-      assertEquals(expected, calc.getMassFlowRate("kg/sec"), 0.03 * expected, method + " SRK vs workbook");
+    SystemInterface[] fluids = {fillComposition(worked, new SystemSrkEos(288.15, 1.01325)),
+        fillComposition(worked, new SystemPrEos(288.15, 1.01325))};
+    for (SystemInterface fluid : fluids) {
+      LabyrinthSealFlowCalculator calc = calculator(worked, fluid, LabyrinthFlowMethod.KEARTON);
+      Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
+      for (LabyrinthFlowMethod method : CLOSED_FORM) {
+        double expected = excelFlow(worked, method);
+        assertEquals(expected, all.get(method), 5.0e-3 * expected, method + " " + fluid.getModelName());
+      }
     }
+  }
+
+  /** Water that condenses at the inlet is detected; the workbook treats such gas as single phase. */
+  @Test
+  void condensedWaterAtInletIsDetected() {
+    JsonObject cold = referenceCase("cold_20C");
+    LabyrinthSealFlowCalculator calc = calculator(cold, gergFluid(cold), LabyrinthFlowMethod.KEARTON);
+    calc.calculate();
+    assertTrue(calc.hasLiquidAtInlet());
+    assertTrue(calc.getMassFlowRate("kg/sec") > 0.0);
   }
 
   /** calculateAllMethods returns the same values as running each method separately. */
@@ -284,7 +316,7 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     Map<LabyrinthFlowMethod, Double> all = calc.calculateAllMethods();
     for (LabyrinthFlowMethod method : CLOSED_FORM) {
       assertNotNull(all.get(method), method.name());
-      assertEquals(excelFlow(worked, method), all.get(method), 1.0e-6 * excelFlow(worked, method));
+      assertEquals(excelFlow(worked, method), all.get(method), WORKBOOK_TOLERANCE * excelFlow(worked, method));
     }
   }
 
@@ -313,10 +345,9 @@ public class LabyrinthSealFlowCalculatorTest extends neqsim.NeqSimTest {
     missing.setInletTemperature(86.12, "C");
     assertThrows(IllegalStateException.class, missing::calculate);
 
-    assertThrows(IllegalArgumentException.class,
-        () -> new LabyrinthSealFlowCalculator(null, geometry(worked)));
-    assertThrows(IllegalStateException.class, () -> new LabyrinthSealFlowCalculator(gergFluid(worked),
-        geometry(worked)).getMassFlowRate("kg/sec"));
+    assertThrows(IllegalArgumentException.class, () -> new LabyrinthSealFlowCalculator(null, geometry(worked)));
+    assertThrows(IllegalStateException.class,
+        () -> new LabyrinthSealFlowCalculator(gergFluid(worked), geometry(worked)).getMassFlowRate("kg/sec"));
   }
 
   /** The JSON summary reports method, flow and choke status. */
