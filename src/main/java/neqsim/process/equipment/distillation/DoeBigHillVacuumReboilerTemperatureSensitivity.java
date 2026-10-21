@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.UUID;
 import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationCase.OperatingInputs;
 import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationResult.ProductResult;
+import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Immutable reboiler-temperature sensitivity summary for the DOE Big Hill vacuum screening case.
@@ -91,6 +92,57 @@ public final class DoeBigHillVacuumReboilerTemperatureSensitivity {
         evaluatedPoints[i] = new PointResult(temperatures[i], pointInputs, result);
       } catch (RuntimeException exception) {
         throw new IllegalStateException("Vacuum reboiler-temperature sensitivity failed at point " + i
+            + " with reboiler temperature " + temperatures[i] + " K", exception);
+      }
+    }
+    return new DoeBigHillVacuumReboilerTemperatureSensitivity(evaluatedPoints);
+  }
+
+  /**
+   * Run a reboiler-temperature sensitivity from one solved DOE Big Hill atmospheric-bottoms stream.
+   *
+   * <p>
+   * The source stream is not mutated. Each point delegates to
+   * {@link DoeBigHillVacuumFractionationCase#createFromAtmosphericBottoms(String, StreamInterface, OperatingInputs)},
+   * which clones the complete modeled composition before applying the point's explicit vacuum-feed state. The result
+   * is numerical screening evidence and does not represent a measured or calibrated plant operating envelope.
+   * </p>
+   *
+   * @param caseNamePrefix non-blank prefix used for independently constructed point names
+   * @param atmosphericBottoms solved DOE Big Hill atmospheric liquid-bottoms stream
+   * @param baselineInputs explicit source-unreported baseline vacuum-column inputs
+   * @param reboilerTemperaturesKelvin finite positive strictly increasing temperatures in kelvin
+   * @return immutable sensitivity summary
+   * @throws NullPointerException if the source, baseline inputs, or temperatures are null
+   * @throws IllegalArgumentException if the name, source identity, source flow, or temperatures are invalid
+   * @throws IllegalStateException if a point does not solve or pass the qualified result gates
+   */
+  public static DoeBigHillVacuumReboilerTemperatureSensitivity run(String caseNamePrefix,
+      StreamInterface atmosphericBottoms, OperatingInputs baselineInputs, double[] reboilerTemperaturesKelvin) {
+    if (caseNamePrefix == null || caseNamePrefix.trim().isEmpty()) {
+      throw new IllegalArgumentException("Case-name prefix must be non-blank");
+    }
+    Objects.requireNonNull(atmosphericBottoms, "atmosphericBottoms");
+    Objects.requireNonNull(baselineInputs, "baselineInputs");
+    Objects.requireNonNull(reboilerTemperaturesKelvin, "reboilerTemperaturesKelvin");
+    if (reboilerTemperaturesKelvin.length < 2) {
+      throw new IllegalArgumentException("Reboiler-temperature sensitivity requires at least two points");
+    }
+
+    double[] temperatures = reboilerTemperaturesKelvin.clone();
+    validateTemperatures(temperatures, baselineInputs.getFeedTemperatureKelvin());
+    PointResult[] evaluatedPoints = new PointResult[temperatures.length];
+    for (int i = 0; i < temperatures.length; i++) {
+      OperatingInputs pointInputs = temperatureInputs(baselineInputs, temperatures[i]);
+      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
+          .createFromAtmosphericBottoms(caseNamePrefix + " reboiler-temperature point " + (i + 1),
+              atmosphericBottoms, pointInputs);
+      try {
+        model.getColumn().run(UUID.randomUUID());
+        DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
+        evaluatedPoints[i] = new PointResult(temperatures[i], pointInputs, result);
+      } catch (RuntimeException exception) {
+        throw new IllegalStateException("Connected vacuum reboiler-temperature sensitivity failed at point " + i
             + " with reboiler temperature " + temperatures[i] + " K", exception);
       }
     }
