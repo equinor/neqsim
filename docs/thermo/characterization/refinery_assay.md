@@ -924,34 +924,43 @@ The regression suite for this API currently verifies:
 
 These tests establish software/bookkeeping correctness, qualify ideal-additive-volume SG/API screening over the frozen COA matrix (published crude SG 0.765-0.847; maximum observed errors 0.006 SG and 1.5 degrees API), qualify per-cut Watson factors over the frozen DOE matrix (375-1050 degF; maximum observed error 0.0122), qualify the DOE residue's Watson-derived representative temperature, qualify the DOE C2-C4 standard-component split, qualify the DOE C5-175 degF PIANO aggregate molar mass, and qualify linear assay sulfur and nitrogen bookkeeping over one complete DOE crude slate. They do **not** qualify temperature correction, contraction, generic molecular-weight or critical-property correlations, sulfur/nitrogen species or reactions, or atmospheric/vacuum fractionation; those remain separate campaign gates in issue #3305.
 
-## Refinery capability inventory after this increment
+## Refinery capability inventory on current master
 
-| Capability | Current NeqSim foundation | Campaign status |
+This inventory reconciles the original assay-foundation roadmap with the merged public APIs,
+reference cases, tests, and user guides. A capability is listed as *available* only for the
+documented contract and evidence boundary; availability does not turn a screening receipt into a
+yield predictor, plant calibration, design approval, or standards-compliance claim.
+
+| Capability | Current NeqSim foundation | Campaign status and evidence boundary |
 | --- | --- | --- |
-| Pre-binned crude/petroleum assay cuts | `OilAssayCharacterisation` | Foundation hardened in #3305 |
-| Mass- and volume-basis cut yields | Unit/basis-explicit assay API | Foundation hardened in #3305 |
-| Pre-binned cumulative TBP cut boundaries | `addTBPCutBoundariesCelsius/Kelvin` | Initial implementation in #3305 |
-| Open-ended terminal boiling limits | Unit-explicit one-sided `AssayCut` boundaries | DOE-qualified for metadata and fail-closed preparation |
-| Watson-derived terminal representative point | `withWatsonCharacterizationFactor(...)` | DOE-qualified for the Big Hill 1050 degF+ residue |
-| Composition-resolved standard light ends | `AssayCut.withStandardComponent(...)` | DOE-qualified for the Big Hill C2-C4 composition and mass/mole bookkeeping |
-| PIANO family/carbon-number molar mass | `calculatePianoMolarMassKgPerMol(...)` | DOE-qualified for the Big Hill C5-175 degF aggregate and explicit-molar-mass bookkeeping |
-| Per-cut UOP/Watson characterization factor | `AssayCut.getWatsonCharacterizationFactor()` | DOE-qualified for assay screening over 375-1050 degF |
-| Assay-carried total sulfur | `getBulkSulfurMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
-| Assay-carried total nitrogen | `getBulkNitrogenMassFraction/Percent()` | DOE-qualified for linear bookkeeping over one complete crude slate |
-| Complete public reference slate | `DoeBigHillSweetAssay` | Reproducible modeled 2021 DOE composition; property and process validation remain separate gates |
-| TBP pseudo-component properties | Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing and related models | Existing; needs refinery-range independent validation |
-| Plus-fraction splitting/lumping | `Characterise`, plus-fraction and lumping models | Existing; refinery assay integration still to be qualified |
-| Oil density/API and volatility standards | Oil-quality standards package, RVP/TVP workflows | Whole-assay SG/API, per-cut Watson and linear sulfur/nitrogen bookkeeping qualified over frozen public matrices; broader stream properties remain open |
-| Rigorous distillation columns | `DistillationColumn`, `SimpleTray`, Naphtali-Sandholm solver, side-draw support | Existing foundation; broad-boiling atmospheric/vacuum refinery benchmark remains open |
-| Crude preheat/fired heater | General heater/heat-exchanger process equipment | Refinery workflow and fuel/emission integration remain open |
-| Crude-assay and TBP blend screening | `RefineryAssayBlend`, `RefineryViscosityBlend`, `RefineryLinearBlendOptimizer`, `TbpCutTable.blendByMass` | Ideal-volume SG/API, mass-linear sulfur/nitrogen, Refutas viscosity, linear cost optimization, receipts, and complete-table TBP blending are available within their documented screening boundaries |
-| ASTM D86/D1160 to TBP conversion | No qualified refinery conversion API in this increment | Open; requires public correlation provenance and validation |
-| Atmospheric crude-unit benchmark | No campaign benchmark yet | Next high-value validation milestone |
-| Vacuum tower benchmark | No campaign benchmark yet | Open after atmospheric case |
-| Hydrotreating/reforming/FCC/hydrocracking | No campaign-qualified refinery conversion models | Deliberately later phase |
+| Pre-binned crude/petroleum assay cuts | `OilAssayCharacterisation` | Unit- and basis-explicit ingestion, export, closure, metadata, and public DOE/OEDI assay regressions are available. |
+| Cumulative TBP boundaries and table transformation | `AssayCut`, `TbpCutTable`, `addTBPCutBoundariesCelsius/Kelvin` | Split, adjacent re-lump, recovery/cut-point queries, conservative target-grid resampling, ideal-volume mass recovery, blend, and recharacterization are available with fail-closed bounds. |
+| Standard light ends, terminal cuts, and PIANO aggregation | `AssayCut.withStandardComponent(...)`, Watson terminal characterization, and `calculatePianoMolarMassKgPerMol(...)` | DOE Big Hill C2-C4, C5-175 degF, and 1050 degF+ evidence is regression protected; generic missing-property inference is not claimed. |
+| TBP pseudo-component properties and heavy-end handling | `Characterise`, selectable TBP models, plus-fraction splitting/lumping, and `PseudoComponentCombiner` | Existing petroleum-characterization paths are composable with assay tables; broader cross-EOS and refinery-range independent property validation remains open. |
+| Bulk and cut refinery properties | SG/API, Watson factor, sulfur, nitrogen, viscosity, boiling-range density/API, and temperature-moment receipts | Public bookkeeping and bounded-property regressions exist. Temperature correction, contraction, species-level contaminants, flash/pour/cloud-point correlation coverage, and uncertainty remain separate gates. |
+| ASTM D86 and TBP conversion | `Standard_ASTM_D86` with molar, recovered-liquid-volume, and empirical Riazi-Daubert/API conversion support | Atmospheric D86 calculation and documented conversion are available. A campaign-qualified ASTM D1160 workflow and D2887 implementation are not claimed. |
+| Crude and product blending | `RefineryAssayBlend`, `RefineryViscosityBlend`, `RefineryBinaryBlendEnvelope`, `RefineryLinearBlendOptimizer`, `RefineryBlendBatch`, and complete `TbpCutTable` blending | Ideal-volume SG/API, mass-linear sulfur/nitrogen, Refutas viscosity, bounded envelopes, linear cost/quality optimization, batch receipts, and table blending are available within documented assumptions. |
+| Atmospheric fractionation | DOE Big Hill qualification and `SarirAtmosphericFractionationCase` | Rigorous-column conservation, boiling-order, repeatability, and public Sarir plant/simulation comparison evidence are available. The Sarir case remains explicitly input-bounded and is not a plant calibration. |
+| Vacuum fractionation | `DoeBigHillVacuumFractionationCase` | A reproducible sub-atmospheric, caller-configured DOE Big Hill handoff with conservation/convergence checks is available. The public assay does not provide a matched operating case, so independent plant-yield validation remains open. |
+| Side draws, pump-around, and side-stripper screens | `DistillationColumn`, `SarirAtmosphericPumparoundScreen`, and `SarirAtmosphericSideStripperContactScreen` | Generic side-draw/pump-around support and bounded Sarir screens are available. The contact screen is not a qualified multistage side stripper. |
+| Crude heating and fired-heater integration | `SarirAtmosphericCrudeHeatingCase`, `Heater`, and `FiredHeater` | A source-bounded preheat/furnace handoff with caller-owned duty, efficiency, fuel, and emissions assumptions is available; exchanger-network design and plant calibration are not claimed. |
+| Hydrotreating | `RefineryHydrotreating*Balance` and `RefineryHydrotreating*Receipt` families | Sulfur/nitrogen, hydrogen, recycle/purge, utility, emissions, heat-recovery, operating, intensity, and screening-economics receipts are available. They are stoichiometric/bookkeeping screens, not kinetic reactor or separator models. |
+| Catalytic reforming | `RefineryCatalyticReformingStoichiometricBalance`, `RefineryCatalyticReformingFeedBalance`, and `RefineryCatalyticReformingHydrogenRecoveryBalance` | Single- and multi-cut stoichiometric reforming plus explicit hydrogen recovery are available; octane, kinetics, catalyst, separator, and compressor predictions are excluded. |
+| Hydrocracking | `RefineryHydrocrackingYieldBalance` and `RefineryHydrocrackingHydrogenSupplyBalance` | Caller-owned conversion/selectivity, hydrogen demand, recovered-reformer-hydrogen offset, import/surplus, and closure receipts are available; kinetics, product properties, recycle, and fractionation are excluded. |
+| Fluid catalytic cracking | `RefineryFccYieldBalance` and `RefineryFccCokeRegeneratorBalance` | Caller-owned five-lump yield plus corrected coke-carbon, air, CO/CO2, oxygen, and dry-flue-gas closure are available; catalyst/riser kinetics, heat balance, wet flue gas, and emissions compliance are excluded. |
+| Delayed coking | `RefineryDelayedCokingYieldBalance` and `RefineryDelayedCokingUtilityBalance` | Caller-owned five-lump yield plus feed-basis duty, fuel, steam, mass, and useful-energy closure are available; kinetics, drum cycle, coke quality, fractionator, fired-equipment design, and safe operability are excluded. |
+| Energy, emissions, and economics | Fired-heater, hydrogen-utility/emissions, heat-recovery, operating-cost, and screening-economics receipts | Reusable bounded receipts exist, especially for hydrotreating and crude heating. A single facility-wide refinery balance and economic optimization benchmark remains open. |
+| Python accessibility | Public Java APIs through the standard NeqSim Python/JPype bridge | The merged classes are callable from Python through the Java API. Dedicated high-level Python wrappers and an executed end-to-end refinery notebook remain open. |
 
 ## Next campaign step
 
-The next dependency-ready process increment should advance the bounded DOE atmospheric integration
-case to this complete modeled slate and compare product yields and boiling ranges against independent
-public evidence before vacuum fractionation.
+The next dependency-ready implementation should compose the **DOE Big Hill** assay,
+atmospheric-fractionation qualification, atmospheric-bottoms handoff, and vacuum-fractionation case
+into one regression-protected reference workflow. It should preserve one assay identity from crude
+feed through products, report component/mass and energy closure, expose product boiling ranges and
+utility/emissions receipts, and keep every operating input explicit.
+
+Do not mix Sarir operating or plant-yield evidence into the DOE case, invent a matched vacuum-plant
+benchmark that the public source does not provide, or duplicate the existing column, assay, heater,
+or balance APIs. ASTM D1160 qualification, broader heavy-fluid property validation, nonlinear blend
+quality, conversion kinetics, and plant calibration remain separate evidence-gated increments.
