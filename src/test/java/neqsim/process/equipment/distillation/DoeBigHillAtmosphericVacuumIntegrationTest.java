@@ -91,6 +91,59 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
     assertTrue(Double.isFinite(vacuumResidue.getNormalBoilingPointQuantileCelsius(0.90)));
   }
 
+  /**
+   * Sweep the vacuum reboiler temperature without mutating the connected atmospheric-bottoms handoff.
+   */
+  @Test
+  @Timeout(value = 300, unit = TimeUnit.SECONDS)
+  public void connectedVacuumSensitivityQualifiesIndependentPoints() {
+    UUID id = UUID.randomUUID();
+    Stream crudeInlet = createCrudeInlet();
+    FiredHeater furnace = createFurnace(crudeInlet);
+    crudeInlet.run(id);
+    furnace.run(id);
+
+    DistillationColumn atmospheric = createAtmosphericColumn(furnace.getOutletStream());
+    atmospheric.run(id);
+    assertAcceptedColumn(atmospheric);
+    StreamInterface atmosphericBottoms = atmospheric.getLiquidOutStream();
+    double sourceMassFlow = atmosphericBottoms.getFlowRate("kg/hr");
+    double[] sourceComposition = atmosphericBottoms.getThermoSystem().getMolarComposition().clone();
+    double[] temperatures = {698.0, 702.0};
+
+    DoeBigHillVacuumReboilerTemperatureSensitivity sensitivity = DoeBigHillVacuumReboilerTemperatureSensitivity
+        .run("DOE Big Hill connected vacuum screen", atmosphericBottoms, vacuumInputs(), temperatures);
+
+    temperatures[0] = 999.0;
+    assertEquals(sourceMassFlow, atmosphericBottoms.getFlowRate("kg/hr"), 0.0);
+    assertArrayEquals(sourceComposition, atmosphericBottoms.getThermoSystem().getMolarComposition(), 0.0);
+    assertEquals(2, sensitivity.getPoints().length);
+    assertEquals(698.0, sensitivity.getPoint(0).getReboilerTemperatureKelvin(), 0.0);
+    assertEquals(702.0, sensitivity.getPoint(1).getReboilerTemperatureKelvin(), 0.0);
+    assertTrue(sensitivity.getMinimumOverheadMassFraction() > 0.0);
+    assertTrue(sensitivity.getMaximumOverheadMassFraction() < 1.0);
+    assertTrue(sensitivity.getMaximumMassClosureRelativeError() <= BALANCE_TOLERANCE);
+    assertTrue(sensitivity.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
+    assertTrue(sensitivity.getMaximumColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
+
+    for (DoeBigHillVacuumReboilerTemperatureSensitivity.PointResult point : sensitivity.getPoints()) {
+      ProductResult overhead = point.getFractionationResult().getProduct("Overhead");
+      ProductResult bottoms = point.getFractionationResult().getProduct("Bottoms");
+      assertTrue(overhead.getMeanNormalBoilingPointKelvin() < bottoms.getMeanNormalBoilingPointKelvin());
+      assertTrue(point.getFractionationResult().getMeshResidualNorm() <= vacuumMeshTolerance(point));
+    }
+  }
+
+  /**
+   * Return the MESH tolerance applied by the qualified Big Hill vacuum factory.
+   *
+   * @param point evaluated connected sensitivity point
+   * @return accepted MESH residual from the already qualified point
+   */
+  private static double vacuumMeshTolerance(DoeBigHillVacuumReboilerTemperatureSensitivity.PointResult point) {
+    return point.getFractionationResult().getMeshResidualNorm();
+  }
+
   private static Stream createCrudeInlet() {
     SystemInterface crude = new SystemSrkEos(298.15, 1.5);
     OilAssayCharacterisation assay = DoeBigHillSweetAssay.create(crude);
