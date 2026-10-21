@@ -3440,10 +3440,13 @@ public class TwoFluidPipe extends Pipeline {
       if (enableAnnularFilmModel) {
         double[] annularResult = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
             inclination);
-        // A film the gas cannot carry thickens until it bridges the bore (Barnea 1986); annular flow then does
-        // not exist and the section is intermittent.
-        if (annularResult[1] >= ANNULAR_FILM_BRIDGING_HOLDUP) {
-          return intermittentHoldup(vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination);
+        // A film that bridges the bore is intermittent. Approach that limit continuously:
+        // a point switch can cycle the water/oil split and viscosity even at fixed regime.
+        double bridgingShare = Math.max(0.0, Math.min(1.0,
+            (annularResult[1] - (ANNULAR_FILM_BRIDGING_HOLDUP - SLUG_BRIDGING_BAND)) / SLUG_BRIDGING_BAND));
+        if (bridgingShare > 0.0) {
+          double intermittent = intermittentHoldup(vsG, vsL, rhoG, rhoL, muG, muL, sigma, inclination);
+          return (1.0 - bridgingShare) * annularResult[0] + bridgingShare * intermittent;
         }
         return annularResult[0];
       }
