@@ -941,7 +941,7 @@ yield predictor, plant calibration, design approval, or standards-compliance cla
 | ASTM D86 and TBP conversion | `Standard_ASTM_D86` with molar, recovered-liquid-volume, and empirical Riazi-Daubert/API conversion support | Atmospheric D86 calculation and documented conversion are available. A campaign-qualified ASTM D1160 workflow and D2887 implementation are not claimed. |
 | Crude and product blending | `RefineryAssayBlend`, `RefineryViscosityBlend`, `RefineryBinaryBlendEnvelope`, `RefineryLinearBlendOptimizer`, `RefineryBlendBatch`, and complete `TbpCutTable` blending | Ideal-volume SG/API, mass-linear sulfur/nitrogen, Refutas viscosity, bounded envelopes, linear cost/quality optimization, batch receipts, and table blending are available within documented assumptions. |
 | Atmospheric fractionation | DOE Big Hill qualification and `SarirAtmosphericFractionationCase` | Rigorous-column conservation, boiling-order, repeatability, and public Sarir plant/simulation comparison evidence are available. The Sarir case remains explicitly input-bounded and is not a plant calibration. |
-| Vacuum fractionation | `DoeBigHillVacuumFractionationCase` | A reproducible sub-atmospheric, caller-configured DOE Big Hill handoff with conservation/convergence checks is available. The public assay does not provide a matched operating case, so independent plant-yield validation remains open. |
+| Vacuum fractionation | `DoeBigHillVacuumFractionationCase` and `DoeBigHillVacuumReboilerTemperatureSensitivity` | A reproducible sub-atmospheric, caller-configured DOE Big Hill handoff with conservation/convergence checks and a composition-preserving connected temperature screen is available. The public assay does not provide a matched operating case, so independent plant-yield validation remains open. |
 | Side draws, pump-around, and side-stripper screens | `DistillationColumn`, `SarirAtmosphericPumparoundScreen`, and `SarirAtmosphericSideStripperContactScreen` | Generic side-draw/pump-around support and bounded Sarir screens are available. The contact screen is not a qualified multistage side stripper. |
 | Crude heating and fired-heater integration | `SarirAtmosphericCrudeHeatingCase`, `Heater`, and `FiredHeater` | A source-bounded preheat/furnace handoff with caller-owned duty, efficiency, fuel, and emissions assumptions is available; exchanger-network design and plant calibration are not claimed. |
 | Hydrotreating | `RefineryHydrotreating*Balance` and `RefineryHydrotreating*Receipt` families | Sulfur/nitrogen, hydrogen, recycle/purge, utility, emissions, heat-recovery, operating, intensity, and screening-economics receipts are available. They are stoichiometric/bookkeeping screens, not kinetic reactor or separator models. |
@@ -960,9 +960,10 @@ vacuum-fractionation case. The regression preserves one assay identity from crud
 products, checks component/mass and column energy closure, exposes product boiling ranges, and
 recomputes utility/emissions identities from caller-owned assumptions.
 
-The next dependency-ready validation should execute this same public API through Python/JPype and
-publish a bounded atmospheric/vacuum operating-sensitivity receipt without promoting the numerical
-settings to plant data. Do not mix Sarir operating or plant-yield evidence into the DOE case, invent a
+The connected sensitivity overload is the Java prerequisite for the next dependency-ready validation:
+execute the same public API through Python/JPype and publish a rendered atmospheric/vacuum
+operating-sensitivity receipt without promoting the numerical settings to plant data. Do not publish
+an unexecuted notebook, mix Sarir operating or plant-yield evidence into the DOE case, invent a
 matched vacuum-plant benchmark that the public source does not provide, or duplicate the existing
 column, assay, heater, or balance APIs. ASTM D1160 qualification, broader heavy-fluid property
 validation, nonlinear blend quality, conversion kinetics, and plant calibration remain separate
