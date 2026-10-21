@@ -4042,9 +4042,10 @@ public class TPflash extends Flash {
       return Double.NaN;
     }
     double fugacityResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
-    double[] repairedBetas = fixedCompositionTwoPhaseFractions(system);
-    boolean requiresAmountRepair = maximumComponentMaterialBalanceResidual(
-        system) > NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD && repairedBetas != null
+    double[] repairedBetas = maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD
+        ? fixedCompositionTwoPhaseFractions(system)
+        : null;
+    boolean requiresAmountRepair = repairedBetas != null
         && isBoundedNeutralTwoPhaseAmountCorrection(system, repairedBetas);
     if (!requiresAmountRepair && Double.isFinite(fugacityResidual)
         && fugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
@@ -4080,7 +4081,8 @@ public class TPflash extends Flash {
    * <p>
    * Each trial retains the accepted compositions, fractions, and active phase set. Requiring component fugacity
    * equality prevents a low single-phase root from influencing the homogeneous-reference comparison unless the pair is
-   * also a valid two-phase equilibrium state.
+   * also a valid two-phase equilibrium state. Successfully initialized roots are reused only within this comparison;
+   * failed trials remain retryable and no root state is retained between flashes.
    * </p>
    *
    * @param candidate conservative two-phase amount candidate
@@ -4088,19 +4090,20 @@ public class TPflash extends Flash {
    */
   private double minimumQualifiedFixedCompositionRootGibbsEnergy(SystemInterface candidate) {
     double minimumGibbs = Double.NaN;
-    for (PhaseType firstRoot : CUBIC_ROOT_PHASE_TYPES) {
-      for (PhaseType secondRoot : CUBIC_ROOT_PHASE_TYPES) {
+    PhaseInterface[][] phaseRoots = new PhaseInterface[2][CUBIC_ROOT_PHASE_TYPES.length];
+    for (int firstRootIndex = 0; firstRootIndex < CUBIC_ROOT_PHASE_TYPES.length; firstRootIndex++) {
+      PhaseType firstRoot = CUBIC_ROOT_PHASE_TYPES[firstRootIndex];
+      for (int secondRootIndex = 0; secondRootIndex < CUBIC_ROOT_PHASE_TYPES.length; secondRootIndex++) {
+        PhaseType secondRoot = CUBIC_ROOT_PHASE_TYPES[secondRootIndex];
         try {
-          PhaseInterface firstPhase = candidate.getPhase(0).clone();
-          PhaseInterface secondPhase = candidate.getPhase(1).clone();
-          firstPhase.init(candidate.getTotalNumberOfMoles(), firstPhase.getNumberOfComponents(), 1, firstRoot,
-              candidate.getBeta(0));
-          secondPhase.init(candidate.getTotalNumberOfMoles(), secondPhase.getNumberOfComponents(), 1, secondRoot,
-              candidate.getBeta(1));
-          for (int componentIndex = 0; componentIndex < firstPhase.getNumberOfComponents(); componentIndex++) {
-            firstPhase.getComponent(componentIndex).fugcoef(firstPhase);
-            secondPhase.getComponent(componentIndex).fugcoef(secondPhase);
+          if (phaseRoots[0][firstRootIndex] == null) {
+            phaseRoots[0][firstRootIndex] = initializedFixedCompositionPhaseRoot(candidate, 0, firstRoot);
           }
+          if (phaseRoots[1][secondRootIndex] == null) {
+            phaseRoots[1][secondRootIndex] = initializedFixedCompositionPhaseRoot(candidate, 1, secondRoot);
+          }
+          PhaseInterface firstPhase = phaseRoots[0][firstRootIndex];
+          PhaseInterface secondPhase = phaseRoots[1][secondRootIndex];
           if (maximumLogFugacityResidual(firstPhase, secondPhase) >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
             continue;
           }
@@ -4115,6 +4118,25 @@ public class TPflash extends Flash {
       }
     }
     return minimumGibbs;
+  }
+
+  /**
+   * Initializes one independent fixed-composition root for a local two-phase comparison.
+   *
+   * @param candidate conservative two-phase amount candidate
+   * @param phaseIndex active phase index to clone
+   * @param root cubic root to evaluate
+   * @return initialized phase clone with refreshed fugacity coefficients
+   */
+  private PhaseInterface initializedFixedCompositionPhaseRoot(SystemInterface candidate, int phaseIndex,
+      PhaseType root) {
+    PhaseInterface phase = candidate.getPhase(phaseIndex).clone();
+    phase.init(candidate.getTotalNumberOfMoles(), phase.getNumberOfComponents(), 1, root,
+        candidate.getBeta(phaseIndex));
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      phase.getComponent(componentIndex).fugcoef(phase);
+    }
+    return phase;
   }
 
   /**
