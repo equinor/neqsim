@@ -189,6 +189,11 @@ pause and fill the missing source material before finalizing.
 - **Consistent within report** — pick one set (SI, °C/bara) and don't switch
 - **Standard conditions** — always disclaim Sm³ basis (15 °C / 1.01325 bara, or 20 °C, or 0 °C — they differ ~5%)
 - **Stream tables** — use standardized columns: name, T [°C], P [bara], ṁ [kg/h], xi [mol%]
+- **Tables: one value per cell.** Never write `"12.3 / 4.5"` or `"bias / MAE"` in a cell; give each quantity its own
+  column (or row) with the unit in the header and the same number of decimals down a column. Keep a table to at most
+  nine columns and split wide ones by topic (for example one table for pressure and one for temperature per well).
+  For results over several days or cases put the days in the columns and the quantities in the rows, mark the
+  calibration day `(cal)`, and use a separate table per quantity group. `validate_task_results.py` warns on both.
 
 ## Principle 4 — Citations
 
@@ -653,3 +658,4 @@ curve, wax appearance).
 - [`neqsim-standards-lookup`](../neqsim-standards-lookup/SKILL.md) — citation lookup
 - [`neqsim-process-safety`](../neqsim-process-safety/SKILL.md) — risk-register schema
 - [`neqsim-trapped-liquid-fire-rupture`](../neqsim-trapped-liquid-fire-rupture/SKILL.md) — evidence matrix, rupture/PFP results, and source-term handoff reporting
+- [process-study-report](../process-study-report/SKILL.md) — complete process-study report package for a solved NeqSim model: engineering basis, all-stream tables per case, balances, BFD/PFD sheets, standards register and a fail-closed validation report (use it when the deliverable is a stream-table/PFD study rather than a narrative task report)

@@ -146,6 +146,8 @@ before building and select the relevant
    Pass the reusable model and validation evidence to specialists. A thermodynamic
    operating point alone cannot establish installed capacity or a safe operating limit.
 
+When the user asks for a process study report, design basis, stream tables or PFD/BFD drawings of an accepted model, hand the solved model to `@process-study-report` (command `neqsim process-report`; skill `process-study-report`: `psr_extract` -> balances -> diagrams -> Word report -> validation).
+
 ## Output Format
 - **Java**: runnable `main()` method, Java 8 compatible (NO `var`, `List.of()`, `String.repeat()`, or any Java 9+ syntax). All types explicitly declared.
 - **Python (Jupyter or runner scripts inside this repo)**: use `devtools/neqsim_dev_setup.py`, `neqsim_init(...)`, and `ns.*` / `ns.JClass(...)` so the simulation uses workspace Java classes from `target/classes`.

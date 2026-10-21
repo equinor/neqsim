@@ -1,7 +1,6 @@
 ---
 name: neqsim-thermodynamic-initialization
 description: "Select and audit NeqSim thermodynamic initialization levels for correctness and performance. USE WHEN: implementing or reviewing flashes, phase stability, EOS root selection, process-equipment thermodynamics, property access, or performance changes involving init(...) or initProperties()."
-last_verified: "2026-09-12"
 ---
 
 # NeqSim thermodynamic initialization
@@ -27,6 +26,16 @@ For fixed-T/P cubic-root selection and fugacity/Gibbs equilibrium checks, prefer
 When a caller consumes temperature derivatives after `TPflash`, initialize them on
 the resulting phase state with `init(2)`. Initializing before the flash is insufficient
 when it replaces phases; the legacy cricondenbar iteration is a regression example.
+
+For correlations that consume only mass density, initialize each requested phase with
+`initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY)` after the flash. Refresh
+finite caches as well as zero caches, preserve the configured density model, and reject
+invalid outputs instead of substituting an EOS estimate. Keep this separate from full
+transport initialization. When cloning fluids, preserve interfacial model selections
+and parameters while binding independent models to the clone; discard copied GT
+profiles until recalculation. See
+[the interfacial-properties guide](../../../docs/physical_properties/interfacial_properties.md)
+and `SurfaceTensionStateLifecycleTest` for regression cases.
 
 After phase removal, verify component inventory as well as normalized compositions:
 `sum(beta[p] * x[p][i])` must reconstruct the feed. Do not repair a failed endpoint

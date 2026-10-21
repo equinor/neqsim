@@ -286,6 +286,7 @@ neqsim doctor            # check your environment is healthy (including a built 
 neqsim doctor --skip-jar # initial CLI/agent setup; explicitly omit only the JAR check
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
+neqsim process-report MODEL   # process-study report (stream tables, BFD/PFD, balances, validation) from a Python/JSON/.neqsim model; see docs/development/PROCESS_STUDY_REPORT.md
 neqsim file-issue TASK   # offer to file a recorded NeqSim gap as an issue (and PR)
 neqsim new-skill NAME    # scaffold a new AI skill
 neqsim skill CMD         # manage community/private skills (list/search/install/export/doctor)

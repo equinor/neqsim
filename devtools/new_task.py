@@ -888,6 +888,7 @@ The deliverables are a **Word report** (`.docx`) and optionally an **HTML report
 | `@solve-task` | **Full 3-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
 | `@thermo-fluid` | Fluid setup, EOS, flash, properties | "Density of CO2-methane mix at 200 bar" |
 | `@solve-process` | Complete simulation -> notebook | "TEG dehydration for 50 MMSCFD" |
+| `@process-study-report` | Process-study report (stream tables, PFD/BFD, balances) from a model | "Report with PFDs for model.py, cases A and B" |
 | `@pvt-simulation` | PVT lab experiments | "CME test at 100C for this oil" |
 | `@gas-quality` | Gas standards (ISO, GPA) | "Wobbe index per ISO 6976" |
 | `@mechanical-design` | Wall thickness, sizing | "20-inch pipe per DNV-OS-F101" |
@@ -1075,6 +1076,7 @@ Create a Jupyter notebook in step2_analysis/ that:
 |-----------|-------|----------------|
 | Fluid properties | `@thermo-fluid` | "Create a CPA fluid for gas with 5% MEG" |
 | Process simulation | `@solve-process` | "3-stage compression from 5 to 150 bara" |
+| Process-study report | `@process-study-report` | "Stream tables and PFDs for this model, two cases" |
 | PVT study | `@pvt-simulation` | "CME test for reservoir fluid at 100C" |
 | Gas quality | `@gas-quality` | "Wobbe index per ISO 6976 for this gas" |
 | Mechanical design | `@mechanical-design` | "Wall thickness for 20-inch pipe per DNV" |

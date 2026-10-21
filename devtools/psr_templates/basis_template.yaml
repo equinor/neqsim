@@ -1,0 +1,80 @@
+# Engineering basis template for process-study-report (fill BEFORE writing the report).
+# Rules: never invent plant data; write unknown items as data_classification 'unavailable' plus a data_gaps entry
+# that states the effect on conclusions. Every string must be free of placeholders (the validator rejects '[describe ...]',
+# 'TBD', 'TODO', '{{', '<name>' ...). Narrative may quote model numbers only through [[...]] tokens, e.g.
+#   [[stream:S010:mass_kg_h:A]]  [[unit:K-100:power_kw:A|.1f]]  [[fact:power_total_A]]  [[balance:overall:A:mass_rel|.2e]]
+document:
+  title: "[describe the study title]"
+  subtitle: "[describe the facility / scope]"
+  document_number: "[assign the document number]"
+  revision: "A"
+  issue_status: "[e.g. Draft for internal review]"
+  readiness: "SCREENING"            # SCREENING | CONCEPT | ISSUED FOR REVIEW | ISSUED FOR DESIGN | ISSUED FOR INFORMATION | ISSUED FOR USE
+  readiness_note: "not for design or construction"
+  readiness_explanation: "[explain why this readiness level applies]"
+  date: "[YYYY-MM-DD]"
+  company: "[company]"
+  project: "[project]"
+  prepared_by: "not assigned"
+  checked_by: "not assigned"
+  approved_by: "not assigned"
+  revision_history:
+    - {rev: "A", date: "[YYYY-MM-DD]", description: "[first issue]", by: "not assigned"}
+objective: "[one or two sentences: what decision or understanding the study supports]"
+audience: "[who will review/use the report]"
+maturity: "[screening / concept / FEED / detail design / operations support, and what that implies]"
+boundaries:
+  included: ["[units, areas, fluids modelled]"]
+  excluded: ["[what is outside the model]"]
+  unmodelled_systems: ["[plant systems that exist but are not represented, e.g. flare, utilities]"]
+operating_cases:
+  - {id: "A", label: "[short label]", role: "[design | calibration | hold-out | scenario]", description: "[conditions]", data_source: "[where the case inputs come from]"}
+acceptance_criteria:
+  - {id: "AC1", text: "Overall mass balance closes within 0.1 % of feed", source: "study basis", requirement_class: "recommended",
+     check: {metric: "overall_mass_rel", max: 0.001}}        # check is optional: overall_mass_rel | overall_energy_rel | unit_mass_rel
+inspected_sources:
+  - {id: "S1", kind: "model", title: "[model]", version: "[version/commit]", status: "used", used_for: "[purpose]"}
+  # kinds: model | drawing | operating_data | equipment_info | previous_study | standard | datasheet
+model:
+  name: "[model name]"
+  version: "[repository + commit or file version]"
+  simulator: "NeqSim [version]"
+  eos: "[e.g. SRK, PR, CPA]"
+  eos_rationale: "[why this EOS suits the fluids and conditions]"
+  mixing_rule: "[mixing rule and kij source]"
+  fluid_characterization: "[pure components, heavy-end characterisation (TBP/plus fractions), tuning and its reference]"
+  convergence: "[solver, tolerance, recycle handling, run status]"
+conventions:
+  units: "SI-derived: T in degC, P in bara (absolute) unless barg is stated, mass flow kg/h, molar flow kmol/h, enthalpy kJ/kg and kW"
+  pressure: "Absolute pressure (bara) in all tables; gauge (barg) = bara - 1.01325"
+  composition_basis: "Mole fraction unless 'mass fraction' is stated; all components listed"
+  standard_conditions: {t_c: 15.0, p_bara: 1.01325, definition: "Standard volumes are flash volumes at 15 degC and 1.01325 bara; ideal-gas standard volume is also given"}
+  phase_fraction_basis: "Phase fractions are mole fractions (beta); mass fractions are given in the phase table"
+  heat_sign: "Heat added to the process fluid is positive; cooler duties are negative"
+  work_sign: "Shaft work added to the fluid (compressor, pump) is positive"
+  enthalpy_reference: "NeqSim enthalpy reference; only differences are meaningful"
+data_classification:
+  - {item: "[item]", class: "measured", note: "[source]"}     # measured | specified | calculated | estimated | unavailable
+assumptions:
+  - {id: "AS1", text: "[assumption]", effect: "[effect on results]"}
+exclusions: ["[explicit exclusions]"]
+data_gaps:
+  - {id: "G1", item: "[missing information]", effect_on_conclusions: "[how conclusions change or are limited]", mitigation: "[how to close]"}
+known_balance_exceptions: []        # understood unit/area balance failures: [{id: TAG or area name, explanation: "..."}]
+requirement_matrices: []            # [{title, source, items: [{id, text (paraphrase), status: met|partially met|not met|not applicable|not assessed, evidence}]}]
+process_description: {}             # optional narrative per area: {area name: "text"}
+validation:
+  statement: "[how the model was compared with measurements, or why it was not]"
+  rows: []                          # [{name, window, kind, measured, model, unit, error_pct, tolerance_pct, status}]
+sensitivities: []                   # [{id, title, description, source, columns, rows}]
+constraint_tables: []               # [{title, description, source, columns, rows}]
+interpretation: []                  # [{topic, text}]
+principal_findings: []
+conclusions: []
+recommendations: ["[recommendation]"]
+references: ["[reference]"]
+figures: []                         # extra figures: [{path, caption, alt}]
+bfd_blocks: null                    # optional [{name, areas, description}]
+pfd_sheets: null                    # optional [{title, areas}]
+diagram_notes: []
+tolerances: {}                      # override balance tolerances (see psr_balances.DEFAULT_TOLERANCES)

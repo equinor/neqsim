@@ -2081,8 +2081,11 @@ measured on a 73.8 km subsea gas-condensate export line at 200 bara inlet (see
   Always check `isSteadyStateConverged()` on a water-bearing line.
 - The reproducible 3 km, 10-degree uphill gas/oil/water fixture converges on 30 and 60 cells with
   positive oil-over-water slip, closed phase volumes and closed phase mass flow. Refinement changes
-  arrival pressure from 7.469114 bar to 7.429146 bar (0.538%) and mean liquid holdup from 0.274301
-  to 0.271630 (0.983%). This is numerical evidence for the compact synthetic fixture, not
+  arrival pressure from 13.327868 bar to 13.250389 bar (0.585%) and mean liquid holdup from 0.237521
+  to 0.236780 (0.313%). This replay uses the calculated 13.5265 mN/m gas-oil tension instead of
+  an initialization-error fallback of 20 mN/m. The annular film closure approaches intermittent
+  holdup continuously over film holdups 0.16–0.24, reaching the full intermittent closure at
+  the unchanged 0.24 blockage limit. This is numerical evidence for the compact synthetic fixture, not
   experimental qualification or evidence for the unavailable 73.8 km input.
 - **Pressure drop does not always respond to a temperature change.** In an earlier revision, adding
   10 MW of heating raised the arrival temperature 22 K but left the computed pressure drop

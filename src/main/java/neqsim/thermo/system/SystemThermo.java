@@ -1548,10 +1548,6 @@ public abstract class SystemThermo implements SystemInterface {
     clonedSystem.phaseIndex = phaseIndex.clone();
 
     clonedSystem.componentNames = new ArrayList<String>(componentNames);
-    if (interfaceProp != null) {
-      // clonedSystem.interfaceProp = (InterphasePropertiesInterface)
-      // interfaceProp.clone();
-    }
     clonedSystem.characterization = characterization.clone();
     clonedSystem.characterization.setThermoSystem(clonedSystem);
     if (waxCharacterisation != null) {
@@ -1570,6 +1566,11 @@ public abstract class SystemThermo implements SystemInterface {
     clonedSystem.phaseArray = phaseArray.clone();
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       clonedSystem.phaseArray[i] = phaseArray[i].clone();
+    }
+
+    if (interfaceProp != null) {
+      clonedSystem.interfaceProp = interfaceProp.clone();
+      clonedSystem.interfaceProp.init(clonedSystem);
     }
 
     if (chemicalReactionOperations != null) {
