@@ -104,8 +104,8 @@ public final class DoeBigHillVacuumReboilerTemperatureSensitivity {
    * <p>
    * The source stream is not mutated. Each point delegates to
    * {@link DoeBigHillVacuumFractionationCase#createFromAtmosphericBottoms(String, StreamInterface, OperatingInputs)},
-   * which clones the complete modeled composition before applying the point's explicit vacuum-feed state. The result
-   * is numerical screening evidence and does not represent a measured or calibrated plant operating envelope.
+   * which clones the complete modeled composition before applying the point's explicit vacuum-feed state. The result is
+   * numerical screening evidence and does not represent a measured or calibrated plant operating envelope.
    * </p>
    *
    * @param caseNamePrefix non-blank prefix used for independently constructed point names
@@ -134,9 +134,8 @@ public final class DoeBigHillVacuumReboilerTemperatureSensitivity {
     PointResult[] evaluatedPoints = new PointResult[temperatures.length];
     for (int i = 0; i < temperatures.length; i++) {
       OperatingInputs pointInputs = temperatureInputs(baselineInputs, temperatures[i]);
-      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
-          .createFromAtmosphericBottoms(caseNamePrefix + " reboiler-temperature point " + (i + 1),
-              atmosphericBottoms, pointInputs);
+      DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase.createFromAtmosphericBottoms(
+          caseNamePrefix + " reboiler-temperature point " + (i + 1), atmosphericBottoms, pointInputs);
       try {
         model.getColumn().run(UUID.randomUUID());
         DoeBigHillVacuumFractionationResult result = DoeBigHillVacuumFractionationResult.evaluate(model);
