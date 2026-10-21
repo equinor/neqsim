@@ -1,8 +1,10 @@
 package neqsim.process.equipment.distillation;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,7 +12,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.distillation.DoeBigHillVacuumFractionationCase.OperatingInputs;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.characterization.DoeBigHillSweetAssay;
+import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 /** Qualification tests for {@link DoeBigHillVacuumFractionationCase}. */
 public class DoeBigHillVacuumFractionationCaseTest {
@@ -67,6 +73,32 @@ public class DoeBigHillVacuumFractionationCaseTest {
       assertEquals(firstComponent.getComponentName(), secondComponent.getComponentName());
       assertEquals(firstComponent.getz(), secondComponent.getz(), 0.0);
     }
+  }
+
+  @Test
+  public void fullSlateHandoffClonesAndPreservesTheDoeAssayIdentity() {
+    SystemInterface system = new SystemSrkEos(650.0, 1.5);
+    OilAssayCharacterisation assay = DoeBigHillSweetAssay.create(system);
+    assay.apply();
+    system.setMixingRule("classic");
+
+    Stream atmosphericBottoms = new Stream("Modeled Big Hill atmospheric bottoms", system);
+    atmosphericBottoms.setFlowRate(1800.0, "kg/hr");
+    atmosphericBottoms.setTemperature(650.0, "K");
+    atmosphericBottoms.setPressure(1.5, "bara");
+    atmosphericBottoms.run();
+    double[] sourceComposition = atmosphericBottoms.getThermoSystem().getMolarComposition().clone();
+
+    DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
+        .createFromAtmosphericBottoms("Connected Big Hill vacuum screen", atmosphericBottoms, qualifiedInputs());
+
+    assertNotSame(atmosphericBottoms.getThermoSystem(), model.getFeedStream().getThermoSystem());
+    assertEquals(atmosphericBottoms.getThermoSystem().getNumberOfComponents(),
+        model.getFeedStream().getThermoSystem().getNumberOfComponents());
+    assertArrayEquals(sourceComposition, model.getFeedStream().getThermoSystem().getMolarComposition(), 1.0e-12);
+    assertEquals(1800.0, model.getFeedStream().getFlowRate("kg/hr"), 1.0e-9);
+    assertEquals(qualifiedInputs().getFeedTemperatureKelvin(), model.getFeedStream().getTemperature("K"), 1.0e-9);
+    assertEquals(qualifiedInputs().getFeedPressureBara(), model.getFeedStream().getPressure("bara"), 1.0e-12);
   }
 
   @Test

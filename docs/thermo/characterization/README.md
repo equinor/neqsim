@@ -62,6 +62,9 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - complete optimized blend plans with source-level cost closure and retained quality receipts;
 - stoichiometric hydrotreating sulfur/hydrogen screening receipts with explicit H2/S assumptions;
 - single- and multi-cut catalytic-reforming naphthene/paraffin-to-aromatic receipts with explicit hydrogen-recovery allocation;
+- caller-defined hydrocracking conversion/product-lump receipts with reformer-hydrogen supply allocation;
+- caller-defined FCC conversion/product-lump receipts with coke-carbon, dry-air, CO/CO2, and dry-flue-gas closure;
+- caller-defined delayed-coking conversion/product-lump receipts with feed-basis duty, fuel, steam, and closure;
 - stoichiometric hydrotreating nitrogen/hydrogen/ammonia receipts with explicit H2/N assumptions;\n- coupled hydrotreating sulfur/nitrogen receipts solved on one liquid-product mass basis;\n- unit-explicit coupled sulfur/nitrogen throughput receipts in kg/h;\n- coupled sulfur/nitrogen makeup- and outlet-gas receipts with H2, H2S, NH3, and non-H2 closure;
 - coupled sulfur/nitrogen recycle/purge receipts with explicit H2, H2S, NH3, and non-H2 recovery;
 - unit-explicit coupled recycle-throughput receipts in kg/h and kmol/h;
@@ -93,7 +96,7 @@ For crude/petroleum assays, use `OilAssayCharacterisation` rather than manually 
 - preserved finite and one-sided lower/upper boiling boundaries;
 - closure, duplicate-name, monotonicity, and repeated-application guards.
 
-See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), whole-assay density/API evidence in [DOE/OEDI COA bulk density qualification](refinery_oedi_coa_bulk_density_validation), per-cut characterization evidence in [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation), terminal representative-temperature evidence in [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation), composition-resolved light-end evidence in [DOE Big Hill light-end qualification](refinery_big_hill_light_ends_validation), PIANO aggregate molar-mass evidence in [DOE Big Hill C5-175 degF qualification](refinery_big_hill_piano_molar_mass_validation), assay-quality evidence in [DOE Big Hill sulfur qualification](refinery_big_hill_sulfur_validation) and [DOE Big Hill nitrogen qualification](refinery_big_hill_nitrogen_validation), terminal-boundary evidence in [DOE Big Hill terminal-cut qualification](refinery_big_hill_terminal_boundary_validation), and the process-integration gate in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation).
+See [Refinery Assay and TBP Cut Characterization](refinery_assay) for the complete contract and the refinery campaign gap matrix. Independent public-data bookkeeping evidence is tracked in [DOE Big Hill Sweet refinery assay validation](refinery_big_hill_validation), whole-assay density/API evidence in [DOE/OEDI COA bulk density qualification](refinery_oedi_coa_bulk_density_validation), per-cut characterization evidence in [DOE Big Hill Watson-factor qualification](refinery_big_hill_watson_validation), terminal representative-temperature evidence in [DOE Big Hill terminal-Watson qualification](refinery_big_hill_watson_terminal_validation), composition-resolved light-end evidence in [DOE Big Hill light-end qualification](refinery_big_hill_light_ends_validation), PIANO aggregate molar-mass evidence in [DOE Big Hill C5-175 degF qualification](refinery_big_hill_piano_molar_mass_validation), assay-quality evidence in [DOE Big Hill sulfur qualification](refinery_big_hill_sulfur_validation) and [DOE Big Hill nitrogen qualification](refinery_big_hill_nitrogen_validation), terminal-boundary evidence in [DOE Big Hill terminal-cut qualification](refinery_big_hill_terminal_boundary_validation), the atmospheric process-integration gate in [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation), and the connected material/energy boundary in [DOE Big Hill atmospheric-to-vacuum workflow](refinery_big_hill_atmospheric_vacuum_workflow).
 
 The qualified inputs are assembled into one reusable reference composition by
 [DOE Big Hill Sweet complete modeled assay slate](refinery_big_hill_complete_slate).
@@ -193,6 +196,9 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [Refinery Assay and TBP Cut Characterization](refinery_assay)
 - [Hydrotreating sulfur and hydrogen balance](refinery_hydrotreating_sulfur_balance)
 - [Catalytic reforming stoichiometric balance](refinery_catalytic_reforming_stoichiometric_balance)
+- [Hydrocracking yield and hydrogen-supply balance](refinery_hydrocracking_yield_balance)
+- [FCC yield and coke-regenerator screening balance](refinery_fcc_yield_regenerator_balance)
+- [Delayed-coking yield and utility screening balances](refinery_delayed_coking_balance)
 - [Hydrotreating nitrogen and ammonia balance](refinery_hydrotreating_nitrogen_balance)\n- [Coupled hydrotreating sulfur and nitrogen balance](refinery_hydrotreating_sulfur_nitrogen_balance)\n- [Coupled hydrotreating sulfur/nitrogen throughput balance](refinery_hydrotreating_sulfur_nitrogen_throughput_balance)\n- [Coupled sulfur/nitrogen hydrotreating hydrogen supply](refinery_hydrotreating_sulfur_nitrogen_hydrogen_supply_balance)
 - [Coupled sulfur/nitrogen hydrotreating hydrogen recycle and purge](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_balance)
 - [Coupled sulfur/nitrogen recycle-throughput balance](refinery_hydrotreating_sulfur_nitrogen_hydrogen_recycle_throughput_balance)
@@ -226,6 +232,7 @@ A bookkeeping regression does not by itself validate a petroleum-property correl
 - [DOE Big Hill assay nitrogen qualification](refinery_big_hill_nitrogen_validation)
 - [DOE Big Hill terminal-cut boundary qualification](refinery_big_hill_terminal_boundary_validation)
 - [DOE Big Hill atmospheric fractionation qualification](refinery_big_hill_atmospheric_fractionation)
+- [DOE Big Hill atmospheric-to-vacuum workflow](refinery_big_hill_atmospheric_vacuum_workflow)
 - [Al-Diwiniya atmospheric operating reference](refinery_al_diwiniya_atmospheric_reference)
 - [Sarir atmospheric validation reference](refinery_sarir_atmospheric_reference)
 - [DOE/OEDI COA bulk density and API qualification](refinery_oedi_coa_bulk_density_validation)

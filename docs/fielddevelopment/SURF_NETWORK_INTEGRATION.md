@@ -460,10 +460,47 @@ external mapped equipment after definition-only JSON copying as before.
 Old serialized layered wells omitted their zones entirely. They now fail on reading
 with an explicit rebuild-from-inputs diagnostic; non-layered legacy wells retain an
 empty extensible list. This repair does not qualify a liquid injectivity law: the
-current multi-zone path still applies squared-pressure differences to every fluid
+legacy multi-zone path still applies squared-pressure differences to every fluid
 and sets the total in gas-standard MSm3/day, despite its older liquid-law descriptions.
 An explicit law/rate-basis migration remains necessary before water-injectivity
 qualification; do not silently reinterpret existing coefficients or layer-rate getters.
+
+### Explicit liquid injection on the same field topology
+
+`WellFlow.addLiquidInjectionZone` now supplies an opt-in linear **mass** contract:
+zone rate is Jm times positive BHP-minus-reservoir-pressure, with Jm in kg/(s bar),
+pressures in bara and rates in kg/s. It leaves the legacy squared-pressure/standard-gas
+path unchanged. See the [well guide](../process/equipment/wells.md#explicit-liquid-mass-injectivity)
+for unit conversion, the executable example and compatibility boundaries. The existing
+coupler consumes the outlet mass rate directly; no network solver, topology, pipe-model
+selector, reservoir scheduler or optimizer is replaced.
+
+`FieldLiquidInjectionAcceptanceTest` binds two live two-zone wells behind one canonical
+fixed-pressure pump and common header. Pure-water SRK/classic is at 298.15 K; supply
+pressure is 10 bara and pump discharge is 180 bara with efficiency 0.8. Horizontal
+1000/2000 m branches have 0.10 m diameter. Each well has reservoir boundaries at
+100/110 bara, explicit coefficients 0.01/0.005 kg/(s bar), and fracture limits
+200/195 bara. The tests check the analytical mass law at each solved well pressure,
+mass closure below 1e-8 kg/s, allocation, shared `ProcessModel` power, independent
+copy/re-solve, fracture rejection/recovery and rate restoration after a 20 bar
+reservoir-pressure change. Changing one branch from Darcy to Beggs-Brill and back
+retains the graph, well and edge objects and closes the same mass balance. The existing
+B&B/two-fluid comparison suite remains the multiphase-fidelity acceptance owner.
+
+The new well path rejects non-liquid/multiphase states and mixed legacy/mass-rate
+zone definitions. The inlet owns injected composition, and every repeated solve
+revalidates mutable pressure/index/limit inputs. Quasi-steady evaluation is supported;
+the dynamic well path is explicitly rejected rather than falling back to legacy physics.
+Copying preserves the mass-basis selection. Zone rates are unavailable after a rejected solve.
+
+These are synthetic analytical and integration checks, not calibrated water-injectivity,
+pump-map, fracture, temperature/energy, field or transient qualification. The inherited
+shared-reservoir fixture still uses the legacy gas-standard law and extrapolated pump
+map; its published numbers are intentionally unchanged. Replacing that fixture requires
+an independently justified injectivity range and map operating region, not coefficient
+retuning to preserve the old trajectory. Consume #4188/#3154's existing endpoint and
+lifecycle evidence when those engineering inputs are qualified; do not introduce a
+second evidence store or optimizer.
 
 For a well that can be routed to mutually exclusive separator pressure levels, register
 the existing alternative network edges with
@@ -807,8 +844,10 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    for its smooth synthetic trajectory. Its exact accepted pressure, production/injection,
    shared-power and cumulative-throughput samples now map into lifecycle state metrics with
    stable IDs, units and provenance; the persistent guard reconstructs every adjacent-period
-   delta. Schema-v4 diagnostics also retain exact added/removed operating-region events across
-   periods without interpolating discrete topology. Next qualify the maps and injectivity laws
+   delta. Schema-v6 diagnostics also retain exact added/removed operating-region events and complete
+   continuous-boundary receipts across periods without interpolating discrete topology. Each refined
+   feasible/infeasible endpoint now carries the exact governing constraint and signed physical
+   headroom. Next qualify the maps and injectivity laws
    and feed their accepted map-region/driver-limit migrations into these diagnostics without
    creating a second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent

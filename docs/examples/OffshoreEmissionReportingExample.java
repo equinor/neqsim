@@ -11,7 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Example demonstrating offshore platform emission reporting with NeqSim.
+ * Example demonstrating offshore platform emission screening with NeqSim.
  *
  * <p>
  * This example shows how to:
@@ -19,8 +19,14 @@ import org.apache.logging.log4j.Logger;
  * <ul>
  * <li>Calculate emissions from produced water degassing</li>
  * <li>Compare thermodynamic vs conventional methods</li>
- * <li>Generate emission reports for regulatory compliance</li>
+ * <li>Generate screening reports for independent assessment</li>
  * </ul>
+ *
+ * <p>
+ * The produced-water convenience builder uses default database parameters. Optional tuning is unsupported and
+ * salinity is metadata only. This example does not reproduce a field calibration or qualify emission reporting.
+ * See docs/process/equipment/util/produced_water_degassing.md for the supported-model example and its executable test.
+ * </p>
  *
  * <h2>Regulatory Framework</h2>
  * <ul>

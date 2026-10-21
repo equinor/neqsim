@@ -73,6 +73,102 @@ These are software/replay checks, not qualification of injectivity or fracture p
 The legacy multi-zone injection path still uses squared-pressure differences for all
 fluids and assigns total flow in MSm3/day. Copying does not implement a linear liquid
 law, correct its existing rate-getter unit inconsistency, or validate that basis for water.
+Use the explicit opt-in below for a mass-basis linear liquid model; existing definitions
+are not automatically migrated.
+
+### Explicit liquid mass injectivity
+
+`WellFlow.addLiquidInjectionZone` uses an explicitly supplied mass injectivity
+$J_m$ in **kg/(s bar)**:
+
+$$\dot m_i = J_{m,i}\max(p_{bh}-p_{r,i},0).$$
+
+Both pressures are absolute bara. If a calibrated liquid-volume index $J_v$ is
+specified in m3/(day bar), convert it with a declared density at the **same reference
+conditions**: $J_m=\rho_{ref}J_v/86400$. Do not use the gas-standard `MSm3/day`
+conversion for a liquid volume. No density is assumed or fitted by this API. A
+constant coefficient assumes approximately constant viscosity/density and formation
+properties over its calibrated pressure/temperature range; phase screening alone does
+not establish that range. `InflowPerformance` remains the separate stock-tank-liquid
+**production** IPR owner; its nonnegative production drawdown cannot be reused as
+injection acceptance by reversing or silently rescaling its coefficients.
+The field-development `InjectionWellModel` also remains a separate rate-specified
+screen: it derives formation coefficients and required BHP, applies fracture clipping,
+and estimates tubing/pump requirements without composing live process streams. Reusing
+its coefficients here requires an explicit units/reference-condition audit; it is not
+a substitute for this pressure-to-mass boundary or for the canonical network hydraulics.
+
+All zones in a liquid mass-injection well must use this new builder. Adding a legacy
+layer/zone to it, or a liquid zone to a populated legacy well, fails before adding a
+zone. `isLiquidMassInjection()` exposes the selection. Existing `addInjectionZone`,
+production models, serialized definitions and legacy rate-getter values are unchanged.
+There is **no automatic conversion** of old squared-pressure coefficients. Recreate
+the well definition with calibrated mass coefficients and rebind it to the existing
+field node; rebuilding the field topology or changing edge hydraulics is unnecessary.
+New liquid definitions must not be loaded into older NeqSim versions that do not
+understand this mass-basis flag. Only forward reading of existing legacy definitions
+is supported here; Java serialization is not a backward interchange format. Keep
+original model inputs and the producing software version with saved models.
+
+The inlet stream supplies injected composition and temperature, not the reservoir-zone
+stream. The inlet is cloned and checked at BHP for one liquid phase before assigning
+the summed mass rate to the existing outlet. Gas, multiphase and solid states are
+rejected. Zone streams remain boundary metadata and are not consumed or mixed into
+the injected fluid. Coefficients/pressures/limits are revalidated on every solve,
+including direct mutations of the existing public layer fields. Shut-in zones have
+zero rate; crossflow is not modeled. Fracture limits remain reported acceptance limits,
+not rate caps, and the existing network coupler rejects an exceeded limit.
+
+For this opt-in model, `getLayerFlowRates` and `getOutOfZoneRate` accept only `kg/sec`,
+`kg/s`, `kg/hr` and `kg/day`. `ReservoirLayer.calculatedRate` is kg/s; allocation and
+target-zone efficiency are mass fractions. Read results after a successful solve;
+a rejected solve invalidates calculated zone rates. Allocation/efficiency/out-of-zone
+queries reject unavailable rate evidence instead of reporting a plausible zero.
+Do not apply legacy volume labels
+to these values. `runTransient` is allowed only in steady/quasi-steady mode; this does
+not implement transient reservoir, thermal, fracture or multiphase injectivity physics.
+
+The complete example below is compiled and executed by
+`ControllersAndWellsDocumentationTest`. Its two coefficients give 0.5 + 0.2 = 0.7 kg/s
+at 150 bara. They are synthetic inputs, not field calibration.
+
+```java
+import neqsim.process.equipment.reservoir.WellFlow;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class LiquidMassInjectionExample {
+  public static void main(String[] args) {
+    SystemSrkEos water = new SystemSrkEos(298.15, 180.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+    Stream feed = new Stream("water supply", water);
+    feed.setFlowRate(1.0, "kg/sec");
+    feed.run();
+    WellFlow injector = new WellFlow("liquid injector");
+    injector.setInletStream(feed);
+    injector.addLiquidInjectionZone("target", feed.clone(), 100.0, 0.01, 170.0);
+    injector.addLiquidInjectionZone("secondary", feed.clone(), 110.0, 0.005, 160.0);
+    injector.setTargetZone("target");
+    injector.setOutletPressure(150.0, "bara");
+    injector.run();
+    double[] rates = injector.getLayerFlowRates("kg/sec");
+    assert Math.abs(rates[0] - 0.5) < 1.0e-12;
+    assert Math.abs(rates[1] - 0.2) < 1.0e-12;
+    assert Math.abs(injector.getOutletStream().getFlowRate("kg/sec") - 0.7) < 1.0e-10;
+    assert !injector.getZoneFractureRisk()[0];
+    assert !injector.getZoneFractureRisk()[1];
+  }
+}
+```
+
+`WellFlowLiquidInjectionTest` independently checks the constant-property Darcy
+mass coefficient $\rho kA/(\mu L)\,10^5$: with density 1000 kg/m3, permeability
+1e-12 m2, area 10 m2, viscosity 0.001 Pa s and length 100 m it is 0.01 kg/(s bar).
+It also checks nearby BHPs, unit conversion, partial/full shut-in and recovery,
+fracture reporting, invalid inputs, phase rejection, legacy compatibility and copies.
+This is an analytical software check of the stated linear approximation, not
+laboratory/field injectivity, fracture-pressure or operating-envelope qualification.
 
 ### Single-layer gas inflow
 

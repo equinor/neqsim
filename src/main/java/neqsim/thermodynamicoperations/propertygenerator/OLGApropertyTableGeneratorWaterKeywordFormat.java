@@ -5,16 +5,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * OLGApropertyTableGeneratorWaterKeywordFormat class.
+ * Generate three-phase OLGA keyword tables, with RS based on gas plus oil mass and standard liquid ratios including the
+ * separate aqueous phase. Optional bubble headers are omitted for multicomponent feeds; pure-component curves retain
+ * only validated saturation points.
  *
  * @author Kjetil Raul
  * @version $Id: $Id
@@ -36,6 +40,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   String[] components;
   double GOR;
   double GLR;
+  /** Standard water volume divided by total standard liquid volume. */
+  double WC;
   double stdGasDens;
   double stdLiqDens;
   double stdWatDens;
@@ -48,6 +54,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   double[] bubT;
   double[] dewP;
   double[] bubPLOG;
+  /** Temperatures in Celsius paired with the retained bubble pressures, independent of the property grid. */
+  private double[] bubbleTemperaturesC;
   double[] dewPLOG;
   double[] bubTLOG;
   double[][] ROL;
@@ -95,8 +103,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   private static final double DEFAULT_OIL_DENSITY = 800.0;
   /** Water density written when the grid holds no aqueous phase at all, in kg/m3. */
   private static final double DEFAULT_WATER_DENSITY = 1000.0;
-  /** GOR written when no liquid forms at standard conditions, so the key stays finite. */
-  private static final double SINGLE_PHASE_GOR = 1.0e6;
+  /** OLGA sentinel for a standard gas/liquid ratio with no denominator phase. */
+  private static final double NO_STANDARD_LIQUID = -999.0;
 
   /**
    * Set the fluid label written to the table.
@@ -345,7 +353,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
-   * calcBubP.
+   * Calculate bubble pressures on independent copies. Failed or nonphysical pure-component saturation points are NaN in
+   * the returned array and are never exported as zero pressures.
    *
    * @param temperatures an array of type double
    * @return an array of type double
@@ -353,18 +362,73 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   public double[] calcBubP(double[] temperatures) {
     double[] bubP = new double[temperatures.length];
     bubPLOG = new double[temperatures.length];
+    bubbleTemperaturesC = new double[temperatures.length];
+    Arrays.fill(bubP, Double.NaN);
+    Arrays.fill(bubPLOG, Double.NaN);
+    Arrays.fill(bubbleTemperaturesC, Double.NaN);
     for (int i = 0; i < temperatures.length; i++) {
-      thermoSystem.setTemperature(temperatures[i]);
+      SystemInterface saturationSystem = thermoSystem.clone();
+      saturationSystem.setTemperature(temperatures[i]);
       try {
-        thermoOps.bubblePointPressureFlash(false);
-        bubP[i] = thermoSystem.getPressure();
+        new ThermodynamicOperations(saturationSystem).bubblePointPressureFlash(false);
+        if (!isPhysicalBubblePoint(saturationSystem)) {
+          continue;
+        }
+        bubP[i] = saturationSystem.getPressure();
         bubPLOG[i] = bubP[i] * 1e5;
+        bubbleTemperaturesC[i] = saturationSystem.getTemperature() - 273.15;
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-        bubP[i] = 0;
+        logger.debug("Omitting bubble pressure at {} K: {}", temperatures[i], ex.getMessage());
       }
     }
     return bubP;
+  }
+
+  /**
+   * Reject invalid pressures and pure-component single-root or spinodal solutions.
+   *
+   * @param system completed saturation flash
+   * @return whether the point has physical saturation roots
+   */
+  private static boolean isPhysicalBubblePoint(SystemInterface system) {
+    double pressure = system.getPressure();
+    if (!Double.isFinite(pressure) || pressure <= 0.0) {
+      return false;
+    }
+    if (system.getNumberOfComponents() != 1) {
+      return true;
+    }
+    if (system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()
+        || pressure >= system.getPhase(0).getComponent(0).getPC() || system.getNumberOfPhases() < 2) {
+      return false;
+    }
+    double firstVolume = system.getPhase(0).getMolarVolume();
+    double secondVolume = system.getPhase(1).getMolarVolume();
+    if (!Double.isFinite(firstVolume) || !Double.isFinite(secondVolume) || firstVolume <= 0.0 || secondVolume <= 0.0
+        || Math.abs(firstVolume - secondVolume) <= 1.0e-6 * Math.max(firstVolume, secondVolume)) {
+      return false;
+    }
+    for (int phase = 0; phase < 2; phase++) {
+      if (system.getPhase(phase) instanceof PhaseEosInterface) {
+        double eosPressure = ((PhaseEosInterface) system.getPhase(phase)).calcPressure();
+        if (!Double.isFinite(eosPressure) || Math.abs(eosPressure - pressure) > 1.0e-6 * pressure) {
+          return false;
+        }
+      }
+    }
+    double logFugacityRatio = Math.log(system.getPhase(0).getComponent(0).getFugacityCoefficient())
+        - Math.log(system.getPhase(1).getComponent(0).getFugacityCoefficient());
+    return Double.isFinite(logFugacityRatio) && Math.abs(logFugacityRatio) < 1.0e-6;
+  }
+
+  /**
+   * Return the physical volume used for standard ratios, including density volume corrections.
+   *
+   * @param phase initialized phase, or null when absent
+   * @return volume in cubic metres
+   */
+  private static double standardVolume(PhaseInterface phase) {
+    return phase == null ? 0.0 : phase.getMass() / phase.getPhysicalProperties().getDensity();
   }
 
   /**
@@ -438,11 +502,14 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
     PhaseInterface stdGas = thermoSystem.hasPhaseType("gas") ? thermoSystem.getPhaseOfType("gas") : null;
     PhaseInterface stdOil = thermoSystem.hasPhaseType("oil") ? thermoSystem.getPhaseOfType("oil") : null;
     PhaseInterface stdWater = thermoSystem.hasPhaseType("aqueous") ? thermoSystem.getPhaseOfType("aqueous") : null;
-    double gasVolume = stdGas == null ? 0.0 : stdGas.getTotalVolume();
-    double oilVolume = stdOil == null ? 0.0 : stdOil.getTotalVolume();
+    double gasVolume = standardVolume(stdGas);
+    double oilVolume = standardVolume(stdOil);
+    double waterVolume = standardVolume(stdWater);
+    double liquidVolume = oilVolume + waterVolume;
 
-    GOR = oilVolume > 0.0 ? gasVolume / oilVolume : SINGLE_PHASE_GOR;
-    GLR = GOR;
+    GOR = oilVolume > 0.0 ? gasVolume / oilVolume : NO_STANDARD_LIQUID;
+    GLR = liquidVolume > 0.0 ? gasVolume / liquidVolume : NO_STANDARD_LIQUID;
+    WC = liquidVolume > 0.0 ? waterVolume / liquidVolume : 0.0;
 
     stdGasDens = stdGas != null ? stdGas.getPhysicalProperties().getDensity()
         : representativeValue(props[0], DEFAULT_GAS_DENSITY);
@@ -615,8 +682,10 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         namesKeyword[k] = "DROWTDT";
         needsWater[k] = true;
         k++;
-        // Genuinely zero without gas, so these two fractions are never extrapolated.
-        props[k][i][j] = gas == null ? 0.0 : gas.getBeta() * gas.getMolarMass() / thermoSystem.getMolarMass();
+        // RS excludes the separate aqueous phase. Fractions are never extrapolated.
+        double gasMass = gas == null ? 0.0 : gas.getMass();
+        double oilMass = oil == null ? 0.0 : oil.getMass();
+        props[k][i][j] = gasMass + oilMass > 0.0 ? gasMass / (gasMass + oilMass) : 0.0;
         names[k] = "GAS MASS FRACTION";
         units[k] = "-";
         namesKeyword[k] = "RS";
@@ -741,11 +810,13 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
       }
     }
     fillAbsentPhaseNodes();
-    bubP = calcBubP(temperatures);
-    // dewP = calcDewP(temperatures);
-    // One bubble point temperature per pressure - this is what the BUBBLETEMPERATURES
-    // keyword expects, and what writeOLGAinpFile iterates over.
-    bubT = calcBubT(pressures);
+    // A wet multicomponent feed has no unambiguous bulk liquid bubble branch. These
+    // headers are optional for mixtures; avoid both unreliable roots and unnecessary flashes.
+    bubP = thermoSystem.getNumberOfComponents() == 1 ? calcBubP(temperatures) : new double[0];
+    if (thermoSystem.getNumberOfComponents() != 1) {
+      bubPLOG = new double[0];
+      bubbleTemperaturesC = new double[0];
+    }
     logger.info("Finished creating arrays");
     initCalc();
   }
@@ -766,11 +837,37 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
   }
 
   /**
+   * Check whether a bubble curve index holds a complete finite pressure/temperature pair.
+   *
+   * @param index curve index
+   * @return whether both values can be exported
+   */
+  private boolean hasBubblePoint(int index) {
+    return bubPLOG != null && bubbleTemperaturesC != null && index < bubPLOG.length
+        && index < bubbleTemperaturesC.length && Double.isFinite(bubPLOG[index]) && bubPLOG[index] > 0.0
+        && Double.isFinite(bubbleTemperaturesC[index]) && bubbleTemperaturesC[index] > -273.15;
+  }
+
+  /**
    * Writes an OLGA .inp file for PVT table input.
    *
    * @param filename a {@link java.lang.String} object
+   * @throws IllegalStateException if a pure component has no validated saturation points
    */
   public void writeOLGAinpFile(String filename) {
+    boolean pureComponent = thermoSystem.getNumberOfComponents() == 1;
+    int bubblePointCount = 0;
+    if (pureComponent && bubPLOG != null) {
+      for (int i = 0; i < bubPLOG.length; i++) {
+        if (hasBubblePoint(i)) {
+          bubblePointCount++;
+        }
+      }
+    }
+    if (pureComponent && bubblePointCount == 0) {
+      throw new IllegalStateException("Pure-component OLGA tables require a valid saturation curve; "
+          + "include subcritical temperatures in the grid.");
+    }
     try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
       writer.write("PVTTABLE LABEL = \"" + fluidLabel + "\", PHASE = THREE,\\\n");
       writer.write("EOS = \"" + thermoSystem.getModelName() + "\",\\\n");
@@ -815,6 +912,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
       writer.write("STDTEMPERATURE = " + stdTemp + " K,\\\n");
       writer.write("GOR = " + GOR + " Sm3/Sm3,\\\n");
       writer.write("GLR = " + GLR + " Sm3/Sm3,\\\n");
+      writer.write("WC = " + WC + ",\\\n");
       writer.write("STDGASDENSITY = " + stdGasDens + " kg/m3,\\\n");
       writer.write("STDOILDENSITY = " + stdLiqDens + " kg/m3,\\\n");
       writer.write("STDWATDENSITY = " + stdWatDens + " kg/m3,\\\n");
@@ -840,26 +938,33 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
       }
       writer.write(") C,\\\n");
 
-      // OLGA requires BUBBLEPRESSURES and BUBBLETEMPERATURES to be paired arrays of
-      // equal length: the bubble point pressure at each grid temperature, and the
-      // grid temperature it belongs to.
-      writer.write("BUBBLEPRESSURES = (");
-      for (int i = 0; i < temperatures.length; i++) {
-        writer.write(Double.toString(bubPLOG[i]));
-        if (i < temperatures.length - 1) {
-          writer.write(",");
+      if (bubblePointCount > 0) {
+        // Both arrays use exactly the same retained saturation points, which need not
+        // coincide with property grid temperatures when calcBubP is called directly.
+        writer.write("BUBBLEPRESSURES = (");
+        int written = 0;
+        for (int i = 0; i < bubPLOG.length; i++) {
+          if (hasBubblePoint(i)) {
+            if (written++ > 0) {
+              writer.write(",");
+            }
+            writer.write(Double.toString(bubPLOG[i]));
+          }
         }
-      }
-      writer.write(") Pa,\\\n");
+        writer.write(") Pa,\\\n");
 
-      writer.write("BUBBLETEMPERATURES = (");
-      for (int i = 0; i < temperatures.length; i++) {
-        writer.write(Double.toString(temperatureLOG[i]));
-        if (i < temperatures.length - 1) {
-          writer.write(",");
+        writer.write("BUBBLETEMPERATURES = (");
+        written = 0;
+        for (int i = 0; i < bubPLOG.length; i++) {
+          if (hasBubblePoint(i)) {
+            if (written++ > 0) {
+              writer.write(",");
+            }
+            writer.write(Double.toString(bubbleTemperaturesC[i]));
+          }
         }
+        writer.write(") C,\\\n");
       }
-      writer.write(") C,\\\n");
 
       writer.write("COLUMNS = (PT,TM,");
       for (int k = 0; k < nProps; k++) {

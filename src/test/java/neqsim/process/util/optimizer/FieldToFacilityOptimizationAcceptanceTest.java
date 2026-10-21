@@ -388,7 +388,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
             late.study, late.search, late.slices);
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
 
-    assertEquals(Integer.valueOf(5), lifecycleEvidence.get("schema_version"));
+    assertEquals(Integer.valueOf(6), lifecycleEvidence.get("schema_version"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
@@ -527,6 +527,23 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(driverBoundary.isConverged(), driverBoundary.getStatus().name());
     assertTrue(driverBoundary.getFeasibleAxisValue() < driverBoundary.getInfeasibleAxisValue());
     assertTrue(driverBoundary.getBracketWidth() <= driverBoundary.getAbsoluteTolerance());
+    LeadingConstraintEvidence feasibleBoundaryConstraint = driverBoundary.getFeasibleBoundaryConstraint();
+    LeadingConstraintEvidence infeasibleBoundaryConstraint = driverBoundary.getInfeasibleBoundaryConstraint();
+    assertTrue(feasibleBoundaryConstraint != null);
+    assertTrue(feasibleBoundaryConstraint.getQualifiedConstraintName().endsWith("#driver-maximum-power"),
+        feasibleBoundaryConstraint.getQualifiedConstraintName());
+    assertTrue(feasibleBoundaryConstraint.isFeasible());
+    assertTrue(Double.isFinite(feasibleBoundaryConstraint.getPhysicalMargin()));
+    assertTrue(feasibleBoundaryConstraint.getPhysicalMargin() >= 0.0);
+    assertTrue(infeasibleBoundaryConstraint != null);
+    assertTrue(infeasibleBoundaryConstraint.getQualifiedConstraintName().endsWith("#driver-maximum-power"),
+        infeasibleBoundaryConstraint.getQualifiedConstraintName());
+    assertFalse(infeasibleBoundaryConstraint.isFeasible());
+    assertTrue(Double.isFinite(infeasibleBoundaryConstraint.getPhysicalMargin()));
+    assertTrue(infeasibleBoundaryConstraint.getPhysicalMargin() < 0.0);
+    Map<String, Object> boundaryEvidence = driverBoundary.toEvidenceMap();
+    assertEquals(feasibleBoundaryConstraint.toEvidenceMap(), boundaryEvidence.get("feasible_boundary_constraint"));
+    assertEquals(infeasibleBoundaryConstraint.toEvidenceMap(), boundaryEvidence.get("infeasible_boundary_constraint"));
     assertTrue(driverBoundary.getSteps().stream().allMatch(step -> step.isCandidateSimulationConverged()
         && step.isBaselineRestored() && step.isBaselineSimulationConverged()));
     assertTrue(driverBoundary.getSteps().stream().filter(step -> !step.isFeasible())
