@@ -952,15 +952,18 @@ yield predictor, plant calibration, design approval, or standards-compliance cla
 | Energy, emissions, and economics | Fired-heater, hydrogen-utility/emissions, heat-recovery, operating-cost, and screening-economics receipts | Reusable bounded receipts exist, especially for hydrotreating and crude heating. A single facility-wide refinery balance and economic optimization benchmark remains open. |
 | Python accessibility | Public Java APIs through the standard NeqSim Python/JPype bridge | The merged classes are callable from Python through the Java API. Dedicated high-level Python wrappers and an executed end-to-end refinery notebook remain open. |
 
-## Next campaign step
+## Connected front-end increment and next campaign step
 
-The next dependency-ready implementation should compose the **DOE Big Hill** assay,
-atmospheric-fractionation qualification, atmospheric-bottoms handoff, and vacuum-fractionation case
-into one regression-protected reference workflow. It should preserve one assay identity from crude
-feed through products, report component/mass and energy closure, expose product boiling ranges and
-utility/emissions receipts, and keep every operating input explicit.
+The DOE Big Hill connected front-end now composes the complete modeled assay, explicit fired-heater
+receipt, qualified atmospheric fractionation, calculated atmospheric-bottoms handoff, and existing
+vacuum-fractionation case. The regression preserves one assay identity from crude feed through final
+products, checks component/mass and column energy closure, exposes product boiling ranges, and
+recomputes utility/emissions identities from caller-owned assumptions.
 
-Do not mix Sarir operating or plant-yield evidence into the DOE case, invent a matched vacuum-plant
-benchmark that the public source does not provide, or duplicate the existing column, assay, heater,
-or balance APIs. ASTM D1160 qualification, broader heavy-fluid property validation, nonlinear blend
-quality, conversion kinetics, and plant calibration remain separate evidence-gated increments.
+The next dependency-ready validation should execute this same public API through Python/JPype and
+publish a bounded atmospheric/vacuum operating-sensitivity receipt without promoting the numerical
+settings to plant data. Do not mix Sarir operating or plant-yield evidence into the DOE case, invent a
+matched vacuum-plant benchmark that the public source does not provide, or duplicate the existing
+column, assay, heater, or balance APIs. ASTM D1160 qualification, broader heavy-fluid property
+validation, nonlinear blend quality, conversion kinetics, and plant calibration remain separate
+evidence-gated increments.
