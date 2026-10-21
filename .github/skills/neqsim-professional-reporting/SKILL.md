@@ -189,6 +189,11 @@ pause and fill the missing source material before finalizing.
 - **Consistent within report** — pick one set (SI, °C/bara) and don't switch
 - **Standard conditions** — always disclaim Sm³ basis (15 °C / 1.01325 bara, or 20 °C, or 0 °C — they differ ~5%)
 - **Stream tables** — use standardized columns: name, T [°C], P [bara], ṁ [kg/h], xi [mol%]
+- **Tables: one value per cell.** Never write `"12.3 / 4.5"` or `"bias / MAE"` in a cell; give each quantity its own
+  column (or row) with the unit in the header and the same number of decimals down a column. Keep a table to at most
+  nine columns and split wide ones by topic (for example one table for pressure and one for temperature per well).
+  For results over several days or cases put the days in the columns and the quantities in the rows, mark the
+  calibration day `(cal)`, and use a separate table per quantity group. `validate_task_results.py` warns on both.
 
 ## Principle 4 — Citations
 

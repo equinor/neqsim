@@ -266,6 +266,7 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
                         warnings.append(f"figure_discussion[{i}].{need}: missing field")
 
     warnings.extend(_check_analytical_depth(results))
+    warnings.extend(_check_table_layout(results))
 
     return errors, warnings
 
@@ -283,6 +284,43 @@ DEPTH_KEYS = (
     "evidence_against",
 )
 DEPTH_MIN_MOVES = 2
+
+_MULTI_NUMBER_CELL = re.compile(r"^\s*[-+]?\d+(\.\d+)?\s*(/|;|\|)\s*[-+]?\d")
+MAX_TABLE_COLUMNS = 9
+
+
+def _check_table_layout(results: dict) -> List[str]:
+    """Warn about tables that are hard to read: several numbers in one cell, or too many columns.
+
+    A cell such as ``"12.3 / 4.5"`` hides two quantities in one place; give each quantity its own
+    column or row, with the unit in the header. Tables wider than MAX_TABLE_COLUMNS should be split by topic.
+
+    Args:
+        results: parsed results.json
+
+    Returns:
+        list of warning strings
+    """
+    out: List[str] = []
+    tables = results.get("tables")
+    if not isinstance(tables, list):
+        return out
+    for i, tbl in enumerate(tables):
+        if not isinstance(tbl, dict):
+            continue
+        title = str(tbl.get("title", i))[:50]
+        headers = tbl.get("headers") or []
+        if len(headers) > MAX_TABLE_COLUMNS:
+            out.append(f"tables[{i}] '{title}': {len(headers)} columns; split into tables of at most {MAX_TABLE_COLUMNS}")
+        bad = 0
+        for row in tbl.get("rows") or []:
+            for cell in row if isinstance(row, list) else []:
+                if isinstance(cell, str) and _MULTI_NUMBER_CELL.match(cell):
+                    bad += 1
+        if bad:
+            out.append(f"tables[{i}] '{title}': {bad} cell(s) hold several numbers (e.g. '12.3 / 4.5'); use one value per cell")
+    return out
+
 
 
 def _check_analytical_depth(results: dict) -> List[str]:
