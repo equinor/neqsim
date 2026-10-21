@@ -2,7 +2,7 @@ package neqsim.standards.gasquality;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
@@ -17,7 +17,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(UKspecifications_ICF_SI.class);
-  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   String componentName = "";
   String unit = "-";

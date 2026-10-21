@@ -4,9 +4,8 @@ package neqsim.mathlib.linearalgebra;
  * Dense linear-algebra operations, independent of the library that performs them.
  *
  * <p>
- * NeqSim depends on three linear-algebra libraries (EJML, Apache Commons Math and MTJ) and repeats the same dense
- * Gaussian elimination in many private helper methods. This interface is the single contract those implementations are
- * held to, so a caller can select a backend without changing any calling code.
+ * The EJML-backed implementation centralizes dense operations behind a stable array-based contract. This interface
+ * keeps callers independent of EJML types and defines the contract for alternative implementations.
  * </p>
  *
  * <p>

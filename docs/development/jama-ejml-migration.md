@@ -40,9 +40,9 @@ Their migration checks equation assembly, ownership and damping, plus the
 normwise linear backward error against a `1e-12` tolerance, rather than
 requiring backend-specific correction vectors to agree in nearly singular
 systems. This does not certify those intermediate iterations as converged
-physical states. The independent Commons Math spectral reference is scaled
-before decomposition to handle very large finite fluxes; the existing
-`1e-10` correction comparison tolerance is unchanged.
+physical states. The EJML spectral reference is scaled before decomposition to
+handle very large finite fluxes; the existing `1e-10` correction comparison
+tolerance is unchanged.
 
 ## Public API migration
 

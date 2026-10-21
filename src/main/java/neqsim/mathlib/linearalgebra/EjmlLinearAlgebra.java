@@ -1,5 +1,6 @@
 package neqsim.mathlib.linearalgebra;
 
+import org.ejml.data.Complex_F64;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
@@ -311,6 +312,84 @@ public final class EjmlLinearAlgebra implements LinearAlgebraOperations {
     return new RealEigenDecomposition(values, vectors);
   }
 
+  /**
+   * Compute a real basis for real eigenvalues and conjugate complex eigenvalue pairs.
+   *
+   * <p>
+   * EJML returns eigenvectors only for real eigenvalues. For a complex pair, this method obtains the real and imaginary
+   * parts of an eigenvector from the null-space of the equivalent real system.
+   * </p>
+   *
+   * @param matrix finite square matrix
+   * @return real and imaginary eigenvalue parts and a real block basis satisfying {@code A V = V D}
+   * @throws LinearAlgebraException if input is invalid, decomposition fails, or a complete real basis is unavailable
+   */
+  public RealBlockEigenDecomposition realBlockEigenDecomposition(double[][] matrix) {
+    LinearAlgebraValidation.requireSquareMatrix(matrix, "Matrix");
+    int size = matrix.length;
+    double scale = maximumAbsoluteEntry(matrix);
+    if (scale == 0.0) {
+      scale = 1.0;
+    }
+    double[][] normalized = new double[size][size];
+    for (int row = 0; row < size; row++) {
+      for (int column = 0; column < size; column++) {
+        normalized[row][column] = matrix[row][column] / scale;
+      }
+    }
+
+    EigenDecomposition_F64<DMatrixRMaj> decomposition = DecompositionFactory_DDRM.eig(size, true);
+    if (!decomposition.decompose(toDense(normalized))) {
+      throw new LinearAlgebraException("Eigenvalue decomposition did not converge.");
+    }
+
+    double[] realParts = new double[size];
+    double[] imaginaryParts = new double[size];
+    double[][] vectors = new double[size][size];
+    int column = 0;
+    for (int index = 0; index < size; index++) {
+      Complex_F64 eigenvalue = decomposition.getEigenvalue(index);
+      if (eigenvalue.getImaginary() != 0.0) {
+        continue;
+      }
+      DMatrixRMaj vector = decomposition.getEigenVector(index);
+      if (vector == null) {
+        throw new LinearAlgebraException("Eigenvalue decomposition did not produce a real eigenvector.");
+      }
+      realParts[column] = eigenvalue.getReal() * scale;
+      for (int row = 0; row < size; row++) {
+        vectors[row][column] = vector.get(row, 0);
+      }
+      column++;
+    }
+
+    for (int index = 0; index < size; index++) {
+      Complex_F64 eigenvalue = decomposition.getEigenvalue(index);
+      double imaginary = eigenvalue.getImaginary();
+      if (imaginary <= 0.0) {
+        continue;
+      }
+      if (!hasConjugateEigenvalue(decomposition, eigenvalue)) {
+        throw new LinearAlgebraException("Eigenvalue decomposition returned an unpaired complex eigenvalue.");
+      }
+      final double[][] pairBasis = complexEigenvectorBasis(normalized, eigenvalue.getReal(), imaginary);
+      realParts[column] = eigenvalue.getReal() * scale;
+      realParts[column + 1] = realParts[column];
+      imaginaryParts[column] = imaginary * scale;
+      imaginaryParts[column + 1] = -imaginaryParts[column];
+      for (int row = 0; row < size; row++) {
+        vectors[row][column] = pairBasis[row][0];
+        vectors[row][column + 1] = pairBasis[row][1];
+      }
+      column += 2;
+    }
+
+    if (column != size || rank(vectors) != size) {
+      throw new LinearAlgebraException("Eigenvalue decomposition did not produce a complete real eigenbasis.");
+    }
+    return new RealBlockEigenDecomposition(realParts, imaginaryParts, vectors);
+  }
+
   /** {@inheritDoc} */
   @Override
   public SingularValueDecompositionResult singularValueDecomposition(double[][] matrix) {
@@ -429,6 +508,90 @@ public final class EjmlLinearAlgebra implements LinearAlgebraOperations {
     double[] values = new double[count];
     System.arraycopy(svd.getSingularValues(), 0, values, 0, count);
     return values;
+  }
+
+  /**
+   * Find the real and imaginary parts of an eigenvector for one complex eigenvalue.
+   *
+   * @param matrix normalized real matrix
+   * @param real real part of the eigenvalue
+   * @param imaginary positive imaginary part of the eigenvalue
+   * @return two columns forming the corresponding real block basis
+   * @throws LinearAlgebraException if the real null-space decomposition fails
+   */
+  private double[][] complexEigenvectorBasis(double[][] matrix, double real, double imaginary) {
+    int size = matrix.length;
+    DMatrixRMaj realSystem = new DMatrixRMaj(2 * size, 2 * size);
+    for (int row = 0; row < size; row++) {
+      for (int column = 0; column < size; column++) {
+        double value = matrix[row][column] - (row == column ? real : 0.0);
+        realSystem.set(row, column, value);
+        realSystem.set(row + size, column + size, value);
+      }
+      realSystem.set(row, row + size, imaginary);
+      realSystem.set(row + size, row, -imaginary);
+    }
+
+    SingularValueDecomposition_F64<DMatrixRMaj> svd = DecompositionFactory_DDRM.svd(2 * size, 2 * size, false, true,
+        false);
+    if (!svd.decompose(realSystem)) {
+      throw new LinearAlgebraException("Complex eigenvector null-space decomposition did not converge.");
+    }
+    double[] singularValues = svd.getSingularValues();
+    int smallestIndex = 0;
+    for (int index = 1; index < svd.numberOfSingularValues(); index++) {
+      if (singularValues[index] < singularValues[smallestIndex]) {
+        smallestIndex = index;
+      }
+    }
+    DMatrixRMaj rightVectors = svd.getV(null, false);
+    double norm = 0.0;
+    for (int row = 0; row < 2 * size; row++) {
+      norm = Math.hypot(norm, rightVectors.get(row, smallestIndex));
+    }
+    if (norm == 0.0 || !Double.isFinite(norm)) {
+      throw new LinearAlgebraException("Complex eigenvector null-space is invalid.");
+    }
+
+    double[][] basis = new double[size][2];
+    for (int row = 0; row < size; row++) {
+      basis[row][0] = rightVectors.get(row, smallestIndex) / norm;
+      basis[row][1] = rightVectors.get(row + size, smallestIndex) / norm;
+    }
+    return basis;
+  }
+
+  /**
+   * Check whether an eigendecomposition contains the conjugate of a complex eigenvalue.
+   *
+   * @param decomposition eigenvalue decomposition to inspect
+   * @param eigenvalue eigenvalue whose conjugate is required
+   * @return true if the conjugate pair is present
+   */
+  private boolean hasConjugateEigenvalue(EigenDecomposition_F64<DMatrixRMaj> decomposition, Complex_F64 eigenvalue) {
+    for (int index = 0; index < decomposition.getNumberOfEigenvalues(); index++) {
+      Complex_F64 candidate = decomposition.getEigenvalue(index);
+      if (candidate.getReal() == eigenvalue.getReal() && candidate.getImaginary() == -eigenvalue.getImaginary()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Find the maximum absolute matrix entry.
+   *
+   * @param matrix matrix to inspect
+   * @return largest absolute entry
+   */
+  private double maximumAbsoluteEntry(double[][] matrix) {
+    double maximum = 0.0;
+    for (double[] row : matrix) {
+      for (double value : row) {
+        maximum = Math.max(maximum, Math.abs(value));
+      }
+    }
+    return maximum;
   }
 
   /**

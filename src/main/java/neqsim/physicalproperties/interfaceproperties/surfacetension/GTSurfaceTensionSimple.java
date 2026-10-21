@@ -2,7 +2,6 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
 import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
@@ -19,7 +18,6 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(GTSurfaceTensionSimple.class);
   private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
-  private static final LinearAlgebraOperations COMMONS_MATH = new ApacheCommonsMathLinearAlgebra();
 
   int ite_step = 200;
   SystemInterface localSystem = null;
@@ -226,7 +224,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         }
         double[] ans2 = null;
         if (localSystem.getPhase(0).getNumberOfComponents() > 1) {
-          ans2 = COMMONS_MATH.solve(fmatrix, bmatrix);
+          ans2 = ALGEBRA.solve(fmatrix, bmatrix);
         }
 
         pp = 0;

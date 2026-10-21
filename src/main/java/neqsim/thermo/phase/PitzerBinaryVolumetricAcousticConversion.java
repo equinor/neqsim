@@ -1,7 +1,7 @@
 package neqsim.thermo.phase;
 
 import java.io.Serializable;
-import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 
 /**
@@ -29,7 +29,7 @@ public final class PitzerBinaryVolumetricAcousticConversion {
 
   private static final double COVARIANCE_SYMMETRY_TOLERANCE = 1.0e-12;
   private static final double CORRELATION_EIGENVALUE_TOLERANCE = 1.0e-10;
-  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   private PitzerBinaryVolumetricAcousticConversion() {
   }

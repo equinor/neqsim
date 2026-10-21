@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.mathlib.linearalgebra.SingularValueDecompositionResult;
 
@@ -33,7 +33,7 @@ public final class PitzerBinaryVolumetricRegression implements Serializable {
   private static final int PARAMETER_COUNT = 4;
   private static final double RELATIVE_RANK_TOLERANCE = 1.0e-12;
   private static final double MAXIMUM_CONDITION_NUMBER = 1.0e10;
-  private static final LinearAlgebraOperations ALGEBRA = new ApacheCommonsMathLinearAlgebra();
+  private static final LinearAlgebraOperations ALGEBRA = new EjmlLinearAlgebra();
 
   private final PitzerBinaryVolumetricModel model;
 

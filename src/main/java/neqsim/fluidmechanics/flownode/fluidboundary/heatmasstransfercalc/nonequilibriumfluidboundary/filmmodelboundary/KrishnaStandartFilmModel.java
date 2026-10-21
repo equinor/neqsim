@@ -9,7 +9,7 @@ import org.ejml.interfaces.linsol.LinearSolverDense;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
-import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.RealBlockEigenDecomposition;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -21,8 +21,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Krishna-Standart film calculations with array-backed coefficient, correction and eigen data.
  *
  * <p>
- * Commons Math supplies paired eigen data, and EJML evaluates the modal correction on primitive-array state. Serialized
- * instances containing the former Jama eigen-data fields are not compatible with this layout.
+ * EJML supplies paired eigen data and evaluates the modal correction on primitive-array state. Serialized instances
+ * containing the former Jama eigen-data fields are not compatible with this layout.
  *
  * @author asmund
  * @version $Id: $Id
@@ -34,7 +34,7 @@ public class KrishnaStandartFilmModel extends
   private static final long serialVersionUID = 1001;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(KrishnaStandartFilmModel.class);
-  private static final ApacheCommonsMathLinearAlgebra ALGEBRA = new ApacheCommonsMathLinearAlgebra();
+  private static final EjmlLinearAlgebra ALGEBRA = new EjmlLinearAlgebra();
   private transient boolean complexSpectrumWarningLogged;
   double[][] phiMatrix;
   double[] redPhiMatrix;

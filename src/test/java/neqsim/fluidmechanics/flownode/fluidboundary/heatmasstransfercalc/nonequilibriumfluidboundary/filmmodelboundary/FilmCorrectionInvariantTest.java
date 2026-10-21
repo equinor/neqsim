@@ -22,7 +22,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitev
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.reactivefilmmodel.ReactiveFluidBoundary;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
-import neqsim.mathlib.linearalgebra.ApacheCommonsMathLinearAlgebra;
+import neqsim.mathlib.linearalgebra.EjmlLinearAlgebra;
 import neqsim.mathlib.linearalgebra.EjmlMatrixUtils;
 import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.mathlib.linearalgebra.RealEigenDecomposition;
@@ -243,7 +243,7 @@ class FilmCorrectionInvariantTest {
           if (spectralScale == 0.0) {
             spectralScale = 1.0;
           }
-          LinearAlgebraOperations algebra = new ApacheCommonsMathLinearAlgebra();
+          LinearAlgebraOperations algebra = new EjmlLinearAlgebra();
           RealEigenDecomposition reference = algebra.eigenDecomposition(algebra.scale(phiMatrix, 1.0 / spectralScale));
           double[] eigenvalues = reference.getEigenvalues();
           for (int index = 0; index < eigenvalues.length; index++) {
@@ -546,7 +546,7 @@ class FilmCorrectionInvariantTest {
    * @return reference solution
    */
   private static SimpleMatrix referenceSolve(SimpleMatrix coefficients, SimpleMatrix rhs) {
-    LinearAlgebraOperations algebra = new ApacheCommonsMathLinearAlgebra();
+    LinearAlgebraOperations algebra = new EjmlLinearAlgebra();
     double[][] matrix = EjmlMatrixUtils.toArray(coefficients);
     SimpleMatrix result = new SimpleMatrix(coefficients.numCols(), rhs.numCols());
     for (int column = 0; column < rhs.numCols(); column++) {
