@@ -198,6 +198,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Characterization Package | [docs/thermo/characterization/README.md](thermo/characterization/README.md)                                                           | Characterization module                             |
 | Catalytic Reforming Balance | [docs/thermo/characterization/refinery_catalytic_reforming_stoichiometric_balance.md](thermo/characterization/refinery_catalytic_reforming_stoichiometric_balance.md) | Single- and multi-cut naphthene/paraffin conversion, reformate, and hydrogen receipts |
 | FCC Yield and Regenerator Balance | [docs/thermo/characterization/refinery_fcc_yield_regenerator_balance.md](thermo/characterization/refinery_fcc_yield_regenerator_balance.md) | Five-lump FCC yield plus coke-carbon, dry-air, CO/CO2, and dry-flue-gas screening receipt |
+| Delayed-Coking Yield and Utility Balance | [docs/thermo/characterization/refinery_delayed_coking_balance.md](thermo/characterization/refinery_delayed_coking_balance.md) | Five-lump delayed-coking yield plus feed-basis heater-fuel and steam screening receipts |
 | Combining Methods        | [docs/thermo/characterization/fluid_characterization_combining.md](thermo/characterization/fluid_characterization_combining.md) | Fluid combining methods                             |
 | Char Mathematics         | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md)                 | Characterization mathematics with lumping equations |
 
