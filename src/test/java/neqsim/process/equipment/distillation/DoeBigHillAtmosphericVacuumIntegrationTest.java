@@ -130,18 +130,9 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
       ProductResult overhead = point.getFractionationResult().getProduct("Overhead");
       ProductResult bottoms = point.getFractionationResult().getProduct("Bottoms");
       assertTrue(overhead.getMeanNormalBoilingPointKelvin() < bottoms.getMeanNormalBoilingPointKelvin());
-      assertTrue(point.getFractionationResult().getMeshResidualNorm() <= vacuumMeshTolerance(point));
+      assertTrue(Double.isFinite(point.getFractionationResult().getMeshResidualNorm()));
+      assertTrue(point.getFractionationResult().getMeshResidualNorm() >= 0.0);
     }
-  }
-
-  /**
-   * Return the MESH tolerance applied by the qualified Big Hill vacuum factory.
-   *
-   * @param point evaluated connected sensitivity point
-   * @return accepted MESH residual from the already qualified point
-   */
-  private static double vacuumMeshTolerance(DoeBigHillVacuumReboilerTemperatureSensitivity.PointResult point) {
-    return point.getFractionationResult().getMeshResidualNorm();
   }
 
   private static Stream createCrudeInlet() {
