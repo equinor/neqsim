@@ -220,7 +220,7 @@ On Windows use `mvnw.cmd install`. Useful focused commands include:
 
 ```bash
 ./mvnw test -Dtest=SeparatorTest
-./mvnw test -Dtest=SeparatorTest#testTwoPhase
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator
 uv run --project devtools --locked devtools/run_spotless.py apply
 uv run --project devtools --locked devtools/run_spotless.py check
 uv run --project devtools --locked devtools/check_documentation_search.py

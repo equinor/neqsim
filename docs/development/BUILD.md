@@ -133,7 +133,7 @@ Build without downloading dependencies (requires previous successful build):
 
 ### Run Single Test Method
 ```bash
-./mvnw test -Dtest=SeparatorTest#testTwoPhase
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator
 ```
 
 ### Run Tests by Package
