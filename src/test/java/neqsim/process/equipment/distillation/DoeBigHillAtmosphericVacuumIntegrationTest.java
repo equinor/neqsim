@@ -3,6 +3,7 @@ package neqsim.process.equipment.distillation;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
@@ -118,6 +119,7 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
     assertEquals(sourceMassFlow, atmosphericBottoms.getFlowRate("kg/hr"), 0.0);
     assertArrayEquals(sourceComposition, atmosphericBottoms.getThermoSystem().getMolarComposition(), 0.0);
     assertEquals(2, sensitivity.getPoints().length);
+    assertNotSame(sensitivity.getPoints(), sensitivity.getPoints());
     assertEquals(698.0, sensitivity.getPoint(0).getReboilerTemperatureKelvin(), 0.0);
     assertEquals(702.0, sensitivity.getPoint(1).getReboilerTemperatureKelvin(), 0.0);
     assertTrue(sensitivity.getMinimumOverheadMassFraction() > 0.0);
