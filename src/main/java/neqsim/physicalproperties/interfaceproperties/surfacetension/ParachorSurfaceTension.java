@@ -36,12 +36,17 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-        * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
-            * system.getPhases()[1].getComponents()[componentNumber].getx()
-            - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
-                * system.getPhases()[0].getComponents()[componentNumber].getx()),
-        4.0);
+    if (!validateInterface(0, 1)) {
+      return 0.0;
+    }
+    validateDensities();
+    return validateResult(
+        1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+            * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
+                * system.getPhases()[1].getComponents()[componentNumber].getx()
+                - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
+                    * system.getPhases()[0].getComponents()[componentNumber].getx()),
+            4.0));
   }
 
   /**
@@ -53,16 +58,11 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
-    if (system.getNumberOfPhases() < 2) {
+    if (!validateInterface(interface1, interface2)) {
       return 0.0;
     }
-    if (interface1 < 0 || interface2 < 0 || interface1 >= system.getNumberOfPhases()
-        || interface2 >= system.getNumberOfPhases()) {
-      throw new IllegalArgumentException("Surface-tension phase index is outside the current phase set");
-    }
-    if (interface1 == interface2) {
-      throw new IllegalArgumentException("Surface tension requires two distinct phases");
-    }
+    validateDensity(interface1);
+    validateDensity(interface2);
 
     double temp = 0.0;
     for (int i = 0; i < system.getPhase(interface1).getNumberOfComponents(); i++) {
@@ -72,6 +72,25 @@ public class ParachorSurfaceTension extends SurfaceTension {
               - system.getPhase(interface1).getPhysicalProperties().getDensity()
                   / system.getPhase(interface1).getMolarMass() * system.getPhase(interface1).getComponent(i).getx());
     }
-    return Math.pow(temp, 4.0) / 1000.0;
+    return validateResult(Math.pow(temp, 4.0) / 1000.0);
+  }
+
+  /** Validates the physical densities used by the pure-component correlation. */
+  private void validateDensities() {
+    validateDensity(0);
+    validateDensity(1);
+  }
+
+  /**
+   * Rejects uninitialized or invalid cached physical density.
+   *
+   * @param phase phase index
+   * @throws IllegalStateException if the density is not finite and positive
+   */
+  private void validateDensity(int phase) {
+    double density = system.getPhase(phase).getPhysicalProperties().getDensity();
+    if (!Double.isFinite(density) || density <= 0.0) {
+      throw new IllegalStateException("Initialize valid physical density before calculating surface tension");
+    }
   }
 }

@@ -166,14 +166,26 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTension(int numb1, int numb2) {
+    if (system.getNumberOfPhases() < 2) {
+      return 0.0;
+    }
+    if (numb1 < 0 || numb2 < 0 || numb1 >= system.getNumberOfPhases() || numb2 >= system.getNumberOfPhases()
+        || numb1 == numb2) {
+      throw new IllegalArgumentException("Surface tension requires two distinct active phase indices");
+    }
+    double tension;
     if (system.getPhase(numb1).getType() == PhaseType.GAS && system.getPhase(numb2).getType() == PhaseType.OIL) {
-      return gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
+      tension = gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else if (system.getPhase(numb1).getType() == PhaseType.GAS
         && system.getPhase(numb2).getType() == PhaseType.AQUEOUS) {
-      return gasAqueousSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
+      tension = gasAqueousSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else {
-      return liquidLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
+      tension = liquidLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     }
+    if (!Double.isFinite(tension) || tension < 0.0) {
+      throw new IllegalStateException("Interfacial-tension model returned a non-finite or negative result");
+    }
+    return tension;
   }
 
   // TODO: add unit conversion implementation to interfacial tension

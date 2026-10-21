@@ -83,23 +83,33 @@ public class GTSurfaceTension extends SurfaceTension {
     super(system);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc} A numerical failure, unconverged profile or invalid result uses a logged Parachor fallback for a gas
+   * interface, or Firozabadi-Ramley for two liquid phases. No unconverged integral is returned.
+   */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
+    if (!validateInterface(interface1, interface2)) {
+      return 0.0;
+    }
     SystemInterface localSystem;
     double surftens = 0.0;
     int refcompIndex = 0;
 
-    localSystem = this.system.clone();
-    switch (useFullGT) {
-    case 1:
-      surftens = solveFullDensityProfile(localSystem, interface1, interface2);
-      break;
-    default:
-      refcompIndex = this.getComponentWithHighestBoilingpoint();
-      surftens = solveWithRefcomp(localSystem, interface1, interface2, refcompIndex);
+    try {
+      localSystem = this.system.clone();
+      switch (useFullGT) {
+      case 1:
+        surftens = solveFullDensityProfile(localSystem, interface1, interface2);
+        break;
+      default:
+        refcompIndex = this.getComponentWithHighestBoilingpoint();
+        surftens = solveWithRefcomp(localSystem, interface1, interface2, refcompIndex);
+      }
+      return validateResult(surftens);
+    } catch (RuntimeException failure) {
+      return correlationFallback(interface1, interface2, failure);
     }
-    return surftens;
   }
 
   /**
