@@ -242,14 +242,14 @@ tolerance.
 
 The same receipt exposes the auditable first boiling-temperature moment
 
-$M_{T,V}=\sum_i \Delta V_i \overline{T}_i$
+$$M_{T,V}=\sum_i \Delta V_i \overline{T}_i$$
 
 in K liquid-volume percent through
 `getLiquidVolumeWeightedBoilingPointKelvinPercent()`. With piecewise-linear cumulative
 recovery, liquid-volume density is uniform versus temperature inside each overlap, so
 $\overline{T}_i=(T_{\mathrm{lower},i}+T_{\mathrm{upper},i})/2$. The liquid-volume-weighted mean is
 
-$\overline{T}_{V,\mathrm{range}}=\frac{M_{T,V}}{\sum_i \Delta V_i}$
+$$\overline{T}_{V,\mathrm{range}}=\frac{M_{T,V}}{\sum_i \Delta V_i}$$
 
 and is available in K and degC. First moments, unlike means, close additively when a
 range is partitioned.
@@ -967,3 +967,4 @@ source does not provide, or duplicate the existing
 column, assay, heater, or balance APIs. ASTM D1160 qualification, broader heavy-fluid property
 validation, nonlinear blend quality, conversion kinetics, and plant calibration remain separate
 evidence-gated increments.
+
