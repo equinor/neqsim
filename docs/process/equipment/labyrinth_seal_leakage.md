@@ -3,8 +3,6 @@ title: Labyrinth Seal Leakage
 description: "Gas leakage through straight-through labyrinth seals with the Stodola, Egli, Vermes, Kearton and tooth-by-tooth Neumann methods, using any NeqSim fluid."
 ---
 
-# Labyrinth seal leakage
-
 `LabyrinthSealFlowCalculator` (package `neqsim.process.equipment.compressor.seal`) estimates the gas mass flow
 through a straight-through labyrinth seal with teeth on the stator. Typical uses are the process-side labyrinth
 upstream of a dry gas seal, balance-piston labyrinths, and checking seal-gas supply against measured flow.
@@ -53,9 +51,7 @@ Egli is not defined near $n = 4.3$, where $C_t$ is singular.
 
 Each closed-form result is capped at the critical flow of the clearance:
 
-$$
-\dot m_{crit} = A\sqrt{1000\,\rho_0 p_0\,\kappa\left(\frac{2}{\kappa+1}\right)^{(\kappa+1)/(\kappa-1)}}
-$$
+$$\dot m_{crit} = A\sqrt{1000\,\rho_0 p_0\,\kappa\left(\frac{2}{\kappa+1}\right)^{(\kappa+1)/(\kappa-1)}}$$
 
 `isChoked()` reports when the cap is active. For Vermes, the flow is also treated as choked when $n + \ln r \le 0$.
 
@@ -70,18 +66,11 @@ the critical flow is the lower of the clearance limit above and this peak.
 `NEUMANN` is the modified Neumann method for teeth on the stator. It solves the pressure after each tooth instead of
 using one closed-form expression. For a trial flow $\dot m$ (pressures in Pa):
 
-$$
-p_{i+1}^2 = p_i^2 - \left(\frac{\dot m}{C_{f,i}\,\mu_i A}\right)^2 \frac{p_i}{\rho_i}
-$$
+$$p_{i+1}^2 = p_i^2 - \left(\frac{\dot m}{C_{f,i}\,\mu_i A}\right)^2 \frac{p_i}{\rho_i}$$
 
-$$
-C_{f,i} = \frac{\pi}{\pi + 2 - 5\beta_i + 2\beta_i^2}, \qquad
-\beta_i = \max\left[\left(\frac{p_i}{p_{i+1}}\right)^{(\kappa_i-1)/\kappa_i} - 1,\ 0\right]
-$$
+$$C_{f,i} = \frac{\pi}{\pi + 2 - 5\beta_i + 2\beta_i^2}, \qquad \beta_i = \max\left[\left(\frac{p_i}{p_{i+1}}\right)^{(\kappa_i-1)/\kappa_i} - 1,\ 0\right]$$
 
-$$
-\mu_0 = 1, \qquad \mu_{i>0} = \sqrt{\frac{n}{n(1-\alpha)+\alpha}}, \qquad \alpha = 1 - \frac{1}{(1 + 16.6\,c/t)^2}
-$$
+$$\mu_0 = 1, \qquad \mu_{i>0} = \sqrt{\frac{n}{n(1-\alpha)+\alpha}}, \qquad \alpha = 1 - \frac{1}{(1 + 16.6\,c/t)^2}$$
 
 - $C_{f,i}$ depends on $p_{i+1}$. Each tooth is therefore solved for its pressure ratio with a bracketed Brent search
   between the critical ratio and 1. The residual rises steadily over that interval, so the root is unique. A plain
@@ -223,3 +212,4 @@ gas. Neumann leakage is then 2 to 5 % lower.
 - [Dry gas seal condensation and conditioning](dry_gas_seal_conditioning)
 - [Seal support-system monitoring](dry_gas_seal_monitoring)
 - [Compressors](compressors)
+
