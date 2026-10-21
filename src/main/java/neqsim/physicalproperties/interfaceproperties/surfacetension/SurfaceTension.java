@@ -8,6 +8,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.physicalproperties.interfaceproperties.InterfaceProperties;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
@@ -41,6 +42,41 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
    */
   public SurfaceTension(SystemInterface system) {
     this.system = system;
+  }
+
+  /**
+   * Copies this model's configuration for another fluid without retaining a computed profile.
+   *
+   * @param target fluid whose bulk phases the copied model will use
+   * @return independently bound model with the same configuration
+   */
+  public SurfaceTension copyForSystem(SystemInterface target) {
+    SurfaceTension copy = (SurfaceTension) super.clone();
+    copy.system = target;
+    copy.clearProfile();
+    return copy;
+  }
+
+  /** Discards state-dependent profile data when a model is copied to another fluid. */
+  protected void clearProfile() {
+    // Correlations and cDFT do not retain an exposed density profile.
+  }
+
+  /**
+   * Calculates only the physical mass density required by a correlation at the current bulk state.
+   *
+   * @param index active phase index
+   * @return finite positive density in kg/m3 from the configured physical-property model
+   * @throws IllegalStateException if the density model returns a non-finite or nonpositive value
+   */
+  protected double physicalDensity(int index) {
+    PhaseInterface phase = system.getPhase(index);
+    phase.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+    double density = phase.getPhysicalProperties().getDensity();
+    if (!Double.isFinite(density) || density <= 0.0) {
+      throw new IllegalStateException("Invalid physical density for surface tension in phase " + index);
+    }
+    return density;
   }
 
   /**

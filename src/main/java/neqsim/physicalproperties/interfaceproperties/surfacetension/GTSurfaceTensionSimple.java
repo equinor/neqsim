@@ -47,6 +47,14 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     super(system);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public GTSurfaceTensionSimple copyForSystem(SystemInterface target) {
+    GTSurfaceTensionSimple copy = (GTSurfaceTensionSimple) super.copyForSystem(target);
+    copy.influenceParam = influenceParam == null ? null : influenceParam.clone();
+    return copy;
+  }
+
   /**
    * calcInfluenceParameters.
    */
@@ -449,7 +457,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /** Discards all profile data before a new calculation and after any failed integration. */
-  private void clearProfile() {
+  @Override
+  protected void clearProfile() {
     profileComplete = false;
     localSystem = null;
     den_interface = null;

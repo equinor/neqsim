@@ -9,6 +9,27 @@ NeqSim exposes surface- and interfacial-tension calculations through
 thermodynamic state: establish the expected phases first, initialize properties, select a
 model, and then evaluate the interface.
 
+Parachor and Firozabadi-Ramley initialize the configured physical mass-density model
+for the requested phases on each evaluation. This supports calls directly after a
+flash and refreshes finite density caches left by an earlier state. It does not
+initialize viscosity, conductivity or diffusion, and it does not replace a failed
+density model with an EOS estimate. Use `initProperties()` when those additional
+properties are needed.
+
+Cloning a fluid preserves its interfacial model selections and numerical parameters,
+with independent models bound to the clone's bulk phases. Model changes and flashes
+on the clone do not change the original's interfacial calculations. A copied gradient
+model must complete its own calculation before exposing density or pressure profiles.
+
+Process models now receive the clone's calculated tension where they previously could
+have used an initialization-error fallback. The three-phase pipeline regression, for
+example, uses 13.5265 mN/m instead of a 20 mN/m fallback. Its annular film closure now
+approaches the intermittent branch continuously at the unchanged bridging limit; see
+the [two-fluid model description](../process/TWOFLUIDPIPE_MODEL.md).
+
+For implementation review, see the
+[thermodynamic initialization skill](../../.github/skills/neqsim-thermodynamic-initialization/SKILL.md).
+
 ## Units and phase identity
 
 `getSurfaceTension(int, int)` and the `SystemInterface.getInterfacialTension(...)`

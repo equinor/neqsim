@@ -282,7 +282,8 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /** Discards all profile data before a new calculation and after any failed integration. */
-  private void clearProfile() {
+  @Override
+  protected void clearProfile() {
     profileComplete = false;
     localSystem = null;
     den_interface = null;

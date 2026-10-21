@@ -523,8 +523,11 @@ moved the export-line error from +1.4 to +14.7 per cent at 10 MSm3/d and pushed 
 The current stratified residual uses a bounded Andritsos-Hanratty interfacial wave enhancement
 and brackets the thinnest film root. Intermittent sections use a slug-unit balance for film and
 slug-body holdup and wall friction by default; `setSlugUnitClosureEnabled(false)` selects the
-earlier correlation. An annular film that reaches the liquid-bridging threshold falls back to
-intermittent holdup. These local closure changes require validation for the specific fluid,
+earlier correlation. An annular film approaches intermittent holdup continuously over film
+holdups 0.16–0.24, using the existing 0.08 bridging band. At and above the 0.24 blockage limit,
+only intermittent holdup is used. This removes a point switch that could cycle the oil/water
+split and viscosity after a corrected interfacial tension changed the film solution.
+Thin films retain the annular closure. These local closure changes require validation for the specific fluid,
 inclination, and rate range; they do not qualify transient severe-slug loads.
 
 #### Lean Gas Systems
@@ -2486,8 +2489,10 @@ Remaining limitations:
   regression coverage does not resolve this historical case or qualify its reported pressure drop.
 - The reproducible 3 km, 10-degree uphill gas/oil/water fixture converges with positive
   oil-over-water slip and closed phase volumes and mass flow on both 30 and 60 cells. Arrival
-  pressure changes from 7.469114 bar to 7.429146 bar (0.538% relative), while mean liquid holdup
-  changes from 0.274301 to 0.271630 (0.983%). These are numerical-refinement results for a synthetic
+  pressure changes from 13.327868 bar to 13.250389 bar (0.585% relative), while mean liquid holdup
+  changes from 0.237521 to 0.236780 (0.313%). This replay uses the calculated gas-oil tension of
+  13.5265 mN/m, independently bound cloned fluids and the continuous film-bridging closure,
+  replacing the earlier initialization-error fallback of 20 mN/m. These are numerical-refinement results for a synthetic
   regression fixture, not experimental qualification or evidence for the unavailable 73.8 km case.
 - All observations are model-internal on one line.
 

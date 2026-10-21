@@ -21,6 +21,7 @@ import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTen
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTensionSimple;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.LGTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.ParachorSurfaceTension;
+import neqsim.physicalproperties.interfaceproperties.surfacetension.SurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.SurfaceTensionInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
@@ -81,8 +82,24 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public void init(SystemInterface system) {
+    if (this.system != system) {
+      gasLiquidSurfaceTensionCalc = copyModel(gasLiquidSurfaceTensionCalc, system);
+      gasAqueousSurfaceTensionCalc = copyModel(gasAqueousSurfaceTensionCalc, system);
+      liquidLiquidSurfaceTensionCalc = copyModel(liquidLiquidSurfaceTensionCalc, system);
+    }
     this.system = system;
     init();
+  }
+
+  /**
+   * Preserves a selected model's parameters while binding an independent copy to the target fluid.
+   *
+   * @param model selected model, or null before model initialization
+   * @param target fluid whose bulk phases the copy will use
+   * @return copied model, or null for an uninitialized slot
+   */
+  private SurfaceTensionInterface copyModel(SurfaceTensionInterface model, SystemInterface target) {
+    return model == null ? null : ((SurfaceTension) model).copyForSystem(target);
   }
 
   /** {@inheritDoc} */
@@ -216,6 +233,10 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   /** {@inheritDoc} */
   @Override
   public void setInterfacialTensionModel(String phase1, String phase2, String model) {
+    if (gasLiquidSurfaceTensionCalc == null || gasAqueousSurfaceTensionCalc == null
+        || liquidLiquidSurfaceTensionCalc == null) {
+      setInterfacialTensionModel(interfacialTensionModel);
+    }
     SurfaceTensionInterface surfTensModel = null;
     if ("Linear Gradient Theory".equals(model)) {
       surfTensModel = new LGTSurfaceTension(system);
