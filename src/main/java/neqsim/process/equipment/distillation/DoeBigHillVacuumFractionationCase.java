@@ -289,4 +289,3 @@ public final class DoeBigHillVacuumFractionationCase {
     }
   }
 }
-
