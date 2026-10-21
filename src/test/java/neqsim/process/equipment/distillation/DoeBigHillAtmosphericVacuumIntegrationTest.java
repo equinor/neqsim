@@ -23,10 +23,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * End-to-end DOE Big Hill assay, heating, atmospheric, and vacuum integration.
  *
  * <p>
- * Every material stream derives from one public DOE Big Hill modeled assay. The atmospheric
- * operating point repeats the campaign's numerical integration qualification; the vacuum
- * operating point and fired-heater factors are explicit engineering assumptions. This test
- * qualifies software integration and closure, not plant yields or ASTM D1160 performance.
+ * Every material stream derives from one public DOE Big Hill modeled assay. The atmospheric operating point repeats the
+ * campaign's numerical integration qualification; the vacuum operating point and fired-heater factors are explicit
+ * engineering assumptions. This test qualifies software integration and closure, not plant yields or ASTM D1160
+ * performance.
  * </p>
  */
 public class DoeBigHillAtmosphericVacuumIntegrationTest {
@@ -55,51 +55,40 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
     assertTrue(atmospheric.getEnergyBalanceError() <= BALANCE_TOLERANCE);
 
     StreamInterface atmosphericBottoms = atmospheric.getLiquidOutStream();
-    double[] handoffComposition =
-        atmosphericBottoms.getThermoSystem().getMolarComposition().clone();
-    DoeBigHillVacuumFractionationCase vacuum =
-        DoeBigHillVacuumFractionationCase.createFromAtmosphericBottoms(
-            "DOE Big Hill connected vacuum", atmosphericBottoms, vacuumInputs());
-    assertArrayEquals(handoffComposition,
-        vacuum.getFeedStream().getThermoSystem().getMolarComposition(), 1.0e-12);
+    double[] handoffComposition = atmosphericBottoms.getThermoSystem().getMolarComposition().clone();
+    DoeBigHillVacuumFractionationCase vacuum = DoeBigHillVacuumFractionationCase
+        .createFromAtmosphericBottoms("DOE Big Hill connected vacuum", atmosphericBottoms, vacuumInputs());
+    assertArrayEquals(handoffComposition, vacuum.getFeedStream().getThermoSystem().getMolarComposition(), 1.0e-12);
 
     vacuum.getColumn().run(id);
     assertAcceptedColumn(vacuum.getColumn());
-    DoeBigHillVacuumFractionationResult vacuumResult =
-        DoeBigHillVacuumFractionationResult.evaluate(vacuum);
+    DoeBigHillVacuumFractionationResult vacuumResult = DoeBigHillVacuumFractionationResult.evaluate(vacuum);
     assertTrue(vacuumResult.getMassClosureRelativeError() <= BALANCE_TOLERANCE);
-    assertTrue(vacuumResult.getMaximumComponentMolarClosureRelativeError()
-        <= BALANCE_TOLERANCE);
+    assertTrue(vacuumResult.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
     assertTrue(vacuumResult.getColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
 
     StreamInterface atmosphericOverhead = atmospheric.getGasOutStream();
-    StreamInterface atmosphericSideDraw = atmospheric.getSideDrawStream(
-        SIDE_DRAW_TRAY, DistillationColumn.SideDrawPhase.LIQUID);
+    StreamInterface atmosphericSideDraw = atmospheric.getSideDrawStream(SIDE_DRAW_TRAY,
+        DistillationColumn.SideDrawPhase.LIQUID);
     StreamInterface vacuumOverhead = vacuum.getColumn().getGasOutStream();
     StreamInterface vacuumBottoms = vacuum.getColumn().getLiquidOutStream();
-    StreamInterface[] finalProducts = {atmosphericOverhead, atmosphericSideDraw,
-        vacuumOverhead, vacuumBottoms};
+    StreamInterface[] finalProducts = {atmosphericOverhead, atmosphericSideDraw, vacuumOverhead, vacuumBottoms};
     assertOverallMaterialClosure(furnace.getOutletStream(), finalProducts);
 
-    ProductBoilingPointDistribution atmosphericOverheadBoiling =
-        ProductBoilingPointDistribution.from(atmosphericOverhead);
-    ProductBoilingPointDistribution atmosphericSideDrawBoiling =
-        ProductBoilingPointDistribution.from(atmosphericSideDraw);
-    assertTrue(atmosphericOverheadBoiling.getMeanNormalBoilingPointKelvin()
-        < atmosphericSideDrawBoiling.getMeanNormalBoilingPointKelvin());
+    ProductBoilingPointDistribution atmosphericOverheadBoiling = ProductBoilingPointDistribution
+        .from(atmosphericOverhead);
+    ProductBoilingPointDistribution atmosphericSideDrawBoiling = ProductBoilingPointDistribution
+        .from(atmosphericSideDraw);
+    assertTrue(atmosphericOverheadBoiling.getMeanNormalBoilingPointKelvin() < atmosphericSideDrawBoiling
+        .getMeanNormalBoilingPointKelvin());
 
     ProductResult vacuumDistillate = vacuumResult.getProduct("Overhead");
     ProductResult vacuumResidue = vacuumResult.getProduct("Bottoms");
-    assertTrue(vacuumDistillate.getMeanNormalBoilingPointKelvin()
-        < vacuumResidue.getMeanNormalBoilingPointKelvin());
-    assertTrue(Double.isFinite(
-        vacuumDistillate.getNormalBoilingPointQuantileCelsius(0.10)));
-    assertTrue(Double.isFinite(
-        vacuumDistillate.getNormalBoilingPointQuantileCelsius(0.90)));
-    assertTrue(Double.isFinite(
-        vacuumResidue.getNormalBoilingPointQuantileCelsius(0.10)));
-    assertTrue(Double.isFinite(
-        vacuumResidue.getNormalBoilingPointQuantileCelsius(0.90)));
+    assertTrue(vacuumDistillate.getMeanNormalBoilingPointKelvin() < vacuumResidue.getMeanNormalBoilingPointKelvin());
+    assertTrue(Double.isFinite(vacuumDistillate.getNormalBoilingPointQuantileCelsius(0.10)));
+    assertTrue(Double.isFinite(vacuumDistillate.getNormalBoilingPointQuantileCelsius(0.90)));
+    assertTrue(Double.isFinite(vacuumResidue.getNormalBoilingPointQuantileCelsius(0.10)));
+    assertTrue(Double.isFinite(vacuumResidue.getNormalBoilingPointQuantileCelsius(0.90)));
   }
 
   private static Stream createCrudeInlet() {
@@ -127,10 +116,8 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
     return furnace;
   }
 
-  private static DistillationColumn createAtmosphericColumn(
-      StreamInterface heatedFeed) {
-    DistillationColumn column =
-        new DistillationColumn("DOE Big Hill connected atmospheric", 8, true, true);
+  private static DistillationColumn createAtmosphericColumn(StreamInterface heatedFeed) {
+    DistillationColumn column = new DistillationColumn("DOE Big Hill connected atmospheric", 8, true, true);
     column.addFeedStream(heatedFeed, 4);
     column.setTopPressure(1.2);
     column.setBottomPressure(1.5);
@@ -154,12 +141,9 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
   private static void assertAcceptedColumn(DistillationColumn column) {
     String diagnostics = column.getConvergenceDiagnostics();
     assertTrue(column.solved(), diagnostics);
-    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL,
-        column.getLastSolverTypeUsed(), diagnostics);
-    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS,
-        column.getLastSolveStatus(), diagnostics);
-    assertNotEquals(DistillationColumn.SolveStatus.FAILED,
-        column.getLastSolveStatus(), diagnostics);
+    assertEquals(DistillationColumn.SolverType.MESH_RESIDUAL, column.getLastSolverTypeUsed(), diagnostics);
+    assertNotEquals(DistillationColumn.SolveStatus.FALLBACK_PRODUCTS, column.getLastSolveStatus(), diagnostics);
+    assertNotEquals(DistillationColumn.SolveStatus.FAILED, column.getLastSolveStatus(), diagnostics);
   }
 
   private static void assertUtilityAndEmissionsReceipt(FiredHeater furnace) {
@@ -168,23 +152,18 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
     double fuelKgPerHour = furnace.getFuelConsumption("kg/hr");
     double co2KgPerHour = furnace.getCO2Emissions("kg/hr");
     assertTrue(Double.isFinite(absorbedDutyW) && absorbedDutyW > 0.0);
-    assertEquals(absorbedDutyW / FURNACE_EFFICIENCY, firedDutyW,
-        1.0e-10 * firedDutyW);
-    assertEquals(firedDutyW / FUEL_LHV_J_PER_KG * 3600.0, fuelKgPerHour,
-        1.0e-10 * fuelKgPerHour);
-    assertEquals(fuelKgPerHour * FUEL_CO2_KG_PER_KG, co2KgPerHour,
-        1.0e-10 * co2KgPerHour);
+    assertEquals(absorbedDutyW / FURNACE_EFFICIENCY, firedDutyW, 1.0e-10 * firedDutyW);
+    assertEquals(firedDutyW / FUEL_LHV_J_PER_KG * 3600.0, fuelKgPerHour, 1.0e-10 * fuelKgPerHour);
+    assertEquals(fuelKgPerHour * FUEL_CO2_KG_PER_KG, co2KgPerHour, 1.0e-10 * co2KgPerHour);
   }
 
-  private static void assertOverallMaterialClosure(StreamInterface feed,
-      StreamInterface[] products) {
+  private static void assertOverallMaterialClosure(StreamInterface feed, StreamInterface[] products) {
     double feedMassFlow = feed.getFlowRate("kg/hr");
     double productMassFlow = 0.0;
     for (StreamInterface product : products) {
       productMassFlow += product.getFlowRate("kg/hr");
     }
-    assertEquals(feedMassFlow, productMassFlow,
-        BALANCE_TOLERANCE * feedMassFlow);
+    assertEquals(feedMassFlow, productMassFlow, BALANCE_TOLERANCE * feedMassFlow);
 
     double[] feedComposition = feed.getThermoSystem().getMolarComposition();
     double feedMolarFlow = feed.getFlowRate("mol/hr");
@@ -192,13 +171,12 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
       double feedComponentFlow = feedMolarFlow * feedComposition[i];
       double productComponentFlow = 0.0;
       for (StreamInterface product : products) {
-        assertEquals(feedComposition.length,
-            product.getThermoSystem().getNumberOfComponents());
-        productComponentFlow += product.getFlowRate("mol/hr")
-            * product.getThermoSystem().getMolarComposition()[i];
+        assertEquals(feedComposition.length, product.getThermoSystem().getNumberOfComponents());
+        productComponentFlow += product.getFlowRate("mol/hr") * product.getThermoSystem().getMolarComposition()[i];
       }
       assertEquals(feedComponentFlow, productComponentFlow,
           Math.max(1.0e-7, BALANCE_TOLERANCE * Math.abs(feedComponentFlow)));
     }
   }
 }
+
