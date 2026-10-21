@@ -962,9 +962,9 @@ recomputes utility/emissions identities from caller-owned assumptions.
 
 The connected sensitivity overload is the Java prerequisite for the next dependency-ready validation:
 execute the same public API through Python/JPype and publish a rendered atmospheric/vacuum
-operating-sensitivity receipt without promoting the numerical settings to plant data. Do not publish
-an unexecuted notebook, mix Sarir operating or plant-yield evidence into the DOE case, invent a
-matched vacuum-plant benchmark that the public source does not provide, or duplicate the existing
+operating-sensitivity receipt without promoting the numerical settings to plant data. Do not mix
+Sarir operating or plant-yield evidence into the DOE case. Do not publish an unexecuted notebook,
+invent a matched vacuum-plant benchmark that the public source does not provide, or duplicate the existing
 column, assay, heater, or balance APIs. ASTM D1160 qualification, broader heavy-fluid property
 validation, nonlinear blend quality, conversion kinetics, and plant calibration remain separate
 evidence-gated increments.
