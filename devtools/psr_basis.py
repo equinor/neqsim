@@ -172,3 +172,16 @@ def skill_dir():
     """Folder of the skill (templates and references); works in the repo layout only."""
     here = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(os.path.dirname(here), ".github", "skills", "process-study-report")
+
+
+def templates_dir():
+    """Folder with the basis and standards-register templates.
+
+    The packaged ``psr_templates`` folder next to the modules works in a repository checkout and in an installed
+    package; the skill folder is only the fallback.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    packaged = os.path.join(here, "psr_templates")
+    if os.path.isdir(packaged):
+        return packaged
+    return os.path.join(skill_dir(), "templates")

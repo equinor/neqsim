@@ -18,7 +18,24 @@ DEFAULT_TOLERANCES = {
     "energy_abs_kw": 1.0,      # absolute floor below which a residual always passes
     "mass_abs_kg_h": 1.0e-3,   # absolute floor (kg/h)
     "overall_mass_rel": 1.0e-3,
+    "energy_dt_bookkeeping_k": 2.0,    # relaxed energy limit (equivalent temperature shift, K) for units whose NeqSim energy bookkeeping is not closed
+    "energy_rel_bookkeeping": 2.0e-2,  # fallback relative limit when no heat capacity is available
+    "recycle_mass_rel": 1.0e-3,        # relaxed mass limit for the tear residual of a Recycle unit
 }
+
+# Units whose balance residual is a property of the NeqSim implementation, not of the flowsheet. They are
+# reported as NOTE (never as PASS) and only while the residual stays below the relaxed tolerance above;
+# a larger residual is still a genuine FAIL. Mass and component residuals of ordinary units are never relaxed.
+BOOKKEEPING_ENERGY_CLASSES = (
+    ("ComponentSplitter", "component splitter: every outlet is re-flashed at the inlet temperature and pressure, "
+                          "so the energy residual is the implicit heat of the separation, not a closure error"),
+)
+BOOKKEEPING_ENERGY_CATEGORIES = {
+    "separator": "separator or scrubber: the gas and liquid outlets are re-flashed isothermally at the vessel "
+                 "temperature and pressure, so the energy residual is an implicit re-flash term, not a closure error",
+}
+RECYCLE_NOTE = ("recycle: the mass residual is the tear-stream convergence residual of the iteration, "
+                "not a flowsheet closure error")
 
 # Unit categories whose energy balance is defined by stream enthalpies alone.
 ADIABATIC = {"valve", "mixer", "splitter", "separator", "ejector", "recycle", "pipe"}
@@ -58,8 +75,29 @@ def _component_residual(in_ids, out_ids, streams, case, comps):
     return worst
 
 
+def bookkeeping_note(unit, check):
+    """Explanation when a failing ``check`` of ``unit`` is a known implementation property, else None.
+
+    Args:
+        unit: equipment record (``category`` and ``java_class`` are used).
+        check: ``"energy"`` or ``"mass"``.
+    """
+    if check == "energy":
+        for key, text in BOOKKEEPING_ENERGY_CLASSES:
+            if key in str(unit.get("java_class") or ""):
+                return text
+        return BOOKKEEPING_ENERGY_CATEGORIES.get(unit["category"])
+    if check == "mass" and unit["category"] == "recycle":
+        return RECYCLE_NOTE
+    return None
+
+
 def unit_balance(unit, streams, case, comps, tol):
-    """Balance of one unit for one case."""
+    """Balance of one unit for one case.
+
+    A failing check is relabelled NOTE only for the equipment classes in :func:`bookkeeping_note` and only while
+    the residual is inside the relaxed tolerance; ``*_note`` then carries the reason.
+    """
     res = unit["results"].get(case, {})
     m_in, miss_in = _sum_streams(unit["inlet_streams"], streams, case, "mass_kg_h")
     m_out, miss_out = _sum_streams(unit["outlet_streams"], streams, case, "mass_kg_h")
@@ -70,10 +108,16 @@ def unit_balance(unit, streams, case, comps, tol):
            "mass_in_kg_h": m_in, "mass_out_kg_h": m_out, "mass_res_kg_h": m_out - m_in,
            "mass_rel": (abs(m_out - m_in) / throughput) if throughput > 0 else 0.0}
     rec["mass_status"] = "PASS" if (abs(m_out - m_in) <= tol["mass_abs_kg_h"] or rec["mass_rel"] <= tol["mass_rel"]) else "FAIL"
+    rec["mass_note"] = ""
+    note = bookkeeping_note(unit, "mass")
+    if rec["mass_status"] == "FAIL" and note and rec["mass_rel"] <= tol["recycle_mass_rel"]:
+        rec["mass_status"], rec["mass_note"] = "NOTE", note
     comp_res = _component_residual(unit["inlet_streams"], unit["outlet_streams"], streams, case, comps)
     rec["component_max_res_kg_h"] = comp_res
     rec["component_status"] = "PASS" if (comp_res <= tol["mass_abs_kg_h"] or
                                          (throughput > 0 and comp_res / throughput <= tol["component_rel"])) else "FAIL"
+    if rec["component_status"] == "FAIL" and note and throughput > 0 and comp_res / throughput <= tol["recycle_mass_rel"]:
+        rec["component_status"], rec["component_note"] = "NOTE", note
     rec["h_in_kw"], rec["h_out_kw"] = h_in, h_out
     q = res.get("duty_kw")
     w = res.get("power_kw")
@@ -97,14 +141,46 @@ def unit_balance(unit, streams, case, comps, tol):
         scale = max(abs(h_in), abs(h_out), abs(_num(q)) + abs(_num(w)))
         rec["energy_res_kw"] = residual
         rec["energy_rel"] = abs(residual) / scale if scale > 0 else 0.0
+        cp_flow = sum((_num(r.get("mass_kg_h")) / 3600.0) * _num(r.get("cp_kj_kg_k")) for r in
+                      (streams[s]["results"].get(case, {}) for s in unit["inlet_streams"]) if r.get("available"))
+        rec["energy_dt_equiv_k"] = abs(residual) / cp_flow if cp_flow > 0 else None
         ok = abs(residual) <= tol["energy_abs_kw"] or rec["energy_rel"] <= tol["energy_rel"]
         rec["energy_status"] = "PASS" if ok else "FAIL"
         rec["energy_note"] = ""
+        note = bookkeeping_note(unit, "energy")
+        within = (rec["energy_dt_equiv_k"] <= tol["energy_dt_bookkeeping_k"]) if rec["energy_dt_equiv_k"] is not None \
+            else rec["energy_rel"] <= tol["energy_rel_bookkeeping"]
+        if not ok and note and within:
+            rec["energy_status"], rec["energy_note"] = "NOTE", note
     return rec
 
 
-def area_balances(data, case, tol):
-    """Boundary balance of every area (mass, energy with duties and work)."""
+def _explained(residual, attributed, scale, rel_tol, abs_tol):
+    """True when what is left of ``residual`` after removing the bookkeeping part ``attributed`` is within tolerance."""
+    left = abs(residual - attributed)
+    return left <= abs_tol or (scale > 0 and left / scale <= rel_tol)
+
+
+def _note_status(status, residual, units, key_status, key_res, scale, rel_tol, abs_tol, tol_limit):
+    """Relabel a failing boundary check as NOTE when the NOTE-class unit residuals inside it explain it."""
+    if status != "FAIL":
+        return status, ""
+    noted = [u for u in units if u.get(key_status) == "NOTE" and u.get(key_res) is not None]
+    if not noted:
+        return status, ""
+    attributed = sum(u[key_res] for u in noted)
+    if tol_limit is not None and scale > 0 and abs(residual) / scale > tol_limit:
+        return status, ""
+    if _explained(residual, attributed, scale, rel_tol, abs_tol):
+        return "NOTE", "explained by the bookkeeping residual of: %s" % ", ".join(u["tag"] for u in noted[:6])
+    return status, ""
+
+
+def area_balances(data, case, tol, unit_recs=None):
+    """Boundary balance of every area (mass, energy with duties and work).
+
+    ``unit_recs`` (from :func:`unit_balance`) lets a failing area check be explained by NOTE-class units inside it.
+    """
     streams = _stream_index(data)
     unit_area = {u["tag"]: u["area"] for u in data["equipment"]}
     rows = []
@@ -138,18 +214,25 @@ def area_balances(data, case, tol):
         e_res = (h_out - h_in) - (q + w)
         scale = max(abs(h_in), abs(h_out), abs(q) + abs(w))
         e_rel = abs(e_res) / scale if scale > 0 else 0.0
+        mass_status = "PASS" if (abs(mass_res) <= tol["mass_abs_kg_h"] or mass_rel <= tol["mass_rel"]) else "FAIL"
+        energy_status = "PASS" if (abs(e_res) <= tol["energy_abs_kw"] or e_rel <= tol["energy_rel"]) else "FAIL"
+        members = [u for u in (unit_recs or []) if u["area"] == name]
+        mass_status, mass_note = _note_status(mass_status, mass_res, members, "mass_status", "mass_res_kg_h", throughput,
+                                              tol["mass_rel"], tol["mass_abs_kg_h"], tol["recycle_mass_rel"])
+        energy_status, energy_note = _note_status(energy_status, e_res, members, "energy_status", "energy_res_kw", scale,
+                                                  tol["energy_rel"], tol["energy_abs_kw"], None)
         rows.append({
             "area": name, "n_inflow": len(inflow), "n_outflow": len(outflow),
             "mass_in_kg_h": m_in, "mass_out_kg_h": m_out, "mass_res_kg_h": mass_res, "mass_rel": mass_rel,
-            "mass_status": "PASS" if (abs(mass_res) <= tol["mass_abs_kg_h"] or mass_rel <= tol["mass_rel"]) else "FAIL",
+            "mass_status": mass_status, "mass_note": mass_note,
             "h_in_kw": h_in, "h_out_kw": h_out, "duty_kw": q, "power_kw": w, "energy_res_kw": e_res, "energy_rel": e_rel,
-            "energy_status": "PASS" if (abs(e_res) <= tol["energy_abs_kw"] or e_rel <= tol["energy_rel"]) else "FAIL",
+            "energy_status": energy_status, "energy_note": energy_note,
             "inflow_streams": inflow, "outflow_streams": outflow,
         })
     return rows
 
 
-def overall_balance(data, case, tol):
+def overall_balance(data, case, tol, unit_recs=None):
     """Plant-level boundary balance: feeds in, products out, all duties and work."""
     streams = _stream_index(data)
     feeds = [s["id"] for s in data["streams"] if s["kind"] == "feed"]
@@ -172,13 +255,20 @@ def overall_balance(data, case, tol):
     e_res = (h_out - h_in) - (q_total + w_total)
     scale = max(abs(h_in), abs(h_out), abs(q_total) + abs(w_total))
     e_rel = abs(e_res) / scale if scale > 0 else 0.0
+    mass_status = "PASS" if mass_rel <= tol["overall_mass_rel"] else "FAIL"
+    energy_status = "PASS" if (abs(e_res) <= tol["energy_abs_kw"] or e_rel <= tol["energy_rel"]) else "FAIL"
+    members = list(unit_recs or [])
+    mass_status, mass_note = _note_status(mass_status, m_out - m_in, members, "mass_status", "mass_res_kg_h", throughput,
+                                          tol["overall_mass_rel"], tol["mass_abs_kg_h"], tol["recycle_mass_rel"])
+    energy_status, energy_note = _note_status(energy_status, e_res, members, "energy_status", "energy_res_kw", scale,
+                                              tol["energy_rel"], tol["energy_abs_kw"], None)
     return {
         "n_feeds": len(feeds), "n_products": len(products), "feed_streams": feeds, "product_streams": products,
         "mass_in_kg_h": m_in, "mass_out_kg_h": m_out, "mass_res_kg_h": m_out - m_in, "mass_rel": mass_rel,
-        "mass_status": "PASS" if mass_rel <= tol["overall_mass_rel"] else "FAIL",
+        "mass_status": mass_status, "mass_note": mass_note,
         "h_in_kw": h_in, "h_out_kw": h_out, "duty_kw": q_total, "power_kw": w_total,
         "energy_res_kw": e_res, "energy_rel": e_rel,
-        "energy_status": "PASS" if (abs(e_res) <= tol["energy_abs_kw"] or e_rel <= tol["energy_rel"]) else "FAIL",
+        "energy_status": energy_status, "energy_note": energy_note,
         "components": comp_rows, "missing_streams": miss_f + miss_p,
     }
 
@@ -200,13 +290,13 @@ def compute_balances(data, tolerances=None):
     comps = [c["name"] for c in data["components"]]
     out = {"tolerances": tol, "sign_convention": "Q and W positive when added to the process fluid; "
            "sum(H_out) - sum(H_in) = Q + W", "cases": {}, "summary": {}}
-    counts = {"PASS": 0, "FAIL": 0, "N/A": 0}
+    counts = {"PASS": 0, "FAIL": 0, "NOTE": 0, "N/A": 0}
     for case in data["cases"]:
         cid = case["id"]
         units = [unit_balance(u, streams, cid, comps, tol) for u in data["equipment"]
                  if u["category"] != "logic" and (u["inlet_streams"] or u["outlet_streams"])]
-        areas = area_balances(data, cid, tol)
-        overall = overall_balance(data, cid, tol)
+        areas = area_balances(data, cid, tol, units)
+        overall = overall_balance(data, cid, tol, units)
         out["cases"][cid] = {"units": units, "areas": areas, "overall": overall}
         for rec in units:
             for key in ("mass_status", "component_status", "energy_status"):
@@ -217,13 +307,38 @@ def compute_balances(data, tolerances=None):
         counts[overall["mass_status"]] += 1
         counts[overall["energy_status"]] += 1
     out["summary"] = counts
-    out["fail_items"] = [
-        {"case": cid, "level": level, "id": rec.get("tag") or rec.get("area") or "overall", "check": key,
-         "residual": rec.get(key.replace("_status", "_res_kg_h")) if key != "energy_status" else rec.get("energy_res_kw")}
-        for cid, blocks in out["cases"].items()
-        for level, recs in (("unit", blocks["units"]), ("area", blocks["areas"]), ("overall", [blocks["overall"]]))
-        for rec in recs for key in ("mass_status", "component_status", "energy_status") if rec.get(key) == "FAIL"]
+    out["fail_items"] = _status_items(out, "FAIL")
+    out["note_items"] = _status_items(out, "NOTE")
     return out
+
+
+def _residual(rec, key):
+    """Residual belonging to a status key (kg/h for mass and component checks, kW for energy)."""
+    if key == "energy_status":
+        return rec.get("energy_res_kw")
+    if key == "component_status":
+        return rec.get("component_max_res_kg_h")
+    return rec.get("mass_res_kg_h")
+
+
+def _status_items(result, status):
+    """List every balance check with the given status (FAIL or NOTE) across cases and levels."""
+    items = []
+    for cid, blocks in result["cases"].items():
+        for level, recs in (("unit", blocks["units"]), ("area", blocks["areas"]), ("overall", [blocks["overall"]])):
+            for rec in recs:
+                for key in ("mass_status", "component_status", "energy_status"):
+                    if rec.get(key) != status:
+                        continue
+                    item = {"case": cid, "level": level, "id": rec.get("tag") or rec.get("area") or "overall", "check": key,
+                            "residual": _residual(rec, key)}
+                    note = rec.get(key.replace("_status", "_note"))
+                    if status == "NOTE":
+                        item["note"] = note or "bookkeeping residual of a NeqSim equipment type"
+                        if key == "energy_status" and rec.get("energy_dt_equiv_k") is not None:
+                            item["note"] += "; equals %.2f K of inlet heat-capacity flow" % rec["energy_dt_equiv_k"]
+                    items.append(item)
+    return items
 
 
 def utility_summary(data, case):

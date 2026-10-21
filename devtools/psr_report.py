@@ -14,6 +14,7 @@ Token syntax (used in basis narrative strings and in generated text)::
 """
 import datetime
 import json
+import math
 import os
 import re
 import textwrap
@@ -75,9 +76,19 @@ def compute_facts(data, balances):
         facts["max_unit_mass_rel_pct_" + cid] = 100.0 * max([u["mass_rel"] for u in units] or [0.0])
         facts["n_unit_fail_" + cid] = sum(1 for u in units for k in ("mass_status", "component_status", "energy_status") if u[k] == "FAIL")
         facts["n_unit_checks_" + cid] = sum(1 for u in units for k in ("mass_status", "component_status", "energy_status") if u[k] != "N/A")
+        facts["n_unit_note_" + cid] = sum(1 for u in units for k in ("mass_status", "component_status", "energy_status") if u[k] == "NOTE")
     facts["n_balance_fail_total"] = balances["summary"]["FAIL"]
+    facts["n_balance_note_total"] = balances["summary"].get("NOTE", 0)
     facts["n_balance_pass_total"] = balances["summary"]["PASS"]
     return facts
+
+
+def significant(value, digits):
+    """Fixed-point text with ``digits`` significant figures (never an exponent), e.g. 0.7517 -> 0.7517, 60012 -> 60010."""
+    if value == 0:
+        return "0"
+    decimals = max(0, digits - 1 - int(math.floor(math.log10(abs(value)))))
+    return "%.*f" % (decimals, value)
 
 
 class Resolver:
@@ -115,7 +126,7 @@ class Resolver:
             self.errors.append(ref)
             return "n/a"
         if isinstance(val, (int, float)):
-            out = format(val, spec) if spec else fmt_value(float(val), 4)
+            out = significant(float(val), int(spec[3:])) if spec and spec.startswith("sig") else (format(val, spec) if spec else fmt_value(float(val), 4))
             if not spec and float(val).is_integer() and abs(val) < 1e7:
                 out = "%d" % val
         else:
@@ -382,13 +393,13 @@ class ReportBuilder:
                "All streams were solved for [[fact:n_cases]] operating cases.", track=track)
         header = ["Quantity"] + ["Case %s" % c for c in self.cases]
         rows = [
-            ["Boundary feed, mass flow (kg/h)"] + ["[[fact:feed_mass_%s|.0f]]" % c for c in self.cases],
-            ["Boundary products, mass flow (kg/h)"] + ["[[fact:product_mass_%s|.0f]]" % c for c in self.cases],
+            ["Boundary feed, mass flow (kg/h)"] + ["[[fact:feed_mass_%s|sig4]]" % c for c in self.cases],
+            ["Boundary products, mass flow (kg/h)"] + ["[[fact:product_mass_%s|sig4]]" % c for c in self.cases],
             ["Overall mass balance residual (% of feed)"] + ["[[fact:mass_rel_pct_%s|.2e]]" % c for c in self.cases],
-            ["Overall energy balance residual (kW)"] + ["[[fact:energy_res_%s|.1f]]" % c for c in self.cases],
-            ["Compressor and pump shaft power (kW)"] + ["[[fact:power_total_%s|.0f]]" % c for c in self.cases],
-            ["Cooling duty (kW, removed)"] + ["[[fact:cooling_total_%s|.0f]]" % c for c in self.cases],
-            ["Heating duty (kW, added)"] + ["[[fact:heating_total_%s|.0f]]" % c for c in self.cases]]
+            ["Overall energy balance residual (kW)"] + ["[[fact:energy_res_%s|sig4]]" % c for c in self.cases],
+            ["Compressor and pump shaft power (kW)"] + ["[[fact:power_total_%s|sig4]]" % c for c in self.cases],
+            ["Cooling duty (kW, removed)"] + ["[[fact:cooling_total_%s|sig4]]" % c for c in self.cases],
+            ["Heating duty (kW, added)"] + ["[[fact:heating_total_%s|sig4]]" % c for c in self.cases]]
         rows = [[self.res.expand(c) for c in r] for r in rows]
         self.table(header, rows, caption="Principal results by operating case (all values computed from the extracted model data)",
                    widths=[75] + [30] * len(self.cases), font=9)
@@ -399,7 +410,8 @@ class ReportBuilder:
         self.P("Limitations", bold=True)
         gaps = b.get("data_gaps", [])
         self.P("[[fact:n_unit_fail_%s]] of [[fact:n_unit_checks_%s]] unit-level balance checks in case %s exceed the stated "
-               "tolerance; see Section 8.4." % (self.cases[0], self.cases[0], self.cases[0]), track=track)
+               "tolerance and [[fact:n_unit_note_%s]] are classified as NeqSim bookkeeping residuals (not closure errors); "
+               "see Section 8.4." % (self.cases[0], self.cases[0], self.cases[0], self.cases[0]), track=track)
         for gap in gaps[:int(self.opt.get("exec_gap_count", 6))]:
             self.P("%s: %s" % (gap["item"].rstrip("."), gap["effect_on_conclusions"]), style="List Bullet", track=track)
         self.P("The report is issued as %s. See Section 3.6 for the complete list of data gaps." % b["document"]["readiness"], track=track)
@@ -681,7 +693,17 @@ class ReportBuilder:
                            caption="Documented explanations for balance checks outside tolerance", font=7.5, widths=[40, 130],
                            align=["left", "left"])
         else:
-            self.P("All balance checks are within tolerance.")
+            self.P("All balance checks are within tolerance or classified below as NeqSim bookkeeping notes.")
+        notes = self.balances.get("note_items", [])
+        if notes:
+            self.P("Balance residuals classified as NeqSim bookkeeping (%d). The residual is shown; it is not a closure test of the "
+                   "flowsheet because the equipment type does not conserve energy (separator and scrubber outlets are re-flashed "
+                   "isothermally, component splitters re-flash at inlet conditions) or the residual is the recycle tear convergence "
+                   "residual. A residual above the relaxed tolerance stays a FAIL." % len(notes), bold=True)
+            rows = [[n["case"], n["level"], n["id"], n["check"], fmt_value(n["residual"], 4), n["note"]] for n in notes]
+            self.table(["Case", "Level", "Item", "Check", "Residual (kg/h or kW)", "Reason"], rows,
+                       caption="Balance residuals classified as equipment bookkeeping (NOTE)", font=7,
+                       widths=[10, 14, 34, 28, 26, 60], align=["left"] * 6)
 
     def _case_comparison(self, figure_dir):
         import matplotlib
@@ -764,7 +786,7 @@ class ReportBuilder:
         rows = []
         for u in data["equipment"]:
             des = ", ".join("%s=%s" % (k, fmt_value(v, 3)) for k, v in (u.get("design") or {}).items())
-            rows.append([u["tag"], u["java_class"], u["category"], u["area"], " ".join(u["inlet_streams"]), " ".join(u["outlet_streams"]), des or "n/a"])
+            rows.append([u["tag"], u["java_class"], u["category"] + (" (generic symbol)" if u["category"] == "other" else ""), u["area"], " ".join(u["inlet_streams"]), " ".join(u["outlet_streams"]), des or "n/a"])
         self.table(["Tag", "Model type", "Category", "Area", "Inlet streams", "Outlet streams", "Design data in model"], rows,
                    caption="Equipment register (every modelled unit operation)", font=7, widths=[48, 42, 24, 36, 86, 86, 50], align=["left"] * 7)
         rows = []

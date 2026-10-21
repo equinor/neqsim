@@ -2398,5 +2398,23 @@
  ],
  "mass and energy balance report": [
   "process-study-report"
+ ],
+ "process-report": [
+  "process-study-report"
+ ],
+ "neqsim process-report": [
+  "process-study-report"
+ ],
+ "process report command": [
+  "process-study-report"
+ ],
+ "one-step process report": [
+  "process-study-report"
+ ],
+ "cases.yaml": [
+  "process-study-report"
+ ],
+ "operating cases overrides": [
+  "process-study-report"
  ]
 }

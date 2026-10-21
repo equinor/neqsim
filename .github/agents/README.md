@@ -41,12 +41,14 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 |-------|---------|---------|
 | **solve-task** | `@solve-task <description>` | **End-to-end task solving** with report generation (3-step workflow) |
 | **solve-process** | `@solve-process <description>` | **Process model/notebook** → reusable flowsheet, staged convergence and physical validation (skips formal reporting) |
+| **process-study-report** | `@process-study-report <model and purpose>` | **Process-study report for any model** → basis, all-stream tables per case, balances, BFD/PFD sheets, standards register and validation via `neqsim process-report` ([how-to](../../docs/development/PROCESS_STUDY_REPORT.md)) |
 
 **Examples:**
 ```
 @solve-task JT cooling for rich gas at 100 bara
 @solve-task field development NPV per NORSOK Z-013
 @solve-process TEG dehydration for 50 MMSCFD wet gas
+@process-study-report report with PFDs and stream tables for step2_analysis/model.py, cases A and B
 ```
 
 ### PaperLab Writing & Publishing

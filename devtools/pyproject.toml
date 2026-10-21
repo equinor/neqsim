@@ -49,6 +49,7 @@ py-modules = [
     "ensure_on_path", "paperlab_install", "new_skill", "neqsim_doctor", "onboard",
     "neqsim_try", "neqsim_contribute", "java_locator", "doc_retriever", "stid_download",
     "process_study_report", "psr_extract", "psr_balances", "psr_basis", "psr_diagrams", "psr_report", "psr_validate", "psr_demo",
+    "process_report", "psr_draft",
 ]
 packages = [
     "neqsim_runner",
@@ -57,10 +58,12 @@ packages = [
     "task_template.step1_scope_and_research",
     "task_template.step2_analysis",
     "task_template.step3_report",
+    "psr_templates",
 ]
 
 [tool.setuptools.package-data]
 task_template = ["*", "*/*", "*/*/*", "*/*/*/*"]
+psr_templates = ["*.yaml"]
 
 [tool.setuptools.exclude-package-data]
 "*" = ["__pycache__/*", "*.pyc"]

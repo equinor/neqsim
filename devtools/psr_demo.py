@@ -71,3 +71,54 @@ def build_demo_model(feed_kg_h=20000.0, compressor_outlet_bara=90.0):
     model.add("compression", area2)
     model.run()
     return model
+
+
+def build_large_model(n_trains=18, areas=3):
+    """Build a large synthetic ``ProcessModel`` (about 8 streams per train) for performance checks.
+
+    Each train is feed, separator, compressor, cooler, scrubber and a liquid valve into a common collector
+    mixer of its area; trains are spread over ``areas`` areas.
+
+    Args:
+        n_trains: number of parallel trains.
+        areas: number of model areas.
+
+    Returns:
+        A solved multi-area ``ProcessModel``.
+    """
+    from jneqsim import neqsim
+
+    fluid = neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, 30.0)
+    for name, amount in (("methane", 0.80), ("ethane", 0.08), ("propane", 0.05), ("n-butane", 0.03), ("n-hexane", 0.02),
+                         ("water", 0.02)):
+        fluid.addComponent(name, amount)
+    fluid.setMixingRule("classic")
+    fluid.setMultiPhaseCheck(True)
+    eq = neqsim.process.equipment
+    model = neqsim.process.processmodel.ProcessModel()
+    per_area = max(1, -(-n_trains // areas))
+    for a in range(areas):
+        system = neqsim.process.processmodel.ProcessSystem()
+        collector = eq.mixer.Mixer("collector %d" % (a + 1))
+        count = 0
+        for t in range(a * per_area, min(n_trains, (a + 1) * per_area)):
+            feed = eq.stream.Stream("feed %d" % (t + 1), fluid.clone())
+            feed.setFlowRate(5000.0 + 100.0 * t, "kg/hr")
+            sep = eq.separator.Separator("separator %d" % (t + 1), feed)
+            comp = eq.compressor.Compressor("compressor %d" % (t + 1), sep.getGasOutStream())
+            comp.setOutletPressure(60.0)
+            comp.setIsentropicEfficiency(0.75)
+            cool = eq.heatexchanger.Cooler("cooler %d" % (t + 1), comp.getOutletStream())
+            cool.setOutTemperature(273.15 + 35.0)
+            scrub = eq.separator.Separator("scrubber %d" % (t + 1), cool.getOutletStream())
+            valve = eq.valve.ThrottlingValve("liquid valve %d" % (t + 1), scrub.getLiquidOutStream())
+            valve.setOutletPressure(30.0)
+            collector.addStream(valve.getOutletStream())
+            for unit in (feed, sep, comp, cool, scrub, valve):
+                system.add(unit)
+            count += 1
+        if count:
+            system.add(collector)
+            model.add("area %d" % (a + 1), system)
+    model.run()
+    return model

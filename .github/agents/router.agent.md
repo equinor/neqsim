@@ -65,6 +65,7 @@ Analyze the request and match it to one or more agents:
 | Whole-plant well-to-export model with all wells and formation fluids, ProcessPilot benchmark, model calibrated to PDM/plant data | `enterprise-process-notebook-agent` (Equinor plugin) else `@process-model` + `@plant-data` | `enterprise-well-production-routing-agent`, `enterprise-reservoir-history-match-agent`, `enterprise-process-model-build-verify-agent` |
 | Reservoir simulator from open data (OPM Flow), history match and forecast, VFP lift curves | `reservoir-simulator-agent` / `reservoir-history-match-agent` (community; enterprise variants for PDM/OSDU) | `near-well-injectivity-agent`, `fluid-characterization-agent`, `@pvt-simulation` |
 | Quick process sim, working notebook fast | `@solve-process` | — |
+| Process study report, design basis, heat and material balance, stream tables, PFD/BFD drawings of a NeqSim model, `neqsim process-report` | `@process-study-report` | `@solve-process` / `@process-model` / `@extract-process` when the model does not exist yet; `@standards-review` for a requirement set; loads `process-study-report` |
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability-scout` | — |
 | Complex multi-discipline task needing pre-assessment | `@capability-scout` | then specialist agents |
 | Engineering deliverables, PFD, alarm schedule, spare parts, thermal utilities, noise assessment, study class A/B deliverables | `@engineering-deliverables` | `@process-model` for process system, `@field-development` for full study |

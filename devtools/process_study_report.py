@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 import sys
+import time
 
 import psr_balances
 import psr_basis
@@ -80,6 +81,7 @@ def build_diagrams(data, basis, out_dir, max_units_per_sheet=14, dpi=220):
     pfd = psr_diagrams.build_pfd(data, os.path.join(ddir, "pfd"),
                                  title_block=_title_block(basis, "PFD", "Equipment data shown for operating case %s (%s)" % (case, label)),
                                  sheets=basis.get("pfd_sheets"), max_units_per_sheet=max_units_per_sheet,
+                                 layout_overrides=basis.get("layout_overrides"),
                                  equipment_data=default_equipment_data(data, case))
     pages = []
     bfd_pngs = psr_report.render_pdf_pages(bfd["pdf"], fdir, "bfd", dpi=dpi)
@@ -105,18 +107,30 @@ def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_s
         allow_fail: when False a failing validation raises ``RuntimeError``.
     """
     os.makedirs(out_dir, exist_ok=True)
+    clock = [time.time()]
+    timings = {}
+
+    def lap(name):
+        now = time.time()
+        timings[name] = round(now - clock[0], 2)
+        clock[0] = now
+
     data_dir = os.path.join(out_dir, "data")
     exports = psr_extract.write_outputs(data, data_dir)
+    lap("exports")
     balances = psr_balances.compute_balances(data, tolerances or basis.get("tolerances"))
     with open(os.path.join(data_dir, "balances.json"), "w", encoding="utf-8") as fh:
         json.dump(balances, fh, indent=1)
+    lap("balances")
     diagrams = build_diagrams(data, basis, out_dir, max_units_per_sheet=max_units_per_sheet)
+    lap("diagrams")
     report_dir = os.path.join(out_dir, "report")
     os.makedirs(report_dir, exist_ok=True)
     docx_path = os.path.join(report_dir, "%s_rev%s.docx" % (basis["document"]["document_number"], basis["document"]["revision"]))
     fig_dir = os.path.join(out_dir, "figures")
     builder = psr_report.ReportBuilder(data, basis, standards, balances, diagrams, validation=None)
     builder.build(docx_path, fig_dir)
+    lap("report")
     facts_path = os.path.join(report_dir, "report_facts.json")
     first = psr_validate.validate_all(data, basis, standards, balances, diagrams, docx_path, facts_path, data_dir)
     builder = psr_report.ReportBuilder(data, basis, standards, balances, diagrams, validation=first)
@@ -127,10 +141,14 @@ def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_s
     if word_ok:
         final = psr_validate.validate_all(data, basis, standards, balances, diagrams, docx_path, facts_path, data_dir)
     jp, mp = psr_validate.write_validation(final, report_dir)
+    lap("validation_and_pdf")
     summary = {"docx": docx_path, "pdf": pdf_path if word_ok else None, "validation": final["status"], "validation_json": jp,
                "validation_md": mp, "exports": exports, "diagrams": {"bfd": diagrams["bfd"]["svg"], "pfd_pdf": diagrams["pfd"]["pdf"],
-               "pfd_sheets": [s["svg"] for s in diagrams["pfd"]["sheets"]], "pfd_spec": diagrams["pfd"]["spec"]},
-               "balances_summary": balances["summary"], "word_updated": word_ok}
+               "pfd_sheets": [s["svg"] for s in diagrams["pfd"]["sheets"]], "pfd_spec": diagrams["pfd"]["spec"],
+                            "crossings_total": diagrams["pfd"].get("crossings_total", 0),
+                            "sparse_sheets": diagrams["pfd"].get("sparse_sheets", [])},
+               "balances_summary": balances["summary"], "word_updated": word_ok, "timings_s": timings,
+               "validation_checks": {c["id"]: c["status"] for c in final["checks"]}}
     if not allow_fail and final["n_fail"]:
         raise RuntimeError("validation failed: %s" % [c["id"] for c in final["checks"] if c["status"] == "FAIL"])
     return summary
@@ -198,9 +216,9 @@ def main(argv=None):
     p.add_argument("out")
     args = parser.parse_args(argv)
     if args.cmd == "init-basis":
-        src = os.path.join(psr_basis.skill_dir(), "templates")
+        src = psr_basis.templates_dir()
         os.makedirs(args.dir, exist_ok=True)
-        for name in os.listdir(src):
+        for name in (n for n in os.listdir(src) if n.endswith(".yaml")):
             shutil.copy(os.path.join(src, name), os.path.join(args.dir, name))
         sys.stdout.write("templates copied to %s\n" % args.dir)
         return 0
@@ -213,7 +231,7 @@ def main(argv=None):
 
         model = psr_demo.build_demo_model()
         data = psr_extract.extract_process(model, "A", "Demo case", model_name="synthetic demo flowsheet")
-        src = os.path.join(psr_basis.skill_dir(), "templates")
+        src = psr_basis.templates_dir()
         basis = psr_basis.load_structured(os.path.join(src, "basis_demo.yaml"))
         standards = psr_basis.load_structured(os.path.join(src, "standards_register_template.yaml"))["standards"]
         res = run_pipeline(data, basis, standards, args.out, use_word=False)

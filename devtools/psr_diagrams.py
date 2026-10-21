@@ -300,7 +300,7 @@ LEGEND_NAMES = {
     "recycle": "Numerical recycle element, not physical equipment",
     "pipe": "Pipe",
     "reactor": "Reactor",
-    "generic": "Other equipment",
+    "generic": "Equipment type without a dedicated symbol (generic box; NeqSim class under the tag)",
 }
 
 
@@ -787,32 +787,26 @@ def _count_crossings(layers, pos, segs_by_gap):
     return total
 
 
-def _order_layers(layout, sweeps=12):
-    """Barycentre crossing reduction (keeps the best ordering found)."""
-    layers = layout.layers
-    nl = len(layers)
-    segs = _seg_list(layout)
-    up = {}
-    down = {}
-    for a, b, e in segs:
-        down.setdefault(a.id, []).append((b, 0.0))
-        # a predecessor contributes its out-port fraction to the barycentre
-        up.setdefault(b.id, []).append((a, _frac(a, e.key, "out")))
+def _layer_positions(layers):
     pos = {}
+    for layer in layers:
+        for i, n in enumerate(layer):
+            pos[n.id] = i
+    return pos
 
-    def refresh():
-        for layer in layers:
-            for i, n in enumerate(layer):
-                pos[n.id] = i
 
-    def crossings():
-        by_gap = [[] for _ in range(max(nl - 1, 0))]
-        for a, b, e in segs:
-            by_gap[a.layer].append((pos[a.id] + _frac(a, e.key, "out"), pos[b.id]))
-        return _count_crossings(layers, pos, by_gap)
+def _gap_crossings(segs, pos, nl):
+    """Exact number of segment crossings between adjacent layers for the current order."""
+    by_gap = [[] for _ in range(max(nl - 1, 0))]
+    for a, b, e in segs:
+        by_gap[a.layer].append((pos[a.id] + _frac(a, e.key, "out"), pos[b.id]))
+    return _count_crossings(None, None, by_gap)
 
-    refresh()
-    best = (crossings(), [list(l) for l in layers])
+
+def _barycentre_sweeps(layers, up, down, pos, segs, sweeps, use_median=False):
+    """Barycentre (or median) layer sweeps; returns (best crossings, best order) and leaves ``layers`` at the best."""
+    nl = len(layers)
+    best = (_gap_crossings(segs, pos, nl), [list(l) for l in layers])
     for sweep in range(sweeps):
         direction = "down" if sweep % 2 == 0 else "up"
         rng = range(1, nl) if direction == "down" else range(nl - 2, -1, -1)
@@ -823,7 +817,12 @@ def _order_layers(layout, sweeps=12):
             for n in layer:
                 ns = nbr.get(n.id)
                 if ns:
-                    keys[n.id] = sum(pos[m.id] + f for m, f in ns) / len(ns)
+                    vals = sorted(pos[m.id] + f for m, f in ns)
+                    if use_median:
+                        mid = len(vals) // 2
+                        keys[n.id] = vals[mid] if len(vals) % 2 else 0.5 * (vals[mid - 1] + vals[mid])
+                    else:
+                        keys[n.id] = sum(vals) / len(vals)
             movable = sorted([n for n in layer if n.id in keys], key=lambda n: (keys[n.id], pos[n.id]))
             new = [None] * len(layer)
             for n in layer:
@@ -836,14 +835,147 @@ def _order_layers(layout, sweeps=12):
             layers[li] = new
             for i, n in enumerate(new):
                 pos[n.id] = i
-        c = crossings()
+        c = _gap_crossings(segs, pos, nl)
         if c < best[0]:
             best = (c, [list(l) for l in layers])
         if c == 0:
             break
-    layout.layers = best[1]
+    layers[:] = [list(l) for l in best[1]]
+    pos.clear()
+    pos.update(_layer_positions(layers))
+    return best
+
+
+def _pair_cost(u, v, pos, up, down):
+    """Crossings between the edges of ``u`` and ``v`` (same layer) if ``u`` is drawn left of ``v``."""
+    cost = 0
+    for side in (up, down):
+        for a, fa in side.get(u.id, []):
+            xa = pos[a.id] + fa
+            for b, fb in side.get(v.id, []):
+                xb = pos[b.id] + fb
+                if xa > xb:
+                    cost += 1
+    return cost
+
+
+def _transpose(layers, up, down_pos, pos, max_passes=8):
+    """Swap adjacent nodes while that lowers the local crossing count (Gansner transpose heuristic)."""
+    for _ in range(max_passes):
+        improved = False
+        for layer in layers:
+            for i in range(len(layer) - 1):
+                u, v = layer[i], layer[i + 1]
+                keep = _pair_cost(u, v, pos, up, down_pos)
+                swap = _pair_cost(v, u, pos, up, down_pos)
+                if swap < keep:
+                    layer[i], layer[i + 1] = v, u
+                    pos[u.id], pos[v.id] = i + 1, i
+                    improved = True
+        if not improved:
+            break
+
+
+def _order_layers(layout, sweeps=12, mode="refined"):
+    """Crossing reduction by layer sweeps; returns the crossing count of the kept order.
+
+    ``mode="barycentre"`` is the plain barycentre heuristic. ``mode="refined"`` (default) adds median sweeps,
+    adjacent-pair transposition against the exact crossing count and deterministic multi-start, and keeps the
+    ordering with the fewest crossings; the barycentre result is the starting candidate, so it is never worse.
+    """
+    layers = layout.layers
+    nl = len(layers)
+    segs = _seg_list(layout)
+    up = {}
+    down = {}
+    for a, b, e in segs:
+        down.setdefault(a.id, []).append((b, 0))
+        up.setdefault(b.id, []).append((a, _frac(a, e.key, "out")))
+    pos = _layer_positions(layers)
+    initial = [list(l) for l in layers]
+    base = _barycentre_sweeps(layers, up, down, pos, segs, sweeps)
+    layout.crossings_initial = _gap_crossings_for(initial, segs)
+    layout.crossings_barycentre = base[0]
+    best = base
+    if mode == "refined" and base[0] > 0:
+        candidates = [("median", initial)]
+        if len(segs) <= 600:
+            rng = _LcgRandom(12345)
+            for _ in range(4):
+                shuffled = []
+                for layer in initial:
+                    cand = list(layer)
+                    rng.shuffle(cand)
+                    shuffled.append(cand)
+                candidates.append(("shuffle", shuffled))
+        for kind, start in candidates:
+            layers[:] = [list(l) for l in start]
+            pos.clear()
+            pos.update(_layer_positions(layers))
+            got = _barycentre_sweeps(layers, up, down, pos, segs, sweeps, use_median=(kind == "median"))
+            _transpose(layers, up, down, pos)
+            c = _gap_crossings(segs, pos, nl)
+            if c < got[0]:
+                got = (c, [list(l) for l in layers])
+            if got[0] < best[0]:
+                best = got
+            if best[0] == 0:
+                break
+        if best[1] is not base[1]:
+            layers[:] = [list(l) for l in best[1]]
+            pos.clear()
+            pos.update(_layer_positions(layers))
+            _transpose(layers, up, down, pos)
+            c = _gap_crossings(segs, pos, nl)
+            if c < best[0]:
+                best = (c, [list(l) for l in layers])
+    layout.layers = [list(l) for l in best[1]]
     layers[:] = layout.layers
+    layout.crossings_order = best[0]
     return best[0]
+
+
+def _gap_crossings_for(order, segs):
+    """Crossing count of an arbitrary layer order (used to report the starting point)."""
+    pos = _layer_positions(order)
+    return _gap_crossings(segs, pos, len(order))
+
+
+class _LcgRandom:
+    """Tiny deterministic shuffler so that drawings are reproducible without the random module state."""
+
+    def __init__(self, seed):
+        self.state = seed
+
+    def next(self):
+        self.state = (1103515245 * self.state + 12345) % (2 ** 31)
+        return self.state
+
+    def shuffle(self, items):
+        for i in range(len(items) - 1, 0, -1):
+            j = self.next() % (i + 1)
+            items[i], items[j] = items[j], items[i]
+
+
+def route_crossings(edges):
+    """Number of crossings between routed polylines of different streams (axis-aligned segments).
+
+    Touching at an end point or running along the same line is not counted. Same-stream branches never count.
+    """
+    horiz, vert = [], []
+    for e in edges:
+        for p, q in zip(e.pts[:-1], e.pts[1:]):
+            if abs(p[1] - q[1]) < 1e-6 and abs(p[0] - q[0]) > 1e-6:
+                horiz.append((e.key, p[1], min(p[0], q[0]), max(p[0], q[0])))
+            elif abs(p[0] - q[0]) < 1e-6 and abs(p[1] - q[1]) > 1e-6:
+                vert.append((e.key, p[0], min(p[1], q[1]), max(p[1], q[1])))
+    total = 0
+    eps = 1e-6
+    for hk, hy, hx1, hx2 in horiz:
+        for vk, vx, vy1, vy2 in vert:
+            if hk != vk and hx1 + eps < vx < hx2 - eps and vy1 + eps < hy < vy2 - eps:
+                total += 1
+    return total
 
 
 def _node_off(node, side, key):
@@ -1327,13 +1459,14 @@ def compute_layout(nodes, edges, cfg, target_w=None):
     for layer in layout.layers:
         layer.sort(key=lambda n: (rank.get(n.id, 10 ** 6), 0))
     # stable: keep creation order for non-units (sort is stable on equal keys)
-    _order_layers(layout, cfg.get("sweeps", 12))
+    _order_layers(layout, cfg.get("sweeps", 12), cfg.get("ordering", "refined"))
     _assign_y(layout)
     _straighten(layout)
     _assign_lanes(layout)
     _assign_ports(layout, final=True)
     _assign_x(layout, target_w)
     _route(layout)
+    layout.crossings = route_crossings(layout.edges)
     # normalise: top-left of bounding box at (0, 0)
     _shift(layout, 0.0, -layout.top)
     layout.height = layout.bottom - layout.top
@@ -1687,6 +1820,8 @@ def _desc_word(u):
         return "separator"
     if u.category == "recycle":
         return "recycle (numerical)"
+    if u.category == "other":
+        return "%s (generic symbol)" % _short(u.java_class or "equipment", 26)
     return u.category
 
 
@@ -1746,7 +1881,7 @@ def _build_graph(model, tags, k, plan, scale, sheet_labels):
         nmap[t] = n
 
     def boundary(kind, sid, label):
-        lab = _short(label, 28)
+        lab = _short(label, 36)
         w = max(14.0, text_w(lab, LABEL_FS) + 2.0)
         nd = _Node(("F:" if kind == "feed" else "P:") + sid, kind, w, 0.0, 3.3, 1.2,
                    payload={"stream": sid, "label": lab})
@@ -1800,9 +1935,16 @@ def _build_graph(model, tags, k, plan, scale, sheet_labels):
 
 
 def _layout_sheet(model, tags, k, plan, scale, sheet_labels):
+    mode = getattr(model, "ordering", "refined")
+    cfg = {"stack_pitch": DIAMOND + 0.6, "gap_base": 10.0, "ordering": mode}
     nodes, edges = _build_graph(model, tags, k, plan, scale, sheet_labels)
-    cfg = {"stack_pitch": DIAMOND + 0.6, "gap_base": 10.0}
     layout = compute_layout(nodes, edges, cfg, target_w=AREA[2])
+    if mode == "refined" and layout.crossings > 0:
+        # the routed crossing count is the quality measure: keep the plain barycentre layout when it routes better
+        nodes2, edges2 = _build_graph(model, tags, k, plan, scale, sheet_labels)
+        alt = compute_layout(nodes2, edges2, dict(cfg, ordering="barycentre"), target_w=AREA[2])
+        if alt.crossings < layout.crossings:
+            layout = alt
     return layout
 
 
@@ -1826,10 +1968,32 @@ def _topo_tags(model, tags):
     return topo
 
 
+def _cut_cost(model, order, h):
+    """Number of streams that would become off-page connectors if ``order`` is cut after position ``h``."""
+    left, right = set(order[:h]), set(order[h:])
+    cost = 0
+    for st in model.streams:
+        prods = [t for t in st.producers if t in left or t in right]
+        cons = [t for t in st.consumers if t in left or t in right]
+        if (any(t in left for t in prods) and any(t in right for t in cons)) or \
+                (any(t in right for t in prods) and any(t in left for t in cons)):
+            cost += 1
+    return cost
+
+
 def _split_parts(model, parts, idx):
+    """Split sheet ``idx`` in two at the topological cut with the fewest crossing streams.
+
+    The cut position is searched in the middle 40 % of the order (never leaving a nearly empty sheet) and the
+    cheapest cut wins; ties go to the cut closest to the middle.
+    """
     p = parts[idx]
     order = _topo_tags(model, p["tags"])
-    h = len(order) // 2
+    n = len(order)
+    lo, hi = max(1, int(round(0.3 * n))), min(n - 1, int(round(0.7 * n)))
+    if hi < lo:
+        lo = hi = max(1, n // 2)
+    h = min(range(lo, hi + 1), key=lambda k: (_cut_cost(model, order, k), abs(k - n / 2.0)))
     a = {"tags": order[:h], "title": p["title"], "areas": p.get("areas", [])}
     b = {"tags": order[h:], "title": p["title"], "areas": p.get("areas", [])}
     return parts[:idx] + [a, b] + parts[idx + 1:]
@@ -1866,6 +2030,21 @@ def _plan_sheets(model, sheets, max_units):
         cur["areas"].append(name)
     if cur is not None:
         parts.append(cur)
+    # an area (or a single-system model) larger than the limit is split at the cheapest cut
+    i = 0
+    guard = 0
+    while i < len(parts) and guard < 500:
+        guard += 1
+        if len(parts[i]["tags"]) > max_units and len(parts[i]["tags"]) > 1:
+            parts = _split_parts(model, parts, i)
+        else:
+            i += 1
+    # a tiny last sheet is merged into its predecessor when the result stays close to the limit
+    if len(parts) > 1 and len(parts[-1]["tags"]) <= max(2, max_units // 4) \
+            and len(parts[-2]["tags"]) + len(parts[-1]["tags"]) <= int(max_units * 1.25):
+        last = parts.pop()
+        parts[-1]["tags"].extend(last["tags"])
+        parts[-1]["areas"] = list(parts[-1].get("areas", [])) + [a for a in last.get("areas", []) if a not in parts[-1].get("areas", [])]
     for p in parts:
         p["title"] = _area_title(p["areas"])
     return parts
@@ -2416,7 +2595,7 @@ def _write(path, text):
 
 
 def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=14, layout_overrides=None,
-              equipment_data=None):
+              equipment_data=None, ordering="refined"):
     """Build the PFD drawing set (A3 landscape SVG sheets, PDF, PNG previews, layout spec).
 
     Args:
@@ -2429,6 +2608,8 @@ def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=
         layout_overrides: optional ``{tag: {'x': mm, 'y': mm}}`` symbol positions.
         equipment_data: optional ``{tag: [str, ...]}``; at most 3 short lines (34 characters, truncated
             with ``...``) printed in grey under the equipment description.
+        ordering: ``"refined"`` (default; median, transposition and multi-start crossing reduction) or
+            ``"barycentre"`` (the plain heuristic, kept for before/after measurements).
 
     Returns:
         Manifest dict with sheets, pdf, spec, unplaced_units, unplaced_streams, warnings.
@@ -2438,6 +2619,7 @@ def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=
     tb = _resolve_tb(title_block, data, "PFD")
     eq_data = {t: v for t, v in _clean_equipment_data(equipment_data).items() if t in model.unit}
     model.eq_data = eq_data
+    model.ordering = ordering
     model.dn_fn = lambda number: "%s-%s-%02d" % (tb["document_number"], tb["sheet_number_prefix"], number)
     sheets_dir = os.path.join(out_dir, "sheets")
     prev_dir = os.path.join(out_dir, "previews")
@@ -2469,6 +2651,7 @@ def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=
         number = i + 1
         dn = "%s-%s-%02d" % (tb["document_number"], tb["sheet_number_prefix"], number)
         applied = _finalize_sheet(layout, layout_overrides, warnings, number)
+        layout.crossings = route_crossings(layout.edges)
         spec["overrides"].update(applied)
         sh = {"number": number, "drawing_number": dn, "title": title, "tags": p["tags"], "layout": layout,
               "scale": scale}
@@ -2495,7 +2678,12 @@ def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=
         all_streams.update(streams_here)
         manifest["sheets"].append({"number": number, "drawing_number": dn, "title": title, "svg": svg_path,
                                    "png": png_path, "units": list(p["tags"]), "streams": streams_here,
-                                   "connectors": conns})
+                                   "connectors": conns, "crossings": layout.crossings,
+                                   "order_crossings": {"initial": getattr(layout, "crossings_initial", None),
+                                                       "barycentre": getattr(layout, "crossings_barycentre", None),
+                                                       "kept": getattr(layout, "crossings_order", None)},
+                                   "fill": round(min(1.0, layout.width * layout.height / (AREA[2] * AREA[3])), 3),
+                                   "symbol_scale": scale})
         spec["sheets"].append(_sheet_spec(sh, tb))
     pdf_path = os.path.join(out_dir, "pfd_drawing_set.pdf")
     _svgs_to_pdf(svg_paths, pdf_path, png_paths, warnings)
@@ -2504,6 +2692,8 @@ def build_pfd(data, out_dir, title_block=None, sheets=None, max_units_per_sheet=
     _write(spec_path, json.dumps(spec, indent=1, ensure_ascii=True))
     manifest["pdf"] = pdf_path
     manifest["spec"] = spec_path
+    manifest["crossings_total"] = sum(s["crossings"] for s in manifest["sheets"])
+    manifest["sparse_sheets"] = [s["number"] for s in manifest["sheets"] if s["fill"] < 0.25]
     manifest["unplaced_units"] = [t for t in model.unit if t not in all_units]
     manifest["unplaced_streams"] = [s.id for s in model.streams if s.id not in all_streams]
     return manifest

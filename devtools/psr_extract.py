@@ -265,25 +265,75 @@ def _assign_labels(streams):
 
 # ── component data ───────────────────────────────────────────
 
+class ComponentRegistry:
+    """Union of the components of all stream fluids with collision handling.
+
+    Areas of a multi-area model may use different component sets or define a pseudo-component of the same name
+    with different properties. A component is identified by name and (molar mass, Tc, Pc, acentric factor); a
+    second variant of a name gets the key ``"name [variant 2]"`` so that flows are never merged by accident.
+    """
+
+    REL_TOL = 1.0e-6
+
+    def __init__(self):
+        self.rows = []
+        self._variants = {}
+        self.conflicts = []
+
+    @staticmethod
+    def _props(comp):
+        return (_clean(comp.getMolarMass() * 1000.0), _clean(_try(comp, ["getTC"])), _clean(_try(comp, ["getPC"])),
+                _clean(_try(comp, ["getAcentricFactor"])))
+
+    @classmethod
+    def _same(cls, a, b):
+        for x, y in zip(a, b):
+            if x is None or y is None:
+                if x is not y:
+                    return False
+                continue
+            if abs(x - y) > cls.REL_TOL * max(abs(x), abs(y), 1.0):
+                return False
+        return True
+
+    def key(self, comp):
+        """Unique key of a Java component object (registering it when new)."""
+        name = str(comp.getComponentName())
+        props = self._props(comp)
+        variants = self._variants.setdefault(name, [])
+        for vprops, vkey in variants:
+            if self._same(props, vprops):
+                return vkey
+        vkey = name if not variants else "%s [variant %d]" % (name, len(variants) + 1)
+        variants.append((props, vkey))
+        if len(variants) > 1:
+            self.conflicts.append("component %s is defined with different properties in different streams; kept apart as '%s'"
+                                  % (name, vkey))
+        row = {"index": len(self.rows), "name": vkey, "base_name": name}
+        row.update({
+            "mw_g_mol": props[0], "tc_k": props[1], "pc_bara": props[2], "omega": props[3],
+            "tb_k": _clean(_try(comp, ["getNormalBoilingPoint"])),
+            "rho_liq_g_cm3": _clean(_try(comp, ["getNormalLiquidDensity"])),
+            "is_tbp": bool(_try(comp, ["isIsTBPfraction"]) or False),
+            "is_plus": bool(_try(comp, ["isIsPlusFraction"]) or False),
+        })
+        self.rows.append(row)
+        return vkey
+
+    def scan(self, fluid):
+        """Register every component of ``fluid``; returns the list of keys in fluid order."""
+        phase = fluid.getPhase(0)
+        return [self.key(phase.getComponent(i)) for i in range(int(fluid.getNumberOfComponents()))]
+
+    def keys(self):
+        return [r["name"] for r in self.rows]
+
+
 def component_table(fluid):
     """Pure-component / pseudo-component properties of a fluid (SI-derived units)."""
-    rows = []
-    phase = fluid.getPhase(0)
-    for i in range(int(fluid.getNumberOfComponents())):
-        c = phase.getComponent(i)
-        rows.append({
-            "index": i,
-            "name": str(c.getComponentName()),
-            "mw_g_mol": _clean(c.getMolarMass() * 1000.0),
-            "tc_k": _clean(_try(c, ["getTC"])),
-            "pc_bara": _clean(_try(c, ["getPC"])),
-            "omega": _clean(_try(c, ["getAcentricFactor"])),
-            "tb_k": _clean(_try(c, ["getNormalBoilingPoint"])),
-            "rho_liq_g_cm3": _clean(_try(c, ["getNormalLiquidDensity"])),
-            "is_tbp": bool(_try(c, ["isIsTBPfraction"]) or False),
-            "is_plus": bool(_try(c, ["isIsPlusFraction"]) or False),
-        })
-    return rows
+    reg = ComponentRegistry()
+    reg.scan(fluid)
+    return reg.rows
 
 
 # ── stream properties ────────────────────────────────────────
@@ -324,8 +374,12 @@ def _std_flash(fluid, std_t_c, std_p_bara):
 
 
 def stream_results(stream, components, std_t_c=DEFAULT_STD_T_C, std_p_bara=DEFAULT_STD_P_BARA,
-                   std_flash=True):
-    """Collect all reportable results of one solved stream (a plain dict)."""
+                   std_flash=True, registry=None):
+    """Collect all reportable results of one solved stream (a plain dict).
+
+    With a :class:`ComponentRegistry` the composition dicts are keyed by the registry key and carry an exact
+    zero for every registered component the stream fluid does not contain.
+    """
     fluid = _stream_fluid(stream)
     res = {"available": False}
     if fluid is None:
@@ -361,18 +415,22 @@ def stream_results(stream, components, std_t_c=DEFAULT_STD_T_C, std_p_bara=DEFAU
         "density_kg_m3": _clean(_try(fluid, ["getDensity"], "kg/m3")),
         "vol_actual_m3_h": _clean(_try(fluid, ["getFlowRate"], "m3/hr")),
     })
-    comp_names = [c["name"] for c in components]
     z, w, flow_kmol, flow_kg = {}, {}, {}, {}
     phase0 = fluid.getPhase(0)
     n_comp = int(fluid.getNumberOfComponents())
     for i in range(n_comp):
         comp = phase0.getComponent(i)
-        name = str(comp.getComponentName())
+        name = registry.key(comp) if registry is not None else str(comp.getComponentName())
         zi = _clean(comp.getz()) or 0.0
         z[name] = zi
         mwi = _clean(comp.getMolarMass() * 1000.0) or 0.0
         flow_kmol[name] = zi * mole_kmol_h if mole_kmol_h is not None else None
         flow_kg[name] = zi * mole_kmol_h * mwi if mole_kmol_h is not None else None
+    if registry is not None:
+        zero_flow_value = 0.0 if mole_kmol_h is not None else None
+        for name in registry.keys():
+            if name not in z:
+                z[name], flow_kmol[name], flow_kg[name] = 0.0, zero_flow_value, zero_flow_value
     total_kg = sum(v for v in flow_kg.values() if v is not None)
     for name in z:
         w[name] = (flow_kg[name] / total_kg) if (total_kg and flow_kg[name] is not None) else None
@@ -407,7 +465,10 @@ def stream_results(stream, components, std_t_c=DEFAULT_STD_T_C, std_p_bara=DEFAU
         x = {}
         for j in range(n_comp):
             comp = ph.getComponent(j)
-            x[str(comp.getComponentName())] = _clean(comp.getx())
+            x[registry.key(comp) if registry is not None else str(comp.getComponentName())] = _clean(comp.getx())
+        if registry is not None:
+            for name in registry.keys():
+                x.setdefault(name, 0.0)
         x_sum = sum(v for v in x.values() if v is not None)
         if abs(x_sum - 1.0) > 1.0e-3:
             x = None  # degenerate phase object: composition undefined, not zero
@@ -508,14 +569,29 @@ def extract_process(process, case_id="A", case_label="", std_t_c=DEFAULT_STD_T_C
     """
     units, streams, areas = discover_topology(process)
     first = None
+    registry = ComponentRegistry()
+    eos_names = []
+    mixing_rules = []
     for s in streams:
-        first = _stream_fluid(s["_obj"])
-        if first is not None:
-            break
-    components = component_table(first) if first is not None else []
+        fluid = _stream_fluid(s["_obj"])
+        if fluid is None:
+            continue
+        if first is None:
+            first = fluid
+        try:
+            registry.scan(fluid)
+        except Exception:  # noqa: BLE001 - a stream without a usable fluid is reported as unavailable later
+            continue
+        s["eos"] = _eos_name(fluid)
+        if s["eos"] not in eos_names:
+            eos_names.append(s["eos"])
+        rule = _mixing_rule_name(fluid)
+        if rule and rule not in mixing_rules:
+            mixing_rules.append(rule)
+    components = registry.rows
     stream_res = {}
     for n, s in enumerate(streams):
-        stream_res[s["id"]] = stream_results(s["_obj"], components, std_t_c, std_p_bara, std_flash)
+        stream_res[s["id"]] = stream_results(s["_obj"], components, std_t_c, std_p_bara, std_flash, registry=registry)
         if progress and n % 100 == 0:
             progress("stream %d/%d" % (n, len(streams)))
     unit_res = {}
@@ -528,8 +604,12 @@ def extract_process(process, case_id="A", case_label="", std_t_c=DEFAULT_STD_T_C
             "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "standard_conditions": {"t_c": std_t_c, "p_bara": std_p_bara},
             "neqsim_version": _neqsim_version(),
-            "eos": _eos_name(first),
+            "eos": " / ".join(eos_names) if eos_names else _eos_name(first),
+            "eos_list": eos_names,
+            "mixing_rules": mixing_rules,
             "n_components": len(components),
+            "component_conflicts": list(registry.conflicts),
+            "generic_symbol_units": [u["tag"] for u in units if u["category"] == "other"],
         },
         "cases": [{"id": case_id, "label": case_label}],
         "areas": areas,
@@ -539,6 +619,7 @@ def extract_process(process, case_id="A", case_label="", std_t_c=DEFAULT_STD_T_C
     }
     for u in units:
         rec = {k: v for k, v in u.items() if k != "_obj"}
+        rec["generic_symbol"] = rec["category"] == "other"
         rec["design"] = unit_design(u)
         rec["results"] = {case_id: unit_res[u["tag"]]}
         data["equipment"].append(rec)
@@ -557,6 +638,15 @@ def _neqsim_version():
         return "neqsim " + metadata.version("neqsim")
     except Exception:  # noqa: BLE001
         return "unknown"
+
+def _mixing_rule_name(fluid):
+    """Mixing-rule description of a fluid, or None when the API does not report one."""
+    value = _try(fluid, ["getMixingRuleName"])
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
 
 def _eos_name(fluid):
     if fluid is None:

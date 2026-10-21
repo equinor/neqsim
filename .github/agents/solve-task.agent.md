@@ -388,7 +388,7 @@ lean:
 
 Loaded skills: neqsim-task-workflow, neqsim-setup, neqsim-document-intelligence-extraction, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-autonomous-investigation, neqsim-root-cause-analysis
 
-On demand (Phase 3, report): the `process-study-report` skill builds the complete process-study package (basis, all-stream tables per case, balances, BFD/PFD, standards register, validation report) from a solved model; load it when the task asks for a process study, stream tables or PFDs.
+On demand (Phase 3, report): the `process-study-report` skill (one-step command `neqsim process-report`, agent `@process-study-report`, how-to `docs/development/PROCESS_STUDY_REPORT.md`) builds the complete process-study package (basis, all-stream tables per case, balances, BFD/PFD, standards register, validation report) from a solved model; load it when the task asks for a process study, stream tables or PFDs.
 
 Sections 1-10 - overview, context-window resilience, the phase-by-phase
 workflow with quality gates, benchmark validation, uncertainty and risk,

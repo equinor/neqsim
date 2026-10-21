@@ -1,8 +1,8 @@
 ---
 name: process-study-report
-version: "1.0.0"
+version: "1.1.0"
 description: "Produces a complete, validated engineering process-study report (Word + PDF) from a solved NeqSim ProcessModel or ProcessSystem: engineering basis, all-stream/all-case tables, balances, BFD and A3 PFD sheets (SVG/PDF), standards register (ISO 10628, NORSOK P-002) and a fail-closed validation report. USE WHEN: a task asks for a process study report, design basis, heat and material balance, stream tables, PFD/BFD drawings or a reviewable model documentation package from NeqSim."
-last_verified: "2026-10-20"
+last_verified: "2026-10-21"
 requires:
   python_packages: [python-docx, matplotlib, pymupdf, openpyxl, pyyaml, jpype1]
 ---
@@ -15,6 +15,56 @@ diagram (BFD), A3 PFD sheets with stream numbers, a standards register, appendic
 machine-readable validation report. The toolkit lives in `devtools/` (flat modules, no extra
 environment): `psr_extract`, `psr_balances`, `psr_basis`, `psr_diagrams`, `psr_report`,
 `psr_validate`, `process_study_report` (CLI and `run_pipeline`), `psr_demo` (synthetic fixture).
+
+## Quick start (one step)
+
+```powershell
+neqsim process-report model.py --cases cases.yaml --out report      # Python file with build(case) or model
+neqsim process-report process.json --cases cases.yaml               # NeqSim JSON definition (system or areas)
+neqsim process-report plant.neqsim                                  # serialized ProcessSystem / ProcessModel
+neqsim process-report report/data/process_data.json                 # data extracted earlier (no model needed)
+neqsim process-report model.py --init                               # only write draft basis + cases template, then edit
+neqsim process-report model.py --basis inputs/basis.yaml --cases inputs/cases.yaml --strict
+```
+
+(`cases.yaml` is picked up automatically only as `<model>.cases.yaml` or beside `model.py`/`process.json`; otherwise pass
+`--cases`. `python -m neqsim_cli process-report ...` is equivalent; add `--no-word` without Microsoft Word.) The source type is
+detected; inside a task folder the output defaults to `<task>/deliverables/process_report` and the summary is merged
+into `results.json`. Without `--basis` a **draft basis** is written to `inputs/basis.yaml`: everything derivable from
+the model/cases/task folder is filled in, every other value reads `unavailable - TO BE CONFIRMED` (with a data-gap
+entry), and the report carries the label **SCREENING - basis not confirmed** until a person confirms it. The default
+standards register is the shipped template, flagged **verify before issue** (`STD-VERIFY`).
+Full how-to with a worked example, outputs table and troubleshooting:
+[docs/development/PROCESS_STUDY_REPORT.md](../../../docs/development/PROCESS_STUDY_REPORT.md); agent:
+[@process-study-report](../../agents/process-study-report.agent.md).
+
+**Model-file contract.** The Python file defines `build(case)` (or `build()`) returning a solved or runnable
+`ProcessSystem` or multi-area `ProcessModel` (one `ProcessSystem` per area), or a module-level `model` / `process`.
+`case = {"id", "label", "parameters"}`; `build` is called once per case. After `cases.yaml` overrides
+(`set: {"unit.property": [value, unit]}`, multi-area `"Area::unit.property"`, applied through
+`getAutomation().setVariableValue`) the tool calls `run()`.
+
+**cases.yaml.**
+
+```yaml
+cases:
+  - {id: A, label: Base case, role: design}
+  - id: B
+    label: High rate
+    role: scenario
+    parameters: {feed_temperature_c: 55.0}                 # handed to build(case)
+    set: {"separation::feed.flowRate": [75000, kg/hr]}      # applied through the automation facade
+```
+
+Topology must be identical in all cases; an unknown address, a model without units, JSON entries that were not
+created and mismatching basis/case ids stop the run with an explanatory message (exit code 2). `--strict` returns 1
+when the validation status is FAIL.
+
+**Troubleshooting.** `cannot set ...` lists the units of the model (check the address and the `Area::` prefix);
+`the cases do not share one topology` means `build(case)` changed the equipment; `BASIS-STATUS` warns while the basis
+is a draft; `BAL-NOTES` lists separator/scrubber re-flash, component-splitter and recycle-tear residuals that are
+equipment bookkeeping, not closure errors (shown with their size, never as PASS); `EQ-GENERIC-SYMBOL` lists unit
+types drawn with the generic box; long linear chains split over several sheets - tune `--max-units-per-sheet`.
 
 ## When to use
 
@@ -75,9 +125,17 @@ Outputs: `OUT/data/` (`process_data.json`, `.xlsx`, `stream_properties.csv`, `st
 - **Unit categories** (`psr_extract.classify`): valve, mixer, splitter, separator (incl. scrubbers),
   cooler, heater, exchanger, compressor, pump, expander, ejector, column, pipe, reactor, recycle
   (numerical convergence element, drawn as a dashed `R`), logic (not drawn), other.
+- **Balance statuses** PASS, FAIL, NOTE, N/A. NOTE is reserved for NeqSim equipment whose bookkeeping is not a closure
+  test: separator/scrubber outlets are re-flashed isothermally and component splitters re-flash at inlet conditions
+  (energy residual up to 2 K equivalent of the inlet heat-capacity flow), and the recycle tear residual (mass up to
+  0.1 % of throughput). Area and overall residuals that these units explain are NOTE too. Mass and component residuals
+  of ordinary units, and anything larger, stay FAIL; NOTE items are listed with their size in the report and as
+  `BAL-NOTES` (WARN). On a 146-stream plant model 18 FAIL became 13 NOTE and 5 genuine FAIL.
 - `known_balance_exceptions` in the basis documents unit/area balance failures that are understood
-  (e.g. isothermal re-flash of scrubber outlets, component splitters): they turn FAIL into WARN
-  only when an explanation exists; undocumented failures stay FAIL.
+  (e.g. stale recycle state): they turn FAIL into WARN only when an explanation exists; undocumented failures stay FAIL.
+- Multi-area models: components are the union over all stream fluids (a component missing in a stream is an exact 0);
+  a pseudo-component defined differently in two areas is kept apart as `name [variant 2]`; several EOS classes or such
+  conflicts raise `MODEL-EOS-COMPONENTS`.
 
 ## Standards (verified 2026-10-20; re-verify before every issue)
 
@@ -140,13 +198,15 @@ generic report for the narrative of a task, this package as the controlled techn
 - Topology is what the solved model contains; plant systems that are not modelled must be listed in
   `boundaries.unmodelled_systems` (printed on every sheet).
 - Streams consumed by several units are counted once per area in area balances (validator warns).
-- Layout is heuristic: some line crossings and sparse sheets remain; always inspect the images.
+- Layout is heuristic (layered layout with median/transposition crossing reduction and cheapest-cut sheet splitting; the
+  run prints the routed line crossings and the manifest lists `sparse_sheets`): some crossings and sparse sheets can remain; always inspect the images.
 - Utility media, drivers, sparing, vessel sizes and control loops appear only if the model has them.
 - Word field update and PDF export need Microsoft Word (COM); without Word the contents/list fields
   carry a static list and no PDF is produced.
 
 ## Related
 
+How-to page: [docs/development/PROCESS_STUDY_REPORT.md](../../../docs/development/PROCESS_STUDY_REPORT.md). Agent: `@process-study-report`.
 `neqsim-professional-reporting` (report hygiene and `results.json`), `neqsim-task-workflow` (phase
 6 report), `neqsim-standards-lookup`, `neqsim-pid-process-operations`,
 `neqsim-document-intelligence-extraction`, agents `solve-task`, `process-model`, `solve-process`.

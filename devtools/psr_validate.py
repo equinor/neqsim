@@ -5,11 +5,13 @@ and returns a dict with one entry per check (PASS / FAIL / WARN / SKIP). The
 function never raises for a failed check; callers decide on the exit code.
 """
 import csv
+import datetime
 import json
 import os
 import re
 
 import psr_basis
+import psr_draft
 
 try:  # report_kit lives in the task template package
     from task_template.step3_report import report_kit
@@ -17,6 +19,7 @@ except ImportError:  # pragma: no cover - flat checkout without package install
     report_kit = None
 
 COMP_SUM_TOL = 1.0e-6
+STANDARDS_MAX_AGE_DAYS = 90
 PHASE_SUM_TOL = 1.0e-5
 BAD_TOKENS = re.compile(r"\b(nan|NaN|inf|None)\b")
 SECTION_REF_RE = re.compile(r"\b(Sections?|Appendix|Appendices|Tables?|Figures?)\s+[A-Z]?\d+(?:\.\d+)*")
@@ -100,6 +103,31 @@ def validate_all(data, basis, standards, balances, diagrams, docx_path=None, fac
     checks.append(_check("STD-REGISTER", "Standards register has edition, status, source URL, date checked, application, class, "
                          "compliance statement and no unsupported compliance claim", "FAIL" if sf else "PASS",
                          "; ".join(f["message"] for f in sf[:12]) or "%d standards registered" % len(standards)))
+    n_open = psr_draft.count_unconfirmed(basis)
+    is_draft = str(basis.get("basis_status", "")).lower() == "draft"
+    readiness = str((basis.get("document") or {}).get("readiness", "")).upper()
+    if is_draft:
+        status = "FAIL" if readiness not in ("SCREENING",) else "WARN"
+        detail = "draft basis: %d items marked TO BE CONFIRMED; readiness must stay SCREENING until a person confirms the basis" % n_open
+    elif n_open:
+        status, detail = "FAIL", "basis is not marked draft but %d items still read TO BE CONFIRMED" % n_open
+    else:
+        status, detail = "PASS", "basis confirmed (no open items)"
+    checks.append(_check("BASIS-STATUS", "Engineering basis is confirmed, or the report is labelled as a draft screening", status, detail))
+    ages = []
+    for row in standards or []:
+        try:
+            ages.append((datetime.date.today() - datetime.date.fromisoformat(str(row.get("date_checked"))[:10])).days)
+        except ValueError:
+            ages.append(None)
+    stale = [a for a in ages if a is None or a > STANDARDS_MAX_AGE_DAYS]
+    default_reg = str(basis.get("standards_register_source", "")).startswith("toolkit default")
+    checks.append(_check("STD-VERIFY", "Standards editions were verified recently (max %d days) and are not the unverified toolkit default" % STANDARDS_MAX_AGE_DAYS,
+                         "WARN" if (stale or default_reg) else "PASS",
+                         "%s%d of %d register rows older than %d days or without a date; re-verify editions before issue" % (
+                             "default register shipped with the toolkit (verify before issue); " if default_reg else "", len(stale), len(ages),
+                             STANDARDS_MAX_AGE_DAYS)
+                         if (stale or default_reg) else "all rows checked within %d days" % STANDARDS_MAX_AGE_DAYS))
     std = data["meta"].get("standard_conditions", {})
     bstd = (basis.get("conventions") or {}).get("standard_conditions", {})
     same = std and bstd and abs(std.get("t_c", 1e9) - bstd.get("t_c", -1e9)) < 1e-9 and abs(std.get("p_bara", 1e9) - bstd.get("p_bara", -1e9)) < 1e-9
@@ -123,6 +151,14 @@ def validate_all(data, basis, standards, balances, diagrams, docx_path=None, fac
     labels = [s["label"] for s in data["streams"]]
     checks.append(_check("DATA-LABELS", "Stream labels are unique", "FAIL" if len(labels) != len(set(labels)) else "PASS", ""))
 
+    generic = [u["tag"] for u in data["equipment"] if u["category"] == "other"]
+    checks.append(_check("EQ-GENERIC-SYMBOL", "Every equipment type has a dedicated schematic symbol (unknown types are drawn as a flagged generic box)",
+                         "WARN" if generic else "PASS", "%d units drawn with the generic symbol: %s" % (len(generic), generic[:10]) if generic else "none"))
+    eos_list = (data.get("meta") or {}).get("eos_list") or []
+    conflicts = (data.get("meta") or {}).get("component_conflicts") or []
+    checks.append(_check("MODEL-EOS-COMPONENTS", "Single thermodynamic model and unambiguous component definitions across all areas",
+                         "WARN" if (len(eos_list) > 1 or conflicts) else "PASS",
+                         "; ".join(([("several EOS classes in one model: %s (the basis must state which area uses which)" % ", ".join(eos_list))] if len(eos_list) > 1 else []) + conflicts[:4]) or "one EOS, one definition per component"))
     # compositions
     worst, where = 0.0, ""
     pworst, pwhere = 0.0, ""
@@ -177,6 +213,12 @@ def validate_all(data, basis, standards, balances, diagrams, docx_path=None, fac
                          "FAIL" if undocumented else ("WARN" if unit_fail else "PASS"),
                          "%d unit checks outside tolerance, %d without documented explanation: %s" %
                          (len(unit_fail), len(undocumented), sorted({f["id"] for f in undocumented})[:10])))
+    note_items = balances.get("note_items", [])
+    checks.append(_check("BAL-NOTES", "Residuals of NeqSim equipment whose energy or recycle bookkeeping is not a closure test "
+                         "(separator/scrubber re-flash, component splitter, recycle tear) are listed as NOTE with their size",
+                         "WARN" if note_items else "PASS",
+                         "%d checks, e.g. %s" % (len(note_items), sorted({"%s %s" % (n["id"], n["check"]) for n in note_items})[:6])
+                         if note_items else "none"))
 
     # diagrams
     if diagrams is not None:

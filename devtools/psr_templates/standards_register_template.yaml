@@ -1,0 +1,62 @@
+# Standards register template for process-study reports.
+# Editions and status below were checked on 2026-10-20 (see references/standards_verification.md).
+# RE-VERIFY before issuing a report: editions and status change. Keep one row per standard actually applied.
+# requirement_class: mandatory (project/company/regulatory requirement) | recommended (good practice) | informative.
+# text_available: true only if the licensed text was actually read for this study. If false, compliance must
+# not be claimed beyond what is evidenced (the validator rejects an unqualified 'complies' statement).
+standards:
+  - reference: "ISO 10628-1"
+    title: "Diagrams for the chemical and petrochemical industry - Part 1: Specification of diagrams"
+    edition: "2014"
+    status: "Current per accredited reseller listing; iso.org catalogue page not retrievable (JavaScript catalogue)"
+    source_url: "https://www.en-standard.eu/iso-10628-1-2014-diagrams-for-the-chemical-and-petrochemical-industry-part-1-specification-of-diagrams/"
+    date_checked: "2026-10-20"
+    application: "Content, classification and drafting conventions of block flow diagrams and PFDs (stream numbering, equipment tags, legend, title block)"
+    requirement_class: "recommended"
+    text_available: false
+    compliance_statement: "Conventions applied as publicly described in the abstract; conformance with the standard text is not claimed because the text was not available"
+    deviations: "Drawings are generated schematically; no formal conformance review performed"
+  - reference: "ISO 10628-2"
+    title: "Diagrams for the chemical and petrochemical industry - Part 2: Graphical symbols"
+    edition: "2012"
+    status: "Current per accredited reseller listing; iso.org catalogue page not retrievable"
+    source_url: "https://www.en-standard.eu/iso-10628-2-2012-diagrams-for-the-chemical-and-petrochemical-industry-part-2-graphical-symbols/"
+    date_checked: "2026-10-20"
+    application: "Graphical symbols for equipment on the PFDs (collective application standard of ISO 14617)"
+    requirement_class: "recommended"
+    text_available: false
+    compliance_statement: "Symbols are schematic and follow the ISO 10628-2 / ISO 14617 conventions in spirit only; conformance is not claimed"
+    deviations: "Symbol geometry is simplified; text not available for a symbol-by-symbol check"
+  - reference: "ISO 14617-1"
+    title: "Graphical symbols for diagrams - Part 1: General information and indexes"
+    edition: "2005"
+    status: "Current per accredited reseller listing; other parts not individually checked"
+    source_url: "https://www.en-standard.eu/iso-14617-1-2005-graphical-symbols-for-diagrams-part-1-general-information-and-indexes/"
+    date_checked: "2026-10-20"
+    application: "Background for ISO 10628-2 symbol conventions"
+    requirement_class: "informative"
+    text_available: false
+    compliance_statement: "Informative reference only; no compliance claim"
+    deviations: "none"
+  - reference: "NORSOK P-002"
+    title: "Process system design"
+    edition: "2023+AC:2024 (edition 2, corrigendum published 2024-12-20; supersedes NORSOK P-002:2023)"
+    status: "Current (Standards Norway sector page and licensed copy cover page)"
+    source_url: "https://standard.no/en/sectors/petroleum/norsok-standards/p-process/"
+    date_checked: "2026-10-20"
+    application: "Offshore topside process-system design requirements (design pressure and temperature, process safety system design, line sizing, isolation, insulation and heat tracing); used as reference for design-basis conventions"
+    requirement_class: "mandatory"
+    text_available: false
+    compliance_statement: "Not assessed: this study contains no line list, design pressure or safety-system data. No compliance claim"
+    deviations: "Compliance screening against P-002 is outside the scope of the model"
+  - reference: "DEXPI 2.0.1"
+    title: "DEXPI specification (P&ID data exchange)"
+    edition: "2.0.1"
+    status: "Current public specification per dexpi.org (not an ISO/IEC standard)"
+    source_url: "https://dexpi.org/"
+    date_checked: "2026-10-20"
+    application: "Optional machine-readable exchange of the topology (NeqSim DEXPI export)"
+    requirement_class: "informative"
+    text_available: false
+    compliance_statement: "Informative; no compliance claim"
+    deviations: "none"
