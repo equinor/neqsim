@@ -3,8 +3,6 @@ title: "Refinery Assay and TBP Cut Characterization"
 description: "Create refinery assay cuts from mass, volume, pre-binned TBP, or qualified D86 reference-point data with explicit units and mass closure."
 ---
 
-# Refinery Assay and TBP Cut Characterization
-
 `OilAssayCharacterisation` is the first refinery-specific assay entry point in NeqSim. It converts a pre-binned crude or petroleum-fraction assay into TBP pseudo-components that can be used by the existing thermodynamic and `ProcessSystem` APIs.
 
 This API is intentionally conservative. It handles **assay representation and pseudo-component generation**. It can convert the seven literature-qualified ASTM D86 reference points to true boiling point (TBP) boundaries, but it does not replace a laboratory assay package, interpolate unqualified recovery points, or support ASTM D1160 conversion.
@@ -244,14 +242,14 @@ tolerance.
 
 The same receipt exposes the auditable first boiling-temperature moment
 
-$$M_{T,V}=sum_iDelta V_ioverline{T}_i$$
+$M_{T,V}=\sum_i \Delta V_i \overline{T}_i$
 
 in K liquid-volume percent through
 `getLiquidVolumeWeightedBoilingPointKelvinPercent()`. With piecewise-linear cumulative
 recovery, liquid-volume density is uniform versus temperature inside each overlap, so
-$overline{T}_i=(T_{lower,i}+T_{upper,i})/2$. The liquid-volume-weighted mean is
+$\overline{T}_i=(T_{\mathrm{lower},i}+T_{\mathrm{upper},i})/2$. The liquid-volume-weighted mean is
 
-$$overline{T}_{V,range}=rac{M_{T,V}}{sum_iDelta V_i}$$
+$\overline{T}_{V,\mathrm{range}}=\frac{M_{T,V}}{\sum_i \Delta V_i}$
 
 and is available in K and degC. First moments, unlike means, close additively when a
 range is partitioned.
@@ -272,7 +270,7 @@ add a measured intrainterval curve.
 
 `getWatsonCharacterizationFactor()` combines that mean TBP with the receipt's average
 SG60/60 using NeqSim's existing convention
-$K_W=(1.8overline{T}_{V,range})^{1/3}/SG_{range}$, where temperature is in K and the
+$K_W=(1.8\overline{T}_{V,\mathrm{range}})^{1/3}/SG_{\mathrm{range}}$, where temperature is in K and the
 factor is dimensionless. This is a transparent descriptor under the table assumptions.
 It is not an ASTM mean-average or volumetric-average boiling point, and it does not
 integrate enthalpy or heat capacity, temperature-correct density, infer an
