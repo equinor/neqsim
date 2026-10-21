@@ -87,24 +87,18 @@ public class DoeBigHillVacuumFractionationCaseTest {
     atmosphericBottoms.setTemperature(650.0, "K");
     atmosphericBottoms.setPressure(1.5, "bara");
     atmosphericBottoms.run();
-    double[] sourceComposition =
-        atmosphericBottoms.getThermoSystem().getMolarComposition().clone();
+    double[] sourceComposition = atmosphericBottoms.getThermoSystem().getMolarComposition().clone();
 
-    DoeBigHillVacuumFractionationCase model =
-        DoeBigHillVacuumFractionationCase.createFromAtmosphericBottoms(
-            "Connected Big Hill vacuum screen", atmosphericBottoms, qualifiedInputs());
+    DoeBigHillVacuumFractionationCase model = DoeBigHillVacuumFractionationCase
+        .createFromAtmosphericBottoms("Connected Big Hill vacuum screen", atmosphericBottoms, qualifiedInputs());
 
-    assertNotSame(atmosphericBottoms.getThermoSystem(),
-        model.getFeedStream().getThermoSystem());
+    assertNotSame(atmosphericBottoms.getThermoSystem(), model.getFeedStream().getThermoSystem());
     assertEquals(atmosphericBottoms.getThermoSystem().getNumberOfComponents(),
         model.getFeedStream().getThermoSystem().getNumberOfComponents());
-    assertArrayEquals(sourceComposition,
-        model.getFeedStream().getThermoSystem().getMolarComposition(), 1.0e-12);
+    assertArrayEquals(sourceComposition, model.getFeedStream().getThermoSystem().getMolarComposition(), 1.0e-12);
     assertEquals(1800.0, model.getFeedStream().getFlowRate("kg/hr"), 1.0e-9);
-    assertEquals(qualifiedInputs().getFeedTemperatureKelvin(),
-        model.getFeedStream().getTemperature("K"), 1.0e-9);
-    assertEquals(qualifiedInputs().getFeedPressureBara(),
-        model.getFeedStream().getPressure("bara"), 1.0e-12);
+    assertEquals(qualifiedInputs().getFeedTemperatureKelvin(), model.getFeedStream().getTemperature("K"), 1.0e-9);
+    assertEquals(qualifiedInputs().getFeedPressureBara(), model.getFeedStream().getPressure("bara"), 1.0e-12);
   }
 
   @Test
@@ -147,3 +141,4 @@ public class DoeBigHillVacuumFractionationCaseTest {
     assertTrue(component.getMolarMass() > 0.0);
   }
 }
+
