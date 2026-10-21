@@ -375,6 +375,13 @@ cancel the Ubuntu tests or hide their diagnostics. Each job retains its Surefire
 reports as `fast-test-reports-<platform>`, including after failure when reports are
 available. The existing Java 8 dependency on the fast-test matrix is unchanged.
 
+The Windows Java 21 step interprets the EJML LU `solve` and
+`PhaseSrkCPA.initCPAMatrix` methods after retained HotSpot logs identified native
+access violations in their C2-compiled code on Temurin 21.0.12.1. The exclusions
+are confined to that CI step; the complete test suite and its numerical assertions
+remain enabled. See the [workflow catalog](../../.github/WORKFLOWS.md#windows-jvm-crash-workaround)
+for crash evidence, diagnostic artifacts and the full-Windows-suite removal gate.
+
 ### Slow-test shards
 
 The Java 21 slow suite runs in eight parallel jobs, each with a 60-minute limit and

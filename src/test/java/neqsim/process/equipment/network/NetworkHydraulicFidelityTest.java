@@ -238,12 +238,19 @@ class NetworkHydraulicFidelityTest {
     rich.setMixingRule("classic");
     rich.setMultiPhaseCheck(true);
     LoopedPipeNetwork network = network(false);
+    // Nodal mass residuals are scaled by 1e5 to Pa. Resolve the requested 1e-8 kg/s
+    // rate check with a tighter solve, rather than the helper's 1 Pa tolerance.
+    network.setTolerance(1.0e-4);
     network.setFluidTemplate(rich);
     NetworkPipe edge = network.getPipe("riser");
     edge.setElevationProfile(new double[] {0.0, 50.0, 100.0}, new double[] {0.0, -5.0, 0.0});
     edge.setHydraulicModelType(PipeModelType.TWO_FLUID);
     network.run();
     assertTrue(network.isConverged());
+    assertEquals(1.0, edge.getFlowRate(), 1.0e-8);
+    assertEquals(0.0, network.getMassBalanceError(), 1.0e-8);
+    assertEquals(edge.getFlowRate(), edge.getInletFluid().getFlowRate("kg/sec"), 1.0e-12);
+    assertEquals(edge.getInletFluid().getFlowRate("kg/sec"), edge.getOutletFluid().getFlowRate("kg/sec"), 1.0e-12);
     assertTrue(edge.getInletFluid().getNumberOfPhases() >= 2);
     Stream inlet = new Stream("rich reference", rich.clone());
     inlet.setFlowRate(1.0, "kg/sec");

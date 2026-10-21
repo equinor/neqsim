@@ -24,12 +24,18 @@ that a workflow invokes an LLM.
 
 ### Windows JVM crash workaround
 
-The Windows fast-test step sets `JAVA_TOOL_OPTIONS` to exclude only
-`org.ejml.dense.row.linsol.lu.LinearSolverLu_DDRM::solve` from JIT compilation.
+The Windows fast-test step sets `JAVA_TOOL_OPTIONS` to exclude two methods from
+JIT compilation: `org.ejml.dense.row.linsol.lu.LinearSolverLu_DDRM::solve` and
+`neqsim.thermo.phase.PhaseSrkCPA::initCPAMatrix`.
 PR [#4484](https://github.com/equinor/neqsim/pull/4484) exposed a fatal
-`EXCEPTION_ACCESS_VIOLATION` in that method's C2-compiled code on Temurin
-21.0.12.1 while running `PTPhaseEnvelopeReferenceEosTest`. The method still runs
-through the interpreter; EJML remains the numerical backend and every test stays
+`EXCEPTION_ACCESS_VIOLATION` in the LU solver's C2-compiled code on Temurin
+21.0.12.1 while running `PTPhaseEnvelopeReferenceEosTest`. PR
+[#4499](https://github.com/equinor/neqsim/pull/4499) retained a second fatal
+access violation in C2-compiled `PhaseSrkCPA.initCPAMatrix` during
+`SystemHybridEosGeFlashTest` on the same JVM build; see
+[the failing Windows job](https://github.com/equinor/neqsim/actions/runs/39612791624/job/119266533232)
+and its `jvm-crash-logs-Windows` artifact. Both methods still run through the
+interpreter; EJML remains the numerical backend and every test stays
 enabled. The setting reaches the forked Surefire JVM and is limited to the
 Windows step. Ubuntu coverage and production JVM options are unchanged.
 
@@ -37,8 +43,8 @@ Both fast-test platforms retain HotSpot `hs_err_pid*.log` and `replay_pid*.log`
 files in a separate `jvm-crash-logs-<platform>` artifact when present. Existing
 Surefire report artifact names and layouts are preserved. Inspect the fatal
 error and problematic frame before changing numerical code or test tolerances.
-Remove the workaround only after the Windows full suite passes on a replacement
-JDK without the exclusion; a passing Linux run alone is insufficient evidence.
+Remove an exclusion only after the Windows full suite passes on a replacement
+JDK without that exclusion; a passing Linux run alone is insufficient evidence.
 
 ## Publishing and Distribution
 
