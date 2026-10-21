@@ -64,7 +64,9 @@ solve before constructing the handoff.
 The reboiler-temperature sensitivity also accepts the solved atmospheric-bottoms
 stream directly. Each point independently clones the complete handoff composition,
 changes only the caller-owned vacuum reboiler temperature, runs the qualified
-MESH column, and evaluates the existing immutable result contract.
+MESH column, and evaluates the existing immutable result contract. Tray count,
+feed tray, feed temperature and pressure, top and bottom pressure, and condenser
+reflux remain the explicit baseline values at every point.
 
 ~~~java
 double[] reboilerTemperaturesKelvin = {698.0, 702.0};
