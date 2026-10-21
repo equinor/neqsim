@@ -1,7 +1,7 @@
 ---
 name: neqsim-pipeline-and-terminal-networks
 description: "Guides agents through NeqSim pipeline and terminal networks. USE WHEN: users ask to solve a looped gathering/export network, optimize well and choke settings, apply nominations or quality limits, track gas linepack or transient composition, blend crude, or schedule terminal tanks and cargoes. Anchors: LoopedPipeNetwork, NetworkOptimizer, TransientGasNetwork, TransientCompositionalPipeNetwork, NetworkQualityProfile, OilNetworkSchedule."
-last_verified: "2026-10-03"
+last_verified: "2026-10-20"
 ---
 
 # Pipeline and Terminal Networks
@@ -93,6 +93,15 @@ must be rebuilt from inputs; do not infer missing zones from a stored outlet str
 The legacy multi-zone injection calculation uses squared-pressure differences and
 gas-standard MSm3/day for every fluid, not a qualified linear liquid-injectivity law.
 Keep that rate-basis migration separate from copy/replay validation.
+For explicitly calibrated single-liquid injection, use `WellFlow.addLiquidInjectionZone`
+with kg/(s bar) coefficients and read mass units from `getLayerFlowRates` and
+`getOutOfZoneRate`. The inlet owns injected composition; zone streams are reservoir
+boundary metadata. Do not mix this builder with legacy zones or infer a coefficient
+conversion from gas-standard volume. Phase/finite-input guards, copy and same-topology
+shared-header acceptance are software evidence, not field injectivity or map qualification.
+Keep the inherited shared-reservoir fixture's legacy basis and extrapolated-map limitation
+visible until independently justified inputs replace them. See the well guide's
+explicit-liquid-mass-injectivity section for the tested example and migration boundary.
 Register configured rotating-equipment maps with
 `FieldNetworkTopology.addPumpWithCurve(...)` and `addCompressorWithChart(...)` so the
 existing `Pump`/`Compressor` remains the chart owner under the canonical edge identity.
