@@ -141,4 +141,3 @@ public class DoeBigHillVacuumFractionationCaseTest {
     assertTrue(component.getMolarMass() > 0.0);
   }
 }
-
