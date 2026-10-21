@@ -27,6 +27,8 @@ public class JavaGettingStartedGuideDocumentationTest extends neqsim.NeqSimTest 
   private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
   private static final Pattern PUBLIC_CLASS = Pattern
       .compile("public\\s+(?:final\\s+)?class\\s+([A-Za-z][A-Za-z0-9_]*)");
+  private static final Pattern SEPARATOR_METHOD_SELECTOR = Pattern
+      .compile("-Dtest=SeparatorTest#([A-Za-z][A-Za-z0-9_]*)");
 
   @TempDir
   Path temporaryDirectory;
@@ -75,6 +77,32 @@ public class JavaGettingStartedGuideDocumentationTest extends neqsim.NeqSimTest 
       programCount++;
     }
     assertEquals(2, programCount, "The guide must expose two complete maintained programs");
+  }
+
+  /**
+   * Verify that every focused SeparatorTest command in the maintained onboarding documents names a current test method.
+   *
+   * @throws Exception if a documentation or test source cannot be read
+   */
+  @Test
+  void documentedSeparatorTestSelectorsExist() throws Exception {
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    String separatorTestSource = read(
+        repositoryRoot.resolve("src/test/java/neqsim/process/equipment/separator/SeparatorTest.java"));
+
+    for (String relativePath : Arrays.asList("README.md", "docs/java-getting-started.md", "docs/development/BUILD.md",
+        "docs/development/GETTING_STARTED_DEVELOPER.md", "docs/development/PROJECT_STRUCTURE_RECOMMENDATIONS.md")) {
+      Matcher selectors = SEPARATOR_METHOD_SELECTOR.matcher(read(repositoryRoot.resolve(relativePath)));
+      int selectorCount = 0;
+      while (selectors.find()) {
+        String methodName = selectors.group(1);
+        Pattern methodDeclaration = Pattern.compile("\\bvoid\\s+" + Pattern.quote(methodName) + "\\s*\\(");
+        assertTrue(methodDeclaration.matcher(separatorTestSource).find(),
+            relativePath + " references missing SeparatorTest method " + methodName);
+        selectorCount++;
+      }
+      assertTrue(selectorCount > 0, relativePath + " must retain a focused SeparatorTest method command");
+    }
   }
 
   private String read(Path path) throws Exception {

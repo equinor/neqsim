@@ -433,7 +433,7 @@ src/test/java/neqsim/
 ./mvnw test -Dtest=SeparatorTest
 
 # Single test method
-./mvnw test -Dtest=SeparatorTest#testTwoPhase
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator
 
 # Exclude slow tests (default)
 ./mvnw test
@@ -679,7 +679,7 @@ git rebase origin/master    # Or merge if you prefer
 
 ### Run Specific Tests
 ```bash
-./mvnw test -Dtest=SeparatorTest#testTwoPhase
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator
 ```
 
 ### Debug in IDE

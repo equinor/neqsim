@@ -494,7 +494,7 @@ outside its task folder.
 ```bash
 ./mvnw test                                    # all tests
 ./mvnw test -Dtest=SeparatorTest               # single class
-./mvnw test -Dtest=SeparatorTest#testTwoPhase  # single method
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator  # single method
 ./mvnw checkstyle:check spotbugs:check pmd:check  # static analysis
 ```
 
