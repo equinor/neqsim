@@ -12,11 +12,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * Reusable low-pressure column handoff for DOE Big Hill Sweet heavy material.
  *
  * <p>
- * The normalized screening factory uses
- * {@link DoeBigHillSweetAssay#createVacuumScreeningFeed(SystemInterface)}. The atmospheric-bottoms factory instead
- * clones one solved DOE Big Hill stream so that the same assay identity and calculated composition cross the unit
- * boundary. Every pressure, temperature, tray, and reflux value remains an explicit caller input because the DOE assay
- * does not report a matching refinery vacuum-column operating case.
+ * The normalized screening factory uses {@link DoeBigHillSweetAssay#createVacuumScreeningFeed(SystemInterface)}. The
+ * atmospheric-bottoms factory instead clones one solved DOE Big Hill stream so that the same assay identity and
+ * calculated composition cross the unit boundary. Every pressure, temperature, tray, and reflux value remains an
+ * explicit caller input because the DOE assay does not report a matching refinery vacuum-column operating case.
  * </p>
  *
  * <p>
@@ -77,10 +76,10 @@ public final class DoeBigHillVacuumFractionationCase {
    * Create an unsolved low-pressure case from modeled DOE Big Hill atmospheric bottoms.
    *
    * <p>
-   * The source stream is cloned before its explicit vacuum-feed temperature and pressure are
-   * applied. All components are retained; the normalized three-cut screening feed is not
-   * substituted. The source must contain the three named DOE heavy pseudo-components, which
-   * prevents an unrelated crude or Sarir case from being relabeled as the Big Hill handoff.
+   * The source stream is cloned before its explicit vacuum-feed temperature and pressure are applied. All components
+   * are retained; the normalized three-cut screening feed is not substituted. The source must contain the three named
+   * DOE heavy pseudo-components, which prevents an unrelated crude or Sarir case from being relabeled as the Big Hill
+   * handoff.
    * </p>
    *
    * @param name non-blank case name
@@ -106,8 +105,8 @@ public final class DoeBigHillVacuumFractionationCase {
     return configureCase(name, feed, operatingInputs);
   }
 
-  private static Stream createFeedStream(String name, SystemInterface feedFluid,
-      double feedMassFlowKgPerHour, OperatingInputs operatingInputs) {
+  private static Stream createFeedStream(String name, SystemInterface feedFluid, double feedMassFlowKgPerHour,
+      OperatingInputs operatingInputs) {
     Stream feed = new Stream(name + " feed", feedFluid);
     feed.setFlowRate(feedMassFlowKgPerHour, "kg/hr");
     feed.setTemperature(operatingInputs.getFeedTemperatureKelvin(), "K");
@@ -118,14 +117,13 @@ public final class DoeBigHillVacuumFractionationCase {
 
   private static DoeBigHillVacuumFractionationCase configureCase(String name, Stream feed,
       OperatingInputs operatingInputs) {
-    DistillationColumn configuredColumn = new DistillationColumn(name + " column",
-        operatingInputs.getSimpleTrayCount(), true, true);
+    DistillationColumn configuredColumn = new DistillationColumn(name + " column", operatingInputs.getSimpleTrayCount(),
+        true, true);
     configuredColumn.addFeedStream(feed, operatingInputs.getFeedTrayIndex());
     configuredColumn.setTopPressure(operatingInputs.getTopPressureBara());
     configuredColumn.setBottomPressure(operatingInputs.getBottomPressureBara());
     configuredColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    configuredColumn.getReboiler()
-        .setOutletTemperature(operatingInputs.getReboilerTemperatureKelvin());
+    configuredColumn.getReboiler().setOutletTemperature(operatingInputs.getReboilerTemperatureKelvin());
     configuredColumn.setCondenserRefluxRatio(operatingInputs.getCondenserRefluxRatio());
 
     configuredColumn.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
@@ -153,10 +151,8 @@ public final class DoeBigHillVacuumFractionationCase {
   }
 
   private static void requireDoeHeavyComponent(SystemInterface system, String componentName) {
-    if (system.getComponent(componentName) == null
-        || !(system.getComponent(componentName).getNumberOfmoles() > 0.0)) {
-      throw new IllegalArgumentException(
-          "Atmospheric bottoms must retain positive " + componentName);
+    if (system.getComponent(componentName) == null || !(system.getComponent(componentName).getNumberOfmoles() > 0.0)) {
+      throw new IllegalArgumentException("Atmospheric bottoms must retain positive " + componentName);
     }
   }
 
@@ -293,3 +289,4 @@ public final class DoeBigHillVacuumFractionationCase {
     }
   }
 }
+
