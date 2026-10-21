@@ -1090,7 +1090,12 @@ After one or more accepted-point slices complete, use
 multi-slice block. It includes the optimizer guard evidence, accepted-point bottleneck, axes,
 sampled points, exact rejection identities, bottleneck transitions, sampled operating-region
 transitions, diagnostics, and measured
-search/envelope evaluation counts and runtimes. The call is read-only and requires the exact runtime
+search/envelope evaluation counts and runtimes. Schema v2 adds a deterministic
+`cross_slice_constraint_summary`: rejecting evidence precedes feasible near-active evidence, and the
+latter uses only a configured finite normalized-margin threshold with explicit provenance. Exact
+source/name/applicable-limit/unit/role/provenance identity prevents rows with incompatible engineering
+bases from collapsing. Raw physical margins remain in representative rows and are not compared across
+units. The call is read-only and requires the exact runtime
 study plus complete, uniquely addressed slices anchored at the accepted candidate. It rejects
 foreign, deserialized, duplicate-axis, incomplete-recovery, stale, or definition-drifted evidence
 rather than combining it into a current cycle.
@@ -1118,14 +1123,15 @@ qualified compressor maps, shaft/driver limits, and shared-power budget. Do not 
 search into a revised period: rebuild, converge, optimize, replay, and sample that period independently. The lifecycle
 map is rejected rather than partially emitted if a period is stale, unconverged, non-finite, incompletely restored, or
 action-incompatible. Its transitions remain sampled advisory evidence, not a continuous forecast or operating approval.
-Schema-v6 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
+Schema-v7 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
 They report exact retained, removed, and added sampled events; event identity includes action semantics, endpoints,
 outcomes, feasibility, and constraint layers. External integrations must preserve these rows verbatim and must not
 interpolate a discrete route event or infer an unsampled continuous boundary.
 They also compare complete boundary-refinement receipts; changing a tolerance, midpoint, recovery flag,
 terminal bracket, endpoint constraint/headroom row, or status is an evidence change rather than a
-numerically equivalent migration. The production guard continues to read schemas v1-v5 for historical
-evidence, while v6 requires both endpoint rows and replays them from sampled points and midpoint steps.
+numerically equivalent migration. The production guard continues to read schemas v1-v6 for historical
+evidence, while v7 additionally requires each period's schema-v2 cross-slice summary and reconstructs
+its exact grouping, counts, ordering, threshold, and representative rows.
 
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set

@@ -644,6 +644,14 @@ hard/validity rejections tighten the final bracket. The receipt is an advisory b
 not an interpolated choke target, compressor-map qualification or operating approval;
 discrete HP/LP routing is never bisected.
 
+The accepted multi-slice export also aggregates exact sampled and final refined-endpoint
+constraints into a deterministic cross-slice report. Rejecting constraints precede feasible
+near-active constraints; feasible screening uses only a dimensionless normalized-margin threshold
+with explicit provenance. Source, name, applicable limit, unit, limit role, and limit provenance are
+part of the grouping identity, so separator, compressor, shaft, driver, and shared-power evidence is
+not blended across incompatible engineering bases. The summary does not add or replace any SURF,
+compressor-map, or host-constraint physics.
+
 ### Repeated production periods and moving host limits
 
 `FieldToFacilityOptimizationAcceptanceTest.replaysLifecyclePeriodsWithMovingHostLimits`
