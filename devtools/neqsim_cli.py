@@ -10,6 +10,8 @@ Usage:
     neqsim new-task TITLE    Create a task-solving workspace
     neqsim tasks CMD         Across solved tasks: index/search/relink/env/duplicates
     neqsim report [DIR]      Generate the report (files named after its title)
+    neqsim process-report SRC  Process-study report (stream tables, BFD/PFD, balances, validation)
+                            from a Python model, JSON definition, .neqsim file or process_data.json
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)
     neqsim --set-task-root P Set the folder new tasks are created in (created if
@@ -117,6 +119,8 @@ def _print_usage():
         print("  {:<18s} {}".format(name, info["desc"]))
     print("  {:<18s} {}".format("report [DIR]",
                                 "Generate the report (files named after its title)"))
+    print("  {:<18s} {}".format("process-report SRC",
+                                "Process-study report from a model file (Python/JSON/.neqsim/data)"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
     print("  {:<18s} {}".format("file-issue [DIR]",
@@ -565,6 +569,10 @@ def main():
 
     if cmd == "report":
         sys.exit(_handle_report(sys.argv[2:]))
+
+    if cmd in ("process-report", "process_report"):
+        import process_report
+        sys.exit(process_report.main(sys.argv[2:]))
 
     if cmd in ("work-record", "workrecord"):
         sys.exit(_handle_work_record(sys.argv[2:]))

@@ -339,6 +339,11 @@ neqsim agent install --all --vscode --force   # community + enterprise
 > If `neqsim` is not recognized (no elevated privileges, console script not on
 > PATH), run the same commands as `python -m neqsim_cli ...`.
 
+Need a reviewable report for a NeqSim flowsheet (stream tables for every case, balances, BFD/PFD drawings, validation)?
+One command does it from a Python model file, a JSON process definition, a saved `.neqsim` file or extracted data:
+`neqsim process-report model.py --cases cases.yaml` (agent `@process-study-report`; how-to:
+[docs/development/PROCESS_STUDY_REPORT.md](docs/development/PROCESS_STUDY_REPORT.md)).
+
 > **Work with every repo in one VS Code workspace.** Clone NeqSim and the agent /
 > skill repos into one parent folder, open the first with `File → Open Folder...`,
 > add the rest with `File → Add Folder to Workspace...` — plus your task folder,

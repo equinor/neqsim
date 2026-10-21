@@ -14,6 +14,12 @@
       "expect_skills_top5": ["neqsim-process-modeling", "neqsim-compressor-power-screening"]
     },
     {
+      "id": "process-study-report-pfd",
+      "prompt": "make a process study report with stream tables, balances and PFD and BFD drawings for my NeqSim model with two operating cases",
+      "expect_agent_top3": ["process-study-report", "solve-task", "process-model"],
+      "expect_skills_top5": ["process-study-report"]
+    },
+    {
       "id": "cme-pvt",
       "prompt": "constant mass expansion CME test at 100 C and saturation pressure for a reservoir fluid with C7+ characterization",
       "expect_agent_top3": ["pvt-simulation"],

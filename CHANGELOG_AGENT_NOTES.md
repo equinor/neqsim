@@ -9,6 +9,21 @@
 
 ---
 
+## 2026-10-20 — `k_top` is reservoir-only: fluid characterisation agents must never touch it
+
+- The methane-heavy BIP ramp `k_top` (reservoir saturation-pressure lever of the universal P/A EOS) is for
+  reservoir BIP modelling only and must in no way be used for topside/process simulations. Agents leave `k_top = 0`
+  and the base-EOS BIPs unchanged: no `apply_k_top`, no `tune_k_top`/retune, no BIP regression against psat/PVT data.
+- **Behaviour change** (enterprise-skills `enterprise-precharacterized-well-fluids`): `get_precharacterized_fluid`
+  ignores `apply_k_top=True|"retune"` with a warning unless `reservoir_use_only=True` is also passed; such a fluid is
+  flagged `RESERVOIR-ONLY` in `warnings`. New test `test_k_top_ignored_without_reservoir_flag`.
+- Updated: agent `enterprise-fluid-generation-workflow-agent` (hard rule + limitation), skills
+  `enterprise-precharacterized-well-fluids`, `enterprise-fluidmagic-characterization`, community
+  `neqsim-pseudocomponent-split-characterization`, `enterprise-skills.yaml` description.
+- Not yet synced: `neqsim-copilot-plugin` copies.
+
+---
+
 ## 2026-10-07 — `SealGasSupplyConditioning` (seal gas supply side) and report generator fix
 
 - New `neqsim.process.equipment.compressor.SealGasSupplyConditioning`: dew point margin (water and hydrocarbon) of seal gas after the isenthalpic reduction over the supply valve, optional heater, `calculateRequiredInletTemperatureC`, and static `impliedLiquidLoadKgPerMSm3` / `sumpFillTimeDays` for filter sump evidence. Complements `DryGasSealAnalyzer` (leakage side). 5 tests in `SealGasSupplyConditioningTest`.
