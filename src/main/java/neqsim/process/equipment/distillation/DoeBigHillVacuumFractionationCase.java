@@ -2,23 +2,27 @@ package neqsim.process.equipment.distillation;
 
 import java.util.Objects;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.characterization.DoeBigHillSweetAssay;
 import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Reusable low-pressure column handoff for the DOE Big Hill Sweet 650 degF+ screening feed.
+ * Reusable low-pressure column handoff for DOE Big Hill Sweet heavy material.
  *
  * <p>
- * The feed composition comes from {@link DoeBigHillSweetAssay#createVacuumScreeningFeed(SystemInterface)}. Every
- * pressure, temperature, tray, flow, and reflux value is an explicit caller-supplied engineering input because the DOE
- * assay does not report a matching refinery vacuum-column operating case.
+ * The normalized screening factory uses
+ * {@link DoeBigHillSweetAssay#createVacuumScreeningFeed(SystemInterface)}. The atmospheric-bottoms factory instead
+ * clones one solved DOE Big Hill stream so that the same assay identity and calculated composition cross the unit
+ * boundary. Every pressure, temperature, tray, and reflux value remains an explicit caller input because the DOE assay
+ * does not report a matching refinery vacuum-column operating case.
  * </p>
  *
  * <p>
- * Factory creation applies the three-cut assay and configures an unsolved MESH-residual column. It does not establish
- * convergence, product yields, cut quality, pressure correction, or plant agreement.
+ * Both factories configure an unsolved MESH-residual column. They do not establish convergence, product yields, cut
+ * quality, pressure correction, or plant agreement. The atmospheric-bottoms overload is a modeled stream handoff, not
+ * evidence that the public assay reports a measured atmospheric-bottoms or vacuum-plant composition.
  * </p>
  */
 public final class DoeBigHillVacuumFractionationCase {
@@ -56,13 +60,8 @@ public final class DoeBigHillVacuumFractionationCase {
    */
   public static DoeBigHillVacuumFractionationCase create(String name, double feedMassFlowKgPerHour,
       OperatingInputs operatingInputs) {
-    if (name == null || name.trim().isEmpty()) {
-      throw new IllegalArgumentException("Case name must be non-blank");
-    }
-    if (!Double.isFinite(feedMassFlowKgPerHour) || !(feedMassFlowKgPerHour > 0.0)) {
-      throw new IllegalArgumentException("Feed mass flow must be finite and positive");
-    }
-    Objects.requireNonNull(operatingInputs, "operatingInputs");
+    validateNameAndInputs(name, operatingInputs);
+    requirePositiveFlow(feedMassFlowKgPerHour);
 
     SystemInterface feedFluid = new SystemSrkEos(operatingInputs.getFeedTemperatureKelvin(),
         operatingInputs.getFeedPressureBara());
@@ -70,19 +69,63 @@ public final class DoeBigHillVacuumFractionationCase {
     assay.apply();
     feedFluid.setMixingRule("classic");
 
+    Stream feed = createFeedStream(name, feedFluid, feedMassFlowKgPerHour, operatingInputs);
+    return configureCase(name, feed, operatingInputs);
+  }
+
+  /**
+   * Create an unsolved low-pressure case from modeled DOE Big Hill atmospheric bottoms.
+   *
+   * <p>
+   * The source stream is cloned before its explicit vacuum-feed temperature and pressure are
+   * applied. All components are retained; the normalized three-cut screening feed is not
+   * substituted. The source must contain the three named DOE heavy pseudo-components, which
+   * prevents an unrelated crude or Sarir case from being relabeled as the Big Hill handoff.
+   * </p>
+   *
+   * @param name non-blank case name
+   * @param atmosphericBottoms modeled Big Hill atmospheric liquid-bottoms stream
+   * @param operatingInputs explicit source-unreported vacuum-column operating inputs
+   * @return configured cloned feed and unsolved low-pressure column
+   * @throws NullPointerException if the source stream or inputs are {@code null}
+   * @throws IllegalArgumentException if the name, flow, or Big Hill identity is invalid
+   */
+  public static DoeBigHillVacuumFractionationCase createFromAtmosphericBottoms(String name,
+      StreamInterface atmosphericBottoms, OperatingInputs operatingInputs) {
+    validateNameAndInputs(name, operatingInputs);
+    Objects.requireNonNull(atmosphericBottoms, "atmosphericBottoms");
+
+    double feedMassFlowKgPerHour = atmosphericBottoms.getFlowRate("kg/hr");
+    requirePositiveFlow(feedMassFlowKgPerHour);
+    SystemInterface feedFluid = atmosphericBottoms.getThermoSystem().clone();
+    requireDoeHeavyComponent(feedFluid, "DOE_BH_650_850_PC");
+    requireDoeHeavyComponent(feedFluid, "DOE_BH_850_1050_PC");
+    requireDoeHeavyComponent(feedFluid, "DOE_BH_1050_PLUS_PC");
+
+    Stream feed = createFeedStream(name, feedFluid, feedMassFlowKgPerHour, operatingInputs);
+    return configureCase(name, feed, operatingInputs);
+  }
+
+  private static Stream createFeedStream(String name, SystemInterface feedFluid,
+      double feedMassFlowKgPerHour, OperatingInputs operatingInputs) {
     Stream feed = new Stream(name + " feed", feedFluid);
     feed.setFlowRate(feedMassFlowKgPerHour, "kg/hr");
     feed.setTemperature(operatingInputs.getFeedTemperatureKelvin(), "K");
     feed.setPressure(operatingInputs.getFeedPressureBara(), "bara");
     feed.run();
+    return feed;
+  }
 
-    DistillationColumn configuredColumn = new DistillationColumn(name + " column", operatingInputs.getSimpleTrayCount(),
-        true, true);
+  private static DoeBigHillVacuumFractionationCase configureCase(String name, Stream feed,
+      OperatingInputs operatingInputs) {
+    DistillationColumn configuredColumn = new DistillationColumn(name + " column",
+        operatingInputs.getSimpleTrayCount(), true, true);
     configuredColumn.addFeedStream(feed, operatingInputs.getFeedTrayIndex());
     configuredColumn.setTopPressure(operatingInputs.getTopPressureBara());
     configuredColumn.setBottomPressure(operatingInputs.getBottomPressureBara());
     configuredColumn.setCondenserMode(DistillationColumn.CondenserMode.PARTIAL);
-    configuredColumn.getReboiler().setOutletTemperature(operatingInputs.getReboilerTemperatureKelvin());
+    configuredColumn.getReboiler()
+        .setOutletTemperature(operatingInputs.getReboilerTemperatureKelvin());
     configuredColumn.setCondenserRefluxRatio(operatingInputs.getCondenserRefluxRatio());
 
     configuredColumn.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
@@ -94,6 +137,27 @@ public final class DoeBigHillVacuumFractionationCase {
     configuredColumn.setEnforceEnergyBalanceTolerance(true);
 
     return new DoeBigHillVacuumFractionationCase(feed, configuredColumn, operatingInputs);
+  }
+
+  private static void validateNameAndInputs(String name, OperatingInputs operatingInputs) {
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Case name must be non-blank");
+    }
+    Objects.requireNonNull(operatingInputs, "operatingInputs");
+  }
+
+  private static void requirePositiveFlow(double feedMassFlowKgPerHour) {
+    if (!Double.isFinite(feedMassFlowKgPerHour) || !(feedMassFlowKgPerHour > 0.0)) {
+      throw new IllegalArgumentException("Feed mass flow must be finite and positive");
+    }
+  }
+
+  private static void requireDoeHeavyComponent(SystemInterface system, String componentName) {
+    if (system.getComponent(componentName) == null
+        || !(system.getComponent(componentName).getNumberOfmoles() > 0.0)) {
+      throw new IllegalArgumentException(
+          "Atmospheric bottoms must retain positive " + componentName);
+    }
   }
 
   /** @return configured mutable feed stream */
