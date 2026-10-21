@@ -449,7 +449,7 @@ git commit               # If merging
 ./mvnw test -Dtest=SeparatorTest
 
 # Single test method
-./mvnw test -Dtest=SeparatorTest#testTwoPhase
+./mvnw test -Dtest=SeparatorTest#testSimpleSeparator
 
 # All tests in a package
 ./mvnw test -Dtest=neqsim.thermo.**
