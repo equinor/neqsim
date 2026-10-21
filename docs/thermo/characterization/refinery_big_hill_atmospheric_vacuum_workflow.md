@@ -1,3 +1,8 @@
+---
+title: "DOE Big Hill atmospheric-to-vacuum workflow"
+description: "Composition-preserving DOE assay handoff with material, energy, utility, and emissions closure."
+---
+
 # DOE Big Hill atmospheric-to-vacuum workflow
 
 This reference workflow carries one modeled DOE Big Hill Sweet assay through crude
