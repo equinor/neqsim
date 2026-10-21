@@ -59,6 +59,37 @@ The same public method is accessible through NeqSim's normal JPype bridge. The
 caller remains responsible for running and accepting the upstream atmospheric
 solve before constructing the handoff.
 
+## Connected operating sensitivity
+
+The reboiler-temperature sensitivity also accepts the solved atmospheric-bottoms
+stream directly. Each point independently clones the complete handoff composition,
+changes only the caller-owned vacuum reboiler temperature, runs the qualified
+MESH column, and evaluates the existing immutable result contract. Tray count,
+feed tray, feed temperature and pressure, top and bottom pressure, and condenser
+reflux remain the explicit baseline values at every point.
+
+~~~java
+double[] reboilerTemperaturesKelvin = {698.0, 702.0};
+DoeBigHillVacuumReboilerTemperatureSensitivity sensitivity =
+    DoeBigHillVacuumReboilerTemperatureSensitivity.run(
+        "DOE Big Hill connected vacuum screen",
+        atmosphericColumn.getLiquidOutStream(),
+        vacuumInputs,
+        reboilerTemperaturesKelvin);
+~~~
+
+The connected overload is JPype-callable with the same Java array and stream
+objects. The repository regression uses the exact public overload and verifies
+that the source stream is unchanged, both independently constructed points pass
+mass, component, energy, residual, and boiling-order gates, and the returned
+point array is defensive.
+
+The two temperatures above are a deliberately bounded numerical perturbation
+around the explicit 700 K baseline. They are neither DOE observations nor a
+recommended plant envelope. A separately executed and rendered Python/JPype
+notebook remains the publication gate for Python workflow evidence; this Java API
+does not claim that unexecuted artifact.
+
 ## Regression-protected engineering contract
 
 <code>DoeBigHillAtmosphericVacuumIntegrationTest</code> exercises the complete
