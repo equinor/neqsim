@@ -37,7 +37,7 @@ class RefineryCampaignInventoryDocumentationTest(unittest.TestCase):
 
     def test_next_step_preserves_one_public_case_identity(self):
         self.assertIn("one assay identity", self.text)
-        self.assertIn("Do not mix Sarir operating or plant-yield evidence into the DOE case", self.text)
+        self.assertIn(\n            "Do not mix Sarir operating or plant-yield evidence into the DOE case",\n            self.text,\n        )
         self.assertIn("ASTM D1160 qualification", self.text)
 
 
