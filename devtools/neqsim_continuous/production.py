@@ -517,6 +517,7 @@ def _valid_operating_region_boundary_refinements(row):
     """Recompute fail-closed continuous bisection receipts from persisted midpoint evidence."""
     transitions = row.get("operating_region_transitions")
     refinements = row.get("operating_region_boundary_refinements")
+    points = row.get("points")
     maximum = row.get("maximum_boundary_refinement_evaluations")
     relative_tolerance = row.get("boundary_refinement_relative_tolerance")
     provenance = row.get("boundary_refinement_tolerance_provenance")
@@ -588,6 +589,29 @@ def _valid_operating_region_boundary_refinements(row):
         else:
             return False
 
+        has_feasible_boundary = "feasible_boundary_constraint" in receipt
+        has_infeasible_boundary = "infeasible_boundary_constraint" in receipt
+        if has_feasible_boundary != has_infeasible_boundary:
+            return False
+        feasible_constraint = None
+        infeasible_constraint = None
+        if has_feasible_boundary:
+            from_index = transition.get("from_sequence_index")
+            to_index = transition.get("to_sequence_index")
+            if (not isinstance(points, list)
+                    or not _non_negative_integer(from_index)
+                    or not _non_negative_integer(to_index)
+                    or from_index >= len(points) or to_index >= len(points)
+                    or not isinstance(points[from_index], dict)
+                    or not isinstance(points[to_index], dict)):
+                return False
+            from_constraint = points[from_index].get("leading_constraint")
+            to_constraint = points[to_index].get("leading_constraint")
+            if transition.get("from_feasible") is True:
+                feasible_constraint, infeasible_constraint = from_constraint, to_constraint
+            else:
+                feasible_constraint, infeasible_constraint = to_constraint, from_constraint
+
         steps = receipt.get("steps")
         if (not isinstance(steps, list) or len(steps) > int(maximum)
                 or receipt.get("evaluation_count") != len(steps)):
@@ -610,9 +634,11 @@ def _valid_operating_region_boundary_refinements(row):
                         or step.get("candidate_evaluator_feasible") is not True):
                     return False
                 feasible_value = midpoint
+                feasible_constraint = step.get("leading_constraint")
             elif (step.get("candidate_simulation_converged") is True
                   and step.get("outcome") in allowed_rejections):
                 infeasible_value = midpoint
+                infeasible_constraint = step.get("leading_constraint")
             else:
                 derived_status = "INELIGIBLE_EVALUATION"
                 if sequence != len(steps) - 1:
@@ -621,6 +647,10 @@ def _valid_operating_region_boundary_refinements(row):
         if (receipt.get("feasible_axis_value") != feasible_value
                 or receipt.get("infeasible_axis_value") != infeasible_value
                 or receipt.get("bracket_width") != width):
+            return False
+        if (has_feasible_boundary
+                and (receipt.get("feasible_boundary_constraint") != feasible_constraint
+                     or receipt.get("infeasible_boundary_constraint") != infeasible_constraint)):
             return False
         if derived_status is None:
             if width <= float(absolute_tolerance):
@@ -633,6 +663,20 @@ def _valid_operating_region_boundary_refinements(row):
                 or receipt.get("converged") != (derived_status == "CONVERGED")):
             return False
     return True
+
+
+def _has_boundary_constraint_headroom(slices):
+    """Return whether every persisted refinement reports both exact endpoint constraints."""
+    return (isinstance(slices, list)
+            and all(isinstance(envelope_slice, dict)
+                    and isinstance(envelope_slice.get(
+                        "operating_region_boundary_refinements"), list)
+                    and all(isinstance(refinement, dict)
+                            and "feasible_boundary_constraint" in refinement
+                            and "infeasible_boundary_constraint" in refinement
+                            for refinement in envelope_slice.get(
+                                "operating_region_boundary_refinements", []))
+                    for envelope_slice in slices))
 
 
 def _exact_vector_key(values, expected_size=None):
@@ -874,7 +918,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3, 4, 5):
+    if schema_version not in (1, 2, 3, 4, 5, 6):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -889,7 +933,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         action_ids = []
     state_metric_ids = None
     if (schema_version == 3
-            or (schema_version in (4, 5) and "accepted_state_metric_ids" in evidence)):
+            or (schema_version in (4, 5, 6) and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
             reasons.append("invalid_lifecycle_state_metric_ids")
@@ -963,7 +1007,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
-        if schema_version in (4, 5):
+        if schema_version in (4, 5, 6):
             slices = envelope.get("slices")
             if (not isinstance(slices, list)
                     or any(not isinstance(envelope_slice, dict)
@@ -971,13 +1015,15 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
                            or "operating_region_transitions" not in envelope_slice
                            for envelope_slice in slices)):
                 reasons.append(prefix + "_missing_operating_region_transition_evidence")
-            if (schema_version == 5
+            if (schema_version in (5, 6)
                     and (not isinstance(slices, list)
                          or any(not isinstance(envelope_slice, dict)
                                 or "operating_region_boundary_refinements" not in envelope_slice
                                 or "maximum_boundary_refinement_evaluations" not in envelope_slice
                                 for envelope_slice in slices))):
                 reasons.append(prefix + "_missing_operating_region_boundary_refinement_evidence")
+            if schema_version == 6 and not _has_boundary_constraint_headroom(slices):
+                reasons.append(prefix + "_missing_boundary_constraint_headroom_evidence")
 
         accepted = envelope.get("accepted_candidate_values")
         optimizer = envelope.get("optimizer_evidence")
@@ -1040,11 +1086,11 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3, 4, 5):
+    if schema_version in (2, 3, 4, 5, 6):
         expected_period_changes = _period_change_diagnostics(
             periods, action_ids, evidence.get("time_unit"), state_metric_ids,
-            require_operating_transitions=schema_version in (4, 5),
-            require_boundary_refinements=schema_version == 5)
+            require_operating_transitions=schema_version in (4, 5, 6),
+            require_boundary_refinements=schema_version in (5, 6))
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")

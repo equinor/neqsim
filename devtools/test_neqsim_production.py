@@ -485,6 +485,13 @@ def _valid_boundary_lifecycle_evidence(current_envelope):
     return evidence
 
 
+def _valid_boundary_headroom_lifecycle_evidence(current_envelope):
+    """Extend valid schema-v5 evidence with exact refined-boundary endpoint constraints."""
+    evidence = _valid_boundary_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 6
+    return evidence
+
+
 def _valid_state_lifecycle_evidence(current_envelope):
     """Extend valid schema-v4 evidence with exact accepted physical-state metrics."""
     evidence = _valid_region_lifecycle_evidence(current_envelope)
@@ -1186,7 +1193,44 @@ def test_guard_persists_schema5_boundary_refinement_migration_evidence(tmp_path)
     assert slice_change["added_operating_region_boundary_refinements"] == []
 
 
+def test_guard_persists_schema6_boundary_headroom_evidence(tmp_path):
+    proposal = _valid_proposal()
+    _add_empty_operating_region_evidence(proposal["accepted_point_envelope_evidence"])
+    _add_empty_boundary_refinement_evidence(proposal["accepted_point_envelope_evidence"])
+    proposal["lifecycle_envelope_evidence"] = _valid_boundary_headroom_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    assert ctx.proposals[0]["lifecycle_envelope_evidence"]["schema_version"] == 6
+
+
 def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
+    sampled_feasible_constraint = {
+        "qualified_constraint_name": "separator-capacity",
+        "physical_margin": 100.0,
+        "physical_unit": "kg/hr",
+        "feasible": True,
+    }
+    sampled_infeasible_constraint = {
+        "qualified_constraint_name": "driver-power",
+        "physical_margin": -50.0,
+        "physical_unit": "kW",
+        "feasible": False,
+    }
+    midpoint_feasible_constraint = {
+        "qualified_constraint_name": "driver-power",
+        "physical_margin": 20.0,
+        "physical_unit": "kW",
+        "feasible": True,
+    }
+    midpoint_infeasible_constraint = {
+        "qualified_constraint_name": "driver-power",
+        "physical_margin": -10.0,
+        "physical_unit": "kW",
+        "feasible": False,
+    }
     transition = {
         "axis_action_id": "choke-a",
         "action_value_semantics": "CONTINUOUS",
@@ -1211,7 +1255,7 @@ def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
             "candidate_evaluator_feasible": True,
             "baseline_restored": True,
             "baseline_simulation_converged": True,
-            "leading_constraint": None,
+            "leading_constraint": midpoint_feasible_constraint,
         },
         {
             "sequence_index": 1,
@@ -1223,7 +1267,7 @@ def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
             "candidate_evaluator_feasible": False,
             "baseline_restored": True,
             "baseline_simulation_converged": True,
-            "leading_constraint": None,
+            "leading_constraint": midpoint_infeasible_constraint,
         },
     ]
     receipt = {
@@ -1242,6 +1286,8 @@ def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
         "evaluation_count": 2,
         "feasible_axis_value": 800.0,
         "infeasible_axis_value": 850.0,
+        "feasible_boundary_constraint": copy.deepcopy(midpoint_feasible_constraint),
+        "infeasible_boundary_constraint": copy.deepcopy(midpoint_infeasible_constraint),
         "bracket_width": 50.0,
         "status": "MAXIMUM_EVALUATIONS_REACHED",
         "converged": False,
@@ -1250,6 +1296,10 @@ def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
         "advisory": True,
     }
     row = {
+        "points": [
+            {"leading_constraint": sampled_feasible_constraint},
+            {"leading_constraint": sampled_infeasible_constraint},
+        ],
         "operating_region_transitions": [transition],
         "maximum_boundary_refinement_evaluations": 2,
         "boundary_refinement_relative_tolerance": 0.01,
@@ -1264,6 +1314,16 @@ def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():
     partial_recovery = copy.deepcopy(row)
     partial_recovery["operating_region_boundary_refinements"][0]["steps"][1]["baseline_restored"] = False
     assert not production._valid_operating_region_boundary_refinements(partial_recovery)
+    changed_headroom = copy.deepcopy(row)
+    changed_headroom["operating_region_boundary_refinements"][0][
+        "infeasible_boundary_constraint"]["physical_margin"] = -9.0
+    assert not production._valid_operating_region_boundary_refinements(changed_headroom)
+    missing_headroom = copy.deepcopy(row)
+    del missing_headroom["operating_region_boundary_refinements"][0][
+        "feasible_boundary_constraint"]
+    assert not production._valid_operating_region_boundary_refinements(missing_headroom)
+    assert production._has_boundary_constraint_headroom([row])
+    assert not production._has_boundary_constraint_headroom([missing_headroom])
 
 
 def test_guard_persists_schema4_accepted_physical_state_changes(tmp_path):

@@ -731,7 +731,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
     return new OperatingRegionBoundaryRefinement(transition, action.getLowerBound(), action.getUpperBound(),
         boundaryRefinementRelativeTolerance, absoluteTolerance, boundaryRefinementToleranceProvenance,
         maximumBoundaryRefinementEvaluations, feasible.getCandidateValues()[actionIndex],
-        infeasible.getCandidateValues()[actionIndex], status, steps);
+        infeasible.getCandidateValues()[actionIndex], feasible.getLeadingConstraint(),
+        infeasible.getLeadingConstraint(), status, steps);
   }
 
   /** Returns true only for a finite, converged, feasible midpoint with complete recovery. */
@@ -1707,13 +1708,33 @@ public final class ProcessModelOperatingEnvelopeStudy {
     private final int maximumEvaluations;
     private final double feasibleAxisValue;
     private final double infeasibleAxisValue;
+    private final LeadingConstraintEvidence feasibleBoundaryConstraint;
+    private final LeadingConstraintEvidence infeasibleBoundaryConstraint;
     private final Status status;
     private final List<Step> steps;
 
-    /** Creates one immutable refinement receipt. */
+    /**
+     * Creates one immutable refinement receipt.
+     *
+     * @param transition sampled transition being refined
+     * @param actionLowerBound configured action lower bound
+     * @param actionUpperBound configured action upper bound
+     * @param relativeTolerance terminal tolerance relative to action range
+     * @param absoluteTolerance terminal tolerance in action units
+     * @param toleranceProvenance engineering source of the tolerance
+     * @param maximumEvaluations configured midpoint budget
+     * @param feasibleAxisValue final independently evaluated feasible value
+     * @param infeasibleAxisValue final independently evaluated infeasible value
+     * @param feasibleBoundaryConstraint leading constraint at the final feasible endpoint
+     * @param infeasibleBoundaryConstraint rejecting constraint at the final infeasible endpoint
+     * @param status terminal refinement status
+     * @param steps complete midpoint evidence
+     */
     private OperatingRegionBoundaryRefinement(OperatingRegionTransition transition, double actionLowerBound,
         double actionUpperBound, double relativeTolerance, double absoluteTolerance, String toleranceProvenance,
-        int maximumEvaluations, double feasibleAxisValue, double infeasibleAxisValue, Status status, List<Step> steps) {
+        int maximumEvaluations, double feasibleAxisValue, double infeasibleAxisValue,
+        LeadingConstraintEvidence feasibleBoundaryConstraint, LeadingConstraintEvidence infeasibleBoundaryConstraint,
+        Status status, List<Step> steps) {
       this.axisActionId = transition.getAxisActionId();
       this.fromSequenceIndex = transition.getFromSequenceIndex();
       this.toSequenceIndex = transition.getToSequenceIndex();
@@ -1727,6 +1748,8 @@ public final class ProcessModelOperatingEnvelopeStudy {
       this.maximumEvaluations = maximumEvaluations;
       this.feasibleAxisValue = feasibleAxisValue;
       this.infeasibleAxisValue = infeasibleAxisValue;
+      this.feasibleBoundaryConstraint = feasibleBoundaryConstraint;
+      this.infeasibleBoundaryConstraint = infeasibleBoundaryConstraint;
       this.status = status;
       this.steps = Collections.unmodifiableList(new ArrayList<Step>(steps));
     }
@@ -1796,6 +1819,16 @@ public final class ProcessModelOperatingEnvelopeStudy {
       return infeasibleAxisValue;
     }
 
+    /** @return unit-safe leading constraint at the final feasible endpoint, or null */
+    public LeadingConstraintEvidence getFeasibleBoundaryConstraint() {
+      return feasibleBoundaryConstraint;
+    }
+
+    /** @return exact rejecting constraint at the final infeasible endpoint, or null */
+    public LeadingConstraintEvidence getInfeasibleBoundaryConstraint() {
+      return infeasibleBoundaryConstraint;
+    }
+
     /** @return final bracket width in the action unit */
     public double getBracketWidth() {
       return Math.abs(infeasibleAxisValue - feasibleAxisValue);
@@ -1839,6 +1872,10 @@ public final class ProcessModelOperatingEnvelopeStudy {
       evidence.put("feasible_axis_value", finiteOrNull(feasibleAxisValue));
       evidence.put("infeasible_axis_value", finiteOrNull(infeasibleAxisValue));
       evidence.put("bracket_width", finiteOrNull(getBracketWidth()));
+      evidence.put("feasible_boundary_constraint",
+          feasibleBoundaryConstraint == null ? null : feasibleBoundaryConstraint.toEvidenceMap());
+      evidence.put("infeasible_boundary_constraint",
+          infeasibleBoundaryConstraint == null ? null : infeasibleBoundaryConstraint.toEvidenceMap());
       evidence.put("status", status.name());
       evidence.put("converged", Boolean.valueOf(isConverged()));
       evidence.put("steps", Collections.unmodifiableList(stepEvidence));

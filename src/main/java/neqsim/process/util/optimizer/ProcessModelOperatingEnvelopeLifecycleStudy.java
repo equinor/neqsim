@@ -244,7 +244,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
-    evidence.put("schema_version", Integer.valueOf(5));
+    evidence.put("schema_version", Integer.valueOf(6));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);

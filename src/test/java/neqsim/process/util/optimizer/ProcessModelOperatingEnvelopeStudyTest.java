@@ -305,6 +305,12 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertTrue(refinement.getInfeasibleAxisValue() <= 808.0);
     assertTrue(refinement.getBracketWidth() <= refinement.getAbsoluteTolerance());
     assertEquals(8.0, refinement.getAbsoluteTolerance(), 0.0);
+    assertTrue(refinement.getFeasibleBoundaryConstraint() != null);
+    assertTrue(refinement.getFeasibleBoundaryConstraint().isFeasible());
+    assertTrue(Double.isFinite(refinement.getFeasibleBoundaryConstraint().getPhysicalMargin()));
+    assertTrue(refinement.getInfeasibleBoundaryConstraint() != null);
+    assertFalse(refinement.getInfeasibleBoundaryConstraint().isFeasible());
+    assertTrue(Double.isFinite(refinement.getInfeasibleBoundaryConstraint().getPhysicalMargin()));
     assertTrue(refinement.getSteps().size() > 0);
     assertEquals(2 + refinement.getSteps().size(), result.getEvaluationCount());
     for (OperatingRegionBoundaryRefinement.Step step : refinement.getSteps()) {
@@ -319,6 +325,10 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(Boolean.TRUE, evidence.get("advisory"));
     assertEquals(Boolean.TRUE, evidence.get("converged"));
     assertEquals(Integer.valueOf(refinement.getSteps().size()), evidence.get("evaluation_count"));
+    assertEquals(refinement.getFeasibleBoundaryConstraint().toEvidenceMap(),
+        evidence.get("feasible_boundary_constraint"));
+    assertEquals(refinement.getInfeasibleBoundaryConstraint().toEvidenceMap(),
+        evidence.get("infeasible_boundary_constraint"));
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }
@@ -532,7 +542,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getToConstraint());
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("cycle-lifecycle-1");
-    assertEquals(Integer.valueOf(5), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(6), evidence.get("schema_version"));
     assertEquals("cycle-lifecycle-1", evidence.get("cycle_id"));
     assertEquals(Integer.valueOf(2), evidence.get("period_count"));
     assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), evidence.get("accepted_action_ids"));
@@ -608,7 +618,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
             late.search, late.slice);
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("shared-reservoir-cycle");
-    assertEquals(Integer.valueOf(5), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(6), evidence.get("schema_version"));
     assertEquals(Arrays.asList("reservoir-pressure", "production-rate", "injection-rate"),
         evidence.get("accepted_state_metric_ids"));
     Map<?, ?> firstPeriod = (Map<?, ?>) ((List<?>) evidence.get("periods")).get(0);
