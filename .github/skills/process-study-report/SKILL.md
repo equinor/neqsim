@@ -60,6 +60,27 @@ Topology must be identical in all cases; an unknown address, a model without uni
 created and mismatching basis/case ids stop the run with an explanatory message (exit code 2). `--strict` returns 1
 when the validation status is FAIL.
 
+**Connectivity audit (always run, `psr_connectivity`).** The drawings show exactly the wiring the solved model
+contains, so a model that lost connections (an old JSON export, an old serialized file, a half-wired script) gives
+arrows that end in blank space. The audit flags recycles without a tear stream (`RECYCLE-NO-INLET`), columns without
+feed (`COLUMN-NO-FEED`), units without inlet/outlet or without any stream, mixers with one inlet and isolated streams.
+It writes `data/connectivity_audit.csv/.json` (with name-ranked repair candidates), adds validator check
+`TOPO-CONNECTIVITY` (FAIL on errors), report section 6.5 and "NOT CONNECTED" lines on the PFD sheets, and prints a
+CONNECTIVITY line. Read it before trusting any balance: balances around open recycles are not meaningful. Repair by
+re-exporting/rebuilding the source model (`JsonProcessExporter` now writes column outlets, all column feeds and recycle
+inlets, and `getExportWarnings()` lists connections it could not write), or add a `wiring` list to `cases.yaml`
+(applied to every fresh model before the overrides and the run, listed in the report as a model repair, never as
+source data):
+
+```yaml
+wiring:
+  - {unit: "sture::gas resycle", inlet: "sture::compressor gas to gas column.outlet"}          # Recycle -> addStream
+  - {unit: "NGL column::NGL column", feed: "NGL column::ngl valve to column.outlet", tray: 5}  # column -> addFeedStream
+```
+
+`Area::unit.port`; ports `outlet`, `gasOut`, `liquidOut`, `oilOut`, `waterOut`, `splitN`, `outN`. Pick the stream from
+the audit candidates and confirm it against the P&ID; never guess a connection.
+
 **Troubleshooting.** `cannot set ...` lists the units of the model (check the address and the `Area::` prefix);
 `the cases do not share one topology` means `build(case)` changed the equipment; `BASIS-STATUS` warns while the basis
 is a draft; `BAL-NOTES` lists separator/scrubber re-flash, component-splitter and recycle-tear residuals that are
