@@ -66,7 +66,10 @@ arrows that end in blank space. The audit flags recycles without a tear stream (
 feed (`COLUMN-NO-FEED`), units without inlet/outlet or without any stream, mixers with one inlet and isolated streams.
 It writes `data/connectivity_audit.csv/.json` (with name-ranked repair candidates), adds validator check
 `TOPO-CONNECTIVITY` (FAIL on errors), report section 6.5 and "NOT CONNECTED" lines on the PFD sheets, and prints a
-CONNECTIVITY line. Read it before trusting any balance: balances around open recycles are not meaningful. Repair by
+CONNECTIVITY line. Read it before trusting any balance: balances around open recycles are not meaningful. Prefer a live
+model (a Python model file whose `build()` returns the solved `ProcessModel`, for example by executing the
+model-building cells of the notebook) over a JSON export from an older NeqSim: on the Oseberg model the live object cut
+the connectivity errors from 102 to 0 and the failing balance checks from 361 to 78. Repair by
 re-exporting/rebuilding the source model (`JsonProcessExporter` now writes column outlets, all column feeds and recycle
 inlets, and `getExportWarnings()` lists connections it could not write), or add a `wiring` list to `cases.yaml`
 (applied to every fresh model before the overrides and the run, listed in the report as a model repair, never as

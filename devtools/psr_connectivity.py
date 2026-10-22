@@ -36,7 +36,8 @@ CODE_TEXT = {
     "UNIT-NO-OUTLET": "A unit has no outlet stream.",
     "UNIT-UNCONNECTED": "A unit has neither inlet nor outlet streams and is not connected to the flowsheet.",
     "MIXER-SINGLE-INLET": "A mixer has fewer than two inlet streams; a second inlet is probably missing.",
-    "STREAM-ISOLATED": "A stream is neither produced nor consumed by any unit.",
+    "STREAM-ISOLATED": ("A stream is neither produced nor consumed by any unit (a deliberate reporting stream, or a "
+                        "connection the model lost)."),
 }
 
 REMEDY = {
@@ -141,8 +142,8 @@ def audit_connectivity(data):
         if s["kind"] == "isolated":
             mass = _mass(s, case)
             flow = "mass flow %s kg/h" % ("n/a" if mass is None else "%.4g" % mass)
-            severity = SEVERITY_ERROR if (mass or 0.0) > 0.0 else SEVERITY_WARNING
-            add("STREAM-ISOLATED", severity, "stream", s["id"], s.get("area", ""), "%s (%s); %s" % (s["label"], s["name"], flow))
+            add("STREAM-ISOLATED", SEVERITY_WARNING, "stream", s["id"], s.get("area", ""),
+                "%s (%s); %s; may be a deliberate reporting or measurement stream" % (s["label"], s["name"], flow))
 
     codes, flagged_units, flagged_streams = {}, {}, {}
     for f in findings:
