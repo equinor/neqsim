@@ -44,12 +44,12 @@ class TPflashFixedCompositionRootReuseTest {
   }
 
   /**
-   * Balanced endpoints must not enter the transactional root search or allocate phase clones.
+   * Balanced endpoints in fugacity equilibrium must not enter the transactional root search or allocate phase clones.
    *
    * @throws Exception if reflective invocation fails
    */
   @Test
-  void balancedEndpointsSkipTransactionalRootSearchAndCloning() throws Exception {
+  void balancedEquilibriumEndpointsSkipTransactionalRootSearchAndCloning() throws Exception {
     for (int model = 0; model < 3; model++) {
       SystemInterface fluid = fluid(model);
       double[] original = snapshot(fluid);
@@ -66,6 +66,35 @@ class TPflashFixedCompositionRootReuseTest {
       finalRepair.invoke(flash);
 
       assertEquals(0, cloneAttempts.get(), "Balanced model " + model + " must not clone phase roots");
+      assertArrayEquals(original, snapshot(fluid), 0.0);
+    }
+  }
+
+  /**
+   * Material closure alone must not suppress root qualification when live fugacity coefficients are stale.
+   *
+   * @throws Exception if reflective invocation fails
+   */
+  @Test
+  void balancedEndpointsWithStaleFugacityStillQualifyRootPairs() throws Exception {
+    for (int model = 0; model < 3; model++) {
+      SystemInterface fluid = fluid(model);
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        double recoveredFeed = fluid.getBeta(0) * fluid.getPhase(0).getComponent(component).getx()
+            + fluid.getBeta(1) * fluid.getPhase(1).getComponent(component).getx();
+        assertEquals(fluid.getPhase(0).getComponent(component).getz(), recoveredFeed, 1.0e-10);
+      }
+      double fugacityCoefficient = fluid.getPhase(0).getComponent(0).getFugacityCoefficient();
+      fluid.getPhase(0).getComponent(0).setFugacityCoefficient(1.5 * fugacityCoefficient);
+      double[] original = snapshot(fluid);
+      double expected = independentPairMinimum(fluid);
+      assertTrue(Double.isFinite(expected), "A qualified root pair is required for model " + model);
+
+      Method conservativeGibbs = TPflash.class.getDeclaredMethod("conservativeNeutralTwoPhaseGibbsEnergy");
+      conservativeGibbs.setAccessible(true);
+      double actual = (Double) conservativeGibbs.invoke(new TPflash(fluid));
+
+      assertEquals(expected, actual, 1.0e-8, "Balanced model " + model + " must still qualify its cubic roots");
       assertArrayEquals(original, snapshot(fluid), 0.0);
     }
   }

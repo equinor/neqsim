@@ -4029,31 +4029,34 @@ public class TPflash extends Flash {
    * <p>
    * The live endpoint is deliberately not mutated before later root and equilibrium refinements. Stale phase amounts
    * are synchronized on the clone when necessary, then every fixed-composition cubic-root pair is screened for strict
-   * fugacity equality. This prevents conservation or root repair from changing the numerical path of already balanced
-   * ordinary and multiphase flashes. The returned value is used only to adjudicate the existing homogeneous-reference
-   * Gibbs comparison.
+   * fugacity equality. Balanced endpoints skip root trials only when their live fugacity coefficients already satisfy
+   * equilibrium. The returned value is used only to adjudicate the existing homogeneous-reference Gibbs comparison; the
+   * live numerical path remains unchanged until the final root and amount refinements.
    * </p>
    *
-   * @return conservative two-phase Gibbs energy, or {@link Double#NaN} when synchronization is unnecessary or the
-   * candidate fails strict acceptance
+   * @return conservative two-phase Gibbs energy, or {@link Double#NaN} when no repair is needed or the candidate fails
+   * strict acceptance
    */
   private double conservativeNeutralTwoPhaseGibbsEnergy() {
     if (!isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
       return Double.NaN;
     }
-    if (maximumComponentMaterialBalanceResidual(system) <= NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD) {
-      return Double.NaN;
-    }
-    double[] repairedBetas = fixedCompositionTwoPhaseFractions(system);
-    if (!isBoundedNeutralTwoPhaseAmountCorrection(system, repairedBetas)) {
+    double[] repairedBetas = maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD
+        ? fixedCompositionTwoPhaseFractions(system)
+        : null;
+    boolean requiresAmountRepair = isBoundedNeutralTwoPhaseAmountCorrection(system, repairedBetas);
+    if (!requiresAmountRepair
+        && maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
       return Double.NaN;
     }
     double originalFirstBeta = system.getBeta(0);
     double originalSecondBeta = system.getBeta(1);
     SystemInterface candidate = system.clone();
     try {
-      candidate.setBeta(0, repairedBetas[0]);
-      candidate.setBeta(1, repairedBetas[1]);
+      if (requiresAmountRepair) {
+        candidate.setBeta(0, repairedBetas[0]);
+        candidate.setBeta(1, repairedBetas[1]);
+      }
       candidate.init(1);
       if (candidate.getPhase(0).getType() != system.getPhase(0).getType()
           || candidate.getPhase(1).getType() != system.getPhase(1).getType()
@@ -4636,12 +4639,12 @@ public class TPflash extends Flash {
    * <p>
    * The lower-Gibbs root check retains fixed compositions and amounts. The subsequent lever-rule synchronization is
    * independently accepted only for a bounded correction with strict final conservation and equilibrium. This preserves
-   * large mapped-phase changes for their established finalization path.
+   * large mapped-phase changes for their established finalization path. Material closure alone does not establish
+   * correct cubic roots, so root qualification remains independent of amount synchronization.
    * </p>
    */
   private void repairInvalidMultiphaseHydrocarbonEndpoint() {
-    if (!system.doMultiPhaseCheck() || !isNeutralTwoPhaseAmountSynchronizationEligible(system)
-        || maximumComponentMaterialBalanceResidual(system) <= NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD) {
+    if (!system.doMultiPhaseCheck() || !isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
       return;
     }
     rescueFinalMultiphaseHydrocarbonRoot();
