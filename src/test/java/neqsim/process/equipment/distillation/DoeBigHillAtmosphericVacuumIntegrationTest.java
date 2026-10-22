@@ -3,6 +3,7 @@ package neqsim.process.equipment.distillation;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
@@ -89,6 +90,56 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
     assertTrue(Double.isFinite(vacuumDistillate.getNormalBoilingPointQuantileCelsius(0.90)));
     assertTrue(Double.isFinite(vacuumResidue.getNormalBoilingPointQuantileCelsius(0.10)));
     assertTrue(Double.isFinite(vacuumResidue.getNormalBoilingPointQuantileCelsius(0.90)));
+  }
+
+  /**
+   * Sweep the vacuum reboiler temperature without mutating the connected atmospheric-bottoms handoff.
+   *
+   * <p>
+   * This connected screen solves one atmospheric column and two independent vacuum columns. Allow headroom for the
+   * supported Java 8 runtime while retaining a bounded integration-test timeout.
+   * </p>
+   */
+  @Test
+  @Timeout(value = 600, unit = TimeUnit.SECONDS)
+  public void connectedVacuumSensitivityQualifiesIndependentPoints() {
+    UUID id = UUID.randomUUID();
+    Stream crudeInlet = createCrudeInlet();
+    FiredHeater furnace = createFurnace(crudeInlet);
+    crudeInlet.run(id);
+    furnace.run(id);
+
+    DistillationColumn atmospheric = createAtmosphericColumn(furnace.getOutletStream());
+    atmospheric.run(id);
+    assertAcceptedColumn(atmospheric);
+    StreamInterface atmosphericBottoms = atmospheric.getLiquidOutStream();
+    double sourceMassFlow = atmosphericBottoms.getFlowRate("kg/hr");
+    double[] sourceComposition = atmosphericBottoms.getThermoSystem().getMolarComposition().clone();
+    double[] temperatures = {698.0, 702.0};
+
+    DoeBigHillVacuumReboilerTemperatureSensitivity sensitivity = DoeBigHillVacuumReboilerTemperatureSensitivity
+        .run("DOE Big Hill connected vacuum screen", atmosphericBottoms, vacuumInputs(), temperatures);
+
+    temperatures[0] = 999.0;
+    assertEquals(sourceMassFlow, atmosphericBottoms.getFlowRate("kg/hr"), 0.0);
+    assertArrayEquals(sourceComposition, atmosphericBottoms.getThermoSystem().getMolarComposition(), 0.0);
+    assertEquals(2, sensitivity.getPoints().length);
+    assertNotSame(sensitivity.getPoints(), sensitivity.getPoints());
+    assertEquals(698.0, sensitivity.getPoint(0).getReboilerTemperatureKelvin(), 0.0);
+    assertEquals(702.0, sensitivity.getPoint(1).getReboilerTemperatureKelvin(), 0.0);
+    assertTrue(sensitivity.getMinimumOverheadMassFraction() > 0.0);
+    assertTrue(sensitivity.getMaximumOverheadMassFraction() < 1.0);
+    assertTrue(sensitivity.getMaximumMassClosureRelativeError() <= BALANCE_TOLERANCE);
+    assertTrue(sensitivity.getMaximumComponentMolarClosureRelativeError() <= BALANCE_TOLERANCE);
+    assertTrue(sensitivity.getMaximumColumnEnergyBalanceError() <= BALANCE_TOLERANCE);
+
+    for (DoeBigHillVacuumReboilerTemperatureSensitivity.PointResult point : sensitivity.getPoints()) {
+      ProductResult overhead = point.getFractionationResult().getProduct("Overhead");
+      ProductResult bottoms = point.getFractionationResult().getProduct("Bottoms");
+      assertTrue(overhead.getMeanNormalBoilingPointKelvin() < bottoms.getMeanNormalBoilingPointKelvin());
+      assertTrue(Double.isFinite(point.getFractionationResult().getMeshResidualNorm()));
+      assertTrue(point.getFractionationResult().getMeshResidualNorm() >= 0.0);
+    }
   }
 
   private static Stream createCrudeInlet() {

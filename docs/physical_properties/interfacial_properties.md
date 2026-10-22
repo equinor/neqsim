@@ -9,6 +9,49 @@ NeqSim exposes surface- and interfacial-tension calculations through
 thermodynamic state: establish the expected phases first, initialize properties, select a
 model, and then evaluate the interface.
 
+Parachor and Firozabadi-Ramley initialize the configured physical mass-density model
+for the requested phases on each evaluation. This supports calls directly after a
+flash and refreshes finite density caches left by an earlier state. It does not
+initialize viscosity, conductivity or diffusion, and it does not replace a failed
+density model with an EOS estimate. Use `initProperties()` when those additional
+properties are needed.
+
+Cloning a fluid preserves its interfacial model selections and numerical parameters,
+with independent models bound to the clone's bulk phases. Model changes and flashes
+on the clone do not change the original's interfacial calculations. A copied gradient
+model must complete its own calculation before exposing density or pressure profiles.
+
+Process models now receive the clone's calculated tension where they previously could
+have used an initialization-error fallback. The three-phase pipeline regression, for
+example, uses 13.5265 mN/m instead of a 20 mN/m fallback. Its annular film closure now
+approaches the intermittent branch continuously at the unchanged bridging limit; see
+the [two-fluid model description](../process/TWOFLUIDPIPE_MODEL.md).
+
+For implementation review, see the
+[thermodynamic initialization skill](../../.github/skills/neqsim-thermodynamic-initialization/SKILL.md).
+
+## Repeated evaluations and performance
+
+Every evaluation checks both current bulk states and their compositions. Validation
+does not allocate a phase-index array and evaluates each phase's molar-mass sum once.
+These values are local to the call: direct phase edits, reflashes and density-model
+changes must still be checked on the next evaluation. Density refresh, physical-domain
+checks and profile-convergence requirements remain enabled.
+
+`SurfaceTensionPerformanceBenchmarkTest` is an opt-in profiling harness for two-component
+and fourteen-component gas-oil mixtures, all three interfaces in a gas-oil-water fluid,
+repeated flash/property calculations, and fluid cloning. It reports median timings
+after warmup without imposing machine-dependent timing assertions on CI:
+
+```bash
+./mvnw test -Dtest=SurfaceTensionPerformanceBenchmarkTest -DexcludedTestGroups=
+```
+
+For revision comparisons, run each scenario in separate JVMs, alternate revision order
+and compare several forks on an otherwise idle machine. Check the reported calculated
+values as well as timings; clone independence and fresh density values are required
+even when their initialization adds work.
+
 ## Units and phase identity
 
 `getSurfaceTension(int, int)` and the `SystemInterface.getInterfacialTension(...)`
@@ -152,19 +195,66 @@ interpret the selector name as a validated accuracy guarantee: benchmark the cho
 equation of state and influence parameters against data in the intended range.
 
 Simple Gradient Theory solves the transposed density-gradient system through
-`LinearAlgebraOperations` with the JAMA backend.
+`LinearAlgebraOperations` with EJML, and uses Commons Math for the inner Newton
+system. Simple and Linear Gradient Theory select the component with the largest
+absolute bulk molar-density contrast as the density-path reference. Selecting a
+trace high-boiling component, such as water in the gas-oil pair of a three-phase
+fluid, can otherwise follow a different density branch. Simple GT uses a relative
+density-update convergence tolerance of $10^{-12}$, above round-off in the
+chemical-potential derivatives. Both density-path models also check that the last
+point approaches the requested second bulk phase within two grid intervals of the
+larger bulk total molar density.
 
 ### Classical density functional theory
 
 `cDFT` and `Classical DFT` are aliases for `CDFTSurfaceTension`. The model is available
-for pure fluids and mixtures; it is not a documented alias for Parachor. Treat cDFT as
-an explicit model selection and validate its numerical result for the fluid and state.
+for pure fluids and mixtures with non-aqueous interfaces. Its dispersive cubic-EOS
+functional is not qualified for aqueous interfaces: those requests use the logged
+correlation fallback described below. Treat cDFT as an explicit model selection and
+validate its numerical result for the fluid and state.
 
 ### Firozabadi-Ramley
 
 The default oil-aqueous selector is `Firozabadi Ramley`. Use the canonical
 `("oil", "aqueous")` interface order. Confirm that the flashed state contains both
 liquid phases before evaluating it.
+
+### Invalid states, incomplete profiles and fallback
+
+All six model implementations validate the active phase pair and finite, positive
+bulk temperature, pressure, molar volume and molar mass before calculating. Bulk
+compositions and cubic-EOS densities beyond the covolume are also rejected.
+Invalid or identical indices in a multiphase fluid raise `IllegalArgumentException`; invalid
+bulk states raise `IllegalStateException`. The shared dispatcher also rejects
+non-finite or negative results. For compatibility, an indexed calculation on a
+single-phase system returns zero for no interface; the named system facade still
+returns `NaN` for a missing requested phase.
+
+An unsuccessful density-profile calculation never returns a partial integral or
+converts a negative result to zero. Simple GT and Linear GT discard their density,
+pressure and position profiles when any step fails. Their profile getters, and the
+Simple GT derivative getter, then raise `IllegalStateException`, including after a
+previous successful calculation. Simple GT influence-parameter fitting requires a
+completed GT profile and cannot fit the fallback correlation.
+
+| Selected model | Response to a failed calculation |
+|---|---|
+| Simple GT, Linear GT, Full GT | Warn with the selected model and failure reason, then calculate the default correlation for the actual phase pair |
+| cDFT | Same fallback for invalid/non-finite/negative results, invalid numerical parameters, or an aqueous interface |
+| Parachor, Firozabadi-Ramley | Reject invalid physical density or a non-finite/negative correlation result with an exception |
+
+The fallback is **Parachor for an interface containing gas** and
+**Firozabadi-Ramley for two liquid phases**. It uses the requested bulk phase
+indices, including when a third phase is present. If the fallback also fails, the
+calculation raises an exception. A fallback value is a correlation estimate, not a
+converged density-functional or gradient-theory result. Preserve the warning in
+engineering calculation records.
+
+Explicitly selecting Parachor for oil-water retains that correlation's formula.
+Component contributions can cancel strongly for this interface, producing very low
+values even when the arithmetic is finite. Prefer the default liquid-liquid model
+and qualify predictions against relevant measurements; a finite value alone is not
+an accuracy check.
 
 ## Three-phase calculations
 
@@ -187,6 +277,24 @@ double oilWater = fluid.getInterphaseProperties().getSurfaceTension(oil, aqueous
 ```
 
 Do not enumerate arbitrary `i, j` combinations and assume dispatch is symmetric.
+
+The numerical regressions exercise every named model and model sets 0-5 with both
+SRK and PR, independent gas-oil, gas-water and oil-water fluids, and all three
+interfaces in one methane/heptane/water fluid. They check phase identity,
+repeatability, unchanged bulk states, useful magnitude, fallback selection and
+nearby-temperature trends. Existing hydrocarbon GT snapshots and cDFT literature
+benchmarks provide additional coverage.
+
+For the synthetic three-phase SRK regression (0.5 methane, 0.3 n-heptane,
+0.2 water on a molar basis; mixing rule 2; 10 bara), default model set 0 gives:
+
+| Temperature (K) | Gas-oil (mN/m) | Gas-water (mN/m) | Oil-water (mN/m) |
+|---:|---:|---:|---:|
+| 300 | 19.2871 | 71.0670 | 50.0621 |
+| 320 | 17.3438 | 65.8114 | 46.1660 |
+
+These are reproducibility and trend checks on a synthetic EOS case, not measured
+data or a universal accuracy qualification of every selector.
 
 ## Adsorption is a separate subsystem
 

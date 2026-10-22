@@ -620,6 +620,16 @@ exact route restoration, mass conservation and the expected lower injectivity at
 reservoir pressure. The curve is synthetic integration input; this is not vendor-map,
 injectivity, fracture, outage or brownfield qualification.
 
+The separate field-development `InjectionWellModel` multi-zone water screen now uses the same
+dimensional radial-Darcy conversion as its single-zone path: m3/s/Pa is multiplied by
+`86400 s/day * 100000 Pa/bar`. Analytical tests check the coefficient directly and reconstruct
+unequal-zone allocation and total-rate conservation. This deliberately corrects prior multi-zone
+values by a factor of `1e10`; persisted results from the old calculation are not compatible and
+must be recalculated. It does not alter live `WellFlow` pressure-rate coupling, topology,
+hydraulics or optimization. The established Sm3/day label remains a screening contract without a
+PVT/formation-volume-factor conversion, and field/laboratory injectivity plus fracture review is
+still required before design or operating use.
+
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
 well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
 fixed-pressure sinks. Those stable sink streams feed separators, compressor-suction
@@ -643,6 +653,14 @@ shared-power evaluator. Only converged, finite, fully restored feasible points o
 hard/validity rejections tighten the final bracket. The receipt is an advisory bracket,
 not an interpolated choke target, compressor-map qualification or operating approval;
 discrete HP/LP routing is never bisected.
+
+The accepted multi-slice export also aggregates exact sampled and final refined-endpoint
+constraints into a deterministic cross-slice report. Rejecting constraints precede feasible
+near-active constraints; feasible screening uses only a dimensionless normalized-margin threshold
+with explicit provenance. Source, name, applicable limit, unit, limit role, and limit provenance are
+part of the grouping identity, so separator, compressor, shaft, driver, and shared-power evidence is
+not blended across incompatible engineering bases. The summary does not add or replace any SURF,
+compressor-map, or host-constraint physics.
 
 ### Repeated production periods and moving host limits
 

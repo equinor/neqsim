@@ -467,6 +467,24 @@ def _add_empty_boundary_refinement_evidence(envelope):
         envelope_slice["operating_region_boundary_refinements"] = []
 
 
+def _add_empty_constraint_summary_evidence(envelope):
+    """Upgrade one constraint-free fixture to exact accepted-envelope schema v2."""
+    envelope["schema_version"] = 2
+    envelope["cross_slice_constraint_summary"] = {
+        "summary_version": 1,
+        "maximum_normalized_margin": 0.1,
+        "threshold_provenance": "test normalized remaining-margin screen",
+        "observed_constraint_count": 0,
+        "ranked_constraint_count": 0,
+        "excluded_constraint_count": 0,
+        "ranked_constraints": [],
+        "advisory": True,
+        "interpretation": (
+            "Exact sampled/refined evidence; not a shadow price, causal attribution, "
+            "global active set, or approval"),
+    }
+
+
 def _valid_boundary_lifecycle_evidence(current_envelope):
     """Extend valid schema-v4 evidence with fail-closed continuous-boundary receipts."""
     evidence = _valid_region_lifecycle_evidence(current_envelope)
@@ -489,6 +507,13 @@ def _valid_boundary_headroom_lifecycle_evidence(current_envelope):
     """Extend valid schema-v5 evidence with exact refined-boundary endpoint constraints."""
     evidence = _valid_boundary_lifecycle_evidence(current_envelope)
     evidence["schema_version"] = 6
+    return evidence
+
+
+def _valid_constraint_summary_lifecycle_evidence(current_envelope):
+    """Extend valid schema-v6 evidence with exact reconstructed cross-slice summaries."""
+    evidence = _valid_boundary_headroom_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 7
     return evidence
 
 
@@ -1204,6 +1229,69 @@ def test_guard_persists_schema6_boundary_headroom_evidence(tmp_path):
     production.guard(ctx, {})
     assert [row["title"] for row in ctx.proposals] == ["candidate"]
     assert ctx.proposals[0]["lifecycle_envelope_evidence"]["schema_version"] == 6
+
+
+def test_guard_persists_schema7_cross_slice_constraint_summary(tmp_path):
+    proposal = _valid_proposal()
+    _add_empty_operating_region_evidence(proposal["accepted_point_envelope_evidence"])
+    _add_empty_boundary_refinement_evidence(proposal["accepted_point_envelope_evidence"])
+    _add_empty_constraint_summary_evidence(proposal["accepted_point_envelope_evidence"])
+    proposal["lifecycle_envelope_evidence"] = _valid_constraint_summary_lifecycle_evidence(
+        proposal["accepted_point_envelope_evidence"])
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    lifecycle = ctx.proposals[0]["lifecycle_envelope_evidence"]
+    assert lifecycle["schema_version"] == 7
+    assert lifecycle["periods"][0]["envelope_evidence"][
+        "cross_slice_constraint_summary"]["ranked_constraints"] == []
+
+
+def test_guard_reconstructs_schema2_constraint_summary_fail_closed(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    constraint = {
+        "source": "PLANT_CONSTRAINT",
+        "qualified_constraint_name": "host::shared power",
+        "normalized_utilization": 0.96,
+        "normalized_margin": 0.04,
+        "current_value": 960.0,
+        "applicable_limit": 1000.0,
+        "physical_margin": 40.0,
+        "physical_unit": "kW",
+        "feasible": True,
+        "diagnostic": "AVAILABLE",
+        "applicable_limit_role": "SHARED_RESOURCE",
+        "applicable_limit_provenance": "approved host power budget",
+    }
+    envelope["slices"][0]["points"][0]["leading_constraint"] = constraint
+    _add_empty_constraint_summary_evidence(envelope)
+    envelope["cross_slice_constraint_summary"] = production._cross_slice_constraint_summary(
+        envelope["slices"], envelope["cross_slice_constraint_summary"])
+    ctx = _guard_context(tmp_path, proposal)
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    entry = ctx.proposals[0]["accepted_point_envelope_evidence"][
+        "cross_slice_constraint_summary"]["ranked_constraints"][0]
+    assert entry["classification"] == "NEAR_ACTIVE"
+    assert entry["qualified_constraint_name"] == "host::shared power"
+    assert entry["physical_unit"] == "kW"
+
+    tampered = _valid_proposal()
+    tampered["title"] = "tampered summary"
+    tampered_envelope = tampered["accepted_point_envelope_evidence"]
+    tampered_envelope["slices"][0]["points"][0]["leading_constraint"] = constraint
+    _add_empty_constraint_summary_evidence(tampered_envelope)
+    tampered_envelope["cross_slice_constraint_summary"] = production._cross_slice_constraint_summary(
+        tampered_envelope["slices"], tampered_envelope["cross_slice_constraint_summary"])
+    tampered_envelope["cross_slice_constraint_summary"]["ranked_constraints"][0][
+        "minimum_normalized_margin"] = 0.03
+    tampered_ctx = _guard_context(tmp_path, tampered)
+    production.guard(tampered_ctx, {})
+    assert tampered_ctx.proposals == []
+    reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+    assert "envelope_constraint_summary_mismatch" in reasons
 
 
 def test_boundary_refinement_receipt_recomputes_midpoints_fail_closed():

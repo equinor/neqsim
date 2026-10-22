@@ -100,11 +100,14 @@ jobs:
         if: ${{ !matrix.verify_jacoco }}
         # PR #4484: Temurin 21.0.12.1 on Windows crashed with an access violation
         # in the C2-compiled EJML LU solve during PTPhaseEnvelopeReferenceEosTest.
-        # Interpret only this method; retain the solver, assertions and full suite.
+        # PR #4499: the retained crash log also identifies C2-compiled
+        # PhaseSrkCPA.initCPAMatrix in an access violation during SystemHybridEosGeFlashTest.
+        # Interpret only these methods; retain the solvers, assertions and full suite.
         # JAVA_TOOL_OPTIONS also reaches the forked Surefire JVM.
         env:
           JAVA_TOOL_OPTIONS: >-
             -XX:CompileCommand=exclude,org.ejml.dense.row.linsol.lu.LinearSolverLu_DDRM::solve
+            -XX:CompileCommand=exclude,neqsim.thermo.phase.PhaseSrkCPA::initCPAMatrix
         run: mvn -B test -ntp -DskipITs "-Djacoco.skip=true"
       - name: Retain fast-test reports
         if: always()

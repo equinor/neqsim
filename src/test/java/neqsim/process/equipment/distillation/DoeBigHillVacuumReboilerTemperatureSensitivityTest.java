@@ -112,6 +112,8 @@ public class DoeBigHillVacuumReboilerTemperatureSensitivityTest {
         FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {702.0, 700.0}));
     assertThrows(IllegalArgumentException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
         FEED_MASS_FLOW_KG_PER_HOUR, baseline, new double[] {640.0, 700.0}));
+    assertThrows(NullPointerException.class, () -> DoeBigHillVacuumReboilerTemperatureSensitivity.run("screen",
+        (neqsim.process.equipment.stream.StreamInterface) null, baseline, new double[] {698.0, 702.0}));
   }
 
   private static OperatingInputs baselineInputs() {

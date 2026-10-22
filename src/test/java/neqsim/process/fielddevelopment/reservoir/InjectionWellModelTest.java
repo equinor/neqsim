@@ -7,7 +7,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionType;
+import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionZone;
+import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionZoneResult;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionWellResult;
+import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.MultiZoneInjectionResult;
 
 /**
  * Unit tests for InjectionWellModel.
@@ -236,5 +239,54 @@ class InjectionWellModelTest {
     pattern.setWellSpacing(400.0);
 
     assertEquals(400.0, pattern.getWellSpacing(), 0.1);
+  }
+
+  @Test
+  @DisplayName("Multi-zone injectivity uses the radial Darcy SI-to-field conversion")
+  void testMultiZoneInjectivityDimensionalConversion() {
+    InjectionZone zone = new InjectionZone("target", 2500.0, 250.0, 100.0, 20.0, 400.0);
+    zone.skinFactor = 2.0;
+    zone.isTargetZone = true;
+    model.addZone(zone);
+    model.setMaxBHP(390.0, "bara");
+
+    double targetRate = 1000.0;
+    MultiZoneInjectionResult result = model.calculateMultiZone(targetRate);
+
+    double permeabilitySI = 100.0 * 9.869e-16;
+    double viscositySI = 0.3e-3;
+    double expectedII = 2.0 * Math.PI * permeabilitySI * 20.0 / (viscositySI * (Math.log(500.0 / 0.1) + 2.0)) * 86400.0
+        * 1e5;
+    InjectionZoneResult zoneResult = result.zoneResults.get(0);
+
+    assertEquals(expectedII, zoneResult.injectivityIndex, expectedII * 1e-12);
+    assertEquals(targetRate, result.totalRate, 1e-9);
+    assertEquals(250.0 + targetRate / expectedII, result.commonBHP, 1e-12);
+    assertEquals(1.0, result.injectionEfficiency, 1e-12);
+  }
+
+  @Test
+  @DisplayName("Multi-zone allocation conserves the requested rate across unequal zones")
+  void testMultiZoneAllocationConservesRate() {
+    InjectionZone target = new InjectionZone("target", 2500.0, 200.0, 100.0, 20.0, 400.0);
+    target.skinFactor = 1.0;
+    target.isTargetZone = true;
+    InjectionZone nonTarget = new InjectionZone("non-target", 2600.0, 220.0, 50.0, 10.0, 400.0);
+    nonTarget.skinFactor = 3.0;
+    model.addZone(target);
+    model.addZone(nonTarget);
+    model.setMaxBHP(390.0, "bara");
+
+    MultiZoneInjectionResult result = model.calculateMultiZone(1000.0);
+    double summedZoneRate = result.zoneResults.stream().mapToDouble(zone -> zone.rate).sum();
+    double reconstructedRate = result.zoneResults.get(0).injectivityIndex
+        * (result.commonBHP - target.reservoirPressure)
+        + result.zoneResults.get(1).injectivityIndex * (result.commonBHP - nonTarget.reservoirPressure);
+
+    assertEquals(1000.0, result.totalRate, 1e-9);
+    assertEquals(result.totalRate, summedZoneRate, 1e-12);
+    assertEquals(result.totalRate, reconstructedRate, 1e-9);
+    assertEquals(result.zoneResults.get(0).rate / result.totalRate, result.injectionEfficiency, 1e-12);
+    assertEquals(result.zoneResults.get(1).rate, result.outOfZoneRate, 1e-12);
   }
 }

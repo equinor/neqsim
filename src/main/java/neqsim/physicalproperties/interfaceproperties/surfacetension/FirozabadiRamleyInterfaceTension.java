@@ -36,12 +36,7 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-        * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
-            * system.getPhases()[1].getComponents()[componentNumber].getx()
-            - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
-                * system.getPhases()[0].getComponents()[componentNumber].getx()),
-        4.0);
+    return new ParachorSurfaceTension(system).calcPureComponentSurfaceTension(componentNumber);
   }
 
   /**
@@ -53,12 +48,10 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
    */
   @Override
   public double calcSurfaceTension(int interface1, int interface2) {
-    if (system.getNumberOfPhases() < 2) {
+    if (!validateInterface(interface1, interface2)) {
       return 0.0;
     }
-
-    double deltaDens = Math.abs(system.getPhase(interface2).getPhysicalProperties().getDensity()
-        - system.getPhase(interface1).getPhysicalProperties().getDensity());
+    double deltaDens = Math.abs(physicalDensity(interface2) - physicalDensity(interface1));
     double Tr = system.getPhase(interface1).getTemperature()
         / system.getPhase(interface1).getPseudoCriticalTemperature();
     // System.out.println("deltaDens " + deltaDens + " Tr " + Tr + " pt " +
@@ -77,6 +70,6 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
     }
 
     double temp1 = a1 * Math.pow(deltaDens / 1000.0, b1 + 1.0) / Math.pow(Tr, 0.3125);
-    return Math.pow(temp1, 4.0) / 1000.0;
+    return validateResult(Math.pow(temp1, 4.0) / 1000.0);
   }
 }

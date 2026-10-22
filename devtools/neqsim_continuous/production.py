@@ -232,7 +232,8 @@ def _validate_envelope_evidence(evidence, optimizer_evidence, setpoints, expecte
     """Validate one complete accepted-point envelope against its owning cycle and proposal."""
 
     reasons = []
-    if evidence.get("schema_version") != 1:
+    schema_version = evidence.get("schema_version")
+    if schema_version not in (1, 2):
         reasons.append("unsupported_envelope_schema")
     if evidence.get("cycle_id") != expected_cycle_id:
         reasons.append("stale_envelope_evidence")
@@ -337,6 +338,12 @@ def _validate_envelope_evidence(evidence, optimizer_evidence, setpoints, expecte
         reasons.append("envelope_total_evaluation_count_mismatch")
     if evidence.get("advisory") is not True:
         reasons.append("envelope_not_advisory")
+    if schema_version == 2:
+        expected_summary = _cross_slice_constraint_summary(
+            slices, evidence.get("cross_slice_constraint_summary"))
+        if (expected_summary is None
+                or evidence.get("cross_slice_constraint_summary") != expected_summary):
+            reasons.append("envelope_constraint_summary_mismatch")
     return reasons
 
 
@@ -375,6 +382,165 @@ def _bottleneck_name(value):
         if not isinstance(value.get(field), str):
             return False
     return value["qualified_constraint_name"]
+
+
+def _cross_slice_constraint_summary(slices, persisted):
+    """Rebuild the exact schema-v2 constraint summary from sampled and endpoint rows."""
+    if (not isinstance(slices, list) or not isinstance(persisted, dict)
+            or persisted.get("summary_version") != 1
+            or not _number(persisted.get("maximum_normalized_margin"))
+            or persisted["maximum_normalized_margin"] < 0
+            or not _text(persisted.get("threshold_provenance"))):
+        return None
+    maximum_margin = float(persisted["maximum_normalized_margin"])
+    accumulators = []
+
+    def observe(evidence, role, axes):
+        if evidence is None:
+            return True
+        if _bottleneck_name(evidence) is False:
+            return False
+        identity = (
+            evidence.get("source"), evidence.get("qualified_constraint_name"),
+            evidence.get("applicable_limit"), evidence.get("physical_unit"),
+            evidence.get("applicable_limit_role"),
+            evidence.get("applicable_limit_provenance"),
+        )
+        accumulator = next((item for item in accumulators
+                            if item["identity"] == identity), None)
+        if accumulator is None:
+            accumulator = {
+                "identity": identity,
+                "source": evidence["source"],
+                "qualified_constraint_name": evidence["qualified_constraint_name"],
+                "applicable_limit": evidence.get("applicable_limit"),
+                "physical_unit": evidence["physical_unit"],
+                "applicable_limit_role": evidence["applicable_limit_role"],
+                "applicable_limit_provenance": evidence["applicable_limit_provenance"],
+                "slice_axes": [],
+                "sampled_point_count": 0,
+                "feasible_boundary_count": 0,
+                "infeasible_boundary_count": 0,
+                "feasible_evidence_count": 0,
+                "rejecting_evidence_count": 0,
+                "minimum_normalized_margin": None,
+                "representative_feasible_constraint": None,
+                "representative_rejecting_constraint": None,
+            }
+            accumulators.append(accumulator)
+        axes_copy = list(axes)
+        if axes_copy not in accumulator["slice_axes"]:
+            accumulator["slice_axes"].append(axes_copy)
+        count_field = {
+            "sampled_point": "sampled_point_count",
+            "feasible_boundary": "feasible_boundary_count",
+            "infeasible_boundary": "infeasible_boundary_count",
+        }.get(role)
+        if count_field is None:
+            return False
+        accumulator[count_field] += 1
+        if evidence.get("feasible") is True:
+            accumulator["feasible_evidence_count"] += 1
+            margin = evidence.get("normalized_margin")
+            representative = accumulator["representative_feasible_constraint"]
+            representative_margin = (representative.get("normalized_margin")
+                                     if isinstance(representative, dict) else None)
+            if (representative is None
+                    or (_number(margin)
+                        and (not _number(representative_margin)
+                             or float(margin) < float(representative_margin)))):
+                accumulator["representative_feasible_constraint"] = evidence
+            if (_number(margin)
+                    and (accumulator["minimum_normalized_margin"] is None
+                         or float(margin) < accumulator["minimum_normalized_margin"])):
+                accumulator["minimum_normalized_margin"] = float(margin)
+        else:
+            accumulator["rejecting_evidence_count"] += 1
+            if accumulator["representative_rejecting_constraint"] is None:
+                accumulator["representative_rejecting_constraint"] = evidence
+        return True
+
+    for envelope_slice in slices:
+        if not isinstance(envelope_slice, dict):
+            return None
+        axes = envelope_slice.get("axis_action_ids")
+        points = envelope_slice.get("points")
+        refinements = envelope_slice.get("operating_region_boundary_refinements", [])
+        if (not isinstance(axes, list) or not isinstance(points, list)
+                or not isinstance(refinements, list)):
+            return None
+        for point in points:
+            if (not isinstance(point, dict)
+                    or not observe(point.get("leading_constraint"), "sampled_point", axes)):
+                return None
+        for refinement in refinements:
+            if (not isinstance(refinement, dict)
+                    or not observe(refinement.get("feasible_boundary_constraint"),
+                                   "feasible_boundary", axes)
+                    or not observe(refinement.get("infeasible_boundary_constraint"),
+                                   "infeasible_boundary", axes)):
+                return None
+
+    ranked = [item for item in accumulators
+              if (item["rejecting_evidence_count"] > 0
+                  or (item["minimum_normalized_margin"] is not None
+                      and item["minimum_normalized_margin"] <= maximum_margin))]
+
+    def rank_key(item):
+        limit_key = ((0, float(item["applicable_limit"]))
+                     if _number(item["applicable_limit"]) else (1, 0.0))
+        identity_tail = (
+            item["qualified_constraint_name"], item["source"],
+            limit_key, item["physical_unit"],
+            item["applicable_limit_role"], item["applicable_limit_provenance"],
+        )
+        if item["rejecting_evidence_count"] > 0:
+            return ((0, -item["rejecting_evidence_count"],
+                     -item["infeasible_boundary_count"]) + identity_tail)
+        return ((1, item["minimum_normalized_margin"],
+                 -item["feasible_boundary_count"],
+                 -item["feasible_evidence_count"]) + identity_tail)
+
+    try:
+        ranked.sort(key=rank_key)
+    except (TypeError, ValueError):
+        return None
+    entries = []
+    for rank, item in enumerate(ranked, 1):
+        entries.append({
+            "rank": rank,
+            "classification": ("REJECTING" if item["rejecting_evidence_count"] > 0
+                               else "NEAR_ACTIVE"),
+            "source": item["source"],
+            "qualified_constraint_name": item["qualified_constraint_name"],
+            "applicable_limit": item["applicable_limit"],
+            "physical_unit": item["physical_unit"],
+            "applicable_limit_role": item["applicable_limit_role"],
+            "applicable_limit_provenance": item["applicable_limit_provenance"],
+            "slice_count": len(item["slice_axes"]),
+            "slice_axes": item["slice_axes"],
+            "sampled_point_count": item["sampled_point_count"],
+            "feasible_boundary_count": item["feasible_boundary_count"],
+            "infeasible_boundary_count": item["infeasible_boundary_count"],
+            "feasible_evidence_count": item["feasible_evidence_count"],
+            "rejecting_evidence_count": item["rejecting_evidence_count"],
+            "minimum_normalized_margin": item["minimum_normalized_margin"],
+            "representative_feasible_constraint": item["representative_feasible_constraint"],
+            "representative_rejecting_constraint": item["representative_rejecting_constraint"],
+        })
+    return {
+        "summary_version": 1,
+        "maximum_normalized_margin": persisted["maximum_normalized_margin"],
+        "threshold_provenance": persisted["threshold_provenance"],
+        "observed_constraint_count": len(accumulators),
+        "ranked_constraint_count": len(entries),
+        "excluded_constraint_count": len(accumulators) - len(entries),
+        "ranked_constraints": entries,
+        "advisory": True,
+        "interpretation": (
+            "Exact sampled/refined evidence; not a shadow price, causal attribution, "
+            "global active set, or approval"),
+    }
 
 
 def _sampled_constraint_name(value):
@@ -918,7 +1084,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
 
     reasons = []
     schema_version = evidence.get("schema_version")
-    if schema_version not in (1, 2, 3, 4, 5, 6):
+    if schema_version not in (1, 2, 3, 4, 5, 6, 7):
         reasons.append("unsupported_lifecycle_envelope_schema")
     if evidence.get("cycle_id") != ctx.cycle_id:
         reasons.append("stale_lifecycle_envelope_evidence")
@@ -933,7 +1099,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
         action_ids = []
     state_metric_ids = None
     if (schema_version == 3
-            or (schema_version in (4, 5, 6) and "accepted_state_metric_ids" in evidence)):
+            or (schema_version in (4, 5, 6, 7) and "accepted_state_metric_ids" in evidence)):
         state_metric_ids = _action_ids(evidence.get("accepted_state_metric_ids"))
         if state_metric_ids is None:
             reasons.append("invalid_lifecycle_state_metric_ids")
@@ -1007,7 +1173,7 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             reasons.append(prefix + "_identity_mismatch")
         if envelope.get("accepted_action_ids") != action_ids:
             reasons.append(prefix + "_action_ids_mismatch")
-        if schema_version in (4, 5, 6):
+        if schema_version in (4, 5, 6, 7):
             slices = envelope.get("slices")
             if (not isinstance(slices, list)
                     or any(not isinstance(envelope_slice, dict)
@@ -1015,15 +1181,19 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
                            or "operating_region_transitions" not in envelope_slice
                            for envelope_slice in slices)):
                 reasons.append(prefix + "_missing_operating_region_transition_evidence")
-            if (schema_version in (5, 6)
+            if (schema_version in (5, 6, 7)
                     and (not isinstance(slices, list)
                          or any(not isinstance(envelope_slice, dict)
                                 or "operating_region_boundary_refinements" not in envelope_slice
                                 or "maximum_boundary_refinement_evaluations" not in envelope_slice
                                 for envelope_slice in slices))):
                 reasons.append(prefix + "_missing_operating_region_boundary_refinement_evidence")
-            if schema_version == 6 and not _has_boundary_constraint_headroom(slices):
+            if schema_version in (6, 7) and not _has_boundary_constraint_headroom(slices):
                 reasons.append(prefix + "_missing_boundary_constraint_headroom_evidence")
+            if (schema_version == 7
+                    and (envelope.get("schema_version") != 2
+                         or "cross_slice_constraint_summary" not in envelope)):
+                reasons.append(prefix + "_missing_cross_slice_constraint_summary")
 
         accepted = envelope.get("accepted_candidate_values")
         optimizer = envelope.get("optimizer_evidence")
@@ -1086,11 +1256,11 @@ def _lifecycle_evidence_reasons(ctx, proposal, required=False):
             })
     if evidence.get("bottleneck_transitions") != expected_transitions:
         reasons.append("lifecycle_bottleneck_transitions_mismatch")
-    if schema_version in (2, 3, 4, 5, 6):
+    if schema_version in (2, 3, 4, 5, 6, 7):
         expected_period_changes = _period_change_diagnostics(
             periods, action_ids, evidence.get("time_unit"), state_metric_ids,
-            require_operating_transitions=schema_version in (4, 5, 6),
-            require_boundary_refinements=schema_version in (5, 6))
+            require_operating_transitions=schema_version in (4, 5, 6, 7),
+            require_boundary_refinements=schema_version in (5, 6, 7))
         if (expected_period_changes is None
                 or evidence.get("period_change_diagnostics") != expected_period_changes):
             reasons.append("lifecycle_period_change_diagnostics_mismatch")

@@ -3,7 +3,6 @@ title: Machine Learning Surrogate Integration
 description: Register bounded surrogate models with validated physics fallback and explicit engineering limits.
 ---
 
-# Machine Learning Surrogate Integration
 
 `SurrogateModelRegistry` coordinates fast surrogate predictions with a caller-supplied
 physics fallback. It validates vector shape and numeric values, tracks use outside the

@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,10 @@ public final class ProcessModelOperatingEnvelopeStudy {
   private double boundaryRefinementRelativeTolerance = 1.0e-3;
   /** Engineering source of the refinement tolerance. */
   private String boundaryRefinementToleranceProvenance = "diagnostic continuous-action range fraction";
+  /** Largest normalized feasible margin classified as near-active in the cross-slice summary. */
+  private double nearActiveConstraintNormalizedMargin = 0.10;
+  /** Engineering source of the near-active classification threshold. */
+  private String nearActiveConstraintThresholdProvenance = "default normalized remaining-margin screening threshold";
 
   /**
    * Creates a study around an existing transactional evaluator.
@@ -132,6 +137,30 @@ public final class ProcessModelOperatingEnvelopeStudy {
     this.boundaryRefinementRelativeTolerance = relativeTolerance;
     this.boundaryRefinementToleranceProvenance = requireText(toleranceProvenance,
         "Boundary-refinement tolerance provenance");
+    return this;
+  }
+
+  /**
+   * Sets the dimensionless feasible-margin threshold used by the cross-slice constraint summary.
+   *
+   * <p>
+   * Only exact feasible evidence with a finite normalized margin at or below this value is classified as near-active.
+   * Rejecting evidence is retained independently of this threshold. Physical margins with unlike units are never ranked
+   * against one another.
+   * </p>
+   *
+   * @param maximumNormalizedMargin finite non-negative normalized remaining margin
+   * @param thresholdProvenance engineering source and screening purpose of the threshold
+   * @return this study
+   */
+  public ProcessModelOperatingEnvelopeStudy setNearActiveConstraintNormalizedMargin(double maximumNormalizedMargin,
+      String thresholdProvenance) {
+    if (!Double.isFinite(maximumNormalizedMargin) || maximumNormalizedMargin < 0.0) {
+      throw new IllegalArgumentException("Near-active normalized margin must be finite and non-negative");
+    }
+    nearActiveConstraintNormalizedMargin = maximumNormalizedMargin;
+    nearActiveConstraintThresholdProvenance = requireText(thresholdProvenance,
+        "Near-active constraint threshold provenance");
     return this;
   }
 
@@ -216,6 +245,24 @@ public final class ProcessModelOperatingEnvelopeStudy {
   }
 
   /**
+   * Builds a deterministic cross-slice summary from exact sampled and refined-endpoint constraint evidence.
+   *
+   * <p>
+   * Every slice must be complete, originate from this exact runtime study, use unique ordered axes, and share one
+   * identical anchor vector. The summary never reruns the model. Rejecting constraints rank before feasible near-active
+   * constraints. Rejecting rows are ordered by occurrence counts; feasible rows are ordered only by their finite
+   * dimensionless normalized margin. Physical margins with unlike units are retained as evidence but never compared.
+   * </p>
+   *
+   * @param slices one or more complete slices from this runtime study
+   * @return immutable ranked cross-slice constraint summary
+   */
+  public CrossSliceConstraintSummary summarizeConstraints(SliceResult... slices) {
+    validateSummarySlices(slices);
+    return buildConstraintSummary(slices);
+  }
+
+  /**
    * Builds one compact machine-readable evidence block for an accepted point and its completed envelope slices.
    *
    * <p>
@@ -274,7 +321,7 @@ public final class ProcessModelOperatingEnvelopeStudy {
     CandidateSetEvaluationResult replay = search.getAcceptedPointReplay().getEvaluation();
     LeadingConstraintEvidence acceptedBottleneck = leading(replay, leadingInstalled(replay));
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
-    evidence.put("schema_version", Integer.valueOf(1));
+    evidence.put("schema_version", Integer.valueOf(2));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("study_id", id);
     evidence.put("study_name", name);
@@ -295,10 +342,103 @@ public final class ProcessModelOperatingEnvelopeStudy {
     evidence.put("envelope_runtime_seconds", Double.valueOf(envelopeRuntimeSeconds));
     evidence.put("total_evaluation_count", Long.valueOf(search.getEvaluationCount() + envelopeEvaluationCount));
     evidence.put("slices", Collections.unmodifiableList(sliceEvidence));
+    evidence.put("cross_slice_constraint_summary", buildConstraintSummary(slices).toEvidenceMap());
     evidence.put("advisory", Boolean.TRUE);
     evidence.put("interpretation",
         "Sampled operating evidence; not a continuous boundary, global optimum, shadow price, or operating approval");
     return Collections.unmodifiableMap(evidence);
+  }
+
+  /**
+   * Validates slices for a read-only cross-slice summary.
+   *
+   * @param slices one or more slices to validate
+   */
+  private void validateSummarySlices(SliceResult... slices) {
+    if (slices == null || slices.length == 0) {
+      throw new IllegalArgumentException("Cross-slice constraint summary requires at least one slice");
+    }
+    List<String[]> axisSignatures = new ArrayList<String[]>();
+    double[] anchor = null;
+    for (SliceResult slice : slices) {
+      if (slice == null || !slice.isFromStudy(this)) {
+        throw new IllegalStateException("Constraint summary requires slices from this exact runtime study");
+      }
+      if (!slice.isComplete()) {
+        throw new IllegalStateException("Constraint summary requires complete slices with safe baseline recovery");
+      }
+      if (anchor == null) {
+        anchor = slice.getAnchorValues();
+      } else if (!sameVector(anchor, slice.getAnchorValues())) {
+        throw new IllegalStateException("Constraint summary slices do not share one exact anchor vector");
+      }
+      String[] signature = slice.getAxisActionIds();
+      if (containsAxisSignature(axisSignatures, signature)) {
+        throw new IllegalArgumentException(
+            "Constraint summary contains duplicate slice axes: " + Arrays.toString(signature));
+      }
+      axisSignatures.add(signature);
+    }
+  }
+
+  /**
+   * Builds the summary after slice ownership, completion, axes, and anchors have been validated.
+   *
+   * @param slices validated complete slices
+   * @return immutable cross-slice constraint summary
+   */
+  private CrossSliceConstraintSummary buildConstraintSummary(SliceResult... slices) {
+    List<ConstraintSummaryAccumulator> accumulators = new ArrayList<ConstraintSummaryAccumulator>();
+    for (SliceResult slice : slices) {
+      String[] axes = slice.getAxisActionIds();
+      for (Point point : slice.getPoints()) {
+        observeConstraint(accumulators, point.getLeadingConstraint(), ConstraintEvidenceRole.SAMPLED_POINT, axes);
+      }
+      for (OperatingRegionBoundaryRefinement refinement : slice.getBoundaryRefinements()) {
+        observeConstraint(accumulators, refinement.getFeasibleBoundaryConstraint(),
+            ConstraintEvidenceRole.FEASIBLE_BOUNDARY, axes);
+        observeConstraint(accumulators, refinement.getInfeasibleBoundaryConstraint(),
+            ConstraintEvidenceRole.INFEASIBLE_BOUNDARY, axes);
+      }
+    }
+    List<ConstraintSummaryAccumulator> ranked = new ArrayList<ConstraintSummaryAccumulator>();
+    for (ConstraintSummaryAccumulator accumulator : accumulators) {
+      if (accumulator.getRejectingEvidenceCount() > 0
+          || accumulator.isNearActive(nearActiveConstraintNormalizedMargin)) {
+        ranked.add(accumulator);
+      }
+    }
+    Collections.sort(ranked, new ConstraintSummaryAccumulatorComparator());
+    List<ConstraintSummaryEntry> entries = new ArrayList<ConstraintSummaryEntry>();
+    for (int index = 0; index < ranked.size(); index++) {
+      entries.add(ranked.get(index).toEntry(index + 1));
+    }
+    return new CrossSliceConstraintSummary(nearActiveConstraintNormalizedMargin,
+        nearActiveConstraintThresholdProvenance, accumulators.size(), entries);
+  }
+
+  /**
+   * Adds one exact constraint row to its compatible aggregate identity.
+   *
+   * @param accumulators mutable compatible-identity aggregates
+   * @param evidence exact constraint row, or null
+   * @param role sampled or refined-endpoint role
+   * @param axes ordered slice axes
+   */
+  private static void observeConstraint(List<ConstraintSummaryAccumulator> accumulators,
+      LeadingConstraintEvidence evidence, ConstraintEvidenceRole role, String[] axes) {
+    if (evidence == null) {
+      return;
+    }
+    for (ConstraintSummaryAccumulator accumulator : accumulators) {
+      if (accumulator.matches(evidence)) {
+        accumulator.observe(evidence, role, axes);
+        return;
+      }
+    }
+    ConstraintSummaryAccumulator accumulator = new ConstraintSummaryAccumulator(evidence);
+    accumulator.observe(evidence, role, axes);
+    accumulators.add(accumulator);
   }
 
   /** Returns true when the ordered axis identifier vector already exists. */
@@ -1092,6 +1232,481 @@ public final class ProcessModelOperatingEnvelopeStudy {
       throw new IllegalArgumentException(label + " must not be blank");
     }
     return value.trim();
+  }
+
+  /** Role of one exact row in the cross-slice summary. */
+  private enum ConstraintEvidenceRole {
+    /** Leading constraint at a sampled grid point. */
+    SAMPLED_POINT,
+    /** Leading constraint at the final feasible refined endpoint. */
+    FEASIBLE_BOUNDARY,
+    /** Rejecting constraint at the final infeasible refined endpoint. */
+    INFEASIBLE_BOUNDARY
+  }
+
+  /** Mutable internal aggregate used only while constructing a summary. */
+  private static final class ConstraintSummaryAccumulator {
+    private final LeadingConstraintEvidence identity;
+    private final List<List<String>> sliceAxes = new ArrayList<List<String>>();
+    private int sampledPointCount;
+    private int feasibleBoundaryCount;
+    private int infeasibleBoundaryCount;
+    private int feasibleEvidenceCount;
+    private int rejectingEvidenceCount;
+    private double minimumNormalizedMargin = Double.NaN;
+    private LeadingConstraintEvidence representativeFeasibleConstraint;
+    private LeadingConstraintEvidence representativeRejectingConstraint;
+
+    /**
+     * Creates an empty aggregate with the exact compatibility identity of one row.
+     *
+     * @param evidence first exact row for this identity
+     */
+    private ConstraintSummaryAccumulator(LeadingConstraintEvidence evidence) {
+      identity = evidence;
+    }
+
+    /**
+     * Returns true when one row has the exact grouping identity of this aggregate.
+     *
+     * @param evidence exact row to compare
+     * @return true when every engineering-basis identity field matches
+     */
+    private boolean matches(LeadingConstraintEvidence evidence) {
+      return identity.getSource() == evidence.getSource()
+          && identity.getQualifiedConstraintName().equals(evidence.getQualifiedConstraintName())
+          && Double.doubleToLongBits(identity.getApplicableLimit()) == Double
+              .doubleToLongBits(evidence.getApplicableLimit())
+          && identity.getPhysicalUnit().equals(evidence.getPhysicalUnit())
+          && identity.getApplicableLimitRole().equals(evidence.getApplicableLimitRole())
+          && identity.getApplicableLimitProvenance().equals(evidence.getApplicableLimitProvenance());
+    }
+
+    /**
+     * Retains one exact occurrence and its evidence role.
+     *
+     * @param evidence exact compatible row
+     * @param role sampled or refined-endpoint role
+     * @param axes ordered slice axes
+     */
+    private void observe(LeadingConstraintEvidence evidence, ConstraintEvidenceRole role, String[] axes) {
+      List<String> axisSignature = Collections.unmodifiableList(new ArrayList<String>(Arrays.asList(axes)));
+      if (!sliceAxes.contains(axisSignature)) {
+        sliceAxes.add(axisSignature);
+      }
+      switch (role) {
+      case SAMPLED_POINT:
+        sampledPointCount++;
+        break;
+      case FEASIBLE_BOUNDARY:
+        feasibleBoundaryCount++;
+        break;
+      case INFEASIBLE_BOUNDARY:
+        infeasibleBoundaryCount++;
+        break;
+      default:
+        throw new IllegalStateException("Unsupported constraint evidence role: " + role);
+      }
+      if (evidence.isFeasible()) {
+        feasibleEvidenceCount++;
+        if (representativeFeasibleConstraint == null || isSmallerFiniteMargin(evidence.getNormalizedMargin(),
+            representativeFeasibleConstraint.getNormalizedMargin())) {
+          representativeFeasibleConstraint = evidence;
+        }
+        if (Double.isFinite(evidence.getNormalizedMargin()) && (!Double.isFinite(minimumNormalizedMargin)
+            || evidence.getNormalizedMargin() < minimumNormalizedMargin)) {
+          minimumNormalizedMargin = evidence.getNormalizedMargin();
+        }
+      } else {
+        rejectingEvidenceCount++;
+        if (representativeRejectingConstraint == null) {
+          representativeRejectingConstraint = evidence;
+        }
+      }
+    }
+
+    /**
+     * Returns true when the feasible aggregate is inside the configured normalized-margin screen.
+     *
+     * @param maximumNormalizedMargin inclusive dimensionless screen
+     * @return true when a finite feasible margin passes the screen
+     */
+    private boolean isNearActive(double maximumNormalizedMargin) {
+      return Double.isFinite(minimumNormalizedMargin) && minimumNormalizedMargin <= maximumNormalizedMargin;
+    }
+
+    /** @return number of exact rejecting rows in this aggregate */
+    private int getRejectingEvidenceCount() {
+      return rejectingEvidenceCount;
+    }
+
+    /**
+     * Converts this aggregate to one immutable ranked entry.
+     *
+     * @param rank one-based deterministic rank
+     * @return immutable summary entry
+     */
+    private ConstraintSummaryEntry toEntry(int rank) {
+      ConstraintSummaryEntry.Classification classification = rejectingEvidenceCount > 0
+          ? ConstraintSummaryEntry.Classification.REJECTING
+          : ConstraintSummaryEntry.Classification.NEAR_ACTIVE;
+      return new ConstraintSummaryEntry(rank, classification, identity.getSource(),
+          identity.getQualifiedConstraintName(), identity.getApplicableLimit(), identity.getPhysicalUnit(),
+          identity.getApplicableLimitRole(), identity.getApplicableLimitProvenance(), sliceAxes, sampledPointCount,
+          feasibleBoundaryCount, infeasibleBoundaryCount, feasibleEvidenceCount, rejectingEvidenceCount,
+          minimumNormalizedMargin, representativeFeasibleConstraint, representativeRejectingConstraint);
+    }
+
+    /**
+     * Returns true when the first margin is the preferred finite representative.
+     *
+     * @param first candidate margin
+     * @param second current representative margin
+     * @return true when the candidate is finite and smaller
+     */
+    private static boolean isSmallerFiniteMargin(double first, double second) {
+      return Double.isFinite(first) && (!Double.isFinite(second) || first < second);
+    }
+  }
+
+  /** Deterministic ordering for rejecting and feasible near-active aggregates. */
+  private static final class ConstraintSummaryAccumulatorComparator
+      implements Comparator<ConstraintSummaryAccumulator>, Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Orders rejecting evidence first, then normalized feasible headroom, then exact identity.
+     *
+     * @param first first accumulator
+     * @param second second accumulator
+     * @return comparator result
+     */
+    @Override
+    public int compare(ConstraintSummaryAccumulator first, ConstraintSummaryAccumulator second) {
+      boolean firstRejecting = first.rejectingEvidenceCount > 0;
+      boolean secondRejecting = second.rejectingEvidenceCount > 0;
+      if (firstRejecting != secondRejecting) {
+        return firstRejecting ? -1 : 1;
+      }
+      int comparison;
+      if (firstRejecting) {
+        comparison = Integer.compare(second.rejectingEvidenceCount, first.rejectingEvidenceCount);
+        if (comparison == 0) {
+          comparison = Integer.compare(second.infeasibleBoundaryCount, first.infeasibleBoundaryCount);
+        }
+      } else {
+        comparison = Double.compare(first.minimumNormalizedMargin, second.minimumNormalizedMargin);
+        if (comparison == 0) {
+          comparison = Integer.compare(second.feasibleBoundaryCount, first.feasibleBoundaryCount);
+        }
+        if (comparison == 0) {
+          comparison = Integer.compare(second.feasibleEvidenceCount, first.feasibleEvidenceCount);
+        }
+      }
+      if (comparison != 0) {
+        return comparison;
+      }
+      comparison = first.identity.getQualifiedConstraintName().compareTo(second.identity.getQualifiedConstraintName());
+      if (comparison == 0) {
+        comparison = first.identity.getSource().name().compareTo(second.identity.getSource().name());
+      }
+      if (comparison == 0) {
+        comparison = Double.compare(first.identity.getApplicableLimit(), second.identity.getApplicableLimit());
+      }
+      if (comparison == 0) {
+        comparison = first.identity.getPhysicalUnit().compareTo(second.identity.getPhysicalUnit());
+      }
+      if (comparison == 0) {
+        comparison = first.identity.getApplicableLimitRole().compareTo(second.identity.getApplicableLimitRole());
+      }
+      if (comparison == 0) {
+        comparison = first.identity.getApplicableLimitProvenance()
+            .compareTo(second.identity.getApplicableLimitProvenance());
+      }
+      return comparison;
+    }
+  }
+
+  /**
+   * Immutable ranked cross-slice near-active and rejecting constraint summary.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static final class CrossSliceConstraintSummary implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final double maximumNormalizedMargin;
+    private final String thresholdProvenance;
+    private final int observedConstraintCount;
+    private final List<ConstraintSummaryEntry> rankedConstraints;
+
+    /**
+     * Creates one immutable cross-slice summary.
+     *
+     * @param maximumNormalizedMargin inclusive dimensionless feasible screen
+     * @param thresholdProvenance engineering provenance for the screen
+     * @param observedConstraintCount compatible identities observed before screening
+     * @param rankedConstraints screened deterministic entries
+     */
+    private CrossSliceConstraintSummary(double maximumNormalizedMargin, String thresholdProvenance,
+        int observedConstraintCount, List<ConstraintSummaryEntry> rankedConstraints) {
+      this.maximumNormalizedMargin = maximumNormalizedMargin;
+      this.thresholdProvenance = thresholdProvenance;
+      this.observedConstraintCount = observedConstraintCount;
+      this.rankedConstraints = Collections.unmodifiableList(new ArrayList<ConstraintSummaryEntry>(rankedConstraints));
+    }
+
+    /** @return configured maximum normalized margin for feasible near-active rows */
+    public double getMaximumNormalizedMargin() {
+      return maximumNormalizedMargin;
+    }
+
+    /** @return engineering source of the near-active screen */
+    public String getThresholdProvenance() {
+      return thresholdProvenance;
+    }
+
+    /** @return number of compatible exact constraint identities observed */
+    public int getObservedConstraintCount() {
+      return observedConstraintCount;
+    }
+
+    /** @return immutable deterministic ranked constraint list */
+    public List<ConstraintSummaryEntry> getRankedConstraints() {
+      return Collections.unmodifiableList(new ArrayList<ConstraintSummaryEntry>(rankedConstraints));
+    }
+
+    /** @return number of observed identities excluded by the feasible near-active screen */
+    public int getExcludedConstraintCount() {
+      return observedConstraintCount - rankedConstraints.size();
+    }
+
+    /** Converts this summary to a deeply immutable JSON-friendly map. */
+    public Map<String, Object> toEvidenceMap() {
+      List<Map<String, Object>> entries = new ArrayList<Map<String, Object>>();
+      for (ConstraintSummaryEntry entry : rankedConstraints) {
+        entries.add(entry.toEvidenceMap());
+      }
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("summary_version", Integer.valueOf(1));
+      evidence.put("maximum_normalized_margin", Double.valueOf(maximumNormalizedMargin));
+      evidence.put("threshold_provenance", thresholdProvenance);
+      evidence.put("observed_constraint_count", Integer.valueOf(observedConstraintCount));
+      evidence.put("ranked_constraint_count", Integer.valueOf(rankedConstraints.size()));
+      evidence.put("excluded_constraint_count", Integer.valueOf(getExcludedConstraintCount()));
+      evidence.put("ranked_constraints", Collections.unmodifiableList(entries));
+      evidence.put("advisory", Boolean.TRUE);
+      evidence.put("interpretation",
+          "Exact sampled/refined evidence; not a shadow price, causal attribution, global active set, or approval");
+      return Collections.unmodifiableMap(evidence);
+    }
+  }
+
+  /**
+   * Immutable ranked aggregate for one exact constraint identity and engineering basis.
+   *
+   * @author NeqSim Development Team
+   * @version 1.0
+   */
+  public static final class ConstraintSummaryEntry implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** Ranked screening classification. */
+    public enum Classification {
+      /** At least one exact sampled or refined row rejected its candidate. */
+      REJECTING,
+      /** Feasible exact evidence fell inside the configured normalized-margin screen. */
+      NEAR_ACTIVE
+    }
+
+    private final int rank;
+    private final Classification classification;
+    private final LeadingConstraintEvidence.Source source;
+    private final String qualifiedConstraintName;
+    private final double applicableLimit;
+    private final String physicalUnit;
+    private final String applicableLimitRole;
+    private final String applicableLimitProvenance;
+    private final List<List<String>> sliceAxes;
+    private final int sampledPointCount;
+    private final int feasibleBoundaryCount;
+    private final int infeasibleBoundaryCount;
+    private final int feasibleEvidenceCount;
+    private final int rejectingEvidenceCount;
+    private final double minimumNormalizedMargin;
+    private final LeadingConstraintEvidence representativeFeasibleConstraint;
+    private final LeadingConstraintEvidence representativeRejectingConstraint;
+
+    /**
+     * Creates one immutable ranked aggregate.
+     *
+     * @param rank one-based deterministic rank
+     * @param classification rejecting or feasible near-active classification
+     * @param source evidence layer
+     * @param qualifiedConstraintName stable constraint identity
+     * @param applicableLimit exact physical limit
+     * @param physicalUnit physical engineering unit
+     * @param applicableLimitRole engineering role of the limit
+     * @param applicableLimitProvenance provenance of the limit
+     * @param sliceAxes ordered axes where this identity was observed
+     * @param sampledPointCount sampled-point occurrence count
+     * @param feasibleBoundaryCount final feasible-endpoint occurrence count
+     * @param infeasibleBoundaryCount final infeasible-endpoint occurrence count
+     * @param feasibleEvidenceCount exact feasible-row count
+     * @param rejectingEvidenceCount exact rejecting-row count
+     * @param minimumNormalizedMargin minimum finite feasible normalized margin
+     * @param representativeFeasibleConstraint representative exact feasible row
+     * @param representativeRejectingConstraint representative exact rejecting row
+     */
+    private ConstraintSummaryEntry(int rank, Classification classification, LeadingConstraintEvidence.Source source,
+        String qualifiedConstraintName, double applicableLimit, String physicalUnit, String applicableLimitRole,
+        String applicableLimitProvenance, List<List<String>> sliceAxes, int sampledPointCount,
+        int feasibleBoundaryCount, int infeasibleBoundaryCount, int feasibleEvidenceCount, int rejectingEvidenceCount,
+        double minimumNormalizedMargin, LeadingConstraintEvidence representativeFeasibleConstraint,
+        LeadingConstraintEvidence representativeRejectingConstraint) {
+      this.rank = rank;
+      this.classification = classification;
+      this.source = source;
+      this.qualifiedConstraintName = qualifiedConstraintName;
+      this.applicableLimit = applicableLimit;
+      this.physicalUnit = physicalUnit;
+      this.applicableLimitRole = applicableLimitRole;
+      this.applicableLimitProvenance = applicableLimitProvenance;
+      this.sliceAxes = immutableAxes(sliceAxes);
+      this.sampledPointCount = sampledPointCount;
+      this.feasibleBoundaryCount = feasibleBoundaryCount;
+      this.infeasibleBoundaryCount = infeasibleBoundaryCount;
+      this.feasibleEvidenceCount = feasibleEvidenceCount;
+      this.rejectingEvidenceCount = rejectingEvidenceCount;
+      this.minimumNormalizedMargin = minimumNormalizedMargin;
+      this.representativeFeasibleConstraint = representativeFeasibleConstraint;
+      this.representativeRejectingConstraint = representativeRejectingConstraint;
+    }
+
+    /** @return one-based deterministic rank */
+    public int getRank() {
+      return rank;
+    }
+
+    /** @return rejecting or feasible near-active classification */
+    public Classification getClassification() {
+      return classification;
+    }
+
+    /** @return evidence layer */
+    public LeadingConstraintEvidence.Source getSource() {
+      return source;
+    }
+
+    /** @return stable or area-qualified constraint identity */
+    public String getQualifiedConstraintName() {
+      return qualifiedConstraintName;
+    }
+
+    /** @return exact applicable limit retained by this compatible evidence identity */
+    public double getApplicableLimit() {
+      return applicableLimit;
+    }
+
+    /** @return physical unit shared by every row in this aggregate */
+    public String getPhysicalUnit() {
+      return physicalUnit;
+    }
+
+    /** @return engineering role of the applicable limit */
+    public String getApplicableLimitRole() {
+      return applicableLimitRole;
+    }
+
+    /** @return provenance of the applicable limit */
+    public String getApplicableLimitProvenance() {
+      return applicableLimitProvenance;
+    }
+
+    /** @return immutable ordered axes on which this identity was observed */
+    public List<List<String>> getSliceAxes() {
+      return sliceAxes;
+    }
+
+    /** @return number of sampled-point occurrences */
+    public int getSampledPointCount() {
+      return sampledPointCount;
+    }
+
+    /** @return number of final feasible-boundary occurrences */
+    public int getFeasibleBoundaryCount() {
+      return feasibleBoundaryCount;
+    }
+
+    /** @return number of final infeasible-boundary occurrences */
+    public int getInfeasibleBoundaryCount() {
+      return infeasibleBoundaryCount;
+    }
+
+    /** @return number of exact feasible rows */
+    public int getFeasibleEvidenceCount() {
+      return feasibleEvidenceCount;
+    }
+
+    /** @return number of exact rejecting rows */
+    public int getRejectingEvidenceCount() {
+      return rejectingEvidenceCount;
+    }
+
+    /** @return minimum finite normalized feasible margin, or NaN */
+    public double getMinimumNormalizedMargin() {
+      return minimumNormalizedMargin;
+    }
+
+    /** @return smallest-normalized-margin feasible row, or null */
+    public LeadingConstraintEvidence getRepresentativeFeasibleConstraint() {
+      return representativeFeasibleConstraint;
+    }
+
+    /** @return first exact rejecting row in deterministic slice traversal, or null */
+    public LeadingConstraintEvidence getRepresentativeRejectingConstraint() {
+      return representativeRejectingConstraint;
+    }
+
+    /** Converts this ranked aggregate to a deeply immutable JSON-friendly map. */
+    public Map<String, Object> toEvidenceMap() {
+      Map<String, Object> evidence = new LinkedHashMap<String, Object>();
+      evidence.put("rank", Integer.valueOf(rank));
+      evidence.put("classification", classification.name());
+      evidence.put("source", source.name());
+      evidence.put("qualified_constraint_name", qualifiedConstraintName);
+      evidence.put("applicable_limit", finiteOrNull(applicableLimit));
+      evidence.put("physical_unit", physicalUnit);
+      evidence.put("applicable_limit_role", applicableLimitRole);
+      evidence.put("applicable_limit_provenance", applicableLimitProvenance);
+      evidence.put("slice_count", Integer.valueOf(sliceAxes.size()));
+      evidence.put("slice_axes", sliceAxes);
+      evidence.put("sampled_point_count", Integer.valueOf(sampledPointCount));
+      evidence.put("feasible_boundary_count", Integer.valueOf(feasibleBoundaryCount));
+      evidence.put("infeasible_boundary_count", Integer.valueOf(infeasibleBoundaryCount));
+      evidence.put("feasible_evidence_count", Integer.valueOf(feasibleEvidenceCount));
+      evidence.put("rejecting_evidence_count", Integer.valueOf(rejectingEvidenceCount));
+      evidence.put("minimum_normalized_margin", finiteOrNull(minimumNormalizedMargin));
+      evidence.put("representative_feasible_constraint",
+          representativeFeasibleConstraint == null ? null : representativeFeasibleConstraint.toEvidenceMap());
+      evidence.put("representative_rejecting_constraint",
+          representativeRejectingConstraint == null ? null : representativeRejectingConstraint.toEvidenceMap());
+      return Collections.unmodifiableMap(evidence);
+    }
+
+    /**
+     * Deep-copies axis signatures into immutable lists.
+     *
+     * @param axes ordered mutable axis signatures
+     * @return deeply immutable axis signatures
+     */
+    private static List<List<String>> immutableAxes(List<List<String>> axes) {
+      List<List<String>> copy = new ArrayList<List<String>>();
+      for (List<String> axis : axes) {
+        copy.add(Collections.unmodifiableList(new ArrayList<String>(axis)));
+      }
+      return Collections.unmodifiableList(copy);
+    }
   }
 
   /** Immutable unit-safe identity and headroom for one leading or rejecting constraint. */
