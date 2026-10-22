@@ -24,6 +24,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProcessModelOperatingActionEvaluator.HydraulicLimitRole;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.ConstraintSummaryEntry;
+import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.CrossSliceConstraintSummary;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.LeadingConstraintEvidence;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionBoundaryRefinement;
 import neqsim.process.util.optimizer.ProcessModelOperatingEnvelopeStudy.OperatingRegionTransition;
@@ -329,6 +331,21 @@ class ProcessModelOperatingEnvelopeStudyTest {
         evidence.get("feasible_boundary_constraint"));
     assertEquals(refinement.getInfeasibleBoundaryConstraint().toEvidenceMap(),
         evidence.get("infeasible_boundary_constraint"));
+    CrossSliceConstraintSummary summary = study.summarizeConstraints(result);
+    assertEquals(0.10, summary.getMaximumNormalizedMargin(), 0.0);
+    assertTrue(summary.getObservedConstraintCount() >= 1);
+    assertFalse(summary.getRankedConstraints().isEmpty());
+    ConstraintSummaryEntry rejecting = summary.getRankedConstraints().get(0);
+    assertEquals(ConstraintSummaryEntry.Classification.REJECTING, rejecting.getClassification());
+    assertEquals(refinement.getInfeasibleBoundaryConstraint().getQualifiedConstraintName(),
+        rejecting.getQualifiedConstraintName());
+    assertEquals(refinement.getInfeasibleBoundaryConstraint().getPhysicalUnit(), rejecting.getPhysicalUnit());
+    assertTrue(rejecting.getInfeasibleBoundaryCount() >= 1);
+    assertEquals(refinement.getInfeasibleBoundaryConstraint().getQualifiedConstraintName(),
+        rejecting.getRepresentativeRejectingConstraint().getQualifiedConstraintName());
+    assertFalse(rejecting.getRepresentativeRejectingConstraint().isFeasible());
+    assertThrows(UnsupportedOperationException.class, () -> summary.getRankedConstraints().clear());
+    assertThrows(IllegalArgumentException.class, () -> study.summarizeConstraints(result, result));
     assertEquals(600.0, fixture.producerA.getFlowRate("kg/hr"), 1.0e-8);
     assertEquals(400.0, fixture.producerB.getFlowRate("kg/hr"), 1.0e-8);
   }
@@ -446,7 +463,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     Map<String, Object> envelopeEvidence = study.getAcceptedPointEnvelopeEvidence("cycle-43", search, slice,
         secondSlice);
     assertEquals(evaluationsBeforeEvidence, evaluator.getSimulationEvaluator().getEvaluationCount());
-    assertEquals(Integer.valueOf(1), envelopeEvidence.get("schema_version"));
+    assertEquals(Integer.valueOf(2), envelopeEvidence.get("schema_version"));
     assertEquals("cycle-43", envelopeEvidence.get("cycle_id"));
     assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), envelopeEvidence.get("accepted_action_ids"));
     assertEquals(Arrays.asList(Double.valueOf(accepted[0]), Double.valueOf(accepted[1])),
@@ -458,6 +475,10 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(2, ((List<?>) envelopeEvidence.get("slices")).size());
     assertEquals(bottleneck.getQualifiedConstraintName(),
         ((Map<?, ?>) envelopeEvidence.get("accepted_point_bottleneck")).get("qualified_constraint_name"));
+    Map<?, ?> summary = (Map<?, ?>) envelopeEvidence.get("cross_slice_constraint_summary");
+    assertEquals(Integer.valueOf(1), summary.get("summary_version"));
+    assertEquals(Double.valueOf(0.10), summary.get("maximum_normalized_margin"));
+    assertEquals(Boolean.TRUE, summary.get("advisory"));
     assertThrows(UnsupportedOperationException.class, () -> envelopeEvidence.put("study_id", "changed"));
     assertThrows(IllegalArgumentException.class,
         () -> study.getAcceptedPointEnvelopeEvidence("cycle-43", search, slice, slice));
@@ -542,7 +563,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getToConstraint());
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("cycle-lifecycle-1");
-    assertEquals(Integer.valueOf(6), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(7), evidence.get("schema_version"));
     assertEquals("cycle-lifecycle-1", evidence.get("cycle_id"));
     assertEquals(Integer.valueOf(2), evidence.get("period_count"));
     assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), evidence.get("accepted_action_ids"));
@@ -618,7 +639,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
             late.search, late.slice);
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("shared-reservoir-cycle");
-    assertEquals(Integer.valueOf(6), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(7), evidence.get("schema_version"));
     assertEquals(Arrays.asList("reservoir-pressure", "production-rate", "injection-rate"),
         evidence.get("accepted_state_metric_ids"));
     Map<?, ?> firstPeriod = (Map<?, ?>) ((List<?>) evidence.get("periods")).get(0);

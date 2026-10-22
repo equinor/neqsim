@@ -353,6 +353,11 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(Double.isFinite(((Double) envelopeEvidence.get("envelope_runtime_seconds")).doubleValue()));
     assertEquals(acceptedBottleneck.getQualifiedConstraintName(),
         ((Map<?, ?>) envelopeEvidence.get("accepted_point_bottleneck")).get("qualified_constraint_name"));
+    assertEquals(Integer.valueOf(2), envelopeEvidence.get("schema_version"));
+    Map<?, ?> constraintSummary = (Map<?, ?>) envelopeEvidence.get("cross_slice_constraint_summary");
+    assertEquals(Integer.valueOf(1), constraintSummary.get("summary_version"));
+    assertTrue(((Integer) constraintSummary.get("observed_constraint_count")).intValue() > 0);
+    assertTrue(((Integer) constraintSummary.get("ranked_constraint_count")).intValue() > 0);
 
     assertEquals(100.0, fixture.exportValve.getOutletStream().getPressure("bara"), 1.0e-6);
     assertBaselineRestored(fixture);
@@ -388,7 +393,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
             late.study, late.search, late.slices);
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
 
-    assertEquals(Integer.valueOf(6), lifecycleEvidence.get("schema_version"));
+    assertEquals(Integer.valueOf(7), lifecycleEvidence.get("schema_version"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
