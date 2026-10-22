@@ -19,10 +19,12 @@ import java.util.List;
  *
  * <p>
  * The multi-zone calculation is a water-injection screening model. It evaluates each zone with the radial Darcy
- * equation using the configured formation-water viscosity and reports the resulting coefficient in Sm3/day/bar. The
- * conversion from m3/s/Pa multiplies by both 86400 s/day and 100000 Pa/bar. No pressure-dependent fluid properties,
- * formation volume factor, relative permeability, crossflow, transient reservoir response or fracture growth is
- * included.
+ * equation using the configured formation-water viscosity and volume factor and reports the resulting coefficient in
+ * Sm3/day/bar. The conversion from m3/s/Pa multiplies by both 86400 s/day and 100000 Pa/bar, then divides by the
+ * formation-water volume factor in reservoir m3/Sm3. The default volume factor is 1.0 to preserve the established
+ * screening result; users must configure a qualified value when a standard-volume PVT conversion is required. No
+ * pressure-dependent fluid properties, relative permeability, crossflow, transient reservoir response or fracture
+ * growth is included.
  * </p>
  *
  * <h2>Injectivity Index</h2>
@@ -135,6 +137,7 @@ public class InjectionWellModel implements Serializable {
 
   // Formation water properties (for water injection)
   private double formationWaterViscosity = 0.3; // cP at reservoir conditions
+  private double formationWaterVolumeFactor = 1.0; // reservoir m3/Sm3
 
   // Pump efficiency
   private double pumpEfficiency = 0.75;
@@ -602,6 +605,41 @@ public class InjectionWellModel implements Serializable {
   }
 
   /**
+   * Sets formation-water viscosity for the multi-zone radial-Darcy screen.
+   *
+   * @param viscosity formation-water viscosity at reservoir conditions (cP)
+   * @return this for chaining
+   * @throws IllegalArgumentException if viscosity is not finite and positive
+   */
+  public InjectionWellModel setFormationWaterViscosity(double viscosity) {
+    if (!Double.isFinite(viscosity) || viscosity <= 0.0) {
+      throw new IllegalArgumentException("Formation-water viscosity must be finite and positive");
+    }
+    this.formationWaterViscosity = viscosity;
+    return this;
+  }
+
+  /**
+   * Sets formation-water volume factor for the multi-zone radial-Darcy screen.
+   *
+   * <p>
+   * The factor is reservoir volume divided by standard volume. The calculated reservoir-volume rate is divided by
+   * this value before it is reported in Sm3/day. The default value is 1.0 for backward compatibility.
+   * </p>
+   *
+   * @param formationVolumeFactor formation-water volume factor (reservoir m3/Sm3)
+   * @return this for chaining
+   * @throws IllegalArgumentException if the factor is not finite and positive
+   */
+  public InjectionWellModel setFormationWaterVolumeFactor(double formationVolumeFactor) {
+    if (!Double.isFinite(formationVolumeFactor) || formationVolumeFactor <= 0.0) {
+      throw new IllegalArgumentException("Formation-water volume factor must be finite and positive");
+    }
+    this.formationWaterVolumeFactor = formationVolumeFactor;
+    return this;
+  }
+
+  /**
    * Sets drainage radius.
    *
    * @param radius radius (m)
@@ -820,6 +858,10 @@ public class InjectionWellModel implements Serializable {
     public double outOfZoneRate;
     /** Common BHP used for allocation (bara). */
     public double commonBHP;
+    /** Formation-water viscosity used by the multi-zone screen (cP). */
+    public double formationWaterViscosity;
+    /** Formation-water volume factor used by the multi-zone screen (reservoir m3/Sm3). */
+    public double formationWaterVolumeFactor;
 
     /**
      * Gets the total injection rate.
@@ -854,6 +896,8 @@ public class InjectionWellModel implements Serializable {
       sb.append("Multi-Zone Injection Result\n");
       sb.append("==========================\n");
       sb.append(String.format("Common BHP: %.1f bara%n", commonBHP));
+      sb.append(String.format("Formation water: %.3f cP, B=%.5f reservoir m3/Sm3%n", formationWaterViscosity,
+          formationWaterVolumeFactor));
       sb.append(String.format("Total rate: %.0f Sm3/day%n", totalRate));
       sb.append(String.format("Injection efficiency: %.1f%%%n", injectionEfficiency * 100));
       sb.append(String.format("Out-of-zone rate: %.0f Sm3/day%n", outOfZoneRate));
@@ -919,6 +963,8 @@ public class InjectionWellModel implements Serializable {
    */
   public MultiZoneInjectionResult calculateMultiZone(double totalTargetRate) {
     MultiZoneInjectionResult result = new MultiZoneInjectionResult();
+    result.formationWaterViscosity = formationWaterViscosity;
+    result.formationWaterVolumeFactor = getEffectiveFormationWaterVolumeFactor();
 
     if (zones.isEmpty()) {
       return result;
@@ -1006,12 +1052,30 @@ public class InjectionWellModel implements Serializable {
     double viscosity = formationWaterViscosity * 1e-3; // cP to Pa·s
     double lnRatio = Math.log(drainageRadius / wellboreRadius);
 
-    // II = 2π k h / (μ × (ln(re/rw) + S)) in SI (m³/s/Pa)
-    double iiSI = 2.0 * Math.PI * kSI * zone.thickness / (viscosity * (lnRatio + zone.skinFactor));
+    // II = 2π k h / (μ × B × (ln(re/rw) + S)) in SI (m³/s/Pa)
+    double iiSI = 2.0 * Math.PI * kSI * zone.thickness
+        / (viscosity * getEffectiveFormationWaterVolumeFactor() * (lnRatio + zone.skinFactor));
 
     // Convert m3/s/Pa to Sm3/day/bar. A one-bar pressure difference is 1e5 Pa,
     // so the rate per bar is larger than the rate per Pa by 1e5.
     return iiSI * 86400.0 * 1e5;
+  }
+
+  /**
+   * Gets the effective multi-zone formation-water volume factor.
+   *
+   * <p>
+   * Java serialization initializes fields absent from an older stream to zero. Treating that value as the legacy
+   * default preserves compatibility when a previously serialized model is rebuilt with zones.
+   * </p>
+   *
+   * @return finite positive volume factor, or the legacy default of 1.0
+   */
+  private double getEffectiveFormationWaterVolumeFactor() {
+    if (!Double.isFinite(formationWaterVolumeFactor) || formationWaterVolumeFactor <= 0.0) {
+      return 1.0;
+    }
+    return formationWaterVolumeFactor;
   }
 
   /**

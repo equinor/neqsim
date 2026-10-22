@@ -626,9 +626,11 @@ dimensional radial-Darcy conversion as its single-zone path: m3/s/Pa is multipli
 unequal-zone allocation and total-rate conservation. This deliberately corrects prior multi-zone
 values by a factor of `1e10`; persisted results from the old calculation are not compatible and
 must be recalculated. It does not alter live `WellFlow` pressure-rate coupling, topology,
-hydraulics or optimization. The established Sm3/day label remains a screening contract without a
-PVT/formation-volume-factor conversion, and field/laboratory injectivity plus fracture review is
-still required before design or operating use.
+hydraulics or optimization. The multi-zone screen also accepts explicit formation-water viscosity
+and volume factor, records both inputs in its result and divides the reservoir-volume coefficient
+by the configured reservoir-m3/Sm3 factor. The default factor remains `1.0`, preserving the
+established screening result. Pressure-dependent PVT remains outside this screen, and
+field/laboratory injectivity plus fracture review is still required before design or operating use.
 
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
 well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP
