@@ -44,6 +44,33 @@ class TPflashFixedCompositionRootReuseTest {
   }
 
   /**
+   * Balanced endpoints must not enter the transactional root search or allocate phase clones.
+   *
+   * @throws Exception if reflective invocation fails
+   */
+  @Test
+  void balancedEndpointsSkipTransactionalRootSearchAndCloning() throws Exception {
+    for (int model = 0; model < 3; model++) {
+      SystemInterface fluid = fluid(model);
+      double[] original = snapshot(fluid);
+      AtomicInteger cloneAttempts = new AtomicInteger();
+      SystemInterface counted = withCloneCounter(fluid, cloneAttempts, false);
+      TPflash flash = new TPflash(counted);
+
+      Method conservativeGibbs = TPflash.class.getDeclaredMethod("conservativeNeutralTwoPhaseGibbsEnergy");
+      conservativeGibbs.setAccessible(true);
+      assertTrue(Double.isNaN((Double) conservativeGibbs.invoke(flash)));
+
+      Method finalRepair = TPflash.class.getDeclaredMethod("repairInvalidMultiphaseHydrocarbonEndpoint");
+      finalRepair.setAccessible(true);
+      finalRepair.invoke(flash);
+
+      assertEquals(0, cloneAttempts.get(), "Balanced model " + model + " must not clone phase roots");
+      assertArrayEquals(original, snapshot(fluid), 0.0);
+    }
+  }
+
+  /**
    * A mismatched composition must remain rejected rather than supplying a low non-equilibrium Gibbs value.
    *
    * @throws Exception if reflective invocation fails

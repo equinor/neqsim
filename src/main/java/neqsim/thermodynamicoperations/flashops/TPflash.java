@@ -4041,14 +4041,11 @@ public class TPflash extends Flash {
     if (!isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
       return Double.NaN;
     }
-    double fugacityResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
-    double[] repairedBetas = maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD
-        ? fixedCompositionTwoPhaseFractions(system)
-        : null;
-    boolean requiresAmountRepair = repairedBetas != null
-        && isBoundedNeutralTwoPhaseAmountCorrection(system, repairedBetas);
-    if (!requiresAmountRepair && Double.isFinite(fugacityResidual)
-        && fugacityResidual < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+    if (maximumComponentMaterialBalanceResidual(system) <= NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD) {
+      return Double.NaN;
+    }
+    double[] repairedBetas = fixedCompositionTwoPhaseFractions(system);
+    if (!isBoundedNeutralTwoPhaseAmountCorrection(system, repairedBetas)) {
       return Double.NaN;
     }
     double originalFirstBeta = system.getBeta(0);
@@ -4645,7 +4642,8 @@ public class TPflash extends Flash {
    * </p>
    */
   private void repairInvalidMultiphaseHydrocarbonEndpoint() {
-    if (!system.doMultiPhaseCheck() || !isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
+    if (!system.doMultiPhaseCheck() || !isNeutralTwoPhaseAmountSynchronizationEligible(system)
+        || maximumComponentMaterialBalanceResidual(system) <= NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD) {
       return;
     }
     rescueFinalMultiphaseHydrocarbonRoot();
