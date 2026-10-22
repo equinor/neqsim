@@ -508,12 +508,11 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     // Differentiate the stationary association equations twice and three times
     // with respect to native EOS volume. Each derivative is another right-hand
     // side for the already-factorized association Hessian.
-    SimpleMatrix XVV = applyHessianInv(KlkVVMatrixTImesKsi.plus(KlkVMatrix.mult(XV).scale(2.0))
-        .minus(QMatksiksiksi.elementMult(XV.elementMult(XV))));
+    SimpleMatrix XVV = applyHessianInv(
+        KlkVVMatrixTImesKsi.plus(KlkVMatrix.mult(XV).scale(2.0)).minus(QMatksiksiksi.elementMult(XV.elementMult(XV))));
     SimpleMatrix QMatksiksiksiksi = QMatksiksiksi.elementDiv(ksiMatrix).scale(-3.0);
     SimpleMatrix XVVV = applyHessianInv(KlkVVVMatrix.mult(ksiMatrix).plus(KlkVVMatrix.mult(XV).scale(3.0))
-        .plus(KlkVMatrix.mult(XVV).scale(3.0))
-        .minus(QMatksiksiksi.elementMult(XV.elementMult(XVV)).scale(3.0))
+        .plus(KlkVMatrix.mult(XVV).scale(3.0)).minus(QMatksiksiksi.elementMult(XV.elementMult(XVV)).scale(3.0))
         .minus(QMatksiksiksiksi.elementMult(XV.elementMult(XV).elementMult(XV))));
 
     temp = 0;
@@ -543,8 +542,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     // the diagonal third derivative 2*m/X^3 of the association Helmholtz term.
     SimpleMatrix XTT = applyHessianInv(KlkTTMatrix.mult(ksiMatrix).plus(KlkTMatrix.mult(XT).scale(2.0))
         .minus(QMatksiksiksi.elementMult(XT.elementMult(XT))));
-    SimpleMatrix XTV = applyHessianInv(KlkTVMatrix.mult(ksiMatrix).plus(KlkTMatrix.mult(XV))
-        .plus(KlkVMatrix.mult(XT)).minus(QMatksiksiksi.elementMult(XT.elementMult(XV))));
+    SimpleMatrix XTV = applyHessianInv(KlkTVMatrix.mult(ksiMatrix).plus(KlkTMatrix.mult(XV)).plus(KlkVMatrix.mult(XT))
+        .minus(QMatksiksiksi.elementMult(XT.elementMult(XV))));
     // dQdTdT
     SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
         .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
