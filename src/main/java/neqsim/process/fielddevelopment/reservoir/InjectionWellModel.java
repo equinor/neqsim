@@ -623,8 +623,8 @@ public class InjectionWellModel implements Serializable {
    * Sets formation-water volume factor for the multi-zone radial-Darcy screen.
    *
    * <p>
-   * The factor is reservoir volume divided by standard volume. The calculated reservoir-volume rate is divided by
-   * this value before it is reported in Sm3/day. The default value is 1.0 for backward compatibility.
+   * The factor is reservoir volume divided by standard volume. The calculated reservoir-volume rate is divided by this
+   * value before it is reported in Sm3/day. The default value is 1.0 for backward compatibility.
    * </p>
    *
    * @param formationVolumeFactor formation-water volume factor (reservoir m3/Sm3)
