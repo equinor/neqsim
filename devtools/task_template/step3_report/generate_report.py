@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 91169)
+Total output lines: 8485
+
 """
 generate_report.py - Generate Word/HTML reports and scientific papers for this task.
 
@@ -44,6 +47,7 @@ This script AUTO-READS data from the task folder:
     - study_config.yaml                    -> defines depth, notebook plan, quality gates
   - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
   - results.json (task root)               -> populates Results + Validation
+  - results.json "lifecycle_envelope_evidence" -> guarded per-period envelope evidence
   - figures/*.png                          -> embeds all plots
   - results.json "equations"               -> renders equations (KaTeX/images)
   - results.json "figure_captions"         -> custom captions for figures
@@ -70,6 +74,7 @@ import json
 import base64
 import hashlib
 import io
+import math
 import shutil
 import sqlite3
 import subprocess
@@ -2310,6 +2315,276 @@ def format_reproducibility_text(results):
     return text
 
 
+_LIFECYCLE_IDENTITY_FIELDS = (
+    "classification", "source", "qualified_constraint_name", "applicable_limit",
+    "physical_unit", "applicable_limit_role", "applicable_limit_provenance",
+)
+
+
+def _report_number(value):
+    """Return true only for finite report-facing numbers (booleans are not numbers)."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except OverflowError:
+        return False
+
+
+def _report_text(value):
+    """Return true only for non-empty report-facing text."""
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _md_cell(value):
+    """Escape one value for a compact Markdown table cell."""
+    return str(value if value is not None else "-").replace("|", "/").replace("\n", " ")
+
+
+def _constraint_identity(row):
+    """Return the exact schema-v8 identity subset from one ranked summary row."""
+    return {field: row.get(field) for field in _LIFECYCLE_IDENTITY_FIELDS}
+
+
+def _exact_report_difference(first, second):
+    """Return exact ordered rows in first but not second, retaining multiplicity."""
+    remaining = list(second)
+    difference = []
+    for row in first:
+        if row in remaining:
+            remaining.remove(row)
+        else:
+            difference.append(row)
+    return difference
+
+
+def _validate_representative_constraint(entry, representative, feasible):
+    """Validate one exact representative row against its ranked identity and class."""
+    if not isinstance(representative, dict):
+        return False
+    if representative.get("feasible") is not feasible:
+        return False
+    if any(representative.get(field) != entry.get(field) for field in (
+            "source", "qualified_constraint_name", "applicable_limit", "physical_unit",
+            "applicable_limit_role", "applicable_limit_provenance")):
+        return False
+    return all(_report_number(representative.get(field)) for field in (
+        "current_value", "physical_margin", "normalized_margin"))
+
+
+def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
+    """Validate the report-facing schema-v8 subset and independently replay identity deltas."""
+    reasons = []
+    if not isinstance(evidence, dict):
+        return ["evidence is not an object"]
+    if evidence.get("schema_version") != 8:
+        reasons.append("schema_version must be 8")
+    if evidence.get("advisory") is not True:
+        reasons.append("advisory flag is missing")
+    if not _report_text(evidence.get("cycle_id")):
+        reasons.append("cycle_id is missing")
+    elif expected_cycle_id and evidence.get("cycle_id") != expected_cycle_id:
+        reasons.append("cycle_id does not match the promoted current-best cycle")
+    if not all(_report_text(evidence.get(field)) for field in (
+            "lifecycle_study_id", "lifecycle_study_name", "lifecycle_study_provenance", "time_unit")):
+        reasons.append("lifecycle identity, provenance, or time unit is incomplete")
+    requested = evidence.get("requested_point_count")
+    completed = evidence.get("completed_point_count")
+    if (not _report_number(requested) or not _report_number(completed)
+            or int(requested) != requested or int(completed) != completed
+            or requested < 1 or requested != completed):
+        reasons.append("sampled lifecycle points are incomplete")
+    if (not _report_number(evidence.get("total_evaluation_count"))
+            or evidence.get("total_evaluation_count") < 1
+            or not _report_number(evidence.get("envelope_runtime_seconds"))
+            or evidence.get("envelope_runtime_seconds") < 0):
+        reasons.append("evaluation count or runtime is invalid")
+
+    periods = evidence.get("periods")
+    if (not isinstance(periods, list) or not periods
+            or evidence.get("period_count") != len(periods)):
+        reasons.append("period_count does not match the period evidence")
+        return reasons
+    period_identities = []
+    previous_elapsed = None
+    seen_period_ids = set()
+    for index, period in enumerate(periods):
+        prefix = "period {}".format(index + 1)
+        if not isinstance(period, dict):
+            reasons.append(prefix + " is not an object")
+            period_identities.append([])
+            continue
+        period_id = period.get("period_id")
+        elapsed = period.get("elapsed_time")
+        if not _report_text(period_id) or period_id in seen_period_ids:
+            reasons.append(prefix + " has a missing or duplicate period_id")
+        else:
+            seen_period_ids.add(period_id)
+        if (not _report_text(period.get("period_name"))
+                or not _report_text(period.get("configuration_provenance"))):
+            reasons.append(prefix + " has incomplete report metadata")
+        if (not _report_number(elapsed) or elapsed < 0
+                or (previous_elapsed is not None and elapsed <= previous_elapsed)):
+            reasons.append(prefix + " elapsed_time is not strictly increasing")
+        else:
+            previous_elapsed = elapsed
+        if period.get("time_unit") != evidence.get("time_unit"):
+            reasons.append(prefix + " time unit does not match the lifecycle")
+        envelope = period.get("envelope_evidence")
+        if not isinstance(envelope, dict) or envelope.get("schema_version") != 2:
+            reasons.append(prefix + " is missing schema-v2 envelope evidence")
+            period_identities.append([])
+            continue
+        slices = envelope.get("slices")
+        if (not isinstance(slices, list) or not slices
+                or any(not isinstance(row, dict) or row.get("complete") is not True
+                       or row.get("outcome") != "COMPLETE" for row in slices)):
+            reasons.append(prefix + " contains incomplete operating-envelope slices")
+        summary = envelope.get("cross_slice_constraint_summary")
+        ranked = summary.get("ranked_constraints") if isinstance(summary, dict) else None
+        if (not isinstance(summary, dict) or summary.get("summary_version") != 1
+                or summary.get("advisory") is not True or not isinstance(ranked, list)
+                or summary.get("ranked_constraint_count") != len(ranked)):
+            reasons.append(prefix + " has an invalid cross-slice constraint summary")
+            period_identities.append([])
+            continue
+        identities = []
+        for row_index, row in enumerate(ranked):
+            row_prefix = "{} ranked constraint {}".format(prefix, row_index + 1)
+            if (not isinstance(row, dict)
+                    or row.get("rank") != row_index + 1
+                    or row.get("classification") not in ("REJECTING", "NEAR_ACTIVE")
+                    or not all(_report_text(row.get(field)) for field in (
+                        "source", "qualified_constraint_name", "physical_unit",
+                        "applicable_limit_role", "applicable_limit_provenance"))
+                    or (row.get("applicable_limit") is not None
+                        and not _report_number(row.get("applicable_limit")))):
+                reasons.append(row_prefix + " has an incomplete identity")
+                continue
+            representative_key = ("representative_rejecting_constraint"
+                                  if row["classification"] == "REJECTING"
+                                  else "representative_feasible_constraint")
+            representative = row.get(representative_key)
+            if not _validate_representative_constraint(
+                    row, representative, row["classification"] == "NEAR_ACTIVE"):
+                reasons.append(row_prefix + " has incomplete or mismatched representative evidence")
+            identity = _constraint_identity(row)
+            if identity in identities:
+                reasons.append(row_prefix + " duplicates an exact identity")
+            identities.append(identity)
+        period_identities.append(identities)
+
+    if expected_cycle_id and expected_cycle_id not in seen_period_ids:
+        reasons.append("promoted current-best cycle is missing from lifecycle periods")
+
+    changes = evidence.get("period_change_diagnostics")
+    if not isinstance(changes, list) or len(changes) != max(0, len(periods) - 1):
+        reasons.append("period_change_diagnostics does not match adjacent periods")
+        return reasons
+    for index, change in enumerate(changes):
+        prefix = "period change {}".format(index + 1)
+        if not isinstance(change, dict):
+            reasons.append(prefix + " is not an object")
+            continue
+        removed = _exact_report_difference(period_identities[index], period_identities[index + 1])
+        added = _exact_report_difference(period_identities[index + 1], period_identities[index])
+        retained = len(period_identities[index]) - len(removed)
+        if (change.get("from_period_id") != periods[index].get("period_id")
+                or change.get("to_period_id") != periods[index + 1].get("period_id")
+                or change.get("from_ranked_constraint_identity_count") != len(period_identities[index])
+                or change.get("to_ranked_constraint_identity_count") != len(period_identities[index + 1])
+                or change.get("retained_ranked_constraint_identity_count") != retained
+                or change.get("removed_ranked_constraint_identities") != removed
+                or change.get("added_ranked_constraint_identities") != added):
+            reasons.append(prefix + " identity migration does not reconstruct from period summaries")
+    return reasons
+
+
+def _promoted_cycle_id():
+    """Return the reviewed current-best source cycle when this is a living task."""
+    path = os.path.join(TASK_DIR, "continuous", "baseline", "baseline.json")
+    try:
+        with open(path, "r", encoding="utf-8-sig") as handle:
+            baseline = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    return baseline.get("source_cycle") if isinstance(baseline, dict) else None
+
+
+def _identity_text(identity):
+    """Render one exact identity without comparing physical margins across units."""
+    limit = identity.get("applicable_limit")
+    limit_text = _fmt_number(limit) if _report_number(limit) else "not applicable"
+    return "{} `{}` — {} {}, role {}, source {}; basis: {}".format(
+        identity.get("classification"), identity.get("qualified_constraint_name"),
+        limit_text, identity.get("physical_unit") or "", identity.get("applicable_limit_role"),
+        identity.get("source"), identity.get("applicable_limit_provenance"))
+
+
+def format_lifecycle_envelope_text(results, expected_cycle_id=None):
+    """Render guarded schema-v8 lifecycle evidence for current-best and final reports."""
+    evidence = (results or {}).get("lifecycle_envelope_evidence")
+    if evidence is None:
+        return ""
+    reasons = _validate_lifecycle_report_evidence(evidence, expected_cycle_id)
+    if reasons:
+        return ("**Lifecycle evidence withheld.** The report did not accept this evidence because: {}. "
+                "No bottleneck, headroom, or identity-migration claim is rendered."
+                .format("; ".join(reasons)))
+
+    lines = [
+        "**Evidence basis.** {} (`{}`), cycle `{}`; {} complete sampled point(s), {} model evaluation(s), "
+        "runtime {} s. {}".format(
+            evidence["lifecycle_study_name"], evidence["lifecycle_study_id"], evidence["cycle_id"],
+            evidence["completed_point_count"], evidence["total_evaluation_count"],
+            _fmt_number(evidence["envelope_runtime_seconds"]), evidence["lifecycle_study_provenance"]),
+        "",
+        "Rows below retain exact per-period engineering units and representative physical headroom. "
+        "Rank applies only inside one period; margins are never ranked or compared across unlike units.",
+        "",
+        "| Period | Time | Class | Exact constraint | Representative value | Physical headroom | Limit basis |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for period in evidence["periods"]:
+        summary = period["envelope_evidence"]["cross_slice_constraint_summary"]
+        ranked = summary["ranked_constraints"]
+        if not ranked:
+            lines.append("| {} | {} {} | - | No rejecting or near-active identity | - | - | {} |".format(
+                _md_cell(period["period_name"]), _fmt_number(period["elapsed_time"]),
+                _md_cell(period["time_unit"]), _md_cell(period["configuration_provenance"])))
+            continue
+        for row in ranked:
+            representative = row[("representative_rejecting_constraint"
+                                  if row["classification"] == "REJECTING"
+                                  else "representative_feasible_constraint")]
+            lines.append("| {} | {} {} | {} | `{}` | {} {} | {} {} | {}: {} {}; {} |".format(
+                _md_cell(period["period_name"]), _fmt_number(period["elapsed_time"]),
+                _md_cell(period["time_unit"]), row["classification"],
+                _md_cell(row["qualified_constraint_name"]),
+                _fmt_number(representative["current_value"]), _md_cell(row["physical_unit"]),
+                _fmt_number(representative["physical_margin"]), _md_cell(row["physical_unit"]),
+                _md_cell(row["applicable_limit_role"]),
+                _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
+                _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
+
+    lines += ["", "**Exact adjacent-period identity migration.** Classification or limit-basis changes "
+              "appear as one removed and one added identity; this is descriptive evidence, not causal attribution."]
+    for change in evidence["period_change_diagnostics"]:
+        lines += ["", "- **{} → {}:** {} retained, {} removed, {} added.".format(
+            _md_cell(change["from_period_id"]), _md_cell(change["to_period_id"]),
+            change["retained_ranked_constraint_identity_count"],
+            len(change["removed_ranked_constraint_identities"]),
+            len(change["added_ranked_constraint_identities"]))]
+        lines += ["  - Removed: {}".format(_identity_text(identity))
+                  for identity in change["removed_ranked_constraint_identities"]]
+        lines += ["  - Added: {}".format(_identity_text(identity))
+                  for identity in change["added_ranked_constraint_identities"]]
+    lines += ["", "**Qualification boundary.** This is exact sampled/refined advisory evidence. It is not a "
+              "continuous forecast, shadow price, causal diagnosis, equipment qualification, operating approval, "
+              "or permission to relax a physical constraint."]
+    return "\n".join(lines)
+
+
 def _load_final_report_metadata():
     """Load the continuous-task finalization record supplied by its orchestrator."""
     path = _cli_option("--final-metadata")
@@ -2559,2848 +2834,7 @@ def _benchmark_tests(results):
     listed = next((benchmark[key] for key in ("tests", "points")
                    if isinstance(benchmark.get(key), list)), None)
     if listed is not None:
-        entries = ((value.get("test") or value.get("name") or "Test {}".format(index)
-                    if isinstance(value, dict) else "Test {}".format(index), value)
-                   for index, value in enumerate(listed, 1))
-    else:
-        entries = benchmark.items()
-    tests = []
-    for name, value in entries:
-        if not isinstance(value, dict):
-            continue
-        test = dict(value)
-        test.setdefault("parameter", name if listed is not None else name.replace("_", " ").title())
-        if "pass" not in test:
-            status = str(test.get("status", "")).upper()
-            if status in ("PASS", "FAIL"):
-                test["pass"] = status == "PASS"
-        tests.append(test)
-    return tests
-
-
-def auto_executive_summary(results, task_spec):
-    """Generate an executive summary that leads with findings, not provenance.
-
-    With written conclusions the summary is the conclusions plus only items that
-    need attention. The approach, evidence counts, data-gap counts and passed
-    checks belong to their own sections and are used only as a fallback.
-    """
-    parts = []
-    conclusions = str((results or {}).get("conclusions") or "").strip()
-    has_conclusions = bool(conclusions) and not _is_placeholder_text(conclusions)
-    if has_conclusions:
-        parts.append(conclusions)
-    approach = ""
-    if results and results.get("approach"):
-        approach = results["approach"]
-    if not has_conclusions and approach and not _is_placeholder_text(approach):
-        # Skip run-in headings such as "Data." that open a paragraph.
-        sentences = [s.strip().rstrip(".") for s in approach.split(". ") if s.strip()]
-        first_sentence = next((s for s in sentences if len(s.split()) >= 4),
-                              sentences[0] if sentences else "")
-        parts.append(first_sentence + ".")
-    if not has_conclusions and results and results.get("key_results"):
-        findings = []
-        for label, value, unit, _note in _flatten_key_results(results["key_results"])[:5]:
-            value_text = _fmt_cell(value)
-            findings.append("{} = {}{}".format(
-                label, value_text, " " + unit if unit else ""))
-        if findings:
-            parts.append("Key findings: {}.".format(", ".join(findings)))
-    readiness = infer_safety_readiness(results) if results else None
-    if readiness:
-        parts.append("Safety study readiness: {}.".format(readiness["verdict"]))
-    evidence_rows = [] if has_conclusions else (
-        _document_source_counts(load_collection_manifest()) or _count_reference_files())
-    if evidence_rows:
-        parts.append("Evidence basis: {} document(s) from {}.".format(
-            sum(row[1] for row in evidence_rows),
-            ", ".join("{} ({})".format(name, count)
-                      for name, count, _desc in evidence_rows[:6])))
-    if results and not has_conclusions:
-        _assumptions, _gaps = _assumption_rows(results)
-        if _gaps:
-            parts.append("{} item(s) of information could not be obtained; the "
-                         "substitute assumptions are listed in Assumptions and "
-                         "Data Gaps.".format(len(_gaps)))
-    if results and results.get("uncertainty"):
-        uncertainty = results["uncertainty"]
-        p50 = uncertainty.get("p50")
-        output = uncertainty.get("output_parameter", "output")
-        if p50 is not None:
-            parts.append("Uncertainty analysis gives P50 {} = {:.4g}.".format(output, p50))
-    if results and results.get("validation"):
-        failures = _validation_failures(results)
-        failures.extend("benchmark: {}".format(test["parameter"])
-                        for test in _benchmark_tests(results) if test.get("pass") is False)
-        if failures:
-            parts.append("Validation checks requiring attention: {}.".format(
-                ", ".join(failures)))
-        elif not has_conclusions:
-            parts.append("Validation checks did not flag design blockers.")
-    benchmarks = _benchmark_tests(results)
-    if benchmarks and not has_conclusions:
-        passed = sum(test.get("pass") is True for test in benchmarks)
-        parts.append("{} of {} benchmark comparisons passed.".format(passed, len(benchmarks)))
-    if results and results.get("risk_evaluation", {}).get("overall_risk_level"):
-        parts.append("Overall project risk: {}.".format(
-            results["risk_evaluation"]["overall_risk_level"]))
-    return "\n\n".join(parts)
-
-
-def check_report_consistency(results):
-    """Check results.json for internal contradictions and inconsistencies.
-
-    Returns a list of dicts with keys: severity, message, fix_type.
-    severity: 'ERROR', 'WARNING', or 'INFO'.
-    fix_type: 'text' (auto-fixable in report), 'calculation' (needs
-    agent to re-run notebook), or 'none' (informational).
-    """
-    if not results:
-        return [{"severity": "INFO", "message": "No results.json loaded; all sections use placeholders.", "fix_type": "none"}]
-
-    issues = []
-
-    # --- 1. Benchmark failures vs optimistic conclusions ---
-    bmk_tests = _benchmark_tests(results)
-    n_fail = sum(1 for t in bmk_tests if t.get("pass") is False)
-    n_total = len(bmk_tests)
-    conclusions = results.get("conclusions", "")
-
-    if n_fail > 0:
-        # Check if any failure has large deviation (>20%) => calculation fix
-        large_devs = []
-        documented = []
-        for t in bmk_tests:
-            if t.get("pass") is False:
-                dev_pct = t.get("deviation_pct")
-                if dev_pct is not None and abs(dev_pct) > 20:
-                    # A written disposition (e.g. two input sources disagree) is a finding, not a misfit.
-                    (documented if str(t.get("disposition", "")).strip() else large_devs).append(t)
-        if documented:
-            issues.append({
-                "severity": "WARNING",
-                "message": "Benchmark deviation >20% kept with a written disposition: {}.".format(
-                    ", ".join(t.get("parameter", "?") for t in documented)),
-                "fix_type": "none",
-            })
-
-        failure_words = ["fail", "exceed", "deviation", "caution", "attention",
-                         "issue", "concern", "discrepanc", "not met"]
-        conc_lower = conclusions.lower()
-        acknowledges = any(w in conc_lower for w in failure_words)
-
-        if large_devs:
-            params = [t.get("parameter", "?") for t in large_devs]
-            issues.append({
-                "severity": "ERROR",
-                "message": "Benchmark deviation >20% for: {}. Model may need "
-                           "retuning or different EOS/parameters.".format(
-                               ", ".join(params)),
-                "fix_type": "calculation",
-                "action": "Re-run benchmark notebook with revised model "
-                          "parameters (check EOS, BIPs, component characterization).",
-                "parameters": params,
-            })
-
-        if not acknowledges:
-            safe_words = ["safe", "confirm", "acceptable", "satisfactor",
-                          "within limits", "meets"]
-            if any(w in conc_lower for w in safe_words):
-                issues.append({
-                    "severity": "ERROR",
-                    "message": "Conclusions say \'{}\' but {}/{} benchmark tests FAILED. "
-                               "Conclusions must acknowledge benchmark failures or explain "
-                               "why they are acceptable.".format(
-                                   conclusions[:80], n_fail, n_total),
-                    "fix_type": "text",
-                })
-            else:
-                issues.append({
-                    "severity": "WARNING",
-                    "message": "{}/{} benchmark tests failed. Consider addressing this "
-                               "in the conclusions.".format(n_fail, n_total),
-                    "fix_type": "text",
-                })
-
-    # --- 2. Validation failures vs optimistic conclusions ---
-    validation = results.get("validation", {})
-    val_failures = []
-    for check, outcome in validation.items():
-        outcome = _validation_value(outcome)
-        if outcome is False or (isinstance(outcome, str)
-                                and outcome.strip().upper() in _FAIL_STATUSES):
-            val_failures.append(check)
-        elif (check.endswith(("_pct", "_percent"))
-              and isinstance(outcome, (int, float)) and outcome >= 5.0):
-            val_failures.append("{} ({})".format(check, outcome))
-    if val_failures:
-        conc_lower = conclusions.lower()
-        safe_words = ["safe", "confirm", "acceptable", "satisfactor",
-                      "all.*pass", "within limits"]
-        if any(w in conc_lower for w in safe_words):
-            issues.append({
-                "severity": "ERROR",
-                "message": "Conclusions claim safety/acceptability but validation checks "
-                           "show issues: {}. Revise conclusions or explain why failures "
-                           "are acceptable.".format(", ".join(val_failures)),
-                "fix_type": "text",
-            })
-        # Check if validation error is large enough to need recalculation
-        large_val = [value for key, value in validation.items()
-                     if key.endswith(("_pct", "_percent"))
-                     and isinstance(value, (int, float)) and value >= 10.0]
-        if large_val:
-            issues.append({
-                "severity": "ERROR",
-                "message": "Validation error >=10% detected ({}). Model accuracy "
-                           "may be insufficient — consider retuning.".format(
-                               ", ".join(val_failures)),
-                "fix_type": "calculation",
-                "action": "Re-run main analysis notebook with tighter convergence "
-                          "tolerances or revised model setup.",
-            })
-
-    # --- 3. High risk level vs unconditionally positive conclusions ---
-    risk_eval = results.get("risk_evaluation", {})
-    overall_risk = risk_eval.get("overall_risk_level", "").lower()
-    risks = risk_eval.get("risks", [])
-    high_risks = [r for r in risks if "high" in r.get("risk_level", "").lower()
-                  or "very high" in r.get("risk_level", "").lower()]
-    if high_risks:
-        conc_lower = conclusions.lower()
-        caution_words = ["risk", "mitigat", "caution", "monitor", "contingenc",
-                         "condition", "subject to", "provided that"]
-        has_caution = any(w in conc_lower for w in caution_words)
-        if not has_caution and any(
-            w in conc_lower for w in ["safe", "confirm", "recommend proceed",
-                                      "no concern"]
-        ):
-            issues.append({
-                "severity": "WARNING",
-                "message": "{} high-risk items identified ({}), but conclusions don\'t "
-                           "mention risk mitigation. Consider adding caveats.".format(
-                               len(high_risks),
-                               ", ".join(r.get("description", "") for r in high_risks[:3])),
-                "fix_type": "text",
-            })
-
-    # --- 4. High probability of negative outcome vs positive conclusions ---
-    uncertainty = results.get("uncertainty", {})
-    prob_neg = uncertainty.get("prob_negative_pct")
-    if prob_neg is not None and prob_neg > 25:
-        conc_lower = conclusions.lower()
-        if any(w in conc_lower for w in ["safe", "confirm", "favourable",
-                                          "recommend proceed"]):
-            issues.append({
-                "severity": "WARNING",
-                "message": "Probability of unfavourable outcome is {:.1f}% (>25%). "
-                           "Conclusions should acknowledge the significant downside "
-                           "risk.".format(prob_neg),
-                "fix_type": "text",
-            })
-
-    # --- 5. Discussion recommendations contradict conclusions ---
-    discussions = results.get("figure_discussion", [])
-    recs = [d.get("recommendation", "") for d in discussions
-            if d.get("recommendation")]
-    for rec in recs:
-        rec_lower = rec.lower()
-        conc_lower = conclusions.lower()
-        # Check for direct contradictions
-        if "do not proceed" in rec_lower and "proceed" in conc_lower:
-            issues.append({
-                "severity": "ERROR",
-                "message": "Discussion recommends \'do not proceed\' but conclusions "
-                           "say \'proceed\'. Resolve the contradiction.",
-                "fix_type": "text",
-            })
-        if "further study" in rec_lower or "sensitivity" in rec_lower:
-            if "no further" in conc_lower:
-                issues.append({
-                    "severity": "WARNING",
-                    "message": "Discussion recommends further study/sensitivity analysis "
-                               "but conclusions dismiss it. Ensure consistency.",
-                    "fix_type": "text",
-                })
-
-    # --- 6. Missing critical sections ---
-    if not results.get("key_results"):
-        issues.append({
-            "severity": "WARNING",
-            "message": "No key_results in results.json. The Results section will be empty.",
-            "fix_type": "calculation",
-            "action": "Run the main analysis notebook and populate key_results in results.json.",
-        })
-    if not results.get("conclusions") or results["conclusions"].startswith("["):
-        issues.append({
-            "severity": "WARNING",
-            "message": "Conclusions are still a placeholder. Fill in conclusions "
-                       "before finalising the report.",
-            "fix_type": "text",
-        })
-    if not results.get("approach") or results["approach"].startswith("["):
-        issues.append({
-            "severity": "WARNING",
-            "message": "Approach section is still a placeholder.",
-            "fix_type": "text",
-        })
-
-    # --- 7. Numerical consistency: key_results referenced in discussions ---
-    key_results = results.get("key_results", {})
-    for disc in discussions:
-        obs = disc.get("observation", "")
-        linked = disc.get("linked_results", [])
-        for link_key in linked:
-            if link_key in key_results:
-                expected_val = key_results[link_key]
-                if isinstance(expected_val, dict):
-                    expected_val = expected_val.get("value")
-                if isinstance(expected_val, float):
-                    # Check if the observation mentions a consistent number.
-                    # Small magnitudes are usually written in scientific notation in
-                    # prose, so accept those renderings too; and do not accept the
-                    # degenerate "0.0" that %.1f produces for them, which would match
-                    # almost any text.
-                    val_strs = [
-                        "{:.4g}".format(expected_val),
-                        "{:.3g}".format(expected_val),
-                        "{:.2g}".format(expected_val),
-                        str(int(expected_val)) if expected_val == int(expected_val) else "",
-                    ]
-                    if abs(expected_val) >= 0.1:
-                        val_strs.append("{:.1f}".format(expected_val))
-                    for prec in (1, 2, 3):
-                        sci = "{:.{p}e}".format(expected_val, p=prec)
-                        mant, _, exp = sci.partition("e")
-                        exp_i = int(exp)
-                        val_strs.extend([
-                            sci,
-                            "{}e{:+03d}".format(mant, exp_i),
-                            "{}e{}".format(mant, exp_i),
-                            "{}E{:+03d}".format(mant, exp_i),
-                        ])
-                    val_strs = [v for v in val_strs if v]
-                    # Norwegian and other decimal-comma prose write 169,9 and 49 229.
-                    localized = [v.replace(".", ",") for v in val_strs if "." in v and "e" not in v.lower()]
-                    if abs(expected_val) >= 1000:
-                        grouped = "{:,.0f}".format(expected_val)
-                        localized.extend([grouped, grouped.replace(",", " "), grouped.replace(",", "\u00a0")])
-                    val_strs.extend(localized)
-                    if obs and not any(v in obs for v in val_strs):
-                        issues.append({
-                            "severity": "WARNING",
-                            "message": "Discussion links to \'{}\' (value={}) but "
-                                       "observation text doesn\'t mention this value. "
-                                       "Verify numerical consistency.".format(
-                                           link_key, expected_val),
-                            "fix_type": "calculation",
-                            "action": "Verify the value of \'{}\' in the notebook output "
-                                      "and update either key_results or the discussion "
-                                      "observation text.".format(link_key),
-                        })
-
-    # --- 8. Risk level vs uncertainty probability alignment ---
-    if prob_neg is not None and overall_risk:
-        if prob_neg > 40 and overall_risk in ("low",):
-            issues.append({
-                "severity": "WARNING",
-                "message": "Probability of negative outcome is {:.0f}% but overall risk "
-                           "is \'Low\'. These seem inconsistent.".format(prob_neg),
-                "fix_type": "text",
-            })
-        if prob_neg < 5 and overall_risk in ("high", "very high"):
-            issues.append({
-                "severity": "INFO",
-                "message": "Probability of negative outcome is only {:.0f}% but overall "
-                           "risk is \'{}\'. Consider whether the risk rating is driven "
-                           "by non-economic factors.".format(prob_neg, overall_risk.title()),
-                "fix_type": "none",
-            })
-
-    # --- 9. Numbers quoted in the findings that results.json cannot account for ---
-    quoted, unmatched = KIT.untraced_numbers(results)
-    if len(unmatched) >= 3 and len(unmatched) > len(quoted) / 2.0:
-        listed = ", ".join(_fmt_number(v) for v in unmatched[:10])
-        issues.append({
-            "severity": "WARNING",
-            "message": "{} of {} numbers quoted in the findings are not in results.json "
-                       "({}). Add them to key_results, or state in the text how they were "
-                       "derived, so every figure in the findings can be traced.".format(
-                           len(unmatched), len(quoted), listed),
-            "fix_type": "text",
-        })
-    elif unmatched:
-        issues.append({
-            "severity": "INFO",
-            "message": "Numbers quoted in the findings but not found in results.json: {}. "
-                       "Confirm they are derived values or add them to key_results.".format(
-                           ", ".join(_fmt_number(v) for v in unmatched[:10])),
-            "fix_type": "none",
-        })
-
-    # --- 10. A long key_results list with nothing marked as the headline ---
-    n_rows = len(_flatten_key_results(key_results)) if key_results else 0
-    if n_rows > 15 and not _headline_rows(results):
-        issues.append({
-            "severity": "WARNING",
-            "message": "key_results has {} rows and none is marked \"headline\": true, so the "
-                       "Results table prints all of them with labels derived from key names. "
-                       "Mark the 5-10 decisive values (with label, unit, decimals) and the "
-                       "full list moves to an appendix.".format(n_rows),
-            "fix_type": "text",
-        })
-
-    if not issues:
-        issues.append({"severity": "INFO", "message": "No consistency issues found.", "fix_type": "none"})
-
-    return issues
-
-
-def print_consistency_report(issues):
-    """Print the consistency check results with visual formatting."""
-    errors = [i for i in issues if i["severity"] == "ERROR"]
-    warnings = [i for i in issues if i["severity"] == "WARNING"]
-    infos = [i for i in issues if i["severity"] == "INFO"]
-
-    text_fixes = [i for i in issues if i.get("fix_type") == "text"]
-    calc_fixes = [i for i in issues if i.get("fix_type") == "calculation"]
-
-    print("  ===== Report Consistency Check =====")
-    if errors:
-        for i in errors:
-            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
-            print("  [ERROR{}] {}".format(tag, i["message"]))
-    if warnings:
-        for i in warnings:
-            tag = " [CALC-FIX]" if i.get("fix_type") == "calculation" else " [TEXT-FIX]" if i.get("fix_type") == "text" else ""
-            print("  [WARNING{}] {}".format(tag, i["message"]))
-    if infos and not errors and not warnings:
-        for i in infos:
-            print("  [OK] {}".format(i["message"]))
-
-    if errors:
-        print("")
-        print("  {} ERROR(s) found. Fix these before distributing the report.".format(
-            len(errors)))
-        print("  Errors indicate contradictions that undermine report credibility.")
-    elif warnings:
-        print("")
-        print("  {} WARNING(s) found. Review before finalising.".format(
-            len(warnings)))
-    else:
-        print("  Report is internally consistent.")
-
-    if text_fixes:
-        print("  {} text fix(es) require review before distribution.".format(len(text_fixes)))
-    if calc_fixes:
-        print("  {} calculation fix(es) need agent re-run (see fixes_needed.json).".format(
-            len(calc_fixes)))
-
-    print("  ====================================")
-    return len(errors)
-
-
-
-def auto_problem_description(results, task_spec):
-    """Generate a problem description from task_spec.md sections."""
-    parts = []
-    for heading in ["Objective", "Description", "Problem Statement", "Task Description", "Background"]:
-        text = extract_spec_section(task_spec, heading)
-        if text:
-            parts.append(text)
-            break
-    envelope = extract_spec_section(task_spec, "Operating Envelope")
-    # A markdown table cannot be flattened into prose without becoming a line of
-    # pipes; Scope and Standards already renders the same section as a table.
-    if envelope and "|" not in envelope:
-        items = [re.sub(r"^\s*[-*]\s+", "", line).strip().rstrip(".")
-                 for line in envelope.splitlines() if line.strip()]
-        parts.append(_t("Operating envelope") + ": " + "; ".join(items) + ".")
-    if results and results.get("objective") and not parts:
-        parts.append(str(results["objective"]))
-    return "\n\n".join(parts)
-
-
-def _required_section_available(section, results, task_spec):
-    """Check whether a configured report section has enough input data."""
-    normalized = str(section).strip().lower().replace("-", "_").replace(" ", "_")
-    if normalized == "executive_summary":
-        return bool((results and (results.get("executive_summary")
-                                  or results.get("key_results")
-                                  or results.get("approach")
-                                  or results.get("conclusions")))
-                    or _manual_section_filled("executive_summary"))
-    if normalized in ("problem_description", "problem_statement"):
-        return bool(auto_problem_description(results, task_spec)
-                    or _manual_section_filled("problem_description"))
-    if normalized in ("scope", "scope_and_standards"):
-        if not task_spec:
-            return False
-        return bool(extract_spec_section(task_spec, "Applicable Standards")
-                    or extract_spec_section(task_spec, "Calculation Methods")
-                    or extract_spec_section(task_spec, "Acceptance Criteria")
-                    or extract_spec_section(task_spec, "Operating Envelope"))
-    if normalized in ("methodology", "approach"):
-        return bool((results and results.get("approach"))
-                    or _manual_section_filled("approach"))
-    if normalized in ("information_sources", "evidence_basis", "sources"):
-        return bool(format_information_sources_text({}, results))
-    if normalized in ("assumptions", "assumptions_and_gaps", "data_gaps"):
-        return bool(format_assumptions_text(results))
-    if normalized == "results":
-        return bool(results and results.get("key_results"))
-    if normalized == "discussion":
-        return bool(results and results.get("figure_discussion"))
-    if normalized == "validation":
-        return bool(results and results.get("validation"))
-    if normalized == "benchmark_validation":
-        return bool(results and results.get("benchmark_validation"))
-    if normalized in ("uncertainty", "uncertainty_analysis"):
-        return bool(results and results.get("uncertainty"))
-    if normalized in ("solution_workflow", "workflow", "agent_workflow"):
-        return bool(results and results.get("agent_workflow_plan"))
-    if normalized in ("risk", "risk_assessment", "risk_evaluation"):
-        return bool(results and (results.get("risk_evaluation") or results.get("risks")))
-    if normalized in ("conclusion", "conclusions", "conclusions_and_recommendations"):
-        return bool((results and results.get("conclusions"))
-                    or _manual_section_filled("conclusions"))
-    if normalized == "references":
-        return bool((results and results.get("references"))
-                    or _manual_section_filled("references"))
-    return True
-
-
-def _load_runner_jobs(runner_db_path):
-    """Return runner job rows from runner.db or an error message."""
-    try:
-        connection = sqlite3.connect(runner_db_path, timeout=5.0)
-        connection.row_factory = sqlite3.Row
-        try:
-            rows = connection.execute(
-                "SELECT job_id, script, job_type, status, error_message "
-                "FROM jobs ORDER BY created_at"
-            ).fetchall()
-        finally:
-            connection.close()
-    except sqlite3.Error as error:
-        return [], str(error)
-    return [dict(row) for row in rows], None
-
-
-def _runner_script_name(job_row):
-    """Return the basename of a runner job script path."""
-    return os.path.basename(str(job_row.get("script") or ""))
-
-
-def _runner_status_summary(job_rows):
-    """Return a compact status summary for report warnings."""
-    counts = {}
-    for job_row in job_rows:
-        status = str(job_row.get("status") or "unknown")
-        counts[status] = counts.get(status, 0) + 1
-    return ", ".join(["{}={}".format(status, counts[status])
-                      for status in sorted(counts)])
-
-
-def _validate_runner_execution(notebooks, planned_notebooks, existing_notebooks):
-    """Return warnings for incomplete NeqSim Runner notebook execution."""
-    warnings = []
-    execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
-    notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
-    require_successful_jobs = _as_bool(notebooks.get("require_successful_jobs", True))
-    if not (notebook_execution_required and execution_engine == "neqsim_runner"):
-        return warnings
-    if not existing_notebooks:
-        return warnings
-
-    runner_output_path = os.path.join(TASK_DIR, "runner_output")
-    runner_db_path = os.path.join(TASK_DIR, "runner.db")
-    if not os.path.exists(runner_output_path):
-        warnings.append("Notebook execution engine is neqsim_runner, but runner_output/ is missing.")
-    if not os.path.exists(runner_db_path):
-        warnings.append("Notebook execution engine is neqsim_runner, but runner.db is missing.")
-        return warnings
-
-    job_rows, load_error = _load_runner_jobs(runner_db_path)
-    if load_error:
-        warnings.append("Could not inspect runner.db for notebook status: {}".format(
-            load_error))
-        return warnings
-    if not job_rows:
-        warnings.append("runner.db exists, but it contains no recorded runner jobs.")
-        return warnings
-
-    expected_notebooks = planned_notebooks or [os.path.basename(path)
-                                               for path in existing_notebooks]
-    expected_script_names = set()
-    for notebook_file in expected_notebooks:
-        notebook_name = os.path.basename(str(notebook_file))
-        expected_script_names.add(notebook_name)
-        expected_script_names.add(os.path.splitext(notebook_name)[0] + ".py")
-
-    notebook_rows = []
-    for row in job_rows:
-        job_type = str(row.get("job_type") or "script")
-        script_name = _runner_script_name(row)
-        if job_type == "notebook" or script_name in expected_script_names:
-            notebook_rows.append(row)
-    if not notebook_rows:
-        warnings.append(
-            "runner.db contains jobs ({}), but none match the planned notebooks.".format(
-                _runner_status_summary(job_rows)))
-        return warnings
-
-    if require_successful_jobs:
-        unsuccessful = [row for row in notebook_rows
-                        if str(row.get("status") or "") != "success"]
-        if unsuccessful:
-            details = []
-            for row in unsuccessful[:5]:
-                details.append("{}={} ({})".format(
-                    row.get("job_id"), row.get("status"), _runner_script_name(row)))
-            if len(unsuccessful) > 5:
-                details.append("... {} more".format(len(unsuccessful) - 5))
-            warnings.append("NeqSim Runner notebook jobs are not all successful: {}.".format(
-                "; ".join(details)))
-
-        successful_notebooks = set([_runner_script_name(row) for row in notebook_rows
-                                    if str(row.get("status") or "") == "success"])
-        for notebook_file in expected_notebooks:
-            notebook_name = os.path.basename(str(notebook_file))
-            script_name = os.path.splitext(notebook_name)[0] + ".py"
-            notebook_path = os.path.join(TASK_DIR, "step2_analysis", str(notebook_file))
-            if (os.path.exists(notebook_path)
-                    and notebook_name not in successful_notebooks
-                    and script_name not in successful_notebooks):
-                warnings.append(
-                    "Planned notebook has no successful runner job: step2_analysis/{}".format(
-                        notebook_file))
-    return warnings
-
-
-def _resolve_task_path(path):
-    """Resolve a study_config path relative to the task folder."""
-    if os.path.isabs(str(path)):
-        return str(path)
-    return os.path.join(TASK_DIR, str(path))
-
-
-def _validate_analysis_scripts(analysis):
-    """Return warnings for declared analysis scripts and their artifacts."""
-    warnings = []
-    engine = str(analysis.get("engine", "auto")).strip().lower()
-    scripts = analysis.get("scripts", [])
-    if engine in ("script", "hybrid") and not scripts:
-        warnings.append(
-            "analysis.engine is '{}', but analysis.scripts lists no scripts.".format(engine))
-    for entry in scripts:
-        script_file = entry.get("file")
-        if not script_file:
-            continue
-        # Data-retrieval scripts live in step1; the work record resolves bare names in both folders.
-        candidates = [os.path.join(TASK_DIR, folder, str(script_file))
-                      for folder in ("step2_analysis", "step1_scope_and_research")]
-        candidates.append(_resolve_task_path(script_file))
-        if not any(os.path.exists(path) for path in candidates):
-            warnings.append("Planned analysis script is missing: step2_analysis/{}".format(
-                script_file))
-            continue
-        produces = entry.get("produces")
-        if produces and not glob.glob(_resolve_task_path(produces)):
-            warnings.append("Analysis script {} declares an output that is missing: {}".format(
-                script_file, produces))
-    return warnings
-
-
-def _validate_data_sources(inputs, quality_gates, results):
-    """Return warnings for declared source systems and provenance closure."""
-    warnings = []
-    data_sources = inputs.get("data_sources", [])
-    required = _as_bool(inputs.get("data_sources_required", False))
-    if required and not data_sources:
-        warnings.append(
-            "inputs.data_sources_required is true, but no source systems are listed.")
-
-    for entry in data_sources:
-        system = entry.get("system", "<unnamed>")
-        evidence = entry.get("evidence")
-        if not evidence:
-            if required or _is_required(quality_gates.get("provenance_closure")):
-                warnings.append(
-                    "Data source '{}' has no evidence path — captured records cannot "
-                    "be traced.".format(system))
-            continue
-        if not os.path.exists(_resolve_task_path(evidence)):
-            warnings.append("Captured evidence is missing for data source '{}': {}".format(
-                system, evidence))
-
-    if _is_required(quality_gates.get("provenance_closure")) and data_sources:
-        cited = results.get("data_sources") or results.get("sources") if results else None
-        if not cited:
-            warnings.append(
-                "Provenance closure is required, but results.json has no data_sources "
-                "or sources section naming the systems the numbers came from.")
-    return warnings
-
-
-def _validate_work_record(report, quality_gates):
-    """Return warnings when the method-and-data record is required but unusable."""
-    setting = str(report.get("work_record", "auto")).strip().lower()
-    gate = str(quality_gates.get("work_record", "auto")).strip().lower()
-    if "skip" in (setting, gate):
-        return []
-    if not (_is_required(setting) or _is_required(gate)):
-        return []
-
-    record_path = os.path.join(TASK_DIR, "step3_report", "WORK_RECORD.md")
-    if not os.path.exists(record_path):
-        return ["Work record is required, but step3_report/WORK_RECORD.md is missing "
-                "(build it with: neqsim work-record .)."]
-    try:
-        with open(record_path, "r", encoding="utf-8") as record_file:
-            text = record_file.read()
-    except OSError as error:
-        return ["Work record could not be read: {}".format(error)]
-
-    warnings = []
-    blocks = re.findall(
-        r"<!--\s*WORK_RECORD:NARRATIVE id=([A-Za-z0-9_\-]+)\s*-->\n?(.*?)\n?"
-        r"<!--\s*/WORK_RECORD:NARRATIVE\s*-->", text, re.DOTALL)
-    unfilled = [block_id for block_id, body in blocks
-                if re.fullmatch(r"\[[^\]]*\]", (body or "").strip() or "[]")]
-    if unfilled:
-        warnings.append(
-            "Work record narrative is still template text: {}.".format(
-                ", ".join(unfilled)))
-    if not blocks:
-        warnings.append(
-            "Work record has no narrative blocks — regenerate it with "
-            "neqsim work-record so the method section is present.")
-    return warnings
-
-
-def _find_work_record_generator():
-    """Locate devtools/generate_work_record.py from the environment or the tree.
-
-    A task folder vendors its own copy of this report generator, so the search
-    also walks up from the task itself — that is what lets an old task pick up
-    the current work-record generator.
-    """
-    return _find_devtool("generate_work_record.py")
-
-
-def _find_devtool(filename):
-    """Locate a devtools script from NEQSIM_PROJECT_ROOT or the folder tree."""
-    candidates = []
-    project_root = os.environ.get("NEQSIM_PROJECT_ROOT")
-    if project_root:
-        candidates.append(os.path.join(project_root, "devtools", filename))
-    for start in (os.path.dirname(os.path.abspath(__file__)), TASK_DIR):
-        current = start
-        for _ in range(6):
-            candidates.append(os.path.join(current, "devtools", filename))
-            candidates.append(os.path.join(current, filename))
-            parent = os.path.dirname(current)
-            if parent == current:
-                break
-            current = parent
-    for candidate in candidates:
-        if os.path.isfile(candidate):
-            return candidate
-    return None
-
-
-def record_environment(results):
-    """Record the software that produced this report into results.json.
-
-    Stamped here rather than backfilled later: only the run that renders the
-    deliverable can honestly claim which NeqSim produced its numbers.
-    """
-    if not isinstance(results, dict):
-        return None
-    tool = _find_devtool("task_corpus.py")
-    if not tool:
-        return None
-    try:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("neqsim_task_corpus", tool)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        environment = module.capture_environment()
-    except Exception as error:  # a provenance stamp must never break a report
-        print("NOTE: environment not recorded ({}).".format(error))
-        return None
-    results["environment"] = environment
-    try:
-        with open(RESULTS_FILE, "r", encoding="utf-8-sig") as handle:
-            stored = json.load(handle)
-        if isinstance(stored, dict):
-            stored["environment"] = environment
-            with open(RESULTS_FILE, "w", encoding="utf-8") as handle:
-                json.dump(stored, handle, indent=2, ensure_ascii=False)
-                handle.write("\n")
-    except (OSError, ValueError) as error:
-        print("NOTE: could not persist the report environment in results.json "
-              "({}).".format(error), file=sys.stderr)
-    return environment
-
-
-def generate_work_record(config):
-    """Build step3_report/WORK_RECORD.md unless the task opts out.
-
-    The report carries the conclusion; the work record carries the method, the
-    data, and the file map. It is regenerated with every report so the two
-    deliverables cannot drift apart.
-    """
-    setting = str((config.get("report") or {}).get("work_record", "auto")).strip().lower()
-    if setting == "skip":
-        return
-    generator = _find_work_record_generator()
-    if not generator:
-        print("")
-        print("NOTE: work record not generated (devtools/generate_work_record.py "
-              "not found). Run: neqsim work-record \"{}\"".format(TASK_DIR))
-        return
-    try:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("neqsim_work_record", generator)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        print("")
-        module.main([TASK_DIR])
-    except Exception as error:  # never block the report on the companion file
-        print("")
-        print("NOTE: work record could not be generated: {}".format(error))
-
-
-def _validate_assumption_register(inputs, results):
-    """Warn when information was not obtained but nothing was assumed in writing.
-
-    A study that could not get a document still reached an answer somehow. If no
-    assumption is registered, that substitution is invisible to the reader.
-    """
-    unobtained = []
-    for entry in inputs.get("data_sources", []) or []:
-        if not isinstance(entry, dict):
-            continue
-        evidence = str(entry.get("evidence", "") or "")
-        if not evidence or not os.path.exists(_resolve_task_path(evidence)):
-            unobtained.append(str(entry.get("system", "<unnamed>")))
-    manifest_gaps = load_collection_manifest().get("data_gaps", []) or []
-    if not unobtained and not manifest_gaps:
-        return []
-    if format_assumptions_text(results):
-        return []
-    detail = ", ".join(unobtained) if unobtained else "{} document gap(s)".format(
-        len(manifest_gaps))
-    return ["Information was not obtained ({}), but results.json registers no "
-            "assumptions or data_gaps \u2014 state what was assumed in its place.".format(
-                detail)]
-
-
-def validate_study_config(config, results, task_spec):
-    """Return warnings for missing deliverables required by study_config.yaml."""
-    if not config:
-        return []
-
-    warnings = []
-    inputs = config.get("inputs", {})
-    analysis = config.get("analysis", {})
-    notebooks = config.get("notebooks", {})
-    report = config.get("report", {})
-    quality_gates = config.get("quality_gates", {})
-
-    documents = inputs.get("documents", [])
-    documents_required = _as_bool(inputs.get("documents_required", False))
-    if documents_required and not documents:
-        warnings.append("inputs.documents_required is true, but no input documents are listed.")
-    for document in documents:
-        document_path = document.get("path")
-        document_required = documents_required or _as_bool(document.get("required", False))
-        if not document_path or not document_required:
-            continue
-        if os.path.isabs(str(document_path)):
-            resolved_path = str(document_path)
-        else:
-            resolved_path = os.path.join(TASK_DIR, str(document_path))
-        if not os.path.exists(resolved_path):
-            warnings.append("Required input document path is missing: {}".format(document_path))
-        elif os.path.isdir(resolved_path):
-            files = [name for name in os.listdir(resolved_path)
-                     if os.path.isfile(os.path.join(resolved_path, name))]
-            if not files:
-                warnings.append("Required input document directory is empty: {}".format(
-                    document_path))
-
-    planned_notebooks = [entry.get("file") for entry in notebooks.get("plan", [])
-                         if entry.get("file")]
-    existing_notebooks = glob.glob(os.path.join(TASK_DIR, "step2_analysis", "*.ipynb"))
-    minimum_count = _as_int(notebooks.get("minimum_count"), 0)
-    notebooks_required = _as_bool(notebooks.get("required", True))
-    notebook_execution_required = _as_bool(notebooks.get("execution_required", False))
-    execution_engine = str(notebooks.get("execution_engine", "")).strip().lower()
-    analysis_engine = str(analysis.get("engine", "auto")).strip().lower()
-    script_backed = (not notebooks_required
-                     and (execution_engine == "script" or analysis_engine == "script"))
-    if notebooks_required or notebook_execution_required or minimum_count:
-        if minimum_count and len(existing_notebooks) < minimum_count and not script_backed:
-            warnings.append(
-                "Configured notebook minimum is {}, but {} notebook(s) exist.".format(
-                    minimum_count, len(existing_notebooks)))
-        if notebooks_required and not script_backed:
-            for notebook_file in planned_notebooks:
-                notebook_path = os.path.join(TASK_DIR, "step2_analysis", notebook_file)
-                if not os.path.exists(notebook_path):
-                    warnings.append("Planned notebook is missing: step2_analysis/{}".format(
-                        notebook_file))
-
-        warnings.extend(_validate_runner_execution(notebooks, planned_notebooks,
-                                                   existing_notebooks))
-
-    warnings.extend(_validate_analysis_scripts(analysis))
-    warnings.extend(_validate_data_sources(inputs, quality_gates, results or {}))
-    warnings.extend(_validate_work_record(report, quality_gates))
-    warnings.extend(_validate_assumption_register(inputs, results or {}))
-
-    if _as_bool(quality_gates.get("require_results_json", False)) and not results:
-        warnings.append("quality_gates.require_results_json is true, but results.json is missing.")
-    if _is_required(quality_gates.get("benchmark_validation")) and not (
-            results and results.get("benchmark_validation")):
-        benchmark_kind = str(quality_gates.get("benchmark_kind", "auto")).strip().lower()
-        if benchmark_kind in ("", "auto", "none"):
-            benchmark_kind = "independent reference"
-        warnings.append(
-            "Benchmark validation ({}) is required, but results.json has no "
-            "benchmark_validation section.".format(benchmark_kind.replace("_", " ")))
-    if _is_required(quality_gates.get("human_review")) and not (
-            results and (results.get("human_review") or results.get("review"))):
-        warnings.append(
-            "Human review is required, but results.json has no human_review section "
-            "recording the reviewer and sign-off status.")
-    if _is_required(quality_gates.get("uncertainty_analysis")) and not (
-            results and results.get("uncertainty")):
-        warnings.append("Uncertainty analysis is required, but results.json has no uncertainty section.")
-    if _is_required(quality_gates.get("risk_register")) and not (
-            results and (results.get("risk_evaluation") or results.get("risks"))):
-        warnings.append("Risk register is required, but results.json has no risk_evaluation or risks section.")
-    if _is_required(quality_gates.get("figure_discussion")) and not (
-            results and results.get("figure_discussion")):
-        warnings.append("Figure discussion is required, but results.json has no figure_discussion section.")
-    if _is_required(quality_gates.get("consistency_checker")):
-        consistency_path = os.path.join(TASK_DIR, "consistency_report.json")
-        if not os.path.exists(consistency_path):
-            warnings.append("Consistency checker is required, but consistency_report.json is missing.")
-
-    minimum_figures = _as_int(quality_gates.get("minimum_figures"), 0)
-    figure_count = len(glob.glob(os.path.join(FIG_DIR, "*.png")))
-    if minimum_figures and figure_count < minimum_figures:
-        warnings.append("Configured figure minimum is {}, but {} PNG figure(s) exist.".format(
-            minimum_figures, figure_count))
-
-    for section in report.get("required_sections", []):
-        if not _required_section_available(section, results, task_spec):
-            warnings.append("Required report section lacks source data: {}".format(section))
-
-    return warnings
-
-
-def _md_table_to_html(lines):
-    """Convert markdown table lines to an HTML table string."""
-    if len(lines) < 2:
-        return ""
-    # Parse header
-    header_cells = [c.strip() for c in lines[0].strip().strip("|").split("|")]
-    # Skip separator line (line 1)
-    html = '<table class="scope-table"><thead><tr>'
-    for cell in header_cells:
-        html += "<th>{}</th>".format(_md_inline(cell))
-    html += "</tr></thead><tbody>\n"
-    for row_line in lines[2:]:
-        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
-        html += "<tr>"
-        for cell in cells:
-            html += "<td>{}</td>".format(_md_inline(cell))
-        html += "</tr>\n"
-    html += "</tbody></table>"
-    return html
-
-
-def _md_inline(text):
-    """Convert inline markdown (bold, `code`) to HTML."""
-    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
-    return _INLINE_CODE_RE.sub(r"<code>\1</code>", text)
-
-
-def _md_list_to_html(lines):
-    """Convert markdown bullet list lines to an HTML list."""
-    html = "<ul>\n"
-    for line in lines:
-        item = line.lstrip("- ").strip()
-        html += "  <li>{}</li>\n".format(_md_inline(item))
-    html += "</ul>"
-    return html
-
-
-def scope_content_to_html(content):
-    """Convert scope section content (from task_spec.md) to styled HTML.
-
-    Handles markdown tables, bold text, bullet lists, and sub-headings.
-    """
-    lines = content.split("\n")
-    html_parts = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-
-        # Blank line
-        if not line.strip():
-            i += 1
-            continue
-
-        # Sub-heading (e.g., "Applicable Standards:")
-        if (line.strip().endswith(":") and not line.strip().startswith("-")
-                and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            html_parts.append("<h3>{}</h3>".format(
-                _md_inline(line.strip().rstrip(":").strip())))
-            i += 1
-            continue
-
-        # Markdown table (starts with |)
-        if line.strip().startswith("|"):
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i])
-                i += 1
-            # Check if second line is separator (|---|)
-            if len(table_lines) >= 2 and set(table_lines[1].replace("|", "").replace("-", "").replace(":", "").strip()) <= set(""):
-                html_parts.append(_md_table_to_html(table_lines))
-            else:
-                # Not a real table, just text with pipes
-                for tl in table_lines:
-                    html_parts.append("<p>{}</p>".format(_md_inline(tl.strip())))
-            continue
-
-        # Bullet list (starts with -)
-        if line.strip().startswith("- "):
-            list_lines = []
-            while i < len(lines) and lines[i].strip().startswith("- "):
-                list_lines.append(lines[i])
-                i += 1
-            html_parts.append(_md_list_to_html(list_lines))
-            continue
-
-        # Regular paragraph
-        html_parts.append("<p>{}</p>".format(_md_inline(line.strip())))
-        i += 1
-
-    return "\n".join(html_parts)
-
-
-def render_scope_to_word(doc, content):
-    """Render scope section content (from task_spec.md) into a Word document.
-
-    Parses markdown tables into Word tables, bold text into runs, and
-    bullet lists into formatted paragraphs.
-    """
-    lines = content.split("\n")
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-
-        # Blank line
-        if not line.strip():
-            i += 1
-            continue
-
-        # Sub-heading (e.g., "Applicable Standards:")
-        if (line.strip().endswith(":") and not line.strip().startswith("-")
-                and not line.strip().startswith("|") and not line.strip().startswith("*")):
-            # "Applicable Standards:" is a label in the spec, not heading text.
-            _add_heading(doc, line.strip().rstrip(":").strip(), level=2)
-            i += 1
-            continue
-
-        # Markdown table
-        if line.strip().startswith("|"):
-            table_lines = []
-            while i < len(lines) and lines[i].strip().startswith("|"):
-                table_lines.append(lines[i])
-                i += 1
-            if len(table_lines) >= 2:
-                _md_table_to_word(doc, table_lines)
-            else:
-                for tl in table_lines:
-                    doc.add_paragraph(tl.strip())
-            continue
-
-        # Bullet list
-        if line.strip().startswith("- "):
-            while i < len(lines) and lines[i].strip().startswith("- "):
-                item_text = lines[i].strip()[2:]  # Remove "- "
-                p = doc.add_paragraph(style="List Bullet")
-                _add_bold_runs(p, item_text)
-                i += 1
-            continue
-
-        # Regular paragraph
-        p = doc.add_paragraph()
-        _add_bold_runs(p, line.strip())
-        i += 1
-
-
-def _md_table_to_word(doc, table_lines):
-    """Convert markdown table lines to a styled Word table."""
-    header_cells = [c.strip() for c in table_lines[0].strip().strip("|").split("|")]
-    data_rows = []
-    for row_line in table_lines[2:]:  # skip header and separator
-        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
-        data_rows.append(cells)
-    add_word_table(doc, header_cells, data_rows)
-
-
-# Matches **bold** spans and $...$ inline maths (but not $$...$$ display
-# maths, which is a separate results.json-driven code path) in one pass, so
-# the two kinds of markup can be interleaved in a single sentence.
-_INLINE_TOKEN_RE = re.compile(
-    r"(\*\*.+?\*\*|`[^`\n]+`|\{fig:[^}\s]+\}|\$(?!\$)[^$\n]+?\$(?!\$))")
-_INLINE_MATH_CACHE = {}
-
-_FIGURE_PLAN_CACHE = {}
-
-
-def get_figure_plan(results):
-    """Where each figure is shown and its number; shared by Word and HTML.
-
-    A figure with a Discussion entry is shown next to that discussion, the rest
-    stay in Results. Cached per results object so both renderers agree.
-    """
-    key = id(results)
-    if key not in _FIGURE_PLAN_CACHE:
-        discussion = (results or {}).get("figure_discussion") or []
-        _FIGURE_PLAN_CACHE.clear()
-        _FIGURE_PLAN_CACHE[key] = KIT.FigurePlan(get_figures(), discussion)
-    return _FIGURE_PLAN_CACHE[key]
-
-
-def _active_figure_plan():
-    """The plan of the report being built, or an empty plan."""
-    for plan in _FIGURE_PLAN_CACHE.values():
-        return plan
-    return KIT.FigurePlan([], None)
-
-
-def _figure_bookmark(path):
-    """Word bookmark that wraps a figure's "Figure N" caption label."""
-    return "_RefFig_" + KIT.figure_slug(path)
-
-
-_BOOKMARK_IDS = {"next": 100}
-
-
-def _add_ref_field(paragraph, bookmark, text):
-    """Insert a { REF bookmark \\h } cross-reference that Word keeps current."""
-    begin = paragraph.add_run()
-    begin._r.append(parse_xml('<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
-    code = paragraph.add_run()
-    code._r.append(parse_xml(
-        '<w:instrText {} xml:space="preserve"> REF {} \\h </w:instrText>'.format(
-            nsdecls("w"), bookmark)))
-    sep = paragraph.add_run()
-    sep._r.append(parse_xml('<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))))
-    shown = paragraph.add_run(text)
-    end = paragraph.add_run()
-    end._r.append(parse_xml('<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
-    return shown
-
-
-def _add_figure_reference(paragraph, token):
-    """Render a {fig:name} marker as a live cross-reference, or plain text."""
-    plan = _active_figure_plan()
-    path = plan.resolve(token)
-    number = plan.number_of(path) if path else None
-    if number is None:
-        paragraph.add_run("{} ?".format(_t("Figure")))
-        return
-    _add_ref_field(paragraph, _figure_bookmark(path),
-                   "{} {}".format(_t("Figure"), number))
-
-
-def _html_xrefs(text):
-    """Replace {fig:name} markers with links to the figure anchors."""
-    plan = _active_figure_plan()
-
-    def link(match):
-        path = plan.resolve(match.group(1))
-        number = plan.number_of(path) if path else None
-        if number is None:
-            return "{} ?".format(_t("Figure"))
-        return '<a class="xref" href="#fig-{}">{} {}</a>'.format(
-            number, _t("Figure"), number)
-
-    return KIT.FIG_REF_RE.sub(link, str(text))
-
-
-def _append_omml(paragraph, latex_str):
-    """Append an editable Word equation; False when it needs the image fallback."""
-    if not EQUATIONS_AS_OMML:
-        return False
-    xml = KIT.latex_to_omml(_sanitize_equation_latex(latex_str))
-    if not xml:
-        return False
-    try:
-        paragraph._p.append(parse_xml(xml))
-    except Exception:
-        return False
-    return True
-
-
-def _inline_math_image_path(latex_str, font_pt):
-    """Render (and cache) a small inline-maths PNG; returns the path or None."""
-    key = (latex_str, font_pt)
-    if key in _INLINE_MATH_CACHE:
-        return _INLINE_MATH_CACHE[key]
-    eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
-    if not os.path.exists(eq_img_dir):
-        os.makedirs(eq_img_dir)
-    digest = hashlib.md5(latex_str.encode("utf-8")).hexdigest()[:12]
-    path = os.path.join(eq_img_dir, "inline_{}.png".format(digest))
-    ok = render_equation_to_image(latex_str, path, font_pt=font_pt, inline=True)
-    _INLINE_MATH_CACHE[key] = path if ok else None
-    return _INLINE_MATH_CACHE[key]
-
-
-def _add_inline_math_run(paragraph, latex_str, font_pt=None):
-    """Insert inline maths: an editable equation, else a small image on the line."""
-    if _append_omml(paragraph, latex_str):
-        return
-    font_pt = font_pt or INLINE_EQ_FONT_PT
-    image_path = _inline_math_image_path(_sanitize_equation_latex(latex_str), font_pt)
-    if not image_path:
-        run = paragraph.add_run(_latex_fallback_text(latex_str))
-        run.italic = True
-        return
-    run = paragraph.add_run()
-    # Natural size at EQ_RENDER_DPI reproduces exactly the fixed ascent/descent
-    # window the image was cropped to, so consecutive inline equations share
-    # one baseline instead of each floating at their own ink-tight height.
-    size = _png_pixel_size(image_path)
-    if size and size[1] > 0:
-        run.add_picture(image_path, height=Inches(size[1] / float(EQ_RENDER_DPI)))
-    else:
-        run.add_picture(image_path, height=Pt(font_pt))
-    _set_last_picture_alt(paragraph, _latex_fallback_text(latex_str))
-
-
-def _set_last_picture_alt(paragraph, text):
-    """Give the paragraph's last inline picture alt text (screen readers, PDF tags)."""
-    try:
-        docpr = paragraph._p.xpath(".//wp:docPr")[-1]
-        docpr.set("descr", KIT.plain_alt_text(text))
-    except (IndexError, AttributeError, KeyError):
-        pass
-
-
-def _add_bold_runs(paragraph, text):
-    """Add text with **bold** spans, $...$ inline maths and {fig:name} cross-references."""
-    for part in _INLINE_TOKEN_RE.split(text):
-        if not part:
-            continue
-        if part.startswith("**") and part.endswith("**"):
-            run = paragraph.add_run(part[2:-2])
-            run.bold = True
-        elif part.startswith("{fig:") and part.endswith("}"):
-            _add_figure_reference(paragraph, part[5:-1])
-        elif part.startswith("`") and part.endswith("`") and len(part) > 2:
-            run = paragraph.add_run(part[1:-1])
-            run.font.name = "Consolas"
-        elif part.startswith("$") and part.endswith("$") and len(part) > 2:
-            _add_inline_math_run(paragraph, part[1:-1])
-        else:
-            paragraph.add_run(part)
-
-
-def get_figures():
-    """The task's figures followed by the live-task figures of a final report, if any."""
-    return _task_figures() + get_live_figures()
-
-
-def _task_figures():
-    """Collect all PNG/SVG figures from the figures/ directory.
-
-    Files named without an ordering prefix (``fig01_``, ``01_``) follow the order of
-    ``figure_captions`` in results.json, so the narrative order is the author's, not
-    the alphabet's; figures without a caption follow alphabetically.
-    """
-    pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
-    svgs = sorted(glob.glob(os.path.join(FIG_DIR, "*.svg")))
-    figures = pngs + svgs
-    prefixed = re.compile(r"^(fig(ure)?[\s_-]*)?\d", re.IGNORECASE)
-    if any(prefixed.match(os.path.basename(path)) for path in figures):
-        return figures
-    try:
-        with open(RESULTS_FILE, "r", encoding="utf-8") as source:
-            captions = list((json.load(source).get("figure_captions") or {}).keys())
-    except (OSError, ValueError, AttributeError):
-        return figures
-    rank = {name: index for index, name in enumerate(captions)}
-    return sorted(figures, key=lambda path: (rank.get(os.path.basename(path), len(rank)),
-                                             os.path.basename(path)))
-
-
-def get_figure_caption(fig_path, results, fig_index):
-    """Get a caption for a figure: custom from results.json or auto-generated."""
-    fig_name = os.path.basename(fig_path)
-    captions = {}
-    if results:
-        captions = results.get("figure_captions", {})
-    if fig_name in captions:
-        return "{} {}: {}".format(_t("Figure"), fig_index, captions[fig_name])
-    live_captions = _load_final_report_metadata().get("figure_captions") or {}
-    if fig_name in live_captions:
-        return "{} {}: {}".format(_t("Figure"), fig_index, live_captions[fig_name])
-    for entry in (results or {}).get("figure_discussion", []) or []:
-        if isinstance(entry, dict) and os.path.basename(
-                str(entry.get("figure", ""))) == fig_name:
-            title = str(entry.get("caption") or entry.get("title") or "").strip()
-            if title:
-                return "{} {}: {}".format(_t("Figure"), fig_index, title)
-    # Auto-generate from filename; drop an ordering prefix such as "fig03_".
-    stem = re.sub(r"^fig(ure)?[\s_-]*\d+[\s_-]*", "",
-                  fig_name.rsplit(".", 1)[0], flags=re.IGNORECASE)
-    stem = stem or fig_name.rsplit(".", 1)[0]
-    auto = stem.replace("_", " ").replace("-", " ").strip()
-    auto = auto[:1].upper() + auto[1:]
-    return "{} {}: {}".format(_t("Figure"), fig_index, auto)
-
-
-# A degree sign written through a codepage-437 console round-trips as the
-# U+2591 light-shade block ("°C" becomes "░C"); nothing in engineering
-# notation legitimately uses that glyph, so repairing it is always safe.
-_MOJIBAKE_DEGREE = "\u2591"
-# matplotlib's mathtext only knows the long form of these comparison
-# operators, not the common LaTeX aliases authors actually type.
-_MATHTEXT_ALIASES = [
-    (re.compile(r"\\le\b"), r"\\leq"),
-    (re.compile(r"\\ge\b"), r"\\geq"),
-    (re.compile(r"\\ne\b"), r"\\neq"),
-]
-
-
-def _sanitize_equation_latex(latex_str):
-    """Repair known encoding corruption and LaTeX/mathtext symbol mismatches."""
-    text = str(latex_str or "").replace(_MOJIBAKE_DEGREE, "\u00b0")
-    for pattern, replacement in _MATHTEXT_ALIASES:
-        text = pattern.sub(replacement, text)
-    return text
-
-
-# Best-effort LaTeX-to-plain-text approximation for the rare equation mathtext
-# cannot parse at all (e.g. a \begin{cases} piecewise definition -- mathtext
-# has no support for LaTeX environments). Order matters: fractions and text
-# runs are unwrapped before the catch-all \command stripper at the end.
-_LATEX_FALLBACK_SUBS = [
-    (re.compile(r"\\begin\{[a-zA-Z*]+\}"), ""),
-    (re.compile(r"\\end\{[a-zA-Z*]+\}"), ""),
-    (re.compile(r"\\\\"), "; "),
-    (re.compile(r"\\d?frac\{([^{}]*)\}\{([^{}]*)\}"), r"(\1)/(\2)"),
-    (re.compile(r"\\text\{([^{}]*)\}"), r"\1"),
-    (re.compile(r"\\mathrm\{([^{}]*)\}"), r"\1"),
-    (re.compile(r"\\left|\\right"), ""),
-    (re.compile(r"\\quad|\\qquad|\\,|\\;|\\!"), " "),
-    (re.compile(r"\\cdot"), "\u00b7"), (re.compile(r"\\times"), "\u00d7"),
-    (re.compile(r"\\leq"), "\u2264"), (re.compile(r"\\geq"), "\u2265"),
-    (re.compile(r"\\neq"), "\u2260"),
-    (re.compile(r"\\rightarrow|\\to"), "\u2192"),
-    (re.compile(r"\\pi"), "\u03c0"), (re.compile(r"\\Delta"), "\u0394"),
-    (re.compile(r"\\alpha"), "\u03b1"), (re.compile(r"\\beta"), "\u03b2"),
-    (re.compile(r"\\gamma"), "\u03b3"), (re.compile(r"\\eta"), "\u03b7"),
-    (re.compile(r"\\rho"), "\u03c1"), (re.compile(r"\\mu"), "\u03bc"),
-    (re.compile(r"\\theta"), "\u03b8"), (re.compile(r"\\omega"), "\u03c9"),
-    (re.compile(r"\\phi"), "\u03c6"),
-    (re.compile(r"&"), " \u2192 "),
-    (re.compile(r"\\[a-zA-Z]+"), ""),
-    (re.compile(r"[{}]"), ""),
-    (re.compile(r"\s+"), " "),
-]
-
-
-def _latex_fallback_text(latex_str):
-    """Readable approximation for an equation matplotlib cannot render.
-
-    Used only when rendering fails; a stripped-down plain-text approximation
-    reads as an engineer's shorthand, whereas the raw backslash-and-brace
-    LaTeX source reads as a bug in a formal report.
-    """
-    text = _sanitize_equation_latex(latex_str)
-    for pattern, replacement in _LATEX_FALLBACK_SUBS:
-        text = pattern.sub(replacement, text)
-    return text.strip()
-
-
-def get_equations(results):
-    """Get equations from results.json. Returns list of {label, latex}."""
-    if not results:
-        return []
-    cleaned = []
-    for eq in results.get("equations", []):
-        if isinstance(eq, dict) and eq.get("latex"):
-            eq = dict(eq, latex=_sanitize_equation_latex(eq["latex"]))
-        cleaned.append(eq)
-    return cleaned
-
-
-# An inline equation's own ink extent varies with how many sub/superscripts
-# or fractions it carries, so a per-equation tight vertical crop would leave
-# every inline expression sitting at a different height on the line (Word
-# aligns an inline picture's BOTTOM edge with the text baseline). Cropping to
-# a fixed ascent/descent window instead -- in font-size units, generous enough
-# for a simple fraction or subscript -- keeps that bottom edge, and so the
-# apparent baseline, the same distance from every equation's own baseline.
-INLINE_EQ_ASCENT_EM = 1.30
-INLINE_EQ_DESCENT_EM = 0.50
-
-
-def render_equation_to_image(latex_str, output_path, font_pt=None, inline=False):
-    """Render a LaTeX equation to a PNG sized for font_pt in the document.
-
-    Rendered at font_pt (default EQ_FONT_PT) and EQ_RENDER_DPI so that placing
-    the image at its natural size (pixels / EQ_RENDER_DPI inches) reproduces
-    exactly that point size. A display equation (inline=False) is cropped
-    tight to its own ink on every side, which is correct for a free-standing,
-    centered equation. ``inline=True`` instead crops to a fixed ascent/descent
-    window so consecutive inline equations line up on the same baseline; see
-    INLINE_EQ_ASCENT_EM/INLINE_EQ_DESCENT_EM. Returns True if the image was
-    created, False otherwise.
-    """
-    if not HAS_MATPLOTLIB:
-        return False
-    size_pt = font_pt or EQ_FONT_PT
-    text = "${}$".format(_sanitize_equation_latex(latex_str))
-    try:
-        if inline:
-            ascent_in = INLINE_EQ_ASCENT_EM * size_pt / 72.0
-            descent_in = INLINE_EQ_DESCENT_EM * size_pt / 72.0
-            fig = plt.figure(figsize=(10.0, ascent_in + descent_in))
-            fig.text(0.5, descent_in / (ascent_in + descent_in), text,
-                      fontsize=size_pt, ha="center", va="baseline",
-                      math_fontfamily="cm")
-            renderer = fig.canvas.get_renderer()
-            tight = fig.get_tightbbox(renderer)
-            fixed = Bbox.from_extents(tight.x0, 0.0, tight.x1,
-                                       ascent_in + descent_in)
-            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches=fixed,
-                        pad_inches=0.02, facecolor="white", edgecolor="none")
-        else:
-            fig = plt.figure(figsize=(8, 1.2))
-            fig.text(0.5, 0.5, text, fontsize=size_pt, ha="center", va="center",
-                      math_fontfamily="cm")
-            fig.savefig(output_path, dpi=EQ_RENDER_DPI, bbox_inches="tight",
-                        pad_inches=0.04, facecolor="white", edgecolor="none")
-        plt.close(fig)
-        return True
-    except Exception as e:
-        print("  Warning: could not render equation: {}".format(e))
-        return False
-
-
-def _png_pixel_size(path):
-    """Return (width, height) in pixels from the PNG IHDR chunk, else None."""
-    try:
-        with open(path, "rb") as handle:
-            header = handle.read(24)
-        if len(header) < 24 or header[:8] != b"\x89PNG\r\n\x1a\n":
-            return None
-        return (int.from_bytes(header[16:20], "big"),
-                int.from_bytes(header[20:24], "big"))
-    except Exception:
-        return None
-
-
-def _add_equation_picture(doc, image_path, max_width_in):
-    """Insert an equation image at its natural size, capped to the text width."""
-    size = _png_pixel_size(image_path)
-    if size and size[0] > 0:
-        width_in = min(size[0] / float(EQ_RENDER_DPI), max_width_in)
-    else:
-        width_in = min(3.0, max_width_in)
-    doc.add_picture(image_path, width=Inches(width_in))
-
-
-def _raise_run(run, half_points):
-    """Raise a run above the baseline by the given number of half-points."""
-    if half_points > 0:
-        run._r.get_or_add_rPr().append(parse_xml(
-            '<w:position {} w:val="{}"/>'.format(nsdecls("w"), int(half_points))))
-
-
-def _add_display_equation(doc, image_path, label, max_width_in):
-    """Set a display equation centred, with its number right-aligned: (n).
-
-    The label goes on a short lead-in line above; the number is a Word SEQ
-    field raised to the equation's vertical centre, as in a typeset paper.
-    """
-    measure = _text_width_in(doc)
-    if label:
-        lead = doc.add_paragraph()
-        run = lead.add_run(_strip_caption_prefix(label))
-        run.italic = True
-        run.font.size = Pt(CAPTION_PT)
-        run.font.color.rgb = RGBColor(90, 90, 90)
-        lead.paragraph_format.space_before = Pt(6)
-        lead.paragraph_format.space_after = Pt(0)
-        lead.paragraph_format.keep_with_next = True
-    size = _png_pixel_size(image_path)
-    natural_in = size[0] / float(EQ_RENDER_DPI) if size and size[0] else 3.0
-    # Leave room either side so the number never collides with the maths.
-    width_in = min(natural_in, max_width_in, measure - 1.4)
-    height_pt = (width_in * size[1] / float(size[0]) * 72.0
-                 if size and size[0] else EQ_FONT_PT * 1.5)
-    paragraph = doc.add_paragraph()
-    fmt = paragraph.paragraph_format
-    fmt.space_before = Pt(2)
-    fmt.space_after = Pt(8)
-    fmt.keep_together = True
-    fmt.tab_stops.add_tab_stop(Inches(measure / 2.0), WD_TAB_ALIGNMENT.CENTER)
-    fmt.tab_stops.add_tab_stop(Inches(measure), WD_TAB_ALIGNMENT.RIGHT)
-    paragraph.add_run("\t")
-    paragraph.add_run().add_picture(image_path, width=Inches(width_in))
-    first_number_run = len(paragraph.runs)
-    paragraph.add_run("\t(")
-    _add_seq_field(paragraph, _t("Equation"))
-    paragraph.add_run(")")
-    # Word re-formats an updated field result from its field-code run, so every
-    # run of the number (codes included) must carry the raise, not just the text.
-    for run in paragraph.runs[first_number_run:]:
-        _raise_run(run, height_pt - 0.7 * BODY_PT)
-    return paragraph
-
-
-def _add_equation_fallback_paragraph(doc, label, latex):
-    """Show an unrenderable display equation as marked, readable text.
-
-    Presenting it as ordinary body prose would read as a typo; the italic,
-    muted styling and the trailing note make clear it is a known gap rather
-    than broken output.
-    """
-    paragraph = doc.add_paragraph()
-    prefix = "{}: ".format(label) if label else ""
-    run = paragraph.add_run(prefix + _latex_fallback_text(latex))
-    run.italic = True
-    run.font.color.rgb = RGBColor(90, 90, 90)
-    note = paragraph.add_run("  ({})".format(
-        _t("automatic equation typesetting unavailable")))
-    note.italic = True
-    note.font.size = Pt(CAPTION_PT)
-    note.font.color.rgb = RGBColor(140, 140, 140)
-    return paragraph
-
-
-def _add_figure_picture(doc, image_path, alt=None):
-    """Place a figure across the measure, shrunk if it would not fit the page.
-
-    A fixed picture width makes a tall figure overflow the printable height,
-    which Word resolves by pushing it onto its own page and clipping what is
-    left. Scaling on the native aspect ratio keeps every figure on one page.
-    """
-    max_width = _text_width_in(doc)
-    max_height = max(2.0, _text_height_in(doc) - FIGURE_CAPTION_ALLOWANCE_IN)
-    width_in = max_width
-    size = _png_pixel_size(image_path)
-    if size and size[0] > 0 and size[1] > 0:
-        height_in = max_width * size[1] / float(size[0])
-        if height_in > max_height:
-            width_in = max_width * max_height / height_in
-    doc.add_picture(image_path, width=Inches(width_in))
-    picture_para = doc.paragraphs[-1]
-    if alt:
-        _set_last_picture_alt(picture_para, alt)
-    picture_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    # The caption follows the picture, so the picture must not end a page.
-    picture_para.paragraph_format.keep_with_next = True
-    return picture_para
-
-
-_CAPTION_PREFIX = re.compile(r"^\s*(Figure|Table|Equation)\s+\d+\s*[:.\u2013-]\s*",
-                             re.IGNORECASE)
-
-
-def _strip_caption_prefix(text):
-    """Drop a leading "Figure 3:" so the Word SEQ field owns the numbering.
-
-    Also strips the translated labels, otherwise a report in another language
-    keeps the prefix and Word adds a second one.
-    """
-    cleaned = _CAPTION_PREFIX.sub("", str(text or "")).strip()
-    labels = [_t(label) for label in ("Figure", "Table", "Equation")]
-    labels = [label for label in labels if label]
-    if labels:
-        translated = re.compile(
-            r"^\s*({})\s+\d+\s*[:.\u2013-]\s*".format("|".join(
-                re.escape(label) for label in labels)), re.IGNORECASE)
-        cleaned = translated.sub("", cleaned).strip()
-    return cleaned
-
-
-def _add_seq_field(paragraph, label):
-    """Append a { SEQ <label> } field so Word owns the caption numbering."""
-    run = paragraph.add_run()
-    run._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="begin"/>'.format(nsdecls("w"))))
-    run._r.append(parse_xml(
-        '<w:instrText {} xml:space="preserve"> SEQ {} \\* ARABIC </w:instrText>'
-        .format(nsdecls("w"), label)))
-    run._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="separate"/>'.format(nsdecls("w"))))
-    placeholder = paragraph.add_run(str(_SEQ_COUNTERS.setdefault(label, 0) + 1))
-    _SEQ_COUNTERS[label] += 1
-    run_end = paragraph.add_run()
-    run_end._r.append(parse_xml(
-        '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))))
-    return placeholder
-
-
-_SEQ_COUNTERS = {}
-
-
-def _add_caption(doc, label, text, keep_with_next=False, bookmark=None):
-    """Add a numbered, styled caption that a list of figures/tables can collect.
-
-    The number comes from a Word SEQ field, so inserting a figure renumbers the
-    rest of the report instead of leaving the captions to drift out of step.
-    A ``bookmark`` wraps "Figure N" so REF fields can cross-reference it.
-    """
-    text = _strip_caption_prefix(text)
-    try:
-        paragraph = doc.add_paragraph(style="Caption")
-    except KeyError:
-        paragraph = doc.add_paragraph()
-    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    paragraph.paragraph_format.keep_with_next = keep_with_next
-    if bookmark:
-        bookmark_id = _BOOKMARK_IDS["next"]
-        _BOOKMARK_IDS["next"] += 1
-        paragraph._p.append(parse_xml(
-            '<w:bookmarkStart {} w:id="{}" w:name="{}"/>'.format(
-                nsdecls("w"), bookmark_id, bookmark)))
-    paragraph.add_run("{} ".format(label))
-    _add_seq_field(paragraph, label)
-    if bookmark:
-        paragraph._p.append(parse_xml(
-            '<w:bookmarkEnd {} w:id="{}"/>'.format(nsdecls("w"), bookmark_id)))
-    if text:
-        paragraph.add_run(": {}".format(text))
-    for run in paragraph.runs:
-        run.font.size = Pt(CAPTION_PT)
-        run.font.italic = True
-    return paragraph
-
-
-def _fmt_number(value, sig=4):
-    """Format a number the way an engineering report prints one.
-
-    "{:.4g}" turns 370523 into "3.705e+05", which reads as a slip rather than a
-    result. Digits are grouped with a non-breaking space per ISO 80000-1 and an
-    exponent is kept only where it is genuinely the clearer form.
-    """
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return str(value)
-    if number != number or number in (float("inf"), float("-inf")):
-        return str(value)
-    if number == 0:
-        return "0"
-    magnitude = abs(number)
-    # An exact count is not a measurement: rounding 370523 records to 370 500
-    # reads as a sloppy figure rather than a rounded one.
-    if float(number).is_integer() and magnitude < 1e12:
-        return "{:,.0f}".format(number).replace(",", THOUSANDS_SEP)
-    if magnitude >= 1e7 or magnitude < 1e-4:
-        return _localize_decimal("{:.{}e}".format(number, max(1, sig - 1)))
-    rounded = float("{:.{}g}".format(number, sig))
-    if abs(rounded) >= 1000:
-        return "{:,.0f}".format(rounded).replace(",", THOUSANDS_SEP)
-    return _localize_decimal("{:.{}g}".format(rounded, sig))
-
-
-# Report languages whose prose and tables use a decimal comma (ISO 80000-1 allows both).
-DECIMAL_COMMA_LANGUAGES = {"nb"}
-
-
-def _localize_decimal(text):
-    """Swap the decimal point for a comma when the report language writes 0,5."""
-    return text.replace(".", ",") if REPORT_LANGUAGE in DECIMAL_COMMA_LANGUAGES else text
-
-
-def _fmt_cell(value, sig=4):
-    """Format one table cell, leaving non-numeric values untouched."""
-    if isinstance(value, bool):
-        return str(value)
-    if isinstance(value, (int, float)):
-        return _fmt_number(value, sig)
-    return str(value)
-
-
-def _label_from_key(name_part):
-    """Title-case a snake_case key without destroying acronyms.
-
-    ``.title()`` turns GFC into Gfc and LL into Ll, which reads badly in the
-    headline results table. A token that is already all-uppercase is kept.
-    """
-    words = []
-    for word in name_part.split("_"):
-        if not word:
-            continue
-        # "0p91" is how a decimal survives a snake_case key.
-        decimal = re.match(r"^(\d+)p(\d+)$", word)
-        if decimal:
-            words.append("{}.{}".format(*decimal.groups()))
-        elif word.isupper() and len(word) > 1:
-            words.append(word)
-        elif any(ch.isupper() for ch in word[1:]):
-            words.append(word)
-        else:
-            words.append(word.capitalize())
-    return " ".join(words)
-
-
-def _parse_key_name(key):
-    """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
-    unit_suffixes = [
-        ("_pct", "%"), ("_percent", "%"),
-        ("_ppm", "ppm"), ("_ppmv", "ppmv"), ("_ppb", "ppb"),
-        ("_l_per_h", "l/h"), ("_l_per_min", "l/min"), ("_l_per_s", "l/s"),
-        ("_degC", "\u00b0C"), ("_degc", "\u00b0C"),
-        ("_MNOK", "MNOK"), ("_MUSD", "MUSD"), ("_NOK", "NOK"), ("_USD", "USD"),
-        ("_days", "days"), ("_years", "years"),
-        ("_bar", "bar"), ("_bara", "bara"), ("_barg", "barg"),
-        ("_psi", "psi"), ("_psia", "psia"),
-        ("_C", "°C"), ("_K", "K"), ("_F", "°F"),
-        ("_kg", "kg"), ("_g", "g"), ("_lb", "lb"),
-        ("_m3", "m³"), ("_m2", "m²"), ("_m", "m"),
-        ("_mm", "mm"), ("_cm", "cm"), ("_km", "km"),
-        ("_ft", "ft"), ("_in", "in"),
-        ("_kW", "kW"), ("_MW", "MW"), ("_W", "W"),
-        ("_kJ", "kJ"), ("_MJ", "MJ"), ("_J", "J"),
-        ("_kg_hr", "kg/hr"), ("_kg_s", "kg/s"),
-        ("_m3_hr", "m³/hr"), ("_m3_s", "m³/s"),
-        ("_Sm3_day", "Sm³/day"), ("_Sm3_hr", "Sm³/hr"),
-        ("_Sm3d", "Sm³/d"), ("_Sm3", "Sm³"), ("_kSm3", "kSm³"), ("_MSm3", "MSm³"),
-        ("_GSm3", "GSm³"), ("_rm3_Sm3", "rm³/Sm³"),
-        ("_kg_m3", "kg/m³"), ("_kg_Sm3", "kg/Sm³"), ("_g_cm3", "g/cm³"),
-        ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
-        ("_rpm", "rpm"), ("_Hz", "Hz"),
-    ]
-    # Checked before the suffix table below: single-letter suffixes such as
-    # "_s"/"_m"/"_kg" would otherwise swallow the denominator of a
-    # "..._num_per_den" key (e.g. "velocity_m_per_s" ending in "_s").
-    per_match = re.match(r"^(.*)_([A-Za-z0-9]+)_per_([A-Za-z0-9]+)$", key)
-    if per_match:
-        name_part, num_token, den_token = per_match.groups()
-        unit = "{}/{}".format(_prettify_unit_token(num_token), _prettify_unit_token(den_token))
-        return _label_from_key(name_part), unit
-    # Sorted longest-suffix-first so a compound suffix (e.g. "_kg_m3") always
-    # wins over a shorter suffix it contains (e.g. "_m3"), regardless of the
-    # order the table above lists them in. Without this a density key like
-    # "..._kg_m3" resolves to unit "m³" with a stray "Kg" left in the label.
-    for suffix, unit in sorted(unit_suffixes, key=lambda pair: -len(pair[0])):
-        if key.endswith(suffix):
-            name_part = key[:len(key) - len(suffix)]
-            return _label_from_key(name_part), unit
-    return _label_from_key(key), ""
-
-
-_UNIT_TOKEN_MAP = {
-    "kg": "kg", "g": "g", "lb": "lb",
-    "m3": "m\u00b3", "m2": "m\u00b2", "m": "m", "mm": "mm", "cm": "cm", "km": "km",
-    "sm3": "Sm\u00b3", "ksm3": "kSm\u00b3", "msm3": "MSm\u00b3", "nm3": "Nm\u00b3",
-    "s": "s", "sec": "s", "min": "min", "h": "h", "hr": "h", "d": "d", "day": "day",
-    "bar": "bar", "bara": "bara", "barg": "barg", "psi": "psi", "psia": "psia",
-    "kw": "kW", "mw": "MW", "w": "W", "kj": "kJ", "mj": "MJ", "j": "J",
-    "kmol": "kmol", "mol": "mol", "rpm": "rpm", "hz": "Hz",
-    "degc": "\u00b0C", "degf": "\u00b0F", "c": "\u00b0C",
-}
-
-
-
-def _prettify_unit_token(token):
-    """Normalize a single unit token parsed out of a ``..._per_...`` key suffix."""
-    lookup = _UNIT_TOKEN_MAP.get(token.lower())
-    if lookup:
-        return lookup
-    numeric = re.match(r"^(\d+)([A-Za-z]+)$", token)
-    if numeric:
-        number, unit = numeric.groups()
-        return "{} {}".format(number, _UNIT_TOKEN_MAP.get(unit.lower(), unit))
-    return token
-
-
-def _prettify_declared_unit(unit_str):
-    """Superscript/normalize an explicitly declared unit string (e.g. "kSm3/h")."""
-    if not unit_str:
-        return unit_str
-    parts = str(unit_str).split("/")
-    pretty = [_prettify_unit_token(part) if re.match(r"^[A-Za-z0-9]+$", part) else part
-              for part in parts]
-    return "/".join(pretty)
-
-
-def _leaf_label_and_unit(key_for_leaf, declared_unit=None):
-    """Resolve the display label/unit for one leaf, preferring a declared unit."""
-    if key_for_leaf is None:
-        return "Value", _prettify_declared_unit(declared_unit) or ""
-    parsed_label, parsed_unit = _parse_key_name(key_for_leaf)
-    unit = _prettify_declared_unit(declared_unit) if declared_unit else parsed_unit
-    return parsed_label, unit
-
-
-_LIST_SUMMARY_THRESHOLD = 8
-
-
-def _summarize_dict_list(items):
-    """Summarize a long list of similarly-shaped dicts (e.g. a transient time
-    history) as one compact line instead of exploding every sample into its
-    own row.
-    """
-    keys = []
-    for item in items:
-        if isinstance(item, dict):
-            for sub_key in item:
-                if sub_key not in keys:
-                    keys.append(sub_key)
-    parts = ["{} samples".format(len(items))]
-    for sub_key in keys:
-        values = [item[sub_key] for item in items
-                  if isinstance(item, dict) and isinstance(item.get(sub_key), (int, float))
-                  and not isinstance(item.get(sub_key), bool)]
-        if values:
-            parts.append("{}: {} \u2192 {}".format(
-                _label_from_key(sub_key), _fmt_number(min(values)), _fmt_number(max(values))))
-    return "; ".join(parts)
-
-
-def _flatten_key_results(key_results):
-    """Flatten a (possibly nested) key_results dict into printable leaf rows.
-
-    Task notebooks sometimes group parameters into nested dicts, e.g.
-    ``{"operating_point": {"pressure_barg": {"value": 29.1, "unit": "barg",
-    "description": "..."}}}`` instead of the flat ``key -> scalar`` schema.
-    Printing ``str(value)`` on those dicts puts raw Python repr straight into
-    the report. This walks the structure and yields one ``(label, value,
-    unit, note)`` row per leaf, honoring an explicit ``value``/``unit`` pair
-    and prefixing nested leaves with their parent group name(s).
-    """
-    rows = []
-
-    def walk(value, key_for_leaf, path_labels, depth):
-        if isinstance(value, dict):
-            if "value" in value and not isinstance(value["value"], (dict, list)):
-                label_part, unit = _leaf_label_and_unit(key_for_leaf, value.get("unit"))
-                label_part = value.get("label") or label_part
-                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-                note = value.get("description") or value.get("source") or value.get("basis")
-                rows.append((label, _apply_decimals(value["value"], value.get("decimals")),
-                             unit, note))
-                return
-            if depth >= 5:
-                label = " \u2013 ".join(path_labels) or "Value"
-                rows.append((label, str(value), "", None))
-                return
-            group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
-            for sub_key, sub_val in value.items():
-                walk(sub_val, sub_key, group_labels, depth + 1)
-            return
-        if isinstance(value, (list, tuple)):
-            if all(not isinstance(item, (dict, list, tuple)) for item in value):
-                label_part, unit = _leaf_label_and_unit(key_for_leaf)
-                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-                if len(value) > _LIST_SUMMARY_THRESHOLD:
-                    shown = ", ".join(_fmt_cell(item) for item in value[:3])
-                    text = "{}, \u2026 ({} values total)".format(shown, len(value))
-                else:
-                    text = ", ".join(_fmt_cell(item) for item in value)
-                rows.append((label, text, unit, None))
-            elif len(value) > _LIST_SUMMARY_THRESHOLD and all(
-                    isinstance(item, dict) for item in value):
-                # A long list of same-shaped dicts is a time series/sweep, not a
-                # set of distinct results; one summary row beats one row per sample.
-                label_part = _label_from_key(key_for_leaf) if key_for_leaf else "Value"
-                label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-                rows.append((label, _summarize_dict_list(value), "",
-                             "Full series retained in results.json"))
-            else:
-                group_labels = path_labels + [_label_from_key(key_for_leaf)] if key_for_leaf else path_labels
-                for index, item in enumerate(value, 1):
-                    walk(item, str(index), group_labels, depth + 1)
-            return
-        label_part, unit = _leaf_label_and_unit(key_for_leaf)
-        if isinstance(value, str):
-            # A guessed unit suffix (e.g. "..._pct") does not apply once the
-            # value is free text that may already state its own units.
-            unit = ""
-        label = " \u2013 ".join(path_labels + [label_part]) if path_labels else label_part
-        rows.append((label, value, unit, None))
-
-    for top_key, top_val in (key_results or {}).items():
-        walk(top_val, top_key, [], 1)
-    return rows
-
-
-def _apply_decimals(value, decimals):
-    """Fixed decimals for a numeric result when the author asked for them."""
-    if (isinstance(decimals, int) and not isinstance(decimals, bool) and decimals >= 0
-            and isinstance(value, (int, float)) and not isinstance(value, bool)):
-        return _localize_decimal("{:.{}f}".format(value, decimals))
-    return value
-
-
-def _headline_rows(results):
-    """The decisive results as (group, label, value, unit, note) rows.
-
-    Authors mark them with ``"headline": true`` (plus optional ``label``,
-    ``unit``, ``group``, ``decimals``) inside key_results, or list them in a
-    top-level ``headline_results`` array. Empty when nothing is marked, in
-    which case the Results table keeps printing every key_results row.
-    """
-    rows = []
-    declared = (results or {}).get("headline_results")
-    for item in declared if isinstance(declared, list) else []:
-        if not isinstance(item, dict) or "value" not in item:
-            continue
-        label = item.get("label") or _label_from_key(str(item.get("key", "Value")))
-        rows.append((item.get("group") or "", label,
-                     _apply_decimals(item["value"], item.get("decimals")),
-                     _prettify_declared_unit(item.get("unit")) or "",
-                     item.get("note") or item.get("source") or item.get("description")))
-
-    def walk(key, value):
-        if not isinstance(value, dict):
-            return
-        if "value" in value and not isinstance(value["value"], (dict, list)):
-            if value.get("headline"):
-                label, unit = _leaf_label_and_unit(key, value.get("unit"))
-                rows.append((value.get("group") or "", value.get("label") or label,
-                             _apply_decimals(value["value"], value.get("decimals")), unit,
-                             value.get("description") or value.get("source")
-                             or value.get("basis")))
-            return
-        for sub_key, sub_value in value.items():
-            walk(sub_key, sub_value)
-
-    for top_key, top_value in ((results or {}).get("key_results") or {}).items():
-        walk(top_key, top_value)
-    return rows
-
-
-def _grouped(rows):
-    """Split headline rows into [(group, [(label, value, unit, note)])] in first-seen order."""
-    order, groups = [], {}
-    for group, label, value, unit, note in rows:
-        if group not in groups:
-            groups[group] = []
-            order.append(group)
-        groups[group].append((label, value, unit, note))
-    return [(group, groups[group]) for group in order]
-
-
-def format_results_table(results):
-    """Format key_results dict as a text table."""
-    key_results = results.get("key_results", {})
-    if not key_results:
-        return "[No key_results in results.json]"
-    lines = []
-    for label, value, unit, note in _flatten_key_results(key_results):
-        val_str = _fmt_cell(value)
-        line = "{}: {} {}".format(label, val_str, unit) if unit else "{}: {}".format(label, val_str)
-        if note:
-            line += " ({})".format(note)
-        lines.append(line)
-    return "\n".join(lines)
-
-
-def format_validation_table(results):
-    """Format validation checks as a text table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return "[No validation data in results.json]"
-    lines = ["Validation Summary:", ""]
-    for check, outcome in validation.items():
-        label = _label_from_key(check)
-        if isinstance(outcome, dict) and "value" in outcome:
-            label = outcome.get("label") or label
-            outcome = outcome["value"]
-        if isinstance(outcome, bool):
-            status = "FAIL" if _validation_outcome_is_failure(check, outcome) else "PASS"
-        elif isinstance(outcome, (int, float)):
-            status = "{:.4g}".format(outcome)
-        else:
-            status = str(outcome)
-        lines.append("  {}: {}".format(label, status))
-    return "\n".join(lines)
-
-
-def format_validation_html(results):
-    """Format validation checks as an HTML table."""
-    validation = results.get("validation", {})
-    if not validation:
-        return "<p><em>No validation data in results.json</em></p>"
-    rows = ""
-    for check, outcome in validation.items():
-        label = _label_from_key(check)
-        unit = ""
-        if isinstance(outcome, dict) and "value" in outcome:
-            label = outcome.get("label") or label
-            unit = outcome.get("unit") or ""
-            outcome = outcome["value"]
-        if isinstance(outcome, bool):
-            failed = _validation_outcome_is_failure(check, outcome)
-            status = "FAIL" if failed else "PASS"
-            css_class = ' class="fail"' if failed else ' class="pass"'
-        elif isinstance(outcome, (int, float)):
-            status = (_fmt_number(outcome) + " " + unit).strip()
-            css_class = ' class="num"'
-        else:
-            status = str(outcome)
-            css_class = {"PASS": ' class="pass"', "FAIL": ' class="fail"'}.get(
-                status.strip().upper(), "")
-        rows += '<tr><td>{}</td><td{}>{}</td></tr>\n'.format(
-            label, css_class, status)
-    return (_html_table_caption(_t("Validation checks"))
-            + '<table class="validation-table"><thead><tr><th>{}</th>'
-            '<th>{}</th></tr></thead><tbody>\n{}</tbody></table>'.format(
-                _t("Check"), _t("Result"), rows))
-
-
-def _results_table_html(rows, caption):
-    """One styled results table from (label, value, unit, note) rows."""
-    has_notes = any(note for _label, _value, _unit, note in rows)
-    body = ""
-    for label, value, unit, note in rows:
-        body += '<tr><td>{}</td><td class="num">{}</td><td>{}</td>'.format(
-            _html_escape(label), _fmt_cell(value), _html_escape(unit))
-        if has_notes:
-            body += '<td>{}</td>'.format(_html_escape(note) if note else "")
-        body += '</tr>\n'
-    extra_header = '<th>{}</th>'.format(_t("Source")) if has_notes else ""
-    return (
-        _html_table_caption(caption)
-        + '<table class="results-table"><thead>'
-        '<tr><th>{}</th><th>{}</th><th>{}</th>{}</tr>'
-        '</thead><tbody>\n{}</tbody></table>'.format(
-            _t("Parameter"), _t("Value"), _t("Unit"), extra_header, body)
-    )
-
-
-def format_results_html(results, full=False):
-    """Format key_results as styled HTML tables (headline view, or all rows when full)."""
-    key_results = results.get("key_results", {})
-    headline = [] if full else _headline_rows(results)
-    if headline:
-        return "".join(_results_table_html(rows, _group_caption(group))
-                       for group, rows in _grouped(headline))
-    if not key_results:
-        return ""
-    return _results_table_html(
-        _flatten_key_results(key_results),
-        _t("Complete numerical results") if full else _t("Key results"))
-
-
-_HTML_TABLE_COUNTER = {"n": 0}
-
-
-def _html_table_caption(title):
-    """Return a numbered table caption so HTML and Word agree on the numbering."""
-    _HTML_TABLE_COUNTER["n"] += 1
-    text = _strip_caption_prefix(title)
-    label = "{} {}".format(_t("Table"), _HTML_TABLE_COUNTER["n"])
-    if text:
-        label = "{}: {}".format(label, text)
-    return '<p class="table-caption">{}</p>\n'.format(_html_escape(label))
-
-
-def format_custom_tables_html(results):
-    """Format custom tables from results.json 'tables' key as HTML."""
-    tables = results.get("tables", [])
-    if not tables:
-        return ""
-    html_parts = []
-    for tbl in tables:
-        title = tbl.get("title", "")
-        headers = tbl.get("headers", [])
-        data_rows = tbl.get("rows", [])
-        if not headers or not data_rows:
-            continue
-        h = _html_table_caption(title)
-        h += '<table class="custom-table"><thead><tr>'
-        for col in headers:
-            h += '<th>{}</th>'.format(col)
-        h += '</tr></thead><tbody>\n'
-        for row in data_rows:
-            h += "<tr>"
-            for i, cell in enumerate(row):
-                css = ' class="num"' if i > 0 and isinstance(cell, (int, float)) else ""
-                h += '<td{}>{}</td>'.format(css, _fmt_cell(cell))
-            h += "</tr>\n"
-        h += "</tbody></table>"
-        html_parts.append(h)
-    return "\n".join(html_parts)
-
-
-def _reference_text(ref):
-    """Citation text of a reference entry; results.json files use text, citation or title."""
-    if not isinstance(ref, dict):
-        return str(ref)
-    return str(ref.get("text") or ref.get("citation") or ref.get("title") or "")
-
-
-def format_references_html(results):
-    """Format the references list from results.json as a styled HTML ordered list."""
-    refs = results.get("references", [])
-    if not refs:
-        return ""
-    h = '<ol class="reference-list">\n'
-    for ref in refs:
-        ref_id = ref.get("id", "") if isinstance(ref, dict) else ""
-        ref_text = _reference_text(ref)
-        if ref_id:
-            h += '  <li id="ref-{}"><strong>[{}]</strong> {}</li>\n'.format(
-                ref_id, ref_id, ref_text)
-        else:
-            h += '  <li>{}</li>\n'.format(ref_text)
-    h += '</ol>'
-    return h
-
-
-def format_risk_html(results):
-    """Format risk_evaluation from results.json as a styled HTML risk table.
-
-    Renders a summary card with overall risk level, then a professional
-    table with color-coded risk levels and mitigation measures.
-    """
-    re_data = results.get("risk_evaluation", {})
-    if not re_data:
-        return ""
-    risks = re_data.get("risks", [])
-    matrix = re_data.get("risk_matrix_used", "5x5 (ISO 31000)")
-    overall = re_data.get("overall_risk_level", "N/A")
-    high_count = re_data.get("high_risk_count",
-                             sum(1 for r in risks if r.get("risk_level") == "High"))
-    medium_count = re_data.get("medium_risk_count",
-                               sum(1 for r in risks if r.get("risk_level") == "Medium"))
-    low_count = sum(1 for r in risks if r.get("risk_level") == "Low")
-
-    h = '<div class="risk-summary-card">\n'
-    h += '<p>Risk assessment performed using <strong>{}</strong> framework.</p>\n'.format(
-        matrix)
-    h += '<p>Overall risk level: <span class="risk-badge risk-{}">{}</span>'.format(
-        overall.lower(), overall)
-    h += '&nbsp;&mdash;&nbsp;'
-    parts = []
-    if high_count:
-        parts.append('<span class="risk-badge risk-high">{} High</span>'.format(high_count))
-    if medium_count:
-        parts.append('<span class="risk-badge risk-medium">{} Medium</span>'.format(medium_count))
-    if low_count:
-        parts.append('<span class="risk-badge risk-low">{} Low</span>'.format(low_count))
-    h += ", ".join(parts) if parts else ""
-    h += '</p>\n</div>\n'
-
-    if risks:
-        h += '<table class="risk-table"><thead><tr>'
-        h += '<th>ID</th><th>Category</th><th>Risk Description</th>'
-        h += '<th>Likelihood</th><th>Consequence</th><th>Risk Level</th>'
-        h += '<th>Mitigation</th>'
-        h += '</tr></thead><tbody>\n'
-        for risk in risks:
-            level = risk.get("risk_level", "").lower()
-            h += '<tr>'
-            h += '<td><strong>{}</strong></td>'.format(risk.get("id", ""))
-            h += '<td>{}</td>'.format(risk.get("category", ""))
-            h += '<td>{}</td>'.format(risk.get("description", ""))
-            h += '<td>{}</td>'.format(risk.get("likelihood", ""))
-            h += '<td>{}</td>'.format(risk.get("consequence", ""))
-            h += '<td class="risk-level risk-{}">{}</td>'.format(level, risk.get("risk_level", ""))
-            h += '<td class="mitigation-cell">{}</td>'.format(risk.get("mitigation", ""))
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-    return h
-
-
-def format_workflow_html(results):
-    """Format agent_workflow_plan from results.json as a Solution Workflow block.
-
-    Documents *how* the task was solved: the discovered/used specialist agents,
-    the workflow composition, and the rationale. Reuses the existing risk-card
-    and risk-table CSS classes so no stylesheet changes are needed.
-    """
-    plan = results.get("agent_workflow_plan", {})
-    if not plan:
-        return ""
-    h = '<div class="risk-summary-card">\n'
-    wtype = plan.get("workflow_type", "")
-    workflow = plan.get("workflow", "")
-    if wtype:
-        h += '<p>Workflow type: <strong>{}</strong></p>\n'.format(wtype)
-    if workflow:
-        h += '<p>Composition: <code>{}</code></p>\n'.format(workflow)
-    disc = plan.get("discovery", {})
-    if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
-        bits = []
-        if disc.get("skill_search"):
-            bits.append("skill_search")
-        if disc.get("agent_search"):
-            bits.append("agent_search &rarr; {}".format(disc.get("agent_search")))
-        h += '<p>Discovery: {}</p>\n'.format(", ".join(bits))
-    h += '</div>\n'
-
-    agents = plan.get("agents_used", [])
-    if agents:
-        h += '<table class="risk-table"><thead><tr>'
-        h += '<th>Agent</th><th>Repo</th><th>Role</th><th>Loads skills</th>'
-        h += '</tr></thead><tbody>\n'
-        for a in agents:
-            handle = a.get("handle") or a.get("name", "")
-            skills = a.get("loads_skills", [])
-            skills_txt = ", ".join(skills) if isinstance(skills, list) else str(skills)
-            h += '<tr>'
-            h += '<td><strong>{}</strong></td>'.format(handle)
-            h += '<td>{}</td>'.format(a.get("repo", ""))
-            h += '<td>{}</td>'.format(a.get("role", ""))
-            h += '<td>{}</td>'.format(skills_txt)
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-
-    rationale = plan.get("rationale", "")
-    if rationale:
-        h += '<p><em>{}</em></p>\n'.format(rationale)
-    return h
-
-
-def add_workflow_word_section(doc, results):
-    """Add the Solution Workflow (agent_workflow_plan) as text plus a Word table."""
-    plan = results.get("agent_workflow_plan", {})
-    if not plan:
-        return
-    wtype = plan.get("workflow_type", "")
-    workflow = plan.get("workflow", "")
-    if wtype:
-        p = doc.add_paragraph()
-        p.add_run("Workflow type: ").font.size = Pt(BODY_PT)
-        run = p.add_run(str(wtype))
-        run.bold = True
-        run.font.size = Pt(BODY_PT)
-    if workflow:
-        p = doc.add_paragraph()
-        p.add_run("Composition: ").font.size = Pt(BODY_PT)
-        p.add_run(str(workflow)).font.size = Pt(BODY_PT)
-    disc = plan.get("discovery", {})
-    if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
-        bits = []
-        if disc.get("skill_search"):
-            bits.append("skill_search")
-        if disc.get("agent_search"):
-            bits.append("agent_search: {}".format(disc.get("agent_search")))
-        p = doc.add_paragraph()
-        p.add_run("Discovery: {}".format(", ".join(bits))).font.size = Pt(BODY_PT)
-
-    agents = plan.get("agents_used", [])
-    if agents:
-        headers = ["Agent", "Repo", "Role", "Loads skills"]
-        data_rows = []
-        for a in agents:
-            handle = a.get("handle") or a.get("name", "")
-            skills = a.get("loads_skills", [])
-            skills_txt = ", ".join(skills) if isinstance(skills, list) else str(skills)
-            data_rows.append([
-                str(handle), str(a.get("repo", "")), str(a.get("role", "")), skills_txt
-            ])
-        add_word_table(doc, headers, data_rows)
-
-    rationale = plan.get("rationale", "")
-    if rationale:
-        p = doc.add_paragraph()
-        run = p.add_run(str(rationale))
-        run.italic = True
-        run.font.size = Pt(BODY_PT)
-
-
-def format_uncertainty_html(results):
-    """Format uncertainty analysis from results.json as styled HTML tables.
-
-    Renders: input parameters table, P10/P50/P90 output table, tornado table.
-    """
-    unc = results.get("uncertainty", {})
-    if not unc:
-        return ""
-    h = ""
-
-    # Summary paragraph
-    h += '<div class="uncertainty-summary">\n'
-    h += '<p><strong>{}</strong> with <strong>{}</strong> simulations'.format(
-        unc.get("method", "Monte Carlo analysis"),
-        unc.get("n_simulations", "N/A"))
-    engine = unc.get("simulation_engine", "")
-    if engine:
-        h += ' using {}'.format(engine)
-    h += '.</p>\n</div>\n'
-
-    # Input parameters table
-    params = unc.get("input_parameters", [])
-    if params:
-        h += '<h3>' + _t('Input Parameter Ranges') + '</h3>\n'
-        h += '<table class="uncertainty-table"><thead><tr>'
-        h += '<th>Parameter</th><th>Unit</th><th>Low</th><th>Base</th>'
-        h += '<th>High</th><th>Distribution</th>'
-        h += '</tr></thead><tbody>\n'
-        for p in params:
-            h += '<tr>'
-            h += '<td>{}</td>'.format(p.get("name", ""))
-            h += '<td>{}</td>'.format(p.get("unit", ""))
-            h += '<td class="num">{}</td>'.format(_fmt_num(p.get("low", "")))
-            h += '<td class="num">{}</td>'.format(_fmt_num(p.get("base", "")))
-            h += '<td class="num">{}</td>'.format(_fmt_num(p.get("high", "")))
-            h += '<td>{}</td>'.format(p.get("distribution", ""))
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-
-    # Output P10/P50/P90 table — handle both single-output and multi-output formats
-    out_param = unc.get("output_parameter", "")
-    out_params = unc.get("output_parameters", {})
-    if out_param or out_params:
-        h += '<h3>' + _t('Output Distribution (P10 / P50 / P90)') + '</h3>\n'
-        h += '<table class="uncertainty-table"><thead><tr>'
-        h += '<th>Output Parameter</th><th>P10</th><th>P50</th><th>P90</th>'
-        h += '</tr></thead><tbody>\n'
-        if out_param:
-            h += '<tr><td>{}</td>'.format(out_param)
-            h += '<td class="num">{}</td>'.format(_fmt_num(unc.get("p10", "")))
-            h += '<td class="num"><strong>{}</strong></td>'.format(_fmt_num(unc.get("p50", "")))
-            h += '<td class="num">{}</td></tr>\n'.format(_fmt_num(unc.get("p90", "")))
-        for key, val in out_params.items():
-            label = key.replace("_", " ").title()
-            h += '<tr><td>{}</td>'.format(label)
-            h += '<td class="num">{}</td>'.format(_fmt_num(val.get("p10", "")))
-            h += '<td class="num"><strong>{}</strong></td>'.format(_fmt_num(val.get("p50", "")))
-            h += '<td class="num">{}</td></tr>\n'.format(_fmt_num(val.get("p90", "")))
-        h += '</tbody></table>\n'
-
-    # Tornado sensitivity table
-    tornado = unc.get("tornado", [])
-    if tornado:
-        h += '<h3>' + _t('Sensitivity Ranking (Tornado)') + '</h3>\n'
-        h += '<table class="tornado-table"><thead><tr>'
-        # Detect column names from first tornado entry
-        first = tornado[0]
-        cols = [k for k in first.keys() if k != "parameter"]
-        h += '<th>Parameter</th>'
-        for col in cols:
-            h += '<th>{}</th>'.format(col.replace("_", " ").title())
-        h += '</tr></thead><tbody>\n'
-        for item in tornado:
-            h += '<tr><td>{}</td>'.format(item.get("parameter", ""))
-            for col in cols:
-                h += '<td class="num">{}</td>'.format(_fmt_num(item.get(col, "")))
-            h += '</tr>\n'
-        h += '</tbody></table>\n'
-
-    return h
-
-
-def format_benchmark_html(results):
-    """Format benchmark_validation from results.json as a styled HTML table."""
-    bv = results.get("benchmark_validation", {})
-    if not bv:
-        return ""
-    source = bv.get("source", "") if isinstance(bv, dict) else ""
-    h = '<p>{}: {}</p>\n'.format(_t("Reference source"), _html_escape(str(source))) if source else ""
-    headers, rows, status_idx = _benchmark_table(results)
-    h += '<table class="benchmark-table"><thead><tr>'
-    h += "".join("<th>{}</th>".format(_html_escape(str(x))) for x in headers)
-    h += '</tr></thead><tbody>\n'
-    for row in rows:
-        h += '<tr>'
-        for index, cell in enumerate(row):
-            text = _html_escape(str(cell))
-            if index == status_idx:
-                css = (' class="pass"' if cell == "PASS"
-                       else (' class="fail"' if cell == "FAIL" else ""))
-                h += '<td{}><strong>{}</strong></td>'.format(css, text)
-            elif index == 0:
-                h += '<td><strong>{}</strong></td>'.format(text)
-            else:
-                h += '<td>{}</td>'.format(text)
-        h += '</tr>\n'
-    h += '</tbody></table>\n'
-    return h
-
-
-def _fmt_num(value):
-    """Format a numeric value for display in tables."""
-    # Same formatter as every other table, so 162000.0 reads "162 000", not "1.62e+05".
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
-        return _fmt_cell(value)
-    return str(value)
-
-
-def add_risk_word_table(doc, results):
-    """Add risk evaluation as a styled Word table with color-coded risk levels."""
-    re_data = results.get("risk_evaluation", {})
-    if not re_data:
-        return
-    risks = re_data.get("risks", [])
-    matrix = re_data.get("risk_matrix_used", "5x5 (ISO 31000)")
-    overall = re_data.get("overall_risk_level", "N/A")
-    high_count = re_data.get("high_risk_count",
-                             sum(1 for r in risks if r.get("risk_level") == "High"))
-    medium_count = re_data.get("medium_risk_count",
-                               sum(1 for r in risks if r.get("risk_level") == "Medium"))
-
-    # Summary paragraph
-    p = doc.add_paragraph()
-    p.add_run("Risk assessment using ").font.size = Pt(BODY_PT)
-    r = p.add_run("{} framework".format(matrix))
-    r.bold = True
-    r.font.size = Pt(BODY_PT)
-    p.add_run(". Overall risk level: ").font.size = Pt(BODY_PT)
-    r2 = p.add_run(overall)
-    r2.bold = True
-    r2.font.size = Pt(BODY_PT)
-    if overall == "High":
-        r2.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-    elif overall == "Medium":
-        r2.font.color.rgb = RGBColor(0xE6, 0x7E, 0x22)
-    elif overall == "Low":
-        r2.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-    p.add_run(". ({} High, {} Medium)".format(high_count, medium_count)).font.size = Pt(BODY_PT)
-
-    if not risks:
-        return
-    headers = ["ID", "Category", "Description", "Likelihood", "Consequence",
-               "Risk Level", "Mitigation"]
-    data_rows = []
-    for risk in risks:
-        data_rows.append([
-            risk.get("id", ""),
-            risk.get("category", ""),
-            risk.get("description", ""),
-            risk.get("likelihood", ""),
-            risk.get("consequence", ""),
-            risk.get("risk_level", ""),
-            risk.get("mitigation", ""),
-        ])
-    table = add_word_table(doc, headers, data_rows)
-    # Color-code risk level column (column 5, 0-indexed)
-    for row in table.rows[1:]:
-        cell = row.cells[5]
-        text = cell.text.strip()
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                if text == "High":
-                    run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-                elif text == "Medium":
-                    run.font.color.rgb = RGBColor(0xE6, 0x7E, 0x22)
-                elif text == "Low":
-                    run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-
-
-def add_uncertainty_word_tables(doc, results):
-    """Add uncertainty analysis as styled Word tables."""
-    unc = results.get("uncertainty", {})
-    if not unc:
-        return
-
-    # Summary paragraph
-    p = doc.add_paragraph()
-    p.add_run("{} with {} simulations".format(
-        unc.get("method", "Monte Carlo analysis"),
-        unc.get("n_simulations", "N/A"))).font.size = Pt(BODY_PT)
-    engine = unc.get("simulation_engine", "")
-    if engine:
-        p.add_run(" using {}.".format(engine)).font.size = Pt(BODY_PT)
-
-    # Input parameters table
-    params = unc.get("input_parameters", [])
-    if params:
-        _add_heading(doc, _t("Input Parameter Ranges"), level=2)
-        headers = ["Parameter", "Unit", "Low", "Base", "High", "Distribution"]
-        data_rows = []
-        for param in params:
-            data_rows.append([
-                param.get("name", ""),
-                param.get("unit", ""),
-                _fmt_num(param.get("low", "")),
-                _fmt_num(param.get("base", "")),
-                _fmt_num(param.get("high", "")),
-                param.get("distribution", ""),
-            ])
-        add_word_table(doc, headers, data_rows)
-
-    # Output P10/P50/P90 table
-    out_param = unc.get("output_parameter", "")
-    out_params = unc.get("output_parameters", {})
-    if out_param or out_params:
-        _add_heading(doc, _t("Output Distribution (P10 / P50 / P90)"), level=2)
-        headers = ["Output Parameter", "P10", "P50", "P90"]
-        data_rows = []
-        if out_param:
-            data_rows.append([
-                out_param,
-                _fmt_num(unc.get("p10", "")),
-                _fmt_num(unc.get("p50", "")),
-                _fmt_num(unc.get("p90", "")),
-            ])
-        for key, val in out_params.items():
-            label = key.replace("_", " ").title()
-            data_rows.append([
-                label,
-                _fmt_num(val.get("p10", "")),
-                _fmt_num(val.get("p50", "")),
-                _fmt_num(val.get("p90", "")),
-            ])
-        add_word_table(doc, headers, data_rows,
-                       col_widths=[Inches(2.5), Inches(1.0), Inches(1.0), Inches(1.0)])
-
-    # Tornado sensitivity table
-    tornado = unc.get("tornado", [])
-    if tornado:
-        _add_heading(doc, _t("Sensitivity Ranking (Tornado)"), level=2)
-        first = tornado[0]
-        cols = [k for k in first.keys() if k != "parameter"]
-        headers = ["Parameter"] + [c.replace("_", " ").title() for c in cols]
-        data_rows = []
-        for item in tornado:
-            row = [item.get("parameter", "")]
-            for col in cols:
-                row.append(_fmt_num(item.get(col, "")))
-            data_rows.append(row)
-        add_word_table(doc, headers, data_rows)
-
-
-# (label, accepted keys): results.json files in use write either
-# reference_value/neqsim_value or the shorter numeric reference/neqsim.
-_BENCHMARK_VALUE_COLUMNS = (
-    ("Reference value", ("reference_value", "expected", "reference")),
-    ("NeqSim value", ("neqsim_value", "neqsim", "calculated")),
-    ("Unit", ("unit",)),
-    ("Deviation [%]", ("deviation_pct", "deviation_percent")),
-    ("Tolerance [%]", ("tolerance_pct", "tolerance_percent")),
-)
-_BENCHMARK_TEXT_KEYS = {"parameter", "name", "test", "description", "source",
-                        "status", "pass", "points"}
-
-
-def _benchmark_value_key(test, keys, label):
-    """First key of ``keys`` present in the test; a text "reference" is a citation."""
-    for key in keys:
-        if key not in test:
-            continue
-        if key == "reference" and isinstance(test[key], str):
-            continue
-        return key
-    return None
-
-
-def _benchmark_reference_text(test):
-    """The citation for a test, when one is given as text."""
-    reference = test.get("reference")
-    if isinstance(reference, str) and reference.strip():
-        return reference
-    if test.get("name") and test.get("description"):
-        return test["description"]
-    return test.get("source") or ""
-
-
-def _benchmark_table(results):
-    """Return (headers, rows, status column index) for the benchmark table.
-
-    Each numeric field gets its own column; flattening them into one
-    "Name: ...; Reference Value: ..." string made the table unreadable.
-    """
-    tests = _benchmark_tests(results)
-    value_cols = [(label, keys) for label, keys in _BENCHMARK_VALUE_COLUMNS
-                  if any(_benchmark_value_key(t, keys, label) for t in tests)]
-    # A value from another simulator (OPM, OLGA) is not a "NeqSim value"; say what it is.
-    bv = (results or {}).get("benchmark_validation") or {}
-    value_label = bv.get("value_label") if isinstance(bv, dict) else None
-    if not value_label and not any(k in t for t in tests for k in ("neqsim_value", "neqsim")):
-        value_label = "Calculated value"
-    if value_label:
-        value_cols = [(value_label if label == "NeqSim value" else label, keys)
-                      for label, keys in value_cols]
-    has_reference = any(_benchmark_reference_text(t) for t in tests)
-    used_by_test = []
-    for test in tests:
-        used = set(_BENCHMARK_TEXT_KEYS)
-        for label, keys in value_cols:
-            key = _benchmark_value_key(test, keys, label)
-            if key:
-                used.add(key)
-        if isinstance(test.get("reference"), str):
-            used.add("reference")
-        used_by_test.append(used)
-    has_notes = any(key not in used for test, used in zip(tests, used_by_test)
-                    for key in test)
-    headers = ([_t("Test")] + ([_t("Reference")] if has_reference else [])
-               + [_t(label) for label, _ in value_cols]
-               + [_t("Status")] + ([_t("Notes")] if has_notes else []))
-    rows = []
-    for test, used in zip(tests, used_by_test):
-        status = test.get("status")
-        if status is None:
-            passed = test.get("pass")
-            status = "PASS" if passed is True else ("FAIL" if passed is False else "N/A")
-        row = [test.get("name") or test.get("description") or test["parameter"]]
-        if has_reference:
-            row.append(_benchmark_reference_text(test))
-        for label, keys in value_cols:
-            key = _benchmark_value_key(test, keys, label)
-            row.append(_fmt_cell(test[key]) if key else "")
-        row.append(str(status).upper())
-        if has_notes:
-            row.append("; ".join(_fmt_cell(value) if key in ("notes", "note", "comment")
-                                  else "{}: {}".format(_label_from_key(key), _fmt_cell(value))
-                                  for key, value in test.items() if key not in used))
-        rows.append(row)
-    return headers, rows, 1 + int(has_reference) + len(value_cols)
-
-
-def add_benchmark_word_table(doc, results):
-    """Add benchmark validation as a styled Word table."""
-    bv = results.get("benchmark_validation", {})
-    if not bv:
-        return
-    if isinstance(bv, dict) and bv.get("source"):
-        doc.add_paragraph("{}: {}".format(_t("Reference source"), bv["source"]))
-    headers, data_rows, status_idx = _benchmark_table(results)
-    if not data_rows:
-        return
-    table = add_word_table(doc, headers, data_rows)
-    for row in table.rows[1:]:
-        cell = row.cells[status_idx]
-        text = cell.text.strip()
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.font.bold = True
-                if text == "PASS":
-                    run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
-                elif text == "FAIL":
-                    run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
-
-
-def add_word_table(doc, headers, data_rows, col_widths=None, caption=None):
-    """Add a professionally styled table to a Word document.
-
-    Args:
-        doc: Document object.
-        headers: list of column header strings.
-        data_rows: list of lists (each inner list = one row of cell values).
-        col_widths: optional list of Inches widths per column, rescaled to the
-            measure so a template's page size cannot leave the table narrow.
-        caption: optional caption text, numbered and placed above the table.
-    """
-    ncols = len(headers)
-    texts = [[str(text) for text in headers]]
-    texts += [[_fmt_cell(val) for val in row_data[:ncols]]
-              + [""] * max(0, ncols - len(row_data)) for row_data in data_rows]
-    margin_in = _TABLE_WIDE_MARGIN_IN if ncols >= 7 else _TABLE_MARGIN_IN
-    body_pt, landscape = _plan_table_layout(doc, texts, margin_in, col_widths)
-    if landscape:
-        _set_body_orientation(doc, landscape=True)
-    if caption:
-        _add_caption(doc, _t("Table"), caption, keep_with_next=True)
-    table = doc.add_table(rows=1, cols=ncols)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    _set_table_style(table)
-    _set_cell_margins(table, margin_in)
-
-    hdr = table.rows[0]
-    for i, text in enumerate(texts[0]):
-        cell = hdr.cells[i]
-        cell.text = text
-        _style_cell_text(cell, body_pt, bold=True, color=RGBColor(0xFF, 0xFF, 0xFF))
-        cell._tc.get_or_add_tcPr().append(parse_xml(
-            '<w:shd {} w:val="clear" w:color="auto" w:fill="2F5496"/>'.format(
-                nsdecls('w'))))
-        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.BOTTOM
-
-    for row_texts in texts[1:]:
-        row = table.add_row()
-        for i, text in enumerate(row_texts):
-            cell = row.cells[i]
-            cell.text = text
-            _style_cell_text(cell, body_pt)
-
-    _scale_table_to_measure(doc, table, col_widths, body_pt, margin_in)
-    _repeat_header_row(table)
-    _keep_rows_intact(table)
-    _align_numeric_cells(table)
-
-    if landscape:
-        _set_body_orientation(doc, landscape=False)
-    else:
-        spacer = doc.add_paragraph("")
-        spacer.paragraph_format.space_after = Pt(4)
-    return table
-
-
-# Word's default cell margin is 0.075 in each side; wide tables get less so the
-# digits, not the padding, claim the width.
-_TABLE_MARGIN_IN = 0.075
-_TABLE_WIDE_MARGIN_IN = 0.045
-# Smallest type a portrait table may shrink to before it is set landscape.
-_TABLE_PORTRAIT_MIN_PT = 8.0
-_TABLE_MIN_PT = 7.0
-# Body cells narrower than this are kept on one line ("Test 1", "open (NIP-01)").
-_TABLE_NOWRAP_IN = 0.85
-
-
-def _style_cell_text(cell, font_pt, bold=False, color=None):
-    """Set type size and compact spacing; Normal's 6 pt space-after doubles row height."""
-    for paragraph in cell.paragraphs:
-        fmt = paragraph.paragraph_format
-        fmt.space_before = Pt(1.5)
-        fmt.space_after = Pt(1.5)
-        fmt.line_spacing = 1.0
-        fmt.keep_with_next = False
-        for run in paragraph.runs:
-            run.font.size = Pt(font_pt)
-            if bold:
-                run.font.bold = True
-            if color is not None:
-                run.font.color.rgb = color
-
-
-def _set_cell_margins(table, margin_in):
-    """Set the table's default left/right cell margins."""
-    tbl_pr = table._tbl.tblPr
-    for existing in tbl_pr.findall(qn("w:tblCellMar")):
-        tbl_pr.remove(existing)
-    twips = int(round(margin_in * 1440))
-    tbl_pr.append(parse_xml(
-        '<w:tblCellMar {0}><w:top w:w="0" w:type="dxa"/>'
-        '<w:left w:w="{1}" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/>'
-        '<w:right w:w="{1}" w:type="dxa"/></w:tblCellMar>'.format(nsdecls("w"), twips)))
-
-
-def _landscape_measure_in(doc):
-    """Printable width of the current section if it were turned landscape."""
-    section = doc.sections[-1]
-    long_side = max(section.page_width, section.page_height)
-    return max(2.0, (long_side - section.left_margin - section.right_margin) / 914400.0)
-
-
-def _plan_table_layout(doc, texts, margin_in, col_widths=None):
-    """Pick the largest type size at which no word or number has to break.
-
-    Returns (font_pt, landscape). A table that does not fit the portrait measure
-    even at _TABLE_PORTRAIT_MIN_PT is set on its own landscape page instead of
-    splitting "9.961" over three lines.
-    """
-    ncols = len(texts[0]) if texts else 0
-    start_pt = TABLE_PT
-    if ncols >= 9:
-        start_pt = TABLE_PT - 1.5
-    elif ncols >= 7:
-        start_pt = TABLE_PT - 1.0
-    if col_widths or ncols <= 1:
-        return start_pt, False
-    pad = 2.0 * margin_in + 0.02
-    portrait = _text_width_in(doc)
-    section = doc.sections[-1]
-    already_landscape = section.page_width > section.page_height
-
-    def fits(font_pt, measure):
-        minimums, _natural = _column_extents(texts, font_pt, pad)
-        return sum(minimums) <= measure
-
-    font_pt = start_pt
-    while font_pt >= _TABLE_PORTRAIT_MIN_PT - 1e-9:
-        if fits(font_pt, portrait):
-            return font_pt, False
-        font_pt -= 0.5
-    if already_landscape or REPORT_ORIENTATION == "template":
-        font_pt = _TABLE_PORTRAIT_MIN_PT - 0.5
-        while font_pt > _TABLE_MIN_PT and not fits(font_pt, portrait):
-            font_pt -= 0.5
-        return max(font_pt, _TABLE_MIN_PT), False
-    landscape = _landscape_measure_in(doc)
-    font_pt = start_pt
-    while font_pt > _TABLE_MIN_PT and not fits(font_pt, landscape):
-        font_pt -= 0.5
-    return max(font_pt, _TABLE_MIN_PT), True
-
-
-def _set_body_orientation(doc, landscape):
-    """Start a new section on a fresh page in the requested orientation.
-
-    Headers and footers stay linked to the previous section, so page numbering
-    and branding continue unchanged.
-    """
-    section = doc.add_section(WD_SECTION.NEW_PAGE)
-    is_landscape = section.page_width > section.page_height
-    if is_landscape != landscape:
-        section.page_width, section.page_height = section.page_height, section.page_width
-    section.orientation = WD_ORIENT.LANDSCAPE if landscape else WD_ORIENT.PORTRAIT
-    section.different_first_page_header_footer = False
-    return section
-
-
-# Approximate advance widths in em for a sans corporate face (Arial/Calibri
-# class). A flat average under-sizes "Medium" (two wide m's) and over-sizes
-# "Consequence", so column minimums were wrong in both directions.
-_GLYPH_EM_WIDE = set("MWmw@%")
-_GLYPH_EM_NARROW = set("iljtfrI.,:;'!|()[]-/ ")
-_TABLE_BOLD_FACTOR = 1.07
-_TABLE_CELL_PAD_IN = 0.17
-# A single token longer than this (a URL, a long formula) may break; letting
-# it claim its full width would starve every other column.
-_TABLE_MAX_TOKEN_IN = 1.6
-
-
-def _text_width_estimate_in(text, font_pt):
-    """Estimated printed width of text in inches at font_pt (bold)."""
-    em = 0.0
-    for char in text:
-        if char in _GLYPH_EM_WIDE:
-            em += 0.86
-        elif char in _GLYPH_EM_NARROW:
-            em += 0.30
-        elif char.isupper():
-            em += 0.68
-        else:
-            em += 0.56
-    return em * font_pt * _TABLE_BOLD_FACTOR / 72.0
-# Only real spaces are break points; "180 000" uses a no-break separator.
-_TABLE_BREAK_RE = re.compile(r"[ \t\n]+")
-
-
-def _column_extents(texts, font_pt, pad_in=_TABLE_CELL_PAD_IN):
-    """Return (minimum, natural) widths per column for a text matrix.
-
-    Row 0 is the header, which may wrap between words; a short body cell is
-    kept on one line because "Test / 1" reads as two entries.
-    """
-    ncols = max(len(row) for row in texts) if texts else 0
-    minimums, natural = [], []
-    for index in range(ncols):
-        min_in, natural_in = 0.0, 0.0
-        for row_index, row in enumerate(texts):
-            if index >= len(row):
-                continue
-            text = row[index].strip()
-            words = [w for w in _TABLE_BREAK_RE.split(text) if w]
-            if not words:
-                continue
-            longest = max(_text_width_estimate_in(w, font_pt) for w in words)
-            whole = _text_width_estimate_in(text[:70], font_pt)
-            if row_index > 0 and whole <= _TABLE_NOWRAP_IN:
-                longest = whole
-            min_in = max(min_in, min(longest, _TABLE_MAX_TOKEN_IN))
-            natural_in = max(natural_in, whole)
-        minimums.append(min_in + pad_in)
-        natural.append(max(min_in, natural_in) + pad_in)
+        entries …31169 tokens truncated…d_in)
     return minimums, natural
 
 
@@ -5994,6 +3428,15 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         "has_figures": True,
     })
     next_section_num += 1
+
+    lifecycle_text = format_lifecycle_envelope_text(results, _promoted_cycle_id())
+    if lifecycle_text:
+        sections.append({
+            "heading": "{}. Lifecycle Operating Envelope".format(next_section_num),
+            "content": lifecycle_text,
+            "has_markdown": True,
+        })
+        next_section_num += 1
 
     # Discussion (auto-populated from results.json figure_discussion)
     if results and results.get("figure_discussion"):

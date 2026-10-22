@@ -885,6 +885,16 @@ periods and aggregate/transition closure from persisted JSON, then invalidates a
 when mapped reservoir state, availability, routing, operating limits, or other evidence changes. This reuses the
 existing #4187 ledger and revalidation path rather than introducing another lifecycle state store.
 
+The canonical task report consumes accepted top-level schema-v8 `lifecycle_envelope_evidence` in both ordinary
+current-best and immutable final-report generation. It renders the exact per-period `REJECTING` and `NEAR_ACTIVE`
+rows, representative values, signed physical headroom with engineering units, and adjacent-period identity
+migration. Before rendering, it requires complete ordered period evidence, finite counts/runtime, complete slices,
+matching representative identities, exact reconstructed identity deltas, and—when a promoted living-task baseline
+exists—the matching source cycle. A mismatch produces an explicit evidence-withheld section rather than a partial
+bottleneck claim. This report view is downstream of, and does not replace, the production guard. Rankings remain
+period-local; unlike-unit margins are not compared, and the output is not causal attribution, a shadow price,
+equipment qualification, operating approval, or authority to weaken a physical constraint.
+
 ### Trace-qualified bottleneck-relief evidence
 
 `ProcessModelAllocationBottleneckAnalyzer` reads a completed
