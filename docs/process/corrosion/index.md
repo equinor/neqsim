@@ -3,7 +3,6 @@ title: "Corrosion Analysis Module"
 description: "NORSOK M-506 CO2 corrosion rate prediction and NORSOK M-001 material selection for pipelines and process piping in NeqSim. Includes integration with pipeline mechanical design."
 ---
 
-# Corrosion Analysis Module
 
 The `neqsim.process.corrosion` package provides industry-standard corrosion assessment tools for carbon steel and CRA material selection in CO2/H2S environments.
 

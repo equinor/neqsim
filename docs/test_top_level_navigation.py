@@ -34,6 +34,18 @@ def _landing_pages() -> tuple[Path, ...]:
     return tuple(sorted(set(pages)))
 
 
+def _all_landing_pages() -> tuple[Path, ...]:
+    pages = list(_landing_pages())
+    for directory in DOCS.rglob("*"):
+        if not directory.is_dir():
+            continue
+        for name in ("index.md", "README.md"):
+            candidate = directory / name
+            if candidate.exists():
+                pages.append(candidate)
+    return tuple(sorted(set(pages)))
+
+
 def _front_matter(page: Path) -> tuple[str, str, str]:
     text = page.read_text(encoding="utf-8")
     match = FRONT_MATTER.match(text)
@@ -101,6 +113,18 @@ def test_top_level_landing_metadata_and_rendered_titles() -> None:
         words = re.findall(r"[A-Za-z0-9][A-Za-z0-9_-]*", description)
         assert len(words) >= 5, f"{page}: description has {len(words)} words"
 
+        body = FRONT_MATTER.sub("", text, count=1)
+        visible = _without_fenced_code(body)
+        assert re.search(r"^#\s+", visible, re.MULTILINE) is None, (
+            f"{page}: front-matter title must not be repeated as H1"
+        )
+
+
+def test_all_landing_pages_use_front_matter_title_only() -> None:
+    pages = _all_landing_pages()
+    assert len(pages) == 86
+    for page in pages:
+        text, _title, _description = _front_matter(page)
         body = FRONT_MATTER.sub("", text, count=1)
         visible = _without_fenced_code(body)
         assert re.search(r"^#\s+", visible, re.MULTILINE) is None, (
@@ -319,6 +343,7 @@ def load_tests(
         unittest.FunctionTestCase(contract)
         for contract in (
             test_top_level_landing_metadata_and_rendered_titles,
+            test_all_landing_pages_use_front_matter_title_only,
             test_top_level_landing_relative_targets_resolve,
             test_main_landing_routes_to_foundational_package_guides,
             test_reference_index_places_henry_database_with_component_guides,
