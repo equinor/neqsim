@@ -67,6 +67,16 @@ public class VfpTableBuilder {
     double maxRate(double outletPressure, double waterRatio, double gasRatio, double alq);
   }
 
+  /** Conditioning of the rate dependence of the flowing pressure. */
+  public enum RateMonotoneMode {
+    /** Leave the rate dependence as computed. */
+    OFF,
+    /** Non-decreasing above the minimum of each rate curve; the liquid-loading side is kept (default). */
+    ABOVE_MINIMUM,
+    /** Non-decreasing over the whole rate axis, as OPM Flow needs to avoid rate/THP control flipping. */
+    FULL
+  }
+
   /** Handling of coordinates where the provider returns NaN or throws. */
   public enum FailurePolicy {
     /** Fail the build with the coordinate of the first infeasible point. */
@@ -95,7 +105,7 @@ public class VfpTableBuilder {
   private FailurePolicy failurePolicy = FailurePolicy.FAIL;
   private boolean enforceThpMonotone = true;
   private double minThpSlope = 0.5;
-  private boolean enforceRateMonotone = true;
+  private RateMonotoneMode rateMonotoneMode = RateMonotoneMode.ABOVE_MINIMUM;
   private double zeroRatioFloor = 0.0;
   private double continuityToleranceBar = 1.0;
   private double repairWarnBar = 0.5;
@@ -455,11 +465,24 @@ public class VfpTableBuilder {
   /**
    * Enables or disables non-decreasing flowing pressure with rate above the curve minimum.
    *
-   * @param enforce true to enforce (default)
+   * @param enforce true for {@link RateMonotoneMode#ABOVE_MINIMUM} (default), false for {@link RateMonotoneMode#OFF}
    * @return this builder
    */
   public VfpTableBuilder setEnforceRateMonotone(boolean enforce) {
-    this.enforceRateMonotone = enforce;
+    this.rateMonotoneMode = enforce ? RateMonotoneMode.ABOVE_MINIMUM : RateMonotoneMode.OFF;
+    return this;
+  }
+
+  /**
+   * Selects how the rate dependence of the flowing pressure is conditioned. OPM Flow can stall on a table that is
+   * U-shaped in rate because the well flips between rate and THP control; use {@link RateMonotoneMode#FULL} for such
+   * decks and keep the raw curve for the minimum stable rate report.
+   *
+   * @param mode OFF, ABOVE_MINIMUM (default) or FULL
+   * @return this builder
+   */
+  public VfpTableBuilder setRateMonotoneMode(RateMonotoneMode mode) {
+    this.rateMonotoneMode = mode;
     return this;
   }
 
@@ -730,15 +753,17 @@ public class VfpTableBuilder {
           }
         }
       }
-      if (enforceRateMonotone) {
+      if (rateMonotoneMode != RateMonotoneMode.OFF) {
         for (int t = 0; t < nt; t++) {
           for (int w = 0; w < nw; w++) {
             for (int g = 0; g < ng; g++) {
               for (int a = 0; a < na; a++) {
                 int imin = 0;
-                for (int f = 1; f < nf; f++) {
-                  if (bhp[f][t][w][g][a] < bhp[imin][t][w][g][a]) {
-                    imin = f;
+                if (rateMonotoneMode == RateMonotoneMode.ABOVE_MINIMUM) {
+                  for (int f = 1; f < nf; f++) {
+                    if (bhp[f][t][w][g][a] < bhp[imin][t][w][g][a]) {
+                      imin = f;
+                    }
                   }
                 }
                 for (int f = imin + 1; f < nf; f++) {
@@ -760,8 +785,10 @@ public class VfpTableBuilder {
     }
     addRepairWarning(warnings, "BHP raised to the outlet pressure", floorCount, floorMax);
     addRepairWarning(warnings, "BHP raised to restore increase with outlet pressure", thpCount, thpMax);
-    addRepairWarning(warnings, "BHP raised to restore non-decreasing rate dependence above the minimum", rateCount,
-        rateMax);
+    addRepairWarning(warnings,
+        rateMonotoneMode == RateMonotoneMode.FULL ? "BHP raised to restore non-decreasing rate dependence"
+            : "BHP raised to restore non-decreasing rate dependence above the minimum",
+        rateCount, rateMax);
     return new int[] {floorCount, thpCount, rateCount};
   }
 

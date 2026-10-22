@@ -143,4 +143,5 @@ Use `CompressorTrainTest`, `CompressorChartGeneratorTest`, `CompressorChartSpeed
 - `neqsim-troubleshooting` — operating-point and process convergence diagnostics
 - `neqsim-power-generation` — gas-turbine/driver coupling
 - `neqsim-dynamic-simulation` — transient controllers and process response
+- `neqsim-vfp-lift-curves` — compressor capacity vs suction pressure as a VFP rate cap (scan the feasible flow band; a chart at low pressure ratio is not a bisection problem)
 

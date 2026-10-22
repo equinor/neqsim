@@ -63,7 +63,8 @@ Analyze the request and match it to one or more agents:
 | Area development, several discoveries against alternative hosts, host ullage per year, back-out, tie-in strategy valuation | `enterprise-area-development-agent` (Equinor plugin) else `@field-development` | `enterprise-tie-in-solution-agent`, `enterprise-host-ullage-agent`, `enterprise-area-development-value-agent` |
 | PEPR action, M1 notification, Blålys / bluelight trip or production disturbance | `enterprise-pepr-solve-task-agent`, `enterprise-m1-notification-agent`, `enterprise-trip-investigation-agent` (Equinor plugin) | `@root-cause`, `enterprise-incident-response-agent`, `enterprise-maintenance-agent` |
 | Whole-plant well-to-export model with all wells and formation fluids, ProcessPilot benchmark, model calibrated to PDM/plant data | `enterprise-process-notebook-agent` (Equinor plugin) else `@process-model` + `@plant-data` | `enterprise-well-production-routing-agent`, `enterprise-reservoir-history-match-agent`, `enterprise-process-model-build-verify-agent` |
-| Reservoir simulator from open data (OPM Flow), history match and forecast, VFP lift curves | `reservoir-simulator-agent` / `reservoir-history-match-agent` (community; enterprise variants for PDM/OSDU) | `near-well-injectivity-agent`, `fluid-characterization-agent`, `@pvt-simulation` |
+| Reservoir simulator from open data (OPM Flow), history match and forecast | `reservoir-simulator-agent` / `reservoir-history-match-agent` (community; enterprise variants for PDM/OSDU) | `near-well-injectivity-agent`, `fluid-characterization-agent`, `@pvt-simulation` |
+| Lift curve, VFP table (VFPPROD/VFPINJ), vertical lift performance, THP/BHP table for Eclipse or OPM Flow | `vfp-lift-curve-agent` (community; `enterprise-vfp-lift-curve-agent` adds STID/PDM/historian sourcing); loads `neqsim-vfp-lift-curves` | `near-well-injectivity-agent` (inflow), `@flow-assurance`, `@process-model` |
 | Quick process sim, working notebook fast | `@solve-process` | — |
 | Process study report, design basis, heat and material balance, stream tables, PFD/BFD drawings of a NeqSim model, `neqsim process-report` | `@process-study-report` | `@solve-process` / `@process-model` / `@extract-process` when the model does not exist yet; `@standards-review` for a requirement set; loads `process-study-report` |
 | "Can NeqSim do X?", capability check, gap analysis, implementation plan | `@capability-scout` | — |
@@ -199,8 +200,8 @@ Some requests need multiple agents in sequence. Detect these patterns:
 **Pipeline:** `enterprise-process-notebook-agent` (task folder, one `ProcessSystem` per area in a `ProcessModel`, validator sheet) delegating to `enterprise-fluid-generation-workflow-agent` (per-formation fluids), `enterprise-well-production-routing-agent` (wells, chokes, flowlines), `enterprise-process-model-build-verify-agent` (STID topology and sizing), `@plant-data` / `enterprise-plant-data-agent` (measured-vs-calculated). Community fallback: `@process-model` then `@plant-data`.
 
 ### Pattern 14: Reservoir from Open Data
-**Trigger:** "OPM Flow", "reservoir simulator from open data", "Sodir volumes", "history match", "VFPPROD"
-**Pipeline:** `reservoir-simulator-agent` (screening model, maturity ladder) → `near-well-injectivity-agent` (PI/II, black-oil tables, lift curves) → `reservoir-history-match-agent` (multi-tank match and forecast) → `@process-model` for the host. Enterprise variants add PDM history and OSDU static models.
+**Trigger:** "OPM Flow", "reservoir simulator from open data", "Sodir volumes", "history match"
+**Pipeline:** `reservoir-simulator-agent` (screening model, maturity ladder) → `near-well-injectivity-agent` (PI/II, black-oil tables) → `vfp-lift-curve-agent` (VFPPROD/VFPINJ lift curves) → `reservoir-history-match-agent` (multi-tank match and forecast) → `@process-model` for the host. Enterprise variants add PDM history and OSDU static models.
 
 ### Pattern 15: Living Task (Continuous Improvement)
 **Trigger:** "keep improving", "living task", "monitor", "re-run daily", "new data arrived", "backtest", "improvement ledger", "promote baseline"

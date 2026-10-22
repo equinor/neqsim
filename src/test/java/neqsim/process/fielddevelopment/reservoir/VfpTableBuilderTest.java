@@ -251,6 +251,58 @@ class VfpTableBuilderTest {
   }
 
   @Test
+  void fullRateMonotoneModeRemovesTheUShapeThatStallsOpmFlow() {
+    VlpProvider uShaped = new VlpProvider() {
+      @Override
+      public double bottomHolePressure(double rate, double thp, double wr, double gr, double alq) {
+        double q = rate / 1.0e6;
+        return thp + 50.0 + 6.0 * (q - 1.0) * (q - 1.0);
+      }
+    };
+    double[] rates = {0.2e6, 0.6e6, 1.0e6, 1.4e6};
+    VfpTableBuilder.Result aboveMin = VfpTableBuilder.gasWell(1).setRates(rates).setOutletPressures(new double[] {40.0})
+        .build(uShaped);
+    assertTrue(aboveMin.getBhp(0, 0, 0, 0, 0) > aboveMin.getBhp(2, 0, 0, 0, 0), "loading side is kept");
+    VfpTableBuilder.Result full = VfpTableBuilder.gasWell(1).setRates(rates).setOutletPressures(new double[] {40.0})
+        .setRateMonotoneMode(VfpTableBuilder.RateMonotoneMode.FULL).build(uShaped);
+    for (int f = 1; f < rates.length; f++) {
+      assertTrue(full.getBhp(f, 0, 0, 0, 0) >= full.getBhp(f - 1, 0, 0, 0, 0));
+    }
+    assertEquals(aboveMin.getBhp(0, 0, 0, 0, 0), full.getBhp(3, 0, 0, 0, 0), 1e-9);
+    assertTrue(full.getRepairCount() > 0);
+  }
+
+  @Test
+  void documentedGasWellExampleRuns() throws IOException {
+    SystemInterface surfaceGas = new SystemSrkEos(288.15, 1.01325);
+    surfaceGas.addComponent("methane", 0.90);
+    surfaceGas.addComponent("ethane", 0.06);
+    surfaceGas.addComponent("propane", 0.03);
+    surfaceGas.addComponent("n-butane", 0.01);
+    surfaceGas.setMixingRule("classic");
+    SystemInterface condensate = new SystemSrkEos(288.15, 1.01325);
+    condensate.addComponent("n-hexane", 0.6);
+    condensate.addComponent("n-octane", 0.4);
+    condensate.setMixingRule("classic");
+    RecombinationFluidFactory wellStream = new RecombinationFluidFactory(template(), surfaceGas, condensate)
+        .setRateBasis("GAS").setWaterRatioType("WGR").setGasRatioType("OGR");
+    TubingVlpProvider vlp = new TubingVlpProvider(wellStream, new double[] {0.0, 1500.0, 3200.0},
+        new double[] {0.0, 1450.0, 2500.0}, new double[] {0.15, 0.15}).setTemperatures(95.0, 40.0)
+        .setNumberOfSegments(6).setCorrelation(TubingPerformance.CorrelationType.GRAY);
+    VfpTableBuilder.Result result = VfpTableBuilder.gasWell(1).setDatumDepth(2500.0)
+        .setRates(VfpTableBuilder.rateAxis(0.2e6, 1.0e6, 5, 1.2))
+        .setOutletPressures(VfpTableBuilder.pressureAxis(40.0, 80.0, 4, 0.1, 0.1))
+        .setWaterRatios(new double[] {1.0e-6, 1.0e-4}).setGasRatios(new double[] {1.0e-5, 1.0e-4})
+        .setRateMonotoneMode(VfpTableBuilder.RateMonotoneMode.FULL).setRateCap(1.1e6, 200.0)
+        .addProvenance("Gray tubing survey, synthetic well").build(vlp);
+    Path file = tempDir.resolve("vfp1.inc");
+    result.writeDeck(file);
+    assertTrue(new String(Files.readAllBytes(file), StandardCharsets.UTF_8).contains("RATE CAP"));
+    assertEquals(0, vlp.getFailures());
+    assertTrue(result.getBhp(0, 0, 0, 0, 0) > result.getOutletPressures()[0]);
+  }
+
+  @Test
   void reservoirCouplingExporterUsesTheProviderInsteadOfThePlaceholder() {
     ReservoirCouplingExporter exporter = new ReservoirCouplingExporter();
     exporter.setRateRange(1000.0, 3000.0, 3);

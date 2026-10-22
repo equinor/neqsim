@@ -26,6 +26,7 @@ This page is the landing page for NeqSim process optimization. Use it to find th
 | [Multi-Objective Optimization](multi-objective-optimization) | Pareto optimization for conflicting objectives |
 | [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curves |
 | [VFP Export Contract](vfp-export-contract) | Supplied well BHP, indexed axes, METRIC/FIELD units and process-screening limits |
+| [VFP Lift Curve Builder](vfp-lift-curve-builder) | Building VFPPROD/VFPINJ tables from a tubing, flowline or full-system lift model with rate cap and sanity enforcement |
 | [Constraint Framework](constraint-framework) | Unified ProcessConstraint interface for all optimizer layers |
 | [Data Reconciliation and Steady-State Detection](data-reconciliation) | R-statistic SSD, WLS reconciliation, gross error detection, SSD-to-reconciliation bridge |
 | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
