@@ -2,6 +2,7 @@ package neqsim.process.fielddevelopment.reservoir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -288,5 +289,36 @@ class InjectionWellModelTest {
     assertEquals(result.totalRate, reconstructedRate, 1e-9);
     assertEquals(result.zoneResults.get(0).rate / result.totalRate, result.injectionEfficiency, 1e-12);
     assertEquals(result.zoneResults.get(1).rate, result.outOfZoneRate, 1e-12);
+  }
+
+  @Test
+  @DisplayName("Multi-zone injectivity records and applies explicit water PVT inputs")
+  void testMultiZoneInjectivityUsesConfiguredWaterPvtInputs() {
+    InjectionZone zone = new InjectionZone("target", 2500.0, 250.0, 100.0, 20.0, 400.0);
+    zone.skinFactor = 2.0;
+    zone.isTargetZone = true;
+    model.addZone(zone);
+    model.setMaxBHP(390.0, "bara");
+    model.setFormationWaterViscosity(0.45);
+    model.setFormationWaterVolumeFactor(1.02);
+
+    MultiZoneInjectionResult result = model.calculateMultiZone(1000.0);
+
+    double permeabilitySI = 100.0 * 9.869e-16;
+    double expectedII = 2.0 * Math.PI * permeabilitySI * 20.0 / (0.45e-3 * 1.02 * (Math.log(500.0 / 0.1) + 2.0))
+        * 86400.0 * 1e5;
+    assertEquals(expectedII, result.zoneResults.get(0).injectivityIndex, expectedII * 1e-12);
+    assertEquals(0.45, result.formationWaterViscosity, 0.0);
+    assertEquals(1.02, result.formationWaterVolumeFactor, 0.0);
+    assertEquals(1000.0, result.totalRate, 1e-9);
+  }
+
+  @Test
+  @DisplayName("Multi-zone water PVT inputs reject nonphysical values")
+  void testMultiZoneWaterPvtInputsRejectNonphysicalValues() {
+    assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterViscosity(0.0));
+    assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterViscosity(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterVolumeFactor(-1.0));
+    assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterVolumeFactor(Double.POSITIVE_INFINITY));
   }
 }
