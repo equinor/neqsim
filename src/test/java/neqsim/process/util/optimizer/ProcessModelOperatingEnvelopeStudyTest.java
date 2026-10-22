@@ -563,7 +563,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals("gathering::gathering sink/shared gathering rate", transition.getToConstraint());
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("cycle-lifecycle-1");
-    assertEquals(Integer.valueOf(7), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(8), evidence.get("schema_version"));
     assertEquals("cycle-lifecycle-1", evidence.get("cycle_id"));
     assertEquals(Integer.valueOf(2), evidence.get("period_count"));
     assertEquals(Arrays.asList("producer-a-rate", "producer-b-rate"), evidence.get("accepted_action_ids"));
@@ -582,6 +582,20 @@ class ProcessModelOperatingEnvelopeStudyTest {
     assertEquals(Integer.valueOf(1), periodChange.get("comparable_slice_count"));
     assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
     assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
+    List<?> removedConstraintIdentities = (List<?>) periodChange.get("removed_ranked_constraint_identities");
+    List<?> addedConstraintIdentities = (List<?>) periodChange.get("added_ranked_constraint_identities");
+    int retainedConstraintIdentityCount = ((Integer) periodChange.get("retained_ranked_constraint_identity_count"))
+        .intValue();
+    assertEquals(((Integer) periodChange.get("from_ranked_constraint_identity_count")).intValue(),
+        retainedConstraintIdentityCount + removedConstraintIdentities.size());
+    assertEquals(((Integer) periodChange.get("to_ranked_constraint_identity_count")).intValue(),
+        retainedConstraintIdentityCount + addedConstraintIdentities.size());
+    assertTrue(removedConstraintIdentities.stream().map(Map.class::cast)
+        .anyMatch(identity -> "REJECTING".equals(identity.get("classification"))
+            && "gathering::gathering sink/producer A rate".equals(identity.get("qualified_constraint_name"))));
+    assertTrue(addedConstraintIdentities.stream().map(Map.class::cast)
+        .anyMatch(identity -> "NEAR_ACTIVE".equals(identity.get("classification"))
+            && "gathering::gathering sink/shared gathering rate".equals(identity.get("qualified_constraint_name"))));
     Map<?, ?> sliceChange = (Map<?, ?>) ((List<?>) periodChange.get("slice_changes")).get(0);
     assertEquals(Arrays.asList("producer-a-rate"), sliceChange.get("axis_action_ids"));
     assertEquals(Integer.valueOf(2), sliceChange.get("from_requested_point_count"));
@@ -639,7 +653,7 @@ class ProcessModelOperatingEnvelopeStudyTest {
             late.search, late.slice);
 
     Map<String, Object> evidence = lifecycle.toEvidenceMap("shared-reservoir-cycle");
-    assertEquals(Integer.valueOf(7), evidence.get("schema_version"));
+    assertEquals(Integer.valueOf(8), evidence.get("schema_version"));
     assertEquals(Arrays.asList("reservoir-pressure", "production-rate", "injection-rate"),
         evidence.get("accepted_state_metric_ids"));
     Map<?, ?> firstPeriod = (Map<?, ?>) ((List<?>) evidence.get("periods")).get(0);

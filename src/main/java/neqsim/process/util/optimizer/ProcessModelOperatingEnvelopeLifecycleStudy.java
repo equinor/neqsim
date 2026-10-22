@@ -244,7 +244,7 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     }
     Map<String, Object> evidence = new LinkedHashMap<String, Object>();
     boolean hasStateMetrics = acceptedStateMetricIds != null && !acceptedStateMetricIds.isEmpty();
-    evidence.put("schema_version", Integer.valueOf(7));
+    evidence.put("schema_version", Integer.valueOf(8));
     evidence.put("cycle_id", currentCycleId);
     evidence.put("lifecycle_study_id", id);
     evidence.put("lifecycle_study_name", name);
@@ -504,8 +504,60 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     diagnostic.put("removed_slice_axes", Collections.unmodifiableList(removedAxes));
     diagnostic.put("added_slice_axes", Collections.unmodifiableList(addedAxes));
     diagnostic.put("slice_changes", Collections.unmodifiableList(sliceChanges));
+    List<Map<String, Object>> fromConstraintIdentities = constraintSummaryIdentityEvidence(from);
+    List<Map<String, Object>> toConstraintIdentities = constraintSummaryIdentityEvidence(to);
+    List<Map<String, Object>> removedConstraintIdentities = exactDifference(fromConstraintIdentities,
+        toConstraintIdentities);
+    List<Map<String, Object>> addedConstraintIdentities = exactDifference(toConstraintIdentities,
+        fromConstraintIdentities);
+    diagnostic.put("from_ranked_constraint_identity_count", Integer.valueOf(fromConstraintIdentities.size()));
+    diagnostic.put("to_ranked_constraint_identity_count", Integer.valueOf(toConstraintIdentities.size()));
+    diagnostic.put("retained_ranked_constraint_identity_count",
+        Integer.valueOf(fromConstraintIdentities.size() - removedConstraintIdentities.size()));
+    diagnostic.put("removed_ranked_constraint_identities", removedConstraintIdentities);
+    diagnostic.put("added_ranked_constraint_identities", addedConstraintIdentities);
     diagnostic.put("advisory", Boolean.TRUE);
     return Collections.unmodifiableMap(diagnostic);
+  }
+
+  /**
+   * Extracts exact rejecting or near-active identity rows from one accepted period summary.
+   *
+   * <p>
+   * Rank, occurrence counts, headroom, and representative evidence are intentionally excluded. The retained identity
+   * contains the classification and complete engineering basis, so a change between {@code NEAR_ACTIVE} and
+   * {@code REJECTING}, a changed applicable limit, or changed provenance appears as one removed and one added identity.
+   * </p>
+   *
+   * @param period accepted lifecycle period
+   * @return immutable exact identity rows in summary rank order
+   */
+  private static List<Map<String, Object>> constraintSummaryIdentityEvidence(PeriodEvidence period) {
+    Object summaryValue = period.getEnvelopeEvidence().get("cross_slice_constraint_summary");
+    if (!(summaryValue instanceof Map<?, ?>)) {
+      throw new IllegalStateException("Lifecycle period is missing cross-slice constraint summary evidence");
+    }
+    Object rowsValue = ((Map<?, ?>) summaryValue).get("ranked_constraints");
+    if (!(rowsValue instanceof List<?>)) {
+      throw new IllegalStateException("Lifecycle period is missing ranked constraint summary rows");
+    }
+    List<Map<String, Object>> identities = new ArrayList<Map<String, Object>>();
+    for (Object rowValue : (List<?>) rowsValue) {
+      if (!(rowValue instanceof Map<?, ?>)) {
+        throw new IllegalStateException("Lifecycle period contains an invalid ranked constraint summary row");
+      }
+      Map<?, ?> row = (Map<?, ?>) rowValue;
+      Map<String, Object> identity = new LinkedHashMap<String, Object>();
+      identity.put("classification", row.get("classification"));
+      identity.put("source", row.get("source"));
+      identity.put("qualified_constraint_name", row.get("qualified_constraint_name"));
+      identity.put("applicable_limit", row.get("applicable_limit"));
+      identity.put("physical_unit", row.get("physical_unit"));
+      identity.put("applicable_limit_role", row.get("applicable_limit_role"));
+      identity.put("applicable_limit_provenance", row.get("applicable_limit_provenance"));
+      identities.add(Collections.unmodifiableMap(identity));
+    }
+    return Collections.unmodifiableList(identities);
   }
 
   /** Builds exact accepted physical-state deltas for one adjacent period pair. */

@@ -862,10 +862,11 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    for its smooth synthetic trajectory. Its exact accepted pressure, production/injection,
    shared-power and cumulative-throughput samples now map into lifecycle state metrics with
    stable IDs, units and provenance; the persistent guard reconstructs every adjacent-period
-   delta. Schema-v6 diagnostics also retain exact added/removed operating-region events and complete
+   delta. Schema-v8 diagnostics also retain exact added/removed operating-region events and complete
    continuous-boundary receipts across periods without interpolating discrete topology. Each refined
    feasible/infeasible endpoint now carries the exact governing constraint and signed physical
-   headroom. Next qualify the maps and injectivity laws
+   headroom. Adjacent periods now also expose exact retained, removed, and added rejecting/near-active
+   identities without comparing unlike physical units. Next qualify the maps and injectivity laws
    and feed their accepted map-region/driver-limit migrations into these diagnostics without
    creating a second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent

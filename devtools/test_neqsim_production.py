@@ -517,6 +517,26 @@ def _valid_constraint_summary_lifecycle_evidence(current_envelope):
     return evidence
 
 
+def _valid_constraint_summary_migration_lifecycle_evidence(current_envelope):
+    """Extend schema-v7 evidence with exact adjacent-period summary identity changes."""
+    evidence = _valid_constraint_summary_lifecycle_evidence(current_envelope)
+    evidence["schema_version"] = 8
+    for change, before, after in zip(
+            evidence["period_change_diagnostics"], evidence["periods"], evidence["periods"][1:]):
+        from_identities = production._constraint_summary_identities(before["envelope_evidence"])
+        to_identities = production._constraint_summary_identities(after["envelope_evidence"])
+        removed = production._exact_list_difference(from_identities, to_identities)
+        added = production._exact_list_difference(to_identities, from_identities)
+        change.update({
+            "from_ranked_constraint_identity_count": len(from_identities),
+            "to_ranked_constraint_identity_count": len(to_identities),
+            "retained_ranked_constraint_identity_count": len(from_identities) - len(removed),
+            "removed_ranked_constraint_identities": removed,
+            "added_ranked_constraint_identities": added,
+        })
+    return evidence
+
+
 def _valid_state_lifecycle_evidence(current_envelope):
     """Extend valid schema-v4 evidence with exact accepted physical-state metrics."""
     evidence = _valid_region_lifecycle_evidence(current_envelope)
@@ -1246,6 +1266,75 @@ def test_guard_persists_schema7_cross_slice_constraint_summary(tmp_path):
     assert lifecycle["schema_version"] == 7
     assert lifecycle["periods"][0]["envelope_evidence"][
         "cross_slice_constraint_summary"]["ranked_constraints"] == []
+
+
+def test_guard_persists_schema8_constraint_identity_migration(tmp_path):
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    current_constraint = {
+        "source": "PLANT_CONSTRAINT",
+        "qualified_constraint_name": "host::separator gas capacity",
+        "normalized_utilization": 0.96,
+        "normalized_margin": 0.04,
+        "current_value": 960.0,
+        "applicable_limit": 1000.0,
+        "physical_margin": 40.0,
+        "physical_unit": "kg/hr",
+        "feasible": True,
+        "diagnostic": "AVAILABLE",
+        "applicable_limit_role": "OPERATING_LIMIT",
+        "applicable_limit_provenance": "synthetic separator limit",
+    }
+    envelope["slices"][0]["points"][0]["leading_constraint"] = current_constraint
+    _add_empty_constraint_summary_evidence(envelope)
+    envelope["cross_slice_constraint_summary"] = production._cross_slice_constraint_summary(
+        envelope["slices"], envelope["cross_slice_constraint_summary"])
+    lifecycle = _valid_constraint_summary_migration_lifecycle_evidence(envelope)
+
+    future_envelope = lifecycle["periods"][1]["envelope_evidence"]
+    future_constraint = dict(
+        current_constraint,
+        qualified_constraint_name="host::shared power",
+        current_value=980.0,
+        applicable_limit=1000.0,
+        physical_margin=20.0,
+        physical_unit="kW",
+        applicable_limit_role="SHARED_RESOURCE",
+        applicable_limit_provenance="synthetic host power budget",
+    )
+    future_envelope["slices"][0]["points"][0]["leading_constraint"] = future_constraint
+    future_envelope["cross_slice_constraint_summary"] = production._cross_slice_constraint_summary(
+        future_envelope["slices"], future_envelope["cross_slice_constraint_summary"])
+    lifecycle["period_change_diagnostics"] = production._period_change_diagnostics(
+        lifecycle["periods"], lifecycle["accepted_action_ids"], lifecycle["time_unit"],
+        require_operating_transitions=True, require_boundary_refinements=True,
+        require_constraint_summary_identities=True)
+    proposal["lifecycle_envelope_evidence"] = lifecycle
+
+    ctx = _guard_context(tmp_path, proposal)
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    assert [row["title"] for row in ctx.proposals] == ["candidate"]
+    change = ctx.proposals[0]["lifecycle_envelope_evidence"][
+        "period_change_diagnostics"][0]
+    assert change["retained_ranked_constraint_identity_count"] == 0
+    assert change["removed_ranked_constraint_identities"][0][
+        "qualified_constraint_name"] == "host::separator gas capacity"
+    assert change["added_ranked_constraint_identities"][0][
+        "qualified_constraint_name"] == "host::shared power"
+
+    tampered = copy.deepcopy(proposal)
+    tampered["title"] = "tampered lifecycle constraint identity"
+    tampered["lifecycle_envelope_evidence"]["period_change_diagnostics"][0][
+        "added_ranked_constraint_identities"][0]["physical_unit"] = "MW"
+    tampered_ctx = _guard_context(tmp_path, tampered)
+    tampered_ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(tampered_ctx, {})
+    assert tampered_ctx.proposals == []
+    reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
+    assert "lifecycle_period_change_diagnostics_mismatch" in reasons
 
 
 def test_guard_reconstructs_schema2_constraint_summary_fail_closed(tmp_path):

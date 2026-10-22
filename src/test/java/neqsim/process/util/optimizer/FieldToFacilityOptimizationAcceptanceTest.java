@@ -393,7 +393,7 @@ class FieldToFacilityOptimizationAcceptanceTest {
             late.study, late.search, late.slices);
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
 
-    assertEquals(Integer.valueOf(7), lifecycleEvidence.get("schema_version"));
+    assertEquals(Integer.valueOf(8), lifecycleEvidence.get("schema_version"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
@@ -406,6 +406,18 @@ class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(((List<?>) periodChange.get("removed_slice_axes")).isEmpty());
     assertTrue(((List<?>) periodChange.get("added_slice_axes")).isEmpty());
     assertEquals(Integer.valueOf(20), Integer.valueOf(((List<?>) periodChange.get("accepted_action_changes")).size()));
+    List<?> removedConstraintIdentities = (List<?>) periodChange.get("removed_ranked_constraint_identities");
+    List<?> addedConstraintIdentities = (List<?>) periodChange.get("added_ranked_constraint_identities");
+    int retainedConstraintIdentityCount = ((Integer) periodChange.get("retained_ranked_constraint_identity_count"))
+        .intValue();
+    assertEquals(((Integer) periodChange.get("from_ranked_constraint_identity_count")).intValue(),
+        retainedConstraintIdentityCount + removedConstraintIdentities.size());
+    assertEquals(((Integer) periodChange.get("to_ranked_constraint_identity_count")).intValue(),
+        retainedConstraintIdentityCount + addedConstraintIdentities.size());
+    assertTrue(removedConstraintIdentities.stream().map(Map.class::cast)
+        .anyMatch(identity -> earlyConstraint.equals(identity.get("qualified_constraint_name"))));
+    assertTrue(addedConstraintIdentities.stream().map(Map.class::cast)
+        .anyMatch(identity -> lateConstraint.equals(identity.get("qualified_constraint_name"))));
     for (Object value : (List<?>) periodChange.get("slice_changes")) {
       Map<?, ?> sliceChange = (Map<?, ?>) value;
       int fromTransitionCount = ((Integer) sliceChange.get("from_operating_region_transition_count")).intValue();
