@@ -19,7 +19,10 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   private double[][] xsitedni = new double[0][0];
   double[] xsiteOld = new double[0];
   double[] xsitedV = new double[0];
+  double[] xsitedVdV = new double[0];
+  double[] xsitedVdVdV = new double[0];
   double[] xsitedT = new double[0];
+  double[] xsitedTdV = new double[0];
   double[] xsitedTdT = new double[0];
 
   /**
@@ -36,7 +39,10 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][phase.getNumberOfComponents()];
     xsitedV = new double[numberOfAssociationSites];
+    xsitedVdV = new double[numberOfAssociationSites];
+    xsitedVdVdV = new double[numberOfAssociationSites];
     xsitedT = new double[numberOfAssociationSites];
+    xsitedTdV = new double[numberOfAssociationSites];
     xsitedTdT = new double[numberOfAssociationSites];
     xsiteOld = new double[numberOfAssociationSites];
     if (numberOfAssociationSites != 0 && cpaon == 1) {
@@ -76,7 +82,10 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][phase.getNumberOfComponents()];
     xsitedV = new double[numberOfAssociationSites];
+    xsitedVdV = new double[numberOfAssociationSites];
+    xsitedVdVdV = new double[numberOfAssociationSites];
     xsitedT = new double[numberOfAssociationSites];
+    xsitedTdV = new double[numberOfAssociationSites];
     xsitedTdT = new double[numberOfAssociationSites];
     xsiteOld = new double[numberOfAssociationSites];
     if (numberOfAssociationSites != 0 && cpaon == 1) {
@@ -113,8 +122,14 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     System.arraycopy(this.xsiteOld, 0, clonedComponent.xsiteOld, 0, xsiteOld.length);
     clonedComponent.xsitedV = xsitedV.clone();
     System.arraycopy(this.xsitedV, 0, clonedComponent.xsitedV, 0, xsitedV.length);
+    clonedComponent.xsitedVdV = xsitedVdV.clone();
+    System.arraycopy(this.xsitedVdV, 0, clonedComponent.xsitedVdV, 0, xsitedVdV.length);
+    clonedComponent.xsitedVdVdV = xsitedVdVdV.clone();
+    System.arraycopy(this.xsitedVdVdV, 0, clonedComponent.xsitedVdVdV, 0, xsitedVdVdV.length);
     clonedComponent.xsitedT = xsitedT.clone();
     System.arraycopy(this.xsitedT, 0, clonedComponent.xsitedT, 0, xsitedT.length);
+    clonedComponent.xsitedTdV = xsitedTdV.clone();
+    System.arraycopy(this.xsitedTdV, 0, clonedComponent.xsitedTdV, 0, xsitedTdV.length);
     clonedComponent.xsitedTdT = xsitedTdT.clone();
     System.arraycopy(this.xsitedTdT, 0, clonedComponent.xsitedTdT, 0, xsitedTdT.length);
     clonedComponent.xsitedni = xsitedni.clone();
@@ -501,10 +516,67 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     this.xsitedV[i] = xsitedV;
   }
 
+  /**
+   * Returns the second volume derivatives of the association-site fractions.
+   *
+   * @return site-fraction second volume derivatives
+   */
+  public double[] getXsitedVdV() {
+    return this.xsitedVdV;
+  }
+
+  /**
+   * Sets one second volume derivative of an association-site fraction.
+   *
+   * @param i association-site index
+   * @param xsitedVdV second volume derivative
+   */
+  public void setXsitedVdV(int i, double xsitedVdV) {
+    this.xsitedVdV[i] = xsitedVdV;
+  }
+
+  /**
+   * Returns the third volume derivatives of the association-site fractions.
+   *
+   * @return site-fraction third volume derivatives
+   */
+  public double[] getXsitedVdVdV() {
+    return this.xsitedVdVdV;
+  }
+
+  /**
+   * Sets one third volume derivative of an association-site fraction.
+   *
+   * @param i association-site index
+   * @param xsitedVdVdV third volume derivative
+   */
+  public void setXsitedVdVdV(int i, double xsitedVdVdV) {
+    this.xsitedVdVdV[i] = xsitedVdVdV;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double[] getXsitedT() {
     return this.xsitedT;
+  }
+
+  /**
+   * Returns the mixed temperature-volume derivatives of the association-site fractions.
+   *
+   * @return site-fraction mixed temperature-volume derivatives
+   */
+  public double[] getXsitedTdV() {
+    return this.xsitedTdV;
+  }
+
+  /**
+   * Sets one mixed temperature-volume derivative of an association-site fraction.
+   *
+   * @param i association-site index
+   * @param xsitedTdV mixed temperature-volume derivative
+   */
+  public void setXsitedTdV(int i, double xsitedTdV) {
+    this.xsitedTdV[i] = xsitedTdV;
   }
 
   /** {@inheritDoc} */
