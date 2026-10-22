@@ -72,6 +72,25 @@ class SlugUnitModelTest {
   }
 
   @Test
+  void frontMixingLossIsOffByDefaultAndCanBeCounted() {
+    double vsG = 4.96;
+    double vsL = 0.60;
+    SlugUnitModel model = new SlugUnitModel();
+    assertFalse(model.isFrontMixingLossIncluded());
+    SlugUnitModel.Result wallOnly = model.solve(vsG, vsL, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS, 0.0);
+    model.setFrontMixingLossIncluded(true);
+    SlugUnitModel.Result counted = model.solve(vsG, vsL, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS, 0.0);
+    assertTrue(counted.valid && wallOnly.valid);
+    assertTrue(counted.accelerationGradient > 0.0);
+    assertEquals(wallOnly.wallFrictionGradient, counted.wallFrictionGradient, 1.0e-12);
+    assertEquals(wallOnly.wallFrictionGradient, wallOnly.frictionGradient, 1.0e-12);
+    assertEquals(counted.wallFrictionGradient + counted.accelerationGradient, counted.frictionGradient, 1.0e-12);
+    // OLGA 2025.1 gives 86 Pa/m on this horizontal line; wall shear alone gives about 61 Pa/m and the front loss 14.
+    assertEquals(61.0, wallOnly.frictionGradient, 4.0);
+    assertEquals(75.0, counted.frictionGradient, 5.0);
+  }
+
+  @Test
   void rejectsDegenerateInput() {
     SlugUnitModel model = new SlugUnitModel();
     assertFalse(model.solve(0.0, 1.0, RHO_G, RHO_L, MU_G, MU_L, SIGMA, DIAMETER, ROUGHNESS, 0.0).valid);

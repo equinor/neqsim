@@ -433,6 +433,12 @@ public class TwoFluidPipe extends Pipeline {
   /** Pipe wall temperature profile (K). */
   private double[] wallTemperatureProfile = null;
 
+  /**
+   * Split the overall U into a flow-dependent fluid film and an outer wall-to-ambient path; default true. False keeps
+   * the legacy equal split of the two resistances.
+   */
+  private boolean physicalWallFilmSplit = true;
+
   /** Soil/burial thermal resistance (m²·K/W). */
   private double soilThermalResistance = 0.0;
 
@@ -2569,18 +2575,27 @@ public class TwoFluidPipe extends Pipeline {
 
     if (wallTemperatureProfile == null || wallTemperatureProfile.length != numberOfSections) {
       wallTemperatureProfile = new double[numberOfSections];
+      double steadyOuterDiameter = diameter + 2.0 * wallThickness;
       for (int i = 0; i < numberOfSections; i++) {
-        // Start the wall at its steady conduction temperature. The film and outer resistances are
-        // equal halves of the overall U (see below), so the steady wall sits midway between fluid
-        // and ambient; starting it at the fluid temperature suppresses the wall loss for a wall
-        // time constant (hours on a steel line) and warms the outlet after a steady handoff.
+        // Start the wall at its steady conduction temperature so that a steady handoff does not
+        // spend a wall time constant (hours on a steel line) charging or discharging the wall.
         double fluidTemperature = sections[i].getTemperature();
         double ambient = surfaceTemperature;
         if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
           ambient = surfaceTemperatureProfile[i];
         }
         boolean hasWallLoss = enableHeatTransfer && heatTransferCoefficient > 0.0 && !useMultilayerThermalModel;
-        wallTemperatureProfile[i] = hasWallLoss ? 0.5 * (fluidTemperature + ambient) : fluidTemperature;
+        if (hasWallLoss) {
+          double[] split = wallFilmSplit(i, sections[i], phaseMassFaceFluxes, steadyOuterDiameter);
+          double filmConductance = split[0] * Math.PI * diameter;
+          double outerConductance = split[1] * Math.PI * steadyOuterDiameter;
+          double total = filmConductance + outerConductance;
+          wallTemperatureProfile[i] = total > 0.0
+              ? (filmConductance * fluidTemperature + outerConductance * ambient) / total
+              : 0.5 * (fluidTemperature + ambient);
+        } else {
+          wallTemperatureProfile[i] = fluidTemperature;
+        }
       }
     }
 
@@ -2614,25 +2629,14 @@ public class TwoFluidPipe extends Pipeline {
       double wallTemperature = wallTemperatureProfile[i];
       double oldWallTemperature = wallTemperature;
 
-      double hInner = heatTransferCoefficient;
-      if (heatTransferProfile != null && i < heatTransferProfile.length) {
-        hInner = heatTransferProfile[i];
-      }
-
       double ambientTemperature = surfaceTemperature;
       if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
         ambientTemperature = surfaceTemperatureProfile[i];
       }
 
-      double hOverall = hInner;
-      if (soilThermalResistance > 0.0 && hInner > 0.0) {
-        hOverall = 1.0 / (1.0 / hInner + soilThermalResistance);
-      }
-      // The configured value is the OVERALL bore-referenced U used by the steady solve. Split its
-      // resistance equally between the fluid film and the wall-to-ambient path so the wall node
-      // carries thermal inertia while its quasi-steady limit reproduces the steady U exactly.
-      double hFilm = 2.0 * hOverall;
-      double hOuter = 2.0 * hOverall * diameter / outerDiameter;
+      double[] split = wallFilmSplit(i, sec, phaseMassFaceFluxes, outerDiameter);
+      double hFilm = split[0];
+      double hOuter = split[1];
 
       double fluidToWallHeat = hFilm * pipePerimeter * (oldFluidTemperature - wallTemperature);
       double wallToAmbientHeat = hOuter * outerPerimeter * (wallTemperature - ambientTemperature);
@@ -3110,6 +3114,108 @@ public class TwoFluidPipe extends Pipeline {
       double Nu = 0.023 * Math.pow(Re, 0.8) * Math.pow(Pr, 0.3);
       return Nu * k / diameter;
     }
+  }
+
+  /**
+   * Split the configured overall U of one cell into a fluid film and a wall-to-ambient coefficient.
+   *
+   * <p>
+   * The configured value is the overall bore-referenced U used by the steady solve. The wall node between the two paths
+   * carries the thermal inertia, and the series resistance of the two paths must equal {@code 1/U} so that the
+   * quasi-steady limit reproduces the steady heat loss exactly. By default the film is the flow-dependent fluid-side
+   * coefficient of the cell ({@link #sectionFilmCoefficient}) and the remaining resistance is placed outside the wall,
+   * which is where it physically sits for an insulated or buried line. Benchmarking against OLGA showed that the legacy
+   * equal split (both paths at {@code 2U}) made the wall respond four times faster than the reference after a rate
+   * change, because a weak film decouples the fluid from the wall while a strong outer path discharges the wall. The
+   * equal split is kept as a fallback when the film coefficient is not at least twice the overall U, and when
+   * {@link #setPhysicalWallFilmSplit(boolean)} is false.
+   * </p>
+   *
+   * @param cell zero-based cell index
+   * @param sec the cell; its phase holdups, densities and velocities give the local mass flow for the film
+   * @param phaseMassFaceFluxes retained for the call sites; the film uses the cell state so that a closed domain at
+   * rest does not depend on boundary face bookkeeping
+   * @param outerDiameter outer wall diameter in m
+   * @return {bore-referenced film coefficient, outer-perimeter-referenced wall-to-ambient coefficient} in W/(m2 K)
+   */
+  private double[] wallFilmSplit(int cell, TwoFluidSection sec, double[][] phaseMassFaceFluxes, double outerDiameter) {
+    double hOverall = heatTransferCoefficient;
+    if (heatTransferProfile != null && cell < heatTransferProfile.length) {
+      hOverall = heatTransferProfile[cell];
+    }
+    if (soilThermalResistance > 0.0 && hOverall > 0.0) {
+      hOverall = 1.0 / (1.0 / hOverall + soilThermalResistance);
+    }
+    double diameterRatio = diameter / outerDiameter;
+    if (!(hOverall > 0.0)) {
+      return new double[] {0.0, 0.0};
+    }
+    if (physicalWallFilmSplit) {
+      double film = sectionFilmCoefficient(sec);
+      if (Double.isFinite(film) && film > 2.0 * hOverall) {
+        double outer = diameterRatio / (1.0 / hOverall - 1.0 / film);
+        if (Double.isFinite(outer) && outer > 0.0) {
+          return new double[] {film, outer};
+        }
+      }
+    }
+    return new double[] {2.0 * hOverall, 2.0 * hOverall * diameterRatio};
+  }
+
+  /**
+   * Fluid-side film coefficient of one cell from its own state (Dittus-Boelter in turbulent flow).
+   *
+   * <p>
+   * Uses holdup-weighted phase density, viscosity and velocity from the section, with representative thermal
+   * conductivity (0.03 W/(m K) gas, 0.12 W/(m K) hydrocarbon liquid) and heat capacity (2200 and 2100 J/(kg K)). The
+   * value sets how closely the fluid follows the wall node; for an insulated line it exceeds the overall U by one to
+   * two orders of magnitude, so the Prandtl-number estimate has little effect on the result. It does not read the inlet
+   * stream, so a closed domain at rest is independent of a disconnected feed. At zero local throughput the configured
+   * stagnant coefficient is returned.
+   * </p>
+   *
+   * @param sec the cell
+   * @return film coefficient in W/(m2 K)
+   */
+  private double sectionFilmCoefficient(TwoFluidSection sec) {
+    double alphaG = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
+    double alphaL = Math.max(0.0, Math.min(1.0, sec.getLiquidHoldup()));
+    double rhoG = alphaG > 0.0 ? sec.getGasDensity() : 0.0;
+    double rhoL = alphaL > 0.0 ? sec.getLiquidDensity() : 0.0;
+    double muG = alphaG > 0.0 ? sec.getGasViscosity() : 0.0;
+    double muL = alphaL > 0.0 ? sec.getLiquidViscosity() : 0.0;
+    double area = sec.getArea();
+    double massFlux = alphaG * rhoG * Math.abs(sec.getGasVelocity())
+        + alphaL * rhoL * Math.abs(sec.getLiquidVelocity());
+    double rho = alphaG * rhoG + alphaL * rhoL;
+    double mu = alphaG * muG + alphaL * muL;
+    if (!(massFlux > 0.0) || !(rho > 0.0) || !(mu > 0.0) || !(area > 0.0) || !Double.isFinite(massFlux)) {
+      return stagnantInnerHeatTransferCoefficient;
+    }
+    double conductivity = alphaG * 0.03 + alphaL * 0.12;
+    double heatCapacity = alphaG * 2200.0 + alphaL * 2100.0;
+    double prandtl = mu * heatCapacity / conductivity;
+    double velocity = massFlux / rho;
+    double reynolds = rho * velocity * diameter / mu;
+    double nusselt = reynolds < 2300.0 ? 3.66 : 0.023 * Math.pow(reynolds, 0.8) * Math.pow(prandtl, 0.3);
+    double film = nusselt * conductivity / diameter;
+    return Double.isFinite(film) && film > 0.0 ? film : stagnantInnerHeatTransferCoefficient;
+  }
+
+  /**
+   * Choose how the overall U is split around the wall thermal mass in the simple transient thermal model.
+   *
+   * @param enabled true (default) for a flow-dependent fluid film with the remaining resistance outside the wall; false
+   * for the legacy equal split of the two resistances
+   */
+  public void setPhysicalWallFilmSplit(boolean enabled) {
+    physicalWallFilmSplit = enabled;
+    wallTemperatureProfile = null;
+  }
+
+  /** @return true when the transient wall model uses the flow-dependent film split */
+  public boolean isPhysicalWallFilmSplit() {
+    return physicalWallFilmSplit;
   }
 
   /**
@@ -4396,6 +4502,29 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Cell-centre pressure that represents the constant outlet pressure during a transient.
+   *
+   * <p>
+   * With an explicit cell-face elevation profile the steady solve places the prescribed outlet pressure at the outlet
+   * face and keeps the last midpoint half a cell upstream of it. The transient must use the same placement, otherwise
+   * the first time step moves the pressure level of the whole line by the half-cell friction and gravity head without
+   * any change of boundary condition. Without a face profile the legacy convention is kept and the prescribed value is
+   * the last cell pressure.
+   * </p>
+   *
+   * @return pressure in Pa to impose on the last cell of the transient solution
+   */
+  private double transientOutletCellPressure() {
+    if (!isTransientMode || cellFaceElevationProfile == null || outletBCType != BoundaryCondition.CONSTANT_PRESSURE
+        || sections == null || numberOfSections < 1 || sections[numberOfSections - 1] == null) {
+      return outletPressure;
+    }
+    TwoFluidSection last = sections[numberOfSections - 1];
+    double cellPressure = outletPressure + 0.5 * last.getLength() * estimatePressureGradient(last);
+    return Double.isFinite(cellPressure) ? Math.max(MIN_SECTION_PRESSURE_PA, cellPressure) : outletPressure;
+  }
+
+  /**
    * Check whether any section pressure rests on the marching floor.
    *
    * @return true when at least one section sits at {@link #MIN_SECTION_PRESSURE_PA}
@@ -5527,6 +5656,7 @@ public class TwoFluidPipe extends Pipeline {
     wallThickness = candidate.wallThickness;
     wallDensity = candidate.wallDensity;
     wallHeatCapacity = candidate.wallHeatCapacity;
+    physicalWallFilmSplit = candidate.physicalWallFilmSplit;
     wallTemperatureProfile = candidate.wallTemperatureProfile;
     soilThermalResistance = candidate.soilThermalResistance;
     directElectricalHeatingPowerPerMeter = candidate.directElectricalHeatingPowerPerMeter;
@@ -5821,7 +5951,18 @@ public class TwoFluidPipe extends Pipeline {
           }
         }
         equations.setLocalEquilibriumStates(localEquilibriumStates);
-        double[][] derivative = equations.calcRHS(sections, dx);
+        double savedOutletFacePressure = equations.getOutletBoundaryPressure();
+        double[][] derivative;
+        try {
+          if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletPressureSet && outletPressure > 0.0
+              && Double.isFinite(outletPressure)) {
+            // The prescribed pressure is the outlet-face traction; the last cell pressure stays dynamic.
+            equations.setOutletBoundaryPressure(outletPressure);
+          }
+          derivative = equations.calcRHS(sections, dx);
+        } finally {
+          equations.setOutletBoundaryPressure(savedOutletFacePressure);
+        }
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
         if (capturePhaseStageTerms) {
           int stage = phaseStageIndex[0]++;
@@ -5908,15 +6049,15 @@ public class TwoFluidPipe extends Pipeline {
           boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
               || outletBCType == BoundaryCondition.CHARACTERISTIC);
           timeIntegrator.setIMEXProperties(soundSpeeds, densities, areas, gasDensities, oilDensities, waterDensities,
-              dx, outletPressure, outletFixed);
+              dx, transientOutletCellPressure(), outletFixed);
         }
         timeIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, voidWaveSlipCoefficients, areas, gasDensities,
             oilDensities, waterDensities, dx, useImplicitVoidWave);
         boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
             || outletBCType == BoundaryCondition.CHARACTERISTIC);
         timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
-            waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, outletPressure, outletFixed,
-            coupledPressureMomentumEnabled);
+            waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, transientOutletCellPressure(),
+            outletFixed, coupledPressureMomentumEnabled);
       } else {
         timeIntegrator.setCoupledPressureMomentumEnabled(false);
       }
@@ -6758,7 +6899,7 @@ public class TwoFluidPipe extends Pipeline {
     } else {
       // OUTLET OPEN (constant pressure): Standard backward march
       // Start from outlet with known pressure (Dirichlet BC)
-      sections[numberOfSections - 1].setPressure(outletPressure);
+      sections[numberOfSections - 1].setPressure(transientOutletCellPressure());
 
       // March backward from outlet to inlet
       for (int i = numberOfSections - 2; i >= 0; i--) {
@@ -7046,7 +7187,7 @@ public class TwoFluidPipe extends Pipeline {
     // Outlet boundary
     TwoFluidSection outlet = sections[numberOfSections - 1];
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
-      outlet.setPressure(outletPressure);
+      outlet.setPressure(transientOutletCellPressure());
     } else if (outletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
       // Repeatedly resetting a finite cell's momentum is an artificial impulse, not a closed-face condition.
       // Zero velocity at outlet (blocked/shut-in condition)
@@ -7124,8 +7265,36 @@ public class TwoFluidPipe extends Pipeline {
     face.setOilVelocity(alphaOil > 0.0 ? velocity : 0.0);
     face.setWaterVelocity(alphaWater > 0.0 ? velocity : 0.0);
     face.setTemperature(fluid.getTemperature("K"));
+    face.setPressure(inletFacePressureFromCells(cell));
     face.updateConservativeVariables();
     return face;
+  }
+
+  /**
+   * Pressure at the external inlet face, extrapolated from the two inlet cells.
+   *
+   * <p>
+   * The interior faces carry the mean of two cell pressures, so a face that carries the inlet-cell centre pressure
+   * gives the inlet cell only half of its pressure force while it carries the full gravity and friction of the cell. On
+   * a 100 m cell at 6 degrees that deficit is 0.4 bar and it seeds an odd-even velocity mode in the first transient
+   * step. The second-order extrapolation restores the full force for a locally linear pressure field.
+   * </p>
+   *
+   * @param cell the inlet cell (expected to be {@code sections[0]})
+   * @return inlet-face pressure in Pa
+   */
+  private double inletFacePressureFromCells(TwoFluidSection cell) {
+    double pressure = cell.getPressure();
+    if (sections == null || numberOfSections < 2 || sections[0] != cell || sections[1] == null) {
+      return pressure;
+    }
+    TwoFluidSection next = sections[1];
+    double distance = 0.5 * (cell.getLength() + next.getLength());
+    if (!(distance > 0.0) || !Double.isFinite(next.getPressure()) || !Double.isFinite(pressure)) {
+      return pressure;
+    }
+    double face = pressure - 0.5 * cell.getLength() * (next.getPressure() - pressure) / distance;
+    return Double.isFinite(face) ? Math.max(0.1 * pressure, face) : pressure;
   }
 
   /**
@@ -10265,6 +10434,28 @@ public class TwoFluidPipe extends Pipeline {
     if (slugUnitModel == null) {
       slugUnitModel = new SlugUnitModel();
     }
+  }
+
+  /**
+   * Choose whether the slug-front mixing loss is counted in the steady slug-unit friction.
+   *
+   * <p>
+   * See {@link SlugUnitModel#setFrontMixingLossIncluded(boolean)}. Off by default: counting it brought a horizontal
+   * gas-oil slug line from 29 to 20 per cent below OLGA but moved an undulating one from 5 to 53 per cent above.
+   * </p>
+   *
+   * @param included true to count the front-mixing loss; false (default) for the wall-shear-only unit gradient
+   */
+  public void setSlugFrontMixingLossIncluded(boolean included) {
+    if (slugUnitModel == null) {
+      slugUnitModel = new SlugUnitModel();
+    }
+    slugUnitModel.setFrontMixingLossIncluded(included);
+  }
+
+  /** @return true when the slug-front mixing loss is counted in the steady slug-unit friction */
+  public boolean isSlugFrontMixingLossIncluded() {
+    return slugUnitModel != null && slugUnitModel.isFrontMixingLossIncluded();
   }
 
   /**
