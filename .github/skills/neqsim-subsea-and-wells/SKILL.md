@@ -678,6 +678,26 @@ For a deep HPHT gas/condensate discovery the pressure rating, not the hydraulics
 - Flowing wellhead pressure is much lower than SITHP (440-640 bara at 1-3 MSm3/d for 700-850 bara bottom-hole pressure); the choke absorbs the difference, so the tie-back line is sized by erosional velocity and arrival pressure, not by the reservoir pressure.
 - `PipeBeggsAndBrills` throws a hydraulic-domain exception (NaN row) when a small line (8 in) is pushed to a rate that makes the outlet pressure negative; record those rows as infeasible instead of retrying.
 
+## Gas-well VLP/IPR chain calibrated on downhole gauges (Troll A integrated model, 2026-10)
+
+Use this when a gas/condensate well + flowline + compressor model must give a production forecast, not a lumped back-pressure.
+
+- **Tubing correlation:** for lean gas with traces of condensate/water use `TubingPerformance` with `CorrelationType.GRAY`.
+  `PipeBeggsAndBrills` over-predicts the vertical pressure drop 2x in the same case (liquid holdup of a 3 % mass-fraction heavy tail at 4 m/s);
+  `HAGEDORN_BROWN`, `HASAN_KABIR`, `DUNS_ROS` threw NaN-Z / absurd results with a 26-component PR78 fluid. Check each correlation on one point first.
+- **One inclination per instance:** `TubingPerformance` takes one length/diameter/inclination. Chain one instance per survey interval (incl. inclination from
+  `asin(dTVD/dMD)`), re-set the inlet stream P, T and flow before every `run()` and carry the outlet pressure forward.
+- **Calibrate roughness, nothing else, on gauge rows:** 173 TWGP downhole-gauge rows gave roughness 1.2e-5 m, wellhead-pressure bias 0.0 bar, RMSE 0.4 bar.
+  Reuse the same roughness for wells without gauges and flag it.
+- **Forward tables:** pipes only run forward. Tabulate p_out(q, p_in) on a (q, p_in) grid once, invert by bisection, and chain forward from the reservoir
+  (IPR -> tubing -> hook-up -> separator); fail points (outlet pressure collapse, trace-water flash repair errors) are set to a very low p_out, not dropped.
+- **IPR identifiability:** with no BHP data the Forchheimer `a` and a reservoir-pressure offset are confounded (recent years fit `a` to its lower bound with delta -4 bar).
+  Constrain b >= 0, fit (a, b, delta) on the last 5-8 years, hold out the last 2-3, and anchor the per-well multipliers to the latest snapshot so the model reproduces today exactly.
+  Parameterise tank uncertainty by the *remaining* volume (pressure at the start state fixed), otherwise a GIIP change moves today's pressure by 10 bar.
+- **`SimpleReservoir` stops producing below 50 bar by default:** call `setLowPressureLimit(1.0, "bara")` for depleted gas tanks. It is exact p/z with the NeqSim Z (0.004 bar vs a table tank over 3 years).
+- **Compressor feasibility:** a charted `Compressor` with `setSolveSpeed(true)` throws when the duty is unreachable; treat the exception as "infeasible" in a capacity bisection,
+  and retry once with a tiny flow or temperature perturbation because the trace-water TPflash repair can fail on a perfectly valid point.
+
 ## Design Standards Reference
 
 | Domain | Standard | Used For |
