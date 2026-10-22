@@ -1123,15 +1123,18 @@ qualified compressor maps, shaft/driver limits, and shared-power budget. Do not 
 search into a revised period: rebuild, converge, optimize, replay, and sample that period independently. The lifecycle
 map is rejected rather than partially emitted if a period is stale, unconverged, non-finite, incompletely restored, or
 action-incompatible. Its transitions remain sampled advisory evidence, not a continuous forecast or operating approval.
-Schema-v7 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
+Schema-v8 lifecycle diagnostics also compare complete `operating_region_transitions` rows for matching slice axes.
 They report exact retained, removed, and added sampled events; event identity includes action semantics, endpoints,
 outcomes, feasibility, and constraint layers. External integrations must preserve these rows verbatim and must not
 interpolate a discrete route event or infer an unsampled continuous boundary.
 They also compare complete boundary-refinement receipts; changing a tolerance, midpoint, recovery flag,
 terminal bracket, endpoint constraint/headroom row, or status is an evidence change rather than a
-numerically equivalent migration. The production guard continues to read schemas v1-v6 for historical
-evidence, while v7 additionally requires each period's schema-v2 cross-slice summary and reconstructs
-its exact grouping, counts, ordering, threshold, and representative rows.
+numerically equivalent migration. Schema v8 then compares the exact ranked rejecting/near-active identity set between
+adjacent periods. Classification, source, qualified name, applicable limit, unit, limit role, and provenance define an
+identity; rank and occurrence counts do not. External consumers can therefore report emergence, disappearance, or a
+classification/basis change without comparing physical margins across units. The production guard continues to read
+schemas v1-v7 for historical evidence, while v8 additionally reconstructs every identity delta from each period's
+schema-v2 summary after validating its grouping, counts, ordering, threshold, and representative rows.
 
 The block also carries ordered `accepted_action_ids` beside `accepted_candidate_values`. Attach it to
 the proposal as `accepted_point_envelope_evidence` and set
