@@ -30,6 +30,28 @@ the [two-fluid model description](../process/TWOFLUIDPIPE_MODEL.md).
 For implementation review, see the
 [thermodynamic initialization skill](../../.github/skills/neqsim-thermodynamic-initialization/SKILL.md).
 
+## Repeated evaluations and performance
+
+Every evaluation checks both current bulk states and their compositions. Validation
+does not allocate a phase-index array and evaluates each phase's molar-mass sum once.
+These values are local to the call: direct phase edits, reflashes and density-model
+changes must still be checked on the next evaluation. Density refresh, physical-domain
+checks and profile-convergence requirements remain enabled.
+
+`SurfaceTensionPerformanceBenchmarkTest` is an opt-in profiling harness for two-component
+and fourteen-component gas-oil mixtures, all three interfaces in a gas-oil-water fluid,
+repeated flash/property calculations, and fluid cloning. It reports median timings
+after warmup without imposing machine-dependent timing assertions on CI:
+
+```bash
+./mvnw test -Dtest=SurfaceTensionPerformanceBenchmarkTest -DexcludedTestGroups=
+```
+
+For revision comparisons, run each scenario in separate JVMs, alternate revision order
+and compare several forks on an otherwise idle machine. Check the reported calculated
+values as well as timings; clone independence and fresh density values are required
+even when their initialization adds work.
+
 ## Units and phase identity
 
 `getSurfaceTension(int, int)` and the `SystemInterface.getInterfacialTension(...)`

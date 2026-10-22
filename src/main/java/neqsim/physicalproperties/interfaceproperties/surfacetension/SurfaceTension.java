@@ -116,30 +116,47 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
         || interface2 >= system.getNumberOfPhases() || interface1 == interface2) {
       throw new IllegalArgumentException("Surface tension requires two distinct active phase indices");
     }
-    for (int index : new int[] {interface1, interface2}) {
-      PhaseInterface phase = system.getPhase(index);
-      if (!Double.isFinite(phase.getTemperature()) || phase.getTemperature() <= 0.0
-          || !Double.isFinite(phase.getPressure()) || phase.getPressure() <= 0.0
-          || !Double.isFinite(phase.getMolarVolume()) || phase.getMolarVolume() <= 0.0
-          || !Double.isFinite(phase.getMolarMass()) || phase.getMolarMass() <= 0.0) {
-        throw new IllegalStateException("Invalid bulk state for surface tension in phase " + index);
-      }
-      if (phase instanceof PhaseEosInterface) {
-        GTSurfaceTensionUtils.validateState(phase);
-      }
-      double sum = 0.0;
-      for (int i = 0; i < phase.getNumberOfComponents(); i++) {
-        double fraction = phase.getComponent(i).getx();
-        if (!Double.isFinite(fraction) || fraction < 0.0) {
-          throw new IllegalStateException("Invalid bulk composition for surface tension in phase " + index);
-        }
-        sum += fraction;
-      }
-      if (!Double.isFinite(sum) || Math.abs(sum - 1.0) > 1e-6) {
-        throw new IllegalStateException("Bulk composition is not normalized for surface tension in phase " + index);
-      }
-    }
+    validatePhase(interface1);
+    validatePhase(interface2);
     return true;
+  }
+
+  /**
+   * Checks one bulk phase without temporary arrays or repeated component sums.
+   *
+   * @param index active phase index
+   * @throws IllegalStateException if the bulk state or composition is invalid
+   */
+  private void validatePhase(int index) {
+    PhaseInterface phase = system.getPhase(index);
+    if (!isPositiveFinite(phase.getTemperature()) || !isPositiveFinite(phase.getPressure())
+        || !isPositiveFinite(phase.getMolarVolume()) || !isPositiveFinite(phase.getMolarMass())) {
+      throw new IllegalStateException("Invalid bulk state for surface tension in phase " + index);
+    }
+    if (phase instanceof PhaseEosInterface) {
+      GTSurfaceTensionUtils.validateState(phase);
+    }
+    double sum = 0.0;
+    for (int i = 0; i < phase.getNumberOfComponents(); i++) {
+      double fraction = phase.getComponent(i).getx();
+      if (!Double.isFinite(fraction) || fraction < 0.0) {
+        throw new IllegalStateException("Invalid bulk composition for surface tension in phase " + index);
+      }
+      sum += fraction;
+    }
+    if (!Double.isFinite(sum) || Math.abs(sum - 1.0) > 1e-6) {
+      throw new IllegalStateException("Bulk composition is not normalized for surface tension in phase " + index);
+    }
+  }
+
+  /**
+   * Tests one scalar bulk property without reading it twice.
+   *
+   * @param value bulk property value
+   * @return whether the value is finite and positive
+   */
+  private static boolean isPositiveFinite(double value) {
+    return Double.isFinite(value) && value > 0.0;
   }
 
   /**
