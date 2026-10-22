@@ -175,7 +175,7 @@ with a 200 dpi crop.
 ## Validation checks (all must be PASS or explained WARN)
 
 Basis complete; standards register complete and no overclaim; standard conditions match; every stream
-and unit has results for every case; topology and unique labels; composition sums (overall and per
+and unit has results for every case; topology and unique labels; **connectivity (`TOPO-CONNECTIVITY`)**; composition sums (overall and per
 phase); raw phase-fraction normalisation (WARN); zero-flow/undefined compositions shown n/a (WARN);
 overall / area / unit balances; every stream and tag on a PFD, nothing extra; no layout warnings; BFD
 present; exports complete (component-flow rows = streams x components x cases); no placeholder text;

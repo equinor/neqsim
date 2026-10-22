@@ -19,6 +19,7 @@ import time
 
 import psr_balances
 import psr_basis
+import psr_connectivity
 import psr_diagrams
 import psr_extract
 import psr_report
@@ -55,6 +56,8 @@ def default_equipment_data(data, case):
             lines.append("dP = %s bar" % psr_extract.fmt_value(r["dp_bar"], 3))
         if lines:
             out[u["tag"]] = lines
+    for tag, notes in psr_connectivity.diagram_notes(psr_connectivity.audit_connectivity(data)).items():
+        out[tag] = list(out.get(tag, [])) + notes
     return out
 
 
@@ -117,6 +120,7 @@ def run_pipeline(data, basis, standards, out_dir, use_word=True, max_units_per_s
 
     data_dir = os.path.join(out_dir, "data")
     exports = psr_extract.write_outputs(data, data_dir)
+    psr_connectivity.write_audit(psr_connectivity.audit_connectivity(data), data_dir)
     lap("exports")
     balances = psr_balances.compute_balances(data, tolerances or basis.get("tolerances"))
     with open(os.path.join(data_dir, "balances.json"), "w", encoding="utf-8") as fh:

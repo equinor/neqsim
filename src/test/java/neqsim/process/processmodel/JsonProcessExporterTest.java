@@ -3,6 +3,7 @@ package neqsim.process.processmodel;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
@@ -17,11 +18,13 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.manifold.Manifold;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.separator.Separator;
@@ -673,6 +676,66 @@ class JsonProcessExporterTest {
     assertEquals(0.25, rebuilt.getWegsteinQMax(), 1.0e-12);
     assertEquals(4, rebuilt.getWegsteinDelayIterations());
     assertEquals("flow rate", rebuilt.getDownstreamProperty().get(0));
+  }
+
+  @Test
+  void testColumnFeedsAndColumnOutletRecycleSurviveRoundTrip() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 20.0);
+    fluid.addComponent("ethane", 0.20);
+    fluid.addComponent("propane", 0.40);
+    fluid.addComponent("n-butane", 0.40);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    Stream sideFeed = new Stream("side feed", fluid.clone());
+    sideFeed.setFlowRate(500.0, "kg/hr");
+
+    DistillationColumn column = new DistillationColumn("col", 4, true, true);
+    Mixer mixer = new Mixer("mix");
+    mixer.addStream(feed);
+    column.addFeedStream(mixer.getOutletStream(), 2);
+    column.addFeedStream(sideFeed, 3);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sideFeed);
+    process.add(mixer);
+    process.add(column);
+    process.run();
+
+    Recycle recycle = new Recycle("liquid recycle");
+    recycle.addStream(column.getLiquidOutStream());
+    mixer.addStream(recycle.getOutletStream());
+    process.add(recycle);
+
+    JsonProcessExporter exporter = new JsonProcessExporter();
+    JsonObject root = JsonParser.parseString(exporter.toJson(process)).getAsJsonObject();
+    assertTrue(exporter.getExportWarnings().isEmpty(), "No connection may be dropped: " + exporter.getExportWarnings());
+    JsonArray units = root.getAsJsonArray("process");
+    JsonObject columnJson = null;
+    JsonObject recycleJson = null;
+    for (int i = 0; i < units.size(); i++) {
+      JsonObject unit = units.get(i).getAsJsonObject();
+      if ("col".equals(unit.get("name").getAsString())) {
+        columnJson = unit;
+      } else if ("liquid recycle".equals(unit.get("name").getAsString())) {
+        recycleJson = unit;
+      }
+    }
+    assertNotNull(columnJson);
+    assertNotNull(recycleJson);
+    assertEquals(2, columnJson.getAsJsonArray("inlets").size(), "Both column feeds must be exported");
+    assertEquals("col.liquidOut", recycleJson.get("inlet").getAsString(),
+        "Recycle must be tied to the column liquid outlet");
+
+    SimulationResult result = new JsonProcessBuilder().build(exporter.toJson(process));
+    assertTrue(result.isSuccess(), "Column recycle process should rebuild: " + result.toJson());
+    DistillationColumn rebuiltColumn = (DistillationColumn) result.getProcessSystem().getUnit("col");
+    Recycle rebuiltRecycle = (Recycle) result.getProcessSystem().getUnit("liquid recycle");
+    assertEquals(2, rebuiltColumn.getInletStreams().size());
+    assertEquals(1, rebuiltRecycle.getInletStreams().size());
+    assertSame(rebuiltColumn.getLiquidOutStream(), rebuiltRecycle.getInletStreams().get(0));
   }
 
   @Test
