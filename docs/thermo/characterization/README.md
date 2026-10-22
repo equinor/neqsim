@@ -3,7 +3,6 @@ title: "Characterization Package"
 description: "Petroleum TBP, plus-fraction, assay, lumping, asphaltene, and pseudo-component characterization in NeqSim."
 ---
 
-# Characterization Package
 
 The `neqsim.thermo.characterization` package converts petroleum assay, TBP, and plus-fraction information into pseudo-components suitable for NeqSim equations of state and process calculations.
 

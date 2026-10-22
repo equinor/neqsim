@@ -3,7 +3,6 @@ title: Process Optimization Framework
 description: "Entry point for NeqSim process optimization documentation: optimizer selection, getting started, and verified code patterns."
 ---
 
-# Process Optimization Framework
 
 This page is the landing page for NeqSim process optimization. Use it to find the right optimizer quickly and start with verified code patterns for `ProcessSystem` and `ProcessModel` optimization workflows.
 

@@ -24,7 +24,7 @@ HTML_LINK = re.compile(r'href=["\']([^"\']+)["\']')
 
 def _landing_pages() -> tuple[Path, ...]:
     pages = [DOCS / "index.md", DOCS / "README.md"]
-    for directory in DOCS.iterdir():
+    for directory in DOCS.rglob("*"):
         if not directory.is_dir():
             continue
         for name in ("index.md", "README.md"):
@@ -94,7 +94,7 @@ def _target_candidates(source: Path, target: str) -> tuple[Path, ...]:
 
 def test_top_level_landing_metadata_and_rendered_titles() -> None:
     pages = _landing_pages()
-    assert len(pages) == 51
+    assert len(pages) == 86
     assert DOCS / "rfcs" / "index.md" in pages
     for page in pages:
         text, _title, description = _front_matter(page)
