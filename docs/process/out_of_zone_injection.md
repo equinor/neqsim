@@ -79,6 +79,14 @@ The containment check uses: net pressure = BHP - fracture pressure. If net press
 
 The `InjectionWellModel` provides rate allocation across multiple zones based on their individual injectivity indices, plus thermal stress effects on effective fracture pressure.
 
+This is a steady water-injection screening calculation. For each zone it evaluates the radial
+Darcy coefficient in m3/s/Pa and converts it to the public Sm3/day/bar result basis with
+`86400 s/day * 100000 Pa/bar`. The reported standard-volume label is the established API contract;
+the model does not perform a PVT/formation-volume-factor conversion. Pressure-dependent properties,
+relative permeability, crossflow, reservoir transients and fracture growth require separate qualified
+models. Multi-zone results produced before the dimensional correction in #4228 were lower by a factor
+of `1e10` and must be recalculated rather than reused.
+
 ### Zone Allocation
 
 ```java

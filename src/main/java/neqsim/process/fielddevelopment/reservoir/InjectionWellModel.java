@@ -17,6 +17,14 @@ import java.util.List;
  * <li><b>Skin Factor Effects:</b> Near-wellbore damage or stimulation</li>
  * </ul>
  *
+ * <p>
+ * The multi-zone calculation is a water-injection screening model. It evaluates each zone with the radial Darcy
+ * equation using the configured formation-water viscosity and reports the resulting coefficient in Sm3/day/bar. The
+ * conversion from m3/s/Pa multiplies by both 86400 s/day and 100000 Pa/bar. No pressure-dependent fluid properties,
+ * formation volume factor, relative permeability, crossflow, transient reservoir response or fracture growth is
+ * included.
+ * </p>
+ *
  * <h2>Injectivity Index</h2>
  * <p>
  * The injectivity index (II) relates injection rate to bottomhole pressure:
@@ -1001,9 +1009,9 @@ public class InjectionWellModel implements Serializable {
     // II = 2π k h / (μ × (ln(re/rw) + S)) in SI (m³/s/Pa)
     double iiSI = 2.0 * Math.PI * kSI * zone.thickness / (viscosity * (lnRatio + zone.skinFactor));
 
-    // Convert to Sm3/day/bar
-    // 1 m³/s/Pa = 86400 / 1e5 = 0.864 Sm3/day/bar
-    return iiSI * 86400.0 / 1e5;
+    // Convert m3/s/Pa to Sm3/day/bar. A one-bar pressure difference is 1e5 Pa,
+    // so the rate per bar is larger than the rate per Pa by 1e5.
+    return iiSI * 86400.0 * 1e5;
   }
 
   /**
