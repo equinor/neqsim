@@ -44,6 +44,7 @@ This script AUTO-READS data from the task folder:
     - study_config.yaml                    -> defines depth, notebook plan, quality gates
   - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
   - results.json (task root)               -> populates Results + Validation
+  - results.json "lifecycle_envelope_evidence" -> guarded per-period envelope evidence
   - figures/*.png                          -> embeds all plots
   - results.json "equations"               -> renders equations (KaTeX/images)
   - results.json "figure_captions"         -> custom captions for figures
@@ -70,6 +71,7 @@ import json
 import base64
 import hashlib
 import io
+import math
 import shutil
 import sqlite3
 import subprocess
@@ -2308,6 +2310,276 @@ def format_reproducibility_text(results):
         text += "\n\n**{}**\n- results.json SHA-256 {}\u2026; report generator {}\u2026".format(
             _t("Report build"), stamp["results"], stamp["generator"])
     return text
+
+
+_LIFECYCLE_IDENTITY_FIELDS = (
+    "classification", "source", "qualified_constraint_name", "applicable_limit",
+    "physical_unit", "applicable_limit_role", "applicable_limit_provenance",
+)
+
+
+def _report_number(value):
+    """Return true only for finite report-facing numbers (booleans are not numbers)."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except OverflowError:
+        return False
+
+
+def _report_text(value):
+    """Return true only for non-empty report-facing text."""
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _md_cell(value):
+    """Escape one value for a compact Markdown table cell."""
+    return str(value if value is not None else "-").replace("|", "/").replace("\n", " ")
+
+
+def _constraint_identity(row):
+    """Return the exact schema-v8 identity subset from one ranked summary row."""
+    return {field: row.get(field) for field in _LIFECYCLE_IDENTITY_FIELDS}
+
+
+def _exact_report_difference(first, second):
+    """Return exact ordered rows in first but not second, retaining multiplicity."""
+    remaining = list(second)
+    difference = []
+    for row in first:
+        if row in remaining:
+            remaining.remove(row)
+        else:
+            difference.append(row)
+    return difference
+
+
+def _validate_representative_constraint(entry, representative, feasible):
+    """Validate one exact representative row against its ranked identity and class."""
+    if not isinstance(representative, dict):
+        return False
+    if representative.get("feasible") is not feasible:
+        return False
+    if any(representative.get(field) != entry.get(field) for field in (
+            "source", "qualified_constraint_name", "applicable_limit", "physical_unit",
+            "applicable_limit_role", "applicable_limit_provenance")):
+        return False
+    return all(_report_number(representative.get(field)) for field in (
+        "current_value", "physical_margin", "normalized_margin"))
+
+
+def _validate_lifecycle_report_evidence(evidence, expected_cycle_id=None):
+    """Validate the report-facing schema-v8 subset and independently replay identity deltas."""
+    reasons = []
+    if not isinstance(evidence, dict):
+        return ["evidence is not an object"]
+    if evidence.get("schema_version") != 8:
+        reasons.append("schema_version must be 8")
+    if evidence.get("advisory") is not True:
+        reasons.append("advisory flag is missing")
+    if not _report_text(evidence.get("cycle_id")):
+        reasons.append("cycle_id is missing")
+    elif expected_cycle_id and evidence.get("cycle_id") != expected_cycle_id:
+        reasons.append("cycle_id does not match the promoted current-best cycle")
+    if not all(_report_text(evidence.get(field)) for field in (
+            "lifecycle_study_id", "lifecycle_study_name", "lifecycle_study_provenance", "time_unit")):
+        reasons.append("lifecycle identity, provenance, or time unit is incomplete")
+    requested = evidence.get("requested_point_count")
+    completed = evidence.get("completed_point_count")
+    if (not _report_number(requested) or not _report_number(completed)
+            or int(requested) != requested or int(completed) != completed
+            or requested < 1 or requested != completed):
+        reasons.append("sampled lifecycle points are incomplete")
+    if (not _report_number(evidence.get("total_evaluation_count"))
+            or evidence.get("total_evaluation_count") < 1
+            or not _report_number(evidence.get("envelope_runtime_seconds"))
+            or evidence.get("envelope_runtime_seconds") < 0):
+        reasons.append("evaluation count or runtime is invalid")
+
+    periods = evidence.get("periods")
+    if (not isinstance(periods, list) or not periods
+            or evidence.get("period_count") != len(periods)):
+        reasons.append("period_count does not match the period evidence")
+        return reasons
+    period_identities = []
+    previous_elapsed = None
+    seen_period_ids = set()
+    for index, period in enumerate(periods):
+        prefix = "period {}".format(index + 1)
+        if not isinstance(period, dict):
+            reasons.append(prefix + " is not an object")
+            period_identities.append([])
+            continue
+        period_id = period.get("period_id")
+        elapsed = period.get("elapsed_time")
+        if not _report_text(period_id) or period_id in seen_period_ids:
+            reasons.append(prefix + " has a missing or duplicate period_id")
+        else:
+            seen_period_ids.add(period_id)
+        if (not _report_text(period.get("period_name"))
+                or not _report_text(period.get("configuration_provenance"))):
+            reasons.append(prefix + " has incomplete report metadata")
+        if (not _report_number(elapsed) or elapsed < 0
+                or (previous_elapsed is not None and elapsed <= previous_elapsed)):
+            reasons.append(prefix + " elapsed_time is not strictly increasing")
+        else:
+            previous_elapsed = elapsed
+        if period.get("time_unit") != evidence.get("time_unit"):
+            reasons.append(prefix + " time unit does not match the lifecycle")
+        envelope = period.get("envelope_evidence")
+        if not isinstance(envelope, dict) or envelope.get("schema_version") != 2:
+            reasons.append(prefix + " is missing schema-v2 envelope evidence")
+            period_identities.append([])
+            continue
+        slices = envelope.get("slices")
+        if (not isinstance(slices, list) or not slices
+                or any(not isinstance(row, dict) or row.get("complete") is not True
+                       or row.get("outcome") != "COMPLETE" for row in slices)):
+            reasons.append(prefix + " contains incomplete operating-envelope slices")
+        summary = envelope.get("cross_slice_constraint_summary")
+        ranked = summary.get("ranked_constraints") if isinstance(summary, dict) else None
+        if (not isinstance(summary, dict) or summary.get("summary_version") != 1
+                or summary.get("advisory") is not True or not isinstance(ranked, list)
+                or summary.get("ranked_constraint_count") != len(ranked)):
+            reasons.append(prefix + " has an invalid cross-slice constraint summary")
+            period_identities.append([])
+            continue
+        identities = []
+        for row_index, row in enumerate(ranked):
+            row_prefix = "{} ranked constraint {}".format(prefix, row_index + 1)
+            if (not isinstance(row, dict)
+                    or row.get("rank") != row_index + 1
+                    or row.get("classification") not in ("REJECTING", "NEAR_ACTIVE")
+                    or not all(_report_text(row.get(field)) for field in (
+                        "source", "qualified_constraint_name", "physical_unit",
+                        "applicable_limit_role", "applicable_limit_provenance"))
+                    or (row.get("applicable_limit") is not None
+                        and not _report_number(row.get("applicable_limit")))):
+                reasons.append(row_prefix + " has an incomplete identity")
+                continue
+            representative_key = ("representative_rejecting_constraint"
+                                  if row["classification"] == "REJECTING"
+                                  else "representative_feasible_constraint")
+            representative = row.get(representative_key)
+            if not _validate_representative_constraint(
+                    row, representative, row["classification"] == "NEAR_ACTIVE"):
+                reasons.append(row_prefix + " has incomplete or mismatched representative evidence")
+            identity = _constraint_identity(row)
+            if identity in identities:
+                reasons.append(row_prefix + " duplicates an exact identity")
+            identities.append(identity)
+        period_identities.append(identities)
+
+    if expected_cycle_id and expected_cycle_id not in seen_period_ids:
+        reasons.append("promoted current-best cycle is missing from lifecycle periods")
+
+    changes = evidence.get("period_change_diagnostics")
+    if not isinstance(changes, list) or len(changes) != max(0, len(periods) - 1):
+        reasons.append("period_change_diagnostics does not match adjacent periods")
+        return reasons
+    for index, change in enumerate(changes):
+        prefix = "period change {}".format(index + 1)
+        if not isinstance(change, dict):
+            reasons.append(prefix + " is not an object")
+            continue
+        removed = _exact_report_difference(period_identities[index], period_identities[index + 1])
+        added = _exact_report_difference(period_identities[index + 1], period_identities[index])
+        retained = len(period_identities[index]) - len(removed)
+        if (change.get("from_period_id") != periods[index].get("period_id")
+                or change.get("to_period_id") != periods[index + 1].get("period_id")
+                or change.get("from_ranked_constraint_identity_count") != len(period_identities[index])
+                or change.get("to_ranked_constraint_identity_count") != len(period_identities[index + 1])
+                or change.get("retained_ranked_constraint_identity_count") != retained
+                or change.get("removed_ranked_constraint_identities") != removed
+                or change.get("added_ranked_constraint_identities") != added):
+            reasons.append(prefix + " identity migration does not reconstruct from period summaries")
+    return reasons
+
+
+def _promoted_cycle_id():
+    """Return the reviewed current-best source cycle when this is a living task."""
+    path = os.path.join(TASK_DIR, "continuous", "baseline", "baseline.json")
+    try:
+        with open(path, "r", encoding="utf-8-sig") as handle:
+            baseline = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    return baseline.get("source_cycle") if isinstance(baseline, dict) else None
+
+
+def _identity_text(identity):
+    """Render one exact identity without comparing physical margins across units."""
+    limit = identity.get("applicable_limit")
+    limit_text = _fmt_number(limit) if _report_number(limit) else "not applicable"
+    return "{} `{}` — {} {}, role {}, source {}; basis: {}".format(
+        identity.get("classification"), identity.get("qualified_constraint_name"),
+        limit_text, identity.get("physical_unit") or "", identity.get("applicable_limit_role"),
+        identity.get("source"), identity.get("applicable_limit_provenance"))
+
+
+def format_lifecycle_envelope_text(results, expected_cycle_id=None):
+    """Render guarded schema-v8 lifecycle evidence for current-best and final reports."""
+    evidence = (results or {}).get("lifecycle_envelope_evidence")
+    if evidence is None:
+        return ""
+    reasons = _validate_lifecycle_report_evidence(evidence, expected_cycle_id)
+    if reasons:
+        return ("**Lifecycle evidence withheld.** The report did not accept this evidence because: {}. "
+                "No bottleneck, headroom, or identity-migration claim is rendered."
+                .format("; ".join(reasons)))
+
+    lines = [
+        "**Evidence basis.** {} (`{}`), cycle `{}`; {} complete sampled point(s), {} model evaluation(s), "
+        "runtime {} s. {}".format(
+            evidence["lifecycle_study_name"], evidence["lifecycle_study_id"], evidence["cycle_id"],
+            evidence["completed_point_count"], evidence["total_evaluation_count"],
+            _fmt_number(evidence["envelope_runtime_seconds"]), evidence["lifecycle_study_provenance"]),
+        "",
+        "Rows below retain exact per-period engineering units and representative physical headroom. "
+        "Rank applies only inside one period; margins are never ranked or compared across unlike units.",
+        "",
+        "| Period | Time | Class | Exact constraint | Representative value | Physical headroom | Limit basis |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for period in evidence["periods"]:
+        summary = period["envelope_evidence"]["cross_slice_constraint_summary"]
+        ranked = summary["ranked_constraints"]
+        if not ranked:
+            lines.append("| {} | {} {} | - | No rejecting or near-active identity | - | - | {} |".format(
+                _md_cell(period["period_name"]), _fmt_number(period["elapsed_time"]),
+                _md_cell(period["time_unit"]), _md_cell(period["configuration_provenance"])))
+            continue
+        for row in ranked:
+            representative = row[("representative_rejecting_constraint"
+                                  if row["classification"] == "REJECTING"
+                                  else "representative_feasible_constraint")]
+            lines.append("| {} | {} {} | {} | `{}` | {} {} | {} {} | {}: {} {}; {} |".format(
+                _md_cell(period["period_name"]), _fmt_number(period["elapsed_time"]),
+                _md_cell(period["time_unit"]), row["classification"],
+                _md_cell(row["qualified_constraint_name"]),
+                _fmt_number(representative["current_value"]), _md_cell(row["physical_unit"]),
+                _fmt_number(representative["physical_margin"]), _md_cell(row["physical_unit"]),
+                _md_cell(row["applicable_limit_role"]),
+                _fmt_number(row["applicable_limit"]) if row["applicable_limit"] is not None else "n/a",
+                _md_cell(row["physical_unit"]), _md_cell(row["applicable_limit_provenance"])))
+
+    lines += ["", "**Exact adjacent-period identity migration.** Classification or limit-basis changes "
+              "appear as one removed and one added identity; this is descriptive evidence, not causal attribution."]
+    for change in evidence["period_change_diagnostics"]:
+        lines += ["", "- **{} → {}:** {} retained, {} removed, {} added.".format(
+            _md_cell(change["from_period_id"]), _md_cell(change["to_period_id"]),
+            change["retained_ranked_constraint_identity_count"],
+            len(change["removed_ranked_constraint_identities"]),
+            len(change["added_ranked_constraint_identities"]))]
+        lines += ["  - Removed: {}".format(_identity_text(identity))
+                  for identity in change["removed_ranked_constraint_identities"]]
+        lines += ["  - Added: {}".format(_identity_text(identity))
+                  for identity in change["added_ranked_constraint_identities"]]
+    lines += ["", "**Qualification boundary.** This is exact sampled/refined advisory evidence. It is not a "
+              "continuous forecast, shadow price, causal diagnosis, equipment qualification, operating approval, "
+              "or permission to relax a physical constraint."]
+    return "\n".join(lines)
 
 
 def _load_final_report_metadata():
@@ -5994,6 +6266,15 @@ def build_sections(results, task_spec, study_config_warnings=None, study_config=
         "has_figures": True,
     })
     next_section_num += 1
+
+    lifecycle_text = format_lifecycle_envelope_text(results, _promoted_cycle_id())
+    if lifecycle_text:
+        sections.append({
+            "heading": "{}. Lifecycle Operating Envelope".format(next_section_num),
+            "content": lifecycle_text,
+            "has_markdown": True,
+        })
+        next_section_num += 1
 
     # Discussion (auto-populated from results.json figure_discussion)
     if results and results.get("figure_discussion"):
