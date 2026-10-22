@@ -19,6 +19,13 @@ FIELD_LIFECYCLE_CASE = DOCS.parent / (
 FIELD_LIFECYCLE_TEST = DOCS.parent / (
     "src/test/java/neqsim/process/fielddevelopment/lifecycle/NorwegianOilFieldLifecycleTest.java"
 )
+PRESSURE_MONITORING_PAGE = DOCS / "safety/PRESSURE_MONITORING_ESD.md"
+ESD_BLOWDOWN_EXAMPLE = DOCS.parent / (
+    "src/test/java/neqsim/process/util/example/ESDBlowdownSystemExample.java"
+)
+ESD_BLOWDOWN_TEST = DOCS.parent / (
+    "src/test/java/neqsim/process/equipment/valve/BlowdownValveESDSystemTest.java"
+)
 SCOPE_PAGES = (
     DOCS / "examples/FieldDevelopmentWorkflow.md",
     DOCS / "fielddevelopment/API_GUIDE.md",
@@ -63,6 +70,7 @@ SCOPE_PAGES = (
     DOCS / "risk/sis-integration.md",
     DOCS / "risk/stid-tagging.md",
     DOCS / "risk/topology.md",
+    PRESSURE_MONITORING_PAGE,
 )
 
 
@@ -152,7 +160,7 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
     """Protect the frozen rotation-scope-4 documentation surface."""
 
     def test_frozen_scope_exists(self):
-        self.assertEqual(43, len(SCOPE_PAGES))
+        self.assertEqual(44, len(SCOPE_PAGES))
         for page in SCOPE_PAGES:
             with self.subTest(page=page):
                 self.assertTrue(page.is_file())
@@ -213,7 +221,6 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
                         "Unresolved repository-relative target",
                     )
 
-
     def test_host_tie_in_nameplate_quickstart_is_executable(self):
         page = HOST_TIE_IN_PAGE.read_text(encoding="utf-8")
         section = page.split("## Nameplate Ullage Example", 1)[1].split(
@@ -269,6 +276,49 @@ class EngineeringSafetyFieldDocumentationContractTest(unittest.TestCase):
         ):
             with self.subTest(regression_contract=regression_contract):
                 self.assertIn(regression_contract, regression)
+
+    def test_pressure_monitoring_esd_has_executable_source_evidence(self):
+        page = PRESSURE_MONITORING_PAGE.read_text(encoding="utf-8")
+        example = ESD_BLOWDOWN_EXAMPLE.read_text(encoding="utf-8")
+        regression = ESD_BLOWDOWN_TEST.read_text(encoding="utf-8")
+
+        self.assertNotIn("System.out", page)
+        self.assertNotIn("System.err", page)
+        for source_link in (
+            "../../src/test/java/neqsim/process/util/example/"
+            "ESDBlowdownSystemExample.java",
+            "../../src/test/java/neqsim/process/equipment/valve/"
+            "BlowdownValveESDSystemTest.java",
+        ):
+            with self.subTest(source_link=source_link):
+                self.assertIn(source_link, page)
+
+        for source_contract in (
+            "esdButton.push();",
+            "gasSplitter.setSplitFactors(new double[] {0.0, 1.0});",
+            "separator.setCalculateSteadyState(false);",
+            "separator.runTransient(timeStep, java.util.UUID.randomUUID());",
+            "flare.updateCumulative(timeStep);",
+            'double currentPressure = separator.getGasOutStream().getPressure("bara");',
+            "pressureAtEnd = currentPressure;",
+        ):
+            with self.subTest(source_contract=source_contract):
+                self.assertIn(source_contract, example)
+
+        for regression_contract in (
+            "void testPressureReliefViaBlowdown()",
+            'assertTrue(maxPressure > initialPressure,',
+            'assertTrue(finalPressure < pressureAtEsdActivation,',
+            'assertTrue(hpBdValve.isActivated(),',
+            'assertTrue(hpFlare.getCumulativeGasBurned("kg") > 0,',
+        ):
+            with self.subTest(regression_contract=regression_contract):
+                self.assertIn(regression_contract, regression)
+
+        self.assertIn(
+            "./mvnw test -Dtest=BlowdownValveESDSystemTest#testPressureReliefViaBlowdown",
+            page,
+        )
 
 
 if __name__ == "__main__":
