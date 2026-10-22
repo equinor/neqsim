@@ -57,15 +57,18 @@ class TPflashFixedCompositionRootReuseTest {
       SystemInterface counted = withCloneCounter(fluid, cloneAttempts, false);
       TPflash flash = new TPflash(counted);
 
-      Method conservativeGibbs = TPflash.class.getDeclaredMethod("conservativeNeutralTwoPhaseGibbsEnergy");
+      Method conservativeGibbs =
+          TPflash.class.getDeclaredMethod("conservativeNeutralTwoPhaseGibbsEnergy");
       conservativeGibbs.setAccessible(true);
       assertTrue(Double.isNaN((Double) conservativeGibbs.invoke(flash)));
 
-      Method finalRepair = TPflash.class.getDeclaredMethod("repairInvalidMultiphaseHydrocarbonEndpoint");
+      Method finalRepair =
+          TPflash.class.getDeclaredMethod("repairInvalidMultiphaseHydrocarbonEndpoint");
       finalRepair.setAccessible(true);
       finalRepair.invoke(flash);
 
-      assertEquals(0, cloneAttempts.get(), "Balanced model " + model + " must not clone phase roots");
+      assertEquals(0, cloneAttempts.get(),
+          "Balanced model " + model + " must not clone phase roots");
       assertArrayEquals(original, snapshot(fluid), 0.0);
     }
   }

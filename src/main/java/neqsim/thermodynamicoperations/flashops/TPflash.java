@@ -4052,10 +4052,8 @@ public class TPflash extends Flash {
     double originalSecondBeta = system.getBeta(1);
     SystemInterface candidate = system.clone();
     try {
-      if (requiresAmountRepair) {
-        candidate.setBeta(0, repairedBetas[0]);
-        candidate.setBeta(1, repairedBetas[1]);
-      }
+      candidate.setBeta(0, repairedBetas[0]);
+      candidate.setBeta(1, repairedBetas[1]);
       candidate.init(1);
       if (candidate.getPhase(0).getType() != system.getPhase(0).getType()
           || candidate.getPhase(1).getType() != system.getPhase(1).getType()
