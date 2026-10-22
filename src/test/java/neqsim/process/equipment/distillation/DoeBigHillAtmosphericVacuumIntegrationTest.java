@@ -94,9 +94,14 @@ public class DoeBigHillAtmosphericVacuumIntegrationTest {
 
   /**
    * Sweep the vacuum reboiler temperature without mutating the connected atmospheric-bottoms handoff.
+   *
+   * <p>
+   * This connected screen solves one atmospheric column and two independent vacuum columns. Allow headroom for the
+   * supported Java 8 runtime while retaining a bounded integration-test timeout.
+   * </p>
    */
   @Test
-  @Timeout(value = 300, unit = TimeUnit.SECONDS)
+  @Timeout(value = 600, unit = TimeUnit.SECONDS)
   public void connectedVacuumSensitivityQualifiesIndependentPoints() {
     UUID id = UUID.randomUUID();
     Stream crudeInlet = createCrudeInlet();

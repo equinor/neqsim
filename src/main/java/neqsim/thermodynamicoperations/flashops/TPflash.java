@@ -100,6 +100,16 @@ public class TPflash extends Flash {
   private static final double CHARACTERIZED_FLUID_INVENTORY_TOLERANCE = 1.0e-8;
   /** Maximum component-balance error accepted after a dry cubic-EOS single-phase collapse. */
   private static final double COLLAPSED_HYDROCARBON_MATERIAL_BALANCE_TOLERANCE = 1.0e-10;
+  /** Maximum component-balance error accepted after neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE = 1.0e-10;
+  /** Minimum component-balance error that activates neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD = 1.0e-8;
+  /** Maximum beta correction accepted by final neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_MAXIMUM_CORRECTION = 5.0e-2;
+  /** Maximum normalization error accepted during neutral two-phase amount synchronization. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE = 1.0e-12;
+  /** Minimum phase-composition separation used to recover a unique two-phase fraction. */
+  private static final double NEUTRAL_TWO_PHASE_AMOUNT_SEPARATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted phase-composition normalization residual for an aqueous trial seed. */
   private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
@@ -676,6 +686,7 @@ public class TPflash extends Flash {
           recoverNonconservativeHydrocarbonCollapse();
         }
       }
+      repairInvalidMultiphaseHydrocarbonEndpoint();
       validateTraceWaterAqueousRepair();
       validateCharacterizedFluidPhaseInventories();
     } finally {
@@ -4013,6 +4024,315 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Evaluates Gibbs energy on a conservative clone for a neutral two-phase endpoint.
+   *
+   * <p>
+   * The live endpoint is deliberately not mutated before later root and equilibrium refinements. Stale phase amounts
+   * are synchronized on the clone when necessary, then every fixed-composition cubic-root pair is screened for strict
+   * fugacity equality. Balanced endpoints skip root trials only when their live fugacity coefficients already satisfy
+   * equilibrium. The returned value is used only to adjudicate the existing homogeneous-reference Gibbs comparison; the
+   * live numerical path remains unchanged until the final root and amount refinements.
+   * </p>
+   *
+   * @return conservative two-phase Gibbs energy, or {@link Double#NaN} when no repair is needed or the candidate fails
+   * strict acceptance
+   */
+  private double conservativeNeutralTwoPhaseGibbsEnergy() {
+    if (!isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
+      return Double.NaN;
+    }
+    double[] repairedBetas = maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD
+        ? fixedCompositionTwoPhaseFractions(system)
+        : null;
+    boolean requiresAmountRepair = isBoundedNeutralTwoPhaseAmountCorrection(system, repairedBetas);
+    if (!requiresAmountRepair
+        && maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) < PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return Double.NaN;
+    }
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    SystemInterface candidate = system.clone();
+    try {
+      if (requiresAmountRepair) {
+        candidate.setBeta(0, repairedBetas[0]);
+        candidate.setBeta(1, repairedBetas[1]);
+      }
+      candidate.init(1);
+      if (candidate.getPhase(0).getType() != system.getPhase(0).getType()
+          || candidate.getPhase(1).getType() != system.getPhase(1).getType()
+          || maximumComponentMaterialBalanceResidual(candidate) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE) {
+        return Double.NaN;
+      }
+      return minimumQualifiedFixedCompositionRootGibbsEnergy(candidate);
+    } catch (Exception ex) {
+      logger.debug("Conservative neutral two-phase Gibbs candidate failed: {}", ex.getMessage());
+      return Double.NaN;
+    } finally {
+      system.setBeta(0, originalFirstBeta);
+      system.setBeta(1, originalSecondBeta);
+    }
+  }
+
+  /**
+   * Finds the lowest-Gibbs strictly equilibrated cubic-root pair without changing the candidate.
+   *
+   * <p>
+   * Each trial retains the accepted compositions, fractions, and active phase set. Requiring component fugacity
+   * equality prevents a low single-phase root from influencing the homogeneous-reference comparison unless the pair is
+   * also a valid two-phase equilibrium state. Successfully initialized roots are reused only within this comparison;
+   * failed trials remain retryable and no root state is retained between flashes.
+   * </p>
+   *
+   * @param candidate conservative two-phase amount candidate
+   * @return minimum qualified pair Gibbs energy, or {@link Double#NaN} when no pair qualifies
+   */
+  private double minimumQualifiedFixedCompositionRootGibbsEnergy(SystemInterface candidate) {
+    double minimumGibbs = Double.NaN;
+    PhaseInterface[][] phaseRoots = new PhaseInterface[2][CUBIC_ROOT_PHASE_TYPES.length];
+    for (int firstRootIndex = 0; firstRootIndex < CUBIC_ROOT_PHASE_TYPES.length; firstRootIndex++) {
+      PhaseType firstRoot = CUBIC_ROOT_PHASE_TYPES[firstRootIndex];
+      for (int secondRootIndex = 0; secondRootIndex < CUBIC_ROOT_PHASE_TYPES.length; secondRootIndex++) {
+        PhaseType secondRoot = CUBIC_ROOT_PHASE_TYPES[secondRootIndex];
+        try {
+          if (phaseRoots[0][firstRootIndex] == null) {
+            phaseRoots[0][firstRootIndex] = initializedFixedCompositionPhaseRoot(candidate, 0, firstRoot);
+          }
+          if (phaseRoots[1][secondRootIndex] == null) {
+            phaseRoots[1][secondRootIndex] = initializedFixedCompositionPhaseRoot(candidate, 1, secondRoot);
+          }
+          PhaseInterface firstPhase = phaseRoots[0][firstRootIndex];
+          PhaseInterface secondPhase = phaseRoots[1][secondRootIndex];
+          if (maximumLogFugacityResidual(firstPhase, secondPhase) >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+            continue;
+          }
+          double pairGibbs = firstPhase.getGibbsEnergy() + secondPhase.getGibbsEnergy();
+          if (Double.isFinite(pairGibbs) && (!Double.isFinite(minimumGibbs) || pairGibbs < minimumGibbs)) {
+            minimumGibbs = pairGibbs;
+          }
+        } catch (Exception ex) {
+          logger.debug("Conservative two-phase root comparison failed for roots {}/{}: {}", firstRoot, secondRoot,
+              ex.getMessage());
+        }
+      }
+    }
+    return minimumGibbs;
+  }
+
+  /**
+   * Initializes one independent fixed-composition root for a local two-phase comparison.
+   *
+   * @param candidate conservative two-phase amount candidate
+   * @param phaseIndex active phase index to clone
+   * @param root cubic root to evaluate
+   * @return initialized phase clone with refreshed fugacity coefficients
+   */
+  private PhaseInterface initializedFixedCompositionPhaseRoot(SystemInterface candidate, int phaseIndex,
+      PhaseType root) {
+    PhaseInterface phase = candidate.getPhase(phaseIndex).clone();
+    phase.init(candidate.getTotalNumberOfMoles(), phase.getNumberOfComponents(), 1, root,
+        candidate.getBeta(phaseIndex));
+    for (int componentIndex = 0; componentIndex < phase.getNumberOfComponents(); componentIndex++) {
+      phase.getComponent(componentIndex).fugcoef(phase);
+    }
+    return phase;
+  }
+
+  /**
+   * Synchronizes final neutral two-phase amounts with the original feed after all root and equilibrium refinements.
+   *
+   * <p>
+   * A clone is qualified first. The live endpoint is changed only when its current component balance exceeds
+   * {@value #NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD}, the phase compositions define one unique lever-rule fraction
+   * for every feed component, the beta correction is bounded, and the corrected clone retains topology, composition
+   * normalization, material closure, fugacity equality, and finite Gibbs energy. Failure leaves the live endpoint
+   * unchanged.
+   * </p>
+   */
+  private void synchronizeEquilibratedNeutralPhaseAmounts() {
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    double[] candidateBetas = qualifiedNeutralTwoPhaseAmounts();
+    if (candidateBetas == null) {
+      return;
+    }
+    try {
+      system.setBeta(0, candidateBetas[0]);
+      system.setBeta(1, candidateBetas[1]);
+      system.init(1);
+      if (!isQualifiedNeutralTwoPhaseAmountState(system)) {
+        system.setBeta(0, originalFirstBeta);
+        system.setBeta(1, originalSecondBeta);
+        system.init(1);
+      }
+    } catch (Exception ex) {
+      try {
+        system.setBeta(0, originalFirstBeta);
+        system.setBeta(1, originalSecondBeta);
+        system.init(1);
+      } catch (Exception rollbackException) {
+        logger.debug("Neutral two-phase amount rollback failed: {}", rollbackException.getMessage());
+      }
+      logger.debug("Neutral two-phase amount synchronization failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Builds a strictly qualified fixed-composition amount candidate without mutating the live system.
+   *
+   * @return corrected phase fractions, or {@code null} when the endpoint is ineligible, already balanced, or fails
+   * acceptance
+   */
+  private double[] qualifiedNeutralTwoPhaseAmounts() {
+    if (!isNeutralTwoPhaseAmountSynchronizationEligible(system)
+        || maximumComponentMaterialBalanceResidual(system) <= NEUTRAL_TWO_PHASE_AMOUNT_REPAIR_THRESHOLD) {
+      return null;
+    }
+    double[] betas = fixedCompositionTwoPhaseFractions(system);
+    if (betas == null || !isBoundedNeutralTwoPhaseAmountCorrection(system, betas)) {
+      return null;
+    }
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    SystemInterface candidate = system.clone();
+    try {
+      candidate.setBeta(0, betas[0]);
+      candidate.setBeta(1, betas[1]);
+      candidate.init(1);
+      if (!isQualifiedNeutralTwoPhaseAmountState(candidate)
+          || candidate.getPhase(0).getType() != system.getPhase(0).getType()
+          || candidate.getPhase(1).getType() != system.getPhase(1).getType()) {
+        return null;
+      }
+      return new double[] {betas[0], betas[1]};
+    } catch (Exception ex) {
+      logger.debug("Neutral two-phase amount candidate failed: {}", ex.getMessage());
+      return null;
+    } finally {
+      system.setBeta(0, originalFirstBeta);
+      system.setBeta(1, originalSecondBeta);
+    }
+  }
+
+  /**
+   * Checks whether fixed-composition amount synchronization is safe for the endpoint family.
+   *
+   * @param candidate endpoint to inspect
+   * @return {@code true} for a neutral dry fluid with exactly two active phases
+   */
+  private boolean isNeutralTwoPhaseAmountSynchronizationEligible(SystemInterface candidate) {
+    return candidate.getNumberOfPhases() == 2 && !candidate.hasPhaseType(PhaseType.AQUEOUS)
+        && !candidate.isChemicalSystem() && !candidate.hasIons() && !solidCheck && !candidate.doSolidPhaseCheck()
+        && !candidate.isMultiphaseWaxCheck();
+  }
+
+  /**
+   * Checks whether the fixed-composition phase-fraction correction is sufficiently small.
+   *
+   * <p>
+   * A large difference means the endpoint is still in an internal mapped-phase representation and must be left to its
+   * established finalization path. A bounded difference distinguishes a stale final amount from a different active
+   * phase mapping.
+   * </p>
+   *
+   * @param candidate endpoint to inspect
+   * @param correctedBetas lever-rule phase fractions
+   * @return {@code true} when the proposed correction is within the final synchronization bound
+   */
+  private boolean isBoundedNeutralTwoPhaseAmountCorrection(SystemInterface candidate, double[] correctedBetas) {
+    return correctedBetas != null && correctedBetas.length == 2
+        && Math.abs(candidate.getBeta(0) - correctedBetas[0]) <= NEUTRAL_TWO_PHASE_AMOUNT_MAXIMUM_CORRECTION
+        && Math.abs(candidate.getBeta(1) - correctedBetas[1]) <= NEUTRAL_TWO_PHASE_AMOUNT_MAXIMUM_CORRECTION;
+  }
+
+  /**
+   * Recovers the unique two-phase fractions from the fixed phase compositions and original feed.
+   *
+   * @param candidate endpoint whose phase compositions are retained
+   * @return two phase fractions, or {@code null} when no unique strictly conservative split exists
+   */
+  private double[] fixedCompositionTwoPhaseFractions(SystemInterface candidate) {
+    int componentCount = candidate.getPhase(0).getNumberOfComponents();
+    double feedTotal = 0.0;
+    double firstCompositionTotal = 0.0;
+    double secondCompositionTotal = 0.0;
+    int pivotComponent = -1;
+    double maximumSeparation = 0.0;
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double feedComposition = candidate.getPhase(0).getComponent(componentIndex).getz();
+      double firstComposition = candidate.getPhase(0).getComponent(componentIndex).getx();
+      double secondComposition = candidate.getPhase(1).getComponent(componentIndex).getx();
+      if (!Double.isFinite(feedComposition) || !Double.isFinite(firstComposition)
+          || !Double.isFinite(secondComposition)) {
+        return null;
+      }
+      feedTotal += feedComposition;
+      firstCompositionTotal += firstComposition;
+      secondCompositionTotal += secondComposition;
+      double separation = Math.abs(firstComposition - secondComposition);
+      if (separation > maximumSeparation) {
+        maximumSeparation = separation;
+        pivotComponent = componentIndex;
+      }
+    }
+    if (Math.abs(feedTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || Math.abs(firstCompositionTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || Math.abs(secondCompositionTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || maximumSeparation <= NEUTRAL_TWO_PHASE_AMOUNT_SEPARATION_TOLERANCE || pivotComponent < 0) {
+      return null;
+    }
+    double firstPivot = candidate.getPhase(0).getComponent(pivotComponent).getx();
+    double secondPivot = candidate.getPhase(1).getComponent(pivotComponent).getx();
+    double firstBeta = (candidate.getPhase(0).getComponent(pivotComponent).getz() - secondPivot)
+        / (firstPivot - secondPivot);
+    double secondBeta = 1.0 - firstBeta;
+    if (!Double.isFinite(firstBeta) || !Double.isFinite(secondBeta) || firstBeta <= phaseFractionMinimumLimit
+        || secondBeta <= phaseFractionMinimumLimit || firstBeta >= 1.0 || secondBeta >= 1.0) {
+      return null;
+    }
+    for (int componentIndex = 0; componentIndex < componentCount; componentIndex++) {
+      double recoveredFeed = firstBeta * candidate.getPhase(0).getComponent(componentIndex).getx()
+          + secondBeta * candidate.getPhase(1).getComponent(componentIndex).getx();
+      if (Math.abs(candidate.getPhase(0).getComponent(componentIndex).getz()
+          - recoveredFeed) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE) {
+        return null;
+      }
+    }
+    return new double[] {firstBeta, secondBeta};
+  }
+
+  /**
+   * Checks strict conservation and equilibrium gates after a fixed-composition amount correction.
+   *
+   * @param candidate corrected endpoint
+   * @return {@code true} when every numerical acceptance gate passes
+   */
+  private boolean isQualifiedNeutralTwoPhaseAmountState(SystemInterface candidate) {
+    if (!isNeutralTwoPhaseAmountSynchronizationEligible(candidate) || !Double.isFinite(candidate.getGibbsEnergy())
+        || Math
+            .abs(candidate.getBeta(0) + candidate.getBeta(1) - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE
+        || maximumComponentMaterialBalanceResidual(candidate) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE
+        || maximumLogFugacityResidual(candidate.getPhase(0),
+            candidate.getPhase(1)) >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+      return false;
+    }
+    for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {
+      double compositionTotal = 0.0;
+      for (int componentIndex = 0; componentIndex < candidate.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double composition = candidate.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        if (!Double.isFinite(composition) || composition < 0.0 || composition > 1.0) {
+          return false;
+        }
+        compositionTotal += composition;
+      }
+      if (Math.abs(compositionTotal - 1.0) > NEUTRAL_TWO_PHASE_AMOUNT_NORMALIZATION_TOLERANCE) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Checks whether candidate phases have meaningfully different compositions.
    *
    * @param candidate candidate system to inspect
@@ -4295,8 +4615,51 @@ public class TPflash extends Flash {
    * </p>
    */
   private void rescueLowerGibbsHydrocarbonPhaseRoots() {
-    if (system.doMultiPhaseCheck() || system.getNumberOfPhases() != 2 || system.isChemicalSystem() || system.hasIons()
-        || solidCheck || system.isMultiphaseWaxCheck() || system.hasPhaseType(PhaseType.AQUEOUS)) {
+    rescueLowerGibbsHydrocarbonPhaseRoots(false);
+  }
+
+  /**
+   * Performs the lower-Gibbs hydrocarbon-root check at the final public multiphase boundary.
+   *
+   * <p>
+   * Running this check only after every internal multiphase rescue avoids changing the numerical path of the flash. The
+   * existing fixed-composition acceptance still requires a lower Gibbs energy and strict fugacity equality before any
+   * phase object is replaced.
+   * </p>
+   */
+  private void rescueFinalMultiphaseHydrocarbonRoot() {
+    if (system.doMultiPhaseCheck()) {
+      rescueLowerGibbsHydrocarbonPhaseRoots(true);
+    }
+  }
+
+  /**
+   * Repairs a final multiphase hydrocarbon endpoint with independently guarded root and amount transactions.
+   *
+   * <p>
+   * The lower-Gibbs root check retains fixed compositions and amounts. The subsequent lever-rule synchronization is
+   * independently accepted only for a bounded correction with strict final conservation and equilibrium. This preserves
+   * large mapped-phase changes for their established finalization path. Material closure alone does not establish
+   * correct cubic roots, so root qualification remains independent of amount synchronization.
+   * </p>
+   */
+  private void repairInvalidMultiphaseHydrocarbonEndpoint() {
+    if (!system.doMultiPhaseCheck() || !isNeutralTwoPhaseAmountSynchronizationEligible(system)) {
+      return;
+    }
+    rescueFinalMultiphaseHydrocarbonRoot();
+    synchronizeEquilibratedNeutralPhaseAmounts();
+  }
+
+  /**
+   * Implements the lower-Gibbs hydrocarbon-root check.
+   *
+   * @param allowMultiphaseEndpoint whether the final public multiphase boundary is eligible
+   */
+  private void rescueLowerGibbsHydrocarbonPhaseRoots(boolean allowMultiphaseEndpoint) {
+    if ((!allowMultiphaseEndpoint && system.doMultiPhaseCheck()) || system.getNumberOfPhases() != 2
+        || system.isChemicalSystem() || system.hasIons() || solidCheck || system.isMultiphaseWaxCheck()
+        || system.hasPhaseType(PhaseType.AQUEOUS)) {
       return;
     }
 
@@ -4528,7 +4891,8 @@ public class TPflash extends Flash {
     // Compare current multiphase Gibbs to the cached single-phase reference at the feed.
     // Negated > guards against NaN naturally. init(1) (from the preceding orderByDensity) is
     // sufficient — getGibbsEnergy() is used after init(1) throughout runInternal().
-    final double currentGibbs = system.getGibbsEnergy();
+    final double correctedGibbs = conservativeNeutralTwoPhaseGibbsEnergy();
+    final double currentGibbs = Double.isFinite(correctedGibbs) ? correctedGibbs : system.getGibbsEnergy();
     if (!(currentGibbs - referenceSinglePhaseGibbs > SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J)) {
       return;
     }

@@ -581,29 +581,27 @@ class TPFlashTest {
 
   /**
    * Verifies known isolated cells from the 200 by 200 methane/n-heptane PR phase map converge to a stable phase state
-   * from a cold start. Low-temperature cells should collapse to the lower-Gibbs single OIL root, while high-temperature
-   * cells remain true GAS/OIL splits.
+   * from a cold start. Low-temperature cells retain dense, conserved two-phase equilibria below the homogeneous feed
+   * Gibbs energy. A single-phase expectation at these cells concealed the stale-root and phase-amount defect.
+   * High-temperature cells remain true GAS/OIL splits.
    */
   @Test
   void testMethaneHeptaneKnownPhaseMapSpotsResolveToStablePhaseState() {
-    double[][] singleOilConditions = new double[][] {{78.5, 194.0}, {81.0, 194.0}};
+    double[][] denseSplitConditions = new double[][] {{78.5, 194.0}, {81.0, 194.0}};
     double[][] gasOilConditions = new double[][] {{186.0, 424.0}, {191.0, 418.0}};
 
-    for (int spotIndex = 0; spotIndex < singleOilConditions.length; spotIndex++) {
+    for (int spotIndex = 0; spotIndex < denseSplitConditions.length; spotIndex++) {
       SystemInterface fluid = createMethaneHeptanePhaseMapFluid();
       ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-      fluid.setPressure(singleOilConditions[spotIndex][0], "bara");
-      fluid.setTemperature(singleOilConditions[spotIndex][1], "K");
+      fluid.setPressure(denseSplitConditions[spotIndex][0], "bara");
+      fluid.setTemperature(denseSplitConditions[spotIndex][1], "K");
 
       operations.TPflash();
 
-      assertEquals(1, fluid.getNumberOfPhases(),
-          "Known methane/nC7 low-temperature spot should collapse to one phase at P="
-              + singleOilConditions[spotIndex][0] + " bara, T=" + singleOilConditions[spotIndex][1] + " K");
-      assertTrue(fluid.hasPhaseType(PhaseType.OIL),
-          "Known methane/nC7 low-temperature spot should be the lower-Gibbs oil root");
-      assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
-          "Collapsed methane/nC7 low-temperature spot should have closed phase fractions");
+      String label = "methane/nC7 dense split at P=" + denseSplitConditions[spotIndex][0] + " bara";
+      assertEquals(2, fluid.getNumberOfPhases(), label);
+      assertClosedEquilibrium(fluid, label);
+      assertLowerGibbsThanHomogeneousFeed(fluid, label);
     }
 
     for (int spotIndex = 0; spotIndex < gasOilConditions.length; spotIndex++) {
@@ -620,6 +618,30 @@ class TPFlashTest {
       assertTrue(fluid.hasPhaseType(PhaseType.OIL), "Known methane/nC7 phase-map spot should contain an oil phase");
       assertEquals(1.0, phaseFractionSum(fluid), 1.0e-10,
           "Known methane/nC7 gas-oil spot should have closed phase fractions");
+    }
+  }
+
+  /**
+   * Requires a qualified dense split to beat both homogeneous feed-root trials.
+   *
+   * @param fluid conserved two-phase equilibrium at the original feed inventory
+   * @param label assertion context
+   */
+  private void assertLowerGibbsThanHomogeneousFeed(SystemInterface fluid, String label) {
+    for (PhaseType root : new PhaseType[] {PhaseType.GAS, PhaseType.LIQUID}) {
+      SystemInterface homogeneous = fluid.clone();
+      homogeneous.setNumberOfPhases(1);
+      homogeneous.setPhaseIndex(0, 0);
+      homogeneous.setBeta(0, 1.0);
+      homogeneous.setPhaseType(0, root);
+      for (int component = 0; component < homogeneous.getPhase(0).getNumberOfComponents(); component++) {
+        homogeneous.getPhase(0).getComponent(component).setx(homogeneous.getPhase(0).getComponent(component).getz());
+      }
+      homogeneous.init(1);
+      double homogeneousGibbs = homogeneous.getGibbsEnergy();
+      assertTrue(Double.isFinite(homogeneousGibbs), label + " homogeneous " + root + " Gibbs energy");
+      assertTrue(fluid.getGibbsEnergy() < homogeneousGibbs - 1.0,
+          label + " must lower Gibbs energy by more than 1 J for the 100 mol feed against " + root);
     }
   }
 
