@@ -80,7 +80,10 @@ neqsim process-report <model> --cases <cases.yaml> --basis <basis.yaml> --out <d
 
 Without Word add `--no-word`. In a task folder the output defaults to `deliverables/process_report` and the summary is
 merged into `results.json`. Read the printed summary: validation status, readiness label, balances, timings, line
-crossings.
+crossings, and the **CONNECTIVITY** line. If it reports errors, stop and fix the wiring first (open
+`data/connectivity_audit.csv`; restore the connections in the source model or add a `wiring` list to `cases.yaml`
+using the repair candidates, confirm against the P&ID) - balances and drawings around open recycles, column feeds
+and isolated streams are not meaningful. Never "fix" a connection by guessing; state any repair in the hand-over.
 
 ### 5. LOOK at the drawings and fix them
 

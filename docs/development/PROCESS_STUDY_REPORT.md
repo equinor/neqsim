@@ -262,6 +262,20 @@ multi-area `ProcessModel`, or a module-level `model` / `process` object. `case` 
 second JVM. After the case overrides are applied the tool calls `run()` once more (`--no-rerun` skips it when
 there are no overrides).
 
+**Repairing lost connections (`wiring`).** Every run audits the topology (`data/connectivity_audit.csv`, check
+`TOPO-CONNECTIVITY`, report section 6.5). If the source model lost connections, for example an old JSON export where
+recycles have no tear stream and columns no feed, fix the source or list the missing connections in `cases.yaml`;
+they are applied to every fresh model before the overrides and the run, and are reported as a model repair:
+
+```yaml
+wiring:
+  - {unit: "sture::gas resycle", inlet: "sture::compressor gas to gas column.outlet"}
+  - {unit: "NGL column::NGL column", feed: "NGL column::ngl valve to column.outlet", tray: 5}
+```
+
+`unit` is `Area::name`; the stream is `Area::unit.port` with port `outlet`, `gasOut`, `liquidOut`, `oilOut`, `waterOut`,
+`splitN` or `outN`. Choose the stream from the repair candidates of the audit and confirm it on the P&ID.
+
 <!-- file: gas_plant_model.py -->
 ```python
 """Synthetic gas-processing example for ``neqsim process-report`` (public fixture, no real facility).
@@ -478,6 +492,7 @@ remain `FAIL`.
 | `NeqSim JSON ... did not build` | Names of the entries that were not created are listed (unknown type or inlet) |
 | `Validation: FAIL` | Open `report/validation_report.md`; fix the FAIL checks (data, basis, drawings) and re-run |
 | `BASIS-STATUS` warning | The draft basis is unconfirmed; follow section 3.3 |
+| `TOPO-CONNECTIVITY` FAIL, arrows ending in blank space, units drawn "NOT CONNECTED" | The solved model lacks connections (recycles without tear stream, columns without feed, isolated streams), typically from an old JSON export or serialized file. Open `data/connectivity_audit.csv`, restore the wiring in the source model (re-export with a current NeqSim), or add a `wiring` list to `cases.yaml` (section 4); balances around open recycles are not meaningful |
 | Mixed EOS or component warning | Areas use different equation-of-state classes or define a pseudo-component differently; state it in the basis |
 | No PDF | PDF export and field update need Microsoft Word; without it the contents carry a static list |
 | Nearly empty sheets | Long linear chains are wide and short; raise or lower `--max-units-per-sheet`, or group areas with `pfd_sheets` |

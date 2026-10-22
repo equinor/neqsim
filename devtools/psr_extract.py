@@ -174,6 +174,7 @@ def discover_topology(process):
     # First pass: stream-type units register themselves, then inlets/outlets of the rest.
     streams = []
     order = []
+    stream_unit_area = {}
 
     def register(obj):
         if reg.get(obj) is not None:
@@ -186,7 +187,7 @@ def discover_topology(process):
 
     for unit in raw_units:
         if unit["category"] == "stream":
-            register(unit["_obj"])
+            stream_unit_area[register(unit["_obj"])] = unit["area"]
             continue
         for obj in unit["_ins"]:
             register(obj)
@@ -221,7 +222,8 @@ def discover_topology(process):
     for s in streams:
         s["source"] = s["producers"][0] if s["producers"] else None
         s["destination"] = s["consumers"][0] if s["consumers"] else None
-        s["area"] = area_of.get(s["source"] or (s["consumers"][0] if s["consumers"] else ""), areas[0]["name"] if areas else "")
+        s["area"] = area_of.get(s["source"] or (s["consumers"][0] if s["consumers"] else ""),
+                                stream_unit_area.get(s["index"]) or (areas[0]["name"] if areas else ""))
         if not s["producers"] and s["consumers"]:
             s["kind"] = "feed"
         elif s["producers"] and not s["consumers"]:

@@ -11,6 +11,7 @@ import os
 import re
 
 import psr_basis
+import psr_connectivity
 import psr_draft
 
 try:  # report_kit lives in the task template package
@@ -150,6 +151,16 @@ def validate_all(data, basis, standards, balances, diagrams, docx_path=None, fac
                          "WARN" if multi else "PASS", "streams: %s" % multi[:10] if multi else "none"))
     labels = [s["label"] for s in data["streams"]]
     checks.append(_check("DATA-LABELS", "Stream labels are unique", "FAIL" if len(labels) != len(set(labels)) else "PASS", ""))
+    audit = psr_connectivity.audit_connectivity(data)
+    wired = (data.get("meta") or {}).get("wiring_applied") or []
+    names = [("%s (%s)" % (f["name"], f["code"])) for f in audit["findings"] if f["severity"] == psr_connectivity.SEVERITY_ERROR][:6]
+    checks.append(_check("TOPO-CONNECTIVITY", "Every unit is connected with streams (recycles have a tear stream, columns a feed, no isolated "
+                         "streams); drawings and stream tables match the wiring of the solved model", audit["status"],
+                         ("%d error(s), %d warning(s) %s; first: %s; repair candidates in data/connectivity_audit.csv%s" % (
+                             audit["summary"]["n_error"], audit["summary"]["n_warning"], audit["summary"]["by_code"], names,
+                             "; %d wiring repair(s) applied" % len(wired) if wired else ""))
+                         if audit["status"] != "PASS" else
+                         "all %d units connected%s" % (len(data["equipment"]), "; %d wiring repair(s) applied" % len(wired) if wired else "")))
 
     generic = [u["tag"] for u in data["equipment"] if u["category"] == "other"]
     checks.append(_check("EQ-GENERIC-SYMBOL", "Every equipment type has a dedicated schematic symbol (unknown types are drawn as a flagged generic box)",

@@ -18,6 +18,7 @@ import neqsim.process.equipment.compressor.BoundaryCurve;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.compressor.CompressorDriver;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -73,6 +74,23 @@ public class JsonProcessExporter {
   /** Map from equipment name to processed flag. */
   private final Map<String, Boolean> processed = new LinkedHashMap<String, Boolean>();
 
+  /** Connections that could not be written to the JSON during the most recent export. */
+  private final List<String> exportWarnings = new ArrayList<String>();
+
+  /**
+   * Gets the connections that could not be exported during the most recent export.
+   *
+   * <p>
+   * A unit whose inlet stream has no reference would be rebuilt without that connection (an open recycle or a column
+   * without feed), so each such case is reported instead of being dropped silently.
+   * </p>
+   *
+   * @return unmodifiable list of warning messages, empty when every inlet was exported
+   */
+  public List<String> getExportWarnings() {
+    return java.util.Collections.unmodifiableList(exportWarnings);
+  }
+
   /**
    * Exports a ProcessSystem to a JSON string that can be consumed by {@link JsonProcessBuilder#build(String)}.
    *
@@ -112,6 +130,7 @@ public class JsonProcessExporter {
     boundaryFluidRefMap.clear();
     streamUnitFluidRefMap.clear();
     processed.clear();
+    exportWarnings.clear();
 
     List<ProcessEquipmentInterface> units = process.getUnitOperations();
 
@@ -502,6 +521,14 @@ public class JsonProcessExporter {
       if (outlets != null && !outlets.isEmpty() && outlets.get(0) != null) {
         streamRefMap.put(outlets.get(0), name + ".outlet");
       }
+    } else if (unit instanceof DistillationColumn) {
+      DistillationColumn column = (DistillationColumn) unit;
+      if (column.getGasOutStream() != null) {
+        streamRefMap.put(column.getGasOutStream(), name + ".gasOut");
+      }
+      if (column.getLiquidOutStream() != null) {
+        streamRefMap.put(column.getLiquidOutStream(), name + ".liquidOut");
+      }
     } else {
       // Generic two-port equipment (Compressor, Valve, Heater, Cooler, Pump, etc.)
       List<StreamInterface> outlets = unit.getOutletStreams();
@@ -785,25 +812,29 @@ public class JsonProcessExporter {
     } else if (unit instanceof HeatExchanger) {
       exportHeatExchangerInlets(json, (HeatExchanger) unit);
     } else {
-      // Single-inlet equipment — resolve inlet stream reference
-      List<StreamInterface> inlets = unit.getInletStreams();
-      StreamInterface inlet = null;
-      if (inlets != null && !inlets.isEmpty()) {
-        inlet = inlets.get(0);
-      }
-      // Fallback: try reflection for equipment that doesn't override getInletStreams()
-      if (inlet == null) {
-        try {
-          inlet = (StreamInterface) unit.getClass().getMethod("getInletStream").invoke(unit);
-        } catch (Exception e) {
-          // no getInletStream method
-        }
-      }
-      if (inlet != null) {
+      // Single-inlet equipment — resolve inlet stream reference. Columns and recycles accept several inlets
+      // (feeds, tear streams) that the builder attaches one by one, so all of them are exported.
+      List<StreamInterface> inlets = getInletStreams(unit);
+      boolean multiInlet = unit instanceof DistillationColumn || unit instanceof Recycle;
+      JsonArray inletRefs = new JsonArray();
+      for (StreamInterface inlet : inlets) {
         String ref = streamRefMap.get(inlet);
-        if (ref != null) {
-          json.addProperty("inlet", ref);
+        if (ref == null) {
+          exportWarnings.add("Inlet stream '" + inlet.getName() + "' of unit '" + unit.getName()
+              + "' has no reference in the exported process; the connection is not exported");
+          continue;
         }
+        if (!inletRefs.contains(new com.google.gson.JsonPrimitive(ref))) {
+          inletRefs.add(ref);
+        }
+        if (!multiInlet) {
+          break;
+        }
+      }
+      if (inletRefs.size() == 1) {
+        json.addProperty("inlet", inletRefs.get(0).getAsString());
+      } else if (inletRefs.size() > 1) {
+        json.add("inlets", inletRefs);
       }
     }
 

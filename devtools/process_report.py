@@ -28,8 +28,10 @@ import time
 import process_study_report as psr
 import psr_balances
 import psr_basis
+import psr_connectivity
 import psr_draft
 import psr_extract
+import psr_wiring
 
 SOURCE_TYPES = ("python", "json", "neqsim", "data")
 DATA_SCHEMA_PREFIX = "neqsim.process_study_report.data"
@@ -162,6 +164,11 @@ def parse_cases(root):
     options = {}
     if isinstance(root, dict):
         options = dict(root.get("options") or {})
+        if root.get("wiring"):
+            try:
+                options["wiring"] = psr_wiring.validate_entries(root.get("wiring"))
+            except psr_wiring.WiringError as exc:
+                raise ReportError("cases file: %s" % exc)
         root = root.get("cases")
     if not isinstance(root, list) or not root:
         raise ReportError("cases file needs a non-empty list under 'cases'")
@@ -315,8 +322,12 @@ def apply_overrides(model, sets, case_id):
                               "compressor.outletPressure in bara" % (case_id, address, value, unit, exc, ", ".join(units)))
 
 
-def solve_case(source_type, path, case, cache, rerun=True):
-    """Build a fresh model for one case, apply the overrides and solve it."""
+def solve_case(source_type, path, case, cache, rerun=True, wiring=None):
+    """Build a fresh model for one case, apply the wiring repairs and overrides and solve it.
+
+    Returns:
+        the solved model; the wiring records applied to it are stored in ``cache["wiring_applied"]``.
+    """
     if source_type == "python":
         if "module" not in cache:
             cache["module"] = load_python_module(path)
@@ -330,29 +341,37 @@ def solve_case(source_type, path, case, cache, rerun=True):
         model = _open_neqsim(path)
     else:
         raise ReportError("source type %s cannot be solved" % source_type)
+    if wiring:
+        try:
+            cache["wiring_applied"] = psr_wiring.apply_wiring(model, wiring)
+        except psr_wiring.WiringError as exc:
+            raise ReportError("case %s: cannot apply wiring: %s" % (case["id"], exc))
     apply_overrides(model, case["set"], case["id"])
-    if rerun or case["set"] or source_type == "json":
+    if rerun or case["set"] or wiring or source_type == "json":
         model.run()
     return model
 
 
-def extract_cases(source_type, path, cases, std_t_c, std_p_bara, model_name, rerun=True, progress=None):
+def extract_cases(source_type, path, cases, std_t_c, std_p_bara, model_name, rerun=True, progress=None, wiring=None):
     """Solve and extract every case; returns the merged data set."""
     cache = {}
     datasets = []
     for case in cases:
         if progress:
             progress("case %s: build and solve" % case["id"])
-        model = solve_case(source_type, path, case, cache, rerun)
+        model = solve_case(source_type, path, case, cache, rerun, wiring)
         data = psr_extract.extract_process(model, case["id"], case["label"], std_t_c, std_p_bara, model_name=model_name)
         if not data["equipment"]:
             raise ReportError("the model has no unit operations (case %s)" % case["id"])
         datasets.append(data)
     try:
-        return psr_extract.merge_cases(datasets)
+        merged = psr_extract.merge_cases(datasets)
     except ValueError as exc:
         raise ReportError("the cases do not share one topology (%s). build(case) and the overrides may change values but "
                           "must not add or remove equipment" % exc)
+    if cache.get("wiring_applied"):
+        merged["meta"]["wiring_applied"] = cache["wiring_applied"]
+    return merged
 
 
 def load_data_source(path, cases_given, cases):
@@ -423,7 +442,12 @@ CASES_HEADER = (
     "#   'unit.property' for a ProcessSystem and 'Area::unit.property' for a ProcessModel, e.g.\n"
     "#   'feed.flowRate': [20000, kg/hr]   'export compressor.outletPressure': [95, bara]\n"
     "# parameters: free values handed to build(case) of a Python model file (case['parameters']).\n"
-    "# Topology must be identical in all cases: overrides change values, never equipment.\n")
+    "# Topology must be identical in all cases: overrides change values, never equipment.\n"
+    "# wiring: optional repair of connections the source model lost (see the connectivity audit of a first run), e.g.\n"
+    "#   wiring:\n"
+    "#     - {unit: 'sture::gas resycle', inlet: 'sture::compressor gas to gas column.outlet'}\n"
+    "#     - {unit: 'NGL column::NGL column', feed: 'NGL column::ngl valve to column.outlet', tray: 5}\n"
+    "#   Applied to every fresh model before the overrides and the run; listed in the report as a model repair.\n")
 
 
 def _dump_yaml(path, header, obj):
@@ -514,7 +538,7 @@ def run(args):
         cases = [{"id": c["id"], "label": c["label"], "set": {}, "parameters": {}} for c in data["cases"]]
     else:
         data = extract_cases(source_type, src_path, cases, std_t, std_p, model_name, rerun=not args.no_rerun,
-                             progress=None if args.quiet else say)
+                             progress=None if args.quiet else say, wiring=case_options.get("wiring"))
     t_extract = time.time() - started
     if basis is not None:
         basis_ids = sorted(str(c.get("id")) for c in basis.get("operating_cases") or [])
@@ -524,6 +548,13 @@ def run(args):
                               "and cases.yaml" % (basis_ids, data_ids))
     say("extracted %d units, %d streams, %d components, %d case(s) in %.1f s" % (
         len(data["equipment"]), len(data["streams"]), len(data["components"]), len(data["cases"]), t_extract))
+    audit = psr_connectivity.audit_connectivity(data)
+    if audit["status"] != "PASS":
+        s = audit["summary"]
+        say("CONNECTIVITY %s: %d error(s), %d warning(s) %s - see connectivity_audit.csv under data/; the drawings show these "
+            "units as not connected" % (audit["status"], s["n_error"], s["n_warning"], s["by_code"]))
+    elif data["meta"].get("wiring_applied"):
+        say("connectivity: PASS after %d wiring repair(s)" % len(data["meta"]["wiring_applied"]))
 
     standards_path = args.standards or os.path.join(psr_basis.templates_dir(), "standards_register_template.yaml")
     standards = _load_standards(standards_path)

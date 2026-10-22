@@ -28,6 +28,7 @@ from docx.oxml.ns import qn
 from docx.shared import Mm, Pt, RGBColor
 
 import psr_balances
+import psr_connectivity
 from psr_extract import fmt_value
 
 REF_RE = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
@@ -555,6 +556,34 @@ class ReportBuilder:
             self.table(["Quantity", "Case", "Kind", "Measured", "Model", "Unit", "Error %", "Tol. %", "Status"], rows,
                        caption="Model versus measured data (quoted from the preceding calibration study; not recomputed here)",
                        font=7, widths=[52, 10, 20, 17, 17, 12, 13, 11, 12])
+        self._connectivity_section()
+
+    def _connectivity_section(self):
+        audit = psr_connectivity.audit_connectivity(self.data)
+        s = audit["summary"]
+        wired = (self.data.get("meta") or {}).get("wiring_applied") or []
+        self.H("6.5 Model connectivity", 2)
+        if audit["status"] == "PASS":
+            self.P("Every unit of the model has inlet and outlet streams as required by its type; no isolated streams were found.")
+        else:
+            self.P("The connectivity audit of the solved model found %d error(s) and %d warning(s). Drawings and stream tables show the "
+                   "wiring that the model contains; units listed below are drawn with a 'not connected' note and their balances "
+                   "are not meaningful until the connections are restored. The full list with repair candidates is in "
+                   "data/connectivity_audit.csv." % (s["n_error"], s["n_warning"]), bold=True)
+            rows = [(code, str(n), psr_connectivity.CODE_TEXT[code]) for code, n in sorted(s["by_code"].items())]
+            self.table(["Finding", "Count", "Meaning"], rows, caption="Connectivity findings by type", font=7.5,
+                       widths=[40, 14, 116], align=["left", "right", "left"])
+            rows = [(f["area"], f["name"], f["code"], "; ".join("%s %s" % (c["stream"], c["label"]) for c in f["candidates"][:2]) or "-")
+                    for f in audit["findings"] if f["kind"] == "unit"][:60]
+            if rows:
+                self.table(["Area", "Unit", "Finding", "Repair candidates (unverified)"], rows,
+                           caption="Units with connectivity findings (first 60; candidates ranked by name similarity)", font=7,
+                           widths=[28, 44, 34, 64], align=["left"] * 4)
+        if wired:
+            rows = [(w["unit"], w["stream"], w["method"]) for w in wired]
+            self.P("Connections added by the analyst through the wiring list of cases.yaml (model repair, not source data):", bold=True)
+            self.table(["Unit", "Attached stream", "Method"], rows, caption="Wiring repairs applied before the run", font=7.5,
+                       widths=[60, 80, 30], align=["left"] * 3)
 
     def diagrams_section(self, figure_dir):
         self.H("7 Block flow diagram and process flow diagrams", 1)
@@ -618,6 +647,11 @@ class ReportBuilder:
             self.P(block["topic"], bold=True)
             self.P(block["text"])
 
+    def _end_result(self, unit, key, case):
+        """Return the results of the first inlet or outlet stream of a unit, or an empty dict when it has none."""
+        names = unit.get(key) or []
+        return self.S[names[0]]["results"][case] if names else {}
+
     def _unit_summary(self, cat, units):
         cs = self.cases
         if cat == "compressor":
@@ -627,8 +661,8 @@ class ReportBuilder:
                 for c in cs:
                     r = u["results"][c]
                     ex = r.get("extras") or {}
-                    sin = self.S[u["inlet_streams"][0]]["results"][c]
-                    sout = self.S[u["outlet_streams"][0]]["results"][c]
+                    sin = self._end_result(u, "inlet_streams", c)
+                    sout = self._end_result(u, "outlet_streams", c)
                     rows.append([u["tag"], c, fmt_value(sin.get("p_bara"), 4), fmt_value(sout.get("p_bara"), 4),
                                  fmt_value(ex.get("pressure_ratio"), 4), fmt_value(r.get("power_kw"), 5),
                                  fmt_value(ex.get("polytropic_efficiency"), 3), fmt_value(ex.get("speed_rpm"), 4)])
@@ -639,8 +673,8 @@ class ReportBuilder:
             for u in units:
                 for c in cs:
                     r = u["results"][c]
-                    sin = self.S[u["inlet_streams"][0]]["results"][c]
-                    sout = self.S[u["outlet_streams"][0]]["results"][c]
+                    sin = self._end_result(u, "inlet_streams", c)
+                    sout = self._end_result(u, "outlet_streams", c)
                     rows.append([u["tag"], c, fmt_value(sin.get("t_c"), 4), fmt_value(sout.get("t_c"), 4), fmt_value(r.get("duty_kw"), 4),
                                  fmt_value(r.get("dp_bar"), 3)])
             return header, rows
@@ -650,8 +684,8 @@ class ReportBuilder:
             for u in units:
                 for c in cs:
                     r = u["results"][c]
-                    rows.append([u["tag"], c, fmt_value(self.S[u["inlet_streams"][0]]["results"][c].get("p_bara"), 4),
-                                 fmt_value(self.S[u["outlet_streams"][0]]["results"][c].get("p_bara"), 4), fmt_value(r.get("power_kw"), 4)])
+                    rows.append([u["tag"], c, fmt_value(self._end_result(u, "inlet_streams", c).get("p_bara"), 4),
+                                 fmt_value(self._end_result(u, "outlet_streams", c).get("p_bara"), 4), fmt_value(r.get("power_kw"), 4)])
             return header, rows
         header = ["Tag", "Type", "Case", "Inlets", "Outlets", "Throughput (kg/h)", "T out (C)", "P out (bara)"]
         rows = []
