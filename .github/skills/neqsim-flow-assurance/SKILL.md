@@ -874,6 +874,21 @@ double pCO2 = fluid.getPhase("gas").getComponent("CO2").getx()
 // Water cut affects wetting: >30% water cut → higher risk
 ```
 
+### Sour service (H2S cracking) screening for compressors and vessels
+
+H2S cracking (SSC) is a materials question, not a corrosion rate: ISO 15156-2 (NORSOK M-001 cl. 6.1.3) calls the service sour when the wet gas has
+pH2S >= 0.3 kPa at total pressure >= 0.4 MPa, and dehydration or chemical treatment give no relief. Screen it as follows (task 2026-10-21 Vigdis/Snorre compressors):
+
+1. Express the limit as H2S in the gas for each machine pressure: `y_limit = 0.3 kPa / P` (24 ppm at 125 bara, 10 ppm at 300 bara, 100 ppm at 30 bara). Check
+   both suction and discharge; the high-pressure machines go sour first because the ppm is constant while P rises.
+2. Get y_H2S per machine from a process model with H2S as a trace component (the system is linear: run once and scale), or from the stream composition; use
+   `y x P` (Dalton) for classification and the fugacity coefficient (`getFugacityCoefficient()`, 0.2-0.4 in dense injection gas) as sensitivity only.
+3. When the H2S source is not in the model (e.g. degassing-tank gas recovered from a flare), carry it with a dilution share f (`y_mix = f x y_source`) and report the
+   break-even f = `0.3 kPa / (y_source x P)` plus a Monte Carlo, instead of a single number.
+4. Report in-situ pH of the condensed water (CO2 and H2S, salt-free) and the water dew point at the discharge; ISO 15156-2 Figure 1 region and the material check are for the materials group.
+5. Adding a trace component to a model fluid: check the unit operations that rebuild streams by component index (a `ComponentSplitter` with split factors `[1]*(n-1)+[0]`
+   removes the LAST component); insert the tracer before the last component and verify the downstream ppm is not zero.
+
 ### Network-Level Corrosion (LoopedPipeNetwork)
 
 For production gathering networks, `LoopedPipeNetwork` has inline corrosion
