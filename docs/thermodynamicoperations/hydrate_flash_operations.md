@@ -35,6 +35,10 @@ gas-hydrate TP flash) reject Pitzer systems because this coupling calculates ons
 
 NeqSim provides specialized flash calculations for systems containing gas hydrates. These operations extend the standard thermodynamic operations to include hydrate phase equilibrium.
 
+The fragments below assume a class-level Log4j2 logger, for example
+`private static final Logger logger = LogManager.getLogger(YourClass.class);`.
+The complete example includes the required imports and declaration.
+
 **Key Classes:**
 - `TPHydrateFlash` - TP flash with hydrate phase equilibrium
 - `HydrateFormationTemperatureFlash` - Calculate hydrate formation temperature
@@ -102,10 +106,10 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateTPflash();
 
 // Check results
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-System.out.println("Has hydrate: " + fluid.hasHydratePhase());
+logger.info("Number of phases: {}", fluid.getNumberOfPhases());
+logger.info("Has hydrate: {}", fluid.hasHydratePhase());
 if (fluid.hasHydratePhase()) {
-    System.out.println("Hydrate fraction: " + fluid.getBeta(PhaseType.HYDRATE));
+    logger.info("Hydrate fraction: {}", fluid.getBeta(PhaseType.HYDRATE));
 }
 fluid.prettyPrint();
 ```
@@ -146,7 +150,7 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
         hasAqueous = true;
     }
 }
-System.out.println("Has aqueous phase: " + hasAqueous);  // false
+logger.info("Has aqueous phase: {}", hasAqueous);  // false
 ```
 
 **Algorithm:**
@@ -194,8 +198,8 @@ fluid.setHydrateCheck(true);
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateFormationTemperature();
 
-System.out.println("Hydrate formation T: " + fluid.getTemperature("C") + " °C");
-System.out.println("At pressure: " + fluid.getPressure("bara") + " bara");
+logger.info("Hydrate formation T: {} °C", fluid.getTemperature("C"));
+logger.info("At pressure: {} bara", fluid.getPressure("bara"));
 ```
 
 For non-reactive electrolyte fluids, every fluid evaluation must conserve the
@@ -330,7 +334,7 @@ void hydrateFormationPressure(int structure)
 ```java
 fluid.setTemperature(278.15);  // 5°C
 ops.hydrateFormationPressure();
-System.out.println("Hydrate formation P: " + fluid.getPressure("bara") + " bara");
+logger.info("Hydrate formation P: {} bara", fluid.getPressure("bara"));
 ```
 
 ### Hydrate Inhibitor Calculations
@@ -365,7 +369,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 
 // What MEG concentration prevents hydrate at 5°C?
 ops.hydrateInhibitorConcentration("MEG", 273.15 + 5.0);
-System.out.println("Required MEG (wt%): " + 
+logger.info("Required MEG (wt%): {}",
     fluid.getPhase("aqueous").getComponent("MEG").getwtfrac() * 100);
 ```
 
@@ -384,10 +388,10 @@ fluid.setMixingRule(10);
 fluid.setHydrateCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.calcHydrateEquilibriumLine();
+ops.hydrateEquilibriumLine(1.0, 200.0);
 
 // Get curve data
-double[][] curve = ops.getOperation().get2DData();
+double[][] curve = ops.getOperation().getPoints(0);
 // curve[0] = temperatures (K)
 // curve[1] = pressures (bar)
 ```
@@ -446,10 +450,10 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.hydrateTPflash();
 
 // Expected phases: GAS, OIL, AQUEOUS, HYDRATE
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+logger.info("Number of phases: {}", fluid.getNumberOfPhases());
 for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-    System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType() + 
-        ", beta = " + fluid.getBeta(i));
+    logger.info("Phase {}: {}, beta = {}", i, fluid.getPhase(i).getType(),
+        fluid.getBeta(i));
 }
 ```
 
@@ -474,7 +478,7 @@ for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
         hasAqueous = true;
     }
 }
-System.out.println("Has aqueous: " + hasAqueous);  // false
+logger.info("Has aqueous: {}", hasAqueous);  // false
 ```
 
 ---
@@ -495,7 +499,7 @@ System.out.println("Has aqueous: " + hasAqueous);  // false
 | `hydrateFormationPressure(int structure)` | For specific structure |
 | `hydrateInhibitorConcentration(String, double)` | Calculate inhibitor needed |
 | `hydrateInhibitorConcentrationSet(String, double)` | Set inhibitor and calculate |
-| `calcHydrateEquilibriumLine()` | Generate PT curve |
+| `hydrateEquilibriumLine(double, double)` | Generate PT curve over a pressure range |
 
 ### SystemInterface Methods
 
@@ -527,8 +531,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class HydrateAnalysis {
+    private static final Logger logger = LogManager.getLogger(HydrateAnalysis.class);
     public static void main(String[] args) {
         // 1. Create production fluid
         SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
@@ -545,19 +552,19 @@ public class HydrateAnalysis {
         // 2. Calculate hydrate formation temperature
         ops.hydrateFormationTemperature();
         double Thyd = fluid.getTemperature("C");
-        System.out.println("Hydrate formation temperature: " + Thyd + " °C");
+        logger.info("Hydrate formation temperature: {} °C", Thyd);
         
         // 3. At 5°C, check if hydrate exists
         fluid.setTemperature(273.15 + 5.0);
         ops.hydrateTPflash();
         
         if (fluid.hasHydratePhase()) {
-            System.out.println("Hydrate forms at 5°C, 100 bar");
+            logger.info("Hydrate forms at 5°C, 100 bar");
             
             // Get phase fractions
             for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-                System.out.printf("Phase %d (%s): %.4f mol%%\n", 
-                    i, fluid.getPhase(i).getType(), fluid.getBeta(i) * 100);
+                logger.info("Phase {} ({}): {} mol%", i, fluid.getPhase(i).getType(),
+                    fluid.getBeta(i) * 100);
             }
         }
         
@@ -566,7 +573,7 @@ public class HydrateAnalysis {
         fluid.createDatabase(true);
         ops.hydrateInhibitorConcentration("MEG", 273.15 + 5.0);
         double megWt = fluid.getPhase("aqueous").getComponent("MEG").getwtfrac();
-        System.out.println("Required MEG in aqueous phase: " + megWt * 100 + " wt%");
+        logger.info("Required MEG in aqueous phase: {} wt%", megWt * 100);
     }
 }
 ```
@@ -594,7 +601,7 @@ HydrateEquilibriumTemperatureAnalyser hydrateAnalyser =
 hydrateAnalyser.run();
 
 double hydrateT = hydrateAnalyser.getMeasuredValue("C");
-System.out.println("Hydrate equilibrium temperature: " + hydrateT + " °C");
+logger.info("Hydrate equilibrium temperature: {} °C", hydrateT);
 ```
 
 ---
