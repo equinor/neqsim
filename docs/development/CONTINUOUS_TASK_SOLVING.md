@@ -1184,6 +1184,16 @@ and the ordered events added or removed between periods. The guard reconstructs 
 persisted period envelopes and rejects any mismatch. It never interpolates changed grids, matches a discrete
 line-up event to an intermediate state, or treats sampled counts as a continuous boundary.
 
+When accepted schema-v8 evidence is also stored at the top level of the promoted `results.json`, the canonical
+current-best and final engineering-report pipeline adds a **Lifecycle Operating Envelope** section. The renderer
+checks the promoted source-cycle identity, complete ordered periods, finite aggregate values, complete envelope
+slices, exact representative constraint identity, and independently reconstructed retained/removed/added
+constraint identities before showing any claim. Malformed, partial, stale, or edited evidence is replaced by a
+fail-closed “evidence withheld” notice; report rendering does not replace the production guard that qualified the
+proposal. Accepted rows retain each period's representative value and signed physical headroom in its own unit.
+Ranks apply only within a period: the report does not compare unlike units or imply causality, shadow price,
+equipment qualification, operating approval, or permission to relax a physical constraint.
+
 Schema v8 additionally validates and compares `operating_region_boundary_refinements`. Each receipt
 contains the exact feasible- and infeasible-endpoint constraint rows, including signed physical margin
 and unit. The guard reconstructs those endpoint rows from the sampled points and midpoint sequence, so
