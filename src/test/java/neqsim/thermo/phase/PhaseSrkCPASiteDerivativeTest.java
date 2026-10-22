@@ -87,31 +87,25 @@ class PhaseSrkCPASiteDerivativeTest {
     double analyticalThird = component.getXsitedVdVdV()[0];
     double analyticalMixed = component.getXsitedTdV()[0];
 
-    double[] plusVolume =
-        siteSensitivitiesAtVolume(fluid, componentName, phaseIndex, volume + volumeStep);
-    double[] minusVolume =
-        siteSensitivitiesAtVolume(fluid, componentName, phaseIndex, volume - volumeStep);
+    double[] plusVolume = siteSensitivitiesAtVolume(fluid, componentName, phaseIndex, volume + volumeStep);
+    double[] minusVolume = siteSensitivitiesAtVolume(fluid, componentName, phaseIndex, volume - volumeStep);
     double numericalSecond = (plusVolume[0] - minusVolume[0]) / (2.0 * volumeStep);
     double numericalThird = (plusVolume[1] - minusVolume[1]) / (2.0 * volumeStep);
     double numericalMixedFromVolume = (plusVolume[2] - minusVolume[2]) / (2.0 * volumeStep);
 
-    double plusTemperatureVolumeDerivative =
-        volumeDerivativeAtTemperature(fluid, componentName, phaseIndex, fluid.getTemperature() + temperatureStep);
-    double minusTemperatureVolumeDerivative =
-        volumeDerivativeAtTemperature(fluid, componentName, phaseIndex, fluid.getTemperature() - temperatureStep);
-    double numericalMixedFromTemperature =
-        (plusTemperatureVolumeDerivative - minusTemperatureVolumeDerivative) / (2.0 * temperatureStep);
+    double plusTemperatureVolumeDerivative = volumeDerivativeAtTemperature(fluid, componentName, phaseIndex,
+        fluid.getTemperature() + temperatureStep);
+    double minusTemperatureVolumeDerivative = volumeDerivativeAtTemperature(fluid, componentName, phaseIndex,
+        fluid.getTemperature() - temperatureStep);
+    double numericalMixedFromTemperature = (plusTemperatureVolumeDerivative - minusTemperatureVolumeDerivative)
+        / (2.0 * temperatureStep);
 
-    assertTrue(Math.abs(analyticalSecond) > 1.0e-12,
-        "Second volume site sensitivity must be populated");
-    assertTrue(Math.abs(analyticalThird) > 1.0e-12,
-        "Third volume site sensitivity must be populated");
-    assertTrue(Math.abs(analyticalMixed) > 1.0e-12,
-        "Mixed temperature-volume site sensitivity must be populated");
+    assertTrue(Math.abs(analyticalSecond) > 1.0e-12, "Second volume site sensitivity must be populated");
+    assertTrue(Math.abs(analyticalThird) > 1.0e-12, "Third volume site sensitivity must be populated");
+    assertTrue(Math.abs(analyticalMixed) > 1.0e-12, "Mixed temperature-volume site sensitivity must be populated");
     assertEquals(numericalSecond, analyticalSecond, tolerance(numericalSecond, 5.0e-4, 1.0e-10));
     assertEquals(numericalThird, analyticalThird, tolerance(numericalThird, 2.0e-3, 1.0e-9));
-    assertEquals(numericalMixedFromVolume, analyticalMixed,
-        tolerance(numericalMixedFromVolume, 5.0e-4, 1.0e-10));
+    assertEquals(numericalMixedFromVolume, analyticalMixed, tolerance(numericalMixedFromVolume, 5.0e-4, 1.0e-10));
     assertEquals(numericalMixedFromTemperature, analyticalMixed,
         tolerance(numericalMixedFromTemperature, 5.0e-4, 1.0e-10));
   }
