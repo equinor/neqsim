@@ -12,6 +12,9 @@ having to catch and parse the exception text.
 `ProcessSystem` and `ProcessModel` expose a structured **`RunStatus`** that records a
 per-unit outcome for each run.
 
+The Java fragments below assume a class-level Log4j2 logger, for example:
+`private static final Logger logger = LogManager.getLogger(YourClass.class);`.
+
 ## Quick Start
 
 ```java
@@ -27,10 +30,10 @@ try {
 
 RunStatus status = process.getRunStatus();
 if (status.isSuccess()) {
-  System.out.println("All " + status.getUnits().size() + " units ran.");
+  logger.info("All {} units ran.", status.getUnits().size());
 } else {
-  System.out.println("Run failed at " + status.getFailedUnitName()
-      + ": " + status.getFailedUnitError());
+  logger.info("Run failed at {}: {}", status.getFailedUnitName(),
+      status.getFailedUnitError());
 }
 ```
 
@@ -68,6 +71,7 @@ agent pinpoint not just the failing unit but the area it lives in.
 
 ```java
 import neqsim.process.processmodel.ProcessModel;
+import neqsim.process.processmodel.RunStatus;
 import neqsim.process.processmodel.UnitRunStatus;
 
 ProcessModel plant = new ProcessModel();
@@ -77,8 +81,8 @@ plant.run();
 
 RunStatus status = plant.getRunStatus();
 for (UnitRunStatus u : status.getUnits()) {
-  System.out.println(u.getAreaName() + " / " + u.getUnitName()
-      + " -> " + (u.isSuccess() ? "ok" : "FAILED: " + u.getErrorMessage()));
+  logger.info("{} / {} -> {}", u.getAreaName(), u.getUnitName(),
+      u.isSuccess() ? "ok" : "FAILED: " + u.getErrorMessage());
 }
 ```
 
@@ -122,6 +126,6 @@ For a `ProcessModel`, each unit entry additionally carries an `areaName` field.
 
 ## Related Documentation
 
-- [ProcessSystem](process_system) — building and running flowsheets
-- [ProcessModel](process_model) — multi-area model coordination
-- [Process Automation API](../../simulation/process_automation) — string-addressable variable access for agents
+- [ProcessSystem](process_system.md) — building and running flowsheets
+- [ProcessModel](process_model.md) — multi-area model coordination
+- [Process Automation API](../../simulation/process_automation.md) — string-addressable variable access for agents
