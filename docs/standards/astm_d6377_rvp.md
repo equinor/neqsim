@@ -20,8 +20,9 @@ The class calculates several distinct quantities at one configured reference tem
 | `VPCR4` | Pressure from `TVfractionFlash(0.8)` after the bubble-point solve | Raw vapor/liquid volume ratio 4:1 result, not an 80% molar vapor fraction |
 | `RVP_ASTM_D6377` | `0.834 * VPCR4` | NeqSim D6377-labelled RVP-equivalent correlation |
 | `RVP_ASTM_D323_82` | `0.752 * VPCR4 + 0.0607` with pressures in bara | NeqSim historical D323-labelled correlation |
-| `VPCR4_no_water` | VPCR4 calculation on a clone with water removed | Water-free comparison, calculated lazily |
+| `VPCR4_no_water` | VPCR4 calculation on a water-free clone (see below) | Water-free comparison, calculated lazily |
 | `RVP_ASTM_D323_73_79` | Water-free VPCR4 result | Implementation equivalence, not endorsement as a laboratory D323 procedure |
+| `RVP_ASTM_D6377_add_water_saturated` | `0.834 * (VPCR4_dry + psat_water,IF97)`, always at 37.8 °C | Declared water-saturated storage basis; NaN when the dry flash misses the V/L = 4 target |
 
 These are model outputs, not interchangeable measurements. Report the selected method, reference
 temperature, pressure unit, fluid characterization, equation of state, and mixing rule with every
@@ -151,15 +152,22 @@ does not update every phase and can invalidate the density/volume-shift characte
 reapply a database mixing rule to a tuned fluid simply to repair component indexing: that can
 discard fitted BIPs.
 
-**Component-removal limitation:** the current `removeComponent("water")` path compacts the
-component list without remapping the EOS BIP matrix. If water is not the last component, a
-hydrocarbon pair can inherit the wrong interaction. The lazy `VPCR4_NO_WATER` route uses this
-removal path too; selecting that label is not a preservation guarantee. A synthetic regression
-with water between pentane and methane detects a BIP change from 0.0123 to 0.5 in each allocated
-phase. Reject such a dry basis. Supply a separately audited water-free version of the same
-characterization instead; this guide intentionally does not offer a universal removal helper.
-Removing last-listed water is covered by a per-phase preservation test for a synthetic SRK/TBP
-fluid, not a guarantee for every E300 file or software version.
+**Component-removal limitation:** `removeComponent("water")` compacts the component list without
+remapping the EOS BIP matrix. If water is not the last component, a hydrocarbon pair would inherit
+the wrong interaction. A synthetic regression with water between pentane and methane detects a BIP
+change from 0.0123 to 0.5 in each allocated phase, which shifts dry VPCR4 by about 2%. The
+water-free clone used by `VPCR4_NO_WATER`, `RVP_ASTM_D323_73_79` and
+`RVP_ASTM_D6377_add_water_saturated` therefore:
+
+1. clones the fluid and resets it to its unflashed state (`init(0)`), so phase bookkeeping left by
+   an earlier, possibly unconverged, wet flash cannot break the removal;
+2. removes water only when it is the **last** component, where no retained index shifts;
+3. otherwise keeps water as a trace of mole fraction `1e-15`, which leaves every BIP on its pair and
+   reproduces the truly water-free VPCR4 to about 13 significant digits.
+
+This protects the BIP alignment only. It does not audit other characterization changes; for a
+tuned E300 or TBP fluid, still check the dry basis against a separately audited water-free version
+of the same characterization when the result supports a decision.
 
 ### Partial-Pressure Addition and Correlation Order
 
@@ -184,23 +192,57 @@ $$
 =\mathrm{TVP}_{\mathrm{dry}}(T)+p^{\mathrm{sat}}_{\mathrm{water}}(T).
 $$
 
-| Reference temperature | Illustrative rounded pure-water pressure | Added contribution |
+| Reference temperature | IAPWS-IF97 pure-water saturation pressure | Added contribution |
 |----------|----------|----------|
-| 37.8 °C | About 6.54 kPa = 0.0654 bar | RVPE: about 5.45 kPa = 0.0545 bar |
-| 30 °C | About 4.24 kPa = 0.0424 bar | TVP at 30 °C: about 4.24 kPa = 0.0424 bar |
+| 37.8 °C | 6.561 kPa = 0.06561 bar | RVPE: 0.834 × 0.06561 = 0.05472 bar |
+| 30 °C | 4.247 kPa = 0.04247 bar | TVP at 30 °C: 0.04247 bar |
 
-These rounded numbers illustrate the arithmetic, not a new NeqSim water-property API. Obtain
-$p^{\mathrm{sat}}$ from an approved independent source, for example an implementation of IAPWS-IF97
-Region 4 within its saturation-temperature range (273.15–647.096 K), or an appropriate
-[NIST water property source](https://webbook.nist.gov/cgi/cbook.cgi?ID=C7732185&Mask=4).
-Record the source, version, validity range, temperature and units. The 0.0424 bar value is a
-30 °C study convention, not a temperature-independent constant.
+`Standard_ASTM_D6377.getWaterSaturationPressure(temperatureK)` returns this pressure in bara from
+the IAPWS-IF97 Region 4 equation, valid from 273.15 K to 647.096 K; it throws outside that range.
+The implementation reproduces the IF97 verification values (Table 35 of the release).
 
-### Existing API Example on an Audited Dry Fluid
+### Built-in Method: `RVP_ASTM_D6377_ADD_WATER_SATURATED`
+
+`RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED` evaluates the RVPE equation above in one call:
+
+1. build the water-free clone described in the component-removal section;
+2. calculate VPCR4 of that clone at **37.8 °C**, the temperature at which RVP is defined. The
+   value set with `setReferenceTemperature(...)` does not apply to this method, and the structured
+   result always reports 37.8 °C;
+3. require exactly one gas and one oil phase with a corrected gas volume fraction of 0.8 ± 1e-4
+   (V/L = 4); otherwise the result is NaN and `RvpResult.isValid()` is false;
+4. return `0.834 * (VPCR4_dry + psat_water,IF97(37.8 °C))` in bara.
+
+The water term is always added, whether or not the fluid contains water: the method declares a
+water-saturated storage basis instead of letting the EOS predict the water contribution. Because
+the EOS only evaluates the hydrocarbons, the result does not depend on the amount of water in the
+fluid, nor on how well a hydrocarbon-tuned EOS represents water. The fail-closed volume check
+matters: for a binary pentane/C11 screening fluid, plain `VPCR4` returns a positive pressure at a
+gas volume fraction of about 0.83 instead of 0.8, and this method reports NaN for that case.
+
+```java
+Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(sourceOil.clone());
+standard.calculate();
+RvpResult waterSaturated = standard.getRvpResult(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED);
+if (!waterSaturated.isValid()) {
+  throw new IllegalStateException("Dry VPCR4 flash did not reach V/L = 4");
+}
+double rvpeWaterSatBara = waterSaturated.getValue(); // reference temperature 37.8 C
+
+// Equivalent string label, for example through a stream:
+double fromStream = new Stream("oil", sourceOil.clone())
+    .getRVP(37.8, "C", "bara", "RVP_ASTM_D6377_add_water_saturated");
+```
+
+The regression tests are in
+[RvpAddWaterSaturatedTest](../../src/test/java/neqsim/standards/oilquality/RvpAddWaterSaturatedTest.java).
+
+### Manual Route on an Audited Dry Fluid
 
 `auditedDryOil` below is a previously verified water-free version of the source characterization.
 The earlier synthetic `sourceOil` is water-free and is also suitable for illustrating these calls.
-The example performs no parameter mutation and applies the storage convention outside NeqSim.
+This route is equivalent to the built-in method when the dry fluid is the same, and is useful when
+the dry basis is supplied separately or when a different water-property source is required.
 
 ```java
 SystemInterface workingOil = auditedDryOil.clone();
@@ -273,6 +315,7 @@ These are software regressions, not fabricated laboratory validation data.
 | `calculate()` | Populates TVP, VPCR4, and the two direct correlations |
 | `getRvpResult()` | Returns the selected structured result |
 | `getRvpResult(method)` | Returns a named structured result; water-free variants are evaluated lazily |
+| `getWaterSaturationPressure(temperatureK)` | IAPWS-IF97 pure-water saturation pressure in bara (273.15–647.096 K) |
 | `getValue("RVP", pressureUnit)` | Converts the selected method result from bara |
 | `getValue("TVP", pressureUnit)` | Converts the EOS bubble-point result from bara |
 | `getMethodRVP()` | Returns the selected legacy method label |
