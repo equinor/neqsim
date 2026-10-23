@@ -9,6 +9,27 @@
 
 ---
 
+## 2026-10-23 — Two-fluid dynamic stability review
+
+- Corrected the legacy IMEX pressure-response sign: compression produces a restoring pressure force rather than
+  amplifying inward momentum. This scalar correction still transports phase mass explicitly and does not establish
+  unrestricted multiphase acoustic stability.
+- Partition unresolved liquid-wall resistance by conservative oil/water mass, matching the bulk velocity used by the
+  wall law and keeping combined wall kinetic work nonpositive in counterflow. Gravity uses independent phase masses.
+- Exactly absent phases contribute zero external mass, momentum and energy flux even when unused primitive properties
+  are non-finite. Their stale reverse velocities no longer trigger outlet-backflow warnings; positive traces remain active.
+- Replaced explicit radial thermal exchange with a coupled fluid/layer backward-Euler solve. Added adiabatic
+  energy-equation temperature transport and the missing multi-layer elevation-work term. External inlet temperature
+  events preserve finite-cell thermal inertia instead of resetting cell temperature outside the energy ledger.
+- Radial links include cylindrical half-layer resistances at both boundaries and between layer nodes, restoring
+  long-time heat-flux consistency for positive material/film coefficients. The existing IMEX source bound excludes
+  active implicit slug friction while retaining explicit oil-water shear, using current tracked-marker membership.
+  Extending it globally to Euler/Runge-Kutta
+  exposed trace-film timestep collapse in coupled-riser progress tests and is deferred pending implicit mean-cell drag.
+- Added analytical, conservation, counterflow, phase-limit and thermal-bound regression tests. Updated the model guide,
+  wiki and evidence matrix. Severe-slugging cycles, general terrain well balancing and long-duration liquid-rich
+  physical qualification remain open under #3298 and #2907.
+
 ## 2026-10-23 — `TwoFluidPipe` transient wall-energy and counterflow corrections
 
 - **Simple transient thermal model:** solve local fluid/wall heat exchange and wall-to-ambient loss together by

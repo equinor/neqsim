@@ -348,7 +348,7 @@ class TwoFluidPipeClosedThermalTest {
   }
 
   @Test
-  void disabledHeatTransferLeavesTemperatureUnchangedAndDoesNotCreateReport() {
+  void disabledHeatTransferLeavesTemperatureUnchangedWhenEnergyIsDisabled() {
     PipeFixture fixture = createInitializedPipe("disabled-heat-transfer");
     double[] initial = fixture.pipe.getTemperatureProfile();
     fixture.pipe.closeInlet();
@@ -356,6 +356,7 @@ class TwoFluidPipeClosedThermalTest {
     fixture.pipe.setEnableJouleThomson(false);
     fixture.pipe.setSurfaceTemperature(280.0, "K");
     fixture.pipe.setHeatTransferCoefficient(0.0);
+    fixture.pipe.setIncludeEnergyEquation(false);
 
     fixture.pipe.runTransient(1.0e-3, TRANSIENT_ID);
 

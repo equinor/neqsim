@@ -840,6 +840,15 @@ double drainageRate = Math.sqrt(2 * g * dz * holdup);
 
 ## Simple Transient Wall Thermal Model
 
+Selecting `setIncludeEnergyEquation(true)` enables sensible-temperature transport even when the
+overall heat-transfer coefficient is zero. An adiabatic boundary removes ambient heat exchange;
+it does not remove advection or the selected pressure/elevation work. The default energy-disabled
+configuration retains its isothermal transient behavior.
+
+The external feed temperature enters through the boundary heat transport. During a thermal
+transient, applying stream, flow, pressure or characteristic inlet conditions preserves the
+first physical cell's finite thermal inventory instead of resetting that cell to the feed temperature.
+
 Without radial layers, the transient thermal model places the configured wall heat capacity
 between a fluid film and a wall-to-ambient path. The configured heat-transfer coefficient is
 the overall bore-referenced $U$, including any added soil resistance. With inner diameter $D$,
@@ -926,7 +935,16 @@ System.out.println(pipe.getThermalSummary());
   case-specific value for the fluid inventory and natural-convection regime being studied.
 - **Flowing inner HTC**: Cells with local face throughput use the model's laminar constant-Nusselt or turbulent
   Dittus-Boelter correlation instead of the stagnant value.
-- **Transient response**: Explicit finite-difference with thermal mass in each layer
+- **Transient response**: Backward-Euler radial conduction with thermal mass in each layer. The pipe includes
+  fluid thermal inertia in the same tridiagonal solve, so a thin coating or small fluid inventory does not impose
+  an explicit fluid/wall stability restriction. Advective and other non-wall sources retain their existing treatment.
+- **Radial geometry**: Layer nodes use geometric midradii. Each fluid/ambient link includes its film resistance and
+  the adjacent half-layer cylindrical resistance; interior links include both neighboring half resistances.
+  For positive coefficients and conductivities, the long-time heat flux therefore matches the configured total
+  cylindrical series resistance. Zero conductivity or a zero convective coefficient insulates the corresponding
+  transient link; this does not change the legacy steady zero-coefficient API conventions.
+- **Elevation work**: The simple and multi-layer routes include the same gravitational potential-energy source.
+  Choosing a radial wall model must not remove uphill cooling or downhill heating from transported mass.
 - **Cooldown time**: Lumped capacitance approximation for shutdown scenarios
 - **Transient advection**: Uses the gas, oil, and water mass flow retained from each conservative AUSM+ integration
   stage, combined with the time integrator's own stage weights. Temperature transport therefore uses the same face
@@ -1343,10 +1361,10 @@ Select the time integration method via `setTimeIntegrationMethod(TimeIntegrator.
 
 | Method | CFL constraint | Description |
 |--------|---------------|-------------|
-| `RK4` (default) | Acoustic ($c + v$) | Classical 4th-order Runge-Kutta; explicit drag stiffness is not bounded by the acoustic CFL. |
-| `SSP_RK3` | Acoustic | Strong Stability Preserving RK3 |
-| `RK2` | Acoustic | Heun's method (2nd order) |
-| `EULER` | Acoustic | Forward Euler (1st order) |
+| `RK4` (default) | Acoustic/void-wave | Classical 4th-order Runge-Kutta; explicit drag stiffness is not bounded by wave propagation. |
+| `SSP_RK3` | Acoustic/void-wave | Strong Stability Preserving RK3 |
+| `RK2` | Acoustic/void-wave | Heun's method (2nd order) |
+| `EULER` | Acoustic/void-wave | Forward Euler (1st order) |
 | `IMEX_PRESSURE_CORRECTION` | Convective and explicit drag relaxation | Semi-implicit momentum pressure correction with conservative explicit phase-mass transport. The usable timestep depends on the remaining explicit sources. Not recommended for vertical risers. |
 
 ```java
@@ -2444,15 +2462,26 @@ gradient also has a nonzero alternating sum and must not be mistaken for growth 
 The original 20/80-cell fixtures, duration and refinement inequalities are retained; both meshes
 must also damp the seeded mode. This is a numerical regression for that flow regime.
 
-IMEX removes the acoustic timestep restriction but leaves wall and interphase drag explicit,
-except for dispersed-bubble drag when its existing implicit source option is enabled. The IMEX
-timestep now also respects a local drag-relaxation Jacobian estimate, including separate oil/water
+The legacy IMEX pressure correction regularizes phase momenta but still transports phase mass explicitly.
+It is not an unconditional multiphase acoustic solve. Wall and interphase drag remain explicit,
+except for dispersed-bubble drag when its existing implicit source option is enabled, and wall/gas-liquid
+friction in cells with an active conservative slug reconstruction and implicit subcell split. These
+implicitly advanced forces are excluded from the explicit source estimate; oil-water shear remains included.
+Timestep selection refreshes tracked-marker membership before evaluating source ownership, including
+creation or removal of the final marker.
+The IMEX timestep respects a local drag-relaxation Jacobian estimate, including separate oil/water
 momentum response. This constrains the remaining explicit friction sources; it does not make a
 mismatched steady and transient closure a fixed point. The estimate holds regime weights and
 thermophysical properties fixed and does not guarantee nonlinear stability.
 
-Euler and Runge-Kutta retain their acoustic CFL selection. Extending the source limit to those
-paths exposed an unresolved limitation at phase appearance: a vanishing laminar liquid film can
+Euler and Runge-Kutta retain their acoustic/void-wave CFL selection, which does not bound every
+explicit drag timescale. A stationary 1 mm bore containing 1 Pa s oil at 800 kg/m3 permits
+0.003333 s acoustically over a 10 m cell, while the local wall-relaxation estimate with the same
+CFL factor is 0.0000125 s. Applying the source bound globally in a review experiment caused three
+of the five coupled Tengesdal progress cases to fail: the implicit-subcell case exhausted 50,000
+attempts after advancing only 0.041457 s of a requested 0.1 s interval. The extension is deferred
+pending a qualified implicit treatment of the remaining mean-cell drag.
+A vanishing laminar liquid film can
 have an arbitrarily short drag-relaxation time, including at zero velocity. An implicit drag
 treatment is needed to resolve this stiffness without an artificial phase-inventory or timestep
 floor. The IMEX source limit may also become impractically small in such states; it is not a

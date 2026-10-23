@@ -2978,25 +2978,20 @@ public class TwoFluidPipe extends Pipeline {
 
       double localMassFlow = getCellFaceThroughput(i, phaseMassFaceFluxes);
       double hInner = calculateInnerHTC(localMassFlow, sec.getArea());
-      double wallTemperature = advanceMultilayerCellThermalState(thermalCalculator, layerTemperatures[i],
-          oldFluidTemperature, ambientTemperature, hInner, dt);
-
-      double heatLoss = thermalCalculator.getLastFluidHeatTransferPerLength();
-      double ambientHeatLoss = thermalCalculator.getLastAmbientHeatTransferPerLength();
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
-      double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT);
+      double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT)
+          + calcGravityWorkSource(i, phaseMassFaceFluxes);
       double latentHeatSource = latentHeatEnergyByCellJ[i] / (dt * sec.getLength());
       double dehSource = directElectricalHeatingPowerPerMeter;
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
-      double newFluidTemperature = oldFluidTemperature
-          + (sensibleAdvection - heatLoss + jouleThomsonSource + latentHeatSource + dehSource)
-              / (fluidMassPerLength * Cp) * dt;
-
-      newFluidTemperature = Math.max(newFluidTemperature, 100.0);
+      double newFluidTemperature = advanceCoupledMultilayerCellThermalState(thermalCalculator, layerTemperatures[i],
+          oldFluidTemperature, ambientTemperature, hInner, fluidMassPerLength * Cp,
+          sensibleAdvection + jouleThomsonSource + latentHeatSource + dehSource, dt);
+      double ambientHeatLoss = thermalCalculator.getLastAmbientHeatTransferPerLength();
       sec.setTemperature(newFluidTemperature);
 
       if (thermalCalculator.getNumberOfLayers() > 0) {
-        wallTemperatureProfile[i] = wallTemperature;
+        wallTemperatureProfile[i] = multilayerInnerWallSurfaceTemperature(thermalCalculator);
       }
       updateThermalRiskFlags(i, newFluidTemperature);
 
@@ -3067,7 +3062,59 @@ public class TwoFluidPipe extends Pipeline {
     for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
       layerTemperatures[layerIndex] = layers.get(layerIndex).getTemperature();
     }
-    return layers.isEmpty() ? Double.NaN : calculator.calculateInterfaceTemperature(0, false);
+    return multilayerInnerWallSurfaceTemperature(calculator);
+  }
+
+  /**
+   * Recover the transient inner-wall surface from the accepted endpoint film flux.
+   *
+   * @param calculator calculator after one accepted thermal advance
+   * @return inner-wall surface temperature in K, or NaN without radial layers
+   */
+  private static double multilayerInnerWallSurfaceTemperature(MultilayerThermalCalculator calculator) {
+    List<RadialThermalLayer> layers = calculator.getLayers();
+    if (layers.isEmpty()) {
+      return Double.NaN;
+    }
+    double filmConductance = calculator.getInnerHTC() * 2.0 * Math.PI * layers.get(0).getInnerRadius();
+    return filmConductance > 0.0
+        ? calculator.getFluidTemperature() - calculator.getLastFluidHeatTransferPerLength() / filmConductance
+        : layers.get(0).getTemperature();
+  }
+
+  /**
+   * Restore one cell's radial state, advance its fluid and layers together, and retain that cell's endpoint.
+   *
+   * @param calculator shared radial configuration
+   * @param layerTemperatures cell-owned radial temperatures in K
+   * @param fluidTemperature cell fluid temperature in K
+   * @param ambientTemperature cell ambient temperature in K
+   * @param innerHeatTransferCoefficient fluid-side heat transfer in W/(m2 K)
+   * @param fluidCapacity fluid heat capacity per unit length in J/(m K)
+   * @param fluidSource explicit non-wall heat source per unit length in W/m
+   * @param dt positive finite thermal step in s
+   * @return updated fluid temperature in K
+   * @throws IllegalArgumentException if the cell profile dimensions or thermal configuration are invalid
+   * @throws IllegalStateException if no positive finite thermal endpoint can be obtained
+   */
+  static double advanceCoupledMultilayerCellThermalState(MultilayerThermalCalculator calculator,
+      double[] layerTemperatures, double fluidTemperature, double ambientTemperature,
+      double innerHeatTransferCoefficient, double fluidCapacity, double fluidSource, double dt) {
+    List<RadialThermalLayer> layers = calculator.getLayers();
+    if (layerTemperatures == null || layerTemperatures.length != layers.size()) {
+      throw new IllegalArgumentException("Stored radial-layer profile must match the configured layer count");
+    }
+    for (int layer = 0; layer < layers.size(); layer++) {
+      layers.get(layer).initializeTemperature(layerTemperatures[layer]);
+    }
+    calculator.setFluidTemperature(fluidTemperature);
+    calculator.setAmbientTemperature(ambientTemperature);
+    calculator.setInnerHTC(innerHeatTransferCoefficient);
+    double updatedFluid = calculator.advanceCoupledTransient(fluidCapacity, fluidSource, dt);
+    for (int layer = 0; layer < layers.size(); layer++) {
+      layerTemperatures[layer] = layers.get(layer).getTemperature();
+    }
+    return updatedFluid;
   }
 
   /**
@@ -5958,8 +6005,9 @@ public class TwoFluidPipe extends Pipeline {
 
       // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
-      final boolean captureThermalStageFluxes = enableHeatTransfer && heatTransferCoefficient > 0.0
-          || componentTransportEnabled || directElectricalHeatingPowerPerMeter > 0.0;
+      final boolean captureThermalStageFluxes = includeEnergyEquation
+          || enableHeatTransfer && heatTransferCoefficient > 0.0 || componentTransportEnabled
+          || directElectricalHeatingPowerPerMeter > 0.0;
       final boolean captureComponentStageFluxes = componentTransportEnabled;
       final boolean capturePhaseStageTerms = captureThermalStageFluxes || captureComponentStageFluxes;
       final List<TwoFluidConservationEquations.MassBalanceRate> stageMassBalanceRates = new ArrayList<>();
@@ -6637,6 +6685,7 @@ public class TwoFluidPipe extends Pipeline {
    * @return stable time step [s]
    */
   private double calcStableTimeStep() {
+    synchronizeConservativeSlugGeometry();
     double minDt = Double.MAX_VALUE;
 
     for (int i = 0; i < numberOfSections; i++) {
@@ -6673,6 +6722,7 @@ public class TwoFluidPipe extends Pipeline {
    * @return stable convective time step (s)
    */
   private double calcConvectiveTimeStep() {
+    synchronizeConservativeSlugGeometry();
     double minDt = equations == null ? Double.MAX_VALUE
         : cflNumber * equations.calcExplicitMomentumSourceTimeStep(sections);
 
@@ -6712,6 +6762,22 @@ public class TwoFluidPipe extends Pipeline {
     }
 
     return Math.min(minDt, calcSlugFilmTimeStep(false));
+  }
+
+  /**
+   * Synchronize current marker membership before timestep selection decides explicit source ownership.
+   *
+   * <p>
+   * Tracker additions and removals change whether cell friction is advanced by the implicit subcell split. An empty
+   * tracker, disabled tracking, or another tracking mode must clear stale equation geometry before the source estimate
+   * or a slug-film CFL early return. Reading the current marker list does not advance tracker state.
+   * </p>
+   */
+  private void synchronizeConservativeSlugGeometry() {
+    if (equations != null) {
+      equations.setConservativeSlugs(enableSlugTracking && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
+          && lagrangianSlugTracker != null ? lagrangianSlugTracker.getSlugs() : null);
+    }
   }
 
   /** Include reconstructed velocities, interface motion and phase draining in the accepted-step CFL bound. */
@@ -7068,7 +7134,9 @@ public class TwoFluidPipe extends Pipeline {
       if (!isTransientMode) {
         inlet.setPressure(inFluid.getPressure("Pa"));
       }
-      inlet.setTemperature(inFluid.getTemperature("K"));
+      if (!preserveTransientCellTemperature()) {
+        inlet.setTemperature(inFluid.getTemperature("K"));
+      }
 
       // Calculate target mass flow rates from inlet stream
       double massFlow = getInletStream().getFlowRate("kg/sec");
@@ -7160,7 +7228,9 @@ public class TwoFluidPipe extends Pipeline {
     } else if (inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet) {
       // Use explicit mass flow value (temperature/composition still from inlet stream)
       SystemInterface inFluid = getInletStream().getFluid();
-      inlet.setTemperature(inFluid.getTemperature("K"));
+      if (!preserveTransientCellTemperature()) {
+        inlet.setTemperature(inFluid.getTemperature("K"));
+      }
 
       double massFlow = inletMassFlow; // Explicit mass flow BC
       double area = Math.PI * diameter * diameter / 4.0;
@@ -7205,7 +7275,9 @@ public class TwoFluidPipe extends Pipeline {
     } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && inletPressureSet) {
       // Fix inlet pressure (transient: flow rate computed from momentum balance)
       inlet.setPressure(inletPressure);
-      inlet.setTemperature(getInletStream().getFluid().getTemperature("K"));
+      if (!preserveTransientCellTemperature()) {
+        inlet.setTemperature(getInletStream().getFluid().getTemperature("K"));
+      }
     } else if (inletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
       // Coupled transients impose zero flow at the external face; the physical cell retains its inertia.
       // Zero velocity at inlet (blocked/no inflow condition)
@@ -7251,6 +7323,17 @@ public class TwoFluidPipe extends Pipeline {
       // At the outlet: J- is prescribed (typically from back-pressure), J+ from interior.
       applyCharacteristicOutletBC(outlet);
     }
+  }
+
+  /**
+   * Determine whether the evolving physical-cell temperature belongs to the post-step thermal balance.
+   *
+   * @return true when boundary data must enter through the external thermal flux instead of resetting cell inventory
+   */
+  private boolean preserveTransientCellTemperature() {
+    return isTransientMode && nonEquilibriumFilmTransfer == null
+        && (includeEnergyEquation || enableHeatTransfer && heatTransferCoefficient > 0.0 || componentTransportEnabled
+            || directElectricalHeatingPowerPerMeter > 0.0);
   }
 
   /** Build a feed face without modifying any physical cell inventory or equation-of-state state. */
@@ -7476,7 +7559,9 @@ public class TwoFluidPipe extends Pipeline {
     // Apply to inlet section
     inlet.setGasVelocity(vBoundary);
     inlet.setPressure(Pb);
-    inlet.setTemperature(inFluid.getTemperature("K"));
+    if (!preserveTransientCellTemperature()) {
+      inlet.setTemperature(inFluid.getTemperature("K"));
+    }
 
     // Liquid phase: use simple upwind for liquid velocity (subsonic liquid always has
     // both characteristics entering at inlet for typical subsonic liquid velocities)
@@ -9473,9 +9558,10 @@ public class TwoFluidPipe extends Pipeline {
    * Set the time integration method.
    *
    * <p>
-   * Use {@link TimeIntegrator.Method#IMEX_PRESSURE_CORRECTION} for long pipelines where the acoustic CFL constraint is
-   * prohibitively small. The IMEX method solves the pressure wave equation implicitly, allowing time steps 10-100x
-   * larger than explicit schemes.
+   * {@link TimeIntegrator.Method#IMEX_PRESSURE_CORRECTION} provides a semi-implicit momentum correction while retaining
+   * explicit phase-mass transport. Its legacy scalar correction is not a coupled multiphase volume solve. Select the
+   * pressure/momentum coupling separately where required, inspect its convergence diagnostics, and establish usable
+   * time steps by refinement rather than assuming acoustic or explicit-source stability.
    * </p>
    *
    * @param method integration method (RK4, EULER, IMEX_PRESSURE_CORRECTION, etc.)
@@ -11669,6 +11755,11 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Get the pipe wall temperature profile.
+   *
+   * <p>
+   * For the multi-layer model this is the inner-wall surface reconstructed from the accepted endpoint film flux.
+   * Individual radial layer temperatures represent their geometric-midradius nodes.
+   * </p>
    *
    * @return Wall temperature profile [K], or null if not calculated
    */
