@@ -855,9 +855,27 @@ lifecycle.addPeriod(
     "year-0", "Early life", 0.0, "forecast case E0",
     earlyStudy, earlySearch, earlyChokeSlice, earlyRoutingSlice, earlyPowerSlice);
 lifecycle.addPeriod(
-    "year-5", "Late life", 5.0, "forecast case L5",
+    currentCycleId, "Late life", 5.0, "forecast case L5",
     lateStudy, lateSearch, lateChokeSlice, lateRoutingSlice, latePowerSlice);
-Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap(currentCycleId);
+String lifecycleEvidenceJson = lifecycle.toEvidenceJson(currentCycleId);
+```
+
+```python
+from neqsim_continuous.production import proposal_from_lifecycle_json
+
+
+def run(ctx):
+    lifecycle_json = build_lifecycle_study(ctx).toEvidenceJson(ctx.cycle_id)
+    proposal = proposal_from_lifecycle_json(
+        lifecycle_json,
+        cycle_id=ctx.cycle_id,
+        title="Increase accepted field export",
+        objective_kpi="export_kg_hr",
+        baseline_value=ctx.kpis["export_kg_hr"],
+        expected_gain=expected_export_gain,
+        predicted=predicted_kpis,
+    )
+    return {"proposals": [proposal]}
 ```
 
 Periods are independent by design: never mutate a completed period's model and reuse its accepted search as
@@ -889,6 +907,15 @@ Promotion automatically copies one exact schema-v8 block from the reviewed cycle
 proposal into both the current-best `results.json` and its immutable baseline snapshot. It independently replays the
 production validation and refuses stale, superseded, rejected, modified, unguarded, or ambiguous evidence before
 changing the baseline. When lifecycle evidence is required, a cycle without that receipt cannot be promoted.
+
+The supported Java-to-living-task boundary is the compact JSON returned by
+`ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceJson(currentCycleId)`. It fails before serialization unless
+one independently validated lifecycle period has that exact cycle ID. A task-local `scripts.optimize` stage passes
+the JSON to `neqsim_continuous.production.proposal_from_lifecycle_json(...)`, which rejects stale, duplicate,
+non-finite, incomplete, or edited evidence, derives exact setpoints and the accepted envelope, and reuses the same
+production validators that guard and promotion use. The task supplies only proposal metadata and finite objective/
+prediction values; it must not rebuild Java evidence dictionaries. The separate `report.prepare` hook refreshes
+report inputs after accepted results exist and is not a proposal-ingestion path.
 
 The canonical task report consumes accepted top-level schema-v8 `lifecycle_envelope_evidence` in both ordinary
 current-best and immutable final-report generation. It renders the exact per-period `REJECTING` and `NEAR_ACTIVE`

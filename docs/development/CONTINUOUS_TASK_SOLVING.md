@@ -1148,6 +1148,16 @@ optimizer_evidence:
 item retains this block, including the positive integer evaluation count and finite non-negative runtime, so
 resume and change-driven cycles preserve the incumbent's validation and performance provenance.
 
+For a Java lifecycle study, do not hand-assemble the optimizer, accepted-envelope, and lifecycle blocks in Python.
+Export the exact model result with
+`ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceJson(ctx.cycle_id)`, then pass that string to
+`neqsim_continuous.production.proposal_from_lifecycle_json(...)` in the task-local `scripts.optimize` stage. The
+adapter selects exactly one current-cycle period, derives its ordered setpoints and accepted envelope, rejects
+non-finite JSON, and replays the existing optimizer/envelope/lifecycle validators without changing the evidence.
+The caller must still supply the engineering proposal title, objective KPI, finite baseline and expected gain, and
+finite predicted KPI values. `report.prepare` remains a downstream `results.json` refresh hook; it does not publish
+or bypass guarded proposals.
+
 For field-to-facility studies, set `production.require_envelope_evidence: true` and attach the map from
 `ProcessModelOperatingEnvelopeStudy.getAcceptedPointEnvelopeEvidence(...)` as
 `accepted_point_envelope_evidence`. The guard revalidates the persisted JSON instead of trusting its Java origin:

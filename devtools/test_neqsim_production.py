@@ -1403,7 +1403,12 @@ def _promotable_schema8_task(tmp_path):
         lifecycle["periods"], lifecycle["accepted_action_ids"], lifecycle["time_unit"],
         require_operating_transitions=True, require_boundary_refinements=True,
         require_constraint_summary_identities=True)
-    proposal["lifecycle_envelope_evidence"] = lifecycle
+    proposal = production.proposal_from_lifecycle_json(
+        json.dumps(lifecycle), cycle_id="C-1", title=proposal["title"],
+        objective_kpi=proposal["objective_kpi"], baseline_value=proposal["baseline_value"],
+        expected_gain=proposal["expected_gain"]["value"], predicted=proposal["predicted"])
+    assert proposal["setpoints"] == {"p3_barg": 0.5}
+    assert proposal["accepted_point_envelope_evidence"] == envelope
     ctx = _guard_context(task / "continuous" / "cycles" / "C-1", proposal)
     ctx.plan["production"]["require_envelope_evidence"] = True
     ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
@@ -1428,6 +1433,27 @@ def _promotable_schema8_task(tmp_path):
     event = book.create(accepted["title"], accepted.get("category", "operational"),
                         cycle="C-1", **fields)
     return task, accepted["lifecycle_envelope_evidence"], event["id"]
+
+
+@pytest.mark.parametrize("failure", ["stale", "duplicate", "envelope-cycle", "non-finite"])
+def test_lifecycle_json_proposal_adapter_fails_closed(tmp_path, failure):
+    _, evidence, _ = _promotable_schema8_task(tmp_path)
+    candidate = copy.deepcopy(evidence)
+    if failure == "stale":
+        candidate["cycle_id"] = "C-0"
+    elif failure == "duplicate":
+        candidate["periods"].append(copy.deepcopy(candidate["periods"][0]))
+        candidate["period_count"] += 1
+    elif failure == "envelope-cycle":
+        candidate["periods"][0]["envelope_evidence"]["cycle_id"] = "C-0"
+    else:
+        candidate["periods"][0]["envelope_evidence"]["envelope_runtime_seconds"] = float("nan")
+
+    with pytest.raises(ValueError, match="Lifecycle|lifecycle"):
+        production.proposal_from_lifecycle_json(
+            json.dumps(candidate), cycle_id="C-1", title="unsafe adapter candidate",
+            objective_kpi="oil_Sm3d", baseline_value=12700.0, expected_gain=300.0,
+            predicted={"rvp_bara": 0.63})
 
 
 def test_promote_copies_only_guarded_schema8_lifecycle_evidence(tmp_path):

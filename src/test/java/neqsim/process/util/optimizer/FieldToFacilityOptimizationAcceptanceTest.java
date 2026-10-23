@@ -1,8 +1,12 @@
 package neqsim.process.util.optimizer;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -392,8 +396,17 @@ class FieldToFacilityOptimizationAcceptanceTest {
         .addPeriod("late-life", "Late life", 5.0, "expanded separation capacity and tighter shared plant power budget",
             late.study, late.search, late.slices);
     Map<String, Object> lifecycleEvidence = lifecycle.toEvidenceMap("synthetic-lifecycle-cycle");
+    JsonObject lifecycleJson = JsonParser.parseString(lifecycle.toEvidenceJson("late-life")).getAsJsonObject();
 
     assertEquals(Integer.valueOf(8), lifecycleEvidence.get("schema_version"));
+    assertEquals(8, lifecycleJson.get("schema_version").getAsInt());
+    assertEquals("late-life", lifecycleJson.get("cycle_id").getAsString());
+    JsonArray jsonPeriods = lifecycleJson.getAsJsonArray("periods");
+    assertEquals(2, jsonPeriods.size());
+    assertEquals("late-life", jsonPeriods.get(1).getAsJsonObject().get("period_id").getAsString());
+    assertEquals("late-life", jsonPeriods.get(1).getAsJsonObject().getAsJsonObject("envelope_evidence")
+        .getAsJsonObject("optimizer_evidence").get("cycle_id").getAsString());
+    assertThrows(IllegalStateException.class, () -> lifecycle.toEvidenceJson("missing-cycle"));
     assertEquals(Integer.valueOf(2), lifecycleEvidence.get("period_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("requested_point_count"));
     assertEquals(Integer.valueOf(12), lifecycleEvidence.get("completed_point_count"));
