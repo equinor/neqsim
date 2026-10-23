@@ -4,6 +4,8 @@ import json
 import math
 import os
 import pathlib
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -13,7 +15,7 @@ import neqsim_continuous as nc
 from neqsim_continuous import production
 from neqsim_continuous.cycle import run_cycle
 from neqsim_continuous.ledger import Ledger
-from neqsim_continuous.living import make_living
+from neqsim_continuous.living import make_living, promote
 
 RVP = {"name": "rvp", "kpi": "rvp_bara", "op": "<=", "limit": 0.70, "margin": 0.05, "warn": 0.03, "hard": True}
 
@@ -1335,6 +1337,153 @@ def test_guard_persists_schema8_constraint_identity_migration(tmp_path):
     assert tampered_ctx.proposals == []
     reasons = json.loads((tmp_path / "guard.json").read_text())["withheld"][0]["reasons"]
     assert "lifecycle_period_change_diagnostics_mismatch" in reasons
+
+
+def _promotable_schema8_task(tmp_path):
+    """Create one completed cycle with a guard-approved schema-v8 ledger receipt."""
+    task = tmp_path / "promotable-lifecycle"
+    task.mkdir()
+    (task / "results.json").write_text(json.dumps({
+        "key_results": {"accepted_export_kg_hr": 1234.0},
+        "conclusions": "Synthetic ten-well current-best result.",
+    }), encoding="utf-8")
+    (task / "study_config.yaml").write_text("study:\n  title: Ten-well lifecycle\n", encoding="utf-8")
+    make_living(str(task), template="production")
+    plan_path = task / "continuous" / "cycle_plan.yaml"
+    plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
+    plan["production"]["require_envelope_evidence"] = True
+    plan["production"]["require_lifecycle_envelope_evidence"] = True
+    plan_path.write_text(yaml.safe_dump(plan), encoding="utf-8")
+
+    proposal = _valid_proposal()
+    envelope = proposal["accepted_point_envelope_evidence"]
+    _add_empty_operating_region_evidence(envelope)
+    _add_empty_boundary_refinement_evidence(envelope)
+    current_constraint = {
+        "source": "PLANT_CONSTRAINT",
+        "qualified_constraint_name": "host::separator gas capacity",
+        "normalized_utilization": 0.96,
+        "normalized_margin": 0.04,
+        "current_value": 960.0,
+        "applicable_limit": 1000.0,
+        "physical_margin": 40.0,
+        "physical_unit": "kg/hr",
+        "feasible": True,
+        "diagnostic": "AVAILABLE",
+        "applicable_limit_role": "OPERATING_LIMIT",
+        "applicable_limit_provenance": "synthetic ten-well separator limit",
+    }
+    envelope["slices"][0]["points"][0]["leading_constraint"] = current_constraint
+    _add_empty_constraint_summary_evidence(envelope)
+    envelope["cross_slice_constraint_summary"] = production._cross_slice_constraint_summary(
+        envelope["slices"], envelope["cross_slice_constraint_summary"])
+    lifecycle = _valid_constraint_summary_migration_lifecycle_evidence(envelope)
+    future_envelope = lifecycle["periods"][1]["envelope_evidence"]
+    future_constraint = dict(
+        current_constraint,
+        qualified_constraint_name="host::shared power",
+        current_value=1020.0,
+        applicable_limit=1000.0,
+        normalized_utilization=1.02,
+        normalized_margin=-0.02,
+        physical_margin=-20.0,
+        physical_unit="kW",
+        feasible=False,
+        applicable_limit_role="SHARED_RESOURCE",
+        applicable_limit_provenance="synthetic ten-well shared host power budget",
+    )
+    future_envelope["slices"][0]["points"][0].update({
+        "feasible": False,
+        "outcome": "OTHER_MODEL_CONSTRAINT_VIOLATED",
+        "leading_constraint": future_constraint,
+    })
+    future_envelope["cross_slice_constraint_summary"] = production._cross_slice_constraint_summary(
+        future_envelope["slices"], future_envelope["cross_slice_constraint_summary"])
+    lifecycle["period_change_diagnostics"] = production._period_change_diagnostics(
+        lifecycle["periods"], lifecycle["accepted_action_ids"], lifecycle["time_unit"],
+        require_operating_transitions=True, require_boundary_refinements=True,
+        require_constraint_summary_identities=True)
+    proposal["lifecycle_envelope_evidence"] = lifecycle
+    ctx = _guard_context(task / "continuous" / "cycles" / "C-1", proposal)
+    ctx.plan["production"]["require_envelope_evidence"] = True
+    ctx.plan["production"]["require_lifecycle_envelope_evidence"] = True
+    production.guard(ctx, {})
+    accepted = ctx.proposals[0]
+
+    cycle = task / "continuous" / "cycles" / "C-1"
+    cycle.mkdir(parents=True, exist_ok=True)
+    (cycle / "cycle.json").write_text(json.dumps({
+        "cycle_id": "C-1",
+        "status": "complete",
+        "versions": {"neqsim_commit": "synthetic-test"},
+        "stages": [
+            {"name": "guard", "status": "ok"},
+            {"name": "ledger", "status": "ok"},
+        ],
+    }), encoding="utf-8")
+    fields = {key: value for key, value in accepted.items()
+              if key not in ("title", "category")}
+    fields["evidence_current"] = True
+    book = Ledger(task / "continuous" / "ledger" / "events.jsonl")
+    event = book.create(accepted["title"], accepted.get("category", "operational"),
+                        cycle="C-1", **fields)
+    return task, accepted["lifecycle_envelope_evidence"], event["id"]
+
+
+def test_promote_copies_only_guarded_schema8_lifecycle_evidence(tmp_path):
+    task, evidence, _ = _promotable_schema8_task(tmp_path)
+
+    promoted = promote(str(task), "C-1", "Engineering reviewer", note="accepted")
+
+    current = json.loads((task / "results.json").read_text(encoding="utf-8"))
+    snapshot = json.loads((task / "continuous" / "baseline" / "results_snapshot.json")
+                          .read_text(encoding="utf-8"))
+    assert promoted["source_cycle"] == "C-1"
+    assert current["lifecycle_envelope_evidence"] == evidence
+    assert snapshot == current
+    assert current["key_results"]["accepted_export_kg_hr"] == 1234.0
+
+    generator = pathlib.Path(__file__).parent / "task_template" / "step3_report" / "generate_report.py"
+    completed = subprocess.run([
+        sys.executable, str(generator), "--task-dir", str(task), "--no-template",
+        "--title", "Promoted ten-well lifecycle",
+    ], capture_output=True, text=True, timeout=120)
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    report = (task / "step3_report" / "Promoted_ten-well_lifecycle.html").read_text(encoding="utf-8")
+    assert "Lifecycle Operating Envelope" in report
+    assert "host::separator gas capacity" in report and "40 kg/hr" in report
+    assert "host::shared power" in report and "-20 kW" in report
+    assert "synthetic ten-well shared host power budget" in report
+
+
+@pytest.mark.parametrize("failure", ["stale", "unguarded", "ambiguous", "tampered"])
+def test_promote_rejects_unqualified_lifecycle_handoff(tmp_path, failure):
+    task, _, item_id = _promotable_schema8_task(tmp_path)
+    ledger_path = task / "continuous" / "ledger" / "events.jsonl"
+    events = Ledger(ledger_path).events()
+    if failure == "stale":
+        Ledger(ledger_path).invalidate_evidence(item_id, [{"path": "study_config.yaml"}], cycle="C-2")
+    elif failure == "unguarded":
+        events[0]["guard"] = "not-run"
+        ledger_path.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
+    elif failure == "tampered":
+        events[0]["lifecycle_envelope_evidence"]["period_change_diagnostics"][0][
+            "added_ranked_constraint_identities"] = [{"classification": "REJECTING"}]
+        ledger_path.write_text("\n".join(json.dumps(event) for event in events) + "\n", encoding="utf-8")
+    else:
+        second = copy.deepcopy(events[0])
+        second["event_id"] = "second-guarded-evidence"
+        second["id"] = "OPP-0002"
+        second["title"] = "different guarded lifecycle"
+        second["lifecycle_envelope_evidence"]["lifecycle_study_name"] = "Different study"
+        ledger_path.write_text("\n".join(json.dumps(event) for event in events + [second]) + "\n",
+                               encoding="utf-8")
+    before = (task / "results.json").read_text(encoding="utf-8")
+
+    with pytest.raises(ValueError, match="lifecycle evidence|ambiguous"):
+        promote(str(task), "C-1", "Engineering reviewer")
+
+    assert (task / "results.json").read_text(encoding="utf-8") == before
 
 
 def test_guard_reconstructs_schema2_constraint_summary_fail_closed(tmp_path):
