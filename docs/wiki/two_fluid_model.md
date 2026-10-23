@@ -838,15 +838,30 @@ The `AUSMPlusFluxCalculator` implements AUSM+ flux splitting for:
 - SSPRK3 (Strong stability preserving)
 - IMEX pressure correction
 
+The legacy IMEX correction raises pressure after compression and lowers it after expansion, so
+its force opposes the imposed velocity convergence. It regularizes phase momentum while retaining
+explicit phase-mass transport; its scalar total-mass residual does not enforce phase-volume closure.
+Do not interpret this route as an unconditionally stable multiphase acoustic solver.
+
 The IMEX timestep is limited by both convection and the explicit wall/interphase drag relaxation.
 An implicit pressure update does not remove the source stability restriction. The estimate excludes
-dispersed-bubble drag when its implicit source option is enabled. Euler and Runge-Kutta retain
-their acoustic CFL; this does not bound all explicit drag timescales. A newly appearing laminar
-film can have arbitrarily fast relaxation, so the IMEX source limit may also become impractically
+dispersed-bubble drag when its implicit source option is enabled, and wall/gas-liquid friction
+already advanced by an active conservative slug reconstruction's implicit subcell split.
+The tracked-marker list is refreshed before timestep selection so additions and removals take effect immediately.
+Oil-water shear remains explicit. Euler and Runge-Kutta retain their acoustic/void-wave CFL,
+which does not bound every explicit drag timescale. A global source-bound extension stalled
+previously passing coupled-riser progress cases and is deferred pending implicit mean-cell drag.
+A newly appearing laminar film can have arbitrarily fast relaxation, so an IMEX source limit can become impractically
 small. General phase-appearance stability requires implicit drag, without artificial phase-mass
 or timestep floors. Wall forces use
 regime-specific wetted geometry and are blended after integration: slug/churn volume weights are
 applied once, while annular films and dispersed-liquid continuums use the full wall perimeter.
+
+The unresolved liquid-wall law uses the mass-weighted bulk liquid velocity. Its oil/water force
+split uses the corresponding conservative phase masses, preserving total wall force and
+nonpositive combined wall kinetic power during counterflow. Gravity uses each phase's own
+conservative mass. Exactly absent phases carry zero external mass, momentum and energy flux,
+and do not trigger an outlet-backflow diagnostic; every positive trace remains active.
 
 ### Coupled Pressure-Momentum Correction
 

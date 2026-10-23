@@ -37,7 +37,7 @@ class TwoFluidMomentumSourceConservationTest {
     }
   }
 
-  /** Vanishing total liquid holdup does not replace the actual oil/water wall-force shares with 50/50. */
+  /** Trace liquid wall resistance retains the conservative inertia shares that define bulk liquid velocity. */
   @Test
   void traceLiquidWallForceUsesActualLiquidShares() {
     TwoFluidConservationEquations equations = createEquations(true);
@@ -46,8 +46,10 @@ class TwoFluidMomentumSourceConservationTest {
     section.setGasWallShear(0.0);
     section.setInterfacialShear(0.0);
     double[] source = equations.calcSourceTerms(new TwoFluidSection[] {section})[0];
-    assertEquals(-11.0 * 0.35 * 0.2, source[4], 1e-12);
-    assertEquals(-11.0 * 0.35 * 0.8, source[5], 1e-12);
+    double oilMassFraction = section.getOilMassPerLength()
+        / (section.getOilMassPerLength() + section.getWaterMassPerLength());
+    assertEquals(-11.0 * 0.35 * oilMassFraction, source[4], 1e-12);
+    assertEquals(-11.0 * 0.35 * (1.0 - oilMassFraction), source[5], 1e-12);
   }
 
   /** With slip disabled, both liquid phases accelerate equally despite unequal densities. */

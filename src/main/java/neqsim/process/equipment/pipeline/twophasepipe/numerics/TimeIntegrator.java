@@ -48,10 +48,10 @@ public class TimeIntegrator implements Serializable {
     /** Strong Stability Preserving RK3. */
     SSP_RK3,
     /**
-     * IMEX (Implicit-Explicit) pressure correction method. Treats transport (advection) explicitly and the pressure
-     * wave equation implicitly, removing the acoustic CFL constraint. Allows time steps 10-100x larger than fully
-     * explicit schemes for long pipelines. Based on the pressure-correction approach of Harlow and Amsden (1971)
-     * adapted for two-fluid models.
+     * IMEX (Implicit-Explicit) pressure correction method. Treats transport explicitly and applies either the selected
+     * coupled phase-volume correction or the legacy scalar momentum correction. The usable step depends on the
+     * correction, source stiffness and transient qualification; a material-advection CFL bound alone is insufficient to
+     * establish stability of the legacy split.
      */
     IMEX_PRESSURE_CORRECTION
   }
@@ -797,23 +797,25 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
-   * IMEX (Implicit-Explicit) pressure correction step.
+   * Legacy IMEX (Implicit-Explicit) momentum correction from a scalar acoustic pressure response.
    *
    * <p>
-   * The algorithm follows a two-stage splitting:
+   * The algorithm follows an explicit predictor and an implicit momentum correction:
    * </p>
    * <ol>
    * <li><b>Predictor (explicit):</b> Advance mass and momentum using the explicit RHS (advection + source terms) to
    * obtain intermediate values U*.</li>
-   * <li><b>Pressure correction (implicit):</b> Solve a tridiagonal Helmholtz equation for the pressure correction dp.
-   * The pressure wave equation dp - (c*dt/dx)^2 * d^2(dp)/dx^2 = RHS removes the acoustic CFL constraint.</li>
+   * <li><b>Pressure correction (implicit):</b> Smooth the linearized pressure response to the predictor's mixture-mass
+   * change with a tridiagonal Helmholtz equation. Compression produces a positive pressure increment.</li>
    * <li><b>Corrector:</b> Update phase momenta using the pressure correction gradient while leaving the phase masses
    * from the conservative predictor unchanged.</li>
    * </ol>
    *
    * <p>
-   * This allows the convective CFL (based on material velocity |v|) to govern the time step instead of the acoustic CFL
-   * (based on |v|+c). For typical gas-liquid flows where c=300 m/s and v=5 m/s, this gives a factor of ~60 speedup.
+   * Phase-mass transport remains explicit, and the scalar mixture-mass response does not enforce separate phase-volume
+   * closure. Acoustic and timestep-refinement checks remain necessary for this legacy split. Select the coupled
+   * pressure-momentum correction for phase-resolved volume closure; its convergence and physical qualification gates
+   * must also be checked for the chosen transient.
    * </p>
    *
    * @param U Current state [nCells][nVars]
@@ -883,9 +885,10 @@ public class TimeIntegrator implements Serializable {
       lower[i] = -sig;
       upper[i] = -sig;
 
-      // RHS: pressure correction to absorb the mass residual
-      // mass per length = area * density, and density correction is dp / c^2.
-      b[i] = -c * c * massResidual[i] / area;
+      // The acoustic EOS gives deltaP = c^2 * deltaRho = c^2 * deltaMassPerLength / area.
+      // The positive sign makes compression raise pressure, so -A*grad(deltaP) opposes convergence.
+      // Reversing this sign adds inward momentum to a compressing cell and amplifies the acoustic mode.
+      b[i] = c * c * massResidual[i] / area;
     }
 
     // Boundary conditions for pressure correction
@@ -1145,22 +1148,22 @@ public class TimeIntegrator implements Serializable {
   }
 
   /**
-   * Calculate stable time step for IMEX method. The IMEX scheme removes the acoustic CFL constraint, so the time step
-   * is limited only by the convective CFL based on material velocities (not sound speed).
+   * Calculate the material-advection CFL bound for the IMEX method.
    *
    * <p>
    * dt_IMEX = CFL * dx / max(|v_G|, |v_L|)
    * </p>
    *
    * <p>
-   * For typical gas-liquid flows where c=300 m/s and v=5 m/s, this gives a speedup factor of ~60 compared to the
-   * standard acoustic CFL.
+   * This bound omits acoustic and momentum-source relaxation times. The selected pressure correction, explicit sources
+   * and nonlinear convergence impose additional requirements. In particular, the legacy scalar correction retains
+   * explicit phase-mass transport and requires independent acoustic/timestep-refinement checks.
    * </p>
    *
    * @param gasVelocities gas velocities at each cell (m/s)
    * @param liquidVelocities liquid velocities at each cell (m/s)
    * @param dx cell size (m)
-   * @return stable time step (s), typically 10-100x larger than acoustic CFL
+   * @return material-advection time-step bound in s
    */
   public double calcIMEXTimeStep(double[] gasVelocities, double[] liquidVelocities, double dx) {
     double maxMaterialSpeed = 1.0; // Minimum to avoid division by zero
