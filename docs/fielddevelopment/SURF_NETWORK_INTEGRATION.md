@@ -631,6 +631,12 @@ and volume factor, records both inputs in its result and divides the reservoir-v
 by the configured reservoir-m3/Sm3 factor. The default factor remains `1.0`, preserving the
 established screening result. Pressure-dependent PVT remains outside this screen, and
 field/laboratory injectivity plus fracture review is still required before design or operating use.
+Its common-BHP allocation now solves the active accepting-zone set: zones at or above the solved BHP
+remain shut in and are removed before pressure is recomputed. Analytical regressions cover an inactive
+higher-pressure zone, zero target, and a max-BHP-limited rate shortfall. Results retain requested and
+achieved rates together with unconstrained required BHP, applied pressure limit and the limiting flag.
+This is conservative steady screening and does not introduce inter-zone crossflow or independent
+injectivity/fracture qualification.
 
 The synthetic `FieldToFacilityOptimizationAcceptanceTest` connects two live wells and
 well chokes through exclusive per-well routes to distinct 45 bara HP and 30 bara LP

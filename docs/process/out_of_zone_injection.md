@@ -88,6 +88,13 @@ relative permeability, crossflow, reservoir transients and fracture growth requi
 models. Multi-zone results produced before the dimensional correction in #4228 were lower by a factor
 of `1e10` and must be recalculated rather than reused.
 
+The common BHP is solved from the piecewise-linear accepting-zone equation
+$q = \sum_i II_i\max(p_{bh}-p_{r,i},0)$. A zone whose reservoir pressure is at or above the
+solved BHP remains shut in and is excluded before the BHP is recomputed. This prevents a closed,
+higher-pressure zone from biasing the pressure and over-allocating the requested rate to lower-pressure
+zones. The result records the requested rate, unconstrained required BHP, applied pressure limit and
+whether that limit caused a rate shortfall. The calculation does not model inter-zone crossflow.
+
 ### Zone Allocation
 
 ```java
@@ -117,6 +124,8 @@ InjectionWellModel.MultiZoneInjectionResult result =
 System.out.println("Total rate: " + result.totalRate + " Sm3/day");
 System.out.println("Injection efficiency: " + result.injectionEfficiency);
 System.out.println("Out-of-zone rate: " + result.outOfZoneRate + " Sm3/day");
+System.out.println("Required BHP: " + result.requiredBHP + " bara");
+System.out.println("Pressure limited: " + result.limitedByPressure);
 ```
 
 ### Thermal Stress Effects

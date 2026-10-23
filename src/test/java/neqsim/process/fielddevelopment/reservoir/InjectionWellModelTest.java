@@ -1,6 +1,7 @@
 package neqsim.process.fielddevelopment.reservoir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -289,6 +290,84 @@ class InjectionWellModelTest {
     assertEquals(result.totalRate, reconstructedRate, 1e-9);
     assertEquals(result.zoneResults.get(0).rate / result.totalRate, result.injectionEfficiency, 1e-12);
     assertEquals(result.zoneResults.get(1).rate, result.outOfZoneRate, 1e-12);
+  }
+
+  @Test
+  @DisplayName("Multi-zone allocation excludes zones above the solved common BHP")
+  void testMultiZoneAllocationUsesOnlyAcceptingZones() {
+    InjectionZone accepting = new InjectionZone("accepting", 2500.0, 200.0, 100.0, 20.0, 400.0);
+    accepting.isTargetZone = true;
+    InjectionZone shutIn = new InjectionZone("shut-in", 2600.0, 250.0, 100.0, 20.0, 400.0);
+    model.addZone(accepting);
+    model.addZone(shutIn);
+    model.setMaxBHP(390.0, "bara");
+
+    double targetRate = 1000.0;
+    MultiZoneInjectionResult result = model.calculateMultiZone(targetRate);
+    double acceptingII = result.zoneResults.get(0).injectivityIndex;
+
+    assertEquals(200.0 + targetRate / acceptingII, result.commonBHP, 1e-12);
+    assertEquals(targetRate, result.totalRate, 1e-9);
+    assertEquals(targetRate, result.zoneResults.get(0).rate, 1e-9);
+    assertEquals(0.0, result.zoneResults.get(1).rate, 0.0);
+    assertEquals(targetRate, result.getRequestedRate(), 0.0);
+    assertEquals(result.commonBHP, result.getRequiredBHP(), 0.0);
+    assertEquals(390.0, result.getPressureLimit(), 0.0);
+    assertFalse(result.isLimitedByPressure());
+  }
+
+  @Test
+  @DisplayName("Zero target does not create crossflow between unequal-pressure zones")
+  void testMultiZoneZeroTargetHasZeroAllocation() {
+    model.addZone(new InjectionZone("low-pressure", 2500.0, 200.0, 100.0, 20.0, 400.0));
+    model.addZone(new InjectionZone("high-pressure", 2600.0, 250.0, 100.0, 20.0, 400.0));
+
+    MultiZoneInjectionResult result = model.calculateMultiZone(0.0);
+
+    assertEquals(200.0, result.commonBHP, 0.0);
+    assertEquals(0.0, result.totalRate, 0.0);
+    assertEquals(0.0, result.zoneResults.get(0).rate, 0.0);
+    assertEquals(0.0, result.zoneResults.get(1).rate, 0.0);
+    assertFalse(result.isLimitedByPressure());
+  }
+
+  @Test
+  @DisplayName("Multi-zone allocation reports rate shortfall at the pressure limit")
+  void testMultiZoneAllocationReportsPressureLimitedRate() {
+    InjectionZone accepting = new InjectionZone("accepting", 2500.0, 200.0, 100.0, 20.0, 400.0);
+    InjectionZone shutIn = new InjectionZone("shut-in", 2600.0, 250.0, 100.0, 20.0, 400.0);
+    model.addZone(accepting);
+    model.addZone(shutIn);
+    model.setMaxBHP(210.0, "bara");
+
+    MultiZoneInjectionResult result = model.calculateMultiZone(1000.0);
+    double expectedRate = result.zoneResults.get(0).injectivityIndex * 10.0;
+
+    assertTrue(result.isLimitedByPressure());
+    assertEquals(210.0, result.getPressureLimit(), 0.0);
+    assertEquals(210.0, result.commonBHP, 0.0);
+    assertTrue(result.getRequiredBHP() > result.getPressureLimit());
+    assertEquals(expectedRate, result.totalRate, 1e-9);
+    assertTrue(result.totalRate < result.requestedRate);
+    assertEquals(0.0, result.zoneResults.get(1).rate, 0.0);
+  }
+
+  @Test
+  @DisplayName("Multi-zone allocation rejects invalid target rates")
+  void testMultiZoneAllocationRejectsInvalidTargetRates() {
+    model.addZone(new InjectionZone("target", 2500.0, 200.0, 100.0, 20.0, 400.0));
+
+    assertThrows(IllegalArgumentException.class, () -> model.calculateMultiZone(-1.0));
+    assertThrows(IllegalArgumentException.class, () -> model.calculateMultiZone(Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> model.calculateMultiZone(Double.POSITIVE_INFINITY));
+  }
+
+  @Test
+  @DisplayName("Multi-zone allocation rejects a configuration without positive injectivity")
+  void testMultiZoneAllocationRejectsNoInjectiveZone() {
+    model.addZone(new InjectionZone("sealed", 2500.0, 200.0, 0.0, 20.0, 400.0));
+
+    assertThrows(IllegalStateException.class, () -> model.calculateMultiZone(1000.0));
   }
 
   @Test
