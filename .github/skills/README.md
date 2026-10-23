@@ -109,6 +109,7 @@ and point the tool at `~/.neqsim/export/generic/manifest.json` or the generated
 | `neqsim-subsea-and-wells`                          | Subsea systems and well design — SURF cost estimation, casing design, tieback analysis                                                        | field.development, mechanical.design        |
 | `neqsim-technical-document-reading`                | Technical document reading — PDF/Word/Excel extraction, P&ID topology, vendor datasheets, image analysis                                      | technical.reader                            |
 | `neqsim-troubleshooting`                           | Troubleshooting playbook — flash non-convergence, recycle divergence, zero values, phase ID issues                                            | All simulation agents                       |
+| `neqsim-vfp-lift-curves`                           | VFPPROD/VFPINJ lift curve tables for Eclipse and OPM Flow — VfpTableBuilder, tubing/flowline/full-system lift models, rate cap, validation  | field.development, process.model            |
 | `neqsim-unisim-reader`                             | UniSim/HYSYS conversion — COM reader, component/EOS mapping, topology reconstruction, sub-flowsheets                                          | unisim.reader                               |
 | `neqsim-utilities-specification`                   | Utilities — steam HP/MP/LP, cooling water, instrument air, fuel gas, N₂, demin, refrigeration sizing & specs                                  | process.model, solve.task                   |
 

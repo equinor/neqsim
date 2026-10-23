@@ -847,10 +847,34 @@
   "neqsim-optimization-and-doe"
  ],
  "lift curve": [
+  "neqsim-vfp-lift-curves",
   "neqsim-optimization-and-doe"
  ],
  "vfp table": [
+  "neqsim-vfp-lift-curves",
   "neqsim-optimization-and-doe"
+ ],
+ "vfpprod": [
+  "neqsim-vfp-lift-curves"
+ ],
+ "vfpinj": [
+  "neqsim-vfp-lift-curves"
+ ],
+ "vertical lift performance": [
+  "neqsim-vfp-lift-curves",
+  "neqsim-subsea-and-wells"
+ ],
+ "tubing performance table": [
+  "neqsim-vfp-lift-curves"
+ ],
+ "thp table": [
+  "neqsim-vfp-lift-curves"
+ ],
+ "bhp table": [
+  "neqsim-vfp-lift-curves"
+ ],
+ "opm flow vfp": [
+  "neqsim-vfp-lift-curves"
  ],
  "or analyzing column performance": [
   "neqsim-distillation-design"

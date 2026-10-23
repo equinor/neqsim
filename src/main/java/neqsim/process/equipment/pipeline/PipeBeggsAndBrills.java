@@ -593,6 +593,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // Angle of the pipe [degrees]
   private double angle = Double.NaN;
 
+  /** Ensures the lean-gas holdup warning is logged once per pipe instance. */
+  private transient boolean leanGasWarningLogged = false;
   // Density of the liquid in the mixture in case of water and oil phases present
   // together
   private double mixtureLiquidDensity;
@@ -1462,6 +1464,14 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       // in mixture-density and pressure-drop calculations.
       El = Math.max(inputVolumeFractionLiquid, Math.min(1.0, El));
 
+      if (!leanGasWarningLogged && inputVolumeFractionLiquid < 0.03 && Math.abs(angle) > Math.toRadians(30.0)) {
+        leanGasWarningLogged = true;
+        logger.warn(
+            "Pipe {}: Beggs-Brill with gas volume fraction {} in a {} deg inclined leg can over-predict the "
+                + "hydrostatic pressure drop of lean gas (liquid hold-up {}); verify against a gas-well correlation "
+                + "such as Gray (TubingPerformance.CorrelationType.GRAY) or measured data",
+            getName(), 1.0 - inputVolumeFractionLiquid, Math.toDegrees(angle), El);
+      }
       if (system.getNumberOfPhases() == 3) {
         mixtureDensity = mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       } else {

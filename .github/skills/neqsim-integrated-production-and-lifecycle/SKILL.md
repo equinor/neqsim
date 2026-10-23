@@ -109,7 +109,7 @@ print(result.getFieldRate(), result.getWellRates())
 
 To bridge a concept to a process skeleton, `FieldConcept.gasTieback("name", tiebackKm, wellCount, ratePerWellMSm3d)` creates inputs, and `new ConceptToProcessLinker().generateProcessSystem(concept, ConceptToProcessLinker.FidelityLevel.SCREENING)` creates a process model. `FacilityBuilder.autoGenerate(concept).build()` creates a `FacilityConfig`; it does not itself instantiate every config block into validated equipment. The linker also creates representative fluid/process inputs, so replace those with project fluid and measured data before design use.
 
-For lifecycle work, build a `FieldLifecycleConcept` using `NorwegianOilFieldCase` examples as patterns or assemble `FieldLifecycleModel` and `FieldLifecycleConfiguration` directly; evaluate with `new FieldLifecycleEvaluator().evaluate(concept)`. The tested lifecycle path supports user-supplied production-potential providers and existing `ProcessSystem`/multi-area `ProcessModel` mappings. For VFP export, instantiate `ReservoirCouplingExporter(process)`, configure pressure/rate ranges, call `generateVfpProd(wellName, fluid, tableNumber)`, then retrieve `getEclipseKeywords()`.
+For lifecycle work, build a `FieldLifecycleConcept` using `NorwegianOilFieldCase` examples as patterns or assemble `FieldLifecycleModel` and `FieldLifecycleConfiguration` directly; evaluate with `new FieldLifecycleEvaluator().evaluate(concept)`. The tested lifecycle path supports user-supplied production-potential providers and existing `ProcessSystem`/multi-area `ProcessModel` mappings. For VFP export, build the table with `VfpTableBuilder` and a lift model (see `neqsim-vfp-lift-curves`); `ReservoirCouplingExporter(process)` with `generateVfpProd(wellName, fluid, tableNumber)` and `getEclipseKeywords()` is a placeholder correlation unless `setVlpProvider(...)` is called.
 
 ## Result extraction
 
@@ -163,11 +163,10 @@ Build the capacity curve from repeated process-model throughput sweeps at severa
 - `neqsim-agentic-process-optimization` — closed-loop optimization of an already-built process model.
 - `neqsim-process-modeling` — detailed flowsheet construction and convergence checks.
 - `neqsim-e300-fluid-io` — Eclipse E300 fluid import/export; distinct from VFP table generation.
+- `neqsim-vfp-lift-curves` — VFPPROD/VFPINJ lift curves from well, flowline and topside models.
 - `neqsim-reservoir-facility-value-chain` (community) — p/z history match, well law, facility capacity and supply/capacity balance for a gas chain.
-## VFPPROD lift curves from a calibrated well/flowline/topside model (Troll A, 2026-10)
+## VFPPROD / VFPINJ lift curves
 
-- `ReservoirCouplingExporter.generateVfpProd` uses a placeholder BHP (hydrostatic + simple friction); do not use it for deliverable VFP. Compute the BHP table yourself (NeqSim `TubingPerformance` Gray chains inverted for THP, `PipeBeggsAndBrills` flowline tables, compressor capacity tables) and format it with `neqsim.process.util.optimizer.EclipseVFPExporter` (`setFlowRateType("GAS")`, `setWaterCutType("WGR")`, `setGORType("OGR")`, `setInputUnits("Sm3/day","bara")`, `setUnitSystem("METRIC")`; axes strictly increasing, BHP array `[flow][THP][WGR][OGR][ALQ]` via `jpype.JArray(jpype.JDouble, 5)`, BHP must be positive and finite).
-- Full-system (outlet-to-inlet) curve = required platform-inlet pressure from the topside (lowest separator pressure at which the trains and inlet vessels carry the rate, export pressure fixed) + flowline/hook-up dP + tubing VLP. A compressor-capacity limit is a rate cap, not a pressure: continue the table with a steep penalty slope and also give the simulator a group rate limit.
-- Gas-condensate VLP is weakly sensitive to lean-gas OGR/WGR but nonlinear at small WGR: put 3-4 points in the first decade of each axis (0, base, 5x, 25x) or the multilinear interpolation of the deck gives 1-4 bar error; validate against the live chain at off-grid points.
-- Validate the exported tables, not the model: solve IPR x VFP the way the simulator does and compare with the full model; check a live equipment bracket (trains OK just above the inlet curve, infeasible 1.5 bar below).
-- Routing configurations (which train takes which province gas, mixed feeds): see `step2_analysis/tam_cfg.py`, `tam_route.py`, `tam_mix.py` of the Troll A integrated-model task for a reusable pattern (config validation, NeqSim mixer + JT valve for the mixed feed, convex-hull LP allocation).
+Deliverable lift curve tables (tubing, flowline and full-system curves, axis design, rate caps, validation and traps)
+are covered by `neqsim-vfp-lift-curves`. `ReservoirCouplingExporter.generateVfpProd` is a placeholder unless a
+`VlpProvider` is set with `setVlpProvider(...)`; use `VfpTableBuilder` for deck output.

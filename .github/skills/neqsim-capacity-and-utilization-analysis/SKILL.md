@@ -194,3 +194,4 @@ Traps seen: a TP/third-party owner reusing another owner's blown-up intensity; d
 - `neqsim-model-calibration-and-data-reconciliation` — measured data quality, calibration and residual analysis.
 - `neqsim-production-optimization` — production surveillance, rate allocation and profile fitting.
 - `neqsim-operational-risk-and-safety-validation` — safety-system scenario interpretation and review boundaries.
+- `neqsim-vfp-lift-curves` — turns a binding capacity (compressor head limit, separator pressure) into a rate cap and full-system VFP curve.
