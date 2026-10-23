@@ -4927,39 +4927,20 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    recycleRemovedPhaseSlot(specPhase);
+    for (int i = specPhase; i < numberOfPhases - 1; i++) {
+      phaseIndex[i] = phaseIndex[i + 1];
+      phaseType[i] = phaseType[i + 1];
+    }
+    numberOfPhases--;
   }
 
   /** {@inheritDoc} */
   @Override
   public void removePhaseKeepTotalComposition(int specPhase) {
-    recycleRemovedPhaseSlot(specPhase);
-  }
-
-  /**
-   * Remove one logical phase while retaining its physical storage slot for the next {@link #addPhase()} call.
-   *
-   * <p>
-   * For a non-tail removal, the legacy mapping exposed the last surviving phase twice. Preserve that converged trial
-   * state in a detached phase clone before returning the released slot to the inactive tail. The active survivor keeps
-   * its identity, while a later add receives the same root, composition, phase fraction and phase-type seed without
-   * sharing a mutable phase object.
-   * </p>
-   *
-   * @param specPhase logical phase index to remove
-   */
-  private void recycleRemovedPhaseSlot(int specPhase) {
-    int releasedPhysicalSlot = phaseIndex[specPhase];
-    int lastActivePhysicalSlot = phaseIndex[numberOfPhases - 1];
-    if (specPhase < numberOfPhases - 1) {
-      phaseArray[releasedPhysicalSlot] = phaseArray[lastActivePhysicalSlot].clone();
-      beta[releasedPhysicalSlot] = beta[lastActivePhysicalSlot];
-      phaseType[releasedPhysicalSlot] = phaseType[lastActivePhysicalSlot];
-    }
     for (int i = specPhase; i < numberOfPhases - 1; i++) {
       phaseIndex[i] = phaseIndex[i + 1];
+      phaseType[i] = phaseType[i + 1];
     }
-    phaseIndex[numberOfPhases - 1] = releasedPhysicalSlot;
     numberOfPhases--;
   }
 
