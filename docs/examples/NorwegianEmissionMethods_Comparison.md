@@ -1,357 +1,143 @@
 ---
-title: "NeqSim vs Norwegian Handbook: Emission Calculation Methods Comparison"
-description: "This document compares the conventional Norwegian handbook method for emission reporting with the NeqSim thermodynamic method implemented via NeqSimLive."
+title: "Norwegian Emission Methods Comparison"
+description: "Source-backed comparison of NeqSim's conventional factors and produced-water degassing screening model."
 ---
 
-> **📖 Related Documentation:**
-> - [Produced Water Emissions Tutorial](ProducedWaterEmissions_Tutorial) - Complete implementation guide
-> - [Examples Index](index) - All tutorials and examples
-> - [REFERENCE_MANUAL_INDEX - Chapter 43](../REFERENCE_MANUAL_INDEX#chapter-43-sustainability--emissions) - Full API documentation
+This page explains the two comparison paths implemented in NeqSim. It is a
+screening and software-integration guide, not a regulatory calculation procedure.
+This model does not establish field accuracy, regulatory compliance, or an uncertainty budget.
+Verify the applicable handbook revision, facility
+basis, measurement plan, and reporting requirements with accountable specialists.
 
-## Overview
+## Choose the calculation path
 
-This document compares the **conventional Norwegian handbook method** for emission reporting with the **NeqSim thermodynamic method** implemented via NeqSimLive. The comparison is based on the methodology presented in:
+| Path | Current NeqSim behavior | Use it for | Do not infer |
+|---|---|---|---|
+| Conventional factors | Multiplies annual produced-water volume and pressure drop by the two constants implemented in `EmissionsCalculator` | Reproducing the implemented factor calculation and creating a transparent comparison basis | That the constants are current or applicable for a particular report |
+| Thermodynamic screening | Runs the `ProducedWaterDegassingSystem` SRK-CPA convenience model and reports released CO2, methane, and C2+ hydrocarbons by stage | Exploring sensitivity to stated flow, temperature, pressure, and assumed gas composition | Field calibration, salinity correction, certified uncertainty, or regulatory acceptance |
 
-> **"Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator"**
-> Kristiansen et al., Global Flow Measurement Workshop (GFMW), October 2023
-> *Paper presented at GFMW 2023 conference*
+The convenience model assumes 95 mol% water and distributes the remaining 5 mol%
+using the supplied gas fractions. It uses mixing rule 10 and database interaction
+parameters. `setSalinity` stores metadata only; it does not add salt or alter the
+thermodynamic calculation. See the
+[supported-model guide](../process/equipment/util/produced_water_degassing.md) for
+the complete basis and limitations.
 
----
+## Conventional factor calculation
 
-## Norwegian Continental Shelf Emissions Context
+The current Java source defines `HANDBOOK_F_CH4 = 14.0` and
+`HANDBOOK_F_NMVOC = 3.5`, both in g/(m3 water bar). Its static methods return
+tonnes for the supplied produced-water volume in m3 and pressure drop in bar:
 
-### Regulatory Framework
+$$U_{\mathrm{CH_4}}=f_{\mathrm{CH_4}}V_{\mathrm{pw}}\Delta P\times10^{-6}$$
 
-The Norwegian Continental Shelf (NCS) is one of the world's most strictly regulated offshore petroleum provinces:
+$$U_{\mathrm{nmVOC}}=f_{\mathrm{nmVOC}}V_{\mathrm{pw}}\Delta P\times10^{-6}$$
 
-| Metric | NCS Statistics (2024) |
-|--------|----------------------|
-| Total GHG emissions | ~10.9 million tonnes CO₂eq |
-| Share of Norway's total GHG | ~25% |
-| nmVOC emissions | ~21,500 tonnes |
-| Carbon tax + EU ETS cost | ~NOK 1,565/tonne CO₂ |
-| Total annual emission cost | ~NOK 16 billion |
+`calculateConventionalEmissions` also returns `CO2_tonnes = 0.0` and computes
+`CO2eq_tonnes` with the source constants `GWP_METHANE = 28.0` and
+`GWP_NMVOC = 2.2`. Those are implementation choices, not a promise that the
+factors or GWP basis match the reporting basis for a new case.
 
-*Source: [Norwegian Petroleum - Emissions to Air](https://www.norskpetroleum.no/en/environment-and-technology/emissions-to-air/)*
+The source-backed static entry points are:
 
-### Key Regulations
+- `calculateConventionalCH4(double producedWaterVolume_m3, double pressureDrop_bar)`
+- `calculateConventionalNMVOC(double producedWaterVolume_m3, double pressureDrop_bar)`
+- `calculateConventionalEmissions(double producedWaterVolume_m3, double pressureDrop_bar)`
 
-1. **Aktivitetsforskriften §70** (Activities Regulations): Operators must measure or calculate emissions with quality-assured, representative methods
-2. **Norwegian Offshore Emission Handbook**: Defines conventional calculation factors
-3. **CO₂ Tax Act on Petroleum Activities**: Carbon pricing mechanism
-4. **EU ETS**: Emissions trading system participation
+## Thermodynamic screening calculation
 
----
+`ProducedWaterDegassingSystem` builds three pressure-reduction stages: degasser,
+compact-flotation-unit (CFU), and caisson. After `run()`, use
+`getTotalCO2EmissionRate`, `getTotalMethaneEmissionRate`,
+`getTotalNMVOCEmissionRate`, and `getTotalCO2Equivalents` for totals. Use
+`getMethodComparisonReport()` or `toMap()` to carry the comparison into an
+application logger, report, or data store instead of printing directly to the
+console.
 
-## Method Comparison
+### Executable Java example
 
-### 1. Norwegian Handbook Method (Conventional)
-
-**Reference:** Håndbok for kvantifisering av direkte metan- og nmVOC-utslipp (Norwegian Environment Agency, Retningslinje 044, ver. 2.2)
-
-#### Formulas
-
-```
-U_CH4 = f_CH4 × V_pw × ΔP × 10⁻⁶  [tonnes/year]
-U_NMVOC = f_NMVOC × V_pw × ΔP × 10⁻⁶  [tonnes/year]
-```
-
-#### Parameters
-
-| Parameter | Symbol | Value | Unit |
-|-----------|--------|-------|------|
-| Methane solubility factor | f_CH4 | 14 | g/(m³·bar) |
-| nmVOC solubility factor | f_NMVOC | 3.5 | g/(m³·bar) |
-| Produced water volume | V_pw | varies | m³/year |
-| Pressure drop | ΔP | varies | bar |
-
-#### Limitations
-
-| Issue | Impact |
-|-------|--------|
-| **CO₂ not included** | Misses 72-78% of total gas emissions |
-| **Fixed factors** | Cannot reflect real process conditions |
-| **No temperature dependence** | Same factor for 50°C and 100°C |
-| **No salinity correction** | Same factor for fresh and saline water |
-| **No composition dependence** | Same factor regardless of gas composition |
-| **Uncertainty** | Estimated ±50% or higher |
-
-### 2. NeqSim Thermodynamic Method
-
-#### Thermodynamic Model
-
-**Equation of State:** SRK-CPA (Cubic Plus Association)
-
-The CPA-EoS extends the traditional cubic equation of state with an association term for polar molecules:
-
-```
-P = P_physical + P_association
-```
-
-Where:
-- P_physical: SRK equation for non-polar interactions
-- P_association: Wertheim's perturbation theory for hydrogen bonding (water, glycols)
-
-#### Mixing Rule
-
-The field model uses mixing rule 10 with a saline-water-specific calibration. The convenience `ProducedWaterDegassingSystem` builder uses database defaults; its salinity setter stores metadata only. See the [supported-model guide](../process/equipment/util/produced_water_degassing.md).
-
-#### Binary Interaction Parameters (kij)
-
-Historical saline-water fit reported by Kristiansen et al. (2023), Appendix A, Eq. (6) and Table 2: $k_{ij}=k_{ij,0}+k_{ij,T}(T-288.15)$, with $T$ in kelvin. The fit represents about 10–11 wt% NaCl and is not a default parameter set or an implemented tuning option in `ProducedWaterDegassingSystem`. No general validity range is claimed here; consult the paper and reconcile the complete model before reuse.
-
-| System | Historical kij formula | Salinity basis |
-|--------|-------------|-------------------|
-| Water-CO₂ | kij = -0.24 + 0.001121 × (T[K] - 288.15) | 10–11 wt% NaCl |
-| Water-CH₄ | kij = -0.72 + 0.002605 × (T[K] - 288.15) | 10–11 wt% NaCl |
-| Water-C₂H₆ | kij = 0.11 (fixed) | 10–11 wt% NaCl |
-| Water-C₃H₈ | kij = 0.205 (fixed) | 10–11 wt% NaCl |
-
-#### Implementation in NeqSim
+The example is intentionally identical to the one in the supported-model guide.
+`ProducedWaterDegassingDocumentationTest#supportedGuideExampleCompilesAndRuns`
+extracts that guide's Java fence, compiles it with Java 8 settings, loads it, and
+executes `runExample()` against the current source. The synthetic lab GWR only
+demonstrates comparison reporting; it does not calibrate the model.
 
 ```java
-// Create system with CPA-EoS
-SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(273.15 + 80, 65.0);
-fluid.addComponent("water", 0.85);
-fluid.addComponent("CO2", 0.03);
-fluid.addComponent("methane", 0.08);
-fluid.addComponent("ethane", 0.02);
-fluid.addComponent("propane", 0.01);
-fluid.addComponent("n-butane", 0.005);
-fluid.addComponent("Na+", 0.002);
-fluid.addComponent("Cl-", 0.003);
+import java.util.Map;
+import neqsim.process.equipment.util.ProducedWaterDegassingSystem;
 
-// CPA mixing rule for water-hydrocarbon systems
-fluid.setMixingRule(10);
-fluid.setMultiPhaseCheck(true);
+public class ProducedWaterDegassingExample {
+  /**
+   * Runs a synthetic screening case with the default database model.
+   *
+   * @return the executed model for inspection or integration
+   */
+  public static ProducedWaterDegassingSystem runExample() {
+    ProducedWaterDegassingSystem system = new ProducedWaterDegassingSystem("Screening PW");
+    system.setWaterFlowRate(100.0, "m3/hr");
+    system.setWaterTemperature(80.0, "C");
+    system.setInletPressure(30.0, "bara");
+    system.setDegasserPressure(4.0, "bara");
+    system.setCFUPressure(1.2, "bara");
+    system.setCaissonPressure(1.01325, "bara");
+    system.setDissolvedGasComposition(
+        new String[] {"CO2", "methane", "ethane", "propane"},
+        new double[] {0.51, 0.44, 0.04, 0.01});
+    system.setTunedInteractionParameters(false);
+    system.setLabGWR(0.85);
+    system.run();
+    Map<String, Object> comparison = system.getValidationResults();
+    if (comparison == null || !comparison.containsKey("GWR")) {
+      throw new IllegalStateException("Missing lab comparison");
+    }
+    return system;
+  }
+}
 ```
 
-#### Advantages
+For a real case, replace the synthetic inputs with traceable facility data and
+retain the input basis alongside the result. Changing configuration after a model
+has already been built requires an explicit `build()` before the next `run()`.
 
-| Feature | Benefit |
-|---------|---------|
-| **Includes CO₂** | Captures all emission components |
-| **Process conditions** | Reflects actual P, T variations |
-| **Salinity effects** | "Salting-out" reduces gas solubility |
-| **Composition-based** | Uses actual well stream PVT data |
-| **Real-time capable** | Live connection to process data |
-| **Validated uncertainty** | ±3.6% total gas, ±7.4% methane |
+## Compare and review
 
----
+1. Record the produced-water volume, pressure basis (absolute versus gauge),
+   temperature, assumed or measured gas composition, operating duration, and
+   source revision.
+2. Run the conventional factor calculation with the applicable, independently
+   verified factor basis.
+3. Run the thermodynamic screening case and preserve `toMap()` output, including
+   `processConditions`, stage emissions, totals, validation, and the conventional
+   comparison.
+4. Reconcile differences component by component. The conventional implementation
+   does not calculate CO2; the thermodynamic path depends on its fluid and process
+   assumptions.
+5. Validate against representative pressurized-water sampling, evolved-gas volume
+   and composition, and a case-specific uncertainty assessment before operational
+   or reporting use.
 
-## Validation Results (Gudrun Field)
+The legacy `passesRegulatoryCriteria` result only applies a fixed 7.5% deviation
+threshold to the supplied lab GWR. It is not a regulatory decision and is not a
+complete uncertainty budget.
 
-### Case Study Parameters
+## Evidence and provenance
 
-| Parameter | Value |
-|-----------|-------|
-| Field | Gudrun (North Sea) |
-| Water salinity | 10-11 wt% NaCl |
-| Temperature | 75-90°C |
-| Separator pressure | 65 bara typical |
-| Degasser pressure | 3-5 barg |
-| CFU pressure | 0.2-1 barg |
-| Validation period | 2020-2023 |
+The 2023 workshop paper
+[Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator](https://nfogm.no/wp-content/uploads/2025/08/05-Virtual-Measurement-of-Emissions-from-Produced-Water-Using-an-Online-Process-Simulator_-Equinor_Olav-Kristiansen.pdf)
+describes a separate field-calibrated model. Its reported field results and
+uncertainties must not be transferred to this convenience builder. In particular,
+the paper's saline-water interaction fit is not enabled by
+`setTunedInteractionParameters(false)` and is not implemented by `setSalinity`.
 
-### Comparison with Field Measurements
+For current implementation evidence, inspect:
 
-| Metric | NeqSim vs Measurement |
-|--------|----------------------|
-| GWR (Gas-Water Ratio) | -1% to +4% |
-| CO₂ composition | ±1% |
-| CH₄ composition | ±1% |
-| Total gas mass rate | -2% to -7.2% (annual cumulative) |
-| Gas molar mass | Good agreement with USM |
-| Gas density | Good agreement with USM |
+- [`EmissionsCalculator`](../../src/main/java/neqsim/process/equipment/util/EmissionsCalculator.java)
+- [`ProducedWaterDegassingSystem`](../../src/main/java/neqsim/process/equipment/util/ProducedWaterDegassingSystem.java)
+- [`EmissionsCalculatorTest`](../../src/test/java/neqsim/process/equipment/util/EmissionsCalculatorTest.java)
+- [`ProducedWaterDegassingDocumentationTest`](../../src/test/java/neqsim/process/equipment/util/ProducedWaterDegassingDocumentationTest.java)
 
-### Emission Comparison (2022 Data)
+## Related documentation
 
-| Method | CH₄ + nmVOC | CO₂ | Total Gas | CO₂ Equivalents |
-|--------|-------------|-----|-----------|-----------------|
-| Conventional Handbook | 100% | 0% | Higher | 11,000 tonnes |
-| NeqSimLive | 22-28% | 72-78% | Accurate | 4,700 tonnes |
-| **Reduction** | - | - | - | **-58%** |
-
-### Key Finding: CO₂ Dominates Emissions
-
-The NeqSimLive data revealed that **72-78% of emissions are CO₂**, not hydrocarbons as assumed by the conventional method. This fundamentally changes emission reporting:
-
-```
-Conventional: All emissions = CH₄ + nmVOC (high GWP)
-Reality:      Most emissions = CO₂ (lower GWP)
-```
-
-### Solubility Factor Comparison
-
-| Component | Handbook Factor | NeqSim Calculated | Difference |
-|-----------|-----------------|-------------------|------------|
-| Methane | 14 g/(m³·bar) | 5-6 g/(m³·bar) | **-60%** |
-| nmVOC | 3.5 g/(m³·bar) | 1.2-1.4 g/(m³·bar) | **-65%** |
-| CO₂ | Not included | 15-30 g/(m³·bar) | **Missing!** |
-
----
-
-## Implementation Complexity Levels
-
-NeqSim supports various implementation levels depending on process complexity:
-
-### Level 1: Simple Calculator
-
-For basic flash calculations without full process modeling:
-
-```python
-from neqsim import jNeqSim
-
-# Quick emission estimate from single flash
-calc = jNeqSim.process.equipment.util.EmissionsCalculator
-ch4 = calc.calculateConventionalCH4(water_volume_m3, pressure_drop_bar)
-
-# Or use thermodynamic flash
-fluid = jNeqSim.thermo.system.SystemSrkCPAstatoil(273.15 + 80, 4.0)
-# ... configure and flash
-```
-
-### Level 2: Multi-Stage Degassing Model
-
-For typical produced water treatment trains:
-
-```java
-ProducedWaterDegassingSystem system = new ProducedWaterDegassingSystem("Platform PW");
-system.setWaterFlowRate(100.0, "m3/hr");
-system.setDegasserPressure(4.0, "bara");
-system.setCFUPressure(1.2, "bara");
-system.setDissolvedGasComposition(composition);
-system.run();
-
-// Get comparison report
-System.out.println(system.getMethodComparisonReport());
-```
-
-### Level 3: Full Process Plant Model
-
-For complex processes like TEG dehydration with emission tracking:
-
-```java
-ProcessSystem process = new ProcessSystem();
-
-// Add all unit operations
-Stream feed = new Stream("Feed", feedFluid);
-Separator separator = new Separator("HP Sep", feed);
-TEGAbsorber absorber = new TEGAbsorber("Contactor");
-TEGRegeneration regen = new TEGRegeneration("Regenerator");
-// ... configure full process
-
-process.add(feed);
-process.add(separator);
-process.add(absorber);
-process.add(regen);
-process.run();
-
-// Track emissions from each source
-EmissionsCalculator sepEmissions = new EmissionsCalculator(separator.getGasOutStream());
-EmissionsCalculator flashEmissions = new EmissionsCalculator(regen.getStillColumn().getGasOut());
-```
-
-### Level 4: NeqSimLive (Real-Time Cloud API)
-
-For production operations with live data integration:
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   PI/Aspen      │────▶│   SIGMA         │────▶│   NeqSimAPI     │
-│   (Field Data)  │◀────│   (Scheduler)   │◀────│   (Cloud)       │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                        │
-                                                        ▼
-                                                ┌─────────────────┐
-                                                │   NeqSim        │
-                                                │   (Calculation) │
-                                                └─────────────────┘
-                                                        │
-                        ┌───────────────────────────────┤
-                        ▼                               ▼
-                ┌─────────────────┐             ┌─────────────────┐
-                │  Emisoft        │             │  MPRML          │
-                │  (Env. Agency)  │             │  (Tax/NPD)      │
-                └─────────────────┘             └─────────────────┘
-```
-
-Key features:
-- Runs in Microsoft Azure cloud
-- 5-15 minute calculation intervals
-- Automatic emission reporting to authorities
-- Supports multiple facilities from single API
-
----
-
-## Calibration Requirements
-
-### Recommended Calibration Frequency
-
-| Condition | Frequency |
-|-----------|-----------|
-| Normal operations | 2 samples/year |
-| Well composition change | Immediate recalibration |
-| Back-production of injection water | Immediate recalibration |
-| New wells online | Reassess within 1 month |
-
-### Required Measurements for Calibration
-
-1. **Pressurized water sample** from separator outlet
-2. **Single-stage flash** to atmospheric conditions (15°C, 1 atm)
-3. **Gas chromatography** for composition
-4. **GWR measurement** (Sm³ gas / Sm³ water)
-5. **Water salinity** analysis (NaCl content)
-
-### Validation Criteria
-
-Per Norwegian offshore emission handbook, acceptable uncertainty is **±7.5%** for emission gases.
-
-NeqSim achieves:
-- Total gas: ±3.6%
-- CO₂: ±3.6%
-- Methane: ±7.4%
-- nmVOC: ±38% (higher due to small quantities)
-
----
-
-## References
-
-1. Kristiansen, O., et al. (2023). "Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator." Global Flow Measurement Workshop.
-
-2. Petroleum Safety Authority Norway. "Activities Regulations, Chapter XI - Emissions and discharges to the external environment, §70 Measurement and calculation." https://www.ptil.no/en/regulations/
-
-3. Norwegian Environment Agency. "Håndbok for kvantifisering av direkte metan- og nmVOC-utslipp" (Retningslinje 044).
-
-4. Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂ and H₂S with pure water and NaCl brine." Fluid Phase Equilibria 77: 217-240.
-
-5. Kontogeorgis, G.M., et al. (2006). "Ten Years with the CPA Equation of State." Ind. Eng. Chem. Res. 45: 4869-4878.
-
-6. Norwegian Petroleum. "Emissions to Air." https://www.norskpetroleum.no/en/environment-and-technology/emissions-to-air/
-
----
-
-## Conclusion
-
-The NeqSim thermodynamic method provides significant advantages over the conventional Norwegian handbook method:
-
-| Aspect | Handbook | NeqSim |
-|--------|----------|--------|
-| CO₂ emissions | ❌ Not captured | ✅ Full accounting |
-| Process conditions | ❌ Fixed factors | ✅ Real-time P, T, composition |
-| Salinity effects | ❌ Ignored | ✅ Electrolyte model |
-| Uncertainty | ±50%+ | ±3.6% |
-| Automation | ❌ Manual annual | ✅ Live API (NeqSimLive) |
-| Regulatory compliance | ✅ Accepted | ✅ More accurate |
-
-**Key outcome from Gudrun:** Reported emissions reduced from **11,000 to 4,700 tonnes CO₂eq** (-58%) by using the more accurate thermodynamic method.
-
-For facilities with significant produced water handling, implementing NeqSim-based emission calculations can:
-1. Improve reporting accuracy
-2. Identify actual emission sources
-3. Support emission reduction initiatives
-4. Ensure regulatory compliance with better uncertainty
-
----
-
-*Document generated from NeqSim emission calculation framework. See [ProducedWaterEmissions_Tutorial.md](ProducedWaterEmissions_Tutorial) for implementation details.*
+- [Produced-water emissions tutorial](ProducedWaterEmissions_Tutorial.md)
+- [Examples index](index.md)
+- [Reference manual: sustainability and emissions](../REFERENCE_MANUAL_INDEX.md#chapter-43-sustainability--emissions)

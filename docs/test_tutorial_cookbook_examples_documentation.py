@@ -72,6 +72,23 @@ COMBINED_MODELS_TEST = (
     / "src/test/java/neqsim/process/processmodel/CombinedModelsTest.java"
 )
 
+NORWEGIAN_COMPARISON_PAGE = DOCS / "examples/NorwegianEmissionMethods_Comparison.md"
+PRODUCED_WATER_GUIDE = DOCS / "process/equipment/util/produced_water_degassing.md"
+EMISSIONS_SOURCE = (
+    DOCS.parent / "src/main/java/neqsim/process/equipment/util/EmissionsCalculator.java"
+)
+PRODUCED_WATER_SOURCE = (
+    DOCS.parent
+    / "src/main/java/neqsim/process/equipment/util/ProducedWaterDegassingSystem.java"
+)
+EMISSIONS_TEST = (
+    DOCS.parent / "src/test/java/neqsim/process/equipment/util/EmissionsCalculatorTest.java"
+)
+PRODUCED_WATER_DOC_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/process/equipment/util/ProducedWaterDegassingDocumentationTest.java"
+)
+
 
 def metadata_value(metadata, name):
     """Return a plain scalar, including folded YAML front-matter values."""
@@ -200,6 +217,106 @@ class TutorialCookbookExamplesDocumentationContractTest(unittest.TestCase):
         for marker in regression_markers:
             with self.subTest(regression_marker=marker):
                 self.assertIn(marker, java_test)
+
+
+    def test_norwegian_comparison_reuses_executable_supported_example(self):
+        page = NORWEGIAN_COMPARISON_PAGE.read_text(encoding="utf-8")
+        supported_guide = PRODUCED_WATER_GUIDE.read_text(encoding="utf-8")
+        java_test = PRODUCED_WATER_DOC_TEST.read_text(encoding="utf-8")
+        section = section_after_heading(page, "## Thermodynamic screening calculation")
+        supported_section = section_after_heading(supported_guide, "## Executable Java example")
+        fence = re.compile(r"```java\n(?P<source>.*?)```", re.DOTALL)
+        page_example = fence.search(section)
+        supported_example = fence.search(supported_section)
+
+        self.assertIsNotNone(page_example)
+        self.assertIsNotNone(supported_example)
+        self.assertEqual(supported_example.group("source"), page_example.group("source"))
+        self.assertNotIn("System.out", section)
+        self.assertNotIn("System.err", section)
+        self.assertIn("supportedGuideExampleCompilesAndRuns", java_test)
+        self.assertIn(
+            'Paths.get("docs/process/equipment/util/produced_water_degassing.md")',
+            java_test,
+        )
+        self.assertIn('example.getMethod("runExample").invoke(null)', java_test)
+
+    def test_norwegian_comparison_matches_current_source_and_tests(self):
+        page = NORWEGIAN_COMPARISON_PAGE.read_text(encoding="utf-8")
+        emissions_source = EMISSIONS_SOURCE.read_text(encoding="utf-8")
+        produced_water_source = PRODUCED_WATER_SOURCE.read_text(encoding="utf-8")
+        emissions_test = EMISSIONS_TEST.read_text(encoding="utf-8")
+
+        emissions_markers = (
+            "HANDBOOK_F_CH4 = 14.0",
+            "HANDBOOK_F_NMVOC = 3.5",
+            "GWP_METHANE = 28.0",
+            "GWP_NMVOC = 2.2",
+            "calculateConventionalCH4(double producedWaterVolume_m3, double pressureDrop_bar)",
+            "calculateConventionalNMVOC(double producedWaterVolume_m3, double pressureDrop_bar)",
+            "calculateConventionalEmissions(double producedWaterVolume_m3,",
+        )
+        for marker in emissions_markers:
+            with self.subTest(emissions_marker=marker):
+                self.assertIn(marker, page)
+                self.assertIn(marker, emissions_source)
+
+        produced_water_markers = (
+            "mixing rule 10",
+            "Salinity is reporting metadata only",
+            "public String getMethodComparisonReport()",
+            "public Map<String, Object> getValidationResults()",
+            "public Map<String, Object> toMap()",
+        )
+        for marker in produced_water_markers:
+            with self.subTest(produced_water_marker=marker):
+                self.assertIn(marker, produced_water_source)
+
+        for marker in (
+            "testConventionalHandbookMethods",
+            "testMethodComparisonReport",
+            'report.contains("Aktivitetsforskriften")',
+        ):
+            with self.subTest(test_marker=marker):
+                self.assertIn(marker, emissions_test)
+
+    def test_norwegian_comparison_has_safe_claims_and_provenance(self):
+        page = NORWEGIAN_COMPARISON_PAGE.read_text(encoding="utf-8")
+        for marker in (
+            "screening and software-integration guide",
+            "does not establish field accuracy",
+            "not a regulatory decision",
+            "must not be transferred to this convenience builder",
+            "`setSalinity` stores metadata only",
+            "representative pressurized-water sampling",
+        ):
+            with self.subTest(required_boundary=marker):
+                self.assertIn(marker, page)
+
+        for marker in (
+            "System.out",
+            "System.err",
+            "TEGAbsorber",
+            "TEGRegeneration",
+            "±3.6%",
+            "±7.4%",
+            "11,000 tonnes",
+            "4,700 tonnes",
+            "✅ More accurate",
+            "jNeqSim",
+        ):
+            with self.subTest(forbidden_claim=marker):
+                self.assertNotIn(marker, page)
+
+        link_markers = (
+            "(ProducedWaterEmissions_Tutorial.md)",
+            "(index.md)",
+            "(../REFERENCE_MANUAL_INDEX.md#chapter-43-sustainability--emissions)",
+            "(../process/equipment/util/produced_water_degassing.md)",
+        )
+        for marker in link_markers:
+            with self.subTest(link_marker=marker):
+                self.assertIn(marker, page)
 
     def test_frozen_scope_exists(self):
         self.assertEqual(48, len(SCOPE_PAGES))
