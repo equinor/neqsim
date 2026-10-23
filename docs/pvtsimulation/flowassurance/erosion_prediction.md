@@ -1,280 +1,160 @@
 ---
 title: "Erosion Prediction Calculator"
-description: "Sand erosion prediction using API RP 14E erosional velocity and DNV RP O501 particle erosion models for pipelines, elbows, tees, chokes, and other geometries."
+description: "Source-backed screening workflow for API RP 14E velocity limits and simplified sand-erosion estimates in production piping."
 ---
 
-The `ErosionPredictionCalculator` provides sand erosion assessment for production piping and process equipment using two industry-standard methods.
+`ErosionPredictionCalculator` is a screening calculator for production-piping velocity and sand-erosion assessments. It reports an API RP 14E erosional-velocity check, a simplified DNV RP O501-inspired erosion estimate, remaining wall thickness, and a combined risk category.
 
-**Class:** `neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator`
+The implementation is [`neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator`](../../../src/main/java/neqsim/pvtsimulation/flowassurance/ErosionPredictionCalculator.java). Its focused executable regression is [`ErosionPredictionCalculatorTest`](../../../src/test/java/neqsim/pvtsimulation/flowassurance/ErosionPredictionCalculatorTest.java).
 
-## Standards Implemented
+## Qualification boundary
 
-| Standard | Method | Output |
-|----------|--------|--------|
-| **API RP 14E** | Erosional velocity limit | Max allowable velocity (m/s) |
-| **DNV RP O501** | Sand particle erosion model | Erosion rate (mm/yr), cumulative loss |
+This calculator is a screening implementation, not a standards-conformance certificate or a replacement for project erosion, corrosion, materials, mechanical-integrity, or piping-design reviews. Confirm the applicable editions of API RP 14E and DNV RP O501, the project design basis, measured sand production, particle distribution, geometry, material response, corrosion allowance, and uncertainty before using results in an engineering decision.
 
----
+The implementation accepts unknown material and geometry strings without throwing an exception and applies fallback constants. Validate every identifier explicitly; a numerical result does not prove that an intended model was selected.
 
-## API RP 14E - Erosional Velocity
+## API RP 14E velocity check
 
-The API RP 14E erosional velocity formula limits mixture velocity to prevent erosion:
+The implementation evaluates the traditional imperial-unit relation
 
-$$V_e = \frac{C}{\sqrt{\rho_m}}$$
+$$V_e=\frac{C}{\sqrt{\rho_m}}$$
 
-Where:
-- $V_e$ = erosional velocity (ft/s, converted to m/s internally)
-- $C$ = empirical constant (default 100 for continuous service)
-- $\rho_m$ = mixture density at flowing conditions (lb/ft3)
+with mixture density converted from kg/m³ to lb/ft³ and velocity converted from ft/s to m/s. `setApiCFactor` therefore expects the imperial C-factor. The default is `100.0`; choose another value only from the governing project basis.
 
-### C-Factor Guidelines
+After `calculate()`:
 
-| Service | C-Factor |
-|---------|----------|
-| Continuous (default) | 100 |
-| Intermittent | 125 |
-| Solids-free, inhibited | 150 |
-| With sand production | 75-100 |
+- `getErosionalVelocity()` returns the limit in m/s.
+- `getVelocityRatio()` returns actual mixture velocity divided by the erosional velocity.
+- `isWithinApiLimits()` is true when the ratio is at most `1.0`.
 
----
+## Sand-erosion screen
 
-## DNV RP O501 - Sand Erosion Model
+When `sandRate > 0`, the calculator estimates particle velocity, material response, impact angle, and geometry response, then converts material loss to mm/year. Inputs use these units:
 
-The DNV model predicts material loss rate from sand particle impact:
+| Input | Unit |
+|---|---|
+| Mixture density | kg/m³ |
+| Mixture velocity | m/s |
+| Internal pipe diameter | m |
+| Wall thickness and corrosion allowance | mm |
+| Sand rate | kg/day |
+| Sand particle diameter | mm |
+| Design life | years |
 
-$$E = K \cdot F(geometry) \cdot \dot{m}_p \cdot V_p^n \cdot f(\alpha)$$
+Supported geometry identifiers are `straight`, `elbow`, `bend`, `tee`, `blind_tee`, `reducer`, `contraction`, `choke`, `valve`, and `weld`. Use the exact identifier `straight` for a straight section.
 
-Where:
-- $K$ = material constant (depends on pipe material grade)
-- $F$ = geometry factor (elbow, tee, choke, etc.)
-- $\dot{m}_p$ = sand mass flow rate
-- $V_p$ = particle impact velocity
-- $f(\alpha)$ = impact angle function
+Supported material identifiers are `carbon_steel`, `duplex_steel`, `22cr`, `super_duplex`, `25cr`, `13cr`, `inconel`, `inconel_625`, `titanium`, and `tungsten_carbide`.
 
-### Supported Materials
+## Complete Java example
 
-| Material | Typical Application |
-|----------|-------------------|
-| `carbon_steel` | General piping |
-| `duplex_steel` | Moderate corrosion environments |
-| `super_duplex` | Severe corrosion + erosion |
-| `13cr` | Downhole tubing |
-| `inconel` | High temperature, corrosive |
-| `titanium` | Seawater systems |
-| `tungsten_carbide` | Choke trim |
-
-### Supported Geometries
-
-| Geometry | Typical Use |
-|----------|------------|
-| `straight_pipe` | Straight pipe sections |
-| `elbow` | Standard pipe elbows |
-| `tee` | Tee junctions |
-| `blind_tee` | Dead-end tees (sand traps) |
-| `reducer` | Pipe reducers |
-| `choke` | Production chokes |
-| `weld` | Girth/field welds |
-
----
-
-## Usage
-
-### Basic Erosional Velocity Check
+The example uses Log4j2 rather than direct console output. Its API calls are exercised by the focused JUnit regression linked above.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator;
+import neqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator.SandLoadDefaults;
 
-ErosionPredictionCalculator calc = new ErosionPredictionCalculator();
-calc.setMixtureDensity(120.0);    // kg/m3
-calc.setMixtureVelocity(12.0);   // m/s (actual velocity)
-calc.setApiCFactor(100.0);       // Continuous service
-calc.calculate();
+public final class ErosionScreeningExample {
+  private static final Logger logger =
+      LogManager.getLogger(ErosionScreeningExample.class);
 
-double erosionalVelocity = calc.getErosionalVelocity();
-double velocityRatio = calc.getVelocityRatio();
-boolean withinLimits = calc.isWithinApiLimits();
+  private ErosionScreeningExample() {}
 
-System.out.printf("Erosional velocity: %.1f m/s%n", erosionalVelocity);
-System.out.printf("Velocity ratio: %.2f%n", velocityRatio);
-System.out.printf("Within API limits: %s%n", withinLimits);
-```
-
-### Sand Erosion Assessment
-
-```java
-ErosionPredictionCalculator calc = new ErosionPredictionCalculator();
-
-// Flow conditions
-calc.setMixtureDensity(150.0);    // kg/m3
-calc.setMixtureVelocity(15.0);   // m/s
-
-// Pipe geometry
-calc.setPipeDiameter(0.1524);     // 6 inch (meters)
-calc.setWallThickness(10.0);     // mm
-
-// Sand parameters
-calc.setSandRate(50.0);           // kg/day
-calc.setSandParticleDiameter(0.25); // mm
-
-// Material and geometry
-calc.setPipeMaterial("carbon_steel");
-calc.setGeometry("elbow");
-
-// Design parameters
-calc.setDesignLife(25.0);         // years
-calc.setCorrosionAllowance(3.0);  // mm
-
-calc.calculate();
-
-// Results
-double erosionRate = calc.getErosionRate();         // mm/yr
-double cumulative = calc.getCumulativeErosion();     // mm over design life
-double remaining = calc.getRemainingWallThickness(); // mm
-String riskLevel = calc.getRiskLevel();              // low/medium/high/critical
-
-System.out.printf("Erosion rate: %.4f mm/yr%n", erosionRate);
-System.out.printf("Cumulative erosion (25 yr): %.2f mm%n", cumulative);
-System.out.printf("Remaining wall: %.2f mm%n", remaining);
-System.out.printf("Risk level: %s%n", riskLevel);
-```
-
-### Multiple Geometry Comparison
-
-```java
-String[] geometries = {"straight_pipe", "elbow", "blind_tee", "tee", "choke"};
-
-for (String geometry : geometries) {
+  public static void main(String[] args) {
     ErosionPredictionCalculator calc = new ErosionPredictionCalculator();
-    calc.setMixtureDensity(150.0);
-    calc.setMixtureVelocity(15.0);
-    calc.setPipeDiameter(0.1524);
-    calc.setSandRate(50.0);
+    calc.setMixtureDensity(150.0); // kg/m3
+    calc.setMixtureVelocity(15.0); // m/s
+    calc.setPipeDiameter(0.1524); // m
+    calc.setWallThickness(10.0); // mm
     calc.setPipeMaterial("carbon_steel");
-    calc.setGeometry(geometry);
+    calc.setGeometry("elbow");
+    calc.setDesignLife(25.0); // years
+    calc.setCorrosionAllowance(3.0); // mm
+
+    // Convert completion defaults to kg/day using the supplied production basis.
+    calc.applySandLoadDefaults("ohgp_complete", 1200.0, 0.0, 850.0);
     calc.calculate();
 
-    System.out.printf("%-15s  Erosion: %.4f mm/yr  Risk: %s%n",
-        geometry, calc.getErosionRate(), calc.getRiskLevel());
+    logger.info(
+        "API limit={} m/s, ratio={}, withinLimit={}",
+        calc.getErosionalVelocity(),
+        calc.getVelocityRatio(),
+        calc.isWithinApiLimits());
+    logger.info(
+        "Erosion={} mm/yr, cumulative={} mm, remainingWall={} mm, risk={}",
+        calc.getErosionRate(),
+        calc.getCumulativeErosion(),
+        calc.getRemainingWallThickness(),
+        calc.getRiskLevel());
+
+    SandLoadDefaults defaults =
+        ErosionPredictionCalculator.getSandLoadDefaults("ohgp_complete");
+    logger.info(
+        "Completion={}, liquid={} ppm-wt, gas={} ppm-wt, particle={} micrometres",
+        defaults.getCompletionType(),
+        defaults.getLiquidPpmWt(),
+        defaults.getGasPpmWt(),
+        defaults.getParticleSizeMicrons());
+
+    double protectedVelocity =
+        calc.calcMaxVelocityForCorrosionProtection(true, true);
+    logger.info("Corrosion-protection velocity screen={} m/s", protectedVelocity);
+    logger.debug("Calculation record: {}", calc.toJson());
+  }
 }
 ```
 
-### JSON Output
+Run the focused regression from the repository root:
 
-```java
-String json = calc.toJson();
-System.out.println(json);
+```bash
+./mvnw -Dtest=ErosionPredictionCalculatorTest test
 ```
 
----
+## Completion defaults
 
-## Sand Load Defaults by Completion Type
+`getSandLoadDefaults(String)` returns assumptions in ppm by weight for liquid and dry-gas flow, plus particle size in micrometres. `applySandLoadDefaults(String, double, double, double)` converts those assumptions to kg/day using liquid rate in m³/day, gas rate in kg/day, and liquid density in kg/m³. It calculates liquid- and gas-phase sand rates separately and applies the larger value; it does not add them.
 
-The calculator provides default sand production parameters based on well completion type, enabling quick screening assessments without detailed sand monitoring data.
+| Identifier | Liquid ppm-wt | Dry-gas ppm-wt | Particle size (µm) |
+|---|---:|---:|---:|
+| `natural` | 1.0 | 0.05 | 250 |
+| `natural_failure` | 10.0 | 0.5 | 250 |
+| `sas` | 3.0 | 0.3 | 100 |
+| `ohgp_incomplete` | 3.0 | 0.3 | 100 |
+| `ohgp_complete` | 1.0 | 0.05 | 50 |
 
-### Available Completion Types
+`getAvailableCompletionTypes()` returns those five identifiers. The lookup also accepts source-defined aliases, but using the advertised identifiers keeps input records unambiguous. An unrecognized identifier returns `null`; `applySandLoadDefaults` then leaves the calculator unchanged.
 
-| Completion | Sand Rate (g/m3) | Particle Diameter (μm) | Description |
-|------------|-------------------|-------------------------|-------------|
-| `openhole_gravel_pack` | 5.0 | 200 | Open hole with gravel pack |
-| `cased_perforated` | 15.0 | 250 | Cased and perforated |
-| `standalone_screen` | 3.0 | 150 | Standalone screen in open hole |
-| `frac_pack` | 8.0 | 180 | Hydraulic fracture with gravel pack |
-| `expandable_screen` | 4.0 | 170 | Expandable sand screen |
+## Corrosion-protection velocity screen
 
-### Usage
+`calcMaxVelocityForCorrosionProtection(boolean corrosionInhibited, boolean sandPresent)` reads the calculator's mixture density. It uses an internal C-factor of `150.0` for inhibited service or `100.0` otherwise, then reduces that factor by 25% when sand is present. The method is another screening result and does not verify inhibitor-film stability or corrosion control.
 
-```java
-ErosionPredictionCalculator calc = new ErosionPredictionCalculator();
+## Risk classification
 
-// Apply defaults for a completion type
-calc.applySandLoadDefaults("cased_perforated");
-// Sets sandRate = 15.0 g/m3, sandParticleDiameter = 250 μm
+Risk combines erosion rate and velocity ratio in this order:
 
-// Get defaults without applying
-ErosionPredictionCalculator.SandLoadDefaults defaults =
-    calc.getSandLoadDefaults("frac_pack");
-System.out.println(defaults.getSandRate());           // 8.0
-System.out.println(defaults.getSandParticleDiameter()); // 180.0
-System.out.println(defaults.getDescription());        // "Hydraulic fracture with gravel pack"
+| Result | Source logic |
+|---|---|
+| `critical` | erosion rate > 1.0 mm/year **or** velocity ratio > 1.5 |
+| `high` | otherwise, erosion rate > 0.5 mm/year **or** velocity ratio > 1.0 |
+| `medium` | otherwise, erosion rate > 0.1 mm/year **or** velocity ratio > 0.8 |
+| `low` | otherwise |
 
-// List all available completion types
-List<String> types = calc.getAvailableCompletionTypes();
-```
+Because the comparisons are strict `>` checks, a value exactly on a listed threshold falls through to the next category unless the other metric triggers a higher category.
 
-## Maximum Velocity for Corrosion Protection
+## Structured output
 
-In addition to erosion limits, the calculator provides a velocity limit to protect internal corrosion barriers (coatings, inhibitor films):
+`toJson()` serializes `toMap()` and preserves the engineering basis used by the calculation:
 
-```java
-// Calculate maximum velocity that preserves corrosion protection
-double maxVel = calc.calcMaxVelocityForCorrosionProtection(
-    150.0,    // mixture density kg/m3
-    0.0002    // sand concentration kg/kg (200 ppm)
-);
-// Typical range: 5-20 m/s depending on conditions
-```
+- `inputs` contains density, velocity, dimensions, sand inputs, identifiers, C-factor, corrosion allowance, and design life.
+- `API_RP_14E` contains `erosionalVelocity_ms`, `velocityRatio`, and `withinApiLimits`.
+- `DNV_RP_O501` contains `erosionRate_mmyr`, `cumulativeErosion_mm`, `remainingWallThickness_mm`, and `withinErosionLimits`.
+- `riskLevel` contains the combined category.
 
----
+Store inputs, NeqSim version, source revision, project assumptions, and independent review evidence alongside any exported result.
 
-## Related Documentation
+## Related documentation
 
-- [Flow Assurance Screening Tools](flow_assurance_screening_tools) - Pipeline cooldown, corrosion, scale
-- [Emulsion Viscosity](emulsion_viscosity_calculator) - Emulsion viscosity models
-
-```java
-calc.calculate();
-String json = calc.toJson();
-System.out.println(json);
-```
-
-Output includes:
-- API RP 14E results (erosional velocity, velocity ratio, within limits)
-- DNV RP O501 results (erosion rate, cumulative, remaining wall)
-- Risk assessment (level: low/medium/high/critical)
-- All input parameters for traceability
-
----
-
-## Risk Assessment
-
-The risk level is determined by the velocity ratio (actual / erosional):
-
-| Velocity Ratio | Risk Level |
-|----------------|------------|
-| < 0.5 | Low |
-| 0.5 - 0.8 | Medium |
-| 0.8 - 1.0 | High |
-| > 1.0 | Critical |
-
----
-
-## Python Usage
-
-```python
-from neqsim import jneqsim
-
-ErosionPredictionCalculator = jneqsim.pvtsimulation.flowassurance.ErosionPredictionCalculator
-
-calc = ErosionPredictionCalculator()
-calc.setMixtureDensity(150.0)
-calc.setMixtureVelocity(15.0)
-calc.setPipeDiameter(0.1524)
-calc.setSandRate(50.0)
-calc.setPipeMaterial("carbon_steel")
-calc.setGeometry("elbow")
-calc.setDesignLife(25.0)
-calc.setCorrosionAllowance(3.0)
-calc.calculate()
-
-print(f"Erosion rate: {calc.getErosionRate():.4f} mm/yr")
-print(f"Risk: {calc.getRiskLevel()}")
-print(calc.toJson())
-```
-
----
-
-## Related Documentation
-
-- [Flow Assurance Screening Tools](flow_assurance_screening_tools)
-- [Flow Assurance Overview](../flow_assurance_overview)
-- [Emulsion Viscosity Calculator](emulsion_viscosity_calculator)
+- [Flow-assurance screening tools](flow_assurance_screening_tools.md)
+- [Flow-assurance overview](../flow_assurance_overview.md)
+- [Emulsion viscosity calculator](emulsion_viscosity_calculator.md)
