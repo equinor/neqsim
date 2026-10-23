@@ -3,6 +3,8 @@ package neqsim.process.fielddevelopment.reservoir;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity;
+import neqsim.thermo.util.steam.Iapws_if97;
 
 /**
  * Injection well performance model for water and gas injection.
@@ -106,6 +108,16 @@ public class InjectionWellModel implements Serializable {
     WAG_INJECTOR
   }
 
+  /**
+   * Formation-water property basis used by the radial-Darcy injection screens.
+   */
+  public enum FormationWaterPvtMode {
+    /** Preserve caller-configured constant viscosity and formation-volume factors. */
+    CONFIGURED_CONSTANT,
+    /** Evaluate pure liquid water with IF97 density and the NeqSim IAPWS-fitted viscosity correlation. */
+    IAPWS_IF97_PURE_WATER
+  }
+
   // Well type
   private InjectionType injectionType = InjectionType.WATER_INJECTOR;
 
@@ -138,6 +150,20 @@ public class InjectionWellModel implements Serializable {
   // Formation water properties (for water injection)
   private double formationWaterViscosity = 0.3; // cP at reservoir conditions
   private double formationWaterVolumeFactor = 1.0; // reservoir m3/Sm3
+  private FormationWaterPvtMode formationWaterPvtMode = FormationWaterPvtMode.CONFIGURED_CONSTANT;
+
+  /** Standard conditions used to derive pure-water reservoir m3/Sm3. */
+  private static final double STANDARD_WATER_TEMPERATURE_K = 288.15;
+  private static final double STANDARD_WATER_PRESSURE_BARA = 1.01325;
+  /** Lower temperature of the viscosity fit, 2 degrees Celsius. */
+  private static final double IAPWS_WATER_MIN_TEMPERATURE_K = 275.15;
+  /** Upper temperature of the viscosity fit, 300 degrees Celsius. */
+  private static final double IAPWS_WATER_MAX_TEMPERATURE_K = 573.15;
+  /** Pressure bounds shared by the viscosity fit and this injection contract. */
+  private static final double IAPWS_WATER_MIN_PRESSURE_BARA = 1.0;
+  private static final double IAPWS_WATER_MAX_PRESSURE_BARA = 700.0;
+  /** Critical pressure of ordinary water (MPa); saturation temperature is undefined above it. */
+  private static final double WATER_CRITICAL_PRESSURE_MPA = 22.064;
 
   // Pump efficiency
   private double pumpEfficiency = 0.75;
@@ -170,7 +196,7 @@ public class InjectionWellModel implements Serializable {
     result.injectionType = this.injectionType;
 
     // Calculate injectivity index
-    double ii = calculateInjectivityIndex();
+    double ii = calculateInjectivityIndex(result);
     result.injectivityIndex = ii;
 
     // Calculate required BHP for target rate
@@ -224,9 +250,10 @@ public class InjectionWellModel implements Serializable {
    * For radial flow: II = 2π × k × h / (μ × B × (ln(re/rw) + S))
    * </p>
    *
+   * @param result calculation result receiving the applied water-PVT evidence
    * @return injectivity index (Sm3/day/bar)
    */
-  private double calculateInjectivityIndex() {
+  private double calculateInjectivityIndex(InjectionWellResult result) {
     // Convert permeability from mD to m²
     double kSI = formationPermeability * 9.869e-16; // mD to m²
 
@@ -235,8 +262,18 @@ public class InjectionWellModel implements Serializable {
     double formationVolumeFactor;
 
     if (injectionType == InjectionType.WATER_INJECTOR) {
-      viscosity = waterViscosity * 1e-3; // cP to Pa·s
-      formationVolumeFactor = 1.02; // Bw ≈ 1.02 for water
+      FormationWaterProperties properties;
+      if (getEffectiveFormationWaterPvtMode() == FormationWaterPvtMode.IAPWS_IF97_PURE_WATER) {
+        properties = evaluateFormationWaterProperties(reservoirPressure);
+      } else {
+        properties = new FormationWaterProperties(waterViscosity, 1.02, reservoirPressure);
+      }
+      viscosity = properties.viscosityCp * 1e-3; // cP to Pa·s
+      formationVolumeFactor = properties.formationVolumeFactor;
+      result.formationWaterPvtMode = getEffectiveFormationWaterPvtMode();
+      result.formationWaterViscosity = properties.viscosityCp;
+      result.formationWaterVolumeFactor = properties.formationVolumeFactor;
+      result.formationWaterPvtPressure = properties.pressureBara;
     } else {
       // Gas injection
       viscosity = gasViscosity * 1e-3; // cP to Pa·s
@@ -640,6 +677,36 @@ public class InjectionWellModel implements Serializable {
   }
 
   /**
+   * Selects the formation-water property basis used by the radial-Darcy screens.
+   *
+   * <p>
+   * The pure-water option is deliberately opt-in. It derives density from the existing IAPWS-IF97 implementation and
+   * viscosity from NeqSim's IAPWS-fitted water correlation. It is restricted to single-phase pure water within the
+   * documented fit range and is not a brine, relative-permeability, injectivity-calibration or fracture model.
+   * </p>
+   *
+   * @param mode property basis; must not be null
+   * @return this for chaining
+   * @throws IllegalArgumentException if mode is null
+   */
+  public InjectionWellModel setFormationWaterPvtMode(FormationWaterPvtMode mode) {
+    if (mode == null) {
+      throw new IllegalArgumentException("Formation-water PVT mode must not be null");
+    }
+    this.formationWaterPvtMode = mode;
+    return this;
+  }
+
+  /**
+   * Gets the effective formation-water property basis.
+   *
+   * @return configured basis, or the legacy constant basis for an older serialized model
+   */
+  public FormationWaterPvtMode getFormationWaterPvtMode() {
+    return getEffectiveFormationWaterPvtMode();
+  }
+
+  /**
    * Sets drainage radius.
    *
    * @param radius radius (m)
@@ -731,6 +798,18 @@ public class InjectionWellModel implements Serializable {
     /** Achievable rate with interference (Sm3/day). */
     public double achievableRateWithInterference;
 
+    /** Formation-water property basis applied to a water-injection calculation. */
+    public FormationWaterPvtMode formationWaterPvtMode;
+
+    /** Formation-water viscosity applied to the radial-Darcy calculation (cP). */
+    public double formationWaterViscosity;
+
+    /** Formation-water volume factor applied to the radial-Darcy calculation (reservoir m3/Sm3). */
+    public double formationWaterVolumeFactor;
+
+    /** Pressure at which the formation-water properties were evaluated (bara). */
+    public double formationWaterPvtPressure;
+
     /**
      * Gets achievable rate.
      *
@@ -774,6 +853,15 @@ public class InjectionWellModel implements Serializable {
      */
     public double getInjectivityIndex() {
       return injectivityIndex;
+    }
+
+    /**
+     * Gets the formation-water property basis.
+     *
+     * @return property basis, or null for a non-water injection calculation
+     */
+    public FormationWaterPvtMode getFormationWaterPvtMode() {
+      return formationWaterPvtMode;
     }
 
     @Override
@@ -870,6 +958,10 @@ public class InjectionWellModel implements Serializable {
     public double formationWaterViscosity;
     /** Formation-water volume factor used by the multi-zone screen (reservoir m3/Sm3). */
     public double formationWaterVolumeFactor;
+    /** Formation-water property basis used by the multi-zone screen. */
+    public FormationWaterPvtMode formationWaterPvtMode;
+    /** Pressure for the compatibility-level formation-water properties above (bara). */
+    public double formationWaterPvtPressure;
 
     /**
      * Gets the total injection rate.
@@ -934,6 +1026,15 @@ public class InjectionWellModel implements Serializable {
       return limitedByPressure;
     }
 
+    /**
+     * Gets the formation-water property basis.
+     *
+     * @return property basis
+     */
+    public FormationWaterPvtMode getFormationWaterPvtMode() {
+      return formationWaterPvtMode;
+    }
+
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
@@ -944,8 +1045,8 @@ public class InjectionWellModel implements Serializable {
       sb.append(String.format("Common BHP: %.1f bara%n", commonBHP));
       sb.append(String.format("Pressure limit: %.1f bara%n", pressureLimit));
       sb.append(String.format("Limited by pressure: %s%n", limitedByPressure));
-      sb.append(String.format("Formation water: %.3f cP, B=%.5f reservoir m3/Sm3%n", formationWaterViscosity,
-          formationWaterVolumeFactor));
+      sb.append(String.format("Formation water (%s at %.1f bara): %.3f cP, B=%.5f reservoir m3/Sm3%n",
+          formationWaterPvtMode, formationWaterPvtPressure, formationWaterViscosity, formationWaterVolumeFactor));
       sb.append(String.format("Total rate: %.0f Sm3/day%n", totalRate));
       sb.append(String.format("Injection efficiency: %.1f%%%n", injectionEfficiency * 100));
       sb.append(String.format("Out-of-zone rate: %.0f Sm3/day%n", outOfZoneRate));
@@ -978,6 +1079,12 @@ public class InjectionWellModel implements Serializable {
     public boolean isTargetZone;
     /** Hall slope for this zone (bar day/Sm3). */
     public double hallSlope;
+    /** Formation-water viscosity evaluated for this zone (cP). */
+    public double formationWaterViscosity;
+    /** Formation-water volume factor evaluated for this zone (reservoir m3/Sm3). */
+    public double formationWaterVolumeFactor;
+    /** Pressure at which this zone's formation-water properties were evaluated (bara). */
+    public double formationWaterPvtPressure;
   }
 
   /**
@@ -1020,8 +1127,10 @@ public class InjectionWellModel implements Serializable {
 
     MultiZoneInjectionResult result = new MultiZoneInjectionResult();
     result.requestedRate = totalTargetRate;
+    result.formationWaterPvtMode = getEffectiveFormationWaterPvtMode();
     result.formationWaterViscosity = formationWaterViscosity;
     result.formationWaterVolumeFactor = getEffectiveFormationWaterVolumeFactor();
+    result.formationWaterPvtPressure = Double.NaN;
 
     if (zones.isEmpty()) {
       return result;
@@ -1029,8 +1138,10 @@ public class InjectionWellModel implements Serializable {
 
     // Calculate injectivity index for each zone
     List<Double> zoneIIs = new ArrayList<>();
+    List<FormationWaterProperties> zoneProperties = new ArrayList<>();
     for (InjectionZone zone : zones) {
-      double ii = calculateZoneInjectivityIndex(zone);
+      FormationWaterProperties properties = evaluateFormationWaterProperties(zone.reservoirPressure);
+      double ii = calculateZoneInjectivityIndex(zone, properties);
       if (!Double.isFinite(ii) || ii < 0.0) {
         throw new IllegalArgumentException("Zone '" + zone.name + "' has an invalid injectivity index");
       }
@@ -1038,6 +1149,13 @@ public class InjectionWellModel implements Serializable {
         throw new IllegalArgumentException("Zone '" + zone.name + "' has a non-finite reservoir pressure");
       }
       zoneIIs.add(ii);
+      zoneProperties.add(properties);
+    }
+    if (!zoneProperties.isEmpty()) {
+      FormationWaterProperties first = zoneProperties.get(0);
+      result.formationWaterViscosity = first.viscosityCp;
+      result.formationWaterVolumeFactor = first.formationVolumeFactor;
+      result.formationWaterPvtPressure = first.pressureBara;
     }
 
     double requiredBHP = calculateRequiredMultiZoneBHP(totalTargetRate, zoneIIs);
@@ -1076,6 +1194,9 @@ public class InjectionWellModel implements Serializable {
       zr.isTargetZone = zone.isTargetZone;
       zr.fractureRisk = effectiveBHP > zone.fracturePressure && zone.fracturePressure > 0;
       zr.hallSlope = ii > 0 ? 1.0 / ii : 0.0;
+      zr.formationWaterViscosity = zoneProperties.get(i).viscosityCp;
+      zr.formationWaterVolumeFactor = zoneProperties.get(i).formationVolumeFactor;
+      zr.formationWaterPvtPressure = zoneProperties.get(i).pressureBara;
 
       result.zoneResults.add(zr);
       totalRate += zoneRate;
@@ -1162,20 +1283,94 @@ public class InjectionWellModel implements Serializable {
    * Calculate injectivity index for a specific zone using Darcy radial flow.
    *
    * @param zone the injection zone
+   * @param properties formation-water properties evaluated at the zone boundary
    * @return injectivity index (Sm3/day/bar)
    */
-  private double calculateZoneInjectivityIndex(InjectionZone zone) {
+  private double calculateZoneInjectivityIndex(InjectionZone zone, FormationWaterProperties properties) {
     double kSI = zone.permeability * 9.869e-16; // mD to m²
-    double viscosity = formationWaterViscosity * 1e-3; // cP to Pa·s
+    double viscosity = properties.viscosityCp * 1e-3; // cP to Pa·s
     double lnRatio = Math.log(drainageRadius / wellboreRadius);
 
     // II = 2π k h / (μ × B × (ln(re/rw) + S)) in SI (m³/s/Pa)
     double iiSI = 2.0 * Math.PI * kSI * zone.thickness
-        / (viscosity * getEffectiveFormationWaterVolumeFactor() * (lnRatio + zone.skinFactor));
+        / (viscosity * properties.formationVolumeFactor * (lnRatio + zone.skinFactor));
 
     // Convert m3/s/Pa to Sm3/day/bar. A one-bar pressure difference is 1e5 Pa,
     // so the rate per bar is larger than the rate per Pa by 1e5.
     return iiSI * 86400.0 * 1e5;
+  }
+
+  /**
+   * Evaluates the selected formation-water property basis at a reservoir pressure.
+   *
+   * @param pressureBara reservoir pressure (bara)
+   * @return evaluated viscosity, volume factor and pressure
+   * @throws IllegalArgumentException if the pure-water state is outside the declared applicability range
+   */
+  private FormationWaterProperties evaluateFormationWaterProperties(double pressureBara) {
+    if (getEffectiveFormationWaterPvtMode() == FormationWaterPvtMode.CONFIGURED_CONSTANT) {
+      return new FormationWaterProperties(formationWaterViscosity, getEffectiveFormationWaterVolumeFactor(),
+          pressureBara);
+    }
+    if (!Double.isFinite(reservoirTemperature) || reservoirTemperature < IAPWS_WATER_MIN_TEMPERATURE_K
+        || reservoirTemperature > IAPWS_WATER_MAX_TEMPERATURE_K || !Double.isFinite(pressureBara)
+        || pressureBara < IAPWS_WATER_MIN_PRESSURE_BARA || pressureBara > IAPWS_WATER_MAX_PRESSURE_BARA) {
+      throw new IllegalArgumentException("IAPWS pure-water injection PVT requires 275.15-573.15 K and 1-700 bara");
+    }
+    double pressureMPa = pressureBara / 10.0;
+    if (pressureMPa <= WATER_CRITICAL_PRESSURE_MPA) {
+      double saturationTemperature = Iapws_if97.T4_p(pressureMPa);
+      if (!Double.isFinite(saturationTemperature) || reservoirTemperature > saturationTemperature) {
+        throw new IllegalArgumentException("IAPWS pure-water injection PVT requires a Region-1 liquid state");
+      }
+    }
+    double reservoirSpecificVolume = Iapws_if97.v_pt(pressureMPa, reservoirTemperature);
+    double standardSpecificVolume = Iapws_if97.v_pt(STANDARD_WATER_PRESSURE_BARA / 10.0, STANDARD_WATER_TEMPERATURE_K);
+    double viscosityCp = Viscosity.calcWaterViscosity(reservoirTemperature, pressureBara);
+    double formationVolumeFactor = reservoirSpecificVolume / standardSpecificVolume;
+    if (!Double.isFinite(reservoirSpecificVolume) || reservoirSpecificVolume <= 0.0
+        || !Double.isFinite(standardSpecificVolume) || standardSpecificVolume <= 0.0 || !Double.isFinite(viscosityCp)
+        || viscosityCp <= 0.0 || !Double.isFinite(formationVolumeFactor) || formationVolumeFactor <= 0.0) {
+      throw new IllegalArgumentException("IAPWS pure-water injection PVT returned nonphysical properties");
+    }
+    return new FormationWaterProperties(viscosityCp, formationVolumeFactor, pressureBara);
+  }
+
+  /**
+   * Gets the serialization-compatible property basis.
+   *
+   * @return configured basis, or the legacy constant basis when absent from an older stream
+   */
+  private FormationWaterPvtMode getEffectiveFormationWaterPvtMode() {
+    return formationWaterPvtMode == null ? FormationWaterPvtMode.CONFIGURED_CONSTANT : formationWaterPvtMode;
+  }
+
+  /**
+   * Immutable internal formation-water property sample.
+   *
+   * @author ESOL
+   * @version 1.0
+   */
+  private static final class FormationWaterProperties {
+    /** Dynamic viscosity (cP). */
+    private final double viscosityCp;
+    /** Formation volume factor (reservoir m3/Sm3). */
+    private final double formationVolumeFactor;
+    /** Evaluation pressure (bara). */
+    private final double pressureBara;
+
+    /**
+     * Creates an immutable property sample.
+     *
+     * @param viscosityCp dynamic viscosity (cP)
+     * @param formationVolumeFactor reservoir m3/Sm3
+     * @param pressureBara evaluation pressure (bara)
+     */
+    private FormationWaterProperties(double viscosityCp, double formationVolumeFactor, double pressureBara) {
+      this.viscosityCp = viscosityCp;
+      this.formationVolumeFactor = formationVolumeFactor;
+      this.pressureBara = pressureBara;
+    }
   }
 
   /**
