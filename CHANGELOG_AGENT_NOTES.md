@@ -9,6 +9,19 @@
 
 ---
 
+## 2026-10-23 — `TwoFluidPipe` transient wall-energy and counterflow corrections
+
+- **Simple transient thermal model:** solve local fluid/wall heat exchange and wall-to-ambient loss together by
+  backward Euler. The fluid and wall ledgers use the same heat exchange, avoiding explicit film-exchange instability
+  at low fluid inventory or high conductance. Advection and other thermal sources still require timestep refinement.
+- **Film coefficient:** use separate absolute gas, oil, and water throughputs. Opposing oil/water flows no longer
+  cancel into a zero-throughput film estimate. The mixture-property correlation remains an approximation.
+- **State preservation:** `setPhysicalWallFilmSplit(...)` preserves an existing wall-temperature profile, including
+  repeated calls with the current setting. Changing the split no longer discards stored wall energy.
+- No public API additions. The physical split remains the default; `false` selects equal resistances with the same
+  steady overall U-value. Updated `TWOFLUIDPIPE_MODEL.md` with applicability limits and corrected the slug-unit setter
+  JavaDoc: front-mixing loss remains excluded unless `setSlugFrontMixingLossIncluded(true)` is selected.
+
 ## 2026-10-22 — `TwoFluidPipe` transient: boundary-face pressure traction, outlet-face placement, physical wall film split
 
 - **Behaviour changes (transient only; steady results unchanged):**
