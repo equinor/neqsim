@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.util.steam.Iapws_if97;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.IsNaNException;
@@ -20,17 +21,19 @@ import neqsim.util.exception.IsNaNException;
  *
  * <p>
  * {@link #calculate()} mutates the supplied fluid state. A clone protects temperature, pressure and composition during
- * this workflow, but BIP arrays can be shared across clones: do not mutate model parameters through a clone. Water
- * removal must preserve the complete characterization in every phase. The current component-removal path does not remap
- * BIPs when retained component indices shift; audit named interactions before using a dry result. A finite positive
- * {@link RvpResult} alone does not certify convergence to the corrected volume-ratio target.
+ * this workflow, but BIP arrays can be shared across clones: do not mutate model parameters through a clone. The
+ * water-free variants remove water only when it is the last component and otherwise keep it as a 1e-15 trace, because
+ * component removal does not remap BIPs when retained component indices shift. A finite positive {@link RvpResult}
+ * alone does not certify convergence to the corrected volume-ratio target, except for
+ * {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED}, which checks it.
  *
  * <p>
- * For a declared water-contact storage approximation on an audited dry model, apply
- * {@code RVPE_water_sat = 0.834 * (VPCR4_dry + psat_water(37.8 C))}, not dry RVPE plus the full water pressure. The
- * analogous TVP approximation is {@code TVP_dry(T) + psat_water(T)}. Water saturation pressure must come from an
- * independently validated source in consistent pressure units. This assumes water activity near one and sufficient
- * water for saturation; it neither models the ASTM apparatus nor repairs sampling losses. See the
+ * For a declared water-contact storage basis, {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED} returns
+ * {@code RVPE_water_sat = 0.834 * (VPCR4_dry + psat_water(37.8 C))}, always at 37.8 C, not dry RVPE plus the full water
+ * pressure. The EOS only sees the water-free hydrocarbon liquid; the water term is the IAPWS-IF97 Region 4 pure-water
+ * saturation pressure and is always added, whether or not the fluid contains water. This assumes water activity near
+ * one and sufficient water for saturation; it neither models the ASTM apparatus nor repairs sampling losses. The
+ * analogous TVP approximation is {@code TVP_dry(T) + psat_water(T)}. See the
  * <a href="https://equinor.github.io/neqsim/standards/astm_d6377_rvp.html">vapor-pressure water-basis guide</a>.
  *
  * @author ESOL
@@ -55,6 +58,34 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
   private double RVP_ASTM_D6377 = 0.0;
   private double RVP_ASTM_D323_73_79 = 0.0;
   private double RVP_ASTM_D323_82 = 0.0;
+  private double RVP_ASTM_D6377_add_water_saturated = 0.0;
+
+  /** Reference temperature at which RVP and RVPE are defined (100 F) [C]. */
+  private static final double RVP_REFERENCE_TEMPERATURE_C = 37.8;
+
+  /**
+   * Water mole fraction used instead of removal when water is not the last component [-]. See
+   * {@link #createWaterFreeFluid(SystemInterface)}.
+   */
+  private static final double TRACE_WATER_MOLE_FRACTION = 1.0e-15;
+
+  /** True once {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED} has been evaluated for the current state. */
+  private boolean addWaterSaturatedCalculated = false;
+
+  /** D6377-labelled correlation factor from VPCR4 to RVPE [-]. */
+  private static final double RVPE_D6377_FACTOR = 0.834;
+
+  /** Lower temperature limit of the IAPWS-IF97 Region 4 saturation equation [K]. */
+  private static final double IF97_SATURATION_MIN_TEMPERATURE_K = 273.15;
+
+  /** Upper temperature limit (critical point) of the IAPWS-IF97 Region 4 saturation equation [K]. */
+  private static final double IF97_SATURATION_MAX_TEMPERATURE_K = 647.096;
+
+  /**
+   * Accepted absolute deviation of the corrected gas volume fraction from the 0.8 target (V/L = 4) before a dry VPCR4
+   * is used for the water-saturated result [-].
+   */
+  private static final double VOLUME_FRACTION_TOLERANCE = 1.0e-4;
 
   /**
    * True once the water-free variants ({@code VPCR4_no_water} and {@code RVP_ASTM_D323_73_79}) have been evaluated for
@@ -83,8 +114,16 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     RVP_ASTM_D323_82("RVP_ASTM_D323_82"),
     /** Raw vapor pressure at vapor/liquid volume ratio 4:1 (default). */
     VPCR4("VPCR4"),
-    /** Raw vapor pressure at vapor/liquid volume ratio 4:1 with water removed; audit retained BIPs. */
-    VPCR4_NO_WATER("VPCR4_no_water");
+    /**
+     * Raw vapor pressure at vapor/liquid volume ratio 4:1 on the water-free fluid (water removed if last, else trace).
+     */
+    VPCR4_NO_WATER("VPCR4_no_water"),
+    /**
+     * D6377-labelled RVPE on an assumed water-saturated basis, always at 37.8 C: 0.834 times the sum of dry VPCR4 and
+     * the IAPWS-IF97 pure-water saturation pressure. The water term is added whether or not the fluid contains water.
+     * NaN (invalid) when the dry flash does not reach a gas/oil state with vapor/liquid volume ratio 4.
+     */
+    RVP_ASTM_D6377_ADD_WATER_SATURATED("RVP_ASTM_D6377_add_water_saturated");
 
     /** Legacy string label associated with this method. */
     private final String label;
@@ -229,6 +268,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * <li>RVP_ASTM_D323_73_79</li>
    * <li>RVP_ASTM_D323_82</li>
    * <li>VPCR4</li>
+   * <li>VPCR4_no_water</li>
+   * <li>RVP_ASTM_D6377_add_water_saturated</li>
    * </ul>
    *
    * @return the method used for RVP measurement.
@@ -248,6 +289,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * <li>RVP_ASTM_D323_73_79</li>
    * <li>RVP_ASTM_D323_82</li>
    * <li>VPCR4</li>
+   * <li>VPCR4_no_water</li>
+   * <li>RVP_ASTM_D6377_add_water_saturated</li>
    * </ul>
    *
    * @param methodRVP the method to set for RVP measurement.
@@ -287,6 +330,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     case VPCR4_NO_WATER:
       calculateNoWaterVariants();
       return VPCR4_no_water;
+    case RVP_ASTM_D6377_ADD_WATER_SATURATED:
+      calculateAddWaterSaturated();
+      return RVP_ASTM_D6377_add_water_saturated;
     case VPCR4:
     default:
       return VPCR4;
@@ -314,7 +360,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * <p>
    * Call {@link #calculate()} first. Direct correlations reuse that calculation; water-free variants run extra flashes
    * lazily on first access. Dry-basis selection is separate from correlation selection: multiply raw dry VPCR4 by 0.834
-   * explicitly for dry D6377-labelled RVPE. No independent water-saturation correction is added.
+   * explicitly for dry D6377-labelled RVPE. Only {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED} adds an
+   * independent water-saturation term; it is always evaluated at 37.8 C and reports that temperature.
    * </p>
    *
    * @param method the method whose result should be returned; must not be null
@@ -325,7 +372,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     if (method == null) {
       throw new IllegalArgumentException("RVP method must not be null");
     }
-    return new RvpResult(valueForMethod(method), method, referenceTemperature);
+    double resultTemperatureC = method == RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED ? RVP_REFERENCE_TEMPERATURE_C
+        : referenceTemperature;
+    return new RvpResult(valueForMethod(method), method, resultTemperatureC);
   }
 
   /**
@@ -344,6 +393,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     noWaterVariantsCalculated = false;
     VPCR4_no_water = 0.0;
     RVP_ASTM_D323_73_79 = 0.0;
+    addWaterSaturatedCalculated = false;
+    RVP_ASTM_D6377_add_water_saturated = 0.0;
     this.thermoSystem.setTemperature(referenceTemperature, "C");
     this.thermoSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
     this.thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -375,44 +426,147 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    * Evaluates the water-free vapor-pressure variants {@code VPCR4_no_water} and {@code RVP_ASTM_D323_73_79}.
    *
    * <p>
-   * This requires a clone of the fluid with water removed plus a bubble-point flash and an 80% vapor-volume flash,
-   * which roughly doubles the cost of {@link #calculate()}. Because most callers only read {@code VPCR4} or
-   * {@code RVP_ASTM_D6377}, the work is deferred until one of the water-free values is actually requested and is then
-   * cached until the next {@link #calculate()} call.
+   * This requires a water-free clone of the fluid (see {@link #createWaterFreeFluid(SystemInterface)}) plus a
+   * bubble-point flash and an 80% vapor-volume flash, which roughly doubles the cost of {@link #calculate()}. Because
+   * most callers only read {@code VPCR4} or {@code RVP_ASTM_D6377}, the work is deferred until one of the water-free
+   * values is actually requested and is then cached until the next {@link #calculate()} call.
    * </p>
-   *
-   * <p>
-   * Component removal does not remap the BIP matrix when retained indices shift. The method label therefore does not
-   * guarantee preservation of an arbitrary characterized fluid; audit every phase and reject a changed basis.
    */
   private void calculateNoWaterVariants() {
     if (noWaterVariantsCalculated) {
       return;
     }
     noWaterVariantsCalculated = true;
-    SystemInterface fluid1 = this.thermoSystem.clone();
-    if (fluid1.hasComponent("water")) {
-      fluid1.removeComponent("water");
-    }
-    fluid1.setTemperature(referenceTemperature, "C");
-    fluid1.setPressure(ThermodynamicConstantsInterface.referencePressure);
-    fluid1.init(0);
-    ThermodynamicOperations opsNoWater = new ThermodynamicOperations(fluid1);
     try {
-      opsNoWater.bubblePointPressureFlash(false);
-      double tvpNoWater = fluid1.getPressure();
-      fluid1.setPressure(tvpNoWater * 0.9);
-      // ASTM D323 -08 method is used for this property calculation. It is defined at
-      // the pressure
-      // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
-      opsNoWater.TVfractionFlash(0.8);
-      VPCR4_no_water = fluid1.getPressure();
+      SystemInterface fluid1 = createWaterFreeFluid(this.thermoSystem);
+      VPCR4_no_water = calculateVpcr4(fluid1, referenceTemperature);
       RVP_ASTM_D323_73_79 = VPCR4_no_water;
     } catch (Exception ex) {
       logger.debug("RVP calculation without water failed: {}", ex.getMessage());
       VPCR4_no_water = Double.NaN;
       RVP_ASTM_D323_73_79 = Double.NaN;
     }
+  }
+
+  /**
+   * Evaluates {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED} at the fixed RVP reference temperature.
+   *
+   * <p>
+   * {@code RVPE = 0.834 * (VPCR4_dry(37.8 C) + psat_water,IF97(37.8 C))} in bara. The EOS only evaluates the water-free
+   * hydrocarbon fluid; the water contribution is the IAPWS-IF97 pure-water saturation pressure, added whether or not
+   * the fluid contains water (assumed water-saturated storage). The result is NaN when the dry flash fails, does not
+   * end with exactly one gas and one oil phase, or misses the corrected gas volume fraction of 0.8 (V/L = 4) by more
+   * than {@value #VOLUME_FRACTION_TOLERANCE}. The user-set reference temperature is ignored: RVP is defined at 37.8 C.
+   * </p>
+   */
+  private void calculateAddWaterSaturated() {
+    if (addWaterSaturatedCalculated) {
+      return;
+    }
+    addWaterSaturatedCalculated = true;
+    RVP_ASTM_D6377_add_water_saturated = Double.NaN;
+    try {
+      SystemInterface dryFluid = createWaterFreeFluid(this.thermoSystem);
+      double vpcr4DryBara = calculateVpcr4(dryFluid, RVP_REFERENCE_TEMPERATURE_C);
+      if (!isFiniteVolumeRatioFourResult(dryFluid, vpcr4DryBara)) {
+        logger.warn("Dry VPCR4 flash did not reach a two-phase gas/oil state with gas volume fraction 0.8; "
+            + "RVP_ASTM_D6377_add_water_saturated is set to NaN");
+        return;
+      }
+      double waterPsatBara = getWaterSaturationPressure(RVP_REFERENCE_TEMPERATURE_C + 273.15);
+      RVP_ASTM_D6377_add_water_saturated = RVPE_D6377_FACTOR * (vpcr4DryBara + waterPsatBara);
+    } catch (Exception ex) {
+      logger.warn("RVP_ASTM_D6377_add_water_saturated calculation failed: {}", ex.getMessage());
+    }
+  }
+
+  /**
+   * Returns a water-free working copy of a fluid for the dry VPCR4 flash.
+   *
+   * <p>
+   * Removing a component compacts the component list without remapping the EOS binary interaction parameter (BIP)
+   * matrix. Removing water is therefore only safe when it is the last component, because no retained index shifts. When
+   * water sits elsewhere, removal would silently give hydrocarbon pairs the wrong BIPs, so water is kept as a trace of
+   * mole fraction {@value #TRACE_WATER_MOLE_FRACTION} instead. At that level the water contribution to the flash is
+   * negligible (VPCR4 agrees with the truly water-free fluid to about 13 significant digits) and every BIP stays on its
+   * original pair. The working copy is reset to its unflashed state before water is touched. The source fluid is not
+   * modified.
+   * </p>
+   *
+   * @param source fluid that may contain water
+   * @return a clone with water removed (water last) or reduced to a trace (water not last)
+   */
+  private static SystemInterface createWaterFreeFluid(SystemInterface source) {
+    SystemInterface dryFluid = source.clone();
+    if (!dryFluid.hasComponent("water")) {
+      return dryFluid;
+    }
+    // Water removal is a change of the fluid definition, so start from the unflashed state. The source may carry phase
+    // bookkeeping from an earlier (possibly unconverged) flash in which two phase slots point at the same phase object;
+    // init(0) resets that bookkeeping while keeping components, composition and model parameters.
+    dryFluid.init(0);
+    int waterIndex = dryFluid.getPhase(0).getComponent("water").getComponentNumber();
+    if (waterIndex == dryFluid.getNumberOfComponents() - 1) {
+      dryFluid.removeComponent("water");
+    } else {
+      double[] moleFractions = dryFluid.getMolarComposition();
+      moleFractions[waterIndex] = TRACE_WATER_MOLE_FRACTION;
+      dryFluid.setMolarComposition(moleFractions);
+    }
+    return dryFluid;
+  }
+
+  /**
+   * Calculates VPCR4 (vapor/liquid volume ratio 4:1) of a fluid with the same flash sequence as {@link #calculate()}.
+   *
+   * @param fluid fluid to flash; its state is modified
+   * @param temperatureC flash temperature in degrees Celsius
+   * @return VPCR4 in bara
+   * @throws Exception if the bubble-point or volume-fraction flash fails
+   */
+  private static double calculateVpcr4(SystemInterface fluid, double temperatureC) throws Exception {
+    fluid.setTemperature(temperatureC, "C");
+    fluid.setPressure(ThermodynamicConstantsInterface.referencePressure);
+    fluid.init(0);
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.bubblePointPressureFlash(false);
+    fluid.setPressure(fluid.getPressure() * 0.9);
+    ops.TVfractionFlash(0.8);
+    return fluid.getPressure();
+  }
+
+  /**
+   * Checks that a VPCR4 flash ended in one gas and one oil phase at a corrected gas volume fraction of 0.8.
+   *
+   * @param fluid flashed fluid
+   * @param vpcr4Bara VPCR4 returned by the flash in bara
+   * @return true if the result is finite, positive and meets the V/L = 4 target within tolerance
+   */
+  private static boolean isFiniteVolumeRatioFourResult(SystemInterface fluid, double vpcr4Bara) {
+    if (Double.isNaN(vpcr4Bara) || Double.isInfinite(vpcr4Bara) || vpcr4Bara <= 0.0) {
+      return false;
+    }
+    if (fluid.getNumberOfPhases() != 2 || !fluid.hasPhaseType("gas") || !fluid.hasPhaseType("oil")) {
+      return false;
+    }
+    fluid.initPhysicalProperties("density");
+    double gasVolumeFraction = fluid.getPhase("gas").getCorrectedVolume() / fluid.getCorrectedVolume();
+    return Math.abs(gasVolumeFraction - 0.8) <= VOLUME_FRACTION_TOLERANCE;
+  }
+
+  /**
+   * Returns the saturation pressure of pure water from the IAPWS-IF97 Region 4 equation.
+   *
+   * @param temperatureK temperature in kelvin, between 273.15 K and 647.096 K
+   * @return saturation pressure in bara
+   * @throws IllegalArgumentException if the temperature is outside the IAPWS-IF97 Region 4 validity range
+   */
+  public static double getWaterSaturationPressure(double temperatureK) {
+    if (!(temperatureK >= IF97_SATURATION_MIN_TEMPERATURE_K && temperatureK <= IF97_SATURATION_MAX_TEMPERATURE_K)) {
+      throw new IllegalArgumentException(
+          "Temperature " + temperatureK + " K is outside the IAPWS-IF97 saturation range 273.15-647.096 K");
+    }
+    return Iapws_if97.psat_t(temperatureK) * 10.0;
   }
 
   /** {@inheritDoc} */
@@ -460,6 +614,10 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       case "VPCR4_no_water":
         calculateNoWaterVariants();
         return VPCR4_no_water;
+      case "RVP_ASTM_D6377_add_water_saturated":
+      case "RVP_ASTM_D6377_ADD_WATER_SATURATED":
+        calculateAddWaterSaturated();
+        return RVP_ASTM_D6377_add_water_saturated;
       default:
         return VPCR4;
       }

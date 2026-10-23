@@ -44,9 +44,9 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             r'^---\ntitle: "[^"]+"\ndescription: "[^"]+"\n---\n',
         )
         self.assertNotRegex(self.doc, r"(?m)^# ")
-        # Both the base example and the audited dry-fluid example are Java blocks.
+        # The base example, the built-in water-saturated example and the audited dry-fluid example are Java blocks.
         self.assertEqual(
-            ["```java", "```", "```java", "```"],
+            ["```java", "```", "```java", "```", "```java", "```"],
             re.findall(r"(?m)^```[^\n]*$", self.doc),
         )
 
@@ -69,6 +69,8 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "this.thermoSystem.setPressure(",
             "this.thermoOps.TVfractionFlash(0.8)",
             "RVP_ASTM_D6377 = 0.834 * VPCR4",
+            'RVP_ASTM_D6377_ADD_WATER_SATURATED("RVP_ASTM_D6377_add_water_saturated")',
+            "public static double getWaterSaturationPressure(double temperatureK)",
             "public boolean isOnSpec()",
         )
         for pattern in source_patterns:
@@ -80,6 +82,7 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "setMethodRVP(RvpMethod.RVP_ASTM_D6377)",
             "getRvpResult(RvpMethod.VPCR4)",
             "getRvpResult(RvpMethod.VPCR4_NO_WATER)",
+            "getRvpResult(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED)",
             'getValue("TVP", "bara")',
             'getValue("RVP", "kPa")',
             "The standard does not force SRK",
