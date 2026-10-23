@@ -54,6 +54,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   double reservoirVolume = 0.0;
   double lowPressureLimit = 50.0;
 
+  /** True once a transient step was skipped because the reservoir pressure fell below the low pressure limit. */
+  private boolean lowPressureLimitReached = false;
+
   /** Cumulative water produced at surface conditions (Sm3). */
   double waterProductionTotal = 0.0;
 
@@ -501,7 +504,13 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public void runTransient(double dt, UUID id) {
     increaseTime(dt);
     if (thermoSystem.getPressure("bara") < lowPressureLimit) {
-      logger.info("low pressure reservoir limit reached");
+      if (!lowPressureLimitReached) {
+        logger.warn(
+            "Reservoir {} pressure {} bara is below the low pressure limit {} bara: production is stopped; "
+                + "lower it with setLowPressureLimit(...) to keep producing",
+            getName(), thermoSystem.getPressure("bara"), lowPressureLimit);
+      }
+      lowPressureLimitReached = true;
       setCalculationIdentifier(id);
       return;
     }
@@ -840,6 +849,15 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public double getLowPressureLimit(String unit) {
     PressureUnit conver = new PressureUnit(lowPressureLimit, "bara");
     return conver.getValue(unit);
+  }
+
+  /**
+   * Tells whether a transient step was skipped because the pressure fell below the low pressure limit.
+   *
+   * @return true if production stopped at the low pressure limit
+   */
+  public boolean isLowPressureLimitReached() {
+    return lowPressureLimitReached;
   }
 
   // ============================================================

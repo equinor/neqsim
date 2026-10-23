@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**
- * Validates ordinary CPA association-site temperature sensitivities.
+ * Validates ordinary CPA association-site temperature and volume sensitivities.
  *
  * @author NeqSim contributors
  * @version 1.0
@@ -23,6 +23,7 @@ class PhaseSrkCPASiteDerivativeTest {
     fluid.addComponent("water", 1.0);
     fluid.setMixingRule(10);
     assertTemperatureDerivatives(fluid, "water", 0, 0.01);
+    assertVolumeDerivatives(fluid, "water", 0);
   }
 
   /** Compares K15 electrolyte-CPA water-site sensitivities with fixed-volume differences. */
@@ -36,6 +37,7 @@ class PhaseSrkCPASiteDerivativeTest {
     fluid.addComponent("Cl-", saltMoles);
     fluid.setMixingRule(10);
     assertTemperatureDerivatives(fluid, "water", 0, 0.01);
+    assertVolumeDerivatives(fluid, "water", 0);
   }
 
   /**
@@ -68,6 +70,47 @@ class PhaseSrkCPASiteDerivativeTest {
   }
 
   /**
+   * Checks second/third volume and mixed temperature-volume site sensitivities.
+   *
+   * @param fluid configured CPA system
+   * @param componentName associating component name
+   * @param phaseIndex phase containing the association sites
+   */
+  private void assertVolumeDerivatives(SystemInterface fluid, String componentName, int phaseIndex) {
+    fluid.init(3);
+    double volume = fluid.getPhase(phaseIndex).getTotalVolume();
+    double volumeStep = Math.max(Math.abs(volume) * 1.0e-4, 1.0e-6);
+    double temperatureStep = 0.01;
+
+    ComponentSrkCPA component = component(fluid, componentName, phaseIndex);
+    double analyticalSecond = component.getXsitedVdV()[0];
+    double analyticalThird = component.getXsitedVdVdV()[0];
+    double analyticalMixed = component.getXsitedTdV()[0];
+
+    double[] plusVolume = siteSensitivitiesAtVolume(fluid, componentName, phaseIndex, volume + volumeStep);
+    double[] minusVolume = siteSensitivitiesAtVolume(fluid, componentName, phaseIndex, volume - volumeStep);
+    double numericalSecond = (plusVolume[0] - minusVolume[0]) / (2.0 * volumeStep);
+    double numericalThird = (plusVolume[1] - minusVolume[1]) / (2.0 * volumeStep);
+    double numericalMixedFromVolume = (plusVolume[2] - minusVolume[2]) / (2.0 * volumeStep);
+
+    double plusTemperatureVolumeDerivative = volumeDerivativeAtTemperature(fluid, componentName, phaseIndex,
+        fluid.getTemperature() + temperatureStep);
+    double minusTemperatureVolumeDerivative = volumeDerivativeAtTemperature(fluid, componentName, phaseIndex,
+        fluid.getTemperature() - temperatureStep);
+    double numericalMixedFromTemperature = (plusTemperatureVolumeDerivative - minusTemperatureVolumeDerivative)
+        / (2.0 * temperatureStep);
+
+    assertTrue(Math.abs(analyticalSecond) > 1.0e-12, "Second volume site sensitivity must be populated");
+    assertTrue(Math.abs(analyticalThird) > 1.0e-12, "Third volume site sensitivity must be populated");
+    assertTrue(Math.abs(analyticalMixed) > 1.0e-12, "Mixed temperature-volume site sensitivity must be populated");
+    assertEquals(numericalSecond, analyticalSecond, tolerance(numericalSecond, 5.0e-4, 1.0e-10));
+    assertEquals(numericalThird, analyticalThird, tolerance(numericalThird, 2.0e-3, 1.0e-9));
+    assertEquals(numericalMixedFromVolume, analyticalMixed, tolerance(numericalMixedFromVolume, 5.0e-4, 1.0e-10));
+    assertEquals(numericalMixedFromTemperature, analyticalMixed,
+        tolerance(numericalMixedFromTemperature, 5.0e-4, 1.0e-10));
+  }
+
+  /**
    * Returns one CPA component from a phase.
    *
    * @param fluid initialized CPA system
@@ -94,6 +137,41 @@ class PhaseSrkCPASiteDerivativeTest {
     perturbed.setTemperature(temperature);
     perturbed.init(3);
     return component(perturbed, componentName, phaseIndex).getXsite()[0];
+  }
+
+  /**
+   * Evaluates volume sensitivities after a fixed-volume perturbation.
+   *
+   * @param base initialized fixed-volume system
+   * @param componentName component name
+   * @param phaseIndex phase index
+   * @param volume perturbed native EOS volume
+   * @return first volume, second volume, and first temperature sensitivities
+   */
+  private double[] siteSensitivitiesAtVolume(SystemInterface base, String componentName, int phaseIndex,
+      double volume) {
+    SystemInterface perturbed = base.clone();
+    perturbed.getPhase(phaseIndex).setTotalVolume(volume);
+    perturbed.init(3);
+    ComponentSrkCPA component = component(perturbed, componentName, phaseIndex);
+    return new double[] {component.getXsitedV()[0], component.getXsitedVdV()[0], component.getXsitedT()[0]};
+  }
+
+  /**
+   * Evaluates the first volume sensitivity after a fixed-volume temperature perturbation.
+   *
+   * @param base initialized fixed-volume system
+   * @param componentName component name
+   * @param phaseIndex phase index
+   * @param temperature perturbed temperature in K
+   * @return first volume sensitivity
+   */
+  private double volumeDerivativeAtTemperature(SystemInterface base, String componentName, int phaseIndex,
+      double temperature) {
+    SystemInterface perturbed = base.clone();
+    perturbed.setTemperature(temperature);
+    perturbed.init(3);
+    return component(perturbed, componentName, phaseIndex).getXsitedV()[0];
   }
 
   /**

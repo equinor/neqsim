@@ -274,7 +274,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
           ((ComponentSrkCPA) componentArray[i]).setXsite(j, 1.0);
           ((ComponentSrkCPA) componentArray[i]).setXsitedV(j, 0.0);
+          ((ComponentSrkCPA) componentArray[i]).setXsitedVdV(j, 0.0);
+          ((ComponentSrkCPA) componentArray[i]).setXsitedVdVdV(j, 0.0);
           ((ComponentSrkCPA) componentArray[i]).setXsitedT(j, 0.0);
+          ((ComponentSrkCPA) componentArray[i]).setXsitedTdV(j, 0.0);
           ((ComponentSrkCPA) componentArray[i]).setXsitedTdT(j, 0.0);
         }
       }
@@ -502,10 +505,22 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       return;
     }
 
+    // Differentiate the stationary association equations twice and three times
+    // with respect to native EOS volume. Each derivative is another right-hand
+    // side for the already-factorized association Hessian.
+    SimpleMatrix XVV = applyHessianInv(
+        KlkVVMatrixTImesKsi.plus(KlkVMatrix.mult(XV).scale(2.0)).minus(QMatksiksiksi.elementMult(XV.elementMult(XV))));
+    SimpleMatrix QMatksiksiksiksi = QMatksiksiksi.elementDiv(ksiMatrix).scale(-3.0);
+    SimpleMatrix XVVV = applyHessianInv(KlkVVVMatrix.mult(ksiMatrix).plus(KlkVVMatrix.mult(XV).scale(3.0))
+        .plus(KlkVMatrix.mult(XVV).scale(3.0)).minus(QMatksiksiksi.elementMult(XV.elementMult(XVV)).scale(3.0))
+        .minus(QMatksiksiksiksi.elementMult(XV.elementMult(XV).elementMult(XV))));
+
     temp = 0;
     for (int p = 0; p < numberOfComponents; p++) {
       for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
         ((ComponentCPAInterface) getComponent(p)).setXsitedV(kk, XV.get(temp + kk, 0));
+        ((ComponentSrkCPA) getComponent(p)).setXsitedVdV(kk, XVV.get(temp + kk, 0));
+        ((ComponentSrkCPA) getComponent(p)).setXsitedVdVdV(kk, XVVV.get(temp + kk, 0));
       }
       temp += getComponent(p).getNumberOfAssociationSites();
     }
@@ -527,6 +542,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     // the diagonal third derivative 2*m/X^3 of the association Helmholtz term.
     SimpleMatrix XTT = applyHessianInv(KlkTTMatrix.mult(ksiMatrix).plus(KlkTMatrix.mult(XT).scale(2.0))
         .minus(QMatksiksiksi.elementMult(XT.elementMult(XT))));
+    SimpleMatrix XTV = applyHessianInv(KlkTVMatrix.mult(ksiMatrix).plus(KlkTMatrix.mult(XV)).plus(KlkVMatrix.mult(XT))
+        .minus(QMatksiksiksi.elementMult(XT.elementMult(XV))));
     // dQdTdT
     SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5)
         .minus(KlkTMatrixTImesKsi.transpose().mult(XT));
@@ -540,6 +557,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     for (int p = 0; p < numberOfComponents; p++) {
       for (int kk = 0; kk < getComponent(p).getNumberOfAssociationSites(); kk++) {
         ((ComponentCPAInterface) getComponent(p)).setXsitedT(kk, XT.get(temp + kk, 0));
+        ((ComponentSrkCPA) getComponent(p)).setXsitedTdV(kk, XTV.get(temp + kk, 0));
         ((ComponentCPAInterface) getComponent(p)).setXsitedTdT(kk, XTT.get(temp + kk, 0));
       }
       temp += getComponent(p).getNumberOfAssociationSites();

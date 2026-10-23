@@ -77,7 +77,10 @@ class PhaseSrkCPACloneIsolationTest {
       ComponentSrkCPA second = (ComponentSrkCPA) copy.getComponent(component);
       assertArrayEquals(first.getXsite(), second.getXsite(), 0.0);
       assertArrayEquals(first.getXsitedV(), second.getXsitedV(), 1.0e-12);
+      assertArrayEquals(first.getXsitedVdV(), second.getXsitedVdV(), 1.0e-12);
+      assertArrayEquals(first.getXsitedVdVdV(), second.getXsitedVdVdV(), 1.0e-12);
       assertArrayEquals(first.getXsitedT(), second.getXsitedT(), 1.0e-12);
+      assertArrayEquals(first.getXsitedTdV(), second.getXsitedTdV(), 1.0e-12);
       assertArrayEquals(first.getXsitedTdT(), second.getXsitedTdT(), 1.0e-12);
       for (int site = 0; site < first.getXsitedni().length; site++) {
         assertArrayEquals(first.getXsitedni()[site], second.getXsitedni()[site], 1.0e-12);

@@ -269,6 +269,12 @@ public class ReservoirCouplingExporter implements Serializable {
   /** Datum depth for VFP tables (m). */
   private double datumDepth = 2500.0;
 
+  /** Optional lift model; the placeholder correlation is used when null. */
+  private transient VlpProvider vlpProvider;
+
+  /** Ensures the placeholder warning is logged once. */
+  private transient boolean placeholderWarningLogged = false;
+
   // ============================================================================
   // CONSTRUCTORS
   // ============================================================================
@@ -365,6 +371,18 @@ public class ReservoirCouplingExporter implements Serializable {
     this.datumDepth = depth;
   }
 
+  /**
+   * Sets the lift model used by {@link #generateVfpProd} and {@link #generateVfpInj}. Without a provider the tables
+   * come from a placeholder hydrostatic and friction correlation that is not a well model. The provider receives the
+   * rate and the water cut and gas ratio of the configured ranges; for deliverable tables with ratio definitions, rate
+   * cap handling and checks use {@link VfpTableBuilder}.
+   *
+   * @param provider lift model, or null to restore the placeholder correlation
+   */
+  public void setVlpProvider(VlpProvider provider) {
+    this.vlpProvider = provider;
+  }
+
   // ============================================================================
   // VFP TABLE GENERATION
   // ============================================================================
@@ -373,8 +391,9 @@ public class ReservoirCouplingExporter implements Serializable {
    * Generate VFPPROD table for a producing well.
    *
    * <p>
-   * Creates a multi-dimensional VFP table mapping (rate, THP, WCT, GOR) to BHP using the process model for pressure
-   * drop calculations.
+   * Creates a multi-dimensional VFP table mapping (rate, THP, WCT, GOR) to BHP. The BHP comes from the provider set
+   * with {@link #setVlpProvider(VlpProvider)}; without a provider a placeholder hydrostatic and friction correlation is
+   * used, which is not a well model and must not be used for deliverable tables.
    * </p>
    *
    * @param wellName well name
@@ -479,8 +498,15 @@ public class ReservoirCouplingExporter implements Serializable {
    * @return calculated bottom hole pressure in bara
    */
   private double calculateBhp(SystemInterface fluid, double rate, double thp, double wct, double gor) {
-    // Simplified correlation - in practice would use full well model
-    // BHP = THP + hydrostatic + friction
+    if (vlpProvider != null) {
+      return vlpProvider.bottomHolePressure(rate, thp, wct, gor, 0.0);
+    }
+    if (!placeholderWarningLogged) {
+      placeholderWarningLogged = true;
+      logger.warn("VFPPROD uses a placeholder hydrostatic and friction correlation, not a well model. Call "
+          + "setVlpProvider(...) or use VfpTableBuilder for deliverable tables");
+    }
+    // Placeholder correlation: BHP = THP + hydrostatic + friction
     double tvd = datumDepth;
     double density = 800.0 - wct * 200.0; // Approximate mixture density kg/m3
     double hydrostatic = density * 9.81 * tvd / 1e5; // bara
@@ -501,6 +527,14 @@ public class ReservoirCouplingExporter implements Serializable {
    * @return calculated bottom hole pressure in bara
    */
   private double calculateInjectionBhp(SystemInterface fluid, double rate, double thp) {
+    if (vlpProvider != null) {
+      return vlpProvider.bottomHolePressure(rate, thp, 0.0, 0.0, 0.0);
+    }
+    if (!placeholderWarningLogged) {
+      placeholderWarningLogged = true;
+      logger.warn("VFPINJ uses a placeholder hydrostatic and friction correlation, not a well model. Call "
+          + "setVlpProvider(...) or use VfpTableBuilder for deliverable tables");
+    }
     double tvd = datumDepth;
     double density = 1025.0; // Assume water injection
     double hydrostatic = density * 9.81 * tvd / 1e5;

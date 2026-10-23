@@ -627,6 +627,13 @@ These families are implemented in NeqSim and are routed to a skill and agent. Ve
 **R** = rigorous / mechanistic, **S** = screening or empirical, **C** = case-specific reference.
 Always load the skill before using the classes; it records the verified API and gotchas.
 
+### Lift curves and well deliverability (`vfp-lift-curve-agent`)
+
+| Capability | Key classes (package) | Verdict | Skill |
+|---|---|---|---|
+| VFPPROD / VFPINJ table build with axes, rate cap, sanity enforcement, deck text | `VfpTableBuilder`, `VfpDeckReader`, `EclipseVFPExporter` (`process.fielddevelopment.reservoir`, `process.util.optimizer`) | S/R (depends on calibration) | `neqsim-vfp-lift-curves` |
+| Pluggable lift model: deviated tubing survey, any forward pressure chain | `TubingVlpProvider`, `ForwardVlpProvider`, `RecombinationFluidFactory`, `TubingPerformance` (`process.equipment.pipeline`) | S | `neqsim-vfp-lift-curves` |
+
 ### Gas processing, refining, produced water (`@gas-processing-refining`)
 
 | Capability | Key classes (package) | Verdict | Skill |
@@ -688,6 +695,8 @@ Always load the skill before using the classes; it records the verified API and 
 | Compressor power? | ✅ | `Compressor.getPower("kW")` |
 | NPV / DCF? | ✅ | `DCFCalculator` |
 | Well casing design? | ✅ | `WellDesignCalculator` |
+| VFPPROD / VFPINJ lift curve (vertical lift performance, THP/BHP table) for Eclipse or OPM Flow? | ✅ (screening to study grade, depends on calibration) | `VfpTableBuilder` + `TubingVlpProvider` / `ForwardVlpProvider`, skill `neqsim-vfp-lift-curves`, agent `vfp-lift-curve-agent` |
+| Deviated tubing pressure drop from a survey? | ✅ | `TubingPerformance.setSurvey(md, tvd, id)` (`process.equipment.pipeline`) |
 | TEG dehydration? | ✅ | `SimpleTEGAbsorber` |
 | Sulfur deposition? | ✅ | `SulfurDepositionAnalyser` |
 | JT cooling? | ✅ | `ThrottlingValve` |

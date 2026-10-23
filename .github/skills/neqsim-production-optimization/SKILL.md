@@ -306,6 +306,9 @@ for full API documentation of all features.
 
 ### Lift curves / VFPPROD tables for Eclipse and OPM Flow
 
+> Authoritative guide: `neqsim-vfp-lift-curves` (`VfpTableBuilder`, tubing/flowline/full-system providers, validation).
+> The recipe below is the manual flowline-only route with `PipeBeggsAndBrills`; prefer the builder.
+
 A reservoir simulator wants `VFPPROD`: a 5-D table `BHP[flow][THP][WFR][GFR][ALQ]`
 in **standard surface volumes** (Sm3/d, METRIC) with explicit axis definitions.
 NeqSim gives you the hydraulics (`PipeBeggsAndBrills`) and the validated keyword
