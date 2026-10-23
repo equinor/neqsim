@@ -852,12 +852,20 @@ public class InjectionWellModel implements Serializable {
     public List<InjectionZoneResult> zoneResults = new ArrayList<>();
     /** Total achievable rate across all zones (Sm3/day). */
     public double totalRate;
+    /** Requested total rate across all zones (Sm3/day). */
+    public double requestedRate;
     /** Injection efficiency: fraction entering target zone(s). */
     public double injectionEfficiency;
     /** Total out-of-zone rate (Sm3/day). */
     public double outOfZoneRate;
     /** Common BHP used for allocation (bara). */
     public double commonBHP;
+    /** Unconstrained BHP required to meet the requested rate (bara). */
+    public double requiredBHP;
+    /** Applied common-BHP pressure limit (bara). */
+    public double pressureLimit;
+    /** Whether the applied pressure limit prevents delivery of the requested rate. */
+    public boolean limitedByPressure;
     /** Formation-water viscosity used by the multi-zone screen (cP). */
     public double formationWaterViscosity;
     /** Formation-water volume factor used by the multi-zone screen (reservoir m3/Sm3). */
@@ -870,6 +878,15 @@ public class InjectionWellModel implements Serializable {
      */
     public double getTotalRate() {
       return totalRate;
+    }
+
+    /**
+     * Gets the requested total injection rate.
+     *
+     * @return requested rate (Sm3/day)
+     */
+    public double getRequestedRate() {
+      return requestedRate;
     }
 
     /**
@@ -890,12 +907,43 @@ public class InjectionWellModel implements Serializable {
       return outOfZoneRate;
     }
 
+    /**
+     * Gets the unconstrained BHP required to meet the requested rate.
+     *
+     * @return required BHP (bara)
+     */
+    public double getRequiredBHP() {
+      return requiredBHP;
+    }
+
+    /**
+     * Gets the applied common-BHP pressure limit.
+     *
+     * @return pressure limit (bara)
+     */
+    public double getPressureLimit() {
+      return pressureLimit;
+    }
+
+    /**
+     * Reports whether the pressure limit prevents delivery of the requested rate.
+     *
+     * @return true when the unconstrained required BHP exceeds the pressure limit
+     */
+    public boolean isLimitedByPressure() {
+      return limitedByPressure;
+    }
+
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append("Multi-Zone Injection Result\n");
       sb.append("==========================\n");
+      sb.append(String.format("Requested rate: %.0f Sm3/day%n", requestedRate));
+      sb.append(String.format("Required BHP: %.1f bara%n", requiredBHP));
       sb.append(String.format("Common BHP: %.1f bara%n", commonBHP));
+      sb.append(String.format("Pressure limit: %.1f bara%n", pressureLimit));
+      sb.append(String.format("Limited by pressure: %s%n", limitedByPressure));
       sb.append(String.format("Formation water: %.3f cP, B=%.5f reservoir m3/Sm3%n", formationWaterViscosity,
           formationWaterVolumeFactor));
       sb.append(String.format("Total rate: %.0f Sm3/day%n", totalRate));
@@ -954,15 +1002,24 @@ public class InjectionWellModel implements Serializable {
    * Calculate multi-zone injection allocation at a given total target rate.
    *
    * <p>
-   * The BHP is determined from the total target rate and the combined injectivity of all zones. Each zone then receives
-   * flow proportional to its individual injectivity and pressure differential.
+   * The BHP is determined from the total target rate and the combined injectivity of the zones whose reservoir pressure
+   * is below the solved common BHP. Zones at or above that pressure remain shut in and are removed from the active set
+   * before the pressure is recomputed. Each accepting zone then receives flow proportional to its individual
+   * injectivity and positive pressure differential.
    * </p>
    *
    * @param totalTargetRate total target injection rate (Sm3/day)
    * @return multi-zone injection result with per-zone breakdown
+   * @throws IllegalArgumentException if the target rate or mutable zone inputs are invalid
+   * @throws IllegalStateException if no configured zone has positive injectivity
    */
   public MultiZoneInjectionResult calculateMultiZone(double totalTargetRate) {
+    if (!Double.isFinite(totalTargetRate) || totalTargetRate < 0.0) {
+      throw new IllegalArgumentException("Total target rate must be finite and non-negative");
+    }
+
     MultiZoneInjectionResult result = new MultiZoneInjectionResult();
+    result.requestedRate = totalTargetRate;
     result.formationWaterViscosity = formationWaterViscosity;
     result.formationWaterVolumeFactor = getEffectiveFormationWaterVolumeFactor();
 
@@ -971,23 +1028,20 @@ public class InjectionWellModel implements Serializable {
     }
 
     // Calculate injectivity index for each zone
-    double totalII = 0.0;
     List<Double> zoneIIs = new ArrayList<>();
     for (InjectionZone zone : zones) {
       double ii = calculateZoneInjectivityIndex(zone);
+      if (!Double.isFinite(ii) || ii < 0.0) {
+        throw new IllegalArgumentException("Zone '" + zone.name + "' has an invalid injectivity index");
+      }
+      if (!Double.isFinite(zone.reservoirPressure)) {
+        throw new IllegalArgumentException("Zone '" + zone.name + "' has a non-finite reservoir pressure");
+      }
       zoneIIs.add(ii);
-      totalII += ii;
     }
 
-    // Combined: totalRate = totalII × (BHP - avgPres)
-    // Find required BHP for target rate
-    double avgWeightedPres = 0.0;
-    for (int i = 0; i < zones.size(); i++) {
-      avgWeightedPres += zoneIIs.get(i) * zones.get(i).reservoirPressure;
-    }
-    avgWeightedPres /= totalII;
-
-    double requiredBHP = avgWeightedPres + totalTargetRate / totalII;
+    double requiredBHP = calculateRequiredMultiZoneBHP(totalTargetRate, zoneIIs);
+    result.requiredBHP = requiredBHP;
 
     // Limit BHP to minimum fracture pressure across zones
     double minFracPressure = Double.MAX_VALUE;
@@ -996,7 +1050,10 @@ public class InjectionWellModel implements Serializable {
         minFracPressure = zone.fracturePressure;
       }
     }
-    double effectiveBHP = Math.min(requiredBHP, Math.min(maxBHP, minFracPressure));
+    double pressureLimit = Math.min(maxBHP, minFracPressure);
+    double effectiveBHP = Math.min(requiredBHP, pressureLimit);
+    result.pressureLimit = pressureLimit;
+    result.limitedByPressure = totalTargetRate > 0.0 && requiredBHP > pressureLimit;
     result.commonBHP = effectiveBHP;
 
     // Calculate per-zone rates at the effective BHP
@@ -1039,6 +1096,66 @@ public class InjectionWellModel implements Serializable {
     result.injectionEfficiency = totalRate > 0 ? targetRate / totalRate : 0.0;
 
     return result;
+  }
+
+  /**
+   * Solves the piecewise-linear common BHP for the requested multi-zone rate.
+   *
+   * <p>
+   * The accepting-zone set is reduced until every retained zone has reservoir pressure below the solved BHP. This
+   * enforces {@code q_i = II_i * max(BHP - P_i, 0)} without counting a shut-in zone in the combined pressure equation.
+   * </p>
+   *
+   * @param totalTargetRate requested total rate (Sm3/day)
+   * @param zoneIIs per-zone injectivity indices (Sm3/day/bar)
+   * @return unconstrained common BHP (bara)
+   * @throws IllegalStateException if no zone has positive injectivity
+   */
+  private double calculateRequiredMultiZoneBHP(double totalTargetRate, List<Double> zoneIIs) {
+    boolean[] activeZones = new boolean[zones.size()];
+    int activeCount = 0;
+    double minimumReservoirPressure = Double.POSITIVE_INFINITY;
+
+    for (int i = 0; i < zones.size(); i++) {
+      if (zoneIIs.get(i) > 0.0) {
+        activeZones[i] = true;
+        activeCount++;
+        minimumReservoirPressure = Math.min(minimumReservoirPressure, zones.get(i).reservoirPressure);
+      }
+    }
+    if (activeCount == 0) {
+      throw new IllegalStateException("At least one injection zone must have positive injectivity");
+    }
+    if (totalTargetRate == 0.0) {
+      return minimumReservoirPressure;
+    }
+
+    while (true) {
+      double activeII = 0.0;
+      double pressureWeightedII = 0.0;
+      for (int i = 0; i < zones.size(); i++) {
+        if (activeZones[i]) {
+          activeII += zoneIIs.get(i);
+          pressureWeightedII += zoneIIs.get(i) * zones.get(i).reservoirPressure;
+        }
+      }
+
+      double requiredBHP = (totalTargetRate + pressureWeightedII) / activeII;
+      boolean removedZone = false;
+      for (int i = 0; i < zones.size(); i++) {
+        if (activeZones[i] && requiredBHP <= zones.get(i).reservoirPressure) {
+          activeZones[i] = false;
+          activeCount--;
+          removedZone = true;
+        }
+      }
+      if (!removedZone) {
+        return requiredBHP;
+      }
+      if (activeCount == 0) {
+        throw new IllegalStateException("No injection zone accepts the requested rate");
+      }
+    }
   }
 
   /**
