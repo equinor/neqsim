@@ -17,8 +17,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Tests for {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED}: RVPE = 0.834 * (VPCR4_dry + psat_water,IF97) at
- * 37.8 C, and for the shared water-free fluid used by {@link RvpMethod#VPCR4_NO_WATER}. All pressures are in bara.
+ * Tests for {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED}: RVPE = 0.834 * (VPCR4_dry + psat_water,IF97) at 37.8
+ * C, and for the shared water-free fluid used by {@link RvpMethod#VPCR4_NO_WATER}. All pressures are in bara.
  *
  * @author NeqSim
  * @version 1.0
@@ -103,8 +103,8 @@ class RvpAddWaterSaturatedTest extends NeqSimTest {
   }
 
   /**
-   * After an unconverged flash two phase slots can point at the same phase object, which makes a direct
-   * removeComponent fail. The water-free copy is reset to its unflashed state first, so the result is unaffected.
+   * After an unconverged flash two phase slots can point at the same phase object, which makes a direct removeComponent
+   * fail. The water-free copy is reset to its unflashed state first, so the result is unaffected.
    */
   @Test
   void waterRemovalIsRobustToScrambledPhaseBookkeeping() {
@@ -135,10 +135,8 @@ class RvpAddWaterSaturatedTest extends NeqSimTest {
   /** The label, the enum name, the string API, unit conversion and the Stream overload agree. */
   @Test
   void labelStringApiAndStreamAgree() {
-    assertSame(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED,
-        RvpMethod.fromLabel("RVP_ASTM_D6377_add_water_saturated"));
-    assertSame(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED,
-        RvpMethod.fromLabel("RVP_ASTM_D6377_ADD_WATER_SATURATED"));
+    assertSame(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED, RvpMethod.fromLabel("RVP_ASTM_D6377_add_water_saturated"));
+    assertSame(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED, RvpMethod.fromLabel("RVP_ASTM_D6377_ADD_WATER_SATURATED"));
     double expected = 0.834 * (DRY_VPCR4_BARA + WATER_PSAT_378_BARA);
 
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(createOil(0.1, false));

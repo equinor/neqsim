@@ -29,11 +29,11 @@ import neqsim.util.exception.IsNaNException;
  *
  * <p>
  * For a declared water-contact storage basis, {@link RvpMethod#RVP_ASTM_D6377_ADD_WATER_SATURATED} returns
- * {@code RVPE_water_sat = 0.834 * (VPCR4_dry + psat_water(37.8 C))}, always at 37.8 C, not dry RVPE plus the full
- * water pressure. The EOS only sees the water-free hydrocarbon liquid; the water term is the IAPWS-IF97 Region 4
- * pure-water saturation pressure and is always added, whether or not the fluid contains water. This assumes water
- * activity near one and sufficient water for saturation; it neither models the ASTM apparatus nor repairs sampling
- * losses. The analogous TVP approximation is {@code TVP_dry(T) + psat_water(T)}. See the
+ * {@code RVPE_water_sat = 0.834 * (VPCR4_dry + psat_water(37.8 C))}, always at 37.8 C, not dry RVPE plus the full water
+ * pressure. The EOS only sees the water-free hydrocarbon liquid; the water term is the IAPWS-IF97 Region 4 pure-water
+ * saturation pressure and is always added, whether or not the fluid contains water. This assumes water activity near
+ * one and sufficient water for saturation; it neither models the ASTM apparatus nor repairs sampling losses. The
+ * analogous TVP approximation is {@code TVP_dry(T) + psat_water(T)}. See the
  * <a href="https://equinor.github.io/neqsim/standards/astm_d6377_rvp.html">vapor-pressure water-basis guide</a>.
  *
  * @author ESOL
@@ -114,7 +114,9 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     RVP_ASTM_D323_82("RVP_ASTM_D323_82"),
     /** Raw vapor pressure at vapor/liquid volume ratio 4:1 (default). */
     VPCR4("VPCR4"),
-    /** Raw vapor pressure at vapor/liquid volume ratio 4:1 on the water-free fluid (water removed if last, else trace). */
+    /**
+     * Raw vapor pressure at vapor/liquid volume ratio 4:1 on the water-free fluid (water removed if last, else trace).
+     */
     VPCR4_NO_WATER("VPCR4_no_water"),
     /**
      * D6377-labelled RVPE on an assumed water-saturated basis, always at 37.8 C: 0.834 times the sum of dry VPCR4 and
@@ -370,8 +372,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     if (method == null) {
       throw new IllegalArgumentException("RVP method must not be null");
     }
-    double resultTemperatureC =
-        method == RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED ? RVP_REFERENCE_TEMPERATURE_C : referenceTemperature;
+    double resultTemperatureC = method == RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED ? RVP_REFERENCE_TEMPERATURE_C
+        : referenceTemperature;
     return new RvpResult(valueForMethod(method), method, resultTemperatureC);
   }
 
@@ -483,12 +485,12 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    *
    * <p>
    * Removing a component compacts the component list without remapping the EOS binary interaction parameter (BIP)
-   * matrix. Removing water is therefore only safe when it is the last component, because no retained index shifts.
-   * When water sits elsewhere, removal would silently give hydrocarbon pairs the wrong BIPs, so water is kept as a
-   * trace of mole fraction {@value #TRACE_WATER_MOLE_FRACTION} instead. At that level the water contribution to the
-   * flash is negligible (VPCR4 agrees with the truly water-free fluid to about 13 significant digits) and every BIP
-   * stays on its original pair. The working copy is reset to its unflashed state before water is touched. The source
-   * fluid is not modified.
+   * matrix. Removing water is therefore only safe when it is the last component, because no retained index shifts. When
+   * water sits elsewhere, removal would silently give hydrocarbon pairs the wrong BIPs, so water is kept as a trace of
+   * mole fraction {@value #TRACE_WATER_MOLE_FRACTION} instead. At that level the water contribution to the flash is
+   * negligible (VPCR4 agrees with the truly water-free fluid to about 13 significant digits) and every BIP stays on its
+   * original pair. The working copy is reset to its unflashed state before water is touched. The source fluid is not
+   * modified.
    * </p>
    *
    * @param source fluid that may contain water
@@ -561,8 +563,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
    */
   public static double getWaterSaturationPressure(double temperatureK) {
     if (!(temperatureK >= IF97_SATURATION_MIN_TEMPERATURE_K && temperatureK <= IF97_SATURATION_MAX_TEMPERATURE_K)) {
-      throw new IllegalArgumentException("Temperature " + temperatureK
-          + " K is outside the IAPWS-IF97 saturation range 273.15-647.096 K");
+      throw new IllegalArgumentException(
+          "Temperature " + temperatureK + " K is outside the IAPWS-IF97 saturation range 273.15-647.096 K");
     }
     return Iapws_if97.psat_t(temperatureK) * 10.0;
   }

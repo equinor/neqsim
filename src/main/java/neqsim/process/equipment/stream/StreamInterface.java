@@ -137,8 +137,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * <p>
    * "RVP_ASTM_D6377" returns 0.834 times VPCR4 on the supplied composition. "VPCR4_no_water" returns raw dry VPCR4, not
    * dry RVPE. "RVP_ASTM_D6377_add_water_saturated" returns 0.834 times the sum of dry VPCR4 and the IAPWS-IF97
-   * pure-water saturation pressure, always at 37.8 C (the reference temperature argument is ignored for this label).
-   * Do not add the full water pressure to an already correlated RVPE. See the
+   * pure-water saturation pressure, always at 37.8 C (the reference temperature argument is ignored for this label). Do
+   * not add the full water pressure to an already correlated RVPE. See the
    * <a href="https://equinor.github.io/neqsim/standards/astm_d6377_rvp.html">water-basis guide</a>.
    *
    * @param referenceTemperature reference temperature, normally 37.8 degrees Celsius
