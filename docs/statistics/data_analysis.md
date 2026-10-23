@@ -82,7 +82,7 @@ reference values and the current unchanged-edge behavior.
 Do not interpret a visually smoother curve as evidence that the measurement is
 more accurate. Review window and polynomial sensitivity, compare with the raw
 data, retain units and sampling interval, and validate important trends against
-independent physical knowledge. Derivative modes require an explicit sampling-
+independent physical knowledge. Derivative modes require an explicit sampling
 interval scale and separate qualification; they are outside this example.
 
 ## Source and related documentation
