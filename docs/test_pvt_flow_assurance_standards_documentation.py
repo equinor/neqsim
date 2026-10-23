@@ -63,6 +63,17 @@ E300_READER_TEST = (
     / "src/test/java/neqsim/thermo/util/readwrite/"
     "EclipseFluidReadWriteTest.java"
 )
+EROSION_GUIDE = DOCS / "pvtsimulation/flowassurance/erosion_prediction.md"
+EROSION_SOURCE = (
+    DOCS.parent
+    / "src/main/java/neqsim/pvtsimulation/flowassurance/"
+    "ErosionPredictionCalculator.java"
+)
+EROSION_TEST = (
+    DOCS.parent
+    / "src/test/java/neqsim/pvtsimulation/flowassurance/"
+    "ErosionPredictionCalculatorTest.java"
+)
 
 
 def metadata_value(metadata, name):
@@ -235,6 +246,63 @@ class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
             "testE300NameCaseVariantsMapToDatabaseComponents",
             "imported.getPhase(0).getComponent(i).getCpA()",
             "imported.getPhase(0).getComponent(i).getComponentName()",
+        )
+        for marker in regression_markers:
+            with self.subTest(regression_marker=marker):
+                self.assertIn(marker, java_test)
+
+    def test_erosion_prediction_guide_matches_source_and_regression(self):
+        guide = EROSION_GUIDE.read_text(encoding="utf-8")
+        source = EROSION_SOURCE.read_text(encoding="utf-8")
+        java_test = EROSION_TEST.read_text(encoding="utf-8")
+
+        for forbidden in (
+            "System.out",
+            "System.err",
+            "straight_pipe",
+            'applySandLoadDefaults("cased_perforated")',
+            "getDescription()",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, guide)
+
+        guide_markers = (
+            "LogManager.getLogger(ErosionScreeningExample.class)",
+            "logger.info(",
+            'calc.applySandLoadDefaults("ohgp_complete", 1200.0, 0.0, 850.0)',
+            'ErosionPredictionCalculator.getSandLoadDefaults("ohgp_complete")',
+            "defaults.getLiquidPpmWt()",
+            "defaults.getGasPpmWt()",
+            "defaults.getParticleSizeMicrons()",
+            "calc.calcMaxVelocityForCorrosionProtection(true, true)",
+            "./mvnw -Dtest=ErosionPredictionCalculatorTest test",
+            "screening implementation, not a standards-conformance certificate",
+        )
+        for marker in guide_markers:
+            with self.subTest(guide_marker=marker):
+                self.assertIn(marker, guide)
+
+        source_markers = (
+            'case "straight":',
+            "public static SandLoadDefaults getSandLoadDefaults(String completionType)",
+            "public void applySandLoadDefaults(String completionType",
+            "public double calcMaxVelocityForCorrosionProtection("
+            "boolean corrosionInhibited, boolean sandPresent)",
+            'return new String[] {"natural", "natural_failure", "sas", '
+            '"ohgp_incomplete", "ohgp_complete"}',
+            'inputs.put("sandRate_kgday", sandRate)',
+            'result.put("riskLevel", riskLevel)',
+        )
+        for marker in source_markers:
+            with self.subTest(source_marker=marker):
+                self.assertIn(marker, source)
+
+        regression_markers = (
+            "testApiRP14E_erosionalVelocity",
+            "testDNV_sandErosion_elbow",
+            "testGeometryFactors",
+            "testToJsonNotNull",
+            "testRemainingWallThickness",
         )
         for marker in regression_markers:
             with self.subTest(regression_marker=marker):
