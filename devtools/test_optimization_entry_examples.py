@@ -26,7 +26,7 @@ class OptimizationEntryExamplesTest(unittest.TestCase):
     def test_all_overview_python_blocks_and_headroom(self):
         document = Path(__file__).resolve().parents[1] / "docs/process/optimization/OPTIMIZATION_OVERVIEW.md"
         blocks = re.findall(r"```python\n(.*?)```", document.read_text(encoding="utf-8"), re.S)
-        self.assertEqual(2, len(blocks), "Execute every published Python block")
+        self.assertEqual(3, len(blocks), "Execute every published Python block")
         state = {"__name__": "__main__"}
         with contextlib.redirect_stdout(io.StringIO()):
             exec(compile(blocks[0], str(document) + ":python:0", "exec"), state)
@@ -50,6 +50,9 @@ class OptimizationEntryExamplesTest(unittest.TestCase):
         self.assertAlmostEqual(0.95 * maximum_flow, selected_flow, delta=1.5)
         self.assertAlmostEqual(selected_flow, feed.getFlowRate("kg/hr"), delta=1e-6)
         self.assertAlmostEqual(selected_flow, outlet.getFlowRate("kg/hr"), delta=1e-6)
+        with contextlib.redirect_stdout(io.StringIO()):
+            exec(compile(blocks[2], str(document) + ":python:2", "exec"), state)
+        self.assertTrue(callable(state["run"]))
 
 
 if __name__ == "__main__":
