@@ -1,9 +1,11 @@
 """Make a task living, promote a cycle to the baseline, and read the loop state."""
 
+import copy
 import json
 import os
 import shutil
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 from .ledger import CATEGORIES, Ledger
 from .plan import (GOAL_FILE, PLAN_FILE, continuous_dir, file_sha256, load_baseline, load_plan, read_json,
@@ -294,6 +296,16 @@ def promote(task_dir, cycle_id, reviewer, note=""):
     manifest = read_json(os.path.join(cycle_dir, "cycle.json"))
     if not manifest or manifest.get("status") != "complete":
         raise ValueError("Cycle {} is not complete".format(cycle_id))
+    lifecycle_evidence = _guarded_lifecycle_evidence(task_dir, cycle_id, manifest)
+    candidate = os.path.join(cycle_dir, "results.json")
+    promoted_results = None
+    if lifecycle_evidence is not None:
+        source = candidate if os.path.exists(candidate) else os.path.join(task_dir, "results.json")
+        promoted_results = read_json(source)
+        if not isinstance(promoted_results, dict):
+            raise ValueError("Cycle {} has no results object for guarded lifecycle evidence".format(cycle_id))
+        promoted_results = dict(promoted_results)
+        promoted_results["lifecycle_envelope_evidence"] = lifecycle_evidence
     base = os.path.join(cont, "baseline")
     old = load_baseline(task_dir)["meta"]
     old_kpis = load_baseline(task_dir)["kpis"] or {}
@@ -306,8 +318,10 @@ def promote(task_dir, cycle_id, reviewer, note=""):
     # A solve round reports only the objective; keep the baseline of every KPI it did not report.
     write_json(os.path.join(base, "kpis.json"),
                dict(old_kpis, **(read_json(os.path.join(cycle_dir, "kpis.json"), {}) or {})))
-    candidate = os.path.join(cycle_dir, "results.json")
-    if os.path.exists(candidate):
+    if promoted_results is not None:
+        write_json(os.path.join(task_dir, "results.json"), promoted_results)
+        write_json(os.path.join(base, "results_snapshot.json"), promoted_results)
+    elif os.path.exists(candidate):
         shutil.copy2(candidate, os.path.join(task_dir, "results.json"))
         shutil.copy2(candidate, os.path.join(base, "results_snapshot.json"))
     sense = read_json(os.path.join(cycle_dir, "sense.json"), {}) or {}
@@ -319,6 +333,52 @@ def promote(task_dir, cycle_id, reviewer, note=""):
     from .living_report import update
     update(task_dir, event="promote")
     return meta
+
+
+def _guarded_lifecycle_evidence(task_dir, cycle_id, manifest):
+    """Return one exact current schema-v8 block admitted by this cycle's guard and ledger."""
+    required = (load_plan(task_dir).get("production", {}) or {}).get(
+        "require_lifecycle_envelope_evidence") is True
+    stage_status = {row.get("name"): row.get("status") for row in manifest.get("stages", [])
+                    if isinstance(row, dict)}
+    ledger = Ledger(os.path.join(continuous_dir(task_dir), "ledger", "events.jsonl"))
+    items = [item for item in ledger.current().values()
+             if item.get("cycle") == cycle_id and "lifecycle_envelope_evidence" in item]
+    if not items:
+        if required:
+            raise ValueError("Cycle {} has no guarded lifecycle evidence to promote".format(cycle_id))
+        return None
+    if (stage_status.get("guard") not in ("ok", "warn")
+            or stage_status.get("ledger") not in ("ok", "warn")):
+        raise ValueError("Cycle {} lifecycle evidence did not pass guard and ledger publication".format(cycle_id))
+
+    from .production import _lifecycle_evidence_reasons
+
+    accepted = {}
+    invalid = []
+    for item in items:
+        evidence = item.get("lifecycle_envelope_evidence")
+        reasons = []
+        if (item.get("guard") != "passed" or item.get("requires_approval") is not True
+                or item.get("evidence_current") is not True
+                or item.get("status") in ("rejected", "superseded")):
+            reasons.append("ledger lifecycle evidence is not current and guard-approved")
+        if not isinstance(evidence, dict) or evidence.get("schema_version") != 8:
+            reasons.append("promoted lifecycle evidence must use schema version 8")
+        else:
+            reasons.extend(_lifecycle_evidence_reasons(
+                SimpleNamespace(cycle_id=cycle_id), item, required=True))
+        if reasons:
+            invalid.append("{}: {}".format(item.get("title", "untitled"), ", ".join(reasons)))
+            continue
+        frozen = json.dumps(evidence, sort_keys=True, separators=(",", ":"))
+        accepted.setdefault(frozen, copy.deepcopy(evidence))
+    if invalid:
+        raise ValueError("Cycle {} lifecycle evidence is not promotable ({})".format(
+            cycle_id, "; ".join(invalid)))
+    if len(accepted) != 1:
+        raise ValueError("Cycle {} has ambiguous guarded lifecycle evidence".format(cycle_id))
+    return next(iter(accepted.values()))
 
 
 

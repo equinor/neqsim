@@ -885,6 +885,11 @@ periods and aggregate/transition closure from persisted JSON, then invalidates a
 when mapped reservoir state, availability, routing, operating limits, or other evidence changes. This reuses the
 existing #4187 ledger and revalidation path rather than introducing another lifecycle state store.
 
+Promotion automatically copies one exact schema-v8 block from the reviewed cycle's current guard-approved ledger
+proposal into both the current-best `results.json` and its immutable baseline snapshot. It independently replays the
+production validation and refuses stale, superseded, rejected, modified, unguarded, or ambiguous evidence before
+changing the baseline. When lifecycle evidence is required, a cycle without that receipt cannot be promoted.
+
 The canonical task report consumes accepted top-level schema-v8 `lifecycle_envelope_evidence` in both ordinary
 current-best and immutable final-report generation. It renders the exact per-period `REJECTING` and `NEAR_ACTIVE`
 rows, representative values, signed physical headroom with engineering units, and adjacent-period identity

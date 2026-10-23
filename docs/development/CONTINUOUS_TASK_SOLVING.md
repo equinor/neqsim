@@ -1184,8 +1184,12 @@ and the ordered events added or removed between periods. The guard reconstructs 
 persisted period envelopes and rejects any mismatch. It never interpolates changed grids, matches a discrete
 line-up event to an intermediate state, or treats sampled counts as a continuous boundary.
 
-When accepted schema-v8 evidence is also stored at the top level of the promoted `results.json`, the canonical
-current-best and final engineering-report pipeline adds a **Lifecycle Operating Envelope** section. The renderer
+When a reviewed cycle is promoted, `task-promote` selects schema-v8 evidence only from that cycle's current,
+guard-approved ledger proposal and writes the exact block at the top level of the promoted `results.json` and
+baseline snapshot. Promotion replays the production validation and fails closed if the evidence is stale,
+superseded, rejected, edited, not guard-published, or ambiguous between distinct accepted proposals. This handoff
+uses the existing append-only ledger and promotion boundary; it does not introduce a report-only state store. The
+canonical current-best and final engineering-report pipeline adds a **Lifecycle Operating Envelope** section. The renderer
 checks the promoted source-cycle identity, complete ordered periods, finite aggregate values, complete envelope
 slices, exact representative constraint identity, and independently reconstructed retained/removed/added
 constraint identities before showing any claim. Malformed, partial, stale, or edited evidence is replaced by a
