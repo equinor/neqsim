@@ -48,12 +48,11 @@ public class DataSmootherTest {
     Path guidePath = repositoryRoot.resolve("docs/statistics/data_analysis.md");
     String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
     String source = new String(
-        Files.readAllBytes(repositoryRoot.resolve(
-            "src/main/java/neqsim/statistics/dataanalysis/datasmoothing/DataSmoother.java")),
+        Files.readAllBytes(
+            repositoryRoot.resolve("src/main/java/neqsim/statistics/dataanalysis/datasmoothing/DataSmoother.java")),
         StandardCharsets.UTF_8);
 
-    assertTrue(source.contains(
-        "public DataSmoother(double[] nonSmoothedNumbers, int nl, int nr, int ld, int m)"));
+    assertTrue(source.contains("public DataSmoother(double[] nonSmoothedNumbers, int nl, int nr, int ld, int m)"));
     for (String stale : Arrays.asList("System.out", "System.err", ".setInputNumbers(", "new Matrix(",
         "SampleCreator creator", "WettedWallColumnData data", "optimizer.solve()")) {
       assertFalse(guide.contains(stale), "Stale data-analysis guide token: " + stale);
@@ -102,8 +101,7 @@ public class DataSmootherTest {
     try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
           .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
-      assertTrue(Boolean.TRUE.equals(successful),
-          "docs/statistics/data_analysis.md: " + diagnostics.getDiagnostics());
+      assertTrue(Boolean.TRUE.equals(successful), "docs/statistics/data_analysis.md: " + diagnostics.getDiagnostics());
     }
   }
 }
