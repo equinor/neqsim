@@ -9,6 +9,31 @@
 
 ---
 
+## 2026-10-24 — `SlugUnitModel` calibrated to a 32-case OLGA 2025.1 sweep (horizontal slug flow)
+
+- **High-Froude slip reduction (default on):** the unit holdup is `hs + (vB/vt)(1-hs) - vsG/vt`, so unit slip is fixed by
+  the translational velocity `vt` and bubble velocity `vB`, not by the film balance. Bendiksen's `1.2 vm` overstated
+  slip above Froude 3: OLGA's unit gas velocity falls from 1.25 vm at Froude 2 to about `1.12 - 0.25 vsL/vm` times vm
+  above Froude 4.5. Both velocities are scaled towards no-slip (smoothstep over Froude 2.5 to 4.5, weighted by
+  cos(theta)^2, so vertical units keep Nicklin). Horizontal gas-oil and gas-oil-water holdup error vs OLGA fell from
+  +20..+40 % to within 10 %; the film comes out at 0.11-0.19 and the slug fraction larger, as in OLGA.
+  `TwoFluidPipe.setSlugHighFroudeSlipReductionEnabled(false)` restores the plain coefficients.
+- **Front-mixing weight:** the Dukler-Hubbard pickup term is now counted with an automatic weight, 0.6 falling to 0.2
+  between Froude 4.5 and 7, ramped in between Froude 2.3 and 3.0 and zero beyond about 2 degrees of slope.
+  `setSlugFrontMixingLossIncluded(boolean)` still forces 0/1 and `setSlugFrontMixingLossWeight(double)` sets a share.
+  Horizontal 25 kg/s gas-oil pressure drop moved from 29 % to 14 % below OLGA, an undulating one from +5 % to +2 %.
+- **Tried and not shipped (do not repeat without a terrain check):** a 1.5 m/s floor on the Andritsos-Hanratty wave-onset
+  velocity, or a lower enhancement bound, fixes low-rate flat gas-condensate/wet-gas holdup (-22 % to -4 %, dP +17 % to
+  +3 %) but raises the undulating lean wet-gas pressure drop vs OLGA at 35 and 50 m amplitude from -2 % and +33 % to
+  +43 % and +62 %, and the TwoFluidPipeSteadyStateConvergenceTest terrain fixture from +3 % to +83 % at 50 m. The thin
+  film that climbs gentle slopes needs the current enhancement. A film-friction scan and rough-wall stratified friction
+  were also neutral or counter-productive.
+- Remaining differences (not changed): horizontal annular gas condensate/wet gas is +8..+15 % on pressure drop and
+  +50 % on holdup at 140 kg/s, and risers are +11..+18 % (+90 % at low rate) because
+  OLGA's riser holdup is nearly no-slip (unit gas velocity 1.01-1.06 vm). `setUseInclinedFilmBridgingCriterion(true)`
+  cut the mean riser pressure-drop error from 31 % to 20 % on the five riser cases.
+- Tests: `SlugUnitModelTest`, `TwoFluidPipeOlgaGasOilSlugTest`.
+
 ## 2026-10-23 — Two-fluid dynamic stability review
 
 - Corrected the legacy IMEX pressure-response sign: compression produces a restoring pressure force rather than
