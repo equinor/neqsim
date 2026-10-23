@@ -46,8 +46,8 @@ class TPflashSourGasConsistencyTest {
 
     assertEquals(2, ordinary.getNumberOfPhases());
     assertEquivalent(multiphase, ordinary, 1.0e-10, "cold boundary flash");
-    assertEquals(5204.65719950532, ordinary.getGibbsEnergy(), 1.0e-6);
-    assertEquals(0.330402477242444, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+    assertEquals(5204.65719954021, ordinary.getGibbsEnergy(), 1.0e-6);
+    assertEquals(0.3304026330533084, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
 
     SystemInterface repeatedReference = ordinary.clone();
     new ThermodynamicOperations(ordinary).TPflash();
@@ -62,8 +62,8 @@ class TPflashSourGasConsistencyTest {
 
     assertEquals(2, ordinary.getNumberOfPhases());
     assertEquivalent(multiphase, ordinary, 1.0e-10, "liquid-liquid root boundary");
-    assertEquals(3877.865927361861, ordinary.getGibbsEnergy(), 1.0e-6);
-    assertEquals(0.572813112145268, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
+    assertEquals(3877.86592721083, ordinary.getGibbsEnergy(), 1.0e-6);
+    assertEquals(0.5728114917363223, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
 
     double[][] nearbyConditions = {{220.0, 95.81}, {225.0, 100.80}, {230.0, 95.81}};
     for (double[] condition : nearbyConditions) {

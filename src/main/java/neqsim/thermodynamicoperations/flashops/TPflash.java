@@ -114,6 +114,8 @@ public class TPflash extends Flash {
   private static final double AQUEOUS_SEED_COMPOSITION_NORMALIZATION_TOLERANCE = 1.0e-8;
   /** Maximum accepted log-fugacity residual when selecting an alternate cubic root. */
   private static final double PHASE_ROOT_EQUILIBRIUM_TOLERANCE = 1.0e-8;
+  /** Target log-fugacity residual for polishing a qualified neutral two-phase endpoint. */
+  private static final double NEUTRAL_TWO_PHASE_POLISH_FUGACITY_TOLERANCE = 1.0e-12;
   /** Maximum absolute Z or composition change for recognizing an unchanged stable one-phase state. */
   private static final double UNCHANGED_SINGLE_PHASE_STATE_TOLERANCE = 1.0e-11;
   /** Maximum final SSI updates retained for legacy neutral endpoint repair. */
@@ -1271,7 +1273,7 @@ public class TPflash extends Flash {
             stableSinglePhaseComposition);
         rescueSinglePhaseMultiphaseEndpoint();
         normalizeQualifiedNeutralSinglePhaseEndpoint();
-        polishNearCriticalNeutralTwoPhaseEndpoint();
+        polishQualifiedNeutralTwoPhaseEndpoint();
         rescueWaterRichMissingAqueousPhase();
         return;
       }
@@ -1508,7 +1510,7 @@ public class TPflash extends Flash {
     restoreBalancedAqueousReferenceAfterInvalidPhaseRemoval(balancedWaterRichInput);
     restoreLowerGibbsReferenceAfterSinglePhaseCollapse(balancedWaterRichInput);
     normalizeQualifiedNeutralSinglePhaseEndpoint();
-    polishNearCriticalNeutralTwoPhaseEndpoint();
+    polishQualifiedNeutralTwoPhaseEndpoint();
     refineIonicGasAqueousEndpoint();
     rescueWaterRichMissingAqueousPhase();
 
@@ -3139,38 +3141,47 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Applies the tight final beta polish after all ordinary endpoint post-processing.
+   * Applies the tight final beta polish after endpoint post-processing.
    *
    * <p>
    * Phase cleanup performed after an accepted reciprocal flash can reopen a small near-critical fugacity residual. This
-   * last bounded update is restricted to the qualified rich-gas family and restores the complete pre-polish state
-   * unless material balance, the selected active set, Gibbs energy, and a {@code 1e-10} log-fugacity target all pass.
+   * last bounded update is restricted to the qualified rich-gas and sour-gas families and restores the complete
+   * pre-polish state unless material balance, the selected active set, Gibbs energy, and the family-specific
+   * log-fugacity target all pass. Sour-gas endpoints use the campaign's tighter deterministic polishing target after
+   * phase-slot lifecycle operations so ordinary and multiphase paths no longer retain seed-dependent fractions.
    * </p>
    */
-  private void polishNearCriticalNeutralTwoPhaseEndpoint() {
-    if (system.doMultiPhaseCheck() || !isNearCriticalRichGasRefinementCase() || system.getNumberOfPhases() != 2) {
+  private void polishQualifiedNeutralTwoPhaseEndpoint() {
+    boolean sourGasCase = isSourGasConsistencyRefinementCase();
+    boolean nearCriticalRichGasCase = isNearCriticalRichGasRefinementCase();
+    if ((!sourGasCase && (system.doMultiPhaseCheck() || !nearCriticalRichGasCase)) || system.getNumberOfPhases() != 2) {
       return;
     }
     system.init(1);
+    double polishTolerance = sourGasCase ? NEUTRAL_TWO_PHASE_POLISH_FUGACITY_TOLERANCE
+        : NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE;
+    int maximumRefinements = sourGasCase ? MAX_FINAL_BETA_REFINEMENT_ITERATIONS
+        : MAX_NEAR_CRITICAL_BETA_REFINEMENT_ITERATIONS;
     double initialResidual = maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1));
-    if (!Double.isFinite(initialResidual) || initialResidual < NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE
-        || initialResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE) {
+    if (!Double.isFinite(initialResidual) || initialResidual < polishTolerance
+        || initialResidual >= PHASE_ROOT_EQUILIBRIUM_TOLERANCE
+        || maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE) {
       return;
     }
     BalancedTwoPhaseState referenceState = new BalancedTwoPhaseState(system);
     try {
       TPmultiflash endpointSolver = new TPmultiflash(system, false);
       endpointSolver.setDoubleArrays();
-      for (int refinement = 0; refinement < MAX_NEAR_CRITICAL_BETA_REFINEMENT_ITERATIONS
-          && maximumLogFugacityResidual(system.getPhase(0),
-              system.getPhase(1)) >= NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE; refinement++) {
+      for (int refinement = 0; refinement < maximumRefinements
+          && maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= polishTolerance; refinement++) {
         endpointSolver.solveBeta();
       }
       system.orderByDensity();
       system.init(1);
       double gibbsTolerance = Math.max(1.0e-6, Math.abs(referenceState.gibbsEnergy) * 1.0e-8);
       if (!isBalancedEquilibriumCandidate(system)
-          || maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= NEAR_CRITICAL_EQUILIBRIUM_TOLERANCE
+          || maximumLogFugacityResidual(system.getPhase(0), system.getPhase(1)) >= polishTolerance
+          || maximumComponentMaterialBalanceResidual(system) > NEUTRAL_TWO_PHASE_AMOUNT_BALANCE_TOLERANCE
           || !preservesTwoPhaseActiveSet(system, referenceState.phaseTypes)
           || system.getGibbsEnergy() > referenceState.gibbsEnergy + gibbsTolerance) {
         restoreTwoPhaseIterationState(referenceState);
