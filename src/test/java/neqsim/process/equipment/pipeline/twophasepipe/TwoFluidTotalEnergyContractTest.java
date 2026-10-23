@@ -48,9 +48,9 @@ class TwoFluidTotalEnergyContractTest {
     TwoFluidConservationEquations equations = new TwoFluidConservationEquations();
     equations.setAllowOutletPhaseBackflow(true);
     for (String name : new String[] {"calcInletFlux", "calcOutletFlux"}) {
-      Method method = TwoFluidConservationEquations.class.getDeclaredMethod(name, TwoFluidSection.class);
+      Method method = TwoFluidConservationEquations.class.getDeclaredMethod(name, TwoFluidSection.class, double.class);
       method.setAccessible(true);
-      assertEquals(expected, ((double[]) method.invoke(equations, cell))[6], 1e-7);
+      assertEquals(expected, ((double[]) method.invoke(equations, cell, cell.getPressure()))[6], 1e-7);
     }
     Method internal = TwoFluidConservationEquations.class.getDeclaredMethod("calcInterfaceFluxes",
         TwoFluidSection[].class, double.class);

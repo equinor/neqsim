@@ -170,7 +170,7 @@ public class TwoFluidConservationEquations implements Serializable {
    * <p>
    * The value contributes only to the outlet momentum traction. Phase mass and energy remain the signed or one-way
    * advective fluxes selected by the existing outlet policy. Pass {@link Double#NaN} to restore the cell-based
-   * zero-gradient pressure.
+   * boundary, whose face pressure is the second-order extrapolation from the two outlet cells.
    * </p>
    *
    * @param pressure positive finite outlet-face pressure in Pa, or NaN for the cell-based pressure
@@ -236,6 +236,66 @@ public class TwoFluidConservationEquations implements Serializable {
     TwoFluidSection face = inletBoundaryState.clone();
     face.setPressure(inletCell.getPressure());
     return face;
+  }
+
+  /**
+   * Pressure at the external inlet face used for traction and the matching holdup-gradient source.
+   *
+   * <p>
+   * A legacy inlet state with its own pressure keeps that pressure, and a phase-flow inlet keeps its documented
+   * trial-cell pressure. The cell-based inlet uses the second-order extrapolation from the two inlet cells: the
+   * inlet-cell centre pressure would give the inlet cell only half of its pressure force while it carries the full
+   * gravity and friction of the cell. On an undulating liquid line that deficit (0.4 bar on a 100 m cell at 6 degrees)
+   * seeded an odd-even velocity mode in the first transient step.
+   * </p>
+   *
+   * @param sections current stage state
+   * @return inlet-face pressure in Pa
+   */
+  private double inletFacePressure(TwoFluidSection[] sections) {
+    if (inletBoundaryState != null) {
+      return inletPhaseFlowPrescribed ? sections[0].getPressure() : inletBoundaryState.getPressure();
+    }
+    return extrapolatedFacePressure(sections[0], sections.length > 1 ? sections[1] : null);
+  }
+
+  /**
+   * Pressure at the external outlet face used for traction and the matching holdup-gradient source.
+   *
+   * @param sections current stage state
+   * @param boundary outlet boundary section (reconstructed when slugs are tracked)
+   * @return outlet-face pressure in Pa
+   */
+  private double outletFacePressure(TwoFluidSection[] sections, TwoFluidSection boundary) {
+    if (outletClosed) {
+      return boundary.getPressure();
+    }
+    if (!Double.isNaN(outletBoundaryPressure)) {
+      return outletBoundaryPressure;
+    }
+    int n = sections.length;
+    return extrapolatedFacePressure(boundary, n > 1 ? sections[n - 2] : null);
+  }
+
+  /**
+   * Second-order extrapolation of the cell-centre pressure to the external face of an end cell.
+   *
+   * @param end the boundary cell
+   * @param neighbour its interior neighbour, or null when the mesh has one cell
+   * @return face pressure in Pa, never below one tenth of the cell pressure
+   */
+  private static double extrapolatedFacePressure(TwoFluidSection end, TwoFluidSection neighbour) {
+    double pEnd = end.getPressure();
+    if (neighbour == null) {
+      return pEnd;
+    }
+    double distance = 0.5 * (end.getLength() + neighbour.getLength());
+    if (!(distance > 0.0) || !Double.isFinite(pEnd) || !Double.isFinite(neighbour.getPressure())) {
+      return pEnd;
+    }
+    double gradientTowardsNeighbour = (neighbour.getPressure() - pEnd) / distance;
+    double face = pEnd - 0.5 * end.getLength() * gradientTowardsNeighbour;
+    return Double.isFinite(face) ? Math.max(0.1 * pEnd, face) : pEnd;
   }
 
   /**
@@ -771,8 +831,9 @@ public class TwoFluidConservationEquations implements Serializable {
 
     // Calculate the two external boundary fluxes once. These exact values are also
     // retained for a stage-consistent domain mass-balance diagnostic.
-    double[] inletFlux = calcInletFlux(sections[0]);
-    double[] outletFlux = calcOutletFlux(reconstructedOutlet == null ? sections[nCells - 1] : reconstructedOutlet);
+    double[] inletFlux = calcInletFlux(sections[0], inletFacePressure(sections));
+    TwoFluidSection outletBoundary = reconstructedOutlet == null ? sections[nCells - 1] : reconstructedOutlet;
+    double[] outletFlux = calcOutletFlux(outletBoundary, outletFacePressure(sections, outletBoundary));
     lastPhaseMassFaceFluxes = populatePhaseMassFaceFluxes(lastPhaseMassFaceFluxes, nCells, fluxes, inletFlux,
         outletFlux);
 
@@ -1087,9 +1148,9 @@ public class TwoFluidConservationEquations implements Serializable {
     }
 
     double[][] interfaceFluxes = calcInterfaceFluxes(sections, dx);
-    double[] inletFlux = calcInletFlux(sections[0]);
-    double[] outletFlux = calcOutletFlux(
-        reconstructedOutlet == null ? sections[sections.length - 1] : reconstructedOutlet);
+    double[] inletFlux = calcInletFlux(sections[0], inletFacePressure(sections));
+    TwoFluidSection outletBoundary = reconstructedOutlet == null ? sections[sections.length - 1] : reconstructedOutlet;
+    double[] outletFlux = calcOutletFlux(outletBoundary, outletFacePressure(sections, outletBoundary));
     return populatePhaseMassFaceFluxes(null, sections.length, interfaceFluxes, inletFlux, outletFlux);
   }
 
@@ -1131,9 +1192,10 @@ public class TwoFluidConservationEquations implements Serializable {
    * cell depletion.
    *
    * @param sec the inlet pipe section
+   * @param facePressure pressure at the external inlet face in Pa, see {@link #inletFacePressure}
    * @return array of flux values for each conserved variable
    */
-  private double[] calcInletFlux(TwoFluidSection sec) {
+  private double[] calcInletFlux(TwoFluidSection sec, double facePressure) {
     sec = inletFaceState(sec);
     if (inletClosed) {
       return closedFaceFlux(sec);
@@ -1150,7 +1212,7 @@ public class TwoFluidConservationEquations implements Serializable {
     double alphaG = sec.getGasHoldup();
     alphaG = Math.max(0.0, Math.min(1.0, alphaG));
     flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
-    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
+    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * facePressure * A;
 
     // Oil flux - use holdup directly for inlet BC stability
     double rhoO = sec.getOilDensity();
@@ -1162,7 +1224,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // smaller than the rounding error in gas holdup.
     alphaO = Math.max(0, Math.min(1.0, alphaO));
     flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
-    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
+    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * facePressure * A;
 
     // Water flux - use holdup directly for inlet BC stability
     double rhoW = sec.getWaterDensity();
@@ -1173,7 +1235,7 @@ public class TwoFluidConservationEquations implements Serializable {
     // Do not subtract other phase holdups to recover this phase's availability.
     alphaW = Math.max(0, Math.min(1.0, alphaW));
     flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
-    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
+    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * facePressure * A;
 
     // Energy flux
     if (includeEnergyEquation) {
@@ -1205,15 +1267,15 @@ public class TwoFluidConservationEquations implements Serializable {
    * </p>
    *
    * @param sec the outlet pipe section
+   * @param facePressure pressure at the external outlet face in Pa, see {@link #outletFacePressure}
    * @return array of flux values for each conserved variable
    */
-  private double[] calcOutletFlux(TwoFluidSection sec) {
+  private double[] calcOutletFlux(TwoFluidSection sec, double facePressure) {
     if (outletClosed) {
       return closedFaceFlux(sec);
     }
     double[] flux = new double[NUM_EQUATIONS];
     double A = sec.getArea();
-    double facePressure = Double.isNaN(outletBoundaryPressure) ? sec.getPressure() : outletBoundaryPressure;
 
     if (!allowOutletPhaseBackflow
         && (sec.getGasVelocity() < 0.0 || sec.getOilVelocity() < 0.0 || sec.getWaterVelocity() < 0.0)) {
@@ -2136,6 +2198,7 @@ public class TwoFluidConservationEquations implements Serializable {
     }
 
     TwoFluidSection inletFace = inletFaceState(sections[0]);
+    double inletPressure = inletFacePressure(sections);
     for (int i = 0; i < nCells; i++) {
       TwoFluidSection sec = sections[i];
       double area = sec.getArea();
@@ -2149,19 +2212,18 @@ public class TwoFluidConservationEquations implements Serializable {
       double[] inletHoldups = {inletFace.getGasHoldup(), inletFace.getOilHoldup(), inletFace.getWaterHoldup()};
       TwoFluidSection boundary = reconstructedOutlet == null ? sec : reconstructedOutlet;
       double[] outletHoldups = {boundary.getGasHoldup(), boundary.getOilHoldup(), boundary.getWaterHoldup()};
-      double outletPressure = outletClosed || Double.isNaN(outletBoundaryPressure) ? boundary.getPressure()
-          : outletBoundaryPressure;
+      double outletPressure = i == nCells - 1 ? outletFacePressure(sections, boundary) : boundary.getPressure();
       double rightArea = i < nCells - 1 ? 0.5 * (area + sections[i + 1].getArea()) : boundary.getArea();
       double leftArea = i > 0 ? 0.5 * (sections[i - 1].getArea() + area) : inletFace.getArea();
       double pRight = i < nCells - 1 ? interfacePressure[i] : outletPressure;
-      double pLeft = i > 0 ? interfacePressure[i - 1] : inletFace.getPressure();
+      double pLeft = i > 0 ? interfacePressure[i - 1] : inletPressure;
       double dp = pRight - pLeft;
       double deltaPi = enableInterfacialPressure ? calcInterfacialPressureDifference(sec) : 0.0;
       for (int phase = 0; phase < 3; phase++) {
         double alphaRight = i < nCells - 1 ? interfacePhaseHoldup[i][phase] : outletHoldups[phase];
         double alphaLeft = i > 0 ? interfacePhaseHoldup[i - 1][phase] : inletHoldups[phase];
         double phasePRight = i < nCells - 1 ? interfacePhasePressure[i][phase] : outletPressure;
-        double phasePLeft = i > 0 ? interfacePhasePressure[i - 1][phase] : inletFace.getPressure();
+        double phasePLeft = i > 0 ? interfacePhasePressure[i - 1][phase] : inletPressure;
         // The wall-area source cancels the pressure force from the variation of face area. Its explicit differences
         // are exactly zero on a uniform-area mesh, preserving the established transport operator there.
         double pressureSource = (rightArea - area) * alphaRight * phasePRight

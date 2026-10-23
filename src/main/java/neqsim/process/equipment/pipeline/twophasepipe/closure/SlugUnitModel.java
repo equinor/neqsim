@@ -16,10 +16,16 @@ import java.io.Serializable;
  * <p>
  * The pressure gradient charges mixture wall friction to the slug body only and per-phase wall friction to the film
  * zone, plus gravity. In the frame moving with the slug front the unit is periodic, so the momentum flux entering a
- * unit equals the flux leaving it and the unit-averaged gradient is exactly wall friction plus gravity: the pressure
- * spent accelerating film liquid at the front is recovered at the tail. That front term is reported separately for
- * diagnosis only. When slugs cannot be sustained (slug fraction at or below zero) the result is flagged
- * {@link Result#stratified}; when the film vanishes the unit degenerates to the slug body.
+ * unit equals the flux leaving it and the unit-averaged gradient is wall friction plus gravity (Taitel and Barnea
+ * 1990). Dukler and Hubbard (1975) add the acceleration of the film liquid picked up at the slug front; that term is
+ * reported in {@link Result#accelerationGradient} and can be counted in {@link Result#frictionGradient} with
+ * {@link #setFrontMixingLossIncluded(boolean)}, which is off by default. Benchmarking against OLGA 2025.1 on a 10 in
+ * gas-oil line showed why: on a horizontal section the wall-shear unit gives 61 Pa/m against 86 in OLGA and the front
+ * term (14 Pa/m) closes part of the gap, but on 4 degree up-slopes wall shear plus gravity (229 Pa/m) already matches
+ * OLGA (233 Pa/m) and the front term there (135 Pa/m) is pure excess. The remaining horizontal deficit is consistent
+ * with OLGA carrying a thinner film and a larger slug fraction (about 0.185 and 0.11 against 0.235 and 0.05 here) than
+ * the constant-interfacial-friction film balance gives. When slugs cannot be sustained (slug fraction at or below zero)
+ * the result is flagged {@link Result#stratified}; when the film vanishes the unit degenerates to the slug body.
  * </p>
  *
  * <p>
@@ -43,6 +49,24 @@ public final class SlugUnitModel implements Serializable {
   private static final double FILM_INTERFACIAL_DARCY_FRICTION = 4.0 * 0.014;
   private static final double STRATIFIED_GEOMETRY_LIMIT = Math.toRadians(45.0);
   private static final double ANNULAR_GEOMETRY_LIMIT = Math.toRadians(75.0);
+
+  /** Count the front-mixing (acceleration) loss in the reported unit friction gradient; default false. */
+  private boolean frontMixingLossIncluded = false;
+
+  /**
+   * Choose whether the slug-front mixing loss is counted in {@link Result#frictionGradient}.
+   *
+   * @param included true to add the Dukler-Hubbard front acceleration term; false (default) for the Taitel-Barnea
+   * wall-shear-only unit gradient, which matched OLGA on inclined sections
+   */
+  public void setFrontMixingLossIncluded(boolean included) {
+    frontMixingLossIncluded = included;
+  }
+
+  /** @return true when the front-mixing loss is counted in the unit friction gradient */
+  public boolean isFrontMixingLossIncluded() {
+    return frontMixingLossIncluded;
+  }
 
   /** Slug-unit state for one set of superficial velocities. */
   public static final class Result implements Serializable {
@@ -69,9 +93,11 @@ public final class SlugUnitModel implements Serializable {
     public double filmGasVelocity;
     /** Slug length, m. */
     public double slugLength;
-    /** Unit-averaged wall friction gradient, Pa/m. */
+    /** Unit-averaged pressure-loss gradient from friction, including the front-mixing loss when enabled, Pa/m. */
     public double frictionGradient;
-    /** Pressure drop of the front mixing zone per unit length, Pa/m; recovered at the tail, diagnostic only. */
+    /** Unit-averaged wall-shear gradient only (slug body and film zone), Pa/m. */
+    public double wallFrictionGradient;
+    /** Pressure drop of the front mixing zone per unit length, Pa/m (Dukler-Hubbard acceleration term). */
     public double accelerationGradient;
     /** Unit-averaged hydrostatic gradient, Pa/m. */
     public double gravityGradient;
@@ -220,13 +246,17 @@ public final class SlugUnitModel implements Serializable {
           roughness / diameter);
       filmWallForce += fG * rhoG * filmGasVelocity * Math.abs(filmGasVelocity) / 8.0 * film.gasPerimeter;
     }
-    result.frictionGradient = slugFraction * slugWallGradient + (1.0 - slugFraction) * filmWallForce / area;
+    result.wallFrictionGradient = slugFraction * slugWallGradient + (1.0 - slugFraction) * filmWallForce / area;
 
     double unitLength = result.slugLength / slugFraction;
     result.accelerationGradient = slugFraction < 1.0
         ? rhoL * filmHoldup * (translational - filmLiquidVelocity) * (slugLiquidVelocity - filmLiquidVelocity)
             / unitLength
         : 0.0;
+    result.frictionGradient = result.wallFrictionGradient
+        + (frontMixingLossIncluded && Double.isFinite(result.accelerationGradient)
+            ? Math.max(0.0, result.accelerationGradient)
+            : 0.0);
     double filmDensity = filmHoldup * rhoL + (1.0 - filmHoldup) * rhoG;
     result.gravityGradient = (slugFraction * slugDensity + (1.0 - slugFraction) * filmDensity) * GRAVITY * sinTheta;
     result.valid = true;

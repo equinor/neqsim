@@ -9,6 +9,23 @@
 
 ---
 
+## 2026-10-22 — `TwoFluidPipe` transient: boundary-face pressure traction, outlet-face placement, physical wall film split
+
+- **Behaviour changes (transient only; steady results unchanged):**
+  - External inlet and outlet momentum fluxes now carry the *face* pressure (second-order extrapolation from the two end
+    cells, or the prescribed outlet pressure) instead of the end-cell centre pressure. The end cells previously received
+    half of their pressure force against full gravity and friction, which on an undulating liquid-full line seeded an
+    odd-even mass-flow pattern (23/55 kg/s around a 40 kg/s feed) and a 0.43 bar inlet offset. A converged steady state
+    is now a fixed point of `runTransient` on terrain (`TwoFluidPipeTerrainTransientNullTest`).
+  - With `setCellFaceElevationProfile`, a constant-pressure outlet is placed on the outlet face in the transient as in the
+    steady solve (`transientOutletCellPressure()`); the last cell pressure is `outletPressure + 0.5 L grad`.
+  - Simple transient thermal model: the overall U is split into a flow-dependent fluid film (`calculateInnerHTC`) and a
+    wall-to-ambient path carrying the remaining resistance (`wallFilmSplit`). Outlet-temperature transients after a rate
+    change now follow the wall time constant as OLGA does (20 km gas line: 15.7 against OLGA 15.5 degC at 3 h; before
+    12.5). `setPhysicalWallFilmSplit(false)` restores the legacy equal split.
+- New API: `TwoFluidPipe.setPhysicalWallFilmSplit/isPhysicalWallFilmSplit`, `setSlugFrontMixingLossIncluded/is...`;
+  `SlugUnitModel.setFrontMixingLossIncluded` (default false), `Result.wallFrictionGradient`. The private
+  `TwoFluidConservationEquations.calcInletFlux/calcOutletFlux` take the face pressure as a second argument.
 ## 2026-10-22 — VFP lift curve builder, deviated tubing survey and phase-type aware Gray/Beggs-Brill in `TubingPerformance`
 
 - New `neqsim.process.fielddevelopment.reservoir`: `VfpTableBuilder` (VFPPROD/VFPINJ with axes, rate cap, sanity enforcement,
