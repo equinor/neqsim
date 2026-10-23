@@ -2638,8 +2638,6 @@ public class TwoFluidPipe extends Pipeline {
       double hFilm = split[0];
       double hOuter = split[1];
 
-      double fluidToWallHeat = hFilm * pipePerimeter * (oldFluidTemperature - wallTemperature);
-      double wallToAmbientHeat = hOuter * outerPerimeter * (wallTemperature - ambientTemperature);
       double sensibleAdvection = calcSensibleAdvectionSource(i, phaseMassFaceFluxes, previousFluidTemperatures, Cp);
       double jouleThomsonSource = calcLocalJouleThomsonSource(i, phaseMassFaceFluxes, Cp, muJT)
           + calcGravityWorkSource(i, phaseMassFaceFluxes);
@@ -2647,15 +2645,15 @@ public class TwoFluidPipe extends Pipeline {
       double dehSource = directElectricalHeatingPowerPerMeter;
 
       double wallThermalMass = wallMassPerLength * wallHeatCapacity;
-      if (wallThermalMass > 0.0) {
-        wallTemperature += (fluidToWallHeat - wallToAmbientHeat) / wallThermalMass * dt;
-      }
-      wallTemperatureProfile[i] = wallTemperature;
-
       double fluidMassPerLength = getLocalFluidMassPerLength(sec, fallbackFluidMassPerLength);
-      double newFluidTemperature = oldFluidTemperature
-          + (sensibleAdvection - fluidToWallHeat + jouleThomsonSource + latentHeatSource + dehSource)
-              / (fluidMassPerLength * Cp) * dt;
+      double[] temperatures = advanceSimpleWallThermalState(oldFluidTemperature, oldWallTemperature, ambientTemperature,
+          fluidMassPerLength * Cp, wallThermalMass, hFilm * pipePerimeter, hOuter * outerPerimeter,
+          sensibleAdvection + jouleThomsonSource + latentHeatSource + dehSource, dt);
+      double newFluidTemperature = temperatures[0];
+      wallTemperature = temperatures[1];
+      wallTemperatureProfile[i] = wallTemperature;
+      // Use the same implicit endpoint heat flux in both the state update and the energy ledger.
+      double wallToAmbientHeat = hOuter * outerPerimeter * (wallTemperature - ambientTemperature);
       newFluidTemperature = Math.max(newFluidTemperature, 100.0);
       sec.setTemperature(newFluidTemperature);
       updateThermalRiskFlags(i, newFluidTemperature);
@@ -2671,6 +2669,43 @@ public class TwoFluidPipe extends Pipeline {
       energyStep.directElectricalHeatingEnergyJ += dehSource * dt * cellLength;
     }
     return energyStep;
+  }
+
+  /**
+   * Advance local fluid-wall exchange with a conservative backward-Euler two-temperature solve.
+   *
+   * <p>
+   * Advection and non-wall sources are supplied explicitly. Eliminating the fluid temperature leaves a positive scalar
+   * wall equation, avoiding cancellation of the large film terms in a two-by-two determinant. Nonnegative conductances
+   * and capacities keep an unforced step within the initial/ambient temperature bounds even when the physical film
+   * relaxation is much faster than the hydrodynamic step. Zero wall capacity gives the instantaneous series-resistance
+   * limit. Temporal accuracy of the explicit sources still requires timestep refinement.
+   * </p>
+   *
+   * @param fluidTemperature initial fluid temperature in K
+   * @param wallTemperature initial wall temperature in K
+   * @param ambientTemperature ambient temperature in K
+   * @param fluidCapacity fluid heat capacity per unit length in J/(m K), positive
+   * @param wallCapacity wall heat capacity per unit length in J/(m K), nonnegative
+   * @param filmConductance fluid-to-wall conductance per unit length in W/(m K)
+   * @param outerConductance wall-to-ambient conductance per unit length in W/(m K)
+   * @param fluidSource explicit non-wall heat source per unit length in W/m
+   * @param dt step duration in s
+   * @return updated fluid and wall temperatures in K
+   */
+  static double[] advanceSimpleWallThermalState(double fluidTemperature, double wallTemperature,
+      double ambientTemperature, double fluidCapacity, double wallCapacity, double filmConductance,
+      double outerConductance, double fluidSource, double dt) {
+    double filmRatio = dt * filmConductance / fluidCapacity;
+    double forcedFluidTemperature = fluidTemperature + dt * fluidSource / fluidCapacity;
+    double effectiveFilm = filmConductance / (1.0 + filmRatio);
+    double wallDenominator = wallCapacity + dt * (outerConductance + effectiveFilm);
+    double updatedWall = wallDenominator > 0.0
+        ? (wallCapacity * wallTemperature
+            + dt * (outerConductance * ambientTemperature + effectiveFilm * forcedFluidTemperature)) / wallDenominator
+        : wallTemperature;
+    double updatedFluid = (forcedFluidTemperature + filmRatio * updatedWall) / (1.0 + filmRatio);
+    return new double[] {updatedFluid, updatedWall};
   }
 
   /**
@@ -3166,12 +3201,14 @@ public class TwoFluidPipe extends Pipeline {
    * Fluid-side film coefficient of one cell from its own state (Dittus-Boelter in turbulent flow).
    *
    * <p>
-   * Uses holdup-weighted phase density, viscosity and velocity from the section, with representative thermal
-   * conductivity (0.03 W/(m K) gas, 0.12 W/(m K) hydrocarbon liquid) and heat capacity (2200 and 2100 J/(kg K)). The
-   * value sets how closely the fluid follows the wall node; for an insulated line it exceeds the overall U by one to
-   * two orders of magnitude, so the Prandtl-number estimate has little effect on the result. It does not read the inlet
-   * stream, so a closed domain at rest is independent of a disconnected feed. At zero local throughput the configured
-   * stagnant coefficient is returned.
+   * Uses the sum of absolute gas, oil and water mass fluxes, so opposite liquid phase momenta cannot cancel finite
+   * throughput. The holdup-weighted mixture viscosity retains the effective bulk-liquid viscosity, including the
+   * existing oil-water emulsion and inversion closure. Uses representative thermal conductivity (0.03 W/(m K) gas, 0.12
+   * W/(m K) hydrocarbon liquid) and heat capacity (2200 and 2100 J/(kg K)). The value sets how closely the fluid
+   * follows the wall node; for an insulated line it exceeds the overall U by one to two orders of magnitude, so the
+   * Prandtl-number estimate has little effect on the result. It does not read the inlet stream, so a closed domain at
+   * rest is independent of a disconnected feed. At zero local throughput the configured stagnant coefficient is
+   * returned.
    * </p>
    *
    * @param sec the cell
@@ -3179,14 +3216,19 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double sectionFilmCoefficient(TwoFluidSection sec) {
     double alphaG = Math.max(0.0, Math.min(1.0, sec.getGasHoldup()));
-    double alphaL = Math.max(0.0, Math.min(1.0, sec.getLiquidHoldup()));
+    double alphaO = Math.max(0.0, Math.min(1.0, sec.getOilHoldup()));
+    double alphaW = Math.max(0.0, Math.min(1.0, sec.getWaterHoldup()));
+    double alphaL = alphaO + alphaW;
     double rhoG = alphaG > 0.0 ? sec.getGasDensity() : 0.0;
+    double rhoO = alphaO > 0.0 ? sec.getOilDensity() : 0.0;
+    double rhoW = alphaW > 0.0 ? sec.getWaterDensity() : 0.0;
     double rhoL = alphaL > 0.0 ? sec.getLiquidDensity() : 0.0;
     double muG = alphaG > 0.0 ? sec.getGasViscosity() : 0.0;
     double muL = alphaL > 0.0 ? sec.getLiquidViscosity() : 0.0;
     double area = sec.getArea();
-    double massFlux = alphaG * rhoG * Math.abs(sec.getGasVelocity())
-        + alphaL * rhoL * Math.abs(sec.getLiquidVelocity());
+    double massFlux = (alphaG > 0.0 ? alphaG * rhoG * Math.abs(sec.getGasVelocity()) : 0.0)
+        + (alphaO > 0.0 ? alphaO * rhoO * Math.abs(sec.getOilVelocity()) : 0.0)
+        + (alphaW > 0.0 ? alphaW * rhoW * Math.abs(sec.getWaterVelocity()) : 0.0);
     double rho = alphaG * rhoG + alphaL * rhoL;
     double mu = alphaG * muG + alphaL * muL;
     if (!(massFlux > 0.0) || !(rho > 0.0) || !(mu > 0.0) || !(area > 0.0) || !Double.isFinite(massFlux)) {
@@ -3205,12 +3247,16 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Choose how the overall U is split around the wall thermal mass in the simple transient thermal model.
    *
+   * <p>
+   * Existing wall temperatures are retained when changing the resistance allocation. Reinitializing them would create
+   * an unreported wall-energy change, including when the selected option has not changed.
+   * </p>
+   *
    * @param enabled true (default) for a flow-dependent fluid film with the remaining resistance outside the wall; false
    * for the legacy equal split of the two resistances
    */
   public void setPhysicalWallFilmSplit(boolean enabled) {
     physicalWallFilmSplit = enabled;
-    wallTemperatureProfile = null;
   }
 
   /** @return true when the transient wall model uses the flow-dependent film split */
@@ -9731,10 +9777,11 @@ public class TwoFluidPipe extends Pipeline {
    * Set the fluid-side heat transfer coefficient used at zero local face throughput.
    *
    * <p>
-   * This coefficient is used only by the multi-layer transient model when the local cell has no gas, oil, or water
-   * throughput. It represents stagnant fluid-to-inner-wall heat transfer and is independent of the overall
-   * pipe-to-ambient coefficient configured by {@link #setHeatTransferCoefficient(double)}. The default is 50 W/(m2 K),
-   * a pragmatic gas-rich shutdown assumption that should be replaced with a case-specific value when available.
+   * This coefficient is used by the multi-layer transient model and the simple model's physical wall-film split when
+   * the local cell has no gas, oil, or water throughput. It represents stagnant fluid-to-inner-wall heat transfer and
+   * is independent of the overall pipe-to-ambient coefficient configured by
+   * {@link #setHeatTransferCoefficient(double)}. The default is 50 W/(m2 K), a pragmatic gas-rich shutdown assumption
+   * that should be replaced with a case-specific value when available.
    * </p>
    *
    * @param coefficient stagnant fluid-side heat transfer coefficient in W/(m2 K)
@@ -10421,10 +10468,10 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * With the closure on, the slug share of holdup and friction comes from {@link SlugUnitModel}: mixture friction over
-   * the slug body only, per-phase friction over the film zone, and the acceleration of the film picked up at the slug
-   * front. Where the unit balance admits no slugs the share is treated as stratified. The minimum-slip floor does not
-   * apply to the slug-unit holdup, which carries its own slip. With it off, the legacy slug correlation and mixture
-   * friction over the whole section are used.
+   * the slug body only and per-phase friction over the film zone. The slug-front mixing loss is excluded by default;
+   * {@link #setSlugFrontMixingLossIncluded(boolean)} includes it explicitly. Where the unit balance admits no slugs the
+   * share is treated as stratified. The minimum-slip floor does not apply to the slug-unit holdup, which carries its
+   * own slip. With the closure off, the legacy slug correlation and mixture friction over the whole section are used.
    * </p>
    *
    * @param enabled true to use the slug-unit closure; default true

@@ -838,6 +838,38 @@ if (vG < vG_critical) {
 double drainageRate = Math.sqrt(2 * g * dz * holdup);
 ```
 
+## Simple Transient Wall Thermal Model
+
+Without radial layers, the transient thermal model places the configured wall heat capacity
+between a fluid film and a wall-to-ambient path. The configured heat-transfer coefficient is
+the overall bore-referenced $U$, including any added soil resistance. With inner diameter $D$,
+outer wall diameter $D_o$, fluid-film coefficient $h_f$, and outer coefficient $h_o$, their
+series resistance satisfies $1/U = 1/h_f + D/(D_o h_o)$.
+
+`setPhysicalWallFilmSplit(true)` is the default. It estimates the film from the cell's local
+phase state using a laminar constant-Nusselt or turbulent Dittus–Boelter correlation, and places
+the remaining resistance outside the wall. Gas, oil, and water contribute their absolute local
+mass throughputs separately, so oil/water counterflow cannot cancel into an apparently stagnant
+liquid. This remains an approximate mixture film model using representative thermal conductivity
+and heat capacity; it does not resolve phase-specific wetting or natural convection. At zero
+local throughput, the configured stagnant inner coefficient is used.
+
+The estimated film is used only when it exceeds twice the overall $U$. Otherwise, or when
+`setPhysicalWallFilmSplit(false)` is selected, the two bore-referenced resistances are equal:
+$h_f = 2U$ and $h_o = 2U D/D_o$. Both splits preserve the same steady overall heat loss, but
+predict different wall temperatures and transient time scales. Choose the split and stagnant
+coefficient against the fluid, insulation, and shutdown conditions being studied. This option
+does not alter the multi-layer thermal model.
+
+The local fluid/wall exchange and wall-to-ambient loss are solved together by backward Euler,
+using the same heat exchange in the fluid and wall energy ledgers. This avoids an explicit
+thermal stability restriction when the fluid inventory is small or the film conductance is
+large. Advective and other thermal sources retain their existing time treatment; timestep and
+mesh refinement are still required to assess transient accuracy. Changing the film-split option,
+including repeating its current setting, preserves an already evolved wall-temperature profile
+and therefore does not reset stored wall energy. A wall profile that has not yet been initialized
+starts at the steady conduction temperature for the selected split.
+
 ## Multi-Layer Thermal Model
 
 ### New Classes
