@@ -57,13 +57,16 @@ class WATConsistencyTest extends neqsim.NeqSimTest {
   void reportedOilMustAgreeWithFreshFlashAppearance() throws Exception {
     SystemInterface fluid = syntheticOil(false);
     fluid.setPressure(60.0);
-    assertFalse(flash(fluid, 66.0).hasPhaseType("wax"));
-    assertTrue(flash(fluid, 64.0).getPhaseFraction("wax", "mass") > 0.004);
+    // Fresh TP flashes bracket the corrected, mass-conserving Pedersen slate.
+    assertFalse(flash(fluid, 64.0).hasPhaseType("wax"));
+    assertTrue(flash(fluid, 62.0).getPhaseFraction("wax", "mass") > 0.004);
     SystemInterface direct = fluid.clone();
     direct.setTemperature(323.15);
     new ThermodynamicOperations(direct).calcWAT();
     double watC = direct.getTemperature("C");
-    assertTrue(watC > 64.0 && watC < 66.0, "WAT must lie within the TP appearance bracket: " + watC);
+    assertTrue(watC > 62.0 && watC < 64.0, "WAT must lie within the TP appearance bracket: " + watC);
+    assertTrue(waxFraction(flash(fluid, watC + 0.01)) <= 1e-8);
+    assertTrue(waxFraction(flash(fluid, watC - 0.01)) > 1e-8);
     logger.info("Issue #3709 corrected WAT at 60 bara: {} C", watC);
     assertConserved(fluid, direct);
   }
@@ -128,14 +131,18 @@ class WATConsistencyTest extends neqsim.NeqSimTest {
 
   @Test
   void configuredWaxPhaseWorksWithWaxCheckDisabledAndPreservesOptions() throws Exception {
-    SystemInterface direct = syntheticOil(false);
-    direct.setPressure(60.0);
+    SystemInterface feed = syntheticOil(false);
+    feed.setPressure(60.0);
+    SystemInterface direct = feed.clone();
     direct.setMultiphaseWaxCheck(false);
     direct.setMultiPhaseCheck(false);
     new ThermodynamicOperations(direct).calcWAT();
     assertFalse(direct.isMultiphaseWaxCheck());
     assertFalse(direct.doMultiPhaseCheck());
-    assertTrue(direct.getTemperature("C") > 64.0 && direct.getTemperature("C") < 66.0);
+    double watC = direct.getTemperature("C");
+    assertTrue(waxFraction(flash(feed, watC + 0.01)) <= 1e-8);
+    assertTrue(waxFraction(flash(feed, watC - 0.01)) > 1e-8);
+    assertConserved(feed, direct);
   }
 
   @Test

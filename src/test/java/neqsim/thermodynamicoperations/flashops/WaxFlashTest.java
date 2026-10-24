@@ -1,8 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
@@ -10,13 +9,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * Checks wax onset and a wax-bearing flash for a characterized gas condensate.
+ *
  * @author ESOL
+ * @version 1.0
  */
 class WaxFlashTest {
-  private static final Logger logger = LogManager.getLogger(WaxFlashTest.class);
-
-  /** Logger object for class. */
-
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static ThermodynamicOperations testOps = null;
 
@@ -49,24 +47,21 @@ class WaxFlashTest {
 
   /**
    * Test method for {@link neqsim.thermodynamicoperations.flashops.saturationops.WATcalc#run()}.
+   *
+   * @throws Exception if the wax appearance calculation fails
    */
   @Test
-  void testRun() {
+  void testRun() throws Exception {
     testOps = new ThermodynamicOperations(testSystem);
-    double waxT = 0.0;
-    try {
-      testOps.calcWAT();
-      waxT = testSystem.getTemperature("C");
-      testSystem.setTemperature(waxT - 10.0, "C");
-      testOps.TPflash();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
-    double waxVolumeFrac = 0;
-    if (testSystem.hasPhaseType("wax")) {
-      waxVolumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndex("wax"));
-    }
-    assertEquals(26.197722214967314, waxT, 0.001);
-    assertEquals(3.236072552269342E-4, waxVolumeFrac, 0.01);
+    testOps.calcWAT();
+    double waxT = testSystem.getTemperature("C");
+    testSystem.setTemperature(waxT - 10.0, "C");
+    testOps.TPflash();
+    assertTrue(testSystem.hasPhaseType("wax"));
+    double waxMassFraction = testSystem.getWtFraction(testSystem.getPhaseIndex("wax"));
+    assertTrue(waxMassFraction > 0.0 && waxMassFraction < 1.0);
+    // Updated internal reference for the corrected Pedersen distribution, with unchanged tolerance.
+    assertEquals(26.198953247070335, waxT, 0.001);
+    assertEquals(3.236072552269342E-4, waxMassFraction, 0.01);
   }
 }

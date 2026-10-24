@@ -176,6 +176,16 @@ sum of squared fractions and a mixed-unit absolute stopping tolerance, which
 could leave a molecular-weight moment error even when total moles nearly closed.
 Corrected slates can therefore change PVT results slightly.
 
+Downstream regression values must describe the corrected slate. For the synthetic
+oil in `WATConsistencyTest`, fresh TP flashes at 60 bara move the wax onset from
+about 64.509 °C to 63.357 °C. The tests check wax appearance on both sides of the
+reported temperature, including when the caller disables wax checking. The
+characterized differential-liberation and wax-curve fixtures also check their
+input mole and mass inventories before using updated internal references;
+composition-setting tests check the supplied heavy mean molar mass and normalized
+heavy distribution. These are conservation and internal-consistency checks, not
+experimental PVT or wax-appearance benchmarks.
+
 Lumping retains the additive mole and mass sums; its mean molar masses are
 mole-weighted. Plus density is fitted on the mass/additive-liquid-volume basis
 $\rho_+=\sum_n z_nM_n/\sum_n(z_nM_n/\rho_n)$, with the existing absolute
