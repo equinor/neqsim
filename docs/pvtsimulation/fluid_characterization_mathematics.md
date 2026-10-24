@@ -157,6 +157,40 @@ The coefficients are determined by matching:
 2. The plus fraction molecular weight $M_{C7+}$
 3. The plus fraction density $\rho_{C7+}$
 
+The exponential fit uses the same finite SCN interval for the residuals and the
+fractions passed to lumping: the first carbon number is included and
+`getLastPlusFractionNumber()` is the exclusive upper endpoint. Tabulated SCN
+molar masses remain fixed. No unrepresented tail is silently added or removed.
+The two distribution constraints are checked separately:
+
+$$\sum_n z_n=z_+$$
+
+$$\frac{\sum_n z_n M_n}{\sum_n z_n}=M_+$$
+
+Both residuals must be within $10^{-12}$ relative to their supplied plus-fraction
+values. Nonconvergence raises an exception before the plus component is replaced;
+the user's input mass is never adjusted to make a distribution appear closed.
+The Jacobian for the normalized molecular-weight mean uses the square of the
+sum of fractions in its quotient-rule denominator. Earlier versions used the
+sum of squared fractions and a mixed-unit absolute stopping tolerance, which
+could leave a molecular-weight moment error even when total moles nearly closed.
+Corrected slates can therefore change PVT results slightly.
+
+Lumping retains the additive mole and mass sums; its mean molar masses are
+mole-weighted. Plus density is fitted on the mass/additive-liquid-volume basis
+$\rho_+=\sum_n z_nM_n/\sum_n(z_nM_n/\rho_n)$, with the existing absolute
+$10^{-6}$ g/cm³ density tolerance. These closure checks qualify bookkeeping,
+not the accuracy of critical-property correlations or the fluid's PVT benchmark.
+`PedersenMomentConservationTest` independently checks initial/final component
+inventories, the SCN moments, density basis, positive finite cuts and 6/12/28
+lumps for light, black and heavy oil means, with Whitson Gamma mole/mass controls
+at 240 g/mol. The existing Gamma final-bin cutoff at 10000 g/mol is not changed:
+for a 590 g/mol, 34.3863 mol plus fraction mixed with 65.6137 mol methane,
+renormalizing the truncated Gamma distribution loses about $8.41\times10^{-7}$ kg
+($3.94\times10^{-8}$ of feed mass). Its correlated cut densities also need not
+reproduce the supplied bulk density. This Pedersen correction does not qualify
+those separate Gamma approximations.
+
 #### Density Correlation (Pedersen)
 
 $$\rho_n = C_1 + C_2 \cdot \ln(n)$$

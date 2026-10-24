@@ -98,7 +98,9 @@ public class PlusFractionModelTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
     ops.TPflash();
     // thermoSystem.prettyPrint();
-    assertEquals(0.779829948507504, thermoSystem.getBeta(), 1e-4);
+    // Updated internal reference after correcting the finite-SCN fit to conserve the supplied mean MW.
+    // The historical value 0.7798299485 was obtained from an unconverged plus distribution.
+    assertEquals(0.7823938630675157, thermoSystem.getBeta(), 1e-4);
   }
 
   @Test
