@@ -48,6 +48,45 @@ assuming a fallback.
 
 ## Available Models
 
+### Letsou-Stiel saturated-liquid estimator
+
+`Letsou-Stiel` is an opt-in pure-liquid estimator when fitted viscosity data are unavailable.
+It uses critical temperature, critical pressure, molar mass and acentric factor. It implements
+the polynomial representation of the Letsou-Stiel tables in the [ChemSep book](https://www.chemsep.org/downloads/docs/book2.pdf),
+equations 10.158–10.161, also documented by [COCO/TEA](https://www.cocosimulator.org/index_help.php?page=TEA%2Fviscosity.htm).
+This is an estimation alternative, not a replacement for a fluid-specific reference correlation.
+
+The supported reduced-temperature interval is $0.76 \leq T/T_c \leq 0.98$.
+The result estimates **saturated-liquid** viscosity; selecting it on a compressed-liquid phase
+does not add a pressure correction. The implementation refuses mixtures, gas/solid phases,
+nonfinite or nonpositive required inputs, and temperatures outside that interval. Selection
+validates the current state before replacing the previous model. Establish the liquid phase
+with a flash before selecting it. Later out-of-range state changes are rejected by the model;
+the existing physical-property initialization handler may log such an exception, so callers
+must keep subsequent states inside the supported interval.
+
+**Class:** `LetsouStielViscosity`. Its static `calculateViscosity` API takes temperature and
+critical temperature in K, molar mass in kg/mol, critical pressure in **bara**, and returns Pa s.
+The inherited liquid-model `getPureComponentViscosity(0)` interface retains mPa s.
+No database coefficients or fitted binary interactions are required. No mixture mixing rule
+or automatic fallback is claimed.
+
+```java
+SystemInterface fluid = new SystemSrkEos(500.0, 40.0);
+fluid.addComponent("benzene", 1.0);
+fluid.setMixingRule("classic");
+new ThermodynamicOperations(fluid).TPflash();
+fluid.initProperties();
+fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("Letsou-Stiel");
+fluid.getPhase("oil").initPhysicalProperties();
+double saturatedLiquidEstimatePas = fluid.getPhase("oil").getViscosity("kg/msec");
+```
+
+`LetsouStielViscosityTest` executes this example and the independent ethanol example
+(400 K, 46.07 g/mol, 516.25 K, 6.383 MPa, acentric factor 0.6371), which gives
+0.0002036150875308 Pa s. That is a correlation implementation check, not an experimental
+accuracy claim for ethanol or associating liquids. See the [method audit](method_alignment_audit).
+
 The `Viscosity` liquid mixture method uses tabulated `gijvisc` interactions from
 the `inter` component-pair table in its Grunberg-Nissan mixing expression.
 Pairs without tabulated data use zero interaction. Ions and TBP fractions are

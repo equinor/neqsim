@@ -206,6 +206,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 ### Chapter 9: Physical Properties
 
+See the [property method alignment audit](physical_properties/method_alignment_audit.md) for coverage against
+*The Properties of Gases and Liquids*, verified transport repairs and remaining qualification work.
+
 | Document                        | Path                                                                                                       | Description                                                                                       |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | **Reading Fluid Properties**    | [docs/thermo/reading_fluid_properties.md](thermo/reading_fluid_properties.md)                                 | **Comprehensive guide to calculating and reading properties from fluids, phases, and components** |

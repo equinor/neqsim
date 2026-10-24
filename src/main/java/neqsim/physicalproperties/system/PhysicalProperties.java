@@ -38,6 +38,7 @@ import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.Hi
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.TynCalusDiffusivity;
 import neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity.WilkeChangDiffusivity;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.LetsouStielViscosity;
 import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.methods.methodinterface.DiffusivityInterface;
@@ -209,10 +210,15 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   /**
    * setViscosityModel.
    *
-   * @param model a {@link java.lang.String} object
+   * @param model model name; Letsou-Stiel requires an initialized pure liquid with 0.76 &lt;= T/Tc &lt;= 0.98
+   * @throws IllegalArgumentException if Letsou-Stiel is selected for an unsupported state
    */
   public void setViscosityModel(String model) {
-    if ("polynom".equals(model)) {
+    if ("Letsou-Stiel".equals(model)) {
+      LetsouStielViscosity candidate = new LetsouStielViscosity(this);
+      candidate.calcViscosity();
+      viscosityCalc = candidate;
+    } else if ("polynom".equals(model)) {
       viscosityCalc = new neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity(this);
     } else if ("friction theory".equals(model)) {
       viscosityCalc = new FrictionTheoryViscosityMethod(this);
