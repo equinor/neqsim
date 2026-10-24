@@ -63,6 +63,27 @@ public class ChungDenseConductivityRegressionTest {
     assertEquals(conductivity(mixture(1.0, false)), conductivity(mixture(1.0, true)), 1e-12);
   }
 
+  /** Verifies conformal mixing reduces to the pure-component fast path for an inactive second component. */
+  @Test
+  void zeroFractionComponentPreservesPureLimit() {
+    SystemInterface pure = new SystemSrkEos(350.0, 100.0);
+    pure.addComponent("methane", 1.0);
+    pure.setMixingRule("classic");
+    new ThermodynamicOperations(pure).TPflash();
+    pure.init(3);
+    double reference = conductivity(pure);
+
+    SystemInterface withInactiveComponent = new SystemSrkEos(350.0, 100.0);
+    withInactiveComponent.addComponent("methane", 1.0);
+    withInactiveComponent.addComponent("ethane", 0.0);
+    withInactiveComponent.setMixingRule("classic");
+    new ThermodynamicOperations(withInactiveComponent).TPflash();
+    withInactiveComponent.init(3);
+    assertEquals(2, withInactiveComponent.getPhase(0).getNumberOfComponents());
+    assertEquals(0.0, withInactiveComponent.getPhase(0).getComponent("ethane").getx(), 0.0);
+    assertEquals(reference, conductivity(withInactiveComponent), reference * 1e-12);
+  }
+
   /** Guards the missing dense-fluid term with nitrogen's expected positive pressure dependence. */
   @Test
   void nitrogenDenseContributionIsPresent() {

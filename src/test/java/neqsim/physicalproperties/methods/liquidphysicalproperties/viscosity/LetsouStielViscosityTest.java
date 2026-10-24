@@ -1,9 +1,11 @@
 package neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.methods.methodinterface.ViscosityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -103,8 +105,10 @@ public class LetsouStielViscosityTest {
     gas.initProperties();
     LetsouStielViscosity gasModel = new LetsouStielViscosity(gas.getPhase(0).getPhysicalProperties());
     assertThrows(IllegalArgumentException.class, gasModel::calcViscosity);
+    ViscosityInterface previousGasModel = gas.getPhase(0).getPhysicalProperties().getViscosityModel();
     assertThrows(IllegalArgumentException.class,
         () -> gas.getPhase(0).getPhysicalProperties().setViscosityModel("Letsou-Stiel"));
+    assertSame(previousGasModel, gas.getPhase(0).getPhysicalProperties().getViscosityModel());
     SystemInterface mixture = new SystemSrkEos(500.0, 40.0);
     mixture.addComponent("benzene", 1.0);
     mixture.addComponent("toluene", 1.0);
@@ -113,5 +117,20 @@ public class LetsouStielViscosityTest {
     mixture.initProperties();
     LetsouStielViscosity mixtureModel = new LetsouStielViscosity(mixture.getPhase(0).getPhysicalProperties());
     assertThrows(IllegalArgumentException.class, mixtureModel::calcViscosity);
+    ViscosityInterface previousMixtureModel = mixture.getPhase(0).getPhysicalProperties().getViscosityModel();
+    assertThrows(IllegalArgumentException.class,
+        () -> mixture.getPhase(0).getPhysicalProperties().setViscosityModel("Letsou-Stiel"));
+    assertSame(previousMixtureModel, mixture.getPhase(0).getPhysicalProperties().getViscosityModel());
+  }
+
+  /** Verifies an out-of-range selection leaves the existing liquid viscosity model installed. */
+  @Test
+  void rejectedTemperaturePreservesPreviousModel() {
+    SystemInterface fluid = benzene();
+    PhysicalProperties properties = fluid.getPhase("oil").getPhysicalProperties();
+    ViscosityInterface previousModel = properties.getViscosityModel();
+    fluid.setTemperature(350.0);
+    assertThrows(IllegalArgumentException.class, () -> properties.setViscosityModel("Letsou-Stiel"));
+    assertSame(previousModel, properties.getViscosityModel());
   }
 }
