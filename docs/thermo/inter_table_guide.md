@@ -102,12 +102,34 @@ Huron-Vidal mixing rules combine an EoS with an activity coefficient model.
 |--------|------|-------------|
 | `HVTYPE` | String | Type of mixing rule (`"Classic"` or `"HV"`) |
 | `HVALPHA` | Double | NRTL non-randomness parameter ($\alpha$) |
-| `HVGIJ` | Double | NRTL interaction parameter $g_{ij}$ (J/mol) |
-| `HVGJI` | Double | NRTL interaction parameter $g_{ji}$ (J/mol) |
-| `HVGIJT` | Double | Temperature derivative of $g_{ij}$ |
-| `HVGJIT` | Double | Temperature derivative of $g_{ji}$ |
+| `HVGIJ` | Double | Directed modified-NRTL coefficient $D_{ij}$ (K) |
+| `HVGJI` | Double | Directed modified-NRTL coefficient $D_{ji}$ (K) |
+| `HVGIJT` | Double | Directed offset $D_{ij,T}$ (dimensionless) |
+| `HVGJIT` | Double | Directed offset $D_{ji,T}$ (dimensionless) |
 
 **Note:** When `HVTYPE = "Classic"`, the Huron-Vidal parameters are not used.
+
+The stored coefficients enter $\tau_{ij}=D_{ij}/T+D_{ij,T}$, with $T$ in
+kelvin. They are not raw interaction energies in J/mol. See the
+[mixing-rule guide](mixing_rules_guide#4-huron-vidal-mixing-rules) for the
+volume-weighted modified-NRTL convention, EoS constants and qualification limits.
+
+For cubic SRK/PR mixing rules 3 and 4, an optional complete family of the six
+columns `HVTYPE`, `HVALPHA`, `HVGIJ`, `HVGJI`, `HVGIJT`, `HVGJIT` with suffix
+`_SRK` or `_PR` overrides the legacy family for that EOS. Directed values follow
+the row's `COMP1`/`COMP2` order. No selected-family columns, or six blank values,
+preserve the legacy coefficients. A partial schema, partially populated selected
+row, invalid type or non-finite/nonnumeric selected coefficient raises
+`IllegalArgumentException`; it does not silently switch the pair to `Classic`.
+The other EOS family is ignored. CPA and unrelated models retain legacy handling.
+
+The bundled optional columns are initially empty: their presence provides
+separate storage and selection, not newly fitted or qualified coefficients.
+Complete each calibrated tuple only after recording its EOS, pure-component
+alpha/properties, source, convention and validated range. Legacy fallback remains
+an explicitly unqualified transfer when used with an EOS for which the shared
+set has not been independently checked. Selection occurs during fluid setup,
+with no added database lookup during flashes.
 
 **Mathematical formulation:**
 

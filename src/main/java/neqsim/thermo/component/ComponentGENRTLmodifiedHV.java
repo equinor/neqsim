@@ -95,8 +95,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     double dG2dt = 0;
     double dGdtdt = 0;
     double dG2dtdt = 0.0;
-    double[][] Gmatrix = new double[numberOfComponents][numberOfComponents];
-    double[][] tauMatrix = new double[numberOfComponents][numberOfComponents];
+    double[][] Gmatrix = type == 3 ? new double[numberOfComponents][numberOfComponents] : null;
+    double[][] tauMatrix = type == 3 ? new double[numberOfComponents][numberOfComponents] : null;
     dlngammadn = new double[numberOfComponents];
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     double dA2dTetter = 0;
@@ -118,6 +118,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     A = 0;
     B = 0;
     dlngammadt = 0.0;
+    dlngammadtdt = 0.0;
     dA2dTetter = 0;
     dA3dTetter = 0;
     dA4dTetter = 0;
@@ -293,7 +294,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
             dtaudt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
                 - gij / (R * temperature * temperature);
             dtaudtdt = -dgjjdtdt / (R * temperature) + dgjjdt / (R * temperature * temperature)
-                + dgjjdt / (R * temperature * temperature) - 2 * dgjjdt / (R * temperature * temperature * temperature)
+                + dgjjdt / (R * temperature * temperature) - 2 * gjj / (R * temperature * temperature * temperature)
                 + dgijdtdt / (R * temperature) - dgijdt / (R * temperature * temperature)
                 - dgijdt / (R * temperature * temperature) + 2 * gij / (R * temperature * temperature * temperature);
           }
@@ -301,12 +302,15 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
         G = comp_Array[l].getb() * Math.exp(-alpha * tau);
         dGdt = dtaudt * -alpha * G;
-        Gmatrix[l][j] = G;
-        tauMatrix[l][j] = tau;
+        if (type == 3) {
+          Gmatrix[l][j] = G;
+          tauMatrix[l][j] = tau;
+        }
 
         C += G * comp_Array[l].getx();
         D += G * tau * comp_Array[l].getx();
         if (phase.getInitType() > 1) {
+          dGdtdt = -alpha * (dtaudtdt * G + dtaudt * dGdt);
           dCdT += dGdt * comp_Array[l].getx();
           dCdTdT += dGdtdt * comp_Array[l].getx();
           dDdT += comp_Array[l].getx() * dGdt * tau + comp_Array[l].getx() * G * dtaudt;
@@ -324,29 +328,19 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         dA4dTdTetter += dA4dTdT * dCdT * D / (C * C * C) + dA4dT * dCdTdT * D / (C * C * C)
             + dA4dT * dCdT * dDdT / (C * C * C) - 3.0 * dA4dT * dCdT * D / (C * C * C * C) * dCdT;
         dA5dTetter += dA5dT * D / (C * C);
-        dA5dTdTetter += dA5dTdT * D / (C * C) + dA5dT * dDdT / (C * C) - 2 * dA5dT * D / (C * C) * dCdT;
+        dA5dTdTetter += dA5dTdT * D / (C * C) + dA5dT * dDdT / (C * C) - 2 * dA5dT * D / (C * C * C) * dCdT;
         dA6dTetter += dA6dT * dDdT / (C * C);
         dA6dTdTetter += dA6dTdT * dDdT / (C * C) + dA6dT * dDdTdT / (C * C) - 2 * dA6dT * dDdT / (C * C * C) * dCdT;
       }
       if (mixRule[componentNumber][j].equals("HV")) {
         tau2 = HVgij[componentNumber][j] / (temperature) + HVgijT[componentNumber][j];
-        dtau2dt = -HVgij[componentNumber][j] / (temperature * temperature);
       } else {
         gii = -deltaEOS * comp_Array[componentNumber].aT(temperature) / comp_Array[componentNumber].getb();
-        double dgiidt = -deltaEOS * comp_Array[componentNumber].diffaT(temperature)
-            / comp_Array[componentNumber].getb();
         gjj = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
-        double dgjjdt = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
         gij = -2.0 * Math.pow(comp_Array[componentNumber].getb() * comp_Array[j].getb(), 0.5)
             / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * Math.pow(gii * gjj, 0.5)
             * (1.0 - intparam[componentNumber][j]);
         tau2 = (gij - gjj) / (R * temperature);
-
-        double dgijdt = -2.0 * Math.sqrt(comp_Array[componentNumber].getb() * comp_Array[j].getb())
-            / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * 1.0 / Math.sqrt(gii * gjj)
-            * (1.0 - intparam[componentNumber][j]) * (dgiidt * gjj + dgjjdt * gii) * 0.5;
-        dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
-            - gij / (R * temperature * temperature);
       }
 
       F += E / C * (tau2 - D / C);
@@ -359,8 +353,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     if (phase.getInitType() > 1) {
       dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter - dA6dTetter);
       dlngammadtdt = dAdTdT / B - dBdT * dAdT / Math.pow(B, 2.0) - dAdT / (B * B) * dBdT
-          + 2 * dBdT * A / Math.pow(B, 3.0) * dBdT - A / (B * B) * dBdTdT + 0 * dA2dTdTetter - 0 * dA3dTdTetter
-          + 0 * dA4dTdTetter - 0 * dA5dTdTetter - 0 * dA6dTdTetter;
+          + 2 * dBdT * A / Math.pow(B, 3.0) * dBdT - A / (B * B) * dBdTdT + dA2dTdTetter - dA3dTdTetter + dA4dTdTetter
+          - dA5dTdTetter - dA6dTdTetter;
     }
 
     gamma = Math.exp(lngamma);
@@ -376,6 +370,17 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
       double Dtemp = 0;
       double Ftemp = 0;
       double Gtemp = 0;
+      double nt = 0;
+      double[] columnSum = new double[numberOfComponents];
+      double[] columnEnergySum = new double[numberOfComponents];
+      // These column reductions are independent of the differentiated component p.
+      for (int f = 0; f < numberOfComponents; f++) {
+        nt += comp_Array[f].getNumberOfMolesInPhase();
+        for (int g = 0; g < numberOfComponents; g++) {
+          columnSum[f] += comp_Array[g].getx() * Gmatrix[g][f];
+          columnEnergySum[f] += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
+        }
+      }
 
       for (int p = 0; p < numberOfComponents; p++) {
         dAdn = tauMatrix[p][componentNumber] * Gmatrix[p][componentNumber];
@@ -383,21 +388,13 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         dEdn = Gmatrix[componentNumber][p] * tauMatrix[componentNumber][p];
         // dFdn = Gmatrix[componentNumber][p];
         Dtemp = 0;
-        Ctemp = 0;
-        Etemp = 0;
+        Ctemp = columnSum[p];
+        Etemp = columnEnergySum[p];
         Ftemp = 0;
         Gtemp = 0;
-        double nt = 0;
         for (int f = 0; f < numberOfComponents; f++) {
-          nt += comp_Array[f].getNumberOfMolesInPhase();
-          Ctemp += comp_Array[f].getx() * Gmatrix[f][p];
-          Etemp += comp_Array[f].getx() * Gmatrix[f][p] * tauMatrix[f][p];
-          double sum = 0.0;
-          double sum2 = 0.0;
-          for (int g = 0; g < numberOfComponents; g++) {
-            sum += comp_Array[g].getx() * Gmatrix[g][f];
-            sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
-          }
+          double sum = columnSum[f];
+          double sum2 = columnEnergySum[f];
           Dtemp += Gmatrix[p][f] * Gmatrix[componentNumber][f] * tauMatrix[componentNumber][f] * comp_Array[f].getx()
               / (sum * sum);
           Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[componentNumber][f] / (sum * sum * sum);
