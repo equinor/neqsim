@@ -1,9 +1,11 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
@@ -19,7 +21,7 @@ class WaxFlashTest {
   static ThermodynamicOperations testOps = null;
 
   /**
-   * @throws java.lang.Exception
+   * Configures the characterized wax-forming fluid.
    */
   @BeforeEach
   void setUp() {
@@ -55,13 +57,18 @@ class WaxFlashTest {
     testOps = new ThermodynamicOperations(testSystem);
     testOps.calcWAT();
     double waxT = testSystem.getTemperature("C");
+    SystemInterface warm = testSystem.clone();
+    warm.setTemperature(waxT + 0.01, "C");
+    new ThermodynamicOperations(warm).TPflash();
+    assertFalse(warm.hasPhaseType("wax"));
     testSystem.setTemperature(waxT - 10.0, "C");
     testOps.TPflash();
     assertTrue(testSystem.hasPhaseType("wax"));
-    double waxMassFraction = testSystem.getWtFraction(testSystem.getPhaseIndex("wax"));
+    // getWtFraction expects a logical phase number, whereas getPhaseIndex returns a storage slot.
+    double waxMassFraction = testSystem.getPhaseFraction("wax", "mass");
     assertTrue(waxMassFraction > 0.0 && waxMassFraction < 1.0);
     // Updated internal reference for the corrected Pedersen distribution, with unchanged tolerance.
     assertEquals(26.198953247070335, waxT, 0.001);
-    assertEquals(3.236072552269342E-4, waxMassFraction, 0.01);
+    assertEquals(2.9218275199921067e-4, waxMassFraction, 1e-8);
   }
 }

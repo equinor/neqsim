@@ -346,8 +346,12 @@ overall composition unchanged. Do not treat the initial temperature as a WAT aft
 an exception.
 
 This resolves the internal consistency failure in [issue #3709](https://github.com/equinor/neqsim/issues/3709):
-the characterized synthetic oil previously returned 54.4595 °C at 60 bara although
-fresh TP flashes already predicted wax at 64 °C. Regression tests compare direct
+with the former plus-fraction distribution, the characterized synthetic oil returned
+54.4595 °C at 60 bara although fresh TP flashes already predicted wax at 64 °C.
+After correcting the Pedersen plus-fraction mass moment, this oil's numerical
+onset is about 63.3575 °C at 60 bara, with fresh TP flashes bracketing it between
+63 and 64 °C. This composition change affects internal regression references;
+the TP-based onset definition is unchanged. Regression tests compare direct
 WAT against a refined independent TP appearance bracket at 40, 60 and 80 bara,
 including different initial guesses, reordered/existing wax phases and added water.
 The named-component regressions for [issue #4309](https://github.com/equinor/neqsim/issues/4309)
