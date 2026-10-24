@@ -49,6 +49,7 @@ SCOPE_PAGES = (
 )
 
 PVT_LANDING_PAGE = DOCS / "pvtsimulation/README.md"
+STANDARDS_LANDING_PAGE = DOCS / "standards/README.md"
 PVT_SEPARATOR_TEST = (
     DOCS.parent
     / "src/test/java/neqsim/pvtsimulation/PvtSimulationDocumentationTest.java"
@@ -128,6 +129,12 @@ def remove_fenced_code(source):
     if fence_character is not None:
         raise AssertionError("Unclosed fenced code block")
     return "\n".join(rendered)
+
+
+def heading_slug(heading):
+    """Return the source heading fragment used by the documentation site."""
+    normalized = re.sub(r"[^a-z0-9 _-]", "", heading.lower())
+    return normalized.strip().replace(" ", "-")
 
 
 def target_candidates(source, target):
@@ -349,6 +356,40 @@ class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
                     page.read_text(encoding="utf-8")
                 )
                 self.assertIsNone(unsupported.search(remove_fenced_code(body)))
+
+    def test_standards_landing_page_uses_explicit_markdown_sources(self):
+        _title, _description, body = parse_front_matter(
+            STANDARDS_LANDING_PAGE.read_text(encoding="utf-8")
+        )
+        rendered = remove_fenced_code(body)
+        destinations = re.findall(r"\[[^\]]*\]\(([^)\s]+)\)", rendered)
+        internal_targets = []
+        for target in destinations:
+            parsed = urlsplit(target.strip().strip("<>"))
+            if parsed.scheme or parsed.netloc or target.startswith("#"):
+                continue
+            internal_targets.append(target)
+
+        self.assertEqual(9, len(internal_targets))
+        for target in internal_targets:
+            parsed = urlsplit(target.strip().strip("<>"))
+            destination = (
+                STANDARDS_LANDING_PAGE.parent / unquote(parsed.path)
+            ).resolve()
+            with self.subTest(target=target):
+                self.assertTrue(parsed.path.endswith(".md"))
+                self.assertTrue(destination.is_file())
+                if parsed.fragment:
+                    target_source = remove_fenced_code(
+                        destination.read_text(encoding="utf-8")
+                    )
+                    headings = re.findall(
+                        r"^#{1,6}\s+(.+?)\s*$", target_source, re.MULTILINE
+                    )
+                    self.assertIn(
+                        unquote(parsed.fragment),
+                        {heading_slug(heading) for heading in headings},
+                    )
 
     def test_relative_source_links_resolve(self):
         markdown_link = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
