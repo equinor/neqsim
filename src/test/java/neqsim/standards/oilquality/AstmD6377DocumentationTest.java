@@ -54,9 +54,8 @@ class AstmD6377DocumentationTest extends NeqSimTest {
     String exampleSource = fences.group(1);
     assertFalse(fences.find(), "The ASTM D6377 guide should expose one maintained Java program");
     for (String required : Arrays.asList("public final class AstmD6377Example",
-        "RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED",
-        "Standard_ASTM_D6377.getWaterSaturationPressure(310.95)", "sourceStream.getRVP(",
-        "manualWaterSaturatedBara", "assert waterSaturated.isValid()")) {
+        "RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED", "Standard_ASTM_D6377.getWaterSaturationPressure(310.95)",
+        "sourceStream.getRVP(", "manualWaterSaturatedBara", "assert waterSaturated.isValid()")) {
       assertTrue(exampleSource.contains(required), required);
     }
 
