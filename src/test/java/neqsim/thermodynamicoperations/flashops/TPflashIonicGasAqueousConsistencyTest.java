@@ -55,6 +55,43 @@ class TPflashIonicGasAqueousConsistencyTest {
     assertEquivalentEndpoint(ordinary, multiphase);
   }
 
+  /**
+   * Reject singular association updates without losing the concentrated brine inventory.
+   */
+  @Test
+  void concentratedColdKclBrineRemainsConservativeAtNearbyPressures() {
+    for (double pressure : new double[] {35.70, 35.75, 35.80}) {
+      SystemInterface system = new SystemElectrolyteCPAstatoil(273.15, pressure);
+      double[] amounts = {10.0, 1.0 / 0.01801528, 2.36154, 2.36154};
+      String[] names = {"CO2", "water", "K+", "Cl-"};
+      for (int component = 0; component < names.length; component++) {
+        system.addComponent(names[component], amounts[component]);
+      }
+      system.setMixingRule(10);
+      system.setMultiPhaseCheck(true);
+      for (int flash = 0; flash < 2; flash++) {
+        new ThermodynamicOperations(system).TPflash();
+        system.init(3);
+        assertValidIonicGasAqueousEndpoint(system);
+        for (int component = 0; component < names.length; component++) {
+          double reconstructedMoles = 0.0;
+          for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+            reconstructedMoles += system.getPhase(phase).getComponent(names[component]).getNumberOfMolesInPhase();
+          }
+          assertEquals(amounts[component], reconstructedMoles, 1.0e-9,
+              names[component] + " inventory at " + pressure + " bara after flash " + flash);
+        }
+        for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+          neqsim.thermo.component.ComponentCPAInterface water = (neqsim.thermo.component.ComponentCPAInterface) system
+              .getPhase(phase).getComponent("water");
+          for (double siteFraction : water.getXsite()) {
+            assertTrue(Double.isFinite(siteFraction) && siteFraction > 0.0 && siteFraction <= 1.0);
+          }
+        }
+      }
+    }
+  }
+
   private SystemInterface createAndFlash(double temperature, double pressure, boolean multiphaseCheck,
       boolean poorBeta) {
     SystemInterface system = new SystemElectrolyteCPAstatoil(temperature, pressure);
