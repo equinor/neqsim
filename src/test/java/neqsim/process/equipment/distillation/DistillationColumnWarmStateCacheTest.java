@@ -328,7 +328,15 @@ public class DistillationColumnWarmStateCacheTest {
     }
   }
 
-  /** Internal pumparound returns must never be captured as legacy external tray feeds. */
+  /**
+   * Internal pumparound returns must stay out of the external feed registry across a repeated solve.
+   *
+   * <p>
+   * The column uses a 0.001 K temperature tolerance. With the adaptive default, the first accepted temperature residual
+   * is about 0.022 K and the next iteration still moves the overhead flow by 1.75 percent at 20 C. At 0.001 K the same
+   * two runs agree to well within 0.5 percent and both report solved.
+   * </p>
+   */
   @Test
   public void pumparoundReturnIsNotCapturedAsExternalFeed() {
     for (double feedTemperatureC : new double[] {20.0, 25.0}) {
@@ -338,6 +346,7 @@ public class DistillationColumnWarmStateCacheTest {
       feed.run();
       column.addLiquidPumparound("PA-1", 2, 4, 0.01, 2.0);
       column.setPumparoundTolerance(1.0e-3);
+      column.setTemperatureTolerance(1.0e-3);
       column.run();
 
       assertTrue(column.solved(), column.getConvergenceDiagnostics());
@@ -354,9 +363,8 @@ public class DistillationColumnWarmStateCacheTest {
       assertEquals(1, column.getInletStreams().size(),
           "repeated runs must not accumulate the internal return in the external-feed registry");
       assertSame(feed, column.getInletStreams().get(0));
-      // One extra rigorous iteration can move the products by about the enthalpy residual.
-      assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, gasFlow * 2.0e-2));
-      assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, liquidFlow * 2.0e-2));
+      assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, gasFlow * 5.0e-3));
+      assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, liquidFlow * 5.0e-3));
       assertPhysicalAndBalanced(feed, column);
     }
   }

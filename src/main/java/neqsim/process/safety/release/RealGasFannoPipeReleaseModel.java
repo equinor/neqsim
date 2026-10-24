@@ -23,8 +23,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public final class RealGasFannoPipeReleaseModel implements ReleaseFlowModel {
   private static final long serialVersionUID = 1L;
   private static final int AXIAL_STEPS = 10;
-  /** Flux bisections. Twenty iterations keep an unchoked exit within a few hundred pascals of backpressure. */
-  private static final int ROOT_ITERATIONS = 20;
+  private static final int ROOT_ITERATIONS = 16;
   private static final int PROPERTY_ITERATIONS = 20;
   private static final double SONIC_LIMIT = 0.9995;
   private static final double PROPERTY_TOLERANCE = 2.0e-8;
