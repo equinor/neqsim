@@ -192,7 +192,7 @@ class OilQualityStandardsDocumentationContractTest(unittest.TestCase):
         self.assertIn("recovery points remain explicitly unqualified", self.guide)
 
     def test_standards_indexes_discover_the_guide(self):
-        link = "[Oil-quality methods](oil_quality_standards)"
+        link = "[Oil-quality methods](oil_quality_standards.md)"
         self.assertIn(link, self.standards_index)
         self.assertIn("standards/oil_quality_standards.md", self.reference_index)
 
