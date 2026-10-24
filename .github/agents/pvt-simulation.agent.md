@@ -17,6 +17,19 @@ You are a PVT simulation specialist for NeqSim.
 ## Primary Objective
 Set up and run PVT laboratory simulations, compare with experimental data, and optionally tune EOS parameters. Produce working code.
 
+## Qualification and swelling calculations
+
+Read `docs/pvtsimulation/pedersen_method_qualification.md` before asserting reservoir-fluid
+method coverage or accuracy. Distinguish source availability, numerical verification and
+experimental validation. Compare fluids only after matching EOS/alpha/mixing rules, component
+properties, BIPs, volume shifts, heavy-fraction characterization and standard conditions.
+
+`SwellingTest` accepts cumulative injected mole percentages relative to the **initial oil**,
+not the final mixture. Set the experiment temperature explicitly, call `runCalc()`, and handle
+saturation failures. Each run uses the constructor's oil snapshot and preserves the injection
+template. The current calculation is bubble-branch only; it does not establish a critical/dew
+transition or MMP. Never substitute a returned finite value for a qualification benchmark.
+
 ## Available PVT Simulations
 All classes are in `neqsim.pvtsimulation.simulation`:
 
