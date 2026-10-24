@@ -320,6 +320,56 @@ Maribo-Mogensen physical-permittivity state will consume. They do not calculate
 that permittivity, alter Debye-Huckel or Born, introduce a CO2 dipole, change a
 parameter, or qualify hydrate predictions.
 
+
+### Exact-head K10/K15 result and causal boundary
+
+Hosted run [40114797409](https://github.com/equinor/neqsim/actions/runs/40114797409)
+executed the producer at PR head `1041835c41c8b9a5e2e664b9d7b65f75673e44ad`
+(merge checkout `6ec42cc872630a5a94ce8522c071f11cf4d809b6`).
+The 28-row CSV is in `electrolyte-assessment-evidence-0`; shard 3 did
+not select this producer. Its manifest records one executed test, zero
+failures/errors/skips, complete selected evidence, and the exact source/output
+hashes.
+
+The four requested Dholabhai endpoints are:
+
+| Recipe | Pressure / bara | Measured / K | Calculated / K | Error / K | Model suppression from matched salt-free state / K |
+|---|---:|---:|---:|---:|---:|
+| K10 | 11.30 | 269.02 | 269.317673 | +0.297673 | 3.543717 |
+| K10 | 34.85 | 277.86 | 277.775116 | -0.084884 | 3.720364 |
+| K15 | 14.15 | 269.03 | 268.958338 | -0.071662 | 5.762735 |
+| K15 | 35.75 | 276.01 | 275.661797 | -0.348203 | 5.998445 |
+
+Across those pairs, adding KCl lowers the water-activity proxy by
+0.04843–0.07757 and dissolved CO2 mole fraction by 0.00155–0.00467, while
+total water-donor incidence increases by only 0.00106–0.00188. The incidence
+split changes through a larger water-water increase partly offset by a lower
+water-CO2 incidence. CO2 guest fugacity changes by only 0.032–0.540 bara.
+These are matched-state model contrasts, not measured contribution
+decompositions. Association incidence is therefore not the dominant scalar
+change in this diagnostic, although a nonlinear permittivity model could still
+amplify it.
+
+The present sub-kelvin K10/K15 agreement is not caused by this diagnostic PR.
+It first appears after merged PR
+[#4367](https://github.com/equinor/neqsim/pull/4367), which introduced the
+CO2/K+ `W0` default. Independent inspection of Onda et al. confirms the
+source's base-10, molarity-based additive correlation and the tabulated
+components `-0.2277 - 0.0362 + 0.3416 = 0.0777 L/mol` at 25 °C. It also
+confirms that those values are a global least-squares gas/cation/anion
+decomposition, with an overall reported standard deviation of 0.052, rather
+than a unique direct measurement of a CO2/K+ short-range coefficient.
+
+Accordingly, the executable 298.15 K target is source-consistent, but the
+mapping to `W0 = -2.2981e-4 m3/mol` is model calibration. Holding the legacy
+CO2/Cl− value fixed is an allocation convention, not an independently
+identifiable ion-pair result. `W1 = W2 = 0` remains an unsupported
+temperature extrapolation. PR #4367 received only COMMENTED reviews (one
+automated style review and one author response), no accountable scientific
+approval, before merge. Its strong Dholabhai KCl holdout is useful evidence but
+does not close the independent provenance gate, especially with the retained
+He–Morse/Yasunishi deviations and mixed-brine family/recipe biases.
+
 ## Retained numerical evidence
 
 The Core Build, Test, and Javadoc workflow retains an
