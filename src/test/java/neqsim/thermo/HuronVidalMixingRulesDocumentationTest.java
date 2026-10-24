@@ -23,10 +23,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.NeqSimTest;
 
-/** Compiles and executes the exact Huron-Vidal/NRTL program published in the mixing-rule guide. */
+/**
+ * Compiles and executes the exact Huron-Vidal/NRTL program published in the mixing-rule guide.
+ *
+ * @author ESOL
+ * @version 1.0
+ */
 class HuronVidalMixingRulesDocumentationTest extends NeqSimTest {
-  private static final Pattern HV_EXAMPLE = Pattern.compile(
-      "(?s)<!-- hv-nrtl-example:start -->\\s*```java\\r?\\n(.*?)"
+  private static final Pattern HV_EXAMPLE =
+      Pattern.compile("(?s)<!-- hv-nrtl-example:start -->\\s*```java\\r?\\n(.*?)"
           + "```\\s*<!-- hv-nrtl-example:end -->");
 
   @TempDir
@@ -45,7 +50,8 @@ class HuronVidalMixingRulesDocumentationTest extends NeqSimTest {
     for (String required : Arrays.asList("public final class HuronVidalNrtlExample",
         "fluid.setMixingRule(\"HV\", \"NRTL\")", "getHVDijParameter(0, 1)",
         "getHVDijTParameter(0, 1)", "double tau = dijK / temperatureK + dijT",
-        "new ThermodynamicOperations(fluid).TPflash()", "assert Math.abs(recoveredMoles - feedMoles)")) {
+        "new ThermodynamicOperations(fluid).TPflash()",
+        "assert Math.abs(recoveredMoles - feedMoles)")) {
       assertTrue(exampleSource.contains(required), required);
     }
 
@@ -55,8 +61,8 @@ class HuronVidalMixingRulesDocumentationTest extends NeqSimTest {
     Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
     compile(compiler, javaSource);
 
-    try (URLClassLoader loader = new URLClassLoader(
-        new URL[] {temporaryDirectory.toUri().toURL()}, getClass().getClassLoader())) {
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
       loader.setDefaultAssertionStatus(true);
       Class<?> exampleClass = Class.forName("HuronVidalNrtlExample", true, loader);
       assertTrue(exampleClass.desiredAssertionStatus());
@@ -68,12 +74,19 @@ class HuronVidalMixingRulesDocumentationTest extends NeqSimTest {
     }
   }
 
+  /**
+   * Compile the extracted Markdown program with Java 8 syntax and the test classpath.
+   *
+   * @param compiler current JDK compiler
+   * @param source extracted Java source
+   * @throws Exception if source preparation or compilation fails
+   */
   private void compile(JavaCompiler compiler, Path source) throws Exception {
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
     String classPath =
         System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
-    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath",
-        classPath, "-d", temporaryDirectory.toString());
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath,
+        "-d", temporaryDirectory.toString());
     try (StandardJavaFileManager manager =
         compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
       Boolean successful = compiler
