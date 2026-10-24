@@ -70,6 +70,13 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
   /** {@inheritDoc} */
   @Override
   public void solve() {
+    // A rejected evaluation must not retain the success or statistics from an earlier solve.
+    solved = false;
+    result = LevenbergMarquardtResult.notRun();
+    chiSquare = Double.NaN;
+    coVarianceMatrix = null;
+    parameterCorrelationMatrix = null;
+    parameterStandardDeviation = null;
     setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
     double[] newParameters = null;
     int n = 0;
