@@ -310,7 +310,7 @@ public class MultiStreamHeatExchanger2Test {
 
     // Check UA and approach temp
     assertEquals(10.0, heatEx.getTemperatureApproach(), 1);
-    assertEquals(21825, heatEx.getUA(), 1.0);
+    assertEquals(21823.086569960557, heatEx.getUA(), 1.0);
 
     // Composite Curve Points for Ploting
     heatEx.getCompositeCurve();

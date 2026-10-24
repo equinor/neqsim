@@ -3957,7 +3957,7 @@ public class TwoFluidPipe extends Pipeline {
     double gasFriction = gasReynolds < 2000.0 ? 16.0 / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasReynolds)
         : 0.046 / Math.pow(gasReynolds, 0.2);
     double interfacialFriction = gasFriction
-        * InterfacialFriction.andritsosHanrattyEnhancement(vsG, rhoG, 0.5 * (1.0 - Math.cos(beta / 2.0)));
+        * InterfacialFriction.stratifiedWaveEnhancement(vsG, rhoG, 0.5 * (1.0 - Math.cos(beta / 2.0)));
 
     double liquidWallShear = liquidFriction * rhoL * liquidVelocity * Math.abs(liquidVelocity) / 2.0;
     double gasWallShear = gasFriction * rhoG * gasVelocity * Math.abs(gasVelocity) / 2.0;
@@ -10554,10 +10554,11 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * With the closure on, the slug share of holdup and friction comes from {@link SlugUnitModel}: mixture friction over
-   * the slug body only and per-phase friction over the film zone. The slug-front mixing loss is excluded by default;
-   * {@link #setSlugFrontMixingLossIncluded(boolean)} includes it explicitly. Where the unit balance admits no slugs the
-   * share is treated as stratified. The minimum-slip floor does not apply to the slug-unit holdup, which carries its
-   * own slip. With the closure off, the legacy slug correlation and mixture friction over the whole section are used.
+   * the slug body only and per-phase friction over the film zone. The slug-front mixing loss is counted with an
+   * OLGA-calibrated weight that is zero on slopes beyond about 2 degrees; {@link #setSlugFrontMixingLossIncluded} and
+   * {@link #setSlugFrontMixingLossWeight(double)} override it. Where the unit balance admits no slugs the share is
+   * treated as stratified. The minimum-slip floor does not apply to the slug-unit holdup, which carries its own slip.
+   * With the closure off, the legacy slug correlation and mixture friction over the whole section are used.
    * </p>
    *
    * @param enabled true to use the slug-unit closure; default true
@@ -10573,11 +10574,12 @@ public class TwoFluidPipe extends Pipeline {
    * Choose whether the slug-front mixing loss is counted in the steady slug-unit friction.
    *
    * <p>
-   * See {@link SlugUnitModel#setFrontMixingLossIncluded(boolean)}. Off by default: counting it brought a horizontal
-   * gas-oil slug line from 29 to 20 per cent below OLGA but moved an undulating one from 5 to 53 per cent above.
+   * See {@link SlugUnitModel#setFrontMixingLossIncluded(boolean)}. Counting the whole term on every slope brought a
+   * horizontal gas-oil slug line from 29 to 20 per cent below OLGA but moved an undulating one from 5 to 53 per cent
+   * above, so without this call an OLGA-calibrated weight is used that is zero on slopes steeper than about 2 degrees.
    * </p>
    *
-   * @param included true to count the front-mixing loss; false (default) for the wall-shear-only unit gradient
+   * @param included true to count the whole front-mixing loss; false for the wall-shear-only unit gradient
    */
   public void setSlugFrontMixingLossIncluded(boolean included) {
     if (slugUnitModel == null) {
@@ -10586,9 +10588,44 @@ public class TwoFluidPipe extends Pipeline {
     slugUnitModel.setFrontMixingLossIncluded(included);
   }
 
-  /** @return true when the slug-front mixing loss is counted in the steady slug-unit friction */
+  /** @return true when the whole slug-front mixing loss is counted in the steady slug-unit friction */
   public boolean isSlugFrontMixingLossIncluded() {
     return slugUnitModel != null && slugUnitModel.isFrontMixingLossIncluded();
+  }
+
+  /**
+   * Set the share of the slug-front mixing loss counted in the steady slug-unit friction.
+   *
+   * @param weight share between zero and one; NaN restores the OLGA-calibrated automatic weight
+   * @throws IllegalArgumentException if the weight is outside zero to one and not NaN
+   */
+  public void setSlugFrontMixingLossWeight(double weight) {
+    if (slugUnitModel == null) {
+      slugUnitModel = new SlugUnitModel();
+    }
+    slugUnitModel.setFrontMixingLossWeight(weight);
+  }
+
+  /**
+   * Choose whether the slug unit reduces its gas-liquid slip towards no-slip at high mixture Froude number.
+   *
+   * <p>
+   * See {@link SlugUnitModel#setHighFroudeSlipReductionEnabled(boolean)}. On by default; it removed a 20 to 40 per cent
+   * holdup over-prediction against OLGA 2025.1 on horizontal gas-oil and gas-oil-water lines above Froude number 3.
+   * </p>
+   *
+   * @param enabled true (default) to apply the reduction; false for the plain Bendiksen coefficients
+   */
+  public void setSlugHighFroudeSlipReductionEnabled(boolean enabled) {
+    if (slugUnitModel == null) {
+      slugUnitModel = new SlugUnitModel();
+    }
+    slugUnitModel.setHighFroudeSlipReductionEnabled(enabled);
+  }
+
+  /** @return true when the slug unit applies the high-Froude slip reduction */
+  public boolean isSlugHighFroudeSlipReductionEnabled() {
+    return slugUnitModel == null || slugUnitModel.isHighFroudeSlipReductionEnabled();
   }
 
   /**

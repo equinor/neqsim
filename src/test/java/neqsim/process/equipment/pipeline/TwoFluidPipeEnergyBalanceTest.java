@@ -213,4 +213,20 @@ class TwoFluidPipeEnergyBalanceTest {
     Assertions.assertEquals(InterfacialFriction.ANDRITSOS_HANRATTY_MAXIMUM_ENHANCEMENT,
         InterfacialFriction.andritsosHanrattyEnhancement(1000.0, 50.0, 0.5), 1e-12);
   }
+
+  @Test
+  @DisplayName("Stratified wave roughness is depth-squared and saturates in the velocity ratio")
+  void testStratifiedWaveEnhancement() {
+    // below the wave transition the interface is smooth
+    Assertions.assertEquals(1.0, InterfacialFriction.stratifiedWaveEnhancement(4.0, 1.3, 0.25), 1e-12);
+    // atmospheric air-water at 10 m/s, level 0.25: r - 1 = 1, so 1 + 80 * 0.0625
+    Assertions.assertEquals(6.0, InterfacialFriction.stratifiedWaveEnhancement(10.0, 1.3, 0.25), 1e-9);
+    // dense gas: 3.25 m/s at 82 kg/m3 is r = 5.2, credited as 4; a thin layer stays nearly smooth
+    double thin = InterfacialFriction.stratifiedWaveEnhancement(3.25, 82.0, 0.08);
+    double thick = InterfacialFriction.stratifiedWaveEnhancement(3.25, 82.0, 0.30);
+    Assertions.assertEquals(1.0 + 80.0 * 0.08 * 0.08 * 4.0, thin, 1e-9);
+    Assertions.assertEquals(1.0 + 80.0 * 0.30 * 0.30 * 4.0, thick, 1e-9);
+    // the velocity ratio is not credited beyond the data range
+    Assertions.assertEquals(thick, InterfacialFriction.stratifiedWaveEnhancement(30.0, 82.0, 0.30), 1e-9);
+  }
 }

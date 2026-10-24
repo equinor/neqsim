@@ -9,6 +9,57 @@
 
 ---
 
+## 2026-10-24 — Stratified wave roughness: depth-squared form replaces the capped Andritsos-Hanratty enhancement
+
+- **`InterfacialFriction.stratifiedWaveEnhancement`** (new; used by the `TwoFluidPipe` steady stratified holdup root):
+  `f_i/f_G = 1 + 80 (h_L/D)^2 min(U_SG/U_SG,t - 1, 4)` above the Andritsos-Hanratty transition. Transient
+  wavy-stratified interfacial force retains the published `1 + 15 sqrt(h_L/D)(r - 1)` with its cap of 12 in
+  `andritsosHanrattyEnhancement`: applying the steady calibration there suppressed the validated severe-slugging
+  blowout/fallback cycle. At production gas densities the ratio `r` is 5-15 and the cap bound everywhere,
+  so the interface was equally rough on a thin flat layer (holdup 20-30 % low vs the reference) and on a thick uphill
+  layer; the uphill Taitel-Dukler balance then lost its thin root between 1.6 and 2.5 degrees and jumped 0.025 → 0.32
+  where the reference rises 0.028, 0.072, 0.14. Selected on 13 reference stratified sections (30-100 bara, flat and
+  0.6-4.7 degrees): eleven within 10 %, mean log holdup error 0.24 → 0.06 flat and 0.49 → 0.10 inclined. Square-root
+  forms never got below 0.2 on either group whatever the slope, ratio limit or cap; linear-depth forms reached 0.13/0.15.
+- Effect vs the reference: undulating lean wet gas dP +12/-2/+33 % → +4/+5/+6 % at ±20/35/50 m; gas-condensate terrain
+  +12.6 → +3.8 %; low-rate flat gas condensate / wet gas dP +17/+29 % → +5/+14 % (holdup -23/-22 % → -8/-5 %). Over the
+  32-case multiphase baseline: mean holdup error 16.0 → 8.6 %, dP 14.5 → 12.7 %. Single-phase, gas-oil slug and terrain
+  gas-oil cases unchanged. NeqSim condenses about 30 % more liquid than the reference's interpolated PVT table in the
+  near-dew-point lean gas, which inflates its holdup ratios there independently of the hydraulics.
+- `TwoFluidPipeSteadyStateConvergenceTest` terrain bounds now follow the reference (+5/+30/+70 % at 20/35/50 m on that
+  line); the former flat 15 % bound encoded the weak response of the capped form. Horizontal "annular" gas condensate
+  (+12 % dP, -11 % holdup) is untouched: the reference labels it stratified with partial wetting, which neither closure
+  represents; the dP excess is the liquid wall shear of the too-thin layer, not the friction form (separated and mixture
+  friction give the same 42 Pa/m there).
+
+## 2026-10-24 — `SlugUnitModel` calibrated to a 32-case OLGA 2025.1 sweep (horizontal slug flow)
+
+- **High-Froude slip reduction (default on):** the unit holdup is `hs + (vB/vt)(1-hs) - vsG/vt`, so unit slip is fixed by
+  the translational velocity `vt` and bubble velocity `vB`, not by the film balance. Bendiksen's `1.2 vm` overstated
+  slip above Froude 3: OLGA's unit gas velocity falls from 1.25 vm at Froude 2 to about `1.12 - 0.25 vsL/vm` times vm
+  above Froude 4.5. Both velocities are scaled towards no-slip (smoothstep over Froude 2.5 to 4.5, weighted by
+  cos(theta)^2, so vertical units keep Nicklin). Horizontal gas-oil and gas-oil-water holdup error vs OLGA fell from
+  +20..+40 % to within 10 %; the film comes out at 0.11-0.19 and the slug fraction larger, as in OLGA.
+  `TwoFluidPipe.setSlugHighFroudeSlipReductionEnabled(false)` restores the plain coefficients.
+- **Front-mixing weight:** the Dukler-Hubbard pickup term is now counted with an automatic weight, 0.6 falling to 0.2
+  between Froude 4.5 and 7, ramped in between Froude 2.3 and 3.0 and zero beyond about 2 degrees of slope.
+  `setSlugFrontMixingLossIncluded(boolean)` still forces 0/1 and `setSlugFrontMixingLossWeight(double)` sets a share.
+  Horizontal 25 kg/s gas-oil pressure drop moved from 29 % to 14 % below OLGA, an undulating one from +5 % to +2 %.
+- **Tried and not shipped (do not repeat without a terrain check):** a 1.5 m/s floor on the Andritsos-Hanratty wave-onset
+  velocity, or a lower enhancement bound, fixes low-rate flat gas-condensate/wet-gas holdup (-22 % to -4 %, dP +17 % to
+  +3 %) but raises the undulating lean wet-gas pressure drop vs OLGA at 35 and 50 m amplitude from -2 % and +33 % to
+  +43 % and +62 %, and the TwoFluidPipeSteadyStateConvergenceTest terrain fixture from +3 % to +83 % at 50 m. The thin
+  film that climbs gentle slopes needs the current enhancement. A film-friction scan and rough-wall stratified friction
+  were also neutral or counter-productive.
+- Remaining differences (not changed): horizontal annular gas condensate/wet gas is +8..+15 % on pressure drop and
+  +50 % on holdup at 140 kg/s, and risers are +11..+18 % (+90 % at low rate) because
+  OLGA's riser holdup is nearly no-slip (unit gas velocity 1.01-1.06 vm). `setUseInclinedFilmBridgingCriterion(true)`
+  cut the mean riser pressure-drop error from 31 % to 20 % on the five riser cases.
+- Tests: `SlugUnitModelTest`, `TwoFluidPipeOlgaGasOilSlugTest`.
+- Saved `SlugUnitModel` instances from before the weighted closure preserve their explicit front-mixing on/off
+  choice when loaded. They retain the original slip coefficients; newly constructed models keep the calibrated
+  defaults. Current streams preserve explicit fractional weights and automatic weighting on a serialization round trip.
+
 ## 2026-10-23 — Two-fluid dynamic stability review
 
 - Corrected the legacy IMEX pressure-response sign: compression produces a restoring pressure force rather than

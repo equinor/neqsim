@@ -1,35 +1,34 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity;
 
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * Full Chung et al. (1988) thermal conductivity method including both dilute-gas and dense-fluid contributions. Works
- * for gas and liquid phases across all pressures.
+ * Chung et al. (1988) dilute and dense-fluid thermal conductivity with conformal mixture rules.
  *
  * <p>
- * The dilute-gas contribution uses a modified Eucken correction with the Mason-Saxena mixing rule. The dense-fluid
- * contribution accounts for density effects via the parameter y = rho * Vc / 6.
- * </p>
- *
- * <p>
- * Reference: Chung, T.-H., Ajlan, M., Lee, L. L., Starling, K. E. (1988). Generalized multiparameter correlation for
- * nonpolar and polar fluid transport properties. Ind. Eng. Chem. Res. 27(4), 671-679.
- * </p>
+ * Uses the original conductivity coefficients, also reproduced in Bouraba et al., International Journal of
+ * Refrigeration 80 (2017), Table A.2. Some handbook tables change the sign of the association coefficient in B6 and use
+ * a different B7 row. No critical enhancement is included. Association uses the transport correction factor, not the
+ * CPA association volume. Binary combining-rule factors are unity.
  *
  * @author Even Solbraa
- * @version 1.0
+ * @version 1.1
  */
 public class ChungDenseConductivityMethod extends Conductivity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-
-  /** Conversion factor from Chung conductivity units (1e-6 cal/(cm*s*K)) to W/(m*K). */
-  private static final double CHUNG_TO_SI = 4.184e-4;
+  /** Original Chung conductivity coefficients: constant, acentric, dipole and association terms. */
+  private static final double[][] COEFFICIENTS = {{2.41657, 0.74824, -0.91858, 121.721},
+      {-0.50924, -1.50936, -49.9912, 69.9834}, {6.61069, 5.62073, 64.7599, 27.0389},
+      {14.5425, -8.91387, -5.63794, 74.3435}, {0.79274, 0.82019, -0.69369, 6.31734},
+      {-5.8634, 12.8005, 9.58926, -65.5292}, {81.171, 114.158, -60.841, 466.775}};
 
   /**
-   * Constructor for ChungDenseConductivityMethod.
+   * Creates a conductivity method bound to an existing physical-property package.
    *
-   * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
+   * @param phase physical-property package supplying composition, temperature and density
    */
   public ChungDenseConductivityMethod(PhysicalProperties phase) {
     super(phase);
@@ -38,162 +37,176 @@ public class ChungDenseConductivityMethod extends Conductivity {
   /** {@inheritDoc} */
   @Override
   public double calcConductivity() {
-    int ncomp = phase.getPhase().getNumberOfComponents();
-    double temp = phase.getPhase().getTemperature();
-
-    // Mixing rules for Chung parameters (mole-fraction weighted)
-    double sigMix3 = 0.0;
-    double epskMix = 0.0;
-    double omegaMix = 0.0;
-    double muMix = 0.0;
-    double kappaMix = 0.0;
-    double mwMixG = phase.getPhase().getMolarMass() * 1000.0; // g/mol
-    double mwMixKg = phase.getPhase().getMolarMass(); // kg/mol
-    double vcMix = 0.0; // cm3/mol
-    double tcMix = 0.0; // K
-    double cpMix = phase.getPhase().getCp0() / phase.getPhase().getNumberOfMolesInPhase(); // J/(mol*K)
-
-    for (int i = 0; i < ncomp; i++) {
-      double xi = phase.getPhase().getComponent(i).getx();
-      double tci = phase.getPhase().getComponent(i).getTC();
-      double vci = phase.getPhase().getComponent(i).getCriticalVolume(); // cm3/mol
-      double omi = phase.getPhase().getComponent(i).getAcentricFactor();
-      double sigI = Math.pow(vci, 1.0 / 3.0);
-
-      for (int j = 0; j < ncomp; j++) {
-        double xj = phase.getPhase().getComponent(j).getx();
-        double tcj = phase.getPhase().getComponent(j).getTC();
-        double vcj = phase.getPhase().getComponent(j).getCriticalVolume();
-        double sigJ = Math.pow(vcj, 1.0 / 3.0);
-
-        double sigIJ = Math.sqrt(sigI * sigJ);
-        double epsKij = Math.sqrt(tci / 1.2593 * tcj / 1.2593);
-        double sigIJ3 = sigIJ * sigIJ * sigIJ;
-
-        sigMix3 += xi * xj * sigIJ3;
-        epskMix += xi * xj * epsKij * sigIJ3;
+    PhaseInterface fluid = phase.getPhase();
+    int count = fluid.getNumberOfComponents();
+    double temperature = fluid.getTemperature();
+    if (count == 1) {
+      ComponentInterface component = fluid.getComponent(0);
+      if (!Double.isFinite(component.getx()) || Math.abs(component.getx() - 1.0) > 1e-8) {
+        throw new IllegalArgumentException("Chung requires normalized nonempty composition");
       }
-      omegaMix += xi * omi;
-      muMix += xi * phase.getPhase().getComponent(i).getDebyeDipoleMoment();
-      kappaMix += xi * phase.getPhase().getComponent(i).getAssociationVolume();
-      vcMix += xi * phase.getPhase().getComponent(i).getCriticalVolume();
-      tcMix += xi * tci;
+      conductivity = calculateConductivity(temperature, fluid.getDensity() / component.getMolarMass(),
+          component.getMolarMass(), component.getTC(), component.getCriticalVolume(), component.getAcentricFactor(),
+          component.getCv0(temperature), component.getDebyeDipoleMoment(), component.getViscosityCorrectionFactor());
+      return conductivity;
     }
-
-    if (sigMix3 > 0.0) {
-      epskMix = epskMix / sigMix3;
-    }
-
-    // Reduced dipole moment (Chung 1988 Eq 9-4.12)
-    double muR4 = 0.0;
-    if (vcMix > 0.0 && tcMix > 0.0) {
-      double muR = 131.3 * muMix / Math.sqrt(vcMix * tcMix);
-      muR4 = muR * muR * muR * muR;
-    }
-
-    double tStar = temp / (epskMix * 1.2593);
-    if (tStar < 0.01) {
-      tStar = 0.01;
-    }
-
-    // Neufeld collision integral
-    double omegaV = 1.16145 * Math.pow(tStar, -0.14874) + 0.52487 * Math.exp(-0.77320 * tStar)
-        + 2.16178 * Math.exp(-2.43787 * tStar);
-
-    // Fc correction for polarity and association (Chung 1988 Eq 9-4.11)
-    double fc = 1.0 - 0.2756 * omegaMix + 0.059035 * muR4 + kappaMix;
-
-    // ---- Dilute-gas contribution in W/(m*K) ----
-    // Cv0 in J/(mol*K)
-    double cv0 = cpMix - R;
-    double psi = calcAlpha(cv0, omegaMix, temp, epskMix * 1.2593);
-
-    // Dilute viscosity in Pa*s (Chung Eq 9-4.10 from Poling 5th ed)
-    double eta0PaS = 40.785e-7 * fc * Math.sqrt(mwMixG * temp) / (Math.pow(vcMix, 2.0 / 3.0) * omegaV);
-
-    // Dilute conductivity in W/(m*K): lambda0 = (eta0/M) * 3.75 * R * Psi
-    double lambda0 = (eta0PaS / mwMixKg) * 3.75 * R * psi;
-
-    // ---- Dense-fluid contribution (Chung 1988) ----
-    // All internal calculations in Chung CGS units, converted at end.
-    // Chung unit for conductivity: 1e-6 cal/(cm*s*K) = 4.184e-4 W/(m*K)
-    double rhoMolar = phase.getPhase().getDensity() / mwMixKg; // mol/m3
-    double rhoMolPerCm3 = rhoMolar * 1e-6; // mol/cm3
-    double y = rhoMolPerCm3 * vcMix / 6.0;
-
-    if (y < 0.0) {
-      y = 0.0;
-    }
-    if (y > 0.99) {
-      y = 0.99;
-    }
-
-    double lambdaDenseSI = 0.0;
-    if (y > 1e-10) {
-      // G coefficients from Chung (1988) Table V
-      double[] aC = {2.4166e0, -5.0924e-1, 6.6107e0, 1.4543e1, 7.9274e-1, -5.8634e0, 9.1089e1};
-      double[] bC = {7.4824e-1, -1.5094e0, 5.6207e0, -8.9139e0, 8.2019e-1, 1.2801e1, 1.2811e2};
-      double[] cC = {-9.1858e-1, -4.9991e1, 6.4760e1, -5.6379e0, -6.9369e-1, 9.5893e0, -5.4217e1};
-      double[] dC = {1.2172e2, 6.9983e1, 2.7039e1, 7.4344e1, 6.3173e0, 6.5529e1, 5.2381e2};
-
-      double[] G = new double[7];
-      for (int k = 0; k < 7; k++) {
-        G[k] = aC[k] + bC[k] * omegaMix + cC[k] * muR4 + dC[k] * kappaMix;
+    double[] volumeRoots = new double[count];
+    double[] criticalTemperatures = new double[count];
+    double[] masses = new double[count];
+    double[] dipolesSquared = new double[count];
+    double[] associationRoots = new double[count];
+    double cv = 0.0;
+    double fractionSum = 0.0;
+    double actualMolarMass = 0.0;
+    for (int i = 0; i < count; i++) {
+      ComponentInterface component = fluid.getComponent(i);
+      double fraction = component.getx();
+      if (!Double.isFinite(fraction) || fraction < 0.0) {
+        throw new IllegalArgumentException("Chung requires finite nonnegative mole fractions");
       }
-
-      // Hard-sphere radial distribution function at contact
-      double g1 = (1.0 - 0.5 * y) / Math.pow(1.0 - y, 3.0);
-
-      // H2 function (Chung 1988 Eq 10.5-8): correction to dilute conductivity
-      double h2Num = G[0] * (1.0 - Math.exp(-G[3] * y)) / y + G[1] * g1 * Math.exp(G[4] * y) + G[2] * g1;
-      double h2Den = G[0] * G[3] + G[1] + G[2];
-      double h2 = (Math.abs(h2Den) > 1e-30) ? h2Num / h2Den : 1.0;
-      if (h2 < 0.01) {
-        h2 = 0.01;
+      if (fraction == 0.0) {
+        continue;
       }
+      requirePositive(component.getCriticalVolume(), "critical volume");
+      requirePositive(component.getTC(), "critical temperature");
+      requirePositive(component.getMolarMass(), "molar mass");
+      double association = component.getViscosityCorrectionFactor();
+      if (!Double.isFinite(association) || association < 0.0 || !Double.isFinite(component.getDebyeDipoleMoment())
+          || !Double.isFinite(component.getAcentricFactor())) {
+        throw new IllegalArgumentException("Chung requires finite transport parameters and nonnegative association");
+      }
+      volumeRoots[i] = Math.cbrt(component.getCriticalVolume());
+      criticalTemperatures[i] = component.getTC();
+      masses[i] = component.getMolarMass() * 1000.0;
+      double dipole = component.getDebyeDipoleMoment();
+      dipolesSquared[i] = dipole * dipole;
+      associationRoots[i] = Math.sqrt(association);
+      cv += fraction * component.getCv0(temperature);
+      actualMolarMass += fraction * component.getMolarMass();
+      fractionSum += fraction;
+    }
+    if (Math.abs(fractionSum - 1.0) > 1e-8) {
+      throw new IllegalArgumentException("Chung requires normalized nonempty composition");
+    }
 
-      // Dilute conductivity in Chung units: 7.452 * (eta0_uP / M_g) * Psi
-      double eta0MicroP = eta0PaS * 1.0e7;
-      double lambda0Chung = 7.452 * (eta0MicroP / mwMixG) * psi;
-
-      // Dense pre-factor q (Chung 1988 Eq 10.5-6)
-      double qChung = 3.586e-3 * Math.sqrt(tcMix / mwMixG) / Math.pow(vcMix, 2.0 / 3.0);
-
-      // Total in Chung units: lambda = lambda0/H2 + G6*q*y
-      double lambdaTotalChung = lambda0Chung / h2 + G[5] * qChung * y;
-
-      // Convert to SI: multiply by 4.184e-4 (Chung unit -> W/(m*K))
-      double lambdaTotalSI = lambdaTotalChung * CHUNG_TO_SI;
-
-      // Dense contribution = total - dilute
-      lambdaDenseSI = lambdaTotalSI - lambda0;
-      if (lambdaDenseSI < 0.0) {
-        lambdaDenseSI = 0.0;
+    // Powers of 0.809 cancel in the conformal rules when cbrt(Vc) replaces sigma.
+    double volume = 0.0;
+    double temperatureNumerator = 0.0;
+    double massNumerator = 0.0;
+    double omegaNumerator = 0.0;
+    double dipoleNumerator = 0.0;
+    double association = 0.0;
+    for (int i = 0; i < count; i++) {
+      double xi = fluid.getComponent(i).getx();
+      if (xi == 0.0) {
+        continue;
+      }
+      for (int j = i; j < count; j++) {
+        double xj = fluid.getComponent(j).getx();
+        if (xj == 0.0) {
+          continue;
+        }
+        double weight = xi * xj * (i == j ? 1.0 : 2.0);
+        double diameterSquared = volumeRoots[i] * volumeRoots[j];
+        double pairVolume = diameterSquared * Math.sqrt(diameterSquared);
+        double pairTemperature = Math.sqrt(criticalTemperatures[i] * criticalTemperatures[j]);
+        double pairMass = 2.0 * masses[i] * masses[j] / (masses[i] + masses[j]);
+        volume += weight * pairVolume;
+        temperatureNumerator += weight * pairVolume * pairTemperature;
+        massNumerator += weight * diameterSquared * pairTemperature * Math.sqrt(pairMass);
+        omegaNumerator += weight * pairVolume * 0.5
+            * (fluid.getComponent(i).getAcentricFactor() + fluid.getComponent(j).getAcentricFactor());
+        dipoleNumerator += weight * dipolesSquared[i] * dipolesSquared[j] / pairVolume;
+        association += weight * associationRoots[i] * associationRoots[j];
       }
     }
-
-    conductivity = lambda0 + lambdaDenseSI;
-    if (conductivity < 1e-10) {
-      conductivity = 1e-10;
-    }
+    double tc = temperatureNumerator / volume;
+    double effectiveMassRoot = massNumerator / (tc * Math.pow(volume, 2.0 / 3.0));
+    double effectiveMolarMass = effectiveMassRoot * effectiveMassRoot / 1000.0;
+    double dipole = Math.sqrt(Math.sqrt(volume * dipoleNumerator));
+    // Actual molar mass converts EOS mass density; conformal mass belongs only in the transport kernel.
+    double molarDensity = fluid.getDensity() / actualMolarMass;
+    conductivity = calculateConductivity(temperature, molarDensity, effectiveMolarMass, tc, volume,
+        omegaNumerator / volume, cv, dipole, association);
     return conductivity;
   }
 
   /**
-   * Calculates the alpha correction factor for thermal conductivity.
+   * Evaluates the pure-fluid Chung equation, also used with conformal mixture parameters.
    *
-   * @param cv0 ideal gas Cv in J/(mol*K)
-   * @param omega acentric factor
-   * @param temp temperature in K
-   * @param tc critical temperature in K
-   * @return alpha correction factor
+   * @param temperature temperature in K
+   * @param molarDensity molar density in mol/m3; zero gives the analytic dilute limit
+   * @param molarMass molar mass in kg/mol
+   * @param criticalTemperature critical temperature in K
+   * @param criticalVolume critical molar volume in cm3/mol
+   * @param acentricFactor dimensionless acentric factor
+   * @param idealGasCv ideal-gas molar Cv in J/(mol K)
+   * @param dipoleMoment dipole moment in Debye
+   * @param associationFactor dimensionless Chung transport association correction
+   * @return conductivity in W/(m K)
+   * @throws IllegalArgumentException for invalid inputs or the hard-sphere singular domain
    */
-  private double calcAlpha(double cv0, double omega, double temp, double tc) {
-    double cvR = cv0 / R - 1.5;
-    double beta = 0.7862 - 0.7109 * omega + 1.3168 * omega * omega;
-    double z = 2.0 + 10.5 * (temp / tc) * (temp / tc);
+  public static double calculateConductivity(double temperature, double molarDensity, double molarMass,
+      double criticalTemperature, double criticalVolume, double acentricFactor, double idealGasCv, double dipoleMoment,
+      double associationFactor) {
+    requirePositive(temperature, "temperature");
+    requirePositive(molarMass, "molar mass");
+    requirePositive(criticalTemperature, "critical temperature");
+    requirePositive(criticalVolume, "critical volume");
+    requirePositive(idealGasCv, "ideal-gas Cv");
+    if (!Double.isFinite(molarDensity) || molarDensity < 0.0 || !Double.isFinite(acentricFactor)
+        || !Double.isFinite(dipoleMoment) || !Double.isFinite(associationFactor) || associationFactor < 0.0) {
+      throw new IllegalArgumentException("Invalid Chung density or transport parameter");
+    }
+    double tr = temperature / criticalTemperature;
+    double tStar = 1.2593 * tr;
+    if (tStar < 0.3 || tStar > 100.0) {
+      throw new IllegalArgumentException("Chung collision integral requires 0.3 <= T* <= 100");
+    }
+    double y = molarDensity * 1e-6 * criticalVolume / 6.0;
+    if (y >= 1.0) {
+      throw new IllegalArgumentException("Chung packing fraction must be below one");
+    }
+    double reducedDipole = 131.3 * dipoleMoment / Math.sqrt(criticalVolume * criticalTemperature);
+    double dipole4 = reducedDipole * reducedDipole * reducedDipole * reducedDipole;
+    double fc = 1.0 - 0.2756 * acentricFactor + 0.059035 * dipole4 + associationFactor;
+    double collisionIntegral = 1.16145 * Math.pow(tStar, -0.14874) + 0.52487 * Math.exp(-0.77320 * tStar)
+        + 2.16178 * Math.exp(-2.43787 * tStar);
+    double volumePower = Math.pow(criticalVolume, 2.0 / 3.0);
+    double diluteViscosity = 40.785e-7 * fc * Math.sqrt(1000.0 * molarMass * temperature)
+        / (volumePower * collisionIntegral);
+    double alpha = idealGasCv / R - 1.5;
+    double beta = 0.7862 - 0.7109 * acentricFactor + 1.3168 * acentricFactor * acentricFactor;
+    double z = 2.0 + 10.5 * tr * tr;
     double psi = 1.0
-        + cvR * ((0.215 + 0.28288 * cvR - 1.061 * beta + 0.26665 * z) / (0.6366 + beta * z + 1.061 * cvR * beta));
-    return psi;
+        + alpha * (0.215 + 0.28288 * alpha - 1.061 * beta + 0.26665 * z) / (0.6366 + beta * z + 1.061 * alpha * beta);
+    double[] b = new double[7];
+    for (int i = 0; i < b.length; i++) {
+      b[i] = COEFFICIENTS[i][0] + COEFFICIENTS[i][1] * acentricFactor + COEFFICIENTS[i][2] * dipole4
+          + COEFFICIENTS[i][3] * associationFactor;
+    }
+    double g1 = (1.0 - 0.5 * y) / Math.pow(1.0 - y, 3.0);
+    // expm1 avoids cancellation at low density, with the analytic value at zero density.
+    double exponentialRatio = y == 0.0 ? b[3] : -Math.expm1(-b[3] * y) / y;
+    double h2 = (b[0] * exponentialRatio + b[1] * g1 * Math.exp(b[4] * y) + b[2] * g1) / (b[0] * b[3] + b[1] + b[2]);
+    requirePositive(h2, "Chung H2");
+    double q = 3.586e-3 * Math.sqrt(criticalTemperature / molarMass) / volumePower;
+    double result = 31.2 * diluteViscosity * psi / molarMass * (1.0 / h2 + b[5] * y)
+        + q * b[6] * y * y * Math.sqrt(tr) * h2;
+    requirePositive(result, "conductivity");
+    return result;
+  }
+
+  /**
+   * Rejects nonphysical scalar inputs instead of clipping a correlation result.
+   *
+   * @param value input value
+   * @param name parameter name for diagnostics
+   * @throws IllegalArgumentException when the input is not finite and positive
+   */
+  private static void requirePositive(double value, String name) {
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException("Chung requires finite positive " + name);
+    }
   }
 }

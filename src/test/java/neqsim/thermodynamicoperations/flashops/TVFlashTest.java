@@ -68,7 +68,7 @@ class TVFlashTest {
         logger.error(ex.getMessage(), ex);
       }
     }
-    assertEquals(235310.3670621656, testSystem.getEnthalpy(), 1.0);
+    assertEquals(235272.27225256967, testSystem.getEnthalpy(), 1.0);
   }
 
   @Test

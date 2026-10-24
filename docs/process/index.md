@@ -7,6 +7,7 @@ description: "Documentation for NeqSim's process simulation capabilities includi
 
 ## Flowline operation models
 
+- [Two-fluid pipeline model](TWOFLUIDPIPE_MODEL.md): steady closures, transient qualification and configuration.
 - [Experimental pressure-driven pig mechanics](pig-motion): prescribed-pressure mechanics with explicit coupling limits.
 
 ## Residual film after pigging

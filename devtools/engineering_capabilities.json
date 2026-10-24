@@ -1393,6 +1393,195 @@
       ],
       "limitations": "Experimental Java/Python route only; configure finite-rate transfer and independent initial aqueous inventory. Isothermal Euler with CFL <= 0.5, gas/aqueous only, no tracked slugs. Long-time drying and experimental duration accuracy are not qualified; not exposed by runPipeline.",
       "tool": "inspectApi"
+    },
+    {
+      "id": "bounded-transport-property-estimation",
+      "title": "Bounded saturated-liquid viscosity and dense-fluid conductivity estimation",
+      "domain": "physicalproperties",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.LetsouStielViscosity",
+        "neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod",
+        "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/viscosity/LetsouStielViscosityTest.java",
+        "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/conductivity/ChungDenseCorrelationTest.java",
+        "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java",
+        "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityReferenceValuesTest.java"
+      ],
+      "limitations": "Correlation evaluation only, not experimental qualification. Letsou-Stiel estimates pure saturated-liquid viscosity without mixture or pressure correction. Chung takes pure-fluid or supplied conformal parameters. CO2 uses the Laesecke-Muzny background correlation without critical enhancement and requires a separately established physical gas or compressed-fluid state. The dilute-only CO2 API explicitly permits extrapolation above 2000 K. Default model selection is unchanged; the background CO2 implementation also serves the existing Span-Wagner default.",
+      "operations": [
+        {
+          "id": "letsou-stiel-saturated-liquid-viscosity",
+          "classification": "supported",
+          "api": "neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.LetsouStielViscosity",
+          "method": "calculateViscosity",
+          "signature": "double neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.LetsouStielViscosity.calculateViscosity(double,double,double,double,double)",
+          "units": {
+            "inputs": {
+              "temperature": "K",
+              "molarMass": "kg/mol",
+              "criticalTemperature": "K",
+              "criticalPressure": "bara",
+              "acentricFactor": "dimensionless"
+            },
+            "outputs": {
+              "value": "Pa s"
+            }
+          },
+          "applicability": "Finite positive T, M, Tc and Pc, finite acentric factor and 0.76 <= T/Tc <= 0.98. Saturated-liquid estimate only, no pressure correction or mixture rule.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              400,
+              0.04607,
+              516.25,
+              63.83,
+              0.6371
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 0.0002036150875308,
+            "absoluteTolerance": 1e-14
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/viscosity/LetsouStielViscosityTest.java",
+            "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+          ]
+        },
+        {
+          "id": "chung-dense-conductivity",
+          "classification": "supported",
+          "api": "neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod",
+          "method": "calculateConductivity",
+          "signature": "double neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod.calculateConductivity(double,double,double,double,double,double,double,double,double)",
+          "units": {
+            "inputs": {
+              "temperature": "K",
+              "molarDensity": "mol/m3",
+              "molarMass": "kg/mol",
+              "criticalTemperature": "K",
+              "criticalVolume": "cm3/mol",
+              "acentricFactor": "dimensionless",
+              "idealGasCv": "J/(mol K)",
+              "dipoleMoment": "Debye",
+              "associationFactor": "dimensionless Chung transport factor"
+            },
+            "outputs": {
+              "value": "W/(m K)"
+            }
+          },
+          "applicability": "Original Chung conductivity coefficients, finite positive required constants, nonnegative density and association, 0.3 <= 1.2593*T/Tc <= 100 and packing fraction below one. No critical enhancement or universal accuracy claim.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              300,
+              4000,
+              0.0280134,
+              126.2,
+              89.4,
+              0.0372,
+              20.8,
+              0,
+              0
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 0.031034910394252442,
+            "absoluteTolerance": 1e-14
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/conductivity/ChungDenseCorrelationTest.java",
+            "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+          ]
+        },
+        {
+          "id": "pure-co2-background-viscosity",
+          "classification": "supported",
+          "api": "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod",
+          "method": "calculateViscosity",
+          "signature": "double neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod.calculateViscosity(double,double)",
+          "units": {
+            "inputs": {
+              "temperature": "K",
+              "density": "kg/m3"
+            },
+            "outputs": {
+              "viscosity": "Pa s"
+            }
+          },
+          "applicability": "Pure CO2 background viscosity, 100 <= T <= 2000 K, finite nonnegative mass density. Includes dilute, initial-density and residual terms, excludes critical enhancement. Callers must establish a physical fluid state inside the published gas/compressed-fluid domain; scalar checks do not enforce melting or phase stability.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              300,
+              65
+            ],
+            "parameterTypes": [
+              "double",
+              "double"
+            ],
+            "expected": 1.5563e-05,
+            "absoluteTolerance": 5e-10
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityReferenceValuesTest.java",
+            "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+          ]
+        },
+        {
+          "id": "pure-co2-dilute-viscosity",
+          "classification": "supported",
+          "api": "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod",
+          "method": "calculateDiluteGasViscosity",
+          "signature": "double neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod.calculateDiluteGasViscosity(double)",
+          "units": {
+            "inputs": {
+              "temperature": "K"
+            },
+            "outputs": {
+              "viscosity": "Pa s"
+            }
+          },
+          "applicability": "Pure CO2 zero-density viscosity. 100 <= T <= 10000 K; values above 2000 K are the explicitly documented extrapolation, not finite-density predictions.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              100
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 5.3757e-06,
+            "absoluteTolerance": 5e-11
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityReferenceValuesTest.java",
+            "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+          ]
+        }
+      ]
     }
   ]
 }

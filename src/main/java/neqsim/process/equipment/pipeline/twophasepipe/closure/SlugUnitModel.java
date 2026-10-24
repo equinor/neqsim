@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.closure;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -18,14 +20,25 @@ import java.io.Serializable;
  * zone, plus gravity. In the frame moving with the slug front the unit is periodic, so the momentum flux entering a
  * unit equals the flux leaving it and the unit-averaged gradient is wall friction plus gravity (Taitel and Barnea
  * 1990). Dukler and Hubbard (1975) add the acceleration of the film liquid picked up at the slug front; that term is
- * reported in {@link Result#accelerationGradient} and can be counted in {@link Result#frictionGradient} with
- * {@link #setFrontMixingLossIncluded(boolean)}, which is off by default. Benchmarking against OLGA 2025.1 on a 10 in
- * gas-oil line showed why: on a horizontal section the wall-shear unit gives 61 Pa/m against 86 in OLGA and the front
- * term (14 Pa/m) closes part of the gap, but on 4 degree up-slopes wall shear plus gravity (229 Pa/m) already matches
- * OLGA (233 Pa/m) and the front term there (135 Pa/m) is pure excess. The remaining horizontal deficit is consistent
- * with OLGA carrying a thinner film and a larger slug fraction (about 0.185 and 0.11 against 0.235 and 0.05 here) than
- * the constant-interfacial-friction film balance gives. When slugs cannot be sustained (slug fraction at or below zero)
- * the result is flagged {@link Result#stratified}; when the film vanishes the unit degenerates to the slug body.
+ * reported in {@link Result#accelerationGradient}. How much of it is counted in {@link Result#frictionGradient} is set
+ * with {@link #setFrontMixingLossWeight(double)} or {@link #setFrontMixingLossIncluded(boolean)}; by default an
+ * OLGA-calibrated weight is used that is zero on slopes steeper than about 2 degrees and below Froude number 2.3.
+ * Benchmarking against OLGA 2025.1 on a 10 in gas-oil line showed why: on a horizontal section wall shear alone gives
+ * 61 Pa/m against 86 in OLGA and the front term (14 Pa/m) closes part of the gap, but on 4 degree up-slopes wall shear
+ * plus gravity (229 Pa/m) already matches OLGA (233 Pa/m) and the front term there (135 Pa/m) is pure excess.
+ * </p>
+ *
+ * <p>
+ * The unit holdup follows from the liquid balance as {@code hs + (vB/vt)(1 - hs) - vsG/vt}, independent of the film
+ * balance, so the slip of the whole unit is set by the translational velocity {@code vt} and the bubble velocity
+ * {@code vB}. A 32-case OLGA 2025.1 steady sweep (8 to 16 in gas-oil, gas-oil-water, gas-condensate and wet-gas lines,
+ * 30 to 100 bara) showed the Bendiksen value {@code vt = 1.2 vm} overstates the slip above Froude number 3: OLGA's unit
+ * gas velocity falls from 1.25 vm at Froude 2 to about {@code 1.12 - 0.25 vsL/vm} times vm above Froude 4.5. Both
+ * velocities are therefore scaled towards no-slip by {@link #setHighFroudeSlipReductionEnabled(boolean)} (on by
+ * default, horizontal sections only), which removed a 20 to 40 per cent holdup over-prediction and gives the thinner
+ * film (about 0.11 to 0.19) and larger slug fraction OLGA carries. When slugs cannot be sustained (slug fraction at or
+ * below zero) the result is flagged {@link Result#stratified}; when the film vanishes the unit degenerates to the slug
+ * body.
  * </p>
  *
  * <p>
@@ -49,23 +62,109 @@ public final class SlugUnitModel implements Serializable {
   private static final double FILM_INTERFACIAL_DARCY_FRICTION = 4.0 * 0.014;
   private static final double STRATIFIED_GEOMETRY_LIMIT = Math.toRadians(45.0);
   private static final double ANNULAR_GEOMETRY_LIMIT = Math.toRadians(75.0);
+  private static final double HIGH_FROUDE_START = 2.5;
+  private static final double HIGH_FROUDE_END = 4.5;
+  private static final double HIGH_FROUDE_UNIT_VELOCITY_RATIO = 1.12;
+  private static final double HIGH_FROUDE_LIQUID_SLOPE = 0.25;
+  private static final double FRONT_MIXING_SLOPE_LIMIT = 0.035;
+  private static final double FRONT_MIXING_ONSET_FROUDE = 2.3;
 
-  /** Count the front-mixing (acceleration) loss in the reported unit friction gradient; default false. */
-  private boolean frontMixingLossIncluded = false;
+  /** Reduce the unit slip towards no-slip at high mixture Froude number; default true. */
+  private boolean highFroudeSlipReductionEnabled = true;
+
+  /**
+   * Enable or disable the high-Froude reduction of the unit gas-liquid velocity ratio.
+   *
+   * @param enabled true to scale the translational and bubble velocities towards no-slip as the mixture Froude number
+   * rises (default); false for the plain Bendiksen coefficients
+   */
+  public void setHighFroudeSlipReductionEnabled(boolean enabled) {
+    highFroudeSlipReductionEnabled = enabled;
+  }
+
+  /** @return true when the high-Froude slip reduction is applied */
+  public boolean isHighFroudeSlipReductionEnabled() {
+    return highFroudeSlipReductionEnabled;
+  }
+
+  /**
+   * Front-mixing weight set explicitly; NaN selects the OLGA-calibrated horizontal weight of
+   * {@link #automaticFrontMixingWeight(double, double)}.
+   */
+  private double frontMixingLossWeight = Double.NaN;
+
+  /** Legacy serialized switch, retained so older readers preserve explicitly enabled front-mixing loss. */
+  private boolean frontMixingLossIncluded;
+
+  /**
+   * Restore the explicit mixing-loss choice from models saved before weighted mixing losses were introduced.
+   *
+   * <p>
+   * Legacy models retain their boolean choice and unscaled Bendiksen velocities. Newer streams retain fractional
+   * weights, the automatic NaN selection and their configured high-Froude slip reduction.
+   * </p>
+   *
+   * @param input serialized model input
+   * @throws IOException if the model fields cannot be read
+   * @throws ClassNotFoundException if a serialized field type is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    ObjectInputStream.GetField fields = input.readFields();
+    boolean legacyIncluded = fields.get("frontMixingLossIncluded", false);
+    frontMixingLossWeight = fields.defaulted("frontMixingLossWeight") ? (legacyIncluded ? 1.0 : 0.0)
+        : fields.get("frontMixingLossWeight", Double.NaN);
+    frontMixingLossIncluded = frontMixingLossWeight == 1.0;
+    highFroudeSlipReductionEnabled = fields.get("highFroudeSlipReductionEnabled", false);
+  }
 
   /**
    * Choose whether the slug-front mixing loss is counted in {@link Result#frictionGradient}.
    *
-   * @param included true to add the Dukler-Hubbard front acceleration term; false (default) for the Taitel-Barnea
-   * wall-shear-only unit gradient, which matched OLGA on inclined sections
+   * @param included true to add the whole Dukler-Hubbard front acceleration term; false for the Taitel-Barnea
+   * wall-shear-only unit gradient. Not calling this keeps the automatic horizontal weight.
    */
   public void setFrontMixingLossIncluded(boolean included) {
-    frontMixingLossIncluded = included;
+    setFrontMixingLossWeight(included ? 1.0 : 0.0);
   }
 
-  /** @return true when the front-mixing loss is counted in the unit friction gradient */
+  /**
+   * Set the share of the front-mixing loss counted in {@link Result#frictionGradient}.
+   *
+   * @param weight share between zero and one; NaN restores the automatic horizontal weight
+   * @throws IllegalArgumentException if the weight is outside zero to one and not NaN
+   */
+  public void setFrontMixingLossWeight(double weight) {
+    if (!Double.isNaN(weight) && (weight < 0.0 || weight > 1.0)) {
+      throw new IllegalArgumentException("front mixing weight must be within [0, 1]: " + weight);
+    }
+    frontMixingLossWeight = weight;
+    frontMixingLossIncluded = weight == 1.0;
+  }
+
+  /** @return true when the whole front-mixing loss is counted in the unit friction gradient */
   public boolean isFrontMixingLossIncluded() {
     return frontMixingLossIncluded;
+  }
+
+  /**
+   * Horizontal front-mixing weight calibrated against OLGA 2025.1.
+   *
+   * <p>
+   * Wall shear alone under-predicts the OLGA unit gradient on horizontal gas-oil lines at moderate Froude number (65
+   * against 83 Pa/m at Froude 3.4) and the front term closes it, but on up-slopes wall shear plus gravity already
+   * matches and the term is excess, so the weight is zero beyond about 2 degrees. It falls from 0.6 to 0.2 as the
+   * Froude number rises from 4.5 to 7 because the unit approaches no-slip and the pickup loss weakens.
+   * </p>
+   *
+   * @param froude mixture Froude number vm / sqrt(g D)
+   * @param sinTheta sine of the pipe inclination
+   * @return weight between zero and one
+   */
+  static double automaticFrontMixingWeight(double froude, double sinTheta) {
+    double inclinationRamp = Math.max(0.0, 1.0 - Math.abs(sinTheta) / FRONT_MIXING_SLOPE_LIMIT);
+    double onset = Math.max(0.0, Math.min(1.0, (froude - FRONT_MIXING_ONSET_FROUDE) / 0.7));
+    double x = Math.max(0.0, Math.min(1.0, (froude - 4.5) / 2.5));
+    return inclinationRamp * onset * (0.6 - 0.4 * x);
   }
 
   /** Slug-unit state for one set of superficial velocities. */
@@ -155,6 +254,9 @@ public final class SlugUnitModel implements Serializable {
         ? 1.53 * Math.pow(GRAVITY * sigma * (rhoL - rhoG) / (rhoL * rhoL), 0.25) * Math.sqrt(slugHoldup) * sinTheta
         : 0.0;
     double bubbleVelocity = 1.2 * vm + riseVelocity;
+    double slipScale = highFroudeSlipScale(froude, vsL / vm, cosTheta);
+    translational *= slipScale;
+    bubbleVelocity *= slipScale;
     double slugLiquidVelocity = (vm - bubbleVelocity * (1.0 - slugHoldup)) / slugHoldup;
 
     result.slugHoldup = slugHoldup;
@@ -253,14 +355,43 @@ public final class SlugUnitModel implements Serializable {
         ? rhoL * filmHoldup * (translational - filmLiquidVelocity) * (slugLiquidVelocity - filmLiquidVelocity)
             / unitLength
         : 0.0;
+    double weight = Double.isNaN(frontMixingLossWeight) ? automaticFrontMixingWeight(froude, sinTheta)
+        : frontMixingLossWeight;
     result.frictionGradient = result.wallFrictionGradient
-        + (frontMixingLossIncluded && Double.isFinite(result.accelerationGradient)
-            ? Math.max(0.0, result.accelerationGradient)
+        + (weight > 0.0 && Double.isFinite(result.accelerationGradient)
+            ? weight * Math.max(0.0, result.accelerationGradient)
             : 0.0);
     double filmDensity = filmHoldup * rhoL + (1.0 - filmHoldup) * rhoG;
     result.gravityGradient = (slugFraction * slugDensity + (1.0 - slugFraction) * filmDensity) * GRAVITY * sinTheta;
     result.valid = true;
     return result;
+  }
+
+  /**
+   * Scale factor on the translational and bubble velocities at high mixture Froude number.
+   *
+   * <p>
+   * Bendiksen's distribution coefficient of 1.2 is a developed-turbulent-profile value for the elongated bubble. In a
+   * horizontal or near-horizontal line the gas-liquid velocity ratio of the whole unit falls towards the no-slip limit
+   * as the mixing rate rises. OLGA 2025.1 steady runs on 8 to 12 in gas-oil, gas-oil-water and gas-condensate lines
+   * (mixture Froude number 2 to 7, liquid fraction 0.1 to 0.5) give a unit gas velocity of 1.25 vm near Froude 2, and
+   * about 1.12 - 0.25 liquid fraction times vm above Froude 4.5, against 1.2 vm without this scaling. The scaling is
+   * applied with cos(theta) squared so a vertical slug unit keeps the Nicklin value.
+   * </p>
+   *
+   * @param froude mixture Froude number vm / sqrt(g D)
+   * @param liquidFraction no-slip liquid fraction vsL / vm
+   * @param cosTheta cosine of the pipe inclination
+   * @return scale factor in (0, 1]
+   */
+  private double highFroudeSlipScale(double froude, double liquidFraction, double cosTheta) {
+    if (!highFroudeSlipReductionEnabled) {
+      return 1.0;
+    }
+    double limit = Math.max(1.0, HIGH_FROUDE_UNIT_VELOCITY_RATIO - HIGH_FROUDE_LIQUID_SLOPE * liquidFraction) / 1.2;
+    double x = Math.max(0.0, Math.min(1.0, (froude - HIGH_FROUDE_START) / (HIGH_FROUDE_END - HIGH_FROUDE_START)));
+    double ramp = x * x * (3.0 - 2.0 * x);
+    return 1.0 - (1.0 - Math.min(1.0, limit)) * ramp * cosTheta * cosTheta;
   }
 
   /**

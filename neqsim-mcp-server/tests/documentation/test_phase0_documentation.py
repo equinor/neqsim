@@ -46,6 +46,16 @@ if root_level_tests:
 require(SUPPORT_HELPER_PATH.read_text(encoding="utf-8"), "def require(", SUPPORT_HELPER_PATH)
 
 source = SOURCE_PATH.read_text(encoding="utf-8")
+# Check Java source accounting before the expensive core/server build as well.
+java_test_class_count = sum(
+    1 for path in (REPOSITORY_ROOT / "src/test/java/neqsim/mcp").rglob("*Test.java")
+    if path.is_file()
+)
+require(
+    source,
+    f"int JAVA_TEST_CLASS_COUNT = {java_test_class_count};",
+    SOURCE_PATH,
+)
 # Recount the harness before packaging so newly added scenarios cannot leave
 # the published evidence inventory and its documentation silently out of date.
 protocol_tree = ast.parse(PROTOCOL_PATH.read_text(encoding="utf-8"))
@@ -83,6 +93,7 @@ require(source, 'case "runNorsokS001Clause10Review":', SOURCE_PATH)
 # the current inventory. Otherwise CI can pass the focused checks and only
 # discover stale accounting at the final comprehensive regression.
 expected_inventory = {
+    "javaTestClassCount": java_test_class_count,
     "inventoryVersion": "1.50",
     "contractTestedToolCount": 50,
     "confirmedGapToolCount": 1,
@@ -113,6 +124,8 @@ for focused_path in [PROTOCOL_PATH] + sorted(PROTOCOL_PATH.parent.glob("test_*_p
             )
 
 surface = SURFACE_PATH.read_text(encoding="utf-8")
+require(surface, f"| MCP Java test classes | {java_test_class_count} |", SURFACE_PATH)
+require(surface, f"{java_test_class_count} JUnit test classes", SURFACE_PATH)
 require_groups(
     surface,
     r"as the primary harness: version `([^`]+)`, (\d+) contract-tested tools "
