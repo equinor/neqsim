@@ -3,6 +3,7 @@ package neqsim.process.fielddevelopment.reservoir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,8 @@ import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionZon
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionZoneResult;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionWellResult;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.MultiZoneInjectionResult;
+import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity;
+import neqsim.thermo.util.steam.Iapws_if97;
 
 /**
  * Unit tests for InjectionWellModel.
@@ -399,5 +402,96 @@ class InjectionWellModelTest {
     assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterViscosity(Double.NaN));
     assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterVolumeFactor(-1.0));
     assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterVolumeFactor(Double.POSITIVE_INFINITY));
+  }
+
+  @Test
+  @DisplayName("Pure-water PVT reproduces official IF97 volume and IAPWS viscosity verification evidence")
+  void testIapwsPureWaterReferenceEvidence() {
+    // IAPWS-IF97 revised release, Region 1 verification point: 300 K and 3 MPa.
+    assertEquals(1.00215168e-3, Iapws_if97.v_pt(3.0, 300.0), 5.0e-12);
+
+    // IAPWS R12-08 Table 4: 298.15 K, 998 kg/m3, 889.735100 microPa s.
+    double lowerPressureMPa = 0.1;
+    double upperPressureMPa = 10.0;
+    for (int i = 0; i < 80; i++) {
+      double pressureMPa = 0.5 * (lowerPressureMPa + upperPressureMPa);
+      double density = 1.0 / Iapws_if97.v_pt(pressureMPa, 298.15);
+      if (density < 998.0) {
+        lowerPressureMPa = pressureMPa;
+      } else {
+        upperPressureMPa = pressureMPa;
+      }
+    }
+    double matchedPressureBara = 5.0 * (lowerPressureMPa + upperPressureMPa);
+    assertEquals(0.889735100, Viscosity.calcWaterViscosity(298.15, matchedPressureBara), 0.0045);
+  }
+
+  @Test
+  @DisplayName("IAPWS pure-water mode applies pressure-dependent viscosity and volume factor")
+  void testIapwsPureWaterPvtFeedsRadialInjectivity() {
+    model.setFormationWaterPvtMode(InjectionWellModel.FormationWaterPvtMode.IAPWS_IF97_PURE_WATER);
+    model.setReservoirTemperature(300.0, "K");
+    model.setReservoirPressure(30.0, "bara");
+    model.setFormationPermeability(100.0, "mD");
+    model.setFormationThickness(20.0, "m");
+    model.setSkinFactor(2.0);
+
+    InjectionWellResult result = model.calculate(1000.0);
+    double standardSpecificVolume = Iapws_if97.v_pt(0.101325, 288.15);
+    double expectedBw = Iapws_if97.v_pt(3.0, 300.0) / standardSpecificVolume;
+    double expectedViscosity = Viscosity.calcWaterViscosity(300.0, 30.0);
+    double expectedII = 2.0 * Math.PI * 100.0 * 9.869e-16 * 20.0
+        / (expectedViscosity * 1.0e-3 * expectedBw * (Math.log(500.0 / 0.1) + 2.0)) * 86400.0 * 1.0e5;
+
+    assertEquals(InjectionWellModel.FormationWaterPvtMode.IAPWS_IF97_PURE_WATER, result.getFormationWaterPvtMode());
+    assertEquals(30.0, result.formationWaterPvtPressure, 0.0);
+    assertEquals(expectedViscosity, result.formationWaterViscosity, 0.0);
+    assertEquals(expectedBw, result.formationWaterVolumeFactor, 1.0e-12);
+    assertEquals(expectedII, result.injectivityIndex, expectedII * 1.0e-12);
+  }
+
+  @Test
+  @DisplayName("Multi-zone pure-water PVT refreshes each pressure boundary without changing topology")
+  void testIapwsPureWaterPvtRefreshesPerZone() {
+    model.setFormationWaterPvtMode(InjectionWellModel.FormationWaterPvtMode.IAPWS_IF97_PURE_WATER);
+    model.setReservoirTemperature(300.0, "K");
+    InjectionZone lowPressure = new InjectionZone("low", 2500.0, 30.0, 100.0, 20.0, 500.0);
+    InjectionZone highPressure = new InjectionZone("high", 2600.0, 300.0, 100.0, 20.0, 500.0);
+    model.addZone(lowPressure);
+    model.addZone(highPressure);
+    model.setMaxBHP(490.0, "bara");
+
+    MultiZoneInjectionResult initial = model.calculateMultiZone(1000.0);
+    assertEquals(InjectionWellModel.FormationWaterPvtMode.IAPWS_IF97_PURE_WATER, initial.getFormationWaterPvtMode());
+    assertEquals(30.0, initial.zoneResults.get(0).formationWaterPvtPressure, 0.0);
+    assertEquals(300.0, initial.zoneResults.get(1).formationWaterPvtPressure, 0.0);
+    assertTrue(
+        initial.zoneResults.get(0).formationWaterVolumeFactor > initial.zoneResults.get(1).formationWaterVolumeFactor);
+
+    double initialVolumeFactor = initial.zoneResults.get(0).formationWaterVolumeFactor;
+    lowPressure.reservoirPressure = 40.0;
+    MultiZoneInjectionResult changed = model.calculateMultiZone(1000.0);
+    assertEquals(40.0, changed.zoneResults.get(0).formationWaterPvtPressure, 0.0);
+    assertTrue(changed.zoneResults.get(0).formationWaterVolumeFactor < initialVolumeFactor);
+    assertSame(lowPressure, model.getZones().get(0));
+  }
+
+  @Test
+  @DisplayName("IAPWS pure-water mode fails outside its declared liquid range")
+  void testIapwsPureWaterPvtFailsOutsideRange() {
+    model.setFormationWaterPvtMode(InjectionWellModel.FormationWaterPvtMode.IAPWS_IF97_PURE_WATER);
+    model.setReservoirTemperature(573.15, "K");
+    model.setReservoirPressure(700.0, "bara");
+    InjectionWellResult upperBoundary = model.calculate(1000.0);
+    assertTrue(Double.isFinite(upperBoundary.formationWaterViscosity));
+    assertTrue(Double.isFinite(upperBoundary.formationWaterVolumeFactor));
+
+    model.setReservoirPressure(700.0001, "bara");
+    assertThrows(IllegalArgumentException.class, () -> model.calculate(1000.0));
+
+    model.setReservoirPressure(1.0, "bara");
+    model.setReservoirTemperature(373.15, "K");
+    assertThrows(IllegalArgumentException.class, () -> model.calculate(1000.0));
+    assertThrows(IllegalArgumentException.class, () -> model.setFormationWaterPvtMode(null));
   }
 }

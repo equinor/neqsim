@@ -83,10 +83,25 @@ This is a steady water-injection screening calculation. For each zone it evaluat
 Darcy coefficient in m3/s/Pa, converts it with `86400 s/day * 100000 Pa/bar`, and divides by the
 configured formation-water volume factor in reservoir m3/Sm3. The default factor is `1.0`, which
 preserves the established screening result; configure an independently justified value before
-interpreting the output as a standard-volume PVT conversion. Pressure-dependent properties,
-relative permeability, crossflow, reservoir transients and fracture growth require separate qualified
-models. Multi-zone results produced before the dimensional correction in #4228 were lower by a factor
-of `1e10` and must be recalculated rather than reused.
+interpreting the output as a standard-volume PVT conversion. Multi-zone results produced before the
+dimensional correction in #4228 were lower by a factor of `1e10` and must be recalculated rather than
+reused.
+
+An opt-in `IAPWS_IF97_PURE_WATER` property basis reuses NeqSim's canonical IF97 specific-volume
+implementation and IAPWS-fitted water-viscosity correlation. It evaluates every zone at its own
+reservoir pressure and the configured reservoir temperature. The volume factor is the ratio of the
+reservoir specific volume to the IF97 value at 288.15 K and 1.01325 bara; the result records each
+zone's applied pressure, viscosity and volume factor. The implementation fails closed outside
+275.15--573.15 K, 1--700 bara or the IF97 Region-1 liquid state. Constant configured inputs remain the
+default and serialized legacy behavior.
+
+The reference tests reproduce the official IF97 Region-1 specific-volume verification point at
+300 K and 3 MPa and compare the fitted viscosity with the IAPWS R12-08 298.15 K, 998 kg/m3 sample.
+See the [IAPWS-IF97 release](https://iapws.org/technical-guidance/release/IF97-Rev) and the
+[IAPWS viscosity release](https://iapws.org/technical-guidance/release/viscosity). This evidence is
+limited to ordinary pure water. Salinity, dissolved gas, relative permeability, formation damage,
+crossflow, reservoir transients and fracture growth still require separate qualified inputs and
+models.
 
 The common BHP is solved from the piecewise-linear accepting-zone equation
 $q = \sum_i II_i\max(p_{bh}-p_{r,i},0)$. A zone whose reservoir pressure is at or above the

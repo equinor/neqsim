@@ -629,8 +629,14 @@ must be recalculated. It does not alter live `WellFlow` pressure-rate coupling, 
 hydraulics or optimization. The multi-zone screen also accepts explicit formation-water viscosity
 and volume factor, records both inputs in its result and divides the reservoir-volume coefficient
 by the configured reservoir-m3/Sm3 factor. The default factor remains `1.0`, preserving the
-established screening result. Pressure-dependent PVT remains outside this screen, and
-field/laboratory injectivity plus fracture review is still required before design or operating use.
+established screening result. An opt-in pure-water basis now evaluates each reservoir boundary with
+the canonical IF97 specific-volume implementation and NeqSim's IAPWS-fitted viscosity correlation.
+It records per-zone pressure, viscosity and reservoir/standard volume factor; rejects temperatures,
+pressures and phase states outside its declared 275.15--573.15 K, 1--700 bara Region-1 scope; and
+retains the constant-input path as the serialization-compatible default. Official IF97 specific-volume
+and IAPWS R12-08 viscosity samples provide independent reference checks. This qualifies the property
+calculation only for ordinary pure water within that scope. Saline formation water, field/laboratory
+injectivity, relative permeability and fracture review are still required before design or operating use.
 Its common-BHP allocation now solves the active accepting-zone set: zones at or above the solved BHP
 remain shut in and are removed before pressure is recomputed. Analytical regressions cover an inactive
 higher-pressure zone, zero target, and a max-BHP-limited rate shortfall. Results retain requested and
