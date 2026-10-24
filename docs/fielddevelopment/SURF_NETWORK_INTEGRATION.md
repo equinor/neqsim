@@ -722,6 +722,15 @@ fresh pump-power evidence rejects a temporary budget at 95% of demand and become
 feasible again when the budget is restored. Finally the original pressures recover
 rate and power within 1e-4 relative tolerance. Run it with
 `./mvnw -Dtest=FieldWellNetworkProcessUnitTest test`.
+
+`FieldToFacilityOptimizationAcceptanceTest.createTenWellLifecycleEvidenceJson(cycleId)` is a public test-scope
+bridge for the cross-language acceptance workflow. It executes the same independent early/current fixtures and
+returns the exact schema-v8 exporter output; Python does not assemble or repair its nested evidence. The executable
+`devtools.test_field_to_facility_living_workflow` regression binds that output to a generated living-task cycle and
+requires the existing production guard, ledger, promotion, living report and canonical report to accept the same
+immutable block. The production-optimization documentation workflow compiles `target/test-classes` and runs this
+regression against current source.
+
 These checks establish repeated-solve conservation and expected trends, not vendor-map
 qualification, a production forecast, coupled reservoir material balance, optimal
 lifecycle economics or transient validation. Durable candidate storage and fresh replay
