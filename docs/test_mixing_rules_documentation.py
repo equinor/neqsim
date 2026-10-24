@@ -241,20 +241,22 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
             'mixingRuleGEModel.equals("UNIFAC")',
             'mixingRuleGEModel.equals("UNIFAC_PSRK")',
             'mixingRuleGEModel.equals("UNIFAC_UMRPRU")',
-            'mixingRuleGEModel.equals("UNIQUAC")',
+            'mixingRuleGEModel.equalsIgnoreCase("UNIQUAC")',
         ):
             with self.subTest(selector=selector):
                 self.assertIn(selector, self.mixing_rule_handler)
 
         for source_formula in (
-            "tau = Dji / temperature + DjiT;",
-            "tau2 = Dij / temperature + DijT;",
+            "tau = Dji / (temperature) + DjiT;",
+            "tau2 = Dij / (temperature) + DijT;",
         ):
             with self.subTest(source_formula=source_formula):
                 self.assertIn(source_formula, self.modified_hv_component)
 
         for documentation_contract in (
-            r"\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}",
+            r"$$a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} "
+            r"- \frac{G^E}{\Lambda} \right)$$",
+            r"$$\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}.$$",
             "`Dij` has units of kelvin",
             "`DijT` is dimensionless",
             "`\"UNIQUAC\"` is explicitly rejected",

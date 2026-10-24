@@ -227,9 +227,7 @@ at initialization levels 1, 2 and 3.
 The excess Gibbs energy from the selected activity-coefficient model is incorporated
 into the EoS:
 
-$
-a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} - \frac{G^E}{\Lambda} \right)
-$
+$$a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} - \frac{G^E}{\Lambda} \right)$$
 
 Here, $G^E$ is the excess Gibbs energy and $\Lambda$ is the EoS-specific
 constant (approximately 0.693 for SRK).
@@ -238,9 +236,7 @@ constant (approximately 0.693 for SRK).
 `HVDij` matrix only. `HV` (type 4) also supplies `HVDijT`, so its
 dimensionless directional NRTL parameter is evaluated in source as
 
-$
-\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}.
-$
+$$\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}.$$
 
 Equivalently, define an effective energy numerator
 $D_{ij}^{\mathrm{eff}}(T)=D_{ij}+D_{ij,T}T$ and divide it by $T$.
@@ -257,11 +253,11 @@ finite results and total-mole conservation. Run it with assertions enabled
 
 <!-- hv-nrtl-example:start -->
 ```java
-import neqsim.thermo.ThermodynamicOperations;
 import neqsim.thermo.mixingrule.HVMixingRulesInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
