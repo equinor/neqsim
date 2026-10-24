@@ -27,9 +27,12 @@ class OptimizationEntryExamplesTest(unittest.TestCase):
         document = Path(__file__).resolve().parents[1] / "docs/process/optimization/OPTIMIZATION_OVERVIEW.md"
         blocks = re.findall(r"```python\n(.*?)```", document.read_text(encoding="utf-8"), re.S)
         self.assertEqual(3, len(blocks), "Execute every published Python block")
+        lifecycle_block = next(block for block in blocks if "proposal_from_lifecycle_json" in block)
+        engine_block = next(block for block in blocks if "findMaximumThroughput" in block)
+        optimizer_block = next(block for block in blocks if "ThroughputObjective" in block)
         state = {"__name__": "__main__"}
         with contextlib.redirect_stdout(io.StringIO()):
-            exec(compile(blocks[0], str(document) + ":python:0", "exec"), state)
+            exec(compile(engine_block, str(document) + ":python:engine", "exec"), state)
         maximum_flow = state["result"].getOptimalValue()
         compressor = state["compressor"]
         feed = state["feed"]
@@ -41,7 +44,7 @@ class OptimizationEntryExamplesTest(unittest.TestCase):
         self.assertAlmostEqual(maximum_flow, outlet.getFlowRate("kg/hr"), delta=1e-6)
         self.assertAlmostEqual(150.0, outlet.getPressure("bara"), delta=1e-8)
         with contextlib.redirect_stdout(io.StringIO()):
-            exec(compile(blocks[1], str(document) + ":python:1", "exec"), state)
+            exec(compile(optimizer_block, str(document) + ":python:optimizer", "exec"), state)
         selected_flow = state["result"].getOptimalRate()
         selected_power = compressor.getPower("kW")
         self.assertTrue(state["result"].isFeasible())
@@ -51,7 +54,7 @@ class OptimizationEntryExamplesTest(unittest.TestCase):
         self.assertAlmostEqual(selected_flow, feed.getFlowRate("kg/hr"), delta=1e-6)
         self.assertAlmostEqual(selected_flow, outlet.getFlowRate("kg/hr"), delta=1e-6)
         with contextlib.redirect_stdout(io.StringIO()):
-            exec(compile(blocks[2], str(document) + ":python:2", "exec"), state)
+            exec(compile(lifecycle_block, str(document) + ":python:lifecycle", "exec"), state)
         self.assertTrue(callable(state["run"]))
 
 
