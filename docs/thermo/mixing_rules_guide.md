@@ -786,3 +786,27 @@ ops.TPflash();
 - [Mathematical Models](mathematical_models.md) - EoS equations and derivations
 - [Thermodynamic Workflows](thermodynamic_workflows.md) - Flash calculations and operations
 - [PVT and Fluid Characterization](pvt_fluid_characterization.md) - Heavy fraction handling
+
+
+### Pure cubic saturation root qualification
+
+For an ordinary pure SRK or PR phase, `CubicPureSaturation` locates the two
+mechanical spinodals and brackets equal liquid/vapor fugacity strictly between
+them. The bubble-pressure calculation uses that pressure to initialize distinct
+physical roots. It does not accept identical roots merely because their fugacity
+coefficients agree. The helper does not mutate its supplied phase, introduce
+fitted parameters, or run on mixture TP-flash paths.
+
+`CubicPureSaturationTest` checks hydrogen at 20.369 K, CO2 at 302 K, methane at
+150 K and water at 373.15 K for both EOS, with three starting pressures each.
+Reference pressures come from independently solving the spinodal quartic and
+cubic pressure polynomial with NumPy, then bisecting the log-fugacity difference.
+The complete scalar inputs and results are retained in
+`src/test/resources/neqsim/thermo/mixingrule/hv-pure-cubic-saturation-reference.json`,
+with its standalone reproduction script. These are equation-implementation
+checks, not measured vapor-pressure accuracy or a new parameter fit.
+
+This qualification excludes CPA, electrolytes, translated-volume phases, SAFT,
+mixture saturation and critical/dew continuation. Broader TV, stability and
+caloric compatibility of the stalled-volume correction remains tracked in
+[issue #4579](https://github.com/equinor/neqsim/issues/4579).
