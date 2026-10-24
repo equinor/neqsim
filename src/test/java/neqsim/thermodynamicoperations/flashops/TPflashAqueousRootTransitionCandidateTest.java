@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseType;
@@ -34,7 +35,8 @@ class TPflashAqueousRootTransitionCandidateTest {
 
     assertTrue(flash.isLowerGibbsMultiphaseAqueousRootCandidate(gasAqueous, gasAqueous.getGibbsEnergy() + 1.0));
 
-    SystemInterface threePhase = createSrkCandidate(255.0, 90.0);
+    SystemInterface threePhase = createSrkCandidate(255.0, 60.0);
+    assertEquals(3, threePhase.getNumberOfPhases(), "topology guard requires three actual equilibrium phases");
     assertFalse(flash.isLowerGibbsMultiphaseAqueousRootCandidate(threePhase, threePhase.getGibbsEnergy() + 1.0));
 
     SystemInterface dryGasOil = createDryGasOilCandidate();

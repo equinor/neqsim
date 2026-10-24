@@ -346,6 +346,9 @@ derivatives, Gibbs-Duhem and Hessian symmetry, classical-rule recovery for both
 EoS, directed-parameter ordering, and gas-oil-water material balance and fugacity
 equilibrium with methanol and MEG. These checks establish implementation
 consistency for the tested states; they are separate from experimental accuracy.
+Hydrate-temperature depression is a trend check on the coupled hydrate model,
+not a validation of dissociation temperatures for every inhibitor concentration.
+
 `HuronVidalThermodynamicModelConsistencyTest` also uses the existing
 `ThermodynamicModelTest` fugacity/Gibbs, composition, pressure and temperature
 identity checks at their default absolute tolerance of $10^{-10}$ for its
@@ -353,8 +356,30 @@ specified feeds. The independent numerical derivative check uses the established
 mixed absolute/relative tolerance of $10^{-6}$ and requires agreement between two
 step sizes. Bounded step refinement resolves trace-component one-sided stencil
 truncation without relaxing that tolerance; an unresolved check still fails.
-Hydrate-temperature depression is a trend check on the coupled hydrate model,
-not a validation of dissociation temperatures for every inhibitor concentration.
+
+`HuronVidalModelConsistencyTest` and `HuronVidalMultiphaseQualificationTest` also
+assert all five `ThermodynamicModelTest` identities and independently compare
+every component's $\partial\ln\phi_i/\partial T$, $\partial\ln\phi_i/\partial P$
+and $\partial\ln\phi_i/\partial n_j$ against refined finite differences. Coverage
+includes both rules 3/4, prescribed asymmetric interactions and nonzero offsets,
+non-unit mole amounts, temperature changes and return, and equilibrated gas,
+oil and aqueous phases with and without methanol or MEG. Derivative trials retain
+each phase root, pressure and component amounts without reflashing. Additional
+checks compare attraction temperature/mixed derivatives and residual heat
+capacity with independent differences. The numerical checker may halve its step
+up to four additional times near dilute amounts; it still rejects unresolved derivatives
+at the requested tolerance and preserves the supplied fluid state.
+
+A stalled cubic-volume iteration must not be accepted solely because its update
+is small. The volume solver checks its EOS-equation residual before accepting
+that convergence, using the existing analytical cubic fallback if needed. The
+fixed-root qualification explicitly checks the returned volume against the
+pressure equation, including the SRK-HV spinodal regression at 280 K and 20 bara.
+This also removes a spurious third phase in a classical SRK CO2/methane/ethane/
+water regression at 255 K and 90 bara: its former vapor volume satisfied only
+54.73 bara. The corrected two-phase result satisfies the EOS equation and has
+lower Gibbs energy. Three-phase topology protection uses the same feed at
+255 K and 60 bara, where all three volumes satisfy the pressure equation.
 
 Public experimental data for a separate physical assessment are available for
 [MEG-water-methane from Folas et al. (2007)](https://trc.nist.gov/ThermoML/10.1016/j.fluid.2006.11.001.html).

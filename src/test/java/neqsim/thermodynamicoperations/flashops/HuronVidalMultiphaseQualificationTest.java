@@ -3,10 +3,13 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import neqsim.thermo.ThermodynamicModelTest;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -31,12 +34,16 @@ class HuronVidalMultiphaseQualificationTest extends neqsim.NeqSimTest {
    *
    * @param pengRobinson whether to use PR instead of SRK
    * @param inhibitor inhibitor component or {@code none}
+   * @param mixingRule numeric HV mixing rule
    */
   @ParameterizedTest
-  @CsvSource({"false,none", "false,methanol", "false,MEG", "true,none", "true,methanol", "true,MEG"})
-  void gasOilWaterAndInhibitorsRemainBalancedAndEquilibrated(boolean pengRobinson, String inhibitor) {
+  @CsvSource({"false,none,3", "false,methanol,3", "false,MEG,3", "true,none,3", "true,methanol,3", "true,MEG,3",
+      "false,none,4", "false,methanol,4", "false,MEG,4", "true,none,4", "true,methanol,4", "true,MEG,4"})
+  void gasOilWaterAndInhibitorsRemainBalancedAndEquilibrated(boolean pengRobinson, String inhibitor, int mixingRule) {
     SystemInterface fluid = fluid(pengRobinson, inhibitor, true);
+    fluid.setMixingRule(mixingRule);
     flashAndCheck(fluid);
+    assertThermodynamicConsistency(fluid);
     SystemInterface reference = fluid.clone();
 
     flashAndCheck(fluid);
@@ -45,7 +52,9 @@ class HuronVidalMultiphaseQualificationTest extends neqsim.NeqSimTest {
     fluid.setTemperature(300.15);
     fluid.setPressure(59.5);
     flashAndCheck(fluid);
+    assertThermodynamicConsistency(fluid);
     SystemInterface fresh = fluid(pengRobinson, inhibitor, true);
+    fresh.setMixingRule(mixingRule);
     fresh.setTemperature(300.15);
     fresh.setPressure(59.5);
     flashAndCheck(fresh);
@@ -55,6 +64,51 @@ class HuronVidalMultiphaseQualificationTest extends neqsim.NeqSimTest {
     fluid.setPressure(60.0);
     flashAndCheck(fluid);
     assertSameEquilibrium(reference, fluid);
+  }
+
+  /**
+   * Asserts identities and independent fugacity derivatives in every active phase, including trace components.
+   *
+   * @param fluid equilibrated gas/oil/water fluid with initialized analytical derivatives
+   */
+  private static void assertThermodynamicConsistency(SystemInterface fluid) {
+    ThermodynamicModelTest checker = new ThermodynamicModelTest(fluid);
+    checker.setMaxError(1.0e-8);
+    assertTrue(checker.checkFugacityCoefficients(), "residual Gibbs energy");
+    assertTrue(checker.checkFugacityCoefficientsDT(), "residual enthalpy and temperature derivatives");
+    assertTrue(checker.checkFugacityCoefficientsDP(), "compressibility and pressure derivatives");
+    assertTrue(checker.checkFugacityCoefficientsDn(), "Gibbs-Duhem in every derivative column");
+    assertTrue(checker.checkFugacityCoefficientsDn2(), "composition Hessian symmetry");
+    // Numerical trials retain each phase root and composition rather than reflashing at the perturbed T/P.
+    checker.setMaxError(1.0e-6);
+    assertTrue(checker.checkNumerically(), "independent d(ln phi)/dT, dP and dn with step refinement");
+    for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+      PhaseInterface state = fluid.getPhase(phase);
+      double analytic = state.getCpres();
+      double coarse = residualHeatCapacity(fluid, phase, 0.01);
+      double fine = residualHeatCapacity(fluid, phase, 0.005);
+      double tolerance = 2.0e-6 * Math.max(1.0, Math.abs(analytic));
+      assertEquals(coarse, fine, tolerance, "heat-capacity step refinement for " + state.getType());
+      assertEquals(analytic, fine, tolerance, "Cp residual = dH residual/dT at fixed P,n for " + state.getType());
+    }
+  }
+
+  /**
+   * Differentiates residual enthalpy at fixed pressure and phase amounts on detached snapshots.
+   *
+   * @param fluid initialized reference fluid
+   * @param phase logical phase index
+   * @param step temperature step in kelvin
+   * @return numerical residual heat capacity in joules per kelvin
+   */
+  private static double residualHeatCapacity(SystemInterface fluid, int phase, double step) {
+    SystemInterface plus = SerializationUtils.clone(fluid);
+    SystemInterface minus = SerializationUtils.clone(fluid);
+    plus.getPhase(phase).setTemperature(fluid.getTemperature() + step);
+    minus.getPhase(phase).setTemperature(fluid.getTemperature() - step);
+    plus.init(3, phase);
+    minus.init(3, phase);
+    return (plus.getPhase(phase).getHresTP() - minus.getPhase(phase).getHresTP()) / (2.0 * step);
   }
 
   /**

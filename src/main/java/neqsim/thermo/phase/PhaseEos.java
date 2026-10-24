@@ -471,7 +471,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (error > 1.0e-10 && iterations < maxIterations);
-    if (iterations >= maxIterations) {
+    // A tiny update can also indicate a stalled spinodal iteration. Inspect the final pressure only when the
+    // previous residual is suspect, avoiding another evaluation on the ordinary converged path. A large previous
+    // residual alone is not a failure if the last update solved the equation.
+    if (iterations >= maxIterations || !Double.isFinite(h) || (Math.abs(h) > 1.0e-10
+        && Math.abs(calcPressure() - pressure) > 1.0e-8 * Math.max(1.0, Math.abs(pressure)))) {
       return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {
