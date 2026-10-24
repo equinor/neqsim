@@ -17,6 +17,22 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Tests for the conservative axial pipeline evaporation model. */
 public class PipelineEvaporationStudyTest {
+  /** Checks mol/(m2 s) times J/mol yields W/m2 and preserves evaporation/condensation signs. */
+  @Test
+  void fallbackLatentHeatUsesMolarSIUnits() {
+    SystemSrkEos fluid = new SystemSrkEos(353.3, 1);
+    fluid.addComponent("benzene", 1);
+    double positive = PipelineEvaporationStudy.calculateFallbackEnthalpyFlux(fluid.getPhase(0), new double[] {0.002},
+        353.3);
+    // Independently evaluated shipped benzene coefficients give 39147.9734826 J/mol.
+    // This checks units only; these coefficients overpredict the NIST physical value.
+    assertEquals(78.29594696523956, positive, 1e-8);
+    assertEquals(-positive,
+        PipelineEvaporationStudy.calculateFallbackEnthalpyFlux(fluid.getPhase(0), new double[] {-0.002}, 353.3), 0);
+    assertEquals(0, PipelineEvaporationStudy.calculateFallbackEnthalpyFlux(fluid.getPhase(0), new double[] {0}, 353.3),
+        0);
+  }
+
   @Test
   void testDropletAreaPerLengthUsesSauterMeanDiameter() {
     double area = PipelineEvaporationStudy.dropletAreaPerLength(2.0e-5, 0.5, 200.0e-6);
