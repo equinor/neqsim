@@ -196,13 +196,12 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
             models,
         )
 
-
     def test_huron_vidal_nrtl_example_matches_current_source(self):
         guide = self.documents[MIXING_RULE_GUIDE]
         marked_example = re.search(
-            r"<!-- hv-nrtl-example:start -->\\s*"
-            r"```java\\n([\\s\\S]*?)"
-            r"```\\s*<!-- hv-nrtl-example:end -->",
+            r"<!-- hv-nrtl-example:start -->\s*"
+            r"```java\r?\n([\s\S]*?)"
+            r"```\s*<!-- hv-nrtl-example:end -->",
             guide,
         )
         self.assertIsNotNone(marked_example)
@@ -225,8 +224,16 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
         self.assertEqual(example.count("public static void main("), 1)
         self.assertIn("CLASSIC_HV(3)", self.mixing_rule_types)
         self.assertIn("HV(4)", self.mixing_rule_types)
-        self.assertIn("return new SRKHuronVidal2(phase, HValpha, HVDij, classicOrHV);", self.mixing_rule_handler)
-        self.assertIn("return new SRKHuronVidal2(phase, HValpha, HVDij, HVDijT, classicOrHV);", self.mixing_rule_handler)
+        self.assertIn(
+            "return new SRKHuronVidal2(phase, HValpha, HVDij, "
+            "classicOrHV);",
+            self.mixing_rule_handler,
+        )
+        self.assertIn(
+            "return new SRKHuronVidal2(phase, HValpha, HVDij, "
+            "HVDijT, classicOrHV);",
+            self.mixing_rule_handler,
+        )
 
         for selector in (
             'mixingRuleGEModel.equals("NRTL")',
