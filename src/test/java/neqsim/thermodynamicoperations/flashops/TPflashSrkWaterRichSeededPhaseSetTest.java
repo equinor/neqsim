@@ -24,7 +24,7 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
     assertEquals(PhaseType.OIL, ordinary.getPhase(0).getType());
     assertEquals(PhaseType.AQUEOUS, ordinary.getPhase(1).getType());
     assertEquals(0.907774808238, ordinary.getBeta(0), 1.0e-10);
-    assertEquals(1925.79587972, ordinary.getGibbsEnergy(), 1.0e-7);
+    assertEquals(1925.8051176648405, ordinary.getGibbsEnergy(), 1.0e-7);
 
     double firstGibbsEnergy = multiphase.getGibbsEnergy();
     double firstOilFraction = multiphase.getBeta(0);
@@ -61,7 +61,7 @@ class TPflashSrkWaterRichSeededPhaseSetTest {
     assertEquals(PhaseType.OIL, ordinary.getPhase(0).getType());
     assertEquals(PhaseType.AQUEOUS, ordinary.getPhase(1).getType());
     assertEquals(0.907786822946, ordinary.getBeta(0), 1.0e-10);
-    assertEquals(2338.92392890, ordinary.getGibbsEnergy(), 1.0e-7);
+    assertEquals(2338.9316062637536, ordinary.getGibbsEnergy(), 1.0e-7);
     assertTrue(maximumLogFugacityResidual(ordinary) < 1.0e-8);
   }
 

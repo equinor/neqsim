@@ -279,6 +279,13 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     }
   }
 
+  /**
+   * Ideal-gas density and sound speed follow temperature and pressure, then return to the reference state.
+   *
+   * <p>
+   * Argon ideal-gas heat capacity is the stored constant, so a temperature change leaves Cp unchanged.
+   * </p>
+   */
   @Test
   void idealGasRefreshesExactAndCaloricStateBeforeReturningToReference() {
     SystemIdealGas system = new SystemIdealGas(298.15, 1.0);
@@ -299,7 +306,7 @@ class ModelSpecStateTest extends neqsim.NeqSimTest {
     double nearbyCp = phase.getCp("J/molK");
     double nearbySoundSpeed = phase.getSoundSpeed();
     assertNotEquals(firstDensity, nearbyDensity);
-    assertNotEquals(firstCp, nearbyCp);
+    assertEquals(firstCp, nearbyCp, 0.0);
     assertNotEquals(firstSoundSpeed, nearbySoundSpeed);
     assertEquals(1.0, phase.getZ(), 0.0);
     assertEquals(1.0, phase.getComponent(0).fugcoef(phase), 0.0);

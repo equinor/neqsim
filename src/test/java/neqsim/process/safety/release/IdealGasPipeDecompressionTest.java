@@ -71,6 +71,9 @@ class IdealGasPipeDecompressionTest extends neqsim.NeqSimTest {
     write("source-term-benchmarks", "ideal-gas-pipe-decompression-refinement.csv", receipt.toString());
   }
 
+  /**
+   * A closed release keeps the stored inventory, and a rejected timestep does not commit a new state.
+   */
   @Test
   void physicalIsolationStopsDischargeAndRetainsAtomicState() {
     IdealGasPipeDecompression pipe = pipe(40);
@@ -82,8 +85,11 @@ class IdealGasPipeDecompressionTest extends neqsim.NeqSimTest {
     assertEquals(mass, pipe.getRemainingMassKg(), mass * 1.0e-12);
     assertEquals(released, pipe.getReleasedMassKg(), 0.0);
     assertEquals(0.0, pipe.getReleaseResult().getMassFlowRateKgS(), 0.0);
+    double isolatedMass = pipe.getRemainingMassKg();
+    double isolatedReleased = pipe.getReleasedMassKg();
     assertThrows(IllegalArgumentException.class, () -> pipe.runTransient(Double.NaN, UUID.randomUUID()));
-    assertEquals(mass, pipe.getRemainingMassKg(), 0.0);
+    assertEquals(isolatedMass, pipe.getRemainingMassKg(), 0.0);
+    assertEquals(isolatedReleased, pipe.getReleasedMassKg(), 0.0);
   }
 
   @Test

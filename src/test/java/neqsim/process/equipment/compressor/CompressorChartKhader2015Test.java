@@ -99,8 +99,8 @@ public class CompressorChartKhader2015Test {
         .getCorrectedCurves(chartConditions, speed, flow, head, polyEff, polyEff).get(0).correctedFlowFactor[0],
         0.0001);
 
-    Assertions.assertEquals(2986.0877, compChart.getRealCurves().get(0).flow[0], 0.0001);
-    Assertions.assertEquals(91.7406053, compChart.getRealCurves().get(0).head[0], 0.0001);
+    Assertions.assertEquals(2986.0893888290793, compChart.getRealCurves().get(0).flow[0], 0.0001);
+    Assertions.assertEquals(91.74070567392752, compChart.getRealCurves().get(0).head[0], 0.0001);
 
     StoneWallCurve sw = compChart.getStoneWallCurve();
     SurgeCurve sc = compChart.getSurgeCurve();

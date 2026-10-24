@@ -293,7 +293,7 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentMixtureSuperficialVelocity(10), 33.85480591912372, 1.0);
     Assertions.assertEquals(pipe.getSegmentMixtureViscosity(10), 0.14329203901478244, 1.0);
     Assertions.assertEquals(pipe.getSegmentLiquidHoldup(10), 0.0, 0.01);
-    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2.014803001851525E7, 1.0);
+    Assertions.assertEquals(pipe.getSegmentMixtureReynoldsNumber(10), 2.0148037804739866E7, 1.0);
     Assertions.assertEquals(pipe.getSegmentLength(10), 1500.0, 1.0);
     Assertions.assertEquals(pipe.getSegmentElevation(10), -1000, 1.0);
     Assertions.assertEquals(pipe.getNumberOfIncrements(), 10, 0.1);

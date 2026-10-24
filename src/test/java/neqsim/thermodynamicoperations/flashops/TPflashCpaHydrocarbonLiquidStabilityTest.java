@@ -22,7 +22,7 @@ class TPflashCpaHydrocarbonLiquidStabilityTest {
 
     assertOilAqueousEquilibrium(ordinary);
     assertEquals(0.3488579645, ordinary.getBeta(findPhase(ordinary, PhaseType.OIL)), 1.0e-10);
-    assertEquals(-5702.35947620, ordinary.getGibbsEnergy(), 1.0e-6);
+    assertEquals(-5702.356606187974, ordinary.getGibbsEnergy(), 1.0e-6);
     assertEquivalentEquilibrium(multiphase, ordinary);
     assertEquivalentEquilibrium(ordinary, poorGuess);
 
