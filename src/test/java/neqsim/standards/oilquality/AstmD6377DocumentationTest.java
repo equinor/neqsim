@@ -1,12 +1,30 @@
 package neqsim.standards.oilquality;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.NeqSimTest;
 import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpMethod;
 import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpResult;
@@ -20,6 +38,47 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class AstmD6377DocumentationTest extends NeqSimTest {
+  private static final Pattern JAVA_FENCE = Pattern.compile("(?m)^```java\\r?\\n([\\s\\S]*?)^```[ \\t]*$");
+
+  @TempDir
+  Path temporaryDirectory;
+
+  @Test
+  void exactPublishedProgramCompilesAndRuns() throws Exception {
+    Path repositoryRoot = Paths.get(System.getProperty("basedir", ".")).toAbsolutePath();
+    Path guidePath = repositoryRoot.resolve("docs/standards/astm_d6377_rvp.md");
+    String guide = new String(Files.readAllBytes(guidePath), StandardCharsets.UTF_8);
+
+    Matcher fences = JAVA_FENCE.matcher(guide);
+    assertTrue(fences.find(), "The ASTM D6377 guide must contain one complete Java program");
+    String exampleSource = fences.group(1);
+    assertFalse(fences.find(), "The ASTM D6377 guide should expose one maintained Java program");
+    for (String required : Arrays.asList("public final class AstmD6377Example",
+        "RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED",
+        "Standard_ASTM_D6377.getWaterSaturationPressure(310.95)", "sourceStream.getRVP(",
+        "manualWaterSaturatedBara", "assert waterSaturated.isValid()")) {
+      assertTrue(exampleSource.contains(required), required);
+    }
+
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    assertNotNull(compiler, "Documentation examples require a JDK compiler");
+    Path javaSource = temporaryDirectory.resolve("AstmD6377Example.java");
+    Files.write(javaSource, exampleSource.getBytes(StandardCharsets.UTF_8));
+    compile(compiler, javaSource);
+
+    try (URLClassLoader loader = new URLClassLoader(new URL[] {temporaryDirectory.toUri().toURL()},
+        getClass().getClassLoader())) {
+      loader.setDefaultAssertionStatus(true);
+      Class<?> example = Class.forName("AstmD6377Example", true, loader);
+      assertTrue(example.desiredAssertionStatus());
+      try {
+        example.getMethod("main", String[].class).invoke(null, (Object) new String[0]);
+      } catch (InvocationTargetException exception) {
+        throw new AssertionError("AstmD6377Example failed", exception.getCause());
+      }
+    }
+  }
+
   @Test
   void documentedTypedWorkflowProducesTraceableResultsAndPreservesSourceState() {
     SystemInterface sourceOil = createOil();
@@ -80,6 +139,25 @@ class AstmD6377DocumentationTest extends NeqSimTest {
     assertTrue(wetVpcr4.isValid());
     assertTrue(dryVpcr4.isValid());
     assertNotEquals(wetVpcr4.getValue(), dryVpcr4.getValue(), 1.0e-6);
+  }
+
+  /**
+   * Compile the extracted Markdown program with Java 8 syntax and the test classpath.
+   *
+   * @param compiler current JDK compiler
+   * @param source extracted Java source
+   * @throws Exception if source preparation or compilation fails
+   */
+  private void compile(JavaCompiler compiler, Path source) throws Exception {
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
+    String classPath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+    Iterable<String> options = Arrays.asList("-source", "8", "-target", "8", "-classpath", classPath, "-d",
+        temporaryDirectory.toString());
+    try (StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, StandardCharsets.UTF_8)) {
+      Boolean successful = compiler
+          .getTask(null, manager, diagnostics, options, null, manager.getJavaFileObjects(source.toFile())).call();
+      assertTrue(Boolean.TRUE.equals(successful), "docs/standards/astm_d6377_rvp.md: " + diagnostics.getDiagnostics());
+    }
   }
 
   private SystemInterface createOil() {
