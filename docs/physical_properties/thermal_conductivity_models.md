@@ -125,6 +125,36 @@ fluid.getPhase("gas").initPhysicalProperties();
 density-dependent contributions. Use it when pressure or liquid-like density makes the dilute
 `Chung` model insufficient.
 
+The implementation uses Chung's conformal mixture rules with unity binary combining factors,
+including the effective transport molar mass, critical volume, critical temperature, acentric
+factor, dipole and association terms. The actual mixture molar mass converts EOS mass density
+to molar density. Ideal-gas molar heat capacity is independent of the total phase amount.
+The association input is the component's **viscosity correction factor**, not its CPA association volume.
+
+The dense equation is evaluated consistently in SI:
+
+$$\lambda = \frac{31.2\eta_0\Psi}{M}\left(H_2^{-1}+B_6 y\right)+q B_7 y^2\sqrt{T_r}H_2$$
+
+Here $M$ is in kg/mol, $\eta_0$ in Pa s, $y=\rho_{mol}V_c/6$ with matched volume units,
+$T_r=T/T_c$, and $q=3.586\times10^{-3}\sqrt{T_c/M}/V_c^{2/3}$ for $V_c$ in cm³/mol.
+The collision integral uses $T^*=1.2593T_r$. Coefficients follow the original Chung table
+reproduced in [Bouraba et al. (2017), Table A.2](https://doi.org/10.1016/j.ijrefrig.2017.05.008),
+including the negative association coefficient in $B_6$ and the original $B_7$ row.
+They differ from some reproductions of the fifth-edition table. This choice is explicit;
+it is not a claim that every later handbook coefficient table has been independently inspected.
+
+Zero density uses the analytic limit; `expm1` prevents cancellation at very low density.
+Nonfinite inputs, nonpositive required constants, unnormalized compositions, negative density,
+$y\geq1$, and $T^*$ outside 0.3–100 are rejected. There is **no critical enhancement**;
+these bounds are mathematical/domain guards, not a guarantee of accuracy for every fluid
+within them. Use a qualified reference-fluid model for near-critical design calculations.
+
+This corrects the earlier amount-dependent heat capacity, reduced temperature, mixture rules,
+transport-association input, mixed CGS/SI conversion and missing $B_7$ dense term.
+Only explicitly selected `Chung-dense` calculations change. PFCT defaults are unchanged.
+Frozen equation checks, amount invariance and lifecycle regressions are described in the
+[method audit](method_alignment_audit).
+
 **Class:** `ChungDenseConductivityMethod`
 
 **Applicable phases:** Gas and liquid
