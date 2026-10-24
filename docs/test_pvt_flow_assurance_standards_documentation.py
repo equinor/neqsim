@@ -357,7 +357,7 @@ class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
                 )
                 self.assertIsNone(unsupported.search(remove_fenced_code(body)))
 
-    def test_standards_landing_page_uses_explicit_markdown_sources(self):
+    def test_standards_landing_page_uses_extensionless_published_routes(self):
         _title, _description, body = parse_front_matter(
             STANDARDS_LANDING_PAGE.read_text(encoding="utf-8")
         )
@@ -373,13 +373,14 @@ class PvtFlowAssuranceStandardsDocumentationContractTest(unittest.TestCase):
         self.assertEqual(9, len(internal_targets))
         for target in internal_targets:
             parsed = urlsplit(target.strip().strip("<>"))
-            destination = (
-                STANDARDS_LANDING_PAGE.parent / unquote(parsed.path)
-            ).resolve()
+            candidates = target_candidates(STANDARDS_LANDING_PAGE, target)
+            destination = next(
+                (candidate for candidate in candidates if candidate.is_file()), None
+            )
             with self.subTest(target=target):
-                self.assertTrue(parsed.path.endswith(".md"))
-                self.assertTrue(destination.is_file())
-                if parsed.fragment:
+                self.assertEqual("", Path(unquote(parsed.path)).suffix)
+                self.assertIsNotNone(destination)
+                if parsed.fragment and destination is not None:
                     target_source = remove_fenced_code(
                         destination.read_text(encoding="utf-8")
                     )
