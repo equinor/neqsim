@@ -10,6 +10,7 @@ import neqsim.process.equipment.network.FieldNetworkTopology.EdgeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.FlowDirection;
 import neqsim.process.equipment.network.FieldNetworkTopology.NodeRole;
 import neqsim.process.equipment.network.FieldNetworkTopology.Service;
+import neqsim.process.equipment.reservoir.RadialDarcyWaterInjectivity;
 import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessModel;
@@ -72,6 +73,42 @@ class FieldLiquidInjectionAcceptanceTest {
       coupler.bindInjectionWell(node, well);
     }
     return new FieldWellNetworkProcessUnit("injection", coupler);
+  }
+
+  /**
+   * Build two pressure-dependent ordinary-water injectors on the same canonical topology.
+   *
+   * @return process-compatible coupled network
+   */
+  private FieldWellNetworkProcessUnit radialFixture() {
+    FieldNetworkTopology topology = new FieldNetworkTopology("radial water injection field");
+    LoopedPipeNetwork network = topology.getHydraulicNetwork();
+    network.setFluidTemplate(water("radial template", 180.0).getThermoSystem());
+    network.setSolverType(LoopedPipeNetwork.SolverType.NEWTON_RAPHSON);
+    network.setTolerance(0.01);
+    topology.addPressureSource("supply", "SUP-R", NodeRole.INJECTION_SOURCE, Service.INJECTION, 10.0, 0.0, 0.0);
+    topology.addJunction("header", "MA-R", NodeRole.MANIFOLD, Service.INJECTION, 0.0);
+    topology.addPump("pump", "P-R", Service.INJECTION, FlowDirection.FROM_TO, "supply", "out", "header", "in", 180.0,
+        0.8);
+    FieldWellNetworkCoupler coupler = new FieldWellNetworkCoupler(topology);
+    coupler.setRelaxationFactor(0.6);
+    coupler.setTolerances(1.0e-8, 1.0e-6);
+    coupler.setMaximumIterations(100);
+    for (int i = 0; i < 2; i++) {
+      String node = "radial-injector-" + i;
+      topology.addLiveWellNode(node, "XT-R" + i, NodeRole.INJECTION_WELL, Service.INJECTION, 150.0, 0.0);
+      topology.addPipe("radial-branch-" + i, "WI-R" + i, EdgeRole.FLOWLINE, Service.INJECTION, FlowDirection.FROM_TO,
+          "header", "slot-" + i, node, "in", 1000.0 + i * 1000.0, 0.10, LoopedPipeNetwork.PipeModelType.DARCY_WEISBACH);
+      WellFlow well = new WellFlow(node);
+      well.setInletStream(water("radial-feed-" + i, 180.0));
+      well.addRadialDarcyWaterInjectionZone("target", water("radial-target-" + i, 100.0), 100.0,
+          RadialDarcyWaterInjectivity.iapwsPureWater(100.0, 20.0, 1.0, 500.0, 0.1, 300.0), 200.0);
+      well.addRadialDarcyWaterInjectionZone("secondary", water("radial-secondary-" + i, 110.0), 110.0,
+          RadialDarcyWaterInjectivity.iapwsPureWater(50.0, 10.0, 2.0, 500.0, 0.1, 300.0), 195.0);
+      well.setTargetZone("target");
+      coupler.bindInjectionWell(node, well);
+    }
+    return new FieldWellNetworkProcessUnit("radial injection", coupler);
   }
 
   /**
@@ -155,5 +192,37 @@ class FieldLiquidInjectionAcceptanceTest {
     copiedWell.getLayer(0).setFracturePressure(200.0, "bara");
     copy.run();
     assertAccepted(copy);
+  }
+
+  /** Pressure-dependent well demand remains conservative through the coupled network inner iteration. */
+  @Test
+  void closesLiveRadialDarcyDemandAndRefreshesReservoirBoundary() {
+    FieldWellNetworkProcessUnit unit = radialFixture();
+    unit.run();
+    assertTrue(unit.solved(), unit.getCoupler().getLastResult().getMessage());
+    LoopedPipeNetwork network = unit.getTopology().getHydraulicNetwork();
+    double total = 0.0;
+    for (int i = 0; i < 2; i++) {
+      WellFlow well = (WellFlow) unit.getTopology().getBoundEquipment("radial-injector-" + i);
+      double branchFlow = network.getPipe("radial-branch-" + i).getFlowRate();
+      double wellFlow = 0.0;
+      for (int zone = 0; zone < well.getNumberOfLayers(); zone++) {
+        RadialDarcyWaterInjectivity.Result evidence = well.getLayer(zone).getRadialDarcyWaterInjectivityResult();
+        wellFlow += evidence.getStandardVolumeRateSm3PerDay() * evidence.getStandardDensityKgPerSm3() / 86400.0;
+      }
+      assertEquals(wellFlow, branchFlow, 3.0e-8);
+      assertEquals(wellFlow, well.getOutletStream().getFlowRate("kg/sec"), 3.0e-8);
+      total += branchFlow;
+    }
+    assertEquals(total, network.getPipe("pump").getFlowRate(), 1.0e-8);
+    assertEquals(0.0, unit.getCoupler().getLastResult().getMassBalanceResidualKgS(), 1.0e-8);
+    WellFlow first = (WellFlow) unit.getTopology().getBoundEquipment("radial-injector-0");
+    double original = network.getPipe("radial-branch-0").getFlowRate();
+    first.getLayer(0).setReservoirPressure(120.0, "bara");
+    unit.run();
+    assertTrue(unit.solved(), unit.getCoupler().getLastResult().getMessage());
+    assertEquals(120.0, first.getLayer(0).getRadialDarcyWaterInjectivityResult().getReservoirPressureBara(), 0.0);
+    assertTrue(network.getPipe("radial-branch-0").getFlowRate() < original);
+    assertEquals(0.0, unit.getCoupler().getLastResult().getMassBalanceResidualKgS(), 1.0e-8);
   }
 }

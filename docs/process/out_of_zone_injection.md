@@ -103,6 +103,17 @@ limited to ordinary pure water. Salinity, dissolved gas, relative permeability, 
 crossflow, reservoir transients and fracture growth still require separate qualified inputs and
 models.
 
+The same immutable radial-Darcy law can be attached to a live `WellFlow` zone with
+`addRadialDarcyWaterInjectionZone`. The live path accepts only the ordinary pure-water basis,
+reevaluates each zone at its current reservoir pressure, and converts the reported Sm3/day to
+the canonical network kg/s using the law's explicit IF97 standard density. Its most recent
+pressure, viscosity, volume factor, standard density, injectivity and rate are available from
+`ReservoirLayer.getRadialDarcyWaterInjectivityResult()`. A controlled reservoir-pressure update
+therefore changes live well demand without rebuilding the field graph. Constant configured PVT
+is intentionally not accepted by this bridge because it does not define the standard density
+needed for the mass conversion. This shares one software law; it does not turn the screening
+model into field-qualified injectivity or add the excluded physics above.
+
 The common BHP is solved from the piecewise-linear accepting-zone equation
 $q = \sum_i II_i\max(p_{bh}-p_{r,i},0)$. A zone whose reservoir pressure is at or above the
 solved BHP remains shut in and is excluded before the BHP is recomputed. This prevents a closed,

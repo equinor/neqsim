@@ -3,8 +3,8 @@ package neqsim.process.fielddevelopment.reservoir;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.Viscosity;
-import neqsim.thermo.util.steam.Iapws_if97;
+import neqsim.process.equipment.reservoir.RadialDarcyWaterInjectivity;
+import neqsim.process.equipment.reservoir.RadialDarcyWaterInjectivity.Result;
 
 /**
  * Injection well performance model for water and gas injection.
@@ -24,9 +24,9 @@ import neqsim.thermo.util.steam.Iapws_if97;
  * equation using the configured formation-water viscosity and volume factor and reports the resulting coefficient in
  * Sm3/day/bar. The conversion from m3/s/Pa multiplies by both 86400 s/day and 100000 Pa/bar, then divides by the
  * formation-water volume factor in reservoir m3/Sm3. The default volume factor is 1.0 to preserve the established
- * screening result; users must configure a qualified value when a standard-volume PVT conversion is required. No
- * pressure-dependent fluid properties, relative permeability, crossflow, transient reservoir response or fracture
- * growth is included.
+ * screening result; users must configure a qualified value when a standard-volume PVT conversion is required. The
+ * opt-in ordinary-water mode reuses {@link RadialDarcyWaterInjectivity} for IF97 volume and IAPWS-fitted viscosity
+ * evidence. Relative permeability, crossflow, transient reservoir response and fracture growth are not included.
  * </p>
  *
  * <h2>Injectivity Index</h2>
@@ -152,19 +152,6 @@ public class InjectionWellModel implements Serializable {
   private double formationWaterVolumeFactor = 1.0; // reservoir m3/Sm3
   private FormationWaterPvtMode formationWaterPvtMode = FormationWaterPvtMode.CONFIGURED_CONSTANT;
 
-  /** Standard conditions used to derive pure-water reservoir m3/Sm3. */
-  private static final double STANDARD_WATER_TEMPERATURE_K = 288.15;
-  private static final double STANDARD_WATER_PRESSURE_BARA = 1.01325;
-  /** Lower temperature of the viscosity fit, 2 degrees Celsius. */
-  private static final double IAPWS_WATER_MIN_TEMPERATURE_K = 275.15;
-  /** Upper temperature of the viscosity fit, 300 degrees Celsius. */
-  private static final double IAPWS_WATER_MAX_TEMPERATURE_K = 573.15;
-  /** Pressure bounds shared by the viscosity fit and this injection contract. */
-  private static final double IAPWS_WATER_MIN_PRESSURE_BARA = 1.0;
-  private static final double IAPWS_WATER_MAX_PRESSURE_BARA = 700.0;
-  /** Critical pressure of ordinary water (MPa); saturation temperature is undefined above it. */
-  private static final double WATER_CRITICAL_PRESSURE_MPA = 22.064;
-
   // Pump efficiency
   private double pumpEfficiency = 0.75;
 
@@ -254,34 +241,21 @@ public class InjectionWellModel implements Serializable {
    * @return injectivity index (Sm3/day/bar)
    */
   private double calculateInjectivityIndex(InjectionWellResult result) {
-    // Convert permeability from mD to m²
-    double kSI = formationPermeability * 9.869e-16; // mD to m²
-
-    // Get fluid properties based on injection type
-    double viscosity;
-    double formationVolumeFactor;
-
     if (injectionType == InjectionType.WATER_INJECTOR) {
-      FormationWaterProperties properties;
-      if (getEffectiveFormationWaterPvtMode() == FormationWaterPvtMode.IAPWS_IF97_PURE_WATER) {
-        properties = evaluateFormationWaterProperties(reservoirPressure);
-      } else {
-        properties = new FormationWaterProperties(waterViscosity, 1.02, reservoirPressure);
-      }
-      viscosity = properties.viscosityCp * 1e-3; // cP to Pa·s
-      formationVolumeFactor = properties.formationVolumeFactor;
+      RadialDarcyWaterInjectivity injectivity = createRadialDarcyWaterInjectivity(formationPermeability,
+          formationThickness, skinFactor, waterViscosity, 1.02);
+      Result evidence = injectivity.evaluate(reservoirPressure, reservoirPressure);
       result.formationWaterPvtMode = getEffectiveFormationWaterPvtMode();
-      result.formationWaterViscosity = properties.viscosityCp;
-      result.formationWaterVolumeFactor = properties.formationVolumeFactor;
-      result.formationWaterPvtPressure = properties.pressureBara;
-    } else {
-      // Gas injection
-      viscosity = gasViscosity * 1e-3; // cP to Pa·s
-      // Calculate Bg at reservoir conditions
-      formationVolumeFactor = 1.01325 / reservoirPressure * reservoirTemperature / 288.15 * 0.9;
+      result.formationWaterViscosity = evidence.getViscosityCp();
+      result.formationWaterVolumeFactor = evidence.getFormationVolumeFactor();
+      result.formationWaterPvtPressure = evidence.getReservoirPressureBara();
+      return evidence.getInjectivitySm3PerDayPerBar();
     }
 
-    // Radial flow equation (Darcy units)
+    // Preserve the established gas-injection screening equation.
+    double kSI = formationPermeability * 9.869e-16; // mD to m²
+    double viscosity = gasViscosity * 1e-3; // cP to Pa·s
+    double formationVolumeFactor = 1.01325 / reservoirPressure * reservoirTemperature / 288.15 * 0.9;
     double lnRatio = Math.log(drainageRadius / wellboreRadius);
     double denominator = viscosity * formationVolumeFactor * (lnRatio + skinFactor);
 
@@ -1138,10 +1112,12 @@ public class InjectionWellModel implements Serializable {
 
     // Calculate injectivity index for each zone
     List<Double> zoneIIs = new ArrayList<>();
-    List<FormationWaterProperties> zoneProperties = new ArrayList<>();
+    List<Result> zoneProperties = new ArrayList<>();
     for (InjectionZone zone : zones) {
-      FormationWaterProperties properties = evaluateFormationWaterProperties(zone.reservoirPressure);
-      double ii = calculateZoneInjectivityIndex(zone, properties);
+      RadialDarcyWaterInjectivity injectivity = createRadialDarcyWaterInjectivity(zone.permeability, zone.thickness,
+          zone.skinFactor, formationWaterViscosity, getEffectiveFormationWaterVolumeFactor());
+      Result properties = injectivity.evaluate(zone.reservoirPressure, zone.reservoirPressure);
+      double ii = properties.getInjectivitySm3PerDayPerBar();
       if (!Double.isFinite(ii) || ii < 0.0) {
         throw new IllegalArgumentException("Zone '" + zone.name + "' has an invalid injectivity index");
       }
@@ -1152,10 +1128,10 @@ public class InjectionWellModel implements Serializable {
       zoneProperties.add(properties);
     }
     if (!zoneProperties.isEmpty()) {
-      FormationWaterProperties first = zoneProperties.get(0);
-      result.formationWaterViscosity = first.viscosityCp;
-      result.formationWaterVolumeFactor = first.formationVolumeFactor;
-      result.formationWaterPvtPressure = first.pressureBara;
+      Result first = zoneProperties.get(0);
+      result.formationWaterViscosity = first.getViscosityCp();
+      result.formationWaterVolumeFactor = first.getFormationVolumeFactor();
+      result.formationWaterPvtPressure = first.getReservoirPressureBara();
     }
 
     double requiredBHP = calculateRequiredMultiZoneBHP(totalTargetRate, zoneIIs);
@@ -1194,9 +1170,9 @@ public class InjectionWellModel implements Serializable {
       zr.isTargetZone = zone.isTargetZone;
       zr.fractureRisk = effectiveBHP > zone.fracturePressure && zone.fracturePressure > 0;
       zr.hallSlope = ii > 0 ? 1.0 / ii : 0.0;
-      zr.formationWaterViscosity = zoneProperties.get(i).viscosityCp;
-      zr.formationWaterVolumeFactor = zoneProperties.get(i).formationVolumeFactor;
-      zr.formationWaterPvtPressure = zoneProperties.get(i).pressureBara;
+      zr.formationWaterViscosity = zoneProperties.get(i).getViscosityCp();
+      zr.formationWaterVolumeFactor = zoneProperties.get(i).getFormationVolumeFactor();
+      zr.formationWaterPvtPressure = zoneProperties.get(i).getReservoirPressureBara();
 
       result.zoneResults.add(zr);
       totalRate += zoneRate;
@@ -1280,60 +1256,23 @@ public class InjectionWellModel implements Serializable {
   }
 
   /**
-   * Calculate injectivity index for a specific zone using Darcy radial flow.
+   * Creates the shared radial-Darcy law without duplicating its PVT or unit conversion.
    *
-   * @param zone the injection zone
-   * @param properties formation-water properties evaluated at the zone boundary
-   * @return injectivity index (Sm3/day/bar)
+   * @param permeabilityMd formation permeability (mD)
+   * @param thicknessM completed thickness (m)
+   * @param zoneSkinFactor dimensionless zone skin factor
+   * @param configuredViscosityCp configured viscosity (cP)
+   * @param configuredVolumeFactor configured reservoir m3/Sm3
+   * @return immutable radial-Darcy water law
    */
-  private double calculateZoneInjectivityIndex(InjectionZone zone, FormationWaterProperties properties) {
-    double kSI = zone.permeability * 9.869e-16; // mD to m²
-    double viscosity = properties.viscosityCp * 1e-3; // cP to Pa·s
-    double lnRatio = Math.log(drainageRadius / wellboreRadius);
-
-    // II = 2π k h / (μ × B × (ln(re/rw) + S)) in SI (m³/s/Pa)
-    double iiSI = 2.0 * Math.PI * kSI * zone.thickness
-        / (viscosity * properties.formationVolumeFactor * (lnRatio + zone.skinFactor));
-
-    // Convert m3/s/Pa to Sm3/day/bar. A one-bar pressure difference is 1e5 Pa,
-    // so the rate per bar is larger than the rate per Pa by 1e5.
-    return iiSI * 86400.0 * 1e5;
-  }
-
-  /**
-   * Evaluates the selected formation-water property basis at a reservoir pressure.
-   *
-   * @param pressureBara reservoir pressure (bara)
-   * @return evaluated viscosity, volume factor and pressure
-   * @throws IllegalArgumentException if the pure-water state is outside the declared applicability range
-   */
-  private FormationWaterProperties evaluateFormationWaterProperties(double pressureBara) {
-    if (getEffectiveFormationWaterPvtMode() == FormationWaterPvtMode.CONFIGURED_CONSTANT) {
-      return new FormationWaterProperties(formationWaterViscosity, getEffectiveFormationWaterVolumeFactor(),
-          pressureBara);
+  private RadialDarcyWaterInjectivity createRadialDarcyWaterInjectivity(double permeabilityMd, double thicknessM,
+      double zoneSkinFactor, double configuredViscosityCp, double configuredVolumeFactor) {
+    if (getEffectiveFormationWaterPvtMode() == FormationWaterPvtMode.IAPWS_IF97_PURE_WATER) {
+      return RadialDarcyWaterInjectivity.iapwsPureWater(permeabilityMd, thicknessM, zoneSkinFactor, drainageRadius,
+          wellboreRadius, reservoirTemperature);
     }
-    if (!Double.isFinite(reservoirTemperature) || reservoirTemperature < IAPWS_WATER_MIN_TEMPERATURE_K
-        || reservoirTemperature > IAPWS_WATER_MAX_TEMPERATURE_K || !Double.isFinite(pressureBara)
-        || pressureBara < IAPWS_WATER_MIN_PRESSURE_BARA || pressureBara > IAPWS_WATER_MAX_PRESSURE_BARA) {
-      throw new IllegalArgumentException("IAPWS pure-water injection PVT requires 275.15-573.15 K and 1-700 bara");
-    }
-    double pressureMPa = pressureBara / 10.0;
-    if (pressureMPa <= WATER_CRITICAL_PRESSURE_MPA) {
-      double saturationTemperature = Iapws_if97.T4_p(pressureMPa);
-      if (!Double.isFinite(saturationTemperature) || reservoirTemperature > saturationTemperature) {
-        throw new IllegalArgumentException("IAPWS pure-water injection PVT requires a Region-1 liquid state");
-      }
-    }
-    double reservoirSpecificVolume = Iapws_if97.v_pt(pressureMPa, reservoirTemperature);
-    double standardSpecificVolume = Iapws_if97.v_pt(STANDARD_WATER_PRESSURE_BARA / 10.0, STANDARD_WATER_TEMPERATURE_K);
-    double viscosityCp = Viscosity.calcWaterViscosity(reservoirTemperature, pressureBara);
-    double formationVolumeFactor = reservoirSpecificVolume / standardSpecificVolume;
-    if (!Double.isFinite(reservoirSpecificVolume) || reservoirSpecificVolume <= 0.0
-        || !Double.isFinite(standardSpecificVolume) || standardSpecificVolume <= 0.0 || !Double.isFinite(viscosityCp)
-        || viscosityCp <= 0.0 || !Double.isFinite(formationVolumeFactor) || formationVolumeFactor <= 0.0) {
-      throw new IllegalArgumentException("IAPWS pure-water injection PVT returned nonphysical properties");
-    }
-    return new FormationWaterProperties(viscosityCp, formationVolumeFactor, pressureBara);
+    return RadialDarcyWaterInjectivity.configured(permeabilityMd, thicknessM, zoneSkinFactor, drainageRadius,
+        wellboreRadius, configuredViscosityCp, configuredVolumeFactor);
   }
 
   /**
@@ -1343,34 +1282,6 @@ public class InjectionWellModel implements Serializable {
    */
   private FormationWaterPvtMode getEffectiveFormationWaterPvtMode() {
     return formationWaterPvtMode == null ? FormationWaterPvtMode.CONFIGURED_CONSTANT : formationWaterPvtMode;
-  }
-
-  /**
-   * Immutable internal formation-water property sample.
-   *
-   * @author ESOL
-   * @version 1.0
-   */
-  private static final class FormationWaterProperties {
-    /** Dynamic viscosity (cP). */
-    private final double viscosityCp;
-    /** Formation volume factor (reservoir m3/Sm3). */
-    private final double formationVolumeFactor;
-    /** Evaluation pressure (bara). */
-    private final double pressureBara;
-
-    /**
-     * Creates an immutable property sample.
-     *
-     * @param viscosityCp dynamic viscosity (cP)
-     * @param formationVolumeFactor reservoir m3/Sm3
-     * @param pressureBara evaluation pressure (bara)
-     */
-    private FormationWaterProperties(double viscosityCp, double formationVolumeFactor, double pressureBara) {
-      this.viscosityCp = viscosityCp;
-      this.formationVolumeFactor = formationVolumeFactor;
-      this.pressureBara = pressureBara;
-    }
   }
 
   /**
