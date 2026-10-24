@@ -1,0 +1,506 @@
+{
+  "schemaVersion": 1,
+  "interpretation": "Workflow entry points for source packages; routing is not operation support, execution or engineering qualification. Specific package routes override domain fallbacks.",
+  "routes": [
+    {
+      "package": "neqsim.api",
+      "title": "High-level simulation API",
+      "keywords": "facade entry point fluid process simulation",
+      "agent": "process-model",
+      "skill": "neqsim-api-patterns",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.blackoil",
+      "title": "Black-oil PVT tables and export",
+      "keywords": "black oil Rs Rv Bo Bg Eclipse OPM reservoir conversion interpolation",
+      "agent": "pvt-simulation",
+      "skill": "neqsim-api-patterns",
+      "docs": [
+        "docs/blackoil/README.md"
+      ]
+    },
+    {
+      "package": "neqsim.chemicalreactions",
+      "title": "Chemical equilibrium and kinetics",
+      "keywords": "reaction equilibrium speciation kinetics stoichiometry",
+      "agent": "reaction-engineering",
+      "skill": "neqsim-reaction-engineering",
+      "docs": [
+        "docs/chemicalreactions/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.datapresentation",
+      "title": "Result tables and plots",
+      "keywords": "presentation chart plot graph output table visualization",
+      "agent": "notebook-example",
+      "skill": "neqsim-notebook-patterns",
+      "docs": [
+        "docs/integration/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.fluidmechanics",
+      "title": "Fluid mechanics and transport",
+      "keywords": "fluid mechanics pipe flow nodes heat mass transfer hydraulic solver",
+      "agent": "flow-assurance",
+      "skill": "neqsim-flow-assurance",
+      "docs": [
+        "docs/fluidmechanics/README.md"
+      ]
+    },
+    {
+      "package": "neqsim.integration",
+      "title": "External simulator integration",
+      "keywords": "external simulator coupling reservoir OPM integration",
+      "agent": "field-development",
+      "skill": "neqsim-integrated-production-and-lifecycle",
+      "docs": [
+        "docs/integration/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.mathlib",
+      "title": "Numerical methods and linear algebra",
+      "keywords": "linear algebra matrix EJML numerical solver nonlinear integration derivative",
+      "agent": "neqsim-test",
+      "skill": "neqsim-regression-baselines",
+      "docs": [
+        "docs/mathlib/README.md"
+      ]
+    },
+    {
+      "package": "neqsim.mcp",
+      "title": "MCP schemas and runtime discovery",
+      "keywords": "MCP tool server schema profile discovery coverage inventory runner",
+      "agent": "capability-scout",
+      "skill": "neqsim-capability-map",
+      "docs": [
+        "docs/development/ENGINEERING_CAPABILITY_COVERAGE.md"
+      ]
+    },
+    {
+      "package": "neqsim.physicalproperties",
+      "title": "Physical and interfacial properties",
+      "keywords": "physical property viscosity conductivity density diffusion diffusivity interfacial tension surface tension transport model",
+      "agent": "thermo-fluid",
+      "skill": "neqsim-api-patterns",
+      "docs": [
+        "docs/physical_properties/README.md"
+      ]
+    },
+    {
+      "package": "neqsim.process",
+      "title": "Process equipment and flowsheets",
+      "keywords": "process equipment flowsheet stream separator heat exchanger cooler valve pump",
+      "agent": "process-model",
+      "skill": "neqsim-process-modeling",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.pvtsimulation",
+      "title": "PVT laboratory simulations and regression",
+      "keywords": "PVT CME CCE CVD depletion differential liberation swelling saturation fluid laboratory",
+      "agent": "pvt-simulation",
+      "skill": "neqsim-eos-regression",
+      "docs": [
+        "docs/pvtsimulation/README.md"
+      ]
+    },
+    {
+      "package": "neqsim.standards",
+      "title": "Gas and oil quality standards",
+      "keywords": "ISO gas quality Wobbe calorific heating value sales contract oil quality standard",
+      "agent": "gas-quality",
+      "skill": "neqsim-standards-lookup",
+      "docs": [
+        "docs/standards/README.md"
+      ]
+    },
+    {
+      "package": "neqsim.statistics",
+      "title": "Parameter fitting and statistical methods",
+      "keywords": "parameter fitting regression Levenberg Marquardt sample covariance Monte Carlo uncertainty",
+      "agent": "optimize",
+      "skill": "neqsim-optimization-and-doe",
+      "docs": [
+        "docs/statistics/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.thermo",
+      "title": "Thermodynamic fluids and models",
+      "keywords": "EOS SRK PR CPA SAFT GERG activity NRTL Huron Vidal mixing rule characterization",
+      "agent": "thermo-fluid",
+      "skill": "neqsim-api-patterns",
+      "docs": [
+        "docs/thermo/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.thermodynamicoperations",
+      "title": "Flashes and equilibrium operations",
+      "keywords": "flash TP PH PS UV TV dew bubble hydrate freezing equilibrium phase stability",
+      "agent": "thermo-fluid",
+      "skill": "neqsim-api-patterns",
+      "docs": [
+        "docs/thermodynamicoperations/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.util",
+      "title": "Shared infrastructure and validation",
+      "keywords": "units database serialization concurrency validation exceptions infrastructure utilities",
+      "agent": "neqsim-test",
+      "skill": "neqsim-api-patterns",
+      "docs": [
+        "docs/util/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.thermo.characterization",
+      "title": "Heavy-end and crude characterization",
+      "keywords": "TBP plus fraction lumping assay petroleum fluid heavy end characterization",
+      "agent": "thermo-fluid",
+      "skill": "neqsim-refinery-crude-processing",
+      "docs": [
+        "docs/thermo/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.thermo.mixingrule",
+      "title": "EOS mixing rules and binary parameters",
+      "keywords": "Huron Vidal HV NRTL Wong Sandler kij binary interaction mixing rule temperature parameter",
+      "agent": "thermo-fluid",
+      "skill": "neqsim-eos-regression",
+      "docs": [
+        "docs/thermo/mixing_rules_guide.md"
+      ]
+    },
+    {
+      "package": "neqsim.thermodynamicoperations.phaseenvelopeops",
+      "title": "Phase envelopes and critical points",
+      "keywords": "phase envelope cricondenbar cricondentherm retrograde dew bubble critical",
+      "agent": "thermo-fluid",
+      "skill": "neqsim-phase-envelope",
+      "docs": [
+        "docs/thermodynamicoperations/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.pvtsimulation.flowassurance",
+      "title": "Hydrates wax and asphaltenes",
+      "keywords": "flow assurance hydrate wax asphaltene deposition screening erosion",
+      "agent": "flow-assurance",
+      "skill": "neqsim-flow-assurance",
+      "docs": [
+        "docs/pvtsimulation/flowassurance/README.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.pipeline",
+      "title": "Pipeline and well hydraulics",
+      "keywords": "Beggs Brill two fluid slug transient pipeline riser flowline hydraulics restart pigging",
+      "agent": "flow-assurance",
+      "skill": "neqsim-pipeline-and-terminal-networks",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.compressor",
+      "title": "Compressor performance and surge",
+      "keywords": "compressor compression performance chart surge stonewall recycle efficiency",
+      "agent": "rotating-equipment",
+      "skill": "neqsim-rotating-equipment-design",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.pump",
+      "title": "Pump performance",
+      "keywords": "pump NPSH head cavitation efficiency impeller",
+      "agent": "rotating-equipment",
+      "skill": "neqsim-rotating-equipment-design",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.expander",
+      "title": "Expander performance",
+      "keywords": "expander turbine work efficiency rotating equipment",
+      "agent": "rotating-equipment",
+      "skill": "neqsim-rotating-equipment-design",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.distillation",
+      "title": "Columns and separation stages",
+      "keywords": "distillation column tray packed rate based internals flooding HETP",
+      "agent": "gas-processing-refining",
+      "skill": "neqsim-column-internals-and-rate-based",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.reactor",
+      "title": "Reactors and conversion",
+      "keywords": "reactor reaction CSTR PFR equilibrium kinetic conversion",
+      "agent": "reaction-engineering",
+      "skill": "neqsim-reaction-engineering",
+      "docs": [
+        "docs/chemicalreactions/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.energy",
+      "title": "Facility energy and electrical buses",
+      "keywords": "energy electrical mechanical bus shaft motor generator utility network balance",
+      "agent": "network-energy-systems",
+      "skill": "neqsim-energy-systems-and-electrification",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.powergeneration",
+      "title": "Power generation",
+      "keywords": "power generation gas steam turbine HRSG combined cycle fuel emissions",
+      "agent": "network-energy-systems",
+      "skill": "neqsim-power-generation",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.well",
+      "title": "Well and tubing models",
+      "keywords": "well tubing inflow IPR VLP lift choke injection production",
+      "agent": "field-development",
+      "skill": "neqsim-subsea-and-wells",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.subsea",
+      "title": "Subsea production and injection",
+      "keywords": "subsea tree template manifold PLEM production injection well",
+      "agent": "field-development",
+      "skill": "neqsim-subsea-and-wells",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.reservoir",
+      "title": "Reservoir and production coupling",
+      "keywords": "reservoir tank material balance production injection pressure decline",
+      "agent": "field-development",
+      "skill": "neqsim-integrated-production-and-lifecycle",
+      "docs": [
+        "docs/fielddevelopment/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.automation",
+      "title": "Process automation and agent optimization",
+      "keywords": "automation string address variable utilization feasibility evaluate optimize agent",
+      "agent": "optimize-processmodel",
+      "skill": "neqsim-agentic-process-optimization",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.calibration",
+      "title": "Plant model calibration",
+      "keywords": "calibration reconciliation measured simulation model fit uncertainty",
+      "agent": "plant-data",
+      "skill": "neqsim-model-calibration-and-data-reconciliation",
+      "docs": [
+        "docs/calibration/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.controllerdevice",
+      "title": "PID and regulatory control",
+      "keywords": "PID cascade ratio controller tuning control anti windup",
+      "agent": "control-system",
+      "skill": "neqsim-dynamic-simulation",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.dynamics",
+      "title": "Dynamic simulation",
+      "keywords": "transient dynamic time integration event inventory conservation stability",
+      "agent": "dynamic-equipment",
+      "skill": "neqsim-dynamic-simulation",
+      "docs": [
+        "docs/process/dynamic-capability-contract.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.mpc",
+      "title": "MPC and virtual sensing",
+      "keywords": "model predictive control linearizer soft sensor virtual flow meter",
+      "agent": "control-system",
+      "skill": "neqsim-advanced-control-mpc-and-virtual-sensing",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.logic",
+      "title": "Safety and process logic",
+      "keywords": "logic ESD interlock trip safety startup shutdown sequence",
+      "agent": "safety-depressuring",
+      "skill": "neqsim-operational-risk-and-safety-validation",
+      "docs": [
+        "docs/safety/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.chemistry",
+      "title": "Production chemistry",
+      "keywords": "chemical inhibitor dose scavenger biocide scale hydrate corrosion",
+      "agent": "production-chemistry",
+      "skill": "neqsim-production-chemistry",
+      "docs": [
+        "docs/chemistry/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.corrosion",
+      "title": "Corrosion screening",
+      "keywords": "CO2 H2S corrosion de Waard NORSOK M506 materials",
+      "agent": "flow-assurance",
+      "skill": "neqsim-flow-assurance",
+      "docs": [
+        "docs/chemistry/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.fielddevelopment",
+      "title": "Field development and economics",
+      "keywords": "field development NPV IRR CAPEX OPEX host tieback lifecycle production network",
+      "agent": "field-development",
+      "skill": "neqsim-field-development",
+      "docs": [
+        "docs/fielddevelopment/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.costestimation",
+      "title": "Equipment cost estimation",
+      "keywords": "cost CAPEX OPEX CEPCI AACE escalation estimate equipment economics",
+      "agent": "mechanical-design",
+      "skill": "neqsim-equipment-cost-estimation",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.mechanicaldesign",
+      "title": "Mechanical design and sizing",
+      "keywords": "mechanical sizing vessel thickness nozzle exchanger separator design standards",
+      "agent": "mechanical-design",
+      "skill": "neqsim-standards-lookup",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.engineering",
+      "title": "Engineering packages and diagrams",
+      "keywords": "engineering package PFD PID DEXPI CFIHOS design deliverable topology",
+      "agent": "engineering-deliverables",
+      "skill": "neqsim-engineering-design-package",
+      "docs": [
+        "docs/engineering/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.safety",
+      "title": "Safety release and consequence models",
+      "keywords": "safety relief flare blowdown source term leak fire dispersion risk HAZOP",
+      "agent": "safety-depressuring",
+      "skill": "neqsim-release-source-terms",
+      "docs": [
+        "docs/safety/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.optimization",
+      "title": "Process optimization",
+      "keywords": "optimization constraints feasible objective sensitivity Pareto",
+      "agent": "optimize",
+      "skill": "neqsim-optimization-and-doe",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.research",
+      "title": "Process synthesis and research",
+      "keywords": "research synthesis superstructure candidate design process flowsheet",
+      "agent": "optimize",
+      "skill": "neqsim-process-synthesis-research",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.synthesis",
+      "title": "Process superstructures",
+      "keywords": "synthesis superstructure candidate flowsheet graph optimization",
+      "agent": "optimize",
+      "skill": "neqsim-process-synthesis-research",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.equipment.network",
+      "title": "Production gathering graphs and well coupling",
+      "keywords": "reservoir wells SURF PLEM template manifold daisy chain flowline riser full production system Python Java",
+      "agent": "network-energy-systems",
+      "skill": "neqsim-production-system-modeling",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.lng",
+      "title": "LNG liquefaction systems",
+      "keywords": "LNG liquefaction SMR DMR C3MR nitrogen expander refrigeration downstream",
+      "agent": "lng-value-chain",
+      "skill": "neqsim-lng-liquefaction",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    },
+    {
+      "package": "neqsim.process.util.utilitydesign",
+      "title": "Process utility systems",
+      "keywords": "utility steam cooling heating refrigeration nitrogen boiler power",
+      "agent": "utility-design",
+      "skill": "neqsim-utility-design",
+      "docs": [
+        "docs/process/index.md"
+      ]
+    }
+  ]
+}
