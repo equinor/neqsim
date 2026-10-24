@@ -493,6 +493,16 @@ revalidates mutable pressure/index/limit inputs. Quasi-steady evaluation is supp
 the dynamic well path is explicitly rejected rather than falling back to legacy physics.
 Copying preserves the mass-basis selection. Zone rates are unavailable after a rejected solve.
 
+`RadialDarcyWaterInjectivity` now closes the next software dependency between the separate
+injection screen and this live boundary. `InjectionWellModel` and `WellFlow` consume the same
+radial-Darcy unit conversion and immutable PVT evidence. The live builder is restricted to
+ordinary pure water: it evaluates IF97 volume and the existing IAPWS-fitted viscosity at each
+zone's current reservoir pressure, converts Sm3/day to kg/s with the reported IF97 standard
+density, and regenerates evidence on every inner-coupling evaluation. The shared-header
+acceptance checks branch demand against that evidence, pump-flow conservation below 1e-8 kg/s,
+and the expected lower demand after a controlled reservoir-pressure increase. No topology,
+hydraulic-model selection, reservoir owner, scheduler or optimizer is duplicated.
+
 These are synthetic analytical and integration checks, not calibrated water-injectivity,
 pump-map, fracture, temperature/energy, field or transient qualification. The inherited
 shared-reservoir fixture still uses the legacy gas-standard law and extrapolated pump
@@ -620,13 +630,14 @@ exact route restoration, mass conservation and the expected lower injectivity at
 reservoir pressure. The curve is synthetic integration input; this is not vendor-map,
 injectivity, fracture, outage or brownfield qualification.
 
-The separate field-development `InjectionWellModel` multi-zone water screen now uses the same
+The separate field-development `InjectionWellModel` multi-zone water screen uses the same
 dimensional radial-Darcy conversion as its single-zone path: m3/s/Pa is multiplied by
 `86400 s/day * 100000 Pa/bar`. Analytical tests check the coefficient directly and reconstruct
 unequal-zone allocation and total-rate conservation. This deliberately corrects prior multi-zone
 values by a factor of `1e10`; persisted results from the old calculation are not compatible and
-must be recalculated. It does not alter live `WellFlow` pressure-rate coupling, topology,
-hydraulics or optimization. The multi-zone screen also accepts explicit formation-water viscosity
+must be recalculated. The shared immutable law now also drives opt-in live ordinary-water
+`WellFlow` pressure-rate coupling; it does not alter topology, hydraulics or optimization. The
+multi-zone screen also accepts explicit formation-water viscosity
 and volume factor, records both inputs in its result and divides the reservoir-volume coefficient
 by the configured reservoir-m3/Sm3 factor. The default factor remains `1.0`, preserving the
 established screening result. An opt-in pure-water basis now evaluates each reservoir boundary with
@@ -880,9 +891,11 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    continuous-boundary receipts across periods without interpolating discrete topology. Each refined
    feasible/infeasible endpoint now carries the exact governing constraint and signed physical
    headroom. Adjacent periods now also expose exact retained, removed, and added rejecting/near-active
-   identities without comparing unlike physical units. Next qualify the maps and injectivity laws
-   and feed their accepted map-region/driver-limit migrations into these diagnostics without
-   creating a second scheduler or optimizer.
+   identities without comparing unlike physical units. The ordinary-water radial-Darcy software
+   law is now shared by the screen and live `WellFlow` boundary with explicit standard-density
+   conversion and conservative network acceptance. Next independently qualify the injectivity
+   range and the maps, then feed accepted map-region/driver-limit migrations into these diagnostics
+   without creating a second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
    OD/ID/wall/material/installation/insulation/stability alternatives now exists with synthetic

@@ -54,6 +54,23 @@ class WellFlowLiquidInjectionTest {
     return well;
   }
 
+  /**
+   * Build a two-zone live radial-Darcy ordinary-water injector.
+   *
+   * @return configured well
+   */
+  private WellFlow radialInjector() {
+    WellFlow well = new WellFlow("radial injector");
+    well.setInletStream(stream("radial supply", "water", 180.0));
+    well.addRadialDarcyWaterInjectionZone("target", stream("radial target", "water", 100.0), 100.0,
+        RadialDarcyWaterInjectivity.iapwsPureWater(100.0, 20.0, 1.0, 500.0, 0.1, 300.0), 200.0);
+    well.addRadialDarcyWaterInjectionZone("secondary", stream("radial secondary", "water", 110.0), 110.0,
+        RadialDarcyWaterInjectivity.iapwsPureWater(50.0, 10.0, 2.0, 500.0, 0.1, 300.0), 195.0);
+    well.setTargetZone("target");
+    well.setOutletPressure(150.0, "bara");
+    return well;
+  }
+
   /** Check the analytical Darcy mass law, allocation, units and injected-fluid ownership. */
   @Test
   void closesAnalyticalMassAllocation() {
@@ -105,6 +122,43 @@ class WellFlowLiquidInjectionTest {
     well.getLayer(0).setReservoirPressure(120.0, "bara");
     well.run();
     assertEquals(0.5, well.getOutletStream().getFlowRate("kg/sec"), 1.0e-10);
+  }
+
+  /** The live bridge refreshes zone PVT and closes its standard-volume-to-mass conversion. */
+  @Test
+  void evaluatesRadialDarcyWaterOnEverySolve() {
+    WellFlow well = radialInjector();
+    well.run();
+    double expectedTotal = 0.0;
+    for (int i = 0; i < well.getNumberOfLayers(); i++) {
+      RadialDarcyWaterInjectivity.Result evidence = well.getLayer(i).getRadialDarcyWaterInjectivityResult();
+      double expected = evidence.getStandardVolumeRateSm3PerDay() * evidence.getStandardDensityKgPerSm3() / 86400.0;
+      assertEquals(expected, well.getLayerFlowRates("kg/sec")[i], 1.0e-12);
+      expectedTotal += expected;
+    }
+    assertEquals(expectedTotal, well.getOutletStream().getFlowRate("kg/sec"), 1.0e-10);
+    RadialDarcyWaterInjectivity law = well.getLayer(0).getRadialDarcyWaterInjectivity();
+    double firstRate = well.getLayerFlowRates("kg/sec")[0];
+    well.getLayer(0).setReservoirPressure(120.0, "bara");
+    well.run();
+    assertSame(law, well.getLayer(0).getRadialDarcyWaterInjectivity());
+    assertEquals(120.0, well.getLayer(0).getRadialDarcyWaterInjectivityResult().getReservoirPressureBara(), 0.0);
+    assertTrue(well.getLayerFlowRates("kg/sec")[0] < firstRate);
+  }
+
+  /** The live radial-Darcy API accepts only its declared pure-water PVT and composition basis. */
+  @Test
+  void rejectsUnqualifiedRadialDarcyBasisAndFeed() {
+    WellFlow well = new WellFlow("invalid radial injector");
+    well.setInletStream(stream("oil supply", "n-decane", 180.0));
+    RadialDarcyWaterInjectivity configured = RadialDarcyWaterInjectivity.configured(100.0, 20.0, 0.0, 500.0, 0.1, 0.5,
+        1.0);
+    assertThrows(IllegalArgumentException.class,
+        () -> well.addRadialDarcyWaterInjectionZone("zone", stream("zone", "water", 100.0), 100.0, configured, 200.0));
+    well.addRadialDarcyWaterInjectionZone("zone", stream("zone", "water", 100.0), 100.0,
+        RadialDarcyWaterInjectivity.iapwsPureWater(100.0, 20.0, 0.0, 500.0, 0.1, 300.0), 200.0);
+    well.setOutletPressure(150.0, "bara");
+    assertThrows(IllegalStateException.class, () -> well.run());
   }
 
   /** Units, law selection and invalid configuration fail before changing the existing zone list. */
@@ -207,6 +261,21 @@ class WellFlowLiquidInjectionTest {
     assertEquals(0.5, copied.getOutletStream().getFlowRate("kg/sec"), 1.0e-10);
     assertEquals(100.0, original.getLayer(0).reservoirPressure, 0.0);
     assertEquals(0.7, original.getOutletStream().getFlowRate("kg/sec"), 1.0e-10);
+  }
+
+  /** Serialized copies retain an independent radial law and regenerate evidence from copied boundaries. */
+  @Test
+  void copiesRadialDarcyDefinitionAndEvidence() {
+    WellFlow original = radialInjector();
+    original.run();
+    WellFlow copied = (WellFlow) original.copy();
+    assertNotSame(original.getLayer(0), copied.getLayer(0));
+    assertNotSame(original.getLayer(0).getRadialDarcyWaterInjectivity(),
+        copied.getLayer(0).getRadialDarcyWaterInjectivity());
+    copied.getLayer(0).setReservoirPressure(120.0, "bara");
+    copied.run();
+    assertEquals(120.0, copied.getLayer(0).getRadialDarcyWaterInjectivityResult().getReservoirPressureBara(), 0.0);
+    assertEquals(100.0, original.getLayer(0).getRadialDarcyWaterInjectivityResult().getReservoirPressureBara(), 0.0);
   }
 
   /** Preserve the old coefficient and rate-getter behavior, including its documented legacy unit defect. */

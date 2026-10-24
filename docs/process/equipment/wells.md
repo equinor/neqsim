@@ -170,6 +170,24 @@ fracture reporting, invalid inputs, phase rejection, legacy compatibility and co
 This is an analytical software check of the stated linear approximation, not
 laboratory/field injectivity, fracture-pressure or operating-envelope qualification.
 
+For pressure-dependent ordinary-water injection, use
+`RadialDarcyWaterInjectivity.iapwsPureWater(...)` and attach the immutable law with
+`WellFlow.addRadialDarcyWaterInjectionZone(...)`. The same radial-Darcy implementation
+is used by the field-development injection screen and the live well boundary. It
+evaluates viscosity and reservoir/standard specific-volume ratio at each zone's current
+reservoir pressure, reports the applied PVT evidence, and returns Sm3/day. `WellFlow`
+uses the law's IF97 density at 288.15 K and 1.01325 bara to convert that result explicitly
+to kg/s for the canonical network. Changing `ReservoirLayer` pressure and solving again
+refreshes the evidence without rebuilding the well, topology or hydraulic edges.
+
+The live builder deliberately accepts only `IAPWS_IF97_PURE_WATER`. The inlet must contain
+ordinary water only and remain one liquid phase at BHP. Configured-constant PVT remains
+available to screening calculations, but lacks an unambiguous standard density and is
+therefore rejected at this mass boundary. Salinity, dissolved gas, relative permeability,
+formation damage, fracture growth and reservoir transients remain outside the law. The
+analytical tests and shared-header acceptance establish software units, state refresh and
+mass conservation; they are not independent field or laboratory qualification.
+
 ### Single-layer gas inflow
 
 For the single-layer gas production-index model:
