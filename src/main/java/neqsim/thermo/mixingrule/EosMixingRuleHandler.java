@@ -1049,16 +1049,17 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
       double sqrtAi = ((neqsim.thermo.component.ComponentEos) compArray[compNumb]).sqrtAT;
-      Ai = 0.0;
+      double calculatedAi = 0.0;
       for (int j = 0; j < numbcomp; j++) {
         double nj = compArray[j].getNumberOfMolesInPhase();
         if (nj < 1e-100) {
           continue;
         }
-        Ai += nj * ((neqsim.thermo.component.ComponentEos) compArray[j]).sqrtAT;
+        calculatedAi += nj * ((neqsim.thermo.component.ComponentEos) compArray[j]).sqrtAT;
       }
 
-      return 2.0 * sqrtAi * Ai;
+      Ai = calculatedAi;
+      return 2.0 * sqrtAi * calculatedAi;
     }
 
     public double calcBiFull(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -1153,7 +1154,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       double tempPow = 0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-      A = 0.0;
+      double calculatedATT = 0.0;
       for (int i = 0; i < numbcomp; i++) {
         for (int j = 0; j < numbcomp; j++) {
           sqrtaij = Math.sqrt(compArray[i].getaT() * compArray[j].getaT());
@@ -1162,10 +1163,11 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               + compArray[i].getaT() * compArray[j].getaDiffDiffT()
               + compArray[j].getaT() * compArray[i].getaDiffDiffT()) / sqrtaij
               - tempPow * tempPow / (2.0 * sqrtaij * compArray[i].getaT() * compArray[j].getaT()));
-          A += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
+          calculatedATT += compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
         }
       }
-      return A;
+      A = calculatedATT;
+      return calculatedATT;
     }
 
     /** {@inheritDoc} */

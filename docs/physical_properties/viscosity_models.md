@@ -185,6 +185,14 @@ fluid.getPhase("oil").initPhysicalProperties();
 Use `"CSP"` as an equivalent alias for `"PFCT"`, or select `"PFCT-Heavy-Oil"` for
 characterized heavy fractions. Reinitialize the phase after any selection.
 
+PFCT, PFCT-Mod86 and PFCT-Heavy-Oil clones keep independent mutable methane
+reference fluids. This includes the default gas/oil transport models on cloned
+process streams, so parallel branches can evaluate viscosity at different
+temperatures and pressures without overwriting a sibling reference state.
+Model parameters and correction factors are retained. Configure fluids and
+mixing parameters before launching parallel calculations; do not mutate a
+stream that another calculation is using.
+
 ---
 
 ### Polynomial Correlation

@@ -267,6 +267,8 @@ public class PFCTViscosityMethod extends Viscosity {
   @Override
   public PFCTViscosityMethod clone() {
     PFCTViscosityMethod method = (PFCTViscosityMethod) super.clone();
+    // The methane reference is mutated during every viscosity evaluation.
+    method.referenceSystem = referenceSystem.clone();
     method.cspViscosityCorrectionFactors = cspViscosityCorrectionFactors.clone();
     return method;
   }

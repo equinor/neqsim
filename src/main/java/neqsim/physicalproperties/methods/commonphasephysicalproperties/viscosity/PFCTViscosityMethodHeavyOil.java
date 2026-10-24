@@ -318,6 +318,8 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
   @Override
   public PFCTViscosityMethodHeavyOil clone() {
     PFCTViscosityMethodHeavyOil method = (PFCTViscosityMethodHeavyOil) super.clone();
+    // The methane reference is mutated during every viscosity evaluation.
+    method.referenceSystem = referenceSystem.clone();
     method.cspViscosityCorrectionFactors = cspViscosityCorrectionFactors.clone();
     return method;
   }

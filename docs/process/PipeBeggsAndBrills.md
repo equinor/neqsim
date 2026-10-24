@@ -10,6 +10,12 @@ keywords: "Beggs and Brill, multiphase, pipeline, pressure drop, liquid holdup, 
 
 The `PipeBeggsAndBrills` class implements the Beggs and Brill (1973) empirical correlations for pressure drop and liquid holdup prediction in multiphase pipeline flow. It supports single-phase (gas or liquid) and multiphase (gas-liquid, gas-oil-water) flow in horizontal, inclined, and vertical pipes.
 
+The default PFCT viscosity models retain independent methane reference states
+when inlet fluids are cloned for parallel branches. Each branch still requires
+its own stream and fluid state. The regression suite compares concurrent pipe
+outlet pressure and liquid holdup with sequential calculations; it does not
+qualify concurrent editing of a stream or its mixing parameters.
+
 ## Reference
 
 > Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes", Journal of Petroleum Technology, May 1973, pp. 607-617. **SPE-4007-PA**
