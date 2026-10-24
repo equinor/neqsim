@@ -1,0 +1,365 @@
+{
+  "status": "Research catalogue; no default coefficients changed",
+  "hv_source": {
+    "author": "Georgios K. Folas",
+    "title": "Modeling of Complex Mixtures Containing Hydrogen Bonding Molecules",
+    "year_on_thesis": 2006,
+    "repository_year": 2007,
+    "url": "https://backend.orbit.dtu.dk/ws/portalfiles/portal/123926886/CDocuments_and_SettingsalbDesktopPh.D._Georgios_K._Folas.pdf.pdf",
+    "tables": "6.1-6.3, printed pages 132-133, PDF indices 151-152",
+    "convention": "SRK infinite-pressure Huron-Vidal with volume-weighted modified NRTL; tau12=(g12-g22)/(RT)=D12/T; tau21=(g21-g11)/(RT)=D21/T",
+    "coefficient_units": "D12 and D21 kelvin; alpha dimensionless; both temperature offsets zero",
+    "qualification": "Polar pure components use Mathias-Copeman alpha. Complete original pure-component configuration must accompany coefficients. These are not ordinary low-pressure NRTL parameters."
+  },
+  "pairs": [
+    {
+      "component1": "water",
+      "component2": "methane",
+      "D12": 410,
+      "D21": 2291,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "water",
+      "component2": "propane",
+      "D12": 847,
+      "D21": 2650,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": [
+        278,
+        366
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-butane",
+      "D12": 793,
+      "D21": 2501,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        420
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-hexane",
+      "D12": 1187,
+      "D21": 2878,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": [
+        280,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-heptane",
+      "D12": -81,
+      "D21": 2741,
+      "alpha": 0.15,
+      "table": "6.1",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "water",
+      "component2": "n-octane",
+      "D12": 4272,
+      "D21": 2520,
+      "alpha": 0.25,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        550
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "n-decane",
+      "D12": -228,
+      "D21": 2690,
+      "alpha": 0.14,
+      "table": "6.1",
+      "temperature_range_K": [
+        290,
+        566
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "benzene",
+      "D12": 591,
+      "D21": 1998,
+      "alpha": 0.175,
+      "table": "6.1",
+      "temperature_range_K": [
+        273,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "toluene",
+      "D12": 535,
+      "D21": 2031,
+      "alpha": 0.17,
+      "table": "6.1",
+      "temperature_range_K": [
+        273,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "ethylbenzene",
+      "D12": 641,
+      "D21": 1908,
+      "alpha": 0.17,
+      "table": "6.1",
+      "temperature_range_K": [
+        303,
+        568
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "m-xylene",
+      "D12": 282,
+      "D21": 2023,
+      "alpha": 0.17,
+      "table": "6.1",
+      "temperature_range_K": [
+        373,
+        473
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "1-hexene",
+      "D12": 2729,
+      "D21": 2401,
+      "alpha": 0.24,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        496
+      ]
+    },
+    {
+      "component1": "water",
+      "component2": "1-decene",
+      "D12": 793,
+      "D21": 2389,
+      "alpha": 0.16,
+      "table": "6.1",
+      "temperature_range_K": [
+        310,
+        550
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "methane",
+      "D12": 181,
+      "D21": 2274,
+      "alpha": 0.07,
+      "table": "6.2",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "MEG",
+      "component2": "n-hexane",
+      "D12": 1249,
+      "D21": 2553,
+      "alpha": 0.2,
+      "table": "6.2",
+      "temperature_range_K": [
+        308,
+        330
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "n-heptane",
+      "D12": 430,
+      "D21": 2595,
+      "alpha": 0.13,
+      "table": "6.2",
+      "temperature_range_K": [
+        316,
+        352
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "benzene",
+      "D12": 13,
+      "D21": 1927,
+      "alpha": 0.15,
+      "table": "6.2",
+      "temperature_range_K": [
+        279,
+        342
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "toluene",
+      "D12": 726,
+      "D21": 1624,
+      "alpha": 0.27,
+      "table": "6.2",
+      "temperature_range_K": [
+        279,
+        382
+      ]
+    },
+    {
+      "component1": "MEG",
+      "component2": "water",
+      "D12": 105,
+      "D21": 59,
+      "alpha": 0.95,
+      "table": "6.2",
+      "temperature_range_K": null
+    },
+    {
+      "component1": "TEG",
+      "component2": "n-heptane",
+      "D12": 143,
+      "D21": 2157,
+      "alpha": 0.06,
+      "table": "6.3",
+      "temperature_range_K": [
+        309,
+        351
+      ]
+    },
+    {
+      "component1": "TEG",
+      "component2": "benzene",
+      "D12": 15,
+      "D21": 809,
+      "alpha": 0.16,
+      "table": "6.3",
+      "temperature_range_K": [
+        279,
+        288
+      ]
+    },
+    {
+      "component1": "TEG",
+      "component2": "toluene",
+      "D12": 45,
+      "D21": 1091,
+      "alpha": 0.15,
+      "table": "6.3",
+      "temperature_range_K": [
+        279,
+        345
+      ]
+    }
+  ],
+  "pure_component_sources": {
+    "source_url": "https://backend.orbit.dtu.dk/ws/portalfiles/portal/5653725/PhD_Derawi.pdf",
+    "source_title": "Samer Omar Derawi, Modeling of Phase Equilibria Containing Associating Fluids, 2002",
+    "MEG": {
+      "TC_K": 720.0,
+      "PC_bar": 82.0,
+      "MC": [
+        1.1121,
+        0.9679,
+        -1.42
+      ],
+      "references": "Table4.1 PDFp62; Table4.10 PDFp83; Table5.5 PDFp97",
+      "alpha_fit_Tr": [
+        0.4,
+        0.9
+      ]
+    },
+    "TEG": {
+      "TC_K": 769.5,
+      "PC_bar": 33.2,
+      "MC": [
+        1.9673,
+        -3.5617,
+        7.3424
+      ],
+      "references": "Table4.1 PDFp62; Table5.5 PDFp97"
+    },
+    "water_caution": "Folas chapter6 uses Pedersen1996 water MC values. Folas Table2.8 values1.0873,-0.6377,0.6345 are for SRK/MHV2 and must not silently be assumed identical to chapter6 configuration."
+  },
+  "MEG_heptane_physical_reproduction": {
+    "pressure_bara": 1.0,
+    "measured_source": "Derawi2002 Table3.3 PDFp46, printedp34; DOI10.1021/je010199a",
+    "measurement_basis": "Table reports100*mass_fraction. Values below divided by100; no mole-fraction interpretation.",
+    "measurement_uncertainty": "MEG2% and hydrocarbon5% relative as stated immediately before Table3.3; model deviations exceed these uncertainties.",
+    "data": [
+      {
+        "T_K": 315.95,
+        "w_MEG_in_HC": 0.000198,
+        "w_HC_in_MEG": 0.001478
+      },
+      {
+        "T_K": 322.75,
+        "w_MEG_in_HC": 0.000287,
+        "w_HC_in_MEG": 0.001532
+      },
+      {
+        "T_K": 329.75,
+        "w_MEG_in_HC": 0.000399,
+        "w_HC_in_MEG": 0.00176
+      },
+      {
+        "T_K": 336.55,
+        "w_MEG_in_HC": 0.000553,
+        "w_HC_in_MEG": 0.001903
+      },
+      {
+        "T_K": 341.15,
+        "w_MEG_in_HC": 0.000677,
+        "w_HC_in_MEG": 0.002024
+      },
+      {
+        "T_K": 346.95,
+        "w_MEG_in_HC": 0.000867,
+        "w_HC_in_MEG": 0.002119
+      },
+      {
+        "T_K": 351.85,
+        "w_MEG_in_HC": 0.001066,
+        "w_HC_in_MEG": 0.002238
+      }
+    ],
+    "model_configuration": "SystemSrkEos,rule4,multiphasecheck,MEG/n-heptane .5/.5mol; apply both directedClassicOrHV flags=HV; alpha.13;D12=430,D21=2595;DT12=DT21=0 on all allocated phases; MEGPC82bar and attractiveTerm4 MC1.1121,.9679,-1.4200 on all phases; default n-heptane pureproperties.",
+    "observed_AARD_percent": {
+      "HC_in_MEG": 6.706562621364773,
+      "MEG_in_HC": 21.261932815658238
+    },
+    "published_AARD_percent": {
+      "HC_in_MEG": 6.7,
+      "MEG_in_HC": 21.2
+    },
+    "published_comparison_reference": "FolasTable6.6 PDFp158,printedp139",
+    "interpretation": "Reproduces the published model correlation; not measurement-uncertainty accuracy. Current globalMEGPC90bar is incompatible with this fitted dataset; no global default changed.",
+    "reproduction_test": "neqsim.thermo.mixingrule.HuronVidalLiteratureReproductionTest"
+  },
+  "missing_active_HV_pairs_in_current_INTER": [
+    "water/n-octane",
+    "water/n-decane",
+    "MEG/methane",
+    "MEG/n-hexane",
+    "MEG/n-heptane",
+    "MEG/benzene",
+    "MEG/toluene",
+    "TEG/n-heptane",
+    "TEG/benzene",
+    "TEG/toluene"
+  ],
+  "activation_caution": "Dormant existing MEG/heptane alpha.39867 and largeD/DT resemble ordinaryNRTLTable3.6 of Derawi2002, not Folas's refitted volumeweightedHVTable6.2. Do not activate dormant data without checking model convention."
+}

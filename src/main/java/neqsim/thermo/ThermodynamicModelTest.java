@@ -20,6 +20,8 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
   static Logger logger = LogManager.getLogger(ThermodynamicModelTest.class);
   /** Relative perturbation for second-order finite differences, balancing truncation and roundoff. */
   private static final double DIFFERENCE_STEP = Math.cbrt(Math.ulp(1.0));
+  /** Maximum step halvings when finite estimates have not yet resolved the configured tolerance. */
+  private static final int MAX_DIFFERENCE_REFINEMENTS = 4;
   SystemInterface system;
   private double maxError = 1e-10;
 
@@ -191,8 +193,10 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
    * <p>
    * Each active logical phase is checked on its retained root without flashing or mutating the supplied fluid. Two
    * second-order estimates, at a step and half that step, must agree with each other and with the analytic derivative.
-   * Their tolerance is {@code maxError * max(1, abs(analytic), abs(numerical))}; callers must choose an accuracy that
-   * their property evaluator and finite differences can resolve. An unresolved or non-finite check returns false. Mole
+   * Finite unresolved estimates permit at most four step halvings, retaining the same tolerance and requiring agreement
+   * for every component. A non-finite estimate fails immediately rather than being hidden by refinement. Their
+   * tolerance is {@code maxError * max(1, abs(analytic), abs(numerical))}; callers must choose an accuracy that their
+   * property evaluator and finite differences can resolve. An unresolved or non-finite check returns false. Mole
    * perturbations never remove more than the available amount; boundary components use a one-sided stencil. These are
    * the unconstrained partial derivatives exposed by the component API. Electrolyte model qualification also requires
    * separate charge-preserving directional checks and is not established by this method alone.
@@ -224,16 +228,41 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
           boolean central = coordinate > step;
           double[] coarse = differences(snapshot, phase, variable, step, central);
           double[] fine = differences(snapshot, phase, variable, step / 2.0, central);
-          for (int component = 0; component < state.getNumberOfComponents(); component++) {
-            ComponentInterface species = state.getComponent(component);
-            double analytic = variable == -2 ? species.getdfugdt()
-                : variable == -1 ? species.getdfugdp() : species.getdfugdn(variable);
-            if (!derivativesAgree(analytic, fine[component]) || !derivativesAgree(coarse[component], fine[component])) {
-              logger.debug(
-                  "Derivative check failed: phase={}, component={}, variable={}, analytic={}, coarse={}, fine={}",
-                  phase, component, variable, analytic, coarse[component], fine[component]);
-              return false;
+          boolean resolved = false;
+          for (int refinement = 0; refinement <= MAX_DIFFERENCE_REFINEMENTS; refinement++) {
+            int failedComponent = -1;
+            for (int component = 0; component < state.getNumberOfComponents(); component++) {
+              ComponentInterface species = state.getComponent(component);
+              double analytic = variable == -2 ? species.getdfugdt()
+                  : variable == -1 ? species.getdfugdp() : species.getdfugdn(variable);
+              if (!Double.isFinite(analytic) || !Double.isFinite(coarse[component])
+                  || !Double.isFinite(fine[component])) {
+                return false;
+              }
+              if (!derivativesAgree(analytic, fine[component])
+                  || !derivativesAgree(coarse[component], fine[component])) {
+                failedComponent = component;
+              }
             }
+            if (failedComponent < 0) {
+              resolved = true;
+              break;
+            }
+            if (refinement == MAX_DIFFERENCE_REFINEMENTS) {
+              ComponentInterface species = state.getComponent(failedComponent);
+              double analytic = variable == -2 ? species.getdfugdt()
+                  : variable == -1 ? species.getdfugdp() : species.getdfugdn(variable);
+              logger.debug(
+                  "Derivative check unresolved: phase={}, component={}, variable={}, analytic={}, coarse={}, fine={}",
+                  phase, failedComponent, variable, analytic, coarse[failedComponent], fine[failedComponent]);
+              break;
+            }
+            step /= 2.0;
+            coarse = fine;
+            fine = differences(snapshot, phase, variable, step / 2.0, central);
+          }
+          if (!resolved) {
+            return false;
           }
         }
       }

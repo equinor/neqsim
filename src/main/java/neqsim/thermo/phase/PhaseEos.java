@@ -52,17 +52,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    // Thread-safety contract: mixSelect and mixRule are shared (shallow) with the
-    // parent. This is safe for concurrent flashing on parent and clone because the
-    // interaction-parameter matrices (intparam, intparamT, HVDij, NRTLDij,
-    // WSintparam,
-    // NRTLalpha, ...) are written exclusively by setMixingRule() during fluid setup
-    // and are treated as read-only during flash calculations. Callers MUST NOT
-    // invoke setMixingRule() on a fluid (or any of its clones) while another thread
-    // is performing a flash on a sibling clone. EosMixingRuleHandler.clone() is
-    // available for callers that need fully-independent matrix copies (e.g., when
-    // tuning kij in parallel); it is intentionally not invoked here to keep clone()
-    // cheap on the hot path.
+    // mixSelect and mixRule remain shared to keep this hot-path clone inexpensive.
+    // Parameter mutation affects siblings. Stateful rules, including Huron-Vidal,
+    // also share mutable calculation caches, so read-only parameter access alone
+    // does not make concurrent sibling flashes safe. Use independently configured
+    // systems per worker or serialize complete operations on cloned siblings.
+    // Copying only the handler's parameter matrices does not isolate rule work state.
     return clonedPhase;
   }
 
@@ -476,7 +471,11 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       Z = pressure * getMolarVolume() / (R * temperature);
       // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
     } while (error > 1.0e-10 && iterations < maxIterations);
-    if (iterations >= maxIterations) {
+    // A tiny update can also indicate a stalled spinodal iteration. Inspect the final pressure only when the
+    // previous residual is suspect, avoiding another evaluation on the ordinary converged path. A large previous
+    // residual alone is not a failure if the last update solved the equation.
+    if (iterations >= maxIterations || !Double.isFinite(h) || (Math.abs(h) > 1.0e-10
+        && Math.abs(calcPressure() - pressure) > 1.0e-8 * Math.max(1.0, Math.abs(pressure)))) {
       return molarVolumeAnalytical(pressure, temperature, pt);
     }
     if (Double.isNaN(getMolarVolume())) {

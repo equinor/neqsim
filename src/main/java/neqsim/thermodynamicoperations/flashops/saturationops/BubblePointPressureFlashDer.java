@@ -32,6 +32,11 @@ public class BubblePointPressureFlashDer extends ConstantDutyPressureFlash {
    */
   @Override
   public void run() {
+    if (system.getNumberOfComponents() == 1 && (system.getPhase(0).getClass() == neqsim.thermo.phase.PhaseSrkEos.class
+        || system.getPhase(0).getClass() == neqsim.thermo.phase.PhasePrEos.class)) {
+      new BubblePointPressureFlash(system).run();
+      return;
+    }
     if (system.getPhase(0).getNumberOfComponents() == 1
         && system.getTemperature() >= system.getPhase(0).getComponent(0).getTC()
         && (system.getModelName() == null || !system.getModelName().contains("SAFT"))) {

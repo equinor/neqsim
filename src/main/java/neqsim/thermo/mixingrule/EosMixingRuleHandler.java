@@ -25,8 +25,10 @@ import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrCPA;
+import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
 import neqsim.thermo.phase.PhaseSrkCPA;
+import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
@@ -78,6 +80,30 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
   /** Constant <code>calcEOSInteractionParameters=false</code>. */
   public static boolean calcEOSInteractionParameters = false;
   private int bmixType = 0;
+
+  /** Column names defining one complete EOS-specific Huron-Vidal parameter set. */
+  private static final String[] HV_PARAMETER_COLUMNS = {"HVTYPE", "HVALPHA", "HVGIJ", "HVGJI", "HVGIJT", "HVGJIT"};
+
+  /**
+   * Rejects a malformed EOS-specific calibration instead of silently changing the pair to classic mixing.
+   *
+   * @author NeqSim contributors
+   * @version 1.0
+   */
+  private static final class InvalidHuronVidalParametersException extends IllegalArgumentException {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Creates a calibration rejection with its original parsing or database cause.
+     *
+     * @param message rejection reason
+     * @param cause original cause, or null for an incomplete set
+     */
+    private InvalidHuronVidalParametersException(String message, Throwable cause) {
+      super(message, cause);
+    }
+  }
 
   /**
    * Constructor for EosMixingRules.
@@ -155,6 +181,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
    * @param mr a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a {@link neqsim.thermo.mixingrule.EosMixingRulesInterface} object
+   * @throws IllegalArgumentException if the selected EOS-specific Huron-Vidal override is incomplete or invalid
    */
   public EosMixingRulesInterface getMixingRule(int mr, PhaseInterface phase) {
     this.wij = new double[3][phase.getNumberOfComponents()][phase.getNumberOfComponents()];
@@ -178,6 +205,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     classicOrHV = new String[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     classicOrWS = new String[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
     wijCalcOrFitted = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+    String hvEosSuffix = mr == 3 || mr == 4 ? getHuronVidalEosSuffix(phase) : "";
+    int[] hvOverrideColumns = null;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       for (int k = 0; k < phase.getNumberOfComponents(); k++) {
         String component_name = phase.getComponent(k).getComponentName();
@@ -220,9 +249,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 templ = k;
                 tempk = l;
               }
-
-              classicOrHV[k][l] = dataSet.getString("HVTYPE").trim();
-              classicOrHV[l][k] = classicOrHV[k][l];
 
               if (isCalcEOSInteractionParameters()) {
                 intparam[k][l] = BIPEstimator.estimateChuehPrausnitz(phase.getComponent(k), phase.getComponent(l),
@@ -320,6 +346,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               }
 
               java.sql.ResultSetMetaData dataSetMD = dataSet.getMetaData();
+              if (hvOverrideColumns == null) {
+                hvOverrideColumns = findHuronVidalOverrideColumns(dataSetMD, hvEosSuffix);
+              }
               int cols = dataSetMD.getColumnCount();
               boolean hasKIJTTypeCPAcol = false;
               String colname = "KIJTTypeCPA";
@@ -340,11 +369,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               }
               intparamTType[l][k] = intparamTType[k][l];
 
-              HValpha[k][l] = Double.parseDouble(dataSet.getString("HValpha"));
-              HValpha[l][k] = HValpha[k][l];
-
-              HVDij[tempk][templ] = Double.parseDouble(dataSet.getString("HVgij"));
-              HVDij[templ][tempk] = Double.parseDouble(dataSet.getString("HVgji"));
+              loadHuronVidalParameters(dataSet, hvOverrideColumns, tempk, templ);
 
               wijCalcOrFitted[k][l] = Integer.parseInt(dataSet.getString("CalcWij"));
               wijCalcOrFitted[l][k] = wijCalcOrFitted[k][l];
@@ -369,11 +394,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               NRTLDij[tempk][templ] = Double.parseDouble(dataSet.getString("NRTLgij"));
               NRTLDij[templ][tempk] = Double.parseDouble(dataSet.getString("NRTLgji"));
 
-              HVDijT[tempk][templ] = Double.parseDouble(dataSet.getString("HVgijT"));
-              HVDijT[templ][tempk] = Double.parseDouble(dataSet.getString("HVgjiT"));
-
               NRTLDijT[tempk][templ] = Double.parseDouble(dataSet.getString("WSgijT"));
               NRTLDijT[templ][tempk] = Double.parseDouble(dataSet.getString("WSgjiT"));
+            } catch (InvalidHuronVidalParametersException ex) {
+              throw ex;
             } catch (Exception ex) {
               // System.out.println("err in thermo mix.....");
               // System.out.println(ex.toString());
@@ -533,11 +557,124 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           }
         }
       }
+    } catch (InvalidHuronVidalParametersException ex) {
+      throw ex;
     } catch (Exception ex) {
       logger.error("error reading from database", ex);
     }
 
     return resetMixingRule(mr, phase);
+  }
+
+  /**
+   * Chooses a cubic-EOS parameter family without applying it to CPA or unrelated models.
+   *
+   * @param phase phase selecting the equation of state
+   * @return optional database suffix, or an empty string for legacy-only selection
+   */
+  static String getHuronVidalEosSuffix(PhaseInterface phase) {
+    if (phase instanceof PhaseCPAInterface) {
+      return "";
+    }
+    if (phase instanceof PhasePrEos) {
+      return "_PR";
+    }
+    return phase instanceof PhaseSrkEos ? "_SRK" : "";
+  }
+
+  /**
+   * Resolves optional override columns once for the interaction-table schema during fluid setup.
+   *
+   * @param metadata interaction-table metadata
+   * @param suffix selected EOS suffix, or an empty string for legacy-only selection
+   * @return six JDBC column indices, or an empty array when the optional family is absent
+   * @throws java.sql.SQLException if the table metadata cannot be read
+   * @throws IllegalArgumentException if only part of the selected optional family exists
+   */
+  static int[] findHuronVidalOverrideColumns(java.sql.ResultSetMetaData metadata, String suffix)
+      throws java.sql.SQLException {
+    if (suffix.length() == 0) {
+      return new int[0];
+    }
+    int[] indices = new int[HV_PARAMETER_COLUMNS.length];
+    int count = 0;
+    for (int column = 1; column <= metadata.getColumnCount(); column++) {
+      String name = metadata.getColumnName(column);
+      for (int parameter = 0; parameter < HV_PARAMETER_COLUMNS.length; parameter++) {
+        if ((HV_PARAMETER_COLUMNS[parameter] + suffix).equalsIgnoreCase(name)) {
+          indices[parameter] = column;
+          count++;
+        }
+      }
+    }
+    if (count != 0 && count != HV_PARAMETER_COLUMNS.length) {
+      throw new InvalidHuronVidalParametersException(
+          "Incomplete Huron-Vidal " + suffix + " column family: all six override columns are required", null);
+    }
+    return count == 0 ? new int[0] : indices;
+  }
+
+  /**
+   * Loads one complete directed EOS-specific set, or the unchanged legacy set when every override is blank.
+   *
+   * @param row interaction-table row positioned on the selected component pair
+   * @param overrideColumns selected EOS column indices, or an empty array when absent
+   * @param first phase index corresponding to the row's COMP1
+   * @param second phase index corresponding to the row's COMP2
+   * @throws java.sql.SQLException if the legacy row cannot be read
+   * @throws IllegalArgumentException if a populated selected override is partial, non-finite or malformed
+   */
+  void loadHuronVidalParameters(java.sql.ResultSet row, int[] overrideColumns, int first, int second)
+      throws java.sql.SQLException {
+    String[] values = new String[HV_PARAMETER_COLUMNS.length];
+    int populated = 0;
+    for (int parameter = 0; parameter < overrideColumns.length; parameter++) {
+      String value = row.getString(overrideColumns[parameter]);
+      if (value != null && value.trim().length() != 0) {
+        values[parameter] = value.trim();
+        populated++;
+      }
+    }
+    boolean overridden = populated != 0;
+    if (overridden && populated != values.length) {
+      throw new InvalidHuronVidalParametersException(
+          "Incomplete EOS-specific Huron-Vidal parameters for " + row.getString("COMP1") + "/" + row.getString("COMP2")
+              + ": all six values are required; leave all blank for legacy fallback",
+          null);
+    }
+    if (!overridden) {
+      for (int parameter = 0; parameter < values.length; parameter++) {
+        values[parameter] = row.getString(HV_PARAMETER_COLUMNS[parameter]);
+      }
+    }
+    String type = values[0].trim();
+    double[] coefficients = new double[values.length - 1];
+    try {
+      if (overridden && !"HV".equals(type) && !"Classic".equals(type)) {
+        throw new IllegalArgumentException("HVTYPE must be HV or Classic");
+      }
+      for (int parameter = 1; parameter < values.length; parameter++) {
+        coefficients[parameter - 1] = Double.parseDouble(values[parameter]);
+        if (overridden && !Double.isFinite(coefficients[parameter - 1])) {
+          throw new IllegalArgumentException("Huron-Vidal coefficients must be finite");
+        }
+      }
+    } catch (IllegalArgumentException ex) {
+      if (overridden) {
+        throw new InvalidHuronVidalParametersException(
+            "Invalid EOS-specific Huron-Vidal parameters for " + row.getString("COMP1") + "/" + row.getString("COMP2"),
+            ex);
+      }
+      throw ex;
+    }
+    classicOrHV[first][second] = type;
+    classicOrHV[second][first] = type;
+    HValpha[first][second] = coefficients[0];
+    HValpha[second][first] = coefficients[0];
+    HVDij[first][second] = coefficients[1];
+    HVDij[second][first] = coefficients[2];
+    HVDijT[first][second] = coefficients[3];
+    HVDijT[second][first] = coefficients[4];
   }
 
   /**
@@ -1096,6 +1233,11 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     @Override
     public double calcBij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
         int numbcomp) {
+      if (bmixType == 0) {
+        // Linear covolume has no composition curvature. Cached Bi values may not yet
+        // exist for later components during their first sequential Finit call.
+        return 0.0;
+      }
       double bij = 0.0;
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
