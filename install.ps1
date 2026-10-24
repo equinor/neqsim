@@ -99,7 +99,7 @@ if ($null -eq $python) {
     Write-Host ""
     Write-Host "ERROR: No working Python interpreter was found." -ForegroundColor Red
     Write-Host ""
-    Write-Host "Fix: install Python 3.8+ from one of:" -ForegroundColor Yellow
+    Write-Host "Fix: install Python 3.11-3.14 from one of:" -ForegroundColor Yellow
     Write-Host "  * https://www.python.org/downloads/  (check 'Add python.exe to PATH')"
     Write-Host "  * winget install Python.Python.3.12"
     Write-Host ""

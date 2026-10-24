@@ -34,6 +34,9 @@ improvement to become publishable.
 
 ## Setup
 
+Use Python 3.11 or newer. Figure tools require Pillow 13.0.0 or newer, including
+the fix for [CVE-2026-96639](https://github.com/python-pillow/Pillow/security/advisories/GHSA-v9pv-5gc8-w2m6).
+
 ```bash
 cd neqsim-paperlab
 pip install -r requirements.txt
