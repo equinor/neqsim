@@ -288,6 +288,38 @@ evidence, complete joint neutral-parameter provenance and independent #4367
 review remain necessary before a physical correction. Existing seawater,
 ice/precipitation, kinetics and commercial-fluid exclusions still apply.
 
+## CO2-water donor-incidence diagnostic
+
+The Dholabhai assessment reports the molecular association probabilities needed
+by the physical-permittivity model without changing the production model. The
+definition follows Coelho, Franco and Firoozabadi (2025), equation 22: a
+molecule-pair quantity is a selected-site bond incidence. No implementation or
+fitted parameter is copied from that work.
+
+NeqSim's existing topology assigns water the 4C site signs `{+,+,-,-}` and
+CO2 the acceptor-only 2A signs `{-,-}`. Let `X_D` be the mean of the two
+water donor-site fractions and `X_A` the mean of the two water acceptor-site
+fractions. Because a water acceptor can bond only a water donor in this
+water/CO2 topology, its mass-action balance gives
+
+```text
+P_ww = 1 - X_A
+P_wc = X_A - X_D
+P_w  = P_ww + P_wc = 1 - X_D
+```
+
+Here `P_ww` is water-water donor incidence, `P_wc` is water-CO2 donor
+incidence, and `P_w` is total water-donor incidence. The assessment records
+both site fractions, all three probabilities, and the within-pair donor and
+acceptor symmetry residuals for every K10/K15, pure-water, NaCl, CaCl2 and
+mixed-salt state. The exact algebraic identity is checked at `1e-14`; this is
+an identity check, not an experimental-accuracy tolerance.
+
+These columns isolate the molecular-association input that the future
+Maribo-Mogensen physical-permittivity state will consume. They do not calculate
+that permittivity, alter Debye-Huckel or Born, introduce a CO2 dipole, change a
+parameter, or qualify hydrate predictions.
+
 ## Retained numerical evidence
 
 The Core Build, Test, and Javadoc workflow retains an
@@ -356,3 +388,5 @@ compensated here.
 - Yasunishi and Yoshida (1979), *J. Chem. Eng. Data* 24, 11–14,
   [NIST data reproduction](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_227).
 - Dholabhai et al. (1993), [DOI 10.1021/je00012a045](https://doi.org/10.1021/je00012a045).
+- Coelho, Franco and Firoozabadi (2025), *Industrial & Engineering Chemistry Research* 64, 8492–8505,
+  [DOI 10.1021/acs.iecr.5c00134](https://doi.org/10.1021/acs.iecr.5c00134), equation 22.
