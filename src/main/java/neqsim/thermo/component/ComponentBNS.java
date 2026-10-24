@@ -59,7 +59,13 @@ public class ComponentBNS extends ComponentPR {
   /** {@inheritDoc} */
   @Override
   public double calcb() {
-    b = omegaB * R * criticalTemperature / criticalPressure;
+    b = getOmegaB() * R * criticalTemperature / criticalPressure;
     return b;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOmegaB() {
+    return hasOmegaBOverride() ? getOmegaBOverride() : omegaB;
   }
 }

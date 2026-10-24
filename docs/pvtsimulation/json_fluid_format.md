@@ -88,6 +88,17 @@ Each entry in the `components` array is an object with these fields:
 | `parachor`            | number  | No       | dyn/cm  | Parachor for IFT calculation                                 |
 | `isPseudo`            | boolean | No       | —       | If true, added as TBP pseudo-fraction                        |
 | `density`             | number  | No       | kg/m³   | Standard liquid density (for pseudo-components)              |
+| `omegaB`              | number  | No       | —       | Positive finite persistent PR covolume coefficient override |
+
+The optional `omegaB` value uses the
+[PR covolume tuning contract](../thermo/characterization/README#persistent-pr-covolume-tuning).
+It is applied to every allocated phase and survives initialization and flashes.
+`JsonFluidReadWrite` exports this field only for explicitly tuned PR components;
+omitting it preserves the default. A nonpositive or nonfinite value, or use with
+an SRK fluid, is rejected. JSON export does not store parameter-fit provenance,
+uncertainty or experimental validation. `PrOmegaBFluidRoundTripTest` verifies
+the export/reload and invalid-input behavior. The diagnostic `fluid.toJson()`
+response is a different format and must not be used to reload tuning.
 
 ### Component Name Mapping
 
