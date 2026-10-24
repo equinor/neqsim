@@ -977,7 +977,17 @@ public final class ProcessModelOperatingPointOptimizer {
     public Map<String, Object> getOptimizerEvidence(String cycleId) {
       Map<String, Object> evidence = new LinkedHashMap<String, Object>();
       evidence.put("cycle_id", requireText(cycleId, "Cycle identifier"));
+      CandidateRecord initial = candidates.isEmpty() ? null : candidates.get(0);
       CandidateSetEvaluationResult replay = acceptedPointReplay == null ? null : acceptedPointReplay.getEvaluation();
+      evidence.put("objective_name", objective.getName());
+      evidence.put("objective_direction", objective.getDirection().name());
+      evidence.put("objective_unit", objective.getUnit());
+      evidence.put("initial_objective_value",
+          initial != null && isFinite(initial.getRawObjective()) ? Double.valueOf(initial.getRawObjective()) : null);
+      evidence.put("accepted_objective_value",
+          acceptedPointReplay != null && isFinite(acceptedPointReplay.getRawObjective())
+              ? Double.valueOf(acceptedPointReplay.getRawObjective())
+              : null);
       evidence.put("simulation_converged", replay != null && replay.isCandidateSimulationConverged());
       evidence.put("candidate_feasible", replay != null && replay.isFeasible());
       evidence.put("candidate_finite", isCandidateFinite());

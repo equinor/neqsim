@@ -30,7 +30,7 @@ import json
 
 import jpype
 
-from neqsim_continuous.production import proposal_from_lifecycle_json
+from neqsim_continuous.production import proposal_from_lifecycle_context
 
 
 def run(ctx):
@@ -41,13 +41,10 @@ def run(ctx):
     current = next(period for period in evidence["periods"]
                    if period["period_id"] == ctx.cycle_id)
     envelope = current["envelope_evidence"]
-    proposal = proposal_from_lifecycle_json(
+    proposal = proposal_from_lifecycle_context(
         encoded,
-        cycle_id=ctx.cycle_id,
+        ctx=ctx,
         title="Review validated ten-well field operating point",
-        objective_kpi="validated_field_operating_point",
-        baseline_value=0.0,
-        expected_gain=1.0,
         predicted={},
     )
     return {
@@ -56,7 +53,8 @@ def run(ctx):
             "lifecycle_period_count": evidence["period_count"],
             "lifecycle_evaluation_count": evidence["total_evaluation_count"],
             "lifecycle_runtime_seconds": evidence["envelope_runtime_seconds"],
-            "validated_field_operating_point": 1.0,
+            "validated_gas_export_kg_hr": proposal["predicted"][
+                "validated_gas_export_kg_hr"],
             "current_envelope_evaluation_count": envelope["total_evaluation_count"],
         },
     }
@@ -79,6 +77,9 @@ def source_classpath():
 
 def create_task(parent):
     """Create the minimal production living task used by this acceptance workflow."""
+    acceptance = jpype.JClass(
+        "neqsim.process.util.optimizer.FieldToFacilityOptimizationAcceptanceTest")
+    baseline_export = float(acceptance.createTenWellBaselineGasExportKgHr())
     task = Path(parent) / "field_to_facility_living_acceptance"
     task.mkdir()
     (task / "study_config.yaml").write_text(
@@ -89,7 +90,7 @@ def create_task(parent):
         "task_statement": (
             "Validate a synthetic ten-well field-to-facility operating point without "
             "weakening physical constraints."),
-        "key_results": {"validated_field_operating_point": 0.0},
+        "key_results": {"validated_gas_export_kg_hr": baseline_export},
         "recommendations": [
             "Treat the synthetic result as workflow acceptance, not operating approval."],
     }, indent=2), encoding="utf-8")
@@ -104,6 +105,7 @@ def create_task(parent):
     }
     plan["production"]["require_envelope_evidence"] = True
     plan["production"]["require_lifecycle_envelope_evidence"] = True
+    plan["production"]["require_objective_evidence"] = True
     plan["stages"] = [
         "script:optimize", "kpis", "gates", "constraints", "guard", "ledger", "digest",
     ]
@@ -112,11 +114,13 @@ def create_task(parent):
     goal_path = continuous / "goal.yaml"
     goal = yaml.safe_load(goal_path.read_text(encoding="utf-8"))
     goal["objective"] = {
-        "metric": "validated_field_operating_point",
+        "metric": "validated_gas_export_kg_hr",
+        "source_name": "validated gas export",
+        "unit": "kg/hr",
         "direction": "maximize",
-        "target": 1.0,
+        "target": None,
         "confidence_required": "medium",
-        "source_section": "synthetic acceptance",
+        "source_section": "current ten-well Java objective evidence",
     }
     goal["constraints"] = []
     goal_path.write_text(yaml.safe_dump(goal, sort_keys=False), encoding="utf-8")
@@ -171,6 +175,21 @@ class FieldToFacilityLivingWorkflowTest(unittest.TestCase):
             current = next(period for period in evidence["periods"]
                            if period["period_id"] == cycle_id)
             optimizer = current["envelope_evidence"]["optimizer_evidence"]
+            self.assertEqual("validated gas export", optimizer["objective_name"])
+            self.assertEqual("MAXIMIZE", optimizer["objective_direction"])
+            self.assertEqual("kg/hr", optimizer["objective_unit"])
+            self.assertEqual(
+                optimizer["initial_objective_value"],
+                items[0]["baseline_value"],
+            )
+            self.assertGreater(
+                optimizer["accepted_objective_value"],
+                optimizer["initial_objective_value"],
+            )
+            self.assertEqual(
+                optimizer["accepted_objective_value"],
+                items[0]["predicted"]["validated_gas_export_kg_hr"],
+            )
             for field in (
                     "simulation_converged", "candidate_feasible", "candidate_finite",
                     "constraint_evidence_complete", "state_restore_complete",
