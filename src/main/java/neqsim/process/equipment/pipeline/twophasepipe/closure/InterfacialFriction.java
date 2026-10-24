@@ -337,8 +337,7 @@ public class InterfacialFriction implements Serializable {
     // Retain the published bounded wave law for transient interfacial shear. The calibrated depth-squared law is a
     // steady hold-up closure: using it here weakens thin-film gas-to-liquid momentum transfer enough to suppress the
     // validated severe-slugging blowout/fallback cycle.
-    double enhancementFactor =
-        andritsosHanrattyEnhancement(Math.abs(vG) * (1.0 - alphaL), rhoG, geom.liquidLevel / D);
+    double enhancementFactor = andritsosHanrattyEnhancement(Math.abs(vG) * (1.0 - alphaL), rhoG, geom.liquidLevel / D);
 
     result.frictionFactor = f_smooth * enhancementFactor;
 

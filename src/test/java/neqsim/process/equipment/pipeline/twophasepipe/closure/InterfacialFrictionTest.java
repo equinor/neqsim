@@ -112,8 +112,8 @@ class InterfacialFrictionTest {
     double liquidHoldup = 0.08;
     double diameter = 0.30;
     double superficialGasVelocity = gasVelocity * (1.0 - liquidHoldup);
-    double liquidLevelFraction =
-        new GeometryCalculator().calculateFromHoldup(liquidHoldup, diameter).liquidLevel / diameter;
+    double liquidLevelFraction = new GeometryCalculator().calculateFromHoldup(liquidHoldup, diameter).liquidLevel
+        / diameter;
 
     InterfacialFriction.InterfacialFrictionResult smooth = friction.calculate(FlowRegime.STRATIFIED_SMOOTH, gasVelocity,
         liquidVelocity, gasDensity, 750.0, 1.5e-5, 1.0e-3, liquidHoldup, diameter, 0.025);
