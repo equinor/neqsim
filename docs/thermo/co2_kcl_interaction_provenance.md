@@ -94,6 +94,11 @@ CO2 correction. At 273.15 K it differs from the Archer reference by −0.00215 f
 K10 and −0.00467 for K15 before CO2 is added. The saturated Burgass NaCl control
 retains five points within 1 K and a sixth error of −1.121 K at 194.77 bara.
 
+Electrolyte-CPA association iterations reject non-finite Hessian corrections before
+changing site fractions, allowing the volume solver to retry without poisoning the
+final brine state. This numerical safeguard does not refit the interaction parameters
+or relax the component-balance and fugacity checks.
+
 ## Full-family Dholabhai benchmark
 
 `CO2BrineHydrateFullFamilyAssessmentTest` retains **110 measured endpoints**

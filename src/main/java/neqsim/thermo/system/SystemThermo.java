@@ -1197,8 +1197,15 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error(ex.getMessage(), ex);
     }
 
-    double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density); // 0.2918-0.0928*
-    // acs)*ThermodynamicConstantsInterface.R*TC/PC*10.0;
+    // Derive dependent properties from the supplied critical data, without re-entering
+    // a potentially unsupported or inconsistent TBP critical-property correlation.
+    double criticalZ = 0.2918 - 0.0928 * acs;
+    if (criticalZ < 0.0) {
+      criticalZ = 0.2918 - 0.0928;
+    }
+    double critVol = criticalZ * ThermodynamicConstantsInterface.R * TC / PC * 10.0;
+    double criticalViscosity = 7.94830 * Math.sqrt(molarMass * 1000.0) * Math.pow(PC, 2.0 / 3.0)
+        / Math.pow(TC, 1.0 / 6.0) * 1e-7;
     addComponent(componentName, numberOfMoles, TC, PC, acs);
     double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
     // System.out.println("watson " + Kwatson);
@@ -1227,10 +1234,7 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setIsTBPfraction(true);
       getPhase(i).getComponent(componentName)
           .setParachorParameter(characterization.getTBPModel().calcParachorParameter(molarMass, density)); // 59.3+2.34*molarMass*1000.0);
-      // //0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
-      getPhase(i).getComponent(componentName)
-          .setCriticalViscosity(characterization.getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density)); // 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
-      // 1.0/6.0)*1e-7);
+      getPhase(i).getComponent(componentName).setCriticalViscosity(criticalViscosity);
       getPhase(i).getComponent(componentName)
           .setTriplePointTemperature(374.5 + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
               - 20172.0 / (getPhase(i).getComponent(componentName).getMolarMass() * 1000.0));

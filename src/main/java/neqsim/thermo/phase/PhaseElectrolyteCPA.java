@@ -773,7 +773,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
   /**
    * solveX.
    *
-   * @return a boolean
+   * @return false if the association Hessian cannot produce a finite correction, otherwise the solver result
    */
   public boolean solveX() {
     if (getTotalNumberOfAccociationSites() == 0) {
@@ -859,6 +859,13 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
       CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
       CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
       hessianLU.solve(corr3Matrix, corr4Matrix);
+      // EJML can accept a singular Hessian in setA(). Reject its non-finite
+      // solution before it contaminates the association sites and fugacities.
+      for (int site = 0; site < n; site++) {
+        if (!Double.isFinite(corr4Matrix.unsafe_get(site, 0))) {
+          return false;
+        }
+      }
 
       temp = 0;
       double newX;

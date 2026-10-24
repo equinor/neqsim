@@ -327,7 +327,8 @@ public class PedersenAsphalteneCharacterization {
    *
    * <p>
    * Creates a pseudo-component with the characterized properties and adds it to the system. The component is named
-   * "Asphaltene_PC" (following TBP naming convention) and is configured with the calculated critical properties.
+   * "Asphaltene_PC" (following TBP naming convention) and is configured with the calculated critical properties. These
+   * properties are supplied directly, without invoking the automatic TBP critical-property correlations.
    * </p>
    *
    * <p>
@@ -346,17 +347,15 @@ public class PedersenAsphalteneCharacterization {
 
     // Add asphaltene as TBP fraction with characterized properties
     // Note: addTBPfraction adds "_PC" suffix to the name
-    system.addTBPfraction("Asphaltene", moles, asphalteneMW / 1000.0, asphalteneDensity);
+    system.addTBPfraction("Asphaltene", moles, asphalteneMW / 1000.0, asphalteneDensity, criticalTemperature,
+        criticalPressure, acentricFactor);
 
     // The actual component name will be "Asphaltene_PC"
     String componentName = "Asphaltene_PC";
 
-    // Override calculated properties with Pedersen asphaltene characterization
+    // Preserve the boiling point used by the independent asphaltene characterization.
     int aspIndex = system.getPhase(0).getNumberOfComponents() - 1;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      system.getPhase(i).getComponent(aspIndex).setTC(criticalTemperature);
-      system.getPhase(i).getComponent(aspIndex).setPC(criticalPressure);
-      system.getPhase(i).getComponent(aspIndex).setAcentricFactor(acentricFactor);
       system.getPhase(i).getComponent(aspIndex).setNormalBoilingPoint(boilingPoint);
     }
 
@@ -427,7 +426,8 @@ public class PedersenAsphalteneCharacterization {
    *
    * <p>
    * For more accurate modeling, the asphaltene can be represented as multiple pseudo-components with a distribution of
-   * molecular weights. This follows the same principle as C7+ characterization.
+   * molecular weights. This follows the same principle as C7+ characterization. Each component uses its independently
+   * calculated asphaltene critical properties and boiling point.
    * </p>
    *
    * <p>
@@ -480,14 +480,13 @@ public class PedersenAsphalteneCharacterization {
 
       // Add to system with unique name (will get _PC suffix from addTBPfraction)
       String compName = "Asph_" + (i + 1);
-      system.addTBPfraction(compName, componentMoles[i], componentMW[i] / 1000.0, compChar.getAsphalteneDensity());
+      system.addTBPfraction(compName, componentMoles[i], componentMW[i] / 1000.0, compChar.getAsphalteneDensity(),
+          compChar.getCriticalTemperature(), compChar.getCriticalPressure(), compChar.getAcentricFactor());
 
-      // Set characterized properties (component was just added, so it's the last one)
+      // Preserve the boiling point used to characterize this component.
       int compIndex = system.getPhase(0).getNumberOfComponents() - 1;
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
-        system.getPhase(j).getComponent(compIndex).setTC(compChar.getCriticalTemperature());
-        system.getPhase(j).getComponent(compIndex).setPC(compChar.getCriticalPressure());
-        system.getPhase(j).getComponent(compIndex).setAcentricFactor(compChar.getAcentricFactor());
+        system.getPhase(j).getComponent(compIndex).setNormalBoilingPoint(compChar.getBoilingPoint());
       }
     }
 

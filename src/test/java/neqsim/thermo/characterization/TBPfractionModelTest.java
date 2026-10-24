@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -172,13 +173,13 @@ public class TBPfractionModelTest {
   void testModelRecommendation() {
     TBPfractionModel model = new TBPfractionModel();
 
-    // Heavy oil should recommend heavy oil model
+    // Supported heavy fractions use the standard correlation rather than disabled heavy coefficients.
     String heavyRec = model.recommendTBPModel(0.600, 0.92, "SRK");
-    assertEquals("PedersenSRKHeavyOil", heavyRec);
+    assertEquals("PedersenSRK", heavyRec);
 
-    // Heavy oil with PR should recommend PR heavy oil model
+    // Match the standard correlation to PR when that equation of state is requested.
     String heavyPRRec = model.recommendTBPModel(0.600, 0.92, "PR");
-    assertEquals("PedersenPRHeavyOil", heavyPRRec);
+    assertEquals("PedersenPR", heavyPRRec);
 
     // Light paraffinic should recommend Twu
     String paraffinicRec = model.recommendTBPModel(0.100, 0.70, "SRK");
@@ -203,27 +204,23 @@ public class TBPfractionModelTest {
   }
 
   /**
-   * Test heavy oil models with high molecular weight fraction.
+   * Refuse explicitly selected heavy oil coefficient sets, including fractions below the automatic switch.
    */
   @Test
   void testHeavyOilModels() {
     // Test with heavy C30+ fraction (MW = 0.400 kg/mol, SG = 0.90)
     SystemInterface thermoSystemSRK = new SystemSrkEos(298.0, 10.0);
     thermoSystemSRK.getCharacterization().setTBPModel("PedersenSRKHeavyOil");
-    thermoSystemSRK.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90);
-
-    double TcSRK = thermoSystemSRK.getComponent(0).getTC();
-    double PcSRK = thermoSystemSRK.getComponent(0).getPC();
-    assertTrue(TcSRK > 700, "Heavy fraction Tc should be > 700 K, got: " + TcSRK);
-    assertTrue(PcSRK > 5 && PcSRK < 20, "Heavy fraction Pc should be 5-20 bar, got: " + PcSRK);
+    assertThrows(UnsupportedOperationException.class,
+        () -> thermoSystemSRK.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90));
+    assertEquals(0, thermoSystemSRK.getNumberOfComponents());
 
     // Test PR heavy oil model
     SystemInterface thermoSystemPR = new SystemPrEos(298.0, 10.0);
     thermoSystemPR.getCharacterization().setTBPModel("PedersenPRHeavyOil");
-    thermoSystemPR.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90);
-
-    double TcPR = thermoSystemPR.getComponent(0).getTC();
-    assertTrue(TcPR > 700, "Heavy fraction Tc (PR) should be > 700 K, got: " + TcPR);
+    assertThrows(UnsupportedOperationException.class,
+        () -> thermoSystemPR.addTBPfraction("C30", 1.0, 400.0 / 1000.0, 0.90));
+    assertEquals(0, thermoSystemPR.getNumberOfComponents());
   }
 
   /**
