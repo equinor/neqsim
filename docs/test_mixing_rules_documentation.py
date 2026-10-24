@@ -12,6 +12,14 @@ MIXING_RULE_HANDLER = (
     REPOSITORY_ROOT
     / "src/main/java/neqsim/thermo/mixingrule/EosMixingRuleHandler.java"
 )
+MIXING_RULE_TYPES = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/thermo/mixingrule/EosMixingRuleType.java"
+)
+MODIFIED_HV_COMPONENT = (
+    REPOSITORY_ROOT
+    / "src/main/java/neqsim/thermo/component/ComponentGENRTLmodifiedHV.java"
+)
 
 CLASSIC_T_EQUATION = (
     r"k_{ij}(T) = k_{ij,0} + k_{ij,T} "
@@ -64,6 +72,10 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
             ),
         }
         cls.mixing_rule_handler = MIXING_RULE_HANDLER.read_text(
+            encoding="utf-8"
+        )
+        cls.mixing_rule_types = MIXING_RULE_TYPES.read_text(encoding="utf-8")
+        cls.modified_hv_component = MODIFIED_HV_COMPONENT.read_text(
             encoding="utf-8"
         )
 
@@ -183,6 +195,65 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
             "fluid.setMixingRule(EosMixingRuleType.CLASSIC_T);",
             models,
         )
+
+
+    def test_huron_vidal_nrtl_example_matches_current_source(self):
+        guide = self.documents[MIXING_RULE_GUIDE]
+        marked_example = re.search(
+            r"<!-- hv-nrtl-example:start -->\\s*"
+            r"```java\\n([\\s\\S]*?)"
+            r"```\\s*<!-- hv-nrtl-example:end -->",
+            guide,
+        )
+        self.assertIsNotNone(marked_example)
+        example = marked_example.group(1)
+
+        for documented_call in (
+            'fluid.setMixingRule("HV", "NRTL");',
+            "HVMixingRulesInterface hvRule =",
+            "hvRule.getHVDijParameter(0, 1)",
+            "hvRule.getHVDijTParameter(0, 1)",
+            "hvRule.getHValphaParameter(0, 1)",
+            "double tau = dijK / temperatureK + dijT;",
+            "new ThermodynamicOperations(fluid).TPflash();",
+            "public final class HuronVidalNrtlExample",
+        ):
+            with self.subTest(documented_call=documented_call):
+                self.assertIn(documented_call, example)
+
+        self.assertNotRegex(example, r"System\\.(?:out|err)")
+        self.assertEqual(example.count("public static void main("), 1)
+        self.assertIn("CLASSIC_HV(3)", self.mixing_rule_types)
+        self.assertIn("HV(4)", self.mixing_rule_types)
+        self.assertIn("return new SRKHuronVidal2(phase, HValpha, HVDij, classicOrHV);", self.mixing_rule_handler)
+        self.assertIn("return new SRKHuronVidal2(phase, HValpha, HVDij, HVDijT, classicOrHV);", self.mixing_rule_handler)
+
+        for selector in (
+            'mixingRuleGEModel.equals("NRTL")',
+            'mixingRuleGEModel.equals("NRTL_HV")',
+            'mixingRuleGEModel.equals("UNIFAC")',
+            'mixingRuleGEModel.equals("UNIFAC_PSRK")',
+            'mixingRuleGEModel.equals("UNIFAC_UMRPRU")',
+            'mixingRuleGEModel.equals("UNIQUAC")',
+        ):
+            with self.subTest(selector=selector):
+                self.assertIn(selector, self.mixing_rule_handler)
+
+        for source_formula in (
+            "tau = Dji / temperature + DjiT;",
+            "tau2 = Dij / temperature + DijT;",
+        ):
+            with self.subTest(source_formula=source_formula):
+                self.assertIn(source_formula, self.modified_hv_component)
+
+        for documentation_contract in (
+            r"\\tau_{ij}(T) = \\frac{D_{ij}}{T} + D_{ij,T}",
+            "`Dij` has units of kelvin",
+            "`DijT` is dimensionless",
+            "`\"UNIQUAC\"` is explicitly rejected",
+        ):
+            with self.subTest(documentation_contract=documentation_contract):
+                self.assertIn(documentation_contract, guide)
 
 
 if __name__ == "__main__":
