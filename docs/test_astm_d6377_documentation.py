@@ -44,10 +44,10 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             r'^---\ntitle: "[^"]+"\ndescription: "[^"]+"\n---\n',
         )
         self.assertNotRegex(self.doc, r"(?m)^# ")
-        # The base example, the built-in water-saturated example and the audited dry-fluid example are Java blocks.
         self.assertEqual(
-            ["```java", "```", "```java", "```", "```java", "```"],
+            ["```java", "```"],
             re.findall(r"(?m)^```[^\n]*$", self.doc),
+            "The guide must expose one complete maintained Java program",
         )
 
         for target in re.findall(r"\[[^\]]+\]\(([^)#]+\.md)(?:#[^)]+)?\)", self.doc):
@@ -83,6 +83,9 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "getRvpResult(RvpMethod.VPCR4)",
             "getRvpResult(RvpMethod.VPCR4_NO_WATER)",
             "getRvpResult(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED)",
+            "Standard_ASTM_D6377.getWaterSaturationPressure(310.95)",
+            "sourceStream.getRVP(",
+            "manualWaterSaturatedBara",
             'getValue("TVP", "bara")',
             'getValue("RVP", "kPa")',
             "The standard does not force SRK",
@@ -100,6 +103,7 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "Typical RVP Limit",
             "System.out",
             "System.err",
+            "auditedDryOil",
             "import neqsim.standards.oilquality.*",
         )
         for pattern in rejected:
@@ -117,10 +121,17 @@ class AstmD6377DocumentationContractTest(unittest.TestCase):
             "vaporPressure.getRvpResult()",
             "vaporPressure.getRvpResult(RvpMethod.VPCR4)",
             "vaporPressure.getRvpResult(RvpMethod.VPCR4_NO_WATER)",
+            "RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED",
+            "Standard_ASTM_D6377.getWaterSaturationPressure(310.95)",
+            "sourceStream.getRVP(",
             'vaporPressure.getValue("TVP", "bara")',
             'vaporPressure.getValue("RVP", "kPa")',
             "selected.toJson()",
             "vaporPressure.getMethodRVP()",
+            "JAVA_FENCE",
+            "ToolProvider.getSystemJavaCompiler()",
+            '"-source", "8", "-target", "8"',
+            "setDefaultAssertionStatus(true)",
         )
         for call in calls:
             self.assertIn(call, self.java_test)
