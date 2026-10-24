@@ -63,6 +63,8 @@ and converts the selected RVP value to kPa.
 ```java
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.standards.oilquality.Standard_ASTM_D6377;
 import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpMethod;
 import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpResult;
@@ -93,25 +95,51 @@ public final class AstmD6377Example {
     RvpResult selected = vaporPressure.getRvpResult();
     RvpResult vpcr4 = vaporPressure.getRvpResult(RvpMethod.VPCR4);
     RvpResult dryVpcr4 = vaporPressure.getRvpResult(RvpMethod.VPCR4_NO_WATER);
+    RvpResult waterSaturated =
+        vaporPressure.getRvpResult(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED);
     double tvpBara = vaporPressure.getValue("TVP", "bara");
     double selectedRvpKPa = vaporPressure.getValue("RVP", "kPa");
+    double waterPsatBara =
+        Standard_ASTM_D6377.getWaterSaturationPressure(310.95);
+    double manualWaterSaturatedBara =
+        0.834 * (dryVpcr4.getValue() + waterPsatBara);
+
+    StreamInterface sourceStream =
+        new Stream("source oil", sourceOil.clone());
+    double streamWaterSaturatedBara = sourceStream.getRVP(
+        37.8, "C", "bara", "RVP_ASTM_D6377_add_water_saturated");
 
     requireFinitePositive("selected RVP", selected.getValue());
     requireFinitePositive("VPCR4", vpcr4.getValue());
     requireFinitePositive("water-free VPCR4", dryVpcr4.getValue());
+    requireFinitePositive("water-saturated RVP", waterSaturated.getValue());
     requireFinitePositive("TVP", tvpBara);
     requireFinitePositive("selected RVP", selectedRvpKPa);
 
+    assert selected.isValid();
+    assert vpcr4.isValid();
+    assert dryVpcr4.isValid();
+    assert waterSaturated.isValid();
+    assert Math.abs(
+        waterSaturated.getValue() - manualWaterSaturatedBara) < 1.0e-10;
+    assert Math.abs(
+        streamWaterSaturatedBara - waterSaturated.getValue()) < 1.0e-10;
+    assert Math.abs(sourceOil.getTemperature() - 275.15) < 1.0e-12;
+    assert Math.abs(sourceOil.getPressure() - 1.0) < 1.0e-12;
+
     logger.info("Selected result {}", selected.toJson());
-    logger.info("TVP {} bara; VPCR4 {} bara; dry VPCR4 {} bara",
-        tvpBara, vpcr4.getValue(), dryVpcr4.getValue());
-    logger.info("Source state remains {} K and {} bara",
-        sourceOil.getTemperature(), sourceOil.getPressure());
+    logger.info(
+        "TVP {} bara; VPCR4 {} bara; dry VPCR4 {} bara; water-saturated RVP {} bara",
+        tvpBara,
+        vpcr4.getValue(),
+        dryVpcr4.getValue(),
+        waterSaturated.getValue());
   }
 
   private static void requireFinitePositive(String name, double value) {
     if (!Double.isFinite(value) || value <= 0.0) {
-      throw new IllegalStateException(name + " calculation failed: " + value);
+      throw new IllegalStateException(
+          name + " calculation failed: " + value);
     }
   }
 }
@@ -220,49 +248,31 @@ fluid, nor on how well a hydrocarbon-tuned EOS represents water. The fail-closed
 matters: for a binary pentane/C11 screening fluid, plain `VPCR4` returns a positive pressure at a
 gas volume fraction of about 0.83 instead of 0.8, and this method reports NaN for that case.
 
-```java
-Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(sourceOil.clone());
-standard.calculate();
-RvpResult waterSaturated = standard.getRvpResult(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED);
-if (!waterSaturated.isValid()) {
-  throw new IllegalStateException("Dry VPCR4 flash did not reach V/L = 4");
-}
-double rvpeWaterSatBara = waterSaturated.getValue(); // reference temperature 37.8 C
-
-// Equivalent string label, for example through a stream:
-double fromStream = new Stream("oil", sourceOil.clone())
-    .getRVP(37.8, "C", "bara", "RVP_ASTM_D6377_add_water_saturated");
-```
+The complete Java workflow above evaluates this method through
+`getRvpResult(RvpMethod.RVP_ASTM_D6377_ADD_WATER_SATURATED)`, checks
+`RvpResult.isValid()`, and compares the result with both the explicit IF97 correlation and the
+four-argument `Stream.getRVP(...)` route. Keep the exact method label and 37.8 °C reference
+temperature with the reported value.
 
 The regression tests are in
 [RvpAddWaterSaturatedTest](../../src/test/java/neqsim/standards/oilquality/RvpAddWaterSaturatedTest.java).
 
 ### Manual Route on an Audited Dry Fluid
 
-`auditedDryOil` below is a previously verified water-free version of the source characterization.
-The earlier synthetic `sourceOil` is water-free and is also suitable for illustrating these calls.
-This route is equivalent to the built-in method when the dry fluid is the same, and is useful when
-the dry basis is supplied separately or when a different water-property source is required.
+The manual route is useful when the dry basis is supplied separately or when an approved
+water-property source differs from the built-in IF97 calculation. It is equivalent to the built-in
+method only when it uses the same water-free characterization and correlation order.
 
-```java
-SystemInterface workingOil = auditedDryOil.clone();
-Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(workingOil);
-standard.setReferenceTemperature(37.8, "C");
-standard.setMethodRVP(RvpMethod.VPCR4_NO_WATER);
-standard.calculate();
-RvpResult dry = standard.getRvpResult();
-if (!dry.isValid()) {
-  throw new IllegalStateException("No finite positive dry VPCR4 result");
-}
-// Rounded external inputs, in bar; replace with the approved property source.
-double waterPsat378Bara = 0.0654;
-double rvpeWaterSatBara = 0.834 * (dry.getValue() + waterPsat378Bara);
+The complete workflow uses the already water-free `sourceOil` as the audited dry
+characterization, obtains `VPCR4_NO_WATER`, calls
+`Standard_ASTM_D6377.getWaterSaturationPressure(310.95)`, and checks the manual
+`0.834 * (VPCR4_dry + psat_water)` calculation against the built-in structured result. In a
+project calculation, substitute a separately audited water-free version of the same characterized
+fluid; do not reconstruct or retune the fluid merely for this comparison.
 
-neqsim.process.equipment.stream.StreamInterface dryStream =
-    new neqsim.process.equipment.stream.Stream("Dry oil", auditedDryOil.clone());
-double tvp30DryBara = dryStream.getTVP(30.0, "C", "bara");
-double tvp30WaterSatBara = tvp30DryBara + 0.0424;
-```
+For a TVP comparison at 30 °C, calculate `getTVP(30.0, "C", "bara")` on that audited dry fluid
+and add the approved water saturation pressure on the same absolute-pressure basis. Keep this TVP
+calculation separate from the 37.8 °C RVP-equivalent result.
 
 `Stream.getRVP(T, temperatureUnit, pressureUnit)` defaults to **raw VPCR4**, not `0.834 * VPCR4`.
 Select `"RVP_ASTM_D6377"` explicitly in its four-argument overload for that correlation on the
