@@ -195,8 +195,10 @@ mixture. Supply a nonempty, finite, nonnegative, nondecreasing schedule. Repeate
 amounts repeat a stage without adding gas; the first amount may be nonzero.
 
 Set the experiment temperature with `setTemperature(value, "C")` or
-`setTemperature(value, "K")`; the one-argument setter uses K. If no temperature is
-set, the constructor oil's temperature is used. The unmodified reference oil and
+`setTemperature(value, "K")`; the one-argument setter always uses K, including after
+an earlier Celsius setting. Explicit nonfinite or nonpositive absolute temperatures
+are rejected by `runCalc`; an explicit NaN is not treated as an omitted setting.
+If no temperature is set, the constructor oil's temperature is used. The unmodified reference oil and
 every swollen mixture are evaluated at that same temperature. At zero addition
 the swelling factor is exactly one. Previously, the reference could use the
 construction temperature while later stages used another temperature, and the

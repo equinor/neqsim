@@ -8,6 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.unit.TemperatureUnit;
 
 /**
  * Isothermal gas-injection swelling experiment on the bubble-point branch.
@@ -28,6 +29,8 @@ public class SwellingTest extends BasePVTsimulation {
   private double[] pressures = null;
   private double[] relativeOilVolume = null;
   SystemInterface injectionGas;
+  /** Whether a temperature setter was called, including with an invalid NaN value. */
+  private boolean temperatureConfigured = false;
 
   /**
    * Constructor for SwellingTest.
@@ -61,6 +64,28 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
+   * Set the experiment temperature in Kelvin, replacing any previously configured unit.
+   *
+   * @param temperature experiment temperature in Kelvin; validated by runCalc
+   */
+  @Override
+  public void setTemperature(double temperature) {
+    setTemperature(temperature, "K");
+  }
+
+  /**
+   * Configure an explicit experiment temperature, distinct from omitting the temperature setting.
+   *
+   * @param temperature experiment temperature; validated by runCalc
+   * @param temperatureUnit source temperature unit supported by TemperatureUnit
+   */
+  @Override
+  public void setTemperature(double temperature, String temperatureUnit) {
+    super.setTemperature(temperature, temperatureUnit);
+    temperatureConfigured = true;
+  }
+
+  /**
    * Run all additions at the requested temperature, or the initial oil temperature when none is set.
    *
    * @throws IllegalArgumentException if the schedule, temperature or input amounts are invalid
@@ -74,8 +99,12 @@ public class SwellingTest extends BasePVTsimulation {
     Arrays.fill(relativeOilVolume, Double.NaN);
     setThermoSystem(getBaseThermoSystem().clone());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
-    if (!Double.isNaN(temperature)) {
-      getThermoSystem().setTemperature(temperature, temperatureUnit);
+    if (temperatureConfigured || !Double.isNaN(temperature)) {
+      double kelvin = new TemperatureUnit(temperature, temperatureUnit).getSIvalue();
+      if (!Double.isFinite(kelvin) || kelvin <= 0.0) {
+        throw new IllegalArgumentException("Swelling test requires a positive finite absolute temperature");
+      }
+      getThermoSystem().setTemperature(kelvin);
     }
     double experimentTemperature = getThermoSystem().getTemperature();
     double oilMoles = getThermoSystem().getTotalNumberOfMoles();
