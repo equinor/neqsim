@@ -220,7 +220,7 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
             with self.subTest(documented_call=documented_call):
                 self.assertIn(documented_call, example)
 
-        self.assertNotRegex(example, r"System\\.(?:out|err)")
+        self.assertNotRegex(example, r"System\.(?:out|err)")
         self.assertEqual(example.count("public static void main("), 1)
         self.assertIn("CLASSIC_HV(3)", self.mixing_rule_types)
         self.assertIn("HV(4)", self.mixing_rule_types)
@@ -254,7 +254,7 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
                 self.assertIn(source_formula, self.modified_hv_component)
 
         for documentation_contract in (
-            r"\\tau_{ij}(T) = \\frac{D_{ij}}{T} + D_{ij,T}",
+            r"\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}",
             "`Dij` has units of kelvin",
             "`DijT` is dimensionless",
             "`\"UNIQUAC\"` is explicitly rejected",
