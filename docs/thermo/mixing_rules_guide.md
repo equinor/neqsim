@@ -821,11 +821,12 @@ lowers Helmholtz energy by 25.868 kJ. Five perturbed-start SciPy minimizations
 recover the same two-phase local minimum. This rejects the former homogeneous
 energy reference; it does not prove global stability for arbitrary mixtures.
 
-The independent residual enthalpy is -534369.102300 J. The regression retains its
-original 1 J absolute tolerance and compares total enthalpy after subtracting the
-component ideal-gas contributions, so independent ideal heat-capacity maintenance
-does not alter the residual reference. TV calculation exceptions now fail the
-test directly. The corresponding `CubicTvHelmholtzQualificationTest` checks three
+The independent residual enthalpy is -534369.102300 J. The new independent addition-history regression retains the
+original 1 J absolute energy tolerance and compares total enthalpy after subtracting
+the component ideal-gas contributions, so independent ideal heat-capacity
+maintenance does not alter the residual reference. Its TV calculation exceptions
+fail the test directly. The legacy total-enthalpy golden check remains unchanged
+and is still tracked as compatibility debt in issue #4579. The corresponding `CubicTvHelmholtzQualificationTest` checks three
 nearby temperatures, material/volume/pressure/fugacity closure, lower Helmholtz
 energy and residual enthalpy from refined fixed-volume temperature differences.
 Complete molar inventories, pure/cross coefficients, units, protocol and the

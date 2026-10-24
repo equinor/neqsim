@@ -123,6 +123,7 @@
       293.05,
       293.15,
       293.25
-    ]
+    ],
+    "amount_basis": "One-second-equivalent inlet charges reproduce the existing flow-configured addFluid TV fixture; scalar n values are treated as molar inventories for fixed-T,V,n minimization."
   }
 }

@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import neqsim.thermo.component.ComponentEosInterface;
@@ -75,6 +76,49 @@ class CubicTvHelmholtzQualificationTest {
       }
       assertEquals(FEED[i], recovered, 1.0e-10);
     }
+  }
+
+  /** Repeats the original addition history while asserting the independent residual-energy reference. */
+  @Test
+  void addedFluidHistoryRetainsQualifiedResidualEnergy() {
+    SystemInterface fluid = additionFeed(new double[] {0.0, 0.0, 0.9, 0.1}, 1.0);
+    SystemInterface gas = additionFeed(new double[] {0.85, 0.15, 0.0, 0.0}, 0.3);
+    for (int i = 0; i < 50; i++) {
+      fluid.addFluid(gas);
+      new ThermodynamicOperations(fluid).TVflash(0.998, "m3");
+    }
+    fluid.init(3);
+    assertEquals(2, fluid.getNumberOfPhases());
+    assertEquals(0.998, fluid.getVolume("m3"), 1.0e-10);
+    assertEquals(19.138156156431233, fluid.getPressure(), 1.0e-8);
+    double ideal = 0.0;
+    for (int i = 0; i < FEED.length; i++) {
+      assertEquals(FEED[i], fluid.getComponent(i).getNumberOfmoles(), 1.0e-10);
+      ideal += fluid.getComponent(i).getNumberOfmoles() * fluid.getComponent(i).getHID(fluid.getTemperature());
+    }
+    assertEquals(-534369.1023002401, fluid.getEnthalpy() - ideal, 1.0);
+  }
+
+  /**
+   * Creates an independently configured feed for the public addition-history fixture.
+   *
+   * @param amounts component molar amounts in methane/ethane/pentane/hexadecane order
+   * @param massFlow mass flow in kilograms per second
+   * @return independently configured inlet fluid
+   */
+  private static SystemInterface additionFeed(double[] amounts, double massFlow) {
+    SystemInterface fluid = new SystemUMRPRUMCEos(293.15, 0.1);
+    String[] names = {"methane", "ethane", "n-pentane", "nC16"};
+    for (int i = 0; i < amounts.length; i++) {
+      fluid.addComponent(names[i], amounts[i]);
+    }
+    fluid.setMixingRule(2);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    fluid.setTotalFlowRate(massFlow, "kg/sec");
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.initProperties();
+    return fluid;
   }
 
   /**
