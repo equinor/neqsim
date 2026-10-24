@@ -208,9 +208,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
      * @param kclMolality KCl molality
      * @param sourceCo2ActivityCoefficient source CO2 activity coefficient
      */
-    private Reference(String pointId, double temperatureK, double co2PartialPressureAtm,
-        double sourceSolventDensity, double experimentalCo2Molality, double kclMolality,
-        double sourceCo2ActivityCoefficient) {
+    private Reference(String pointId, double temperatureK, double co2PartialPressureAtm, double sourceSolventDensity,
+        double experimentalCo2Molality, double kclMolality, double sourceCo2ActivityCoefficient) {
       this.pointId = pointId;
       this.temperatureK = temperatureK;
       this.targetCo2PartialPressureBara = co2PartialPressureAtm * ATM_TO_BAR;
