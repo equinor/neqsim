@@ -93,4 +93,47 @@ class ConstantMassExpansionOilPropertiesTest {
     assertEquals(reference.getPhase("oil").getDensity("kg/m3"), cce.getOilDensity()[0], 1e-6);
     assertEquals(reference.getPhase("oil").getViscosity(), cce.getOilViscosity()[0], 1e-10);
   }
+
+  /** Checks that disappearance of oil on a reused simulation clears previously finite oil results. */
+  @Test
+  void oilToGasRerunClearsOilProperties() {
+    SystemInterface fluid = liveOil();
+    ConstantMassExpansion cce = new ConstantMassExpansion(fluid);
+    cce.setPressures(new double[] {350.0, 20.0});
+    cce.setTemperature(350.0, "K");
+    cce.runCalc();
+    assertTrue(Double.isFinite(cce.getOilDensity()[1]));
+    assertTrue(Double.isFinite(cce.getOilViscosity()[1]));
+    fluid.setMolarComposition(new double[] {1.0, 0.0});
+    cce.setPressures(new double[] {20.0, 10.0, 1.0});
+    cce.setTemperature(450.0, "K");
+    cce.runCalc();
+    assertEquals(3, cce.getOilDensity().length);
+    assertEquals(3, cce.getOilViscosity().length);
+    assertTrue(fluid.hasPhaseType("gas"));
+    assertTrue(!fluid.hasPhaseType("oil"));
+    for (int i = 0; i < 3; i++) {
+      assertTrue(Double.isNaN(cce.getOilDensity()[i]));
+      assertTrue(Double.isNaN(cce.getOilViscosity()[i]));
+      assertTrue(Double.isFinite(cce.getDensity()[i]));
+      assertTrue(Double.isFinite(cce.getViscosity()[i]));
+    }
+  }
+
+  /** Checks that an aqueous-only fluid cannot supply fabricated oil properties. */
+  @Test
+  void aqueousOnlyDoesNotSupplyOilProperties() {
+    SystemInterface water = new SystemPrEos(350.0, 100.0);
+    water.addComponent("water", 1.0);
+    water.setMixingRule("classic");
+    ConstantMassExpansion cce = new ConstantMassExpansion(water);
+    cce.setPressures(new double[] {100.0, 20.0});
+    cce.setTemperature(350.0, "K");
+    cce.runCalc();
+    assertTrue(water.hasPhaseType("aqueous"));
+    for (int i = 0; i < 2; i++) {
+      assertTrue(Double.isNaN(cce.getOilDensity()[i]));
+      assertTrue(Double.isNaN(cce.getOilViscosity()[i]));
+    }
+  }
 }
