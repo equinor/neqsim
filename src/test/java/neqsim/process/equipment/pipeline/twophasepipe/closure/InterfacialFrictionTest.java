@@ -103,6 +103,28 @@ class InterfacialFrictionTest {
     assertEquals(bubbleDiameter / diameter, legacy / corrected, 1.0e-14);
   }
 
+  @Test
+  void transientStratifiedWaveForceRetainsPublishedEnhancement() {
+    InterfacialFriction friction = new InterfacialFriction();
+    double gasVelocity = 3.25;
+    double liquidVelocity = 0.15;
+    double gasDensity = 82.0;
+    double liquidHoldup = 0.08;
+    double diameter = 0.30;
+    double superficialGasVelocity = gasVelocity * (1.0 - liquidHoldup);
+    double liquidLevelFraction = new GeometryCalculator().calculateFromHoldup(liquidHoldup, diameter).liquidLevel
+        / diameter;
+
+    InterfacialFriction.InterfacialFrictionResult smooth = friction.calculate(FlowRegime.STRATIFIED_SMOOTH, gasVelocity,
+        liquidVelocity, gasDensity, 750.0, 1.5e-5, 1.0e-3, liquidHoldup, diameter, 0.025);
+    InterfacialFriction.InterfacialFrictionResult wavy = friction.calculate(FlowRegime.STRATIFIED_WAVY, gasVelocity,
+        liquidVelocity, gasDensity, 750.0, 1.5e-5, 1.0e-3, liquidHoldup, diameter, 0.025);
+
+    double expected = InterfacialFriction.andritsosHanrattyEnhancement(superficialGasVelocity, gasDensity,
+        liquidLevelFraction);
+    assertEquals(expected, wavy.frictionFactor / smooth.frictionFactor, 1.0e-12);
+  }
+
   private static double inferredBubbleDiameter(InterfacialFriction friction, double surfaceTension) {
     double diameter = 1.0;
     double liquidHoldup = 0.9;
