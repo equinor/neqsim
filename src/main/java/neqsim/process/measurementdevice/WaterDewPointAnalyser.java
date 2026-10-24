@@ -124,6 +124,7 @@ public class WaterDewPointAnalyser extends StreamMeasurementDeviceBaseClass
         thermoOps.waterDewPointTemperatureFlash();
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
+        return Double.NaN;
       }
       return tempFluid2.getTemperature(unit);
     }
