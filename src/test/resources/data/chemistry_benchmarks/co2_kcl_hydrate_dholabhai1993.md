@@ -69,37 +69,39 @@ Independent CO2-in-KCl solubility data remain the next evidence boundary.
 
 ## Independent CO2-in-KCl solubility boundary
 
-`KClCO2SolubilityReferenceAssessmentTest` executes the complete 273.15 K
-series compiled by
+`KClCO2SolubilityReferenceAssessmentTest` executes the complete 26-point,
+five-temperature series compiled by
 [NIST SRD 106, system 62_229](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_229)
-from He and Morse (1993), *Geochimica et Cosmochimica Acta* **57**,
-3533-3554. The six source points hold reported CO2 partial pressure at
-0.966 atm while KCl molality rises from 0.100 to 3.508 mol/kg water. Measured
-CO2 molality falls monotonically from 0.0713 to 0.0525 mol/kg water. NIST
-reports relative solubility uncertainty of 0.012 and temperature uncertainty
-of 0.1 K.
+and the evaluated IUPAC-NIST Solubility Data Series volume 62 table from He and
+Morse (1993), *Geochimica et Cosmochimica Acta* **57**, 3533-3554. The series
+covers 273.15-363.15 K, 0.301-0.966 atm reported CO2 partial pressure and
+0.100-5.000 mol KCl/kg water. NIST reports relative uncertainties of 0.012 for
+CO2 solubility and 0.04 for its activity coefficient, plus 0.1 K temperature
+uncertainty. Source solvent density and CO2 activity coefficient are retained
+as evidence columns; they are not used as fitted inputs.
+
+The fixture corrects one earlier transcription: at 273.15 K and 2.015 molal
+KCl, the evaluated table reports 0.0572 mol CO2/kg water, not 0.0575. The
+IUPAC-NIST PDF table also resolves the compact HTML rendering of the 348.15 K,
+1.0 molal solvent density as 1.0179 g/cm3.
 
 The no-fit `SystemElectrolyteCPAstatoil` calculation iterates total pressure so
 that gas-phase `y_CO2 * P` matches the reported partial pressure, then compares
 aqueous CO2 molality on the same kilogram-water basis. The water-basis
 calculation explicitly divides aqueous CO2 moles by aqueous water moles times
 the water molar mass; it does not use the generic component `getMolality`
-method, whose denominator is total phase mass. The selected aqueous phase
-retains 0.99884-0.99903 kg water across the series. The model instead rises
-monotonically from 0.05757 to 0.89365 mol/kg water. Its signed relative residual
-moves from -19.3% at 0.100 molal KCl to +1602.2% at 3.508 molal KCl. All six
-states retain GAS+AQUEOUS topology, the target partial pressure and equal
-aqueous K+/Cl- inventories. The generated
-`target/kcl-co2-solubility-he-morse1993-assessment.csv` retains every source
-value, uncertainty, aqueous water mass, calculated value, residual and phase
+method, whose denominator is total phase mass. Monotonic salting-out order is
+checked independently within each temperature block. The generated
+`target/kcl-co2-solubility-he-morse1993-assessment.csv` retains all source
+values, uncertainties, aqueous water mass, calculated value, residual and phase
 diagnostic.
 
-This independent salt-out series changes the leading diagnostic from a broad
-CO2-loaded-aqueous suspicion to a demonstrated concentration-dependent CO2/KCl
-salting-direction error at low pressure. It does not identify a unique
-interaction parameter, directly qualify the 14.15-35.75 bara hydrate states,
-or justify fitting before an independent domain review of the electrolyte-CPA
-CO2/KCl interaction treatment.
+The earlier six-point 273.15 K execution predates merged #4367 and therefore
+cannot establish the current parameter's concentration or temperature
+behavior. The complete source series is retained to diagnose that extrapolation
+without fitting a parameter, introducing an empirical temperature correction or
+adding an experimental-accuracy pass band. Current-head numerical results must
+come from the hosted evidence artifact before any qualification claim.
 
 ## Independent Ostwald-coefficient holdout
 

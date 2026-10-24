@@ -33,10 +33,11 @@ class KClCO2SolubilityReferenceAssessmentTest {
   private static final double ATM_TO_BAR = 1.01325;
   private static final double WATER_MOLAR_MASS_KG_PER_MOL = 0.01801528;
   private static final double RELATIVE_SOLUBILITY_UNCERTAINTY = 0.012;
+  private static final double CO2_ACTIVITY_COEFFICIENT_UNCERTAINTY = 0.04;
   private static final double TEMPERATURE_UNCERTAINTY_K = 0.1;
 
   /**
-   * Executes the 273.15 K NIST series at its reported CO2 partial pressure without fitting.
+   * Executes the complete five-temperature NIST series at reported CO2 partial pressure without fitting.
    *
    * @throws Exception if the reference fixture or generated diagnostic cannot be read or written
    */
@@ -46,16 +47,26 @@ class KClCO2SolubilityReferenceAssessmentTest {
     List<Reference> references = loadReferences();
     List<String> report = new ArrayList<String>();
     report.add("point_id,temperature_K,target_pco2_bara,actual_pco2_bara,kcl_molality_mol_per_kg_water,"
-        + "experimental_co2_molality_mol_per_kg_water,model_co2_molality_mol_per_kg_water,aqueous_water_mass_kg,"
-        + "model_minus_experiment,relative_residual,experimental_relative_uncertainty,temperature_uncertainty_K,"
-        + "total_pressure_bara,aqueous_x_co2,fluid_phases");
+        + "source_solvent_density_g_per_cm3,experimental_co2_molality_mol_per_kg_water,"
+        + "source_co2_activity_coefficient,model_co2_molality_mol_per_kg_water,aqueous_water_mass_kg,"
+        + "model_minus_experiment,relative_residual,experimental_relative_uncertainty,"
+        + "source_activity_coefficient_relative_uncertainty,temperature_uncertainty_K,total_pressure_bara,"
+        + "aqueous_x_co2,fluid_phases");
 
+    double previousTemperature = Double.NaN;
     double previousExperimentalMolality = Double.POSITIVE_INFINITY;
     double previousModelMolality = Double.POSITIVE_INFINITY;
+    int temperatureBlocks = 0;
     for (Reference reference : references) {
+      if (reference.temperatureK != previousTemperature) {
+        previousExperimentalMolality = Double.POSITIVE_INFINITY;
+        previousModelMolality = Double.POSITIVE_INFINITY;
+        previousTemperature = reference.temperatureK;
+        temperatureBlocks++;
+      }
       Result result = calculate(reference);
       assertTrue(reference.experimentalCo2Molality < previousExperimentalMolality,
-          "NIST 273.15 K series must retain monotonic KCl salting-out ordering");
+          reference.pointId + " must retain the source salting-out ordering");
       assertEquals(reference.targetCo2PartialPressureBara, result.actualCo2PartialPressureBara, 1.0e-7,
           reference.pointId + " CO2 partial-pressure iteration did not converge");
       assertTrue(Double.isFinite(result.modelCo2Molality) && result.modelCo2Molality > 0.0,
@@ -67,7 +78,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
       previousModelMolality = result.modelCo2Molality;
     }
 
-    assertEquals(7, report.size());
+    assertEquals(5, temperatureBlocks);
+    assertEquals(27, report.size());
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get("target/kcl-co2-solubility-he-morse1993-assessment.csv"), report, StandardCharsets.UTF_8);
     for (String row : report) {
@@ -145,7 +157,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
   }
 
   /**
-   * Loads the source-pinned 273.15 K experimental series.
+   * Loads the source-pinned 273.15-363.15 K experimental series.
    *
    * @return experimental rows
    * @throws Exception if the fixture cannot be read or parsed
@@ -162,10 +174,11 @@ class KClCO2SolubilityReferenceAssessmentTest {
         }
         String[] fields = line.split(",");
         references.add(new Reference(fields[0], Double.parseDouble(fields[1]), Double.parseDouble(fields[2]),
-            Double.parseDouble(fields[4]), Double.parseDouble(fields[5])));
+            Double.parseDouble(fields[3]), Double.parseDouble(fields[4]), Double.parseDouble(fields[5]),
+            Double.parseDouble(fields[6])));
       }
     }
-    assertEquals(6, references.size());
+    assertEquals(26, references.size());
     return references;
   }
 
@@ -179,8 +192,10 @@ class KClCO2SolubilityReferenceAssessmentTest {
     private final String pointId;
     private final double temperatureK;
     private final double targetCo2PartialPressureBara;
+    private final double sourceSolventDensity;
     private final double experimentalCo2Molality;
     private final double kclMolality;
+    private final double sourceCo2ActivityCoefficient;
 
     /**
      * Creates an experimental state.
@@ -188,16 +203,21 @@ class KClCO2SolubilityReferenceAssessmentTest {
      * @param pointId stable fixture identifier
      * @param temperatureK temperature in kelvin
      * @param co2PartialPressureAtm CO2 partial pressure in atmospheres
+     * @param sourceSolventDensity source solvent density in g/cm3
      * @param experimentalCo2Molality experimental CO2 molality
      * @param kclMolality KCl molality
+     * @param sourceCo2ActivityCoefficient source CO2 activity coefficient
      */
-    private Reference(String pointId, double temperatureK, double co2PartialPressureAtm, double experimentalCo2Molality,
-        double kclMolality) {
+    private Reference(String pointId, double temperatureK, double co2PartialPressureAtm,
+        double sourceSolventDensity, double experimentalCo2Molality, double kclMolality,
+        double sourceCo2ActivityCoefficient) {
       this.pointId = pointId;
       this.temperatureK = temperatureK;
       this.targetCo2PartialPressureBara = co2PartialPressureAtm * ATM_TO_BAR;
+      this.sourceSolventDensity = sourceSolventDensity;
       this.experimentalCo2Molality = experimentalCo2Molality;
       this.kclMolality = kclMolality;
+      this.sourceCo2ActivityCoefficient = sourceCo2ActivityCoefficient;
     }
   }
 
@@ -244,9 +264,10 @@ class KClCO2SolubilityReferenceAssessmentTest {
     private String toCsv(Reference reference) {
       double residual = modelCo2Molality - reference.experimentalCo2Molality;
       return reference.pointId + "," + reference.temperatureK + "," + reference.targetCo2PartialPressureBara + ","
-          + actualCo2PartialPressureBara + "," + reference.kclMolality + "," + reference.experimentalCo2Molality + ","
-          + modelCo2Molality + "," + aqueousWaterMassKg + "," + residual + ","
-          + residual / reference.experimentalCo2Molality + "," + RELATIVE_SOLUBILITY_UNCERTAINTY + ","
+          + actualCo2PartialPressureBara + "," + reference.kclMolality + "," + reference.sourceSolventDensity + ","
+          + reference.experimentalCo2Molality + "," + reference.sourceCo2ActivityCoefficient + "," + modelCo2Molality
+          + "," + aqueousWaterMassKg + "," + residual + "," + residual / reference.experimentalCo2Molality + ","
+          + RELATIVE_SOLUBILITY_UNCERTAINTY + "," + CO2_ACTIVITY_COEFFICIENT_UNCERTAINTY + ","
           + TEMPERATURE_UNCERTAINTY_K + "," + totalPressureBara + "," + aqueousCo2MoleFraction + "," + phaseTypes;
     }
   }

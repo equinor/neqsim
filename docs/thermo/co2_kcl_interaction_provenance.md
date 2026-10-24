@@ -385,14 +385,14 @@ produced by tests selected for that shard:
 |---|---:|
 | Dholabhai K10/K15 plus pure-water and cross-salt controls | 28 |
 | Archer salt-only, pressure-only and CO2-addition sequence | 10 |
-| He–Morse dissolved CO2 | 6 |
+| He–Morse dissolved CO2, complete five-temperature series | 26 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
 | Carroll evaluated salt-free CO2, three setup constructions | 18 |
 | Full Dholabhai family, all supported measured recipes | 110 |
 | Matched measured-state aqueous/guest partition, same Dholabhai recipes | 110 |
 
-The combined bundle has 301 diagnostic rows, not 301 independent measurements.
+The combined bundle has 321 diagnostic rows, not 321 independent measurements.
 The two 110-row assessments deliberately use the same 110 measured endpoints.
 
 The manifest records the actual checkout commit separately from the GitHub

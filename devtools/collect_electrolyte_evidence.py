@@ -31,7 +31,7 @@ ASSESSMENTS = (
     ("KClWaterActivityReferenceAssessmentTest",
      "kcl-water-activity-archer-assessment.csv", 10, None),
     ("KClCO2SolubilityReferenceAssessmentTest",
-     "kcl-co2-solubility-he-morse1993-assessment.csv", 6,
+     "kcl-co2-solubility-he-morse1993-assessment.csv", 26,
      "co2_kcl_solubility_he_morse1993.csv"),
     ("KClCO2OstwaldReferenceAssessmentTest",
      "kcl-co2-ostwald-yasunishi-yoshida1979-assessment.csv", 7,
