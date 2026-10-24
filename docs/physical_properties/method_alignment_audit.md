@@ -33,7 +33,7 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 | Mixture PVT and equilibrium | `SystemGERG2008Eos`, `SystemEOSCGEos`, cubic/CPA/PC-SAFT mixtures, TP/PH/PS and saturation flashes | Present. Reuse [#2937](https://github.com/equinor/neqsim/issues/2937) for numerical flash and stability qualification. Standalone general Tsonopoulos virial prediction was not found; embedded virial terms do exist in AGA8/GERG-related code. |
 | Activity coefficients, infinite dilution and specialized phase behavior | Wilson, NRTL, UNIQUAC, UNIFAC/PSRK/UMR, solid-liquid operations, Henry-law APIs | Present. Benchmark each model/parameter set and infinite-dilution limit. A supplied class does not establish a suitable parameter set for an arbitrary pair. |
 | Density | COSTALD, Rackett, Peneloux and EOS density | Present; see [density models](density_models). Existing correction/mixture methods should be qualified, rather than duplicated as detached utility code. |
-| Viscosity | PFCT, LBC, Chung gas, friction theory, pure-fluid reference choices | Present; see [viscosity models](viscosity_models). **Added:** bounded pure-liquid Letsou-Stiel critical-property estimation. CO2 reference completeness requires a separate assessment below. |
+| Viscosity | PFCT, LBC, Chung gas, friction theory, pure-fluid reference choices | Present; see [viscosity models](viscosity_models). **Added:** bounded pure-liquid Letsou-Stiel estimation. **Repaired:** CO2 background viscosity now includes the missing initial-density term and passes published Table 6/8 checks. Critical enhancement remains unimplemented. |
 | Thermal conductivity | PFCT, dilute/dense Chung, polynomial, Filippov and reference choices | **Repaired:** dense Chung equation, units, original coefficients and conformal mixing. Filippov's simplified pressure factor still needs comparison with the actual Missenard correlation. See [conductivity models](thermal_conductivity_models). |
 | Gas and liquid diffusivity | Chapman-Enskog, Wilke-Lee, Fuller, Wilke-Chang, Siddiqi-Lucas, Tyn-Calus, Hayduk-Minhas and specialized aqueous methods | Present; see [diffusivity models](diffusivity_models). Extend independent value/range checks per method; do not infer dense-fluid validity from dilute-gas accuracy. |
 | Surface tension | Parachor, gradient theory, linear gradient theory, density-functional and empirical interfaces | Present; see [interfacial properties](interfacial_properties). Qualify by phase pair, critical approach and parameter source. |
@@ -85,12 +85,52 @@ tests also exercise the documented benzene phase integration, units, limits and 
 These are implementation checks, not a qualification of compressed-liquid viscosity or of
 associating fluids. No pressure correction or mixture rule has been silently added.
 
+### CO₂ reference background viscosity
+
+The baseline `CO2ViscosityMethod` included the dilute and residual Laesecke–Muzny terms,
+but omitted the linear-in-density Rainwater–Friend contribution. It failed all six
+finite-density rows of the paper's Table 6. The correction restores equations 5–6 and
+retains the existing phase-bound model and Span–Wagner density fallback. NaN density now
+also triggers that fallback. Invalid scalars and unsupported species/mixtures fail explicitly.
+
+The correlation uses the published energy scale 200.76 K, length scale 0.378421 nm,
+Table 3 virial coefficients, and a fixed pure-CO₂ molar mass of 0.0440095 kg/mol.
+The dimensionless virial coefficient is converted with Avogadro's constant and the
+length scale cubed; division by molar mass is essential because the API takes kg/m³.
+All coefficients are fixed, with no parameter fitting in this change.
+
+| T (K) | Density (kg/m³) | Published background viscosity (mPa s) | Baseline error (%) |
+|---:|---:|---:|---:|
+| 220 | 3 | 0.011104 | +0.13 |
+| 225 | 1150 | 0.22218 | +1.98 |
+| 300 | 65 | 0.015563 | -2.15 |
+| 300 | 1400 | 0.50594 | -1.42 |
+| 700 | 100 | 0.033112 | -3.94 |
+| 700 | 1200 | 0.22980 | -6.81 |
+
+All six corrected values fall within half the last printed digit. The three dilute
+Table 6 rows, including the stated zero-density extrapolation to 10000 K, are also checked.
+Seven independent Table 8 recommendations additionally exercise the existing EOS, phase
+selection, property initialization and SI viscosity access at 240–1000 K and 1–1000 bara;
+the integration tolerance is 0.1%. These are checks against the published reference
+correlation and its recommendations, not new experimental qualification.
+
+**Critical enhancement is not included.** The main static API supports 100–2000 K;
+the separate dilute-only API explicitly permits extrapolation to 10000 K. These scalar
+bounds do not establish physical phase stability or the melting limit. Callers needing
+near-critical viscosity must account for the missing enhancement separately.
+
+[NIST IR 8608 (February 2026), section 11](https://doi.org/10.6028/NIST.IR.8608)
+still identifies Laesecke–Muzny (2017) as the reference viscosity formulation and retains
+its parameters when evaluating the new alternative CO₂ EOS. That EOS is separate from
+this viscosity repair; it has not been implemented or qualified by this audit.
+
 ## Execution routes and computational cost
 
-Both stateless correlation APIs are registered in `devtools/engineering_capabilities.json`
+The stateless transport correlation APIs are registered in `devtools/engineering_capabilities.json`
 with parameter units, applicability, frozen examples and test sources. They use the existing
-`runCapability` static-JSON invocation route. `TransportPropertyCapabilityTest` executes both
-routes and checks the viscosity range refusal; no new execution mechanism is introduced.
+`runCapability` static-JSON invocation route. `TransportPropertyCapabilityTest` executes all four
+routes and checks the viscosity range refusals; no new execution mechanism is introduced.
 The generated engineering-coverage inventory records source and evidence references, not
 an experimental-accuracy certification.
 
@@ -110,16 +150,34 @@ were faster. The implementation performs the complete corrected mixture equation
 an unsafe cross-state cache. Default PFCT evaluation paths are unchanged. Letsou-Stiel is
 an opt-in constant-cost polynomial evaluation and introduces no work in default calculations.
 
+The CO₂ continuation was measured with `CO2ViscosityBenchmarkTest`: Java 17, five
+200,000-call batches after 20,000 warmup calls, using the same phase-bound harness and
+a separately compiled original class. Median times in one local run were:
+
+| T (K) | Density (kg/m³) | Original (ns/call) | Corrected (ns/call) |
+|---:|---:|---:|---:|
+| 220 | 3 | 94.45 | 79.77 |
+| 225 | 1150 | 91.48 | 78.18 |
+| 300 | 65 | 92.13 | 79.30 |
+| 300 | 1400 | 90.63 | 79.60 |
+| 700 | 100 | 90.79 | 79.64 |
+| 700 | 1200 | 90.77 | 81.06 |
+
+The corrected model is faster in this diagnostic run despite restoring the missing
+physics. Residual constants are precomputed; fractional powers in the virial term use
+two square roots and a polynomial; integer powers use products. No mutable state cache
+or additional EOS solve is introduced on the ordinary finite-density path. Timing does
+not measure an entire flash/process calculation or establish a stable speedup guarantee.
+
 ## Remaining priorities and evidence gates
 
 1. Obtain sixth-edition equation/errata evidence and attach per-method provenance before making
    a full edition-conformance statement. Do not replace a validated method merely because
    another method is newer; compare accuracy, range, required parameters and computation cost.
-2. Audit CO2 reference viscosity: the inspected implementation includes the dilute and
-   residual Laesecke-Muzny (2017) terms but omits the linear-in-density Rainwater-Friend term.
-   Assess critical enhancement explicitly and replace the existing loose regression tolerance
-   with published check values. The [NIST paper record](https://www.nist.gov/publications/reference-correlation-viscosity-carbon-dioxide)
-   identifies all these contributions. This increment does not certify the existing CO2 model.
+2. Qualify CO2 critical enhancement as a separate numerical/thermodynamic increment.
+   The background correlation is repaired and checked against the paper; the singular
+   critical contribution remains excluded. Assess the new NIST IR 8608 alternative EOS
+   and its potential speed/derivative benefits separately from changing transport coefficients.
 3. Qualify latent-heat coefficient forms/missing data and liquid pressure corrections with
    published examples before changing defaults. Distinguish an unsupported alternative
    correlation from a calculation type already supported by EOS enthalpy differences.
@@ -140,6 +198,8 @@ an opt-in constant-cost polynomial evaluation and introduces no work in default 
 - Letsou and Stiel (1973), [doi:10.1002/aic.690190241](https://doi.org/10.1002/aic.690190241); polynomial form in the [ChemSep book](https://www.chemsep.org/downloads/docs/book2.pdf), equations 10.158–10.161, and [COCO/TEA documentation](https://www.cocosimulator.org/index_help.php?page=TEA%2Fviscosity.htm).
 - [Chemicals viscosity documentation](https://chemicals.readthedocs.io/chemicals.viscosity.html), independent ethanol worked example; no Python package is required by NeqSim.
 - Huber (2018), [NIST IR 8209](https://doi.org/10.6028/NIST.IR.8209), fluid-specific reference transport models and model selection.
+- Laesecke and Muzny (2017), [doi:10.1063/1.4977429](https://doi.org/10.1063/1.4977429), equations 4–9 and Tables 3, 6 and 8. Table 6 explicitly excludes the critical enhancement.
+- Lemmon, Harvey and Hellmann (2026), [NIST IR 8608](https://doi.org/10.6028/NIST.IR.8608), section 11 on continued applicability of the existing CO₂ transport reference formulations.
 
 ## Related documentation
 

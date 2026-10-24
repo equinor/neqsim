@@ -37,7 +37,8 @@
       "tool": "runCapability",
       "apis": [
         "neqsim.physicalproperties.methods.liquidphysicalproperties.viscosity.LetsouStielViscosity",
-        "neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod"
+        "neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.ChungDenseConductivityMethod",
+        "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod"
       ],
       "skills": [
         "neqsim-api-patterns"
@@ -48,9 +49,10 @@
       "testSources": [
         "src/test/java/neqsim/physicalproperties/methods/liquidphysicalproperties/viscosity/LetsouStielViscosityTest.java",
         "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/conductivity/ChungDenseCorrelationTest.java",
-        "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+        "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java",
+        "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityReferenceValuesTest.java"
       ],
-      "limitations": "Correlation evaluation only, not experimental qualification. Letsou-Stiel estimates pure saturated-liquid viscosity from critical constants, with no mixture rule or pressure correction; its phase-package selection requires an initialized liquid. Chung has no critical enhancement and the standalone route takes pure-fluid or supplied conformal parameters. Default transport models are unchanged.",
+      "limitations": "Correlation evaluation only, not experimental qualification. Letsou-Stiel estimates pure saturated-liquid viscosity without mixture or pressure correction. Chung takes pure-fluid or supplied conformal parameters. CO2 uses the Laesecke-Muzny background correlation without critical enhancement and requires a separately established physical gas or compressed-fluid state. The dilute-only CO2 API explicitly permits extrapolation above 2000 K. Default model selection is unchanged; the background CO2 implementation also serves the existing Span-Wagner default.",
       "operations": [
         {
           "id": "letsou-stiel-saturated-liquid-viscosity",
@@ -147,6 +149,71 @@
           },
           "evidenceSources": [
             "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/conductivity/ChungDenseCorrelationTest.java",
+            "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+          ]
+        },
+        {
+          "id": "pure-co2-background-viscosity",
+          "classification": "supported",
+          "api": "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod",
+          "method": "calculateViscosity",
+          "signature": "double neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod.calculateViscosity(double,double)",
+          "units": {
+            "inputs": {
+              "temperature": "K",
+              "density": "kg/m3"
+            },
+            "outputs": {
+              "viscosity": "Pa s"
+            }
+          },
+          "applicability": "Pure CO2 background viscosity, 100 <= T <= 2000 K, finite nonnegative mass density. Includes dilute, initial-density and residual terms, excludes critical enhancement. Callers must establish a physical fluid state inside the published gas/compressed-fluid domain; scalar checks do not enforce melting or phase stability.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              300,
+              65
+            ],
+            "parameterTypes": [
+              "double",
+              "double"
+            ],
+            "expected": 1.5563e-05,
+            "absoluteTolerance": 5e-10
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityReferenceValuesTest.java",
+            "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+          ]
+        },
+        {
+          "id": "pure-co2-dilute-viscosity",
+          "classification": "supported",
+          "api": "neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod",
+          "method": "calculateDiluteGasViscosity",
+          "signature": "double neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod.calculateDiluteGasViscosity(double)",
+          "units": {
+            "inputs": {
+              "temperature": "K"
+            },
+            "outputs": {
+              "viscosity": "Pa s"
+            }
+          },
+          "applicability": "Pure CO2 zero-density viscosity. 100 <= T <= 10000 K; values above 2000 K are the explicitly documented extrapolation, not finite-density predictions.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              100
+            ],
+            "parameterTypes": [
+              "double"
+            ],
+            "expected": 5.3757e-06,
+            "absoluteTolerance": 5e-11
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityReferenceValuesTest.java",
             "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
           ]
         }
@@ -1948,7 +2015,7 @@
     {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/conductivity/WaterConductivityMethod.java","sourceDigest":"b512fe82dfb3ca3062558f22099b034c5a0e4eb055d1718568aa8b9a4118e27a","domain":"physicalproperties","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.CorrespondingStatesDiffusivity","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/diffusivity/CorrespondingStatesDiffusivity.java","sourceDigest":"d257f51d3856e3722bfb831230b70b530b77c8cc56f7e720357942b06142d28a","domain":"physicalproperties","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.diffusivity.Diffusivity","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/diffusivity/Diffusivity.java","sourceDigest":"5d195e889c125d1b2f994fb3a0c364972ac976dc8075dbec8b9ea01acd91c463","domain":"physicalproperties","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
-    {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityMethod.java","sourceDigest":"c33cb8cbb24e5dec2b63114ce9871d9a438bd37bb6f8f0af0123f0a3505f654a","domain":"physicalproperties","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
+    {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityMethod.java","sourceDigest":"b8f750f6e2c5bb9063f4bd385a2c372e5527d8d578d5a51e2d0ea3595647792b","domain":"physicalproperties","skills":[],"agents":[],"capabilities":["bounded-transport-property-estimation"],"disposition":"registered_anchor"},
     {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/FrictionTheoryViscosityMethod.java","sourceDigest":"8238722d5cd562c9e3ea1238d9ec989543ff36942d60f9b1778ac486514bfb7f","domain":"physicalproperties","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethod","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/KTAViscosityMethod.java","sourceDigest":"418fbdf3a3026a7594bb9ea6463ba103d10d542df485ba60c02602ae3bb8fd2e","domain":"physicalproperties","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},
     {"id":"neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.KTAViscosityMethodMod","kind":"class","source":"src/main/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/KTAViscosityMethodMod.java","sourceDigest":"39e11983830469076d774b2eed25ca72f2cc21e72d0749436f9c31a0b072a52d","domain":"physicalproperties","skills":[],"agents":[],"capabilities":[],"disposition":"review_required"},

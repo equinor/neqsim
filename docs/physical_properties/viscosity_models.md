@@ -270,8 +270,30 @@ Specialized high-accuracy methods for specific fluids:
 
 **Class:** `CO2ViscosityMethod`
 
-- Fenghour et al. correlation
-- Covers gas, liquid, and supercritical regions
+- Laesecke–Muzny (2017) **background viscosity**: dilute, initial-density Rainwater–Friend and residual terms.
+- The 2026 [NIST IR 8608, section 11](https://doi.org/10.6028/NIST.IR.8608) retains this reference formulation.
+- Pure CO₂ only, using the phase's current temperature and mass density. An unavailable or nonfinite phase
+  density uses the existing Span–Wagner density fallback. Wrong species and mixtures raise an argument exception.
+- `calculateViscosity(temperature, density)` accepts K and kg/m³ and returns **Pa s**. It supports 100–2000 K
+  mathematically; callers must establish a physical gas, liquid or supercritical state inside the paper's range.
+  Input checks do not enforce the melting curve or qualify every accepted temperature/density pair.
+- `calculateDiluteGasViscosity(temperature)` supports 100–10000 K. Temperatures above 2000 K are the paper's
+  explicitly documented **zero-density extrapolation**, and are refused by the finite-density API.
+- **Critical enhancement is excluded.** The paper identifies a region approximately bounded by 300–310 K and
+  300–600 kg/m³ where this contribution can exceed 1%. These boundaries are guidance, not a sharp cutoff.
+  This implementation does not establish near-critical viscosity accuracy.
+
+The earlier implementation omitted the linear-in-density contribution and failed all six finite-density
+check values in [Laesecke and Muzny (2017), Table 6](https://doi.org/10.1063/1.4977429), with an error up to 6.8%.
+`CO2ViscosityReferenceValuesTest` now checks all nine Table 6 values to their printed rounding precision.
+`CO2ViscosityMethodTest` also checks seven Table 8 pressure-temperature recommendations through the existing
+Span–Wagner phase/property path with a 0.1% tolerance. This is a bounded implementation and EOS integration
+check, not a universal experimental-accuracy statement.
+
+Both stateless APIs use the existing MCP `runCapability` invocation route. The ordinary `CO2Model` key and
+the existing pure-CO₂ Span–Wagner defaults use the corrected background model. PFCT mixtures are unaffected.
+See the [method audit](method_alignment_audit) for parameter provenance, remaining critical-enhancement work,
+and computation-cost evidence.
 
 #### Hydrogen
 
@@ -308,7 +330,7 @@ fluid.getPhase("gas").initPhysicalProperties();
 | Heavy oils | PFCT-Heavy-Oil | Extended for high MW |
 | Characterized crudes | PFCT | Works with pseudo-components |
 | General gas processing | Friction theory or PFCT | Validate against representative data |
-| Pure CO₂ | CO2Model | High accuracy |
+| Pure CO₂ | CO2Model | Reference background correlation; critical enhancement excluded |
 | Pure H₂ | Muzny | Reference accuracy |
 | Pure helium | KTA | Reference-fluid correlation |
 | Aqueous systems | Salt Water | Water/brine correlation |
