@@ -12,6 +12,9 @@ public class ComponentPR extends ComponentEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Optional dimensionless covolume coefficient; zero also preserves older serialized defaults. */
+  private double omegaBOverride;
+
   /**
    * Universal exponent from 3D Ising model critical exponent beta = 0.326. n = 8 * beta - 3 = -0.392. Used in Cachadina
    * et al. (2024) correlation.
@@ -106,7 +109,60 @@ public class ComponentPR extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double calcb() {
-    return .077803333 * R * criticalTemperature / criticalPressure;
+    return getOmegaB() * R * criticalTemperature / criticalPressure;
+  }
+
+  /**
+   * Sets a persistent dimensionless PR covolume coefficient in {@code b = OmegaB R Tc / Pc}. Set it on each allocated
+   * fluid phase, then initialize the fluid before reading properties. This does not fit a coefficient or establish
+   * validity of the supplied parameter. Association models use separately fitted covolumes.
+   *
+   * @param omegaB positive finite dimensionless covolume coefficient
+   * @throws IllegalArgumentException if the coefficient is not positive and finite
+   * @throws UnsupportedOperationException if this is a CPA component
+   */
+  public void setOmegaB(double omegaB) {
+    if (this instanceof ComponentCPAInterface) {
+      throw new UnsupportedOperationException("OmegaB overrides are not supported for CPA components");
+    }
+    if (!Double.isFinite(omegaB) || omegaB <= 0.0) {
+      throw new IllegalArgumentException("OmegaB must be positive and finite");
+    }
+    omegaBOverride = omegaB;
+  }
+
+  /**
+   * Reports whether an explicit PR covolume coefficient is active.
+   *
+   * @return true when an OmegaB override has been set
+   */
+  public boolean hasOmegaBOverride() {
+    return omegaBOverride > 0.0;
+  }
+
+  /**
+   * Returns the explicit coefficient without substituting the model default.
+   *
+   * @return dimensionless override or NaN when none is set
+   */
+  public double getOmegaBOverride() {
+    return hasOmegaBOverride() ? omegaBOverride : Double.NaN;
+  }
+
+  /**
+   * Returns the active PR covolume coefficient. Specialized BNS components retain their constructor coefficient.
+   *
+   * @return dimensionless covolume coefficient
+   */
+  public double getOmegaB() {
+    return hasOmegaBOverride() ? omegaBOverride : 0.077803333;
+  }
+
+  /**
+   * Removes the override and restores the component model's default on the next initialization.
+   */
+  public void clearOmegaBOverride() {
+    omegaBOverride = 0.0;
   }
 
   /** {@inheritDoc} */

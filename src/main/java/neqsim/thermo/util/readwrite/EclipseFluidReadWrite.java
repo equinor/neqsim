@@ -20,6 +20,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.component.ComponentPR;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -402,7 +403,7 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file cannot be read
    */
   public static SystemInterface read(String inputFile, SystemInterface targetFluid) {
-    return readImpl(inputFile, targetFluid);
+    return readImpl(inputFile, targetFluid, false);
   }
 
   /**
@@ -413,7 +414,20 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile) {
-    return readImpl(inputFile, null);
+    return readImpl(inputFile, null, false);
+  }
+
+  /**
+   * Reads a PR fluid and explicitly applies its OMEGAB section. Ordinary {@link #read(String)} retains the historical
+   * behavior of ignoring that section, so existing imported-fluid results do not change. Use this method to reload a
+   * fluid exported with covolume tuning. File EOS selection, naming, and other import behavior are unchanged.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @return populated PR fluid with persistent covolume coefficients
+   * @throws IllegalArgumentException if the file or supplied PR coefficients are invalid
+   */
+  public static SystemInterface readWithPrOmegaB(String inputFile) {
+    return readImpl(inputFile, null, true);
   }
 
   /**
@@ -456,9 +470,10 @@ public class EclipseFluidReadWrite {
    *
    * @param inputFile path to the Eclipse E300 fluid file
    * @param forcedFluid optional pre-created fluid to populate (null to auto-create from EOS keyword)
+   * @param applyPrOmegaB whether to apply the OMEGAB section to PR components
    * @return the populated fluid system
    */
-  private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid) {
+  private static SystemInterface readImpl(String inputFile, SystemInterface forcedFluid, boolean applyPrOmegaB) {
     File file = new File(inputFile);
     if (!file.exists()) {
       throw new IllegalArgumentException(
@@ -475,7 +490,7 @@ public class EclipseFluidReadWrite {
     // of the static field cannot mismatch a cached entry with the prefix it was parsed under.
     String activePseudoName = pseudoName;
     boolean cacheable = forcedFluid == null && useCache;
-    String key = cacheable ? cacheKey(file, activePseudoName) : null;
+    String key = cacheable ? cacheKey(file, activePseudoName) + (applyPrOmegaB ? ":with-pr-omegab" : "") : null;
     if (cacheable) {
       SystemInterface cached = fluidCache.get(key);
       if (cached != null) {
@@ -859,6 +874,9 @@ public class EclipseFluidReadWrite {
         // Re-init so calca() runs with the new OmegaA values.
         fluid.init(0);
       }
+      if (applyPrOmegaB) {
+        applyPrOmegaB(fluid, OMEGAB_list, names.size());
+      }
       if (kij == null) {
         kij = new Double[names.size()][names.size()];
         for (Double[] row : kij) {
@@ -1081,6 +1099,31 @@ public class EclipseFluidReadWrite {
    * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, String[] fluidNames) {
+    return readReplicated(inputFile, fluidNames, false);
+  }
+
+  /**
+   * Reads replicated named PR fluids while applying the source OMEGAB section to every component block.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param fluidNames names for replicated source fluids
+   * @return populated fluid with persistent per-component PR covolume coefficients
+   * @throws IllegalArgumentException if the file or supplied PR coefficients are invalid
+   */
+  public static SystemInterface readWithPrOmegaB(String inputFile, String[] fluidNames) {
+    return readReplicated(inputFile, fluidNames, true);
+  }
+
+  /**
+   * Reads replicated named fluid blocks with optional PR covolume tuning.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param fluidNames names for replicated source fluids
+   * @param applyPrOmegaB whether to apply the OMEGAB section to PR components
+   * @return populated fluid with replicated components and BIPs
+   * @throws IllegalArgumentException if the file or supplied PR coefficients are invalid
+   */
+  private static SystemInterface readReplicated(String inputFile, String[] fluidNames, boolean applyPrOmegaB) {
     File file = new File(inputFile);
     if (!file.exists()) {
       throw new IllegalArgumentException(
@@ -1401,6 +1444,9 @@ public class EclipseFluidReadWrite {
           }
         }
         fluid.init(0);
+      }
+      if (applyPrOmegaB) {
+        applyPrOmegaB(fluid, OMEGAB_list, names.size());
       }
 
       int nCompsPerFluid = names.size(); // base number of components
@@ -1764,9 +1810,22 @@ public class EclipseFluidReadWrite {
     // OmegaB EOS parameter
     writer.write("-- OmegaB\n");
     writer.write("OMEGAB\n");
-    double omegaB = eosType.startsWith("PR") ? 0.07780 : 0.08664;
+    double omegaBDefault = eosType.startsWith("PR") ? 0.07780 : 0.08664;
+    boolean hasPrOmegaBOverrides = false;
+    if (eosType.startsWith("PR")) {
+      for (int i = 0; i < nComps; i++) {
+        if (fluid.getComponent(i) instanceof ComponentPR && ((ComponentPR) fluid.getComponent(i)).hasOmegaBOverride()) {
+          hasPrOmegaBOverrides = true;
+          break;
+        }
+      }
+    }
     for (int i = 0; i < nComps; i++) {
-      writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaB));
+      if (hasPrOmegaBOverrides && fluid.getComponent(i) instanceof ComponentPR) {
+        writer.write("     " + Double.toString(((ComponentPR) fluid.getComponent(i)).getOmegaB()) + "\n");
+      } else {
+        writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaBDefault));
+      }
     }
     writer.write("/\n");
 
@@ -1929,6 +1988,35 @@ public class EclipseFluidReadWrite {
       logger.debug("Could not check PFCT viscosity model: " + e.getMessage());
     }
     return false;
+  }
+
+  /**
+   * Applies E300 PR covolume coefficients to every allocated phase and every replicated fluid block.
+   *
+   * @param fluid imported fluid
+   * @param values dimensionless OMEGAB values in base component order
+   * @param blockSize number of components in one source-fluid block
+   * @throws IllegalArgumentException if a supplied PR coefficient is not positive and finite
+   */
+  private static void applyPrOmegaB(SystemInterface fluid, List<Double> values, int blockSize) {
+    if (values.isEmpty()) {
+      return;
+    }
+    if (!(fluid.getComponent(0) instanceof ComponentPR)) {
+      throw new IllegalArgumentException("OMEGAB overrides require a PR fluid");
+    }
+    if (values.size() != blockSize) {
+      throw new IllegalArgumentException("OMEGAB must contain one value per component");
+    }
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      for (int component = 0; component < fluid.getNumberOfComponents(); component++) {
+        ComponentInterface current = fluid.getPhase(phase).getComponent(component);
+        if (current instanceof ComponentPR) {
+          ((ComponentPR) current).setOmegaB(values.get(component % blockSize));
+        }
+      }
+    }
+    fluid.init(0);
   }
 
   /**
