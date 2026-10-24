@@ -28,7 +28,7 @@ to `src/main/java/neqsim/`. The nearest guides document existing choices and con
 |---|---|---|
 | Pure constants and characterization | `thermo/component/Component`, `thermo/characterization/TBPfractionModel` and component databases | Present. Establish per-parameter provenance and validity; generic molecular group-contribution estimation is not established by this inventory. |
 | Ideal-gas Cp, Cv, H, S and formation data | `Component.getCp0/getCv0/getHID/getIdEntropy`, `SystemIdealGas` | Present. Polynomial paths need independent coefficient and integral matrices. Existing PR #4568 handles the CpD accessor separately. |
-| Vapor pressure, saturation and phase-change enthalpy | `Component.getAntoineVaporPressure` and its derivative/inverse, `ThermodynamicOperations` saturation operations, `SystemInterface.getHeatOfVaporization` | Present through correlations and EOS operations. Audit the low-level `Component.getHeatOfVapourization` coefficient expression and missing-data contract separately from EOS phase enthalpy differences. |
+| Vapor pressure, saturation and phase-change enthalpy | `Component.getAntoineVaporPressure` and its derivative/inverse, `ThermodynamicOperations` saturation operations, `SystemInterface.getHeatOfVaporization` | Present through correlations and EOS operations. The low-level coefficient getters now share the five-coefficient DIPPR 106 form and explicit missing-data contract; per-fluid parameter qualification remains separate from EOS phase enthalpy differences. |
 | Pure-fluid PVT and caloric properties | SRK/PR, CPA, PC-SAFT, Span-Wagner, water and hydrogen reference utilities | Present. Selecting a modern EOS does not establish modern transport-model completeness. See [thermodynamics](../thermo/). |
 | Mixture PVT and equilibrium | `SystemGERG2008Eos`, `SystemEOSCGEos`, cubic/CPA/PC-SAFT mixtures, TP/PH/PS and saturation flashes | Present. Reuse [#2937](https://github.com/equinor/neqsim/issues/2937) for numerical flash and stability qualification. Standalone general Tsonopoulos virial prediction was not found; embedded virial terms do exist in AGA8/GERG-related code. |
 | Activity coefficients, infinite dilution and specialized phase behavior | Wilson, NRTL, UNIQUAC, UNIFAC/PSRK/UMR, solid-liquid operations, Henry-law APIs | Present. Benchmark each model/parameter set and infinite-dilution limit. A supplied class does not establish a suitable parameter set for an arbitrary pair. |
@@ -125,6 +125,45 @@ still identifies Laesecke–Muzny (2017) as the reference viscosity formulation 
 its parameters when evaluating the new alternative CO₂ EOS. That EOS is separate from
 this viscosity repair; it has not been implemented or qualified by this audit.
 
+## Coefficient-based saturation latent heat
+
+Both `Component.getHeatOfVapourization(T)` and
+`Component.getPureComponentHeatOfVaporization(T)` evaluate the same DIPPR 106 form:
+
+$$H_{vap}=10^{-3}A(1-T_r)^{B+CT_r+DT_r^2+ET_r^3},\quad T_r=T/T_c$$
+
+Temperature and critical temperature are in K, database A is in J/kmol and the result
+is in J/mol. The legacy getter previously treated these coefficients as a malformed
+polynomial in absolute temperature; the other getter omitted E. The full five-term
+form is documented in Aspen Physical Property Methods and Models, section
+“DIPPR Heat of Vaporization Equation”
+([vendor manual](https://sites.poli.usp.br/d/pqi2408/physpropmodels.pdf)).
+This establishes the equation form, not sixth-edition conformance or parameter validity.
+
+The methods return NaN for nonfinite/nonpositive temperature, T at or above Tc,
+nonfinite coefficients, nonpositive A, nonpositive evaluated exponent, or a nonfinite/
+nonpositive result. No fit-temperature limits are stored with these coefficients;
+0 < T < Tc alone does not qualify a particular fluid's fit. The
+system-level EOS enthalpy-difference calculation is unchanged.
+
+`ComponentHeatOfVaporizationTest` checks an independent five-coefficient value,
+invalid/missing parameters, temperature trends, amount invariance and clone behavior.
+The shipped benzene coefficients are compared at 353.3 K with the
+[NIST WebBook](https://webbook.nist.gov/cgi/cbook.cgi?ID=C71432&Mask=4)
+value 30.72 kJ/mol (Majer and Svoboda, 1985). The shipped coefficient evaluation gives
+39.147973 kJ/mol, **27.4% high**: this remains an unqualified parameter set, not a passing
+physical-accuracy benchmark. Regression tests freeze the independent equation evaluation
+and do not loosen a physical tolerance to hide this discrepancy. For example,
+water and benzene currently share latent-heat coefficient values, so parameter provenance
+and fluid-specific validation remain open under #4571.
+
+The pipeline evaporation fallback consumes J/mol directly: signed flux in mol/(m2 s)
+times latent heat gives W/m2. The previous extra factor of 1000 is removed, with an
+independent 78.295947 W/m2 equation-based benzene unit check and evaporation/condensation sign checks.
+The fallback still omits unavailable component correlations; that existing approximation
+is not a qualified substitute for coupled interphase enthalpy transport. This repair does
+not certify evaporation distance or two-phase thermal closure against experiments.
+
 ## Execution routes and computational cost
 
 The stateless transport correlation APIs are registered in `devtools/engineering_capabilities.json`
@@ -178,7 +217,7 @@ not measure an entire flash/process calculation or establish a stable speedup gu
    The background correlation is repaired and checked against the paper; the singular
    critical contribution remains excluded. Assess the new NIST IR 8608 alternative EOS
    and its potential speed/derivative benefits separately from changing transport coefficients.
-3. Qualify latent-heat coefficient forms/missing data and liquid pressure corrections with
+3. Qualify latent-heat parameter provenance/fit ranges and liquid pressure corrections with
    published examples before changing defaults. Distinguish an unsupported alternative
    correlation from a calculation type already supported by EOS enthalpy differences.
 4. Assess standalone Tsonopoulos, Watson reference-state latent-heat scaling and molecular
