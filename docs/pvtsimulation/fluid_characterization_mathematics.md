@@ -570,7 +570,7 @@ This section documents the PVT regression framework for automatic EOS model tuni
 |-------|-------------|
 | `PVTRegression` | Main regression framework class |
 | `RegressionParameter` | Enum defining tunable parameters (BIPs, volume shifts, critical properties, CSP viscosity factors) |
-| `ExperimentType` | Enum for experiment types (CCE, CVD, DLE, SEPARATOR, etc.) |
+| `ExperimentType` | Implemented targets CCE, CVD, DLE, SEPARATOR and VISCOSITY, plus reserved unsupported identifiers |
 | `CCEDataPoint`, `CVDDataPoint`, `DLEDataPoint`, `SeparatorDataPoint`, `ViscosityDataPoint` | Data point classes for each experiment type |
 | `RegressionParameterConfig` | Configuration for each regression parameter with bounds |
 | `PVTRegressionFunction` | Objective function extending LevenbergMarquardtFunction |
@@ -580,6 +580,19 @@ This section documents the PVT regression framework for automatic EOS model tuni
 ### Overview
 
 PVT regression involves adjusting equation of state parameters to minimize the deviation between calculated and experimental properties. The framework handles multiple experiment types simultaneously while maintaining physical consistency.
+
+The data-ingestion surface consists of `addCCEData`, `addCVDData`, `addDLEData`,
+`addSeparatorData` and `addViscosityData`. The enum identifiers
+`SATURATION_PRESSURE` and `SWELLING` do not have regression implementations or
+public ingestion methods. The evaluator rejects both with a descriptive
+`UnsupportedOperationException`; it never supplies a zero prediction for them.
+A future extension requires the full experimental protocol, units and, for
+swelling, the injection-fluid composition and injection schedule. Existing
+saturation/swelling simulation methods alone do not supply that regression
+contract. See the [PVT workflow](pvt_workflow) for the ingestion and failure
+contract. This support statement does not validate the scientific protocols of
+every existing target.
+
 
 ### Multi-Objective Regression
 

@@ -82,10 +82,14 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
    * </ul>
    *
    * @param dependentValues array of dependent values for this data point
-   * @return calculated value
+   * @return calculated value for a supported regression target
+   * @throws IllegalArgumentException if the array is incomplete or the experiment ordinal is not a valid integer
+   * @throws UnsupportedOperationException if the experiment protocol is not implemented for regression
    */
   @Override
   public double calcValue(double[] dependentValues) {
+    ExperimentType experimentType = validateExperimentType(dependentValues);
+
     // Apply current parameters to a cloned fluid
     SystemInterface tunedFluid = baseFluid.clone();
     for (int i = 0; i < parameterConfigs.size(); i++) {
@@ -98,10 +102,7 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     // Parse dependent values
     double pressure = dependentValues[0];
     double temperature = dependentValues[1];
-    int experimentTypeOrdinal = (int) dependentValues[2];
     int propertyIndex = (int) dependentValues[3];
-
-    ExperimentType experimentType = ExperimentType.values()[experimentTypeOrdinal];
 
     // Calculate appropriate property based on experiment type
     switch (experimentType) {
@@ -117,7 +118,39 @@ public class PVTRegressionFunction extends LevenbergMarquardtFunction {
     case VISCOSITY:
       return calculateViscosityValue(tunedFluid, pressure, temperature, propertyIndex);
     default:
-      return 0.0;
+      throw new IllegalStateException("No calculation dispatch for supported PVT regression target " + experimentType);
+    }
+  }
+
+  /**
+   * Validates the target before cloning fluids, applying fitting parameters or starting calculations.
+   *
+   * @param dependentValues public dependent-variable array
+   * @return implemented regression experiment type
+   * @throws IllegalArgumentException if the array or ordinal is malformed
+   * @throws UnsupportedOperationException if the target has no implemented regression protocol
+   */
+  private ExperimentType validateExperimentType(double[] dependentValues) {
+    if (dependentValues == null || dependentValues.length < 4) {
+      throw new IllegalArgumentException(
+          "PVT regression requires pressure, temperature, experiment ordinal and property index");
+    }
+    double ordinal = dependentValues[2];
+    ExperimentType[] types = ExperimentType.values();
+    if (!Double.isFinite(ordinal) || ordinal != Math.rint(ordinal) || ordinal < 0.0 || ordinal >= types.length) {
+      throw new IllegalArgumentException("Invalid PVT regression experiment ordinal: " + ordinal);
+    }
+    ExperimentType type = types[(int) ordinal];
+    switch (type) {
+    case CCE:
+    case CVD:
+    case DLE:
+    case SEPARATOR:
+    case VISCOSITY:
+      return type;
+    default:
+      throw new UnsupportedOperationException("PVT regression target " + type
+          + " is not implemented; supported targets are CCE, CVD, DLE, SEPARATOR and VISCOSITY");
     }
   }
 
