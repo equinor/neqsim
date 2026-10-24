@@ -212,7 +212,9 @@ interleaving against isolated SRK and PR calculations for all three sums.
 
 ## 4. Huron-Vidal Mixing Rules
 
-Huron-Vidal (HV) mixing rules combine cubic EoS with activity coefficient models (like NRTL or UNIFAC) for improved liquid-phase behavior.
+Huron-Vidal (HV) mixing rules combine a cubic EoS with an excess-Gibbs-energy
+model for mixtures whose liquid-phase non-ideality is not represented adequately
+by a classic binary-interaction rule.
 
 For mixed HV/classic pairs, the modified NRTL calculation resets the classic
 pair's nonrandomness parameter to zero at every initialization level. Property-only
@@ -220,81 +222,120 @@ initialization (`init(1)`) must not inherit this parameter from a preceding HV p
 `ComponentGENRTLmodifiedHVInitializationTest` checks the zero-interaction invariant
 at initialization levels 1, 2 and 3.
 
-### 4.1 Mathematical Framework
+### 4.1 Mathematical framework
 
-The excess Gibbs energy from an activity coefficient model is incorporated into the EoS:
+The excess Gibbs energy from the selected activity-coefficient model is incorporated
+into the EoS:
 
-$$
+$
 a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} - \frac{G^E}{\Lambda} \right)
-$$
+$
 
-Where:
-- $G^E$ is the excess Gibbs energy from the activity coefficient model
-- $\Lambda$ is the EoS-specific constant (≈ 0.693 for SRK)
+Here, $G^E$ is the excess Gibbs energy and $\Lambda$ is the EoS-specific
+constant (approximately 0.693 for SRK).
 
-### 4.2 CLASSIC_HV - Type 3
+`CLASSIC_HV` (type 3) constructs the modified NRTL rule with the database
+`HVDij` matrix only. `HV` (type 4) also supplies `HVDijT`, so its
+dimensionless directional NRTL parameter is evaluated in source as
 
-Basic Huron-Vidal mixing rule with NRTL parameters from the database.
+$
+\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}.
+$
 
+Equivalently, define an effective energy numerator
+$D_{ij}^{\mathrm{eff}}(T)=D_{ij}+D_{ij,T}T$ and divide it by $T$.
+Consequently, `Dij` has units of kelvin and `DijT` is dimensionless; it is
+not a second kelvin-valued slope. `HVMixingRulesInterface` exposes both
+directional matrices and the dimensionless nonrandomness parameter `alpha`.
+
+### 4.2 Complete HV/NRTL example
+
+The program below selects type 4 by name, performs a TP flash, reads the
+directional NRTL parameters actually installed on the phase, and verifies both
+finite results and total-mole conservation. Run it with assertions enabled
+(`java -ea`).
+
+<!-- hv-nrtl-example:start -->
 ```java
-SystemInterface fluid = new SystemSrkEos(350.0, 10.0);
-fluid.addComponent("methanol", 0.3);
-fluid.addComponent("water", 0.4);
-fluid.addComponent("methane", 0.3);
-fluid.setMixingRule(3);  // or fluid.setMixingRule("CLASSIC_HV");
+import neqsim.thermo.ThermodynamicOperations;
+import neqsim.thermo.mixingrule.HVMixingRulesInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+public final class HuronVidalNrtlExample {
+  private static final Logger logger = LogManager.getLogger(HuronVidalNrtlExample.class);
+
+  private HuronVidalNrtlExample() {}
+
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(350.0, 10.0);
+    fluid.addComponent("methanol", 0.30);
+    fluid.addComponent("water", 0.40);
+    fluid.addComponent("methane", 0.30);
+    fluid.setMixingRule("HV", "NRTL");
+
+    double feedMoles = fluid.getTotalNumberOfMoles();
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(3);
+
+    assert "Huron-Vidal".equals(fluid.getMixingRuleName());
+
+    HVMixingRulesInterface hvRule =
+        (HVMixingRulesInterface) fluid.getPhase(0).getMixingRule();
+    double temperatureK = fluid.getTemperature();
+    double dijK = hvRule.getHVDijParameter(0, 1);
+    double dijT = hvRule.getHVDijTParameter(0, 1);
+    double alpha = hvRule.getHValphaParameter(0, 1);
+    double tau = dijK / temperatureK + dijT;
+
+    assert Double.isFinite(dijK);
+    assert Double.isFinite(dijT);
+    assert Double.isFinite(alpha);
+    assert Double.isFinite(tau);
+
+    double recoveredMoles = 0.0;
+    for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = fluid.getPhase(phaseIndex);
+      double phaseMoles = phase.getNumberOfMolesInPhase();
+      assert Double.isFinite(phaseMoles) && phaseMoles >= 0.0;
+      assert Double.isFinite(phase.getDensity()) && phase.getDensity() > 0.0;
+      recoveredMoles += phaseMoles;
+    }
+    assert Math.abs(recoveredMoles - feedMoles)
+        <= 1.0e-10 * Math.max(1.0, feedMoles);
+
+    logger.info(
+        "rule {}; phases {}; Dij {} K; DijT {}; alpha {}; tau {}; recovered moles {}",
+        fluid.getMixingRuleName(),
+        fluid.getNumberOfPhases(),
+        dijK,
+        dijT,
+        alpha,
+        tau,
+        recoveredMoles);
+  }
+}
 ```
+<!-- hv-nrtl-example:end -->
 
-### 4.3 HV - Type 4
+### 4.3 GE-model selector
 
-Enhanced Huron-Vidal with temperature-dependent parameters (HVDijT):
+The second argument to `setMixingRule("HV", geModel)` chooses the
+excess-Gibbs-energy implementation. The type-4 handler currently accepts:
 
-$$
-D_{ij}(T) = D_{ij,0} + D_{ij,T} \cdot T
-$$
+- `"NRTL"` — modified NRTL with `HVDij` and `HVDijT`.
+- `"NRTL_HV"` — the legacy modified-NRTL HV construction.
+- `"UNIFAC"` — standard UNIFAC.
+- `"UNIFAC_PSRK"` — UNIFAC with PSRK parameters.
+- `"UNIFAC_UMRPRU"` — UNIFAC with UMR-PRU parameters.
 
-**Use case:** Polar/non-polar mixtures, alcohol-water-hydrocarbon systems.
-
-```java
-SystemInterface fluid = new SystemPrEos(320.0, 20.0);
-fluid.addComponent("ethanol", 0.2);
-fluid.addComponent("water", 0.5);
-fluid.addComponent("propane", 0.3);
-fluid.setMixingRule(4);  // or fluid.setMixingRule("HV");
-```
-
-### 4.4 Huron-Vidal with UNIFAC
-
-For predictive calculations without fitted parameters, use UNIFAC:
-
-```java
-SystemInterface fluid = new SystemSrkEos(320.0, 15.0);
-fluid.addComponent("ethanol", 0.3);
-fluid.addComponent("n-hexane", 0.4);
-fluid.addComponent("water", 0.3);
-
-// HV with UNIFAC activity coefficients
-fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
-```
-
-Available GE models for HV:
-- `"NRTL"` - Non-Random Two-Liquid (default)
-- `"UNIFAC_UMRPRU"` - UNIFAC with UMR-PRU parameters
-- `"UNIFAC"` - Standard UNIFAC
-- `"UNIFAC_PSRK"` - UNIFAC with PSRK parameters
-
-### 4.5 Accessing HV Parameters
-
-```java
-// Get the mixing rule interface
-HVMixingRulesInterface hvRule = (HVMixingRulesInterface) fluid.getPhase(0).getMixingRule();
-
-// Get/Set HV parameters
-double dij = hvRule.getHVDijParameter(0, 1);
-hvRule.setHVDijParameter(0, 1, 500.0);  // Set Dij in K
-
-double alpha = hvRule.getHValphaParameter(0, 1);
-hvRule.setHValphaParameter(0, 1, 0.3);  // Set alpha (non-randomness)
-```
+`"UNIQUAC"` is explicitly rejected for this mixing-rule path. Treat selector
+strings as source-level contracts: configure the final component list first,
+then create the database and select the rule before changing or reading custom
+interaction parameters.
 
 ---
 
