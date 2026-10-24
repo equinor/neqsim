@@ -19,6 +19,7 @@ The optimiser itself stays a task-local ``script:`` stage that returns ``proposa
 import json
 import math
 import os
+from types import SimpleNamespace
 
 from .contracts import StageResult, register
 from .ledger import Ledger
@@ -1125,6 +1126,87 @@ def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=
             })
         diagnostics.append(diagnostic)
     return diagnostics
+
+
+def proposal_from_lifecycle_json(evidence_json, cycle_id, title, objective_kpi,
+                                 baseline_value, expected_gain, predicted,
+                                 category="operational"):
+    """Build one guard-ready proposal from exact Java lifecycle JSON.
+
+    The JSON is expected to come from
+    ``ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceJson(cycle_id)``. This adapter does
+    not repair, relabel, or partially accept evidence. It selects the unique current-cycle period,
+    derives setpoints and the accepted envelope from that exact block, then replays the existing
+    optimizer, envelope, and lifecycle validators before returning a proposal to a task-local
+    ``scripts.optimize`` stage.
+    """
+    if not _text(cycle_id):
+        raise ValueError("Lifecycle proposal requires a current cycle identifier")
+    current_cycle = cycle_id.strip()
+    if not _text(title) or not _text(category) or not _text(objective_kpi):
+        raise ValueError("Lifecycle proposal requires title, category, and objective KPI")
+    if not _number(baseline_value) or not _number(expected_gain):
+        raise ValueError("Lifecycle proposal baseline and expected gain must be finite")
+    if (not isinstance(predicted, dict)
+            or any(not _text(key) or not _number(value) for key, value in predicted.items())):
+        raise ValueError("Lifecycle proposal predictions must be a finite KPI mapping")
+
+    if isinstance(evidence_json, bytes):
+        encoded = evidence_json.decode("utf-8")
+    else:
+        encoded = str(evidence_json)
+
+    def reject_constant(value):
+        raise ValueError("Lifecycle evidence contains non-finite JSON constant: {}".format(value))
+
+    try:
+        evidence = json.loads(encoded, parse_constant=reject_constant)
+        # Python's JSON decoder accepts overflowing exponents as infinity. Re-encoding with
+        # allow_nan=False rejects those values anywhere in the nested evidence block.
+        json.dumps(evidence, allow_nan=False)
+    except (TypeError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        raise ValueError("Lifecycle evidence is not finite valid JSON: {}".format(error)) from error
+    if not isinstance(evidence, dict) or evidence.get("cycle_id") != current_cycle:
+        raise ValueError("Lifecycle evidence is not bound to cycle {}".format(current_cycle))
+
+    periods = evidence.get("periods")
+    current_periods = ([period for period in periods
+                        if isinstance(period, dict) and period.get("period_id") == current_cycle]
+                       if isinstance(periods, list) else [])
+    if len(current_periods) != 1:
+        raise ValueError("Lifecycle evidence must contain exactly one current-cycle period")
+    envelope = current_periods[0].get("envelope_evidence")
+    if not isinstance(envelope, dict) or envelope.get("cycle_id") != current_cycle:
+        raise ValueError("Current lifecycle period has no cycle-bound accepted envelope")
+    action_ids = envelope.get("accepted_action_ids")
+    values = envelope.get("accepted_candidate_values")
+    if (not isinstance(action_ids, list) or not action_ids
+            or len(set(action_ids)) != len(action_ids)
+            or any(not _text(action_id) for action_id in action_ids)
+            or not isinstance(values, list) or len(values) != len(action_ids)
+            or any(not _number(value) for value in values)):
+        raise ValueError("Current lifecycle envelope has invalid accepted action values")
+
+    proposal = {
+        "title": title,
+        "category": category,
+        "setpoints": dict(zip(action_ids, values)),
+        "expected_gain": {"value": float(expected_gain), "kpi": objective_kpi},
+        "predicted": dict(predicted),
+        "objective_kpi": objective_kpi,
+        "baseline_value": float(baseline_value),
+        "optimizer_evidence": envelope.get("optimizer_evidence"),
+        "accepted_point_envelope_evidence": envelope,
+        "lifecycle_envelope_evidence": evidence,
+    }
+    validation_context = SimpleNamespace(cycle_id=current_cycle)
+    reasons = _optimizer_evidence_reasons(validation_context, proposal)
+    reasons.extend(_envelope_evidence_reasons(validation_context, proposal, required=True))
+    reasons.extend(_lifecycle_evidence_reasons(validation_context, proposal, required=True))
+    if reasons:
+        raise ValueError("Lifecycle evidence failed proposal validation: {}".format(
+            ", ".join(sorted(set(reasons)))))
+    return proposal
 
 
 def _lifecycle_evidence_reasons(ctx, proposal, required=False):

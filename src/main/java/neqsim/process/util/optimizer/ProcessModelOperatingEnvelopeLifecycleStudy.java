@@ -1,5 +1,7 @@
 package neqsim.process.util.optimizer;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +35,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.Operati
  * @version 1.0
  */
 public final class ProcessModelOperatingEnvelopeLifecycleStudy {
+  private static final Gson EVIDENCE_JSON = new GsonBuilder().disableHtmlEscaping().create();
   private final String id;
   private final String name;
   private final String provenance;
@@ -267,6 +270,36 @@ public final class ProcessModelOperatingEnvelopeLifecycleStudy {
     evidence.put("interpretation",
         "Independent sampled lifecycle periods; not a continuous forecast, equipment qualification, shadow price, or operating approval");
     return Collections.unmodifiableMap(evidence);
+  }
+
+  /**
+   * Serializes lifecycle evidence for the continuous-task proposal boundary.
+   *
+   * <p>
+   * Unlike the general map export, this handoff requires the current living-task cycle to be one of the independently
+   * validated lifecycle periods. The selected period's envelope therefore already carries the same cycle identifier,
+   * allowing the downstream production guard to bind the optimizer replay, accepted envelope and lifecycle evidence
+   * without rewriting model-produced JSON.
+   * </p>
+   *
+   * @param cycleId current living-task cycle identifier and lifecycle period identifier
+   * @return compact JSON containing the exact schema-v8 evidence
+   * @throws IllegalStateException if the current cycle is not an accepted lifecycle period
+   */
+  public String toEvidenceJson(String cycleId) {
+    String currentCycleId = requireText(cycleId, "Cycle identifier");
+    boolean hasCurrentPeriod = false;
+    for (PeriodEvidence period : periods) {
+      if (period.getPeriodId().equals(currentCycleId)) {
+        hasCurrentPeriod = true;
+        break;
+      }
+    }
+    if (!hasCurrentPeriod) {
+      throw new IllegalStateException(
+          "Continuous-task lifecycle evidence requires a period for cycle " + currentCycleId);
+    }
+    return EVIDENCE_JSON.toJson(toEvidenceMap(currentCycleId));
   }
 
   /** Immutable accepted physical-state metric for one lifecycle period. */
