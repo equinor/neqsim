@@ -3957,7 +3957,7 @@ public class TwoFluidPipe extends Pipeline {
     double gasFriction = gasReynolds < 2000.0 ? 16.0 / Math.max(CLOSURE_DENOMINATOR_EPSILON, gasReynolds)
         : 0.046 / Math.pow(gasReynolds, 0.2);
     double interfacialFriction = gasFriction
-        * InterfacialFriction.andritsosHanrattyEnhancement(vsG, rhoG, 0.5 * (1.0 - Math.cos(beta / 2.0)));
+        * InterfacialFriction.stratifiedWaveEnhancement(vsG, rhoG, 0.5 * (1.0 - Math.cos(beta / 2.0)));
 
     double liquidWallShear = liquidFriction * rhoL * liquidVelocity * Math.abs(liquidVelocity) / 2.0;
     double gasWallShear = gasFriction * rhoG * gasVelocity * Math.abs(gasVelocity) / 2.0;

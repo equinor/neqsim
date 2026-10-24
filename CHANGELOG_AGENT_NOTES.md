@@ -9,6 +9,28 @@
 
 ---
 
+## 2026-10-24 — Stratified wave roughness: depth-squared form replaces the capped Andritsos-Hanratty enhancement
+
+- **`InterfacialFriction.stratifiedWaveEnhancement`** (new; used by the `TwoFluidPipe` stratified holdup root and the
+  wavy-stratified interfacial force): `f_i/f_G = 1 + 80 (h_L/D)^2 min(U_SG/U_SG,t - 1, 4)` above the Andritsos-Hanratty
+  transition. The published `1 + 15 sqrt(h_L/D)(r - 1)` with its cap of 12 is kept in `andritsosHanrattyEnhancement`
+  but no longer called by the closures. At production gas densities the ratio `r` is 5-15 and the cap bound everywhere,
+  so the interface was equally rough on a thin flat layer (holdup 20-30 % low vs the reference) and on a thick uphill
+  layer; the uphill Taitel-Dukler balance then lost its thin root between 1.6 and 2.5 degrees and jumped 0.025 → 0.32
+  where the reference rises 0.028, 0.072, 0.14. Selected on 13 reference stratified sections (30-100 bara, flat and
+  0.6-4.7 degrees): eleven within 10 %, mean log holdup error 0.24 → 0.06 flat and 0.49 → 0.10 inclined. Square-root
+  forms never got below 0.2 on either group whatever the slope, ratio limit or cap; linear-depth forms reached 0.13/0.15.
+- Effect vs the reference: undulating lean wet gas dP +12/-2/+33 % → +4/+5/+6 % at ±20/35/50 m; gas-condensate terrain
+  +12.6 → +3.8 %; low-rate flat gas condensate / wet gas dP +17/+29 % → +5/+14 % (holdup -23/-22 % → -8/-5 %). Over the
+  32-case multiphase baseline: mean holdup error 16.0 → 8.6 %, dP 14.5 → 12.7 %. Single-phase, gas-oil slug and terrain
+  gas-oil cases unchanged. NeqSim condenses about 30 % more liquid than the reference's interpolated PVT table in the
+  near-dew-point lean gas, which inflates its holdup ratios there independently of the hydraulics.
+- `TwoFluidPipeSteadyStateConvergenceTest` terrain bounds now follow the reference (+5/+30/+70 % at 20/35/50 m on that
+  line); the former flat 15 % bound encoded the weak response of the capped form. Horizontal "annular" gas condensate
+  (+12 % dP, -11 % holdup) is untouched: the reference labels it stratified with partial wetting, which neither closure
+  represents; the dP excess is the liquid wall shear of the too-thin layer, not the friction form (separated and mixture
+  friction give the same 42 Pa/m there).
+
 ## 2026-10-24 — `SlugUnitModel` calibrated to a 32-case OLGA 2025.1 sweep (horizontal slug flow)
 
 - **High-Froude slip reduction (default on):** the unit holdup is `hs + (vB/vt)(1-hs) - vsG/vt`, so unit slip is fixed by

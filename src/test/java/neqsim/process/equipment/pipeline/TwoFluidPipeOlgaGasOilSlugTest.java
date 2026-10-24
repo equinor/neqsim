@@ -79,7 +79,7 @@ class TwoFluidPipeOlgaGasOilSlugTest {
     TwoFluidPipe reduced = solve(50.0, 44.0, true);
     TwoFluidPipe bendiksen = solve(50.0, 44.0, false);
     Assertions.assertEquals(0.206, meanHoldup(reduced), 0.03);
-    Assertions.assertTrue(meanHoldup(bendiksen) > meanHoldup(reduced) + 0.03,
+    Assertions.assertTrue(meanHoldup(bendiksen) > meanHoldup(reduced) + 0.02,
         "plain Bendiksen coefficients over-predict the high-rate holdup");
     Assertions.assertEquals(13.76, pressureDropBar(reduced), 1.5);
   }

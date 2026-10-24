@@ -150,11 +150,16 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
    * reclassify sections of the flow map, a real terrain response appears and the pressure drop must RISE: uphill
    * sections hold more liquid and shear more wall. The single absolute bound that used to stand here was satisfied by a
    * model that instead LOWERED the pressure drop by 4.5 per cent, which is the signature of a homogeneous friction
-   * form, where the gradient scales as {@code G^2 / rho_mix} and extra liquid therefore reduces it. Measured on this
-   * fixture with the slug-unit closure the response is -0.3, -1.0, -0.8, -0.1 and +3.3 per cent at 5, 10, 20, 35 and 50
-   * m amplitude (without it, -4.7 per cent at 10 m). The residual dip at 10-20 m comes from the share of the 0.3-degree
-   * upslopes classified annular, which carries mixture rather than separated friction; slug-flagged shares that cannot
-   * bridge the bore are stratified.
+   * form, where the gradient scales as {@code G^2 / rho_mix} and extra liquid therefore reduces it.
+   * </p>
+   *
+   * <p>
+   * The size of the response is pinned by a reference transient multiphase simulator run on this line (40 km, 0.5 m,
+   * 55.6 kg/s, 95 bara outlet, 6.7 km waves): plus 5, 30 and 70 per cent at 20, 35 and 50 m amplitude. With the
+   * depth-squared wave-roughness closure this fixture gives -0.1, +2.7, +5.5, +25 and +57 per cent at 5, 10, 20, 35 and
+   * 50 m, so the bounds below are set at about one third above the reference. The earlier flat 15 per cent bound
+   * encoded the capped square-root roughness, under which the uphill film jumped from the thin to the thick root and
+   * the response was +3 per cent at 50 m against the reference's +70.
    * </p>
    */
   @Test
@@ -170,12 +175,15 @@ public class TwoFluidPipeSteadyStateConvergenceTest {
     }
 
     double previous = Double.NEGATIVE_INFINITY;
-    for (double amplitude : new double[] {10.0, 20.0, 35.0, 50.0}) {
+    double[] amplitudes = {10.0, 20.0, 35.0, 50.0};
+    double[] upperBoundsPercent = {10.0, 15.0, 40.0, 90.0};
+    for (int i = 0; i < amplitudes.length; i++) {
+      double amplitude = amplitudes[i];
       double undulating = solveWithUndulation(amplitude);
       double deviationPercent = 100.0 * (undulating - flat) / flat;
       assertTrue(deviationPercent > -1.5, "Undulation of " + amplitude
           + " m must not reduce the pressure drop, but moved it from " + flat + " bar to " + undulating + " bar");
-      assertTrue(deviationPercent < 15.0,
+      assertTrue(deviationPercent < upperBoundsPercent[i],
           "Undulation of " + amplitude + " m with zero net elevation change moved the pressure drop from " + flat
               + " bar to " + undulating + " bar (" + deviationPercent + "%)");
       assertTrue(undulating >= previous - 1.0e-9, "The terrain response must grow with amplitude, but " + amplitude
