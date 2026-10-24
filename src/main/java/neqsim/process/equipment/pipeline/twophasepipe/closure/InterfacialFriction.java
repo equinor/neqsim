@@ -81,9 +81,10 @@ public class InterfacialFriction implements Serializable {
    *
    * <p>
    * {@code f_i/f_G = 1 + 15 sqrt(h_L/D) (U_SG/U_SG,t - 1)} above the wave transition {@code U_SG,t = 5 sqrt(1.3/rho_G)}
-   * m/s, and one below it. The transition scales with the gas density, not with the liquid-to-gas density ratio. This
-   * is the published form, kept for reference and for near-atmospheric gas; the two-fluid stratified closures use
-   * {@link #stratifiedWaveEnhancement(double, double, double)}.
+   * m/s, and one below it. The transition scales with the gas density, not with the liquid-to-gas density ratio. The
+   * transient two-fluid momentum closure retains this published, bounded form because its interfacial shear is
+   * validated against the severe-slugging cycle benchmark. The steady stratified hold-up root uses
+   * {@link #stratifiedWaveEnhancement(double, double, double)} instead.
    * </p>
    *
    * @param superficialGasVelocity superficial gas velocity in m/s
@@ -129,7 +130,7 @@ public class InterfacialFriction implements Serializable {
   public static final double WAVE_ENHANCEMENT_RATIO_LIMIT = 4.0;
 
   /**
-   * Wavy-stratified interfacial friction enhancement used by the two-fluid stratified closures.
+   * Wavy-stratified interfacial friction enhancement used by the steady two-fluid stratified hold-up closure.
    *
    * <p>
    * {@code f_i/f_G = 1 + 80 (h_L/D)^2 min(U_SG/U_SG,t - 1, 4)} above the Andritsos-Hanratty wave transition
@@ -333,8 +334,11 @@ public class InterfacialFriction implements Serializable {
       f_smooth = 0.079 / Math.pow(Re_G, 0.25);
     }
 
-    // Andritsos-Hanratty enhancement factor on the superficial gas velocity
-    double enhancementFactor = stratifiedWaveEnhancement(Math.abs(vG) * (1.0 - alphaL), rhoG, geom.liquidLevel / D);
+    // Retain the published bounded wave law for transient interfacial shear. The calibrated depth-squared law is a
+    // steady hold-up closure: using it here weakens thin-film gas-to-liquid momentum transfer enough to suppress the
+    // validated severe-slugging blowout/fallback cycle.
+    double enhancementFactor =
+        andritsosHanrattyEnhancement(Math.abs(vG) * (1.0 - alphaL), rhoG, geom.liquidLevel / D);
 
     result.frictionFactor = f_smooth * enhancementFactor;
 
