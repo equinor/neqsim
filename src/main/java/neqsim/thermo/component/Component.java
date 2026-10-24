@@ -2694,7 +2694,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getCpD() {
-    return CpD + 1e-10;
+    return CpD;
   }
 
   /** {@inheritDoc} */

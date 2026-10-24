@@ -7,16 +7,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 class FormationEnthalpyReferenceTest {
+  /**
+   * Legacy sensible heat stays on the 273.15 K reference, and the 298.15 K value is the stored Cp integral.
+   */
   @Test
   void referencesAreExplicitAndLegacyValuesArePreserved() {
     ComponentInterface methane = new ComponentSrk("methane", 1.0, 1.0, 0);
+    // Integral of the stored Cp polynomial from 273.15 K to 298.15 K.
+    double sensibleAt298 = 882.7280473433257;
     assertEquals(0.0, methane.getHID(273.15), 1.0e-10);
-    assertEquals(882.7864286135118, methane.getHID(298.15), 1.0e-8);
+    assertEquals(sensibleAt298, methane.getHID(298.15), 1.0e-8);
     assertEquals(-74873.10, methane.getHID(298.15, true), 1.0e-8);
     assertFalse(methane.isUsingIdealGasEnthalpyOfFormation());
     methane.setUseIdealGasEnthalpyOfFormation(true);
     assertEquals(-74873.10, methane.getHID(298.15), 1.0e-8);
-    assertEquals(-74873.10 - 882.7864286135118, methane.getHID(273.15), 1.0e-8);
+    assertEquals(-74873.10 - sensibleAt298, methane.getHID(273.15), 1.0e-8);
     for (double t : new double[] {273.15, 298.15, 600.0, 1000.0}) {
       double derivative = (methane.getHID(t + 0.001) - methane.getHID(t - 0.001)) / 0.002;
       assertEquals(methane.getCp0(t), derivative, 1.0e-6);

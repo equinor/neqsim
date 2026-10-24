@@ -2077,9 +2077,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setCpC(double CpC);
 
   /**
-   * getCpD.
+   * Returns the stored ideal-gas heat-capacity coefficient of temperature to the third power.
    *
-   * @return a double
+   * <p>
+   * {@link #setCpD(double)} stores its argument unchanged, and this method returns that stored value, including zero.
+   * </p>
+   *
+   * @return the stored CpD coefficient
    */
   public double getCpD();
 
