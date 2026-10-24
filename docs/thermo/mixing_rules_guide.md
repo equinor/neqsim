@@ -810,3 +810,27 @@ This qualification excludes CPA, electrolytes, translated-volume phases, SAFT,
 mixture saturation and critical/dew continuation. Broader TV, stability and
 caloric compatibility of the stalled-volume correction remains tracked in
 [issue #4579](https://github.com/equinor/neqsim/issues/4579).
+
+
+### TV endpoint and caloric qualification
+
+Rejecting stalled cubic volumes changes the UMR-PRU/Mathias-Copeman, rule-2,
+quadratic-covolume 50-addition TV fixture from a homogeneous gas to gas plus oil.
+Independent evaluation at the same temperature, volume and component inventories
+lowers Helmholtz energy by 25.868 kJ. Five perturbed-start SciPy minimizations
+recover the same two-phase local minimum. This rejects the former homogeneous
+energy reference; it does not prove global stability for arbitrary mixtures.
+
+The independent residual enthalpy is -534369.102300 J. The regression retains its
+original 1 J absolute tolerance and compares total enthalpy after subtracting the
+component ideal-gas contributions, so independent ideal heat-capacity maintenance
+does not alter the residual reference. TV calculation exceptions now fail the
+test directly. The corresponding `CubicTvHelmholtzQualificationTest` checks three
+nearby temperatures, material/volume/pressure/fugacity closure, lower Helmholtz
+energy and residual enthalpy from refined fixed-volume temperature differences.
+Complete molar inventories, pure/cross coefficients, units, protocol and the
+NumPy/SciPy reproduction are under
+`src/test/resources/neqsim/thermodynamicoperations/flashops/tv-helmholtz/`.
+These are independent equation-implementation checks, not empirical calibration.
+Remaining stability, process and strict-gradient compatibility is tracked in
+[issue #4579](https://github.com/equinor/neqsim/issues/4579).
