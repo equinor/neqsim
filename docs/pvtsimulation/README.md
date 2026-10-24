@@ -8,6 +8,10 @@ reservoir-fluid characterization, laboratory-test reconstruction, and PVT qualit
 control. Build and characterize the thermodynamic system first, then give each
 experiment its own clone so that one pressure path does not affect another.
 
+See the [Pedersen-method qualification matrix](pedersen_method_qualification)
+for the distinction between implemented APIs, numerical verification and measured
+accuracy, including current gas-injection limitations.
+
 ## Choose a simulation
 
 | Engineering task | Main class | Typical results |

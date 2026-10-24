@@ -5,3 +5,5 @@ keywords: "PVT, CME, CVD, differential liberation, separator test, swelling test
 ---
 
 {% include_relative README.md %}
+
+- [Reservoir-fluid method qualification](pedersen_method_qualification.md)

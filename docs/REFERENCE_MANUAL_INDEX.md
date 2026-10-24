@@ -880,6 +880,9 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 
 ### Chapter 35: PVT Simulation
 
+[Pedersen-method qualification matrix](pvtsimulation/pedersen_method_qualification.md):
+capability routes, numerical evidence, measured-data gaps and gas-injection limitations.
+
 | Document                                | Path                                                                                                       | Description                                                                                                      |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | **Phase Envelope Guide**                | [docs/pvtsimulation/phase_envelope_guide.md](pvtsimulation/phase_envelope_guide.md)                           | **Cricondenbar, cricondentherm, HCDP, bubble/dew points**                                                        |

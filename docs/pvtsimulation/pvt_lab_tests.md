@@ -201,6 +201,44 @@ Set the injection fluid with `setInjectionGas`, supply cumulative injected-gas m
 percentages with `setCummulativeMolePercentGasInjected`, and call `runCalc`. Read the
 pressure and relative-oil-volume arrays from `getPressures` and `getRelativeOilVolume`.
 
+The percentages are relative to the **original oil moles**: an addition of 20 mol%
+means 0.2 mol of injection fluid per initial mole of oil, not 20% of the final
+mixture. Supply a nonempty, finite, nonnegative, nondecreasing schedule. Repeated
+amounts repeat a stage without adding gas; the first amount may be nonzero.
+
+Set the experiment temperature with `setTemperature(value, "C")` or
+`setTemperature(value, "K")`; the one-argument setter always uses K, including after
+an earlier Celsius setting. Explicit nonfinite or nonpositive absolute temperatures
+are rejected by `runCalc`; an explicit NaN is not treated as an omitted setting.
+If no temperature is set, the constructor oil's temperature is used. The unmodified reference oil and
+every swollen mixture are evaluated at that same temperature. At zero addition
+the swelling factor is exactly one. Previously, the reference could use the
+construction temperature while later stages used another temperature, and the
+unit supplied to the two-argument setter was ignored.
+
+The ratio uses density-corrected volumes, including configured volume translation.
+Previously, the uncorrected cubic-EOS volume was used even when liquid-density
+volume shifts were enabled.
+
+Each run starts from the oil snapshot captured by the constructor. To use a
+different initial oil or EOS parameter set, construct a new `SwellingTest` after
+configuring that fluid. The original oil and injection-gas template remain
+unchanged; `getThermoSystem` returns the final swollen mixture. Rerunning the same
+experiment does not inject the gas twice.
+
+This API follows **bubble points only**. It does not follow swelling through a
+critical transition onto a dew branch, calculate MMP, or generate the full CCE
+dropout curve at each addition. Failed bubble-point solves throw
+`IllegalStateException` with the failing stage and original cause; result arrays
+remain NaN unless every stage succeeds. Do not interpret a failed solve as a
+physical swelling factor. Follow the remaining EOR work in
+[the qualification matrix](pedersen_method_qualification.md).
+
+`SwellingTestTest` checks temperature units, cumulative component/mass balances,
+new injection components under SRK and PR, input preservation, repeat runs and
+explicit failures. Its binary SRK numerical benchmark is independently generated
+by `devtools/generate_srk_swelling_reference.py`; it is not experimental oil data.
+
 ### Viscosity grids
 
 `ViscositySim.setTemperaturesAndPressures(temperaturesK, pressuresBara)` defines paired
