@@ -142,16 +142,15 @@ class CO2KClHydrateAccuracyAssessmentTest {
 
     for (double value : new double[] {fluid.getTemperature(), waterActivityProxy, waterDonorSiteFraction,
         waterAcceptorSiteFraction, waterWaterIncidence, waterCo2Incidence, totalWaterDonorIncidence,
-        waterDonorSymmetryResidual, waterAcceptorSymmetryResidual, aqueous.getComponent("CO2").getx(),
-        guestCo2Fugacity, aqueousWaterFugacity, hydrateWaterFugacity, diagnostics.getHydrateResidual(),
+        waterDonorSymmetryResidual, waterAcceptorSymmetryResidual, aqueous.getComponent("CO2").getx(), guestCo2Fugacity,
+        aqueousWaterFugacity, hydrateWaterFugacity, diagnostics.getHydrateResidual(),
         diagnostics.getComponentBalanceResidual(), diagnostics.getChargeResidual()}) {
       assertTrue(Double.isFinite(value), scenario + " produced a non-finite diagnostic");
     }
     return new DiagnosticResult(scenario, fractionSum == 0.0 ? 0.0 : point.kclMassPercent, fluid.getTemperature(),
-        waterActivityProxy, waterDonorSiteFraction, waterAcceptorSiteFraction, waterWaterIncidence,
-        waterCo2Incidence, totalWaterDonorIncidence, waterDonorSymmetryResidual, waterAcceptorSymmetryResidual,
-        aqueous.getComponent("CO2").getx(), guestCo2Fugacity, aqueousWaterFugacity, hydrateWaterFugacity,
-        diagnostics);
+        waterActivityProxy, waterDonorSiteFraction, waterAcceptorSiteFraction, waterWaterIncidence, waterCo2Incidence,
+        totalWaterDonorIncidence, waterDonorSymmetryResidual, waterAcceptorSymmetryResidual,
+        aqueous.getComponent("CO2").getx(), guestCo2Fugacity, aqueousWaterFugacity, hydrateWaterFugacity, diagnostics);
   }
 
   private static PhaseInterface findCo2RichPhase(SystemInterface fluid) {
@@ -254,11 +253,10 @@ class CO2KClHydrateAccuracyAssessmentTest {
           + waterActivityProxy + "," + waterDonorSiteFraction + "," + waterAcceptorSiteFraction + ","
           + waterWaterIncidence + "," + waterCo2Incidence + "," + totalWaterDonorIncidence + ","
           + waterDonorSymmetryResidual + "," + waterAcceptorSymmetryResidual + "," + aqueousCo2MoleFraction + ","
-          + guestCo2Fugacity + "," + aqueousWaterFugacity
-          + "," + hydrateWaterFugacity + "," + diagnostics.getHydrateResidual() + ","
-          + diagnostics.getFluidFugacityResidual() + "," + diagnostics.getComponentBalanceResidual() + ","
-          + diagnostics.getChargeResidual() + "," + String.join("+", diagnostics.getPhaseTypes()) + ","
-          + diagnostics.isSaturatedCO2Boundary();
+          + guestCo2Fugacity + "," + aqueousWaterFugacity + "," + hydrateWaterFugacity + ","
+          + diagnostics.getHydrateResidual() + "," + diagnostics.getFluidFugacityResidual() + ","
+          + diagnostics.getComponentBalanceResidual() + "," + diagnostics.getChargeResidual() + ","
+          + String.join("+", diagnostics.getPhaseTypes()) + "," + diagnostics.isSaturatedCO2Boundary();
     }
   }
 }
