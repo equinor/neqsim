@@ -5,6 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Base64;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -21,6 +27,80 @@ class SlugUnitModelTest {
   private static final double SIGMA = 0.02;
   private static final double DIAMETER = 0.25;
   private static final double ROUGHNESS = 4.6e-5;
+  /** Serialized pre-weight model: UID 1000L and its sole boolean field, frontMixingLossIncluded=false. */
+  private static final String LEGACY_DISABLED_MODEL = "rO0ABXNyAERuZXFzaW0ucHJvY2Vzcy5lcXVpcG1lbnQucGlwZWxpbmUudHdvcGhhc2VwaXBlLmNsb3N1cmUu"
+      + "U2x1Z1VuaXRNb2RlbAAAAAAAAAPoAgABWgAXZnJvbnRNaXhpbmdMb3NzSW5jbHVkZWR4cAA=";
+
+  /**
+   * Legacy saves preserve both their front-mixing choice and their original unscaled velocities.
+   *
+   * @throws IOException if the serialized fixture cannot be read
+   * @throws ClassNotFoundException if the serialized model class is unavailable
+   */
+  @Test
+  void legacySerializedMixingFlagsPreservePressureLossChoice() throws IOException, ClassNotFoundException {
+    for (boolean included : new boolean[] {false, true}) {
+      byte[] legacy = Base64.getDecoder().decode(LEGACY_DISABLED_MODEL);
+      legacy[legacy.length - 1] = (byte) (included ? 1 : 0);
+      SlugUnitModel restored = deserialize(legacy);
+      assertEquals(included, restored.isFrontMixingLossIncluded());
+      assertFalse(restored.isHighFroudeSlipReductionEnabled());
+      SlugUnitModel.Result result = restored.solve(4.96, 0.60, 22.8, 664.0, 1.24e-5, 3.5e-4, 0.015, 0.25, ROUGHNESS,
+          0.0);
+      assertTrue(result.valid);
+      assertTrue(result.accelerationGradient > 0.0);
+      assertEquals(result.wallFrictionGradient + (included ? result.accelerationGradient : 0.0),
+          result.frictionGradient, 1.0e-12);
+    }
+  }
+
+  /**
+   * Current saves preserve explicit, fractional and automatic weights at more than one operating point.
+   *
+   * @throws IOException if the model cannot be serialized
+   * @throws ClassNotFoundException if the serialized model class is unavailable
+   */
+  @Test
+  void weightedAndAutomaticConfigurationsSurviveSerialization() throws IOException, ClassNotFoundException {
+    for (double weight : new double[] {0.0, 1.0, 0.35, Double.NaN}) {
+      for (boolean slipReduction : new boolean[] {false, true}) {
+        SlugUnitModel original = new SlugUnitModel();
+        original.setFrontMixingLossWeight(weight);
+        original.setHighFroudeSlipReductionEnabled(slipReduction);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ObjectOutputStream output = new ObjectOutputStream(bytes)) {
+          output.writeObject(original);
+        }
+        SlugUnitModel restored = deserialize(bytes.toByteArray());
+        assertEquals(weight == 1.0, restored.isFrontMixingLossIncluded());
+        assertEquals(slipReduction, restored.isHighFroudeSlipReductionEnabled());
+        for (double[] velocity : new double[][] {{4.71, 0.60}, {7.89, 1.22}}) {
+          SlugUnitModel.Result expected = original.solve(velocity[0], velocity[1], 23.2, 669.6, 1.24e-5, 3.5e-4, 0.0154,
+              0.25, ROUGHNESS, 0.0);
+          SlugUnitModel.Result actual = restored.solve(velocity[0], velocity[1], 23.2, 669.6, 1.24e-5, 3.5e-4, 0.0154,
+              0.25, ROUGHNESS, 0.0);
+          assertTrue(expected.valid && actual.valid);
+          assertEquals(expected.frictionGradient, actual.frictionGradient, 1.0e-12);
+          assertEquals(expected.unitHoldup, actual.unitHoldup, 1.0e-12);
+          assertEquals(expected.translationalVelocity, actual.translationalVelocity, 1.0e-12);
+        }
+      }
+    }
+  }
+
+  /**
+   * Deserialize a slug-unit model from a complete Java serialization stream.
+   *
+   * @param bytes serialized model bytes
+   * @return restored model
+   * @throws IOException if the model cannot be read
+   * @throws ClassNotFoundException if the serialized model class is unavailable
+   */
+  private static SlugUnitModel deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+    try (ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+      return (SlugUnitModel) input.readObject();
+    }
+  }
 
   @Test
   void unitConservesBothPhases() {

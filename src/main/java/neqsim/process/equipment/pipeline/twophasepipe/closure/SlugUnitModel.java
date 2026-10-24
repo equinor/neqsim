@@ -1,5 +1,7 @@
 package neqsim.process.equipment.pipeline.twophasepipe.closure;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -91,6 +93,30 @@ public final class SlugUnitModel implements Serializable {
    */
   private double frontMixingLossWeight = Double.NaN;
 
+  /** Legacy serialized switch, retained so older readers preserve explicitly enabled front-mixing loss. */
+  private boolean frontMixingLossIncluded;
+
+  /**
+   * Restore the explicit mixing-loss choice from models saved before weighted mixing losses were introduced.
+   *
+   * <p>
+   * Legacy models retain their boolean choice and unscaled Bendiksen velocities. Newer streams retain fractional
+   * weights, the automatic NaN selection and their configured high-Froude slip reduction.
+   * </p>
+   *
+   * @param input serialized model input
+   * @throws IOException if the model fields cannot be read
+   * @throws ClassNotFoundException if a serialized field type is unavailable
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    ObjectInputStream.GetField fields = input.readFields();
+    boolean legacyIncluded = fields.get("frontMixingLossIncluded", false);
+    frontMixingLossWeight = fields.defaulted("frontMixingLossWeight") ? (legacyIncluded ? 1.0 : 0.0)
+        : fields.get("frontMixingLossWeight", Double.NaN);
+    frontMixingLossIncluded = frontMixingLossWeight == 1.0;
+    highFroudeSlipReductionEnabled = fields.get("highFroudeSlipReductionEnabled", false);
+  }
+
   /**
    * Choose whether the slug-front mixing loss is counted in {@link Result#frictionGradient}.
    *
@@ -98,7 +124,7 @@ public final class SlugUnitModel implements Serializable {
    * wall-shear-only unit gradient. Not calling this keeps the automatic horizontal weight.
    */
   public void setFrontMixingLossIncluded(boolean included) {
-    frontMixingLossWeight = included ? 1.0 : 0.0;
+    setFrontMixingLossWeight(included ? 1.0 : 0.0);
   }
 
   /**
@@ -112,11 +138,12 @@ public final class SlugUnitModel implements Serializable {
       throw new IllegalArgumentException("front mixing weight must be within [0, 1]: " + weight);
     }
     frontMixingLossWeight = weight;
+    frontMixingLossIncluded = weight == 1.0;
   }
 
   /** @return true when the whole front-mixing loss is counted in the unit friction gradient */
   public boolean isFrontMixingLossIncluded() {
-    return frontMixingLossWeight == 1.0;
+    return frontMixingLossIncluded;
   }
 
   /**

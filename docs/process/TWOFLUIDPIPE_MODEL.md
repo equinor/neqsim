@@ -520,8 +520,15 @@ The separated form is scoped to stratified flow because its wetted perimeters co
 bottom of the bore. Annular flow, whose film wets the whole perimeter, is not described by that geometry: including it
 moved the export-line error from +1.4 to +14.7 per cent at 10 MSm3/d and pushed 12 MSm3/d into the pressure floor.
 
-The current stratified residual uses a bounded Andritsos-Hanratty interfacial wave enhancement
-and brackets the thinnest film root. Intermittent sections use a slug-unit balance for film and
+The steady stratified residual uses the calibrated depth-squared wave enhancement
+$f_i/f_G = 1 + 80(h_L/D)^2\min(U_{SG}/U_{SG,t}-1,4)$ above
+$U_{SG,t}=5\sqrt{1.3/\rho_G}$ m/s, and one below it, and brackets the thinnest film root.
+Here $h_L$ is liquid depth (m), $D$ is diameter (m), $U_{SG}$ is superficial gas velocity (m/s),
+and $\rho_G$ is gas density (kg/m³). This empirical steady calibration was compared with thirteen
+reference sections at 30–100 bara on flat and 0.6–4.7 degree inclined gas/liquid lines. The transient
+wavy-stratified momentum closure retains the bounded Andritsos-Hanratty enhancement because applying
+the steady calibration there suppressed the severe-slugging benchmark cycle.
+Intermittent sections use a slug-unit balance for film and
 slug-body holdup and wall friction by default; `setSlugUnitClosureEnabled(false)` selects the
 earlier correlation. An annular film approaches intermittent holdup continuously over film
 holdups 0.16–0.24, using the existing 0.08 bridging band. At and above the 0.24 blockage limit,
@@ -529,6 +536,15 @@ only intermittent holdup is used. This removes a point switch that could cycle t
 split and viscosity after a corrected interfacial tension changed the film solution.
 Thin films retain the annular closure. These local closure changes require validation for the specific fluid,
 inclination, and rate range; they do not qualify transient severe-slug loads.
+
+New slug-unit models reduce slip at high mixture Froude number (transition 2.5–4.5), weighted
+by the squared cosine of inclination, and include an automatic share of front-mixing loss only
+near horizontal. `setSlugHighFroudeSlipReductionEnabled(false)` restores the original velocity
+coefficients. `setSlugFrontMixingLossIncluded(boolean)` forces the full loss or zero;
+`setSlugFrontMixingLossWeight(double)` selects a fraction in [0, 1], with NaN restoring automatic
+weighting. These are empirical steady closures, requiring fluid- and geometry-specific validation.
+Serialized models predating these controls retain their original slip coefficients and explicit
+front-mixing on/off setting when loaded; newly constructed models use the calibrated defaults.
 
 #### Lean Gas Systems
 

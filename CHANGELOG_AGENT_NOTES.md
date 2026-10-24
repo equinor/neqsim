@@ -11,10 +11,11 @@
 
 ## 2026-10-24 — Stratified wave roughness: depth-squared form replaces the capped Andritsos-Hanratty enhancement
 
-- **`InterfacialFriction.stratifiedWaveEnhancement`** (new; used by the `TwoFluidPipe` stratified holdup root and the
-  wavy-stratified interfacial force): `f_i/f_G = 1 + 80 (h_L/D)^2 min(U_SG/U_SG,t - 1, 4)` above the Andritsos-Hanratty
-  transition. The published `1 + 15 sqrt(h_L/D)(r - 1)` with its cap of 12 is kept in `andritsosHanrattyEnhancement`
-  but no longer called by the closures. At production gas densities the ratio `r` is 5-15 and the cap bound everywhere,
+- **`InterfacialFriction.stratifiedWaveEnhancement`** (new; used by the `TwoFluidPipe` steady stratified holdup root):
+  `f_i/f_G = 1 + 80 (h_L/D)^2 min(U_SG/U_SG,t - 1, 4)` above the Andritsos-Hanratty transition. Transient
+  wavy-stratified interfacial force retains the published `1 + 15 sqrt(h_L/D)(r - 1)` with its cap of 12 in
+  `andritsosHanrattyEnhancement`: applying the steady calibration there suppressed the validated severe-slugging
+  blowout/fallback cycle. At production gas densities the ratio `r` is 5-15 and the cap bound everywhere,
   so the interface was equally rough on a thin flat layer (holdup 20-30 % low vs the reference) and on a thick uphill
   layer; the uphill Taitel-Dukler balance then lost its thin root between 1.6 and 2.5 degrees and jumped 0.025 → 0.32
   where the reference rises 0.028, 0.072, 0.14. Selected on 13 reference stratified sections (30-100 bara, flat and
@@ -55,6 +56,9 @@
   OLGA's riser holdup is nearly no-slip (unit gas velocity 1.01-1.06 vm). `setUseInclinedFilmBridgingCriterion(true)`
   cut the mean riser pressure-drop error from 31 % to 20 % on the five riser cases.
 - Tests: `SlugUnitModelTest`, `TwoFluidPipeOlgaGasOilSlugTest`.
+- Saved `SlugUnitModel` instances from before the weighted closure preserve their explicit front-mixing on/off
+  choice when loaded. They retain the original slip coefficients; newly constructed models keep the calibrated
+  defaults. Current streams preserve explicit fractional weights and automatic weighting on a serialization round trip.
 
 ## 2026-10-23 — Two-fluid dynamic stability review
 
