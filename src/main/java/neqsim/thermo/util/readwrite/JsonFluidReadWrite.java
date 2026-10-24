@@ -17,6 +17,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.component.ComponentPR;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -217,6 +218,12 @@ public class JsonFluidReadWrite {
         double volShift = data.volumeShiftSurface != 0.0 ? data.volumeShiftSurface : data.volumeShift;
         fluid.getPhase(phase).getComponent(neqsimName).setVolumeCorrectionConst(volShift);
         fluid.getPhase(phase).getComponent(neqsimName).setRacketZ(0.29056 - 0.08775 * data.acentricFactor);
+        if (data.omegaB != null) {
+          if (!(fluid.getPhase(phase).getComponent(neqsimName) instanceof ComponentPR)) {
+            throw new IllegalArgumentException("omegaB is supported only for PR components");
+          }
+          ((ComponentPR) fluid.getPhase(phase).getComponent(neqsimName)).setOmegaB(data.omegaB);
+        }
       }
 
       // Rename pseudo-components back to the original name
@@ -384,6 +391,12 @@ public class JsonFluidReadWrite {
       compObj.addProperty("volumeShift", fluid.getComponent(i).getVolumeCorrectionConst());
       compObj.addProperty("parachor", fluid.getComponent(i).getParachorParameter());
       compObj.addProperty("isPseudo", fluid.getComponent(i).isIsTBPfraction());
+      if (fluid.getComponent(i) instanceof ComponentPR) {
+        ComponentPR component = (ComponentPR) fluid.getComponent(i);
+        if (component.hasOmegaBOverride()) {
+          compObj.addProperty("omegaB", component.getOmegaBOverride());
+        }
+      }
 
       if (fluid.getComponent(i).isIsTBPfraction()) {
         compObj.addProperty("density", fluid.getComponent(i).getNormalLiquidDensity());
@@ -537,6 +550,9 @@ public class JsonFluidReadWrite {
     data.parachor = getDoubleOrDefault(comp, "parachor", 0.0);
     data.isPseudo = comp.has("isPseudo") && comp.get("isPseudo").getAsBoolean();
     data.density = getDoubleOrDefault(comp, "density", 0.0);
+    if (comp.has("omegaB")) {
+      data.omegaB = comp.get("omegaB").getAsDouble();
+    }
     return data;
   }
 
@@ -809,5 +825,7 @@ public class JsonFluidReadWrite {
     boolean isPseudo;
     /** Liquid density in kg/m3 (for pseudo-components). */
     double density;
+    /** Optional dimensionless PR covolume override. */
+    Double omegaB;
   }
 }

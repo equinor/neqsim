@@ -1,6 +1,8 @@
 package neqsim.thermo.characterization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.characterization.PlusFractionModel.WhitsonGammaModel;
@@ -92,15 +94,8 @@ public class PlusFractionModelTest {
     // components
     // (C6-C80
     // components)
-    thermoSystem.getCharacterization().characterisePlusFraction();
-    assertEquals(12, thermoSystem.getNumberOfComponents());
-
-    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
-    ops.TPflash();
-    // thermoSystem.prettyPrint();
-    // Updated internal reference after correcting the finite-SCN fit to conserve the supplied mean MW.
-    // The historical value 0.7798299485 was obtained from an unconverged plus distribution.
-    assertEquals(0.7823938630675157, thermoSystem.getBeta(), 1e-4);
+    fitPlusFractionDistribution(thermoSystem);
+    assertHeavyLumpingRefused(thermoSystem);
   }
 
   @Test
@@ -126,15 +121,8 @@ public class PlusFractionModelTest {
 
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
 
-    thermoSystem.getCharacterization().characterisePlusFraction();
-    thermoSystem.setMixingRule("classic");
-    assertEquals(16, thermoSystem.getNumberOfComponents());
-
-    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
-    ops.TPflash();
-    // thermoSystem.prettyPrint();
-    // Note: Result changed slightly due to improved gamma distribution calculation
-    assertEquals(0.767, thermoSystem.getBeta(), 1e-2);
+    fitPlusFractionDistribution(thermoSystem);
+    assertHeavyLumpingRefused(thermoSystem);
 
     // illustration of how to set parameters for the gamma model
     ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel()).setGammaParameters(1.0, 90);
@@ -142,6 +130,7 @@ public class PlusFractionModelTest {
         .getGammaParameters()[0];
     double minMW = ((WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel())
         .getGammaParameters()[1];
+    assertEquals(1.0, shape, 1e-4);
     assertEquals(90.0, minMW, 1e-4);
   }
 
@@ -191,7 +180,7 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().setAutoEstimateGammaAlpha(true);
 
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(6);
-    thermoSystem.getCharacterization().characterisePlusFraction();
+    fitPlusFractionDistribution(thermoSystem);
 
     // Verify alpha was auto-estimated (should be a reasonable value)
     WhitsonGammaModel gammaModel = (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
@@ -201,6 +190,7 @@ public class PlusFractionModelTest {
     // Verify beta was calculated
     double beta = gammaModel.getBeta();
     assertTrue(beta > 0, "Beta should be positive: " + beta);
+    assertHeavyLumpingRefused(thermoSystem);
   }
 
   @Test
@@ -235,7 +225,7 @@ public class PlusFractionModelTest {
     thermoSystem.getCharacterization().setPlusFractionModel("Whitson Gamma Model");
     thermoSystem.getCharacterization().setGammaDensityModel("Soreide");
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(6);
-    thermoSystem.getCharacterization().characterisePlusFraction();
+    fitPlusFractionDistribution(thermoSystem);
 
     WhitsonGammaModel gammaModel = (WhitsonGammaModel) thermoSystem.getCharacterization().getPlusFractionModel();
     double[] densities = gammaModel.getDens();
@@ -250,6 +240,64 @@ public class PlusFractionModelTest {
       }
     }
     assertTrue(hasValidDensities, "Should have densities in valid range (0.6-1.2 g/cm³)");
+    assertHeavyLumpingRefused(thermoSystem);
+  }
+
+  /**
+   * Validate plus-fraction fitting separately from EOS property estimation for the generated lumps.
+   *
+   * @param fluid fluid containing the plus fraction to split
+   */
+  private void fitPlusFractionDistribution(SystemInterface fluid) {
+    fluid.init(0);
+    PlusFractionModelInterface model = fluid.getCharacterization().getPlusFractionModel();
+    assertTrue(model.hasPlusFraction(), "The fixture must retain its plus fraction before fitting");
+    assertTrue(model.characterizePlusFraction(fluid.getCharacterization().getTBPModel()),
+        "The plus-fraction distribution should still fit independently of heavy EOS correlations");
+
+    double sumMoleFraction = 0.0;
+    double sumMolarMass = 0.0;
+    for (int fraction = model.getFirstPlusFractionNumber(); fraction < model.getLastPlusFractionNumber(); fraction++) {
+      double moleFraction = model.getZ()[fraction];
+      assertTrue(Double.isFinite(moleFraction) && moleFraction >= 0.0, "Fitted mole fractions must be finite");
+      assertTrue(Double.isFinite(model.getM()[fraction]) && model.getM()[fraction] > 0.0,
+          "Fitted molecular weights must be positive and finite");
+      assertTrue(Double.isFinite(model.getDens()[fraction]) && model.getDens()[fraction] > 0.0,
+          "Fitted densities must be positive and finite");
+      sumMoleFraction += moleFraction;
+      sumMolarMass += moleFraction * model.getM()[fraction];
+    }
+    assertEquals(model.getZPlus(), sumMoleFraction, model.getZPlus() * 1.0e-11,
+        "Splitting must preserve the plus mole fraction");
+    if (model instanceof WhitsonGammaModel) {
+      assertEquals(model.getMPlus(), sumMolarMass / sumMoleFraction, 1.0e-4,
+          "Gamma splitting must preserve the measured plus-fraction molecular weight");
+    } else {
+      // Distribution closure is independent of whether the generated cuts have supported EOS properties.
+      assertEquals(model.getMPlus(), sumMolarMass / sumMoleFraction, model.getMPlus() * 1.0e-11,
+          "Pedersen splitting must preserve the measured plus-fraction molecular weight");
+    }
+  }
+
+  /**
+   * Require clear refusal of unsupported heavy EOS properties without discarding the fitted distribution.
+   *
+   * @param fluid fluid whose fitted distribution generates a lump at or above 1120 g/mol
+   */
+  private void assertHeavyLumpingRefused(SystemInterface fluid) {
+    Characterise characterization = fluid.getCharacterization();
+    PlusFractionModelInterface model = characterization.getPlusFractionModel();
+    double[] originalMoleFractions = model.getZ().clone();
+    double[] originalMolarMasses = model.getM().clone();
+    double[] originalDensities = model.getDens().clone();
+    UnsupportedOperationException failure = assertThrows(UnsupportedOperationException.class,
+        () -> characterization.getLumpingModel().generateLumpedComposition(characterization));
+    assertTrue(failure.getMessage().contains("heavy-oil"), "The refusal must identify the unsupported correlation");
+    assertTrue(failure.getMessage().contains("molecular weight") && failure.getMessage().contains("g/mol"),
+        "The refusal must identify the offending molecular weight and units");
+    assertArrayEquals(originalMoleFractions, model.getZ(), "Refusal must preserve the fitted mole fractions");
+    assertArrayEquals(originalMolarMasses, model.getM(), "Refusal must preserve the fitted molecular weights");
+    assertArrayEquals(originalDensities, model.getDens(), "Refusal must preserve the fitted densities");
   }
 
   @Test

@@ -315,6 +315,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @param molarMass molar mass of the component in kg/mol
    * @param density specific gravity (relative density) of the component, i.e. density in g/cm3. Typical range: 0.65 to
    * 1.1. Values above 1.5 are auto-converted from kg/m3.
+   * @throws UnsupportedOperationException if the selected TBP correlation requires an unsupported heavy-oil branch; use
+   * the overload accepting independently validated critical properties for such fractions
    */
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density);
 
@@ -333,8 +335,8 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * 1.5 are auto-converted from kg/m3.
    * @param criticalTemperature critical temperature in K
    * @param criticalPressure critical pressure in bara
-   * @param acentricFactor acentric factor (dimensionless). Note that for TBP models which correlate the EOS m parameter
-   * (the Pedersen models), this value is currently overwritten by the value back-calculated from m.
+   * @param acentricFactor independently validated acentric factor (dimensionless), retained without replacement by the
+   * TBP m-parameter correlation; dependent critical volume and viscosity use the supplied critical properties
    */
   public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density,
       double criticalTemperature, double criticalPressure, double acentricFactor);

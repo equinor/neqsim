@@ -59,7 +59,7 @@ double waterDewPointC =
 double calculationPressureBara = waterDewPoint.getValue("pressure");
 ```
 
-For the repository fixture, the result is approximately -21.776 °C at
+For the repository fixture, the result is approximately -28.493 °C at
 70 bara. That number validates the documented API and bundled model behavior; it
 is not a generic natural-gas expectation.
 
@@ -81,10 +81,43 @@ boolean withinWaterDewPointLimit =
 current `isOnSpec()` implementation does not read. Prefer the explicit
 comparison above unless a verified `ContractInterface` has been attached.
 
-A failed flash is logged by the current class rather than rethrown. Callers
-should therefore reject non-finite or physically implausible output and retain
-the input composition, model, pressure, NeqSim version, and calculation
-diagnostics.
+The direct operation solves equality of water fugacity between the feed gas and
+a pure incipient condensed phase. It uses a bracketed temperature solve with a
+relative fugacity criterion; an exhausted iteration limit is a failure, not a
+dew point. Positive water content and positive finite absolute pressure are
+required. The legacy direct pure-MEG calculation is also supported. The standard
+classes log a failed calculation and return `NaN`, so `isOnSpec()` is false.
+
+### Ice, liquid water, and applicability
+
+[ISO 18453:2004](https://www.iso.org/standard/31799.html), clauses 3–5,
+uses separate water attraction functions for vapour pressure over ice below
+273.16 K and over liquid water above it. A subzero ISO result therefore must not
+be compared with a supercooled-liquid dew point without identifying the
+condensed phase. Hydrate equilibrium is another, separate boundary.
+
+The validated working range is **−15 to +5 °C and 5 to 100 bara**, subject to
+the standard's composition limits. The extended range is **−50 to +40 °C and
+1 to 300 bara**, with unknown correlation uncertainty. Thus −26 °C is outside
+the validated range but inside the extended range. Numerical convergence does
+not extend the model's engineering validity; do not use extrapolation outside
+the extended range as an ISO-qualified result.
+
+A result differing from an ideal-gas estimate alone does not identify a coding
+error. Use the same ice/liquid reference and check fugacity equilibrium, model
+parameters and applicability first. The direct operation retains the existing
+pure condensed-phase approximation; it does not model dissolved gas, mixed
+water/glycol liquids, or hydrates. Use and qualify the multiphase/CPA or hydrate
+operation for those questions. The ISO-model low-temperature deviations from
+measurements are discussed by
+[Rajzinger (2012)](https://doi.org/10.26552/com.C.2012.4A.29-35), Table 2;
+matching that model is distinct from matching experimental data.
+
+Before the convergence correction, the fixed temperature step scaled with
+absolute water mole fraction and could stop at 10,000 iterations far from
+equilibrium, especially in dry gas. Earlier stored dew-point values from this
+operation should be recalculated. Retain the input composition, water basis,
+pressure, model, NeqSim version and convergence diagnostics with each result.
 
 ## Hydrocarbon dew point with `BestPracticeHydrocarbonDewPoint`
 

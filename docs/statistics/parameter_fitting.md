@@ -339,6 +339,14 @@ This keeps the fitting study generic while allowing model-specific parameter upd
 
 `LevenbergMarquardtResult` is available after `solve()`:
 
+Each `solve()` attempt clears the previous convergence result and covariance
+statistics before evaluating samples. Function-evaluation exceptions propagate
+to the caller; they are not replaced by a zero residual or a successful fit.
+If evaluation aborts before the optimizer completes, `isSolved()` is false and
+`getResult()` retains the initial nonconverged `NOT_RUN` state with NaN final
+chi-square. Preserve the exception as the rejection reason; `NOT_RUN` does not
+claim a successful optimization or a completed failure assessment.
+
 The program below fits a two-parameter line, checks the convergence diagnostics, and uses the
 array accessors added by the current matrix-migration API. The returned matrices are defensive
 copies: changing one returned array does not mutate the optimizer result.

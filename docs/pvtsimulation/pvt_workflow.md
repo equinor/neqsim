@@ -83,6 +83,21 @@ The current `PVTRegression` methods accept the following quantities:
 | `addSeparatorData` | GOR in Sm³/Sm³, oil FVF, API gravity, separator pressure in bar, separator temperature in K, reservoir temperature in K |
 | `addViscosityData` | pressure in bara, dynamic viscosity in Pa s, temperature in K, and phase name `gas`, `oil`, `liquid`, `aqueous`, or `water` |
 
+These five data-ingestion methods define the current regression target surface.
+`ExperimentType.SATURATION_PRESSURE` and `ExperimentType.SWELLING` are reserved
+identifiers; `PVTRegression` has no ingestion method or complete experimental
+protocol for either. Calling `PVTRegressionFunction.calcValue(...)` with those
+types throws `UnsupportedOperationException` before fluid cloning, parameter
+application or thermodynamic work. Enum presence and experiment weights do not
+enable an unsupported target. Saturation-pressure and swelling **simulation**
+APIs are separate from regression support.
+
+A direct Levenberg–Marquardt sample containing an unsupported target also throws
+when its objective is evaluated. It must not be interpreted as a zero prediction
+or a zero residual against a zero-valued observation. Starting another solve
+clears the optimizer's prior convergence result and statistics; an evaluation
+exception leaves it unsolved with no final chi-square result.
+
 The array-taking methods iterate from the pressure-array length and do not perform a visible
 equal-length, non-empty, finite-value, or ordering check before indexing the companion arrays.
 Validate those properties before calling the API. Also retain the original observation order or an

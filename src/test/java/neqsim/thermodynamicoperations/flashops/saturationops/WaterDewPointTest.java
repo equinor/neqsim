@@ -41,7 +41,8 @@ public class WaterDewPointTest {
     double dewPointTemperature = testSystem.getTemperature("C");
 
     // Assert the expected value (this value should be adjusted based on expected results)
-    assertEquals(-12.0953140, dewPointTemperature, .1, "Dew point temperature is not as expected");
+    assertEquals(-12.60460125, dewPointTemperature, 1e-6, "Dew point temperature is not as expected");
+    assertWaterEquilibrium(testSystem);
   }
 
   @Test
@@ -136,7 +137,8 @@ public class WaterDewPointTest {
     double dewPointTemperature = testSystem.getTemperature("C");
 
     // Assert the expected value (this value should be adjusted based on expected results)
-    assertEquals(-15.3075727, dewPointTemperature, 0.1, "Dew point temperature is not as expected");
+    assertEquals(-16.23767231, dewPointTemperature, 1e-6, "Dew point temperature is not as expected");
+    assertWaterEquilibrium(testSystem);
   }
 
   @Test
@@ -165,7 +167,7 @@ public class WaterDewPointTest {
     double dewPointTemperature = analyser.getMeasuredValue("C");
 
     // Assert the expected value (this value should be adjusted based on expected results)
-    assertEquals(-15.307572714, dewPointTemperature, 0.1, "Dew point temperature is not as expected");
+    assertEquals(-16.23767231, dewPointTemperature, 1e-6, "Dew point temperature is not as expected");
 
     analyser.setMethod("CPA");
     // Get the calculated dew point temperature
@@ -216,5 +218,17 @@ public class WaterDewPointTest {
     // conditions), verified against an independent flood-and-flash oracle. The previous iterative
     // algorithm stopped slightly oversaturated at 22.0 ppm.
     assertEquals(21.82, waterContent, 0.1, "Water content is not as expected");
+  }
+
+  /**
+   * Checks the physical residual behind the direct dew-point regression temperatures.
+   *
+   * @param fluid fluid at the converged dew point
+   */
+  private void assertWaterEquilibrium(SystemInterface fluid) {
+    double ratio = fluid.getPhase(0).getComponent("water").getz()
+        * fluid.getPhase(0).getComponent("water").getFugacityCoefficient()
+        / fluid.getPhase(1).getComponent("water").getFugacityCoefficient();
+    assertEquals(1.0, ratio, 1.0e-8);
   }
 }

@@ -917,6 +917,24 @@ production validators that guard and promotion use. The task supplies only propo
 prediction values; it must not rebuild Java evidence dictionaries. The separate `report.prepare` hook refreshes
 report inputs after accepted results exist and is not a proposal-ingestion path.
 
+The executable source acceptance is
+`devtools.test_field_to_facility_living_workflow.FieldToFacilityLivingWorkflowTest`. It calls the ten-well Java
+fixture from `target/test-classes`, assigns the generated living-task cycle ID to the current lifecycle period, and
+then exercises the adapter, production guard, append-only ledger, reviewed promotion, living report, and canonical
+HTML report. Run it after compiling tests and generating the Maven dependency classpath:
+
+```bash
+./mvnw -B -ntp -DskipTests test-compile dependency:build-classpath \
+  -Dmdep.outputFile=target/optimization-classpath.txt
+NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimization-classpath.txt)" \
+  python -m unittest devtools.test_field_to_facility_living_workflow -v
+```
+
+The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
+schema-v8 persistence, the separator/scrubber-to-shared-power bottleneck migration, and report rendering. It is a
+synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
+instruction to relax any physical constraint.
+
 The canonical task report consumes accepted top-level schema-v8 `lifecycle_envelope_evidence` in both ordinary
 current-best and immutable final-report generation. It renders the exact per-period `REJECTING` and `NEAR_ACTIVE`
 rows, representative values, signed physical headroom with engineering units, and adjacent-period identity

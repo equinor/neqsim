@@ -20,6 +20,7 @@ on:
       - 'examples/notebooks/**'
       - 'devtools/*optimization*'
       - 'devtools/test_optimizer_guide_examples.py'
+      - 'devtools/test_field_to_facility_living_workflow.py'
       - 'devtools/optimization_java_fragments/**'
       - 'devtools/neqsim_dev_setup.py'
       - 'src/main/java/neqsim/process/util/optimizer/**'
@@ -71,12 +72,13 @@ jobs:
         env:
           MPLBACKEND: Agg
         run: |
-          export NEQSIM_TEST_CLASSPATH="$PWD/target/classes:$(cat target/optimization-classpath.txt)"
+          export NEQSIM_TEST_CLASSPATH="$PWD/target/classes:$PWD/target/test-classes:$(cat target/optimization-classpath.txt)"
           uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_practical_optimization_examples -v
           uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_optimization_entry_examples -v
           uv run --project devtools --locked --group test --group optimization-docs python src/test/python/test_production_optimization_guides.py
           uv run --project devtools --locked --group test --group optimization-docs devtools/test_optimizer_guide_examples.py
           uv run --project devtools --locked --group test --group optimization-docs devtools/test_optimization_integration_examples.py
+          uv run --project devtools --locked --group test --group optimization-docs python -m unittest devtools.test_field_to_facility_living_workflow -v
       - name: Verify notebook conversion and documentation search
         run: |
           uv run --project devtools --locked --group test --group optimization-docs python -m unittest discover -s docs -p 'test_*.py'

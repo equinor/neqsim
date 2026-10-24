@@ -35,7 +35,7 @@ import neqsim.process.util.optimizer.ProcessModelOperatingPointOptimizer.Operati
  * @version 1.0
  */
 public final class ProcessModelOperatingEnvelopeLifecycleStudy {
-  private static final Gson EVIDENCE_JSON = new GsonBuilder().disableHtmlEscaping().create();
+  private static final Gson EVIDENCE_JSON = new GsonBuilder().disableHtmlEscaping().serializeNulls().create();
   private final String id;
   private final String name;
   private final String provenance;

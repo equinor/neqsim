@@ -25,10 +25,9 @@ import neqsim.util.database.NeqSimDataBase;
  * </p>
  *
  * <p>
- * Both ways of building a large fluid are covered, because they fail differently. A fluid of named database components
- * traces an envelope, reaches the cricondentherm update and throws. A fluid padded with TBP fractions does not trace an
- * envelope at all in this solver, so it never reaches that code and passes even when the bug is present; for that route
- * only the array length reveals the defect. Testing just one of the two would miss half the problem.
+ * Both ways of building a large fluid are covered. A fluid of named database components traces an envelope and
+ * exercises the cricondentherm update. A fluid padded with TBP fractions also checks the composition array lengths,
+ * independently of how far envelope continuation progresses.
  * </p>
  *
  * @author Pablo Dupuy
@@ -127,8 +126,9 @@ public class PTPhaseEnvelopeComponentLimitTest {
     int fillers = numberOfComponents - BACKBONE_NAMES.length;
     double each = spare / fillers;
     for (int i = 0; i < fillers; i++) {
-      // Molar mass and density are stepped so the fractions stay distinguishable.
-      fluid.addTBPfraction("C" + (7 + i), each, 100.0 + 2.0 * i, 0.75 + 0.0005 * i);
+      // Step synthetic cuts from 100 g/mol; addTBPfraction expects kg/mol.
+      double molarMassKgPerMol = (100.0 + 2.0 * i) / 1000.0;
+      fluid.addTBPfraction("C" + (7 + i), each, molarMassKgPerMol, 0.75 + 0.0005 * i);
     }
     fluid.setMixingRule("classic");
     return fluid;
@@ -168,13 +168,13 @@ public class PTPhaseEnvelopeComponentLimitTest {
   }
 
   /**
-   * TBP-fraction fluid above the old limit. It does not trace an envelope here, so the array length is what exposes the
-   * defect.
+   * TBP-fraction fluid above the old limit. Check array allocation independently of how far continuation progresses.
    */
   @Test
   void testTbpFractionFluidAboveLimit() {
     SystemInterface fluid = buildFromTbpFractions(ABOVE_LIMIT);
     int numberOfComponents = fluid.getPhase(0).getNumberOfComponents();
+    assertEquals(ABOVE_LIMIT, numberOfComponents, "all synthetic TBP cuts must remain distinct");
     assertTrue(numberOfComponents > OLD_FIXED_LENGTH,
         "fluid must exceed the old fixed array length, was " + numberOfComponents);
 

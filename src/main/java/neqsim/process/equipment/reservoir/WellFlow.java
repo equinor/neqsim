@@ -258,6 +258,10 @@ public class WellFlow extends TwoPortEquipment {
     public double barrierStressContrast = 0.0;
     /** Whether this is the target zone for injection. */
     public boolean isTargetZone = false;
+    /** Optional pressure-dependent radial-Darcy pure-water law. */
+    private RadialDarcyWaterInjectivity radialDarcyWaterInjectivity;
+    /** Evidence from the most recent accepted radial-Darcy evaluation. */
+    private RadialDarcyWaterInjectivity.Result radialDarcyWaterInjectivityResult;
 
     /**
      * Create a reservoir layer.
@@ -368,6 +372,24 @@ public class WellFlow extends TwoPortEquipment {
       }
       double netPressure = bhp - fracturePressure;
       return barrierStressContrast - netPressure;
+    }
+
+    /**
+     * Gets the configured pressure-dependent water-injectivity law.
+     *
+     * @return radial-Darcy law, or null for a constant mass coefficient
+     */
+    public RadialDarcyWaterInjectivity getRadialDarcyWaterInjectivity() {
+      return radialDarcyWaterInjectivity;
+    }
+
+    /**
+     * Gets evidence from the most recent accepted pressure-dependent evaluation.
+     *
+     * @return immutable evidence, or null before a successful radial-Darcy solve
+     */
+    public RadialDarcyWaterInjectivity.Result getRadialDarcyWaterInjectivityResult() {
+      return radialDarcyWaterInjectivityResult;
     }
   }
 
@@ -504,9 +526,56 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
+   * Adds a live pure-water zone using the shared pressure-dependent radial-Darcy law.
+   *
+   * <p>
+   * The law returns standard water volume in Sm3/day and its IF97 standard density. This well converts that evidence to
+   * kg/s for the canonical network boundary. The injected inlet fluid must contain ordinary water only and remain a
+   * single liquid at the imposed BHP. Formation PVT is refreshed at the zone's current reservoir pressure on every
+   * solve. Fracture limits are reported and remain fail-closed in the network coupler; this method does not calibrate
+   * permeability, skin, relative permeability or fracture behavior.
+   * </p>
+   *
+   * @param name unique non-empty zone name
+   * @param zoneFluid reservoir boundary stream, not the injected composition
+   * @param reservoirPressure positive finite reservoir pressure (bara)
+   * @param injectivity pressure-dependent IAPWS pure-water radial-Darcy law
+   * @param fracturePressure positive finite fracture pressure (bara), or -1 when unspecified
+   * @throws IllegalArgumentException if a zone input or injectivity basis is invalid
+   * @throws IllegalStateException if legacy zones are already configured
+   */
+  public void addRadialDarcyWaterInjectionZone(String name, StreamInterface zoneFluid, double reservoirPressure,
+      RadialDarcyWaterInjectivity injectivity, double fracturePressure) {
+    if (!layers.isEmpty() && !liquidMassInjection) {
+      throw new IllegalStateException("Cannot mix radial-Darcy water injectivity with legacy zone coefficients");
+    }
+    if (name == null || name.trim().isEmpty() || zoneFluid == null || injectivity == null) {
+      throw new IllegalArgumentException("Radial-Darcy water injection requires a zone name, stream and law");
+    }
+    if (injectivity.getPvtMode() != RadialDarcyWaterInjectivity.PvtMode.IAPWS_IF97_PURE_WATER) {
+      throw new IllegalArgumentException("Live radial-Darcy water injection requires the IAPWS pure-water basis");
+    }
+    for (ReservoirLayer existing : layers) {
+      if (name.equals(existing.name)) {
+        throw new IllegalArgumentException("Duplicate liquid injection zone: " + name);
+      }
+    }
+    ReservoirLayer layer = new ReservoirLayer(name, zoneFluid, reservoirPressure, Double.NaN);
+    layer.fracturePressure = fracturePressure;
+    layer.radialDarcyWaterInjectivity = injectivity;
+    validateLiquidInjectionLayer(layer);
+    layer.isTargetZone = name.equals(targetZoneName);
+    layer.calculatedRate = Double.NaN;
+    layers.add(layer);
+    liquidMassInjection = true;
+    isMultiLayer = true;
+    flowMode = FlowMode.INJECTION;
+  }
+
+  /**
    * Whether zones use the explicit linear kg/(s bar) liquid-injection basis.
    *
-   * @return true for zones added with addLiquidInjectionZone; false for legacy models
+   * @return true for explicit mass-basis liquid zones; false for legacy models
    */
   public boolean isLiquidMassInjection() {
     return liquidMassInjection;
@@ -530,12 +599,14 @@ public class WellFlow extends TwoPortEquipment {
    * @throws IllegalArgumentException if pressure, coefficient or fracture limit is invalid
    */
   private void validateLiquidInjectionLayer(ReservoirLayer layer) {
-    if (!Double.isFinite(layer.reservoirPressure) || layer.reservoirPressure <= 0.0
-        || !Double.isFinite(layer.productivityIndex) || layer.productivityIndex < 0.0
+    boolean invalidInjectivity = layer.radialDarcyWaterInjectivity == null
+        ? !Double.isFinite(layer.productivityIndex) || layer.productivityIndex < 0.0
+        : layer.radialDarcyWaterInjectivity.getPvtMode() != RadialDarcyWaterInjectivity.PvtMode.IAPWS_IF97_PURE_WATER;
+    if (!Double.isFinite(layer.reservoirPressure) || layer.reservoirPressure <= 0.0 || invalidInjectivity
         || !Double.isFinite(layer.fracturePressure)
         || (layer.fracturePressure <= 0.0 && layer.fracturePressure != -1.0)) {
-      throw new IllegalArgumentException("Liquid injection requires positive pressure, non-negative finite mass "
-          + "injectivity and positive fracture pressure (or -1 when unspecified)");
+      throw new IllegalArgumentException("Liquid injection requires positive pressure, a valid mass/radial-Darcy "
+          + "injectivity basis and positive fracture pressure (or -1 when unspecified)");
     }
   }
 
@@ -890,6 +961,7 @@ public class WellFlow extends TwoPortEquipment {
   private void runLiquidMassInjection(UUID id) {
     for (ReservoirLayer layer : layers) {
       layer.calculatedRate = Double.NaN;
+      layer.radialDarcyWaterInjectivityResult = null;
     }
     if (flowMode != FlowMode.INJECTION || layers.isEmpty() || getInletStream() == null) {
       throw new IllegalStateException("Liquid mass injection requires injection mode, zones and an inlet stream");
@@ -897,17 +969,6 @@ public class WellFlow extends TwoPortEquipment {
     double pwf = new PressureUnit(pressureOut, pressureUnit).getValue("bara");
     if (!Double.isFinite(pwf) || pwf <= 0.0) {
       throw new IllegalArgumentException("Liquid injection BHP must be positive and finite");
-    }
-    double[] rates = new double[layers.size()];
-    double total = 0.0;
-    for (int i = 0; i < layers.size(); i++) {
-      ReservoirLayer layer = layers.get(i);
-      validateLiquidInjectionLayer(layer);
-      rates[i] = layer.productivityIndex * Math.max(pwf - layer.reservoirPressure, 0.0);
-      total += rates[i];
-    }
-    if (!Double.isFinite(total)) {
-      throw new IllegalArgumentException("Liquid injection mass rate overflow");
     }
     SystemInterface fluid = getInletStream().getThermoSystem().clone();
     fluid.setPressure(pwf, "bara");
@@ -917,7 +978,33 @@ public class WellFlow extends TwoPortEquipment {
     PhaseType phase = fluid.getPhase(0).getType();
     if (fluid.getNumberOfPhases() != 1
         || (phase != PhaseType.AQUEOUS && phase != PhaseType.OIL && phase != PhaseType.LIQUID)) {
-      throw new IllegalStateException("Linear liquid mass injectivity requires a single liquid phase at BHP");
+      throw new IllegalStateException("Liquid injectivity requires a single liquid phase at BHP");
+    }
+    boolean usesRadialDarcyWater = false;
+    for (ReservoirLayer layer : layers) {
+      usesRadialDarcyWater |= layer.radialDarcyWaterInjectivity != null;
+    }
+    if (usesRadialDarcyWater && (fluid.getNumberOfComponents() != 1 || !fluid.hasComponent("water"))) {
+      throw new IllegalStateException("IAPWS radial-Darcy injectivity requires an ordinary pure-water inlet");
+    }
+    double[] rates = new double[layers.size()];
+    RadialDarcyWaterInjectivity.Result[] radialEvidence = new RadialDarcyWaterInjectivity.Result[layers.size()];
+    double total = 0.0;
+    for (int i = 0; i < layers.size(); i++) {
+      ReservoirLayer layer = layers.get(i);
+      validateLiquidInjectionLayer(layer);
+      if (layer.radialDarcyWaterInjectivity == null) {
+        rates[i] = layer.productivityIndex * Math.max(pwf - layer.reservoirPressure, 0.0);
+      } else {
+        RadialDarcyWaterInjectivity.Result evidence = layer.radialDarcyWaterInjectivity
+            .evaluate(layer.reservoirPressure, pwf);
+        rates[i] = evidence.getStandardVolumeRateSm3PerDay() * evidence.getStandardDensityKgPerSm3() / 86400.0;
+        radialEvidence[i] = evidence;
+      }
+      total += rates[i];
+    }
+    if (!Double.isFinite(total)) {
+      throw new IllegalArgumentException("Liquid injection mass rate overflow");
     }
     thermoSystem = fluid;
     outStream.setThermoSystem(fluid);
@@ -925,6 +1012,7 @@ public class WellFlow extends TwoPortEquipment {
     outStream.run(id);
     for (int i = 0; i < layers.size(); i++) {
       layers.get(i).calculatedRate = rates[i];
+      layers.get(i).radialDarcyWaterInjectivityResult = radialEvidence[i];
     }
     setCalculationIdentifier(id);
   }

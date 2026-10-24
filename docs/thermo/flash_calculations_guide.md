@@ -952,6 +952,17 @@ System.out.println("Hydrocarbon dew point: " + gas.getTemperature("C") + " °C")
 
 Calculate the water dew point (onset of water condensation).
 
+The direct operation holds the feed gas composition fixed and solves water
+fugacity equilibrium with a pure incipient condensed phase. It requires positive
+water (or legacy MEG) content and positive finite absolute pressure, and throws
+if no finite equilibrium can be bracketed or converged. Use the multiphase
+operation for mixed aqueous phases. The GERG-water/ISO path uses an ice-based
+correlation below freezing; distinguish this from liquid-water and hydrate
+boundaries. See the [dew-point standards guide](../standards/dew_point_standards.md)
+for validated and extended ranges, failure handling, and the trace-water
+convergence correction.
+
+
 **Methods:**
 ```java
 void waterDewPointTemperatureFlash()

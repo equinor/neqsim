@@ -215,7 +215,12 @@ public class HydrogenMaterialAssessment implements Serializable {
    *
    * <p>
    * Extracts hydrogen partial pressure, mole fractions, and system conditions from the fluid. The fluid should have
-   * been flashed (TPflash) before calling this method.
+   * been flashed (TPflash) before calling this method. Each call replaces all extracted exposure fields; missing
+   * hydrogen or H2S components clear their previous values. For a fluid without a gas phase, hydrogen retains the
+   * bulk-composition times pressure fallback and gas H2S partial pressure is zero. These are pressure proxies, not
+   * component fugacities. Explicit material, water, chloride and maximum-temperature settings are preserved. Evaluation
+   * is invalidated; call {@link #evaluate()} before reading risk getters. Map/JSON export re-evaluates invalidated
+   * inputs automatically.
    * </p>
    *
    * @param fluid the NeqSim thermodynamic system (must be flashed)
@@ -224,6 +229,10 @@ public class HydrogenMaterialAssessment implements Serializable {
     totalPressureBar = fluid.getPressure("bara");
     double tempK = fluid.getTemperature("K");
     designTemperatureC = tempK - 273.15;
+    h2PartialPressureBar = 0.0;
+    h2MoleFractionGas = 0.0;
+    h2MoleFractionBulk = 0.0;
+    h2sPartialPressureBar = 0.0;
 
     // Try to find hydrogen in the fluid
     int h2Index = -1;
@@ -568,6 +577,9 @@ public class HydrogenMaterialAssessment implements Serializable {
     }
 
     // Use Nelson curve assessment
+    if (nelsonCurve == null) {
+      nelsonCurve = new NelsonCurveAssessment();
+    }
     nelsonCurve.setTemperatureC(maxTemp);
     nelsonCurve.setH2PartialPressurePsia(h2PartialPressureBar * 14.5038);
     nelsonCurve.setMaterialType(mapGradeToNelsonMaterial());
@@ -1019,11 +1031,14 @@ public class HydrogenMaterialAssessment implements Serializable {
   }
 
   /**
-   * Returns the assessment results as a Map.
+   * Returns the assessment results as a Map, evaluating first when inputs have changed.
    *
    * @return results as linked hash map
    */
   public Map<String, Object> toMap() {
+    if (!evaluated) {
+      evaluate();
+    }
     Map<String, Object> result = new LinkedHashMap<String, Object>();
 
     // Input conditions

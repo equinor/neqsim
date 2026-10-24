@@ -35,16 +35,33 @@ public class AttractiveTermSrk extends AttractiveTermBaseClass {
     return attractiveTerm;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * Set the SRK parameter and its corresponding acentric factor.
+   *
+   * <p>
+   * The lower root of {@code m = 0.48 + 1.574 * omega - 0.176 * omega * omega} is used, consistent with the
+   * conventional SRK branch. The admissible range is from {@code omega = -1} to the quadratic maximum at
+   * {@code omega = 1.574 / (2 * 0.176)}. Invalid parameters leave both this term and its component unchanged.
+   * </p>
+   *
+   * @param val finite SRK parameter on the conventional branch
+   * @throws IllegalArgumentException if the parameter has no real root on the admissible branch
+   */
   @Override
   public void setm(double val) {
+    double minimumM = 0.48 - 1.574 - 0.176;
+    double maximumM = 0.48 + 1.574 * 1.574 / (4.0 * 0.176);
+    if (!Double.isFinite(val) || val < minimumM || val > maximumM) {
+      throw new IllegalArgumentException("SRK m must be finite and between " + minimumM + " and " + maximumM
+          + " to imply an acentric factor on the conventional branch: " + val);
+    }
+    double shiftedM = val - 0.48;
+    // Rationalizing the smaller root avoids cancellation near m = 0.48. The maximum
+    // can produce a slightly negative discriminant through floating-point rounding.
+    double discriminant = Math.max(0.0, 1.574 * 1.574 - 4.0 * 0.176 * shiftedM);
+    double acentricFactor = 2.0 * shiftedM / (1.574 + Math.sqrt(discriminant));
     this.m = val;
-    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
-    solve.setOrder(2);
-    double[] acentricConstants = {-0.176, 1.574, (0.48 - this.m)};
-    solve.setConstants(acentricConstants);
-    getComponent().setAcentricFactor(solve.solve(0.25));
-    // System.out.println("solve accen " + getComponent().getAcentricFactor());
+    getComponent().setAcentricFactor(acentricFactor);
   }
 
   /** {@inheritDoc} */

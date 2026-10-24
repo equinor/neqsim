@@ -30,6 +30,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   private double[] viscosityOil = null;
   private double[] Zgas = null;
   private double[] density = null;
+  /** Oil-phase density at each pressure, in kg/m3; NaN when no oil phase exists. */
+  private double[] oilDensity = null;
   private double[] Yfactor = null;
   private double[] isoThermalCompressibility = null;
   private double[] gasExpensionFactor = null;
@@ -115,6 +117,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     gasFormationVolumeFactor = new double[pressures.length];
     viscosity = new double[pressures.length];
     viscosityOil = new double[pressures.length];
+    oilDensity = new double[pressures.length];
     gasExpensionFactor = new double[pressures.length];
     if (!Double.isNaN(temperature)) {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
@@ -148,6 +151,12 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         logger.error(ex.getMessage(), ex);
       }
       getThermoSystem().initPhysicalProperties();
+      oilDensity[i] = Double.NaN;
+      viscosityOil[i] = Double.NaN;
+      if (getThermoSystem().hasPhaseType("oil")) {
+        oilDensity[i] = getThermoSystem().getPhase("oil").getDensity("kg/m3");
+        viscosityOil[i] = getThermoSystem().getPhase("oil").getViscosity();
+      }
       // getThermoSystem().display();
       totalVolume[i] = getThermoSystem().getVolume();
       relativeVolume[i] = totalVolume[i] / saturationVolume;
@@ -316,21 +325,39 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * Getter for the field <code>density</code>.
+   * Returns the legacy phase-zero density. In a gas-oil state this is normally gas density.
    *
-   * @return the density
+   * @return phase-zero density in kg/m3
    */
   public double[] getDensity() {
     return density;
   }
 
   /**
-   * Getter for the field <code>viscosity</code>.
+   * Returns the legacy single-phase viscosity. Two-phase entries are NaN.
    *
-   * @return the gas viscosity
+   * @return single-phase viscosity in Pa s, or NaN for a multiphase state
    */
   public double[] getViscosity() {
     return viscosity;
+  }
+
+  /**
+   * Returns oil-phase density along the constant-composition pressure schedule.
+   *
+   * @return oil density in kg/m3, or NaN where no oil phase exists
+   */
+  public double[] getOilDensity() {
+    return oilDensity;
+  }
+
+  /**
+   * Returns oil-phase dynamic viscosity along the constant-composition pressure schedule.
+   *
+   * @return oil viscosity in Pa s, or NaN where no oil phase exists
+   */
+  public double[] getOilViscosity() {
+    return viscosityOil;
   }
 
   /**

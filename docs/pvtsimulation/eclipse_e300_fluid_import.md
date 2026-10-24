@@ -53,6 +53,35 @@ The table below lists all keywords supported by NeqSim's E300 reader:
 | `OMEGAA`   | EOS OmegaA parameter                                             | —             | Optional |
 | `OMEGAB`   | EOS OmegaB parameter                                             | —             | Optional |
 
+### Persistent PR `OMEGAB` coefficients
+
+Use **`EclipseFluidReadWrite.readWithPrOmegaB(path)`** to opt into applying each
+positive, finite `OMEGAB` value to the corresponding PR component in every
+allocated phase. The overload with a `String[]` of fluid names applies the source
+block to every replicated named fluid. Provide exactly one coefficient per source
+component. A missing section leaves the model default active. The writer exports
+active PR coefficients with round-trip decimal precision whenever at least one
+component is explicitly tuned. This also preserves the exact defaults of the
+remaining components. They survive initialization and flashes when imported
+through this opt-in reader.
+
+Ordinary `read(...)` methods preserve their established behavior of parsing and
+ignoring `OMEGAB`, including forced-CPA imports. Untuned E300 output retains its
+historical five-decimal coefficients. In particular, the exported `0.07780`
+differs slightly from the internal untuned PR default **0.077803333**. Choosing
+the opt-in reader for an old file deliberately makes its explicit coefficients
+effective and can therefore change its numerical results. The two read modes
+use distinct cache entries. SRK and CPA do not support the PR override API; the
+opt-in reader must not be used as an association-parameter importer.
+
+The coefficient does not
+replace critical properties, binary interactions, volume shifts or viscosity
+tuning. See the [PR tuning contract](../thermo/characterization/README#persistent-pr-covolume-tuning).
+
+`PrOmegaBFluidRoundTripTest` covers custom/default coefficients, replicated
+fluids, invalid values, cache-mode separation, forced-CPA compatibility and
+post-import flashes.
+
 ### Critical-Volume Units and Older NeqSim Files
 
 The writer exports `VCRIT` in m³/kmol and dimensionless `ZCRIT`. NeqSim stores

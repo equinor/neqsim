@@ -112,9 +112,62 @@ adds a CC BY 4.0, complete-range TBP case with 34-tray operating data, numeric
 product ASTM D86 endpoints, and plant product rates that remain independent
 validation targets.
 
+## Persistent PR covolume tuning
+
+`ComponentPR.setOmegaB(value)` sets a positive, finite, dimensionless per-component
+coefficient in $b_i = \Omega_{B,i} R T_{c,i}/P_{c,i}$. With SI $R$, $T_c$ in K and
+$P_c$ in Pa, this gives $b_i$ in m³/mol. NeqSim uses bara internally;
+multiply the existing internal `getb()` value by $10^{-5}$ to obtain m³/mol. The
+ordinary PR default remains exactly **0.077803333**. Set the coefficient on the
+component in **every allocated phase** (`getMaxNumberOfPhases()`), then call
+`fluid.init(0)` before flashing or reading updated properties. This is the same
+phase-ownership requirement as other component-property tuning. The public
+methods are callable from Java and JPype's `ComponentPR` wrapper.
+The older `setb(...)` call changes only transient storage and is still replaced
+by component initialization; use `setOmegaB(...)` for persistent tuning.
+
+`hasOmegaBOverride()` reports whether tuning is active and
+`getOmegaBOverride()` returns the supplied value, or NaN when unset.
+`getOmegaB()` returns the active coefficient, including the default.
+`clearOmegaBOverride()` removes tuning; initialize again to rebuild the cached
+covolume. The override survives repeated initialization, flashes, fluid cloning,
+and Java serialization. Older serialized PR components without this field keep
+the default because zero represents an unset override.
+
+The storage belongs to PR components rather than all EOS components. BNS retains
+its supplied constructor coefficient when no override is active, and resetting
+returns to that coefficient. PR-based CPA components reject `setOmegaB` with
+`UnsupportedOperationException`: their covolumes belong to the association
+parameterization. SRK is outside this API's scope. No flash calls or fitting
+iterations are added to the normal initialization path.
+
+[E300](../../pvtsimulation/eclipse_e300_fluid_import) exports explicit PR
+coefficients in `OMEGAB`; reload them with the opt-in
+`EclipseFluidReadWrite.readWithPrOmegaB(...)` reader. Ordinary E300 readers retain
+their historical coefficient behavior. [JSON fluid files](../../pvtsimulation/json_fluid_format)
+preserve explicit PR overrides in optional `omegaB` component fields. Diagnostic
+`fluid.toJson()` output is not a reloadable fluid definition. Retain coefficient
+provenance, fit conditions and uncertainty separately: supplying a number does
+not validate an assay or reproduce a paper whose other tuning inputs are missing.
+The text formats do not reproduce the specialized BNS or CPA model from these
+coefficients; the supported tuning round trip here is ordinary PR/PR1978.
+
+Regressions: `ComponentPrOmegaBTest` checks the analytical coefficient,
+initialization, flash, invalid input, reset, clone/serialization and BNS/CPA
+boundaries; `PrOmegaBFluidRoundTripTest` checks the text-persistence contract.
+
 ## TBP fraction models
 
-TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS. Available implementations include Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert, Twu, Cavett, and Standing.
+TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS.
+Available implementations include standard Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert,
+Twu, Cavett, and Standing. Pedersen estimation rejects molecular weights at or above
+1120 g/mol (1.120 kg/mol at the system API); the explicit `PedersenSRKHeavyOil` and
+`PedersenPRHeavyOil` property models are unavailable at every molecular weight. The
+`RiaziDaubert` fallback inherits the same upper boundary. These paths throw
+`UnsupportedOperationException` rather than constructing an unphysical component.
+The seven-argument `addTBPfraction` overload accepts independently validated critical
+properties for heavier cuts; see [TBP Fraction Models](../../wiki/tbp_fraction_models)
+for units and limitations.
 
 ```java
 SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
