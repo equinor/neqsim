@@ -262,8 +262,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
      */
     private String toCsv(Reference reference, double previousModelMolality) {
       double residual = modelCo2Molality - reference.experimentalCo2Molality;
-      double modelDelta = Double.isFinite(previousModelMolality)
-          ? modelCo2Molality - previousModelMolality
+      double modelDelta = Double.isFinite(previousModelMolality) ? modelCo2Molality - previousModelMolality
           : Double.NaN;
       String modelTrend = "not_applicable";
       if (Double.isFinite(modelDelta)) {
@@ -279,9 +278,9 @@ class KClCO2SolubilityReferenceAssessmentTest {
           + actualCo2PartialPressureBara + "," + reference.kclMolality + "," + reference.sourceSolventDensity + ","
           + reference.experimentalCo2Molality + "," + reference.sourceCo2ActivityCoefficient + "," + modelCo2Molality
           + "," + modelDelta + "," + modelTrend + "," + aqueousWaterMassKg + "," + residual + ","
-          + residual / reference.experimentalCo2Molality + ","
-          + RELATIVE_SOLUBILITY_UNCERTAINTY + "," + CO2_ACTIVITY_COEFFICIENT_UNCERTAINTY + ","
-          + TEMPERATURE_UNCERTAINTY_K + "," + totalPressureBara + "," + aqueousCo2MoleFraction + "," + phaseTypes;
+          + residual / reference.experimentalCo2Molality + "," + RELATIVE_SOLUBILITY_UNCERTAINTY + ","
+          + CO2_ACTIVITY_COEFFICIENT_UNCERTAINTY + "," + TEMPERATURE_UNCERTAINTY_K + "," + totalPressureBara + ","
+          + aqueousCo2MoleFraction + "," + phaseTypes;
     }
   }
 }
