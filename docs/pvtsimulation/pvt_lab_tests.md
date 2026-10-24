@@ -24,6 +24,18 @@ explicitly:
 | `SeparatorTest.setSeparatorConditions` temperature array | K |
 | `ViscositySim.setTemperaturesAndPressures` temperature array | K |
 | `ViscositySim` viscosity outputs | Pa·s; multiply by 1000 for cP |
+| `ConstantMassExpansion.getOilDensity()` | Oil-phase density in kg/m³; NaN if no oil phase exists |
+| `ConstantMassExpansion.getOilViscosity()` | Oil-phase dynamic viscosity in Pa·s; NaN if no oil phase exists |
+
+For CCE oil-property comparisons, use `getOilDensity()` and `getOilViscosity()`.
+Both select the named oil phase above and below the bubble point, preserve the
+constant-composition path, and share the pressure-array index. The legacy
+`getDensity()` reports phase-zero density, which is normally gas density in a
+gas-oil state. The legacy `getViscosity()` reports single-phase viscosity and NaN
+in multiphase states. Their existing behavior is preserved. The named oil
+accessors reuse the physical-property initialization already performed at each
+pressure and require no additional flash calculations. Regression evidence:
+[`ConstantMassExpansionOilPropertiesTest`](../../src/test/java/neqsim/pvtsimulation/simulation/ConstantMassExpansionOilPropertiesTest.java).
 
 `addTBPfraction` and `addPlusFraction` preserve `+` in a pseudo-component label when
 they append the internal `_PC` suffix, for example `C20+_PC`. However, the default Pedersen
