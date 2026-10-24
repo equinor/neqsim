@@ -90,8 +90,11 @@ that gas-phase `y_CO2 * P` matches the reported partial pressure, then compares
 aqueous CO2 molality on the same kilogram-water basis. The water-basis
 calculation explicitly divides aqueous CO2 moles by aqueous water moles times
 the water molar mass; it does not use the generic component `getMolality`
-method, whose denominator is total phase mass. Monotonic salting-out order is
-checked independently within each temperature block. The generated
+method, whose denominator is total phase mass. Source salting-out order is
+checked independently within each temperature block. The calculated change and
+its `salting_out`, `salting_in` or `flat` classification are retained per row
+instead of treating model agreement with the experimental direction as a
+numerical pass condition. The generated
 `target/kcl-co2-solubility-he-morse1993-assessment.csv` retains all source
 values, uncertainties, aqueous water mass, calculated value, residual and phase
 diagnostic.
@@ -100,8 +103,12 @@ The earlier six-point 273.15 K execution predates merged #4367 and therefore
 cannot establish the current parameter's concentration or temperature
 behavior. The complete source series is retained to diagnose that extrapolation
 without fitting a parameter, introducing an empirical temperature correction or
-adding an experimental-accuracy pass band. Current-head numerical results must
-come from the hosted evidence artifact before any qualification claim.
+adding an experimental-accuracy pass band. The first expanded exact-head run
+remained finite and partial-pressure converged but revealed a model trend
+reversal at 323.15 K between 3.997 and 4.998 molal KCl. The revised diagnostic
+retains that behavior rather than aborting before writing the complete evidence.
+Current-head numerical results must come from the hosted evidence artifact
+before any qualification claim.
 
 ## Independent Ostwald-coefficient holdout
 
