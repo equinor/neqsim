@@ -6,6 +6,12 @@ from the repository root.
 
 ## Set up with uv
 
+Python 3.11–3.14 is required. Upgrade Python 3.10 environments before syncing or
+running the installer scripts. Pillow 13.0.0 or newer is required to fix
+[CVE-2026-96639 / GHSA-v9pv-5gc8-w2m6](https://github.com/python-pillow/Pillow/security/advisories/GHSA-v9pv-5gc8-w2m6);
+Pillow 13 no longer supports Python 3.10. The minimum applies to both the locked
+uv project and editable pip installs.
+
 Install `uv`, then sync the devtools environment from the repository root:
 
 ```bash
@@ -28,7 +34,7 @@ development and CI, use the uv project and committed lockfile.
 
 On a locked-down / corporate PC (e.g. no administrator rights), everything
 below installs into your **user profile** and needs **no elevation**.
-Prerequisites — Git, Python 3.8+, a JDK, and VS Code — must already be
+Prerequisites — Git, Python 3.11–3.14, a JDK, and VS Code — must already be
 provisioned per-user (via your software portal or `winget --scope user`).
 
 ```powershell

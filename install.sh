@@ -56,7 +56,7 @@ if [ -z "$PYTHON" ]; then
     echo ""
     echo "ERROR: No working Python interpreter was found." >&2
     echo "" >&2
-    echo "Fix: install Python 3.8+:" >&2
+    echo "Fix: install Python 3.11-3.14:" >&2
     echo "  * macOS:        brew install python   (or https://www.python.org/downloads/)" >&2
     echo "  * Debian/Ubuntu: sudo apt install python3 python3-pip python3-venv" >&2
     echo "  * Fedora/RHEL:   sudo dnf install python3 python3-pip" >&2
