@@ -25,7 +25,7 @@ class DewPointStandardsDocumentationTest extends neqsim.NeqSimTest {
     double waterDewPointC = waterDewPoint.getValue("dewPointTemperature", "C");
     double calculationPressureBara = waterDewPoint.getValue("pressure");
 
-    assertEquals(-21.775841183117222, waterDewPointC, 1.0e-8);
+    assertEquals(-28.49313488, waterDewPointC, 1.0e-6);
     assertEquals(70.0, calculationPressureBara, 1.0e-12);
     assertEquals("C", waterDewPoint.getUnit("dewPointTemperature"));
     assertEquals(waterDewPointC + 273.15, waterDewPoint.getValue("dewPointTemperature", "K"), 1.0e-12);

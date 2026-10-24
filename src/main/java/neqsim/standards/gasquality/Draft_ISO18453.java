@@ -59,12 +59,13 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
     this.thermoSystem.setTemperature(initTemperature);
     this.thermoSystem.setPressure(getReferencePressure());
 
+    dewPointTemperature = Double.NaN;
     try {
       this.thermoOps.waterDewPointTemperatureFlash();
+      dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
   }
 
   /** {@inheritDoc} */
