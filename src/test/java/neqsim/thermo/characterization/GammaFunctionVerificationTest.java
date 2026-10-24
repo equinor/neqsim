@@ -27,7 +27,7 @@ public class GammaFunctionVerificationTest {
   void setUp() {
     SystemSrkEos system = new SystemSrkEos(298.0, 10.0);
     system.addComponent("methane", 1.0);
-    system.addPlusFraction("C7+", 1.0, 200.0, 0.8);
+    system.addPlusFraction("C7+", 1.0, 0.200, 0.8);
     model = new PlusFractionModel(system);
     gammaModel = model.new WhitsonGammaModel();
   }

@@ -141,7 +141,7 @@ public class PedersenAsphalteneCharacterizationTest {
     system.addComponent("propane", 0.10);
     system.addComponent("n-heptane", 0.35);
 
-    asphChar.setAsphalteneMW(750.0);
+    asphChar.setAsphalteneMW(1500.0);
     asphChar.setAsphalteneDensity(1.10);
     String compName = asphChar.addAsphalteneToSystem(system, 0.05);
 
@@ -160,6 +160,14 @@ public class PedersenAsphalteneCharacterizationTest {
 
     assertTrue(Tc > 700.0, "Asphaltene Tc should be set correctly, got " + Tc);
     assertTrue(Pc > 5.0, "Asphaltene Pc should be set correctly, got " + Pc);
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      assertEquals(asphChar.getCriticalTemperature(), system.getPhase(phase).getComponent(aspIndex).getTC(), 1e-12);
+      assertEquals(asphChar.getCriticalPressure(), system.getPhase(phase).getComponent(aspIndex).getPC(), 1e-12);
+      assertEquals(asphChar.getAcentricFactor(), system.getPhase(phase).getComponent(aspIndex).getAcentricFactor(),
+          1e-12);
+      assertEquals(asphChar.getBoilingPoint(), system.getPhase(phase).getComponent(aspIndex).getNormalBoilingPoint(),
+          1e-12);
+    }
 
     logger.info("\nSystem with asphaltene:");
     // system.prettyPrint();
@@ -191,6 +199,32 @@ public class PedersenAsphalteneCharacterizationTest {
     assertTrue(comp3Name.startsWith("Asph_"), "Component 3 should be Asph_1, got: " + comp3Name);
     assertTrue(comp4Name.startsWith("Asph_"), "Component 4 should be Asph_2, got: " + comp4Name);
     assertTrue(comp5Name.startsWith("Asph_"), "Component 5 should be Asph_3, got: " + comp5Name);
+
+    // Fractions above 1120 g/mol use the asphaltene model's own characterized
+    // properties, without entering the unsupported automatic TBP heavy branch.
+    double[] expectedMolecularWeights = {750.0, 1250.0, 1750.0};
+    double[] expectedDensities = {1.1375, 1.1625, 1.1875};
+    for (int fraction = 0; fraction < expectedMolecularWeights.length; fraction++) {
+      PedersenAsphalteneCharacterization expected = new PedersenAsphalteneCharacterization();
+      expected.setAsphalteneMW(expectedMolecularWeights[fraction]);
+      expected.setAsphalteneDensity(expectedDensities[fraction]);
+      expected.characterize();
+      int componentIndex = fraction + 2;
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        assertEquals(expectedMolecularWeights[fraction] / 1000.0,
+            system.getPhase(phase).getComponent(componentIndex).getMolarMass(), 1e-12);
+        assertEquals(expected.getCriticalTemperature(), system.getPhase(phase).getComponent(componentIndex).getTC(),
+            1e-12);
+        assertEquals(expected.getCriticalPressure(), system.getPhase(phase).getComponent(componentIndex).getPC(),
+            1e-12);
+        assertEquals(expected.getAcentricFactor(),
+            system.getPhase(phase).getComponent(componentIndex).getAcentricFactor(), 1e-12);
+        assertEquals(expected.getBoilingPoint(),
+            system.getPhase(phase).getComponent(componentIndex).getNormalBoilingPoint(), 1e-12);
+        assertTrue(system.getPhase(phase).getComponent(componentIndex).getTC() > system.getPhase(phase)
+            .getComponent(componentIndex).getNormalBoilingPoint());
+      }
+    }
 
     logger.info("\nSystem with distributed asphaltene:");
     // system.prettyPrint();

@@ -651,6 +651,14 @@ fluid.getCharacterization().setTBPModel("Twu");
 fluid.getCharacterization().setTBPModel("RiaziDaubert");
 ```
 
+Pedersen critical-property estimation requires MW < 1120 g/mol (1.120 kg/mol for
+`addTBPfraction`), and the explicit `PedersenSRKHeavyOil` and `PedersenPRHeavyOil`
+property models are unavailable. The `RiaziDaubert` fallback inherits the Pedersen boundary.
+Unsupported estimation throws `UnsupportedOperationException`. For a heavy cut with
+independently validated critical temperature, critical pressure and acentric factor, use the
+seven-argument `addTBPfraction` overload; see [TBP Fraction Models](../wiki/tbp_fraction_models)
+for units and dependent-property behavior.
+
 ---
 
 ## 11. Complete Examples

@@ -23,15 +23,15 @@ Petroleum fluids contain thousands of individual hydrocarbon species that cannot
 
 ## 2. Available Models
 
-NeqSim provides 10 TBP models, each optimized for different applications:
+NeqSim recognizes the following TBP model names. The two explicit heavy-oil models are retained as names for compatibility but their property correlations are unavailable:
 
 | Model Name | Best Application | Key Feature |
 |------------|------------------|-------------|
-| `PedersenSRK` | General SRK EOS | Default, auto light/heavy switching |
-| `PedersenSRKHeavyOil` | Heavy oils with SRK | Optimized for MW > 500 g/mol |
-| `PedersenPR` | General PR EOS | Optimized for Peng-Robinson |
-| `PedersenPR2` | PR EOS alternate | Søreide boiling point correlation |
-| `PedersenPRHeavyOil` | Heavy oils with PR | For viscous/heavy crude |
+| `PedersenSRK` | General SRK EOS | Default; requires MW < 1120 g/mol |
+| `PedersenSRKHeavyOil` | Unavailable | Property estimation throws `UnsupportedOperationException` |
+| `PedersenPR` | General PR EOS | Requires MW < 1120 g/mol |
+| `PedersenPR2` | PR EOS alternate | Søreide boiling point; requires MW < 1120 g/mol |
+| `PedersenPRHeavyOil` | Unavailable | Property estimation throws `UnsupportedOperationException` |
 | `RiaziDaubert` | Light fractions | Best for MW < 300 g/mol |
 | `Lee-Kesler` | General purpose | Uses Watson K-factor |
 | `Twu` | Paraffinic fluids | n-alkane reference method |
@@ -57,7 +57,26 @@ $$P_c = \exp\left(b_0 + b_1 \cdot \rho^{b_4} + \frac{b_2}{M} + \frac{b_3}{M^2}\r
 **EOS m-parameter:**
 $$m = c_0 + c_1 \cdot M + c_2 \cdot \rho + c_3 \cdot M^2$$
 
-The model automatically switches between light oil and heavy oil coefficients at MW = 1120 g/mol.
+The implemented correlations above use the standard coefficient set for $M < 1120$ g/mol. At
+$M \geq 1120$ g/mol, `PedersenSRK`, `PedersenPR` and `PedersenPR2` throw
+`UnsupportedOperationException`. The explicit `PedersenSRKHeavyOil` and
+`PedersenPRHeavyOil` property models throw at every molecular weight. Their legacy heavy-oil
+coefficients can produce $T_b \geq T_c$ and unphysical acentric factors and m-parameters;
+no replacement fit has been validated. A boiling-point override does not enable the rejected
+critical-property branch. This restriction also applies to fractions generated during
+plus-fraction characterization and pseudo-component combining.
+
+For heavy cuts with independently validated properties, use the seven-argument
+`addTBPfraction(name, moles, molarMass, density, criticalTemperature, criticalPressure,
+acentricFactor)` overload. Supply molecular weight in kg/mol, density in g/cm³, critical
+temperature in K and critical pressure in bara. This route retains the supplied critical
+properties and derives Rackett, critical-volume and critical-viscosity estimates from them;
+the normal boiling point remains supplied by the selected model or its boiling-point override.
+Check that $T_b < T_c$ and validate the complete pseudo-component against laboratory data.
+
+`AttractiveTermSrk.setm` analytically inverts the SRK m-polynomial on its lower-root branch.
+It rejects non-finite values, values without a real root, and roots below $\omega=-1$,
+instead of silently clipping the result to the old interval [-0.99, 1.5].
 
 #### Usage
 
@@ -87,7 +106,7 @@ fluid.addTBPfraction("C7", 1.0, 0.092, 0.73);
 
 **Best for:** Light to medium petroleum fractions (MW < 300 g/mol)
 
-The Riazi-Daubert model uses a simple exponential-power law form that works well for lighter fractions. For heavier fractions (MW > 300), it automatically falls back to the Pedersen model.
+The Riazi-Daubert model uses a simple exponential-power law form that works well for lighter fractions. For heavier fractions (MW > 300), it falls back to the Pedersen model and inherits its rejection at MW ≥ 1120 g/mol.
 
 #### Correlations
 
@@ -306,25 +325,22 @@ System.out.println("Watson K-factor: " + Kw);
 
 ## 5. Model Selection Guidelines
 
-### 5.1 Decision Tree
+### 5.1 Selection Boundaries
 
-```
-Is EOS = Peng-Robinson?
-├── Yes → Is fluid heavy (MW > 500)?
-│         ├── Yes → PedersenPRHeavyOil
-│         └── No → PedersenPR
-└── No (SRK) → Is fluid heavy (MW > 500)?
-              ├── Yes → PedersenSRKHeavyOil
-              └── No → Is K_w > 12 (paraffinic)?
-                        ├── Yes → Twu
-                        └── No → Is MW < 300?
-                                  ├── Yes → RiaziDaubert or Lee-Kesler
-                                  └── No → PedersenSRK
-```
+| Input | Selection guidance |
+|-------|--------------------|
+| MW ≥ 1120 g/mol | Supply independently validated critical properties; automatic recommendation throws `UnsupportedOperationException` |
+| 500 < MW < 1120 g/mol | `PedersenPR` for PR or `PedersenSRK` for SRK; validate heavy-end predictions |
+| Intermediate MW below 500 g/mol | Start with `PedersenPR` or `PedersenSRK` for the selected EOS |
+| Light paraffinic fractions | Consider `Twu` within its validated range |
+| Light fractions below 300 g/mol | Consider `RiaziDaubert` or `Lee-Kesler` within their validated ranges |
+
+The explicit `PedersenSRKHeavyOil` and `PedersenPRHeavyOil` models are unavailable for
+property estimation. Changing models alone does not establish validity for a heavy cut.
 
 ### 5.2 Automatic Model Recommendation
 
-NeqSim can recommend an appropriate model based on fluid properties:
+NeqSim can recommend a model based on fluid properties below 1120 g/mol. For average MW above 500 g/mol it selects the standard Pedersen model for the EOS, and it rejects MW at or above 1120 g/mol:
 
 ```java
 TBPfractionModel tbpModel = new TBPfractionModel();
@@ -478,41 +494,14 @@ public class GasCondensateExample {
 
 ### 7.4 Heavy Oil Characterization
 
-```java
-import neqsim.thermo.system.SystemPrEos;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
+Heavy-oil workflows must respect the limits of each individual cut, including cuts generated
+by plus-fraction splitting or lumping. The standard Pedersen models can estimate properties
+below 1120 g/mol; the explicit heavy-oil model names reject property estimation.
 
-public class HeavyOilExample {
-    public static void main(String[] args) {
-        // Use Peng-Robinson for heavy oil
-        SystemPrEos fluid = new SystemPrEos(333.15, 10.0);
-        
-        // Light ends
-        fluid.addComponent("methane", 5.0);
-        fluid.addComponent("ethane", 2.0);
-        fluid.addComponent("propane", 3.0);
-        fluid.addComponent("n-butane", 2.0);
-        fluid.addComponent("n-pentane", 3.0);
-        
-        // Use heavy oil model
-        fluid.getCharacterization().setTBPModel("PedersenPRHeavyOil");
-        
-        // Heavy fractions (API ~ 15°, SG ~ 0.96)
-        fluid.addTBPfraction("C6-C10", 15.0, 0.120, 0.80);
-        fluid.addTBPfraction("C11-C20", 25.0, 0.250, 0.88);
-        fluid.addTBPfraction("C21-C30", 20.0, 0.380, 0.92);
-        fluid.addTBPfraction("C31+", 25.0, 0.550, 0.96);
-        
-        fluid.setMixingRule("classic");
-        
-        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        ops.TPflash();
-        
-        System.out.println("Heavy Oil Flash at " + fluid.getTemperature() + " K");
-        fluid.prettyPrint();
-    }
-}
-```
+For a cut at or above that boundary, obtain independently validated $T_c$, $P_c$ and
+$\omega$ and use the seven-argument `addTBPfraction` overload described in Section 3.1.
+Specify a validated normal boiling point when available. Assess density, vapor pressure and
+phase behavior for the resulting slate before using it in a flash or process calculation.
 
 ---
 
@@ -582,11 +571,12 @@ print(f"Pc = {fluid.getComponent(0).getPC()} bar")
    - Try a different model (Pedersen is most robust)
 
 2. **Negative acentric factor**
-   - Usually indicates incorrect input data
+   - Check input data and the correlation range; the legacy heavy-oil branch is rejected because it produced unphysical values
    - Cavett model has built-in bounds checking [0, 1.5]
 
 3. **Flash convergence issues with heavy fractions**
-   - Use heavy oil variants (PedersenSRKHeavyOil, PedersenPRHeavyOil)
+   - Check every cut against the model range; Pedersen rejects MW ≥ 1120 g/mol and the explicit heavy-oil models are unavailable
+   - Supply independently validated critical properties through the seven-argument overload when required
    - Check that fluid composition is normalized
 
 4. **Model not found error**

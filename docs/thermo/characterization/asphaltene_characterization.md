@@ -37,6 +37,21 @@ NeqSim provides tools for characterizing asphaltene content and predicting preci
 | `AsphalteneCharacterization` | SARA-based characterization |
 | `PedersenAsphalteneCharacterization` | Pedersen's correlation approach |
 
+### Pedersen asphaltene properties
+
+`PedersenAsphalteneCharacterization` calculates its own critical temperature, critical
+pressure and acentric factor. Both single-component and distributed-asphaltene addition pass
+those values through the explicit-property `addTBPfraction` overload and retain each
+asphaltene component's independently calculated normal boiling point. This route remains
+available for cuts above 1120 g/mol because it does not estimate their critical properties
+with the rejected generic Pedersen heavy-oil TBP branch; see
+[TBP Fraction Models](../../wiki/tbp_fraction_models) for that boundary.
+
+The asphaltene correlations remain empirical. Calibrate their inputs and binary interaction
+parameters against representative density, phase-equilibrium and precipitation measurements;
+this separate property pathway does not validate the generic heavy-oil correlations or
+establish accuracy outside the asphaltene model's qualified range.
+
 ---
 
 ## SARA Analysis

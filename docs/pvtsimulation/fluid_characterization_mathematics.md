@@ -169,36 +169,49 @@ where $C_1$ and $C_2$ are fitted to match the measured plus fraction density.
 
 ### Pedersen Correlations
 
-For SRK equation of state, critical properties are calculated using Pedersen et al. correlations:
+For SRK equation of state, the supported Pedersen coefficient set below is used for
+$M < 1120$ g/mol. Estimation at or above 1120 g/mol throws `UnsupportedOperationException`.
+The explicit `PedersenSRKHeavyOil` and `PedersenPRHeavyOil` models are unavailable for
+property estimation at every molecular weight. Their legacy coefficient/form combinations
+can produce $T_b \geq T_c$ and unphysical m-parameters, so they are not listed as usable
+correlations here. The `RiaziDaubert` heavy fallback inherits the same upper boundary.
 
 #### Critical Temperature (K)
 
 $$T_c = a_0 \cdot \rho + a_1 \cdot \ln(M) + a_2 \cdot M + \frac{a_3}{M}$$
 
-| Coefficient | Light Oil (M < 1120 g/mol) | Heavy Oil |
-|-------------|---------------------------|-----------|
-| $a_0$ | 163.12 | 830.63 |
-| $a_1$ | 86.052 | 17.5228 |
-| $a_2$ | 0.43475 | 0.0455911 |
-| $a_3$ | -1877.4 | -11348.4 |
+| Coefficient | Standard oil (M < 1120 g/mol) |
+|-------------|-------------------------------|
+| $a_0$ | 163.12 |
+| $a_1$ | 86.052 |
+| $a_2$ | 0.43475 |
+| $a_3$ | -1877.4 |
 
 #### Critical Pressure (bar)
 
 $$P_c = \exp\left(0.01325 + b_0 + b_1 \cdot \rho^{b_4} + \frac{b_2}{M} + \frac{b_3}{M^2}\right)$$
 
-| Coefficient | Light Oil | Heavy Oil |
-|-------------|-----------|-----------|
-| $b_0$ | -0.13408 | 0.802988 |
-| $b_1$ | 2.5019 | 1.78396 |
-| $b_2$ | 208.46 | 156.740 |
-| $b_3$ | -3987.2 | -6965.59 |
-| $b_4$ | 1.0 | 0.25 |
+| Coefficient | Standard oil (M < 1120 g/mol) |
+|-------------|-------------------------------|
+| $b_0$ | -0.13408 |
+| $b_1$ | 2.5019 |
+| $b_2$ | 208.46 |
+| $b_3$ | -3987.2 |
+| $b_4$ | 1.0 |
 
 #### Acentric Factor (SRK m-parameter)
 
 $$m = c_0 + c_1 \cdot M + c_2 \cdot \rho + c_3 \cdot M^2$$
 
-For Peng-Robinson, different coefficients are used.
+For Peng-Robinson, different coefficients are used within the same molecular-weight boundary.
+
+The SRK relation $m = 0.48 + 1.574\omega - 0.176\omega^2$ is inverted analytically
+on its lower-root branch when assigning m. Non-finite m, a non-real root or a root below
+$\omega=-1$ raises an error; assignment no longer silently clips $\omega$ into
+[-0.99, 1.5]. This mathematical check does not establish that a fitted heavy cut is valid.
+For independently validated critical data, the seven-argument `addTBPfraction` overload
+bypasses the rejected critical-property estimation; see
+[TBP Fraction Models](../wiki/tbp_fraction_models) for inputs, units and dependent properties.
 
 ---
 

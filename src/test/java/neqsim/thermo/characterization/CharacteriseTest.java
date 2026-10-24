@@ -1,12 +1,14 @@
 package neqsim.thermo.characterization;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class CharacteriseTest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(CharacteriseTest.class);
@@ -46,6 +48,9 @@ public class CharacteriseTest extends neqsim.NeqSimTest {
     // thermoSystem.prettyPrint();
   }
 
+  /**
+   * Keep gamma-distribution fitting available while refusing unsupported heavy EOS properties.
+   */
   @Test
   void testCharacterisePlusFractionGAMMA() {
     thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -54,18 +59,32 @@ public class CharacteriseTest extends neqsim.NeqSimTest {
     thermoSystem.getCharacterization().setPlusFractionModel("Whitson Gamma Model");
     thermoSystem.getCharacterization().setLumpingModel("PVTlumpingModel");
     thermoSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(15);
-    thermoSystem.getCharacterization().characterisePlusFraction();
-    // logger.info("number of components " + thermoSystem.getNumberOfComponents());
-    // assertEquals(86, thermoSystem.getNumberOfComponents());
-    // logger.info(thermoSystem.getComponent("C1-2_PC").getz());
-    // thermoSystem.prettyPrint();
+    thermoSystem.init(0);
+    Characterise characterization = thermoSystem.getCharacterization();
+    PlusFractionModelInterface model = characterization.getPlusFractionModel();
+    assertTrue(model.hasPlusFraction());
+    assertTrue(model.characterizePlusFraction(characterization.getTBPModel()));
+    double sumMoleFraction = 0.0;
+    double sumMolarMass = 0.0;
+    for (int fraction = model.getFirstPlusFractionNumber(); fraction < model.getLastPlusFractionNumber(); fraction++) {
+      assertTrue(Double.isFinite(model.getZ()[fraction]) && model.getZ()[fraction] >= 0.0);
+      assertTrue(Double.isFinite(model.getM()[fraction]) && model.getM()[fraction] > 0.0);
+      assertTrue(Double.isFinite(model.getDens()[fraction]) && model.getDens()[fraction] > 0.0);
+      sumMoleFraction += model.getZ()[fraction];
+      sumMolarMass += model.getZ()[fraction] * model.getM()[fraction];
+    }
+    assertEquals(model.getZPlus(), sumMoleFraction, 1.0e-8);
+    assertEquals(0.290, sumMolarMass / sumMoleFraction, 1.0e-4);
+    double[] fittedMoleFractions = model.getZ().clone();
+    double[] fittedMolarMasses = model.getM().clone();
+    double[] fittedDensities = model.getDens().clone();
 
-    thermoSystem.setPressure(1, "bara");
-
-    ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    thermoOps.TPflash();
-
-    thermoSystem.initProperties();
-    // thermoSystem.prettyPrint();
+    UnsupportedOperationException failure = assertThrows(UnsupportedOperationException.class,
+        characterization::characterisePlusFraction);
+    assertTrue(failure.getMessage().contains("heavy-oil"));
+    assertTrue(failure.getMessage().contains("molecular weight") && failure.getMessage().contains("g/mol"));
+    assertArrayEquals(fittedMoleFractions, model.getZ());
+    assertArrayEquals(fittedMolarMasses, model.getM());
+    assertArrayEquals(fittedDensities, model.getDens());
   }
 }

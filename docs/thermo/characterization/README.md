@@ -114,7 +114,16 @@ validation targets.
 
 ## TBP fraction models
 
-TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS. Available implementations include Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert, Twu, Cavett, and Standing.
+TBP models estimate the properties needed to represent petroleum pseudo-components in an EOS.
+Available implementations include standard Pedersen SRK/PR variants, Lee-Kesler, Riazi-Daubert,
+Twu, Cavett, and Standing. Pedersen estimation rejects molecular weights at or above
+1120 g/mol (1.120 kg/mol at the system API); the explicit `PedersenSRKHeavyOil` and
+`PedersenPRHeavyOil` property models are unavailable at every molecular weight. The
+`RiaziDaubert` fallback inherits the same upper boundary. These paths throw
+`UnsupportedOperationException` rather than constructing an unphysical component.
+The seven-argument `addTBPfraction` overload accepts independently validated critical
+properties for heavier cuts; see [TBP Fraction Models](../../wiki/tbp_fraction_models)
+for units and limitations.
 
 ```java
 SystemInterface fluid = new SystemSrkEos(350.0, 50.0);

@@ -180,6 +180,6 @@ public class AcidTest extends neqsim.NeqSimTest {
     assertEquals(5.14, bCPA);
     assertEquals(0.0141, boundvol);
     assertEquals(19752.0, assenergy);
-    assertEquals(0.6743999999999983, m);
+    assertEquals(0.6744, m, 1.0e-12);
   }
 }
