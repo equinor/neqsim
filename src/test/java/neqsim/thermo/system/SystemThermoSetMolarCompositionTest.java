@@ -34,15 +34,28 @@ public class SystemThermoSetMolarCompositionTest extends neqsim.NeqSimTest {
     logger.info(sys);
   }
 
+  /** Verifies the normalized light fraction, heavy distribution and supplied heavy mean MW. */
   @Test
   void setMolarCompositionPlus() {
     sys.getCharacterization().characterisePlusFraction();
+    sys.init(0);
+    double[] characterizedComposition = sys.getMolarComposition();
+    double heavyFraction = 1.0 - characterizedComposition[0];
     sys.setMolarCompositionPlus(new double[] {1, 1.5, 1.75});
     double[] molarComposition = sys.getMolarComposition();
 
-    Assertions.assertEquals(0.3999998435802131, molarComposition[0], 0.0000001);
-    Assertions.assertEquals(0.17255098326920942, molarComposition[1], 0.0000001);
-    Assertions.assertEquals(0.1310217963111427, molarComposition[2], 0.0000001);
+    // Default lumping includes the TBP and plus fractions in one heavy distribution.
+    assertEquals(1.0 / (1.0 + 1.5), molarComposition[0], 1e-12);
+    double heavyMass = 0.0;
+    double heavyMoles = 0.0;
+    for (int component = 1; component < molarComposition.length; component++) {
+      assertEquals(0.6 * characterizedComposition[component] / heavyFraction, molarComposition[component], 1e-12);
+      heavyMoles += molarComposition[component];
+      heavyMass += molarComposition[component] * sys.getPhase(0).getComponent(component).getMolarMass();
+    }
+    assertEquals(0.6, heavyMoles, 1e-12);
+    assertEquals((1.06 * 0.0922 + 10.62 * 0.381) / (1.06 + 10.62), heavyMass / heavyMoles, 1e-11);
+    assertEquals(1.0, Arrays.stream(molarComposition).sum(), 1e-12);
     logger.info(sys);
   }
 
