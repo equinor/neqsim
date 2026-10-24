@@ -9,6 +9,19 @@ last_verified: "2026-10-03"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
+## Start with current source and deployed capabilities
+
+Treat the tables below as navigation hints, not an exhaustive or qualified support list.
+For any unfamiliar capability, first follow
+[the discovery contract](../../../docs/development/AGENT_CAPABILITY_DISCOVERY.md).
+In a checkout, run `uv run --project devtools --locked devtools/capability_search.py "<need or API>" --json`.
+It searches current source types and public member names across all Java domains and returns
+agent/skill entry points, documentation and bounded test references. Use `--audit` to check
+package routing completeness. Source routing is distinct from the operation coverage registry.
+With MCP, search the deployed artifact and inspect the exact API/schema before execution.
+Read only the relevant sections and follow references; do not load this entire inventory for
+every calculation. Recheck source, tests and runtime version before accepting a stated gap.
+
 For measured agent/MCP coverage, inspect `getCapabilities.engineeringCoverage`
 and use `runCapability` with `action="coverage"`, `view="capabilities"` or
 `view="apis"`, a query and bounded pagination. Follow the returned tool, API,
@@ -468,6 +481,11 @@ hydraulic-feasibility logic.
 ---
 
 ## G. Physical Properties
+
+For model selection, named-phase guards, transport initialization, binary/effective diffusion,
+interfacial phase pairs and model-specific validation, load the `neqsim-api-patterns`
+[physical-property reference](../neqsim-api-patterns/references/physical-properties.md).
+The tested guides in `docs/physical_properties/` cover more than the short table below.
 
 | Class | Property | Package |
 |-------|---------|---------|

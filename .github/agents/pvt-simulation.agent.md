@@ -1,6 +1,6 @@
 ---
 name: pvt-simulation
-description: Creates and runs PVT laboratory simulations using NeqSim — constant mass expansion (CME), constant volume depletion (CVD), differential liberation, separator tests, swelling tests, saturation pressure/temperature, GOR, viscosity, and slim tube simulations. Supports parameter fitting against experimental data.
+description: Creates and runs NeqSim PVT laboratory simulations: constant mass expansion (CME/CCE), CVD, differential liberation, separator and swelling tests, saturation pressure/temperature, GOR and viscosity. Handles black-oil PVT tables (Rs, Rv, Bo, Bg), compositional conversion, Eclipse/CMG export and reservoir handoff. Assesses slim-tube/MMP limitations and verifies supported regression targets before fitting experimental data.
 required_skills:
 - neqsim-phase-envelope
 - neqsim-api-patterns
@@ -44,7 +44,7 @@ All classes are in `neqsim.pvtsimulation.simulation`:
 | GOR | `GOR` | Gas-oil ratio vs pressure |
 | Swelling Test | `SwellingTest` | Gas injection into oil — swelling factor, saturation pressure |
 | Viscosity | `ViscositySim` | Oil/gas viscosity vs pressure |
-| Slim Tube | `SlimTubeSim` | Minimum miscibility pressure determination |
+| Slim Tube | `SlimTubeSim` | Legacy displacement simulation; no direct MMP-result API |
 | Wax Fraction | `WaxFractionSim` | Wax appearance and fraction vs temperature |
 
 ## Typical Workflow
@@ -65,7 +65,7 @@ cme.setTemperaturesAndPressures(
 );
 
 // 3. Run
-cme.run();
+cme.runCalc();
 
 // 4. Get results
 double[] relVol = cme.getRelativeVolume();
@@ -73,9 +73,16 @@ double[] density = cme.getDensity();
 ```
 
 ## Parameter Fitting
-PVT simulations support regression against experimental data using Levenberg-Marquardt:
-- Set experimental data arrays
-- Call fitting methods to tune EOS binary interaction parameters or volume translation
+Inspect the concrete experiment's entry point rather than assuming `run()` performs the
+experiment. CME uses `runCalc()`; inherited `BasePVTsimulation.run()` only resets the
+thermodynamic-operations object. Follow `ConstantMassExpansionTest` and
+`ConstantMassExpansionOilPropertiesTest` for executable assertions.
+
+The current `PVTRegression` ingestion/evaluation targets are CCE, CVD, DLE, SEPARATOR and
+VISCOSITY. `SATURATION_PRESSURE` and `SWELLING` enum values are reserved and rejected;
+their presence does not provide a fitting protocol. Saturation/swelling simulation support
+is separate. Follow `docs/pvtsimulation/pvt_workflow.md` and `neqsim-eos-regression` before
+selecting an objective; preserve physical bounds, weighting, identifiability and holdout data.
 
 ## Oil Characterization for PVT
 Always characterize C7+ properly:
@@ -99,13 +106,18 @@ double expPsat = 250.0; // experimental value in bara
 double error = (simPsat - expPsat) / expPsat;
 ```
 
-## Slim Tube Simulation for MMP
-```java
-SlimTubeSim slimTube = new SlimTubeSim(fluid);
-slimTube.setInjectionGas(injectionGas);
-slimTube.run();
-double mmp = slimTube.getMinimumMiscibilityPressure();
-```
+## Slim Tube and Black-Oil Boundaries
+`SlimTubeSim` requires both oil and injection-gas systems in its constructor. It has no
+`setInjectionGas` or `getMinimumMiscibilityPressure` method. Inspect `SlimTubeSimTest` and
+the implementation before use; this legacy displacement calculation does not itself
+provide a validated pressure-sweep recovery criterion or MMP result. Do not report MMP
+from a getter guessed from another simulator's API.
+
+For black-oil tables, compositional conversion and Eclipse/CMG export, read
+`docs/blackoil/README.md` and `BlackOilPackageDocumentationTest`. State standard conditions,
+pressure basis, Rs/Rv, formation-volume-factor and viscosity units. Table interpolation
+clamps outside its input range; clamping is not validated extrapolation. Keep reservoir
+simulation in the external reservoir engine and preserve the PVT exchange contract.
 
 ## Shared Skills
 - Java 8 rules: See `neqsim-java8-rules` skill for forbidden features and alternatives

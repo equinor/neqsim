@@ -209,6 +209,14 @@ Some requests need multiple agents in sequence. Detect these patterns:
 
 ## Routing Workflow
 
+For a natural-language request spanning reservoir, wells, SURF, multiphase flowlines/
+risers, facilities, process utilities and downstream processing, route to
+`@network-energy-systems` with `neqsim-production-system-modeling`. Preserve the
+requested Python or Java deliverable. Discover installed community/enterprise
+specialists and keep one shared fluid/topology/interface specification; for a
+formal study, `@solve-task` retains task/report ownership while that agent owns
+system-model composition.
+
 1. **Parse the request** — identify key engineering terms, standards, equipment types
 2. **Check for ambiguity** — if the request could map to 2+ agents equally, ask:
    "This could be handled as [option A] or [option B] — which fits your need better?"
@@ -217,8 +225,12 @@ Some requests need multiple agents in sequence. Detect these patterns:
    - Run the first agent, capture its output
    - Include the output context when invoking the second agent
    - Synthesize a unified response from all agent outputs
-5. **Unknown domain** — if the request doesn't match any agent, say so and suggest
-   the closest match or recommend `@solve-task` as the catch-all
+5. **No table match** — discover before declaring a gap. In a source checkout run
+   `uv run --project devtools --locked devtools/capability_search.py "<user request>" --json`.
+   Follow the returned source, guides and agent/skill route. Use runtime MCP discovery for
+   the deployed artifact, and `agent_search.py` / `skill_search.py` for installed community
+   and enterprise specialists. An absent curated tool or table row is not a missing model.
+   Keep source discovery, executable routes and engineering qualification distinct.
 
 > **Tool selection inside any delegated agent:** for a single bounded
 > calculation (flash, PVT, process run, sizing, standards check), prefer a
@@ -274,7 +286,9 @@ the routing table), consider invoking `@capability-scout` first:
 2. Review its Capability Assessment Report
 3. If Critical gaps exist → discuss with user before proceeding
 4. Use the scout's recommended agent pipeline for routing
-5. Load all recommended skills before delegating
+5. Pass the selected source paths, units, setup, limitations and validation target in the
+   hand-off; load only the skills/sections needed for the current phase. Do not preload the
+   complete catalog. Read `docs/development/AGENT_CAPABILITY_DISCOVERY.md` for the shared contract.
 
 This prevents discovering missing capabilities mid-simulation.
 

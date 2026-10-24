@@ -345,6 +345,70 @@
       "prompt": "fire water deluge coverage of a process area against NORSOK S-001, nozzles and monitors",
       "expect_agent_top3": ["firewater-coverage-agent", "consequence-analysis"],
       "expect_skills_top5": ["neqsim-firewater-deluge-design"]
+    },
+    {
+      "id": "production-chain-python",
+      "prompt": "Build a reusable Python NeqSim model from reservoir through production and injection wells, SURF templates PLEMs and daisy-chain manifolds, multiphase flowlines and risers, host process facilities, constrained steam cooling power utilities and downstream gas treatment and LNG.",
+      "expect_agent_top3": [
+        "network-energy-systems",
+        "reservoir-to-facility-screening-agent"
+      ],
+      "expect_skills_top5": [
+        "neqsim-production-system-modeling"
+      ]
+    },
+    {
+      "id": "production-chain-java",
+      "prompt": "Build the connected production system in Java from reservoir and wells through SURF, multiphase flowlines and risers to facilities, process utilities and downstream processing, preserving the same fluids, boundaries and constraints as the Python case.",
+      "expect_agent_top3": [
+        "network-energy-systems",
+        "reservoir-to-facility-screening-agent"
+      ],
+      "expect_skills_top5": [
+        "neqsim-production-system-modeling"
+      ]
+    },
+    {
+      "id": "transport-model-selection",
+      "prompt": "Select physical property models for viscosity, thermal conductivity, binary and effective diffusion in gas oil and aqueous phases.",
+      "expect_agent_top3": [
+        "thermo-fluid"
+      ],
+      "expect_skills_top5": [
+        "neqsim-api-patterns"
+      ]
+    },
+    {
+      "id": "three-phase-interfacial-model",
+      "prompt": "Calculate gas oil water interfacial tension for all three phase pairs and validate surface tension model units.",
+      "expect_agent_top3": [
+        "thermo-fluid"
+      ],
+      "expect_skills_top5": [
+        "neqsim-api-patterns"
+      ]
+    },
+    {
+      "id": "black-oil-exchange",
+      "prompt": "Build black-oil PVT tables Rs Rv Bo Bg from a compositional fluid and export Eclipse or CMG tables for reservoir simulation.",
+      "expect_agent_top3": [
+        "pvt-simulation",
+        "e300-fluid-agent"
+      ],
+      "expect_skills_top5": [
+        "neqsim-api-patterns"
+      ]
+    },
+    {
+      "id": "hv-mixing-parameters",
+      "prompt": "Inspect SRK and PR EOS Huron Vidal mixing rules with NRTL binary interaction parameters for water methanol and glycol.",
+      "expect_agent_top3": [
+        "thermo-fluid",
+        "pvt-simulation"
+      ],
+      "expect_skills_top5": [
+        "neqsim-eos-regression"
+      ]
     }
   ],
   "contracts": [

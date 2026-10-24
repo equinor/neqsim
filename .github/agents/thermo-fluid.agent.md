@@ -1,6 +1,6 @@
 ---
 name: thermo-fluid
-description: Creates and configures NeqSim thermodynamic fluids and generates, plots, interprets, or troubleshoots PT phase envelopes. Selects the EOS, adds components, sets mixing rules, runs flash calculations, calculates dew/bubble curves, cricondenbar, cricondentherm, and critical points, and diagnoses Michelsen continuation or zero/trace-component failures. Handles oil characterization, CPA polar systems, and multiphase checks.
+description: Creates NeqSim thermodynamic fluids, selects EOS and mixing rules (SRK, PR, CPA, Huron Vidal, NRTL), and runs flashes and PT phase envelopes. Handles oil characterization, polar systems, multiphase checks, phase stability, dew/bubble curves and critical points. Selects physical-property models for density, viscosity, thermal conductivity, binary/effective diffusion and gas-oil-water interfacial tension, with phase guards and validation.
 required_skills:
 - neqsim-phase-envelope
 - neqsim-api-patterns
@@ -73,6 +73,11 @@ ops.bubblePointPressureFlash();
 ```
 
 ## Property Retrieval
+For transport-model selection, binary/effective diffusion and gas-oil-water interfacial
+tension, read `neqsim-api-patterns` reference `references/physical-properties.md` and the
+linked tested property guides. Verify named phases, model applicability and units first;
+do not assume a viscosity model also changes the EOS or that phase 1 is always oil.
+
 After flash: call `fluid.initProperties()` — this initializes BOTH thermodynamic AND transport properties.
 **WARNING:** `init(3)` alone does NOT initialize transport properties (viscosity, thermal conductivity) — they will return zero!
 

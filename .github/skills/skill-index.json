@@ -2440,5 +2440,6 @@
  ],
  "operating cases overrides": [
   "process-study-report"
- ]
+ ],
+ "reservoir to products full chain Python Java SURF utilities downstream": ["neqsim-production-system-modeling", "neqsim-integrated-production-and-lifecycle", "neqsim-process-modeling"]
 }

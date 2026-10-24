@@ -1,6 +1,6 @@
 ---
 name: neqsim-lng-liquefaction
-description: "LNG liquefaction modelling in NeqSim. USE WHEN: building or sizing a liquefaction plant (SMR, DMR, C3MR, cascade, nitrogen expander), calibrating a mixed refrigerant, computing liquefaction specific energy or power, scaling to trains, choosing gas-turbine against electric drive and the resulting carbon intensity, or sizing LNG storage and cargo loading. Covers LNGProcessBuilder, LNGProcessModel, the mandatory specific-energy benchmark gate, and the LNG bubble-point trap."
+description: "LNG liquefaction modelling in NeqSim. USE WHEN: building or sizing a liquefaction plant (SMR, DMR, C3MR, nitrogen expander), calibrating a mixed refrigerant, computing liquefaction specific energy or power, scaling to trains, choosing gas-turbine against electric drive and the resulting carbon intensity, or sizing LNG storage and cargo loading. Covers LNGProcessBuilder, LNGProcessModel, specific-energy validation and phase-state checks."
 last_verified: "2026-10-03"
 ---
 
@@ -12,17 +12,16 @@ Any task that turns a treated gas stream into LNG and needs a defensible power, 
 train count, storage volume or carbon intensity. Pair with `neqsim-process-modeling` for the
 upstream treatment train and `neqsim-equipment-cost-estimation` for the cost side.
 
-## The one thing that will bite you
+## Validate the cycle design
 
-**A shipped mixed-refrigerant inventory is not a design.** Liquefaction specific energy is a
-strong function of refrigerant composition and circulation ratio — those *are* the cycle design.
-A builder with a fixed default inventory will return whatever that inventory gives, which can be
-two to three times outside the published band for the cycle, with no warning.
+Refrigerant composition, mass circulation and operating pressures define the
+cycle design. A default inventory is a starting configuration, not evidence
+that the required feed, product state, pinch, capacity or duty is feasible.
+Validate those inputs and outputs against the intended design and independent
+benchmarks before scaling a train. Broad energy bands are screening checks;
+meeting one does not independently calibrate or qualify the model.
 
-**Therefore: calibrating the refrigerant and passing the specific-energy benchmark is a mandatory
-gate, not a refinement.** Never scale an uncalibrated train to plant size.
-
-Reference bands (specific energy on the feed-to-LNG basis):
+Illustrative screening bands (specific energy on the feed-to-LNG basis):
 
 | Cycle | kWh/kg LNG | Notes |
 |---|---|---|
@@ -35,53 +34,51 @@ Reference bands (specific energy on the feed-to-LNG basis):
 Source: Pereira et al., *Energy Conversion and Management* 272 (2022) 116364, and the open
 liquefaction literature. Always cite the band you validate against.
 
-## Core API
+## Verified builder contract (Java and Python)
 
-```java
-LNGProcessBuilder builder = new LNGProcessBuilder("SMR train");
-builder.setFeedStream(treatedGas);
-builder.setLngTemperature(-160.0);      // degC
-builder.setLngPressure(1.08);           // bara
+Inspect `src/main/java/neqsim/process/lng/LNGProcessBuilder.java` and the executable
+`LNGProcessBuilderTest` / `LNGProcessBuilderRefrigerantTest` under
+`src/test/java/neqsim/process/lng/` before building the model.
 
-// Refrigerant is configurable — set it, do not accept the default
-builder.setRefrigerantComposition(
-    new String[] {"nitrogen", "methane", "ethane", "propane", "i-butane"},
-    new double[] {0.08, 0.34, 0.34, 0.12, 0.12});
-builder.setRefrigerantCirculationRatio(2.5);   // kmol refrigerant per kmol feed
-builder.setRefrigerantSuctionPressure(4.0);    // bara
-builder.setRefrigerantDischargePressure(45.0); // bara
-builder.setRefrigerantCoolingTemperature(30.0);// degC after the aftercooler
+- Construct `LNGProcessBuilder` with no arguments, then set its name and select
+  an `LNGProcessCycle`: SMR, DMR, C3MR or NITROGEN_EXPANDER. The current enum
+  does not expose a cascade cycle.
+- Supply the treated feed with `setFeedStream(StreamInterface)` or the documented
+  fluid/flow/T/P setters. Set the cold-end target with
+  `setTargetLiquefactionTemperature(double)` in °C, and the product pressure with
+  `setProductPressure(double)` in bara.
+- Set refrigerant composition (mole fractions), suction/discharge pressures in
+  bara and cooling temperature in °C. `setRefrigerantCirculationRatio(double)`
+  is **refrigerant mass flow/feed mass flow**, not a molar circulation ratio.
+- Call public `build()` to obtain an `LNGProcessModel`. Individual cycle builders
+  such as `buildSMR()` are private implementation methods. There is no string
+  constructor, `setLngTemperature` or `setLngPressure` API.
+- `LNGProcessModel.run()` returns a `Result`; read
+  `getSpecificEnergyKWhPerKgLNG()`, `getNetPowerKW()` and
+  `getLNGMassFlowKgPerHour()` from that result. Inspect yield, exchanger approach,
+  convergence and the energy boundary before accepting the values.
+- For area composition, retain the live feed and the model's `getProcessSystem()`.
+  `setUpstreamProcess(...)` extends its supplied process in place; do not also
+  register the same upstream equipment in a second area and run it twice.
 
-ProcessSystem train = builder.buildSMR();
-train.run();
-```
+In Python, resolve these same Java classes/enums through the selected NeqSim
+bridge (workspace notebooks use `neqsim_init` and `ns.JClass`). Do not assume
+convenience wrappers or recreate the refrigeration equations in Python. Reuse
+one case specification and engine build when comparing Java/Python results.
 
-Other cycles: `buildDMR()`, `buildC3MR()`, `buildCascade()`, `buildNitrogenExpander()`.
+## Validate the refrigerant design
 
-## The calibration workflow (do this every time)
+Specify the actual cycle/refrigerant design or fit independently justified design
+inputs, then assess the resulting model. Sweep circulation and pressures within
+physical and equipment bounds; inspect duty, pinch/approach, phase states, yield
+and constraints. An energy number falling inside a broad literature band is a
+screening check, not a calibration dataset or proof of a valid design. Do not
+accept the first in-band candidate while ignoring infeasibility or independent
+benchmarks. Retain the objective, bounds, failed cases and benchmark evidence.
 
-```python
-def specific_energy(comp, fractions, ratio, suction, discharge):
-    b = LNGProcessBuilder("cal")
-    b.setFeedStream(feed)
-    b.setRefrigerantComposition(comp, fractions)
-    b.setRefrigerantCirculationRatio(ratio)
-    b.setRefrigerantSuctionPressure(suction)
-    b.setRefrigerantDischargePressure(discharge)
-    p = b.buildSMR()
-    p.run()
-    power_kW = sum(u.getPower("kW") for u in compressors_in(p))
-    lng_kg_per_h = lng_stream.getFlowRate("kg/hr")
-    return power_kW / lng_kg_per_h
-
-# 1. Sweep circulation ratio and discharge pressure
-# 2. Accept the first combination inside the published band
-# 3. ASSERT it is inside the band before going further
-assert 0.19 <= se <= 0.43, "SMR train outside the published specific-energy band"
-```
-
-Circulation ratio is the strongest single lever; discharge pressure is the second. Suction
-pressure mainly sets the cold-end approach.
+For the current source-backed synthetic SMR example and its acceptance checks,
+use `LNGProcessBuilderRefrigerantTest.calibratedRefrigerantLandsInsideThePublishedBand`
+and `circulationRatioChangesCompressorPower`. This verifies those cases only.
 
 ## Scaling to a plant
 
@@ -101,26 +98,20 @@ Then add, as separate items:
 A common sanity number: total FLNG/plant power lands near **0.35–0.40 kWh/kg** once end-flash and
 utilities are included, against 0.26–0.32 for the refrigeration cycle alone.
 
-## The LNG bubble-point trap
+## LNG phase state and inventory density
 
-Flashing an LNG composition at its storage temperature and pressure with `TPflash` frequently
-returns **vapour**, giving a density near 2 kg/m³ instead of 430–460 kg/m³ — and the error then
-propagates silently into cargo size, storage volume and cargo count.
+Calculate equilibrium at the specified tank composition, temperature and pressure
+and inspect the actual phase state. A vapor result is not automatically a flash
+bug: the specified state may be outside the liquid region. Do not replace the
+requested operating temperature with a bubble-point temperature simply to obtain
+a plausible liquid density.
 
-```python
-# WRONG — may land on the vapour side
-fluid.setTemperature(-160.0, "C"); fluid.setPressure(1.08, "bara")
-ops.TPflash(); rho = fluid.getDensity("kg/m3")     # 1.9 kg/m3 !
-
-# RIGHT — put the fluid on the saturation line first
-fluid.setPressure(1.08, "bara")
-ops.bubblePointTemperatureFlash()
-fluid.initProperties()
-rho = fluid.getPhase("oil").getDensity("kg/m3")    # ~440 kg/m3
-```
-
-Always cross-check LNG density against a reference equation (CoolProp methane saturated liquid is
-close enough for a screening study; expect SRK to sit within ~4 %).
+For a deliberately saturated-liquid inventory basis, solve the bubble temperature
+at the specified pressure, report that solved temperature and assumption, check
+which liquid phase is present, and initialize properties before retrieving its
+density. Keep vapor/boil-off mass and the selected density basis explicit. Use
+mixture-relevant reference data; pure-methane saturation density is only a
+screening comparison for an LNG mixture.
 
 ## Driver selection and carbon intensity
 

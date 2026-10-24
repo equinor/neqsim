@@ -27,6 +27,10 @@ on:
       - "devtools/test_discovery_registry.py"
       - "devtools/agent_eval.py"
       - "devtools/agent_eval_cases.json"
+      - "devtools/capability_search.py"
+      - "devtools/agent_capability_routes.json"
+      - "devtools/test_capability_search.py"
+      - "src/main/java/neqsim/**"
       - "devtools/test_agent_eval.py"
       - "devtools/test_agent_search.py"
       - "devtools/test_skill_search.py"
@@ -38,6 +42,10 @@ on:
       - ".agents/**"
       - ".github/skills/**"
       - ".github/agents/**"
+      - "devtools/capability_search.py"
+      - "devtools/agent_capability_routes.json"
+      - "devtools/test_capability_search.py"
+      - "src/main/java/neqsim/**"
 
 jobs:
   verify:
@@ -76,6 +84,11 @@ jobs:
 
       - name: Agent evaluation (routing golden cases + results.json contracts)
         run: uv run --project devtools --locked --group test python -m pytest devtools/test_agent_eval.py -q
+
+      - name: Verify source capability discovery and complete package routing
+        run: |
+          uv run --project devtools --locked devtools/capability_search.py --audit --json
+          uv run --project devtools --locked --group test python -m pytest devtools/test_capability_search.py -q
 
       - name: Regenerate agent → skill map
         run: uv run --project devtools --locked devtools/generate_agent_skill_map.py

@@ -6,6 +6,12 @@ last_verified: "2026-10-03"
 
 # Integrated Production and Lifecycle
 
+For natural-language reservoir-to-products model construction including SURF,
+multiphase flowlines/risers, facilities, utilities and downstream processing,
+use `neqsim-production-system-modeling` with `network-energy-systems`. It preserves
+one case/interface contract for Python and Java and composes these existing
+screening/integrated APIs with detailed process and external reservoir workflows.
+
 Use this guide for executable APIs that sit between the broad field-development workflow and a detailed process model. The existing field-development and economics skills remain the entry point for concept framing, cost/economic assumptions, flow assurance and reporting. This guide fills in the newer integrated well/network solver, explicit tie-in capacity planning, lifecycle product checks, concept-to-process bridge and reservoir coupling export.
 
 ## When to use this

@@ -1,12 +1,19 @@
 ---
 name: neqsim-api-patterns
-description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
+description: "NeqSim Java/Python API patterns for fluids, flashes, process equipment and units. USE WHEN: selecting EOS/mixing-rule selection and property retrieval, including viscosity, thermal conductivity, binary/effective diffusion, gas-oil-water interfacial tension and black-oil PVT table conversion. Follow linked references for exact model selection, initialization and tested examples."
 last_verified: "2026-10-12"
 ---
 
 # NeqSim API Patterns
 
 Copy-paste reference for common NeqSim operations. All Java code must be Java 8 compatible.
+
+Use progressive disclosure: search headings and read only the task-relevant section.
+For property-model selection, diffusion or gas-oil-water interfacial tension, read
+[references/physical-properties.md](references/physical-properties.md) and its tested guides.
+For black-oil tables, conversion and reservoir export, use `docs/blackoil/README.md` and
+the `pvt-simulation` agent. For APIs absent from this recipe list, follow
+[source/runtime discovery](../../../docs/development/AGENT_CAPABILITY_DISCOVERY.md).
 
 ## MCP server vs. Python/Java API — which to use
 
@@ -308,8 +315,12 @@ Benchmarked against CoolProp (Span-Wagner) — density deviation at 40 °C / 100
 | `SystemSrkCPAstatoil` | −17.5 % / −10.3 % |
 | **`SystemGERG2008Eos`** | **+0.01 % / +0.02 %** |
 
-Use `SystemGERG2008Eos` for any CO₂ compression, injection or transport duty. Cubics are
-acceptable for the gas-phase part of the train but not near or above the critical density.
+These two pure-CO₂ density comparisons do not qualify every mixture, caloric property,
+phase boundary or equipment duty. Select the model for the actual composition and required
+properties; verify component support and validate the relevant pressure-temperature range.
+Use a reference EOS benchmark where applicable. For water, inhibitors, electrolytes or
+multiphase CO₂ mixtures, assess the appropriate mixture/association model separately rather
+than extrapolating this density table into a universal GERG recommendation.
 
 ### CPA liquid-water caloric accuracy
 
