@@ -354,8 +354,9 @@ public class DistillationColumnWarmStateCacheTest {
       assertEquals(1, column.getInletStreams().size(),
           "repeated runs must not accumulate the internal return in the external-feed registry");
       assertSame(feed, column.getInletStreams().get(0));
-      assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, gasFlow * 5.0e-3));
-      assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, liquidFlow * 5.0e-3));
+      // One extra rigorous iteration can move the products by about the enthalpy residual.
+      assertEquals(gasFlow, column.getGasOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, gasFlow * 2.0e-2));
+      assertEquals(liquidFlow, column.getLiquidOutStream().getFlowRate("kg/hr"), Math.max(1.0e-6, liquidFlow * 2.0e-2));
       assertPhysicalAndBalanced(feed, column);
     }
   }

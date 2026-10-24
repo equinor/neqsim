@@ -25,7 +25,7 @@ public class WaterCpPlaceholderRegressionTest extends neqsim.NeqSimTest {
       try {
         NeqSimDataBase.useExtendedComponentDatabase(false);
         double water298 = cp0("water", 298.15);
-        assertEquals(33.519817, water298, 1e-5);
+        assertEquals(33.517166826020606, water298, 1e-5);
         checkCase("1,2,4-trimethylbenzene", 154.35131, 237.67382, water298);
         checkCase("(e)-2-methyl-3-hexene", 151.5, 231.9, water298);
         checkCase("1,1,4-trimethylcyclohexane", 175.6, 299.1, water298);

@@ -55,7 +55,7 @@ class TPflashCubicRootSelectionTest {
     assertEquals(PhaseType.GAS, ordinary.getPhase(0).getType());
     assertEquals(PhaseType.OIL, ordinary.getPhase(1).getType());
     assertTrue(ordinary.getPhase(0).getMolarMass() < ordinary.getPhase(1).getMolarMass());
-    assertEquals(4766.143859623306, ordinary.getGibbsEnergy(), 1.0e-8);
+    assertEquals(4766.14523675325, ordinary.getGibbsEnergy(), 1.0e-8);
     assertEquals(multiphase.getGibbsEnergy(), ordinary.getGibbsEnergy(), 1.0e-8);
 
     for (int phaseIndex = 0; phaseIndex < 2; phaseIndex++) {

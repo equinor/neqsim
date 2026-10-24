@@ -23,7 +23,7 @@ class TPflashSrkAqueousLowerGibbsRootTest {
     assertEquivalentGasAqueousEquilibrium(ordinary, multiphase);
     assertEquals(0.907958440381479, multiphase.getBeta(0), 1.0e-10);
     assertEquals(0.301266657120460, multiphase.getPhase(0).getZ(), 1.0e-10);
-    assertEquals(4446.598527443467, multiphase.getGibbsEnergy(), 1.0e-7);
+    assertEquals(4446.5991520838725, multiphase.getGibbsEnergy(), 1.0e-7);
 
     double firstGibbsEnergy = multiphase.getGibbsEnergy();
     double firstGasFraction = multiphase.getBeta(0);

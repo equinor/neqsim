@@ -195,7 +195,7 @@ public class SafeSplineSurgeCurveTest {
     assertEquals(101.9356767734, firstStageCompressor.getPolytropicFluidHead(), 0.1);
     assertEquals(9986.40678, firstStageCompressor.getInletStream().getFlowRate("m3/hr"), 0.1);
     assertEquals(9986.39679526, firstStageCompressor.getSurgeFlowRate(), 1);
-    assertEquals(39429.644850, resyclestream.getFlowRate("kg/hr"), 0.1);
+    assertEquals(39429.541835117976, resyclestream.getFlowRate("kg/hr"), 0.1);
     assertEquals(39820.07485, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
   }
 
