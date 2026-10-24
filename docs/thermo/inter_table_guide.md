@@ -111,7 +111,7 @@ Huron-Vidal mixing rules combine an EoS with an activity coefficient model.
 
 The stored coefficients enter $\tau_{ij}=D_{ij}/T+D_{ij,T}$, with $T$ in
 kelvin. They are not raw interaction energies in J/mol. See the
-[mixing-rule guide](mixing_rules_guide#4-huron-vidal-mixing-rules) for the
+[mixing-rule guide](mixing_rules_guide.md#4-huron-vidal-mixing-rules) for the
 volume-weighted modified-NRTL convention, EoS constants and qualification limits.
 
 For cubic SRK/PR mixing rules 3 and 4, an optional complete family of the six

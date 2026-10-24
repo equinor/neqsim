@@ -321,7 +321,7 @@ pseudocomponent pair. Stored HV coefficients on a pair marked `Classic` do not
 activate an HV fit.
 
 The database supports separate complete `_SRK` and `_PR` HV coefficient
-families, as described in the [interaction-table guide](inter_table_guide#huron-vidal-parameters).
+families, as described in the [interaction-table guide](inter_table_guide.md#huron-vidal-parameters).
 The optional bundled families are initially empty, so existing fluids retain
 their shared legacy coefficients. A malformed selected family raises an error
 instead of changing to classical mixing. The correct EoS constant alone does
@@ -346,6 +346,13 @@ derivatives, Gibbs-Duhem and Hessian symmetry, classical-rule recovery for both
 EoS, directed-parameter ordering, and gas-oil-water material balance and fugacity
 equilibrium with methanol and MEG. These checks establish implementation
 consistency for the tested states; they are separate from experimental accuracy.
+`HuronVidalThermodynamicModelConsistencyTest` also uses the existing
+`ThermodynamicModelTest` fugacity/Gibbs, composition, pressure and temperature
+identity checks at their default absolute tolerance of $10^{-10}$ for its
+specified feeds. The independent numerical derivative check uses the established
+mixed absolute/relative tolerance of $10^{-6}$ and requires agreement between two
+step sizes. Bounded step refinement resolves trace-component one-sided stencil
+truncation without relaxing that tolerance; an unresolved check still fails.
 Hydrate-temperature depression is a trend check on the coupled hydrate model,
 not a validation of dissociation temperatures for every inhibitor concentration.
 
