@@ -49,9 +49,8 @@ class CO2WaterBaselineReferenceAssessmentTest {
   @Test
   void referencePreservesPartialPressureAndEvaluatedColumn() throws Exception {
     List<Reference> references = loadReferences();
-    double[] values = {0.001355, 0.001136, 0.000963, 0.000825, 0.000713, 0.000622, 0.000548, 0.000487,
-        0.000437, 0.000395, 0.000359, 0.000329, 0.000304, 0.000283, 0.000264, 0.000249, 0.000236,
-        0.000224, 0.000214};
+    double[] values = {0.001355, 0.001136, 0.000963, 0.000825, 0.000713, 0.000622, 0.000548, 0.000487, 0.000437,
+        0.000395, 0.000359, 0.000329, 0.000304, 0.000283, 0.000264, 0.000249, 0.000236, 0.000224, 0.000214};
     for (int index = 0; index < references.size(); index++) {
       Reference reference = references.get(index);
       assertEquals(273.15 + 5.0 * index, reference.temperature, 1.0e-12);
