@@ -570,6 +570,19 @@ public final class TwoFluidComponentTransport implements Serializable {
     }
   }
 
+  /**
+   * Validate stage-frozen transfers against phase sources and conservation of every chemical component.
+   *
+   * @param cell cell index
+   * @param timeStepSeconds accepted substep duration
+   * @param cellLengthMetres cell length in metres
+   * @param phaseTransferKg accepted hydrodynamic phase transfers in kg
+   * @param componentSourceKgPerMetreSecond stage-frozen cell/phase/component source rates
+   * @param tolerance relative conservation tolerance
+   * @return validated phase/component transfers in kg
+   * @throws IllegalArgumentException if the source arrays do not match the grid or component slate
+   * @throws IllegalStateException if source transfers are nonfinite or inconsistent
+   */
   private double[][] componentTransferFromSourceRates(int cell, double timeStepSeconds, double cellLengthMetres,
       double[] phaseTransferKg, double[][][] componentSourceKgPerMetreSecond, double tolerance) {
     if (componentSourceKgPerMetreSecond.length != cellCount || componentSourceKgPerMetreSecond[cell] == null
@@ -592,11 +605,24 @@ public final class TwoFluidComponentTransport implements Serializable {
         componentSumKg += value;
       }
       double scale = Math.max(MASS_FLOOR_KG, Math.max(Math.abs(phaseTransferKg[phase]), Math.abs(componentSumKg)));
-      if (Math.abs(componentSumKg - phaseTransferKg[phase]) > Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG,
-          tolerance * scale)) {
+      if (!Double.isFinite(componentSumKg) || Math.abs(componentSumKg - phaseTransferKg[phase]) > Math
+          .max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG, tolerance * scale)) {
         throw new IllegalStateException(
             "Component sources do not reproduce the " + phaseName(phase) + " hydrodynamic source in cell " + cell
                 + ": component transfer=" + componentSumKg + " kg, phase transfer=" + phaseTransferKg[phase] + " kg");
+      }
+    }
+    for (int component = 0; component < componentNames.length; component++) {
+      double residualKg = 0.0;
+      double scaleKg = MASS_FLOOR_KG;
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        residualKg += transfer[phase][component];
+        scaleKg = Math.max(scaleKg, Math.abs(transfer[phase][component]));
+      }
+      if (!Double.isFinite(residualKg)
+          || Math.abs(residualKg) > Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG, tolerance * scaleKg)) {
+        throw new IllegalStateException("Interphase sources do not conserve component " + componentNames[component]
+            + " in cell " + cell + ": residual=" + residualKg + " kg");
       }
     }
     return transfer;

@@ -78,6 +78,84 @@ class TwoFluidPhaseAppearanceAdvectionTest {
     fixture.assertUnchanged();
   }
 
+  /** Equal phase totals cannot authorize conversion of one chemical component into another. */
+  @Test
+  void chemicallyInconsistentSourceAllocationsAreRejectedWithoutMutation() {
+    Fixture fixture = new Fixture();
+    double[][] flux = new double[3][3];
+    flux[1][1] = 0.0004;
+    double[][] sources = {{-0.001, 0.001, 0.0}, {-0.001, 0.001, 0.0}};
+    double[][][] componentSources = new double[2][3][2];
+    for (int cell = 0; cell < 2; cell++) {
+      componentSources[cell][0][fixture.methane] = -0.001;
+      componentSources[cell][1][fixture.ethane] = 0.001;
+      fixture.sections[cell].setGasMassPerLength(0.999);
+      fixture.sections[cell].setOilMassPerLength(cell == 0 ? 0.0006 : 0.0014);
+    }
+
+    assertThrows(IllegalStateException.class, () -> fixture.transport.advance(1.0, flux, sources, componentSources,
+        new double[2], fixture.sections, fixture.fluid, fixture.fluid, 1e-8));
+    fixture.assertUnchanged();
+  }
+
+  /** Incoming newly formed oil cannot fund a second departure from its receiving cell in the same step. */
+  @Test
+  void incomingOilCannotFundSameStepOnwardDeparture() {
+    Fixture fixture = new Fixture();
+    double[][] flux = new double[3][3];
+    flux[1][1] = 0.0008;
+    flux[2][1] = 0.0015;
+    double[][] sources = {{-0.001, 0.001, 0.0}, {-0.001, 0.001, 0.0}};
+    double[][][] componentSources = new double[2][3][2];
+    for (int cell = 0; cell < 2; cell++) {
+      componentSources[cell][0][fixture.ethane] = -0.001;
+      componentSources[cell][1][fixture.ethane] = 0.001;
+      fixture.sections[cell].setGasMassPerLength(0.999);
+      fixture.sections[cell].setOilMassPerLength(cell == 0 ? 0.0002 : 0.0003);
+    }
+
+    IllegalStateException failure = assertThrows(IllegalStateException.class, () -> fixture.transport.advance(1.0, flux,
+        sources, componentSources, new double[2], fixture.sections, fixture.fluid, fixture.fluid, 1e-8));
+    assertTrue(failure.getMessage().contains("Insufficient oil source-stage donor inventory in cell 1"));
+    fixture.assertUnchanged();
+  }
+
+  /** Newly appearing oil can leave the outlet while its actual components close the boundary ledger. */
+  @Test
+  void newlyCondensedOilCanLeaveThroughTheOutletConservatively() {
+    Fixture fixture = new Fixture();
+    double[][] flux = new double[3][3];
+    flux[1][1] = 0.0004;
+    flux[2][1] = 0.0007;
+    double[][] sources = {{-0.001, 0.001, 0.0}, {-0.001, 0.001, 0.0}};
+    double[][][] componentSources = new double[2][3][2];
+    for (int cell = 0; cell < 2; cell++) {
+      componentSources[cell][0][fixture.ethane] = -0.001;
+      componentSources[cell][1][fixture.ethane] = 0.001;
+      fixture.sections[cell].setGasMassPerLength(0.999);
+      fixture.sections[cell].setOilMassPerLength(cell == 0 ? 0.0006 : 0.0007);
+    }
+
+    fixture.transport.advance(1.0, flux, sources, componentSources, new double[2], fixture.sections, fixture.fluid,
+        fixture.fluid, 1e-8);
+    double[][][] actual = fixture.transport.getInventoryKg();
+    assertEquals(0.0006, actual[0][1][fixture.ethane], 1e-14);
+    assertEquals(0.0007, actual[1][1][fixture.ethane], 1e-14);
+    assertEquals(0.0, actual[0][1][fixture.methane], 0.0);
+    assertEquals(0.0, actual[1][1][fixture.methane], 0.0);
+    TwoFluidComponentConservationReport report = fixture.transport.createReport(1.0, 1, 1e-8);
+    assertEquals(0.0007, report.getOutletBoundaryMassKg()[fixture.ethane], 1e-14);
+    assertEquals(0.0, report.getOutletBoundaryMassKg()[fixture.methane], 0.0);
+    assertArrayEquals(new double[2], report.getInletBoundaryMassKg(), 0.0);
+    for (int component = 0; component < 2; component++) {
+      assertEquals(report.getInitialInventoryKg()[component],
+          report.getFinalInventoryKg()[component] + report.getOutletBoundaryMassKg()[component], 1e-14);
+    }
+    assertTrue(report.isConverged(), report.getMessage());
+    assertEquals(0.0, report.getMaximumInterphaseTransferResidualKg(), 1e-14);
+    assertEquals(0.0, report.getMaximumPhaseMassSynchronizationErrorKg(), 1e-14);
+  }
+
   /** Non-finite frozen source entries cannot establish a phase composition. */
   @Test
   void nonFiniteAppearanceSourcesAreRejectedWithoutMutation() {
