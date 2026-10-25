@@ -49,7 +49,9 @@ class CO2WaterBaselineReferenceAssessmentTest {
   @Test
   void referencePreservesPartialPressureAndEvaluatedColumn() throws Exception {
     List<Reference> references = loadReferences();
-    double[] values = {0.001355, 0.001136, 0.000963, 0.000825, 0.000713, 0.000622};
+    double[] values = {0.001355, 0.001136, 0.000963, 0.000825, 0.000713, 0.000622, 0.000548, 0.000487,
+        0.000437, 0.000395, 0.000359, 0.000329, 0.000304, 0.000283, 0.000264, 0.000249, 0.000236,
+        0.000224, 0.000214};
     for (int index = 0; index < references.size(); index++) {
       Reference reference = references.get(index);
       assertEquals(273.15 + 5.0 * index, reference.temperature, 1.0e-12);
@@ -59,7 +61,7 @@ class CO2WaterBaselineReferenceAssessmentTest {
   }
 
   /**
-   * Retains all 18 setup variants before asserting numerical gates, without an accuracy pass band.
+   * Retains all 57 setup variants before asserting numerical gates, without an accuracy pass band.
    *
    * @throws Exception if references, calculations or output cannot be processed
    */
@@ -80,7 +82,7 @@ class CO2WaterBaselineReferenceAssessmentTest {
         dispositions.add(calculate(reference, construction, rows));
       }
     }
-    assertEquals(19, rows.size());
+    assertEquals(58, rows.size());
     Files.createDirectories(Paths.get("target"));
     Files.write(Paths.get("target/co2-water-baseline-carroll1991-assessment.csv"), rows, StandardCharsets.UTF_8);
     for (String row : rows) {
@@ -208,7 +210,7 @@ class CO2WaterBaselineReferenceAssessmentTest {
   }
 
   /**
-   * Loads only the six explicitly tabulated evaluated model values.
+   * Loads the nineteen explicitly tabulated evaluated model values.
    *
    * @return source states, not a newly fitted correlation
    * @throws Exception if the fixture cannot be read or parsed
@@ -229,7 +231,7 @@ class CO2WaterBaselineReferenceAssessmentTest {
             Double.parseDouble(fields[3])));
       }
     }
-    assertEquals(6, references.size());
+    assertEquals(19, references.size());
     return references;
   }
 
