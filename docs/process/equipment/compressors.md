@@ -180,7 +180,11 @@ actual inlet flow, speed, head, and efficiency. Check the selected map and its
 flow/speed range when this occurs. A polynomial extrapolation can produce such
 invalid values even when all tabulated points are physical. The public efficiency
 setters retain their configuration-clamping behavior; they do not make an invalid
-map operating point valid. The speed solver already excludes these map values
+map operating point valid. The failure type is
+`Compressor.ChartOperatingPointException`, a subtype of `IllegalArgumentException`.
+`ProductionOptimizer` records this specific failure as the hard
+`compressorChartOperatingPoint` constraint and skips downstream objectives for
+that trial. Unrelated calculation exceptions still propagate. The speed solver already excludes these map values
 when searching for a feasible operating point.
 For `CompressorShaft.solveSpeed(...)`, choose trial bounds at which every body
 has physical map values; invalid bound evaluations propagate this diagnostic.

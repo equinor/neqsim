@@ -119,4 +119,51 @@ class ProductionOptimizerCompressorFailureTest extends NeqSimTest {
     assertEquals(14.0, compressor.getOutletStream().getPressure("bara"), 0.001);
     assertEquals(1000.0, compressor.getOutletStream().getFlowRate("kg/hr"), 1.0e-6);
   }
+
+  /** Fixed-speed map rejection is infeasible even when optional simulation validation is disabled. */
+  @Test
+  void fixedSpeedChartRejectionDoesNotEvaluateStaleObjectives() {
+    Compressor compressor = createCompressor();
+    compressor.setSolveSpeed(false);
+    compressor.getInletStream().setFlowRate(1.0e9, "kg/hr");
+    compressor.getInletStream().run();
+    assertThrows(Compressor.ChartOperatingPointException.class, () -> compressor.run());
+    ProcessSystem process = new ProcessSystem();
+    process.add(compressor.getInletStream());
+    process.add(compressor);
+    AtomicInteger objectiveCalls = new AtomicInteger();
+    OptimizationObjective objective = new OptimizationObjective("power", ps -> {
+      objectiveCalls.incrementAndGet();
+      return compressor.getPower();
+    }, 1.0, ObjectiveType.MINIMIZE);
+    OptimizationConfig config = new OptimizationConfig(1.0e9, 1.0e9).rateUnit("kg/hr").rejectInvalidSimulations(false);
+    OptimizationResult result = new ProductionOptimizer().optimize(process, compressor.getInletStream(), config,
+        Collections.singletonList(objective), Collections.emptyList());
+    assertFalse(result.isFeasible());
+    assertEquals(0, objectiveCalls.get());
+    assertTrue(result.getObjectiveValues().isEmpty());
+    assertEquals("compressorChartOperatingPoint", result.getConstraintStatuses().get(0).getName());
+    assertTrue(result.getConstraintStatuses().get(0).getDescription().contains("head="));
+    assertTrue(result.getIterationHistory().stream().noneMatch(ProductionOptimizer.IterationRecord::isFeasible));
+  }
+
+  /** Unrelated argument errors must still reach the caller instead of being mislabeled as map limits. */
+  @Test
+  void unrelatedCalculationFailureIsNotHidden() {
+    ProcessSystem process = new ProcessSystem();
+    Compressor configured = createCompressor();
+    Compressor broken = new Compressor("broken", configured.getInletStream()) {
+      private static final long serialVersionUID = 1L;
+
+      /** {@inheritDoc} */
+      @Override
+      public void run(java.util.UUID id) {
+        throw new IllegalArgumentException("unrelated configuration failure");
+      }
+    };
+    process.add(configured.getInletStream());
+    process.add(broken);
+    assertThrows(RuntimeException.class, () -> new ProductionOptimizer().optimize(process, configured.getInletStream(),
+        new OptimizationConfig(1000.0, 1000.0).rateUnit("kg/hr"), null, null));
+  }
 }

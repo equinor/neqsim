@@ -13,6 +13,16 @@ public class nmVOCTest extends neqsim.NeqSimTest {
   static NMVOCAnalyser vocanalyser1;
 
   /**
+   * Compare independently evaluated conversion paths at floating-point rounding precision.
+   *
+   * @param expected result of the direct conversion
+   * @param actual result of the chained conversion
+   */
+  private static void assertConversionEquals(double expected, double actual) {
+    Assertions.assertEquals(expected, actual, 2.0 * Math.ulp(expected));
+  }
+
+  /**
    * Creates the shared process and NMVOC analyser used by the tests.
    */
   @BeforeAll
@@ -50,26 +60,26 @@ public class nmVOCTest extends neqsim.NeqSimTest {
   @Test
   public void testGetFlowRate() {
     process1.run();
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("kg/min"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("kg/sec"));
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("kg/hr"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("kg/min"));
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("tonnes/year"),
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("kg/hr") * 24 * 365
             / 1000);
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("m3/min"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("m3/sec"));
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("m3/hr"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("m3/min"));
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("mole/min"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("mole/sec"));
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("mole/hr"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getFlowRate("mole/min"));
     // throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
@@ -77,23 +87,23 @@ public class nmVOCTest extends neqsim.NeqSimTest {
 
   @Test
   public void testGetTotalFlowRate() {
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("kg/min"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("kg/sec"));
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("kg/hr"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("kg/min"));
 
-    // Assertions.assertEquals(thermoSystem.getComponent("water").getTotalFlowRate("m3/min"),60
+    // assertConversionEquals(thermoSystem.getComponent("water").getTotalFlowRate("m3/min"),60
     // * thermoSystem.getComponent("water").getTotalFlowRate("m3/sec"));
-    // Assertions.assertEquals(thermoSystem.getComponent("water").getTotalFlowRate("m3/hr"),60
+    // assertConversionEquals(thermoSystem.getComponent("water").getTotalFlowRate("m3/hr"),60
     // *
     // thermoSystem.getComponent("water").getTotalFlowRate("m3/min"));
 
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("mole/min"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("mole/sec"));
-    Assertions.assertEquals(
+    assertConversionEquals(
         ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("mole/hr"),
         60 * ((Stream) process1.getUnit("stream 1")).getFluid().getComponent("water").getTotalFlowRate("mole/min"));
     // throw new RuntimeException("failed.. unit: " + flowunit + " not supported");

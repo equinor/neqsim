@@ -2163,8 +2163,8 @@ def _title_block_els(tb, drawing_number, sheet_i, sheet_n, title):
     cell(x0 + 98, y0 + 2 * rh, 50, "Status", tb["issue_status"], 2.8, True)
     cell(x0, y0 + 3 * rh, 37, "Sheet", "Sheet %d of %d" % (sheet_i, sheet_n))
     cell(x0 + 37, y0 + 3 * rh, 37, "Date", tb["date"])
-    cell(x0 + 74, y0 + 3 * rh, 37, "Scale", "not to scale")
-    cell(x0 + 111, y0 + 3 * rh, 37, "Format", "A3 landscape")
+    cell(x0 + 74, y0 + 3 * rh, 37, "Scale", tb.get("scale") or "not to scale")
+    cell(x0 + 111, y0 + 3 * rh, 37, "Format", tb.get("format") or "A3 landscape")
     cell(x0, y0 + 4 * rh, 49, "Drawn by", tb["drawn_by"])
     cell(x0 + 49, y0 + 4 * rh, 49, "Checked by", tb["checked_by"])
     cell(x0 + 98, y0 + 4 * rh, 50, "Approved by", tb["approved_by"])
@@ -3186,4 +3186,24 @@ def build_bfd(data, out_dir, title_block=None, blocks=None, case=None):
                      "edges": [{"id": e.eid, "kind": e.meta["kind"], "streams": e.meta["streams"],
                                 "mass_kg_h": e.meta["total"]} for e in all_edges]})
     return manifest
+
+
+# ---------------------------------------------------------------------------
+# public drawing kit (shared by sibling generators, e.g. fa_diagrams)
+# ---------------------------------------------------------------------------
+class kit:  # noqa: N801 - namespace of stable aliases for the sheet primitives
+    """Stable public aliases of the sheet primitives and A3 page furniture used by sibling generators."""
+
+    PAGE_W, PAGE_H, AREA = PAGE_W, PAGE_H, AREA
+    INK, GREY, RED, SW, FONT = INK, GREY, RED, SW, FONT
+    line, polyline, polygon, rect, circle, path = map(staticmethod, (_line, _polyline, _polygon, _rect, _circle, _path))
+    dashed_poly, text, text_lines, arrowhead, group = map(
+        staticmethod, (_dashed_poly, _text, _text_lines, _arrowhead, _g))
+    wrap, text_w, fit_text, ascii_text, fmt = map(staticmethod, (_wrap, text_w, _fit_text, _ascii, _f))
+    frame, title_block, revision_table, notes_box = map(
+        staticmethod, (_frame_els, _title_block_els, _rev_table_els, _notes_els))
+    legend_box = staticmethod(_legend_els)
+    to_pdf = staticmethod(_svgs_to_pdf)
+    write_text = staticmethod(_write)
+    safe_name = staticmethod(_safe_name)
 

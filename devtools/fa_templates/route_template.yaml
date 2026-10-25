@@ -1,0 +1,28 @@
+# Route file (TEMPLATE). Unknown geometry stays unknown: leave a coordinate out rather than inventing one.
+# Elevations are mandatory for hydraulic segments. Reference example: devtools/fa_examples/offshore_tieback/route.yaml (synthetic).
+schema: flow_assurance_route.v1
+route_status: schematic                  # surveyed | design | synthetic | schematic
+georeferenced: false                     # true only with a real CRS and surveyed coordinates
+crs: "unavailable - TO BE CONFIRMED"
+horizontal_datum: "unavailable - TO BE CONFIRMED"
+vertical_datum: "unavailable - TO BE CONFIRMED"
+chainage: {origin: "unavailable - TO BE CONFIRMED", direction: "along flow", measure: "measured (as-laid) route length"}
+assets:                                  # kinds: well tree template manifold plem junction riser_base host_interface injection_point valve pig_launcher pig_receiver tie_in waypoint
+  - {id: SRC-A, kind: template, name: "unavailable - TO BE CONFIRMED", elev_m: "unavailable - TO BE CONFIRMED"}
+  - {id: HOST-IN, kind: host_interface, name: "unavailable - TO BE CONFIRMED", elev_m: "unavailable - TO BE CONFIRMED"}
+segments:                                # one per pipe; ids are stable tags; layers go from the steel wall outward
+  - id: SEG-01
+    kind: flowline                       # jumper flowline riser spool pipeline gathering_line
+    line_tag: "unavailable - TO BE CONFIRMED"
+    from: SRC-A
+    to: HOST-IN
+    length_m: "unavailable - TO BE CONFIRMED"   # measured length; horizontal projection comes from coordinates when supplied
+    id_m: "unavailable - TO BE CONFIRMED"
+    roughness_m: "unavailable - TO BE CONFIRMED"
+    ambient: {t_c: "unavailable - TO BE CONFIRMED", type: seabed, external_h_w_m2k: "unavailable - TO BE CONFIRMED"}
+    burial: null                         # {depth_m: .., k_soil_w_mk: ..} when buried
+    layers:
+      - {name: "steel", material: "unavailable - TO BE CONFIRMED", thickness_m: "unavailable - TO BE CONFIRMED", k_w_mk: "unavailable - TO BE CONFIRMED",
+         rho_kg_m3: "unavailable - TO BE CONFIRMED", cp_j_kgk: "unavailable - TO BE CONFIRMED"}
+    source: SRC-1
+features: []                             # injection points, isolation valves, pig interfaces, crossings (state verified: true/false)

@@ -3378,7 +3378,7 @@ public class ProductionOptimizer {
             && !compressor.isSpeedSolveConverged()) {
           // A missed pressure target is a failed solve, even when capacity analysis is enabled or optional
           // output validation is disabled. Envelope constraints cannot certify an unconverged calculation.
-          return failedSpeedSolveEvaluation(decisionVariables,
+          return failedCompressorEvaluation(decisionVariables, "compressorSpeedSolve",
               "Speed solve did not converge for " + compressor.getName());
         }
       }
@@ -4103,7 +4103,10 @@ public class ProductionOptimizer {
       Throwable cause = exception;
       while (cause != null) {
         if (cause instanceof Compressor.SpeedSolveException) {
-          return failedSpeedSolveEvaluation(decisions, cause.getMessage());
+          return failedCompressorEvaluation(decisions, "compressorSpeedSolve", cause.getMessage());
+        }
+        if (cause instanceof Compressor.ChartOperatingPointException) {
+          return failedCompressorEvaluation(decisions, "compressorChartOperatingPoint", cause.getMessage());
         }
         if (cause == cause.getCause()) {
           break;
@@ -4119,12 +4122,13 @@ public class ProductionOptimizer {
    * Rejects a failed compressor calculation without evaluating stale downstream results or user callbacks.
    *
    * @param decisions exact attempted decision vector
+   * @param constraintName failed compressor acceptance gate
    * @param diagnostic compressor failure diagnostic
    * @return infeasible evaluation with an explicit hard convergence constraint
    */
-  private Evaluation failedSpeedSolveEvaluation(Map<String, Double> decisions, String diagnostic) {
-    ConstraintStatus status = new ConstraintStatus("compressorSpeedSolve", ConstraintSeverity.HARD, -1.0, 0.0,
-        diagnostic);
+  private Evaluation failedCompressorEvaluation(Map<String, Double> decisions, String constraintName,
+      String diagnostic) {
+    ConstraintStatus status = new ConstraintStatus(constraintName, ConstraintSeverity.HARD, -1.0, 0.0, diagnostic);
     return new Evaluation(9.99, null, Collections.emptyList(), Collections.singletonList(status),
         Collections.emptyMap(), decisions, false, false, Double.NEGATIVE_INFINITY);
   }

@@ -59,6 +59,13 @@ profiles until recalculation. See
 [the interfacial-properties guide](../../../docs/physical_properties/interfacial_properties.md)
 and `SurfaceTensionStateLifecycleTest` for regression cases.
 
+Bind all cloned physical-property families to the new phase, including inactive
+gas/oil/aqueous/solid families, and bind their calculation methods to the new family.
+Rebinding only the active family during initialization retains historical phase
+graphs during repeated role changes and can overflow column candidate serialization.
+`PhysicalPropertiesCloneOwnershipTest` checks ownership before initialization and
+bounded serialized state. This does not qualify concurrent HV mixing-rule state.
+
 After phase removal, verify component inventory as well as normalized compositions:
 `sum(beta[p] * x[p][i])` must reconstruct the feed. Do not repair a failed endpoint
 only by assigning `x = z`; that can conceal a genuine phase instability. Compare

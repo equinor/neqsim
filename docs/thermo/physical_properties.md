@@ -27,6 +27,14 @@ If temperature, pressure, composition, or phase-equilibrium settings change mate
 appropriate flash again before reinitializing physical properties. Calling
 `initPhysicalProperties()` alone does not perform a new equilibrium calculation.
 
+Cloning a phase retains its selected transport models and parameters. Every copied
+gas, oil, aqueous and solid property family belongs to the cloned phase, and each
+calculation method belongs to its copied family, including inactive families before
+the next initialization. Repeated cloning and phase-role changes therefore do not
+retain a growing chain of historical phase states. This ownership contract concerns
+transport-property objects; Huron–Vidal mixing-rule calculation-state isolation is
+tracked separately in issue #4575.
+
 Enabling `setMultiPhaseCheck(true)` allocates an additional equilibrium-search template without
 calculating its transport properties. This avoids viscosity, conductivity and density work for
 an inactive trial phase during repeated flashes. The template initializes those properties on

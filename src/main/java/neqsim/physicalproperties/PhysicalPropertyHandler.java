@@ -123,6 +123,31 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
   }
 
+  /**
+   * Bind every configured property family to its owning phase without rebuilding selected models or parameters.
+   *
+   * <p>
+   * Inactive families also need rebinding after a clone. Otherwise a later phase-role change can retain successive
+   * source phases through their calculation methods and grow the serialized object graph on every clone.
+   * </p>
+   *
+   * @param phase phase owning all of this handler's property families
+   */
+  public void setPhase(PhaseInterface phase) {
+    if (gasPhysicalProperties != null) {
+      gasPhysicalProperties.setPhase(phase);
+    }
+    if (oilPhysicalProperties != null) {
+      oilPhysicalProperties.setPhase(phase);
+    }
+    if (aqueousPhysicalProperties != null) {
+      aqueousPhysicalProperties.setPhase(phase);
+    }
+    if (solidPhysicalProperties != null) {
+      solidPhysicalProperties.setPhase(phase);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public PhysicalPropertyHandler clone() {

@@ -113,6 +113,9 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
     if (mixingRule != null) {
       properties.mixingRule = mixingRule.clone();
     }
+    // Method clones initially retain their source family. Rebind every method now,
+    // including those that a later partial property initialization does not visit.
+    properties.setPhases();
     return properties;
   }
 

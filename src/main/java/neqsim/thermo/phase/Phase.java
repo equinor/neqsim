@@ -121,6 +121,7 @@ public abstract class Phase implements PhaseInterface {
     // System.out.println("cloned length: " + componentArray.length);
     if (physicalPropertyHandler != null) {
       clonedPhase.physicalPropertyHandler = this.physicalPropertyHandler.clone();
+      clonedPhase.physicalPropertyHandler.setPhase(clonedPhase);
     }
 
     clonedPhase.componentNames = null;
