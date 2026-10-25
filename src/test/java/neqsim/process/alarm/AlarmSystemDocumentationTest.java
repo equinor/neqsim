@@ -52,8 +52,9 @@ public class AlarmSystemDocumentationTest extends NeqSimTest {
     assertTrue(exactExample.find(), "Guide must contain the marked exact Java program");
     String source = exactExample.group(1);
     assertFalse(exactExample.find(), "Guide must contain exactly one marked exact Java program");
-    assertTrue(JAVA_FENCE.matcher(guide).results().count() == 1L,
-        "Guide must contain exactly one Java fence");
+    Matcher javaFences = JAVA_FENCE.matcher(guide);
+    assertTrue(javaFences.find(), "Guide must contain one Java fence");
+    assertFalse(javaFences.find(), "Guide must contain exactly one Java fence");
     assertTrue(source.contains("LogManager.getLogger"));
     assertTrue(source.contains("assert alarms.getHistory().size() == 3;"));
     assertFalse(source.contains("System.out"));
