@@ -119,16 +119,23 @@ residuals. Rows are saved as they pass, so a later numerical failure preserves
 earlier evidence while the collector still marks an incomplete producer as
 failed. Experimental uncertainties and numerical tolerances are not relaxed.
 
-The earlier six-point 273.15 K execution predates merged #4367 and therefore
-cannot establish the current parameter's concentration or temperature
-behavior. The complete source series is retained to diagnose that extrapolation
-without fitting a parameter, introducing an empirical temperature correction or
-adding an experimental-accuracy pass band. The first expanded exact-head run
-remained finite and partial-pressure converged but revealed a model trend
-reversal at 323.15 K between 3.997 and 4.998 molal KCl. The revised diagnostic
-retains that behavior rather than aborting before writing the complete evidence.
-Current-head numerical results must come from the hosted evidence artifact
-before any qualification claim.
+The complete hosted exact-head artifact contains all 26 source states. Maximum
+numerical residuals are 9.91e-11 bar in CO2 partial pressure, 4.70e-10 mol/kg
+water in final aqueous KCl molality, 7.11e-15 mol in component inventory and
+3.51e-12 in molecular log fugacity ratio. Every calculated CO2 solubility is
+below experiment: relative residuals span -31.46% to -11.40%, with 19.95% mean
+absolute relative residual and no point within the source's 1.2% relative
+solubility uncertainty.
+
+Within the five constant-partial-pressure temperature blocks, least-squares
+salting coefficients `-d(log10(m_CO2))/d(m_KCl)` are 0.04662, 0.03702,
+0.02587, 0.02027 and 0.01732 for the model versus 0.04032, 0.03750, 0.02480,
+0.01739 and 0.01699 for experiment from 273.15 to 363.15 K. The model therefore
+broadly retains the source salting slope, especially at 298.15 K, while showing
+local salting-in at the 4.998/5.000 molal endpoints at 323.15, 348.15 and
+363.15 K. This separates a systematic absolute-solubility deficit from the
+high-molality shape defect; it does not uniquely identify a K+-specific
+interaction value or justify an empirical temperature correction.
 
 ## Independent Ostwald-coefficient holdout
 
@@ -146,21 +153,23 @@ to molality. It computes the model Ostwald coefficient as the equilibrium
 aqueous molecular-CO2 concentration divided by the gas-phase molecular-CO2
 concentration. KCl inventory is iterated until the model aqueous phase matches
 the source mol/L solution coordinate, avoiding an assumed experimental density.
-Six points through 3.505 mol/L are constructed at the source coordinate. The
-4.131 mol/L point is retained as an explicit unmatched state: the present
-calculation reaches 3.8167 mol/L before ion restoration collapses, so its
-residual is withheld rather than evaluated at a different concentration. The
+All seven states, including 4.131 mol/L, match the source concentration. The
 generated
 `target/kcl-co2-ostwald-yasunishi-yoshida1979-assessment.csv` records target and
 actual KCl concentration, experimental and calculated coefficients, residuals,
 source uncertainty, both CO2 concentrations, aqueous water mass and phase
 topology, and the state-matching status.
 
-Across the six exactly constructed states, the model relative residual changes
-from -17.5% in salt-free water to +34.96%, +117.6%, +447.4%, +1165.6% and
-+2790.9% as KCl rises to 3.505 mol/L. The independent observable therefore
-reproduces the wrong KCl salting direction seen in the He and Morse molality
-series; it does not convert the unmatched 4.131 mol/L state into evidence.
+Experiment decreases from 0.8264 to 0.4703 and the model from 0.68156 to
+0.40120 as KCl rises from 0 to 4.131 mol/L. All seven model values are low,
+with relative residuals from -19.08% to -14.69% and 17.69% mean absolute
+relative residual. Fitted coefficients
+`-d(log10(L_CO2))/d(c_KCl)` are 0.05877 L/mol for experiment and
+0.05608 L/mol for the model; endpoint reductions are 43.09% and 41.13%,
+respectively. The independent observable therefore confirms the salting-out
+direction and the systematic absolute-solubility deficit seen in the corrected
+He and Morse assessment. It does not uniquely identify an ion-pair parameter or
+qualify the hydrate endpoints.
 
 The 308.15 K rows are deliberately excluded because the public compilation's
 temperature grouping must be checked against the original article before
