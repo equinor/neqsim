@@ -904,8 +904,12 @@ second transition detector or interpret a heuristic `OPTIMAL` status as operatin
    law is now shared by the screen and live `WellFlow` boundary with explicit standard-density
    conversion and conservative network acceptance. The executable ten-well living-task handoff now also binds the
    exact Java selected-objective name, direction, unit, initial value, and accepted value to the task-local reviewed
-   baseline before guarded publication; it no longer uses a workflow-only success marker. Next independently qualify the injectivity
-   range and the maps, then feed accepted map-region/driver-limit migrations into these diagnostics
+   baseline before guarded publication; it no longer uses a workflow-only success marker. The same executable case
+   now revises its task-local shared-power operating limit, invalidates and supersedes the earlier receipt, reruns only
+   the explicitly affected optimization/guard/publication stages, retains unrelated validated work, and links the
+   fresh cycle-bound receipt to the invalidated proposal. This exercises #4187 resume/change semantics without adding
+   another task-state system or reusing stale simulator evidence. Next independently qualify the injectivity range and
+   the maps, then feed accepted map-region/driver-limit migrations into these diagnostics
    without creating a second scheduler or optimizer.
 2. Qualify steady arrival temperature, DNV-ST-F101 and DNV-RP-F109 route cases against independent
    field, laboratory or commercial-simulator evidence. The software contract for staged
