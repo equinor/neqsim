@@ -309,22 +309,33 @@ class HydrateCurves:
         self.cache[key] = val
         return val
 
-    def curve(self, p_min, p_max, wt, n=6, inhibitor="MEG"):
-        """Curve dict ``{p_bara, t_c, wt, interpolation_check_k}`` on a geometric pressure grid (>= 3 points)."""
-        lo, hi = max(1.0, 0.97 * p_min), 1.03 * p_max
-        grid = [lo * (hi / lo) ** (i / float(n - 1)) for i in range(n)]
-        grid = [round(g, 2) for g in grid]
-        temps = [self.point(p, wt, inhibitor) for p in grid]
-        ok = [(p, t) for p, t in zip(grid, temps) if t is not None]
+    def curve(self, p_min, p_max, wt, grid, inhibitor="MEG"):
+        """Hydrate curve on the study pressure grid points that bracket ``[p_min, p_max]``.
+
+        Returns ``{wt, inhibitor, p_bara, t_c, n_requested, n_available, interpolation_check_k}``; the check is the difference
+        between the ln(p) interpolation and a direct CPA point at the geometric midpoint of the first interval.
+        Raises :class:`FlowAssuranceError` when the range lies outside the grid (extend ``solver.hydrate_grid_bara``).
+        """
+        grid = sorted(float(g) for g in grid)
+        if p_min < grid[0] or p_max > grid[-1]:
+            raise FlowAssuranceError("pressure range %.1f-%.1f bara lies outside the hydrate grid %.1f-%.1f bara; extend solver.hydrate_grid_bara"
+                                     % (p_min, p_max, grid[0], grid[-1]))
+        lo = max([g for g in grid if g <= p_min] or [grid[0]])
+        hi = min([g for g in grid if g >= p_max] or [grid[-1]])
+        pts = [g for g in grid if lo <= g <= hi]
+        if len(pts) < 2:
+            pts = grid[:2]
+        temps = [self.point(p, wt, inhibitor) for p in pts]
+        ok = [(p, t) for p, t in zip(pts, temps) if t is not None]
         check = None
-        if len(ok) >= 3:
+        if len(ok) >= 2:
             pm = round(math.sqrt(ok[0][0] * ok[1][0]), 2)
             tm = self.point(pm, wt, inhibitor)
             if tm is not None:
                 lin = ok[0][1] + (ok[1][1] - ok[0][1]) * (math.log(pm) - math.log(ok[0][0])) / (math.log(ok[1][0]) - math.log(ok[0][0]))
                 check = abs(lin - tm)
         return {"wt": wt, "inhibitor": inhibitor, "p_bara": [p for p, _ in ok], "t_c": [t for _, t in ok],
-                "n_requested": n, "n_available": len(ok), "interpolation_check_k": check}
+                "n_requested": len(pts), "n_available": len(ok), "interpolation_check_k": check}
 
 
 def interp_log_p(curve, p_bara):
@@ -403,12 +414,13 @@ def run_case(ns, route_model, variant, fluid_def, case, solver, hydrate_cache=No
     # shared chain: segments common to all active paths
     chains = list(paths.values())
     common = []
-    for col in zip(*chains):
+    for col in zip(*[list(reversed(c)) for c in chains]):
         if len(set(col)) == 1:
             common.append(col[0])
         else:
             break
-    branches = {pid: chain[len(common):] for pid, chain in paths.items()}
+    common.reverse()
+    branches = {pid: chain[: len(chain) - len(common)] for pid, chain in paths.items()}
     junction = None
     if len(paths) > 1:
         if not common:
@@ -547,8 +559,9 @@ def run_case(ns, route_model, variant, fluid_def, case, solver, hydrate_cache=No
     so = (case.get("shut_in") or {}).get("settle_out_pressure_bara")
     p_lo, p_hi = min(all_p), max(all_p + ([float(so)] if so else []))
     curves = {}
+    grid = solver.get("hydrate_grid_bara") or [40, 55, 70, 90, 110, 140, 180, 230]
     for key, wt in wts.items():
-        curves[key] = hyd.curve(p_lo, p_hi, wt, n=int(solver.get("hydrate_grid_points", 6)))
+        curves[key] = hyd.curve(p_lo, p_hi, wt, grid)
     findings.extend(hyd.findings)
     t_hyd_s = time.time() - t_h
     result = {"case_id": case["id"], "status": "converged" if converged else "failed", "variant": variant["id"],
