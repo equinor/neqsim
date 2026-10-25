@@ -16,6 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  * TPgradientFlash class handles thermodynamic calculations with temperature and pressure gradients.
  *
  * @author ESOL
+ * @version 1.0
  */
 public class TPgradientFlash extends Flash {
   /** Serialization version UID. */
@@ -70,12 +71,14 @@ public class TPgradientFlash extends Flash {
       double pressure = localSystem.getPressure();
 
       // Breakdown of terms for readability
-      double logTerm = Math.log(fugacityCoeff * componentX * pressure);
+      double logTerm = Math.log(fugacityCoeff) + Math.log(componentX) + Math.log(pressure);
       double molarMassTerm = component.getMolarMass() * gravity * deltaHeight
           / (gasConstant * tempSystem.getPhase(0).getTemperature());
 
-      fvec[i] = logTerm - Math.log(tempSystem.getPhases()[0].getComponent(i).getFugacityCoefficient()
-          * tempSystem.getPhases()[0].getComponent(i).getx() * tempSystem.getPressure()) - molarMassTerm;
+      ComponentInterface referenceComponent = tempSystem.getPhase(0).getComponent(i);
+      double referenceLogFugacity = Math.log(referenceComponent.getFugacityCoefficient())
+          + Math.log(referenceComponent.getx()) + Math.log(tempSystem.getPressure());
+      fvec[i] = logTerm - referenceLogFugacity - molarMassTerm;
       sumx += componentX;
     }
 
@@ -83,7 +86,12 @@ public class TPgradientFlash extends Flash {
   }
 
   /**
-   * Sets the Jacobian (Jac) matrix values based on the thermodynamic calculations.
+   * Sets the Jacobian of log fugacity and composition normalization.
+   *
+   * <p>
+   * The component derivatives already represent derivatives of the logarithmic fugacity coefficient, so they must not
+   * be divided by the fugacity coefficient again.
+   * </p>
    */
   public void setJac() {
     for (double[] row : Jac) {
@@ -94,12 +102,9 @@ public class TPgradientFlash extends Flash {
     for (int i = 0; i < numComponents; i++) {
       for (int j = 0; j < numComponents; j++) {
         double dij = (i == j) ? 1.0 : 0.0; // Kronecker delta
-        double fugacityCoeff = localSystem.getPhases()[0].getComponent(i).getFugacityCoefficient();
         double componentX = localSystem.getPhases()[0].getComponent(i).getx();
-        double pressure = localSystem.getPressure();
 
-        double tempJ = 1.0 / (fugacityCoeff * componentX * pressure) * (fugacityCoeff * dij * pressure
-            + localSystem.getPhases()[0].getComponent(i).getdfugdx(j) * componentX * pressure);
+        double tempJ = dij / componentX + localSystem.getPhases()[0].getComponent(i).getdfugdx(j);
         Jac[i][j] = tempJ;
       }
     }
@@ -110,13 +115,9 @@ public class TPgradientFlash extends Flash {
     }
 
     for (int i = 0; i < numComponents; i++) {
-      double fugacityCoeff = localSystem.getPhases()[0].getComponent(i).getFugacityCoefficient();
-      double componentX = localSystem.getPhases()[0].getComponent(i).getx();
       double pressure = localSystem.getPressure();
 
-      double tempJ = 1.0 / (fugacityCoeff * componentX * pressure)
-          * (localSystem.getPhases()[0].getComponent(i).getdfugdp() * componentX * pressure
-              + fugacityCoeff * componentX);
+      double tempJ = 1.0 / pressure + localSystem.getPhases()[0].getComponent(i).getdfugdp();
       Jac[i][numComponents] = tempJ;
     }
 
@@ -128,7 +129,16 @@ public class TPgradientFlash extends Flash {
    */
   public void setNewX() {
     int numComponents = system.getPhase(0).getNumberOfComponents();
-    double relaxationFactor = 0.8; // Relaxation factor for numerical stability
+    double relaxationFactor = 1.0;
+    for (int i = 0; i < numComponents; i++) {
+      double composition = localSystem.getPhase(0).getComponent(i).getx();
+      if (dx[i] > 0.0 && dx[i] >= composition) {
+        relaxationFactor = Math.min(relaxationFactor, 0.5 * composition / dx[i]);
+      }
+    }
+    if (dx[numComponents] >= localSystem.getPressure()) {
+      relaxationFactor = Math.min(relaxationFactor, 0.5 * localSystem.getPressure() / dx[numComponents]);
+    }
 
     for (int i = 0; i < numComponents; i++) {
       ComponentInterface component = localSystem.getPhase(0).getComponent(i);
@@ -140,8 +150,20 @@ public class TPgradientFlash extends Flash {
     double newPressure = localSystem.getPressure() - relaxationFactor * dx[numComponents];
     localSystem.setPressure(newPressure);
 
-    // Optional: Normalize phase composition
-    // localSystem.getPhase(0).normalize();
+  }
+
+  /**
+   * Returns the largest dimensionless Newton correction.
+   *
+   * @return maximum relative-composition or relative-pressure correction
+   */
+  private double correctionNorm() {
+    double norm = Math.abs(dx[dx.length - 1]) / localSystem.getPressure();
+    for (int i = 0; i < dx.length - 1; i++) {
+      double composition = localSystem.getPhase(0).getComponent(i).getx();
+      norm = Math.max(norm, Math.abs(dx[i]) / Math.max(Math.abs(composition), 1.0e-30));
+    }
+    return norm;
   }
 
   /** {@inheritDoc} */
@@ -164,7 +186,7 @@ public class TPgradientFlash extends Flash {
       localSystem.setTemperature(localSystem.getTemperature() + deltaT);
 
       int iter = 0;
-      double tolerance = 1e-10; // Convergence criterion
+      double tolerance = 1e-13; // Dimensionless relative-composition and relative-pressure correction
       int maxIterations = 50; // Maximum allowable iterations
 
       do {
@@ -173,12 +195,28 @@ public class TPgradientFlash extends Flash {
         setfvec(); // Calculate the function vector
         setJac(); // Calculate the Jacobian matrix
         dx = ALGEBRA.solve(Jac, fvec); // Solve for updates (dx)
+        if (!Double.isFinite(correctionNorm())) {
+          throw new IllegalStateException("Gradient flash produced a nonfinite Newton correction at step " + step);
+        }
         setNewX(); // Update composition and pressure
-      } while (ALGEBRA.euclideanNorm(dx) > tolerance && iter < maxIterations);
+      } while (correctionNorm() > tolerance && iter < maxIterations);
 
-      // Clone the updated local system into tempSystem
+      if (correctionNorm() > tolerance) {
+        throw new IllegalStateException(
+            "Gradient flash did not converge after " + maxIterations + " iterations at step " + step);
+      }
+
+      // Verify the accepted update and retain initialized properties for the next depth step.
+      localSystem.init(3);
+      setfvec();
+      double residualNorm = 0.0;
+      for (double residual : fvec) {
+        residualNorm = Math.max(residualNorm, Math.abs(residual));
+      }
+      if (!Double.isFinite(residualNorm) || residualNorm > 1.0e-10) {
+        throw new IllegalStateException("Gradient flash residual did not converge at step " + step);
+      }
       tempSystem = localSystem.clone();
-      tempSystem.init(3); // Re-initialize tempSystem for the next step
     }
   }
 

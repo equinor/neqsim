@@ -115,6 +115,18 @@ temperature.
 
 ### 6. Validate the result
 
+Distinguish a bounded incomplete trace from a closed vapor-liquid loop. Highly
+asymmetric hydrocarbon boundaries may continue into liquid-liquid coexistence
+after a critical crossing; legacy dew/bubble labels alone do not identify that
+phase topology. A pressure- or point-limit exception retains converged diagnostic
+segments, makes `isEnvelopeClosed()` false and leaves overall extrema NaN. Do not
+silently publish retained maxima as cricondenbar/cricondentherm or remove a real
+liquid-liquid branch to obtain closure. The methane/n-hexane/nC10 SRK regression
+and its independent direct-equation onset reference are in
+`AsymmetricSrkLiquidLiquidEnvelopeTest` and
+`src/test/resources/neqsim/thermodynamicoperations/phaseenvelopeops/asymmetric-srk-liquid-liquid/`.
+
+
 Require all applicable checks:
 
 1. At least one non-empty structured segment.

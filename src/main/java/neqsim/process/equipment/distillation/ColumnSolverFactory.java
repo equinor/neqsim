@@ -169,7 +169,13 @@ final class ColumnSolverFactory {
         bestResult = warmBaseResult;
         bestSolver = warmBaseResult.getSolverType();
       }
-      if (shouldAcceptWarmBaseResult(column, candidateSource, warmBaseResult)) {
+      if (shouldAcceptWarmBaseResult(candidateSource, warmBaseResult)) {
+        for (DistillationColumn.SolverType skippedSolver : candidates) {
+          if (skippedSolver != warmBaseResult.getSolverType()) {
+            appendAutoCandidateSummary(summary, skippedSolver, null,
+                "probe skipped: warmed base satisfies all active convergence gates");
+          }
+        }
         column.acceptAutoSolverCandidate(candidateSource, warmBaseResult.getSolverType());
         column.setLastAutoFeasibilityReport(feasibilityReport);
         column.setLastAutoSolverSummary(summary.toString());
@@ -830,21 +836,18 @@ final class ColumnSolverFactory {
    * Check whether AUTO can stop after the relaxed base solve.
    *
    * <p>
-   * Fixed-specification, small condenser/reboiler columns usually do not benefit from extra simultaneous-correction
-   * probes once the warmed damped solve already satisfies the active tolerances. Accepting the base result avoids
-   * copying and flashing the same column for every candidate while preserving the full homotopy/probe ladder for
-   * product specifications and larger columns.
+   * A warmed result that satisfies every active convergence gate is already a qualified candidate, including at an
+   * adjustable-specification continuation stage or in a larger column. Repeating other solvers cannot improve that
+   * acceptance decision. A failed or fallback-only base still proceeds through the complete candidate ladder, and the
+   * outer specification continuation retains all of its stages.
    * </p>
    *
-   * @param column live AUTO column
    * @param candidate warmed candidate source
    * @param result warmed base result
    * @return {@code true} when the warmed base solve is a sufficient AUTO result
    */
-  private static boolean shouldAcceptWarmBaseResult(DistillationColumn column, DistillationColumn candidate,
-      ColumnSolveResult result) {
-    return column.hasCondenser && column.hasReboiler && column.numberOfTrays <= 8
-        && !hasAdjustableProductSpecification(column) && isAcceptableAutoCandidate(candidate, result);
+  private static boolean shouldAcceptWarmBaseResult(DistillationColumn candidate, ColumnSolveResult result) {
+    return isAcceptableAutoCandidate(candidate, result) && candidate.solved();
   }
 
   /**

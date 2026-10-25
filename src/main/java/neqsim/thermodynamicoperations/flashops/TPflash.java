@@ -63,6 +63,12 @@ public class TPflash extends Flash {
   private static final double METASTABLE_GAS_VOLUME_OVER_B_LIMIT = 4.0;
   /** Maximum beta for replacing an invalid incipient sour-gas phase with a balanced endpoint. */
   private static final double INVALID_INCIPIENT_PHASE_FRACTION_LIMIT = 0.01;
+  /** Largest beta correction eligible for roundoff-only aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT = 1.0e-10;
+  /** Smallest material residual that justifies aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_REPAIR_THRESHOLD = 1.0e-14;
+  /** Material closure required after roundoff-only aqueous amount synchronization. */
+  private static final double AQUEOUS_AMOUNT_ROUNDOFF_MATERIAL_TOLERANCE = 1.0e-13;
   /** Minimum water feed fraction for ordinary water-rich endpoint refinement. */
   private static final double WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT = 0.01;
   /** Material-balance target for an already-present trace-water aqueous split undergoing repair. */
@@ -689,6 +695,7 @@ public class TPflash extends Flash {
         }
       }
       repairInvalidMultiphaseHydrocarbonEndpoint();
+      synchronizeEquilibratedAqueousPhaseAmounts();
       validateTraceWaterAqueousRepair();
       validateCharacterizedFluidPhaseInventories();
     } finally {
@@ -4185,6 +4192,65 @@ public class TPflash extends Flash {
       }
       logger.debug("Neutral two-phase amount synchronization failed: {}", ex.getMessage());
     }
+  }
+
+  /**
+   * Removes roundoff in the phase amounts of an already-equilibrated water-rich split.
+   *
+   * <p>
+   * Ordinary and multiphase beta iterations can retain differences near machine precision even when their compositions
+   * agree. Those differences multiply liquid caloric properties and can leave avoidable extensive-property
+   * discrepancies. Recover the unique lever-rule fractions without another equilibrium solve, changing neither phase
+   * composition nor the active set. Only neutral, substantial-water endpoints with roundoff-sized corrections qualify;
+   * dry and trace-water endpoints retain their existing paths.
+   * </p>
+   */
+  private void synchronizeEquilibratedAqueousPhaseAmounts() {
+    if (system.getNumberOfPhases() != 2 || !system.hasPhaseType(PhaseType.AQUEOUS) || system.isChemicalSystem()
+        || system.hasIons() || solidCheck || system.doSolidPhaseCheck() || system.isMultiphaseWaxCheck()) {
+      return;
+    }
+    double waterFeedFraction = 0.0;
+    for (int componentIndex = 0; componentIndex < system.getNumberOfComponents(); componentIndex++) {
+      if ("water".equalsIgnoreCase(system.getComponent(componentIndex).getComponentName())) {
+        waterFeedFraction = system.getComponent(componentIndex).getz();
+        break;
+      }
+    }
+    if (waterFeedFraction < WATER_RICH_REFINEMENT_FEED_FRACTION_LIMIT) {
+      return;
+    }
+    double originalResidual = maximumComponentMaterialBalanceResidual(system);
+    if (originalResidual <= AQUEOUS_AMOUNT_ROUNDOFF_REPAIR_THRESHOLD
+        || originalResidual > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT || !isBalancedEquilibriumCandidate(system)) {
+      return;
+    }
+    double[] correctedBetas = fixedCompositionTwoPhaseFractions(system);
+    double originalFirstBeta = system.getBeta(0);
+    double originalSecondBeta = system.getBeta(1);
+    if (correctedBetas == null
+        || Math.abs(correctedBetas[0] - originalFirstBeta) > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT
+        || Math.abs(correctedBetas[1] - originalSecondBeta) > AQUEOUS_AMOUNT_ROUNDOFF_CORRECTION_LIMIT) {
+      return;
+    }
+    PhaseType firstType = system.getPhase(0).getType();
+    PhaseType secondType = system.getPhase(1).getType();
+    try {
+      system.setBeta(0, correctedBetas[0]);
+      system.setBeta(1, correctedBetas[1]);
+      system.init(1);
+      double correctedResidual = maximumComponentMaterialBalanceResidual(system);
+      if (isBalancedEquilibriumCandidate(system) && Double.isFinite(system.getGibbsEnergy())
+          && correctedResidual <= Math.min(originalResidual, AQUEOUS_AMOUNT_ROUNDOFF_MATERIAL_TOLERANCE)
+          && system.getPhase(0).getType() == firstType && system.getPhase(1).getType() == secondType) {
+        return;
+      }
+    } catch (Exception ex) {
+      logger.debug("Aqueous roundoff amount synchronization failed: {}", ex.getMessage());
+    }
+    system.setBeta(0, originalFirstBeta);
+    system.setBeta(1, originalSecondBeta);
+    system.init(1);
   }
 
   /**

@@ -259,6 +259,25 @@ prove that independently restarted segments meet or that the full boundary is
 stable. Inspect the structured segments before treating a partial trace as a
 complete dew-bubble-critical loop.
 
+A highly asymmetric hydrocarbon boundary can continue into liquid-liquid
+coexistence after a critical crossing. The historical dew/bubble array names do
+not certify vapor-liquid phase identity throughout that continuation. For SRK
+with classic mixing and methane/n-hexane/nC10 mole fractions 0.8/0.1/0.1, an
+independent direct-equation reference locates a liquid-liquid onset at
+162.0398908893 K and 152.9444304898 bara, with two distinct pressure-valid liquid
+roots. Nearby multiphase flashes qualify oil/oil coexistence on the lower-pressure
+side and one oil phase on the higher-pressure side. The default continuation
+ultimately reaches its 1000-bara pressure bound; it retains diagnostic segments,
+reports `isEnvelopeClosed() == false`, throws an explicit incomplete-trace
+exception and leaves overall extrema NaN. Do not report the largest retained
+point as a certified cricondenbar or silently discard this liquid-liquid branch
+in order to manufacture a closed VLE loop.
+
+The [independent reference and reproduction](../../src/test/resources/neqsim/thermodynamicoperations/phaseenvelopeops/asymmetric-srk-liquid-liquid/README.md)
+and `AsymmetricSrkLiquidLiquidEnvelopeTest` qualify the numerical topology.
+They do not validate cryogenic interaction parameters against experiments or
+account for solid formation.
+
 ## 8. Quality Lines
 
 Quality lines are curves of **constant molar vapor fraction** $\beta$ inside the two-phase region. They connect the bubble curve ($\beta = 0$) to the dew curve ($\beta = 1$).

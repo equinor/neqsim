@@ -202,6 +202,37 @@ TaxModelRegistry.getAvailableModels();  // ["NO", "UK", "BR", "GENERIC"]
 TaxModel model = TaxModelRegistry.getModel("NO");
 ```
 
+### Brazil Special Participation (Participação Especial, Decreto 2.705/1998 Art. 22)
+
+The registry's `BR-DW` model approximates SP as a flat 25 % resource tax. That
+is a screening proxy only: the statutory SP is progressive in the **quarterly**
+fiscalised volume (VPF, thousand m3 oil equivalent), with rates 10/20/30/35/40 %,
+exemption volumes and deductions that depend on location (onshore / shallow /
+deep water, >400 m) and production year (1, 2, 3, 4+). Use
+`BrazilSpecialParticipation` for the statutory charge:
+
+```java
+BrazilSpecialParticipation.Location loc =
+    BrazilSpecialParticipation.Location.fromWaterDepth(2420.0);   // DEEP_WATER
+double vpf = BrazilSpecialParticipation.toThousandM3OilEquivalent(oilSm3, gasSm3, 1000.0);
+double eff = BrazilSpecialParticipation.getEffectiveRate(loc, 4, vpf); // share of RLP
+double[] spPerYear = BrazilSpecialParticipation.calculateAnnualFromEqualQuarters(
+    loc, annualNetRevenueRlp, annualVolumeThousandM3oe);          // year index 0 = first oil
+double[] spPerQuarter = BrazilSpecialParticipation.calculateQuarters(
+    loc, productionYearOfEachQuarter, quarterlyRlp, quarterlyVpf); // with Art. 22 §6 loss carry-forward
+```
+
+- RLP = gross revenue − royalties − OPEX − depreciation − exploration costs
+  (Art. 25). Reinjected gas is not fiscalised; leave it out of VPF.
+- Effective rate = marginal rate × (1 − deduction/VPF). A 150 kbopd deep-water
+  plateau (~2 100 thousand m3 oe/quarter) is in the 35 % band but pays ~18 % of RLP —
+  a flat 20–25 % proxy overstates SP for mid-size fields and understates it for giants.
+- The published decree gives 775 for the shallow-water year-3 20 % deduction where
+  continuity of the table requires 725; the class keeps the published value
+  (documented in JavaDoc) — confirm with ANP for shallow-water cases.
+- Pre-salt Production Sharing (BR-PSA) contracts pay no SP; use it only for
+  concession contracts.
+
 ---
 
 ## Production Profile Generator

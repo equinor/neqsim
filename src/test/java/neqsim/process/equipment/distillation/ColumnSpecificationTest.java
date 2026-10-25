@@ -785,11 +785,14 @@ public class ColumnSpecificationTest {
         () -> "already-converged tray evaluations should avoid a redundant second sweep: evaluations="
             + column.getLastNaphtaliThermoEvaluationCount() + ", K-value iterations="
             + column.getLastNaphtaliThermoKValueIterationCount());
-    assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() > 0,
-        "this difficult case must expose two-sweep evaluations that remain above the log-K tolerance");
+    assertEquals(0, column.getLastNaphtaliThermoKValueNonConvergedCount(),
+        "implicit vapor-composition Newton correction must converge every tray evaluation");
     assertTrue(column.getLastNaphtaliThermoKValueNonConvergedCount() <= column.getLastNaphtaliThermoEvaluationCount());
     assertTrue(Double.isFinite(column.getLastNaphtaliThermoMaxLogKValueUpdate()));
-    assertTrue(column.getLastNaphtaliThermoMaxLogKValueUpdate() > 1.0e-8);
+    assertTrue(column.getLastNaphtaliThermoMaxLogKValueUpdate() <= 1.0e-8,
+        "the unchanged inner convergence gate must hold for all evaluated tray states");
+    assertTrue(column.getLastNaphtaliThermoCacheHitCount() > 0,
+        "nearby-state derivative predictions must avoid repeated fixed-point sweeps");
     assertTrue(column.getLastNaphtaliThermoCacheHitCount() >= 0);
     assertTrue(column.getLastNaphtaliJacobianBuildTimeSeconds() >= 0.0);
     assertTrue(column.getLastNaphtaliBlockLinearSolveCount() > 0);
@@ -1073,6 +1076,24 @@ public class ColumnSpecificationTest {
     assertTrue(column.getLastAutoSolverSummary().contains("INSIDE_OUT"));
     assertTrue(column.getConvergenceDiagnostics().contains("Automatic solver candidates"));
     assertTrue(column.getConvergenceDiagnostics().contains("Specification homotopy"));
+    assertTrue(column.solved(), column.getConvergenceDiagnostics());
+    assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, column.getLastSolverTypeUsed(),
+        "A qualified warm base should not be replaced by another solver at the last continuation stage");
+    assertTrue(column.getLastAutoSolverSummary()
+        .contains("probe skipped: warmed base satisfies all active convergence gates"));
+    assertTrue(column.getLastIterationCount() <= 20,
+        "The final continuation stage should retain the qualified warm base's bounded work");
+    double feedMoles = feed.getFlowRate("mol/hr");
+    double gasMoles = column.getGasOutStream().getFlowRate("mol/hr");
+    double liquidMoles = column.getLiquidOutStream().getFlowRate("mol/hr");
+    assertEquals(feedMoles, gasMoles + liquidMoles, feedMoles * 5.0e-3);
+    for (int component = 0; component < feed.getFluid().getNumberOfComponents(); component++) {
+      double inlet = feedMoles * feed.getFluid().getMolarComposition()[component];
+      double outlet = gasMoles * column.getGasOutStream().getFluid().getMolarComposition()[component]
+          + liquidMoles * column.getLiquidOutStream().getFluid().getMolarComposition()[component];
+      assertEquals(inlet, outlet, Math.abs(inlet) * 5.0e-3,
+          "Accepting a warm base must retain component material closure");
+    }
   }
 
   /**

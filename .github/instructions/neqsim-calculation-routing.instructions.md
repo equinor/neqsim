@@ -64,6 +64,28 @@ Report "no Java installed" only after the locator finds nothing. The remedy
 then is a portable JDK unpacked into the user profile, which needs no admin
 rights — never a system-wide installer the user cannot run.
 
+## Start installed Docker automatically when a task needs it
+
+Before Docker-backed work (OpenFOAM, OPM Flow, FluidMagic or other containers),
+run `neqsim docker ensure --linux`. Do not require users to open Docker first.
+For Windows-container work omit `--linux`. Only do this when Docker is needed,
+not on every session. The command starts an installed local Docker Desktop or
+Linux Docker service and waits up to 120 seconds for `docker info` to succeed.
+Reuse an already healthy engine. Leave Docker running afterward.
+
+If the CLI is not on PATH, use the selected Python interpreter with
+`-m neqsim_cli docker ensure --linux`. In a source checkout use
+`uv run --project devtools --locked devtools/docker_runtime.py ensure --linux`.
+The command prints the resolved Docker executable path; use it for subsequent
+Docker commands if `docker` itself is not on PATH.
+
+Do not install Docker, elevate privileges, accept licence/first-run prompts,
+switch Docker contexts/container modes, restart/stop Docker, or alter WSL or
+host configuration automatically. Report missing installations, denied access,
+remote-context failures and startup timeouts explicitly, with the remedy from
+the command. Preserve documented offline hand-offs when the runtime is blocked;
+never label an unexecuted engine calculation as successful.
+
 ## Repo paths in agents and skills, when only the plugin is installed
 
 Agents and skills cite repository paths. Without a NeqSim checkout (agent plugin

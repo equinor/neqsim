@@ -257,15 +257,27 @@ to the fluid and negative for heat removed. Flowing products receive caloric ini
 before the balance is evaluated; zero-flow phase templates contribute zero energy. This avoids
 using stale residual enthalpy from the internal mixed fluid when a ratio reaches zero.
 
-Naphtali-Sandholm evaluates each tray's forced-root fugacity fixed point for up to 30
-sweeps, stopping at the existing maximum log-K update tolerance of $10^{-8}$. Cold,
-retained and terminal-recovery evaluations use the same bound. Two or three truncated
-sweeps can leave the MESH residual dependent on the preceding K estimate, making its
-finite-difference Jacobian inconsistent. The convergence repair retains all published
-material, energy and equilibrium acceptance gates. Fugacity-only sweeps use `init(1)`;
-separate enthalpy evaluations retain `init(2)`. The iteration bound does not guarantee
-convergence of every column, and exhausted inner iterations remain visible in the
-existing K-value telemetry.
+Naphtali-Sandholm solves each tray's implicit vapor-composition K-value equation for up to
+30 forced-root fugacity sweeps, retaining the maximum log-K residual tolerance of $10^{-8}$.
+The update uses vapor fugacity composition derivatives and a bounded Newton correction;
+singular, nonfinite or oversized corrections retain the fixed-point direction. Nearby states
+reuse the prior local derivatives as a predictor. The outer finite-difference Jacobian freezes
+those derivative states together with its residual base, so perturbed columns cannot advance
+one another's K-value estimate. Every prediction still receives a new EOS evaluation and the
+same convergence check. Cold, retained and terminal-recovery evaluations use the same bound.
+
+Liquid fugacity-only evaluations use `init(1)`. Vapor evaluations that supply composition and
+temperature derivatives use `init(3)`, and separate enthalpy evaluations retain `init(2)`.
+Exhausted inner iterations remain visible in the existing K-value telemetry. Published phase
+outlets retain the solver's forced EOS root across later caloric initialization. Columns without
+side draws retain the independent total vapor flow and its normalized composition, matching the
+vapor enthalpy basis; side-draw inventories retain the solver's component-flow arrays. The convergence repair retains all material, energy and equilibrium acceptance
+gates; it does not guarantee convergence of every column.
+
+Accelerated
+full-tray sweeps transfer liquid across every interface from condenser to reboiler,
+including the rectifying section above a middle feed, and vapor across every interface
+from reboiler to condenser.
 
 Explicit standalone Naphtali-Sandholm retains its established initialization sequence. The isolated
 sequential ratio correction preserves the current tray state instead of replacing it with a
@@ -371,6 +383,13 @@ concrete solver that completed the run. Inspect `getLastAutoSolverSummary()` or
 `getConvergenceDiagnostics()` to see the feasibility pre-screen, candidate list, residuals,
 iteration counts, solve times, and fallback notes. For product-specification cases, also inspect
 `getLastSpecificationHomotopyStepCount()` to confirm whether staged continuation was used.
+
+When the relaxed base already satisfies every active convergence gate, `AUTO`
+accepts that qualified result for any column size and specification context.
+The trace explicitly identifies subsequent candidate probes as skipped. An
+unqualified or fallback-only base retains the full candidate ladder. Product
+specification homotopy still completes its configured stages and checks the
+final target; this work reduction changes no physical acceptance tolerance.
 
 Exact unchanged-input reuse is conditional on both an identical problem fingerprint and the same
 active convergence-gate configuration that was recorded after the accepted public solve. Changing

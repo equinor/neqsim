@@ -39,6 +39,28 @@ docker --version
 docker info
 ```
 
+### Automatic startup for agents and skills
+
+Docker does not need to be open before a Docker-backed task. Agents run
+`neqsim docker ensure --linux` before Linux-container work. This starts an
+installed local Docker Desktop on Windows/macOS or a Docker service on Linux,
+then waits up to 120 seconds for the engine (not just the CLI) to respond.
+Already-running engines are reused, and Docker is left running afterward.
+Use `--timeout 180` for a longer deadline; omit `--linux` for Windows-container
+work. The resolved Docker executable is printed for installations not on PATH.
+
+In a source checkout, the equivalent command is
+`uv run --project devtools --locked devtools/docker_runtime.py ensure --linux`.
+With the toolkit installed but no `neqsim` on PATH, use the selected Python
+interpreter with `-m neqsim_cli docker ensure --linux`.
+
+Startup is on demand, not at every agent session. It never installs software,
+uses sudo, accepts licence prompts, switches contexts or container modes, or
+reconfigures WSL. Missing Docker, first-run setup, permission failures, remote
+endpoint failures and readiness timeouts produce explicit nonzero failures.
+Resolve the reported prerequisite and retry; offline hand-offs remain available
+where the relevant skill supports them.
+
 ---
 
 ## Quick start: do everything locally with the prebuilt image (recommended)

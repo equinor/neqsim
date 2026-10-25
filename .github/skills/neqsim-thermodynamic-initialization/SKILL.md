@@ -21,6 +21,12 @@ Always use the lowest initialization level required by the quantities actually c
 
 Do not call `init(2)` or `init(3)` merely to be safe. Before increasing a level, trace the exact downstream getter and confirm its dependency in `Phase`, `PhaseEos`, the component implementation, or the relevant property model.
 
+For a column K-value Newton step that consumes `getdfugdn(...)` and `getdfugdt()`,
+initialize the derivative-providing vapor state with `init(3)`. Reusing that state as a
+nearby-state predictor does not replace the final EOS residual check. When publishing a
+forced-root solver result, preserve the root policy on the material outlet systems so a
+later caloric initialization cannot silently choose another root.
+
 For fixed-T/P cubic-root selection and fugacity/Gibbs equilibrium checks, prefer `init(1)`. Temperature derivative caches such as `loc_AT` and `loc_ATT` support caloric properties; they are not by themselves evidence that a fixed-T/P flash-Gibbs comparison requires `init(2)`.
 
 When a caller consumes temperature derivatives after `TPflash`, initialize them on
@@ -68,6 +74,14 @@ mapping. A skipped inactive slot can then resurrect its unscaled inventory. Keep
 one common overall component inventory in every slot and derive the scalar total
 from that inventory once; phase-specific amounts are a different quantity. The
 phase-removal regression for issue #4427 is `SystemThermoEmptySystemCloneTest`.
+
+After a homogeneous reaction updates component amounts, derive the scalar total from
+the exact amount vector and synchronize overall amounts and `z` across every stored
+phase before `init_x_y()` and `init(1)`. `init_x_y()` updates active slots; it cannot
+repair stale overall compositions in an inactive slot that a later flash reactivates.
+Preserve species outside the reaction database. `GibbsReactorInventorySynchronizationTest`
+and `GibbsReactorCO2ScenariosTest` cover the outlet-flash consumer; do not weaken the
+flash material-balance gate to accept a non-normalized feed.
 
 For a retained phase outside the active phase count, do not assume a fluid-only flash has synchronized its temperature, pressure, composition, or EOS state. Set the retained phase state explicitly and initialize it at the minimum level required before reading it. This is especially important for inactive solid phases used by freezing or precipitation searches.
 

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.simple.SimpleMatrix;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -61,7 +62,7 @@ public class NaphtaliSandholmSolver {
   /** Maximum number of non-descent line-search steps allowed before restoring the best state. */
   private static final int MAX_NON_DESCENT_LINE_SEARCH_STEPS = 3;
 
-  /** Maximum forced-root fugacity fixed-point sweeps for a cold, retained or recovery tray evaluation. */
+  /** Maximum forced-root fugacity sweeps for a cold, retained or recovery tray evaluation. */
   private static final int THERMO_K_VALUE_ITERATIONS = 30;
 
   /** Convergence tolerance for the largest absolute logarithmic K-value update. */
@@ -113,6 +114,15 @@ public class NaphtaliSandholmSolver {
 
   /** Vapor component flows v_{i,j} in mol/hr. Indexed [j][i]. */
   private double[][] vap;
+
+  /** Last one-mole vapor state evaluated for each tray. */
+  private SystemInterface[] lastVaporSystems;
+
+  /** Frozen vapor derivative states used only while perturbing a Jacobian base. */
+  private SystemInterface[] jacobianBaseVaporSystems;
+
+  /** Vapor state returned by the latest composition-derivative evaluation. */
+  private SystemInterface currentVaporSystem;
 
   /** K-values K_{i,j}. Indexed [j][i]. */
   private double[][] K;
@@ -272,7 +282,7 @@ public class NaphtaliSandholmSolver {
   /** Number of tray thermodynamic evaluations in the last solve. */
   private int lastThermoEvaluationCount;
 
-  /** Number of forced-root fugacity fixed-point iterations in the last solve. */
+  /** Number of forced-root fugacity iterations in the last solve. */
   private int lastThermoKValueIterationCount;
 
   /** Number of tray evaluations that reached the K-value iteration cap. */
@@ -401,7 +411,7 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
-   * Get the number of forced-root fugacity fixed-point iterations in the latest solve.
+   * Get the number of forced-root fugacity iterations in the latest solve.
    *
    * @return K-value iteration count
    */
@@ -1140,6 +1150,7 @@ public class NaphtaliSandholmSolver {
     liq = new double[N][C];
     vap = new double[N][C];
     K = new double[N][C];
+    lastVaporSystems = new SystemInterface[N];
     trayEta = new double[N];
     // Cache effective Murphree efficiency per stage. Reboiler (j=0) and
     // condenser (j=N-1 when present) are always rigorous equilibrium and stay
@@ -3308,6 +3319,7 @@ public class NaphtaliSandholmSolver {
     double[] baseHL = new double[N];
     double[] baseHV = new double[N];
     saveDerivedThermodynamicState(baseK, baseVap, baseL, baseHL, baseHV);
+    jacobianBaseVaporSystems = lastVaporSystems.clone();
 
     for (int jj = 0; jj < N; jj++) {
       for (int k = 0; k < varsPerTray; k++) {
@@ -3337,6 +3349,8 @@ public class NaphtaliSandholmSolver {
       }
     }
 
+    lastVaporSystems = jacobianBaseVaporSystems;
+    jacobianBaseVaporSystems = null;
     double[] restoredResidual = computeResidual();
     lastJacobianBaseResidualMutation = Math.max(lastJacobianBaseResidualMutation,
         vectorDifferenceNorm(F0, restoredResidual));
@@ -3644,6 +3658,7 @@ public class NaphtaliSandholmSolver {
     // is used by computeSinglePhaseEnthalpy() for enthalpies.
     double[] phiL = new double[C];
     double[] phiV = new double[C];
+    double[][] vaporCompositionDerivatives = new double[C][C];
     boolean phiOk = computeSinglePhaseFugacityCoefficients(x, T[j], Pbar, false, phiL);
 
     // Initial y guess: use previous K (or Wilson if uninitialised), normalised.
@@ -3661,6 +3676,10 @@ public class NaphtaliSandholmSolver {
       y[i] = (sumKxGuess > 1e-20) ? y[i] / sumKxGuess : x[i];
     }
 
+    if (phiOk && trayEta[j] >= 1.0 - 1.0e-10) {
+      predictKValues(j, x, y, phiL, Pbar);
+    }
+
     // Self-consistency loop: K = phi_L(x) / phi_V(y), then y = K x / sum(K x).
     // A truncated inner iteration makes the MESH residual depend on the previous K
     // estimate, and can give a finite-difference Jacobian an inconsistent base. Allow
@@ -3671,24 +3690,31 @@ public class NaphtaliSandholmSolver {
     double finalMaxLogKUpdate = Double.POSITIVE_INFINITY;
     if (kOk) {
       for (int sweep = 0; sweep < THERMO_K_VALUE_ITERATIONS; sweep++) {
-        if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV)) {
+        if (!computeSinglePhaseFugacityCoefficients(y, T[j], Pbar, true, phiV, vaporCompositionDerivatives)) {
           kOk = false;
           break;
         }
         lastThermoKValueIterationCount++;
-        double sumKxLocal = 0;
+        double[] logUpdate = new double[C];
+        double[] previousKValues = new double[C];
         finalMaxLogKUpdate = 0.0;
         for (int i = 0; i < C; i++) {
           double previousK = K[j][i];
           if (!(previousK > 1e-20 && previousK < 1e15)) {
             previousK = wilsonK(i, T[j], Pbar);
           }
-          double Knew = phiL[i] / Math.max(phiV[i], 1e-30);
-          Knew = Math.max(Knew, 1e-15);
-          Knew = Math.min(Knew, 1e15);
-          finalMaxLogKUpdate = Math.max(finalMaxLogKUpdate, Math.abs(Math.log(Knew / previousK)));
-          K[j][i] = Knew;
-          y[i] = Knew * x[i];
+          previousKValues[i] = previousK;
+          double Knew = Math.max(1e-15, Math.min(1e15, phiL[i] / Math.max(phiV[i], 1e-30)));
+          logUpdate[i] = Math.log(Knew / previousK);
+          finalMaxLogKUpdate = Math.max(finalMaxLogKUpdate, Math.abs(logUpdate[i]));
+        }
+        if (finalMaxLogKUpdate > THERMO_K_VALUE_TOLERANCE) {
+          refineLogKUpdate(logUpdate, vaporCompositionDerivatives, y);
+        }
+        double sumKxLocal = 0.0;
+        for (int i = 0; i < C; i++) {
+          K[j][i] = Math.max(1e-15, Math.min(1e15, previousKValues[i] * Math.exp(logUpdate[i])));
+          y[i] = K[j][i] * x[i];
           sumKxLocal += y[i];
         }
         for (int i = 0; i < C; i++) {
@@ -3704,6 +3730,7 @@ public class NaphtaliSandholmSolver {
     }
 
     if (kOk) {
+      lastVaporSystems[j] = currentVaporSystem;
       lastThermoMaxLogKValueUpdate = Math.max(lastThermoMaxLogKValueUpdate, finalMaxLogKUpdate);
       if (!kConverged) {
         lastThermoKValueNonConvergedCount++;
@@ -4389,6 +4416,22 @@ public class NaphtaliSandholmSolver {
    */
   private boolean computeSinglePhaseFugacityCoefficients(double[] composition, double tempK, double pressBar,
       boolean isVapor, double[] phiOut) {
+    return computeSinglePhaseFugacityCoefficients(composition, tempK, pressBar, isVapor, phiOut, null);
+  }
+
+  /**
+   * Evaluate forced-root fugacity coefficients and optional composition derivatives.
+   *
+   * @param composition normalized phase composition
+   * @param tempK temperature in kelvin
+   * @param pressBar absolute pressure in bar
+   * @param isVapor whether the gas root is requested
+   * @param phiOut fugacity coefficient destination
+   * @param compositionDerivatives optional d(ln phi_i)/dn_k destination on a one-mole basis
+   * @return true when the phase calculation is finite
+   */
+  private boolean computeSinglePhaseFugacityCoefficients(double[] composition, double tempK, double pressBar,
+      boolean isVapor, double[] phiOut, double[][] compositionDerivatives) {
     try {
       SystemInterface sys = referenceSystem.clone();
       sys.setTemperature(tempK);
@@ -4399,20 +4442,130 @@ public class NaphtaliSandholmSolver {
       sys.setNumberOfPhases(1);
       sys.setPhaseType(0, isVapor ? PhaseType.GAS : PhaseType.LIQUID);
       sys.setForcePhaseTypes(true);
-      // Fixed-T/P fugacity does not consume caloric temperature derivatives.
-      sys.init(1);
+      sys.init(compositionDerivatives == null ? 1 : 3);
+      if (compositionDerivatives != null) {
+        currentVaporSystem = sys;
+      }
       for (int i = 0; i < C; i++) {
         double phi = sys.getPhase(0).getComponent(i).getFugacityCoefficient();
         if (!(phi > 0.0) || Double.isNaN(phi) || Double.isInfinite(phi)) {
           return false;
         }
         phiOut[i] = phi;
+        if (compositionDerivatives != null) {
+          for (int k = 0; k < C; k++) {
+            compositionDerivatives[i][k] = sys.getPhase(0).getComponent(i).getdfugdn(k);
+          }
+        }
       }
       return true;
     } catch (Exception e) {
       logger.debug("Single-phase fugacity failed for {} phase at T={}K P={}bar", isVapor ? "vapor" : "liquid", tempK,
           pressBar);
       return false;
+    }
+  }
+
+  /**
+   * Predict K-values for a nearby state from the latest local vapor derivatives.
+   *
+   * <p>
+   * The predictor only reuses local derivatives. Every predicted state still undergoes a new forced-root fugacity
+   * evaluation and the unchanged logarithmic K convergence gate.
+   * </p>
+   *
+   * @param tray perturbed tray
+   * @param liquidComposition current normalized liquid composition
+   * @param vaporComposition initial vapor guess, updated in place
+   * @param liquidFugacity current liquid fugacity coefficients
+   * @param pressureBar current pressure in bar
+   */
+  private void predictKValues(int tray, double[] liquidComposition, double[] vaporComposition, double[] liquidFugacity,
+      double pressureBar) {
+    SystemInterface base = jacobianBaseVaporSystems == null ? lastVaporSystems[tray] : jacobianBaseVaporSystems[tray];
+    if (base == null || Math.abs(T[tray] - base.getTemperature()) > 1.0
+        || Math.abs(pressureBar - base.getPressure()) > 1.0e-8) {
+      return;
+    }
+    double[] baseComposition = base.getMolarComposition();
+    double maxCompositionChange = 0.0;
+    for (int k = 0; k < C; k++) {
+      maxCompositionChange = Math.max(maxCompositionChange, Math.abs(vaporComposition[k] - baseComposition[k]));
+    }
+    if (maxCompositionChange > 1.0e-2) {
+      return;
+    }
+    double[][] derivatives = new double[C][C];
+    double[] logUpdate = new double[C];
+    for (int i = 0; i < C; i++) {
+      ComponentInterface component = base.getPhase(0).getComponent(i);
+      double lnPhi = Math.log(component.getFugacityCoefficient())
+          + component.getdfugdt() * (T[tray] - base.getTemperature());
+      for (int k = 0; k < C; k++) {
+        derivatives[i][k] = component.getdfugdn(k);
+        lnPhi += derivatives[i][k] * (vaporComposition[k] - baseComposition[k]);
+      }
+      logUpdate[i] = Math.log(liquidFugacity[i] / K[tray][i]) - lnPhi;
+      if (!Double.isFinite(logUpdate[i]) || Math.abs(logUpdate[i]) > 0.1) {
+        return;
+      }
+    }
+    refineLogKUpdate(logUpdate, derivatives, vaporComposition);
+    double sum = 0.0;
+    for (int i = 0; i < C; i++) {
+      K[tray][i] *= Math.exp(logUpdate[i]);
+      vaporComposition[i] = K[tray][i] * liquidComposition[i];
+      sum += vaporComposition[i];
+    }
+    for (int i = 0; i < C; i++) {
+      vaporComposition[i] /= sum;
+    }
+    lastThermoCacheHitCount++;
+  }
+
+  /**
+   * Newton-correct the implicit vapor-composition K-value equation.
+   *
+   * <p>
+   * With y = K*x/sum(K*x), the derivative of ln(phi_i) with respect to ln(K_k) is y_k*(dln(phi_i)/dn_k - sum_l
+   * y_l*dln(phi_i)/dn_l). A finite, bounded correction replaces the slower fixed-point direction; singular or oversized
+   * steps retain it.
+   * </p>
+   *
+   * @param logUpdate fixed-point logarithmic K update, replaced in place when safe
+   * @param derivatives vapor fugacity composition derivatives on the one-mole basis
+   * @param composition normalized vapor composition
+   */
+  private void refineLogKUpdate(double[] logUpdate, double[][] derivatives, double[] composition) {
+    SimpleMatrix jacobian = SimpleMatrix.identity(C);
+    SimpleMatrix residual = new SimpleMatrix(C, 1);
+    for (int i = 0; i < C; i++) {
+      double normalizationDerivative = 0.0;
+      for (int k = 0; k < C; k++) {
+        normalizationDerivative += composition[k] * derivatives[i][k];
+      }
+      residual.set(i, 0, logUpdate[i]);
+      for (int k = 0; k < C; k++) {
+        double derivative = composition[k] * (derivatives[i][k] - normalizationDerivative);
+        if (!Double.isFinite(derivative)) {
+          return;
+        }
+        jacobian.set(i, k, jacobian.get(i, k) + derivative);
+      }
+    }
+    try {
+      SimpleMatrix correction = jacobian.solve(residual);
+      for (int i = 0; i < C; i++) {
+        double value = correction.get(i, 0);
+        if (!Double.isFinite(value) || Math.abs(value) > Math.max(1.0, 2.0 * Math.abs(logUpdate[i]))) {
+          return;
+        }
+      }
+      for (int i = 0; i < C; i++) {
+        logUpdate[i] = correction.get(i, 0);
+      }
+    } catch (RuntimeException exception) {
+      logger.debug("Implicit vapor-composition Newton correction was singular; retaining fixed-point step");
     }
   }
 
@@ -5094,9 +5247,9 @@ public class NaphtaliSandholmSolver {
    *
    * <p>
    * For each tray, creates a two-phase thermo system at the converged T, P, and overall composition for tray-state
-   * reporting. When a side draw is active, internal and side-product streams are materialized from the solver's vapor
-   * and liquid component-flow arrays so each split preserves the accepted species inventory exactly. Columns without
-   * side draws retain the established equilibrium-composition materialization path.
+   * reporting. Side-product streams retain the solver component-flow arrays. Columns without side draws retain the
+   * independent total vapor flow and its normalized phase composition, matching the enthalpy evaluation basis. Every
+   * material outlet preserves its intended EOS root across later caloric initialization.
    * </p>
    *
    * @param id calculation identifier
@@ -5122,23 +5275,6 @@ public class NaphtaliSandholmSolver {
         sumLiq += liq[j][i];
       }
       L[j] = Math.max(sumLiq, 1e-20);
-
-      // Established equilibrium-composition path for columns without side draws.
-      double[] x = new double[C];
-      double[] y = new double[C];
-      double sumY = 0.0;
-      for (int i = 0; i < C; i++) {
-        x[i] = liq[j][i] / L[j];
-        y[i] = K[j][i] * x[i];
-        sumY += y[i];
-      }
-      if (sumY > 1e-20) {
-        for (int i = 0; i < C; i++) {
-          y[i] /= sumY;
-        }
-      } else {
-        System.arraycopy(x, 0, y, 0, C);
-      }
 
       // Overall composition z from liquid + vapor component flows
       double totalMoles = L[j] + V[j];
@@ -5204,26 +5340,17 @@ public class NaphtaliSandholmSolver {
               new neqsim.process.equipment.stream.Stream("pa_draw_" + j, drawSystem));
         }
       } else {
-        SystemInterface gasSystem = referenceSystem.clone();
-        gasSystem.setTemperature(T[j]);
-        gasSystem.setPressure(P[j] / 1e5);
-        gasSystem.setTotalNumberOfMoles(V[j] / 3600.0);
-        gasSystem.setMolarComposition(y);
-        gasSystem.init(0);
-        gasSystem.setNumberOfPhases(1);
-        gasSystem.setPhaseType(0, PhaseType.GAS);
-        gasSystem.init(2);
+        // V is the independent vapor-flow variable; hV uses the normalized K*x composition.
+        // Legacy BP/SR acceptance may retain a small summation residual, so publishing the
+        // unnormalized vapor component sum would change the accepted flow and energy basis.
+        double vaporMoles = 0.0;
+        for (int component = 0; component < C; component++) {
+          vaporMoles += vap[j][component];
+        }
+        double vaporInventoryFraction = vaporMoles > 1.0e-20 ? V[j] / vaporMoles : 0.0;
+        SystemInterface gasSystem = createAppliedPhaseSystem(j, vap[j], vaporInventoryFraction, PhaseType.GAS);
         tray.setCachedGasOutStream(new neqsim.process.equipment.stream.Stream("gas_" + j, gasSystem));
-
-        SystemInterface liqSystem = referenceSystem.clone();
-        liqSystem.setTemperature(T[j]);
-        liqSystem.setPressure(P[j] / 1e5);
-        liqSystem.setTotalNumberOfMoles(L[j] / 3600.0);
-        liqSystem.setMolarComposition(x);
-        liqSystem.init(0);
-        liqSystem.setNumberOfPhases(1);
-        liqSystem.setPhaseType(0, PhaseType.LIQUID);
-        liqSystem.init(2);
+        SystemInterface liqSystem = createAppliedPhaseSystem(j, liq[j], 1.0, PhaseType.LIQUID);
         tray.setCachedLiquidOutStream(new neqsim.process.equipment.stream.Stream("liq_" + j, liqSystem));
       }
     }

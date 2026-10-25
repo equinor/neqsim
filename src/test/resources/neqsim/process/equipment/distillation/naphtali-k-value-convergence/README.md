@@ -51,3 +51,49 @@ envelope. Two total-condenser MESH cases also remain unqualified in a preceding
 30/30/20-bound trial. That trial is not final-tree qualification of the shared
 30-bound policy; fresh CI must retest them. The existing #4579 compatibility issue
 and draft status remain. No unresolved result or tolerance is changed to force a pass.
+
+## Implicit vapor-composition Newton follow-up
+
+The `implicit-newton-control.csv` control uses exactly the solver source from PR
+head `02917efba52dc87e412dcdbad8d222c6db5fc8d1`, compiled into an isolated directory
+and placed before the candidate classes. All other thermodynamic classes, parameters,
+and the unchanged cold-column fixture/assertions are shared. `implicit-newton.csv`
+uses the enclosing commit's bounded Newton K correction and guarded local derivative
+predictor. Both JVMs used OpenJDK 17.0.20 and a 650 MiB Java heap. Reproduce them with
+the same saved `ColumnConvergenceEvidence.java.txt` harness described above.
+
+Both runs pass every published material and energy assertion. Forced-root fugacity
+sweeps fall from 102,200 to 54,573, while tray evaluations rise from 22,450 to 25,910
+and outer iterations rise from 32 to 57. The candidate's public energy and MESH-energy
+residuals are 1.36450e-11 and 6.82251e-12. Each predictor receives a fresh EOS residual
+check; the 30-sweep bound and 1e-8 inner convergence gate are unchanged. Vapor derivative
+evaluations require `init(3)`; liquid fugacity-only work retains `init(1)`.
+
+Capped intermediate evaluations rise from nine to 197, with maximum final log-K
+updates 1.6373e-5 and 3.17215 respectively over the off-solution trajectory. Those
+counters describe trial states, not final accepted equilibrium. This is a successful
+work-budget repair for the tested fixtures, not evidence of universally improved
+stability. The independent public balance gates remain necessary. Single-pair wall
+times of 7.70 and 5.65 seconds were obtained during other validation and establish
+no overall speedup or general performance non-regression.
+
+The two telemetry fixtures retain their original less-than-two-sweeps-per-evaluation
+budgets. Their old requirement to observe a capped two-sweep evaluation is replaced
+with stronger assertions: zero capped evaluations and maximum final update no greater
+than 1e-8 in the nominal telemetry case. The severe and changed-inlet work budgets,
+all published-state balances, and all physical acceptance tolerances are unchanged.
+The focused 12-method telemetry, changed/severe warm-start and publication suite passes.
+The total-condenser connectivity repair is separately covered by a recording-tray
+regression that fails against the original accelerated sweep and by the unchanged
+MESH material/ratio/temperature acceptance cases.
+
+The final no-side-draw publication retains the independent total vapor flow `V` and
+normalized `K*x` composition used by the enthalpy calculation. Directly publishing
+an unnormalized vapor-flow vector changed that established basis at approximate
+BP/Sum-Rates endpoints. Preserving `V` while atomically assigning component flows
+and retaining the forced root fixes the three EOS/mixing-rule/inactive-tolerance
+cache regressions without changing their physical balance tolerances. All 15
+focused cache, K-work, severe/changed warm-start and publication methods pass.
+The complete 34-method `ColumnSpecificationTest` class passes with its one existing
+skip after AUTO accepts already qualified warm bases; the two original MESH cases,
+connectivity regression and selected Newton repeatability methods also pass.

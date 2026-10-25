@@ -141,7 +141,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO", 10.0);
     double[] expectedPpm = new double[] {47.3, 1.0, 14.5, 25.5, 0.0, 0.0, 1.5, 3.86};
     String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
-    runAndPrintWithAssertions(sys, "3", expectedNames, expectedPpm);
+    SystemInterface outlet = runAndPrintWithAssertions(sys, "3", expectedNames, expectedPpm);
+    assertOutletInventory(outlet);
   }
 
   // Scenario 4
@@ -155,7 +156,34 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO", 10.0);
     double[] expectedPpm = new double[] {47.0, 1.0, 14.8, 75.0, 0.0, 0.0, 2.11, 3.02};
     String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO", "nitric acid", "HNO2"};
-    runAndPrintWithAssertions(sys, "4", expectedNames, expectedPpm);
+    SystemInterface outlet = runAndPrintWithAssertions(sys, "4", expectedNames, expectedPpm);
+    assertOutletInventory(outlet);
+  }
+
+  /**
+   * Checks that a reacting outlet presents normalized, conserved inventories to downstream flashes.
+   *
+   * @param outlet flashed reactor outlet
+   */
+  private void assertOutletInventory(SystemInterface outlet) {
+    double overallSum = 0.0;
+    double totalInventory = 0.0;
+    for (int componentIndex = 0; componentIndex < outlet.getNumberOfComponents(); componentIndex++) {
+      double overallFraction = outlet.getComponent(componentIndex).getz();
+      double componentInventory = outlet.getComponent(componentIndex).getNumberOfmoles();
+      overallSum += overallFraction;
+      totalInventory += componentInventory;
+      Assertions.assertEquals(componentInventory / outlet.getTotalNumberOfMoles(), overallFraction, 1.0e-14);
+      double recoveredFraction = 0.0;
+      for (int phaseIndex = 0; phaseIndex < outlet.getNumberOfPhases(); phaseIndex++) {
+        recoveredFraction += outlet.getBeta(phaseIndex)
+            * outlet.getPhase(phaseIndex).getComponent(componentIndex).getx();
+      }
+      Assertions.assertEquals(overallFraction, recoveredFraction, 1.0e-10,
+          "The outlet flash must conserve " + outlet.getComponent(componentIndex).getComponentName());
+    }
+    Assertions.assertEquals(1.0, overallSum, 1.0e-12);
+    Assertions.assertEquals(totalInventory, outlet.getTotalNumberOfMoles(), 1.0e-8);
   }
 
   // Scenario 5

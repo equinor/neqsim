@@ -50,7 +50,11 @@
   test (e.g. `DocExamplesCompilationTest`) that is run and passes before the doc is done.
 - **Notebooks must be executed** end to end (NeqSim Runner by default); unexecuted = incomplete.
 - **Linux-only engines** (FluidMagic, OpenFOAM, OPM Flow) need Docker Desktop/WSL2 on Windows;
-  report a missing runtime as a blocker, never skip silently.
+  run `neqsim docker ensure --linux` before container work to start installed Docker
+  automatically and wait for readiness (source checkout:
+  `uv run --project devtools --locked devtools/docker_runtime.py ensure --linux`).
+  Never install/elevate, switch contexts or container modes, or stop Docker automatically.
+  Report missing installations, startup timeouts and denied access as blockers, never skip silently.
 - **FluidMagic is Equinor-internal, not on PyPI** (enterprise agents/skills only): running it needs the
   private repo `equinor/FluidMagic` (own GitHub SSO; `gh repo clone equinor/FluidMagic`,
   `pip install -e FluidMagic/fluidmagic`). Never `pip install fluidmagic`; if `import fluidmagic`

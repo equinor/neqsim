@@ -80,6 +80,8 @@ public class PHflash extends Flash {
     boolean correctFactor = true;
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
+    double previousInverseTemperature = Double.NaN;
+    double previousResidual = Double.NaN;
 
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
@@ -89,7 +91,25 @@ public class PHflash extends Flash {
       }
       iterations++;
       oldTemp = nyTemp;
-      newCorr = factor * calcdQdT() / calcdQdTT();
+      double residual = calcdQdT();
+      double derivative = calcdQdTT();
+      newCorr = factor * residual / derivative;
+      // Reuse the two completed equilibrium flashes to estimate the caloric slope.
+      // The fixed-composition Cp derivative misses phase-fraction/composition changes.
+      // A decreasing finite residual and a physically signed, bounded slope admit
+      // an undamped secant step; otherwise retain the original damped Newton step.
+      double inverseTemperatureStep = oldTemp - previousInverseTemperature;
+      if (Double.isFinite(previousResidual) && inverseTemperatureStep != 0.0
+          && Math.abs(residual) < Math.abs(previousResidual)) {
+        double secantDerivative = (residual - previousResidual) / inverseTemperatureStep;
+        double derivativeRatio = secantDerivative / derivative;
+        if (Double.isFinite(secantDerivative) && secantDerivative < 0.0 && Double.isFinite(derivativeRatio)
+            && derivativeRatio >= 0.1 && derivativeRatio <= 10.0) {
+          newCorr = residual / secantDerivative;
+        }
+      }
+      previousInverseTemperature = oldTemp;
+      previousResidual = residual;
       nyTemp = oldTemp - newCorr;
 
       if (iterations > 150 && Math.abs(error) < 10.0) {

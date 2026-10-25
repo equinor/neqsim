@@ -9091,10 +9091,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Perform an undamped upward and downward accelerated tray sweep.
    *
    * <p>
-   * NEWTON and the final WEGSTEIN synchronization always use unit relaxation. Each internal transfer therefore takes
-   * one owned clone of the already-flashed tray outlet and installs that same clone as the downstream inlet. No
-   * previous-iterate cache or second cache clone is required. The transferred snapshot is reflashed through the
-   * established relaxation path so downstream tear-state semantics remain unchanged.
+   * NEWTON and the final WEGSTEIN synchronization always use unit relaxation. Both the stripping and rectifying liquid
+   * legs are transferred, so each liquid and vapor interface is refreshed once per sweep. Each transfer takes one owned
+   * clone of the already-flashed tray outlet and installs that same clone as the downstream inlet. No previous-iterate
+   * cache or second cache clone is required. The transferred snapshot is reflashed through the established relaxation
+   * path so downstream tear-state semantics remain unchanged.
    * </p>
    *
    * @param id calculation identifier
@@ -9122,6 +9123,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
       StreamInterface transferredGas = applyRelaxation(null, trays.get(stage - 1).getGasOutStream(), 1.0);
       trays.get(stage).replaceStream(replaceStream, transferredGas);
+      lastAcceleratedInternalStreamTransferCount++;
+      trays.get(stage).run(id);
+      applyMurphreeCorrection(stage);
+    }
+
+    // Refresh the rectifying-section liquid leg as well. The downward pass above
+    // starts at the feed and cannot carry the condenser reflux into trays above it.
+    for (int stage = numberOfTrays - 2; stage >= firstFeedTrayNumber; stage--) {
+      int replaceStream = trays.get(stage).getNumberOfInputStreams() - 1;
+      StreamInterface transferredLiquid = applyRelaxation(null, trays.get(stage + 1).getLiquidOutStream(), 1.0);
+      trays.get(stage).replaceStream(replaceStream, transferredLiquid);
       lastAcceleratedInternalStreamTransferCount++;
       trays.get(stage).run(id);
       applyMurphreeCorrection(stage);

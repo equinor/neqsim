@@ -1,0 +1,2 @@
+implementation,accepted,solved,solver,iterations,thermo_evaluations,k_sweeps,capped_k_evaluations,max_log_k_update,energy_residual,mesh_energy_residual,seconds,failure
+implicit-newton,true,true,NAPHTALI_SANDHOLM,57,25910,54573,197,3.1721499861482330,1.3645028295346699e-11,6.8225141477198960e-12,5.646408278,

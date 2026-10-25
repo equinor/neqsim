@@ -1,10 +1,14 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -72,26 +76,37 @@ public class TPgradientFlashTest {
   }
 
   /**
-   * Pins a five-component reservoir gas gradient to its reference values within floating-point tolerances.
+   * Checks the five-component gas against independent 60/80-digit cubic-EOS references.
+   *
+   * @param pr whether to use Peng-Robinson instead of SRK
    */
-  @Test
-  void reservoirGasGradientIsUnchanged() {
-    SystemInterface testSystem = new SystemSrkEos(360.0, 250.0);
-    testSystem.addComponent("nitrogen", 1.0);
-    testSystem.addComponent("CO2", 2.0);
-    testSystem.addComponent("methane", 85.0);
-    testSystem.addComponent("ethane", 7.0);
-    testSystem.addComponent("propane", 5.0);
-    testSystem.createDatabase(true);
-    testSystem.setMixingRule(2);
-
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void reservoirGasGradientMatchesIndependentReference(boolean pr) {
+    SystemInterface testSystem = TPgradientFlashJacobianTest.reservoirGas(pr);
     SystemInterface result = new ThermodynamicOperations(testSystem).TPgradientFlash(3000.0, 390.0);
 
-    assertEquals(279.7907442693551, result.getPressure(), 1.0e-12);
-    double[] expected = {0.011540669377441238, 0.024552332095877594, 0.8378273954275861, 0.07181519967243205,
-        0.05426440342666295};
+    // Reproduce using test/resources/.../gradient-cubic-reference/reproduce.py.
+    double expectedPressure = pr ? 280.0017890516890655786 : 279.7907442694809963308;
+    assertEquals(expectedPressure, result.getPressure(), 1.0e-12);
+    double[] expected = pr
+        ? new double[] {0.01151613994142086504, 0.02458625611273295182, 0.83738905902534626105, 0.07198234381927365000,
+            0.05452620110122627208}
+        : new double[] {0.01154066937745200692, 0.02455233209587859621, 0.83782739542774358252, 0.07181519967234902144,
+            0.05426440342657679290};
     for (int i = 0; i < expected.length; i++) {
       assertEquals(expected[i], result.getPhase(0).getComponent(i).getx(), 1.0e-14);
     }
+    double compositionSum = 0.0;
+    for (int i = 0; i < expected.length; i++) {
+      double composition = result.getPhase(0).getComponent(i).getx();
+      assertTrue(composition > 0.0);
+      compositionSum += composition;
+    }
+    assertEquals(1.0, compositionSum, 1.0e-14);
+    assertEquals(390.0, result.getTemperature(), 0.0);
+    assertEquals(result.getPressure(), ((PhaseEos) result.getPhase(0)).calcPressure(), 1.0e-8);
+    assertEquals(360.0, testSystem.getTemperature(), 0.0);
+    assertEquals(250.0, testSystem.getPressure(), 0.0);
   }
 }

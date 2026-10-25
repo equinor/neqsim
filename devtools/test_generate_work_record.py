@@ -107,6 +107,18 @@ def test_glob_outputs_and_optional_notebook_plan_are_not_missing(task):
     assert "MISSING" not in text
 
 
+def test_comma_separated_outputs_are_checked_one_by_one(task):
+    config = (task / "study_config.yaml").read_text(encoding="utf-8")
+    config = config.replace(
+        "      produces: step2_analysis/pull.json",
+        "      produces: step2_analysis/pull.json, step2_analysis/gone.json")
+    (task / "study_config.yaml").write_text(config, encoding="utf-8")
+    assert gwr.main([str(task)]) == 0
+    text = (task / "step3_report" / "WORK_RECORD.md").read_text(encoding="utf-8")
+    assert "step2_analysis/pull.json, step2_analysis/gone.json (missing)" in text
+    assert "pull.json (missing)" not in text
+
+
 def test_check_flags_unfilled_narrative(task):
     gwr.main([str(task)])
     problems = gwr.check_work_record(task)

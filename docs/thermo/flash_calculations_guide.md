@@ -104,6 +104,14 @@ System.out.println("Pressure: " + fluid.getPressure("bara") + " bara");
 
 The most common flash type. Given temperature and pressure, find phase split and compositions. NeqSim implements the classical Michelsen flash algorithm with stability analysis.
 
+For an already-equilibrated neutral two-phase endpoint containing at least 1 mol% water,
+TP flash can remove roundoff in the phase amounts by recovering the unique lever-rule
+fractions from the converged compositions and original feed. The correction is limited
+to $10^{-10}$ in either phase fraction, retains the phase set and compositions, and must
+improve component closure to $10^{-13}$ while preserving fugacity equality. This avoids
+amplifying small amount differences into discrepancies in extensive caloric properties.
+It adds no equilibrium iterations and does not change dry-fluid or trace-water flash paths.
+
 **Method signatures:**
 ```java
 void TPflash()
@@ -449,6 +457,14 @@ so a zero-flow column connection retains a usable temperature template when
 flow resumes. Nonzero total enthalpy on an empty stream is rejected. A flowing
 stream can have a zero enthalpy target; its residual uses a finite normalization.
 Small nonzero inventories continue through the caloric solve.
+
+The standard caloric solve reuses the enthalpy residuals from two completed
+TP flashes to estimate the equilibrium caloric slope. When the residual is
+improving and that slope has a finite, physical sign and a bounded magnitude,
+a secant temperature correction avoids unnecessary full equilibrium evaluations.
+Other states retain the damped heat-capacity Newton correction. Both paths keep
+the existing 10 K trial-step bound, TP-failure backoff, iteration limit and
+enthalpy residual tolerance; the acceleration adds no trial TP flash.
 
 **Method signatures:**
 ```java
@@ -1145,6 +1161,21 @@ SystemInterface TPgradientFlash(double height, double temperature)
 **Parameters:**
 - `height`: Depth in meters
 - `temperature`: Temperature at depth in Kelvin
+
+The solver advances through 20 finite height/temperature increments. Each increment
+matches component log fugacities with the gravitational chemical-potential change
+and enforces composition normalization. Its Jacobian uses derivatives of **log**
+fugacity coefficients directly; the derivatives must not be divided by the
+fugacity coefficient again. Newton steps preserve positive compositions and
+pressure, with a 50-iteration cap and explicit rejection of an unconverged or
+nonfinite result. Returned properties correspond to the final accepted state.
+
+The SRK and PR five-component reference in
+`TPgradientFlashTest.reservoirGasGradientMatchesIndependentReference` is reproduced
+independently with standard-library Python Decimal arithmetic at 60 and 80 digits
+in `src/test/resources/neqsim/thermodynamicoperations/flashops/gradient-cubic-reference/`.
+It qualifies the implemented 20-step discretization; it is not a continuous-depth
+integration or a thermal-diffusion (Soret) model.
 
 ---
 

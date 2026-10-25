@@ -1126,8 +1126,9 @@ public class PTPhaseEnvelopeRobustnessTest {
 
   /**
    * Highly asymmetric: methane/n-hexane/nC10 (80/10/10). The large size difference between CH4 and nC10 creates a very
-   * wide envelope. Tests that the algorithm traces through the complex region without falsely detecting multiple CPs
-   * for a system that should have one.
+   * wide boundary that continues into liquid-liquid equilibrium below its critical crossing. The low-temperature branch
+   * reaches the configured pressure bound, so retained segments must not be reported as a complete VLE loop. The
+   * independent SRK onset reference is qualified by {@link AsymmetricSrkLiquidLiquidEnvelopeTest}.
    */
   @Test
   void testAsymmetricTernary_CH4_nC6_nC10() {
@@ -1138,27 +1139,24 @@ public class PTPhaseEnvelopeRobustnessTest {
     fluid.setMixingRule("classic");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-    ops.calcPTphaseEnvelope();
+    assertPressureLimitedEnvelope(ops);
 
     PTPhaseEnvelopeMichelsen env = (PTPhaseEnvelopeMichelsen) ops.getOperation();
     int numCPs = env.getNumberOfCriticalPoints();
 
-    // Highly asymmetric but still single VP region with SRK classic mixing
-    assertTrue(numCPs >= 1, "Should detect at least 1 CP, got " + numCPs);
+    assertEquals(1, numCPs, "The liquid-liquid continuation must not create spurious critical crossings");
 
     double[] dewT = ops.get("dewT");
-    double[] cricondenbar = ops.get("cricondenbar");
-    double[] cricondentherm = ops.get("cricondentherm");
 
     assertNotNull(dewT, "Should have dew curve");
 
-    // Very wide envelope: cricondentherm should be high due to nC10
-    double cctT = cricondentherm[0];
-    assertTrue(cctT > 300.0, "Asymmetric ternary cricondentherm should be >300 K, got " + cctT);
-
-    // High cricondenbar for this very asymmetric system
-    double ccbP = cricondenbar[1];
-    assertTrue(ccbP > 80.0, "Asymmetric ternary cricondenbar should be >80 bar, got " + ccbP);
+    assertTrue(Arrays.stream(dewT).filter(Double::isFinite).max().getAsDouble() > 500.0,
+        "The retained high-temperature segment must still extend past 500 K");
+    assertTrue(Arrays.stream(ops.get("bubP")).filter(Double::isFinite).max().getAsDouble() > 990.0,
+        "The low-temperature liquid-liquid branch must reach the configured pressure bound");
+    double[] criticalPoint = ops.get("criticalPoint1");
+    assertTrue(criticalPoint[0] > 430.0 && criticalPoint[0] < 440.0);
+    assertTrue(criticalPoint[1] > 265.0 && criticalPoint[1] < 280.0);
   }
 
   /**
