@@ -506,9 +506,9 @@ def cross_sections(sh, ds, rs, ctx):
     n_spec = min(len(order), 8)
     cols = 4
     big = n_spec <= 4
-    cw, ch = (96.0, 150.0) if big else (96.0, 98.0)
+    cw, ch = (96.0, 112.0) if big else (96.0, 98.0)
     rmax = 24.0 if big else 14.0
-    base_y = 36.0 if big else 22.0
+    base_y = 60.0 if big else 22.0
     for i, key in enumerate(order[:8]):
         ids = specs[key]
         s = next(x for x in hyd if x["id"] == ids[0])

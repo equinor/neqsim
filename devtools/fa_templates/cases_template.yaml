@@ -1,0 +1,18 @@
+# Cases file (TEMPLATE). Rates carry an explicit basis (mass | molar | std_volume | actual_volume). Reference: devtools/fa_examples/offshore_tieback/cases.yaml.
+schema: flow_assurance_cases.v1
+topology_variants:
+  - {id: DEFAULT, description: "all sources producing"}      # supported operations: isolate_sources, isolate_segments (others are rejected)
+cases:
+  - id: BASE
+    label: "unavailable - TO BE CONFIRMED"
+    role: design                          # design | scenario | mitigation
+    stage: "unavailable - TO BE CONFIRMED"
+    topology_variant: DEFAULT
+    fluid: FLUID-1
+    description: "unavailable - TO BE CONFIRMED"
+    sources:
+      SRC-A: {hc_rate: {value: 0.0, unit: kg/s, basis: mass}, water_rate: {value: 0.0, unit: kg/h, basis: mass}, t_c: 0.0}
+    boundary: {outlet: {node: HOST-IN, type: pressure, value: {value: 0.0, unit: bara}, reference: "unavailable - TO BE CONFIRMED"}, inlet: {type: rate_specified}}
+    # shut_in: {settle_out_pressure_bara: .., duration_h: ..}      # enables the lumped cooldown
+    # inhibitor: {name: MEG, purity_wt: 0.9}
+events: []                                # {id, case, type, analysis: lumped_cooldown | external, ...}; external events need required_outputs and comparison_criteria

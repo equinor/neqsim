@@ -134,6 +134,11 @@ def check_basis(basis):
         hits = psr_basis.placeholder_hits(text)
         if hits:
             out.append(_finding("error", "BASIS-PLACEHOLDER", "placeholder text %s" % hits[:3], path))
+    n_open = sum(1 for _p, t in psr_basis._walk_strings(basis) if "TO BE CONFIRMED" in t)  # noqa: SLF001
+    if n_open:
+        out.append(_finding("warning", "BASIS-UNCONFIRMED", "%d basis item(s) still read 'unavailable - TO BE CONFIRMED'; the study stays SCREENING at best" % n_open, "basis"))
+    if str(basis.get("basis_status", "")).lower() != "confirmed":
+        out.append(_finding("warning", "BASIS-DRAFT", "basis_status is '%s', not 'confirmed'; a person must confirm the basis" % basis.get("basis_status"), "basis_status"))
     return out
 
 
@@ -731,7 +736,7 @@ class FaResolver:
                 self.unit_errors.append({"ref": ref, "message": str(exc)})
                 return "n/a"
         if val is None:
-            self.used.append({"ref": ref, "value": None, "text": "unavailable", "unit": unit})
+            self.used.append({"ref": ref, "value": None, "text": "unavailable", "unit": unit, "format": fmt, "unit_req": unit_spec})
             return "unavailable"
         if isinstance(val, bool):
             out = "yes" if val else "no"
@@ -750,7 +755,7 @@ class FaResolver:
                 out = "%d" % val if float(val).is_integer() and abs(val) < 1e7 else fmt_value(float(val), 4)
         else:
             out = str(val)
-        self.used.append({"ref": ref, "value": val if isinstance(val, (int, float, str, bool)) else str(val), "text": out, "unit": unit, "format": fmt})
+        self.used.append({"ref": ref, "value": val if isinstance(val, (int, float, str, bool)) else str(val), "text": out, "unit": unit, "format": fmt, "unit_req": unit_spec})
         return out
 
     def expand(self, text):

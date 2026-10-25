@@ -25,13 +25,16 @@ study:
   decisions:
     - "Is MEG injection at the stated dose sufficient to keep the hydrate margin at or above the project criterion in plateau, turndown and late life?"
     - "Does the trunk insulation give the cooldown time required before the hydrate equilibrium temperature is reached after a shut-in?"
-    - "Which of the two late-life mitigations (higher MEG dose or thicker trunk insulation) restores the margin, and by how much?"
+    - "Which of the late-life mitigations (higher MEG dose or thicker insulation) restores the margin, and by how much?"
+  decision_criteria: [["C-HYD-01"], ["C-COOL-01"], ["C-HYD-01", "C-COOL-01"]]
   maturity: "Concept screening (synthetic demonstration)"
   audience: "Users of the NeqSim flow-assurance report toolkit; reviewers of the workflow"
   alternatives:
     - "Baseline: 60 mm PP trunk insulation, MEG dose per case"
     - "Mitigation M1: MEG rate raised to a 30 wt % aqueous mass fraction"
     - "Mitigation M2: trunk insulation increased by 30 mm"
+    - "Mitigation M3: MEG at 30 wt % aqueous and branch insulation increased from 40 mm to 80 mm"
+    - "Mitigation M4: turndown MEG rate raised to a 40 wt % aqueous mass fraction"
   battery_limits:
     included: ["Template outlets (aggregated well streams)", "Branch flowlines A and B", "Gathering PLEM", "Trunk flowline", "Riser", "Host-interface (riser top) pressure boundary"]
     excluded: ["Reservoir and well performance (source pressures are calculated, not matched to a well model)", "Host process and slug-catcher design", "Umbilicals and MEG distribution lines", "Structural and fabrication design of any component"]
