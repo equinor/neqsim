@@ -218,6 +218,12 @@ def route_plan(sh, ds, rs, ctx):
     allx = [nodes[n]["x_m"] for n in nodes if nodes[n].get("x_m") is not None]
     ally = [nodes[n]["y_m"] for n in nodes if nodes[n].get("y_m") is not None]
     xlo, xhi, ylo, yhi = min(allx), max(allx), min(ally), max(ally)
+    # a route along one axis has no extent in the other: give it a minimum span so the plan has a valid scale
+    min_span = 0.12 * max(xhi - xlo, yhi - ylo, 1.0)
+    if xhi - xlo < min_span:
+        xlo, xhi = 0.5 * (xlo + xhi) - 0.5 * min_span, 0.5 * (xlo + xhi) + 0.5 * min_span
+    if yhi - ylo < min_span:
+        ylo, yhi = 0.5 * (ylo + yhi) - 0.5 * min_span, 0.5 * (ylo + yhi) + 0.5 * min_span
     padx, pady = 0.06 * (xhi - xlo), 0.12 * (yhi - ylo)
     xlo, xhi, ylo, yhi = xlo - padx, xhi + padx, ylo - pady, yhi + pady
     s = min(pw / (xhi - xlo), ph / (yhi - ylo))  # mm per m
@@ -268,12 +274,15 @@ def route_plan(sh, ds, rs, ctx):
         return None
     runs = []
     shared = set.intersection(*[set(c) for c in route["paths"].values()]) if len(route["paths"]) > 1 else set()
-    for pid, chain in route["paths"].items():
-        pre = [c for c in chain if c not in shared]
-        if pre:
-            runs.append(("KP-%s" % pid.split("->")[0].replace("TMPL-", ""), pre))
-    trunk = [c for c in list(route["paths"].values())[0] if c in shared] or list(route["paths"].values())[0]
-    runs.append(("KPT", trunk))
+    if len(route["paths"]) == 1:
+        runs.append(("KP", list(route["paths"].values())[0]))
+    else:
+        for pid, chain in route["paths"].items():
+            pre = [c for c in chain if c not in shared]
+            if pre:
+                runs.append(("KP-%s" % pid.split("->")[0].replace("TMPL-", ""), pre))
+        trunk = [c for c in list(route["paths"].values())[0] if c in shared] or list(route["paths"].values())[0]
+        runs.append(("KPT", trunk))
     for label, ids in runs:
         total = sum(segs[i]["length_m"] for i in ids)
         k = 0.0
@@ -327,7 +336,7 @@ def route_plan(sh, ds, rs, ctx):
     sh.add(K.rect(bx, by, bar_m * s, 1.6, fill=INK, sw=0.3) + K.rect(bx + bar_m * s / 2, by, bar_m * s / 2, 1.6, fill="#fff", sw=0.3))
     sh.text(bx, by - 1.2, "0", 2.5, "middle")
     sh.text(bx + bar_m * s, by - 1.2, "%.0f km" % (bar_m / 1000.0), 2.5, "middle")
-    nx_, ny_ = ox + (xhi - xlo) * s - 10.0, oy + 14.0
+    nx_, ny_ = px0 + pw + 14.0, oy + 14.0
     sh.add(K.arrowhead(nx_, ny_ - 9.0, 0, -1, length=4.0, width=3.0) + K.line(nx_, ny_ - 9.0, nx_, ny_ + 2.0, sw=0.6))
     sh.text(nx_, ny_ + 6.0, "N (grid north)", 2.6, "middle")
     sh.add(K.rect(ox + 1.0, oy + (yhi - ylo) * s - 1.0, 0.01, 0.01, fill="none", stroke=None))
@@ -341,16 +350,27 @@ def route_plan(sh, ds, rs, ctx):
     sh.tb["scale"] = scale_txt
     sh.items.append({"type": "plan_frame", "x_range_m": [xlo, xhi], "y_range_m": [ylo, yhi], "mm_per_m": s, "scale_denominator": nm_per_mm * 1000.0,
                      "crs": route.get("crs"), "georeferenced": geo})
+    if len(route["paths"]) == 1:
+        kp_note = "KP: chainage from the template outlet along the single flow path. Jumpers (dashed) are not modelled hydraulically."
+    else:
+        kp_note = "KP-A, KP-B: branch runs from the template outlets; KPT: trunk from the gathering PLEM. Jumpers (dashed) are not modelled hydraulically."
+    has_plem = any(a["kind"] == "plem" for a in nodes.values())
+    has_cross = any(f["kind"] == "crossing" for f in route.get("features") or [])
     sh.notes = ["Coordinate reference: %s. Horizontal datum: %s. Vertical datum: %s." % (route.get("crs"), route.get("horizontal_datum"), route.get("vertical_datum")),
                 "Plan scale 1:%d at A3 (1 mm = %.1f m). KP marks every 5 km of measured chainage, interpolated along the plan polyline in proportion to measured length." %
                 (denom, nm_per_mm),
                 "Chainage convention: %s" % route["chainage"]["origin"],
-                "KP-A, KP-B: branch runs from the template outlets; KPT: trunk from the gathering PLEM. Jumpers (dashed) are not modelled hydraulically.",
-                "Safety zones, third-party infrastructure and seabed hazards were not supplied and are not drawn; only the crossing marked is shown and it is unverified.",
+                kp_note,
+                ("Safety zones, third-party infrastructure and seabed hazards were not supplied and are not drawn; only the crossing marked is shown and it is unverified." if has_cross else
+                 "Safety zones, third-party infrastructure, crossings and seabed hazards were not supplied and are not drawn."),
                 "Pig interfaces and injection points have no plan coordinates and are shown on the connectivity schematic (sheet %d) only." % ctx["codes"]["DWG-01"]]
-    sh.legend = [("line", INK, "solid", "Modelled hydraulic route (plan)"), ("line", GREY, "dash", "Non-modelled jumper"), ("marker", "square", False, "Template / host interface"),
-                 ("marker", "triangle", False, "Gathering PLEM"), ("marker", "circle", True, "Riser base"), ("marker", "cross", False, "Crossing (unverified)"),
-                 ("text", "Ticks: KP marks every 5 km of chainage")]
+    sh.legend = [("line", INK, "solid", "Modelled hydraulic route (plan)"), ("line", GREY, "dash", "Non-modelled jumper"), ("marker", "square", False, "Template / host interface")]
+    if has_plem:
+        sh.legend.append(("marker", "triangle", False, "Gathering PLEM"))
+    sh.legend.append(("marker", "circle", True, "Riser base"))
+    if has_cross:
+        sh.legend.append(("marker", "cross", False, "Crossing (unverified)"))
+    sh.legend.append(("text", "Ticks: KP marks every 5 km of chainage"))
 
 
 def _strip_plan(sh, ds, ctx, px0, py0, pw, ph):
@@ -393,15 +413,29 @@ def arrangement_detail(sh, ds, rs, ctx):
     # left panel: PLEM tie-in
     lx0, lx1 = 16.0, 206.0
     sh.add(K.rect(lx0, 22.0, lx1 - lx0, 200.0, fill="none", sw=0.35))
-    sh.text(lx0 + 2.0, 27.0, "PLEM-1 tie-in - plan schematic, NOT TO SCALE", 3.2, "start", bold=True)
     cx, cy = 150.0, 120.0
     plem = route["sink"]
     for n, a in nodes.items():
         if a["kind"] == "plem":
             plem = n
-    branches = [(pid.split("->")[0], [c for c in chain if c in set(chain) - set.intersection(*[set(c2) for c2 in route["paths"].values()])] if len(route["paths"]) > 1 else chain)
-                for pid, chain in route["paths"].items()]
-    trunk = [c for c in list(route["paths"].values())[0] if all(c in ch for ch in route["paths"].values())]
+    has_plem = any(a["kind"] == "plem" for a in nodes.values())
+    if len(route["paths"]) == 1 and not has_plem:
+        # single path without a gathering PLEM: show the transition into the riser (or the last segment into the host) instead
+        pid0, chain0 = next(iter(route["paths"].items()))
+        ridx = next((i for i, c in enumerate(chain0) if segs[c]["kind"] == "riser"), None)
+        if ridx:
+            plem = segs[chain0[ridx]]["from"]
+            branches = [(pid0.split("->")[0], chain0[:ridx])]
+            trunk = [chain0[ridx]]
+        else:
+            plem = segs[chain0[-1]]["to"]
+            branches = [(pid0.split("->")[0], chain0)]
+            trunk = [chain0[-1]]
+    else:
+        branches = [(pid.split("->")[0], [c for c in chain if c in set(chain) - set.intersection(*[set(c2) for c2 in route["paths"].values()])] if len(route["paths"]) > 1 else chain)
+                    for pid, chain in route["paths"].items()]
+        trunk = [c for c in list(route["paths"].values())[0] if all(c in ch for ch in route["paths"].values())]
+    sh.text(lx0 + 2.0, 27.0, ("%s tie-in - plan schematic, NOT TO SCALE" % plem) if has_plem else "%s transition - plan schematic, NOT TO SCALE" % plem, 3.2, "start", bold=True)
     n_br = len(branches)
     for i, (src, chain) in enumerate(branches):
         yy = 120.0 + (i - (n_br - 1) / 2.0) * 76.0
@@ -419,12 +453,20 @@ def arrangement_detail(sh, ds, rs, ctx):
     sh.add(_hex(cx, cy, 24, 16))
     sh.text(cx, cy + 1.0, plem, 3.0, "middle", bold=True)
     t0 = segs[trunk[0]]
-    sh.text(cx + 14.0, cy - 9.0, "trunk %s" % trunk[0], 3.0, "start", bold=True)
+    sh.text(cx + 14.0, cy - 9.0, "%s %s" % ("trunk" if has_plem else "downstream", trunk[0]), 3.0, "start", bold=True)
     sh.text(cx + 14.0, cy - 5.6, "ID %.1f mm, steel wall %.1f mm" % (t0["id_m"] * 1000.0, t0["layers"][0]["thickness_m"] * 1000.0), 2.6, "start")
     for j, (t, _) in enumerate(K.wrap(_spec_text(t0["layers"][1:]), 2.5, 44.0, max_lines=4)):
         sh.text(cx + 14.0, cy + 7.0 + j * 3.1, t, 2.5, "start")
-    sh.add(fa_draw.patterned([(cx + 7.0, cy - 14.0), (cx + 7.0, cy + 14.0)], fa_draw.PATTERNS["dash"], RED, 0.6))
-    sh.text(cx + 8.5, cy - 15.5, "size and insulation transition", 2.6, "start", fill=RED)
+    def _build(sg):
+        return (round(sg["id_m"], 6), [(l["name"], round(l["thickness_m"], 6)) for l in sg["layers"]])
+
+    if any(_build(segs[b[1][-1]]) != _build(t0) for b in branches):
+        transition = True
+        sh.add(fa_draw.patterned([(cx + 7.0, cy - 14.0), (cx + 7.0, cy + 14.0)], fa_draw.PATTERNS["dash"], RED, 0.6))
+        sh.text(cx + 8.5, cy - 15.5, "size and insulation transition", 2.6, "start", fill=RED)
+    else:
+        transition = False
+        sh.text(cx + 8.5, cy - 15.5, "no size or insulation change at this node", 2.6, "start", fill=GREY)
     sh.text(lx0 + 2.0, 216.0, "Hydraulic tie-in only: structural, fabrication, weld and support design are outside this study; no dimensions are implied.", 2.5, "start", fill=GREY)
     for f in route.get("features") or []:
         if f["kind"] == "pig_launcher":
@@ -470,8 +512,12 @@ def arrangement_detail(sh, ds, rs, ctx):
                 "No fabrication dimensions, welds, supports, bend radii or hang-off details are shown or implied; ISO 129-1 dimension presentation is not applied (see standards register).",
                 "Insulation and size transitions follow the route file; a transition at a node is reported when the thermal build-up of adjacent segments differs.",
                 "Elevations are relative to the stated vertical datum (positive up)."]
-    sh.legend = [("line", INK, "solid", "Pipe run"), ("line", RED, "dash", "Insulation / size transition"), ("line", "#2471a3", "longdash", "Mean sea level (datum)"),
-                 ("line", GREY, "dot", "Interface only (not modelled)")]
+    sh.legend = [("line", INK, "solid", "Pipe run")]
+    if transition:
+        sh.legend.append(("line", RED, "dash", "Insulation / size transition"))
+    sh.legend.append(("line", "#2471a3", "longdash", "Mean sea level (datum)"))
+    if any(f["kind"] == "pig_launcher" for f in route.get("features") or []):
+        sh.legend.append(("line", GREY, "dot", "Interface only (not modelled)"))
     sh.scale_text = "NOT TO SCALE"
     sh.tb["scale"] = "NOT TO SCALE"
 

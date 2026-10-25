@@ -251,9 +251,10 @@ class Axes:
                     runs.append(cur)
                 cur = []
                 continue
-            if yv < self.yr[0] or yv > self.yr[1]:
+            top = self.yr[1] if getattr(self, "clip_hi", None) is None else min(self.yr[1], self.clip_hi)
+            if yv < self.yr[0] or yv > top:
                 clipped += 1
-                yv = min(max(yv, self.yr[0]), self.yr[1])
+                yv = min(max(yv, self.yr[0]), top)
             cur.append((self.px(xv), self.py(yv)))
         if len(cur) > 1:
             runs.append(cur)

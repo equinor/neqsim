@@ -30,7 +30,8 @@ def _profile_cases(ds, pid, roles=("design", "scenario")):
     return [c for c in ds["cases"] if c["role"] in roles and pid in ds["results"][c["id"]]["profiles"]]
 
 
-def _y_range(values, pad=0.06, floor=None, ceil=None):
+def _y_range(values, pad=0.06, floor=None, ceil=None, head=0.16):
+    """Axis range with ``head`` extra headroom above the data so the panel title never sits on a curve."""
     vals = [v for v in values if v is not None]
     lo, hi = min(vals), max(vals)
     span = (hi - lo) or 1.0
@@ -39,6 +40,7 @@ def _y_range(values, pad=0.06, floor=None, ceil=None):
         lo = max(lo, floor)
     if ceil is not None:
         hi = min(hi, ceil)
+    hi += head * ((hi - lo) or 1.0)
     return (lo, hi)
 
 
@@ -69,7 +71,9 @@ def profile_sheet(sh, ds, rs, ctx, k):
     for sid in chain:
         pts.append((segs[sid]["path_chainage_m"][pid]["end"], nodes[segs[sid]["to"]]["elev_m"], segs[sid]["to"]))
     ymin, ymax = min(p[1] for p in pts), max(p[1] for p in pts)
-    el = Axes(sh, PX0, 26.0, PW, 62.0, xr, (ymin - 0.12 * (ymax - ymin), ymax + 0.18 * (ymax - ymin)), "E%d" % (k + 1), "Seabed and pipe centreline elevation - path %s" % pid,
+    has_burial = any(segs[sid].get("burial") for sid in chain)
+    lo_pad = 0.12 + (0.32 if has_burial else 0.0)
+    el = Axes(sh, PX0, 26.0, PW, 62.0, xr, (ymin - lo_pad * (ymax - ymin), ymax + 0.18 * (ymax - ymin)), "E%d" % (k + 1), "Seabed and pipe centreline elevation - path %s" % pid,
               None, "elevation (m, MSL)", show_xticks=False)
     el.series([p[0] for p in pts], [p[1] for p in pts], INK, "solid", "seabed / pipe centreline", sw=0.9, meta={"path": pid, "quantity": "elevation_m", "source": "route"})
     # segment boundaries, labels (two rows), burial band, riser transition
@@ -93,7 +97,11 @@ def profile_sheet(sh, ds, rs, ctx, k):
         if (b < a and b < c) or (b > a and b > c):
             kind = "low" if b < a else "high"
             el.marker(pts[j][0], b, "diamond", True, 1.2)
-            sh.bound_text(rs, el.px(pts[j][0]) + 1.8, el.py(b) + (4.2 if kind == "low" else -2.4), "basis:route.nodes.%s.elev_m" % pts[j][2], ".0f", "%s " % kind, " m", 2.5, "start")
+            label_w = K.text_w("%s %.0f m" % (kind, b), 2.5, False)
+            right_edge = PX0 + PW - 1.0
+            near_right = el.px(pts[j][0]) + 1.8 + label_w > right_edge
+            sh.bound_text(rs, el.px(pts[j][0]) + (-1.8 if near_right else 1.8), el.py(b) + (4.2 if kind == "low" else -2.4), "basis:route.nodes.%s.elev_m" % pts[j][2], ".0f", "%s " % kind, " m", 2.5,
+                          "end" if near_right else "start")
             sh.items.append({"type": "extremum_point", "node": pts[j][2], "kind": kind, "chainage_m": pts[j][0], "elev_m": pts[j][1]})
     hz = (xr[1] - xr[0]) / PW  # m per mm horizontally
     vz = (el.yr[1] - el.yr[0]) / el.h
@@ -209,8 +217,11 @@ def hydrate_sheet(sh, ds, rs, ctx):
         xr = _x_range(length, ds)
         cases = _profile_cases(ds, pid, roles=("design", "scenario", "mitigation"))
         vals = [v for c in cases for v in ds["results"][c["id"]]["profiles_derived"][pid]["margin_k"] if v is not None]
-        ax = Axes(sh, PX0, y, pw, h, xr, _y_range(vals + [lim], ceil=lim + 30.0), "H%d" % (k + 1), "Hydrate margin (T - T_hyd, inhibited) - path %s (axis clipped at %s K)" % (pid, "%.0f" % (lim + 30.0)),
+        clip_top = lim + 30.0
+        rng = _y_range(vals + [lim], ceil=clip_top)
+        ax = Axes(sh, PX0, y, pw, h, xr, rng, "H%d" % (k + 1), "Hydrate margin (T - T_hyd, inhibited) - path %s (curves clipped at %.0f K)" % (pid, min(clip_top, rng[1])),
                   None, "margin (K)", show_xticks=False)
+        ax.clip_hi = clip_top
         ax.hatch_below(lim)
         _plot_cases(ax, ds, cases, pid, "margin_k", styles, source="profiles_derived")
         ax.hline(lim, "%s criterion %s K" % (crit["id"], rs.text("crit:%s:value" % crit["id"], ".0f")), "#444", "dash", dy=-0.9)
@@ -233,6 +244,16 @@ def hydrate_sheet(sh, ds, rs, ctx):
     ax.series(prof["chainage_m"], prof["t_c"], INK, "solid", "fluid temperature", sw=0.8, meta={"case": gcase, "path": pid, "quantity": "t_c", "source": "profiles"})
     ax.series(prof["chainage_m"], der["t_hyd_c"], "#b03a2e", "dash", "hydrate T, inhibited", meta={"case": gcase, "path": pid, "quantity": "t_hyd_c", "source": "profiles_derived"})
     ax.series(prof["chainage_m"], der["t_hyd_unin_c"], "#7d3c98", "dot", "hydrate T, no inhibitor", meta={"case": gcase, "path": pid, "quantity": "t_hyd_unin_c", "source": "profiles_derived"})
+    xs_ = prof["chainage_m"]
+
+    def _inline(series, frac, text, dy, anchor="start"):
+        i = int(frac * (len(xs_) - 1))
+        if series[i] is not None:
+            sh.text(ax.px(xs_[i]) + (1.5 if anchor == "start" else -1.5), ax.py(series[i]) + dy, text, 2.5, anchor, layer="label")
+
+    _inline(prof["t_c"], 0.10, "fluid temperature", -2.0)
+    _inline(der["t_hyd_unin_c"], 0.02, "hydrate T, no inhibitor (reference)", -1.6)
+    _inline(der["t_hyd_c"], 0.02, "hydrate T, inhibited", 4.2)
     entries = []
     for c in ds["cases"]:
         if c["id"] not in crit["by_case"] or crit["by_case"][c["id"]]["status"] == "NOT APPLICABLE":
@@ -249,7 +270,7 @@ def hydrate_sheet(sh, ds, rs, ctx):
     sh.notes = ["Margin = fluid temperature minus the CPA hydrate equilibrium temperature at the local pressure and the aqueous inhibitor mass fraction of the local stream (equilibrium, not plugging time).",
                 "The inhibitor mass fraction follows the injection rate balance; losses to gas and condensate are not modelled (upper bound on the concentration).",
                 "The 3 K margin is a synthetic project criterion, not a code value. The hatched band is the region below the criterion.",
-                "Bottom panel: governing case %s; the uninhibited curve is a reference, not an operating mode." % gcase,
+                "Bottom panel: governing case %s; line styles are labelled on the panel and do not follow the case colours of the legend; the uninhibited curve is a reference, not an operating mode." % gcase,
                 "Hydrate temperatures are interpolated in ln(p) on a pressure grid; the interpolation check is reported in the validation appendix."]
     sh.scale_text = "NOT TO SCALE"
     sh.tb["scale"] = "NOT TO SCALE"
