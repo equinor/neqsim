@@ -195,7 +195,8 @@ class BuildPluginTest(unittest.TestCase):
         self.assertIn('base + ["-r", str(req_file)]', hook)
 
     def test_vendored_toolkit(self):
-        spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
+        spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots,
+                              [bap.CORE_INSTRUCTIONS],
                               False, [], pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT])
         known = {n for n, _ in bap.iter_skills(spec.skills_roots)}
         result = bap.build_plugin(spec, self.out, known, _args())
@@ -203,10 +204,13 @@ class BuildPluginTest(unittest.TestCase):
         toolkit = self.out / "core" / bap.TOOLKIT_SUBDIR
         self.assertTrue((toolkit / "pyproject.toml").exists())
         self.assertTrue((toolkit / "neqsim_cli.py").exists())
+        self.assertTrue((toolkit / "docker_runtime.py").exists())
         self.assertTrue((toolkit / "neqsim_runner" / "__init__.py").exists())
         self.assertTrue((toolkit / "task_template" / "step3_report" / "generate_report.py").exists())
         self.assertFalse((toolkit / "test_new_task.py").exists())
         self.assertFalse((toolkit / "unisim_reader.py").exists())
+        rule = self.out / "core" / "com.github.copilot" / "rules" / "neqsim-calculation-routing.instructions.md"
+        self.assertIn("neqsim docker ensure --linux", rule.read_text(encoding="utf-8"))
         hook_py = (self.out / "core" / "scripts" / "install_skill_packages.py").read_text(
             encoding="utf-8")
         self.assertIn("'${PLUGIN_ROOT}/toolkit'", hook_py)
