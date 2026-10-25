@@ -553,7 +553,11 @@ def build_dataset(inputs, results, benchmarks, mesh, timings, repo_root, cache_i
     events = []
     for ev in cases_doc.get("events") or []:
         e = dict(ev)
-        if ev["analysis"] == "lumped_cooldown":
+        if ev.get("analysis") == "lumped_cooldown" and ev.get("case") not in derived:
+            e["status"] = "open"
+            e["result"] = {"governing_time_h": None, "path": None, "chainage_m": None}
+            e["note"] = "the referenced case '%s' was not run; the event is open (see the input findings)" % ev.get("case")
+        elif ev.get("analysis") == "lumped_cooldown":
             gov = (derived[ev["case"]]["cooldown"] or {}).get("governing")
             e["status"] = "calculated" if gov else "open"
             e["result"] = {"governing_time_h": gov["value"] if gov else None, "path": gov["path"] if gov else None, "chainage_m": gov["chainage_m"] if gov else None}
