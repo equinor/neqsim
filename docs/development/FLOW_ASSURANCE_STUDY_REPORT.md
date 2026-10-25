@@ -60,6 +60,11 @@ neqsim flow-assurance-report study.json --basis basis.yaml --out report
 The `--demo` run solves a synthetic two-template tie-back (eight cases, about one minute) and is the reference
 for the output layout. Without the `neqsim` command use `<python> -m neqsim_cli flow-assurance-report ...`.
 
+The shared runtime adapter uses `neqsim_dev_setup` to load compiled workspace classes in a source checkout
+or the installed NeqSim JAR outside one. It reuses an already running JVM, including the one started by a
+SURF study. Java, JPype and an available NeqSim classpath are required; a separate `jneqsim` Python package
+is not required.
+
 ## 3. Inputs
 
 | File | Content |

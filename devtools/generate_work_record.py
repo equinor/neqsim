@@ -375,6 +375,19 @@ def _is_placeholder(text: str) -> bool:
     return any(marker in lowered for marker in PLACEHOLDER_MARKERS)
 
 
+def _is_unfilled_template(text: str) -> bool:
+    """Return true only when a narrative block holds no hand-written prose.
+
+    A block is kept on regeneration when it carries substantial prose beyond
+    bracketed template prompts, even if a marker such as ``yyyy-mm-dd`` occurs
+    in it as legitimate content (for example a documented date syntax).
+    """
+    if not _is_placeholder(text):
+        return False
+    prose = re.sub(r"\[[^\]]*\]", " ", text or "")
+    return len(" ".join(prose.split())) < 200
+
+
 def _narrative(block_id: str, seed: str) -> list:
     """Emit a preserved narrative block with a seed placeholder."""
     return [NARRATIVE_OPEN.format(block_id), seed.rstrip(), NARRATIVE_CLOSE, ""]
@@ -909,7 +922,7 @@ def _preserved_narratives(path: Path) -> dict:
     text = _read(path)
     preserved = {}
     for block_id, body in NARRATIVE_PATTERN.findall(text):
-        if not _is_placeholder(body):
+        if not _is_unfilled_template(body):
             preserved[block_id] = body.strip()
     return preserved
 

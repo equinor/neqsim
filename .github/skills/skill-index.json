@@ -2498,5 +2498,11 @@
  ],
  "neqsim-pvt-fluid-study-report": [
   "neqsim-pvt-fluid-study-report"
- ]
+ ],
+ "surf design study": ["neqsim-surf-design-study", "neqsim-surf-model-generation", "neqsim-surf-report-drawings"],
+ "surf design report": ["neqsim-surf-design-study", "neqsim-surf-report-drawings"],
+ "neqsim surf-study": ["neqsim-surf-design-study"],
+ "subsea tieback design report": ["neqsim-surf-design-study", "neqsim-surf-report-drawings"],
+ "subsea field layout generate network": ["neqsim-surf-model-generation", "neqsim-surf-design-study"],
+ "surf drawings": ["neqsim-surf-report-drawings", "neqsim-surf-design-study"]
 }

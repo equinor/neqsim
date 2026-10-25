@@ -15,6 +15,7 @@ Usage:
     neqsim flow-assurance-report DIR  Flow-assurance report + pipeline drawings
     neqsim pvt-study YAML     PVT samples, characterization, experiments, E300 and controlled report
                             from a Python model, JSON definition, .neqsim file or process_data.json
+    neqsim surf-study SPEC   SURF design study: generated NeqSim model, cases, drawings and report
     neqsim work-record [DIR] Generate WORK_RECORD.md (method, data, file map)
     neqsim file-issue [DIR]  Offer to file a NeqSim gap as a GitHub issue (and PR)
     neqsim --set-task-root P Set the folder new tasks are created in (created if
@@ -134,6 +135,8 @@ def _print_usage():
                                 "Process-study report from a model file (Python/JSON/.neqsim/data)"))
     print("  {:<18s} {}".format("flow-assurance-report DIR",
                                 "Flow-assurance study report + pipeline drawings (--init, --demo)"))
+    print("  {:<18s} {}".format("surf-study SPEC",
+                                "SURF design study: generated model, drawings and report (--init, --demo)"))
     print("  {:<18s} {}".format("work-record [DIR]",
                                 "Generate WORK_RECORD.md (method, data, file map)"))
     print("  {:<18s} {}".format("file-issue [DIR]",
@@ -586,6 +589,9 @@ def main():
     if cmd in ("flow-assurance-report", "flow_assurance_report"):
         import flow_assurance_report
         sys.exit(flow_assurance_report.main(sys.argv[2:]))
+    if cmd in ("surf-study", "surf_study"):
+        import surf_study
+        sys.exit(surf_study.main(sys.argv[2:]))
     if cmd in ("process-report", "process_report"):
         import process_report
         sys.exit(process_report.main(sys.argv[2:]))
