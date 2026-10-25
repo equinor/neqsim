@@ -940,6 +940,15 @@ separator/scrubber-to-shared-power bottleneck migration, and report rendering. I
 synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
 instruction to relax any physical constraint.
 
+The same acceptance now performs a second living-task cycle after changing the task-local shared-power operating
+limit in `continuous/user_input.yaml`. An explicit evidence-impact rule selects the Java optimization, KPI,
+constraint, guard, ledger, and report-digest stages while retaining an unrelated completed stage and its KPI. Before
+the new optimization is published, the evidence stage marks the previous optimizer receipt stale and superseded.
+The replacement proposal must carry the new cycle ID, the unchanged reviewed objective baseline, fresh finite Java
+evidence, and a `revalidation_of` ledger link to the invalidated proposal. Unmapped input changes still fail closed to
+a full cycle. Selective execution is therefore an execution/provenance claim only: it does not reuse an accepted
+candidate, constraint snapshot, or partially restored model state.
+
 The canonical task report consumes accepted top-level schema-v8 `lifecycle_envelope_evidence` in both ordinary
 current-best and immutable final-report generation. It renders the exact per-period `REJECTING` and `NEAR_ACTIVE`
 rows, representative values, signed physical headroom with engineering units, and adjacent-period identity
