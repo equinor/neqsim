@@ -312,7 +312,7 @@ def test_e2e_generates_and_solves_the_network_with_closed_balances(mini_run):
         wells = sum(w["applied_rate_kg_s"] for w in rec["production"]["wells"])
         assert rec["production"]["host"]["mass_rate_kg_s"] == pytest.approx(wells, rel=1e-4)
         assert rec["production"]["coupling"]["mass_balance_residual_kg_s"] < 1e-6
-        assert all(h["status"] == "PASS" for h in ds["hand_checks"][cid] if h["id"].startswith(("HC-MASS", "HC-NODE", "HC-HYDRO")))
+        assert all(h["status"] == "PASS" for h in ds["hand_checks"][cid] if h["id"].startswith(("HC-MASS", "HC-NODE", "HC-HYDRO", "HC-THERMAL")))
 
 
 def test_e2e_producers_are_solved_not_prescribed_and_pressures_are_ordered(mini_run):

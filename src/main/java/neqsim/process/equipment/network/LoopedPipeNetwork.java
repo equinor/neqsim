@@ -4768,9 +4768,10 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
    * Update an edge-local outlet state for elements without a dedicated process model.
    *
    * <p>
-   * The default state transition is adiabatic and isoenthalpic to the solved downstream pressure. When thermal coupling
-   * and a positive route heat transfer coefficient are enabled, a lumped exponential approach to the route ambient
-   * temperature is applied after the pressure flash.
+   * The default state transition is adiabatic and conserves specific enthalpy plus gravitational potential energy to
+   * the solved downstream pressure. Kinetic-energy changes are not represented by this lumped edge model. When thermal
+   * coupling and a positive route heat transfer coefficient are enabled, a lumped exponential approach to the route
+   * ambient temperature is applied after the pressure flash.
    * </p>
    *
    * @param pipe network edge
@@ -4781,12 +4782,18 @@ public class LoopedPipeNetwork extends ProcessEquipmentBaseClass {
     String downstreamNodeName = forward ? pipe.getToNode() : pipe.getFromNode();
     NetworkNode downstreamNode = nodes.get(downstreamNodeName);
     SystemInterface outletFluid = inletFluid.clone();
-    double inletEnthalpy = outletFluid.getEnthalpy();
+    double targetSpecificEnthalpy = outletFluid.getEnthalpy("J/kg");
+    if (Math.abs(pipe.getFlowRate()) > 1.0e-10) {
+      double inletDistance = forward ? 0.0 : pipe.getLength();
+      double outletDistance = forward ? pipe.getLength() : 0.0;
+      double elevationChange = getRouteElevation(pipe, outletDistance) - getRouteElevation(pipe, inletDistance);
+      targetSpecificEnthalpy -= 9.81 * elevationChange;
+    }
     outletFluid.setPressure(downstreamNode.getPressure() / 1.0e5, "bara");
 
     try {
       ThermodynamicOperations operations = new ThermodynamicOperations(outletFluid);
-      operations.PHflash(inletEnthalpy);
+      operations.PHflash(targetSpecificEnthalpy, "J/kg");
       outletFluid.initProperties();
 
       double midpoint = pipe.getLength() / 2.0;
