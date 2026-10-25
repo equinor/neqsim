@@ -270,6 +270,21 @@ public final class TwoFluidComponentTransport implements Serializable {
     double[][][] oldFractions = currentMassFractions();
     double[][][] updated = copy(componentInventoryKg);
     double[] latentHeatEnergyByCellJ = new double[cellCount];
+    double[][][] frozenComponentTransferKg = null;
+    if (componentSourceKgPerMetreSecond != null) {
+      frozenComponentTransferKg = new double[cellCount][][];
+      for (int cell = 0; cell < cellCount; cell++) {
+        double[] phaseTransferKg = new double[PHASE_COUNT];
+        for (int phase = 0; phase < PHASE_COUNT; phase++) {
+          phaseTransferKg[phase] = phaseMassSourceKgPerMetreSecond[cell][phase] * sections[cell].getLength()
+              * timeStepSeconds;
+        }
+        frozenComponentTransferKg[cell] = componentTransferFromSourceRates(cell, timeStepSeconds,
+            sections[cell].getLength(), phaseTransferKg, componentSourceKgPerMetreSecond, tolerance);
+      }
+      prepareAppearingPhaseDonors(timeStepSeconds, phaseMassFaceFluxKgS, frozenComponentTransferKg, oldFractions,
+          tolerance);
+    }
 
     for (int face = 0; face <= cellCount; face++) {
       for (int phase = 0; phase < PHASE_COUNT; phase++) {
@@ -298,8 +313,7 @@ public final class TwoFluidComponentTransport implements Serializable {
       if (componentSourceKgPerMetreSecond == null) {
         componentTransfer = allocateComponentTransfer(cell, phaseTransferKg, updated, sections, fluidTemplate);
       } else {
-        componentTransfer = componentTransferFromSourceRates(cell, timeStepSeconds, sections[cell].getLength(),
-            phaseTransferKg, componentSourceKgPerMetreSecond, tolerance);
+        componentTransfer = frozenComponentTransferKg[cell];
       }
       if (componentSourceKgPerMetreSecond == null) {
         latentHeatEnergyByCellJ[cell] = calculateLatentHeatEnergyJ(cell, componentTransfer, updated, sections,
@@ -324,6 +338,54 @@ public final class TwoFluidComponentTransport implements Serializable {
     synchronizeWithHydrodynamicPhaseMass(updated, sections, tolerance);
     componentInventoryKg = updated;
     return latentHeatEnergyByCellJ;
+  }
+
+  /**
+   * Supply empty phase donors with validated source-stage composition without changing inventory.
+   *
+   * <p>
+   * All outgoing faces share the old plus newly created phase mass budget. Incoming face mass cannot fund another
+   * same-step departure. Existing phases retain their old upwind composition, and sources are added exactly once after
+   * advection. The enclosing candidate transaction retains the final component nonnegativity checks.
+   * </p>
+   *
+   * @param timeStepSeconds accepted substep duration
+   * @param faceFlowsKgS accepted gas/oil/water face mass flows
+   * @param componentTransferKg validated cell/phase/component source transfers
+   * @param donorFractions old upwind fractions, updated only for empty appearing phases
+   * @param tolerance relative mass-budget tolerance
+   * @throws IllegalStateException if an empty donor cannot fund its outgoing transfers
+   */
+  private void prepareAppearingPhaseDonors(double timeStepSeconds, double[][] faceFlowsKgS,
+      double[][][] componentTransferKg, double[][][] donorFractions, double tolerance) {
+    for (int cell = 0; cell < cellCount; cell++) {
+      for (int phase = 0; phase < PHASE_COUNT; phase++) {
+        if (sum(donorFractions[cell][phase]) > 0.0) {
+          continue;
+        }
+        double outgoingKg = timeStepSeconds
+            * (Math.max(0.0, -faceFlowsKgS[cell][phase]) + Math.max(0.0, faceFlowsKgS[cell + 1][phase]));
+        if (outgoingKg <= MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG) {
+          continue;
+        }
+        double createdKg = sum(componentTransferKg[cell][phase]);
+        double availableKg = phaseInventory(componentInventoryKg[cell][phase]) + createdKg;
+        double budgetToleranceKg = Math.max(MASS_SYNCHRONIZATION_ABSOLUTE_TOLERANCE_KG,
+            tolerance * Math.max(MASS_FLOOR_KG, availableKg));
+        if (createdKg <= MASS_FLOOR_KG || outgoingKg > availableKg + budgetToleranceKg) {
+          throw new IllegalStateException("Insufficient " + phaseName(phase) + " source-stage donor inventory in cell "
+              + cell + ": outgoing=" + outgoingKg + " kg, available=" + availableKg + " kg");
+        }
+        for (int component = 0; component < componentNames.length; component++) {
+          double createdComponentKg = componentTransferKg[cell][phase][component];
+          if (createdComponentKg < 0.0) {
+            throw new IllegalStateException("A previously empty " + phaseName(phase)
+                + " donor cannot use a negative component-creation source in cell " + cell);
+          }
+          donorFractions[cell][phase][component] = createdComponentKg / createdKg;
+        }
+      }
+    }
   }
 
   /**
