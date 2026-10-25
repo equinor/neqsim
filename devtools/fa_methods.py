@@ -100,6 +100,7 @@ def parse_evidence_matrix(repo_root):
             cells = [c.strip() for c in re.split(r"(?<!\\)\|", line.strip().strip("|"))]
             if len(cells) != 5 or set(cells[0]) <= set("-: ") or cells[0].startswith("Capability"):
                 continue
+            cells = [re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", c).replace("`", "").replace("**", "") for c in cells]
             rows.append({"capability": cells[0], "implemented": cells[1], "numerically_verified": cells[2],
                          "experimentally_qualified": cells[3], "evidence": cells[4]})
     return rows, "read from %s" % EVIDENCE_MATRIX_REL

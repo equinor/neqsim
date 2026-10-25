@@ -18,7 +18,10 @@ def _path_info(ds, k):
     return pid, chain, segs, length
 
 
-def _x_range(length):
+def _x_range(length, ds=None):
+    """Common chainage range of the study: the longest path (so panels on different sheets and paths share one axis)."""
+    if ds is not None:
+        length = max(sum(s["length_m"] for s in ds["route"]["segments"] if s["id"] in chain) for chain in ds["route"]["paths"].values())
     ticks, step = fa_draw.nice_ticks(0.0, length, 6)
     return (0.0, max(ticks[-1], length))
 
@@ -58,7 +61,7 @@ def profile_sheet(sh, ds, rs, ctx, k):
     """Sheet C: elevation profile with segment boundaries, burial, low/high points and aligned pressure/temperature plots."""
     pid, chain, segs, length = _path_info(ds, k)
     nodes = ds["route"]["nodes"]
-    xr = _x_range(length)
+    xr = _x_range(length, ds)
     styles = ctx["styles"]
     cases = _profile_cases(ds, pid)
     # elevation points
@@ -92,7 +95,7 @@ def profile_sheet(sh, ds, rs, ctx, k):
             el.marker(pts[j][0], b, "diamond", True, 1.2)
             sh.bound_text(rs, el.px(pts[j][0]) + 1.8, el.py(b) + (4.2 if kind == "low" else -2.4), "basis:route.nodes.%s.elev_m" % pts[j][2], ".0f", "%s " % kind, " m", 2.5, "start")
             sh.items.append({"type": "extremum_point", "node": pts[j][2], "kind": kind, "chainage_m": pts[j][0], "elev_m": pts[j][1]})
-    hz = length / PW  # m per mm horizontally
+    hz = (xr[1] - xr[0]) / PW  # m per mm horizontally
     vz = (el.yr[1] - el.yr[0]) / el.h
     ve = hz / vz
     sh.items.append({"type": "scale_info", "path": pid, "horizontal_m_per_mm": hz, "vertical_m_per_mm": vz, "vertical_exaggeration": ve})
@@ -147,7 +150,7 @@ def _loc_line(rs, case, ext):
 def velocity_holdup_sheet(sh, ds, rs, ctx):
     """Sheet F1: mixture velocity, erosional ratio and holdup along the first path with the project limits."""
     pid, chain, segs, length = _path_info(ds, 0)
-    xr = _x_range(length)
+    xr = _x_range(length, ds)
     styles = ctx["styles"]
     cases = _profile_cases(ds, pid, roles=("design", "scenario", "mitigation"))
     pw = 288.0
@@ -203,7 +206,7 @@ def hydrate_sheet(sh, ds, rs, ctx):
             govern = (case["id"], ex["value"], ex["path"])
     for k, pid in enumerate(paths):
         _p, chain, segs, length = _path_info(ds, k)
-        xr = _x_range(length)
+        xr = _x_range(length, ds)
         cases = _profile_cases(ds, pid, roles=("design", "scenario", "mitigation"))
         vals = [v for c in cases for v in ds["results"][c["id"]]["profiles_derived"][pid]["margin_k"] if v is not None]
         ax = Axes(sh, PX0, y, pw, h, xr, _y_range(vals + [lim], ceil=lim + 30.0), "H%d" % (k + 1), "Hydrate margin (T - T_hyd, inhibited) - path %s (axis clipped at %s K)" % (pid, "%.0f" % (lim + 30.0)),
@@ -220,7 +223,7 @@ def hydrate_sheet(sh, ds, rs, ctx):
     gcase, _gv, gpath = govern if govern else (ds["cases"][0]["id"], None, paths[0])
     k = paths.index(gpath) if gpath in paths else 0
     pid, chain, segs, length = _path_info(ds, k)
-    xr = _x_range(length)
+    xr = _x_range(length, ds)
     res = ds["results"][gcase]
     prof, der = res["profiles"][pid], res["profiles_derived"][pid]
     vals = [v for v in prof["t_c"] + der["t_hyd_c"] + der["t_hyd_unin_c"] if v is not None]

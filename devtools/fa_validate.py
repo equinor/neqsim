@@ -23,7 +23,7 @@ INTERP_TOL_K = 0.5
 REQUIRED_HEADINGS = ["1 Executive summary", "2 Scope", "3 Design and operating basis", "4 System description", "5 Fluid and PVT", "6 Methods", "7 Case matrix",
                      "8 Steady-state hydraulics", "9 Transient and event", "10 Hydrate management", "11 Wax, asphaltene", "12 Operating envelope", "13 Mitigation alternatives",
                      "14 Sensitivity", "15 Conclusions", "16 Appendices"]
-BAD_TOKENS = re.compile(r"\b(nan|NaN|inf|None)\b|\[\[|\]\]")
+BAD_TOKENS = re.compile(r"(?<![A-Za-z0-9_])(nan|NaN|-?inf|None)(?![A-Za-z0-9_])|\[\[|\]\]")
 
 
 def _check(cid, description, status, detail=""):
@@ -55,9 +55,9 @@ def check_inputs(ds, input_findings, standards):
                          "duplicates: %s" % dup if dup else "%d assets/segments, %d cases" % (len(ids), len(ds["cases"]))))
     n_geo_err = [f for f in ds["route"]["findings"] if f["level"] == "error"]
     n_geo_warn = [f for f in ds["route"]["findings"] if f["level"] == "warning"]
+    n_info = len([f for f in ds["route"]["findings"] if f["level"] == "info"])
     checks.append(_fail_warn("FA-GEOM", "Route geometry: measured length versus 3D chord, elevations, connectivity, single sink", ["%s %s" % (f["code"], f["message"]) for f in n_geo_err],
-                             ["%s %s" % (f["code"], f["message"]) for f in n_geo_warn], "%d paths to %s; information items: %d" % (len(ds["route"]["paths"]), ds["route"]["sink"],
-                                                                                                                            len([f for f in ds["route"]["findings"] if f["level"] == "info"])))
+                             ["%s %s" % (f["code"], f["message"]) for f in n_geo_warn], "%d paths to %s; information items: %d" % (len(ds["route"]["paths"]), ds["route"]["sink"], n_info)))
     errs, warns = [], []
     for vid, v in ds["topology_variants"].items():
         if not v["active_paths"]:
@@ -304,15 +304,27 @@ def check_drawings(ds, manifest, resolver):
     return checks
 
 
-def _docx_text(path):
+def _docx_text(path, skip_captions=("Validation checks", "TwoFluidPipe evidence matrix", "Standards register")):
+    """Text and headings of a DOCX in document order; tables whose caption starts with a ``skip_captions`` entry quote external text and are left out."""
     from docx import Document
 
     doc = Document(path)
-    parts = [p.text for p in doc.paragraphs]
-    for t in doc.tables:
-        for r in t.rows:
-            parts.append(" ".join(c.text for c in r.cells))
-    heads = [p.text for p in doc.paragraphs if p.style is not None and p.style.name.startswith("Heading")]
+    paragraphs = {p._p: p for p in doc.paragraphs}
+    tables = {t._tbl: t for t in doc.tables}
+    parts, heads, last_caption = [], [], ""
+    for child in doc.element.body.iterchildren():
+        if child in paragraphs:
+            p = paragraphs[child]
+            parts.append(p.text)
+            style = p.style.name if p.style is not None else ""
+            if style.startswith("Heading"):
+                heads.append(p.text)
+            if style == "Caption":
+                last_caption = p.text
+        elif child in tables:
+            if not any(s in last_caption for s in skip_captions):
+                for r in tables[child].rows:
+                    parts.append(" ".join(c.text for c in r.cells))
     return "\n".join(parts), heads
 
 

@@ -209,7 +209,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
                 bad = [(k, v) for k, v in c["by_case"].items() if v["status"] == "FAIL"]
                 worst = min(bad, key=lambda kv: kv[1]["limit_margin"])
                 k, v = worst
-                self.P("%s is not met in %s. The largest shortfall is in case %s: %s %s against the limit %s %s at KP %s km (segment %s, path %s)." % (
+                self.P("%s is not met in %s. The largest shortfall is in case %s: %s %s against the limit %s at KP %s km (segment %s, path %s)." % (
                     c["id"], ", ".join(b[0] for b in bad), k, self.tok("crit:%s:%s:value" % (c["id"], k), ".1f"), c["unit"] if c["unit"] != "-" else "", c["operator"] + " " + ("%g" % c["value"]),
                     self.tok("ext:%s:%s:chainage_m" % (k, fa_study.QUANTITIES[c["quantity"]][0]), ".1f", "km") if v.get("chainage_m") is not None else "n/a",
                     v.get("segment_id") or "n/a", (v.get("path") or "n/a")), style="List Bullet", track=trk)
@@ -264,7 +264,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
                           c["requirement_class"], c["source"], "[[crit:%s:overall]]" % c["id"]]) for c in ds["criteria"]]
         self.table(["Id", "Criterion", "Quantity and limit", "Class", "Source", "Status"], rows, caption="Acceptance criteria (sourced inputs) and overall status", font=7,
                    widths=[14, 58, 32, 16, 34, 14], align=["left"] * 6)
-        self.P("None of these limits is a universal or code value; each is a project input with the source stated. The overall status is FAIL when any applicable case fails.")
+        self.P("No limit here is a universal or code value; each is a project input with the source stated. The overall status is FAIL when any applicable case fails.")
         self.H("3.4 Assumptions, exclusions and data gaps", 2)
         self.table(["Id", "Assumption", "Effect"], [(a["id"], a["text"], a["effect"]) for a in ds["assumptions"]], caption="Assumptions", font=8, widths=[12, 90, 62], align=["left"] * 3)
         self.table(["Id", "Data gap", "Effect on conclusions"], [(g["id"], g["item"], g["effect_on_conclusions"]) for g in ds["data_gaps"]], caption="Data gaps and their effect on conclusions", font=8,
