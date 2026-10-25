@@ -126,12 +126,19 @@ def run_pipeline(inputs, out_dir, use_word=True, strict=False, quiet=False, run_
         mesh = None
         if run_mesh:
             t0 = time.time()
-            design = next((c for c in cases if c["role"] == "design"), cases[0])
             incs = basis["solver"].get("mesh_sensitivity_increments") or [basis["solver"]["increments"]]
             if basis["solver"]["increments"] not in incs:
                 incs = sorted(set(incs) | {basis["solver"]["increments"]})
             if len(incs) >= 2:
-                mesh = fa_study.mesh_sensitivity(basis, route_model, cases, variants, design["id"], incs, MESH_TOL, log=say)
+                # the gate runs on the design/scenario case with the smallest hydrate margin (the case the decision depends on)
+                margins = []
+                for c in cases:
+                    if c["role"] in ("design", "scenario") and results[c["id"]]["status"] == "converged":
+                        m = fa_study.derive_case(results[c["id"]], route_model, c, basis)["extrema"]["hyd_margin_min"]["value"]
+                        if m is not None:
+                            margins.append((m, c["id"]))
+                gate_case = min(margins)[1] if margins else cases[0]["id"]
+                mesh = fa_study.mesh_sensitivity(basis, route_model, cases, variants, gate_case, incs, MESH_TOL, log=say)
             timings["mesh_sensitivity"] = round(time.time() - t0, 2)
         t0 = time.time()
         ds = fa_study.build_dataset(inputs, results, bms, mesh, timings, REPO_ROOT, cache_info={"dir": os.path.join(out_dir, "cache")})

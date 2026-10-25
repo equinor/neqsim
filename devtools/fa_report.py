@@ -197,10 +197,10 @@ class FaReportBuilder(psr_report.ReportBuilder):
             cells = ["%s (%s %s %s)" % (c["id"], c["quantity"].replace("_", " "), c["operator"], ("%g" % c["value"]) + ("" if c["unit"] == "-" else " " + c["unit"]))]
             for cid in self.cases:
                 by = c["by_case"].get(cid, {"status": "NOT APPLICABLE"})
-                cells.append("%s %s" % (self.tok("crit:%s:%s:value" % (c["id"], cid), ".1f"), by["status"]) if by["status"] in ("PASS", "FAIL") else by["status"].lower())
+                cells.append("%s %s" % (self.tok("crit:%s:%s:value" % (c["id"], cid), ".1f"), by["status"]) if by["status"] in ("PASS", "FAIL") else "n/a")
             rows.append(self.row(cells))
-        self.table(header, rows, caption="Criteria status by case (governing value over the whole route and PASS/FAIL against the project criterion)", font=7,
-                   widths=[44] + [14] * len(self.cases), align=["left"] + ["center"] * len(self.cases))
+        self.table(header, rows, caption="Criteria status by case (governing value over the whole route and PASS/FAIL against the project criterion; n/a = not applicable)", font=6.5,
+                   widths=[34] + [15] * len(self.cases), align=["left"] + ["center"] * len(self.cases))
         trk.append(" ".join(" ".join(r) for r in rows))
         fails = [c for c in ds["criteria"] if c["overall"] == "FAIL"]
         if fails:
@@ -276,6 +276,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
     def system(self):
         ds = self.ds
         rt = ds["route"]
+        self.landscape()
         self.H("4 System description, route, geometry, line list and drawing register", 1)
         self.P("The system has [[fact:n_assets]] assets, [[fact:n_segments]] segments ([[fact:n_hydraulic_segments]] modelled hydraulically) and [[fact:n_paths]] source paths to the host interface %s. "
                "The longest path is [[fact:route_length_km|.2f]] km of measured route length. Route status: %s; georeferenced: %s; coordinate reference: %s." % (
@@ -292,7 +293,6 @@ class FaReportBuilder(psr_report.ReportBuilder):
                                       "[[seg:%s:thermal.u_inner_w_m2k|.2f]]" % s["id"]]))
             else:
                 rows.append([s["id"], s["line_tag"], s["from"] + " > " + s["to"], "%.0f" % s["length_m"], "n/a", "n/a", "n/a", "n/a", "not modelled", "n/a"])
-        self.landscape()
         self.table(["Segment", "Line tag", "From > to", "Length (m)", "Horizontal (m)", "dz (m)", "ID (mm)", "Insulation", "Burial", "U inner (W/m2K)"], rows,
                    caption="Line list: measured length, horizontal length, elevation change, inside diameter, insulation, burial and U-value (inner-area basis)", font=7,
                    widths=[22, 40, 44, 20, 22, 16, 18, 36, 24, 24], align=["left"] * 3 + ["right"] * 4 + ["left"] * 2 + ["right"])
@@ -334,7 +334,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
         rows = [(m["id"], m["name"], m["implemented"], m["numerically_verified"], m["experimentally_qualified"], m["use"], m["not_for"], m["limits"]) for m in ds["qualification"]["methods"]]
         self.landscape()
         self.table(["Id", "Method", "Implemented", "Numerically verified", "Experimentally qualified", "Use", "Not for", "Limits"], rows,
-                   caption="Method register with qualification status (as recorded; no method is promoted beyond its evidence)", font=6, widths=[14, 40, 14, 30, 30, 36, 44, 50], align=["left"] * 8)
+                   caption="Method register with qualification status (as recorded; no method is promoted beyond its evidence)", font=6, widths=[14, 38, 18, 30, 30, 36, 42, 48], align=["left"] * 8)
         self.portrait()
         sv = ds["solver"]
         self.P("Numerical settings: %d increments per segment; inner source-pressure solves to 0.05 bar and the junction pressure to 0.05 bar (secant iteration); hydrate temperature on the pressure grid %s bara, interpolated in ln(p); "
@@ -347,6 +347,7 @@ class FaReportBuilder(psr_report.ReportBuilder):
     # --- 7 cases ---
     def case_matrix(self):
         ds = self.ds
+        self.landscape()
         self.H("7 Case matrix, field-life evolution and boundary conditions", 1)
         rows = []
         for c in ds["cases"]:
@@ -354,7 +355,6 @@ class FaReportBuilder(psr_report.ReportBuilder):
             src = ", ".join("%s %.1f kg/s HC, %.0f kg/h water, %.0f degC" % (n, s["hc_kg_s"], 3600.0 * s["water_kg_s"], s["t_c"]) for n, s in r["sources"].items() if n in r["streams"])
             inh = ", ".join("%s %.0f kg/h lean (%.1f wt%% aq.)" % (n, 3600.0 * s["lean_inhibitor_kg_s"], 100.0 * s["aqueous_inhibitor_wt"]) for n, s in r["sources"].items() if n in r["streams"])
             rows.append((c["id"], c["role"], c["stage"], c["topology_variant"], src, inh, "%.0f bara" % r["host_p_bara"]))
-        self.landscape()
         self.table(["Case", "Role", "Stage", "Line-up", "Sources (mass rates, wellhead temperature)", "MEG injection", "Host P"], rows, caption="Case matrix (rates are mass rates; boundary: host-interface pressure)", font=7,
                    widths=[24, 20, 20, 24, 100, 58, 18], align=["left"] * 7)
         self.portrait()
@@ -388,8 +388,8 @@ class FaReportBuilder(psr_report.ReportBuilder):
                "Pressure and temperature profiles are shown in the figure above.")
         self.P("Thermal basis: layered U-values are referenced to the inner area; the internal film is neglected, which makes the arrival temperatures conservative (low). Insulation and burial transitions along the path: " +
                ("; ".join("%s > %s at %s" % (t["from_segment"], t["to_segment"], t["node"]) for t in ds["route"]["transitions"]) or "none") + ".")
-        self.H("8.1 Segment results", 2)
         self.landscape()
+        self.H("8.1 Segment results", 2)
         for cid in self.cases[:3]:
             rr = ds["results"][cid]["segments"]
             rows = [self.row([sid, "[[segres:%s:%s:p_in_bara|.1f]]" % (cid, sid), "[[segres:%s:%s:dp_bar|.2f]]" % (cid, sid), "[[segres:%s:%s:t_in_c|.1f]]" % (cid, sid),
@@ -463,10 +463,10 @@ class FaReportBuilder(psr_report.ReportBuilder):
     # --- 11 other threats ---
     def other_threats(self):
         ds = self.ds
+        self.landscape()
         self.H("11 Wax, asphaltene, scale, corrosion and erosion assessments", 1)
         self.P("Every threat has a recorded status: calculated with evidence, not applicable with a reason, or open/unsupported. An unavailable result is never presented as a safe result.")
         rows = [(t["id"], t["threat"], t["status"].upper().replace("_", " "), t["reason"], ", ".join(t["methods"]) or "-") for t in ds["threats"]]
-        self.landscape()
         self.table(["Id", "Threat", "Status", "Reason / evidence basis", "Methods"], rows, caption="Threat applicability matrix", font=7, widths=[26, 60, 28, 120, 30], align=["left"] * 5)
         self.portrait()
         self.P("Erosional velocity: the maximum ratio of mixture velocity to the project erosional velocity is [[ext:BASE:erosional_ratio_max:value|.2f]] in the base case (limit [[crit:C-EROS-01:value|.1f]]); "
@@ -520,8 +520,11 @@ class FaReportBuilder(psr_report.ReportBuilder):
             self.table(["Increments", "Max source P (bara)", "Arrival T (degC)", "Min margin (K)", "dP vs finest (bar)", "dT vs finest (K)", "dMargin vs finest (K)"], rows,
                        caption="Spatial sensitivity of case %s (study mesh: %d increments per segment; reference: finest mesh)" % (ms["case"], ds["solver"]["increments"]), font=7, widths=[20, 28, 26, 26, 26, 26, 28],
                        align=["left"] + ["right"] * 6)
-            self.P("Spatial gate: status %s with tolerances %s (declared before the comparison). Coarser meshes can differ materially - an arrival temperature that is far too high with a very coarse mesh was observed during "
-                   "development in the riser of a low-flow case - so the study mesh must be confirmed against a finer one for every geometry." % (ms["status"], json.dumps(ms["tolerance"])))
+            coarse = ms["rows"][0]
+            self.P("Spatial gate: status %s with tolerances %s (declared before the comparison); the gate compares the study mesh with the finest mesh for the case with the smallest hydrate margin. "
+                   "The coarsest mesh (%d increments) differs from the finest by %s K in arrival temperature and %s K in the minimum margin, so a coarse mesh is not acceptable for this geometry and the study mesh must be confirmed "
+                   "against a finer one for every new geometry." % (ms["status"], json.dumps(ms["tolerance"]), coarse["increments"], "%+.2f" % coarse["d_arrival_t_k"] if coarse["d_arrival_t_k"] is not None else "n/a",
+                                                                       "%+.2f" % coarse["d_margin_k"] if coarse["d_margin_k"] is not None else "n/a"))
         by_kind = {}
         for b in ds["benchmarks"]:
             by_kind.setdefault(b["kind"], []).append(b)

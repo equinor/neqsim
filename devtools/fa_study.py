@@ -605,11 +605,21 @@ def _dedupe_transitions(transitions):
     return out
 
 
+def _strip_volatile(obj):
+    """Copy of ``obj`` without run-dependent keys (timings, cache flags, wall times) so the dataset hash is reproducible."""
+    drop = {"cache", "timings_s", "wall_s", "created"}
+    if isinstance(obj, dict):
+        return {k: _strip_volatile(v) for k, v in obj.items() if k not in drop}
+    if isinstance(obj, list):
+        return [_strip_volatile(v) for v in obj]
+    return obj
+
+
 def dataset_hash(dataset):
-    """Hash of the content that the report shows (excludes validation, drawings, artifacts, timings, created time and the hash itself)."""
+    """Hash of the content that the report shows (excludes validation, drawings, artifacts, timings, cache flags, created time and the hash itself)."""
     skip = {"validation", "drawings", "artifacts", "timings_s"}
-    body = {k: v for k, v in dataset.items() if k not in skip}
-    body["meta"] = {k: v for k, v in dataset["meta"].items() if k not in ("dataset_hash", "created", "cache")}
+    body = _strip_volatile({k: v for k, v in dataset.items() if k not in skip})
+    body["meta"] = {k: v for k, v in body["meta"].items() if k != "dataset_hash"}
     return canonical_hash(body, 24)
 
 
