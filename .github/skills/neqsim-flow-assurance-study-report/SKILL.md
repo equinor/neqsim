@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance-study-report
 version: "1.0.0"
-description: "Produces a validated flow-assurance study report (Word + PDF, 16 chapters with appendices A-G) and a ten-sheet A3 pipeline drawing package (network, route plan, longitudinal P/T profiles, riser/PLEM arrangement, cross-sections, velocity/holdup, hydrate margin, limits, events) from a route, an engineering basis and a case set, with a threat-applicability matrix, method qualification register, mitigation comparison, external-simulator hand-offs and a fail-closed validation report. USE WHEN: a task asks for a flow-assurance study report, pipeline or tie-back drawings, hydrate/cooldown/MEG screening documentation, turndown or late-life case comparison, or a reviewable flow-assurance deliverable from NeqSim. Distinct from neqsim-flow-assurance (calculation patterns)."
+description: "Produces a validated flow-assurance study report (Word/PDF) and ten A3 pipeline drawing sheets from a route, basis and cases: hydrate margin, cooldown, hydraulics, MEG balance, threat matrix, mitigations, hand-offs, fail-closed validation. USE WHEN: a flow-assurance report, tie-back/pipeline drawings or hydrate/cooldown screening documentation is requested. Calculation patterns: neqsim-flow-assurance."
 last_verified: "2026-10-25"
 requires:
   python_packages: [python-docx, matplotlib, pymupdf, pyyaml, jpype1]

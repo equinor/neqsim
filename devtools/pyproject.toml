@@ -58,6 +58,8 @@ py-modules = [
     "neqsim_try", "neqsim_contribute", "java_locator", "doc_retriever", "stid_download",
     "process_study_report", "psr_extract", "psr_balances", "psr_basis", "psr_diagrams", "psr_report", "psr_validate", "psr_demo",
     "process_report", "psr_draft",
+    "fa_units", "fa_geometry", "fa_thermal", "fa_methods", "fa_solver", "fa_benchmarks", "fa_study", "fa_draw",
+    "fa_sheets_net", "fa_sheets_results", "fa_diagrams", "fa_handoff", "fa_report", "fa_validate", "flow_assurance_report",
 ]
 packages = [
     "neqsim_runner",
@@ -67,11 +69,16 @@ packages = [
     "task_template.step2_analysis",
     "task_template.step3_report",
     "psr_templates",
+    "fa_templates",
+    "fa_examples",
+    "fa_examples.offshore_tieback",
 ]
 
 [tool.setuptools.package-data]
 task_template = ["*", "*/*", "*/*/*", "*/*/*/*"]
 psr_templates = ["*.yaml"]
+fa_templates = ["*.yaml", "*.md"]
+"fa_examples.offshore_tieback" = ["*.yaml"]
 
 [tool.setuptools.exclude-package-data]
 "*" = ["__pycache__/*", "*.pyc"]

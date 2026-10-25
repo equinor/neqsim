@@ -1,6 +1,6 @@
 ---
 name: flow-assurance-study-report
-description: "Produces a validated flow-assurance study report (Word/PDF, 16 chapters) and a ten-sheet A3 pipeline drawing package (network, route plan, longitudinal profiles, riser/PLEM arrangement, cross-sections, velocity/holdup, hydrate margin, limits, events) for a tie-back, flowline or export route with `neqsim flow-assurance-report`: builds the basis, route and cases, runs the study, views and fixes the drawings, interprets validation, keeps open threats and unsupported transients visible, and hands over with an honest readiness label."
+description: "Produces a validated flow-assurance study report (Word/PDF) and ten A3 pipeline drawing sheets for a tie-back, flowline or export route with `neqsim flow-assurance-report`; builds basis, route and cases, inspects drawings, interprets validation and keeps open threats and unsupported transients visible."
 required_skills:
 - neqsim-flow-assurance-study-report
 - neqsim-flow-assurance
