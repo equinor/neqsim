@@ -3,7 +3,7 @@
 # IUPAC-NIST SRD 106, system 62_1, Table 1, x1 (Model) column.
 # Source: https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_1
 # Evaluators: Carroll and Mather, October 1991, updated November 1994.
-# Six factual evaluated values, not raw experimental measurements or a fitted NeqSim parameter set.
+# Nineteen factual evaluated values, not raw experimental measurements or a fitted NeqSim parameter set.
 # CO2 PARTIAL pressure 101.325 kPa = 1.01325 bara; not total pressure or CO2 fugacity.
 # Primary Table 4 (p.1208) independently checked at the overlapping temperatures.
 # The displayed web Eq.(1) normalization is inconsistent with the adjacent table and is not used.
@@ -16,3 +16,16 @@ CSM283,283.15,1.01325,0.000963
 CSM288,288.15,1.01325,0.000825
 CSM293,293.15,1.01325,0.000713
 CSM298,298.15,1.01325,0.000622
+CSM303,303.15,1.01325,0.000548
+CSM308,308.15,1.01325,0.000487
+CSM313,313.15,1.01325,0.000437
+CSM318,318.15,1.01325,0.000395
+CSM323,323.15,1.01325,0.000359
+CSM328,328.15,1.01325,0.000329
+CSM333,333.15,1.01325,0.000304
+CSM338,338.15,1.01325,0.000283
+CSM343,343.15,1.01325,0.000264
+CSM348,348.15,1.01325,0.000249
+CSM353,353.15,1.01325,0.000236
+CSM358,358.15,1.01325,0.000224
+CSM363,363.15,1.01325,0.000214
