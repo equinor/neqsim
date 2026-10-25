@@ -43,6 +43,7 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 | **solve-process** | `@solve-process <description>` | **Process model/notebook** → reusable flowsheet, staged convergence and physical validation (skips formal reporting) |
 | **process-study-report** | `@process-study-report <model and purpose>` | **Process-study report for any model** → basis, all-stream tables per case, balances, BFD/PFD sheets, standards register and validation via `neqsim process-report` ([how-to](../../docs/development/PROCESS_STUDY_REPORT.md)) |
 | **flow-assurance-study-report** | `@flow-assurance-study-report <route and purpose>` | **Flow-assurance study report + pipeline drawings** → threat matrix, hydrate/cooldown/hydraulics per case, mitigation comparison, 10 A3 sheets, fail-closed validation via `neqsim flow-assurance-report` ([how-to](../../docs/development/FLOW_ASSURANCE_STUDY_REPORT.md)) |
+| **pvt-fluid-study-report** | `@pvt-fluid-study-report <samples and purpose>` | **PVT and fluid-characterization study report** → sample/QC lineage, characterization, experiments, calibration/hold-out evidence, complete parameters/BIPs and fresh-process E300 replay via `neqsim pvt-study` ([how-to](../../docs/pvtsimulation/pvt_fluid_study_report.md)) |
 
 **Examples:**
 ```
@@ -127,7 +128,7 @@ the canonical sources still remain under `neqsim-paperlab/`.
 
 | Agent | Command | Purpose |
 |-------|---------|---------|
-| **pvt-simulation** | `@pvt-simulation <description>` | Run PVT lab tests (CME, CVD, DL, separator tests, swelling) |
+| **pvt-simulation** | `@pvt-simulation <description>` | Run PVT lab tests (CME, CVD, DL, separator tests, swelling); use `@pvt-fluid-study-report` for the complete sample-to-E300 report |
 
 **Examples:**
 ```

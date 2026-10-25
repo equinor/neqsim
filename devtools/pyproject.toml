@@ -33,7 +33,7 @@ optimization-notebooks = [
 
 [project.optional-dependencies]
 combustion = ["cantera==3.2.0"]
-pdf = ["pymupdf>=1.22.0"]
+pdf = ["pymupdf>=1.22.0", "reportlab>=4.0"]
 ocr = [
     "pymupdf>=1.22.0",
     "ocrmypdf>=15.0.0",
@@ -60,6 +60,7 @@ py-modules = [
     "process_report", "psr_draft",
     "fa_units", "fa_geometry", "fa_thermal", "fa_methods", "fa_solver", "fa_benchmarks", "fa_study", "fa_draw",
     "fa_sheets_net", "fa_sheets_results", "fa_diagrams", "fa_handoff", "fa_report", "fa_validate", "flow_assurance_report",
+    "pvt_data", "pvt_study", "pvt_report",
 ]
 packages = [
     "neqsim_runner",
@@ -73,6 +74,7 @@ packages = [
     "fa_examples",
     "fa_examples.offshore_tieback",
     "fa_examples.single_flowline",
+    "pvt_examples",
 ]
 
 [tool.setuptools.package-data]
@@ -81,6 +83,7 @@ psr_templates = ["*.yaml"]
 fa_templates = ["*.yaml", "*.md"]
 "fa_examples.offshore_tieback" = ["*.yaml"]
 "fa_examples.single_flowline" = ["*.yaml"]
+pvt_examples = ["*.yaml", "*.json"]
 
 [tool.setuptools.exclude-package-data]
 "*" = ["__pycache__/*", "*.pyc"]

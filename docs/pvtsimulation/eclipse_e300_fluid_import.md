@@ -7,7 +7,7 @@ description: "Guide to Eclipse 300 compositional fluid file format (.e300), supp
 
 Eclipse 300 (E300) is the compositional reservoir simulator from SLB (formerly Schlumberger). It uses a text-based file format to define fluid compositions and equation-of-state (EOS) parameters for compositional reservoir simulation.
 
-NeqSim can **read** E300 fluid files to create thermodynamic `SystemInterface` fluids, and **write** NeqSim fluids back to E300 format. This enables seamless round-tripping between PVT tools (such as PVTsim, Multiflash, or WinProp), reservoir simulators, and NeqSim process/flow assurance calculations.
+NeqSim can **read** E300 fluid files to create thermodynamic `SystemInterface` fluids, and **write** NeqSim fluids back to E300 format. This enables exchange of the supported compositional fluid representation between reservoir simulators and NeqSim process/flow-assurance calculations. Active model parameters, reader modes and serialization precision must be checked before claiming fidelity.
 
 The Java class that handles E300 files is `neqsim.thermo.util.readwrite.EclipseFluidReadWrite`.
 
@@ -41,6 +41,7 @@ The table below lists all keywords supported by NeqSim's E300 reader:
 | `MW`       | Molecular weights                                                | g/mol         | Yes      |
 | `TBOIL`    | Normal boiling points                                            | K             | Yes      |
 | `VCRIT`    | Critical volumes                                                 | m³/kmol       | Yes      |
+| `VCRITVIS` | Effective critical volumes used only by LBC viscosity             | m³/kmol       | Optional |
 | `ZCRIT`    | Critical Z-factors                                               | —             | Optional |
 | `SSHIFT`   | Volume translation (shift) parameters                            | —             | Yes      |
 | `PARACHOR` | Parachor parameters for IFT calculation                          | dyn/cm        | Yes      |
@@ -390,6 +391,31 @@ Two viscosity correlation options are supported:
 - **LBC** (Lorentz-Bray-Clark): Specified via the `LBCCOEF` keyword with 5 coefficients for the dense-fluid contribution
 - **Pedersen** (PFCT): Activated by the `PEDERSEN` keyword flag; uses the corresponding states principle
 
+### Viscosity-only critical volumes (`VCRITVIS`)
+
+The writer emits the **effective volume actually used by LBC** for each component
+as `VCRITVIS`, in component order. This is distinct from thermodynamic `VCRIT`:
+NeqSim's legacy TBP LBC route estimates a viscosity volume from molecular weight
+and normal liquid density, which can differ from the component's stored critical
+volume. Reconstructing the TBP density during import otherwise changes viscosity
+even when the EOS and phase split agree.
+
+The [ECLIPSE Reference Manual](https://www.ipt.ntnu.no/~kleppe/TPG4150/EclipseReferenceManual.pdf),
+printed page 2370, defines `VCRITVIS` as the per-component viscosity-only critical
+volume. Its METRIC unit is m³/kg-mole, equivalently m³/kmol. NeqSim converts these
+values to cm³/mol by multiplying by exactly **1000**; `VCRIT` remains unchanged.
+The current `VCRITVIS` import path requires `METRIC` units and rejects other
+declared systems. Arrays must contain one positive finite value per source
+component. The replicated-fluid reader repeats that ordered source array for
+all named fluid blocks and initializes every allocated phase.
+
+Files without `VCRITVIS` retain the existing NeqSim LBC estimation behavior.
+Explicit viscosity volumes take precedence over that estimate without changing
+component EOS properties. For a qualified delivery, compare the effective array,
+LBC coefficients and actual gas/oil viscosity over the declared replay grid;
+file-read success alone does not establish prediction fidelity. Regression
+coverage is in [LbcFluidRoundTripTest](../../src/test/java/neqsim/thermo/util/readwrite/LbcFluidRoundTripTest.java).
+
 ## Reading E300 Files in NeqSim
 
 ### Java API
@@ -725,7 +751,14 @@ fluid_b = readEclipseFluid('reservoir_B.e300', wellName='_B')
 
 ### Round-Trip Verification
 
-You can verify E300 read/write fidelity by round-tripping a fluid:
+A basic round trip is an initial software check, not proof that all active
+parameters or target-simulator interpretations are preserved. For sample-to-model
+documentation, full parameter capture and fresh-process replay, use the guarded
+[PVT fluid-study report workflow](pvt_fluid_study_report.md). PR OmegaB overrides
+need the preserving reader route; never reapply missing source parameters after
+reading and then claim export fidelity.
+
+The following basic example compares only selected component properties:
 
 ```java
 // Read original
