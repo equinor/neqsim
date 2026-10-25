@@ -943,7 +943,7 @@
               "double"
             ],
             "expected": 305976.87659290305,
-            "absoluteTolerance": 1e-6
+            "absoluteTolerance": 1e-06
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/DeclineCurveAnalysisTest.java",
@@ -1282,7 +1282,7 @@
               "double"
             ],
             "expected": 2865418.4358585374,
-            "absoluteTolerance": 1e-6
+            "absoluteTolerance": 1e-06
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
@@ -1325,7 +1325,7 @@
               "double"
             ],
             "expected": 2520842.0799756097,
-            "absoluteTolerance": 1e-6
+            "absoluteTolerance": 1e-06
           },
           "evidenceSources": [
             "src/test/java/neqsim/pvtsimulation/util/GasPseudoPressureTest.java",
@@ -1578,6 +1578,69 @@
           },
           "evidenceSources": [
             "src/test/java/neqsim/physicalproperties/methods/commonphasephysicalproperties/viscosity/CO2ViscosityReferenceValuesTest.java",
+            "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "watson-reference-latent-heat",
+      "title": "Pure-fluid saturation latent heat from a measured reference",
+      "domain": "thermodynamics",
+      "tool": "runCapability",
+      "apis": [
+        "neqsim.thermo.component.Component",
+        "neqsim.thermo.component.ComponentInterface"
+      ],
+      "skills": [
+        "neqsim-api-patterns"
+      ],
+      "agents": [
+        "thermo-fluid"
+      ],
+      "testSources": [
+        "src/test/java/neqsim/thermo/component/ComponentHeatOfVaporizationTest.java",
+        "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
+      ],
+      "limitations": "Opt-in Watson (1943) reference-state estimate with exponent 0.38. Caller supplies pure-fluid saturation reference data; no mixture rule, pressure correction, database parameter repair, critical-region accuracy or universal uncertainty claim. Six benzene calorimetry points are checked at 307-353 K; other fluids/ranges need validation.",
+      "operations": [
+        {
+          "id": "watson-saturation-latent-heat",
+          "classification": "supported",
+          "api": "neqsim.thermo.component.Component",
+          "method": "calculateWatsonHeatOfVaporization",
+          "signature": "double neqsim.thermo.component.Component.calculateWatsonHeatOfVaporization(double,double,double,double)",
+          "units": {
+            "inputs": {
+              "temperature": "K",
+              "referenceTemperature": "K",
+              "referenceEnthalpy": "J/mol",
+              "criticalTemperature": "K"
+            },
+            "outputs": {
+              "value": "J/mol"
+            }
+          },
+          "applicability": "Finite 0<T<=Tc, 0<Tref<Tc and Href>0. Returns the model zero at T=Tc; rejects supercritical input and nonrepresentable positive subcritical results. Saturated pure-fluid estimate only; mathematical domain is not physical qualification.",
+          "route": "runCapability action=invoke",
+          "example": {
+            "arguments": [
+              332,
+              353.3,
+              30720,
+              562.1
+            ],
+            "parameterTypes": [
+              "double",
+              "double",
+              "double",
+              "double"
+            ],
+            "expected": 31875.128086545672,
+            "absoluteTolerance": 1e-09
+          },
+          "evidenceSources": [
+            "src/test/java/neqsim/thermo/component/ComponentHeatOfVaporizationTest.java",
             "src/test/java/neqsim/mcp/runners/TransportPropertyCapabilityTest.java"
           ]
         }
