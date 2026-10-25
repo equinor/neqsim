@@ -177,12 +177,14 @@ evidence, not new fitting targets or acceptance tolerances.
 
 ## Salt-free CO2 baseline discriminator
 
-`CO2WaterBaselineReferenceAssessmentTest` compares six evaluated liquid CO2 mole
+`CO2WaterBaselineReferenceAssessmentTest` compares nineteen evaluated liquid CO2
 fractions from the [IUPAC–NIST CO2/water evaluation, system 62_1](https://srdata.nist.gov/solubility/sol_detail.aspx?sysID=62_1),
-Table 1 **Model** column, at 273.15–298.15 K and **101.325 kPa CO2 partial
-pressure**. These are evaluated model values, not raw measurements. The fixture
+Table 1 **Model** column, at 273.15–363.15 K and **101.325 kPa CO2 partial
+pressure**. This includes the 323.15, 348.15 and 363.15 K temperatures of the
+He–Morse KCl series, so salt-free absolute bias can be separated from its KCl
+salting slope without fitting a production parameter. These are evaluated model values, not raw measurements. The fixture
 `co2_water_carroll1991_evaluation.csv` records the source, units and reuse basis;
-only six factual values are retained, not an article or figure. Carroll,
+only nineteen factual values are retained, not an article or figure. Carroll,
 Slupsky and Mather (1991), [DOI 10.1063/1.555900](https://doi.org/10.1063/1.555900),
 primary Table 4 was checked at overlapping temperatures. The displayed web
 Eq. (1) has a normalization inconsistency with its table and is not used.
@@ -191,8 +193,8 @@ The nonreactive electrolyte-CPA calculation uses 1 kg water, 10 mol CO2,
 explicit zero K+/Cl-, mixing rule 10 and multiphase checking. Total pressure
 is iterated until `y_CO2 * P = 1.01325 bara`; total pressure and guest fugacity
 are reported separately. Three constructions per temperature retain baseline,
-explicit database reset and reversed component insertion order: **18 calculated
-records from six independent reference states**, not 18 independent observations.
+explicit database reset and reversed component insertion order: **57 calculated
+records from nineteen independent reference states**, not 57 independent observations.
 `apparent_f_over_x_bara` is a finite-composition endpoint ratio, not a newly
 qualified infinite-dilution Henry constant.
 
@@ -205,8 +207,10 @@ All completed records are written before the final numerical assertion. The
 test supplies **no physical-accuracy pass band**; signed relative reference
 residuals are retained even when numerical gates pass.
 
-The initial exact-master assessment retains a -27.30% to -19.25% salt-free
-solubility residual. Runtime diagnostics identify rule `ClassicSRKT2`, CO2
+The previously retained 273.15–298.15 K exact-master subset has a -27.30% to
+-19.25% salt-free solubility residual. The extended 303.15–363.15 K rows retain
+signed residuals as diagnostic evidence; exact-head hosted results must be
+inspected before drawing a temperature-dependent conclusion. Runtime diagnostics identify rule `ClassicSRKT2`, CO2
 2A/two sites and water 4C/four sites, cross beta 0.075 and cross energy
 8327.5 J/mol. Stored zero cross energy selects the combining rule; it does not
 disable association. The default binary coefficients give
@@ -426,11 +430,11 @@ produced by tests selected for that shard:
 | He–Morse dissolved CO2, complete five-temperature series | 26 |
 | Yasunishi–Yoshida Ostwald coefficients | 7 |
 | Burgass saturated and finite-inventory NaCl controls | 12 |
-| Carroll evaluated salt-free CO2, three setup constructions | 18 |
+| Carroll evaluated salt-free CO2, three setup constructions | 57 |
 | Full Dholabhai family, all supported measured recipes | 110 |
 | Matched measured-state aqueous/guest partition, same Dholabhai recipes | 110 |
 
-The combined bundle has 321 diagnostic rows, not 321 independent measurements.
+The combined bundle has 360 diagnostic rows, not 360 independent measurements.
 The two 110-row assessments deliberately use the same 110 measured endpoints.
 
 The manifest records the actual checkout commit separately from the GitHub
