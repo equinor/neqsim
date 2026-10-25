@@ -8,7 +8,7 @@
 # Primary Table 4 (p.1208) independently checked at the overlapping temperatures.
 # The displayed web Eq.(1) normalization is inconsistent with the adjacent table and is not used.
 # No pointwise combined uncertainty is supplied; none is invented.
-# Access: public NIST evaluation; only six factual values/citations retained. Article and figures not redistributed.
+# Access: public NIST evaluation; only nineteen factual values/citations retained. Article and figures not redistributed.
 point_id,temperature_K,co2_partial_pressure_bara,evaluated_model_x_co2
 CSM273,273.15,1.01325,0.001355
 CSM278,278.15,1.01325,0.001136
