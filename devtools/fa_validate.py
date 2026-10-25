@@ -400,7 +400,7 @@ def compute_readiness(ds, checks, basis_doc):
     if requested == "REVIEWED" and review.get("reviewer") and review.get("record") and not reasons:
         return {"label": "REVIEWED", "note": "independently reviewed by %s (record %s); reviewer assertion, not software certification" % (review["reviewer"], review["record"]),
                 "publication_ready": True, "explanation": "A review record was supplied by a person; the software only checked that no blocking evidence gap remains.", "reasons": []}
-    note = "synthetic demonstration; not for design or construction" if synthetic else "screening results; evidence gaps remain open"
+    note = "synthetic inputs; not for design or construction" if synthetic else "screening results; evidence gaps remain open"
     return {"label": "SCREENING", "note": note, "publication_ready": False, "reasons": reasons,
             "explanation": "Screening only (%s). No independent review is recorded and the software assigns none." % "; ".join(reasons) if reasons else "Screening only; no independent review is recorded."}
 

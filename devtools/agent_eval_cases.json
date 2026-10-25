@@ -155,6 +155,12 @@
       "expect_skills_top5": ["neqsim-pipeline-and-terminal-networks"]
     },
     {
+      "id": "surf-design-report",
+      "prompt": "design a four-well subsea tieback with water injection and produce the SURF design report with drawings",
+      "expect_agent_top3": ["surf-design-study"],
+      "expect_skills_top5": ["neqsim-surf-design-study"]
+    },
+    {
       "id": "terminal-cargo-schedule",
       "prompt": "crude oil terminal tank inventory and cargo nomination schedule with crude blending",
       "expect_agent_top3": ["network-energy-systems", "field-development"],

@@ -377,3 +377,59 @@ def test_e2e_strict_mode_exits_nonzero_on_validation_failure(tmp_path):
     if rc == 1:
         with open(out / "report" / "validation_report.json", encoding="utf-8") as fh:
             assert json.load(fh)["readiness"]["label"] == "NOT_READY"
+
+
+# --- second geometry: single path, no junction, no PLEM, route along one axis -------------------------
+SINGLE = os.path.join(HERE, "fa_examples", "single_flowline")
+
+
+@pytest.fixture(scope="module")
+def single_path_run(tmp_path_factory):
+    pytest.importorskip("jneqsim")
+    out = tmp_path_factory.mktemp("fa_single") / "out"
+    rc = flow_assurance_report.main([os.path.join(SINGLE, "route.yaml"), "--basis", os.path.join(SINGLE, "basis.yaml"), "--cases", os.path.join(SINGLE, "cases.yaml"),
+                                     "--out", str(out), "--no-word", "--no-mesh", "--no-results-json", "--quiet", "--strict"])
+    return rc, out
+
+
+def test_single_path_route_builds_with_nine_sheets_and_no_failed_check(single_path_run):
+    rc, out = single_path_run
+    assert rc == 0
+    svgs = sorted(f for f in os.listdir(out / "drawings" / "svg") if f.endswith(".svg"))
+    assert len(svgs) == 9 and not any(f.endswith("DWG-04.svg") for f in svgs)
+    with open(out / "report" / "validation_report.json", encoding="utf-8") as fh:
+        val = json.load(fh)
+    assert val["n_fail"] == 0 and val["readiness"]["label"] == "SCREENING"
+
+
+def _paragraph_text(docx_path):
+    import docx
+
+    return "\n".join(p.text for p in docx.Document(str(docx_path)).paragraphs)
+
+
+def test_single_path_report_has_no_demo_specific_statements(single_path_run):
+    _, out = single_path_run
+    docx_path = next(out.joinpath("report").glob("*.docx"))
+    text = _paragraph_text(docx_path)
+    for phrase in ("trunk", "thinly insulated branch", "M2", "M3", "M4", "TMPL-A", "TMPL-B", "TURNDOWN", "180 bara", "30 wt% aqueous MEG, still insufficient"):
+        assert phrase not in text, phrase
+
+
+def test_single_path_narrative_is_derived_from_the_dataset(single_path_run):
+    _, out = single_path_run
+    ds = _dataset(out)
+    text = _paragraph_text(next(out.joinpath("report").glob("*.docx")))
+    low = min(ds["cases"], key=lambda c: ds["results"][c["id"]]["extrema"]["hyd_margin_min"]["value"])["id"]
+    assert "smallest inhibited margin of all cases is" in text and "in case %s " % low in text
+    only = ds["mitigations"][0]
+    assert only["id"] in text and only["case"] in text
+
+
+def test_single_path_drawing_numbers_are_stable_and_sheet_numbers_consecutive(single_path_run):
+    _, out = single_path_run
+    with open(out / "drawings" / "layout_spec.json", encoding="utf-8") as fh:
+        spec = json.load(fh)
+    assert len(spec["sheets"]) == 9
+    text = (out / "drawings" / "svg" / "FA-TEST-001_DWG-07.svg").read_text(encoding="utf-8")
+    assert "Sheet 6 of 9" in text

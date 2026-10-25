@@ -294,6 +294,7 @@ neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
 neqsim process-report MODEL   # process-study report (stream tables, BFD/PFD, balances, validation) from a Python/JSON/.neqsim model; see docs/development/PROCESS_STUDY_REPORT.md
 neqsim flow-assurance-report ROUTE --basis B --cases C   # flow-assurance report + A3 pipeline drawings (--init DIR scaffolds inputs, --demo runs the synthetic example); see docs/development/FLOW_ASSURANCE_STUDY_REPORT.md
+neqsim surf-study STUDY.yaml --out DIR                    # SURF design study: generated and solved NeqSim network, concept comparison, 15 A3 sheets, 20-chapter report (--init DIR scaffolds, --demo runs the synthetic example, --stage build-model|run|report); see docs/development/SURF_DESIGN_STUDY.md
 neqsim file-issue TASK   # offer to file a recorded NeqSim gap as an issue (and PR)
 neqsim new-skill NAME    # scaffold a new AI skill
 neqsim skill CMD         # manage community/private skills (list/search/install/export/doctor)
