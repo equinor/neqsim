@@ -340,6 +340,18 @@ double pH = co2Brine.getpH();               // ~3.9 for CO2-saturated water
 | Salinity | wt% NaCl equiv | Based on Na+/Cl- content |
 | pH | dimensionless | From H+ activity |
 
+## Gas-solubility reference assessments
+
+Match reported gas partial pressure and **final aqueous** salt molality. Account
+for solvent evaporation: 1 kg feed water need not leave 1 kg aqueous water.
+Rebuild independent trial fluids, compensate feed water, and bracket from valid
+liquid-bearing states. Verify component inventory, ion confinement and molecular
+fugacity equality before using a trial in a pressure root. Check that changing
+the finite gas-reservoir size leaves the matched result unchanged. Use `init(1)`
+for fixed-T/P fugacities, retaining accuracy deviations as evidence.
+See `KClCO2SolubilityReferenceAssessmentTest` and the
+[benchmark notes](../../../src/test/resources/data/chemistry_benchmarks/co2_kcl_hydrate_dholabhai1993.md).
+
 ## Common Pitfalls
 
 1. **Charge balance**: Total positive charges must equal total negative charges
