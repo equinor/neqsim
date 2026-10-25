@@ -10,6 +10,9 @@ Consolidated guide for all flow assurance threats — hydrate, wax, asphaltene, 
 hydraulics, water/liquid hammer screening, slugging, and thermal management — with
 NeqSim code patterns.
 
+> A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
+> validation) is produced by `neqsim flow-assurance-report` — see the
+> `neqsim-flow-assurance-study-report` skill. This skill stays the calculation reference.
 ## When to Use This Skill
 
 - Hydrate formation temperature/pressure prediction
@@ -130,7 +133,9 @@ for (int i = 0; i < pressures.length; i++) {
 SystemInterface inhibitedFluid = new SystemSrkCPAstatoil(273.15 + 4, 100.0);
 inhibitedFluid.addComponent("methane", 0.80);
 inhibitedFluid.addComponent("water", 0.15);
-inhibitedFluid.addComponent("MEG", 0.05);  // 25 wt% MEG in water phase
+// 25 wt% MEG in the water + MEG phase: n_MEG = n_water * 18.015 * 0.25 / 0.75 / 62.07 = 0.0145 mol
+// (0.05 mol MEG per 0.15 mol water would be 53 wt%: amounts are MOLES, never weight percentages)
+inhibitedFluid.addComponent("MEG", 0.0145);
 inhibitedFluid.setMixingRule(10);
 inhibitedFluid.setMultiPhaseCheck(true);
 inhibitedFluid.setHydrateCheck(true);
@@ -172,9 +177,11 @@ double brineHydrateT = brineGas.getTemperature() - 273.15;
 // Find required MEG concentration for target subcooling
 double[] megWtPct = {0, 10, 20, 30, 40, 50};
 for (double wt : megWtPct) {
-    // Create fluid with appropriate MEG/water ratio
-    double waterFrac = 0.20 * (1.0 - wt / 100.0);
-    double megFrac = 0.20 * (wt / 100.0);
+    // wt % MEG is a MASS fraction of the water + MEG mixture: convert to moles (M_water 18.015, M_MEG 62.07 g/mol)
+    double waterMol = 0.20 * (1.0 - wt / 100.0) / 18.015;
+    double megMol = 0.20 * (wt / 100.0) / 62.07;
+    double waterFrac = waterMol / (waterMol + megMol) * 0.20;
+    double megFrac = megMol / (waterMol + megMol) * 0.20;
     SystemInterface testFluid = new SystemSrkCPAstatoil(273.15, 100.0);
     testFluid.addComponent("methane", 0.80);
     testFluid.addComponent("water", waterFrac);
@@ -190,9 +197,10 @@ for (double wt : megWtPct) {
 **Sweep gotchas (found building an HPHT tie-back, Fogelberg VPbo task):** `hydrateFormationTemperature()`
 with a rich gas condensate (C7+ pseudo-components) plus water and MEG at 40 wt % MEG did not return
 (CPA hydrate solver loop, no exception, no timeout). Run every MEG/pressure point of a sweep in a
-watchdog thread or subprocess with a hard time limit, keep the sweep to at most 30 wt % MEG, and
-extrapolate the 40-50 wt % rows linearly (about -4.5 K per 10 wt % at 30-400 bara) instead of letting
-the whole script hang. Write the intermediate JSON before the hydrate loop so a kill does not lose the
+watchdog thread or subprocess with a hard time limit and keep the sweep to at most 30 wt % MEG. If a
+40-50 wt % row is still needed, a linear extrapolation (about -4.5 K per 10 wt % at 30-400 bara) is an
+UNVALIDATED screening number: label it as extrapolated, never use it for a pass/fail margin, and do not
+let the whole script hang for it. Write the intermediate JSON before the hydrate loop so a kill does not lose the
 fluid and CVD results.
 For flowline hydraulics with `PipeBeggsAndBrills` a trial inlet pressure that is too low throws
 `HydraulicDomainException: Non-positive pipeline pressure` instead of returning a low outlet pressure:
@@ -1584,7 +1592,7 @@ impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet su
 | Tie-back deliverability collapses (recovery 7-13 %) when a NeqSim tubing/flowline table is used as the outflow curve | `PipeBeggsAndBrills` tubing outflow is non-monotonic at low rate (liquid-loading minimum): intersect the inflow with the stable right-hand branch only (rate above the pressure minimum), never the whole table |
 | `PipeBeggsAndBrills` throws a negative-pressure exception while building a Pin(Q, P_arrival) table | Solve the required inlet pressure by bisection inside `try/except`, treat a failure as infeasible (NaN), and replace NaN by a large pressure before interpolating |
 | Hydrate temperature is NaN or MEG suppression is zero | `fluid.setHydrateCheck(True)` before the flash, and a water component present; in a TBP-characterised fluid the pseudo-components are named `<name>_PC` |
-| Arrival temperature equals the inlet in a Beggs-and-Brill cooling study | Call `setConstantSurfaceTemperature(...)` before `setHeatTransferCoefficient(...)`; screening U is about 20 W/m2K for a bare line and 4 for an insulated one |
+| Arrival temperature equals the inlet in a Beggs-and-Brill cooling study | Call `setConstantSurfaceTemperature(...)` before `setHeatTransferCoefficient(...)`; screening U is about 20 W/m2K for a bare line and 4 for an insulated one. The U-value is referenced to the INNER area (pi x ID x L): convert a layered build-up with `U_inner = 1/(2 pi r_i R_total)`; an outer-area U overstates the heat loss |
 | 5.5-inch tubing shows no feasible rate for a 1-3 MSm3/d gas-condensate well | Use 7-inch (ID 0.159 m) as the screening tubing and check the liquid-loading minimum before blaming the flowline |
 | A new tie-back looks feasible on its own line but is routed through a shared trunk | Compute the back-pressure the added rate puts on the trunk inlet and compare it with the choke dP of the existing wells (Trestakk: +23/+51/+93 bar for +1.5/+3/+5 kSm3/d on a 12-in trunk against 14-95 bar of headroom); beyond the headroom the existing wells are throttled out or a dedicated line is needed |
 | Trunk ID and host arrival pressure are unknown | Calibrate the arrival pressure to measured wellhead/choke data for each plausible ID (10 and 12 in), show both, and bracket the arrival pressure with the host PSD window instead of reporting one number |

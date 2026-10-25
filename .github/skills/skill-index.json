@@ -2441,5 +2441,35 @@
  "operating cases overrides": [
   "process-study-report"
  ],
+ "flow assurance report": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "flow assurance study report": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "flow-assurance-report": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "neqsim flow-assurance-report": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "pipeline drawings": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "tie-back drawings": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "hydrate margin report": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "cooldown report": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "threat applicability matrix": [
+  "neqsim-flow-assurance-study-report"
+ ],
+ "flowline report": [
+  "neqsim-flow-assurance-study-report"
+ ],
  "reservoir to products full chain Python Java SURF utilities downstream": ["neqsim-production-system-modeling", "neqsim-integrated-production-and-lifecycle", "neqsim-process-modeling"]
 }

@@ -293,6 +293,7 @@ neqsim doctor --skip-jar # initial CLI/agent setup; explicitly omit only the JAR
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
 neqsim process-report MODEL   # process-study report (stream tables, BFD/PFD, balances, validation) from a Python/JSON/.neqsim model; see docs/development/PROCESS_STUDY_REPORT.md
+neqsim flow-assurance-report ROUTE --basis B --cases C   # flow-assurance report + A3 pipeline drawings (--init DIR scaffolds inputs, --demo runs the synthetic example); see docs/development/FLOW_ASSURANCE_STUDY_REPORT.md
 neqsim file-issue TASK   # offer to file a recorded NeqSim gap as an issue (and PR)
 neqsim new-skill NAME    # scaffold a new AI skill
 neqsim skill CMD         # manage community/private skills (list/search/install/export/doctor)
