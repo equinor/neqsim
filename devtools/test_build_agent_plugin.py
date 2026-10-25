@@ -178,6 +178,22 @@ class BuildPluginTest(unittest.TestCase):
             encoding="utf-8")
         self.assertIn("LIVE_REQUIREMENTS = ''", hook_py)
 
+    def test_windows_live_dependency_reaches_plugin_installer(self):
+        skill = self.spec.skills_roots[0] / "cat" / "neqsim-beta"
+        _write(skill / "pyproject.toml",
+               "[project]\nname = 'beta'\nversion = '0'\ndependencies = []\n"
+               "[project.optional-dependencies]\n"
+               "live = [\"pywin32>=306; sys_platform == 'win32'\"]\n"
+               "outlook = [\"pywin32>=306; sys_platform == 'win32'\"]\n")
+        result = self._build()
+        self.assertEqual(result["errors"], [])
+        plugin = self.out / "demo"
+        requirements = (plugin / bap.LIVE_REQUIREMENTS_FILE).read_text(encoding="utf-8")
+        self.assertEqual(requirements.count("pywin32>=306; sys_platform == 'win32'"), 1)
+        hook = (plugin / "scripts" / "install_skill_packages.py").read_text(encoding="utf-8")
+        self.assertIn("LIVE_REQUIREMENTS = 'requirements-live.txt'", hook)
+        self.assertIn('base + ["-r", str(req_file)]', hook)
+
     def test_vendored_toolkit(self):
         spec = bap.PluginSpec("core", "Core", self.spec.skills_roots, self.spec.agents_roots, [],
                               False, [], pip_targets=[bap.VENDORED_TOOLKIT_REQUIREMENT])
