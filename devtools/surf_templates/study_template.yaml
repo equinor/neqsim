@@ -1,0 +1,72 @@
+# SURF study specification template (surf_study.v1). Every value that must come from a source reads "unavailable - TO BE CONFIRMED";
+# `neqsim surf-study` refuses to run on an unfilled template (exit code 2). Units are in the key suffix, pressures are absolute (bara),
+# z is elevation above mean sea level (m, up). The complete synthetic example is devtools/surf_examples/four_well_tieback/study.yaml.
+schema: surf_study.v1
+
+document:
+  title: "unavailable - TO BE CONFIRMED"
+  document_number: "unavailable - TO BE CONFIRMED"
+  revision: "01"
+  issue_status: "Issued for review"
+  readiness: SCREENING
+  date: "unavailable - TO BE CONFIRMED"
+  company: "unavailable - TO BE CONFIRMED"
+  project: "unavailable - TO BE CONFIRMED"
+  checked_by: "not assigned"
+  approved_by: "not assigned"
+  revision_history: []
+
+study:
+  id: "unavailable - TO BE CONFIRMED"
+  objective: "unavailable - TO BE CONFIRMED"
+  maturity: concept
+  design_life_years: 0
+  region: "unavailable - TO BE CONFIRMED"
+  water_depth_m: 0
+  decisions: ["unavailable - TO BE CONFIRMED"]
+
+sources:
+  - {id: SRC-1, title: "unavailable - TO BE CONFIRMED", input_class: unavailable, status: "unavailable - TO BE CONFIRMED"}
+
+fluids:
+  # id: {role: production|injection|chemical, eos: SRK, mixing_rule: classic, components: {name: mole_fraction}, input_class: ..., source: SRC-1}
+  prod_fluid: {role: production, eos: SRK, mixing_rule: classic, components: {methane: 1.0}, input_class: unavailable, source: SRC-1}
+
+host: {id: "unavailable - TO BE CONFIRMED", inlet_elevation_m: 0, max_inlet_mass_rate_kg_s: 0}
+
+nodes:
+  # kinds: production_well, injection_well, manifold, injection_manifold, plem, plet, junction, host, injection_source, riser_base, tie_in
+  # every node needs x_m, y_m, z_m, service (production|injection), a unique tag and a source; wells carry a `well:` block
+  - {id: "unavailable - TO BE CONFIRMED", tag: "unavailable - TO BE CONFIRMED", kind: host, service: production, x_m: 0, y_m: 0, z_m: 0, source: SRC-1}
+
+edges:
+  # kinds: jumper, flowline, trunkline, riser, pipeline, pump, header, tie_in; rigid: od_mm + wall_mm (inside diameter = OD - 2 x wall);
+  # flexible: id_mm + a supplier u_value_w_m2k. Every edge needs unique from_port/to_port, route_points (3D), hydraulic {model, segments},
+  # thermal {ambient_c, ...}, design {pressure_bara, temperature_c} and a source.
+  - {id: "unavailable - TO BE CONFIRMED", tag: "unavailable - TO BE CONFIRMED", kind: flowline, service: production, from: "unavailable - TO BE CONFIRMED", to: "unavailable - TO BE CONFIRMED"}
+
+concepts:
+  # at least two alternatives; edge `concepts: [A]` limits an edge to concepts, concept `edge_overrides` change dimensions for one concept
+  - {id: A, label: "unavailable - TO BE CONFIRMED"}
+  - {id: B, label: "unavailable - TO BE CONFIRMED"}
+
+cases:
+  - {id: BASE, role: design, production_fluid: prod_fluid, host_pressure_bara: 0, production_reservoir_pressure_bara: 0, injection_pump_discharge_bara: 0, injection_reservoir_pressure_bara: 0}
+
+acceptance_criteria:
+  - {id: CR-1, description: "unavailable - TO BE CONFIRMED", quantity: hydrate_margin_min_k, operator: ">=", value: 0, unit: dK, source: SRC-1}
+
+solver:
+  network_tolerance_pa: 100.0
+  max_iterations: 100
+  coupling_relaxation: 0.7
+  coupling_max_iterations: 60
+  coupling_rate_tolerance_kg_s: 0.001
+  coupling_pressure_tolerance_bar: 0.01
+  erosional_c_factor_si: "unavailable - TO BE CONFIRMED"
+  hydrate_grid_bara: [20.0, 40.0, 70.0, 110.0, 160.0, 220.0]
+  mesh_sensitivity: {factor: 2, tolerances: {p_bar: 1.0, t_k: 2.0}}
+
+assumptions: []
+data_gaps: ["unavailable - TO BE CONFIRMED"]
+exclusions: []
