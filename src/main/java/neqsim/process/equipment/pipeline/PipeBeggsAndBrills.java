@@ -3134,6 +3134,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     outletSystem.setTemperature(outletTemperature);
     outletSystem.setTotalFlowRate(outletMassFlow, "kg/sec");
     outletSystem.setMolarComposition(inletSystem.getMolarComposition());
+    // Composition assignment resets phase information. Restore equilibrium at the
+    // transported outlet state before publishing phase flows and properties.
+    new ThermodynamicOperations(outletSystem).TPflash();
     outletSystem.initProperties();
 
     system = outletSystem;

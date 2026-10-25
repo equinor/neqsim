@@ -515,6 +515,12 @@ and `MinimumFlowSpillTest` for the executed synthetic material and energy checks
 
 ## Common Mistakes
 
+Fixed-speed chart calculations reject nonfinite or negative head and efficiencies
+outside `(0, 100]` percent before the PH flash. If this diagnostic appears, check
+actual inlet flow, speed, and map range; do not treat polynomial extrapolation to
+negative map values as a thermodynamic solver failure or clamp it into feasibility.
+`CompressorChartOperatingPointTest` covers rejection and accepted-outlet preservation.
+
 - Naming the legacy calculator anything that does not start with
   `"anti surge calculator"` — the legacy anti-surge logic then never triggers.
 - Wiring the anti-surge valve to the forward branch `getSplitStream(0)` instead

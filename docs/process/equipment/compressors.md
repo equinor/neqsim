@@ -173,6 +173,18 @@ compressor.setSpeed(10000);  // Operating speed
 
 ### Operating Point
 
+For fixed-speed map calculations, `run()` rejects nonfinite or negative head and
+nonfinite efficiencies outside `(0, 100]` percent before computing discharge
+pressure or requesting a PH flash. The exception includes the compressor name,
+actual inlet flow, speed, head, and efficiency. Check the selected map and its
+flow/speed range when this occurs. A polynomial extrapolation can produce such
+invalid values even when all tabulated points are physical. The public efficiency
+setters retain their configuration-clamping behavior; they do not make an invalid
+map operating point valid. The speed solver already excludes these map values
+when searching for a feasible operating point.
+For `CompressorShaft.solveSpeed(...)`, choose trial bounds at which every body
+has physical map values; invalid bound evaluations propagate this diagnostic.
+
 ```java
 compressor.setSpeed(10000);  // RPM
 compressor.run();

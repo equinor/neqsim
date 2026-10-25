@@ -766,6 +766,54 @@ public class LargeCombinedModelsTest {
 
   @Test
   public void testExportCompressorModel() {
+    // At 12 MSm3/day the second-stage map extrapolates to negative head and
+    // efficiency. Qualify throughput at physical points for both stages instead.
+    for (double flow : new double[] {8.0, 8.4}) {
+      StreamInterface gasStream = createExportCompressorTestFeed(flow);
+      ProcessSystem exportCompressorSystem = getExportCopressorModel(gasStream);
+      exportCompressorSystem.setRunInSteps(false);
+      exportCompressorSystem.run();
+
+      Assertions.assertEquals(flow,
+          ((Splitter) exportCompressorSystem.getUnit("TEE-104")).getSplitStream(0).getFlowRate("MSm3/day"), 0.1);
+      for (String name : new String[] {"KA27831", "KA27841"}) {
+        Compressor compressor = (Compressor) exportCompressorSystem.getUnit(name);
+        Assertions.assertTrue(compressor.getPolytropicHead() > 0.0);
+        Assertions.assertTrue(compressor.getPolytropicEfficiency() > 0.0);
+        Assertions.assertTrue(compressor.getPolytropicEfficiency() <= 1.0);
+        Assertions.assertTrue(compressor.getOutletStream().getPressure() > compressor.getInletStream().getPressure());
+        compressor.getInletStream().getFluid().init(2);
+        compressor.getOutletStream().getFluid().init(2);
+        double enthalpyRise = compressor.getOutletStream().getFluid().getEnthalpy()
+            - compressor.getInletStream().getFluid().getEnthalpy();
+        Assertions.assertEquals(compressor.getPower(), enthalpyRise, compressor.getPower() * 1.0e-8);
+      }
+    }
+  }
+
+  /** Verifies the original high-flow extrapolation fails at the map boundary rather than inside a PH flash. */
+  @Test
+  public void testExportCompressorModelRejectsInvalidMapExtrapolation() {
+    ProcessSystem process = getExportCopressorModel(createExportCompressorTestFeed(12.0));
+    process.setRunInSteps(false);
+    RuntimeException failure = Assertions.assertThrows(RuntimeException.class, process::run);
+    Throwable cause = failure;
+    while (cause.getCause() != null) {
+      cause = cause.getCause();
+    }
+    Assertions.assertTrue(cause instanceof IllegalArgumentException);
+    Assertions.assertTrue(cause.getMessage().contains("Invalid compressor chart operating point for KA27841"));
+    Assertions.assertTrue(cause.getMessage().contains("head=-"));
+    Assertions.assertTrue(cause.getMessage().contains("efficiency=-"));
+  }
+
+  /**
+   * Creates the synthetic gas inlet for export-map qualification.
+   *
+   * @param flow standard gas flow in MSm3/day
+   * @return initialized feed stream
+   */
+  private StreamInterface createExportCompressorTestFeed(double flow) {
     SystemInterface gasFluid = new SystemPrEos(273.15 + 20.0, 10.0);
     gasFluid.addComponent("methane", 0.9);
     gasFluid.addComponent("ethane", 0.1);
@@ -773,15 +821,9 @@ public class LargeCombinedModelsTest {
     StreamInterface gasStream = new Stream("test stream", gasFluid);
     gasStream.setPressure(50.0, "bara");
     gasStream.setTemperature(20.0, "C");
-    gasStream.setFlowRate(12.0, "MSm3/day");
+    gasStream.setFlowRate(flow, "MSm3/day");
     gasStream.run();
-
-    ProcessSystem exportCompressorSystem = getExportCopressorModel(gasStream);
-    exportCompressorSystem.setRunInSteps(false);
-    exportCompressorSystem.run();
-
-    Assertions.assertEquals(12,
-        ((Splitter) exportCompressorSystem.getUnit("TEE-104")).getSplitStream(0).getFlowRate("MSm3/day"), 0.1);
+    return gasStream;
   }
 
   public ProcessModel getCombinedModel() {
