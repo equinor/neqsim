@@ -109,22 +109,18 @@ class KClCO2SolubilityReferenceAssessmentTest {
 
     PressureTrial selected = lower;
     for (int iteration = 0; iteration < MAX_PARTIAL_PRESSURE_ITERATIONS; iteration++) {
-      double lowerResidual =
-          lower.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
-      double upperResidual =
-          upper.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
+      double lowerResidual = lower.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
+      double upperResidual = upper.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
       double bracketWidth = upper.totalPressureBara - lower.totalPressureBara;
       double candidatePressure = lower.totalPressureBara
           - lowerResidual * bracketWidth / (upperResidual - lowerResidual);
-      if (!Double.isFinite(candidatePressure)
-          || candidatePressure <= lower.totalPressureBara + 0.05 * bracketWidth
+      if (!Double.isFinite(candidatePressure) || candidatePressure <= lower.totalPressureBara + 0.05 * bracketWidth
           || candidatePressure >= upper.totalPressureBara - 0.05 * bracketWidth) {
         candidatePressure = 0.5 * (lower.totalPressureBara + upper.totalPressureBara);
       }
 
       selected = flashAtTotalPressure(reference, candidatePressure);
-      double selectedResidual =
-          selected.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
+      double selectedResidual = selected.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
       if (Math.abs(selectedResidual) < PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR) {
         break;
       }
@@ -240,8 +236,7 @@ class KClCO2SolubilityReferenceAssessmentTest {
      * @param totalPressureBara total pressure in bara
      * @param actualCo2PartialPressureBara calculated CO2 partial pressure in bara
      */
-    private PressureTrial(SystemInterface fluid, double totalPressureBara,
-        double actualCo2PartialPressureBara) {
+    private PressureTrial(SystemInterface fluid, double totalPressureBara, double actualCo2PartialPressureBara) {
       this.fluid = fluid;
       this.totalPressureBara = totalPressureBara;
       this.actualCo2PartialPressureBara = actualCo2PartialPressureBara;
