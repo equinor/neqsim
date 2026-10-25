@@ -426,9 +426,15 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
         is_notebook = path.suffix.lower() == ".ipynb"
         purpose = entry.get("purpose") or (
             _notebook_purpose(path) if is_notebook else _script_purpose(path))
-        produces = entry.get("produces", "")
-        if produces and not glob.glob(str(task_dir / str(produces))):
-            produces = "{} (missing)".format(produces)
+        declared_outputs = entry.get("produces", "")
+        if isinstance(declared_outputs, (list, tuple)):
+            declared_outputs = [str(item).strip() for item in declared_outputs]
+        else:
+            declared_outputs = [item.strip() for item in str(declared_outputs or "").split(",")]
+        declared_outputs = [item for item in declared_outputs if item]
+        produces = ", ".join(
+            item if glob.glob(str(task_dir / item)) else "{} (missing)".format(item)
+            for item in declared_outputs)
         status = ""
         if is_notebook:
             status = "executed" if _notebook_executed(path) else "no stored outputs"
@@ -449,7 +455,9 @@ def _collect_scripts(task_dir: Path, config: dict) -> list:
             "rel": name,
             "kind": "notebook" if name.endswith(".ipynb") else "script",
             "purpose": entry.get("purpose", "-") or "-",
-            "produces": entry.get("produces", "-") or "-",
+            "produces": (", ".join(str(item) for item in entry.get("produces"))
+                         if isinstance(entry.get("produces"), (list, tuple))
+                         else entry.get("produces", "-")) or "-",
             "modified": "MISSING",
             "status": "planned but not present",
             "declared": True,
