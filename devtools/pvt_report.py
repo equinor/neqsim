@@ -234,8 +234,60 @@ def _protocol_figures(dataset, directory):
     return out
 
 
+def _viscosity_phase(property_key):
+    """Identify phase-specific viscosity without inferring absence from its value."""
+    suffix = "ViscosityPaS"
+    if property_key and property_key.endswith(suffix):
+        phase = property_key[:-len(suffix)]
+        if phase in ("gas", "oil", "aqueous"):
+            return phase
+    return None
+
+
+def _validate_phase_availability(dataset):
+    """Reject malformed explicit masks instead of guessing missing phase states."""
+    for experiment in _records(dataset.get("experiments")) + _records(dataset.get("baseline_experiments")):
+        for name in ("predictions", "baseline_predictions"):
+            predictions = experiment.get(name, {})
+            if "phaseAvailability" not in predictions:
+                continue
+            masks = predictions["phaseAvailability"]
+            if not isinstance(masks, dict):
+                raise ValueError("phaseAvailability must be a dictionary of Boolean arrays")
+            for property_key, values in predictions.get("values", {}).items():
+                phase = _viscosity_phase(property_key)
+                if phase and isinstance(values, list) and phase not in masks:
+                    raise ValueError("phaseAvailability.%s is required for its viscosity values" % phase)
+            pressures = experiment.get("pressures_bara", predictions.get("pressuresBara"))
+            for phase, mask in masks.items():
+                if phase not in ("gas", "oil", "aqueous"):
+                    raise ValueError("phaseAvailability contains an unsupported phase")
+                if not isinstance(mask, list) or any(type(value) is not bool for value in mask):
+                    raise ValueError("phaseAvailability.%s must be a Boolean array" % phase)
+                values = predictions.get("values", {}).get(phase + "ViscosityPaS")
+                if not isinstance(values, list) or len(mask) != len(values):
+                    raise ValueError("phaseAvailability.%s length must match its viscosity values" % phase)
+                if isinstance(pressures, list) and len(mask) != len(pressures):
+                    raise ValueError("phaseAvailability.%s length must match registered pressures" % phase)
+
+
+def _phase_available(predictions, property_key, index):
+    """Read explicit flashed-phase availability; old datasets remain unspecified."""
+    phase = _viscosity_phase(property_key)
+    availability = predictions.get("phaseAvailability", {}).get(phase, [])
+    return availability[index] if index < len(availability) else None
+
+
+def _report_prediction(predictions, property_key, values, index):
+    """Keep unavailable points null and preserve every available numerical zero."""
+    if _phase_available(predictions, property_key, index) is False:
+        return None
+    return values[index] if index < len(values) else None
+
+
 def _observations(dataset):
     """Return long-format observations from the canonical study contract."""
+    _validate_phase_availability(dataset)
     experiments = {e.get("id"): e for e in _records(dataset.get("experiments"))}
     out = []
     observed = set()
@@ -249,8 +301,10 @@ def _observations(dataset):
             observed.add((experiment_id, prop))
             continue
         pressures = experiment.get("pressures_bara", [])
-        predictions = experiment.get("predictions", {}).get("values", {})
-        baseline = experiment.get("baseline_predictions", {}).get("values", {})
+        prediction_result = experiment.get("predictions", {})
+        baseline_result = experiment.get("baseline_predictions", {})
+        predictions = prediction_result.get("values", {})
+        baseline = baseline_result.get("values", {})
         aliases = {"relative_volume": "relativeVolume", "liquid_dropout_percent": "liquidRelativeVolume",
                    "gas_z_factor": "gasZ", "rs_sm3_sm3": "rsSm3PerSm3", "bo_m3_sm3": "boM3PerSm3",
                    "oil_density_kg_m3": "oilDensityKgPerM3"}
@@ -266,8 +320,9 @@ def _observations(dataset):
             point["measured"] = value
             point["source_kind"] = observation.get("source_kind", experiment.get("source_kind"))
             point["pressure_bara"] = pressures[i] if i < len(pressures) else None
-            point["predicted"] = predicted[i] if i < len(predicted) else None
-            point["baseline"] = original[i] if i < len(original) else None
+            point["predicted"] = _report_prediction(prediction_result, property_key, predicted, i)
+            point["baseline"] = _report_prediction(baseline_result, property_key, original, i)
+            point["phase_available"] = _phase_available(prediction_result, property_key, i)
             if isinstance(uncertainty, list):
                 point["uncertainty"] = uncertainty[i] if i < len(uncertainty) else None
             out.append(point)
@@ -279,14 +334,15 @@ def _observations(dataset):
              "gasViscosityPaS": "Pa s", "oilViscosityPaS": "Pa s", "aqueousViscosityPaS": "Pa s"}
     for experiment in experiments.values():
         pressures = experiment.get("pressures_bara", [])
-        for prop, values in experiment.get("predictions", {}).get("values", {}).items():
+        prediction_result = experiment.get("predictions", {})
+        for prop, values in prediction_result.get("values", {}).items():
             if prop not in units or not isinstance(values, list) or (experiment.get("id"), prop) in observed:
-                continue
-            if not any(isinstance(value, (int, float)) and math.isfinite(value) for value in values):
                 continue
             for i, value in enumerate(values):
                 out.append({"experiment_id": experiment.get("id"), "property": prop,
-                            "unit": units[prop], "predicted": value,
+                            "unit": units[prop],
+                            "predicted": _report_prediction(prediction_result, prop, values, i),
+                            "phase_available": _phase_available(prediction_result, prop, i),
                             "pressure_bara": pressures[i] if i < len(pressures) else None,
                             "role": experiment.get("role"), "source_kind": experiment.get("source_kind")})
     return out
@@ -303,6 +359,7 @@ def _number(record, names):
 
 def make_figures(dataset, out_dir):
     """Build figures from supplied records only, including failed-data annotations."""
+    _validate_phase_availability(dataset)
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
     with plt.rc_context({"font.family": "DejaVu Sans", "font.size": 9,
@@ -347,7 +404,8 @@ def make_figures(dataset, out_dir):
                 values = [_number(r, (key, key + "_value")) for r in usable]
                 if any(v is not None for v in values):
                     ax.plot(x, [float("nan") if v is None else v for v in values],
-                            style, color=color, label=label, linewidth=1.5)
+                            style, color=color, label=label, linewidth=1.5,
+                            marker="o" if any(v is None for v in values) else None, markersize=3.5)
             for role, marker in (("calibration", "o"), ("validation", "s"), ("holdout", "s")):
                 measured = [(r, xx) for r, xx in zip(usable, x)
                             if r.get("role", "calibration") == role
@@ -366,6 +424,29 @@ def make_figures(dataset, out_dir):
             if failed:
                 ax.text(0.02, 0.98, "%d failed observations retained in register" % failed,
                         transform=ax.transAxes, va="top", fontsize=8, color="#9b2525")
+            absent = sum(r.get("phase_available") is False for r in usable)
+            phase = _viscosity_phase(prop)
+            if phase is None and prop == "viscosity_pa_s":
+                phase = usable[0].get("phase")
+            if absent:
+                availability_label = ("Unavailable - %s phase absent at all registered points" % phase
+                                      if absent == len(usable) else
+                                      "%s phase absent at %d registered point(s); curve gaps retained" % (phase, absent))
+                if absent == len(usable):
+                    ax.text(0.02, 0.86 if failed else 0.98, availability_label,
+                            transform=ax.transAxes, va="top", fontsize=8, color="#555555")
+                else:
+                    ax.text(0.0, -0.31, availability_label,
+                            transform=ax.transAxes, va="top", fontsize=8, color="#555555")
+                if min(x) != max(x):
+                    ax.set_xlim(min(x), max(x))
+            elif not any(_number(r, ("predicted", "predicted_value")) is not None for r in usable):
+                ax.text(0.02, 0.86 if failed else 0.98, "Unavailable - no finite model prediction supplied",
+                        transform=ax.transAxes, va="top", fontsize=8, color="#555555")
+            if not ax.lines:
+                if min(x) != max(x):
+                    ax.set_xlim(min(x), max(x))
+                ax.set_yticks([])
             ax.set_xlabel("Absolute pressure (bara)")
             ax.set_ylabel(str(prop) + " (" + str(unit) + ")")
             ax.set_title(str(experiment), loc="left", fontsize=11)
@@ -477,7 +558,9 @@ def _experiment_blocks(dataset):
             selected = keys[start:start + 4]
             n = max([len(pressures)] + [len(values[key]) for key in selected])
             rows = [[_text(pressures[i] if i < len(pressures) else None)] + [
-                _text(values[key][i] if i < len(values[key]) else None) for key in selected]
+                ("Unavailable - %s phase absent" % _viscosity_phase(key)
+                 if _phase_available(predictions, key, i) is False else
+                 _text(_report_prediction(predictions, key, values[key], i))) for key in selected]
                     for i in range(n)]
             yield {"type": "table", "title": "%s results in registered pressure order" % identifier,
                    "header": ["P absolute bara"] + selected, "rows": rows}
@@ -548,6 +631,7 @@ def _observation_blocks(dataset, raw_only=False):
 
 def report_blocks(dataset, figures):
     """Create one traceable report representation for every output format."""
+    _validate_phase_availability(dataset)
     study = _study(dataset)
     blocks = []
 
@@ -891,6 +975,7 @@ def build_report(dataset, out_dir):
     if not isinstance(dataset, dict):
         raise ValueError("PVT report dataset must be a dictionary")
     _safe_tokens(dataset)
+    _validate_phase_availability(dataset)
     directory = Path(out_dir)
     directory.mkdir(parents=True, exist_ok=True)
     canonical = json.dumps(dataset, sort_keys=True, ensure_ascii=False, allow_nan=False)

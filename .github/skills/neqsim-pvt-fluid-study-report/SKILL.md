@@ -72,6 +72,16 @@ required); inherited `run()` can only reset a helper. A constant-composition
 pressure sweep cannot stand in for staged gas removal. Preserve the original
 laboratory pressure sequence and reference-volume basis.
 
+For viscosity, retain the adapter's `predictions.phaseAvailability` Boolean
+arrays (`gas`, `oil`, `aqueous`) alongside nullable Pa s values. Each mask
+describes the actual flashed state at the corresponding pressure, including
+phase appearance and disappearance. `ViscositySim` retains legacy numerical
+zeros for absent phases, so use its phase-availability getters rather than
+inferring presence from a viscosity value. Show absent values as unavailable
+and preserve gaps in report curves. Do not replace every finite zero with
+missing data, or omit an absent-phase observation to make a comparison pass;
+existing numerical and physical acceptance gates remain mandatory.
+
 The initial calibrated route uses `PVTRegression` for CCE `relative_volume`
 with bounded constant symmetric BIP parameters only. CVD/DLE/separator/viscosity
 simulation support does not imply that this study workflow supports fitting

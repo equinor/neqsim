@@ -118,6 +118,23 @@ temperature is kelvin unless a particular source API explicitly documents a
 different argument convention. The adapter translates that boundary rather
 than changing the study basis.
 
+Viscosity predictions distinguish a phase that is absent from a computed
+property value. The canonical dataset retains
+`predictions.phaseAvailability.gas`, `.oil` and `.aqueous` as Boolean arrays
+aligned with `pressuresBara` and the corresponding `values` arrays. The masks
+come from the actual flashed state at each point. An absent phase has a JSON
+`null` viscosity; an available finite value is retained, including zero. No
+generic zero-value filter determines phase availability.
+
+The report labels absent-phase viscosity as unavailable and does not draw a
+physical zero curve. If a phase appears or disappears along the pressure grid,
+the figure retains a gap at unavailable points. An observation requiring an
+absent phase still fails explicitly; existing finite-value and positive-property
+comparison gates remain active. The underlying `ViscositySim` numerical getters
+retain their legacy zero-for-absence convention for existing callers; its
+phase-availability getters and the study adapter provide the separate presence
+information.
+
 CVD/DLE simulation support is separate from calibration support. The existing
 one-pressure fitting objective resets the fluid at each point; it cannot stand
 in for a full depletion protocol with material removal. This workflow therefore

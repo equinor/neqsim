@@ -8,11 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonArray;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
+import neqsim.pvtsimulation.simulation.ViscositySim;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentPR;
 import neqsim.thermo.phase.PhaseEosInterface;
@@ -115,6 +117,76 @@ class PVTFluidStudyTest extends neqsim.NeqSimTest {
     assertEquals(250.0, fluid.getPressure(), 0.0);
     assertEquals(323.15, fluid.getTemperature(), 0.0);
     assertEquals(300.0, pressures[0], 0.0);
+  }
+
+  /** Keep dry-fluid phase absence separate from the legacy numerical zero convention. */
+  @Test
+  void dryViscosityUsesNullForAbsentPhasesWithoutChangingLegacyValues() {
+    SystemInterface fluid = fluid(false);
+    double[] pressures = {300.0, 150.0, 50.0};
+    JsonObject result = json(PVTFluidStudy.simulate(fluid, "VISCOSITY", 323.15, pressures));
+    JsonArray aqueous = result.getAsJsonObject("values").getAsJsonArray("aqueousViscosityPaS");
+    for (int i = 0; i < pressures.length; i++) {
+      assertTrue(aqueous.get(i).isJsonNull(), "Absent aqueous viscosity must be unavailable");
+      assertFalse(result.getAsJsonObject("phaseAvailability").getAsJsonArray("aqueous").get(i).getAsBoolean());
+    }
+    ViscositySim legacy = new ViscositySim(fluid.clone());
+    legacy.setTemperaturesAndPressures(new double[] {323.15, 323.15, 323.15}, pressures);
+    legacy.runCalc();
+    for (double viscosity : legacy.getAqueousViscosity()) {
+      assertEquals(0.0, viscosity, 0.0);
+    }
+    assertEquals(250.0, fluid.getPressure(), 0.0);
+  }
+
+  /** Retain point-wise phase presence when a real aqueous phase disappears and returns. */
+  @Test
+  void viscosityAvailabilityFollowsFlashedWaterPhaseAtEveryPoint() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 1.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+    double[] pressures = {1.0, 0.001, 1.0};
+    JsonObject result = json(PVTFluidStudy.simulate(fluid, "VISCOSITY", 298.15, pressures));
+    JsonObject availability = result.getAsJsonObject("phaseAvailability");
+    JsonObject values = result.getAsJsonObject("values");
+    SystemInterface reference = fluid.clone();
+    ThermodynamicOperations operations = new ThermodynamicOperations(reference);
+    for (int i = 0; i < pressures.length; i++) {
+      reference.setPressure(pressures[i]);
+      operations.TPflash();
+      reference.initPhysicalProperties();
+      for (String phase : new String[] {"gas", "oil", "aqueous"}) {
+        boolean present = reference.hasPhaseType(phase);
+        assertEquals(present, availability.getAsJsonArray(phase).get(i).getAsBoolean());
+        if (present) {
+          double viscosity = reference.getPhase(phase).getPhysicalProperties().getViscosity();
+          assertTrue(Double.isFinite(viscosity));
+          assertTrue(viscosity > 0.0);
+          assertEquals(viscosity, values.getAsJsonArray(phase + "ViscosityPaS").get(i).getAsDouble(), 1.0e-12);
+        } else {
+          assertTrue(values.getAsJsonArray(phase + "ViscosityPaS").get(i).isJsonNull());
+        }
+      }
+    }
+    assertTrue(availability.getAsJsonArray("aqueous").get(0).getAsBoolean());
+    assertFalse(availability.getAsJsonArray("aqueous").get(1).getAsBoolean());
+    assertTrue(availability.getAsJsonArray("aqueous").get(2).getAsBoolean());
+
+    ViscositySim repeated = new ViscositySim(fluid.clone());
+    repeated.setTemperaturesAndPressures(new double[] {298.15, 298.15}, new double[] {1.0, 0.001});
+    repeated.runCalc();
+    assertFalse(repeated.getAqueousPhaseAvailable()[1]);
+    assertEquals(0.0, repeated.getAqueousViscosity()[1], 0.0);
+    repeated.setTemperaturesAndPressures(new double[] {298.15}, new double[] {1.0});
+    repeated.runCalc();
+    assertEquals(1, repeated.getGasPhaseAvailable().length);
+    assertEquals(1, repeated.getOilPhaseAvailable().length);
+    assertEquals(1, repeated.getAqueousPhaseAvailable().length);
+    assertTrue(repeated.getAqueousPhaseAvailable()[0]);
+    assertTrue(repeated.getAqueousViscosity()[0] > 0.0);
+    assertFalse(repeated.getGasPhaseAvailable()[0]);
+    assertEquals(0.0, repeated.getGasViscosity()[0], 0.0);
   }
 
   /**

@@ -323,10 +323,17 @@ public final class PVTFluidStudy {
       Arrays.fill(temperatures, temperatureK);
       simulation.setTemperaturesAndPressures(temperatures, pressures.clone());
       simulation.runCalc();
-      values.add("gasViscosityPaS", array(simulation.getGasViscosity()));
-      values.add("oilViscosityPaS", array(simulation.getOilViscosity()));
-      values.add("aqueousViscosityPaS", array(simulation.getAqueousViscosity()));
-      result.addProperty("absentPhaseConvention", "Existing ViscositySim returns zero when a phase is absent");
+      values.add("gasViscosityPaS", phaseArray(simulation.getGasViscosity(), simulation.getGasPhaseAvailable()));
+      values.add("oilViscosityPaS", phaseArray(simulation.getOilViscosity(), simulation.getOilPhaseAvailable()));
+      values.add("aqueousViscosityPaS",
+          phaseArray(simulation.getAqueousViscosity(), simulation.getAqueousPhaseAvailable()));
+      JsonObject availability = new JsonObject();
+      availability.add("gas", JSON.toJsonTree(simulation.getGasPhaseAvailable()));
+      availability.add("oil", JSON.toJsonTree(simulation.getOilPhaseAvailable()));
+      availability.add("aqueous", JSON.toJsonTree(simulation.getAqueousPhaseAvailable()));
+      result.add("phaseAvailability", availability);
+      result.addProperty("absentPhaseConvention",
+          "JSON null when the corresponding flashed phase is absent; phaseAvailability records each point");
       report.addViscosity(simulation);
     } else if ("TP".equals(experiment)) {
       result.add("states", tpStates(trial, temperatureK, pressures));
@@ -894,6 +901,27 @@ public final class PVTFluidStudy {
       for (double value : values) {
         result.add(Double.isFinite(value) ? JSON.toJsonTree(value) : JsonNull.INSTANCE);
       }
+    }
+    return result;
+  }
+
+  /**
+   * Encode phase-dependent outputs using flashed presence instead of inferring absence from zero.
+   *
+   * @param values viscosity values from the existing simulation
+   * @param available presence flags at the same flashed points
+   * @return finite available values, including zero, and null for absent phases
+   */
+  private static JsonArray phaseArray(double[] values, boolean[] available) {
+    if (values == null || available == null || values.length != available.length) {
+      throw new IllegalStateException("Viscosity values and phase availability must have matching lengths");
+    }
+    JsonArray result = new JsonArray();
+    for (int i = 0; i < values.length; i++) {
+      if (available[i] && !Double.isFinite(values[i])) {
+        throw new IllegalStateException("Available phase viscosity contains a non-finite result");
+      }
+      result.add(available[i] ? JSON.toJsonTree(values[i]) : JsonNull.INSTANCE);
     }
     return result;
   }

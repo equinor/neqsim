@@ -2,6 +2,7 @@
 
 import copy
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -174,3 +175,121 @@ def test_separator_sketch_uses_actual_stage_conditions_not_reservoir_pressure(st
     assert "P = 40 bara" in svg
     assert "T = 323.15 K" in svg
     assert "P = 40 to 1.01325 bara; 2 pressure steps" in svg
+
+
+def _viscosity_study(values, availability):
+    """A pointwise viscosity fixture whose availability is independent of value."""
+    return {"study": {"id": "VISCOSITY-QA"}, "experiments": [
+        {"id": "VISC-1", "kind": "VISCOSITY", "pressures_bara": [300, 200, 100],
+         "predictions": {"values": {"aqueousViscosityPaS": values},
+                         "phaseAvailability": {"aqueous": availability}}}]}
+
+
+def test_absent_aqueous_viscosity_is_explicitly_unavailable_in_report(tmp_path, monkeypatch):
+    dataset = _viscosity_study([None, None, None], [False, False, False])
+    before = copy.deepcopy(dataset)
+    captured = []
+    axes = []
+    save = pvt_report._save_figure
+
+    def inspect_figure(fig, directory, stem, caption, source):
+        if stem.startswith("prediction_"):
+            captured.append([line.get_ydata().tolist() for line in fig.axes[0].lines])
+            axes.append((fig.axes[0].get_xlim(), fig.axes[0].get_yticks().tolist()))
+        return save(fig, directory, stem, caption, source)
+
+    monkeypatch.setattr(pvt_report, "_save_figure", inspect_figure)
+    report = pvt_report.build_report(dataset, tmp_path)
+    assert captured == [[]]
+    assert axes == [((100, 300), [])]
+    assert dataset == before
+    svg = (tmp_path / "figures" / "prediction_000.svg").read_text(encoding="utf-8")
+    assert "Unavailable - aqueous phase absent at all registered points" in svg
+    content = Path(report["html"]).read_text(encoding="utf-8")
+    assert "Unavailable - aqueous phase absent" in content
+    assert "phaseAvailability.aqueous[0]" in content
+
+
+def test_phase_disappearance_leaves_a_plot_gap_and_preserves_available_zero(tmp_path, monkeypatch):
+    dataset = _viscosity_study([0.0, None, 0.001], [True, False, True])
+    captured = []
+    markers = []
+    save = pvt_report._save_figure
+
+    def inspect_figure(fig, directory, stem, caption, source):
+        if stem.startswith("prediction_"):
+            captured.append(fig.axes[0].lines[0].get_ydata().tolist())
+            markers.append(fig.axes[0].lines[0].get_marker())
+        return save(fig, directory, stem, caption, source)
+
+    monkeypatch.setattr(pvt_report, "_save_figure", inspect_figure)
+    pvt_report.make_figures(dataset, tmp_path)
+    assert len(captured) == 1
+    assert captured[0][0] == 0.0
+    assert math.isnan(captured[0][1])
+    assert captured[0][2] == 0.001
+    assert markers == ["o"]
+    svg = (tmp_path / "prediction_000.svg").read_text(encoding="utf-8")
+    assert "aqueous phase absent at 1 registered point(s); curve gaps retained" in svg
+    rows = pvt_report._observations(dataset)
+    assert [row["predicted"] for row in rows] == [0.0, None, 0.001]
+
+
+def test_explicit_phase_availability_overrides_old_absence_encoding_without_guessing():
+    dataset = _viscosity_study([0.0, 0.0, 0.001], [True, False, True])
+    assert [row["predicted"] for row in pvt_report._observations(dataset)] == [0.0, None, 0.001]
+    dataset["experiments"][0]["predictions"].pop("phaseAvailability")
+    assert [row["predicted"] for row in pvt_report._observations(dataset)] == [0.0, 0.0, 0.001]
+
+
+@pytest.mark.parametrize("mask", [[False], [True, 0, False], [True, None, False], False, None, "false"])
+def test_malformed_explicit_phase_mask_cannot_render_a_physical_curve(mask, tmp_path):
+    dataset = _viscosity_study([0.0, 0.0, 0.001], mask)
+    with pytest.raises(ValueError, match="phaseAvailability"):
+        pvt_report.build_report(dataset, tmp_path / "rejected")
+    assert not (tmp_path / "rejected").exists()
+
+
+def test_phase_mask_must_match_registered_pressure_grid(tmp_path):
+    dataset = _viscosity_study([None, 0.001], [False, True])
+    with pytest.raises(ValueError, match="registered pressures"):
+        pvt_report.make_figures(dataset, tmp_path / "rejected")
+
+
+@pytest.mark.parametrize("masks", [None, [], False])
+def test_explicit_phase_availability_metadata_must_be_a_dictionary(masks):
+    dataset = _viscosity_study([None, None, None], [False, False, False])
+    dataset["experiments"][0]["predictions"]["phaseAvailability"] = masks
+    with pytest.raises(ValueError, match="phaseAvailability must be a dictionary"):
+        pvt_report._observations(dataset)
+
+
+def test_explicit_phase_availability_cannot_omit_a_reported_viscosity_phase():
+    dataset = _viscosity_study([0.0, 0.001, 0.002], [True, True, True])
+    dataset["experiments"][0]["predictions"]["phaseAvailability"] = {}
+    with pytest.raises(ValueError, match="phaseAvailability.aqueous is required"):
+        pvt_report._observations(dataset)
+
+
+@pytest.mark.parametrize("values, availability", [
+    ([None, 0.001, 0.002], [False, True, True]),
+    ([0.001, 0.002, None], [True, True, False]),
+])
+def test_absent_endpoint_remains_on_pressure_axis_and_annotation_avoids_data(values, availability,
+                                                                          tmp_path, monkeypatch):
+    dataset = _viscosity_study(values, availability)
+    captured = []
+    save = pvt_report._save_figure
+
+    def inspect_figure(fig, directory, stem, caption, source):
+        if stem.startswith("prediction_"):
+            ax = fig.axes[0]
+            annotation = next(text for text in ax.texts if "phase absent" in text.get_text())
+            captured.append((ax.get_xlim(), annotation.get_position()[1]))
+        return save(fig, directory, stem, caption, source)
+
+    monkeypatch.setattr(pvt_report, "_save_figure", inspect_figure)
+    pvt_report.make_figures(dataset, tmp_path)
+    assert len(captured) == 1
+    assert captured[0][0] == (100, 300)
+    assert captured[0][1] < 0

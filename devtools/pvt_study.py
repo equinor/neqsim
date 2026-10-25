@@ -258,6 +258,18 @@ def _prediction_values(experiment, observation):
         if phase not in ("gas", "oil", "aqueous"):
             raise PVTStudyError("viscosity observation requires gas, oil or aqueous phase identity")
         key = phase + "ViscosityPaS"
+        if "phaseAvailability" in experiment["predictions"]:
+            masks = experiment["predictions"]["phaseAvailability"]
+            if not isinstance(masks, dict):
+                raise PVTStudyError("phaseAvailability must be a dictionary of Boolean arrays")
+            if phase not in masks:
+                raise PVTStudyError("phaseAvailability.%s is required for viscosity observations" % phase)
+            availability = masks[phase]
+            if (not isinstance(availability, list) or any(type(value) is not bool for value in availability)
+                    or len(availability) != len(observation["values"])):
+                raise PVTStudyError("phaseAvailability.%s must be a Boolean array matching the observations" % phase)
+            if not all(availability):
+                raise PVTStudyError("observation cannot be compared against an absent-phase viscosity prediction")
     if key not in values:
         raise PVTStudyError("observable %s unavailable for experiment %s" % (prop, experiment["id"]))
     result = values[key]

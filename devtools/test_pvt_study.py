@@ -116,6 +116,49 @@ def test_invalid_observation_array_and_phase_are_rejected(study):
                                      {"property": "viscosity_pa_s", "phase": "oil", "values": [0.1]})
 
 
+@pytest.mark.parametrize("predictions", [
+    {"values": {"aqueousViscosityPaS": [None]}, "phaseAvailability": {"aqueous": [False]}},
+    {"values": {"aqueousViscosityPaS": [0.001]}, "phaseAvailability": {"aqueous": [False]}},
+    {"values": {"aqueousViscosityPaS": [None]}},
+])
+def test_absent_phase_observations_remain_explicit_failures(predictions):
+    with pytest.raises(PVTStudyError, match="absent-phase|missing/failed"):
+        pvt_study._prediction_values({"id": "VISC-1", "predictions": predictions},
+                                     {"property": "viscosity_pa_s", "phase": "aqueous", "values": [0.001]})
+
+
+def test_available_aqueous_viscosity_can_be_compared_to_observations():
+    predictions = {"values": {"aqueousViscosityPaS": [0.001]},
+                   "phaseAvailability": {"aqueous": [True]}}
+    assert pvt_study._prediction_values({"id": "VISC-1", "predictions": predictions},
+                                       {"property": "viscosity_pa_s", "phase": "aqueous", "values": [0.001]}) == [0.001]
+
+
+@pytest.mark.parametrize("masks", [None, [], False, {}, {"oil": [True]}, {"aqueous": False}, {"aqueous": "true"},
+                                  {"aqueous": [1]}, {"aqueous": []}])
+def test_malformed_explicit_phase_availability_has_a_controlled_adapter_error(masks):
+    predictions = {"values": {"aqueousViscosityPaS": [0.001]}, "phaseAvailability": masks}
+    with pytest.raises(PVTStudyError, match="phaseAvailability"):
+        pvt_study._prediction_values({"id": "VISC-1", "predictions": predictions},
+                                     {"property": "viscosity_pa_s", "phase": "aqueous", "values": [0.001]})
+
+
+def test_simulation_preserves_phase_availability_in_canonical_dataset(monkeypatch):
+    predictions = {"values": {"aqueousViscosityPaS": [None, 0.001]},
+                   "phaseAvailability": {"aqueous": [False, True]}}
+
+    class Adapter:
+        def simulate(self, fluid, kind, temperature, pressures):
+            return json.dumps(predictions)
+
+    monkeypatch.setattr(pvt_study, "_array", lambda values: values)
+    experiments = [{"id": "VISC-1", "kind": "VISCOSITY", "temperature_k": 350.0,
+                    "pressures_bara": [200, 100]}]
+    output = pvt_study._simulate(Adapter(), object(), experiments, "FINAL")
+    assert output[0]["predictions"] == predictions
+    assert "predictions" not in experiments[0]
+
+
 def test_unimplemented_gas_density_observable_is_rejected_before_simulation(study):
     study["observations"][0].update(property="gas_density_kg_m3", unit="kg/m3")
     with pytest.raises(PVTStudyError, match="unsupported observable"):
