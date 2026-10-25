@@ -2,6 +2,7 @@ package neqsim.process.mechanicaldesign;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,6 +13,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -391,6 +395,118 @@ class EngineeringDeliverablesPackageTest {
       EngineeringDeliverablesPackage pkg = orch.getEngineeringDeliverables();
       assertNotNull(pkg);
       assertEquals(5, pkg.getSuccessCount());
+    }
+  }
+
+  // ============================================================================
+  // Process-derived fire and noise deliverables
+  // ============================================================================
+  @Nested
+  @DisplayName("Process-Derived Fire and Noise Tests")
+  class ProcessDerivedTests {
+
+    /**
+     * Build a separator plus compressor process with a known vessel geometry.
+     *
+     * @param comp holder that receives the compressor
+     * @return the run process system
+     */
+    private ProcessSystem buildProcess(Compressor[] comp) {
+      SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 45.0);
+      fluid.addComponent("methane", 0.75);
+      fluid.addComponent("ethane", 0.08);
+      fluid.addComponent("propane", 0.05);
+      fluid.addComponent("n-butane", 0.04);
+      fluid.addComponent("n-heptane", 0.06);
+      fluid.addComponent("water", 0.02);
+      fluid.setMixingRule("classic");
+      fluid.setMultiPhaseCheck(true);
+
+      Stream feed = new Stream("Inlet", fluid);
+      feed.setFlowRate(80000.0, "kg/hr");
+      feed.setTemperature(25.0, "C");
+      feed.setPressure(45.0, "bara");
+
+      Separator sep = new Separator("V-100 Inlet Separator", feed);
+      sep.setInternalDiameter(2.0);
+      sep.setSeparatorLength(6.0);
+
+      comp[0] = new Compressor("K-100", sep.getGasOutStream());
+      comp[0].setOutletPressure(90.0);
+
+      ProcessSystem ps = new ProcessSystem();
+      ps.add(feed);
+      ps.add(sep);
+      ps.add(comp[0]);
+      ps.run();
+      return ps;
+    }
+
+    @Test
+    @DisplayName("Fire scenarios should use the actual separator data")
+    void fireScenariosShouldUseSeparatorData() {
+      Compressor[] comp = new Compressor[1];
+      ProcessSystem ps = buildProcess(comp);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(ps, StudyClass.CLASS_A);
+      pkg.generate();
+
+      String json = pkg.getFireScenarioJson();
+      assertNotNull(json);
+      assertTrue(json.contains("V-100 Inlet Separator"));
+      JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+      assertTrue(root.has("fireScenario"));
+      JsonArray scenarios = root.getAsJsonArray("scenarios");
+      assertEquals(1, scenarios.size());
+      JsonObject scenario = scenarios.get(0).getAsJsonObject();
+      assertEquals("V-100 Inlet Separator", scenario.get("equipmentName").getAsString());
+      assertEquals(45.0, scenario.get("operatingPressureBara").getAsDouble(), 1e-6);
+      assertEquals(Math.PI / 4.0 * 4.0 * 6.0, scenario.get("vesselVolumeM3").getAsDouble(), 1e-6);
+      assertTrue(scenario.get("liquidInventoryKg").getAsDouble() > 0.0);
+      assertTrue(scenario.get("gasReleaseRateKgS").getAsDouble() > 0.0);
+      assertTrue(scenario.get("liquidDensityKgM3").getAsDouble() > 400.0);
+      assertEquals("V-100 Inlet Separator", root.get("worstCaseEquipment").getAsString());
+      assertEquals(scenario.get("inventoryKg").getAsDouble(), root.get("inventoryKg").getAsDouble(), 1e-9);
+      assertTrue(root.getAsJsonArray("assumptions").size() > 0);
+    }
+
+    @Test
+    @DisplayName("Noise assessment should use the actual compressor power")
+    void noiseShouldUseCompressorPower() {
+      Compressor[] comp = new Compressor[1];
+      ProcessSystem ps = buildProcess(comp);
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(ps, StudyClass.CLASS_A);
+      pkg.generate();
+
+      JsonObject root = JsonParser.parseString(pkg.getNoiseAssessmentJson()).getAsJsonObject();
+      double expectedKW = Math.abs(comp[0].getPower("kW"));
+      assertTrue(expectedKW > 0.0);
+      assertEquals(expectedKW, root.get("compressorPowerKW").getAsDouble(), 1e-6);
+      assertNotEquals(1000.0, root.get("compressorPowerKW").getAsDouble(), 1e-3);
+      assertEquals("K-100", root.get("governingMachine").getAsString());
+      JsonArray machines = root.getAsJsonArray("machines");
+      assertEquals(1, machines.size());
+      assertEquals(expectedKW, machines.get(0).getAsJsonObject().get("powerKW").getAsDouble(), 1e-6);
+    }
+
+    @Test
+    @DisplayName("Placeholders should be flagged when the process has no vessels or machines")
+    void placeholdersShouldBeFlagged() {
+      SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 30.0);
+      fluid.addComponent("methane", 1.0);
+      fluid.setMixingRule("classic");
+      Stream feed = new Stream("Only Stream", fluid);
+      feed.setFlowRate(1000.0, "kg/hr");
+      ProcessSystem ps = new ProcessSystem();
+      ps.add(feed);
+      ps.run();
+
+      EngineeringDeliverablesPackage pkg = new EngineeringDeliverablesPackage(ps, StudyClass.CLASS_A);
+      pkg.generate();
+      JsonObject fire = JsonParser.parseString(pkg.getFireScenarioJson()).getAsJsonObject();
+      assertEquals("representative placeholder - no vessels found",
+          fire.getAsJsonArray("scenarios").get(0).getAsJsonObject().get("basis").getAsString());
+      JsonObject noise = JsonParser.parseString(pkg.getNoiseAssessmentJson()).getAsJsonObject();
+      assertTrue(noise.get("basis").getAsString().startsWith("representative placeholder"));
     }
   }
 }

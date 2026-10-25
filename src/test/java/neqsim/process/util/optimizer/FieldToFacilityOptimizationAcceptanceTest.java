@@ -191,6 +191,45 @@ public class FieldToFacilityOptimizationAcceptanceTest {
    * @return exact lifecycle evidence JSON emitted by the Java production exporter
    */
   public static String createTenWellLifecycleEvidenceJson(String currentCycleId) {
+    return createTenWellLifecycleEvidenceJson(currentCycleId, 1.02);
+  }
+
+  /**
+   * Execute the source-backed ten-well lifecycle case with a task-selected shared-power limit.
+   *
+   * <p>
+   * The multiplier is applied to the current fixture's validated baseline shaft power. Requiring a finite value above
+   * one keeps the baseline feasible while allowing a living task to re-evaluate the same objective after a reviewed
+   * operating-limit revision. All optimizer, constraint, replay and restoration gates remain unchanged.
+   *
+   * @param currentCycleId living-task cycle identifier for the current lifecycle period
+   * @param sharedPowerLimitMultiplier current shared-power limit divided by validated baseline shaft power
+   * @return exact lifecycle evidence JSON emitted by the Java production exporter
+   * @throws IllegalArgumentException if the multiplier is not finite and greater than one
+   */
+  public static String createTenWellLifecycleEvidenceJson(String currentCycleId, double sharedPowerLimitMultiplier) {
+    return createTenWellLifecycleEvidenceJson(currentCycleId, sharedPowerLimitMultiplier, null);
+  }
+
+  /**
+   * Execute the source-backed lifecycle case from an optional reviewed incumbent action vector.
+   *
+   * <p>
+   * A non-null incumbent is copied into the optimizer seed. The new independent fixture must reproduce its raw
+   * objective exactly before the living-task adapter can bind it to the promoted KPI baseline. Candidate feasibility,
+   * constraints, replay and restoration are still evaluated afresh against the revised shared-power limit.
+   *
+   * @param currentCycleId living-task cycle identifier for the current lifecycle period
+   * @param sharedPowerLimitMultiplier current shared-power limit divided by validated baseline shaft power
+   * @param reviewedIncumbentValues optional ordered accepted action values from the promoted lifecycle receipt
+   * @return exact lifecycle evidence JSON emitted by the Java production exporter
+   * @throws IllegalArgumentException if the multiplier is invalid or the incumbent action count does not match
+   */
+  public static String createTenWellLifecycleEvidenceJson(String currentCycleId, double sharedPowerLimitMultiplier,
+      double[] reviewedIncumbentValues) {
+    if (!Double.isFinite(sharedPowerLimitMultiplier) || sharedPowerLimitMultiplier <= 1.0) {
+      throw new IllegalArgumentException("Shared-power limit multiplier must be finite and greater than one");
+    }
     FieldToFacilityOptimizationAcceptanceTest acceptance = new FieldToFacilityOptimizationAcceptanceTest();
     Fixture earlyFixture = acceptance.createFixture(10);
     acceptance.configureLifecycleCapacityLimits(earlyFixture, 1.03);
@@ -200,7 +239,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     Fixture currentFixture = acceptance.createFixture(10);
     acceptance.configureLifecycleCapacityLimits(currentFixture, 10.0);
     LifecyclePeriod current = acceptance.evaluateLifecyclePeriod(currentCycleId, currentFixture,
-        currentFixture.model.getPower("kW") * 1.02);
+        currentFixture.model.getPower("kW") * sharedPowerLimitMultiplier, reviewedIncumbentValues);
 
     return new ProcessModelOperatingEnvelopeLifecycleStudy("ten-well-lifecycle", "Ten-well field lifecycle envelope",
         "synthetic independent reservoir/facility operating definitions", "year")
@@ -434,6 +473,12 @@ public class FieldToFacilityOptimizationAcceptanceTest {
    */
   @Test
   void evaluatesIndependentLifecyclePeriodsWithMovingHostBottlenecks() {
+    assertThrows(IllegalArgumentException.class,
+        () -> createTenWellLifecycleEvidenceJson("invalid-power-limit", Double.NaN));
+    assertThrows(IllegalArgumentException.class, () -> createTenWellLifecycleEvidenceJson("invalid-power-limit", 1.0));
+    assertThrows(IllegalArgumentException.class,
+        () -> createTenWellLifecycleEvidenceJson("invalid-incumbent", 1.02, new double[] {70.0}));
+
     Fixture earlyFixture = createFixture(10);
     configureLifecycleCapacityLimits(earlyFixture, 1.03);
     LifecyclePeriod early = evaluateLifecyclePeriod("early-life", earlyFixture,
@@ -652,6 +697,20 @@ public class FieldToFacilityOptimizationAcceptanceTest {
 
   /** Evaluate one independent ten-well accepted point and its choke, route and host-power slices. */
   private LifecyclePeriod evaluateLifecyclePeriod(String periodId, Fixture fixture, double sharedPowerLimitKw) {
+    return evaluateLifecyclePeriod(periodId, fixture, sharedPowerLimitKw, null);
+  }
+
+  /**
+   * Evaluate one independent ten-well period from the default action state or a reviewed incumbent.
+   *
+   * @param periodId stable lifecycle period identifier
+   * @param fixture independent field-to-facility fixture
+   * @param sharedPowerLimitKw shared host-power operating limit in kW
+   * @param reviewedIncumbentValues optional ordered incumbent action values
+   * @return complete accepted search and operating-envelope slices
+   */
+  private LifecyclePeriod evaluateLifecyclePeriod(String periodId, Fixture fixture, double sharedPowerLimitKw,
+      double[] reviewedIncumbentValues) {
     ProcessModelSimulationEvaluator simulation = createSimulationEvaluator(fixture, sharedPowerLimitKw);
     List<ProcessModelOperatingAction> actions = createFieldActions(fixture);
     ProcessModelOperatingActionSetEvaluator candidates = new ProcessModelOperatingActionSetEvaluator(
@@ -669,6 +728,12 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     for (int index = 0; index < fixture.wellSuffixes.size(); index++) {
       seed[index] = 70.0;
       seed[index + fixture.wellSuffixes.size()] = index % 2;
+    }
+    if (reviewedIncumbentValues != null) {
+      if (reviewedIncumbentValues.length != seed.length) {
+        throw new IllegalArgumentException("Reviewed incumbent action count does not match the current action set");
+      }
+      seed = Arrays.copyOf(reviewedIncumbentValues, reviewedIncumbentValues.length);
     }
     OperatingPointSearchResult search = new ProcessModelOperatingPointOptimizer(periodId + "-search",
         periodId + " field search", "synthetic independent lifecycle field search", candidates)

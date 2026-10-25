@@ -434,7 +434,10 @@ String csv  = profile.toCSV();    // CSV for spreadsheet/plotting
 
 A simple homogeneous gas-phase decomposition A → B + C:
 
+<!-- pfr-worked-example-1:start -->
 ```java
+Logger logger = LogManager.getLogger("PfrIsothermalExample");
+
 // Feed: 90% methane (A) + 10% ethane (B) at 300°C, 20 bara
 SystemInterface gas = new SystemSrkEos(273.15 + 300.0, 20.0);
 gas.addComponent("methane", 0.90);
@@ -464,15 +467,22 @@ pfr.setNumberOfSteps(100);
 pfr.setKeyComponent("methane");
 pfr.run();
 
-System.out.println("Conversion: " + pfr.getConversion());
-System.out.println("Pressure drop: " + pfr.getPressureDrop() + " bar");
+double conversion = pfr.getConversion();
+double pressureDropBar = pfr.getPressureDrop();
+assert Double.isFinite(conversion) && conversion >= 0.0 && conversion <= 1.0;
+assert Double.isFinite(pressureDropBar) && pressureDropBar >= 0.0;
+logger.info("Conversion: {}; pressure drop: {} bar", conversion, pressureDropBar);
 ```
+<!-- pfr-worked-example-1:end -->
 
 ### Example 2: Adiabatic Catalytic Reactor with Packed Bed
 
 An exothermic catalytic reaction with Ergun pressure drop:
 
+<!-- pfr-worked-example-2:start -->
 ```java
+Logger logger = LogManager.getLogger("PfrPackedBedExample");
+
 // Feed gas
 SystemInterface gas = new SystemSrkEos(273.15 + 250.0, 30.0);
 gas.addComponent("methane", 0.70);
@@ -508,21 +518,34 @@ pfr.setEnergyMode(PlugFlowReactor.EnergyMode.ADIABATIC);
 pfr.setNumberOfSteps(100);
 pfr.run();
 
-System.out.println("Conversion: " + pfr.getConversion());
-System.out.println("Outlet T: " + (pfr.getOutletTemperature() - 273.15) + " °C");
-System.out.println("Pressure drop: " + pfr.getPressureDrop() + " bar");
+double conversion = pfr.getConversion();
+double outletTemperatureC = pfr.getOutletTemperature() - 273.15;
+double pressureDropBar = pfr.getPressureDrop();
+assert Double.isFinite(conversion) && conversion >= 0.0 && conversion <= 1.0;
+assert Double.isFinite(outletTemperatureC);
+assert Double.isFinite(pressureDropBar) && pressureDropBar >= 0.0;
+logger.info(
+    "Conversion: {}; outlet temperature: {} C; pressure drop: {} bar",
+    conversion,
+    outletTemperatureC,
+    pressureDropBar);
 
 // Access axial profiles
 ReactorAxialProfile profile = pfr.getAxialProfile();
 double[] temps = profile.getTemperatureProfile();
 double[] convs = profile.getConversionProfile();
+assert temps.length == convs.length && temps.length == pfr.getNumberOfSteps() + 1;
 ```
+<!-- pfr-worked-example-2:end -->
 
 ### Example 3: Cooled Multi-Tube Reactor
 
 A shell-and-tube reactor with external coolant:
 
+<!-- pfr-worked-example-3:start -->
 ```java
+Logger logger = LogManager.getLogger("PfrCooledMultiTubeExample");
+
 // High temperature feed
 SystemInterface gas = new SystemSrkEos(273.15 + 400.0, 20.0);
 gas.addComponent("methane", 0.90);
@@ -554,10 +577,19 @@ pfr.setOverallHeatTransferCoefficient(250.0);  // W/(m2*K)
 pfr.setNumberOfSteps(200);
 pfr.run();
 
-System.out.println("Conversion: " + pfr.getConversion());
-System.out.println("Outlet T: " + (pfr.getOutletTemperature() - 273.15) + " °C");
-System.out.println("Heat duty: " + pfr.getHeatDuty("kW") + " kW");
+double conversion = pfr.getConversion();
+double outletTemperatureC = pfr.getOutletTemperature() - 273.15;
+double heatDutyKw = pfr.getHeatDuty("kW");
+assert Double.isFinite(conversion) && conversion >= 0.0 && conversion <= 1.0;
+assert Double.isFinite(outletTemperatureC);
+assert Double.isFinite(heatDutyKw);
+logger.info(
+    "Conversion: {}; outlet temperature: {} C; heat duty: {} kW",
+    conversion,
+    outletTemperatureC,
+    heatDutyKw);
 ```
+<!-- pfr-worked-example-3:end -->
 
 ### Example 4: Reversible Reaction with Equilibrium Limitation
 
