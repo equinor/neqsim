@@ -2553,3 +2553,11 @@ L14. **Tornado data should be sorted by swing.** When writing tornado results to
 - **Model-versus-plant check before a capacity claim:** reproduce today's flowing wellhead pressure (PDM) with the line model for the line that is known to carry the flow; only then use the model for headroom (HEP: 10-in P-D 43 bara against PDM median 46 bara).
 - **Verify figure claims against the PNG** before writing the figure discussion; late corrections go through a markdown-cell patch script so executed outputs are kept.
 - **Long notebook or script jobs on a shared terminal:** start them detached (`Start-Process powershell -File runone.ps1 nbNN tag -WindowStyle Hidden`) with a unique log name per attempt, UTF-8 output (`| Out-File -Encoding utf8`) and a `.done` marker; read logs with `read_file`, never trust terminal output of other sessions.
+
+## Re-scoped study lessons (2026-10, multi-revision gate study)
+
+- **Mark superseded revisions.** When the user re-scopes a solved task (screening, then a study class, then a gate package), record each revision in `task_spec.md`, the README and `WORK_RECORD.md`, mark older revisions as superseded, and rename `study.title` so the report title matches the current scope.
+- **Headline key_results for the current scope only.** Move earlier-revision numbers to tables or appendices; a reader of the current report should not see two competing headline answers.
+- **Idempotent finalizer scripts.** Scripts that append tables, figures or improvements to `results.json` must replace by key or deduplicate, so a rerun does not double the entries.
+- **Declare several outputs as a list.** `produces` in `analysis.scripts` accepts a YAML block list or a comma-separated string; each item (glob allowed) is checked separately by the report and the work record.
+- **Verdict versus package.** "Deliver according to gate X" means one register row per required product with status, evidence path and owner role, not only a readiness verdict (see `neqsim-field-development`, Gate Packages).

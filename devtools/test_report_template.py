@@ -648,6 +648,27 @@ def test_glob_declared_outputs_are_matched_not_taken_literally(tmp_path):
     assert "declares an output that is missing: results/none_*.json" in out
 
 
+def test_comma_separated_and_list_outputs_are_checked_individually(tmp_path):
+    """produces may list several outputs as a comma-separated string or a YAML list."""
+    task = _make_task(tmp_path)
+    (task / "step2_analysis").mkdir()
+    (task / "step2_analysis" / "finalize.py").write_text("# stub\n", encoding="utf-8")
+    (task / "results").mkdir()
+    (task / "results" / "a.json").write_text("{}", encoding="utf-8")
+    (task / "results" / "b.csv").write_text("x\n", encoding="utf-8")
+    (task / "study_config.yaml").write_text(
+        "analysis:\n  engine: script\n  scripts:\n"
+        "    - file: step2_analysis/finalize.py\n      produces: results/a.json, results/b.csv\n"
+        "    - file: step2_analysis/finalize.py\n      produces:\n"
+        "        - results/a.json\n        - results/gone.json\n",
+        encoding="utf-8")
+    out = _run(task).stdout
+    assert "declares an output that is missing: results/a.json" not in out
+    assert "declares an output that is missing: results/b.csv" not in out
+    assert "results/a.json, results/b.csv" not in out
+    assert "declares an output that is missing: results/gone.json" in out
+
+
 def test_right_hand_header_logo_stays_on_page_when_template_is_rotated(tmp_path):
     from docx.oxml import parse_xml
     from docx.oxml.ns import nsdecls, qn

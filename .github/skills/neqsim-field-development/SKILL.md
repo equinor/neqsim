@@ -24,6 +24,27 @@ economics, and risk assessment.
 | Operations | — | DETAILED | ±10% | History matching, debottlenecking, optimization |
 | Late Life | — | DETAILED | ±20% | IOR/EOR, recompletion, decommissioning cost |
 
+### Gate Packages: Verdict Versus Full Deliverable Set
+
+- **A gate verdict is not a gate package.** A readiness verdict (ready/review/not_ready) answers
+  "can we go to the gate". A full package answers "here is every product the gate requires, with
+  an owner and a status". When the user asks to "deliver according to DG1" (or any gate), build a
+  product register: one row per required product, a status from a fixed taxonomy (Evidenced /
+  Partly evidenced / Draft for review / Owner action / Not applicable - confirm), the evidence
+  path and the owning role. Never label the result as gate approval; the readiness label stays
+  at most "ready for owner review".
+- **Build a concept long list before capacity sizing.** Development concepts (FPSO, tie-back,
+  subsea-to-shore, phased, joint development) are different from capacity variants of one concept
+  (e.g. 100/150/180 kbbl/d). Screen the long list first, record why concepts are dropped, then size
+  the kept concepts. Capacity variants alone do not satisfy a concept-screening product.
+- **StudyClass is not an AACE class or gate status.** A screening study class (A/B/C) says how
+  deep the work went; the cost estimate carries its own AACE class (5 to 1); the gate carries its
+  own readiness. Report all three separately.
+- **Placeholder sources stay placeholders.** Fiscal, tariff or price inputs marked as examples
+  must be labelled as such in the package and listed as owner actions.
+- Company gate product lists and governance live in enterprise skills (for Equinor:
+  `enterprise-field-development-decision-gate`, `gate_package.py`); keep them out of this repo.
+
 ### Workflow Orchestration
 
 ```java

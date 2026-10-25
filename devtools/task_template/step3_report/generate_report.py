@@ -1538,6 +1538,8 @@ def _parse_mapping_list(lines, key):
     current = None
     capturing = False
     key_indent = 0
+    item_indent = None
+    open_list_key = None
     for line in lines:
         cleaned = _strip_yaml_comment(line)
         stripped = cleaned.strip()
@@ -1551,17 +1553,28 @@ def _parse_mapping_list(lines, key):
                 break
             if not stripped:
                 continue
+            if stripped.startswith("- ") and item_indent is not None and indent > item_indent:
+                # Block list nested under a mapping key, e.g. "produces:" followed by "- a".
+                if current is not None and open_list_key:
+                    if not isinstance(current.get(open_list_key), list):
+                        current[open_list_key] = []
+                    current[open_list_key].append(_parse_yaml_value(stripped[2:]))
+                continue
             if stripped.startswith("- "):
                 if current:
                     values.append(current)
                 current = {}
+                item_indent = indent
+                open_list_key = None
                 item = stripped[2:].strip()
                 if ":" in item:
                     item_key, item_value = item.split(":", 1)
                     current[item_key.strip()] = _parse_yaml_value(item_value)
+                    open_list_key = item_key.strip() if not item_value.strip() else None
             elif current is not None and ":" in stripped:
                 item_key, item_value = stripped.split(":", 1)
                 current[item_key.strip()] = _parse_yaml_value(item_value)
+                open_list_key = item_key.strip() if not item_value.strip() else None
     if current:
         values.append(current)
     return values
@@ -3458,6 +3471,14 @@ def _resolve_task_path(path):
     return os.path.join(TASK_DIR, str(path))
 
 
+def _split_produces(produces):
+    """Return declared outputs as a list; accepts a YAML list or a comma-separated string."""
+    if not produces:
+        return []
+    items = produces if isinstance(produces, (list, tuple)) else str(produces).split(",")
+    return [str(item).strip() for item in items if str(item).strip()]
+
+
 def _validate_analysis_scripts(analysis):
     """Return warnings for declared analysis scripts and their artifacts."""
     warnings = []
@@ -3478,10 +3499,10 @@ def _validate_analysis_scripts(analysis):
             warnings.append("Planned analysis script is missing: step2_analysis/{}".format(
                 script_file))
             continue
-        produces = entry.get("produces")
-        if produces and not glob.glob(_resolve_task_path(produces)):
-            warnings.append("Analysis script {} declares an output that is missing: {}".format(
-                script_file, produces))
+        for produced in _split_produces(entry.get("produces")):
+            if not glob.glob(_resolve_task_path(produced)):
+                warnings.append("Analysis script {} declares an output that is missing: {}".format(
+                    script_file, produced))
     return warnings
 
 
