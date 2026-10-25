@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.mixingrule.EosMixingRuleType;
+import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -61,14 +62,22 @@ class TVFlashTest {
     for (int i = 0; i < 50; i++) {
       testSystem.addFluid(testSystem2);
       ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-      try {
-        testOps.TVflash(total_rig_volume, "m3");
-      } catch (Exception ex) {
-        logger.info("error iterations " + i);
-        logger.error(ex.getMessage(), ex);
-      }
+      testOps.TVflash(total_rig_volume, "m3");
     }
-    assertEquals(235272.27225256967, testSystem.getEnthalpy(), 1.0);
+    testSystem.init(2);
+    assertEquals(total_rig_volume, testSystem.getVolume("m3"), 1.0e-10);
+    assertEquals(2, testSystem.getNumberOfPhases());
+    double idealEnthalpy = 0.0;
+    for (int component = 0; component < testSystem.getNumberOfComponents(); component++) {
+      idealEnthalpy += testSystem.getComponent(component).getNumberOfmoles()
+          * testSystem.getComponent(component).getHID(testSystem.getTemperature());
+    }
+    // Independent quadratic-covolume PR Helmholtz reference, not a golden copied from the TV solver.
+    // See tv-helmholtz/reproduce.py and CubicTvHelmholtzQualificationTest: the split lowers A by 25.868 kJ.
+    assertEquals(-534369.1023002401, testSystem.getEnthalpy() - idealEnthalpy, 1.0);
+    for (int phase = 0; phase < testSystem.getNumberOfPhases(); phase++) {
+      assertEquals(testSystem.getPressure(), ((PhaseEos) testSystem.getPhase(phase)).calcPressure(), 1.0e-8);
+    }
   }
 
   @Test

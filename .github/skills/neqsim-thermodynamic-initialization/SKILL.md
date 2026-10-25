@@ -27,6 +27,13 @@ When a caller consumes temperature derivatives after `TPflash`, initialize them 
 the resulting phase state with `init(2)`. Initializing before the flash is insufficient
 when it replaces phases; the legacy cricondenbar iteration is a regression example.
 
+For strict release-inventory VU accounting, repeated general VU calls can stagnate on
+single-phase dense liquids even when caloric caches are current. Keep the strict balance
+gates. A fixed-composition coupled V/U Jacobian needs the volume/energy cross derivatives
+and an unchanged equilibrated phase; `ReleaseInventoryVuRefinementTest` qualifies the
+bounded inventory-local correction. Do not apply that correction globally to separator
+trajectories: phase-changing transient acceptance requires separate qualification.
+
 For correlations that consume only mass density, initialize each requested phase with
 `initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY)` after the flash. Refresh
 finite caches as well as zero caches, preserve the configured density model, and reject

@@ -561,6 +561,16 @@ ops.TVflash(vesselVolume, "m3");
 System.out.println("New pressure: " + fluid.getPressure("bara") + " bara");
 ```
 
+A volume residual alone does not qualify the phase split. The quadratic-covolume UMR-PRU
+50-addition regression at 293.15 K and 0.998 m³ now selects gas plus oil. Independent
+fixed-$T,V,n$ Helmholtz evaluation lowers energy by 25.868 kJ relative to the former
+single-gas state and gives residual enthalpy $H^{res}=-534369.1023$ J. The regression
+checks that reference after subtracting the current ideal-gas enthalpy, so changes in
+ideal heat-capacity data do not alter the EOS reference. Pressure closure in every
+phase, component conservation, equal fugacity and nearby-temperature caloric differences
+are qualified in `CubicTvHelmholtzQualificationTest`. This is an equation-based check
+of this fixture, not experimental validation or a global stability proof.
+
 ---
 
 ### TS Flash (Temperature-Entropy)
