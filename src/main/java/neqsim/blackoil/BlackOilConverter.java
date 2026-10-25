@@ -259,7 +259,7 @@ public class BlackOilConverter {
         ThermodynamicOperations oilResOps = new ThermodynamicOperations(oilComp);
         oilResOps.TPflash();
         oilComp.initProperties();
-        PhaseInterface oilRes = findOilPhase(oilComp);
+        PhaseInterface oilRes = singleOr(findOilPhase(oilComp), oilComp);
         double V_res_liq = (oilRes != null) ? phaseVolume(oilRes) : totalVolume(oilComp);
         double mu_o = (oilRes != null) ? oilRes.getViscosity() : Double.NaN;
 
@@ -294,7 +294,7 @@ public class BlackOilConverter {
         ThermodynamicOperations gasResOps = new ThermodynamicOperations(gasComp);
         gasResOps.TPflash();
         gasComp.initProperties();
-        PhaseInterface gasRes = findGasPhase(gasComp);
+        PhaseInterface gasRes = singleOr(findGasPhase(gasComp), gasComp);
         double V_res_gas = (gasRes != null) ? phaseVolume(gasRes) : totalVolume(gasComp);
         double mu_g = (gasRes != null) ? gasRes.getViscosity() : Double.NaN;
 
@@ -373,7 +373,80 @@ public class BlackOilConverter {
     return recs.get(recs.size() - 1).Rs;
   }
 
+  /**
+   * Returns the hydrocarbon phases ordered by density when two or more coexist.
+   *
+   * <p>
+   * Near the critical point (for example CO2-rich live oils just below the bubble point) both coexisting hydrocarbon
+   * phases can be typed as "oil". The type name then no longer separates them, so density does: the lighter phase is
+   * the gas and the denser phase the oil.
+   *
+   * @param s the flashed system
+   * @return a two-element array {lightest, densest}, or null when fewer than two hydrocarbon phases exist
+   */
+  private static PhaseInterface[] lightAndDenseHydrocarbonPhases(SystemInterface s) {
+    PhaseInterface light = null;
+    PhaseInterface dense = null;
+    int count = 0;
+    for (int i = 0; i < s.getNumberOfPhases(); i++) {
+      PhaseInterface p = s.getPhase(i);
+      if (isMostlyWater(p) || hydrocarbonFraction(p) <= 1e-6) {
+        continue;
+      }
+      count++;
+      double rho = rawDensity(p);
+      if (light == null || rho < rawDensity(light)) {
+        light = p;
+      }
+      if (dense == null || rho > rawDensity(dense)) {
+        dense = p;
+      }
+    }
+    if (count < 2 || light == dense) {
+      return null;
+    }
+    return new PhaseInterface[] {light, dense};
+  }
+
+  /**
+   * Phase density used only to order coexisting phases. The unit-less accessor is used because it is valid directly
+   * after a flash, before {@code initProperties()}.
+   *
+   * @param p the phase
+   * @return density, or 0 if it cannot be evaluated
+   */
+  private static double rawDensity(PhaseInterface p) {
+    try {
+      double rho = p.getDensity();
+      return Double.isFinite(rho) ? rho : 0.0;
+    } catch (Throwable t) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Returns the given phase, or the system's only phase when the lookup found none.
+   *
+   * <p>
+   * A phase taken out of a near-critical two-phase split and re-flashed alone is single-phase, but its type name can be
+   * either "gas" or "oil". The single phase is then the one wanted, whatever it is called.
+   *
+   * @param found the phase found by type, or null
+   * @param s the re-flashed standalone system
+   * @return the phase to use, or null when the system has more than one phase and none matched
+   */
+  private static PhaseInterface singleOr(PhaseInterface found, SystemInterface s) {
+    if (found != null) {
+      return found;
+    }
+    return s.getNumberOfPhases() == 1 ? s.getPhase(0) : null;
+  }
+
   private static PhaseInterface findOilPhase(SystemInterface s) {
+    PhaseInterface[] pair = lightAndDenseHydrocarbonPhases(s);
+    if (pair != null) {
+      return pair[1];
+    }
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
@@ -385,6 +458,10 @@ public class BlackOilConverter {
   }
 
   private static PhaseInterface findGasPhase(SystemInterface s) {
+    PhaseInterface[] pair = lightAndDenseHydrocarbonPhases(s);
+    if (pair != null) {
+      return pair[0];
+    }
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
