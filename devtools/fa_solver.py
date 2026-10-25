@@ -37,13 +37,18 @@ def neqsim_handle():
 
 
 def neqsim_version():
-    """Best-effort NeqSim jar version string (``unknown`` when it cannot be determined)."""
+    """Best-effort NeqSim jar name/version (``unknown`` when it cannot be determined)."""
     try:
-        ns = neqsim_handle()
-        loc = str(ns.thermo.system.SystemSrkEos(300.0, 1.0).getClass().getProtectionDomain().getCodeSource().getLocation())
-        return os.path.basename(loc) if loc and loc != "None" else "unknown"
+        import jpype
+
+        neqsim_handle()
+        for part in str(jpype.getClassPath()).split(os.pathsep):
+            base = os.path.basename(part)
+            if base.lower().startswith("neqsim") and base.lower().endswith(".jar"):
+                return base
     except Exception:  # noqa: BLE001
-        return "unknown"
+        pass
+    return "unknown"
 
 
 class SolverError(FlowAssuranceError):
