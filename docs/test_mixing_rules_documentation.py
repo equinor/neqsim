@@ -255,7 +255,10 @@ class MixingRulesDocumentationContractTest(unittest.TestCase):
 
         for documentation_contract in (
             r"$$a_{mix} = b_{mix} \left( \sum_i x_i \frac{a_i}{b_i} "
-            r"- \frac{G^E}{\Lambda} \right)$$",
+            r"- \frac{g_\infty^E}{\Lambda} \right)$$",
+            r"Here $g_\infty^E$ is **molar** excess Gibbs energy",
+            r"$\Lambda=\ln 2$ for SRK",
+            r"\approx0.62322524$ for PR.",
             r"$$\tau_{ij}(T) = \frac{D_{ij}}{T} + D_{ij,T}.$$",
             "`Dij` has units of kelvin",
             "`DijT` is dimensionless",
