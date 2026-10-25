@@ -76,17 +76,20 @@ class CO2WaterBaselineReferenceAssessmentTest {
         + "co2_scheme,co2_sites,water_scheme,water_sites,cross_beta,cross_energy_J_per_mol,"
         + "co2_unbonded_fraction,temporary_tables");
     List<Boolean> dispositions = new ArrayList<Boolean>();
-    for (Reference reference : loadReferences()) {
-      for (int construction = 0; construction < 3; construction++) {
-        dispositions.add(calculate(reference, construction, rows));
+    try {
+      for (Reference reference : loadReferences()) {
+        for (int construction = 0; construction < 3; construction++) {
+          dispositions.add(calculate(reference, construction, rows));
+        }
+      }
+    } finally {
+      Files.createDirectories(Paths.get("target"));
+      Files.write(Paths.get("target/co2-water-baseline-carroll1991-assessment.csv"), rows, StandardCharsets.UTF_8);
+      for (String row : rows) {
+        logger.info("CO2_WATER_BASELINE_DIAGNOSTIC,{}", row);
       }
     }
     assertEquals(58, rows.size());
-    Files.createDirectories(Paths.get("target"));
-    Files.write(Paths.get("target/co2-water-baseline-carroll1991-assessment.csv"), rows, StandardCharsets.UTF_8);
-    for (String row : rows) {
-      logger.info("CO2_WATER_BASELINE_DIAGNOSTIC,{}", row);
-    }
     assertTrue(dispositions.stream().allMatch(Boolean::booleanValue),
         "Numerical gate failure: every completed row is retained; physical accuracy is not assessed");
   }
@@ -100,32 +103,8 @@ class CO2WaterBaselineReferenceAssessmentTest {
    * @return whether the numerical gates pass, independently of the reference residual
    */
   private static boolean calculate(Reference reference, int construction, List<String> rows) {
-    SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperature, reference.partialPressure);
-    if (construction == 2) {
-      fluid.addComponent("water", 1.0 / WATER_MOLAR_MASS);
-      fluid.addComponent("CO2", 10.0);
-    } else {
-      fluid.addComponent("CO2", 10.0);
-      fluid.addComponent("water", 1.0 / WATER_MOLAR_MASS);
-    }
-    fluid.addComponent("K+", 0.0);
-    fluid.addComponent("Cl-", 0.0);
-    if (construction == 1) {
-      fluid.createDatabase(true);
-    }
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
+    SystemInterface fluid = matchPartialPressure(reference, construction);
     ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
-    for (int iteration = 0; iteration < 20; iteration++) {
-      operations.TPflash();
-      fluid.init(3);
-      double actual = fluid.getPhase("gas").getComponent("CO2").getx() * fluid.getPressure();
-      if (Math.abs(actual - reference.partialPressure) < 1.0e-10) {
-        break;
-      }
-      fluid.setPressure(fluid.getPressure() * reference.partialPressure / actual);
-    }
-    operations.TPflash();
     fluid.init(3);
     PhaseInterface gas = fluid.getPhase("gas");
     PhaseInterface aqueous = fluid.getPhase("aqueous");
@@ -206,6 +185,92 @@ class CO2WaterBaselineReferenceAssessmentTest {
         + "," + ((ComponentCPAInterface) aqueous.getComponent(co2)).getXsite()[0] + ","
         + neqsim.util.database.NeqSimDataBase.createTemporaryTables());
     return passed;
+  }
+
+  /**
+   * Matches the source CO2 partial pressure with independent, bracketed flash trials.
+   *
+   * @param reference evaluated state
+   * @param construction fluid construction variant
+   * @return converged two-phase fluid
+   */
+  private static SystemInterface matchPartialPressure(Reference reference, int construction) {
+    SystemInterface lower = flashAtTotalPressure(reference, construction, reference.partialPressure);
+    SystemInterface upper = flashAtTotalPressure(reference, construction, reference.partialPressure + 1.0);
+    for (int expansion = 0; expansion < 10 && co2PartialPressure(upper) < reference.partialPressure; expansion++) {
+      upper = flashAtTotalPressure(reference, construction, 2.0 * upper.getPressure());
+    }
+    assertTrue(
+        co2PartialPressure(lower) <= reference.partialPressure
+            && co2PartialPressure(upper) >= reference.partialPressure,
+        reference.id + " pressure root is not bracketed");
+    SystemInterface selected = lower;
+    for (int iteration = 0; iteration < 40; iteration++) {
+      if (Math.abs(co2PartialPressure(selected) - reference.partialPressure) < 1.0e-10) {
+        break;
+      }
+      double lowerResidual = co2PartialPressure(lower) - reference.partialPressure;
+      double upperResidual = co2PartialPressure(upper) - reference.partialPressure;
+      double candidate = lower.getPressure()
+          - lowerResidual * (upper.getPressure() - lower.getPressure()) / (upperResidual - lowerResidual);
+      if (!Double.isFinite(candidate) || candidate <= lower.getPressure() || candidate >= upper.getPressure()
+          || iteration % 4 == 3) {
+        candidate = 0.5 * (lower.getPressure() + upper.getPressure());
+      }
+      selected = flashAtTotalPressure(reference, construction, candidate);
+      if (co2PartialPressure(selected) < reference.partialPressure) {
+        lower = selected;
+      } else {
+        upper = selected;
+      }
+    }
+    assertEquals(reference.partialPressure, co2PartialPressure(selected), 1.0e-10,
+        reference.id + " pressure root exhausted its iteration limit");
+    return selected;
+  }
+
+  /**
+   * Flashes a fresh construction so trial pressure changes cannot reuse a collapsed phase state.
+   *
+   * @param reference evaluated state
+   * @param construction zero for baseline, one for database reset, two for reversed insertion
+   * @param totalPressure total pressure in bara
+   * @return independently flashed gas and aqueous system
+   */
+  private static SystemInterface flashAtTotalPressure(Reference reference, int construction, double totalPressure) {
+    SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperature, totalPressure);
+    if (construction == 2) {
+      fluid.addComponent("water", 1.0 / WATER_MOLAR_MASS);
+      fluid.addComponent("CO2", 10.0);
+    } else {
+      fluid.addComponent("CO2", 10.0);
+      fluid.addComponent("water", 1.0 / WATER_MOLAR_MASS);
+    }
+    fluid.addComponent("K+", 0.0);
+    fluid.addComponent("Cl-", 0.0);
+    if (construction == 1) {
+      fluid.createDatabase(true);
+    }
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+    new ThermodynamicOperations(fluid).TPflash();
+    fluid.init(1);
+    assertTrue(fluid.getNumberOfPhases() == 2 && fluid.hasPhaseType("gas") && fluid.hasPhaseType("aqueous"),
+        reference.id + " construction " + construction + " requires gas and aqueous phases at " + totalPressure
+            + " bara");
+    assertTrue(Double.isFinite(co2PartialPressure(fluid)) && co2PartialPressure(fluid) > 0.0,
+        reference.id + " requires a finite positive CO2 partial pressure");
+    return fluid;
+  }
+
+  /**
+   * Reads the gas CO2 partial pressure after a validated flash.
+   *
+   * @param fluid two-phase flashed system
+   * @return CO2 partial pressure in bara
+   */
+  private static double co2PartialPressure(SystemInterface fluid) {
+    return fluid.getPhase("gas").getComponent("CO2").getx() * fluid.getPressure();
   }
 
   /**

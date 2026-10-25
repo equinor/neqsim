@@ -191,8 +191,11 @@ Eq. (1) has a normalization inconsistency with its table and is not used.
 
 The nonreactive electrolyte-CPA calculation uses 1 kg water, 10 mol CO2,
 explicit zero K+/Cl-, mixing rule 10 and multiphase checking. Total pressure
-is iterated until `y_CO2 * P = 1.01325 bara`; total pressure and guest fugacity
-are reported separately. Three constructions per temperature retain baseline,
+is solved with a bracketed secant/bisection iteration until
+`y_CO2 * P = 1.01325 bara` within 1e-10 bara. Each trial flashes a fresh fluid
+with the same construction and feed inventory; this avoids reusing a collapsed
+phase state during pressure changes. Trial states must contain gas and aqueous
+phases. Total pressure and guest fugacity are reported separately. Three constructions per temperature retain baseline,
 explicit database reset and reversed component insertion order: **57 calculated
 records from nineteen independent reference states**, not 57 independent observations.
 `apparent_f_over_x_bara` is a finite-composition endpoint ratio, not a newly
@@ -203,7 +206,8 @@ component balance <= 1e-12 (relative for molecular components; absolute mol for
 zero-ion inputs), phase-fraction/composition normalization <= 1e-12, charge
 residual <= 1e-12 mol, partial-pressure mismatch <= 1e-7 bara and identical-repeat
 CO2 mole-fraction difference <= 1e-10. Returned phases must be GAS+AQUEOUS.
-All completed records are written before the final numerical assertion. The
+All completed records are written before the final numerical assertion, including
+when a later trial raises an exception; an incomplete assessment remains failed. The
 test supplies **no physical-accuracy pass band**; signed relative reference
 residuals are retained even when numerical gates pass.
 
