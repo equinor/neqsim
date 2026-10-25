@@ -13,6 +13,8 @@ NeqSim code patterns.
 > A complete study report with pipeline drawings (route, profiles, hydrate margin, threat matrix,
 > validation) is produced by `neqsim flow-assurance-report` — see the
 > `neqsim-flow-assurance-study-report` skill. This skill stays the calculation reference.
+> A whole subsea SURF network (templates, injection, risers, umbilical, concept comparison) is
+> generated, solved and documented by `neqsim surf-study` — see the `neqsim-surf-design-study` skill.
 ## When to Use This Skill
 
 - Hydrate formation temperature/pressure prediction
