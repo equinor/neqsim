@@ -6,6 +6,7 @@ Usage:
     neqsim try               Try NeqSim in an interactive playground
     neqsim onboard           Interactive setup wizard for new contributors
     neqsim doctor            Check your environment is healthy
+    neqsim docker ensure     Start installed Docker if needed and wait for its engine
     neqsim contribute        Guided wizard for your first contribution
     neqsim new-task TITLE    Create a task-solving workspace
     neqsim tasks CMD         Across solved tasks: index/search/relink/env/duplicates
@@ -58,6 +59,10 @@ COMMANDS = {
     "doctor": {
         "module": "neqsim_doctor",
         "desc": "Check your development environment is healthy",
+    },
+    "docker": {
+        "module": "docker_runtime",
+        "desc": "Start installed Docker on demand and verify engine readiness (ensure --linux)",
     },
     "contribute": {
         "module": "neqsim_contribute",
