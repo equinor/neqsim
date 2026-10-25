@@ -415,6 +415,26 @@
       "expect_skills_top5": [
         "neqsim-eos-regression"
       ]
+    },
+    {
+      "id": "process-utilities-design-report",
+      "prompt": "Develop a process utilities design report for an offshore plant from its process report: utility consumer register, simultaneous operating cases, generation distribution capacity, utility flow diagrams and standards evidence",
+      "expect_agent_top3": [
+        "utilities-design-report"
+      ],
+      "expect_skills_top5": [
+        "neqsim-utilities-design-report"
+      ]
+    },
+    {
+      "id": "onshore-utility-loss-report",
+      "prompt": "Prepare an onshore process utilities design report with instrument air nitrogen steam cooling water consumer loads, standby storage autonomy and utility loss scenarios",
+      "expect_agent_top3": [
+        "utilities-design-report"
+      ],
+      "expect_skills_top5": [
+        "neqsim-utilities-design-report"
+      ]
     }
   ],
   "contracts": [
