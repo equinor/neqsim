@@ -111,8 +111,8 @@ class KClCO2SolubilityReferenceAssessmentTest {
       fluid.init(3);
       PhaseInterface gas = fluid.getPhase("gas");
       actualPartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
-      if (Math.abs(actualPartialPressureBara - reference.targetCo2PartialPressureBara)
-          < PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR) {
+      if (Math.abs(actualPartialPressureBara
+          - reference.targetCo2PartialPressureBara) < PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR) {
         break;
       }
       fluid.setPressure(fluid.getPressure() * reference.targetCo2PartialPressureBara / actualPartialPressureBara);
