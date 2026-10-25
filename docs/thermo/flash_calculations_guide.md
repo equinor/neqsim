@@ -742,6 +742,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 
 // Initial state
+fluid.init(2);  // Initialize caloric derivatives before reading internal energy
 double V0 = fluid.getVolume("m3");
 double U0 = fluid.getInternalEnergy("J");
 
@@ -749,9 +750,29 @@ double U0 = fluid.getInternalEnergy("J");
 double V_new = V0 * 2.0;  // Volume doubles
 ops.VUflash(V_new, U0, "m3", "J");
 
-System.out.println("New T: " + fluid.getTemperature("C") + " °C");
-System.out.println("New P: " + fluid.getPressure("bara") + " bara");
+org.apache.logging.log4j.LogManager.getLogger("VU example").info("New T: {} C, new P: {} bara",
+    fluid.getTemperature("C"), fluid.getPressure("bara"));
 ```
+
+This example is executed by
+`VUCaloricStateQualificationTest.documentedExpansionUsesInitializedInternalEnergy`.
+
+`OptimizedVUflash` initializes caloric properties at level two after each TP
+flash and reuses that state in the next iteration. Volume, Cp and temperature/pressure
+derivatives require level two; the VU update does not consume composition-derivative
+matrices. Returned enthalpy and internal energy therefore refer to the final
+TP state, rather than caloric caches retained from a preceding iterate.
+
+The existing update equations, damping, bounds and stopping criteria are retained.
+Applications requiring stricter volume/energy closure must check both residuals
+and refine explicitly, as in the [coupled release inventory](../process/safety/coupled-release-inventory).
+`VUCaloricStateQualificationTest` checks independently configured SRK/PR,
+classical/HV gas, hydrocarbon-liquid and methanol/water cases, two finite-difference
+steps, inventory scaling and fresh/repeated/changed/returned targets. Its extensive
+native identities use the default $10^{-10}$ bound per mole, explicitly scaled
+with inventory; independent volume/energy derivative differences use a declared
+$10^{-5}$ mixed scale. These are numerical model checks, not experimental parameter
+qualification or a guarantee of strict VU convergence.
 
 ---
 
@@ -790,7 +811,7 @@ The Q-function flashes use analytical thermodynamic derivatives computed via `in
 | TUflash | T, U | P | $\left(\frac{\partial U}{\partial P}\right)_T = -T\left(\frac{\partial V}{\partial T}\right)_P - P\left(\frac{\partial V}{\partial P}\right)_T$ |
 | TVflash | T, V | P | $\left(\frac{\partial V}{\partial P}\right)_T$ |
 | PVflash | P, V | T | $\left(\frac{\partial V}{\partial T}\right)_P$ |
-| VUflash | V, U | T, P | 2D Newton with $\frac{\partial U}{\partial T}$, $\frac{\partial U}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
+| VUflash | V, U | T, P | Damped T/P updates using a diagonal approximation; coupled-step and phase-transition qualification is tracked in [#4579](https://github.com/equinor/neqsim/issues/4579) and [#4583](https://github.com/equinor/neqsim/issues/4583) |
 | VHflash | V, H | T, P | 2D Newton with $\frac{\partial H}{\partial T}$, $\frac{\partial H}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
 | VSflash | V, S | T, P | 2D Newton with $\frac{\partial S}{\partial T}$, $\frac{\partial S}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
 

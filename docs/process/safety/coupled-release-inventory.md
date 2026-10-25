@@ -66,6 +66,12 @@ This is explicit residual refinement with unchanged physics, not a replacement f
 property fallback. Failure to meet it produces `INVENTORY_VU_REFINEMENT_FAILED`. The total
 number of VU solves is available through `getLastVolumeEnergySolves()` and frame provenance.
 
+The general VU solver refreshes caloric derivatives on its final TP state before
+returning, so inventory checks use current enthalpy and internal energy. Its update
+equations and stopping policy remain unchanged. Caloric-state consistency alone
+does not establish the stricter inventory closure; the same $10^{-11}$ gates and
+32-solve bound remain mandatory.
+
 The release model is explicitly selected. Its upstream pressure, temperature and enthalpy
 must match the selected phase and its upstream/exit composition must match that phase's withdrawal.
 Exit static enthalpy plus specific kinetic energy must equal upstream stagnation enthalpy.
