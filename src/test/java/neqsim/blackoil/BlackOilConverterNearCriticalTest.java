@@ -69,4 +69,35 @@ public class BlackOilConverterNearCriticalTest {
     }
     assertTrue(res.pvt.Bo(460.0) > res.pvt.Bo(400.0), "Bo must rise towards the bubble point");
   }
+
+  /**
+   * Every undersaturated branch of the exported PVTO has Bo falling with pressure, as OPM Flow and Eclipse require.
+   *
+   * @throws java.io.IOException if the include file cannot be written
+   */
+  @Test
+  public void testExportedPvtoUndersaturatedBranchesAreCompressible() throws java.io.IOException {
+    double[] grid = {50.0, 150.0, 250.0, 350.0, 400.0, 440.0, 460.0, 520.0, 600.0};
+    BlackOilConverter.Result res = BlackOilConverter.convert(co2RichOil(), 273.15 + 80.0, grid, 1.01325, 273.15 + 15.0);
+    String text = neqsim.blackoil.io.EclipseEOSExporter.toString(res.pvt, res.rho_o_sc, res.rho_g_sc, res.rho_w_sc)
+        .replace("\r\n", "\n");
+    String pvto = text.substring(text.indexOf("PVTO"), text.indexOf("/\n\n", text.indexOf("PVTO")));
+    int records = 0;
+    for (String record : pvto.split("\n\\s*/\n")) {
+      double previousBo = Double.MAX_VALUE;
+      for (String line : record.split("\n")) {
+        String[] tok = line.trim().split("\\s+");
+        if (tok.length < 3 || !Character.isDigit(tok[0].charAt(0))) {
+          continue;
+        }
+        double bo = Double.parseDouble(tok[tok.length - 2]);
+        if (previousBo != Double.MAX_VALUE) {
+          assertTrue(bo < previousBo, "Bo must fall along an undersaturated branch: " + record);
+        }
+        previousBo = bo;
+      }
+      records++;
+    }
+    assertTrue(records > 3, "PVTO records " + records);
+  }
 }
