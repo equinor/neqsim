@@ -109,6 +109,6 @@ public class SystemBnsEosParityTest {
     new ThermodynamicOperations(system).TPflash();
     system.initProperties();
     assertEquals(0.2778261815698205, system.getZvolcorr(), 1e-7);
-    assertEquals(2.0935369009204514, system.getCp("kJ/kgK"), 1e-7);
+    assertEquals(2.093482222739907, system.getCp("kJ/kgK"), 1e-7);
   }
 }

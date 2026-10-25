@@ -95,7 +95,7 @@ class CPAWaterCaloricTest extends neqsim.NeqSimTest {
     double legacyDensity = fluid.getDensity("kg/m3");
     double idealCp = fluid.getPhase(0).getComponent(0).getCp0(298.15);
     double acentric = fluid.getPhase(0).getComponent(0).getAcentricFactor();
-    assertEquals(3651.669280758189, fluid.getCp("J/kgK"), 0.01);
+    assertEquals(3651.52216128043, fluid.getCp("J/kgK"), 0.01);
     fluid.setUseCaloricWaterAlpha(true);
     flash(fluid);
     assertTrue(fluid.isUsingCaloricWaterAlpha());

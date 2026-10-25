@@ -8,7 +8,9 @@ import neqsim.mathlib.linearalgebra.LinearAlgebraOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * PedersenPlusModelSolver class.
+ * Fits the finite-SCN Pedersen distribution to the supplied plus mole fraction, mean molar mass and
+ * mass/additive-liquid-volume density. Mole and mean-molar-mass residuals are each limited to 1e-12 relative to their
+ * supplied values; the SCN endpoints and tabulated molar masses are unchanged.
  *
  * @author asmund
  * @version $Id: $Id
@@ -108,7 +110,6 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     for (int j = 0; j < 2; j++) {
       double mTot1 = 0.0;
       double mTot2 = 0.0;
-      double zSum2 = 0.0;
       double zSum = 0.0;
       double zSum3 = 0.0;
       for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
@@ -117,17 +118,27 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
             * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
         mTot2 += i * (characterizeClass.PVTsimMolarMass[i - 6] / 1000.0)
             * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-        zSum2 += Math.pow(Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i), 2.0);
         zSum += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
         zSum3 += i * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
       }
       if (j == 0) {
-        tempJ = (mTot1 * zSum - mTot1 * zSum) / zSum2;
+        tempJ = (mTot1 * zSum - mTot1 * zSum) / (zSum * zSum);
       } else if (j == 1) {
-        tempJ = (mTot2 * zSum - mTot1 * zSum3) / zSum2;
+        tempJ = (mTot2 * zSum - mTot1 * zSum3) / (zSum * zSum);
       }
       JacAB[1][j] = tempJ;
     }
+  }
+
+  /**
+   * Tests the independent relative mole and molecular-weight residuals on the supplied plus basis.
+   *
+   * @return whether both extensive constraints meet the relative tolerance
+   */
+  private boolean isAbConverged() {
+    return Double.isFinite(fvecAB[0]) && Double.isFinite(fvecAB[1])
+        && Math.abs(fvecAB[0]) <= characterizeClass.getZPlus() * 1.0e-12
+        && Math.abs(fvecAB[1]) <= characterizeClass.getMPlus() * 1.0e-12;
   }
 
   /**
@@ -209,7 +220,11 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
 
       solAB = ALGEBRA.subtract(solAB, ALGEBRA.scale(dx, (iter) / (iter + 50.0)));
       characterizeClass.setCoefs(solAB);
-    } while (((ALGEBRA.euclideanNorm(fvecAB) > 1e-6 || iter < 3) && iter < 200));
+    } while ((!isAbConverged() || iter < 3) && iter < 200);
+    setfvecAB();
+    if (!isAbConverged()) {
+      throw new IllegalStateException("Pedersen plus distribution did not conserve supplied mole and mass moments");
+    }
     // logger.info("ok char: ");
     // solAB.print(10, 10);
 

@@ -378,7 +378,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // default
     // (0.45724333333)
     // IC4/IC5 now map to the database components (database ideal-gas Cp), which shifts the enthalpy
-    Assertions.assertEquals(-4636.675630757057, ent, 1e-3);
+    Assertions.assertEquals(-4636.697178152326, ent, 1e-3);
 
     // Oil outlet stream is single-phase oil after separation
     Assertions.assertEquals(1, separator.getOilOutStream().getFluid().getNumberOfPhases());

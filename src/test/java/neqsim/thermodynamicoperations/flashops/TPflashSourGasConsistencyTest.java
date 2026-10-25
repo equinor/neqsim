@@ -46,7 +46,7 @@ class TPflashSourGasConsistencyTest {
 
     assertEquals(2, ordinary.getNumberOfPhases());
     assertEquivalent(multiphase, ordinary, 1.0e-10, "cold boundary flash");
-    assertEquals(5204.65719954021, ordinary.getGibbsEnergy(), 1.0e-6);
+    assertEquals(5204.659957839225, ordinary.getGibbsEnergy(), 1.0e-6);
     assertEquals(0.3304026330533084, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
 
     SystemInterface repeatedReference = ordinary.clone();
@@ -62,7 +62,7 @@ class TPflashSourGasConsistencyTest {
 
     assertEquals(2, ordinary.getNumberOfPhases());
     assertEquivalent(multiphase, ordinary, 1.0e-10, "liquid-liquid root boundary");
-    assertEquals(3877.86592721083, ordinary.getGibbsEnergy(), 1.0e-6);
+    assertEquals(3877.8736045754977, ordinary.getGibbsEnergy(), 1.0e-6);
     assertEquals(0.5728114917363223, ordinary.getBeta(phaseOrder(ordinary)[0]), 1.0e-10);
 
     double[][] nearbyConditions = {{220.0, 95.81}, {225.0, 100.80}, {230.0, 95.81}};

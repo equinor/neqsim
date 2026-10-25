@@ -27,6 +27,12 @@
   interpolators) must be `private transient` (SpotBugs SE_BAD_FIELD).
 - **Verify APIs before use:** find the class, read constructor/method signatures, never assume
   convenience overloads, enum locations or getter arguments.
+- **Discover across all functionality:** in a source checkout use
+  `uv run --project devtools --locked devtools/capability_search.py "<task or API>" --json`.
+  It returns current source types, workflow agents/skills, guides and test references;
+  load only the relevant skill sections. In plugin/MCP-only sessions use runtime discovery.
+  Read [the discovery guide](docs/development/AGENT_CAPABILITY_DISCOVERY.md) before declaring
+  functionality absent. Routing coverage and test references do not establish qualification.
 - **Agent/MCP coverage:** `src/main/resources/neqsim/mcp/engineering-coverage.json` is a generated snapshot,
   not a source of truth. After Java formatting or agent/skill mapping changes, regenerate it with
   `uv run --project devtools --locked devtools/build_engineering_coverage.py` and stage the output.

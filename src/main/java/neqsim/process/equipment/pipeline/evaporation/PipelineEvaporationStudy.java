@@ -10,6 +10,7 @@ import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFl
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -346,18 +347,9 @@ public class PipelineEvaporationStudy {
       }
     }
 
-    double enthalpyFlux = 0.0;
     double interfaceTemperature = 0.5
         * (node.getBulkSystem().getPhase(0).getTemperature() + node.getBulkSystem().getPhase(1).getTemperature());
-    for (int i = 0; i < fluxes.length; i++) {
-      double evaluationTemperature = Math.min(interfaceTemperature,
-          0.999 * node.getBulkSystem().getPhase(0).getComponent(i).getTC());
-      double vaporizationEnthalpy = node.getBulkSystem().getPhase(0).getComponent(i)
-          .getPureComponentHeatOfVaporization(evaluationTemperature) * 1000.0;
-      if (Double.isFinite(vaporizationEnthalpy) && vaporizationEnthalpy > 0.0) {
-        enthalpyFlux += fluxes[i] * vaporizationEnthalpy;
-      }
-    }
+    double enthalpyFlux = calculateFallbackEnthalpyFlux(node.getBulkSystem().getPhase(0), fluxes, interfaceTemperature);
 
     double coefficientSum = heatTransferCoefficients[0] + heatTransferCoefficients[1];
     if (!Double.isFinite(coefficientSum) || coefficientSum <= 0.0) {
@@ -373,6 +365,26 @@ public class PipelineEvaporationStudy {
     return new double[] {
         -heatTransferCoefficients[0] * (node.getBulkSystem().getPhase(0).getTemperature() - interfaceTemperature),
         -heatTransferCoefficients[1] * (node.getBulkSystem().getPhase(1).getTemperature() - interfaceTemperature)};
+  }
+
+  /**
+   * Converts signed molar fluxes to latent heat flux without an extra kmol-to-mol conversion.
+   *
+   * @param phase component source
+   * @param fluxes signed molar fluxes in mol/(m2 s)
+   * @param temperature interface temperature in K
+   * @return latent heat flux in W/m2, omitting unavailable component correlations
+   */
+  static double calculateFallbackEnthalpyFlux(PhaseInterface phase, double[] fluxes, double temperature) {
+    double enthalpyFlux = 0.0;
+    for (int i = 0; i < fluxes.length; i++) {
+      double evaluationTemperature = Math.min(temperature, 0.999 * phase.getComponent(i).getTC());
+      double latentHeat = phase.getComponent(i).getPureComponentHeatOfVaporization(evaluationTemperature);
+      if (Double.isFinite(latentHeat) && latentHeat > 0.0) {
+        enthalpyFlux += fluxes[i] * latentHeat;
+      }
+    }
+    return enthalpyFlux;
   }
 
   private void setLocalHydrodynamics(TwoPhaseFlowNode node, SystemInterface system, PipeData pipe,

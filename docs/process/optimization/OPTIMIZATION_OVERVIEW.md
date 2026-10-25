@@ -861,18 +861,15 @@ String lifecycleEvidenceJson = lifecycle.toEvidenceJson(currentCycleId);
 ```
 
 ```python
-from neqsim_continuous.production import proposal_from_lifecycle_json
+from neqsim_continuous.production import proposal_from_lifecycle_context
 
 
 def run(ctx):
     lifecycle_json = build_lifecycle_study(ctx).toEvidenceJson(ctx.cycle_id)
-    proposal = proposal_from_lifecycle_json(
+    proposal = proposal_from_lifecycle_context(
         lifecycle_json,
-        cycle_id=ctx.cycle_id,
+        ctx=ctx,
         title="Increase accepted field export",
-        objective_kpi="export_kg_hr",
-        baseline_value=ctx.kpis["export_kg_hr"],
-        expected_gain=expected_export_gain,
         predicted=predicted_kpis,
     )
     return {"proposals": [proposal]}
@@ -911,11 +908,18 @@ changing the baseline. When lifecycle evidence is required, a cycle without that
 The supported Java-to-living-task boundary is the compact JSON returned by
 `ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceJson(currentCycleId)`. It fails before serialization unless
 one independently validated lifecycle period has that exact cycle ID. A task-local `scripts.optimize` stage passes
-the JSON to `neqsim_continuous.production.proposal_from_lifecycle_json(...)`, which rejects stale, duplicate,
-non-finite, incomplete, or edited evidence, derives exact setpoints and the accepted envelope, and reuses the same
-production validators that guard and promotion use. The task supplies only proposal metadata and finite objective/
-prediction values; it must not rebuild Java evidence dictionaries. The separate `report.prepare` hook refreshes
-report inputs after accepted results exist and is not a proposal-ingestion path.
+the JSON and cycle context to `neqsim_continuous.production.proposal_from_lifecycle_context(...)`. The adapter rejects
+stale, duplicate, non-finite, incomplete, or edited evidence, derives exact setpoints and the accepted envelope, and
+reuses the same production validators that guard and promotion use. It also binds the Java search's selected-objective
+name, direction, unit, initial value, and accepted value to the task-local `goal.yaml` objective and reviewed baseline
+KPI. The task must declare `objective.metric`, `objective.source_name`, `objective.direction`, and `objective.unit`;
+the initial Java objective must exactly equal the reviewed baseline for that KPI. The adapter derives the directional
+gain and objective prediction instead of trusting task-script constants. Set
+`production.require_objective_evidence: true` with the existing envelope requirements so the guard repeats this
+binding before publication. The task may supply additional finite constraint predictions but must not rebuild Java
+evidence dictionaries. The separate `report.prepare` hook refreshes report inputs after accepted results exist and is
+not a proposal-ingestion path. The lower-level `proposal_from_lifecycle_json(...)` remains available for compatibility
+when callers already own separately qualified proposal metadata.
 
 The executable source acceptance is
 `devtools.test_field_to_facility_living_workflow.FieldToFacilityLivingWorkflowTest`. It calls the ten-well Java
@@ -931,7 +935,8 @@ NEQSIM_TEST_CLASSPATH="target/classes:target/test-classes:$(cat target/optimizat
 ```
 
 The workflow asserts finite evaluation counts and runtime, full convergence/feasibility/restoration receipts, exact
-schema-v8 persistence, the separator/scrubber-to-shared-power bottleneck migration, and report rendering. It is a
+selected-objective identity and reviewed-baseline binding, schema-v8 persistence, the
+separator/scrubber-to-shared-power bottleneck migration, and report rendering. It is a
 synthetic software acceptance test, not a reservoir forecast, equipment qualification, operating approval, or an
 instruction to relax any physical constraint.
 

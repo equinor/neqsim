@@ -214,6 +214,27 @@ public class FieldToFacilityOptimizationAcceptanceTest {
   }
 
   /**
+   * Build the current ten-well fixture and read its task-baseline gas-export objective.
+   *
+   * <p>
+   * This is the same physical objective and initial action state used by
+   * {@link #createTenWellLifecycleEvidenceJson(String)}. It lets the living-task fixture establish a reviewed numeric
+   * baseline before a cycle starts instead of inventing a workflow-only marker KPI.
+   *
+   * @return finite initial validated gas export in kg/hr
+   */
+  public static double createTenWellBaselineGasExportKgHr() {
+    FieldToFacilityOptimizationAcceptanceTest acceptance = new FieldToFacilityOptimizationAcceptanceTest();
+    Fixture fixture = acceptance.createFixture(10);
+    acceptance.configureLifecycleCapacityLimits(fixture, 10.0);
+    double value = Math.abs(fixture.exportValve.getOutletStream().getFlowRate("kg/hr"));
+    if (!Double.isFinite(value)) {
+      throw new IllegalStateException("Ten-well baseline gas-export objective is not finite");
+    }
+    return value;
+  }
+
+  /**
    * Verify route swaps, choke changes, per-line operating limits, separator limits, mapped compression, shared power,
    * bottleneck attribution and exact baseline restoration in one optimizer workflow.
    */
@@ -321,6 +342,11 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     assertTrue(Double.isFinite(result.getRuntimeSeconds()) && result.getRuntimeSeconds() >= 0.0);
     Map<String, Object> evidence = result.getOptimizerEvidence("synthetic-cycle-1");
     assertEquals("synthetic-cycle-1", evidence.get("cycle_id"));
+    assertEquals("validated gas export", evidence.get("objective_name"));
+    assertEquals("MAXIMIZE", evidence.get("objective_direction"));
+    assertEquals("kg/hr", evidence.get("objective_unit"));
+    assertEquals(result.getCandidates().get(0).getRawObjective(), evidence.get("initial_objective_value"));
+    assertEquals(result.getAcceptedPointReplay().getRawObjective(), evidence.get("accepted_objective_value"));
     assertEquals(Boolean.TRUE, evidence.get("simulation_converged"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_feasible"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_finite"));
@@ -1217,6 +1243,7 @@ public class FieldToFacilityOptimizationAcceptanceTest {
     simulation.addObjective("validated gas export",
         model -> Math.abs(fixture.exportValve.getOutletStream().getFlowRate("kg/hr")),
         ProcessModelSimulationEvaluator.ObjectiveDefinition.Direction.MAXIMIZE);
+    simulation.getObjectives().get(0).setUnit("kg/hr");
     simulation.addEquipmentCapacityConstraints();
 
     PlantCommonShaftEvidence commonShaftRegistration = fixture.commonShaftEvidence("common-shaft-registration");

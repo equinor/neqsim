@@ -15,6 +15,7 @@ models, and interfacial-property calculations.
 - [Diffusivity Models](diffusivity_models) - Binary and multicomponent diffusion coefficients
 - [Interfacial Properties](interfacial_properties) - Surface tension and related calculations
 - [Density Models](density_models) - Liquid density correlations
+- [Property Method Alignment Audit](method_alignment_audit) - Handbook editions, verified repairs, coverage and qualification gaps
 
 ## Calculation workflow
 

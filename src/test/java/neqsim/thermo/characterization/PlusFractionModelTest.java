@@ -267,16 +267,15 @@ public class PlusFractionModelTest {
       sumMoleFraction += moleFraction;
       sumMolarMass += moleFraction * model.getM()[fraction];
     }
-    // The Pedersen fit stops when its residual norm is below 1e-6.
-    assertEquals(model.getZPlus(), sumMoleFraction, 1.0e-6, "Splitting must preserve the plus mole fraction");
+    assertEquals(model.getZPlus(), sumMoleFraction, model.getZPlus() * 1.0e-11,
+        "Splitting must preserve the plus mole fraction");
     if (model instanceof WhitsonGammaModel) {
       assertEquals(model.getMPlus(), sumMolarMass / sumMoleFraction, 1.0e-4,
           "Gamma splitting must preserve the measured plus-fraction molecular weight");
     } else {
-      // Preserve the existing Pedersen Heavy Oil fit, including its known mean-MW
-      // residual. Refusing its heavy EOS cards must not be mistaken for validating it.
-      assertEquals(0.5617213607185431, sumMolarMass / sumMoleFraction, 1.0e-10,
-          "The legacy heavy distribution must remain unchanged");
+      // Distribution closure is independent of whether the generated cuts have supported EOS properties.
+      assertEquals(model.getMPlus(), sumMolarMass / sumMoleFraction, model.getMPlus() * 1.0e-11,
+          "Pedersen splitting must preserve the measured plus-fraction molecular weight");
     }
   }
 

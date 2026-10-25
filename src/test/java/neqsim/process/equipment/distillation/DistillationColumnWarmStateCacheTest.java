@@ -328,7 +328,15 @@ public class DistillationColumnWarmStateCacheTest {
     }
   }
 
-  /** Internal pumparound returns must never be captured as legacy external tray feeds. */
+  /**
+   * Internal pumparound returns must stay out of the external feed registry across a repeated solve.
+   *
+   * <p>
+   * The column uses a 0.001 K temperature tolerance. With the adaptive default, the first accepted temperature residual
+   * is about 0.022 K and the next iteration still moves the overhead flow by 1.75 percent at 20 C. At 0.001 K the same
+   * two runs agree to well within 0.5 percent and both report solved.
+   * </p>
+   */
   @Test
   public void pumparoundReturnIsNotCapturedAsExternalFeed() {
     for (double feedTemperatureC : new double[] {20.0, 25.0}) {
@@ -338,6 +346,7 @@ public class DistillationColumnWarmStateCacheTest {
       feed.run();
       column.addLiquidPumparound("PA-1", 2, 4, 0.01, 2.0);
       column.setPumparoundTolerance(1.0e-3);
+      column.setTemperatureTolerance(1.0e-3);
       column.run();
 
       assertTrue(column.solved(), column.getConvergenceDiagnostics());

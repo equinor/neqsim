@@ -146,13 +146,13 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     heatExchanger1.setDeltaT(1.0);
     heatExchanger1.run();
 
-    assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
+    assertEquals(15779.617417809137, heatExchanger1.getUAvalue(), 1e-3);
 
     heatExchanger1 = new neqsim.process.equipment.heatexchanger.HeatExchanger("heatEx", stream_Hot, stream_Cold);
     heatExchanger1.setDeltaT(1.0);
     heatExchanger1.run();
 
-    assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
+    assertEquals(15779.617417809137, heatExchanger1.getUAvalue(), 1e-3);
   }
 
   /**

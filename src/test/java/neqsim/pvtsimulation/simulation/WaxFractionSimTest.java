@@ -22,7 +22,16 @@ public class WaxFractionSimTest {
     tempSystem.addComponent("methane", 6.78);
     tempSystem.addTBPfraction("C19", 10.13, 170.0 / 1000.0, 0.7814);
     tempSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.850871882888);
+    double inputMass = 6.78 * tempSystem.getPhase(0).getComponent("methane").getMolarMass() + 10.13 * 0.170
+        + 10.62 * 0.381;
     tempSystem.getCharacterization().characterisePlusFraction();
+    double characterizedMass = 0.0;
+    for (int component = 0; component < tempSystem.getNumberOfComponents(); component++) {
+      characterizedMass += tempSystem.getPhase(0).getComponent(component).getNumberOfmoles()
+          * tempSystem.getPhase(0).getComponent(component).getMolarMass();
+    }
+    assertEquals(6.78 + 10.13 + 10.62, tempSystem.getTotalNumberOfMoles(), 1e-10);
+    assertEquals(inputMass, characterizedMass, inputMass * 1e-11);
     tempSystem.getWaxModel().addTBPWax();
     tempSystem.createDatabase(true);
     tempSystem.setMixingRule(2);
@@ -35,7 +44,8 @@ public class WaxFractionSimTest {
     double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
-    assertEquals(0.2850772245845892, sepSim.getThermoSystem().getPhaseFraction("wax", "mass"), 1e-8);
+    // Corrected Pedersen mean MW changes the wax-former slate; retain the same tolerance.
+    assertEquals(0.28263214407722204, sepSim.getThermoSystem().getPhaseFraction("wax", "mass"), 1e-8);
     assertWaxMassBalance(sepSim);
   }
 

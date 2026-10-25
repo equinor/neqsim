@@ -1,6 +1,8 @@
 package neqsim.pvtsimulation.regression;
 
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -348,7 +350,7 @@ public enum RegressionParameter {
   public abstract void applyToFluid(SystemInterface fluid, double value);
 
   /**
-   * Applies one CSP viscosity correction factor to every initialized phase.
+   * Applies one CSP viscosity correction factor to each stored fluid phase, including inactive slots.
    *
    * @param fluid thermodynamic system to modify
    * @param index correction factor index, from 0 to 3
@@ -356,11 +358,24 @@ public enum RegressionParameter {
    */
   private static void applyCspViscosityCorrectionFactor(SystemInterface fluid, int index, double value) {
     for (int phaseIndex = 0; phaseIndex < fluid.getMaxNumberOfPhases(); phaseIndex++) {
-      PhysicalProperties physicalProperties = fluid.getPhase(phaseIndex).getPhysicalProperties();
-      if (!physicalProperties.isPFCTViscosityModel()) {
-        physicalProperties.setViscosityModel("PFCT");
+      // Mapped phases can repeat after phase removal. Initialization restores the storage mapping,
+      // so configure each raw slot before that inactive phase can become active again.
+      PhaseInterface phase = fluid.getPhases()[phaseIndex];
+      PhaseType originalType = phase.getType();
+      try {
+        // Each storage slot also owns separate gas, oil and aqueous transport models. Configure all
+        // three without a flash, and restore its thermodynamic type even if configuration fails.
+        for (PhaseType type : new PhaseType[] {PhaseType.GAS, PhaseType.OIL, PhaseType.AQUEOUS}) {
+          phase.setType(type);
+          PhysicalProperties physicalProperties = phase.getPhysicalProperties();
+          if (!physicalProperties.isPFCTViscosityModel()) {
+            physicalProperties.setViscosityModel("PFCT");
+          }
+          physicalProperties.setCspViscosityCorrectionFactor(index, value);
+        }
+      } finally {
+        phase.setType(originalType);
       }
-      physicalProperties.setCspViscosityCorrectionFactor(index, value);
     }
   }
 }

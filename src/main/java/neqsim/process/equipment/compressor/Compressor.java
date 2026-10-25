@@ -660,8 +660,10 @@ public class Compressor extends TwoPortEquipment
   /**
    * Calculates polytropic or isentropic efficiency by matching the specified outlet temperature with a safeguarded
    * secant iteration. The outlet temperature must match within {@link #setEfficiencySolveTolerance(double)} (default
-   * 0.01 K) in at most 50 evaluations. Efficiency remains within its physical bounds. The configured temperature mode
-   * is restored even if the calculation fails; a successful solve also records the target for temperature mode.
+   * 0.01 K). Each trajectory uses at most 50 evaluations and stays inside the physical efficiency bounds. A phase
+   * boundary can make outlet temperature jump, so a stalled sign bracket is followed by a short local secant and, if
+   * needed, the same solve from an interior efficiency. The configured temperature mode is restored even if the
+   * calculation fails; a successful solve also records the target for temperature mode.
    *
    * @param outTemperature the finite, positive target outlet temperature in Kelvin
    * @return the calculated efficiency (polytropic or isentropic depending on configuration)
@@ -676,51 +678,239 @@ public class Compressor extends TwoPortEquipment
     if (!Double.isFinite(efficiencySolveTolerance) || efficiencySolveTolerance <= 0.0) {
       throw new IllegalArgumentException("Compressor efficiency solve tolerance must be finite and positive");
     }
-    double effLow = MIN_EFFICIENCY;
-    double effHigh = MAX_EFFICIENCY;
-    double previousEfficiency = Double.NaN;
-    double previousResidual = Double.NaN;
     boolean previousUseOutTemperature = useOutTemperature;
     useOutTemperature = false;
     try {
-      for (int iter = 0; iter < 50; iter++) {
-        run();
-        double efficiency = usePolytropicCalc ? polytropicEfficiency : isentropicEfficiency;
-        double residual = getThermoSystem().getTemperature() - outTemperature;
-        if (!Double.isFinite(residual)) {
-          throw new IllegalStateException("Compressor efficiency solve produced a non-finite outlet temperature");
-        }
-        if (Math.abs(residual) <= efficiencySolveTolerance) {
-          this.outTemperature = outTemperature;
-          return efficiency;
-        }
-        // For compression, a hotter outlet requires a higher efficiency. Keep all subsequent trials inside
-        // the feasible interval instead of clipping a secant overshoot to an efficiency limit.
-        if (residual > 0.0) {
-          effLow = Math.max(effLow, efficiency);
-        } else {
-          effHigh = Math.min(effHigh, efficiency);
-        }
-        double nextEfficiency = efficiency + 0.01;
-        if (Double.isFinite(previousResidual) && residual != previousResidual) {
-          nextEfficiency = efficiency - residual * (efficiency - previousEfficiency) / (residual - previousResidual);
-        }
-        if (!Double.isFinite(nextEfficiency) || nextEfficiency <= effLow || nextEfficiency >= effHigh) {
-          nextEfficiency = 0.5 * (effLow + effHigh);
-        }
-        if (nextEfficiency == efficiency || iter == 49) {
-          break;
-        }
-        previousEfficiency = efficiency;
-        previousResidual = residual;
-        setPolytropicEfficiency(nextEfficiency);
-        setIsentropicEfficiency(nextEfficiency);
+      double startEfficiency = usePolytropicCalc ? polytropicEfficiency : isentropicEfficiency;
+      EfficiencyResidualSample best = new EfficiencyResidualSample();
+      double solved = runEfficiencySecant(outTemperature, best);
+      if (Double.isFinite(solved)) {
+        return solved;
+      }
+      solved = recoverStalledEfficiency(outTemperature, startEfficiency, best);
+      if (Double.isFinite(solved)) {
+        return solved;
       }
       throw new IllegalStateException("Compressor efficiency solve could not match target " + outTemperature
           + " K within " + efficiencySolveTolerance + " K; last outlet temperature was "
           + getThermoSystem().getTemperature() + " K");
     } finally {
       useOutTemperature = previousUseOutTemperature;
+    }
+  }
+
+  /**
+   * One safeguarded secant trajectory from the efficiency currently set on this compressor.
+   *
+   * <p>
+   * A hotter outlet raises the lower efficiency bound and a colder outlet lowers the upper bound. A trial that leaves
+   * that bracket is replaced by its midpoint. The closest sample is recorded even when the trajectory stalls on a
+   * temperature jump.
+   * </p>
+   *
+   * @param outTemperature target outlet temperature in kelvin
+   * @param best closest sample found by this trajectory; updated in place
+   * @return the matching efficiency, or {@link Double#NaN} when the target is not met
+   * @throws IllegalStateException if an outlet temperature is non-finite
+   */
+  private double runEfficiencySecant(double outTemperature, EfficiencyResidualSample best) {
+    double effLow = MIN_EFFICIENCY;
+    double effHigh = MAX_EFFICIENCY;
+    double previousEfficiency = Double.NaN;
+    double previousResidual = Double.NaN;
+    for (int iter = 0; iter < 50; iter++) {
+      run();
+      double efficiency = usePolytropicCalc ? polytropicEfficiency : isentropicEfficiency;
+      double residual = outletTemperatureResidual(outTemperature);
+      best.offer(efficiency, residual);
+      if (Math.abs(residual) <= efficiencySolveTolerance) {
+        this.outTemperature = outTemperature;
+        return efficiency;
+      }
+      // For compression, a hotter outlet requires a higher efficiency. Keep all subsequent trials inside
+      // the feasible interval instead of clipping a secant overshoot to an efficiency limit.
+      if (residual > 0.0) {
+        effLow = Math.max(effLow, efficiency);
+      } else {
+        effHigh = Math.min(effHigh, efficiency);
+      }
+      double nextEfficiency = efficiency + 0.01;
+      if (Double.isFinite(previousResidual) && residual != previousResidual) {
+        nextEfficiency = efficiency - residual * (efficiency - previousEfficiency) / (residual - previousResidual);
+      }
+      if (!Double.isFinite(nextEfficiency) || nextEfficiency <= effLow || nextEfficiency >= effHigh) {
+        nextEfficiency = 0.5 * (effLow + effHigh);
+      }
+      if (nextEfficiency == efficiency || iter == 49) {
+        break;
+      }
+      previousEfficiency = efficiency;
+      previousResidual = residual;
+      setPolytropicEfficiency(nextEfficiency);
+      setIsentropicEfficiency(nextEfficiency);
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Continue an efficiency solve after the sign bracket has stalled.
+   *
+   * <p>
+   * Outlet temperature is not monotone across a phase boundary, so the secant can lock onto a jump of about a tenth of
+   * a kelvin and exclude a nearby match. A short secant around the closest sample is tried first. Interior starts then
+   * repeat the full bracketed secant, because a different initial efficiency can keep the root inside the bracket. A
+   * miss larger than 2 K is left untouched: that is outside this pocket and includes a target colder than unity
+   * efficiency.
+   * </p>
+   *
+   * @param outTemperature target outlet temperature in kelvin
+   * @param startEfficiency efficiency at which the stalled trajectory began
+   * @param best closest sample of the stalled trajectory
+   * @return a matching efficiency, or {@link Double#NaN} when recovery does not meet the tolerance
+   * @throws IllegalStateException if an outlet temperature is non-finite
+   */
+  private double recoverStalledEfficiency(double outTemperature, double startEfficiency,
+      EfficiencyResidualSample best) {
+    if (!Double.isFinite(best.residual) || Math.abs(best.residual) > 2.0) {
+      return Double.NaN;
+    }
+    double local = runLocalEfficiencySecant(outTemperature, best.efficiency, best.residual);
+    if (outletMatchesEfficiencyTarget(outTemperature)) {
+      this.outTemperature = outTemperature;
+      return local;
+    }
+    double[] seeds = new double[] {0.75, 0.5, 0.25};
+    for (int i = 0; i < seeds.length; i++) {
+      if (Math.abs(seeds[i] - startEfficiency) <= 1.0e-12 || Math.abs(seeds[i] - best.efficiency) <= 1.0e-12) {
+        continue;
+      }
+      setPolytropicEfficiency(seeds[i]);
+      setIsentropicEfficiency(seeds[i]);
+      double solved = runEfficiencySecant(outTemperature, new EfficiencyResidualSample());
+      if (Double.isFinite(solved)) {
+        return solved;
+      }
+    }
+    return Double.NaN;
+  }
+
+  /**
+   * Secant search on a short interval around an efficiency that is already close to the target.
+   *
+   * <p>
+   * The first probe is a few ten-thousandths of efficiency, and every trial stays inside a window of 0.003 around
+   * {@code center}. The sign bracket is not allowed to move past the closest sample, so a temperature jump cannot
+   * discard that sample.
+   * </p>
+   *
+   * @param outTemperature target outlet temperature in kelvin
+   * @param center efficiency with the smallest residual seen so far
+   * @param centerResidual signed outlet-temperature residual at {@code center}, in kelvin
+   * @return the best efficiency found; the compressor is left at that operating point
+   * @throws IllegalStateException if an outlet temperature is non-finite
+   */
+  private double runLocalEfficiencySecant(double outTemperature, double center, double centerResidual) {
+    double window = 0.003;
+    double probe = 5.0e-4;
+    double effLow = Math.max(MIN_EFFICIENCY, center - window);
+    double effHigh = Math.min(MAX_EFFICIENCY, center + window);
+    double bestEfficiency = center;
+    double bestAbs = Math.abs(centerResidual);
+    double efficiency = center;
+    double residual = centerResidual;
+    double previousEfficiency = center;
+    double previousResidual = centerResidual;
+    for (int iter = 0; iter < 40; iter++) {
+      if (residual > 0.0) {
+        if (efficiency <= bestEfficiency) {
+          effLow = Math.max(effLow, efficiency);
+        }
+      } else if (efficiency >= bestEfficiency) {
+        effHigh = Math.min(effHigh, efficiency);
+      }
+      if (!(effLow < effHigh)) {
+        break;
+      }
+      double nextEfficiency = efficiency + Math.copySign(probe, residual);
+      if (efficiency != previousEfficiency && residual != previousResidual) {
+        nextEfficiency = efficiency - residual * (efficiency - previousEfficiency) / (residual - previousResidual);
+      }
+      if (!Double.isFinite(nextEfficiency) || nextEfficiency <= effLow || nextEfficiency >= effHigh) {
+        nextEfficiency = 0.5 * (effLow + effHigh);
+      }
+      if (nextEfficiency == efficiency) {
+        break;
+      }
+      previousEfficiency = efficiency;
+      previousResidual = residual;
+      setPolytropicEfficiency(nextEfficiency);
+      setIsentropicEfficiency(nextEfficiency);
+      run();
+      efficiency = usePolytropicCalc ? polytropicEfficiency : isentropicEfficiency;
+      residual = outletTemperatureResidual(outTemperature);
+      if (Math.abs(residual) < bestAbs) {
+        bestAbs = Math.abs(residual);
+        bestEfficiency = efficiency;
+      }
+      if (Math.abs(residual) <= efficiencySolveTolerance) {
+        return efficiency;
+      }
+    }
+    if ((usePolytropicCalc ? polytropicEfficiency : isentropicEfficiency) != bestEfficiency) {
+      setPolytropicEfficiency(bestEfficiency);
+      setIsentropicEfficiency(bestEfficiency);
+      run();
+      outletTemperatureResidual(outTemperature);
+    }
+    return bestEfficiency;
+  }
+
+  /**
+   * Outlet temperature minus the efficiency-solve target.
+   *
+   * @param outTemperature target outlet temperature in kelvin
+   * @return signed residual in kelvin
+   * @throws IllegalStateException if the outlet temperature is non-finite
+   */
+  private double outletTemperatureResidual(double outTemperature) {
+    double residual = getThermoSystem().getTemperature() - outTemperature;
+    if (!Double.isFinite(residual)) {
+      throw new IllegalStateException("Compressor efficiency solve produced a non-finite outlet temperature");
+    }
+    return residual;
+  }
+
+  /**
+   * Whether the current outlet temperature is inside the efficiency-solve tolerance.
+   *
+   * @param outTemperature target outlet temperature in kelvin
+   * @return true when the absolute residual is within the configured solve tolerance
+   */
+  private boolean outletMatchesEfficiencyTarget(double outTemperature) {
+    return Math.abs(getThermoSystem().getTemperature() - outTemperature) <= efficiencySolveTolerance;
+  }
+
+  /**
+   * Closest outlet-temperature residual seen by one efficiency search.
+   */
+  private static final class EfficiencyResidualSample {
+    /** Efficiency that produced the stored residual. */
+    private double efficiency = Double.NaN;
+
+    /** Signed outlet temperature residual in kelvin. */
+    private double residual = Double.NaN;
+
+    /**
+     * Keep this sample when it is closer to the target than the stored one.
+     *
+     * @param candidate efficiency that was run
+     * @param candidateResidual signed outlet-temperature residual in kelvin
+     */
+    private void offer(double candidate, double candidateResidual) {
+      if (!Double.isFinite(residual) || Math.abs(candidateResidual) < Math.abs(residual)) {
+        efficiency = candidate;
+        residual = candidateResidual;
+      }
     }
   }
 

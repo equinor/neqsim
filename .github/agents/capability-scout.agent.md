@@ -66,6 +66,15 @@ For each identified need, fill out this table:
 
 For each capability in the matrix, **systematically search** the NeqSim source:
 
+Start with `uv run --project devtools --locked devtools/capability_search.py "<need or API>" --json`
+when a source checkout is available. This searches current public types and declared public
+member names across every Java domain, including black-oil, transport/interfacial properties,
+statistics, numerical methods and integrations. Inspect its source and test references, then
+load the returned skill section and guide. Its package route is an entry point, not proof that
+every class is a supported calculation. In plugin-only sessions use runtime discovery below.
+Follow `docs/development/AGENT_CAPABILITY_DISCOVERY.md`; never infer missing functionality from
+an absent MCP wrapper, search miss or stale catalog snapshot.
+
 1. **Search the Java source** using `grep_search` and `file_search`:
    - `src/main/java/neqsim/thermo/` — EOS, phases, components, mixing rules
    - `src/main/java/neqsim/process/equipment/` — all process equipment

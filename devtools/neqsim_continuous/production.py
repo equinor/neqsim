@@ -179,6 +179,53 @@ def _optimizer_evidence_reasons(ctx, proposal):
     return _validate_optimizer_evidence(proposal.get("optimizer_evidence"), ctx.cycle_id)
 
 
+def _objective_evidence_reasons(ctx, proposal, required=False):
+    """Bind proposal economics to exact source objective and reviewed baseline evidence."""
+    if not required:
+        return []
+    evidence = proposal.get("optimizer_evidence")
+    fields = ("objective_name", "objective_direction", "objective_unit",
+              "initial_objective_value", "accepted_objective_value")
+    if not isinstance(evidence, dict) or not any(field in evidence for field in fields):
+        return ["missing_objective_evidence"]
+    if any(field not in evidence for field in fields):
+        return ["incomplete_objective_evidence"]
+
+    objective = (ctx.goal or {}).get("objective") or {}
+    metric = objective.get("metric")
+    source_name = objective.get("source_name")
+    direction = objective.get("direction")
+    unit = objective.get("unit")
+    initial = evidence.get("initial_objective_value")
+    accepted = evidence.get("accepted_objective_value")
+    baseline = (ctx.baseline.get("kpis") or {}).get(metric) if isinstance(ctx.baseline, dict) else None
+    reasons = []
+    if not all(_text(value) for value in (metric, source_name, direction, unit)):
+        reasons.append("incomplete_task_objective_metadata")
+    if evidence.get("objective_name") != source_name:
+        reasons.append("objective_name_mismatch")
+    if str(evidence.get("objective_direction", "")).lower() != direction:
+        reasons.append("objective_direction_mismatch")
+    if evidence.get("objective_unit") != unit:
+        reasons.append("objective_unit_mismatch")
+    if not all(_number(value) for value in (initial, accepted, baseline)):
+        reasons.append("non_finite_objective_evidence")
+        return reasons
+    if float(initial) != float(baseline):
+        reasons.append("objective_baseline_mismatch")
+    if proposal.get("objective_kpi") != metric:
+        reasons.append("objective_kpi_mismatch")
+    predicted = proposal.get("predicted")
+    if (not isinstance(predicted, dict) or not _number(predicted.get(metric))
+            or float(predicted[metric]) != float(accepted)):
+        reasons.append("objective_prediction_mismatch")
+    expected_gain = (float(accepted) - float(initial)) * (
+        -1.0 if direction == "minimize" else 1.0)
+    if not _number(_gain_value(proposal)) or float(_gain_value(proposal)) != expected_gain:
+        reasons.append("objective_gain_mismatch")
+    return reasons
+
+
 def _validate_optimizer_evidence(evidence, expected_cycle_id):
     """Validate optimizer evidence for an explicitly identified engineering cycle."""
     if not isinstance(evidence, dict):
@@ -1128,29 +1175,8 @@ def _period_change_diagnostics(periods, action_ids, time_unit, state_metric_ids=
     return diagnostics
 
 
-def proposal_from_lifecycle_json(evidence_json, cycle_id, title, objective_kpi,
-                                 baseline_value, expected_gain, predicted,
-                                 category="operational"):
-    """Build one guard-ready proposal from exact Java lifecycle JSON.
-
-    The JSON is expected to come from
-    ``ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceJson(cycle_id)``. This adapter does
-    not repair, relabel, or partially accept evidence. It selects the unique current-cycle period,
-    derives setpoints and the accepted envelope from that exact block, then replays the existing
-    optimizer, envelope, and lifecycle validators before returning a proposal to a task-local
-    ``scripts.optimize`` stage.
-    """
-    if not _text(cycle_id):
-        raise ValueError("Lifecycle proposal requires a current cycle identifier")
-    current_cycle = cycle_id.strip()
-    if not _text(title) or not _text(category) or not _text(objective_kpi):
-        raise ValueError("Lifecycle proposal requires title, category, and objective KPI")
-    if not _number(baseline_value) or not _number(expected_gain):
-        raise ValueError("Lifecycle proposal baseline and expected gain must be finite")
-    if (not isinstance(predicted, dict)
-            or any(not _text(key) or not _number(value) for key, value in predicted.items())):
-        raise ValueError("Lifecycle proposal predictions must be a finite KPI mapping")
-
+def _finite_json_object(evidence_json):
+    """Decode one finite JSON object without accepting JavaScript numeric extensions."""
     if isinstance(evidence_json, bytes):
         encoded = evidence_json.decode("utf-8")
     else:
@@ -1166,9 +1192,18 @@ def proposal_from_lifecycle_json(evidence_json, cycle_id, title, objective_kpi,
         json.dumps(evidence, allow_nan=False)
     except (TypeError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
         raise ValueError("Lifecycle evidence is not finite valid JSON: {}".format(error)) from error
-    if not isinstance(evidence, dict) or evidence.get("cycle_id") != current_cycle:
-        raise ValueError("Lifecycle evidence is not bound to cycle {}".format(current_cycle))
+    if not isinstance(evidence, dict):
+        raise ValueError("Lifecycle evidence must be a JSON object")
+    return evidence
 
+
+def _current_lifecycle_envelope(evidence, cycle_id):
+    """Return the unique current-cycle envelope or fail closed."""
+    if not _text(cycle_id):
+        raise ValueError("Lifecycle proposal requires a current cycle identifier")
+    current_cycle = cycle_id.strip()
+    if evidence.get("cycle_id") != current_cycle:
+        raise ValueError("Lifecycle evidence is not bound to cycle {}".format(current_cycle))
     periods = evidence.get("periods")
     current_periods = ([period for period in periods
                         if isinstance(period, dict) and period.get("period_id") == current_cycle]
@@ -1178,6 +1213,32 @@ def proposal_from_lifecycle_json(evidence_json, cycle_id, title, objective_kpi,
     envelope = current_periods[0].get("envelope_evidence")
     if not isinstance(envelope, dict) or envelope.get("cycle_id") != current_cycle:
         raise ValueError("Current lifecycle period has no cycle-bound accepted envelope")
+    return envelope
+
+
+def proposal_from_lifecycle_json(evidence_json, cycle_id, title, objective_kpi,
+                                 baseline_value, expected_gain, predicted,
+                                 category="operational"):
+    """Build one guard-ready proposal from exact Java lifecycle JSON.
+
+    The JSON is expected to come from
+    ``ProcessModelOperatingEnvelopeLifecycleStudy.toEvidenceJson(cycle_id)``. This adapter does
+    not repair, relabel, or partially accept evidence. It selects the unique current-cycle period,
+    derives setpoints and the accepted envelope from that exact block, then replays the existing
+    optimizer, envelope, and lifecycle validators before returning a proposal to a task-local
+    ``scripts.optimize`` stage.
+    """
+    current_cycle = cycle_id.strip() if _text(cycle_id) else cycle_id
+    if not _text(title) or not _text(category) or not _text(objective_kpi):
+        raise ValueError("Lifecycle proposal requires title, category, and objective KPI")
+    if not _number(baseline_value) or not _number(expected_gain):
+        raise ValueError("Lifecycle proposal baseline and expected gain must be finite")
+    if (not isinstance(predicted, dict)
+            or any(not _text(key) or not _number(value) for key, value in predicted.items())):
+        raise ValueError("Lifecycle proposal predictions must be a finite KPI mapping")
+
+    evidence = _finite_json_object(evidence_json)
+    envelope = _current_lifecycle_envelope(evidence, current_cycle)
     action_ids = envelope.get("accepted_action_ids")
     values = envelope.get("accepted_candidate_values")
     if (not isinstance(action_ids, list) or not action_ids
@@ -1207,6 +1268,62 @@ def proposal_from_lifecycle_json(evidence_json, cycle_id, title, objective_kpi,
         raise ValueError("Lifecycle evidence failed proposal validation: {}".format(
             ", ".join(sorted(set(reasons)))))
     return proposal
+
+
+def proposal_from_lifecycle_context(evidence_json, ctx, title, predicted=None,
+                                    category="operational"):
+    """Build a lifecycle proposal from exact optimizer and reviewed task metadata.
+
+    The selected objective name, direction, unit, initial value, and accepted value come from
+    the current Java optimizer evidence. The public KPI identity and reviewed baseline come from
+    the task's ``goal.yaml`` and baseline snapshot. Any identity, unit, direction, or baseline
+    mismatch fails before a proposal is returned.
+    """
+    evidence = _finite_json_object(evidence_json)
+    envelope = _current_lifecycle_envelope(evidence, getattr(ctx, "cycle_id", None))
+    optimizer = envelope.get("optimizer_evidence")
+    objective = (getattr(ctx, "goal", {}) or {}).get("objective") or {}
+    baseline = (getattr(ctx, "baseline", {}) or {}).get("kpis") or {}
+    metric = objective.get("metric")
+    source_name = objective.get("source_name")
+    direction = objective.get("direction")
+    unit = objective.get("unit")
+    if not all(_text(value) for value in (metric, source_name, direction, unit)):
+        raise ValueError(
+            "Task objective requires metric, source_name, direction, and unit metadata")
+    if direction not in ("maximize", "minimize"):
+        raise ValueError("Task objective direction must be maximize or minimize")
+    if not isinstance(optimizer, dict):
+        raise ValueError("Lifecycle optimizer objective evidence is missing")
+    if optimizer.get("objective_name") != source_name:
+        raise ValueError("Task objective source name does not match lifecycle evidence")
+    if str(optimizer.get("objective_direction", "")).lower() != direction:
+        raise ValueError("Task objective direction does not match lifecycle evidence")
+    if optimizer.get("objective_unit") != unit:
+        raise ValueError("Task objective unit does not match lifecycle evidence")
+    initial = optimizer.get("initial_objective_value")
+    accepted = optimizer.get("accepted_objective_value")
+    task_baseline = baseline.get(metric)
+    if not all(_number(value) for value in (initial, accepted, task_baseline)):
+        raise ValueError("Lifecycle and task objective values must be finite")
+    if float(initial) != float(task_baseline):
+        raise ValueError("Reviewed task baseline does not match lifecycle search baseline")
+    gain = (float(accepted) - float(initial)) * (1.0 if direction == "maximize" else -1.0)
+    predictions = dict(predicted or {})
+    if metric in predictions and (not _number(predictions[metric])
+                                  or float(predictions[metric]) != float(accepted)):
+        raise ValueError("Task objective prediction does not match lifecycle accepted value")
+    predictions[metric] = float(accepted)
+    return proposal_from_lifecycle_json(
+        evidence_json,
+        cycle_id=ctx.cycle_id,
+        title=title,
+        objective_kpi=metric,
+        baseline_value=float(task_baseline),
+        expected_gain=gain,
+        predicted=predictions,
+        category=category,
+    )
 
 
 def _lifecycle_evidence_reasons(ctx, proposal, required=False):
@@ -1452,6 +1569,8 @@ def guard(ctx, spec):
         if not isinstance(proposal.get("objective_kpi"), str) or not proposal.get("objective_kpi"):
             reasons.append("missing_objective_kpi")
         reasons.extend(_optimizer_evidence_reasons(ctx, proposal))
+        reasons.extend(_objective_evidence_reasons(
+            ctx, proposal, required=settings.get("require_objective_evidence") is True))
         reasons.extend(_envelope_evidence_reasons(
             ctx, proposal, required=settings.get("require_envelope_evidence") is True))
         reasons.extend(_lifecycle_evidence_reasons(

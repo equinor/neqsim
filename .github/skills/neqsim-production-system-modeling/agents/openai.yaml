@@ -1,0 +1,4 @@
+interface:
+  display_name: "NeqSim Production System Modeling"
+  short_description: "Build reservoir-to-products models in Python or Java"
+  default_prompt: "Use $neqsim-production-system-modeling to turn this natural-language engineering request into a reusable reservoir-to-products NeqSim model in the requested Python or Java language."

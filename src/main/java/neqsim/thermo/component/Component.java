@@ -839,12 +839,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getHeatOfVapourization(double temp) {
-    return heatOfVaporizationCoefs[0] + heatOfVaporizationCoefs[1] * temp + heatOfVaporizationCoefs[2] * temp * temp
-        + heatOfVaporizationCoefs[3] * temp * temp * temp * heatOfVaporizationCoefs[4] * temp * temp * temp * temp; // maa
-    // settes
-    // paa
-    // rett
-    // form
+    return getPureComponentHeatOfVaporization(temp);
   }
 
   /** {@inheritDoc} */
@@ -1172,10 +1167,23 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getPureComponentHeatOfVaporization(double temperature) {
-    return 1.0e-3 * heatOfVaporizationCoefs[0]
-        * Math.pow((1.0 - temperature / criticalTemperature),
-            heatOfVaporizationCoefs[1] + heatOfVaporizationCoefs[2] * temperature / criticalTemperature
-                + heatOfVaporizationCoefs[3] * Math.pow(temperature / criticalTemperature, 2.0));
+    if (!Double.isFinite(temperature) || temperature <= 0.0 || !Double.isFinite(criticalTemperature)
+        || criticalTemperature <= temperature || heatOfVaporizationCoefs[0] <= 0.0) {
+      return Double.NaN;
+    }
+    for (double coefficient : heatOfVaporizationCoefs) {
+      if (!Double.isFinite(coefficient)) {
+        return Double.NaN;
+      }
+    }
+    double reducedTemperature = temperature / criticalTemperature;
+    double exponent = heatOfVaporizationCoefs[1] + reducedTemperature * (heatOfVaporizationCoefs[2]
+        + reducedTemperature * (heatOfVaporizationCoefs[3] + reducedTemperature * heatOfVaporizationCoefs[4]));
+    if (exponent <= 0.0 || !Double.isFinite(exponent)) {
+      return Double.NaN;
+    }
+    double value = 1.0e-3 * heatOfVaporizationCoefs[0] * Math.pow(1.0 - reducedTemperature, exponent);
+    return Double.isFinite(value) && value > 0.0 ? value : Double.NaN;
   }
 
   /** {@inheritDoc} */
@@ -2694,7 +2702,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getCpD() {
-    return CpD + 1e-10;
+    return CpD;
   }
 
   /** {@inheritDoc} */

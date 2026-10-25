@@ -23,6 +23,22 @@ def test_routing(case):
         result["missing_skills"], result["skills_top"])
 
 
+@pytest.mark.parametrize("case", CASES["routing"], ids=lambda c: c["id"])
+def test_core_only_routing(case, monkeypatch):
+    """A community installation must not mask a broken public core fallback."""
+    import agent_search
+    import discovery_registry
+
+    discover = agent_search._discover_roots
+    monkeypatch.setattr(agent_search, "_discover_roots", lambda root, extra: [
+        row for row in discover(root, extra) if row[1] == "neqsim"])
+    monkeypatch.setattr(discovery_registry, "sibling_skill_roots", lambda root: [])
+    monkeypatch.setattr(discovery_registry, "installed_skills_roots", lambda: [])
+    monkeypatch.setattr(discovery_registry, "plugin_skill_roots", lambda: [])
+    result = agent_eval.eval_routing(case)
+    assert result["ok"], result
+
+
 @pytest.mark.parametrize("case", CASES["contracts"], ids=lambda c: c["id"])
 def test_contract(case):
     result = agent_eval.eval_contract(case)

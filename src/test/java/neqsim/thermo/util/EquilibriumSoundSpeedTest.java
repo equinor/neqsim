@@ -118,8 +118,8 @@ class EquilibriumSoundSpeedTest extends neqsim.NeqSimTest {
         SystemInterface fluid = referenceTpRoot(original, pressure, target);
         assertEquals(2, fluid.getNumberOfPhases());
         if (impurity.equals("nitrogen") && pressure == 50.0) {
-          assertEquals(281.2568234268, fluid.getTemperature(), 1.0e-7);
-          assertEquals(642.5310058, fluid.getMass("kg") / fluid.getVolume("m3"), 1.0e-4);
+          assertEquals(281.25673175054544, fluid.getTemperature(), 1.0e-7);
+          assertEquals(642.5397754162195, fluid.getMass("kg") / fluid.getVolume("m3"), 1.0e-4);
         }
         Result result = fluid.calculateEquilibriumSoundSpeed();
         check(result);

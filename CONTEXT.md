@@ -25,6 +25,16 @@ prints the folder in use), and set your organisation's Word template once with
 `.openapi/codex.yaml` sets up the sandbox. Give it a one-shot prompt and it
 runs the full workflow including PR creation.
 
+## Model a full production chain in natural language
+
+For reservoir, production/injection wells, SURF, multiphase flowlines and risers,
+facilities, process utilities and downstream processing, use `@network-energy-systems`
+with `neqsim-production-system-modeling`. Python and Java use the same NeqSim engine
+and shared fluid/topology/interface contract. Compose installed core/community
+specialists and optional authorized enterprise overlays. For formal reports,
+`@solve-task` retains the study workflow. See
+[capability discovery](docs/development/AGENT_CAPABILITY_DISCOVERY.md).
+
 ## What Is NeqSim?
 
 Java library for thermodynamic fluid properties and process simulation.
@@ -99,8 +109,8 @@ src/test/java/neqsim/   Mirrors production structure. JUnit 5. Extend NeqSimTest
 src/main/resources/      Component databases, design data CSVs
 examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
-.github/agents/          30+ Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
-.github/skills/          45+ reusable knowledge packages (API, process-modeling, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
+.github/agents/          Specialist Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
+.github/skills/          Reusable knowledge packages (API, process-modeling, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
 community-skills.yaml    Public community skill catalog — external `neqsim-*` skills installable via `neqsim skill install`
 community-agents.yaml    Public community agent catalog — agent workflows with `required_skills` dependencies
 docs/integration/skills_guide.md

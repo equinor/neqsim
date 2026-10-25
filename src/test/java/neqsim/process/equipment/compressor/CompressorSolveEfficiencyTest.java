@@ -109,7 +109,15 @@ public class CompressorSolveEfficiencyTest {
     assertEquals(targetK, compressor.getOutletStream().getTemperature(), 1.0e-10);
   }
 
-  /** Verifies convergence from the upper physical efficiency bound. */
+  /**
+   * Verifies convergence from unit efficiency onto the 0.40 wet-gas target at the default 0.01 K tolerance.
+   *
+   * <p>
+   * Outlet temperature chatters by a few tenths of a kelvin across the hydrocarbon phase boundary, so one secant path
+   * from efficiency 1.0 can stop about 0.1 K short of the forward result. The solve still has to recover that 0.40
+   * operating point without loosening the temperature tolerance.
+   * </p>
+   */
   @Test
   public void testSolveFromUnitEfficiency() {
     Compressor probe = createWetGasCompressor(0.40);
@@ -117,6 +125,24 @@ public class CompressorSolveEfficiencyTest {
     Compressor compressor = createWetGasCompressor(1.0);
     double targetK = probe.getOutletStream().getTemperature();
     assertEquals(0.40, compressor.solveEfficiency(targetK), 0.01);
+    assertEquals(targetK, compressor.getOutletStream().getTemperature(), 0.01);
+  }
+
+  /**
+   * Verifies convergence from unit efficiency onto a smooth 0.50 wet-gas target at the default 0.01 K tolerance.
+   *
+   * <p>
+   * Efficiency 0.50 sits below the phase-boundary chatter of the 0.40 case, so this keeps coverage of the smooth secant
+   * path.
+   * </p>
+   */
+  @Test
+  public void testSolveFromUnitEfficiencySmoothTarget() {
+    Compressor probe = createWetGasCompressor(0.50);
+    probe.run();
+    Compressor compressor = createWetGasCompressor(1.0);
+    double targetK = probe.getOutletStream().getTemperature();
+    assertEquals(0.50, compressor.solveEfficiency(targetK), 0.01);
     assertEquals(targetK, compressor.getOutletStream().getTemperature(), 0.01);
   }
 

@@ -17,10 +17,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Regression tests for {@link PedersenPlusModelSolver}.
  *
  * <p>
- * The expected coefficients were captured from the implementation that used {@code SimpleMatrix} directly, before it
- * was migrated to {@code LinearAlgebraOperations}. EJML and EJML may round LU and QR operations differently; compare
- * steps within 32 ulps and independently verify the least-squares optimality condition. Assembly and input ownership
- * remain exact contracts.
+ * Legacy solver steps retain backend and input-ownership contracts. The current Pedersen distribution is verified
+ * against its physical mole, mass and density constraints, rather than freezing coefficients from an unconverged
+ * historical fit.
  * </p>
  *
  * @author asmf
@@ -33,15 +32,15 @@ class PedersenPlusModelSolverTest {
    * @param plusMoles number of moles in the plus fraction
    * @param plusMolarMass plus-fraction molar mass in kg/mol
    * @param plusDensity plus-fraction density in g/cm3
-   * @return the four Pedersen coefficients
+   * @return the fitted Pedersen distribution
    */
-  private static double[] characterise(double plusMoles, double plusMolarMass, double plusDensity) {
+  private static PlusFractionModelInterface characterise(double plusMoles, double plusMolarMass, double plusDensity) {
     SystemInterface system = createFluid(plusMoles, plusMolarMass, plusDensity);
     system.getCharacterization().setPlusFractionModel("Pedersen");
     system.getCharacterization().setLumpingModel("PVTlumpingModel");
     system.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(9);
     system.getCharacterization().characterisePlusFraction();
-    return system.getCharacterization().getPlusFractionModel().getCoefs();
+    return system.getCharacterization().getPlusFractionModel();
   }
 
   /**
@@ -219,21 +218,85 @@ class PedersenPlusModelSolverTest {
   }
 
   /**
-   * Verifies the coefficients for a typical C10+ fraction within floating-point tolerance.
+   * Verifies the physical constraints for a typical C10+ fraction.
    */
   @Test
-  void typicalPlusFractionCoefficientsAreUnchanged() {
-    assertArrayEquals(new double[] {-3.479373356777761, -0.0855476997870545, 0.7282361992342693, 0.029020154394731944},
-        characterise(11.0, 0.290, 0.82), 1.0e-14);
+  void typicalPlusFractionMatchesSuppliedMoments() {
+    assertFittedMoments(characterise(11.0, 0.290, 0.82), 11.0 / 69.0, 0.290, 0.82);
   }
 
   /**
-   * Verifies the coefficients for a heavy, dense C10+ fraction within floating-point tolerance.
+   * Verifies the physical constraints for a heavy, dense C10+ fraction.
    */
   @Test
-  void heavyPlusFractionCoefficientsAreUnchanged() {
-    assertArrayEquals(
-        new double[] {-4.3450040345066885, -0.024758815553877978, 0.6014349180683386, 0.08672990444665372},
-        characterise(30.0, 0.500, 0.92), 1.0e-14);
+  void heavyPlusFractionMatchesSuppliedMoments() {
+    assertFittedMoments(characterise(30.0, 0.500, 0.92), 30.0 / 88.0, 0.500, 0.92);
+  }
+
+  /**
+   * Checks the extended SCN grid without claiming that its heavy cuts have qualified EOS properties.
+   */
+  @Test
+  void extendedHeavyOilDistributionConservesItsMoments() {
+    SystemInterface system = createFluid(30.0, 0.850, 0.97);
+    system.init(0);
+    system.getCharacterization().setPlusFractionModel("Pedersen Heavy Oil");
+    PlusFractionModelInterface split = system.getCharacterization().getPlusFractionModel();
+    assertTrue(split.hasPlusFraction());
+    assertTrue(split.characterizePlusFraction(system.getCharacterization().getTBPModel()));
+    assertFittedMoments(split, 30.0 / 88.0, 0.850, 0.97);
+  }
+
+  /**
+   * Independently reconstructs the moments supplied to a finite-SCN exponential fit.
+   *
+   * @param split fitted distribution
+   * @param expectedMoles supplied plus mole fraction
+   * @param expectedMass supplied mean molar mass in kg/mol
+   * @param expectedDensity supplied density in g/cm3
+   */
+  private static void assertFittedMoments(PlusFractionModelInterface split, double expectedMoles, double expectedMass,
+      double expectedDensity) {
+    double moles = 0.0;
+    double mass = 0.0;
+    double volume = 0.0;
+    for (int carbon = split.getFirstPlusFractionNumber(); carbon < split.getLastPlusFractionNumber(); carbon++) {
+      moles += split.getZ()[carbon];
+      mass += split.getZ()[carbon] * split.getM()[carbon];
+      volume += split.getZ()[carbon] * split.getM()[carbon] / split.getDens()[carbon];
+    }
+    assertEquals(expectedMoles, moles, expectedMoles * 1.0e-11);
+    assertEquals(expectedMass, mass / moles, expectedMass * 1.0e-11);
+    assertEquals(expectedDensity, mass / volume, 2.0e-6);
+  }
+
+  /**
+   * Verifies the normalized-MW Jacobian against independent central differences.
+   */
+  @Test
+  void meanMolarMassJacobianMatchesFiniteDifference() {
+    SystemInterface system = createFluid(11.0, 0.290, 0.82);
+    system.init(0);
+    PlusFractionModel selector = new PlusFractionModel(system);
+    selector.firstPlusFractionNumber = 10;
+    PlusFractionModel.PedersenPlusModel split = (PlusFractionModel.PedersenPlusModel) selector.getModel("Pedersen");
+    assertTrue(split.hasPlusFraction());
+    split.firsttime = false;
+    split.setCoefs(-3.5, 0);
+    split.setCoefs(-0.085, 1);
+    PedersenPlusModelSolver solver = new PedersenPlusModelSolver(system, split);
+    solver.setJacAB();
+    for (int column = 0; column < 2; column++) {
+      double initial = split.getCoef(column);
+      double step = 1.0e-6;
+      split.setCoefs(initial + step, column);
+      solver.setfvecAB();
+      double upper = solver.fvecAB[1];
+      split.setCoefs(initial - step, column);
+      solver.setfvecAB();
+      double lower = solver.fvecAB[1];
+      split.setCoefs(initial, column);
+      assertEquals((upper - lower) / (2.0 * step), solver.JacAB[1][column], 1.0e-8);
+    }
   }
 }

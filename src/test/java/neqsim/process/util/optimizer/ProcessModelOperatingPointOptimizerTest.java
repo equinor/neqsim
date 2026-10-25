@@ -124,6 +124,11 @@ class ProcessModelOperatingPointOptimizerTest {
 
     Map<String, Object> evidence = result.getOptimizerEvidence("cycle-42");
     assertEquals("cycle-42", evidence.get("cycle_id"));
+    assertEquals("mixed production value", evidence.get("objective_name"));
+    assertEquals("MAXIMIZE", evidence.get("objective_direction"));
+    assertEquals("value-unit/hr", evidence.get("objective_unit"));
+    assertEquals(result.getCandidates().get(0).getRawObjective(), evidence.get("initial_objective_value"));
+    assertEquals(result.getAcceptedPointReplay().getRawObjective(), evidence.get("accepted_objective_value"));
     assertEquals(Boolean.TRUE, evidence.get("simulation_converged"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_feasible"));
     assertEquals(Boolean.TRUE, evidence.get("candidate_finite"));
