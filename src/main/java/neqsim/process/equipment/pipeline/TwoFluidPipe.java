@@ -8,6 +8,8 @@ import java.util.UUID;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.pipeline.twophasepipe.ConservativeEnergyTransport;
+import neqsim.process.equipment.pipeline.twophasepipe.ConservativeThermodynamicRecovery;
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
 import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
@@ -285,6 +287,12 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Stage the legacy transient on an isolated serializable candidate; default false. */
   private boolean transactionalTransientEnabled;
+
+  /** Opt-in conservative internal energy and volume thermodynamic recovery. */
+  private boolean useConservativeEnergyRecovery;
+
+  /** Accepted open-control-volume energy audit for conservative recovery. */
+  private TwoFluidConservativeEnergyReport lastConservativeEnergyReport;
 
   /** Explicitly selected experimental unsplit solver, or null for the legacy integrator. */
   private UnsplitTransientSolver unsplitTransientSolver;
@@ -2945,6 +2953,10 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   private void updateThermalRiskFlags(int section, double temperature) {
+    if (hydrateRiskSections == null || hydrateRiskSections.length != numberOfSections) {
+      hydrateRiskSections = new boolean[numberOfSections];
+      waxRiskSections = new boolean[numberOfSections];
+    }
     hydrateRiskSections[section] = hydrateFormationTemperature > 0.0 && temperature < hydrateFormationTemperature;
     waxRiskSections[section] = waxAppearanceTemperature > 0.0 && temperature < waxAppearanceTemperature;
   }
@@ -5153,6 +5165,7 @@ public class TwoFluidPipe extends Pipeline {
     }
     unsplitDensityModel = null;
     unsplitReferenceSections = null;
+    lastConservativeEnergyReport = null;
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
@@ -5485,8 +5498,9 @@ public class TwoFluidPipe extends Pipeline {
    * Run transient simulation for specified time step.
    *
    * <p>
-   * The default legacy route retains completed substeps on an incomplete interval. Selecting a complete transaction or
-   * an experimental unsplit solver instead leaves the entire accepted interval unchanged on failure.
+   * The default legacy route retains completed substeps on an incomplete interval. Selecting a complete transaction,
+   * conservative energy recovery or an experimental unsplit solver instead leaves the entire accepted interval
+   * unchanged on failure.
    * </p>
    *
    * @param dt Requested time step (s)
@@ -5498,11 +5512,200 @@ public class TwoFluidPipe extends Pipeline {
    */
   @Override
   public synchronized void runTransient(double dt, UUID id) {
-    if (transactionalTransientEnabled || unsplitTransientSolver != null) {
+    if (useConservativeEnergyRecovery) {
+      validateConservativeEnergyConfiguration();
+    }
+    if (transactionalTransientEnabled || useConservativeEnergyRecovery || unsplitTransientSolver != null) {
       runTransactionalTransient(dt, id);
     } else {
       runTransientCandidate(dt, id);
     }
+  }
+
+  /**
+   * Select experimental recovery of common pressure and temperature from transported total energy and fixed volume.
+   * Enable before run(); named-component transport is enabled automatically. Each transient interval is staged on a
+   * private copy and published only after complete success. The supported initial route is coupled Euler with simple
+   * wall heat transfer, without slug tracking, finite-rate film transfer, upstream volumes or an unsplit solver.
+   * Independently transported phase compositions are never replaced by an equilibrium VU flash. Joule-Thomson and
+   * latent contributions are represented by EOS energy and enthalpy transport, rather than added again as sources.
+   *
+   * @param enabled true to select conservative thermodynamic recovery; default false
+   * @throws IllegalStateException if changing the energy owner after cell initialization
+   */
+  public synchronized void setUseConservativeEnergyRecovery(boolean enabled) {
+    if (sections != null && enabled != useConservativeEnergyRecovery) {
+      throw new IllegalStateException("Select the energy recovery owner before run()");
+    }
+    if (enabled) {
+      setComponentTransportEnabled(true);
+    }
+    useConservativeEnergyRecovery = enabled;
+    lastConservativeEnergyReport = null;
+  }
+
+  /** @return whether conservative thermodynamic recovery owns transient temperature */
+  public synchronized boolean isUseConservativeEnergyRecovery() {
+    return useConservativeEnergyRecovery;
+  }
+
+  /** @return accepted conservative total-energy audit, or null when the legacy thermal owner is selected */
+  public TwoFluidConservativeEnergyReport getLastConservativeEnergyReport() {
+    return lastConservativeEnergyReport;
+  }
+
+  /** Reject unsupported combinations before evaluating a conservative interval. */
+  private void validateConservativeEnergyConfiguration() {
+    if (!includeEnergyEquation || !componentTransportEnabled || !coupledPressureMomentumEnabled
+        || timeIntegrator.getMethod() != TimeIntegrator.Method.EULER || enableSlugTracking
+        || nonEquilibriumFilmTransfer != null || useMultilayerThermalModel || upstreamCompressibleVolume != null
+        || unsplitTransientSolver != null || equations.isConservativeSlugForceIntegrationEnabled()
+        || equations.isStiffBubbleDragEnabled()) {
+      throw new IllegalStateException("Conservative energy recovery requires coupled Euler, energy and component "
+          + "transport, disabled slug tracking, and no multilayer, film, upstream-volume or split-force model");
+    }
+    if (!(inletBCType == BoundaryCondition.CLOSED || inletBCType == BoundaryCondition.STREAM_CONNECTED
+        || inletBCType == BoundaryCondition.CONSTANT_FLOW && inletMassFlowSet)
+        || !(outletBCType == BoundaryCondition.CLOSED || outletBCType == BoundaryCondition.CONSTANT_PRESSURE)) {
+      throw new IllegalStateException("Conservative energy recovery supports a phase-flow or closed inlet "
+          + "and a pressure-face or closed outlet");
+    }
+  }
+
+  /** Recover the EOS state at each actual transported gas, oil and aqueous composition. */
+  private void recoverConservativeThermodynamics() {
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      recoverConservativeCell(cell);
+    }
+  }
+
+  /**
+   * Recover one cell without changing its conserved inventories.
+   *
+   * @param cell physical cell index
+   */
+  private void recoverConservativeCell(int cell) {
+    TwoFluidSection section = sections[cell];
+    SystemInterface[] phaseStates = new SystemInterface[3];
+    double[] state = section.getStateVector();
+    for (int phase = 0; phase < 3; phase++) {
+      if (state[phase] > 0.0) {
+        phaseStates[phase] = componentTransport.createPhaseState(cell, phase, referenceFluid, section.getPressure(),
+            section.getTemperature());
+      }
+    }
+    ConservativeThermodynamicRecovery.recover(section, phaseStates).applyTo(section);
+    updateThermalRiskFlags(cell, section.getTemperature());
+  }
+
+  /** @return integrated conservative total internal plus kinetic energy in J */
+  private double integratedConservativeEnergy() {
+    double energy = 0.0;
+    if (sections != null) {
+      for (TwoFluidSection section : sections) {
+        energy += section.getEnergyPerLength() * section.getLength();
+      }
+    }
+    return energy;
+  }
+
+  /** @return physical cell lengths in m for accepted face transfer bookkeeping */
+  private double[] sectionLengthsForEnergy() {
+    double[] lengths = new double[numberOfSections];
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      lengths[cell] = sections[cell].getLength();
+    }
+    return lengths;
+  }
+
+  /**
+   * Build phase total enthalpy donors for the acoustic correction's accepted mass transfers.
+   *
+   * @param donors frozen thermodynamic cell states
+   * @return gas, oil and aqueous specific total enthalpies in J/kg
+   */
+  private static double[][] phaseTotalEnthalpies(TwoFluidSection[] donors) {
+    double[][] enthalpies = new double[donors.length][3];
+    for (int cell = 0; cell < donors.length; cell++) {
+      TwoFluidSection section = donors[cell];
+      enthalpies[cell][0] = section.getGasEnthalpy() + 0.5 * Math.pow(section.getGasVelocity(), 2);
+      enthalpies[cell][1] = section.getOilEnthalpy() + 0.5 * Math.pow(section.getOilVelocity(), 2);
+      enthalpies[cell][2] = section.getWaterEnthalpy() + 0.5 * Math.pow(section.getWaterVelocity(), 2);
+    }
+    return enthalpies;
+  }
+
+  /** @return maximum relative occupied-volume and published-state energy reconstruction residuals */
+  private double[] conservativeRecoveryResiduals() {
+    double volumeResidual = 0.0;
+    double energyResidual = 0.0;
+    for (TwoFluidSection section : sections) {
+      double[] state = section.getStateVector();
+      double[] density = {section.getGasDensity(), section.getOilDensity(), section.getWaterDensity()};
+      double[] enthalpy = {section.getGasEnthalpy(), section.getOilEnthalpy(), section.getWaterEnthalpy()};
+      double occupied = 0.0;
+      double energy = 0.0;
+      for (int phase = 0; phase < 3; phase++) {
+        if (state[phase] > 0.0) {
+          occupied += state[phase] / density[phase];
+          energy += state[phase] * (enthalpy[phase] - section.getPressure() / density[phase])
+              + 0.5 * state[phase + 3] * state[phase + 3] / state[phase];
+        }
+      }
+      volumeResidual = Math.max(volumeResidual, Math.abs(occupied / section.getArea() - 1.0));
+      double scale = Math.max(1.0, Math.max(Math.abs(state[6]),
+          (state[0] + state[1] + state[2]) * section.getMixtureHeatCapacity() * section.getTemperature()));
+      energyResidual = Math.max(energyResidual, Math.abs(energy - state[6]) / scale);
+    }
+    return new double[] {volumeResidual, energyResidual};
+  }
+
+  /**
+   * Apply simple-wall heat once to the conservative energy. The existing backward-Euler two-node heat model uses
+   * locally evaluated Cv for its linearized fluid capacity; a subsequent EOS solve publishes the actual temperature.
+   * The same heat is removed from the wall node. No sensible advection, JT, latent or gravity source is added here.
+   *
+   * @param dt accepted hydrodynamic step in s
+   * @param phaseMassFaceFluxes accepted phase mass face fluxes in kg/s
+   * @return net heat added to fluid including direct electrical heating, in J
+   */
+  private double advanceConservativeWallHeat(double dt, double[][] phaseMassFaceFluxes) {
+    boolean wallExchange = enableHeatTransfer && (heatTransferCoefficient > 0.0 || heatTransferProfile != null);
+    if (!wallExchange && directElectricalHeatingPowerPerMeter == 0.0) {
+      return 0.0;
+    }
+    if (wallTemperatureProfile == null || wallTemperatureProfile.length != numberOfSections) {
+      wallTemperatureProfile = new double[numberOfSections];
+      for (int cell = 0; cell < numberOfSections; cell++) {
+        wallTemperatureProfile[cell] = sections[cell].getTemperature();
+      }
+    }
+    double outerDiameter = diameter + 2.0 * wallThickness;
+    double wallCapacity = Math.PI * (outerDiameter * outerDiameter - diameter * diameter) / 4.0 * wallDensity
+        * wallHeatCapacity;
+    double totalHeatJ = 0.0;
+    for (int cell = 0; cell < numberOfSections; cell++) {
+      TwoFluidSection section = sections[cell];
+      double ambient = surfaceTemperatureProfile != null && cell < surfaceTemperatureProfile.length
+          ? surfaceTemperatureProfile[cell]
+          : surfaceTemperature;
+      double[] split = wallExchange ? wallFilmSplit(cell, section, phaseMassFaceFluxes, outerDiameter) : new double[2];
+      double fluidCapacity = (section.getGasMassPerLength() + section.getOilMassPerLength()
+          + section.getWaterMassPerLength()) * section.getMixtureHeatCapacity();
+      double[] temperatures = advanceSimpleWallThermalState(section.getTemperature(), wallTemperatureProfile[cell],
+          ambient, fluidCapacity, wallCapacity, split[0] * Math.PI * diameter, split[1] * Math.PI * outerDiameter,
+          directElectricalHeatingPowerPerMeter, dt);
+      double heatPerLength = fluidCapacity * (temperatures[0] - section.getTemperature());
+      if (!Double.isFinite(heatPerLength) || !Double.isFinite(temperatures[1])) {
+        throw new IllegalStateException("Nonfinite conservative wall heat exchange");
+      }
+      section.setEnergyPerLength(section.getEnergyPerLength() + heatPerLength);
+      wallTemperatureProfile[cell] = temperatures[1];
+      recoverConservativeCell(cell);
+      updateThermalRiskFlags(cell, section.getTemperature());
+      totalHeatJ += heatPerLength * section.getLength();
+    }
+    return totalHeatJ;
   }
 
   /**
@@ -5514,7 +5717,7 @@ public class TwoFluidPipe extends Pipeline {
    * and outlet objects retain their identity; callers holding a model returned by a submodel getter must reacquire it
    * after acceptance. Copying adds memory and runtime cost. This is an exception transaction, not a guarantee of
    * concurrent access through unsynchronized getters or arbitrary user-defined stream callbacks. The supported concrete
-   * fluid phases are SRK, PR, SRK-CPA and SRK-CPAs; other EOS helpers and pipe subclasses require a separate
+   * fluid phases are SRK, PR, SRK-CPA, SRK-CPAs and ideal gas; other EOS helpers and pipe subclasses require a separate
    * snapshot/commit contract and are rejected before evaluation.
    * </p>
    *
@@ -5632,7 +5835,8 @@ public class TwoFluidPipe extends Pipeline {
     for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
       Class<?> type = fluid.getPhase(phase).getClass();
       if (type != neqsim.thermo.phase.PhaseSrkEos.class && type != neqsim.thermo.phase.PhasePrEos.class
-          && type != neqsim.thermo.phase.PhaseSrkCPA.class && type != neqsim.thermo.phase.PhaseSrkCPAs.class) {
+          && type != neqsim.thermo.phase.PhaseSrkCPA.class && type != neqsim.thermo.phase.PhaseSrkCPAs.class
+          && type != neqsim.thermo.phase.PhaseIdealGas.class) {
         throw new IllegalStateException("Transactional transient simulation does not support phase " + type.getName());
       }
     }
@@ -5713,6 +5917,8 @@ public class TwoFluidPipe extends Pipeline {
     equations = candidate.equations;
     unsplitPressureInterpolationEnabled = candidate.unsplitPressureInterpolationEnabled;
     transactionalTransientEnabled = candidate.transactionalTransientEnabled;
+    useConservativeEnergyRecovery = candidate.useConservativeEnergyRecovery;
+    lastConservativeEnergyReport = candidate.lastConservativeEnergyReport;
     unsplitTransientSolver = candidate.unsplitTransientSolver;
     unsplitMaximumTimeStep = candidate.unsplitMaximumTimeStep;
     unsplitDensityModel = candidate.unsplitDensityModel;
@@ -5833,6 +6039,9 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Execute the existing numerical route on its owning graph. */
   private void runTransientCandidate(double dt, UUID id) {
+    if (useConservativeEnergyRecovery) {
+      validateConservativeEnergyConfiguration();
+    }
     if (equations.isConservativeSlugForceIntegrationEnabled()
         && (slugTrackingMode != SlugTrackingMode.CONSERVATIVE_LAGRANGIAN || !sharedSlugForceBalanceEnabled
             || equations.isStiffBubbleDragEnabled())) {
@@ -5868,6 +6077,7 @@ public class TwoFluidPipe extends Pipeline {
     isTransientMode = true;
     selectCoupledPressureForLiquidFullLine();
     synchronizeUpstreamCompressibleVolumePressure();
+    lastConservativeEnergyReport = null;
     lastMassBalanceReport = null;
     lastThermalEnergyBalanceReport = null;
     lastComponentConservationReport = null;
@@ -5883,6 +6093,12 @@ public class TwoFluidPipe extends Pipeline {
     double[] integratedInletMassKg = new double[3];
     double[] integratedOutletMassKg = new double[3];
     double[] integratedSourceMassKg = new double[3];
+    double initialConservativeEnergyJ = useConservativeEnergyRecovery ? integratedConservativeEnergy() : 0.0;
+    double conservativeAdvectionJ = 0.0;
+    double conservativeGravityJ = 0.0;
+    double conservativeWallHeatJ = 0.0;
+    double maximumRecoveryVolumeResidual = 0.0;
+    double maximumRecoveryEnergyResidual = 0.0;
     double fluidEnergyChangeJ = 0.0;
     double wallEnergyChangeJ = 0.0;
     double sensibleAdvectionEnergyJ = 0.0;
@@ -5993,10 +6209,13 @@ public class TwoFluidPipe extends Pipeline {
 
       // 1. Update thermodynamic properties (periodically)
       currentStep++;
-      if (currentStep % thermodynamicUpdateInterval == 0) {
+      if (useConservativeEnergyRecovery) {
+        recoverConservativeThermodynamics();
+      } else if (currentStep % thermodynamicUpdateInterval == 0) {
         updateThermodynamics();
       }
 
+      TwoFluidSection[] energyDonors = useConservativeEnergyRecovery ? getSectionSnapshots() : null;
       // 2. Store previous state for rollback capability
       equations.setConservativeSlugs(enableSlugTracking && slugTrackingMode == SlugTrackingMode.CONSERVATIVE_LAGRANGIAN
           ? lagrangianSlugTracker.getSlugs()
@@ -6023,6 +6242,7 @@ public class TwoFluidPipe extends Pipeline {
           ? new double[numberOfSections]
           : null;
       final int[] phaseStageIndex = {0};
+      final double[] conservativeRates = new double[2];
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
@@ -6056,6 +6276,14 @@ public class TwoFluidPipe extends Pipeline {
           derivative = equations.calcRHS(sections, dx);
         } finally {
           equations.setOutletBoundaryPressure(savedOutletFacePressure);
+        }
+        if (useConservativeEnergyRecovery) {
+          double weight = phaseStageWeights[phaseStageIndex[0]];
+          for (int cell = 0; cell < numberOfSections; cell++) {
+            double source = sections[cell].getEnergySource() * sections[cell].getLength();
+            conservativeRates[0] += weight * (derivative[cell][6] * sections[cell].getLength() - source);
+            conservativeRates[1] += weight * source;
+          }
         }
         stageMassBalanceRates.add(equations.getLastMassBalanceRate());
         if (capturePhaseStageTerms) {
@@ -6147,7 +6375,7 @@ public class TwoFluidPipe extends Pipeline {
         }
         timeIntegrator.setImplicitVoidWaveProperties(voidWaveSpeeds, voidWaveSlipCoefficients, areas, gasDensities,
             oilDensities, waterDensities, dx, useImplicitVoidWave);
-        boolean outletFixed = (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
+        boolean outletFixed = !useConservativeEnergyRecovery && (outletBCType == BoundaryCondition.CONSTANT_PRESSURE
             || outletBCType == BoundaryCondition.CHARACTERISTIC);
         timeIntegrator.setCoupledPressureMomentumProperties(pressures, areas, lengths, gasDensities, oilDensities,
             waterDensities, gasSoundSpeeds, oilSoundSpeeds, waterSoundSpeeds, transientOutletCellPressure(),
@@ -6248,6 +6476,12 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // 5. Now safe to apply corrections and state
+      if (useConservativeEnergyRecovery) {
+        double[] correctionEnergyJ = ConservativeEnergyTransport.applyFaceTransfers(U_new,
+            timeIntegrator.getCoupledPressureMomentumPhaseMassCorrectionsKg(), phaseTotalEnthalpies(energyDonors),
+            new double[3], sectionLengthsForEnergy());
+        conservativeRates[0] += (correctionEnergyJ[0] - correctionEnergyJ[1]) / dtActual;
+      }
       validateAndCorrectState(U_new, U_prev);
 
       if (coupledPressureMomentumEnabled) {
@@ -6334,6 +6568,15 @@ public class TwoFluidPipe extends Pipeline {
             weightedPhaseMassSources, weightedComponentSources, weightedLatentHeatSources, sections,
             getInletStream().getFluid(), referenceFluid, componentConservationTolerance);
       }
+      if (useConservativeEnergyRecovery) {
+        recoverConservativeThermodynamics();
+        conservativeWallHeatJ += advanceConservativeWallHeat(dtActual, weightedPhaseMassFaceFluxes);
+        double[] residuals = conservativeRecoveryResiduals();
+        maximumRecoveryVolumeResidual = Math.max(maximumRecoveryVolumeResidual, residuals[0]);
+        maximumRecoveryEnergyResidual = Math.max(maximumRecoveryEnergyResidual, residuals[1]);
+        conservativeAdvectionJ += dtActual * conservativeRates[0];
+        conservativeGravityJ += dtActual * conservativeRates[1];
+      }
       // Compensated accepted-time summation prevents repeated subtraction from leaving
       // a spurious, unrepresentable tail after hundreds of CFL-limited steps.
       double elapsedIncrement = dtActual - acceptedElapsedCompensation;
@@ -6393,7 +6636,7 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // 9. Update temperature profile when thermal or component transport is enabled
-      if (captureThermalStageFluxes && nonEquilibriumFilmTransfer == null) {
+      if (captureThermalStageFluxes && nonEquilibriumFilmTransfer == null && !useConservativeEnergyRecovery) {
         ThermalEnergyStep energyStep = updateTransientTemperature(dtActual, weightedPhaseMassFaceFluxes,
             latentHeatEnergyByCellJ);
         fluidEnergyChangeJ += energyStep.fluidEnergyChangeJ;
@@ -6415,6 +6658,11 @@ public class TwoFluidPipe extends Pipeline {
 
     lastMassBalanceReport = new TwoFluidMassBalanceReport(acceptedElapsedTime, acceptedSubsteps, initialMassKg,
         getPhaseMassInventoriesKg(), integratedInletMassKg, integratedOutletMassKg, integratedSourceMassKg);
+    if (useConservativeEnergyRecovery) {
+      lastConservativeEnergyReport = new TwoFluidConservativeEnergyReport(acceptedElapsedTime,
+          initialConservativeEnergyJ, integratedConservativeEnergy(), conservativeAdvectionJ, conservativeGravityJ,
+          conservativeWallHeatJ, maximumRecoveryVolumeResidual, maximumRecoveryEnergyResidual);
+    }
     if (thermalEnergyTracked) {
       lastThermalEnergyBalanceReport = new TwoFluidThermalEnergyBalanceReport(acceptedElapsedTime, acceptedSubsteps,
           fluidEnergyChangeJ, wallEnergyChangeJ, sensibleAdvectionEnergyJ, jouleThomsonEnergyJ, latentHeatEnergyJ,
@@ -7305,7 +7553,9 @@ public class TwoFluidPipe extends Pipeline {
     // Outlet boundary
     TwoFluidSection outlet = sections[numberOfSections - 1];
     if (outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
-      outlet.setPressure(transientOutletCellPressure());
+      if (!(isTransientMode && useConservativeEnergyRecovery)) {
+        outlet.setPressure(transientOutletCellPressure());
+      }
     } else if (outletBCType == BoundaryCondition.CLOSED && !(isTransientMode && coupledPressureMomentumEnabled)) {
       // Repeatedly resetting a finite cell's momentum is an artificial impulse, not a closed-face condition.
       // Zero velocity at outlet (blocked/shut-in condition)
@@ -7358,6 +7608,10 @@ public class TwoFluidPipe extends Pipeline {
         if (phase == 0) {
           face.setGasEnthalpy(enthalpy);
         } else {
+          if (useConservativeEnergyRecovery) {
+            face.setPhaseEnthalpies(phase == 1 ? enthalpy : face.getOilEnthalpy(),
+                phase == 2 ? enthalpy : face.getWaterEnthalpy());
+          }
           liquidEnthalpy += fractions[phase] * enthalpy;
         }
       }
