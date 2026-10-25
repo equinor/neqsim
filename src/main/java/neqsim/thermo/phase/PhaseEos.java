@@ -332,7 +332,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
     double[] roots = solveCubic(c2, c1, c0);
     double z = Double.NaN;
     for (double r : roots) {
-      if (!Double.isNaN(r) && r > 0) {
+      if (Double.isFinite(r) && r > Math.max(0.0, B)) {
         if (Double.isNaN(z)) {
           z = r;
         } else if (pt == PhaseType.GAS && r > z) {
@@ -353,7 +353,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   }
 
   /**
-   * Solve cubic equation z^3 + c2*z^2 + c1*z + c0 = 0 using Cardano's method.
+   * Solve z^3 + c2*z^2 + c1*z + c0 = 0 using Cardano's largest root and stable quadratic deflation.
    *
    * @param c2 coefficient for z^2
    * @param c1 coefficient for z
@@ -387,10 +387,29 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       double phi = Math.acos(acosArg);
       double m = 2.0 * Math.cbrt(r);
       roots[0] = m * Math.cos(phi / 3.0) - b / (3.0 * a);
-      roots[1] = m * Math.cos((phi + 2.0 * Math.PI) / 3.0) - b / (3.0 * a);
-      roots[2] = m * Math.cos((phi + 4.0 * Math.PI) / 3.0) - b / (3.0 * a);
+      // For phi in [0, pi], cos(phi/3) gives the largest root; recover the other two by deflation below.
+      roots[1] = Double.NaN;
+      roots[2] = Double.NaN;
     }
 
+    // At low pressure, subtracting b/(3a) from the trigonometric roots loses the small liquid roots.
+    // Deflate by the well-scaled largest root, deriving the quadratic coefficient from c1 rather than c2+z.
+    double largest = roots[0];
+    if (Double.isFinite(largest) && largest != 0.0) {
+      double product = -c0 / largest;
+      double linear = (product - c1) / largest;
+      double quadraticDiscriminant = linear * linear - 4.0 * product;
+      roots[0] = largest;
+      roots[1] = Double.NaN;
+      roots[2] = Double.NaN;
+      if (quadraticDiscriminant >= 0.0) {
+        double quadraticRoot = -0.5 * (linear + Math.copySign(Math.sqrt(quadraticDiscriminant), linear));
+        if (quadraticRoot != 0.0) {
+          roots[1] = quadraticRoot;
+          roots[2] = product / quadraticRoot;
+        }
+      }
+    }
     return roots;
   }
 

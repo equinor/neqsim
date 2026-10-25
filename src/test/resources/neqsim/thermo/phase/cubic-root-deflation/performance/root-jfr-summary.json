@@ -1,0 +1,68 @@
+{
+  "all_execution_samples": 663,
+  "eligible_flash_plus_init3_samples": 543,
+  "topmost_neqsim_frame_counts": [
+    [
+      "neqsim.thermo.component.ComponentGENRTLmodifiedHV.getGamma",
+      400
+    ],
+    [
+      "neqsim.thermo.phase.PhaseEos.molarVolume",
+      32
+    ],
+    [
+      "neqsim.thermo.component.Component.isIsIon",
+      19
+    ],
+    [
+      "neqsim.thermo.phase.PhaseEos.calcAiT",
+      17
+    ],
+    [
+      "neqsim.thermo.phase.PhaseEos.init",
+      8
+    ],
+    [
+      "neqsim.thermo.mixingrule.EosMixingRuleHandler$SRKHuronVidal2.init",
+      6
+    ],
+    [
+      "neqsim.thermo.component.Component.createComponent",
+      6
+    ],
+    [
+      "neqsim.thermo.system.SystemThermo.initAnalytic",
+      4
+    ],
+    [
+      "neqsim.thermodynamicoperations.flashops.TPmultiflash.stabilityAnalysis",
+      4
+    ],
+    [
+      "neqsim.thermodynamicoperations.flashops.TPmultiflash.setDoubleArrays",
+      3
+    ],
+    [
+      "neqsim.thermo.phase.Phase.getHID",
+      3
+    ],
+    [
+      "neqsim.thermo.component.Component.clone",
+      3
+    ],
+    [
+      "neqsim.thermo.phase.PhaseGE.setMixingRule",
+      3
+    ],
+    [
+      "neqsim.thermodynamicoperations.flashops.TPmultiflash.run",
+      2
+    ],
+    [
+      "neqsim.thermodynamicoperations.flashops.RachfordRice.calcBetaNielsen2023",
+      2
+    ]
+  ],
+  "analytical_root_inclusive_samples": {},
+  "scope": "Candidate PR/rule4 methane-decane-water-MEG completeFlash(includes init3),150warmup/10measurement batches; exclude DB frames. JFR stack-depth128; sampling is not an exact call counter."
+}

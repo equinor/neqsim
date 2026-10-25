@@ -1,0 +1,19 @@
+import java.nio.file.*;
+import org.objectweb.asm.*;
+public class Instrument {
+ public static void main(String[] args) throws Exception {
+  byte[] input=Files.readAllBytes(Paths.get(args[0]));ClassWriter writer=new ClassWriter(ClassWriter.COMPUTE_MAXS);
+  new ClassReader(input).accept(new ClassVisitor(Opcodes.ASM9,writer){
+   @Override public MethodVisitor visitMethod(int access,String name,String descriptor,String signature,String[] exceptions){
+    MethodVisitor delegate=super.visitMethod(access,name,descriptor,signature,exceptions);int chosen=-1;
+    switch(args[2]+"."+name){
+     case "PhaseEos.molarVolume":chosen=1;break;case "PhaseEos.molarVolumeAnalytical":chosen=2;break;case "PhaseEos.solveCubic":chosen=3;break;case "PhaseEos.dFdV":chosen=4;break;case "PhaseEos.init":chosen=5;break;
+     case "ComponentGENRTLmodifiedHV.getGamma":chosen=0;break;case "TPflash.runInternal":chosen=6;break;case "TPmultiflash.run":chosen=7;break;case "PhaseGENRTLmodifiedHV.getExcessGibbsEnergy":chosen=8;break;
+    }
+    final int id=chosen;if(id<0)return delegate;
+    return new MethodVisitor(Opcodes.ASM9,delegate){@Override public void visitCode(){super.visitCode();super.visitLdcInsn(id);super.visitMethodInsn(Opcodes.INVOKESTATIC,"neqsim/qualification/RootWorkCounts","hit","(I)V",false);}};
+   }
+  },0);
+  Path output=Paths.get(args[1]);Files.createDirectories(output.getParent());Files.write(output,writer.toByteArray());
+ }
+}

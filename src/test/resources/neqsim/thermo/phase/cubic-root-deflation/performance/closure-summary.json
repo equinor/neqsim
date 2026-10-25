@@ -1,0 +1,54 @@
+[
+  {
+    "eos": "SRK",
+    "rule": "2",
+    "phase_types": [
+      "AQUEOUS",
+      "GAS",
+      "OIL"
+    ],
+    "max_balance": 1.7985612998927536e-14,
+    "max_norm": 0.0,
+    "max_log_fugacity": 6.199485369506874e-13,
+    "max_relative_pressure": 5.1159076974727215e-14
+  },
+  {
+    "eos": "SRK",
+    "rule": "4",
+    "phase_types": [
+      "AQUEOUS",
+      "GAS",
+      "OIL"
+    ],
+    "max_balance": 1.0519363158323358e-14,
+    "max_norm": 2.220446049250313e-16,
+    "max_log_fugacity": 2.433608869978343e-13,
+    "max_relative_pressure": 4.7369515717340014e-14
+  },
+  {
+    "eos": "PR",
+    "rule": "2",
+    "phase_types": [
+      "AQUEOUS",
+      "GAS",
+      "OIL"
+    ],
+    "max_balance": 3.164135620181696e-14,
+    "max_norm": 0.0,
+    "max_log_fugacity": 6.821210263296962e-13,
+    "max_relative_pressure": 7.200166389035682e-14
+  },
+  {
+    "eos": "PR",
+    "rule": "4",
+    "phase_types": [
+      "AQUEOUS",
+      "GAS",
+      "OIL"
+    ],
+    "max_balance": 1.1601830607332886e-14,
+    "max_norm": 1.1102230246251565e-16,
+    "max_log_fugacity": 2.6645352591003757e-13,
+    "max_relative_pressure": 6.821210263296962e-14
+  }
+]

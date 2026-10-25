@@ -835,3 +835,31 @@ NumPy/SciPy reproduction are under
 These are independent equation-implementation checks, not empirical calibration.
 Remaining stability, process and strict-gradient compatibility is tracked in
 [issue #4579](https://github.com/equinor/neqsim/issues/4579).
+
+
+### Cubic fallback precision and cost
+
+The cubic fallback obtains the largest root with Cardano's formula and recovers
+the other roots by stable quadratic deflation. For largest root $r$, the remaining
+quadratic has constant coefficient $v=-c_0/r$ and linear coefficient
+$u=(v-c_1)/r$. Computing $u$ this way avoids subtracting two numbers near unity
+at dilute pressures. A stable quadratic formula then retains the small liquid
+roots. Roots inside the excluded volume are rejected. The trigonometric branch
+needs only the largest root, saving two redundant cosine evaluations.
+
+`CubicAnalyticalRootPressureTest` checks SRK/PR water, CO2, methane and hexadecane
+from $10^{-10}$ to 200 bara at three molar inventory scales. It checks pressure,
+excluded volume, mechanical stability and root order through both direct fallback
+and public forced-root initialization. Low-pressure liquid branches may be
+metastable; this is EOS root qualification, not saturation or measurement accuracy.
+The previous fallback failed pressure closure in 25 of 128 direct checks; the
+repaired roots agree with independent 80-digit Decimal calculations to about
+$3.5\times10^{-15}$ relative volume error for the saved scalar inputs. Full
+baseline/input/reference data and the standalone reproduction script are under
+`src/test/resources/neqsim/thermo/phase/cubic-root-deflation/`.
+
+The change uses local primitive arithmetic and the existing three-root array;
+it adds no shared cache or per-call allocation. Complete-flash cost must still
+be distinguished from isolated root evaluation and from changed phase equilibria.
+Matched classical-rule/HV timing evidence and remaining compatibility failures
+are tracked in [issue #4579](https://github.com/equinor/neqsim/issues/4579).
