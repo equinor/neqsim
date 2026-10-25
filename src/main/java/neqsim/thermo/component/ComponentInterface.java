@@ -893,10 +893,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public void setComponentNumber(int numb);
 
   /**
-   * getHeatOfVapourization.
+   * Alias for the coefficient-based pure-component saturation latent heat in J/mol.
    *
-   * @param temp a double
-   * @return a double
+   * @param temp absolute temperature in K, strictly between zero and Tc
+   * @return latent heat in J/mol, or NaN for missing/invalid coefficients or an unsupported temperature
+   * @see #getPureComponentHeatOfVaporization(double)
    */
   public double getHeatOfVapourization(double temp);
 
@@ -1500,10 +1501,17 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
   public double getChemicalPotentialdV(PhaseInterface phase);
 
   /**
-   * Calculates the pure component heat of vaporization in J/mol.
+   * Evaluates the DIPPR 106 form A(1-Tr)^(B+C Tr+D Tr^2+E Tr^3), with Tr=T/Tc.
    *
-   * @param temperature a double
-   * @return a double
+   * <p>
+   * Database A is in J/kmol; the result is converted to J/mol. All five coefficients must be finite, A and the
+   * evaluated exponent must be positive, and 0 &lt; T &lt; Tc. The database does not supply fit temperature limits;
+   * these scalar guards do not qualify a parameter set. This correlation is separate from system-level EOS phase
+   * enthalpy differences.
+   * </p>
+   *
+   * @param temperature absolute temperature in K, strictly between zero and Tc
+   * @return latent heat in J/mol, or NaN for missing/invalid coefficients or an unsupported temperature
    */
   public double getPureComponentHeatOfVaporization(double temperature);
 
