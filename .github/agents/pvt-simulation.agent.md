@@ -84,6 +84,12 @@ their presence does not provide a fitting protocol. Saturation/swelling simulati
 is separate. Follow `docs/pvtsimulation/pvt_workflow.md` and `neqsim-eos-regression` before
 selecting an objective; preserve physical bounds, weighting, identifiability and holdout data.
 
+Register a complete isothermal CVD/DLE pressure path in one `addCVDData`/`addDLEData`
+call. Separate calls are independent experiments; splitting one experiment into singleton
+calls loses its gas-removal history and DLE final stock-tank oil reference. Low-level
+objective samples need `registerDepletionExperiment` plus the returned experiment ID and
+original row index. Four-entry low-level samples remain explicit singleton experiments.
+
 ## Oil Characterization for PVT
 Always characterize C7+ properly:
 - Use `addTBPfraction()` for each carbon number fraction

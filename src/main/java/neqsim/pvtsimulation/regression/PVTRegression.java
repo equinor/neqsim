@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
@@ -53,6 +54,8 @@ public class PVTRegression {
   private List<CCEDataPoint> cceData = new ArrayList<>();
   private List<CVDDataPoint> cvdData = new ArrayList<>();
   private List<DLEDataPoint> dleData = new ArrayList<>();
+  private List<DepletionRegistration> cvdExperiments = new ArrayList<>();
+  private List<DepletionRegistration> dleExperiments = new ArrayList<>();
   private List<SeparatorDataPoint> separatorData = new ArrayList<>();
   private List<ViscosityDataPoint> viscosityData = new ArrayList<>();
 
@@ -76,8 +79,8 @@ public class PVTRegression {
    * @param fluid the base fluid to tune
    */
   public PVTRegression(SystemInterface fluid) {
-    this.baseFluid = fluid.clone();
-    this.tunedFluid = fluid.clone();
+    this.baseFluid = SerializationUtils.clone(fluid);
+    this.tunedFluid = SerializationUtils.clone(fluid);
 
     // Default weights
     experimentWeights.put(ExperimentType.CCE, 1.0);
@@ -117,29 +120,37 @@ public class PVTRegression {
   }
 
   /**
-   * Add CVD (Constant Volume Depletion) experimental data.
+   * Add one complete isothermal CVD (Constant Volume Depletion) experiment, retaining its pressure history.
    *
-   * @param pressures pressure values in bar
+   * @param pressures complete nonincreasing pressure schedule in bara
    * @param liquidDropout liquid dropout values (volume %)
    * @param zFactors gas compressibility factors
    * @param temperature experiment temperature in K
+   * @throws IllegalArgumentException if the schedule or observation array lengths are invalid
    */
   public void addCVDData(double[] pressures, double[] liquidDropout, double[] zFactors, double temperature) {
+    DepletionExperiment.validateSchedule(ExperimentType.CVD, pressures, temperature);
+    validateObservationLengths(pressures.length, liquidDropout, zFactors);
+    cvdExperiments.add(new DepletionRegistration(pressures, temperature, cvdData.size()));
     for (int i = 0; i < pressures.length; i++) {
       cvdData.add(new CVDDataPoint(pressures[i], liquidDropout[i], zFactors[i], temperature));
     }
   }
 
   /**
-   * Add DLE (Differential Liberation Expansion) experimental data.
+   * Add one complete isothermal DLE experiment with a shared final residual stock-tank oil reference.
    *
-   * @param pressures pressure values in bar
+   * @param pressures complete nonincreasing pressure schedule in bara
    * @param rs solution gas-oil ratio (Sm³/Sm³)
    * @param bo oil formation volume factor (m³/Sm³)
    * @param oilDensity oil density (kg/m³)
    * @param temperature experiment temperature in K
+   * @throws IllegalArgumentException if the schedule or observation array lengths are invalid
    */
   public void addDLEData(double[] pressures, double[] rs, double[] bo, double[] oilDensity, double temperature) {
+    DepletionExperiment.validateSchedule(ExperimentType.DLE, pressures, temperature);
+    validateObservationLengths(pressures.length, rs, bo, oilDensity);
+    dleExperiments.add(new DepletionRegistration(pressures, temperature, dleData.size()));
     for (int i = 0; i < pressures.length; i++) {
       dleData.add(new DLEDataPoint(pressures[i], rs[i], bo[i], oilDensity[i], temperature));
     }
@@ -377,18 +388,25 @@ public class PVTRegression {
    */
   private void addCVDSamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.CVD, 1.0);
-    for (CVDDataPoint point : cvdData) {
-      // Liquid dropout
-      double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 0};
-      SampleValue sample = new SampleValue(point.getLiquidDropout(), 0.01 / weight, dependentValues);
-      sample.setFunction(function.clone());
-      sampleList.add(sample);
+    for (DepletionRegistration experiment : cvdExperiments) {
+      int identity = function.registerDepletionExperiment(ExperimentType.CVD, experiment.pressures,
+          experiment.temperature);
+      for (int row = 0; row < experiment.pressures.length; row++) {
+        CVDDataPoint point = cvdData.get(experiment.firstObservation + row);
+        // Liquid dropout
+        double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 0,
+            identity, row};
+        SampleValue sample = new SampleValue(point.getLiquidDropout(), 0.01 / weight, dependentValues);
+        sample.setFunction(function.clone());
+        sampleList.add(sample);
 
-      // Z-factor
-      double[] dependentValues2 = {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 1};
-      SampleValue sample2 = new SampleValue(point.getZFactor(), 0.01 / weight, dependentValues2);
-      sample2.setFunction(function.clone());
-      sampleList.add(sample2);
+        // Z-factor
+        double[] dependentValues2 = {point.getPressure(), point.getTemperature(), ExperimentType.CVD.ordinal(), 1,
+            identity, row};
+        SampleValue sample2 = new SampleValue(point.getZFactor(), 0.01 / weight, dependentValues2);
+        sample2.setFunction(function.clone());
+        sampleList.add(sample2);
+      }
     }
   }
 
@@ -400,24 +418,32 @@ public class PVTRegression {
    */
   private void addDLESamples(ArrayList<SampleValue> sampleList, PVTRegressionFunction function) {
     double weight = experimentWeights.getOrDefault(ExperimentType.DLE, 1.0);
-    for (DLEDataPoint point : dleData) {
-      // Rs
-      double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 0};
-      SampleValue sample = new SampleValue(point.getRs(), 0.01 / weight, dependentValues);
-      sample.setFunction(function.clone());
-      sampleList.add(sample);
+    for (DepletionRegistration experiment : dleExperiments) {
+      int identity = function.registerDepletionExperiment(ExperimentType.DLE, experiment.pressures,
+          experiment.temperature);
+      for (int row = 0; row < experiment.pressures.length; row++) {
+        DLEDataPoint point = dleData.get(experiment.firstObservation + row);
+        // Rs
+        double[] dependentValues = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 0,
+            identity, row};
+        SampleValue sample = new SampleValue(point.getRs(), 0.01 / weight, dependentValues);
+        sample.setFunction(function.clone());
+        sampleList.add(sample);
 
-      // Bo
-      double[] dependentValues2 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 1};
-      SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
-      sample2.setFunction(function.clone());
-      sampleList.add(sample2);
+        // Bo
+        double[] dependentValues2 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 1,
+            identity, row};
+        SampleValue sample2 = new SampleValue(point.getBo(), 0.01 / weight, dependentValues2);
+        sample2.setFunction(function.clone());
+        sampleList.add(sample2);
 
-      // Oil density
-      double[] dependentValues3 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 2};
-      SampleValue sample3 = new SampleValue(point.getOilDensity(), 0.01 / weight, dependentValues3);
-      sample3.setFunction(function.clone());
-      sampleList.add(sample3);
+        // Oil density
+        double[] dependentValues3 = {point.getPressure(), point.getTemperature(), ExperimentType.DLE.ordinal(), 2,
+            identity, row};
+        SampleValue sample3 = new SampleValue(point.getOilDensity(), 0.01 / weight, dependentValues3);
+        sample3.setFunction(function.clone());
+        sampleList.add(sample3);
+      }
     }
   }
 
@@ -470,7 +496,7 @@ public class PVTRegression {
    * @param optimizedParams the optimized parameter values in regression parameter order
    */
   private void applyOptimizedParameters(double[] optimizedParams) {
-    tunedFluid = baseFluid.clone();
+    tunedFluid = SerializationUtils.clone(baseFluid);
 
     for (int i = 0; i < regressionParameters.size(); i++) {
       RegressionParameter param = regressionParameters.get(i).getParameter();
@@ -537,23 +563,18 @@ public class PVTRegression {
       return 0.0;
     }
 
-    ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(tunedFluid.clone());
-    double[] pressures = cvdData.stream().mapToDouble(CVDDataPoint::getPressure).toArray();
-    cvd.setPressures(pressures);
-    cvd.setTemperature(cvdData.get(0).getTemperature(), "K");
-    cvd.runCalc();
-
-    double[] calcLiquidDropout = cvd.getLiquidRelativeVolume();
-    double[] calcZgas = cvd.getZgas();
-
-    for (int i = 0; i < cvdData.size(); i++) {
-      double expDropout = cvdData.get(i).getLiquidDropout();
-      double expZ = cvdData.get(i).getZFactor();
-      if (calcLiquidDropout != null && i < calcLiquidDropout.length) {
-        objective += Math.pow((calcLiquidDropout[i] - expDropout) / Math.max(expDropout, 0.01), 2);
-      }
-      if (calcZgas != null && i < calcZgas.length) {
-        objective += Math.pow((calcZgas[i] - expZ) / expZ, 2);
+    for (DepletionRegistration experiment : cvdExperiments) {
+      ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(tunedFluid.clone());
+      cvd.setPressures(experiment.pressures.clone());
+      cvd.setTemperature(experiment.temperature, "K");
+      cvd.runCalc();
+      double[] dropout = cvd.getLiquidRelativeVolume();
+      double[] zGas = cvd.getZgas();
+      for (int row = 0; row < experiment.pressures.length; row++) {
+        CVDDataPoint point = cvdData.get(experiment.firstObservation + row);
+        objective += Math.pow((dropout[row] - point.getLiquidDropout()) / Math.max(point.getLiquidDropout(), 0.01), 2);
+        // CVD retains a zero gas-Z sentinel when gas is absent; matching zeros must not produce 0/0.
+        objective += Math.pow((zGas[row] - point.getZFactor()) / Math.max(Math.abs(point.getZFactor()), 1e-12), 2);
       }
     }
 
@@ -566,29 +587,20 @@ public class PVTRegression {
       return 0.0;
     }
 
-    DifferentialLiberation dle = new DifferentialLiberation(tunedFluid.clone());
-    double[] pressures = dleData.stream().mapToDouble(DLEDataPoint::getPressure).toArray();
-    dle.setPressures(pressures);
-    dle.setTemperature(dleData.get(0).getTemperature(), "K");
-    dle.runCalc();
-
-    double[] calcRs = dle.getRs();
-    double[] calcBo = dle.getBo();
-    double[] calcDensity = dle.getOilDensity();
-
-    for (int i = 0; i < dleData.size(); i++) {
-      double expRs = dleData.get(i).getRs();
-      double expBo = dleData.get(i).getBo();
-      double expDensity = dleData.get(i).getOilDensity();
-
-      if (calcRs != null && i < calcRs.length && expRs > 0) {
-        objective += Math.pow((calcRs[i] - expRs) / expRs, 2);
-      }
-      if (calcBo != null && i < calcBo.length && expBo > 0) {
-        objective += Math.pow((calcBo[i] - expBo) / expBo, 2);
-      }
-      if (calcDensity != null && i < calcDensity.length && expDensity > 0) {
-        objective += Math.pow((calcDensity[i] - expDensity) / expDensity, 2);
+    for (DepletionRegistration experiment : dleExperiments) {
+      DifferentialLiberation dle = new DifferentialLiberation(tunedFluid.clone());
+      dle.setPressures(experiment.pressures.clone());
+      dle.setTemperature(experiment.temperature, "K");
+      dle.runCalc();
+      double[][] calculated = {dle.getRs(), dle.getBo(), dle.getOilDensity()};
+      for (int row = 0; row < experiment.pressures.length; row++) {
+        DLEDataPoint point = dleData.get(experiment.firstObservation + row);
+        double[] observed = {point.getRs(), point.getBo(), point.getOilDensity()};
+        for (int property = 0; property < observed.length; property++) {
+          if (observed[property] > 0.0) {
+            objective += Math.pow((calculated[property][row] - observed[property]) / observed[property], 2);
+          }
+        }
       }
     }
 
@@ -769,6 +781,8 @@ public class PVTRegression {
     cceData.clear();
     cvdData.clear();
     dleData.clear();
+    cvdExperiments.clear();
+    dleExperiments.clear();
     separatorData.clear();
     viscosityData.clear();
   }
@@ -779,4 +793,45 @@ public class PVTRegression {
   public void clearRegressionParameters() {
     regressionParameters.clear();
   }
+
+  /**
+   * Validate observation array shapes before changing any registered experiment.
+   *
+   * @param rows complete protocol length
+   * @param observations required observed-property arrays
+   * @throws IllegalArgumentException if an array does not match the protocol
+   */
+  private static void validateObservationLengths(int rows, double[]... observations) {
+    for (double[] values : observations) {
+      if (values == null || values.length != rows) {
+        throw new IllegalArgumentException("Depletion observation arrays must match the complete pressure schedule");
+      }
+    }
+  }
+
+  /**
+   * Identity of one public addCVDData/addDLEData call, retained independently of other experiments.
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  private static final class DepletionRegistration {
+    private final double[] pressures;
+    private final double temperature;
+    private final int firstObservation;
+
+    /**
+     * Freeze the ordered protocol and its location in the existing observation list.
+     *
+     * @param pressures pressure schedule in bara
+     * @param temperature isothermal temperature in K
+     * @param firstObservation first row in the corresponding observation list
+     */
+    private DepletionRegistration(double[] pressures, double temperature, int firstObservation) {
+      this.pressures = pressures.clone();
+      this.temperature = temperature;
+      this.firstObservation = firstObservation;
+    }
+  }
+
 }

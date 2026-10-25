@@ -33,7 +33,8 @@ class PVTRegressionDispatchTest {
   void dispatchesEveryDeclaredExperimentType(ExperimentType type) {
     PVTRegressionFunction function = createFunction();
     int property = type == ExperimentType.CCE ? 0 : 1;
-    double[] values = {20.0, 353.15, type.ordinal(), property, 373.15};
+    double[] values = type == ExperimentType.SEPARATOR ? new double[] {20.0, 353.15, type.ordinal(), property, 373.15}
+        : new double[] {20.0, 353.15, type.ordinal(), property};
     switch (type) {
     case SATURATION_PRESSURE:
     case SWELLING:
