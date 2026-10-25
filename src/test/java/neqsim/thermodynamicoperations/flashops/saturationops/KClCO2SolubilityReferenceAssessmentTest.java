@@ -95,34 +95,48 @@ class KClCO2SolubilityReferenceAssessmentTest {
    * @return calculated diagnostics
    */
   private static Result calculate(Reference reference) {
-    SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperatureK,
-        reference.targetCo2PartialPressureBara);
-    fluid.addComponent("CO2", 10.0);
-    fluid.addComponent("water", 1.0 / WATER_MOLAR_MASS_KG_PER_MOL);
-    fluid.addComponent("K+", reference.kclMolality);
-    fluid.addComponent("Cl-", reference.kclMolality);
-    fluid.setMixingRule(10);
-    fluid.setMultiPhaseCheck(true);
-    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    PressureTrial lower = flashAtTotalPressure(reference, reference.targetCo2PartialPressureBara);
+    PressureTrial upper = flashAtTotalPressure(reference, reference.targetCo2PartialPressureBara + 1.0);
+    for (int expansion = 0; expansion < 10
+        && upper.actualCo2PartialPressureBara < reference.targetCo2PartialPressureBara; expansion++) {
+      upper = flashAtTotalPressure(reference, 2.0 * upper.totalPressureBara);
+    }
 
-    double actualPartialPressureBara = Double.NaN;
+    assertTrue(lower.actualCo2PartialPressureBara <= reference.targetCo2PartialPressureBara,
+        reference.pointId + " lower pressure trial must not exceed the target CO2 partial pressure");
+    assertTrue(upper.actualCo2PartialPressureBara >= reference.targetCo2PartialPressureBara,
+        reference.pointId + " could not bracket the target CO2 partial pressure");
+
+    PressureTrial selected = lower;
     for (int iteration = 0; iteration < MAX_PARTIAL_PRESSURE_ITERATIONS; iteration++) {
-      operations.TPflash();
-      fluid.init(3);
-      PhaseInterface gas = fluid.getPhase("gas");
-      actualPartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
-      if (Math.abs(actualPartialPressureBara
-          - reference.targetCo2PartialPressureBara) < PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR) {
+      double lowerResidual =
+          lower.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
+      double upperResidual =
+          upper.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
+      double bracketWidth = upper.totalPressureBara - lower.totalPressureBara;
+      double candidatePressure = lower.totalPressureBara
+          - lowerResidual * bracketWidth / (upperResidual - lowerResidual);
+      if (!Double.isFinite(candidatePressure)
+          || candidatePressure <= lower.totalPressureBara + 0.05 * bracketWidth
+          || candidatePressure >= upper.totalPressureBara - 0.05 * bracketWidth) {
+        candidatePressure = 0.5 * (lower.totalPressureBara + upper.totalPressureBara);
+      }
+
+      selected = flashAtTotalPressure(reference, candidatePressure);
+      double selectedResidual =
+          selected.actualCo2PartialPressureBara - reference.targetCo2PartialPressureBara;
+      if (Math.abs(selectedResidual) < PARTIAL_PRESSURE_CONVERGENCE_TOLERANCE_BAR) {
         break;
       }
-      fluid.setPressure(fluid.getPressure() * reference.targetCo2PartialPressureBara / actualPartialPressureBara);
+      if (selectedResidual < 0.0) {
+        lower = selected;
+      } else {
+        upper = selected;
+      }
     }
-    operations.TPflash();
-    fluid.init(3);
 
-    PhaseInterface gas = fluid.getPhase("gas");
+    SystemInterface fluid = selected.fluid;
     PhaseInterface aqueous = findIonRichPhase(fluid);
-    actualPartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
     double aqueousWaterMassKg = aqueous.getComponent("water").getNumberOfMolesInPhase() * WATER_MOLAR_MASS_KG_PER_MOL;
     assertTrue(aqueousWaterMassKg > 0.0, "aqueous phase must retain a positive water mass");
     double modelCo2Molality = aqueous.getComponent("CO2").getNumberOfMolesInPhase() / aqueousWaterMassKg;
@@ -134,8 +148,32 @@ class KClCO2SolubilityReferenceAssessmentTest {
     for (int phaseIndex = 0; phaseIndex < fluid.getNumberOfPhases(); phaseIndex++) {
       phaseTypes.add(fluid.getPhase(phaseIndex).getType().toString());
     }
-    return new Result(actualPartialPressureBara, fluid.getPressure(), modelCo2Molality, aqueousWaterMassKg,
-        aqueousCo2MoleFraction, String.join("+", phaseTypes));
+    return new Result(selected.actualCo2PartialPressureBara, selected.totalPressureBara, modelCo2Molality,
+        aqueousWaterMassKg, aqueousCo2MoleFraction, String.join("+", phaseTypes));
+  }
+
+  /**
+   * Flashes an independent state at one trial pressure.
+   *
+   * @param reference experimental state
+   * @param totalPressureBara trial total pressure in bara
+   * @return independent pressure trial
+   */
+  private static PressureTrial flashAtTotalPressure(Reference reference, double totalPressureBara) {
+    SystemInterface fluid = new SystemElectrolyteCPAstatoil(reference.temperatureK, totalPressureBara);
+    fluid.addComponent("CO2", 10.0);
+    fluid.addComponent("water", 1.0 / WATER_MOLAR_MASS_KG_PER_MOL);
+    fluid.addComponent("K+", reference.kclMolality);
+    fluid.addComponent("Cl-", reference.kclMolality);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.init(3);
+
+    PhaseInterface gas = fluid.getPhase("gas");
+    double actualCo2PartialPressureBara = gas.getComponent("CO2").getx() * fluid.getPressure();
+    return new PressureTrial(fluid, fluid.getPressure(), actualCo2PartialPressureBara);
   }
 
   /**
@@ -182,6 +220,32 @@ class KClCO2SolubilityReferenceAssessmentTest {
     }
     assertEquals(26, references.size());
     return references;
+  }
+
+  /**
+   * Independent trial state for the CO2 partial-pressure root.
+   *
+   * @author OpenAI
+   * @version 1.0
+   */
+  private static final class PressureTrial {
+    private final SystemInterface fluid;
+    private final double totalPressureBara;
+    private final double actualCo2PartialPressureBara;
+
+    /**
+     * Creates a pressure trial.
+     *
+     * @param fluid independently flashed system
+     * @param totalPressureBara total pressure in bara
+     * @param actualCo2PartialPressureBara calculated CO2 partial pressure in bara
+     */
+    private PressureTrial(SystemInterface fluid, double totalPressureBara,
+        double actualCo2PartialPressureBara) {
+      this.fluid = fluid;
+      this.totalPressureBara = totalPressureBara;
+      this.actualCo2PartialPressureBara = actualCo2PartialPressureBara;
+    }
   }
 
   /**
