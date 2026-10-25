@@ -122,7 +122,7 @@ def test_top_level_landing_metadata_and_rendered_titles() -> None:
 
 def test_all_landing_pages_use_front_matter_title_only() -> None:
     pages = _all_landing_pages()
-    assert len(pages) == 86
+    assert len(pages) == 87
     for page in pages:
         text, _title, _description = _front_matter(page)
         body = FRONT_MATTER.sub("", text, count=1)
